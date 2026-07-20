@@ -2046,7 +2046,9 @@
           "emptyTurn": "Asystent nie zwrócił odpowiedzi. Spróbuj ponownie.",
           "retry": "Ponów"
         },
+        "cancelled": "Tura anulowana",
         "error": {
+          "turnCap": "Ta rozmowa osiągnęła limit — rozpocznij nowy czat.",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."

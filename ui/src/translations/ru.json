@@ -2046,7 +2046,9 @@
           "emptyTurn": "Ассистент не вернул ответ. Пожалуйста, попробуйте снова.",
           "retry": "Повторить"
         },
+        "cancelled": "Ход отменён",
         "error": {
+          "turnCap": "Этот разговор достиг лимита — начните новый чат.",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."

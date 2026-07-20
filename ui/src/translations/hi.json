@@ -2046,7 +2046,9 @@
           "emptyTurn": "सहायक ने कोई प्रतिक्रिया नहीं दी। कृपया पुनः प्रयास करें।",
           "retry": "पुनः प्रयास करें"
         },
+        "cancelled": "टर्न रद्द किया गया",
         "error": {
+          "turnCap": "यह बातचीत अपनी सीमा तक पहुँच गई — नई चैट शुरू करें।",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."

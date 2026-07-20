@@ -2046,7 +2046,9 @@
           "emptyTurn": "L'assistente non ha restituito una risposta. Riprova.",
           "retry": "Riprova"
         },
+        "cancelled": "Turno annullato",
         "error": {
+          "turnCap": "Questa conversazione ha raggiunto il limite — avvia una nuova chat.",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."

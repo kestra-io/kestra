@@ -18,7 +18,7 @@ export type ThreadStatus = "IDLE" | "RUNNING" | "AWAITING_CONFIRMATION"
 
 export type MessageRole = "USER" | "ASSISTANT" | "TOOL" | "SYSTEM"
 
-export type MessageType = "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT"
+export type MessageType = "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT" | "CANCELLED"
 
 export type ToolFamily = "READ" | "MUTATE" | "ACT"
 
@@ -99,6 +99,8 @@ export interface ThreadDetail {
     mode: Mode
     scope?: ScopeBinding | null
     status: ThreadStatus
+    /** Set only when status is AWAITING_CONFIRMATION — lets a reload resume the suspended turn. */
+    pendingConfirmationId?: string | null
     messages: MessageView[]
 }
 

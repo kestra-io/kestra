@@ -36,7 +36,7 @@ import {
 } from "./types"
 
 /** Locale-agnostic error identifier; the component maps it to `ai.copilot.error.<code>`. */
-export type ErrorCode = "turnInProgress" | "request" | "generic"
+export type ErrorCode = "turnInProgress" | "turnCap" | "request" | "generic"
 
 /** Locale-agnostic non-error notice identifier; the component maps it to `ai.copilot.notice.<code>`. */
 export type NoticeCode = "emptyTurn"
@@ -46,7 +46,7 @@ export interface ChatMessage {
     /** Local, stable key for v-for. */
     id: string
     role: "USER" | "ASSISTANT" | "TOOL" | "SYSTEM"
-    type: "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT"
+    type: "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT" | "CANCELLED"
     /** Assistant text; appended to as `token` events arrive. */
     content?: string
     toolCall?: ToolCallEvent
@@ -83,13 +83,46 @@ export function useAiChat() {
 
     const base = () => `${apiUrl()}/ai/threads`
 
+    // The active thread uid is remembered client-side so the conversation survives a reload
+    // (threads are persisted + user-scoped server-side). A stale/foreign uid just 404s → cleared.
+    const THREAD_STORAGE_KEY = "kestra.copilot.activeThread"
+    const rememberThread = (uid: string) => {
+        try {
+            localStorage.setItem(THREAD_STORAGE_KEY, uid)
+        } catch { /* storage unavailable (private mode) — resume simply won't persist */ }
+    }
+    const forgetThread = () => {
+        try {
+            localStorage.removeItem(THREAD_STORAGE_KEY)
+        } catch { /* ignore */ }
+    }
+
     /** Creates the thread once and reuses its uid for the rest of the session. */
     async function ensureThread(request: CreateThreadRequest = {}): Promise<ThreadSummary> {
         if (thread.value) return thread.value
         const {data} = await client.post<ThreadSummary>(base(), request)
         thread.value = data
         status.value = data.status
+        rememberThread(data.uid)
         return data
+    }
+
+    /**
+     * Restores the last conversation on mount from the remembered uid. A cleared / other-user /
+     * other-tenant thread 404s → we forget it and start empty. No-op if a thread is already active.
+     */
+    async function restoreThread(): Promise<void> {
+        if (thread.value) return
+        let storedId: string | null = null
+        try {
+            storedId = localStorage.getItem(THREAD_STORAGE_KEY)
+        } catch { /* storage unavailable */ }
+        if (!storedId) return
+        try {
+            await loadThread(storedId)
+        } catch {
+            forgetThread()
+        }
     }
 
     /** Rehydrates an existing thread's transcript on reload. Sorts messages by uid. */
@@ -105,6 +138,9 @@ export function useAiChat() {
             updatedAt: "",
         }
         status.value = data.status
+        error.value = null
+        notice.value = null
+        activeAssistant = null
         messages.value = [...data.messages]
             .sort((a, b) => a.uid.localeCompare(b.uid))
             .map((m) => ({
@@ -118,6 +154,27 @@ export function useAiChat() {
                 toolResult: (m.toolResult as unknown as ToolResultEvent) ?? undefined,
                 draft: m.draft ?? undefined,
             }))
+
+        // Resume a suspended turn: reconstruct the pending proposal so its confirm card renders again.
+        // The backend gives only `pendingConfirmationId`; the summary/held-tool come from the last
+        // PROPOSED_ACTION message in the transcript.
+        pendingConfirmation.value = data.status === "AWAITING_CONFIRMATION" && data.pendingConfirmationId
+            ? proposalFromTranscript(data.pendingConfirmationId)
+            : null
+
+        rememberThread(data.uid)
+    }
+
+    /** Rebuild a ProposedActionEvent from the persisted PROPOSED_ACTION message + the pending id. */
+    function proposalFromTranscript(confirmationId: string): ProposedActionEvent {
+        const last = [...messages.value].reverse().find((m) => m.type === "PROPOSED_ACTION")
+        return {
+            confirmationId,
+            summary: last?.content ?? "",
+            tool: last?.toolCall?.tool ?? null,
+            family: last?.toolCall?.family ?? null,
+            arguments: last?.toolCall?.arguments ?? null,
+        }
     }
 
     /** Sends a user turn and streams the response. Creates the thread if needed. */
@@ -187,6 +244,7 @@ export function useAiChat() {
         unavailable.value = false
         activeAssistant = null
         lastTurn = null
+        forgetThread()
     }
 
     /** Shared streaming driver for both chat and confirm turns. */
@@ -272,7 +330,9 @@ export function useAiChat() {
 
     function toErrorCode(e: unknown): ErrorCode {
         if (e instanceof SseHttpError) {
-            return e.status === 409 ? "turnInProgress" : "request"
+            if (e.status === 409) return "turnInProgress"
+            if (e.status === 429) return "turnCap" // thread hit its turn limit — start a new chat
+            return "request"
         }
         return "generic"
     }
@@ -299,6 +359,7 @@ export function useAiChat() {
         // actions
         ensureThread,
         loadThread,
+        restoreThread,
         sendChat,
         confirm,
         cancel,

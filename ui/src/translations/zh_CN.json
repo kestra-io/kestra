@@ -2046,7 +2046,9 @@
           "emptyTurn": "助手未返回响应。请重试。",
           "retry": "重试"
         },
+        "cancelled": "已取消本轮",
         "error": {
+          "turnCap": "此对话已达到上限——请开始新的聊天。",
           "turnInProgress": "A turn is already in progress.",
           "request": "The request failed. Please try again.",
           "generic": "Something went wrong. Please try again."

@@ -96,4 +96,11 @@ describe("CopilotMessage", () => {
         expect(w.find(".copilot-draft").exists()).toBe(true)
         expect(w.find("[data-test=\"copilot-draft-yaml\"]").text()).toContain("id: demo")
     })
+
+    it("renders a CANCELLED message as a subtle system marker", () => {
+        const w = mountMessage({id: "7", role: "SYSTEM", type: "CANCELLED"})
+        const marker = w.find("[data-test=\"copilot-cancelled\"]")
+        expect(marker.exists()).toBe(true)
+        expect(marker.text()).toBe("Turn cancelled")
+    })
 })

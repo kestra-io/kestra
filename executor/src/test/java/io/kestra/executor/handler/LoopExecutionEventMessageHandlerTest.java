@@ -4,14 +4,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.LoopExecutionEvent;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
@@ -19,6 +22,7 @@ import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.TaskOutputService;
@@ -53,6 +57,9 @@ class LoopExecutionEventMessageHandlerTest {
 
     @Inject
     KillSwitchService killSwitchService;
+
+    @Inject
+    private DispatchQueueInterface<LogEntry> logQueue;
 
     @MockBean(KillSwitchService.class)
     KillSwitchService killSwitchService() {
@@ -116,16 +123,26 @@ class LoopExecutionEventMessageHandlerTest {
         String loopTaskRunId = IdUtils.create();
         var loopTaskRun = loopTaskRun(loopTaskRunId, execution);
         executionRepository.save(execution.withTaskRunList(List.of(loopTaskRun)));
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
 
         // When — one iteration fails, loop should terminate immediately
         var loopRun = new LoopRun(execution, "loop", loopTaskRunId, 0, null, "a", null);
-        var message = new LoopExecutionEvent(loopRun, execution.getId(), State.Type.FAILED, null);
+        var message = new LoopExecutionEvent(loopRun, "sub-execution-id", State.Type.FAILED, null);
         var maybeExecutor = handler.handle(message);
 
         // Then
         assertThat(maybeExecutor).isPresent();
         var taskRun = maybeExecutor.get().getExecution().findTaskRunByTaskRunId(loopTaskRunId);
         assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // check that a log was created for the parent execution
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 1);
+        LogEntry errorLog = matchingLog.getFirst();
+        assertThat(errorLog.getLevel()).isEqualTo(Level.ERROR);
+        assertThat(errorLog.getExecutionId()).isEqualTo(execution.getId());
+        assertThat(errorLog.getTaskRunId()).isEqualTo(loopTaskRunId);
+        assertThat(errorLog.getMessage()).contains("sub-execution-id").contains("FAILED");
     }
 
     @Test

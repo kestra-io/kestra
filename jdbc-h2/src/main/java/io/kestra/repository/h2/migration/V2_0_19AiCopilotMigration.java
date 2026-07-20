@@ -19,14 +19,14 @@ import jakarta.inject.Singleton;
  */
 @Singleton
 @Requires(property = "kestra.repository.type", pattern = "h2|memory")
-public class V2_0_17AiCopilotMigration extends AbstractSQLMigrationScript {
+public class V2_0_19AiCopilotMigration extends AbstractSQLMigrationScript {
 
-    private static final String SCRIPT_ID = "2.0.17-ai-copilot";
+    private static final String SCRIPT_ID = "2.0.19-ai-copilot";
 
     private final DataSource dataSource;
 
     @Inject
-    public V2_0_17AiCopilotMigration(final DataSource dataSource) {
+    public V2_0_19AiCopilotMigration(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -42,7 +42,7 @@ public class V2_0_17AiCopilotMigration extends AbstractSQLMigrationScript {
 
     @Override
     public List<String> sqlResources() {
-        return List.of("/migrations/2.0.17-ai-copilot-h2.sql");
+        return List.of("/migrations/2.0.19-ai-copilot-h2.sql");
     }
 
     @Override

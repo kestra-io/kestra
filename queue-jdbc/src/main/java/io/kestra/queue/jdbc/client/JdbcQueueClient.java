@@ -53,11 +53,21 @@ public class JdbcQueueClient {
     @Getter
     private final JdbcQueueConfiguration configuration;
 
+    /**
+     * Notifies a realtime wake-up mechanism after a publish, so a waiting subscriber's poll loop
+     * can be woken early instead of waiting out its full backoff. Only present on Postgres; on
+     * other dialects this is {@code null} and publish behaves exactly as before.
+     */
+    @Nullable
+    private final QueueChangeNotifier changeNotifier;
+
     @Inject
-    public JdbcQueueClient(@Named("queues") AbstractJdbcRepository<JdbcQueueItem> jdbcRepository, JooqDSLContextWrapper dslContextWrapper, JdbcQueueConfiguration configuration) {
+    public JdbcQueueClient(@Named("queues") AbstractJdbcRepository<JdbcQueueItem> jdbcRepository, JooqDSLContextWrapper dslContextWrapper, JdbcQueueConfiguration configuration,
+        @Nullable QueueChangeNotifier changeNotifier) {
         this.jdbcRepository = jdbcRepository;
         this.dslContextWrapper = dslContextWrapper;
         this.configuration = configuration;
+        this.changeNotifier = changeNotifier;
     }
 
     private boolean isUnsupportedUnicode(DataException e) {
@@ -82,6 +92,16 @@ public class JdbcQueueClient {
         return false;
     }
 
+    /**
+     * Normalizes a routing key the same way it is stored in the {@code routing_key} column
+     * (empty treated as absent), so the realtime wake-up signal targets the same partitioning as
+     * the data itself.
+     */
+    @Nullable
+    private static String normalizeRoutingKey(@Nullable String routingKey) {
+        return (routingKey == null || routingKey.isEmpty()) ? null : routingKey;
+    }
+
     public void publish(String queue, @Nullable String routingKey, String key, String value) throws QueueException {
         try {
             dslContextWrapper.transaction(configuration ->
@@ -90,7 +110,7 @@ public class JdbcQueueClient {
 
                 Map<Field<?>, Object> fields = HashMap.newHashMap(5);
                 fields.put(TYPE, queue);
-                fields.put(ROUTING_KEY, (routingKey == null || routingKey.isEmpty()) ? null : routingKey);
+                fields.put(ROUTING_KEY, normalizeRoutingKey(routingKey));
                 fields.put(KEY, key);
                 fields.put(VALUE, JdbcJsonbUtils.valueOf(value));
                 fields.put(CREATED, Instant.now());
@@ -100,6 +120,10 @@ public class JdbcQueueClient {
                     .set(fields);
 
                 insert.execute();
+
+                if (changeNotifier != null) {
+                    changeNotifier.notifyChange(configuration, queue, normalizeRoutingKey(routingKey));
+                }
             });
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
             // Postgres refuses JSONB payloads with unsupported Unicode escape sequences such as '\0000'
@@ -148,7 +172,7 @@ public class JdbcQueueClient {
                 for (PublishedMessage entry : messages) {
                     insert = insert.values(
                         entry.queue,
-                        (entry.routingKey == null || entry.routingKey.isEmpty()) ? null : entry.routingKey,
+                        normalizeRoutingKey(entry.routingKey),
                         entry.key,
                         JdbcJsonbUtils.valueOf(entry.value),
                         now
@@ -156,6 +180,16 @@ public class JdbcQueueClient {
                 }
 
                 insert.execute();
+
+                if (changeNotifier != null) {
+                    // One notification per distinct (queue, routingKey) pair in the batch: plain
+                    // dispatch/broadcast batches collapse to one per queue; VNode/keyed batches emit
+                    // one per distinct routing key actually present, so wake-ups stay targeted.
+                    messages.stream()
+                        .map(entry -> Pair.of(entry.queue, normalizeRoutingKey(entry.routingKey)))
+                        .distinct()
+                        .forEach(pair -> changeNotifier.notifyChange(configuration, pair.getLeft(), pair.getRight()));
+                }
             });
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
             // Postgres refuses JSONB payloads with unsupported Unicode escape sequences such as '\0000'
@@ -166,6 +200,23 @@ public class JdbcQueueClient {
             }
             throw new QueueException("Unable to emit a message to the queue", e);
         }
+    }
+
+    public @Nullable Long fetchMaxOffset(String queue) {
+        Long initialOffset = dslContextWrapper.transactionResult(conf ->
+        {
+            DSLContext context = DSL.using(conf);
+
+            // Filters identically to subscribeBroadcast/subscribeBroadcastBatch so the seeded
+            // offset and the poll queries always operate over the same row set.
+            return context.select(DSL.max(OFFSET))
+                .from(this.jdbcRepository.getTable())
+                .where(TYPE.eq(queue))
+                .and(ROUTING_KEY.isNull())
+                .fetchAny("max", Long.class);
+        });
+
+        return initialOffset != null ? initialOffset : 0L;
     }
 
     public Integer subscribeDispatch(String queue, @Nullable List<String> routingKeys, Consumer<byte[]> consumer) {
@@ -249,23 +300,6 @@ public class JdbcQueueClient {
 
             return result.size();
         });
-    }
-
-    public @Nullable Long fetchMaxOffset(String queue) {
-        Long initialOffset = dslContextWrapper.transactionResult(conf ->
-        {
-            DSLContext context = DSL.using(conf);
-
-            // Filters identically to subscribeBroadcast/subscribeBroadcastBatch so the seeded
-            // offset and the poll queries always operate over the same row set.
-            return context.select(DSL.max(OFFSET))
-                .from(this.jdbcRepository.getTable())
-                .where(TYPE.eq(queue))
-                .and(ROUTING_KEY.isNull())
-                .fetchAny("max", Long.class);
-        });
-
-        return initialOffset != null ? initialOffset : 0L;
     }
 
     protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, Consumer<byte[]> consumer) {

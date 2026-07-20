@@ -8,12 +8,19 @@ import io.kestra.core.queues.event.Event;
 import io.kestra.core.services.IgnoreExecutionService;
 import io.kestra.queue.QueueService;
 
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JdbcDispatchSubscriber<T extends Event> extends JdbcSubscriber<T> {
     private final List<String> routingKeys;
 
+    /**
+     * @deprecated use the overload taking a {@link QueueWakeRegistry} — kept so existing callers
+     *             built against the pre-{@link QueueWakeRegistry} signature keep compiling; they
+     *             simply get no realtime wake-up.
+     */
+    @Deprecated
     public JdbcDispatchSubscriber(
         Class<T> cls,
         QueueService queueService,
@@ -22,9 +29,26 @@ public class JdbcDispatchSubscriber<T extends Event> extends JdbcSubscriber<T> {
         List<String> routingKeys,
         MetricRegistry metricRegistry,
         IgnoreExecutionService ignoreExecutionService) {
-        super(cls, queueService, jdbcQueueClient, queueName, metricRegistry, ignoreExecutionService);
+        this(cls, queueService, jdbcQueueClient, queueName, routingKeys, metricRegistry, ignoreExecutionService, null);
+    }
+
+    public JdbcDispatchSubscriber(
+        Class<T> cls,
+        QueueService queueService,
+        JdbcQueueClient jdbcQueueClient,
+        String queueName,
+        List<String> routingKeys,
+        MetricRegistry metricRegistry,
+        IgnoreExecutionService ignoreExecutionService,
+        @Nullable QueueWakeRegistry wakeRegistry) {
+        super(cls, queueService, jdbcQueueClient, queueName, metricRegistry, ignoreExecutionService, wakeRegistry);
 
         this.routingKeys = routingKeys;
+    }
+
+    @Override
+    protected List<String> ownedRoutingKeys() {
+        return routingKeys == null ? List.of() : routingKeys;
     }
 
     @Override

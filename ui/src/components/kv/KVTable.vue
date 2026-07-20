@@ -594,7 +594,7 @@
             const now = moment()
 
             if (expirationMoment.isValid() && expirationMoment.isAfter(now)) {
-                const remainingMilliseconds = expirationMoment.diff(now)
+                const remainingMilliseconds = Math.round(expirationMoment.diff(now) / 1000) * 1000
                 kv.value.ttl = moment.duration(remainingMilliseconds).toISOString()
             } else {
                 kv.value.ttl = undefined

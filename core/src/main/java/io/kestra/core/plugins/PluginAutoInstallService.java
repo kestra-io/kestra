@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * <li>Parses the flow YAML to extract all task/trigger type FQCNs.</li>
  * <li>Identifies which ones are absent from the current {@link PluginRegistry}.</li>
  * <li>Maps each missing FQCN to its Maven artifact via the {@link PluginCatalogService}.</li>
+ * <li>Resolves each artifact's version to the highest one compatible with this Kestra instance.</li>
  * <li>Downloads and installs the missing artifacts via {@link PluginManager}.</li>
  * <li>Clears the {@link JsonSchemaCache} so the new plugins are immediately reflected in the schema.</li>
  * </ol>
@@ -140,10 +141,41 @@ public class PluginAutoInstallService {
             return List.of();
         }
 
-        List<PluginArtifact> installed = pluginManager.install(toInstall, List.of(), true, null);
+        List<PluginArtifact> resolved = resolveCompatibleVersions(toInstall);
+        if (resolved.isEmpty()) {
+            log.warn("Could not resolve a Kestra-compatible version for any missing plugin artifact: {}", toInstall);
+            return List.of();
+        }
+
+        List<PluginArtifact> installed = pluginManager.install(resolved, List.of(), true, null);
         jsonSchemaCache.clear();
         log.info("Auto-installed {} plugin artifact(s): {}", installed.size(), installed);
         return installed;
+    }
+
+    /**
+     * Resolves each {@code LATEST}-versioned artifact to the highest version that is compatible with the
+     * current Kestra core version, using {@link PluginCatalogService#resolveVersions(List)}. Artifacts for
+     * which no compatible version is found are dropped (and logged as a warning) rather than falling back
+     * to the newest version overall, which could be incompatible with this instance.
+     *
+     * @param artifacts the artifacts to resolve, with a placeholder {@code LATEST} version.
+     * @return the artifacts with their version resolved to a Kestra-compatible one.
+     */
+    private List<PluginArtifact> resolveCompatibleVersions(final List<PluginArtifact> artifacts) {
+        return catalogService.resolveVersions(artifacts).stream()
+            .peek(result ->
+            {
+                if (!result.resolved()) {
+                    log.warn(
+                        "No Kestra-compatible version found for plugin artifact '{}' (available versions: {})",
+                        result.artifact(), result.versions()
+                    );
+                }
+            })
+            .filter(PluginResolutionResult::resolved)
+            .map(result -> result.artifact().toBuilder().version(result.version()).build())
+            .toList();
     }
 
     /**

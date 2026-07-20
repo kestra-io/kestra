@@ -194,8 +194,12 @@ class PluginAutoInstallServiceTest {
                 manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
             )
         );
-        PluginArtifact expectedArtifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
-        when(pluginManager.install(anyList(), anyList(), eq(true), any())).thenReturn(List.of(expectedArtifact));
+        PluginArtifact latestArtifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
+        PluginArtifact resolvedArtifact = latestArtifact.toBuilder().version("1.2.3").build();
+        when(catalogService.resolveVersions(List.of(latestArtifact))).thenReturn(
+            List.of(new PluginResolutionResult(latestArtifact, "1.2.3", List.of("1.2.3"), true))
+        );
+        when(pluginManager.install(anyList(), anyList(), eq(true), any())).thenReturn(List.of(resolvedArtifact));
 
         PluginAutoInstallService service = enabledService();
 
@@ -205,7 +209,41 @@ class PluginAutoInstallServiceTest {
         // Then
         assertThat(installed).hasSize(1);
         assertThat(installed.getFirst().artifactId()).isEqualTo("plugin-http");
+        assertThat(installed.getFirst().version()).isEqualTo("1.2.3");
+        verify(pluginManager).install(eq(List.of(resolvedArtifact)), anyList(), eq(true), any());
         verify(jsonSchemaCache).clear();
+    }
+
+    @Test
+    void shouldSkipArtifactsWithNoCompatibleVersion() {
+        // Given
+        String yaml = """
+            id: my-flow
+            namespace: company
+            tasks:
+              - id: t1
+                type: io.kestra.plugin.http.request.Request
+            """;
+        when(pluginRegistry.findClassByIdentifier("io.kestra.plugin.http.request.Request")).thenReturn(null);
+        when(catalogService.get()).thenReturn(
+            List.of(
+                manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
+            )
+        );
+        PluginArtifact latestArtifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
+        when(catalogService.resolveVersions(List.of(latestArtifact))).thenReturn(
+            List.of(new PluginResolutionResult(latestArtifact, null, List.of(), false))
+        );
+
+        PluginAutoInstallService service = enabledService();
+
+        // When
+        List<PluginArtifact> installed = service.installMissingPlugins(yaml);
+
+        // Then
+        assertThat(installed).isEmpty();
+        verify(pluginManager, never()).install(anyList(), anyList(), any(Boolean.class), any());
+        verify(jsonSchemaCache, never()).clear();
     }
 
     @Test
@@ -269,16 +307,20 @@ class PluginAutoInstallServiceTest {
                 manifest("io.kestra.plugin", "plugin-http", "io.kestra.plugin.http")
             )
         );
-        PluginArtifact artifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
-        when(pluginManager.install(anyList(), anyList(), eq(true), any())).thenReturn(List.of(artifact));
+        PluginArtifact latestArtifact = PluginArtifact.fromCoordinates("io.kestra.plugin:plugin-http:LATEST");
+        PluginArtifact resolvedArtifact = latestArtifact.toBuilder().version("1.2.3").build();
+        when(catalogService.resolveVersions(List.of(latestArtifact))).thenReturn(
+            List.of(new PluginResolutionResult(latestArtifact, "1.2.3", List.of("1.2.3"), true))
+        );
+        when(pluginManager.install(anyList(), anyList(), eq(true), any())).thenReturn(List.of(resolvedArtifact));
 
         PluginAutoInstallService service = enabledService();
 
         // When
         service.installMissingPlugins(yaml);
 
-        // Then — PluginManager.install is called with a single de-duplicated artifact
-        verify(pluginManager).install(eq(List.of(artifact)), anyList(), eq(true), any());
+        // Then — PluginManager.install is called with a single de-duplicated, version-resolved artifact
+        verify(pluginManager).install(eq(List.of(resolvedArtifact)), anyList(), eq(true), any());
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────

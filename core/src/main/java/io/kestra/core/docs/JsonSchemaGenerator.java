@@ -987,9 +987,18 @@ public class JsonSchemaGenerator {
     protected static Optional<ResolvedType> safelyResolveSubtype(ResolvedType declaredType, Class<?> clz, TypeContext typeContext) {
         try {
             return Optional.ofNullable(typeContext.resolveSubtype(declaredType, clz));
-        } catch (Exception e) {
-            // exception can be thrown when resolving a plugin-type depending on
-            // a non-backward compatible kestra (e.g., java.lang.TypeNotPresentException).
+        } catch (Throwable e) {
+            // Can be thrown when resolving a plugin-type depending on a non-backward compatible kestra
+            // (e.g., java.lang.TypeNotPresentException), or a plugin jar with a classloading conflict
+            // (e.g., NoClassDefFoundError/LinkageError). Log so the excluded type is not silently missing
+            // from the schema used for editor autocompletion.
+            log.warn(
+                "Unable to resolve subtype '{}' of '{}' for schema generation, it will be excluded from autocompletion. Cause: [{}] {}",
+                clz.getName(),
+                declaredType.getErasedType().getName(),
+                e.getClass().getSimpleName(),
+                e.getMessage()
+            );
             return Optional.empty();
         }
     }

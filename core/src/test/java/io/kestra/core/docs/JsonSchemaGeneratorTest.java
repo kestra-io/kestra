@@ -635,6 +635,18 @@ class JsonSchemaGeneratorTest {
         });
     }
 
+    @Test
+    void safelyResolveSubtypeShouldReturnEmptyInsteadOfThrowingWhenSubtypeIsUnresolvable() {
+        com.github.victools.jsonschema.generator.TypeContext typeContext = com.github.victools.jsonschema.generator.impl.TypeContextFactory.createDefaultTypeContext();
+        com.fasterxml.classmate.ResolvedType declaredType = typeContext.resolve(Task.class);
+
+        // String is unrelated to Task, so classmate throws while resolving it as a subtype;
+        // safelyResolveSubtype must swallow it (and log) rather than aborting schema generation for every other plugin.
+        Optional<com.fasterxml.classmate.ResolvedType> resolved = JsonSchemaGenerator.safelyResolveSubtype(declaredType, String.class, typeContext);
+
+        assertThat(resolved.isEmpty(), is(true));
+    }
+
     @SuperBuilder
     @ToString
     @EqualsAndHashCode

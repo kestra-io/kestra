@@ -106,3 +106,22 @@ export const Leaf: Story = {
         template: "<ks-card style=\"font-size:13px;padding:1rem\"><KsJsonTree v-bind=\"args\" /></ks-card>",
     }),
 }
+
+export const RowsWithGutter: Story = {
+    args: {
+        value: NESTED_OBJECT,
+        displayMode: "rows",
+        showGutter: true,
+        selectable: true,
+        selectedPath: "execution.meta.executionId",
+        basePath: "execution",
+        defaultExpanded: true,
+        previewFormatter: (_value: unknown, context: {kind: "array" | "object", count: number}) =>
+            `${context.count} ${context.kind === "array" ? "items" : "keys"}`,
+    },
+    render: (args) => ({
+        components: {KsJsonTree},
+        setup() { return {args} },
+        template: "<ks-card style=\"font-size:13px;padding:1rem\"><KsJsonTree v-bind=\"args\" /></ks-card>",
+    }),
+}

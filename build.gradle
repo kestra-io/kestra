@@ -264,16 +264,6 @@ subprojects {subProj ->
             t.environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
             t.environment 'ENV_TEST1', "true"
             t.environment 'ENV_TEST2', "Pass by env"
-
-
-            // these modules tests were battle tested by @nkwiatkowski so we can allow to try to enable parallel testing on them
-            if (subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
-                // JUnit 5 parallel settings
-                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
-                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
-            }
         }
 
         tasks.register('integrationTest', Test) { Test t ->

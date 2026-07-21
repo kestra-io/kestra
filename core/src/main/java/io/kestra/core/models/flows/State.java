@@ -119,6 +119,10 @@ public class State {
             return Optional.empty();
         }
 
+        if (this.histories.isEmpty()) {
+            return Optional.empty();
+        }
+
         return Optional.of(this.histories.getLast().getDate());
     }
 

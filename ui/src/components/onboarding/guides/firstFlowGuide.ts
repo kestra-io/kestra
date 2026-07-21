@@ -228,9 +228,10 @@ tasks:
         overlayPosition: {vertical: "bottom", horizontal: "right"},
         targetSelector: "[data-onboarding-target=\"execution-actions-menu\"], .execution-edit-flow-button",
         actionNote: "onboarding.actions.edit_flow_to_continue",
-        shouldAutoAdvance: ({routeName}) => routeName === "flows/update",
+        // Flow tabs are now child routes (e.g. "flows/update/edit").
+        shouldAutoAdvance: ({routeName}) => !!routeName?.startsWith("flows/update"),
         validate: ({routeName}) => {
-            if (routeName !== "flows/update") {
+            if (!routeName?.startsWith("flows/update")) {
                 return {ok: false, level: "info", message: "onboarding.validation.edit_flow_from_execution"}
             }
             return {ok: true}

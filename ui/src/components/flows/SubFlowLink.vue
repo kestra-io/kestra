@@ -34,11 +34,11 @@
         return props.executionId ? props.tabExecution : props.tabFlow
     })
 
-    // Executions detail is router-view driven (child route per tab); flows detail
-    // still uses the legacy `:tab?` param, so only the execution branch bakes the
-    // tab into the route name.
+    // Both Executions and Flows detail pages are router-view driven (child route
+    // per tab), so the tab is baked into the route name rather than passed as a
+    // `tab` param (which would be silently discarded before the parent's redirect).
     const routeName = computed(() => {
-        return props.executionId ? `executions/update/${tab.value}` : "flows/update"
+        return props.executionId ? `executions/update/${tab.value}` : `flows/update/${tab.value}`
     })
 
     const params = (execution?: Execution) => {
@@ -52,7 +52,6 @@
             return {
                 namespace: props.namespace,
                 id: props.flowId,
-                tab: tab.value,
             }
         }
     }

@@ -7,6 +7,7 @@ import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -52,7 +53,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         searchable: true,
                     },
                 ] : []) as any,
-                ...(route.name !== "flows/update" ? [{
+                ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
                     description: t("filter.flowId.description"),

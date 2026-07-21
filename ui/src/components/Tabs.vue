@@ -148,7 +148,7 @@
         const TAB = tab.name
         const ROUTE = route?.name as string
 
-        if (["flows/update", "flows/create"].includes(ROUTE)) {
+        if (ROUTE === "flows/create" || ROUTE?.startsWith("flows/update")) {
             return TAB === "edit"
         } else if (["namespaces/update", "namespaces/create"].includes(ROUTE)) {
             if (TAB === "files") return true

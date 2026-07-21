@@ -13,6 +13,7 @@ import DemoAssets from "../components/demo/Assets.vue"
 import DemoQuotas from "../components/demo/Quotas.vue"
 import DemoPolicies from "../components/demo/Policies.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
+import {FLOW_ROUTE} from "../components/flows/flowTabs"
 
 /** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
 export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
@@ -44,7 +45,7 @@ const routes: KestraRouteRecord[] = [
     },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
     {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
-    {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: () => import("../components/flows/FlowRoot.vue")},
+    FLOW_ROUTE,
 
     //Executions
     {

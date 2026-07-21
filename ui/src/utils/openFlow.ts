@@ -21,11 +21,10 @@ export function openFlowInNewTab(target: OpenFlowTarget, router: Router): void {
             },
         })
         : router.resolve({
-            name: "flows/update",
+            name: `flows/update/${target.tab ?? "overview"}`,
             params: {
                 namespace: target.namespace,
                 id: target.flowId,
-                tab: target.tab ?? "overview",
                 tenant,
             },
         })

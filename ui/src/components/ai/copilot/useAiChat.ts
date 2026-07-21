@@ -127,7 +127,20 @@ export function useAiChat() {
 
     /** Rehydrates an existing thread's transcript on reload. Sorts messages by uid. */
     async function loadThread(threadId: string): Promise<void> {
-        const {data} = await client.get<ThreadDetail>(`${base()}/${threadId}`)
+        // `showMessageOnError: false` opts out of the global "page not found" so an expected 404 —
+        // the thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
+        // is handled here: forget the remembered id and start a fresh session instead of erroring out.
+        const response = await client
+            .get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false} as any)
+            .catch((e: {status?: number; response?: {status?: number}}) => {
+                if (e?.status === 404 || e?.response?.status === 404) return null
+                throw e
+            })
+        if (!response) {
+            forgetThread()
+            return
+        }
+        const {data} = response
         thread.value = {
             uid: data.uid,
             title: data.title,

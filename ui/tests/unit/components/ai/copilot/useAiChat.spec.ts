@@ -312,7 +312,7 @@ describe("useAiChat", () => {
         }})
         const reloaded = useAiChat()
         await reloaded.restoreThread()
-        expect(get).toHaveBeenCalledWith("http://localhost/api/v1/main/ai/threads/t1")
+        expect(get).toHaveBeenCalledWith("http://localhost/api/v1/main/ai/threads/t1", expect.objectContaining({showMessageOnError: false}))
         expect(reloaded.thread.value?.uid).toBe("t1")
         expect(reloaded.messages.value.some((m) => m.content === "hi")).toBe(true)
     })
@@ -324,6 +324,18 @@ describe("useAiChat", () => {
         await chat.restoreThread()
         expect(chat.thread.value).toBeNull()
         expect(localStorage.getItem("kestra.copilot.activeThread")).toBeNull()
+        // The load opts out of the global "page not found" so the expected 404 is handled here,
+        // not by redirecting the whole app to the 404 page.
+        expect(get).toHaveBeenCalledWith(expect.stringContaining("/gone"), expect.objectContaining({showMessageOnError: false}))
+    })
+
+    it("loadThread rethrows a non-404 error (does not silently forget on e.g. a 500)", async () => {
+        localStorage.setItem("kestra.copilot.activeThread", "t1")
+        get.mockRejectedValue({status: 500})
+        const chat = useAiChat()
+        await expect(chat.loadThread("t1")).rejects.toBeTruthy()
+        // A transient server error must not drop the remembered thread.
+        expect(localStorage.getItem("kestra.copilot.activeThread")).toBe("t1")
     })
 
     it("loadThread reconstructs a pending proposal from pendingConfirmationId + the transcript", async () => {

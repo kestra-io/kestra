@@ -178,7 +178,6 @@
     "last execution status": "Statut de la dernière exécution",
     "jump to...": "Aller à...",
     "contextBar": {
-      "ai": "AI",
       "news": "Nouvelles",
       "docs": "Docs",
       "help": "Aide",
@@ -1986,116 +1985,6 @@
       },
       "dashboard": {
         "prompt_placeholder": "Posez une question sur vos données. Exemple de demande : Montrez-moi le taux de réussite de mes flows au cours des 7 derniers jours."
-      },
-      "copilot": {
-        "title": "AI Copilot",
-        "placeholder": "Tell me what to build…",
-        "send": "Send",
-        "mode": {
-          "ask": "Ask",
-          "edit": "Edit",
-          "plan": "Plan"
-        },
-        "empty": {
-          "title": "Turn your idea into a workflow"
-        },
-        "toolCall": "Running {tool}",
-        "context": {
-          "execution": "Exécution: {id}",
-          "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
-        },
-        "toolResult": {
-          "detail": "Détails",
-          "error": "{tool} a échoué",
-          "ok": "{tool} completed",
-          "rejected": "{tool} rejected"
-        },
-        "confirm": {
-          "planTitle": "Proposed plan",
-          "actionTitle": "Proposed action",
-          "approve": "Approve",
-          "approveExecute": "Approve & execute",
-          "reject": "Reject",
-          "reasonPlaceholder": "Reply to revise…",
-          "pending": "Pending approval",
-          "revise": "Reply to revise"
-        },
-        "notice": {
-          "emptyTurn": "L'assistant n'a renvoyé aucune réponse. Veuillez réessayer.",
-          "retry": "Réessayer"
-        },
-        "cancelled": "Tour annulé",
-        "error": {
-          "turnCap": "Cette conversation a atteint sa limite — démarrez une nouvelle discussion.",
-          "turnInProgress": "A turn is already in progress.",
-          "request": "The request failed. Please try again.",
-          "generic": "Something went wrong. Please try again."
-        },
-        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
-        "suggestions": {
-          "errorHandling": "Add error handling",
-          "unitTest": "Generate a unit test",
-          "explain": "Explain this flow",
-          "dbt": "Run a dbt pipeline"
-        },
-        "voice": {
-          "start": "Start voice input",
-          "stop": "Stop and insert",
-          "cancel": "Cancel voice input"
-        },
-        "unavailable": {
-          "title": "AI Copilot n'est pas disponible",
-          "detail": "Aucun fournisseur d'AI n'est configuré. Demandez à un administrateur d'en configurer un, puis réessayez.",
-          "retry": "Réessayer"
-        },
-        "thinking": "Réflexion",
-        "thinkingWords": [
-          "Orchestration",
-          "Ordonnancement",
-          "Séquençage",
-          "Routage",
-          "Répartition",
-          "Mise en file",
-          "Déclenchement",
-          "Exécution",
-          "Coordination",
-          "Provisionnement",
-          "Résolution",
-          "Composition",
-          "Assemblage",
-          "Planification",
-          "Mappage",
-          "Câblage",
-          "Ramification",
-          "Synchronisation",
-          "Réconciliation",
-          "Matérialisation",
-          "Compilation",
-          "Validation",
-          "Propagation",
-          "Convergence"
-        ],
-        "newChat": "New chat",
-        "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet",
-        "draft": {
-          "openInEditor": "Ouvrir dans l'éditeur",
-          "apply": "Appliquer",
-          "applyTitle": "Appliquer le flow",
-          "applyConfirm": "Appliquer le flow {namespace}.{id} ? Il sera créé, ou écrasé s'il existe déjà.",
-          "applyError": "Impossible d'appliquer le flow. Veuillez réessayer.",
-          "applyNoTarget": "Ce brouillon n'a pas de namespace ni d'id à appliquer.",
-          "title": {
-            "flow": "Proposed flow",
-            "dashboard": "Proposed dashboard",
-            "app": "Proposed app"
-          },
-          "valid": "Valid",
-          "invalid": "Needs changes",
-          "copy": "Copy YAML",
-          "copied": "Copied"
-        }
       }
     },
     "playground": {

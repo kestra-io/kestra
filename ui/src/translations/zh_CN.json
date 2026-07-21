@@ -178,7 +178,6 @@
     "last execution status": "上次执行状态",
     "jump to...": "跳转到...",
     "contextBar": {
-      "ai": "AI",
       "news": "新闻",
       "docs": "文档",
       "help": "帮助",
@@ -1986,116 +1985,6 @@
       },
       "dashboard": {
         "prompt_placeholder": "询问有关您数据的问题。示例提示：显示我过去7天内的flow成功率。"
-      },
-      "copilot": {
-        "title": "AI Copilot",
-        "placeholder": "Tell me what to build…",
-        "send": "Send",
-        "mode": {
-          "ask": "Ask",
-          "edit": "Edit",
-          "plan": "Plan"
-        },
-        "empty": {
-          "title": "Turn your idea into a workflow"
-        },
-        "toolCall": "Running {tool}",
-        "context": {
-          "execution": "执行: {id}",
-          "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
-        },
-        "toolResult": {
-          "detail": "详情",
-          "error": "{tool} 失败",
-          "ok": "{tool} completed",
-          "rejected": "{tool} rejected"
-        },
-        "confirm": {
-          "planTitle": "Proposed plan",
-          "actionTitle": "Proposed action",
-          "approve": "Approve",
-          "approveExecute": "Approve & execute",
-          "reject": "Reject",
-          "reasonPlaceholder": "Reply to revise…",
-          "pending": "Pending approval",
-          "revise": "Reply to revise"
-        },
-        "notice": {
-          "emptyTurn": "助手未返回响应。请重试。",
-          "retry": "重试"
-        },
-        "cancelled": "已取消本轮",
-        "error": {
-          "turnCap": "此对话已达到上限——请开始新的聊天。",
-          "turnInProgress": "A turn is already in progress.",
-          "request": "The request failed. Please try again.",
-          "generic": "Something went wrong. Please try again."
-        },
-        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
-        "suggestions": {
-          "errorHandling": "Add error handling",
-          "unitTest": "Generate a unit test",
-          "explain": "Explain this flow",
-          "dbt": "Run a dbt pipeline"
-        },
-        "voice": {
-          "start": "Start voice input",
-          "stop": "Stop and insert",
-          "cancel": "Cancel voice input"
-        },
-        "unavailable": {
-          "title": "AI Copilot 不可用",
-          "detail": "未配置任何 AI 提供程序。请让管理员配置后重试。",
-          "retry": "重试"
-        },
-        "thinking": "思考中",
-        "thinkingWords": [
-          "正在编排",
-          "正在调度",
-          "正在排序",
-          "正在路由",
-          "正在分发",
-          "正在排队",
-          "正在触发",
-          "正在执行",
-          "正在协调",
-          "正在预配",
-          "正在解析",
-          "正在组合",
-          "正在装配",
-          "正在规划",
-          "正在映射",
-          "正在连接",
-          "正在分支",
-          "正在同步",
-          "正在核对",
-          "正在物化",
-          "正在编译",
-          "正在校验",
-          "正在传播",
-          "正在收敛"
-        ],
-        "newChat": "New chat",
-        "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet",
-        "draft": {
-          "openInEditor": "在编辑器中打开",
-          "apply": "应用",
-          "applyTitle": "应用 flow",
-          "applyConfirm": "应用 flow {namespace}.{id} 吗？将创建它；如果已存在则覆盖。",
-          "applyError": "无法应用 flow。请重试。",
-          "applyNoTarget": "此草稿没有可应用的 namespace 或 id。",
-          "title": {
-            "flow": "Proposed flow",
-            "dashboard": "Proposed dashboard",
-            "app": "Proposed app"
-          },
-          "valid": "Valid",
-          "invalid": "Needs changes",
-          "copy": "Copy YAML",
-          "copied": "Copied"
-        }
       }
     },
     "playground": {

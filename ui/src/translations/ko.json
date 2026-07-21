@@ -178,7 +178,6 @@
     "last execution status": "마지막 실행 상태",
     "jump to...": "이동...",
     "contextBar": {
-      "ai": "AI",
       "news": "뉴스",
       "docs": "문서",
       "help": "도움말",
@@ -1986,116 +1985,6 @@
       },
       "dashboard": {
         "prompt_placeholder": "데이터에 대해 질문하세요. 예시 프롬프트: 지난 7일 동안 내 flows의 성공률을 보여줘."
-      },
-      "copilot": {
-        "title": "AI Copilot",
-        "placeholder": "Tell me what to build…",
-        "send": "Send",
-        "mode": {
-          "ask": "Ask",
-          "edit": "Edit",
-          "plan": "Plan"
-        },
-        "empty": {
-          "title": "Turn your idea into a workflow"
-        },
-        "toolCall": "Running {tool}",
-        "context": {
-          "execution": "실행: {id}",
-          "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
-        },
-        "toolResult": {
-          "detail": "세부 정보",
-          "error": "{tool} 실패",
-          "ok": "{tool} completed",
-          "rejected": "{tool} rejected"
-        },
-        "confirm": {
-          "planTitle": "Proposed plan",
-          "actionTitle": "Proposed action",
-          "approve": "Approve",
-          "approveExecute": "Approve & execute",
-          "reject": "Reject",
-          "reasonPlaceholder": "Reply to revise…",
-          "pending": "Pending approval",
-          "revise": "Reply to revise"
-        },
-        "notice": {
-          "emptyTurn": "어시스턴트가 응답을 반환하지 않았습니다. 다시 시도해 주세요.",
-          "retry": "다시 시도"
-        },
-        "cancelled": "턴이 취소됨",
-        "error": {
-          "turnCap": "이 대화가 한도에 도달했습니다. 새 채팅을 시작하세요.",
-          "turnInProgress": "A turn is already in progress.",
-          "request": "The request failed. Please try again.",
-          "generic": "Something went wrong. Please try again."
-        },
-        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
-        "suggestions": {
-          "errorHandling": "Add error handling",
-          "unitTest": "Generate a unit test",
-          "explain": "Explain this flow",
-          "dbt": "Run a dbt pipeline"
-        },
-        "voice": {
-          "start": "Start voice input",
-          "stop": "Stop and insert",
-          "cancel": "Cancel voice input"
-        },
-        "unavailable": {
-          "title": "AI Copilot을 사용할 수 없습니다",
-          "detail": "구성된 AI 제공자가 없습니다. 관리자에게 설정을 요청한 후 다시 시도하세요.",
-          "retry": "다시 시도"
-        },
-        "thinking": "생각 중",
-        "thinkingWords": [
-          "오케스트레이션 중",
-          "스케줄링 중",
-          "시퀀싱 중",
-          "라우팅 중",
-          "디스패치 중",
-          "대기열 처리 중",
-          "트리거 중",
-          "실행 중",
-          "조정 중",
-          "프로비저닝 중",
-          "해결 중",
-          "구성 중",
-          "조립 중",
-          "계획 중",
-          "매핑 중",
-          "연결 중",
-          "분기 중",
-          "동기화 중",
-          "대조 중",
-          "구체화 중",
-          "컴파일 중",
-          "검증 중",
-          "전파 중",
-          "수렴 중"
-        ],
-        "newChat": "New chat",
-        "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet",
-        "draft": {
-          "openInEditor": "편집기에서 열기",
-          "apply": "적용",
-          "applyTitle": "flow 적용",
-          "applyConfirm": "{namespace}.{id} flow를 적용하시겠습니까? 생성되며, 이미 존재하는 경우 덮어씁니다.",
-          "applyError": "flow를 적용할 수 없습니다. 다시 시도해 주세요.",
-          "applyNoTarget": "이 초안에는 적용할 namespace 또는 id가 없습니다.",
-          "title": {
-            "flow": "Proposed flow",
-            "dashboard": "Proposed dashboard",
-            "app": "Proposed app"
-          },
-          "valid": "Valid",
-          "invalid": "Needs changes",
-          "copy": "Copy YAML",
-          "copied": "Copied"
-        }
       }
     },
     "playground": {

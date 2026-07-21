@@ -178,7 +178,6 @@
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to...": "कूदें...",
     "contextBar": {
-      "ai": "AI",
       "news": "समाचार",
       "docs": "डॉक्स",
       "help": "मदद",
@@ -1986,116 +1985,6 @@
       },
       "dashboard": {
         "prompt_placeholder": "अपने डेटा के बारे में एक प्रश्न पूछें। उदाहरण प्रॉम्प्ट: पिछले 7 दिनों में मेरे flows की सफलता दर दिखाएं।"
-      },
-      "copilot": {
-        "title": "AI Copilot",
-        "placeholder": "Tell me what to build…",
-        "send": "Send",
-        "mode": {
-          "ask": "Ask",
-          "edit": "Edit",
-          "plan": "Plan"
-        },
-        "empty": {
-          "title": "Turn your idea into a workflow"
-        },
-        "toolCall": "Running {tool}",
-        "context": {
-          "execution": "निष्पादन: {id}",
-          "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
-        },
-        "toolResult": {
-          "detail": "विवरण",
-          "error": "{tool} विफल रहा",
-          "ok": "{tool} completed",
-          "rejected": "{tool} rejected"
-        },
-        "confirm": {
-          "planTitle": "Proposed plan",
-          "actionTitle": "Proposed action",
-          "approve": "Approve",
-          "approveExecute": "Approve & execute",
-          "reject": "Reject",
-          "reasonPlaceholder": "Reply to revise…",
-          "pending": "Pending approval",
-          "revise": "Reply to revise"
-        },
-        "notice": {
-          "emptyTurn": "सहायक ने कोई प्रतिक्रिया नहीं दी। कृपया पुनः प्रयास करें।",
-          "retry": "पुनः प्रयास करें"
-        },
-        "cancelled": "टर्न रद्द किया गया",
-        "error": {
-          "turnCap": "यह बातचीत अपनी सीमा तक पहुँच गई — नई चैट शुरू करें।",
-          "turnInProgress": "A turn is already in progress.",
-          "request": "The request failed. Please try again.",
-          "generic": "Something went wrong. Please try again."
-        },
-        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
-        "suggestions": {
-          "errorHandling": "Add error handling",
-          "unitTest": "Generate a unit test",
-          "explain": "Explain this flow",
-          "dbt": "Run a dbt pipeline"
-        },
-        "voice": {
-          "start": "Start voice input",
-          "stop": "Stop and insert",
-          "cancel": "Cancel voice input"
-        },
-        "unavailable": {
-          "title": "AI Copilot उपलब्ध नहीं है",
-          "detail": "कोई AI प्रदाता कॉन्फ़िगर नहीं किया गया है। किसी व्यवस्थापक से एक सेट अप करने के लिए कहें, फिर पुनः प्रयास करें।",
-          "retry": "पुनः प्रयास करें"
-        },
-        "thinking": "सोच रहा है",
-        "thinkingWords": [
-          "ऑर्केस्ट्रेशन",
-          "समय-निर्धारण",
-          "अनुक्रमण",
-          "मार्गनिर्धारण",
-          "प्रेषण",
-          "कतारबद्धता",
-          "सक्रियण",
-          "निष्पादन",
-          "समन्वयन",
-          "प्रावधान",
-          "समाधान",
-          "रचना",
-          "संयोजन",
-          "नियोजन",
-          "मानचित्रण",
-          "वायरिंग",
-          "शाखन",
-          "तुल्यकालन",
-          "मिलान",
-          "साकारीकरण",
-          "संकलन",
-          "सत्यापन",
-          "प्रसार",
-          "अभिसरण"
-        ],
-        "newChat": "New chat",
-        "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet",
-        "draft": {
-          "openInEditor": "एडिटर में खोलें",
-          "apply": "लागू करें",
-          "applyTitle": "flow लागू करें",
-          "applyConfirm": "flow {namespace}.{id} लागू करें? यह बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
-          "applyError": "flow लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
-          "applyNoTarget": "इस ड्राफ्ट में लागू करने के लिए कोई namespace या id नहीं है।",
-          "title": {
-            "flow": "Proposed flow",
-            "dashboard": "Proposed dashboard",
-            "app": "Proposed app"
-          },
-          "valid": "Valid",
-          "invalid": "Needs changes",
-          "copy": "Copy YAML",
-          "copied": "Copied"
-        }
       }
     },
     "playground": {

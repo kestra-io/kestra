@@ -178,7 +178,6 @@
     "last execution status": "Letzter Ausführungsstatus",
     "jump to...": "Springe zu...",
     "contextBar": {
-      "ai": "AI",
       "news": "Nachrichten",
       "docs": "Dokumentation",
       "help": "Hilfe",
@@ -1986,116 +1985,6 @@
       },
       "dashboard": {
         "prompt_placeholder": "Stellen Sie eine Frage zu Ihren Daten. Beispielaufforderung: Zeigen Sie mir die Erfolgsrate meiner flows in den letzten 7 Tagen."
-      },
-      "copilot": {
-        "title": "AI Copilot",
-        "placeholder": "Tell me what to build…",
-        "send": "Send",
-        "mode": {
-          "ask": "Ask",
-          "edit": "Edit",
-          "plan": "Plan"
-        },
-        "empty": {
-          "title": "Turn your idea into a workflow"
-        },
-        "toolCall": "Running {tool}",
-        "context": {
-          "execution": "Ausführung: {id}",
-          "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
-        },
-        "toolResult": {
-          "detail": "Details",
-          "error": "{tool} fehlgeschlagen",
-          "ok": "{tool} completed",
-          "rejected": "{tool} rejected"
-        },
-        "confirm": {
-          "planTitle": "Proposed plan",
-          "actionTitle": "Proposed action",
-          "approve": "Approve",
-          "approveExecute": "Approve & execute",
-          "reject": "Reject",
-          "reasonPlaceholder": "Reply to revise…",
-          "pending": "Pending approval",
-          "revise": "Reply to revise"
-        },
-        "notice": {
-          "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuche es erneut.",
-          "retry": "Erneut versuchen"
-        },
-        "cancelled": "Vorgang abgebrochen",
-        "error": {
-          "turnCap": "Diese Unterhaltung hat ihr Limit erreicht — starten Sie einen neuen Chat.",
-          "turnInProgress": "A turn is already in progress.",
-          "request": "The request failed. Please try again.",
-          "generic": "Something went wrong. Please try again."
-        },
-        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
-        "suggestions": {
-          "errorHandling": "Add error handling",
-          "unitTest": "Generate a unit test",
-          "explain": "Explain this flow",
-          "dbt": "Run a dbt pipeline"
-        },
-        "voice": {
-          "start": "Start voice input",
-          "stop": "Stop and insert",
-          "cancel": "Cancel voice input"
-        },
-        "unavailable": {
-          "title": "AI Copilot ist nicht verfügbar",
-          "detail": "Es ist kein AI-Anbieter konfiguriert. Bitten Sie eine:n Administrator:in, einen einzurichten, und versuchen Sie es erneut.",
-          "retry": "Erneut versuchen"
-        },
-        "thinking": "Denkt nach",
-        "thinkingWords": [
-          "Orchestrieren",
-          "Terminieren",
-          "Sequenzieren",
-          "Weiterleiten",
-          "Verteilen",
-          "Einreihen",
-          "Auslösen",
-          "Ausführen",
-          "Koordinieren",
-          "Bereitstellen",
-          "Auflösen",
-          "Zusammenstellen",
-          "Zusammensetzen",
-          "Planen",
-          "Zuordnen",
-          "Verknüpfen",
-          "Verzweigen",
-          "Synchronisieren",
-          "Abgleichen",
-          "Materialisieren",
-          "Kompilieren",
-          "Validieren",
-          "Propagieren",
-          "Zusammenführen"
-        ],
-        "newChat": "New chat",
-        "recents": "Recents",
-        "recentsEmpty": "No recent conversations yet",
-        "draft": {
-          "openInEditor": "Im Editor öffnen",
-          "apply": "Anwenden",
-          "applyTitle": "Flow anwenden",
-          "applyConfirm": "Den flow {namespace}.{id} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
-          "applyError": "Der flow konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",
-          "applyNoTarget": "Dieser Entwurf hat keinen namespace oder keine id zum Anwenden.",
-          "title": {
-            "flow": "Proposed flow",
-            "dashboard": "Proposed dashboard",
-            "app": "Proposed app"
-          },
-          "valid": "Valid",
-          "invalid": "Needs changes",
-          "copy": "Copy YAML",
-          "copied": "Copied"
-        }
       }
     },
     "playground": {

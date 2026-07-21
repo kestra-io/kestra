@@ -48,6 +48,29 @@ describe("ProposedActionCard", () => {
         expect(approve(w).text()).toBe("Approve")
     })
 
+    it("shows the tool's identifying arguments", () => {
+        const args = mountCard(mutateAction).find("[data-test=\"copilot-proposed-args\"]")
+        expect(args.exists()).toBe(true)
+        expect(args.text()).toContain("id")
+        expect(args.text()).toContain("exec-1")
+    })
+
+    it("omits verbose (long) and non-scalar arguments from the args list", () => {
+        const w = mountCard({
+            confirmationId: "c8", tool: "create-flow", family: "MUTATE", summary: "Create flow",
+            arguments: {namespace: "company.team", flowId: "my-flow", body: "id: my-flow\n".repeat(50), labels: ["a"]},
+        })
+        const args = w.find("[data-test=\"copilot-proposed-args\"]")
+        expect(args.text()).toContain("company.team")
+        expect(args.text()).toContain("my-flow")
+        expect(args.text()).not.toContain("labels") // array omitted
+        expect(args.text()).not.toContain("id: my-flow") // long YAML body omitted
+    })
+
+    it("shows no args block for a plan card", () => {
+        expect(mountCard(planAction).find("[data-test=\"copilot-proposed-args\"]").exists()).toBe(false)
+    })
+
     it("falls back to a generic plan title when none is provided", () => {
         const w = mountCard({confirmationId: "c3", tool: null, summary: "do things"})
         expect(w.text()).toContain("Proposed plan")

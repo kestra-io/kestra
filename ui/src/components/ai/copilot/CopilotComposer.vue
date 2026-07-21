@@ -155,11 +155,12 @@
     const draft = defineModel<string>({default: ""})
     const textareaEl = ref<HTMLTextAreaElement>()
 
-    // Values are the backend Mode enum; icons match the Figma mode pills.
+    // Values are the backend Mode enum; icons match the Figma mode pills. Ordered by increasing
+    // capability, matching the backend's cumulative tool families (Ask ⊂ Plan ⊂ Edit).
     const modeOptions = computed<{label: string; value: Mode; icon: Component}[]>(() => [
         {label: t("ai.copilot.mode.ask"), value: "ASK", icon: ChatQuestionOutline},
-        {label: t("ai.copilot.mode.edit"), value: "EDIT", icon: Wrench},
         {label: t("ai.copilot.mode.plan"), value: "PLAN", icon: MapOutline},
+        {label: t("ai.copilot.mode.edit"), value: "EDIT", icon: Wrench},
     ])
 
     const currentMode = computed(() => modeOptions.value.find((o) => o.value === props.mode))

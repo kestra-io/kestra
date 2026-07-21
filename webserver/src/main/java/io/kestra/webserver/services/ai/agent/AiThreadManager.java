@@ -49,7 +49,8 @@ public class AiThreadManager {
 
     /**
      * Lists a user's non-deleted threads, most-recently-active first (by last turn, falling back to the
-     * last update). Backs the EE thread-management surface.
+     * last update). Backs the thread-management (listing) surface; the in-memory store returns nothing
+     * here, so a listing is only non-empty when a durable repository is in use.
      */
     public List<AgentThread> list(final String tenant, final String userId) {
         return threadStore.findAllForUser(tenant, userId).stream()

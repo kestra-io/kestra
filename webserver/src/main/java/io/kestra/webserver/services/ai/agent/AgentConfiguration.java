@@ -22,6 +22,14 @@ import io.micronaut.core.bind.annotation.Bindable;
  *        turn; older turns stay persisted for history but are windowed out of the prompt. Windowing is
  *        by whole turns (grouped on {@code traceId}) so tool-call/result pairs are never split
  *        (default 10).
+ * @param inMemoryConversationTtl for the in-memory (non-durable) Copilot store only: how long a
+ *        conversation is retained after its last activity before it is evicted; the store keeps no
+ *        history, so a conversation is dropped once it has been idle this long (default 1 hour).
+ *        Ignored when a durable backend is in use.
+ * @param maxInMemoryConversations for the in-memory store only: the hard cap on retained
+ *        conversations; once exceeded the least-recently-active conversation is evicted, bounding
+ *        memory. A safety ceiling above the idle-TTL sweep — a single account keeps only a handful of
+ *        live conversations (default 50). Ignored when a durable backend is in use.
  */
 @ConfigurationProperties("kestra.ai.agent")
 public record AgentConfiguration(
@@ -29,5 +37,7 @@ public record AgentConfiguration(
     @Bindable(defaultValue = "https://api.kestra.io/v1/mcp") String docsMcpUrl,
     @Bindable(defaultValue = "25") int maxSequentialToolsInvocations,
     @Bindable(defaultValue = "50") int maxTurnsPerThread,
-    @Bindable(defaultValue = "10") int maxContextTurns) {
+    @Bindable(defaultValue = "10") int maxContextTurns,
+    @Bindable(defaultValue = "PT1H") Duration inMemoryConversationTtl,
+    @Bindable(defaultValue = "50") int maxInMemoryConversations) {
 }

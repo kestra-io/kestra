@@ -154,6 +154,7 @@ export function useFlowRoot() {
         routeName,
         routeInfo,
         ready,
+        dependenciesCount,
         setupLifecycle,
     }
 }

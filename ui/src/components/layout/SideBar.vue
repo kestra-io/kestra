@@ -11,7 +11,6 @@
             <div
                 ref="dragHandle"
                 class="menu-drag-handle"
-                :class="{'is-dragging': isSwiping}"
                 aria-hidden="true"
             />
         </template>
@@ -160,12 +159,11 @@
 
     const DRAG_CLOSE_THRESHOLD = 60
     const dragHandle = ref<HTMLElement>()
-    const {isSwiping, distanceX} = usePointerSwipe(dragHandle, {
+    const {direction} = usePointerSwipe(dragHandle, {
         threshold: DRAG_CLOSE_THRESHOLD,
         disableTextSelect: true,
-        onSwipe: () => {
-            const collapsed = distanceX.value >= DRAG_CLOSE_THRESHOLD
-            if (collapsed !== layoutStore.sideMenuCollapsed) onCollapse(collapsed)
+        onSwipeEnd: () => {
+            if (direction.value === "left") onCollapse(true)
         },
     })
 
@@ -306,8 +304,7 @@
     transition: opacity 0.2s ease;
 }
 
-.menu-drag-handle:hover::after,
-.menu-drag-handle.is-dragging::after {
+.menu-drag-handle:hover::after {
     opacity: 1;
 }
 

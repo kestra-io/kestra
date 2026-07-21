@@ -11,7 +11,7 @@
         <div
             class="edge-case-label"
             :style="{
-                transform: `translate(-50%, -50%) translate(${caseLabelX}px, ${caseLabelY}px)`,
+                transform: `${labelAnchor} translate(${caseLabelX}px, ${caseLabelY}px)`,
             }"
         >
             {{ data.value }}
@@ -64,6 +64,16 @@
         if (props.targetPosition === "top") return ty - CASE_LABEL_GAP
         if (props.targetPosition === "bottom") return ty + CASE_LABEL_GAP
         return ty
+    })
+
+    const labelAnchor = computed(() => {
+        switch (props.targetPosition) {
+        case "left": return "translate(-100%, -50%)"
+        case "right": return "translate(0, -50%)"
+        case "top": return "translate(-50%, -100%)"
+        case "bottom": return "translate(-50%, 0)"
+        default: return "translate(-50%, -50%)"
+        }
     })
 
     defineOptions({inheritAttrs: false})

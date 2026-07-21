@@ -178,6 +178,7 @@
     "last execution status": "Último estado de ejecución",
     "jump to...": "Saltar a...",
     "contextBar": {
+      "ai": "IA",
       "news": "Noticias",
       "docs": "Documentos",
       "help": "Ayuda",
@@ -1985,6 +1986,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Haz una pregunta sobre tus datos. Ejemplo de solicitud: Muéstrame la tasa de éxito de mis flows en los últimos 7 días."
+      },
+      "copilot": {
+        "title": "Copiloto de IA",
+        "placeholder": "Dime qué construir…",
+        "send": "Enviar",
+        "mode": {
+          "ask": "Preguntar",
+          "edit": "Editar",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Transforma tu idea en un flujo de trabajo"
+        },
+        "toolCall": "Ejecutando {tool}",
+        "context": {
+          "execution": "Ejecución: {id}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {namespace}"
+        },
+        "toolResult": {
+          "detail": "Detalles",
+          "error": "El {{tool}} falló",
+          "ok": "{tool} completado",
+          "rejected": "{{tool}} rechazado"
+        },
+        "confirm": {
+          "planTitle": "Plan propuesto",
+          "actionTitle": "Acción propuesta",
+          "approve": "Aprobar",
+          "approveExecute": "Aprobar y ejecutar",
+          "reject": "Rechazar",
+          "reasonPlaceholder": "Responder para revisar…",
+          "pending": "Pendiente de aprobación",
+          "revise": "Responder para revisar"
+        },
+        "notice": {
+          "emptyTurn": "El asistente no devolvió una respuesta. Por favor, inténtalo de nuevo.",
+          "retry": "Reintentar"
+        },
+        "cancelled": "Turno cancelado",
+        "error": {
+          "turnCap": "Esta conversación alcanzó su límite — inicia un nuevo chat.",
+          "turnInProgress": "Un turno ya está en curso.",
+          "request": "La solicitud falló. Inténtelo de nuevo, por favor.",
+          "generic": "Algo salió mal. Por favor, inténtelo de nuevo."
+        },
+        "emptyHelper": "Puedo editar este flow, generar pruebas, generar archivos relacionados o explicar cómo funciona.",
+        "suggestions": {
+          "errorHandling": "Añadir manejo de errores",
+          "unitTest": "Generar una prueba unitaria",
+          "explain": "Explicar este flow",
+          "dbt": "Ejecutar un dbt pipeline"
+        },
+        "voice": {
+          "start": "Iniciar entrada de voz",
+          "stop": "Detener e insertar",
+          "cancel": "Cancelar entrada de voz"
+        },
+        "unavailable": {
+          "title": "AI Copilot no está disponible",
+          "detail": "Ningún proveedor de IA está configurado. Pida a un administrador que configure uno y vuelva a intentarlo.",
+          "retry": "Reintentar"
+        },
+        "thinking": "Pensando",
+        "thinkingWords": [
+          "Orquestación",
+          "Programación",
+          "Secuenciación",
+          "Enrutamiento",
+          "Despachando",
+          "En cola",
+          "Disparo",
+          "Ejecutando",
+          "Coordinando",
+          "Aprovisionamiento",
+          "Resolviendo",
+          "Composición",
+          "Ensamblando",
+          "Planificación",
+          "Mapeo",
+          "Conexiones",
+          "Ramificación",
+          "Sincronizando",
+          "Reconciliando",
+          "Materializando",
+          "Compilando",
+          "Validando",
+          "Propagando",
+          "Convergiendo"
+        ],
+        "newChat": "Nuevo chat",
+        "recents": "Recientes",
+        "recentsEmpty": "Aún no hay conversaciones recientes",
+        "draft": {
+          "openInEditor": "Abrir en el editor",
+          "apply": "Aplicar",
+          "applyTitle": "Aplicar flow",
+          "applyConfirm": "Aplicar el flow {namespace}.{id}? Se creará, o se sobrescribirá si ya existe.",
+          "applyConfirmDashboard": "Aplicar el panel de control {id}? Se creará, o se sobrescribirá si ya existe.",
+          "applyError": "No se pudo aplicar el flow. Por favor, inténtalo de nuevo.",
+          "applyErrorDashboard": "No se pudo aplicar el dashboard. Por favor, inténtelo de nuevo.",
+          "applyNoTarget": "Este borrador no tiene namespace o id para aplicar.",
+          "applyTitleDashboard": "Aplicar panel de control",
+          "title": {
+            "flow": "flow propuesto",
+            "dashboard": "Panel de control propuesto",
+            "app": "Aplicación propuesta"
+          },
+          "valid": "Válido",
+          "invalid": "Necesita cambios",
+          "copy": "Copiar YAML",
+          "copied": "Copiado"
+        }
       }
     },
     "playground": {

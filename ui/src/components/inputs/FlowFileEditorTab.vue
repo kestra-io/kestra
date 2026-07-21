@@ -19,11 +19,11 @@
                 id="flowFileEditorTab"
                 ref="editorRefElement"
                 class="flex-1"
-                :modelValue="hasDraft ? draftSource : source"
+                :modelValue="hasDraft ? draftSource : (hasPreview ? flowStore.previewSource : source)"
                 :schemaType="flow ? 'flow': undefined"
                 :lang="lang"
                 :navbar="false"
-                :readOnly="flow && flowStore.isReadOnly"
+                :readOnly="(flow && flowStore.isReadOnly) || hasPreview"
                 :path="path"
                 :options="{
                     creating: isCreating,
@@ -38,7 +38,7 @@
                 @execute="execute"
                 @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
                 @mouse-leave="() => highlightHoveredTask(-1)"
-                :original="hasDraft ? source : undefined"
+                :original="hasDraft || hasPreview ? source : undefined"
             >
                 <template #absolute>
                     <AITriggerButton
@@ -416,6 +416,8 @@
     }
 
     const hasDraft = computed(() => draftSource.value !== undefined)
+
+    const hasPreview = computed(() => props.flow && !hasDraft.value && flowStore.previewSource !== undefined)
 
     const {
         playgroundStore,

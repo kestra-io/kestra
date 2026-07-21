@@ -201,6 +201,7 @@
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
     import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
     import "monaco-editor/esm/vs/language/json/monaco.contribution"
+    import "monaco-editor/esm/vs/language/typescript/monaco.contribution"
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution"
 
     import type {VNode} from "vue"

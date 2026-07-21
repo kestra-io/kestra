@@ -660,6 +660,49 @@ class FlowValidationTest {
         assertThat(modelValidator.isValid(flow)).isEmpty();
     }
 
+    @Test
+    void triggerIdExceedingMaxSize_failValidation() {
+        // A trigger id longer than 256 chars must fail validation early, before it can overflow the
+        // VARCHAR(256) trigger_id DB columns and crash-loop the indexer (see kestra-ee #9268).
+        String longId = "a".repeat(257);
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: %s
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "*/1 * * * *"
+            """.formatted(longId), Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Trigger id must be at most 256 characters");
+    }
+
+    @Test
+    void triggerIdAtMaxSize_succeeds() {
+        // A 256-char trigger id is the maximum the trigger_id columns can hold, so it must pass validation.
+        String maxId = "a".repeat(256);
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: %s
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "*/1 * * * *"
+            """.formatted(maxId), Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;

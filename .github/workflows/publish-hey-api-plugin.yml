@@ -1,20 +1,15 @@
-name: Publish hey-api-plugin
+name: Release hey-api-plugin
 
-# Manually-triggered publish of @kestra-io/hey-api-plugin to npm. Intentionally decoupled from any
-# OpenAPI spec change or SDK regeneration: the shared generator plugin has its own release cadence,
-# and the OSS/EE SDKs consume it as a workspace dependency (only client-sdk consumes the published
-# npm build).
+# Manually-triggered release of @kestra-io/hey-api-plugin as a GitHub Release tarball — NOT published
+# to npm. The OSS and EE UIs consume the plugin as an npm workspace (no release needed); only the
+# external client-sdk repo consumes it, and it does so via the release .tgz URL (see client-sdk's
+# package.json). Keeping it off npm avoids a public package while still sharing one source of truth.
+#
+# The released version is whatever is in ui/packages/hey-api-plugin/package.json — bump that in a
+# normal commit first, then dispatch this workflow. It fails if the tag already exists (bump first).
 on:
   workflow_dispatch:
     inputs:
-      increment:
-        description: Version increment
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
       skip-test:
         description: "Skip typecheck"
         required: false
@@ -26,10 +21,9 @@ on:
 
 permissions:
   contents: write
-  id-token: write
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -43,7 +37,6 @@ jobs:
         with:
           node-version: 22.18
           cache: npm
-          registry-url: https://registry.npmjs.org
           cache-dependency-path: ui/package-lock.json
 
       - name: Install dependencies
@@ -53,36 +46,22 @@ jobs:
         if: inputs.skip-test != 'true'
         run: npm run typecheck --workspace @kestra-io/hey-api-plugin
 
-      - name: Build
-        run: npm run build --workspace @kestra-io/hey-api-plugin
-
-      - name: Discard workspace changes (tsdown may touch package.json exports)
-        run: git reset --hard HEAD
-
-      - name: Bump version from the latest published on npm
-        run: |
-          publishedVersion=$(npm view @kestra-io/hey-api-plugin version --registry https://registry.npmjs.org || echo "0.0.0")
-          echo "Latest published version: $publishedVersion"
-          npm pkg set --workspace @kestra-io/hey-api-plugin version=$publishedVersion
-          newVersion=$(npm version ${{ inputs.increment }} --workspace @kestra-io/hey-api-plugin --no-git-tag-version)
-          echo "New version: $newVersion"
-
-      - name: Read new version
+      - name: Read version
         id: version
-        run: echo "value=$(npm pkg get version --workspace @kestra-io/hey-api-plugin | jq -r '.\"@kestra-io/hey-api-plugin\"')" >> $GITHUB_OUTPUT
+        run: echo "value=$(npm pkg get version --workspace @kestra-io/hey-api-plugin | jq -r '.\"@kestra-io/hey-api-plugin\"')" >> "$GITHUB_OUTPUT"
 
-      - name: Commit and tag
+      - name: Pack (prepack builds dist)
+        # Deterministic tarball name (npm pack: <scope>-<name>-<version>.tgz); avoids parsing
+        # `npm pack --json`, whose stdout is polluted by the prepack build logs.
+        run: npm pack --workspace @kestra-io/hey-api-plugin --pack-destination .
+
+      - name: Create GitHub Release with the tarball
         working-directory: .
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "hey-api-plugin/v${{ steps.version.outputs.value }}"
-          git push --tags
-
-      - name: Upgrade npm
-        run: npm install -g npm@latest
-
-      - name: Publish to npm
-        run: npm publish --workspace @kestra-io/hey-api-plugin --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${{ steps.version.outputs.value }}"
+          tarball="ui/kestra-io-hey-api-plugin-${version}.tgz"
+          gh release create "hey-api-plugin-v${version}" "$tarball" \
+            --title "@kestra-io/hey-api-plugin v${version}" \
+            --notes "Shared Kestra SDK generator plugin + fetch runtime. Consumed by client-sdk via this release tarball; the OSS and EE UIs consume it as an npm workspace. Not published to npm."

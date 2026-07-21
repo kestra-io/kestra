@@ -26,9 +26,9 @@ everywhere:
 
 | Consumer | How it depends on this package |
 |----------|-------------------------------|
-| `@kestra-io/kestra-sdk` (OSS UI, this monorepo) | workspace dependency |
-| `@kestra-io/kestra-sdk` (EE UI, `kestra-ee`) | workspace dependency (points at this OSS package) |
-| `client-sdk` (JS SDK) | published npm dependency |
+| `@kestra-io/kestra-sdk` (OSS UI, this monorepo) | npm workspace dependency |
+| `@kestra-io/kestra-sdk` (EE UI, `kestra-ee`) | npm workspace dependency (points at this OSS package) |
+| `client-sdk` (JS SDK) | GitHub Release **tarball URL** (not npm — see Releasing) |
 
 ## Runtime: `createConfigureClient`
 
@@ -70,17 +70,23 @@ hash so a dev-time staleness check can fetch the backend's live spec, hash it th
 if the checked-in SDK has drifted. Consumers that don't need it (e.g. client-sdk, which regenerates
 on publish) simply omit `specPath`.
 
-## Publishing
+## Releasing (no npm)
 
-This package is **published to npm manually**, on demand, via the
-[`publish-hey-api-plugin.yml`](../../../.github/workflows/publish-hey-api-plugin.yml) GitHub
-workflow (`workflow_dispatch`). Publishing is intentionally **not** tied to any spec change or SDK
-regeneration: the plugin's release cadence is independent from the SDKs it generates.
+This package is **not published to npm**. The OSS and EE UIs consume it as an npm workspace, so they
+never need a release. Only the external `client-sdk` repo consumes it, and it does so via a **GitHub
+Release tarball URL** pinned in its `package.json`.
 
-`dist/` is produced by `tsdown` and is what gets published; it is git-ignored. There is **no**
-`prepare` script (that would run on every `npm ci` and break lockfile-only installs); `dist/` is
-rebuilt by `prepublishOnly` on publish and, for local workspace consumers, by the OSS
-`ui/scripts/ensure-sdk.mjs` bootstrap.
+To cut a release: bump `version` here in a normal commit, then run the
+[`publish-hey-api-plugin.yml`](../../../.github/workflows/publish-hey-api-plugin.yml) workflow
+(`workflow_dispatch`). It typechecks + builds, `npm pack`s the package, and creates a GitHub Release
+tagged `hey-api-plugin-v<version>` with the `.tgz` attached. Then bump the URL in client-sdk's
+`package.json` to the new version and run `npm install` there to refresh its lockfile. Releasing is
+intentionally **not** tied to any spec change or SDK regeneration.
+
+`dist/` is produced by `tsdown` and is what the tarball ships (via the `files` allowlist); it is
+git-ignored. There is **no** `prepare` script (it would run on every `npm ci` and break
+lockfile-only installs); `dist/` is rebuilt by `prepublishOnly` when packing and, for local
+workspace consumers, by the OSS `ui/scripts/ensure-sdk.mjs` bootstrap.
 
 ## Development
 

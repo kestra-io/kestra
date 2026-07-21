@@ -25,7 +25,9 @@ export default defineConfig({
     // Bundle the shared runtime helper (createConfigureClient) into this package's dist so the SDK
     // stays self-contained — the only runtime import (@kestra-io/hey-api-plugin/runtime) is inlined,
     // so @kestra-io/hey-api-plugin remains a build/generation-time devDependency, not a runtime one.
-    noExternal: [/^@kestra-io\/hey-api-plugin/],
+    deps: {
+        alwaysBundle: [/^@kestra-io\/hey-api-plugin/],
+    },
     dts: {
         // Use the tsc resolver so it honors tsconfig `moduleResolution: "bundler"` when resolving the
         // bundled runtime's types.

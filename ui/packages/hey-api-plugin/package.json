@@ -24,7 +24,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "prepublishOnly": "tsdown",
+    "prepack": "tsdown",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {

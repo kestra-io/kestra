@@ -42,5 +42,5 @@ hashes it the same way, and warns if the committed SDK is behind. The check is g
 `src/index.ts` binds the shared `createConfigureClient(client, formDataBodySerializer)` from
 `@kestra-io/hey-api-plugin/runtime` (bundled into `dist/`, not a runtime dependency) and keeps the
 app-only `useClient()` / `setMockClient()` — an axios-like facade over fetch that shares the same
-interceptors, so existing `useClient().get/post(...)` call sites are unchanged. The EE SDK re-uses
+interceptors, so existing `useClient().get/post(...)` call sites are unchanged. The EE SDK reuses
 these by relative import.

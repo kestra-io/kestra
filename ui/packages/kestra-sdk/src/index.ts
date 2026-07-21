@@ -37,5 +37,5 @@ export const configureClient: typeof configure = (clientConfig) => {
 }
 
 // useClient()/setMockClient() — the app-only axios-like fetch facade — bound to this SDK's client.
-// The EE SDK re-uses createClientFacade from this exact module by relative import (DRY).
+// The EE SDK reuses createClientFacade from this exact module by relative import (DRY).
 export const {useClient, setMockClient} = createClientFacade(client, formDataBodySerializer)

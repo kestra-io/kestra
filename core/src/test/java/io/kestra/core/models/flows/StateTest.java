@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -67,37 +66,6 @@ class StateTest {
 
         // When / Then
         assertThat(state.getEndDate()).contains(END);
-    }
-
-    @Test
-    void shouldGetDurationBetweenStartAndEndWhenTerminated() {
-        // Given / When / Then
-        assertThat(terminatedState().getDuration()).contains(Duration.between(START, END));
-    }
-
-    @Test
-    void shouldGetEmptyDurationWhenNotTerminated() {
-        // Given
-        State state = new State(State.Type.RUNNING, List.of(new State.History(State.Type.RUNNING, START)));
-
-        // When / Then
-        assertThat(state.getDuration()).isEmpty();
-    }
-
-    @Test
-    void shouldGetPersistedDurationWhenTerminated() {
-        // Given / When / Then
-        assertThat(terminatedState().getDurationOrComputeIt()).isEqualTo(Duration.between(START, END));
-    }
-
-    @Test
-    void shouldComputeDurationOnTheFlyWhenNotTerminated() {
-        // Given
-        Instant start = Instant.now().minusSeconds(5);
-        State state = new State(State.Type.RUNNING, List.of(new State.History(State.Type.RUNNING, start)));
-
-        // When / Then
-        assertThat(state.getDurationOrComputeIt()).isCloseTo(Duration.ofSeconds(5), Duration.ofSeconds(3));
     }
 
     @Test

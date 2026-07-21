@@ -27,13 +27,9 @@
             document.getElementsByTagName("html")[0].classList.add(localStorage.getItem("theme"));
         }
 
-        // Avoid a "blink" on fast loads: only reveal the loader if loading takes longer than showDelay,
-        // and once shown, keep it visible for at least minVisible so it doesn't flash off immediately.
+        // Avoid a "blink" on fast loads: only reveal the loader if loading takes longer than showDelay.
         window.__kestraLoader = {
-            shown: false,
-            shownAt: 0,
             showDelay: 200,
-            minVisible: 300,
             timer: null,
         };
         window.__kestraLoader.timer = setTimeout(function () {
@@ -41,8 +37,6 @@
             if (loader) {
                 loader.classList.add("is-visible");
             }
-            window.__kestraLoader.shown = true;
-            window.__kestraLoader.shownAt = performance.now();
         }, window.__kestraLoader.showDelay);
     </script>
 </head>

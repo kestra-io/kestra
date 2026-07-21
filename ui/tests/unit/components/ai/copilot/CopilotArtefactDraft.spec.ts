@@ -5,8 +5,10 @@ import {ref} from "vue"
 // Stub the apply composable (it pulls in the router + flows SDK); assert wiring only.
 const openInEditor = vi.fn()
 const apply = vi.fn()
+// Mutable so a test can simulate the EE app path being present (apps are unsupported in OSS).
+const appSupported = {value: false}
 vi.mock("../../../../../src/components/ai/copilot/useApplyDraft", () => ({
-    useApplyDraft: () => ({applying: ref(false), openInEditor, apply}),
+    useApplyDraft: () => ({applying: ref(false), appSupported: appSupported.value, openInEditor, apply}),
 }))
 
 import CopilotArtefactDraft from "../../../../../src/components/ai/copilot/CopilotArtefactDraft.vue"
@@ -59,9 +61,28 @@ describe("CopilotArtefactDraft", () => {
         expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(true)
     })
 
-    it("shows no apply actions for non-flow drafts (dashboard/app)", () => {
-        const w = mountDraft({draftId: "d6", kind: "DASHBOARD", yaml: "x: 1", valid: true, constraints: null})
+    it("offers Open-in-editor + Apply for a valid dashboard draft and wires them", async () => {
+        const w = mountDraft({draftId: "d6", kind: "DASHBOARD", yaml: "id: d", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-open\"]").trigger("click")
+        expect(openInEditor).toHaveBeenCalled()
+        await w.find("[data-test=\"copilot-draft-apply\"]").trigger("click")
+        expect(apply).toHaveBeenCalled()
+    })
+
+    it("shows no apply actions for an app draft when apps are unsupported (OSS)", () => {
+        appSupported.value = false
+        const w = mountDraft({draftId: "d7", kind: "APP", yaml: "id: my-app", valid: true, constraints: null})
         expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(false)
         expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
+    })
+
+    it("offers Open-in-editor (only) for an app draft when the app path is present (EE)", async () => {
+        appSupported.value = true
+        const w = mountDraft({draftId: "d8", kind: "APP", yaml: "id: my-app", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-open\"]").trigger("click")
+        expect(openInEditor).toHaveBeenCalled()
+        // Apps have no direct-apply — only open-in-editor.
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
+        appSupported.value = false
     })
 })

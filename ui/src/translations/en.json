@@ -2084,8 +2084,11 @@
           "apply": "Apply",
           "applyTitle": "Apply flow",
           "applyConfirm": "Apply the flow {namespace}.{id}? It will be created, or overwritten if it already exists.",
+          "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
           "applyError": "Couldn't apply the flow. Please try again.",
+          "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
           "applyNoTarget": "This draft has no namespace or id to apply.",
+          "applyTitleDashboard": "Apply dashboard",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

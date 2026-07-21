@@ -2086,6 +2086,9 @@
           "applyConfirm": "Применить flow {namespace}.{id}? Он будет создан или перезаписан, если уже существует.",
           "applyError": "Не удалось применить flow. Пожалуйста, попробуйте снова.",
           "applyNoTarget": "В этом черновике нет namespace или id для применения.",
+          "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
+          "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
+          "applyTitleDashboard": "Apply dashboard",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

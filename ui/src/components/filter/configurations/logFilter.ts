@@ -18,7 +18,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.log_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_logs"),
             keys: [
-                ...(route.name !== "namespaces/update" && routeFamily(route.name) !== "flows/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" && routeFamily(route.name) !== "flows/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),

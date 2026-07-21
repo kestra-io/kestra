@@ -70,6 +70,7 @@
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
     import {useRouteTabsStore, type RouteTab} from "../stores/routeTabs"
     import {useActiveTab} from "../composables/useActiveTab"
+    import {routeFamily} from "../utils/routeFamily"
 
     export interface Tab extends RouteTab {
         "v-on"?: Record<string, unknown>;
@@ -150,7 +151,7 @@
 
         if (ROUTE === "flows/create" || ROUTE?.startsWith("flows/update")) {
             return TAB === "edit"
-        } else if (["namespaces/update", "namespaces/create"].includes(ROUTE)) {
+        } else if (routeFamily(ROUTE) === "namespaces/update" || ROUTE === "namespaces/create") {
             if (TAB === "files") return true
         }
 

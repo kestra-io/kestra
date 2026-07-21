@@ -20,7 +20,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.trigger_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_triggers"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),

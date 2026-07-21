@@ -92,8 +92,8 @@ export function useFlowRoot() {
             {
                 label: route.params.namespace,
                 link: {
-                    name: "namespaces/update",
-                    params: {id: route.params.namespace, tab: "flows"},
+                    name: "namespaces/update/flows",
+                    params: {id: route.params.namespace},
                 },
             },
         ],

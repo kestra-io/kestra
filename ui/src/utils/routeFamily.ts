@@ -7,7 +7,7 @@
  * flat name keep working whether the page has been migrated to children or
  * not.
  */
-const MIGRATED_ROUTE_FAMILIES = ["executions/update", "flows/update", "assets/update", "tests/edit"]
+const MIGRATED_ROUTE_FAMILIES = ["executions/update", "flows/update", "assets/update", "tests/edit", "namespaces/update"]
 
 export function routeFamily(routeName: unknown): string {
     const name = String(routeName ?? "")

@@ -14,6 +14,7 @@ import DemoQuotas from "../components/demo/Quotas.vue"
 import DemoPolicies from "../components/demo/Policies.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
+import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
 
 /** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
 export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
@@ -79,7 +80,12 @@ const routes: KestraRouteRecord[] = [
 
     //Namespaces
     {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},
-    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
+    {
+        name: NAMESPACE_PARENT_ROUTE,
+        path: "/:tenant?/namespaces/edit/:id",
+        component: () => import("../components/namespaces/Namespace.vue"),
+        children: createNamespaceTabRoutes(),
+    },
 
     //Docs
     {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: () => import("../components/docs/Docs.vue"), meta: {layout: OnlyLeftMenuLayout}},

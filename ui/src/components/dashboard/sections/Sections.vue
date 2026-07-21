@@ -139,7 +139,7 @@
             baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string})
         }
 
-        if (route.name === "namespaces/update") {
+        if (routeFamily(route.name) === "namespaces/update") {
             baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.id as string})
         }
 

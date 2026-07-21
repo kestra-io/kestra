@@ -193,7 +193,7 @@
     const dashboardRef = useTemplateRef("dashboard")
 
     const isFlowEdit = computed(() => routeFamily(route.name) === "flows/update")
-    const isNamespaceEdit = computed(() => route.name === "namespaces/update")
+    const isNamespaceEdit = computed(() => routeFamily(route.name) === "namespaces/update")
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"

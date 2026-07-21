@@ -86,7 +86,7 @@
     const rootName = computed(() => {
         const name = String(route.name ?? "")
         if (name.startsWith("flows/update")) return "flows/update"
-        if (name === "namespaces/update") return "namespaces/update"
+        if (name.startsWith("namespaces/update")) return "namespaces/update"
         return "home"
     })
     // Pages migrated to router children (e.g. flows/update) no longer carry the

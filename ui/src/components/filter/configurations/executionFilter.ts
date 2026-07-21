@@ -19,7 +19,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.execution_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_executions"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),

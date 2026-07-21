@@ -56,7 +56,7 @@ describe("Table initial quick-filter state", () => {
 
         expect(generate).toHaveBeenCalled()
         expect(generate.mock.calls[0][2]).toEqual([
-            {field: "STATE", operation: "IN", value: ALL_STATES},
+            {field: "state", operation: "IN", value: ALL_STATES},
         ])
     })
 

@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Code source invalide",
+    "invalid duration": "Format de durée invalide. Veuillez utiliser le format ISO 8601 (par exemple, PT30M, P1D).",
     "missingSource": "Source manquant",
     "update": "Mettre à jour",
     "update ok": "est mis à jour",
@@ -35,7 +36,8 @@
     "Default page": "Page par défaut",
     "confirmation": "Confirmation",
     "common": {
-      "back": "Retour"
+      "back": "Retour",
+      "openInNewTab": "Ouvrir dans un nouvel onglet"
     },
     "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
     "outdated revision save confirmation": {
@@ -691,7 +693,6 @@
     "taskid column details": "ID de la dernière tâche exécuté ainsi que son nombre de tentatives.",
     "flow already exists": "Flow déjà existant",
     "flow already exists message": "Le flow <code>{id}</code> existe déjà dans le namespace <code>{namespace}</code>. Voulez-vous créer une nouvelle révision ?",
-    "plugin_default_already_exists": "Le plugin par défaut pour <code>{type}</code> existe déjà.",
     "namespace not allowed": "Espace de nom non autorisé",
     "switch-view": "Changer de vue",
     "source and topology": "Source et topologie",
@@ -1191,6 +1192,12 @@
         "title": "Ajouter des Blueprints Personnalisés",
         "message": "Dans l'édition Kestra Enterprise, vous pouvez créer des Blueprints personnalisés uniquement disponibles pour votre organisation. Vous pouvez les utiliser comme modèles de bonnes pratiques pour partager, centraliser et documenter les workflows couramment utilisés dans votre équipe."
       },
+      "policies": {
+        "header": "Politiques de gouvernance",
+        "label": "Politiques",
+        "message": "Les politiques permettent aux équipes plateforme de gérer et d'appliquer des règles de manière centralisée sur tous les flows — injecter des valeurs par défaut partagées, bloquer les plugins, limiter les valeurs de propriété et exiger des labels de conformité. Les règles s'appliquent au niveau du tenant ou du namespace avec un déploiement progressif, et chaque valeur injectée ou remplacée reste visible pour les auteurs de flow.",
+        "title": "Gérer tous les flows avec des politiques"
+      },
       "namespace": {
         "edit": {
           "title": "Améliorez la Gestion de votre Namespace",
@@ -1208,9 +1215,9 @@
           "title": "Gérez vos Variables de manière centralisée",
           "message": "Dans Kestra Enterprise Edition, vous pouvez définir et gérer des variables au niveau du namespace pour éliminer les configurations répétitives à travers les flows. Ces variables assurent la cohérence, simplifient les mises à jour de configuration et peuvent être facilement référencées par n'importe quel task ou trigger pour des workflows plus propres et plus faciles à maintenir."
         },
-        "plugin-defaults": {
-          "title": "Standardiser la Configuration avec les Valeurs par Défaut du Plugin",
-          "message": "Dans Kestra Enterprise Edition, vous pouvez définir des paramètres par défaut spécifiques au namespace pour les plugins, réduisant ainsi le besoin de configurations dupliquées dans chaque flow. Cette gouvernance centrale des plugins impose des configurations cohérentes, permet une référence sécurisée des secrets ou des variables, et simplifie la maintenance de vos workflows."
+        "policies": {
+          "title": "Appliquer les règles de gouvernance dans ce namespace",
+          "message": "Dans Kestra Enterprise Edition, les politiques vous permettent de définir des règles qui s'appliquent à chaque flow dans ce namespace et ses enfants — injecter des valeurs par défaut partagées, restreindre les valeurs de propriété, bloquer les plugins et exiger des labels de conformité, avec chaque modification entièrement visible pour les auteurs de flow."
         },
         "history": {
           "title": "Gérer l'historique des révisions en un seul endroit",
@@ -1386,26 +1393,6 @@
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
     "system_namespace": "Gardez votre plateforme sous contrôle avec les system flows.",
     "system_namespace_description": "Automatisez les tâches de maintenance, des alertes de défaillance aux nettoyages automatisés.",
-    "pluginDefaults": {
-      "title": "Paramètres par défaut du plugin",
-      "add": "Ajouter le Plugin par Défaut",
-      "edit": "Modifier le Plugin par Défaut",
-      "add_subtitle": "Configurer un nouveau plugin par défaut avec ses propriétés",
-      "edit_subtitle": "Modifier la configuration par défaut du plugin existant",
-      "predefined": "Plugin Prédéfini",
-      "custom": "Plugin personnalisé",
-      "form": "Formulaire",
-      "yaml": "YAML",
-      "select_predefined": "Sélectionner un Plugin Prédéfini",
-      "cancel": "Annuler",
-      "update": "Mettre à jour le Plugin par Défaut",
-      "custom_type": "Type de plugin personnalisé",
-      "custom_placeholder": "Entrez le type de plugin",
-      "use_custom": "Utiliser personnalisé",
-      "custom_configure": "Type de plugin personnalisé - configurer avec YAML",
-      "yaml_configuration": "Configuration YAML",
-      "show_yaml": "Afficher YAML"
-    },
     "secret": {
       "add": "Créer",
       "update": "Mettre à jour le secret '{name}'",
@@ -1525,6 +1512,7 @@
     "documentationMenu": "Menu de documentation",
     "item": "élément",
     "items": "éléments",
+    "iterations": "Itérations",
     "cron": "Cron",
     "execution_started": "L'exécution a commencé !",
     "execution_failed": "Échec de l'exécution !",
@@ -1627,8 +1615,7 @@
         "triggers": "Déclencheurs",
         "errors": "Gestionnaires d'erreurs",
         "afterExecution": "Après l'Exécution",
-        "finally": "Enfin",
-        "pluginDefaults": "Paramètres par défaut du plugin"
+        "finally": "Enfin"
       },
       "fields": {
         "main": {
@@ -1660,7 +1647,6 @@
         "triggers": "Sélectionner un trigger",
         "errors": "Sélectionner une task",
         "finally": "Sélectionnez une task",
-        "pluginDefaults": "Sélectionner un plugin",
         "afterExecution": "Sélectionnez une task",
         "conditions": "Sélectionner une condition",
         "inputs": "Sélectionnez un type de champ input",
@@ -1674,7 +1660,6 @@
         "triggers": "Ajouter un trigger",
         "errors": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
-        "pluginDefaults": "Ajouter un plugin par défaut",
         "afterExecution": "Ajouter un bloc après l'exécution",
         "conditions": "Ajouter une condition",
         "inputs": "Ajouter un champ d'input",
@@ -1791,10 +1776,6 @@
       "concurrency_limits": {
         "title": "Aucune limite de concurrence n'est définie.",
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation."
-      },
-      "pluginDefaults": {
-        "title": "Vous n'avez pas encore de paramètres par défaut pour les plugins !",
-        "content": "Les paramètres par défaut des plugins vous permettent de gérer centralement la configuration de votre plugin et de la partager avec tous les flows dans votre namespace."
       },
       "variables": {
         "title": "Aucune variable pour le moment",

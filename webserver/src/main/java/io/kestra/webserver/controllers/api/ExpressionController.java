@@ -12,7 +12,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DisplayExpressionRenderer;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.tenant.TenantService;
 
 import io.micronaut.core.annotation.Nullable;
@@ -37,7 +37,7 @@ public class ExpressionController {
     private final TenantService tenantService;
     private final ExecutionRepositoryInterface executionRepository;
     private final FlowRepositoryInterface flowRepository;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
     private final RunContextFactory runContextFactory;
     private final DisplayExpressionRenderer displayExpressionRenderer;
 
@@ -46,13 +46,13 @@ public class ExpressionController {
         TenantService tenantService,
         ExecutionRepositoryInterface executionRepository,
         FlowRepositoryInterface flowRepository,
-        PluginDefaultService pluginDefaultService,
+        FlowParsingService flowParsingService,
         RunContextFactory runContextFactory,
         DisplayExpressionRenderer displayExpressionRenderer) {
         this.tenantService = tenantService;
         this.executionRepository = executionRepository;
         this.flowRepository = flowRepository;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.runContextFactory = runContextFactory;
         this.displayExpressionRenderer = displayExpressionRenderer;
     }
@@ -85,7 +85,7 @@ public class ExpressionController {
 
         // A flow source (e.g. an unsaved editor draft) takes priority over the persisted flow.
         if (request.flow() != null) {
-            FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), request.flow(), false);
+            FlowWithSource flow = flowParsingService.parse(tenantService.resolveTenant(), request.flow(), false);
 
             return flowVariables(flow);
         }

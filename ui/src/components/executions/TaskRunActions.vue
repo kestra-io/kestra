@@ -24,7 +24,8 @@
                 <Metrics :taskRun="taskRun" :execution="execution" />
 
                 <Outputs
-                    :outputs="taskRun.outputs"
+                    :taskRun="taskRun"
+                    :executionId="execution.id"
                     :execution="execution"
                 />
 

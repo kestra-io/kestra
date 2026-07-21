@@ -68,7 +68,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async (options?: {search?: string}) => {
                         const search = options?.search?.trim()
                         const ids = await useExecutionsStore().findDistinctFieldValues({
-                            field: "FLOW_ID",
+                            field: "flowId",
                             filters: search ? {"filters[flowId][CONTAINS]": search} : undefined,
                             size: 100,
                         })

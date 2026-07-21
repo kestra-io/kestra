@@ -547,14 +547,16 @@
     }
 
     &__btn {
-      margin: 0;
       padding: var(--ks-spacing-2);
       border-radius: var(--ks-radius-base);
     }
 
     &__text-btn {
-      margin: 0;
       font-size: var(--ks-font-size-xs);
+    }
+
+    :deep(.kel-button) {
+        margin: 0;
     }
   }
 </style>

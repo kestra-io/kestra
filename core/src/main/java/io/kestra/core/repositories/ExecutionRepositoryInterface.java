@@ -1,6 +1,7 @@
 package io.kestra.core.repositories;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,11 +12,9 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.utils.DateUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
 
 import io.micronaut.data.model.Pageable;
@@ -122,25 +121,6 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
 
     Integer purge(List<Execution> executions);
 
-    List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
-        @Nullable String query,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy);
-
-    List<DailyExecutionStatistics> dailyStatistics(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        List<State.Type> state);
-
     @Getter
     @SuperBuilder
     @NoArgsConstructor
@@ -176,23 +156,38 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         String tenantId,
         @Nullable List<FlowFilter> flows);
 
-    /** Returns the loop sub-executions for the given parent execution, sorted by iteration index. */
-    default List<Execution> findLoopSubExecutions(String tenantId, String parentExecutionId) {
-        return find(
-            Pageable.from(Sort.of(Sort.Order.asc("loopRunIndex"))),
-            tenantId,
-            List.of(
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.PARENT_ID)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value(parentExecutionId)
-                    .build(),
-                QueryFilter.builder()
-                    .field(QueryFilter.Field.KIND)
-                    .operation(QueryFilter.Op.EQUALS)
-                    .value(ExecutionKind.LOOP)
-                    .build()
-            )
+    /**
+     * Returns the loop sub-executions for the given parent execution, sorted by iteration index.
+     *
+     * @param taskId if non-null, scopes the result to the iterations of that single Loop task
+     *        (matched against {@code loopRun.taskId}); if null, returns iterations for
+     *        every Loop task under the parent execution.
+     */
+    default List<Execution> findLoopSubExecutions(String tenantId, String parentExecutionId, @Nullable String taskId) {
+        List<QueryFilter> filters = new ArrayList<>();
+        filters.add(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.PARENT_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(parentExecutionId)
+                .build()
         );
+        filters.add(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.KIND)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(ExecutionKind.LOOP)
+                .build()
+        );
+        if (taskId != null) {
+            filters.add(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.TASK_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(taskId)
+                    .build()
+            );
+        }
+        return find(Pageable.from(Sort.of(Sort.Order.asc("loopRunIndex"))), tenantId, filters);
     }
 }

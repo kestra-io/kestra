@@ -1,4 +1,5 @@
 import {defineStore} from "pinia"
+import {computed, ref} from "vue"
 
 export type FeatureSpotlight = {
     navItemId: string;
@@ -19,30 +20,25 @@ function loadSeenIds(): string[] {
     }
 }
 
-interface State {
-    seenIds: string[];
-}
+export const useFeatureSpotlightStore = defineStore("featureSpotlight", () => {
+    const seenIds = ref<string[]>(loadSeenIds())
 
-export const useFeatureSpotlightStore = defineStore("featureSpotlight", {
-    state: (): State => ({
-        seenIds: loadSeenIds(),
-    }),
-    getters: {
-        unseenSpotlights(state): FeatureSpotlight[] {
-            return FEATURE_SPOTLIGHTS.filter((spotlight) => !state.seenIds.includes(spotlight.navItemId))
-        },
-        hasUnseenForId(): (navItemId?: string) => boolean {
-            return (navItemId) =>
-                Boolean(navItemId && this.unseenSpotlights.some((spotlight) => spotlight.navItemId === navItemId))
-        },
-    },
-    actions: {
-        markSeenById(navItemId?: string) {
-            if (!navItemId || this.seenIds.includes(navItemId)) return
-            if (!FEATURE_SPOTLIGHTS.some((spotlight) => spotlight.navItemId === navItemId)) return
+    const unseenSpotlights = computed((): FeatureSpotlight[] => FEATURE_SPOTLIGHTS.filter((spotlight) => !seenIds.value.includes(spotlight.navItemId)))
+    const hasUnseenForId = computed(() => (navItemId?: string): boolean =>
+        Boolean(navItemId && unseenSpotlights.value.some((spotlight) => spotlight.navItemId === navItemId)))
 
-            this.seenIds = [...this.seenIds, navItemId]
-            localStorage.setItem(SEEN_STORAGE_KEY, JSON.stringify(this.seenIds))
-        },
-    },
+    function markSeenById(navItemId?: string) {
+        if (!navItemId || seenIds.value.includes(navItemId)) return
+        if (!FEATURE_SPOTLIGHTS.some((spotlight) => spotlight.navItemId === navItemId)) return
+
+        seenIds.value = [...seenIds.value, navItemId]
+        localStorage.setItem(SEEN_STORAGE_KEY, JSON.stringify(seenIds.value))
+    }
+
+    return {
+        seenIds,
+        unseenSpotlights,
+        hasUnseenForId,
+        markSeenById,
+    }
 })

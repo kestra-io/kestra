@@ -2086,9 +2086,6 @@
           "applyConfirm": "应用 flow {namespace}.{id} 吗？将创建它；如果已存在则覆盖。",
           "applyError": "无法应用 flow。请重试。",
           "applyNoTarget": "此草稿没有可应用的 namespace 或 id。",
-          "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
-          "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
-          "applyTitleDashboard": "Apply dashboard",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

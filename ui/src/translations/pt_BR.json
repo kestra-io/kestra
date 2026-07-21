@@ -2086,9 +2086,6 @@
           "applyConfirm": "Aplicar o flow {namespace}.{id}? Ele será criado ou substituído se já existir.",
           "applyError": "Não foi possível aplicar o flow. Tente novamente.",
           "applyNoTarget": "Este rascunho não tem namespace nem id para aplicar.",
-          "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
-          "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
-          "applyTitleDashboard": "Apply dashboard",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

@@ -2086,9 +2086,6 @@
           "applyConfirm": "flow {namespace}.{id} を適用しますか？作成されます。既に存在する場合は上書きされます。",
           "applyError": "flow を適用できませんでした。もう一度お試しください。",
           "applyNoTarget": "この下書きには適用する namespace または id がありません。",
-          "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
-          "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
-          "applyTitleDashboard": "Apply dashboard",
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",

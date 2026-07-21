@@ -189,7 +189,7 @@
             }
 
             &.is-disabled {
-                background-color: var(--ks-bg-base);
+                background-color: var(--ks-bg-inactive);
 
                 .kel-select__suffix {
                     .kel-select__caret {

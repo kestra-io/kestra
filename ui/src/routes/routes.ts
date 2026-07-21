@@ -12,7 +12,7 @@ import DemoTests from "../components/demo/Tests.vue"
 import DemoAssets from "../components/demo/Assets.vue"
 import DemoQuotas from "../components/demo/Quotas.vue"
 import DemoPolicies from "../components/demo/Policies.vue"
-import {EXECUTION_PARENT_ROUTE, EXECUTION_TAB_ROUTES} from "../components/executions/executionTabs"
+import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 
 /** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
 export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
@@ -52,18 +52,7 @@ const routes: KestraRouteRecord[] = [
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
     },
-    {
-        name: EXECUTION_PARENT_ROUTE,
-        path: "/:tenant?/executions/:namespace/:flowId/:id",
-        component: () => import("../components/executions/ExecutionRoot.vue"),
-        // Resolve legacy deep-links `{name: "executions/update", params: {tab}}` and bare
-        // `/:id` URLs to the matching child route, preserving params and query.
-        redirect: (to) => {
-            const tab = (to.params.tab as string) || localStorage.getItem("executeDefaultTab") || "overview"
-            return {name: `${EXECUTION_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
-        },
-        children: EXECUTION_TAB_ROUTES,
-    },
+    EXECUTION_ROUTE,
 
     //KV
     {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},

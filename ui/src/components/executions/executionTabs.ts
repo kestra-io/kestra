@@ -3,6 +3,9 @@ import type {RouteRecordRaw} from "vue-router"
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
 
+/** localStorage key remembering the last tab the user viewed, used as the redirect fallback below. */
+const DEFAULT_TAB_STORAGE_KEY = "executeDefaultTab"
+
 /**
  * Single source of truth for the Executions detail tabs.
  *
@@ -69,3 +72,20 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         meta: {tab: "assets", title: "assets.title", maximized: true, locked: true},
     },
 ]
+
+/**
+ * The Executions detail page's own route: parent + children, colocated with the tab
+ * definitions above so this page owns its full routing structure end to end.
+ */
+export const EXECUTION_ROUTE: RouteRecordRaw = {
+    name: EXECUTION_PARENT_ROUTE,
+    path: "/:tenant?/executions/:namespace/:flowId/:id",
+    component: () => import("./ExecutionRoot.vue"),
+    // Resolve legacy deep-links `{name: "executions/update", params: {tab}}` and bare
+    // `/:id` URLs to the matching child route, preserving params and query.
+    redirect: (to) => {
+        const tab = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY) || "overview"
+        return {name: `${EXECUTION_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
+    },
+    children: EXECUTION_TAB_ROUTES,
+}

@@ -1,21 +1,19 @@
 import {defineStore} from "pinia"
+import {ref} from "vue"
 import * as ServicesAPI from "@kestra-io/kestra-sdk/services"
 import type {ServiceInstance} from "@kestra-io/kestra-sdk"
 
-interface State {
-    service: ServiceInstance | undefined;
-}
+export const useServiceStore = defineStore("service", () => {
+    const service = ref<ServiceInstance | undefined>(undefined)
 
-export const useServiceStore = defineStore("service", {
-    state: (): State => ({
-        service: undefined,
-    }),
+    async function findServiceById(options: {id: string}): Promise<ServiceInstance> {
+        const result = await ServicesAPI.service(options)
+        service.value = result
+        return result
+    }
 
-    actions: {
-        async findServiceById(options: {id: string}): Promise<ServiceInstance> {
-            const service = await ServicesAPI.service(options)
-            this.service = service
-            return service
-        },
-    },
+    return {
+        service,
+        findServiceById,
+    }
 })

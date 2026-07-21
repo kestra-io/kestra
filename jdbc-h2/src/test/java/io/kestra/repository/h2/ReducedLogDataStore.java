@@ -10,6 +10,7 @@ import io.kestra.core.repositories.PaginationType;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.swagger.v3.oas.annotations.Hidden;
 
 /**
  * Test-only log store with a reduced capability set, mirroring a cloud log store such as GCP Cloud
@@ -26,6 +27,12 @@ import io.micronaut.data.model.Pageable;
  * Wired via {@code @MockBean(LogDataStoreInterface.class)} in the tests (with {@code kestra.logs.type} unset so it
  * falls back to the H2 repository — which keeps the log-table migrations, e.g. the {@code task_id} widen, running).
  */
+// @Plugin and @Plugin.Id are @Inherited, so without @Hidden this test double would be registered as a
+// SECOND log-store plugin under the inherited id "h2". LogDataStoreInterfaceFactory.resolve("h2") then does
+// a findFirst() over all types with that id and non-deterministically instantiates H2LogDataStore OR this
+// reduced store (canPurge()==false) in unrelated suites — e.g. H2ExecutionServiceTest.purge() intermittently
+// deleting 0 logs. @Hidden makes the plugin scanner skip it, so it is only ever wired via the @MockBean below.
+@Hidden
 public class ReducedLogDataStore extends H2LogDataStore {
 
     @Override

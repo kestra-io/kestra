@@ -33,7 +33,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
@@ -63,7 +63,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     private final ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher;
     private final ModelValidator modelValidator;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
 
     private final JdbcFilterService filterService;
 
@@ -74,12 +74,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         io.kestra.jdbc.AbstractJdbcRepository<FlowInterface> jdbcRepository,
         ModelValidator modelValidator,
         ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher,
-        PluginDefaultService pluginDefaultService,
+        FlowParsingService flowParsingService,
         JdbcFilterService filterService) {
         this.jdbcRepository = jdbcRepository;
         this.modelValidator = modelValidator;
         this.eventPublisher = eventPublisher;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.jdbcRepository.setDeserializer(record ->
         {
             String source = record.get("value", String.class);
@@ -91,7 +91,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 // Inject default plugin 'version' props before converting
                 // to flow to correctly resolve to plugin type.
-                map = pluginDefaultService.injectVersionDefaults(tenantId, namespace, map);
+                map = flowParsingService.injectPluginVersions(tenantId, namespace, map);
 
                 Flow deserialize = MAPPER.convertValue(map, Flow.class);
 
@@ -930,13 +930,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException {
         try {
-            // Check Flow with defaults.
-            // For drafts the YAML may be unparsable; if injectAllDefaults fails we skip all
+            // For drafts the YAML may be unparsable; if parsing fails we skip all
             // validation since draft revisions are intentionally allowed to carry invalid content.
-            FlowWithSource flowWithDefault = pluginDefaultService.injectAllDefaults(flow, false);
+            FlowWithSource flowWithDefault = flowParsingService.parse(flow, false);
             // Drafts are allowed to be saved invalid - they will fail at execution time instead.
             // Read the draft flag from the original GenericFlow (set from the API draft flag) rather
-            // than from flowWithDefault, since `injectAllDefaults` re-parses the YAML source which
+            // than from flowWithDefault, since `parse` re-parses the YAML source which
             // does not carry the draft field.
             if (!flow.isDraft()) {
                 modelValidator.validate(flowWithDefault);
@@ -946,7 +945,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             if (previous instanceof Flow o) {
                 previousFlow = o;
             } else {
-                previousFlow = pluginDefaultService.injectAllDefaults(previous, false);
+                previousFlow = flowParsingService.parse(previous, false);
             }
 
             // Check update
@@ -969,13 +968,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @VisibleForTesting
     public FlowWithSource save(GenericFlow flow, CrudEventType crudEventType) throws ConstraintViolationException {
 
-        // Inject default plugin 'version' props before converting to flow to correctly resolve to
-        // plugin type - this ensures the flow is parseable before saving.
+        // Ensure the flow is parseable before saving.
         // For drafts with unparsable YAML, fall back to a FlowWithException so the raw source can
         // still be persisted without throwing.
         FlowWithSource flowWithSource;
         try {
-            flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
+            flowWithSource = flowParsingService.parse(flow, false);
         } catch (FlowProcessingException e) {
             if (!flow.isDraft()) {
                 throw e;
@@ -1002,7 +1000,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
 
-        // draft is not part of the YAML source so injectVersionDefaults loses it; restore from the original flow.
+        // draft is not part of the YAML source so parsing loses it; restore from the original flow.
         return flowWithSource.toBuilder()
             .revision(revision)
             .draft(flow.isDraft())

@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.models.flows.FlowWithSource;
 
@@ -55,21 +54,28 @@ public class FlowWithDefaultCache {
     }
 
     /**
-     * Expires all cache entries belonging to the given namespace within a tenant.
-     * Useful when namespace-level plugin defaults change.
+     * Expires all cache entries belonging to the given namespace — or any of its descendants — within
+     * a tenant. Namespace-level settings apply hierarchically, so a change on {@code acme} must also
+     * re-resolve flows cached under {@code acme.data}.
      *
      * @param tenantId the tenant identifier, may be {@code null} for single-tenant deployments
-     * @param namespace the namespace
+     * @param namespace the namespace prefix
      */
     public void flush(String tenantId, String namespace) {
         cache.asMap().values().stream()
-            .filter(flow -> Objects.equals(flow.getTenantId(), tenantId) && Objects.equals(flow.getNamespace(), namespace))
+            .filter(
+                flow -> Objects.equals(flow.getTenantId(), tenantId)
+                    && (Objects.equals(flow.getNamespace(), namespace) || flow.getNamespace().startsWith(namespace + "."))
+            )
             .map(f -> f.uid())
             .forEach(cache::invalidate);
     }
 
-    @VisibleForTesting
-    void clear() {
+    /**
+     * Expires every cache entry across all tenants.
+     * Useful when instance-wide settings change.
+     */
+    public void flushAll() {
         cache.invalidateAll();
     }
 }

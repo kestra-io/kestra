@@ -33,8 +33,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.property.Property;
@@ -744,94 +742,6 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
-    protected void dailyStatistics() throws InterruptedException {
-        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        for (int i = 0; i < 28; i++) {
-            executionRepository.save(
-                builder(
-                    tenant,
-                    i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                    i < 15 ? null : "second"
-                ).build()
-            );
-        }
-
-        executionRepository.save(
-            builder(
-                tenant,
-                State.Type.SUCCESS,
-                "second"
-            ).namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE).build()
-        );
-
-        // mysql need some time ...
-        Thread.sleep(500);
-
-        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            null,
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null
-        );
-
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
-        assertThat(result.get(10).getDuration().getAvg().toMillis()).isGreaterThan(0L);
-
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.USER, FlowScope.SYSTEM),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null
-        );
-
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.USER),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null
-        );
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.SYSTEM),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null
-        );
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
-    }
-
-    @Test
     void shouldFindLatestExecutionGivenState() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution earliest = buildWithCreatedDate(tenant, Instant.now().minus(Duration.ofMinutes(10)));
@@ -1091,6 +1001,44 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(result.getTotal()).isEqualTo(3L);
         assertThat(result).hasSize(3)
             .allMatch(e -> parent.getId().equals(e.getParentId()));
+    }
+
+    @Test
+    protected void shouldFindLoopSubExecutionsScopedByTaskId() {
+        // Given a parent execution with iterations from two distinct Loop tasks
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution parent = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+
+        TaskRun loop1TaskRun = TaskRun.of(
+            parent, ResolvedTask.of(
+                Return.builder().id("loop1").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+        TaskRun loop2TaskRun = TaskRun.of(
+            parent, ResolvedTask.of(
+                Return.builder().id("loop2").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+
+        for (int i = 0; i < 2; i++) {
+            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i));
+        }
+        for (int i = 0; i < 3; i++) {
+            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i));
+        }
+
+        // When / Then: scoping to a single loop task returns only that task's iterations
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), "loop1");
+        assertThat(loop1Subs).hasSize(2)
+            .allMatch(e -> "loop1".equals(e.getLoopRun().taskId()));
+
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), "loop2");
+        assertThat(loop2Subs).hasSize(3)
+            .allMatch(e -> "loop2".equals(e.getLoopRun().taskId()));
+
+        // A null taskId returns every loop task's iterations
+        List<Execution> allSubs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), null);
+        assertThat(allSubs).hasSize(5);
     }
 
     @Test

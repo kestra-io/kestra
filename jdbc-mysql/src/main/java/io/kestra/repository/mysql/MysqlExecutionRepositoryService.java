@@ -49,14 +49,19 @@ public abstract class MysqlExecutionRepositoryService {
             var labels = input.getLeft();
             labels.forEach((key, value) ->
             {
-                Condition labelCondition = DSL.condition(
-                    "JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", DSL.val((String) key, String.class), DSL.val((String) value, String.class)
-                );
+                Field<Boolean> labelMatches = DSL.coalesce(DSL.field(
+                    "JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')",
+                    Boolean.class,
+                    DSL.val((String) key, String.class),
+                    DSL.val((String) value, String.class)
+                ), false);
+                Condition labelCondition = labelMatches.isTrue();
+                Condition labelNotCondition = labelMatches.isFalse();
                 switch (operation) {
                     case EQUALS ->
                         conditions.add(labelCondition);
                     case NOT_EQUALS, NOT_IN ->
-                        conditions.add(DSL.not(labelCondition));
+                        conditions.add(labelNotCondition);
                     case IN ->
                         inConditions.add(labelCondition);
                     case IS_NULL ->

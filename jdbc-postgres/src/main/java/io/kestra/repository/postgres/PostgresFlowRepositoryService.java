@@ -71,20 +71,20 @@ public abstract class PostgresFlowRepositoryService {
         } else if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
             {
-                Condition labelCondition = DSL.condition(
-                    "value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)
+                Field<Boolean> labelMatches = DSL.field(
+                    "COALESCE(value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text)), false)",
+                    Boolean.class,
+                    DSL.val(key, String.class),
+                    DSL.val(value, String.class)
                 );
                 if (operation.equals(EQUALS)) {
-                    conditions.add(labelCondition);
+                    conditions.add(labelMatches.isTrue());
                 } else if (operation.equals(QueryFilter.Op.IN)) {
-                    inConditions.add(labelCondition);
+                    inConditions.add(labelMatches.isTrue());
                 } else if (operation.equals(QueryFilter.Op.NOT_IN)) {
-                    conditions.add(DSL.not(labelCondition));
+                    conditions.add(labelMatches.isFalse());
                 } else if (operation.equals(QueryFilter.Op.NOT_EQUALS)) {
-                    // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
-                    String extractValueSql = "(SELECT jsonb_path_query_first(value, '$.labels[*] ? (@.key == $labelKey).value', jsonb_build_object('labelKey', {0}::text))#>>'{}')";
-                    Field<String> extractedValue = DSL.field(extractValueSql, String.class, DSL.val(key, String.class));
-                    conditions.add(extractedValue.isNull().or(extractedValue.ne((String) value)));
+                    conditions.add(labelMatches.isFalse());
                 } else if (operation.equals(QueryFilter.Op.IS_NULL)) {
                     conditions.add(labelKeyCondition((String) key).not());
                 } else if (operation.equals(QueryFilter.Op.IS_NOT_NULL)) {

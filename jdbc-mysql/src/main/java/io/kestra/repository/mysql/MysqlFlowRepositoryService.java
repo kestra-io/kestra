@@ -72,20 +72,15 @@ public abstract class MysqlFlowRepositoryService {
                 Field<Boolean> valueField = DSL.field(
                     "JSON_CONTAINS(value, JSON_ARRAY(JSON_OBJECT('key', {0}, 'value', {1})), '$.labels')", Boolean.class, DSL.val(key, String.class), DSL.val((String) value, String.class)
                 );
+                Field<Boolean> labelMatches = DSL.coalesce(valueField, false);
                 if (operation.equals(EQUALS))
-                    conditions.add(valueField.eq(value != null));
+                    conditions.add(labelMatches.eq(value != null));
                 else if (operation.equals(QueryFilter.Op.IN))
-                    inConditions.add(valueField.eq(value != null));
+                    inConditions.add(labelMatches.eq(value != null));
                 else if (operation.equals(QueryFilter.Op.NOT_IN))
-                    conditions.add(DSL.not(valueField.eq(value != null)));
+                    conditions.add(labelMatches.ne(value != null));
                 else if (operation.equals(NOT_EQUALS)) {
-                    // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
-                    String extractValueSqlTemplate = "JSON_UNQUOTE(JSON_EXTRACT(`value`, REPLACE(JSON_UNQUOTE(JSON_SEARCH(`value`, 'one', {0}, NULL, '$.labels[*].key')), '.key', '.value')))";
-                    Field<String> extractedValue = DSL.field(extractValueSqlTemplate, String.class, DSL.val(key));
-
-                    conditions.add(
-                        extractedValue.isNull().or(extractedValue.ne(DSL.val(value, String.class)))
-                    );
+                    conditions.add(labelMatches.ne(value != null));
                 } else if (operation.equals(QueryFilter.Op.IS_NULL)) {
                     conditions.add(labelKeyCondition((String) key).not());
                 } else if (operation.equals(QueryFilter.Op.IS_NOT_NULL)) {

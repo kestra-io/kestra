@@ -3,6 +3,7 @@ package io.kestra.repository.postgres;
 import java.util.*;
 
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
@@ -48,14 +49,16 @@ public abstract class PostgresExecutionRepositoryService {
             var labels = input.getLeft();
             labels.forEach((key, value) ->
             {
-                Condition labelCondition = DSL.condition(
-                    "value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val((String) key, String.class),
+                Field<Boolean> labelMatches = DSL.field(
+                    "COALESCE(value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text)), false)",
+                    Boolean.class,
+                    DSL.val((String) key, String.class),
                     DSL.val((String) value, String.class)
                 );
                 switch (operation) {
-                    case EQUALS -> conditions.add(labelCondition);
-                    case NOT_EQUALS, NOT_IN -> conditions.add(DSL.not(labelCondition));
-                    case IN -> inConditions.add(labelCondition);
+                    case EQUALS -> conditions.add(labelMatches.isTrue());
+                    case NOT_EQUALS, NOT_IN -> conditions.add(labelMatches.isFalse());
+                    case IN -> inConditions.add(labelMatches.isTrue());
                     case IS_NULL -> conditions.add(labelKeyCondition((String) key).not());
                     case IS_NOT_NULL -> conditions.add(labelKeyCondition((String) key));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);

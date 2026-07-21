@@ -45,8 +45,8 @@ import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.LabelService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.TruthUtils;
@@ -54,6 +54,7 @@ import io.kestra.core.utils.TypeConverter;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
+import io.kestra.scheduler.internals.TriggerFlowParser;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -81,7 +82,7 @@ public class TriggerScheduler {
     private final TriggerWorkerJobPublisher triggerWorkerJobPublisher;
     private final SchedulableEvaluator schedulableEvaluator;
     private final TriggerExecutionPublisher triggerExecutionSender;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
     private final DefaultSchedulableTriggerFetcher schedulableTriggerFetcher;
 
     // Stores
@@ -100,7 +101,7 @@ public class TriggerScheduler {
         MetricRegistry metricRegistry,
         RunContextFactory runContextFactory,
         ConditionService conditionService,
-        PluginDefaultService pluginDefaultService,
+        FlowParsingService flowParsingService,
         SchedulableEvaluator schedulableEvaluator,
         DefaultSchedulableTriggerFetcher schedulableTriggerFetcher,
         TriggerWorkerJobPublisher triggerWorkerJobPublisher,
@@ -109,7 +110,7 @@ public class TriggerScheduler {
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
         this.runContextFactory = runContextFactory;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.metricRegistry = metricRegistry;
         this.conditionService = conditionService;
         this.triggerWorkerJobPublisher = triggerWorkerJobPublisher;
@@ -153,7 +154,7 @@ public class TriggerScheduler {
 
         flowMetaStore.findAllForVNodes(vNodesAssignments)
             .stream()
-            .map(flow -> pluginDefaultService.injectAllDefaults(flow, log))
+            .map(flow -> TriggerFlowParser.parseOrSkip(flowParsingService, flow, log))
             .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(

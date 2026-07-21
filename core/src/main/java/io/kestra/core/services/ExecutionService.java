@@ -92,7 +92,7 @@ public class ExecutionService {
     private ConcurrencyLimitService concurrencyLimitService;
 
     @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowParsingService flowParsingService;
 
     @Inject
     private TaskOutputService taskOutputService;
@@ -575,8 +575,9 @@ public class ExecutionService {
             return Optional.of(new ExecutionWithTaskRun(execution, maybeTaskRun.get()));
         }
 
-        // Recursively search loop sub-executions to support nested loops
-        return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream()
+        // Recursively search loop sub-executions to support nested loops; span every loop task, we don't
+        // know upfront which one the taskRunId belongs to
+        return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream()
             .map(sub -> findExecutionWithTaskRun(sub, taskRunId))
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -609,7 +610,7 @@ public class ExecutionService {
 
         Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
 
-        final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
+        final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
 
         for (String s : taskRunToRestart) {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);
@@ -856,7 +857,7 @@ public class ExecutionService {
         return Mono.create(sink ->
         {
             try {
-                final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
+                final FlowWithSource flowWithSource = flow instanceof FlowWithSource fws ? fws : flowParsingService.parse(flow, false);
                 var runningTaskRun = execution
                     .findFirstByState(State.Type.PAUSED)
                     .map(throwFunction(task -> flowWithSource.findTaskByTaskId(task.getTaskId())));
@@ -961,7 +962,7 @@ public class ExecutionService {
      * @return a list of zero or more {@link ExecutionKilledExecution}.
      */
     public List<ExecutionKilledExecution> killLoopSubExecutions(final String tenantId, final String executionId) {
-        return executionRepository.findLoopSubExecutions(tenantId, executionId)
+        return executionRepository.findLoopSubExecutions(tenantId, executionId, null)
             .stream()
             .filter(subExecution -> subExecution.getState().isRunning() || subExecution.getState().isPaused())
             .map(
@@ -984,7 +985,7 @@ public class ExecutionService {
      * @return the last restartable sub-execution for that loop task run, if any
      */
     public Optional<Execution> findLastFailingLoopSubExecution(Execution execution, TaskRun loopTaskRun) {
-        return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId())
+        return executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), loopTaskRun.getTaskId())
             .stream()
             .filter(sub -> sub.getLoopRun() != null && sub.getLoopRun().taskRunId().equals(loopTaskRun.getId()))
             .filter(sub -> sub.getState().canBeRestarted())

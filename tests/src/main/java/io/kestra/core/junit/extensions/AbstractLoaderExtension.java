@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,9 +12,11 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 import io.kestra.core.junit.services.TestTenantLifecycle;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 
@@ -22,6 +25,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
+import static org.awaitility.Awaitility.await;
 
 public abstract class AbstractLoaderExtension {
 
@@ -81,6 +85,29 @@ public abstract class AbstractLoaderExtension {
             URL resource = loadFile(path);
 
             TestsUtils.loads(tenantId, repositoryLoader, resource);
+        }
+
+        // The flow metastore's cache is updated asynchronously (via a queue subscription) after
+        // FlowService.create()/update() returns. Under concurrent test load that lag can outlast a
+        // freshly-loaded flow's very first execution transitions, so a Flow trigger on it silently
+        // misses them (no retry). Block here until every loaded flow is actually visible in the
+        // metastore cache, so tests never race their own fixtures.
+        FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
+        FlowMetaStoreInterface flowMetaStore = context.getBean(FlowMetaStoreInterface.class);
+        for (String path : paths) {
+            Flow flow = getFlow(path);
+            FlowWithSource persisted = flowRepository.findByIdWithSource(tenantId, flow.getNamespace(), flow.getId())
+                .orElseThrow();
+
+            await().atMost(Duration.ofSeconds(5)).until(
+                () -> flowMetaStore.allLastVersion().stream()
+                    .anyMatch(
+                        cached -> tenantId.equals(cached.getTenantId())
+                            && cached.getNamespace().equals(flow.getNamespace())
+                            && cached.getId().equals(flow.getId())
+                            && cached.getRevision().equals(persisted.getRevision())
+                    )
+            );
         }
     }
 

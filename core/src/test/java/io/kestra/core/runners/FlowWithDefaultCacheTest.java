@@ -84,6 +84,35 @@ class FlowWithDefaultCacheTest {
     }
 
     @Test
+    void shouldExpireDescendantNamespacesOnNamespaceFlush() {
+        FlowWithSource flowExact = flush("tenant-1", "acme", "flow-a", 1);
+        FlowWithSource flowChild = flush("tenant-1", "acme.data", "flow-b", 1);
+        FlowWithSource flowSibling = flush("tenant-1", "acme-other", "flow-c", 1);
+        cache.put(flowExact.uid(), flowExact);
+        cache.put(flowChild.uid(), flowChild);
+        cache.put(flowSibling.uid(), flowSibling);
+
+        cache.flush("tenant-1", "acme");
+
+        assertThat(cache.getIfPresent(flowExact.uid())).isEmpty();
+        assertThat(cache.getIfPresent(flowChild.uid())).isEmpty();
+        assertThat(cache.getIfPresent(flowSibling.uid())).contains(flowSibling);
+    }
+
+    @Test
+    void shouldExpireEverythingOnFlushAll() {
+        FlowWithSource flowA = flush("tenant-1", "ns", "flow-a", 1);
+        FlowWithSource flowB = flush("tenant-2", "other", "flow-b", 1);
+        cache.put(flowA.uid(), flowA);
+        cache.put(flowB.uid(), flowB);
+
+        cache.flushAll();
+
+        assertThat(cache.getIfPresent(flowA.uid())).isEmpty();
+        assertThat(cache.getIfPresent(flowB.uid())).isEmpty();
+    }
+
+    @Test
     void shouldNotExpireFlowsOfOtherTenantInSameNamespace() {
         FlowWithSource flowT1 = flush("tenant-1", "ns", "flow-a", 1);
         FlowWithSource flowT2 = flush("tenant-2", "ns", "flow-a", 1);

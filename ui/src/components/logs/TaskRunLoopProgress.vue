@@ -14,11 +14,12 @@
                 :key="loopTerminatedSegment.state" 
                 size="small"
                 :to="{
-                    // execution list filtered by Parent execution and state
+                    // execution list filtered by Parent execution, Loop task and state
                     name: 'executions/list',
                     query: {
                         'filters[parentId][EQUALS]': executionId,
                         'filters[kind][EQUALS]': 'LOOP',
+                        'filters[taskId][EQUALS]': taskId,
                         'filters[state][EQUALS]': loopTerminatedSegment.state
                     }
                 }"
@@ -41,6 +42,7 @@
     const props = defineProps<{
         executionId: string;
         currentTaskRunId: string;
+        taskId: string;
         loopOutputsByTaskRunId: Record<string, { iterationCount: number; terminatedIterations: Record<string, number> }>;
     }>()
 

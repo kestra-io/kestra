@@ -1,8 +1,10 @@
-import {AxiosInstance} from "axios"
+import type {useClient} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import type {Execution} from "../stores/executions"
 
-export function waitFor($http: AxiosInstance, execution: {id: string}, predicate: (data: any) => boolean) {
+type KestraClient = ReturnType<typeof useClient>
+
+export function waitFor($http: KestraClient, execution: {id: string}, predicate: (data: any) => boolean) {
     return new Promise((resolve) => {
         const callback = () => {
             $http.get(`${apiUrl()}/executions/${execution.id}`).then(response => {
@@ -33,7 +35,7 @@ export function statePredicate(execution: Execution, current: {state: {histories
     return (current.state.histories?.length ?? 0) >= (execution.state.histories?.length ?? 0)
 }
 
-export function waitForState($http: AxiosInstance, execution: Execution) {
+export function waitForState($http: KestraClient, execution: Execution) {
     return waitFor($http, execution, (current) => {
         return statePredicate(execution, current)
     })

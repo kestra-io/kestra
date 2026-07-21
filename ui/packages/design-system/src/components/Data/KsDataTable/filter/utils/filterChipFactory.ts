@@ -3,6 +3,7 @@ import {
     type FilterKeyConfig,
     COMPARATOR_LABELS,
     Comparators,
+    KV_COMPARATORS,
     TEXT_COMPARATORS,
 } from "./filterTypes"
 import {type DecodedParam, keyOfComparator} from "./helpers"
@@ -92,7 +93,7 @@ export const processFieldValue = (
 ): {value: AppliedFilter["value"]; valueLabel: string} => {
     const isTextOp = TEXT_COMPARATORS.includes(comparator)
 
-    if (config?.valueType === "key-value") {
+    if (config?.valueType === "key-value" && KV_COMPARATORS.includes(comparator)) {
         const combinedValue = params.map(p => p?.value as string)
         return {
             value: combinedValue,

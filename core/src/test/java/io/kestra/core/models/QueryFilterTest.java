@@ -83,6 +83,7 @@ public class QueryFilterTest {
                 Field.LABELS, Resource.FLOW,
                 Set.of(
                     Op.EQUALS,
+                    Op.NOT_EQUALS,
                     Op.IN,
                     Op.NOT_IN,
                     Op.CONTAINS,

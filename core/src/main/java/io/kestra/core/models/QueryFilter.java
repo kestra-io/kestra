@@ -179,7 +179,7 @@ public record QueryFilter(
         LABELS("labels") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.IN, Op.NOT_IN, Op.EQUALS, Op.CONTAINS, Op.NOT_CONTAINS, Op.IS_NOT_NULL, Op.IS_NULL);
+                return List.of(Op.IN, Op.NOT_IN, Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.NOT_CONTAINS, Op.IS_NOT_NULL, Op.IS_NULL);
             }
         },
         @JsonProperty("tags")

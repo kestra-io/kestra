@@ -15,7 +15,7 @@
 
                     <!-- Center: tree / raw JSON of the selected value -->
                     <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--viewer">
-                        <div class="viewer">
+                        <div class="viewer" :class="{'viewer--fill': isRawEditor}">
                             <div class="viewer__header">
                                 <KsSegmented
                                     v-if="isExpandableValue && !fileSelectedOutput"
@@ -38,12 +38,11 @@
                             </template>
 
                             <KsEditor
-                                v-else-if="viewMode === 'raw' && isExpandableValue"
+                                v-else-if="isRawEditor"
                                 v-bind="editorBindings"
                                 :readOnly="true"
                                 :inline="true"
                                 :navbar="false"
-                                :options="{fullHeight: true}"
                                 :modelValue="rawValue"
                                 lang="json"
                             />
@@ -314,6 +313,8 @@
         {label: t("variable_explorer.raw_json"), value: "raw"},
     ])
 
+    const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
+
     function copyValue() {
         navigator.clipboard?.writeText(rawValue.value)
     }
@@ -368,8 +369,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
-    min-height: 0;
+    min-height: 100%;
     background-color: var(--ks-bg-surface);
 
     &__header {
@@ -379,12 +379,6 @@
         gap: var(--ks-spacing-2);
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
-    }
-
-    &__body {
-        flex: 1 1 0;
-        min-height: 0;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
     }
 
     &__scalar {
@@ -397,6 +391,11 @@
     .file-preview {
         padding: var(--ks-spacing-4);
     }
+}
+
+.viewer--fill {
+    height: 100%;
+    min-height: 0;
 }
 
 .debug {

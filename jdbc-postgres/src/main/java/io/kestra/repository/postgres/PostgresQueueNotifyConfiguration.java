@@ -13,5 +13,8 @@ import io.micronaut.core.bind.annotation.Bindable;
 @ConfigurationProperties("kestra.queue.postgres.notify")
 public record PostgresQueueNotifyConfiguration(
     @Bindable(defaultValue = "true") Boolean enabled,
-    @Bindable(defaultValue = "PT0.01S") Duration coalesceInterval) {
+    // Matches kestra.jdbc.queues.min-poll-interval's own default: PostgresQueueChangeNotifier
+    // floors the effective coalescing interval at that value regardless of what's configured
+    // here, so this default just documents the resulting floor rather than being load-bearing.
+    @Bindable(defaultValue = "PT0.025S") Duration coalesceInterval) {
 }

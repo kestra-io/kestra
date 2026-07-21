@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ThreadMainFactoryBuilder;
+import io.kestra.jdbc.runner.JdbcQueueConfiguration;
 import io.kestra.queue.jdbc.client.QueueChangeNotifier;
 
 import io.micronaut.configuration.jdbc.hikari.DatasourceConfiguration;
@@ -35,9 +36,19 @@ import lombok.extern.slf4j.Slf4j;
  * most one {@code NOTIFY} per {@link PostgresQueueNotifyConfiguration#coalesceInterval()} (leading
  * edge immediate, then rate-limited), so a busy queue can't wake its subscriber on every single
  * message — the fix for the second half of the same regression, where the wake-up storm amplified
- * poll-query traffic against the {@code queues} table. This is still a pure latency optimization:
- * a coalesced-away or otherwise lost signal never loses a message, since durable delivery is
- * guaranteed by the poll + transactional ack path regardless.
+ * poll-query traffic against the {@code queues} table.
+ * <p>
+ * The effective coalescing interval is additionally floored at the subscriber's own
+ * {@link JdbcQueueConfiguration#minPollInterval()}: a subscriber's poll loop already re-polls at
+ * that cadence on its own once it has just been active (see {@code QueuePoller}'s empty-poll
+ * backoff), so a NOTIFY tighter than that floor cannot buy any extra latency in the "briefly idle
+ * under sustained load" case — it can only push a hot subscriber to poll (and pay a full
+ * transaction) more often than plain polling ever would. The floor never affects the "genuinely
+ * idle, then a message arrives" case, where the leading-edge immediate emit still fires at once,
+ * cutting the escalated backoff (up to {@code maxPollInterval}) down to the floor.
+ * <p>
+ * This is still a pure latency optimization: a coalesced-away or otherwise lost signal never loses
+ * a message, since durable delivery is guaranteed by the poll + transactional ack path regardless.
  */
 @Slf4j
 @Singleton
@@ -50,6 +61,12 @@ public class PostgresQueueChangeNotifier implements QueueChangeNotifier, AutoClo
     private final DatasourceConfiguration datasourceConfiguration;
     private final PostgresQueueNotifyConfiguration configuration;
     private final ScheduledExecutorService executorService;
+
+    /**
+     * {@code max(coalesceInterval, minPollInterval)}, computed once since both inputs are static
+     * configuration — see the class javadoc for why NOTIFY must never undercut the poll floor.
+     */
+    private final long minEmitIntervalMs;
 
     /**
      * Channels with an emit already scheduled (immediate or delayed) but not yet sent: guards
@@ -69,9 +86,10 @@ public class PostgresQueueChangeNotifier implements QueueChangeNotifier, AutoClo
     private volatile long reconnectBackoffMs = INITIAL_RECONNECT_BACKOFF_MS;
 
     @Inject
-    public PostgresQueueChangeNotifier(DatasourceConfiguration datasourceConfiguration, PostgresQueueNotifyConfiguration configuration) {
+    public PostgresQueueChangeNotifier(DatasourceConfiguration datasourceConfiguration, PostgresQueueNotifyConfiguration configuration, JdbcQueueConfiguration jdbcQueueConfiguration) {
         this.datasourceConfiguration = datasourceConfiguration;
         this.configuration = configuration;
+        this.minEmitIntervalMs = Math.max(configuration.coalesceInterval().toMillis(), jdbcQueueConfiguration.minPollInterval().toMillis());
         // Single thread: every NOTIFY (immediate or coalesced) and every (re)connect attempt runs
         // here, so the dedicated connection is never touched from more than one thread at a time.
         this.executorService = Executors.newSingleThreadScheduledExecutor(ThreadMainFactoryBuilder.build("pg-queue-notify_%d"));
@@ -98,7 +116,7 @@ public class PostgresQueueChangeNotifier implements QueueChangeNotifier, AutoClo
 
         Long lastEmit = lastEmitNanos.get(channel);
         long sinceLastEmitMs = lastEmit == null ? Long.MAX_VALUE : Duration.ofNanos(System.nanoTime() - lastEmit).toMillis();
-        long delayMs = Math.max(0, configuration.coalesceInterval().toMillis() - sinceLastEmitMs);
+        long delayMs = Math.max(0, minEmitIntervalMs - sinceLastEmitMs);
 
         try {
             executorService.schedule(() -> emit(channel), delayMs, TimeUnit.MILLISECONDS);

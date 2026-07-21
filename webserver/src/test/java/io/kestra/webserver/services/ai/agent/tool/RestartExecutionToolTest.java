@@ -1,16 +1,22 @@
 package io.kestra.webserver.services.ai.agent.tool;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
@@ -21,13 +27,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Integration check that {@code restart-execution} enqueues a restart command for a restartable
- * execution, and rejects a missing or non-restartable execution, exercising the tool → repository →
- * queue wiring with the real beans.
+ * Integration check that {@code restart-execution} restarts a restartable execution and waits for the
+ * executor to apply the restart before returning — so the outcome is observable — and rejects a missing
+ * or non-restartable execution. Runs against the real executor ({@code startRunner = true}) because the
+ * tool now blocks on the async restart operation, which only completes once the executor processes it.
  */
-@KestraTest(environments = "memory")
+@KestraTest(startRunner = true)
 class RestartExecutionToolTest {
-    private static final String NAMESPACE = "io.kestra.test.ai";
+    private static final String NAMESPACE = "io.kestra.tests";
     private static final AgentCallContext.Context CONTEXT = AgentCallContext.Context.ofTenant(MAIN_TENANT);
 
     @Inject
@@ -36,6 +43,9 @@ class RestartExecutionToolTest {
     @Inject
     private ExecutionRepositoryInterface executionRepository;
 
+    @Inject
+    private TestRunnerUtils runnerUtils;
+
     @Test
     void shouldExposeActConfirmMetadata() {
         assertThat(tool.family()).isEqualTo(AgentToolFamily.ACT);
@@ -43,16 +53,30 @@ class RestartExecutionToolTest {
     }
 
     @Test
-    void shouldEmitRestartCommandWhenExecutionIsRestartable() {
-        // Given — a terminated (FAILED) execution can be restarted
-        String executionId = save(State.Type.FAILED);
+    @LoadFlows({ "flows/valids/restart_last_failed.yaml" })
+    void shouldRestartAndReturnObservableStateWhenExecutionIsRestartable() throws Exception {
+        // Given — run the flow until it ends in FAILED
+        Execution failedExecution = runnerUtils.runOne(
+            MAIN_TENANT, NAMESPACE, "restart_last_failed", null, (BiFunction<FlowInterface, Execution, Map<String, Object>>) null
+        );
+        assertThat(failedExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
-        // When
-        RestartExecutionTool.Result result = tool.restartExecution(executionId, null, CONTEXT);
+        // When — restart via the tool
+        RestartExecutionTool.Result result = tool.restartExecution(failedExecution.getId(), null, CONTEXT);
 
-        // Then — the tool reports the restart with an operation id
-        assertThat(result.executionId()).isEqualTo(executionId);
-        assertThat(result.operationId()).isNotNull();
+        // Then — the tool waited for the executor to accept the restart and acknowledged it
+        assertThat(result.executionId()).isEqualTo(failedExecution.getId());
+        assertThat(result.message()).isNotNull();
+
+        // And — the restart is observable: the execution carries a RESTARTED transition and finishes
+        Execution restarted = runnerUtils.awaitExecution(
+            execution -> execution.getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESTARTED)
+                && execution.getState().isTerminated(),
+            failedExecution.withTenantId(MAIN_TENANT),
+            Duration.ofSeconds(15)
+        );
+        assertThat(restarted.getId()).isEqualTo(failedExecution.getId());
+        assertThat(restarted.getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESTARTED)).isTrue();
     }
 
     @Test

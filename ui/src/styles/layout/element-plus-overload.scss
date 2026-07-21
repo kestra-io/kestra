@@ -121,3 +121,8 @@
 .kel-scrollbar__thumb {
     background-color: var(--ks-border-default) !important;
 }
+html.dark {
+  .el-dropdown-menu__item.is-disabled {
+    opacity: 0.75;
+  }
+}

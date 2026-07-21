@@ -76,6 +76,15 @@
                 margin-right: 0;
             }
 
+            &.is-disabled {
+                color: var(--ks-text-muted);
+                cursor: not-allowed;
+
+                i {
+                    color: var(--ks-text-muted);
+                }
+            }
+
             &:not(.is-disabled) i {
                 color: var(--ks-icon-muted);
             }

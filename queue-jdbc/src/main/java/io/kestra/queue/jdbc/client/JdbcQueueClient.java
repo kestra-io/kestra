@@ -54,9 +54,10 @@ public class JdbcQueueClient {
     private final JdbcQueueConfiguration configuration;
 
     /**
-     * Notifies a realtime wake-up mechanism after a publish, so a waiting subscriber's poll loop
-     * can be woken early instead of waiting out its full backoff. Only present on Postgres; on
-     * other dialects this is {@code null} and publish behaves exactly as before.
+     * Notifies a realtime wake-up mechanism after a publish transaction commits, so a waiting
+     * subscriber's poll loop can be woken early instead of waiting out its full backoff. Only
+     * present on Postgres; on other dialects this is {@code null} and publish behaves exactly as
+     * before.
      */
     @Nullable
     private final QueueChangeNotifier changeNotifier;
@@ -120,11 +121,11 @@ public class JdbcQueueClient {
                     .set(fields);
 
                 insert.execute();
-
-                if (changeNotifier != null) {
-                    changeNotifier.notifyChange(configuration, queue, normalizeRoutingKey(routingKey));
-                }
             });
+
+            if (changeNotifier != null) {
+                changeNotifier.notifyChange(queue);
+            }
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
             // Postgres refuses JSONB payloads with unsupported Unicode escape sequences such as '\0000'
             // or lone UTF-16 surrogates. Convert those into a recoverable queue error.
@@ -180,17 +181,16 @@ public class JdbcQueueClient {
                 }
 
                 insert.execute();
-
-                if (changeNotifier != null) {
-                    // One notification per distinct (queue, routingKey) pair in the batch: plain
-                    // dispatch/broadcast batches collapse to one per queue; VNode/keyed batches emit
-                    // one per distinct routing key actually present, so wake-ups stay targeted.
-                    messages.stream()
-                        .map(entry -> Pair.of(entry.queue, normalizeRoutingKey(entry.routingKey)))
-                        .distinct()
-                        .forEach(pair -> changeNotifier.notifyChange(configuration, pair.getLeft(), pair.getRight()));
-                }
             });
+
+            if (changeNotifier != null) {
+                // One notification per distinct queue in the batch, regardless of routing key: the
+                // signal is a per-channel wake-up, not per-partition (see QueueChangeNotifier).
+                messages.stream()
+                    .map(PublishedMessage::queue)
+                    .distinct()
+                    .forEach(changeNotifier::notifyChange);
+            }
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
             // Postgres refuses JSONB payloads with unsupported Unicode escape sequences such as '\0000'
             // or lone UTF-16 surrogates. Convert those into a recoverable queue error.

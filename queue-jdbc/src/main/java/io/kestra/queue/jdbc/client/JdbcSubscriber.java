@@ -64,18 +64,9 @@ public abstract class JdbcSubscriber<T extends Event> extends AbstractPollingSub
 
     protected abstract void init();
 
-    /**
-     * Routing keys this subscriber owns, used to target the realtime wake-up signal (see
-     * {@link QueueWakeRegistry}). Empty means "every routing key for this queue" (plain dispatch,
-     * broadcast). Overridden by keyed/VNode dispatch subscribers, which own a partition.
-     */
-    protected List<String> ownedRoutingKeys() {
-        return List.of();
-    }
-
     @Override
     protected QueueWaker waker() {
-        return wakeRegistry != null ? wakeRegistry.waker(queueName, ownedRoutingKeys()) : super.waker();
+        return wakeRegistry != null ? wakeRegistry.waker(queueName) : super.waker();
     }
 
     @Override

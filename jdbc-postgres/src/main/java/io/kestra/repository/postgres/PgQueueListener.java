@@ -108,7 +108,7 @@ public class PgQueueListener implements AutoCloseable {
             PGNotification[] notifications = pgConnection.getNotifications(NOTIFICATION_POLL_TIMEOUT_MS);
             if (notifications != null) {
                 for (PGNotification notification : notifications) {
-                    registry.signal(notification.getName(), notification.getParameter());
+                    registry.signal(notification.getName());
                 }
             }
         }

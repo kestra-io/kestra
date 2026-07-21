@@ -47,11 +47,6 @@ public class JdbcDispatchSubscriber<T extends Event> extends JdbcSubscriber<T> {
     }
 
     @Override
-    protected List<String> ownedRoutingKeys() {
-        return routingKeys == null ? List.of() : routingKeys;
-    }
-
-    @Override
     protected Integer poll(Consumer<byte[]> messageConsumer) {
         return this.jdbcQueueClient.subscribeDispatch(this.queueName, this.routingKeys, messageConsumer);
     }

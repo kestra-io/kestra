@@ -1,7 +1,5 @@
 package io.kestra.queue.jdbc.client;
 
-import java.util.List;
-
 import io.kestra.queue.poller.QueueWaker;
 
 /**
@@ -13,10 +11,8 @@ import io.kestra.queue.poller.QueueWaker;
 public interface QueueWakeRegistry {
     /**
      * @param queueName the queue this subscriber polls
-     * @param routingKeys the routing keys this subscriber owns (empty = the subscriber consumes
-     *        every routing key for this queue, e.g. plain dispatch or broadcast)
-     * @return a waker woken early when a matching message is published, still bounded by the
-     *         caller's own backoff as a fallback
+     * @return a waker woken early when a message is published to {@code queueName}, still bounded
+     *         by the caller's own backoff as a fallback
      */
-    QueueWaker waker(String queueName, List<String> routingKeys);
+    QueueWaker waker(String queueName);
 }

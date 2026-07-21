@@ -9,11 +9,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import io.kestra.core.junit.services.TestTenantLifecycle;
@@ -30,12 +32,11 @@ import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
-import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
 import static io.kestra.core.utils.Rethrow.throwFunction;
+import static org.awaitility.Awaitility.await;
 
-@Slf4j
 public abstract class AbstractLoaderExtension {
 
     protected ApplicationContext context;
@@ -102,68 +103,24 @@ public abstract class AbstractLoaderExtension {
         }
 
         // The flow metastore's cache is updated asynchronously (via a queue subscription) after
-        // FlowService.create()/update() returns. Under concurrent test load that lag can outlast a
-        // freshly-loaded flow's very first execution transitions, so a Flow trigger on it silently
-        // misses them (no retry). Block here until every loaded flow's persisted revision is visible
-        // in the metastore cache, so tests never race their own fixtures. We match against the cache
-        // (the source of truth for flow liveness) rather than re-reading the repository, whose
-        // tenant-scoped lookups are eventually consistent on some backends.
-        //
-        // The wait settles rather than requiring completeness: a few flows never reach the cache at
-        // all — e.g. those whose queue event fails to deserialize (task aliases), which the metastore
-        // logs and drops. Those flows are still persisted and queryable; only the cache-backed
-        // trigger fast-path is unavailable for them. So we stop once the cache has stopped catching
-        // up (a quiet period with no further progress), capped by an overall budget, and warn about
-        // any stragglers instead of failing the whole fixture. Fixtures whose flows all cache — the
-        // common case, including every trigger test — settle in well under the quiet period.
+        // FlowService.create()/update() returns, so a Flow trigger on a freshly-loaded flow can
+        // miss its first executions. Await until every loaded flow is visible in the cache, so tests
+        // never race their own fixtures. Best-effort: a few valid flows never reach the cache (their
+        // queue event fails to deserialize, e.g. task aliases) — they are still persisted, so we
+        // don't fail the fixture on them.
         FlowMetaStoreInterface flowMetaStore = context.getBean(FlowMetaStoreInterface.class);
-        List<FlowWithSource> pending = new ArrayList<>(loadedFlows);
-        waitForFlowsInMetaStore(tenantId, flowMetaStore, pending);
-    }
-
-    private static final Duration METASTORE_WAIT_BUDGET = Duration.ofSeconds(30);
-    private static final Duration METASTORE_WAIT_QUIET_PERIOD = Duration.ofSeconds(3);
-    private static final Duration METASTORE_WAIT_POLL_INTERVAL = Duration.ofMillis(100);
-
-    private static void waitForFlowsInMetaStore(String tenantId, FlowMetaStoreInterface flowMetaStore, List<FlowWithSource> pending) {
-        long deadline = System.nanoTime() + METASTORE_WAIT_BUDGET.toNanos();
-        long lastProgress = System.nanoTime();
-        int lastPendingSize = pending.size();
-
-        while (!pending.isEmpty() && System.nanoTime() < deadline) {
-            pending.removeIf(flow -> flowMetaStore.allLastVersion().stream()
-                .anyMatch(
-                    cached -> tenantId.equals(cached.getTenantId())
-                        && cached.getNamespace().equals(flow.getNamespace())
-                        && cached.getId().equals(flow.getId())
-                        && cached.getRevision().equals(flow.getRevision())
-                )
-            );
-
-            if (pending.size() < lastPendingSize) {
-                lastPendingSize = pending.size();
-                lastProgress = System.nanoTime();
-            } else if (System.nanoTime() - lastProgress > METASTORE_WAIT_QUIET_PERIOD.toNanos()) {
-                // The cache stopped catching up: the remaining flows are unlikely to ever surface.
-                break;
-            }
-
-            if (!pending.isEmpty()) {
-                try {
-                    Thread.sleep(METASTORE_WAIT_POLL_INTERVAL.toMillis());
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-            }
-        }
-
-        if (!pending.isEmpty()) {
-            log.warn(
-                "{} loaded flow(s) never appeared in the flow metastore cache (e.g. flows whose queue event fails to deserialize, such as task aliases); they are still persisted, proceeding: {}",
-                pending.size(),
-                pending.stream().map(flow -> flow.getNamespace() + "." + flow.getId()).toList()
-            );
+        try {
+            await().atMost(Duration.ofSeconds(10)).until(() -> {
+                Collection<FlowWithSource> cached = flowMetaStore.allLastVersion();
+                return loadedFlows.stream().allMatch(flow -> cached.stream().anyMatch(
+                    c -> tenantId.equals(c.getTenantId())
+                        && c.getNamespace().equals(flow.getNamespace())
+                        && c.getId().equals(flow.getId())
+                        && c.getRevision().equals(flow.getRevision())
+                ));
+            });
+        } catch (ConditionTimeoutException ignored) {
+            // Best-effort — some loaded flows never reach the cache (see above); they are persisted.
         }
     }
 

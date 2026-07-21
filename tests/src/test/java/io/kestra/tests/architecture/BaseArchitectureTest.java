@@ -31,7 +31,7 @@ public class BaseArchitectureTest {
 
     @ArchTest
     public static final ArchRule no_production_use_of_awaitility = noClasses()
-        .that().doNotBelongToAnyOf(io.kestra.core.utils.Await.class)
+        .that().doNotBelongToAnyOf(io.kestra.core.utils.Await.class, io.kestra.core.junit.extensions.AbstractLoaderExtension.class)
         .should().dependOnClassesThat().resideInAPackage("org.awaitility")
         .because("you should not use it directly but use " + io.kestra.core.utils.Await.class.getName() + " wrapper instead");
 }

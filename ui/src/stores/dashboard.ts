@@ -92,7 +92,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         // TenantController is hardcoded to the "main" tenant (this OSS build is single-tenant),
         // and its `id` path param isn't the SDK's auto-filled `tenant` param, so it must be passed
         // explicitly here to match.
-        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboards({id: "main", ...def})
+        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboard({id: "main", ...def} as Parameters<typeof TenantsAPI.setTenantDefaultDashboard>[0])
     }
 
     const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]

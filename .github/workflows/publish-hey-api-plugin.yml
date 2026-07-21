@@ -1,0 +1,88 @@
+name: Publish hey-api-plugin
+
+# Manually-triggered publish of @kestra-io/hey-api-plugin to npm. Intentionally decoupled from any
+# OpenAPI spec change or SDK regeneration: the shared generator plugin has its own release cadence,
+# and the OSS/EE SDKs consume it as a workspace dependency (only client-sdk consumes the published
+# npm build).
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: Version increment
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      skip-test:
+        description: "Skip typecheck"
+        required: false
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "false"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.18
+          cache: npm
+          registry-url: https://registry.npmjs.org
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        if: inputs.skip-test != 'true'
+        run: npm run typecheck --workspace @kestra-io/hey-api-plugin
+
+      - name: Build
+        run: npm run build --workspace @kestra-io/hey-api-plugin
+
+      - name: Discard workspace changes (tsdown may touch package.json exports)
+        run: git reset --hard HEAD
+
+      - name: Bump version from the latest published on npm
+        run: |
+          publishedVersion=$(npm view @kestra-io/hey-api-plugin version --registry https://registry.npmjs.org || echo "0.0.0")
+          echo "Latest published version: $publishedVersion"
+          npm pkg set --workspace @kestra-io/hey-api-plugin version=$publishedVersion
+          newVersion=$(npm version ${{ inputs.increment }} --workspace @kestra-io/hey-api-plugin --no-git-tag-version)
+          echo "New version: $newVersion"
+
+      - name: Read new version
+        id: version
+        run: echo "value=$(npm pkg get version --workspace @kestra-io/hey-api-plugin | jq -r '.\"@kestra-io/hey-api-plugin\"')" >> $GITHUB_OUTPUT
+
+      - name: Commit and tag
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "hey-api-plugin/v${{ steps.version.outputs.value }}"
+          git push --tags
+
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Publish to npm
+        run: npm publish --workspace @kestra-io/hey-api-plugin --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

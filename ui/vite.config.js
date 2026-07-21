@@ -67,6 +67,13 @@ export default defineConfig(({mode}) => {
                     ws: true,
                     changeOrigin: true,
                 },
+                // Lets @kestra-io/kestra-sdk's dev-only staleness check reach the backend's served
+                // OpenAPI spec (${context-path}/swagger/kestra.yml) to compare its hash. Dev-only;
+                // the check itself is tree-shaken from production builds.
+                "^/swagger": {
+                    target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
+                    changeOrigin: true,
+                },
             },
         },
         resolve: {

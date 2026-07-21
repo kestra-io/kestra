@@ -19,6 +19,14 @@
                 </li>
             </ol>
             <KsText v-else size="small" class="proposed-action-summary">{{ action.summary }}</KsText>
+
+            <!-- Identifying arguments (namespace/flowId, executionId, …) so the user sees the target. -->
+            <dl v-if="argEntries.length" class="proposed-action-args" data-test="copilot-proposed-args">
+                <div v-for="[key, value] in argEntries" :key="key" class="proposed-action-arg">
+                    <dt class="proposed-action-arg-key">{{ key }}</dt>
+                    <dd class="proposed-action-arg-value">{{ value }}</dd>
+                </div>
+            </dl>
         </div>
 
         <div class="proposed-action-footer">
@@ -68,6 +76,22 @@
     const title = computed(
         () => props.action.title ?? t(isPlan.value ? "ai.copilot.confirm.planTitle" : "ai.copilot.confirm.actionTitle"),
     )
+
+    /** Longest scalar arg we'll show inline — anything above is a verbose payload (e.g. a YAML body). */
+    const MAX_ARG_LENGTH = 120
+
+    /**
+     * The identifying arguments to show under the summary, so the user sees exactly what will run
+     * (e.g. namespace/flowId, executionId). Scalars only — objects/arrays and long values (YAML/source
+     * bodies) are omitted to keep the card compact. Empty for plan cards (no concrete tool call).
+     */
+    const argEntries = computed<[string, string][]>(() => {
+        if (isPlan.value || !props.action.arguments) return []
+        return Object.entries(props.action.arguments)
+            .filter(([, value]) => typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+            .map(([key, value]) => [key, String(value)] as [string, string])
+            .filter(([, value]) => value.length > 0 && value.length <= MAX_ARG_LENGTH)
+    })
 </script>
 
 <style scoped>
@@ -116,6 +140,33 @@
         display: block;
         white-space: pre-line;
         --kel-text-color: var(--ks-text-secondary);
+    }
+
+    .proposed-action-args {
+        margin: var(--ks-spacing-2) 0 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-1);
+    }
+
+    .proposed-action-arg {
+        display: flex;
+        gap: var(--ks-spacing-2);
+        font-size: var(--ks-font-size-xs);
+    }
+
+    .proposed-action-arg-key {
+        flex: 0 0 auto;
+        min-width: 5rem;
+        color: var(--ks-text-secondary);
+    }
+
+    .proposed-action-arg-value {
+        margin: 0;
+        min-width: 0;
+        font-family: var(--font-family-monospace, monospace);
+        color: var(--ks-text-primary);
+        word-break: break-word;
     }
 
     .proposed-action-steps {

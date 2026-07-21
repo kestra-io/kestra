@@ -1,10 +1,12 @@
 /**
  * Wire types for the AI Copilot v2 agentic loop.
  *
- * These mirror the backend DTOs on branch `feat/ai-copilot-v2-agentic-loop`:
- *   - io.kestra.webserver.services.ai.agent.dto.AgentDtos
- *   - io.kestra.webserver.services.ai.agent.dto.AgentEvents
- *   - io.kestra.webserver.services.ai.agent.domain.{Mode,ThreadStatus,ScopeBinding,ToolCall,...}
+ * These mirror the backend types on branch `feat/ai-copilot-v2-agentic-loop`:
+ *   - io.kestra.webserver.services.ai.agent.data.{ApiChatTurnRequest, ApiThreadDetail, ApiThreadSummary, AgentEvents}
+ *   - io.kestra.core.ai.agent.models.{AgentMode, AgentThreadStatus, AgentToolCall, …}
+ *
+ * (ScopeBinding is now frontend-local — used by routeScope.ts to build the free-form
+ * `additionalContext`; the backend no longer has a structured in-focus type.)
  *
  * Keep this file in sync with those records — it is the single source of truth
  * for the shapes the frontend exchanges with `…/ai/threads`.

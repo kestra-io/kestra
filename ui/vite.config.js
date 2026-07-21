@@ -195,6 +195,7 @@ export default defineConfig(({mode}) => {
                 "moment",
                 "moment-timezone",
                 "moment-range",
+                "vue-gtag",
                 "dagre",
                 "@vue-flow/background",
                 "@vue-flow/controls",

@@ -1,7 +1,7 @@
 {
   "name": "@kestra-io/hey-api-plugin",
   "version": "0.0.1",
-  "description": "Kestra's shared @hey-api/openapi-ts plugin. Generates tenant-aware, human-friendly SDK wrappers from a Kestra OpenAPI spec. Single source of truth used by the OSS UI SDK, the EE UI SDK, and the client-sdk repo.",
+  "description": "Kestra's shared SDK tooling. Ships two entry points: the '.' entry is the @hey-api/openapi-ts generator plugin (generation-time); the './runtime' entry is createConfigureClient, the universal axios setup every Kestra SDK ships. Single source of truth used by the OSS UI SDK, the EE UI SDK, and the client-sdk repo.",
   "license": "Apache-2.0",
   "type": "module",
   "publishConfig": {
@@ -11,12 +11,16 @@
     "dist",
     "scripts"
   ],
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
-      "default": "./dist/index.mjs"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "default": "./dist/runtime.js"
     }
   },
   "bin": {
@@ -28,11 +32,21 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {
-    "@hey-api/openapi-ts": ">=0.97.0"
+    "@hey-api/openapi-ts": ">=0.97.0",
+    "axios": ">=1"
+  },
+  "peerDependenciesMeta": {
+    "@hey-api/openapi-ts": {
+      "optional": true
+    },
+    "axios": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.97.3",
     "@types/node": "^26.1.1",
+    "axios": "^1.16.1",
     "tsdown": "^0.22.0",
     "typescript": "^6.0.3"
   }

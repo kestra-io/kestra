@@ -1,9 +1,17 @@
 # @kestra-io/hey-api-plugin
 
-The **single, shared** [`@hey-api/openapi-ts`](https://heyapi.dev/) plugin used to generate every
-Kestra JS/TS SDK. It turns a Kestra OpenAPI spec into tenant-aware, human-friendly SDK wrapper
-functions (stable, readable method names — grouped per tag — that transparently inject the current
-tenant into the request path).
+The **single, shared** package behind every Kestra JS/TS SDK. It ships **two entry points**, one per
+lifecycle:
+
+| Import | Entry | Lifecycle | For |
+|--------|-------|-----------|-----|
+| `@kestra-io/hey-api-plugin` | codegen | generation-time (`devDependency`) | the [`@hey-api/openapi-ts`](https://heyapi.dev/) plugin — turns a Kestra OpenAPI spec into tenant-aware, human-friendly SDK wrappers (stable per-tag method names that inject the current tenant into the path) |
+| `@kestra-io/hey-api-plugin/runtime` | runtime | shipped in the SDK bundle | `createConfigureClient(client)` — the universal axios setup every Kestra SDK needs (Content-Type/Accept fixes, the QueryFilter query serializer, Blob/string error normalization) |
+
+The two are deliberately separate: the codegen entry is used only while generating, the runtime entry
+is what runs in the browser. `createConfigureClient` is the "useful for everyone" half of the old
+hand-written `src/index.ts`; the app-only half (the `useClient`/`setMockClient` singleton) stays in
+the apps, not here.
 
 ## Why this package exists
 

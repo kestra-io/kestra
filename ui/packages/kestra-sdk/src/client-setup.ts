@@ -1,167 +1,18 @@
-import axios from "axios"
-import type { AxiosRequestConfig, AxiosError, AxiosInstance } from "axios"
+import type { AxiosInstance } from "axios"
 
-// Shared axios client setup, generic over any hey-api-generated `client` singleton.
-// `@hey-api/client-axios` isn't an external runtime dependency — the plugin vendors a
-// fully self-contained `./openapi/client/` folder into each package's own generated
-// output, so there is no single "Client" type to import from a shared location.
-// createConfigureClient is generic instead: TypeScript infers the exact per-package
-// Client/Config type from whatever `client` singleton is passed in at the call site
-// (see kestra-ee/ui-ee/packages/kestra-sdk/src/index.ts, which imports this same file
-// by relative path and binds it to its own generated client). Each package still
-// bundles its own copy at build time (tsdown inlines this file into that package's own
-// dist), so there's no shared runtime state between packages — only the source is shared.
-
-function canBeJsonified(str: any): boolean {
-    if (typeof str !== "string" && typeof str !== "object") return false;
-    try {
-        const type = str.toString();
-        return type === "[object Object]" || type === "[object Array]";
-    } catch {
-        return false;
-    }
-}
-
-function serializeQueryValue(val: unknown) {
-    if (canBeJsonified(val)) {
-        return JSON.stringify(val);
-    }
-    return val?.toString();
-}
-
-export function createConfigureClient<TClient extends { setConfig: (config: any) => unknown }>(client: TClient) {
-    return function configureClient(
-        clientConfig: Parameters<TClient["setConfig"]>[0] = {},
-        axiosConfig: AxiosRequestConfig = {},
-    ) {
-        const instance = axios.create(axiosConfig)
-
-        instance.interceptors.request.use((config) => {
-            // Axios omits Content-Type for body-less requests, which causes servers that
-            // expect application/json (e.g. Kestra) to reject them with 401/415.
-            // Force application/json for POST/PUT/PATCH when the body is strictly absent.
-            const method = config.method?.toLowerCase()
-            if (method === "post" || method === "put" || method === "patch") {
-                if (config.data == null) {
-                    config.headers["Content-Type"] = "application/json"
-                }
-            }
-
-            // hey-api sets responseType:'blob'/'text' so Axios decodes the response body
-            // correctly, but does NOT set the Accept request header. Without an explicit
-            // Accept header, Kestra performs content negotiation and may return 404 when
-            // it finds no handler matching the client's implicit "Accept: application/json".
-            // Note: Axios injects a default "application/json, text/plain, */*" Accept header,
-            // so we must override whenever responseType indicates a non-JSON response — not
-            // only when the header is absent.
-            const axiosDefaultAccept = "application/json, text/plain, */*"
-            const currentAccept = config.headers["Accept"]
-            const hasCustomAccept = currentAccept && currentAccept !== axiosDefaultAccept
-            if (!hasCustomAccept) {
-                if (config.responseType === "blob") {
-                    config.headers["Accept"] = "application/octet-stream, text/plain, */*"
-                } else if (config.responseType === "text") {
-                    config.headers["Accept"] = "text/csv, text/plain, text/json, application/json"
-                }
-            }
-            return config
-        })
-
-        client.setConfig({
-            axios: instance,
-            querySerializer(query: Record<string, any>) {
-                const queryParameters = new URLSearchParams();
-                for (const key in query) {
-                    const param = query[key];
-                    if (query[key] === undefined) {
-                        continue
-                    }
-                    const looksLikeQueryFilterArray =
-                        Array.isArray(param) &&
-                        param.length > 0 &&
-                        typeof param[0] === "object" &&
-                        param[0] != null &&
-                        "field" in param[0] &&
-                        "operation" in param[0] &&
-                        "value" in param[0];
-
-                    if (looksLikeQueryFilterArray) {
-                        for (const qf of param) {
-                            const keyField = String(qf.field);
-                            const op = String(qf.operation);
-
-                            if (
-                                typeof qf.value === "object" &&
-                                qf.value != null &&
-                                !Array.isArray(qf.value)
-                            ) {
-                                for (const [k, v] of Object.entries(qf.value)) {
-                                    const ser = serializeQueryValue(v);
-                                    if (ser !== undefined) {
-                                        queryParameters.append(`filters[${keyField}][${op}][${k}]`, ser);
-                                    }
-                                }
-                            } else {
-                                const ser = serializeQueryValue(
-                                    qf.value,
-                                );
-                                if (ser !== undefined) {
-                                    queryParameters.append(`filters[${keyField}][${op}]`, ser);
-                                }
-                            }
-                        }
-                    } else if (param instanceof Array) {
-                        param.forEach((value: any) => {
-                            const ser = serializeQueryValue(value)
-                            if (ser !== undefined) {
-                                queryParameters.append(key, ser);
-                            }
-                        });
-                    } else {
-                        const ser = serializeQueryValue(param)
-                        if (ser !== undefined) {
-                            queryParameters.append(key, ser);
-                        }
-                    }
-                }
-                return queryParameters.toString();
-            },
-            ...clientConfig,
-        })
-
-        // When responseType:'blob' is set (e.g. for AI generate endpoints that return YAML),
-        // Axios may parse the error response body as a Blob (browser) or raw string (Node.js)
-        // instead of JSON, hiding the real server error message. Normalise it so callers see
-        // the actual error object (e.g. { message: "BAD_REQUEST: ..." }) in both environments.
-        instance.interceptors.response.use(undefined, async (error: AxiosError) => {
-            if (error.response?.data instanceof Blob) {
-                const text = await (error.response.data as Blob).text()
-                try {
-                    error.response.data = JSON.parse(text)
-                } catch {
-                    error.response.data = text
-                }
-            } else if (typeof error.response?.data === 'string' && error.response.data.length > 0) {
-                try {
-                    error.response.data = JSON.parse(error.response.data)
-                } catch {
-                    // not JSON, leave as-is
-                }
-            }
-            return Promise.reject(error)
-        })
-
-        instance.defaults.paramsSerializer = {
-            indexes: null
-        };
-
-        axiosInstance = instance
-
-        return instance
-    }
-}
+// App-only (OSS/EE) singleton + accessors for "the current configured client".
+//
+// Block-1 — the universal axios setup (createConfigureClient) — now lives in
+// @kestra-io/hey-api-plugin/runtime and is shared by every SDK. This file is the other half the
+// user identified: the app's global-instance convenience + test seam. It is intentionally NOT part
+// of the shared package or the public SDK — only the apps use useClient() / setMockClient().
 
 let axiosInstance: AxiosInstance | null = null;
+
+/** Record the instance built by configureClient so useClient() can return it. */
+export function rememberInstance(instance: AxiosInstance) {
+    axiosInstance = instance;
+}
 
 /**
  * Set a mock instance of axios controlled in tests

@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Nieprawidłowy kod źródłowy",
+    "invalid duration": "Nieprawidłowy format czasu trwania. Proszę użyć ISO 8601 (np. PT30M, P1D).",
     "missingSource": "Brak źródła",
     "update": "Aktualizuj",
     "update ok": "jest zaktualizowany",
@@ -35,7 +36,8 @@
     "Default page": "Domyślna strona",
     "confirmation": "Potwierdzenie",
     "common": {
-      "back": "Wstecz"
+      "back": "Wstecz",
+      "openInNewTab": "Otwórz w nowej karcie"
     },
     "delete confirm": "Czy na pewno chcesz usunąć <code>{name}</code>?",
     "outdated revision save confirmation": {
@@ -113,6 +115,7 @@
     "prev_execution": "Poprzednia wykonanie",
     "next_execution": "Następne wykonanie",
     "datepicker": {
+      "invalid duration": "Nieprawidłowy format czasu trwania. Proszę użyć ISO 8601 (np. PT30M, P1D).",
       "leave empty for infinite": "Pozostaw puste dla nieskończonego czasu trwania lub wpisz czas trwania w formacie ISO 8601 (przykład: 'P1DT1H1M1S)'",
       "duration example": "Przykład: 'P1DT1H1M1S'",
       "error": "Nieprawidłowy format czasu trwania, musi być w formacie ISO 8601 (np. P1DT1H1M1S)",
@@ -325,9 +328,9 @@
     "no metrics available": "Brak zarejestrowanych metryk dla tego uruchomienia task.",
     "no outputs available": "Brak dostępnych outputów dla tego uruchomienia task.",
     "outputs": "Wyjścia",
-    "flow_outputs": "Wyjścia Flow",
-    "no_flow_outputs": "Brak dostępnych outputów.",
+    "flow_inputs": "Wejścia Flow",
     "output": "Wyjście",
+    "flow_outputs": "Wyjścia Flow",
     "eval": {
       "title": "Debugowanie Wyrażenia",
       "render": "Renderuj Wyrażenie",
@@ -690,7 +693,6 @@
     "taskid column details": "Ostatni task wykonywany i liczba jego prób.",
     "flow already exists": "Flow już istnieje",
     "flow already exists message": "Flow <code>{id}</code> już istnieje w namespace <code>{namespace}</code>. Czy chcesz utworzyć nową wersję?",
-    "plugin_default_already_exists": "Domyślna wtyczka dla <code>{type}</code> już istnieje.",
     "namespace not allowed": "Namespace niedozwolony",
     "switch-view": "Przełącz widok",
     "source and topology": "Źródło i topologia",
@@ -1190,6 +1192,12 @@
         "title": "Dodaj niestandardowe Blueprints",
         "message": "W Kestra Enterprise Edition możesz tworzyć niestandardowe Blueprints dostępne tylko dla Twojej organizacji. Możesz ich używać jako szablonów najlepszych praktyk do udostępniania, centralizowania i dokumentowania często używanych workflow w Twoim zespole."
       },
+      "policies": {
+        "header": "Zasady Zarządzania",
+        "label": "Polityki",
+        "message": "Polityki pozwalają zespołom platformy centralnie zarządzać i egzekwować zasady we wszystkich flow — wstrzykiwać współdzielone wartości domyślne, blokować wtyczki, ograniczać wartości właściwości i wymagać etykiet zgodności. Zasady mają zastosowanie na poziomie dzierżawcy lub namespace ze stopniowym wdrażaniem, a każda wstrzyknięta lub zastąpiona wartość pozostaje widoczna dla autorów flow.",
+        "title": "Zarządzaj każdym flow Politykami"
+      },
       "namespace": {
         "edit": {
           "title": "Ulepsz zarządzanie Namespace",
@@ -1207,9 +1215,9 @@
           "title": "Centralnie Zarządzaj Swoimi Zmiennymi",
           "message": "W Kestra Enterprise Edition możesz definiować i zarządzać zmiennymi na poziomie namespace, aby wyeliminować powtarzające się konfiguracje w różnych flow. Te zmienne zapewniają spójność, upraszczają aktualizacje konfiguracji i mogą być łatwo odwoływane przez dowolny task lub trigger, co prowadzi do czystszych i łatwiejszych w utrzymaniu workflow."
         },
-        "plugin-defaults": {
-          "title": "Standaryzuj konfigurację za pomocą domyślnych ustawień Pluginów",
-          "message": "W Kestra Enterprise Edition możesz ustawić domyślne wtyczki specyficzne dla namespace, co zmniejsza potrzebę powielania konfiguracji w każdym flow. To centralne zarządzanie wtyczkami zapewnia spójne konfiguracje, umożliwia bezpieczne odwoływanie się do sekretów lub zmiennych oraz upraszcza utrzymanie twoich workflow."
+        "policies": {
+          "title": "Wymuszaj Zasady Zarządzania W Obrębie Tego Namespace",
+          "message": "W Kestra Enterprise Edition, Zasady pozwalają definiować reguły, które mają zastosowanie do każdego flow w tym namespace i jego potomnych — wstrzykiwać współdzielone wartości domyślne, ograniczać wartości właściwości, blokować pluginy i wymagać labeli zgodności, przy czym każda zmiana jest w pełni widoczna dla autorów flow."
         },
         "history": {
           "title": "Zarządzaj historią wersji w jednym miejscu",
@@ -1385,26 +1393,6 @@
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
     "system_namespace": "Zachowaj kontrolę nad swoją platformą dzięki systemowym flows.",
     "system_namespace_description": "Automatyzuj zadania konserwacyjne, od alertów o awariach po automatyczne czyszczenie.",
-    "pluginDefaults": {
-      "title": "Domyślne ustawienia wtyczki",
-      "add": "Dodaj Domyślną Wtyczkę",
-      "edit": "Edytuj domyślny plugin",
-      "add_subtitle": "Skonfiguruj nową domyślną wtyczkę z jej właściwościami",
-      "edit_subtitle": "Zmodyfikuj domyślną konfigurację istniejącej wtyczki",
-      "predefined": "Wstępnie zdefiniowana wtyczka",
-      "custom": "Wtyczka niestandardowa",
-      "form": "Formularz",
-      "yaml": "YAML",
-      "select_predefined": "Wybierz Wstępnie Zdefiniowaną Wtyczkę",
-      "cancel": "Anuluj",
-      "update": "Aktualizuj domyślną wtyczkę",
-      "custom_type": "Niestandardowy typ wtyczki",
-      "custom_placeholder": "Wprowadź typ pluginu",
-      "use_custom": "Użyj niestandardowego",
-      "custom_configure": "Niestandardowy typ wtyczki - konfiguruj za pomocą YAML",
-      "yaml_configuration": "Konfiguracja YAML",
-      "show_yaml": "Pokaż YAML"
-    },
     "secret": {
       "add": "Utwórz",
       "update": "Aktualizuj sekret '{name}'",
@@ -1524,6 +1512,7 @@
     "documentationMenu": "Menu dokumentacji",
     "item": "element",
     "items": "elementy",
+    "iterations": "Iteracje",
     "cron": "Kron",
     "execution_started": "Rozpoczęto wykonanie!",
     "execution_failed": "Wykonanie nie powiodło się!",
@@ -1626,8 +1615,7 @@
         "triggers": "Triggery",
         "errors": "Obsługa błędów",
         "afterExecution": "Po wykonaniu",
-        "finally": "Na koniec",
-        "pluginDefaults": "Domyślne ustawienia Pluginów"
+        "finally": "Na koniec"
       },
       "fields": {
         "main": {
@@ -1659,7 +1647,6 @@
         "triggers": "Wybierz trigger",
         "errors": "Wybierz task",
         "finally": "Wybierz task",
-        "pluginDefaults": "Wybierz plugin",
         "afterExecution": "Wybierz task",
         "conditions": "Wybierz warunek",
         "inputs": "Wybierz typ pola input",
@@ -1673,7 +1660,6 @@
         "triggers": "Dodaj trigger",
         "errors": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
-        "pluginDefaults": "Dodaj domyślny plugin",
         "afterExecution": "Dodaj blok po wykonaniu",
         "conditions": "Dodaj warunek",
         "inputs": "Dodaj pole input",
@@ -1790,10 +1776,6 @@
       "concurrency_limits": {
         "title": "Nie ustawiono limitów współbieżności.",
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limitach Równoczesności</a></strong> w naszej dokumentacji."
-      },
-      "pluginDefaults": {
-        "title": "Nie masz jeszcze domyślnych pluginów!",
-        "content": "Domyślne ustawienia Pluginów pozwalają centralnie zarządzać konfiguracją pluginów i udostępniać ją wszystkim flow w twoim namespace."
       },
       "variables": {
         "title": "Jeszcze brak zmiennych",

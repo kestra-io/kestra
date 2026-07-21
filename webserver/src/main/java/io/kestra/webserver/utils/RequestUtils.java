@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.kestra.core.models.flows.FlowScope;
+import io.kestra.core.utils.TypeConverter;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -58,7 +59,7 @@ public class RequestUtils {
             .map(valueStr ->
             {
                 try {
-                    return FlowScope.valueOf(valueStr.toUpperCase());
+                    return TypeConverter.toEnum(valueStr, FlowScope.class);
                 } catch (IllegalArgumentException e) {
                     throw new IllegalArgumentException("Invalid FlowScope value: " + valueStr, e);
                 }

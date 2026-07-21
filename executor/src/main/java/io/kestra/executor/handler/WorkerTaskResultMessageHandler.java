@@ -21,19 +21,28 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<WorkerTaskResult> {
-    @Inject
-    private ExecutionStateStore executionStateStore;
+    private final ExecutionStateStore executionStateStore;
+
+    private final ExecutorService executorService;
+
+    private final FlowMetaStoreInterface flowMetaStore;
+
+    private final KillSwitchService killSwitchService;
+    private final KillSwitchActionService killSwitchActionService;
 
     @Inject
-    private ExecutorService executorService;
-
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
-
-    @Inject
-    private KillSwitchService killSwitchService;
-    @Inject
-    private KillSwitchActionService killSwitchActionService;
+    public WorkerTaskResultMessageHandler(
+        ExecutionStateStore executionStateStore,
+        ExecutorService executorService,
+        FlowMetaStoreInterface flowMetaStore,
+        KillSwitchService killSwitchService,
+        KillSwitchActionService killSwitchActionService) {
+        this.executionStateStore = executionStateStore;
+        this.executorService = executorService;
+        this.flowMetaStore = flowMetaStore;
+        this.killSwitchService = killSwitchService;
+        this.killSwitchActionService = killSwitchActionService;
+    }
 
     @Override
     public Optional<ExecutorContext> handle(WorkerTaskResult message) {

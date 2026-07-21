@@ -12,11 +12,40 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.runners.IndexingRepository;
 import io.kestra.plugin.core.dashboard.data.Logs;
 
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 
 public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, QueryBuilderInterface<Logs.Fields>, Plugin {
+    /**
+     * Whether this log store supports on-demand deletion of log entries ({@code purge}/{@code deleteByQuery}/{@code deleteByFilters}).
+     * <p>
+     * Backends whose entries can only expire via retention/TTL (e.g. GCP Cloud Logging) return {@code false}.
+     * When {@code false}, all purge/delete methods must no-op and return {@code 0}, and must NOT call
+     * {@link io.kestra.core.repositories.log.LogDataStoreAccessControl#onDeleteByQuery} — otherwise a delete
+     * audit event would be published for a deletion that never happened. Callers already tolerate a {@code 0} result.
+     *
+     * @return {@code true} by default.
+     */
+    default boolean canPurge() {
+        return true;
+    }
+
+    /**
+     * How this log store paginates its {@link Page}-returning finds — {@link PaginationType#OFFSET}
+     * (random-access pages with an exact total; the default for JDBC/Elasticsearch) or
+     * {@link PaginationType#CURSOR} (forward-only cursor with no total, for stateless external stores).
+     * <p>
+     * The mode must be advertised independently of any single response because the UI cannot guarantee its first
+     * request is page 1 (it deep-links/restores page N).
+     *
+     * @return {@link PaginationType#OFFSET} by default.
+     */
+    default PaginationType paginationType() {
+        return PaginationType.OFFSET;
+    }
+
     /**
      * Finds all the log entries for the given tenant, execution and min log-level.
      * <p>
@@ -41,7 +70,7 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
      */
     List<LogEntry> findByExecutionIdWithoutAcl(String tenantId, String executionId, Level minLevel);
 
-    ArrayListTotal<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, Pageable pageable);
+    Page<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, Pageable pageable);
 
     /**
      * This method is the same as {@link #findByExecutionId(String, String, Level)} but with
@@ -55,7 +84,7 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
 
     List<LogEntry> findByExecutionIdAndTaskIdWithoutAcl(String tenantId, String executionId, String taskId, Level minLevel);
 
-    ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, Pageable pageable);
+    Page<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, Pageable pageable);
 
     /**
      * This method is the same as {@link #findByExecutionIdAndTaskId(String, String, String, Level)} but with
@@ -69,15 +98,15 @@ public interface LogDataStoreInterface extends IndexingRepository<LogEntry>, Que
 
     List<LogEntry> findByExecutionIdAndTaskRunIdWithoutAcl(String tenantId, String executionId, String taskRunId, Level minLevel);
 
-    ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel, Pageable pageable);
+    Page<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel, Pageable pageable);
 
     List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt);
 
     List<LogEntry> findByExecutionIdAndTaskRunIdAndAttemptWithoutAcl(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt);
 
-    ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable);
+    Page<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable);
 
-    ArrayListTotal<LogEntry> find(
+    Page<LogEntry> find(
         Pageable pageable,
         @Nullable String tenantId,
         List<QueryFilter> filters);

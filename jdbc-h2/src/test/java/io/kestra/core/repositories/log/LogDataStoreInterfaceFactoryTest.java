@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * <p>
  * Lives in the {@code jdbc-h2} module so at least one log store ({@code H2LogDataStore}) is on the
  * classpath and discoverable via the plugin registry. It exercises the factory, not the store —
- * the store's behavior is covered by {@code H2LogRepositoryTest} (the shared repository suite).
+ * the store's behavior is covered by {@code H2LogDataStoreTest} (the shared log data store suite).
  */
 @MicronautTest
 class LogDataStoreInterfaceFactoryTest {

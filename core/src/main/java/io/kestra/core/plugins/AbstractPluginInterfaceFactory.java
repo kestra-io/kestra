@@ -1,14 +1,5 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.models.Plugin;
-import io.kestra.core.serializers.JacksonMapper;
-
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validator;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -16,6 +7,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.models.Plugin;
+import io.kestra.core.serializers.JacksonMapper;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 
 /**
  * Base class for factories that construct a plugin instance selected by a {@code type} configuration
@@ -66,7 +67,7 @@ public abstract class AbstractPluginInterfaceFactory<T> {
      * The returned instance is <b>not</b> initialized — concrete factories perform any init /
      * decoration in their own {@code make(...)}.
      *
-     * @param identifier          the plugin identifier, optionally in the form {@code <id>:<version>}.
+     * @param identifier the plugin identifier, optionally in the form {@code <id>:<version>}.
      * @param pluginConfiguration the plugin configuration. May be {@code null}.
      * @return the validated, uninitialized plugin instance.
      * @throws KestraRuntimeException if no plugin can be found, or the configuration is invalid.

@@ -39,6 +39,7 @@ import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
@@ -97,6 +98,7 @@ import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
 
+import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
@@ -125,6 +127,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -237,8 +240,44 @@ public class ExecutionController {
 
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
+
     @Inject
     private PluginRegistry pluginRegistry;
+
+    @Inject
+    private MetricRegistry metricRegistry;
+
+    private Counter restartCounter;
+    private Counter replayCounter;
+    private Counter pauseCounter;
+    private Counter resumeCounter;
+    private Counter resumeFromBreakpointCounter;
+    private Counter forceRunCounter;
+    private Counter changeStatusCounter;
+    private Counter changeTaskRunStateCounter;
+    private Counter killCounter;
+    private Counter updateLabelsCounter;
+    private Counter unqueueCounter;
+
+    @PostConstruct
+    void initMetrics() {
+        restartCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESTART_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESTART_TOTAL_DESCRIPTION);
+        replayCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_REPLAY_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_REPLAY_TOTAL_DESCRIPTION);
+        pauseCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_PAUSE_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_PAUSE_TOTAL_DESCRIPTION);
+        resumeCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL_DESCRIPTION);
+        resumeFromBreakpointCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL_DESCRIPTION);
+        forceRunCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL_DESCRIPTION);
+        changeStatusCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL_DESCRIPTION);
+        changeTaskRunStateCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_TASKRUN_CHANGE_STATE_TOTAL, MetricRegistry.METRIC_WEBSERVER_TASKRUN_CHANGE_STATE_TOTAL_DESCRIPTION);
+        killCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_KILL_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_KILL_TOTAL_DESCRIPTION);
+        updateLabelsCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_UPDATE_LABELS_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_UPDATE_LABELS_TOTAL_DESCRIPTION);
+        resumeCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL_DESCRIPTION);
+        unqueueCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_UNQUEUE_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_UNQUEUE_TOTAL_DESCRIPTION);
+    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -614,6 +653,7 @@ public class ExecutionController {
         }
 
         final AbstractWebhookTrigger webhook = maybeWebhook.get();
+        this.onWebhookMatched(flow, webhook);
 
         // Webhook context
         var webhookContext = new WebhookContext(
@@ -644,6 +684,15 @@ public class ExecutionController {
 
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
+    }
+
+    /**
+     * Hook invoked once a webhook trigger has been matched against its key, before it is evaluated.
+     * No-op by default; editions may throw to veto the execution creation. Running after key matching
+     * keeps veto details from callers that failed the key check.
+     */
+    protected void onWebhookMatched(Flow flow, AbstractWebhookTrigger webhook) {
+        // no-op
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -733,6 +782,10 @@ public class ExecutionController {
         }
 
         var executionId = IdUtils.create();
+        // Capture the OTel context on the current thread before entering the reactive chain.
+        // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
+        // would return an empty root context since OTel Context is thread-local.
+        final Context otelContext = Context.current();
         return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
             .flatMap(executionInputs ->
             {
@@ -761,13 +814,13 @@ public class ExecutionController {
                     createCommand = createCommand.withStateType(State.Type.FAILED);
                 }
 
-                // inject the traceparent from the current OTel context into the command so it's propagated to the execution
+                // inject the traceparent from the captured OTel context into the command so it's propagated to the execution
                 // TODO see if we can replicate ExecutionTextMapSetter logic
                 Map<String, String> traceCarrier = new HashMap<>();
                 openTelemetry
                     .map(OpenTelemetry::getPropagators)
                     .map(ContextPropagators::getTextMapPropagator)
-                    .ifPresent(propagator -> propagator.inject(Context.current(), traceCarrier, Map::put));
+                    .ifPresent(propagator -> propagator.inject(otelContext, traceCarrier, Map::put));
                 if (traceCarrier.containsKey("traceparent")) {
                     createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
                 }
@@ -1071,6 +1124,8 @@ public class ExecutionController {
             );
         }
 
+        this.restartCounter.increment();
+
         return awaitBlockingAction(
             executionId, "Restart",
             operationId -> executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId))
@@ -1125,6 +1180,8 @@ public class ExecutionController {
                     .build()
             );
         }
+
+        this.restartCounter.increment(executions.size());
 
         return submitBatchAction(
             executions,
@@ -1230,6 +1287,8 @@ public class ExecutionController {
 
         var newExecutionId = IdUtils.create();
 
+        this.replayCounter.increment();
+
         AsyncOperationProcessedEvent processed;
         try {
             processed = asyncOperationWaiter.submitAndWait(
@@ -1333,6 +1392,8 @@ public class ExecutionController {
             throw new ConflictException("Cannot change task run state: execution must be terminated and not killed.");
         }
 
+        this.changeTaskRunStateCounter.increment();
+
         return awaitBlockingAction(
             executionId, "Change task run state",
             operationId -> executionCommandQueue.emit(ChangeTaskRunState.from(execution, stateRequest.taskRunId(), stateRequest.state()).withOperationId(operationId))
@@ -1361,6 +1422,8 @@ public class ExecutionController {
         if (!execution.getState().canChangeStatus()) {
             throw new ConflictException("Cannot change execution state: execution must be terminated and not killed.");
         }
+
+        this.changeStatusCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Change status",
@@ -1420,6 +1483,8 @@ public class ExecutionController {
             );
         }
 
+        this.changeStatusCounter.increment(executions.size());
+
         return submitBatchAction(
             executions,
             (execution, opId) -> executionCommandQueue.emit(UpdateStatus.from(execution, newStatus).withOperationId(opId))
@@ -1458,6 +1523,8 @@ public class ExecutionController {
         if (maybeExecution.isEmpty()) {
             return Mono.just(HttpResponse.notFound());
         }
+
+        this.killCounter.increment();
 
         var execution = maybeExecution.get();
 
@@ -1544,6 +1611,8 @@ public class ExecutionController {
             );
         }
 
+        this.killCounter.increment(executions.size());
+
         return submitBatchAction(executions, (execution, opId) ->
         {
             eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
@@ -1603,6 +1672,8 @@ public class ExecutionController {
     protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution, Flow flow) {
         io.kestra.plugin.core.flow.Pause.Resumed resumed = createResumed();
 
+        this.resumeCounter.increment();
+
         return this.executionService.readInputs(execution, flow, inputs)
             .flatMap(
                 resumeInputs -> awaitBlockingAction(
@@ -1632,6 +1703,8 @@ public class ExecutionController {
         if (ListUtils.isEmpty(execution.getBreakpoints())) {
             throw new ConflictException("Cannot resume execution: no breakpoint defined.");
         }
+
+        this.resumeFromBreakpointCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Resume from breakpoint",
@@ -1696,6 +1769,8 @@ public class ExecutionController {
             );
         }
 
+        this.resumeCounter.increment(executions.size());
+
         return submitBatchAction(
             executions,
             (execution, opId) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId))
@@ -1728,6 +1803,8 @@ public class ExecutionController {
         if (!execution.getState().isRunning()) {
             throw new ConflictException("Cannot pause execution: execution is not running.");
         }
+
+        this.pauseCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Pause",
@@ -1781,6 +1858,8 @@ public class ExecutionController {
                     .build()
             );
         }
+
+        this.pauseCounter.increment(executions.size());
 
         return submitBatchAction(
             executions,
@@ -1872,6 +1951,8 @@ public class ExecutionController {
                     .build()
             );
         }
+
+        this.replayCounter.increment(executions.size());
 
         return submitBatchAction(executions, (execution, opId) ->
         {
@@ -2068,6 +2149,8 @@ public class ExecutionController {
 
         List<Label> mergedLabels = mergeSystemLabels(execution, labels);
 
+        this.updateLabelsCounter.increment();
+
         return awaitBlockingAction(
             executionId, "Set labels",
             operationId -> executionCommandQueue.emit(UpdateLabels.from(execution, mergedLabels).withOperationId(operationId))
@@ -2145,6 +2228,8 @@ public class ExecutionController {
             );
         }
 
+        this.updateLabelsCounter.increment(executions.size());
+
         return submitBatchAction(executions, (execution, opId) ->
         {
             List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
@@ -2186,6 +2271,8 @@ public class ExecutionController {
         if (execution.getState().getCurrent() != State.Type.QUEUED) {
             throw new ConflictException("Cannot unqueue execution: only QUEUED executions can be unqueued.");
         }
+
+        this.unqueueCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Unqueue",
@@ -2241,6 +2328,8 @@ public class ExecutionController {
             );
         }
 
+        this.unqueueCounter.increment(executions.size());
+
         return submitBatchAction(
             executions,
             (execution, opId) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(opId))
@@ -2276,6 +2365,8 @@ public class ExecutionController {
         if (execution.getState().isTerminated()) {
             throw new ConflictException("Cannot force run execution: only non-terminated executions can be force run.");
         }
+
+        this.forceRunCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Force run",
@@ -2339,6 +2430,8 @@ public class ExecutionController {
                     .build()
             );
         }
+
+        this.forceRunCounter.increment(executions.size());
 
         return submitBatchAction(
             executions,

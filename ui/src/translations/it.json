@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Codice sorgente non valido",
+    "invalid duration": "Formato durata non valido. Utilizzare ISO 8601 (ad es., PT30M, P1D).",
     "missingSource": "Sorgente mancante",
     "update": "Aggiorna",
     "update ok": "è aggiornato",
@@ -35,7 +36,8 @@
     "Default page": "Pagina predefinita",
     "confirmation": "Conferma",
     "common": {
-      "back": "Indietro"
+      "back": "Indietro",
+      "openInNewTab": "Apri in una nuova scheda"
     },
     "delete confirm": "Sei sicuro di voler eliminare <code>{name}</code>?",
     "outdated revision save confirmation": {
@@ -113,6 +115,7 @@
     "prev_execution": "Esecuzione precedente",
     "next_execution": "Prossima esecuzione",
     "datepicker": {
+      "invalid duration": "Formato durata non valido. Utilizzare il formato ISO 8601 (es. PT30M, P1D).",
       "leave empty for infinite": "Lascia vuoto per durata infinita o digita una durata ISO 8601 (esempio: 'P1DT1H1M1S)'",
       "duration example": "Esempio: 'P1DT1H1M1S'",
       "error": "Formato durata non valido, deve essere una durata ISO 8601 (ad es. P1DT1H1M1S)",
@@ -325,9 +328,9 @@
     "no metrics available": "Nessuna metrica registrata per questa esecuzione del task.",
     "no outputs available": "Nessun output disponibile per questa esecuzione del task.",
     "outputs": "Outputs",
-    "flow_outputs": "Output del Flow",
-    "no_flow_outputs": "Nessun output disponibile.",
+    "flow_inputs": "Input del Flow",
     "output": "Output",
+    "flow_outputs": "Output del Flow",
     "eval": {
       "title": "Espressione di Debug",
       "render": "Espressione di Render",
@@ -690,7 +693,6 @@
     "taskid column details": "Ultimo task in esecuzione e il numero di tentativi.",
     "flow already exists": "Flow già esistente",
     "flow already exists message": "Il flow <code>{id}</code> esiste già nel namespace <code>{namespace}</code>. Vuoi creare una nuova revisione?",
-    "plugin_default_already_exists": "Il plugin predefinito per <code>{type}</code> esiste già.",
     "namespace not allowed": "Namespace non consentito",
     "switch-view": "Cambia vista",
     "source and topology": "Sorgente e topologia",
@@ -1190,6 +1192,12 @@
         "title": "Aggiungi Blueprint Personalizzati",
         "message": "Nella Kestra Enterprise Edition, puoi creare blueprint personalizzati disponibili solo per la tua organizzazione. Puoi usarli come modelli di best-practice per condividere, centralizzare e documentare i flussi di lavoro comunemente utilizzati nel tuo team."
       },
+      "policies": {
+        "header": "Politiche di Governance",
+        "label": "Politiche",
+        "message": "Le policy consentono ai team della piattaforma di gestire e applicare centralmente le regole a tutti i flow — iniettare valori predefiniti condivisi, bloccare i plugin, limitare i valori delle proprietà e richiedere label di conformità. Le regole si applicano a livello di tenant o di namespace con rollout graduale, e ogni valore iniettato o sostituito rimane visibile agli autori dei flow.",
+        "title": "Gestisci ogni flow con Politiche"
+      },
       "namespace": {
         "edit": {
           "title": "Aggiorna la Gestione del tuo Namespace",
@@ -1207,9 +1215,9 @@
           "title": "Governa Centralmente le Tue Variabili",
           "message": "Nella Kestra Enterprise Edition, puoi definire e gestire variabili a livello di namespace per eliminare configurazioni ripetitive tra i flow. Queste variabili assicurano coerenza, semplificano gli aggiornamenti di configurazione e possono essere facilmente riferite da qualsiasi task o trigger per flussi di lavoro più puliti e manutenibili."
         },
-        "plugin-defaults": {
-          "title": "Standardizza la Configurazione con i Valori Predefiniti del Plugin",
-          "message": "Nella Kestra Enterprise Edition, puoi impostare i plugin predefiniti specifici per namespace, riducendo la necessità di configurazioni duplicate in ogni flow. Questa governance centrale dei plugin impone configurazioni coerenti, consente il riferimento sicuro a segreti o variabili e semplifica la manutenzione dei tuoi workflow."
+        "policies": {
+          "title": "Applicare le Regole di Governance in questo Namespace",
+          "message": "In Kestra Enterprise Edition, le politiche ti consentono di definire regole che si applicano a ogni flow in questo namespace e ai suoi figli — iniettare impostazioni predefinite condivise, limitare i values delle proprietà, bloccare i plugin e richiedere labels di conformità, con ogni modifica completamente visibile agli autori dei flow."
         },
         "history": {
           "title": "Gestisci la Cronologia delle Revisioni in un Unico Luogo",
@@ -1385,26 +1393,6 @@
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
     "system_namespace": "Mantieni la tua piattaforma sotto controllo con i system flows.",
     "system_namespace_description": "Automatizza le attività di manutenzione, dagli avvisi di errore alle pulizie automatiche.",
-    "pluginDefaults": {
-      "title": "Predefiniti del Plugin",
-      "add": "Aggiungi Plugin Predefinito",
-      "edit": "Modifica Plugin Predefinito",
-      "add_subtitle": "Configura un nuovo plugin predefinito con le sue proprietà",
-      "edit_subtitle": "Modifica la configurazione predefinita del plugin esistente",
-      "predefined": "Plugin Predefinito",
-      "custom": "Plugin Personalizzato",
-      "form": "Modulo",
-      "yaml": "YAML",
-      "select_predefined": "Seleziona Plugin Predefinito",
-      "cancel": "Annulla",
-      "update": "Aggiorna Plugin Default",
-      "custom_type": "Tipo di plugin personalizzato",
-      "custom_placeholder": "Inserisci il tipo di plugin",
-      "use_custom": "Usa Personalizzato",
-      "custom_configure": "Tipo di plugin personalizzato - configurare utilizzando YAML",
-      "yaml_configuration": "Configurazione YAML",
-      "show_yaml": "Mostra YAML"
-    },
     "secret": {
       "add": "Crea",
       "update": "Aggiorna secret '{name}'",
@@ -1524,6 +1512,7 @@
     "documentationMenu": "Menu documentazione",
     "item": "elemento",
     "items": "elementi",
+    "iterations": "Iterazioni",
     "cron": "Cron",
     "execution_started": "L'esecuzione è iniziata!",
     "execution_failed": "Esecuzione fallita!",
@@ -1626,8 +1615,7 @@
         "triggers": "Trigger",
         "errors": "Gestori degli Errori",
         "afterExecution": "Dopo l'Esecuzione",
-        "finally": "Infine",
-        "pluginDefaults": "Predefiniti del Plugin"
+        "finally": "Infine"
       },
       "fields": {
         "main": {
@@ -1659,7 +1647,6 @@
         "triggers": "Seleziona un trigger",
         "errors": "Seleziona un task",
         "finally": "Seleziona un task",
-        "pluginDefaults": "Seleziona un plugin",
         "afterExecution": "Seleziona un task",
         "conditions": "Seleziona una condizione",
         "inputs": "Seleziona un tipo di input field",
@@ -1673,7 +1660,6 @@
         "triggers": "Aggiungi un trigger",
         "errors": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
-        "pluginDefaults": "Aggiungi un plugin predefinito",
         "afterExecution": "Aggiungi un blocco after execution",
         "conditions": "Aggiungi una condizione",
         "inputs": "Aggiungi un campo di input",
@@ -1790,10 +1776,6 @@
       "concurrency_limits": {
         "title": "Nessun limite di concorrenza è impostato.",
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limiti di Concurrency</a></strong> nella nostra documentazione."
-      },
-      "pluginDefaults": {
-        "title": "Non hai ancora impostazioni predefinite per i plugin!",
-        "content": "I valori predefiniti del plugin ti permettono di gestire centralmente la configurazione del tuo plugin e condividerla con tutti i flow nel tuo namespace."
       },
       "variables": {
         "title": "Ancora nessuna variabile",

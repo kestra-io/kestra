@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "अमान्य स्रोत कोड",
+    "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
     "missingSource": "स्रोत अनुपलब्ध",
     "update": "अपडेट करें",
     "update ok": "अपडेट किया गया है",
@@ -35,7 +36,8 @@
     "Default page": "पूर्व-निर्धारित पृष्ठ",
     "confirmation": "पुष्टि",
     "common": {
-      "back": "वापस"
+      "back": "वापस",
+      "openInNewTab": "नए टैब में खोलें"
     },
     "delete confirm": "क्या आप वाकई <code>{name}</code> को हटाना चाहते हैं?",
     "outdated revision save confirmation": {
@@ -113,6 +115,7 @@
     "prev_execution": "पिछला निष्पादन",
     "next_execution": "अगली निष्पादन",
     "datepicker": {
+      "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
       "leave empty for infinite": "अनंत अवधि के लिए खाली छोड़ दें या एक ISO 8601 अवधि टाइप करें (उदाहरण: 'P1DT1H1M1S)'",
       "duration example": "उदाहरण: 'P1DT1H1M1S'",
       "error": "अमान्य अवधि प्रारूप, एक ISO 8601 अवधि होनी चाहिए (उदाहरण के लिए P1DT1H1M1S)",
@@ -325,9 +328,9 @@
     "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
     "no outputs available": "इस task run के लिए कोई outputs उपलब्ध नहीं हैं।",
     "outputs": "आउटपुट",
-    "flow_outputs": "फ्लो Outputs",
-    "no_flow_outputs": "कोई output उपलब्ध नहीं है।",
+    "flow_inputs": "फ्लो Inputs",
     "output": "आउटपुट",
+    "flow_outputs": "फ्लो Outputs",
     "eval": {
       "title": "डिबग अभिव्यक्ति",
       "render": "एक्सप्रेशन रेंडर करें",
@@ -690,7 +693,6 @@
     "taskid column details": "निष्पादित होने वाला अंतिम Task और इसके प्रयासों की संख्या।",
     "flow already exists": "Flow पहले से मौजूद है",
     "flow already exists message": "Flow <code>{id}</code> पहले से ही namespace <code>{namespace}</code> में मौजूद है। क्या आप एक नया संशोधन बनाना चाहते हैं?",
-    "plugin_default_already_exists": "<code>{type}</code> के लिए प्लगइन डिफ़ॉल्ट पहले से मौजूद है।",
     "namespace not allowed": "Namespace की अनुमति नहीं है",
     "switch-view": "दृश्य स्विच करें",
     "source and topology": "स्रोत और टोपोलॉजी",
@@ -1190,6 +1192,12 @@
         "title": "कस्टम Blueprints जोड़ें",
         "message": "Kestra एंटरप्राइज एडिशन में, आप अपनी संस्था के लिए केवल उपलब्ध कस्टम Blueprints बना सकते हैं। आप इन्हें अपनी टीम में साझा करने, केंद्रीकृत करने और सामान्य रूप से उपयोग किए जाने वाले workflows को दस्तावेज़ करने के लिए सर्वोत्तम-प्रथाओं के टेम्पलेट के रूप में उपयोग कर सकते हैं।"
       },
+      "policies": {
+        "header": "शासन नीतियाँ",
+        "label": "नीतियाँ",
+        "message": "नीतियां प्लेटफ़ॉर्म टीमों को सभी flows में नियमों को केंद्रीय रूप से प्रबंधित और लागू करने में सक्षम बनाती हैं — जैसे साझा डिफ़ॉल्ट इंजेक्ट करना, प्लगइन्स को ब्लॉक करना, प्रॉपर्टी मानों को सीमित करना, और अनुपालन labels की आवश्यकता करना। नियम tenant या namespace स्तर पर चरणबद्ध रोलआउट के साथ लागू होते हैं, और हर इंजेक्ट किया गया या बदला गया value flow लेखकों को दिखाई देता है।",
+        "title": "नीतियों के साथ हर flow का नियमन करें"
+      },
       "namespace": {
         "edit": {
           "title": "अपने Namespace प्रबंधन को अपग्रेड करें",
@@ -1207,9 +1215,9 @@
           "title": "अपने वेरिएबल्स को केंद्रीय रूप से प्रबंधित करें",
           "message": "Kestra Enterprise Edition में, आप namespace-स्तर के वेरिएबल्स को परिभाषित और प्रबंधित कर सकते हैं ताकि flows में दोहराव वाली कॉन्फ़िगरेशन को समाप्त किया जा सके। ये वेरिएबल्स स्थिरता सुनिश्चित करते हैं, कॉन्फ़िगरेशन अपडेट को सरल बनाते हैं, और किसी भी task या trigger द्वारा आसानी से संदर्भित किए जा सकते हैं, जिससे workflows को अधिक साफ और बनाए रखने योग्य बनाया जा सके।"
         },
-        "plugin-defaults": {
-          "title": "प्लगइन डिफॉल्ट्स के साथ कॉन्फ़िगरेशन को मानकीकृत करें",
-          "message": "Kestra एंटरप्राइज एडिशन में, आप namespace-विशिष्ट प्लगइन डिफ़ॉल्ट सेट कर सकते हैं, जिससे प्रत्येक flow में डुप्लिकेट सेटअप की आवश्यकता कम हो जाती है। यह केंद्रीय प्लगइन गवर्नेंस सुसंगत कॉन्फ़िगरेशन को लागू करता है, गुप्त या वेरिएबल्स के सुरक्षित संदर्भ की अनुमति देता है, और आपके workflows के रखरखाव को सरल बनाता है।"
+        "policies": {
+          "title": "इस namespace पर शासन नियम लागू करें",
+          "message": "Kestra Enterprise Edition में, नीतियां आपको ऐसे नियम परिभाषित करने देती हैं जो इस namespace और इसके बच्चों में हर flow पर लागू होते हैं — साझा डिफ़ॉल्ट इंजेक्ट करें, प्रॉपर्टी मानों को प्रतिबंधित करें, plugins को ब्लॉक करें, और अनुपालन labels की आवश्यकता होती है, हर बदलाव flow लेखकों को पूरी तरह से दिखाई देता है।"
         },
         "history": {
           "title": "एक ही स्थान पर Revision History प्रबंधित करें",
@@ -1385,26 +1393,6 @@
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
     "system_namespace": "अपने प्लेटफ़ॉर्म को सिस्टम flows के साथ नियंत्रण में रखें।",
     "system_namespace_description": "रखरखाव के tasks को स्वचालित करें, failure alerts से लेकर automated cleanups तक।",
-    "pluginDefaults": {
-      "title": "प्लगइन डिफॉल्ट्स",
-      "add": "प्लगइन डिफ़ॉल्ट जोड़ें",
-      "edit": "प्लगइन डिफ़ॉल्ट संपादित करें",
-      "add_subtitle": "इसके गुणों के साथ एक नया प्लगइन डिफ़ॉल्ट कॉन्फ़िगर करें",
-      "edit_subtitle": "मौजूदा प्लगइन डिफ़ॉल्ट कॉन्फ़िगरेशन को संशोधित करें",
-      "predefined": "पूर्वनिर्धारित प्लगइन",
-      "custom": "कस्टम प्लगइन",
-      "form": "फॉर्म",
-      "yaml": "YAML",
-      "select_predefined": "पूर्वनिर्धारित प्लगइन चुनें",
-      "cancel": "रद्द करें",
-      "update": "प्लगइन डिफ़ॉल्ट अपडेट करें",
-      "custom_type": "कस्टम प्लगइन प्रकार",
-      "custom_placeholder": "प्लगइन प्रकार दर्ज करें",
-      "use_custom": "कस्टम उपयोग करें",
-      "custom_configure": "कस्टम प्लगइन प्रकार - YAML का उपयोग करके कॉन्फ़िगर करें",
-      "yaml_configuration": "YAML कॉन्फ़िगरेशन",
-      "show_yaml": "YAML दिखाएं"
-    },
     "secret": {
       "add": "बनाएं",
       "update": "गुप्त जानकारी '{name}' अपडेट करें",
@@ -1524,6 +1512,7 @@
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
     "item": "आइटम",
     "items": "आइटम्स",
+    "iterations": "पुनरावृत्तियाँ",
     "cron": "क्रॉन",
     "execution_started": "निष्पादन शुरू हो गया है!",
     "execution_failed": "निष्पादन FAILED!",
@@ -1626,8 +1615,7 @@
         "triggers": "ट्रिगर्स",
         "errors": "त्रुटि हैंडलर्स",
         "afterExecution": "Execution के बाद",
-        "finally": "अंत में",
-        "pluginDefaults": "डिफ़ॉल्ट प्लगइन"
+        "finally": "अंत में"
       },
       "fields": {
         "main": {
@@ -1659,7 +1647,6 @@
         "triggers": "ट्रिगर चुनें",
         "errors": "एक task चुनें",
         "finally": "एक task चुनें",
-        "pluginDefaults": "एक प्लगइन चुनें",
         "afterExecution": "एक task चुनें",
         "conditions": "कंडीशन चुनें",
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
@@ -1673,7 +1660,6 @@
         "triggers": "ट्रिगर जोड़ें",
         "errors": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
-        "pluginDefaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
         "afterExecution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "conditions": "एक शर्त जोड़ें",
         "inputs": "इनपुट फ़ील्ड जोड़ें",
@@ -1790,10 +1776,6 @@
       "concurrency_limits": {
         "title": "कोई concurrency सीमाएँ निर्धारित नहीं हैं।",
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।"
-      },
-      "pluginDefaults": {
-        "title": "आपके पास अभी तक कोई प्लगइन डिफॉल्ट नहीं है!",
-        "content": "प्लगइन डिफॉल्ट्स आपको अपने प्लगइन कॉन्फ़िगरेशन को केंद्रीय रूप से प्रबंधित करने और इसे आपके namespace के सभी flows के साथ साझा करने की अनुमति देते हैं।"
       },
       "variables": {
         "title": "अभी तक कोई वेरिएबल नहीं है",

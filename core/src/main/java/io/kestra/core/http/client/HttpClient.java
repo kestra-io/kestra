@@ -98,8 +98,7 @@ public class HttpClient implements Closeable {
         // otherwise offer `br`, then fail with UnsatisfiedLinkError when the matching native artifact
         // is missing. Setting the header explicitly wins: ContentCompressionExec only adds its own
         // Accept-Encoding when the request has none, so gzip/deflate responses are still auto-decoded.
-        builder.addRequestInterceptorFirst((request, entity, context) ->
-            request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate"));
+        builder.addRequestInterceptorFirst((request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate"));
 
         if (observationRegistry != null) {
             // micrometer, must be placed before the retry strategy (see https://docs.micrometer.io/micrometer/reference/reference/httpcomponents.html#_retry_strategy_considerations)
@@ -145,7 +144,8 @@ public class HttpClient implements Closeable {
             String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
 
             if (StringUtils.isNotEmpty(proxyAddress)) {
-                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class).orElseThrow();
+                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
+                    .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
                 SocketAddress proxyAddr = new InetSocketAddress(
                     proxyAddress,
                     port

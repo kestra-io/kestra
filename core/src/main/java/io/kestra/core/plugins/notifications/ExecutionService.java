@@ -10,6 +10,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.core.utils.UriProvider;
 
 public final class ExecutionService {
@@ -123,7 +124,7 @@ public final class ExecutionService {
 
     private record ExecutionContextState(String current, String startDate, String endDate) {
         public String humanDuration() {
-            Duration duration = Duration.between(Instant.parse(startDate), Optional.ofNullable(endDate).map(d -> Instant.parse(d)).orElse(Instant.now()));
+            Duration duration = Duration.between(TypeConverter.toInstant(startDate), Optional.ofNullable(endDate).map(TypeConverter::toInstant).orElse(Instant.now()));
             return DurationFormatUtils.formatDurationHMS(duration.toMillis());
         }
     }

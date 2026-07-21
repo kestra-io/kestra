@@ -57,6 +57,7 @@
         <div class="side d-flex gap-2 flex-shrink-0 align-items-center">
             <slot name="search" />
             <slot name="actions" />
+            <slot name="panel-toggle" />
             <KsIconButton
                 v-if="showDockToggle"
                 class="icon-btn dock-toggle"
@@ -120,6 +121,7 @@
         description?(): unknown
         search?(): unknown
         actions?(): unknown
+        "panel-toggle"?(): unknown
     }>()
 
     const {t} = useI18n({useScope: "global"})

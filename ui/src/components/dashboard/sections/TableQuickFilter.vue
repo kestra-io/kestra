@@ -27,9 +27,9 @@
     import {useI18n} from "vue-i18n"
 
     import {Motion} from "motion-v"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import type {Chart} from "../types.ts"
-    import {FilterObject} from "../../../utils/filters"
     import {
         QUICK_FILTER_TABS,
         QuickFilterTabKey,
@@ -39,7 +39,7 @@
 
     const props = defineProps<{chart: Chart}>()
 
-    const emit = defineEmits<{change: [filter: FilterObject | null, tab: QuickFilterTabKey]}>()
+    const emit = defineEmits<{change: [filter: QueryFilter | null, tab: QuickFilterTabKey]}>()
 
     const {t} = useI18n({useScope: "global"})
 

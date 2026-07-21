@@ -53,44 +53,49 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 @Slf4j
 public class ExecutorService {
-    @Inject
-    private RunContextFactory runContextFactory;
+    private final RunContextFactory runContextFactory;
+    private final MetricRegistry metricRegistry;
+    protected final FlowMetaStoreInterface flowExecutorInterface;
+    private final ExecutionService executionService;
+    private final WorkerQueueService workerQueueService;
+    private final SLAService slaService;
+    private final Optional<OpenTelemetry> openTelemetry;
+    protected final BroadcastQueueInterface<ExecutionKilled> killQueue;
+    private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
+    private final RunContextLoggerFactory runContextLoggerFactory;
+    private final AssetService assetService;
+    private final RunContextInitializer runContextInitializer;
+    private final TaskOutputService taskOutputService;
 
     @Inject
-    private MetricRegistry metricRegistry;
-
-    @Inject
-    protected FlowMetaStoreInterface flowExecutorInterface;
-
-    @Inject
-    private ExecutionService executionService;
-
-    @Inject
-    private WorkerQueueService workerQueueService;
-
-    @Inject
-    private SLAService slaService;
-
-    @Inject
-    private Optional<OpenTelemetry> openTelemetry;
-
-    @Inject
-    protected BroadcastQueueInterface<ExecutionKilled> killQueue;
-
-    @Inject
-    private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
-
-    @Inject
-    private RunContextLoggerFactory runContextLoggerFactory;
-
-    @Inject
-    private AssetService assetService;
-
-    @Inject
-    private RunContextInitializer runContextInitializer;
-
-    @Inject
-    private TaskOutputService taskOutputService;
+    public ExecutorService(
+        RunContextFactory runContextFactory,
+        MetricRegistry metricRegistry,
+        FlowMetaStoreInterface flowExecutorInterface,
+        ExecutionService executionService,
+        WorkerQueueService workerQueueService,
+        SLAService slaService,
+        Optional<OpenTelemetry> openTelemetry,
+        BroadcastQueueInterface<ExecutionKilled> killQueue,
+        DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
+        RunContextLoggerFactory runContextLoggerFactory,
+        AssetService assetService,
+        RunContextInitializer runContextInitializer,
+        TaskOutputService taskOutputService) {
+        this.runContextFactory = runContextFactory;
+        this.metricRegistry = metricRegistry;
+        this.flowExecutorInterface = flowExecutorInterface;
+        this.executionService = executionService;
+        this.workerQueueService = workerQueueService;
+        this.slaService = slaService;
+        this.openTelemetry = openTelemetry;
+        this.killQueue = killQueue;
+        this.loopExecutionEventQueue = loopExecutionEventQueue;
+        this.runContextLoggerFactory = runContextLoggerFactory;
+        this.assetService = assetService;
+        this.runContextInitializer = runContextInitializer;
+        this.taskOutputService = taskOutputService;
+    }
 
     public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
         // if concurrency was removed, it can be null as we always get the latest flow definition
@@ -628,7 +633,7 @@ public class ExecutorService {
                                             taskRun, Map.of(
                                                 Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
                                                 Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0,
+                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
                                                 Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
                                             )
                                         );
@@ -643,7 +648,7 @@ public class ExecutorService {
                                             taskRun, Map.of(
                                                 Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
                                                 Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0
+                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
                                             )
                                         );
 

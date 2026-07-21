@@ -1,7 +1,6 @@
 package io.kestra.webserver.services;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -17,6 +16,7 @@ import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.namespaces.Namespace;
 import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.services.FollowLogEventMatcher;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.webserver.utils.Searchable;
 
 import io.micronaut.context.annotation.Factory;
@@ -257,9 +257,9 @@ public class SearchableFactory {
         if (event.timestamp() == null) {
             return -1;
         }
-        Instant target = queryValue instanceof Instant i ? i
-            : queryValue instanceof ZonedDateTime zdt ? zdt.toInstant()
-                : ZonedDateTime.parse(queryValue.toString()).toInstant();
+        Instant target = queryValue instanceof Instant i
+            ? i
+            : TypeConverter.toZonedDateTime(queryValue).toInstant();
         return event.timestamp().compareTo(target);
     }
 

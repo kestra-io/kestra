@@ -96,7 +96,7 @@
                                                 :style="{'--depth': item.depth || 0}"
                                             >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
-                                                    <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :loadIcon="pluginsStore.loadIcon" />
+                                                    <TaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :loadIcon="pluginsStore.loadIcon" />
                                                 </div>
                                                 <KsTooltip placement="top-start">
                                                     <template #content>
@@ -218,12 +218,12 @@
         normalizeRouteLevelFilter,
         readRouteLevelFilter,
         KsExecutionStatus,
-        KsTaskIcon,
         KsFilter as KSFilter,
         KsEmptyState,
         type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
+    import TaskIcon from "../plugins/TaskIcon.vue"
 
     import * as FlowUtils from "../../utils/flowUtils"
     import * as Utils from "../../utils/utils"
@@ -238,6 +238,7 @@
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
+    import {computeTaskBarPercents} from "../../utils/ganttSeries"
 
     interface TaskRun {
         id: string;
@@ -486,7 +487,21 @@
 
         const newSeries: SeriesItem[] = []
         const executionDelta = delta()
-        const taskMap: Record<string, SeriesItem> = {}
+
+        const barInputs = tasks.value.map(({task}) => {
+            const stopTs = State.isRunning(task.state.current)
+                ? ts(new Date())
+                : ts(task.state.histories[task.state.histories.length - 1].date)
+            return {
+                id: task.id,
+                parentTaskRunId: task.parentTaskRunId,
+                startTs: ts(task.state.histories[0].date),
+                stopTs,
+            }
+        })
+        const barPercentsById = Object.fromEntries(
+            computeTaskBarPercents(barInputs, start.value, executionDelta).map((p) => [p.id, p]),
+        )
 
         for (const taskWrapper of tasks.value) {
             const task = taskWrapper.task
@@ -497,16 +512,12 @@
                 const lastIndex = task.state.histories.length - 1
                 stopTs = ts(task.state.histories[lastIndex].date)
             }
-
             const startTs = ts(task.state.histories[0].date)
 
             const runningState = task.state.histories.filter(r => r.state === State.RUNNING)
             const left = runningState.length > 0
                 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100)
                 : 0
-
-            const taskStart = startTs - start.value
-            const taskStop = stopTs - start.value - taskStart
 
             const taskDelta = stopTs - startTs
 
@@ -517,23 +528,17 @@
                 tooltip += `\n${t("running duration")} : ${durationUtils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`
             }
 
-            let width = (taskStop / executionDelta) * 100
+
+            const barPercents = barPercentsById[task.id]
+            let width = barPercents.width
             if (State.isRunning(task.state.current)) {
                 width = ((stop() - startTs) / executionDelta) * 100
-            }
-
-            const startPercent = (taskStart / executionDelta) * 100
-            let parentEndPercent: number | undefined = undefined
-
-            if (task.parentTaskRunId && taskMap[task.parentTaskRunId]) {
-                const parent = taskMap[task.parentTaskRunId]
-                parentEndPercent = parent.start + parent.width
             }
 
             const seriesItem: SeriesItem = {
                 id: task.id,
                 name: task.taskId,
-                start: startPercent,
+                start: barPercents.start,
                 width,
                 left,
                 tooltip,
@@ -545,10 +550,8 @@
                 executionId: task.outputs?.executionId as string | undefined,
                 attempts: task.attempts ? task.attempts.length : 1,
                 depth: taskWrapper.depth,
-                parentEndPercent,
+                parentEndPercent: barPercents.parentEndPercent,
             }
-
-            taskMap[task.id] = seriesItem
             newSeries.push(seriesItem)
         }
         series.value = newSeries

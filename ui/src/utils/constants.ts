@@ -54,15 +54,12 @@ export const stateDisplayValues = {
     INPROGRESS: "IN-PROGRESS",
 } as const
 
-export const PLUGIN_DEFAULTS_SECTION = "plugin defaults"
-
 export const SECTIONS_MAP = {
     tasks: "tasks",
     triggers: "triggers",
     "error handlers": "errors",
     finally: "finally",
     "after execution": "afterExecution",
-    [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
 } as const
 
 export const groupMemberships = {

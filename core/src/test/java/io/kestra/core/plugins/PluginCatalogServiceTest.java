@@ -1,7 +1,9 @@
 package io.kestra.core.plugins;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,12 +13,14 @@ import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.utils.ExecutorsUtils;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -210,5 +214,102 @@ class PluginCatalogServiceTest {
 
         // Then
         assertThat(results).isEmpty();
+    }
+
+    @Test
+    void shouldResolveIconLazilyForKnownArtifact() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+        when(blockingClient.exchange(any(HttpRequest.class), eq(String.class)))
+            .thenReturn(HttpResponse.ok("<svg>currentColor</svg>"));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-serdes");
+
+        // Then
+        assertThat(icon).isPresent();
+        assertThat(new String(icon.get(), StandardCharsets.UTF_8)).isEqualTo("<svg>currentColor</svg>");
+    }
+
+    @Test
+    void shouldReturnEmptyIconWhenIconResolutionDisabled() {
+        // Given
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-serdes");
+
+        // Then
+        assertThat(icon).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyIconForUnknownArtifact() {
+        // Given
+        when(blockingClient.exchange(any(), any(Argument.class)))
+            .thenReturn(
+                HttpResponse.ok(
+                    List.of(
+                        Map.of("name", "plugin-serdes", "title", "Serdes", "group", "io.kestra.plugin.serdes", "license", "OPENSOURCE")
+                    )
+                )
+            );
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin", "plugin-unknown");
+
+        // Then
+        assertThat(icon).isEmpty();
+    }
+
+    @Test
+    void shouldResolveIconLazilyByGroup() {
+        // Given
+        when(blockingClient.exchange(any(HttpRequest.class), eq(String.class)))
+            .thenReturn(HttpResponse.ok("<svg>currentColor</svg>"));
+
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin.serdes");
+
+        // Then
+        assertThat(icon).isPresent();
+        assertThat(new String(icon.get(), StandardCharsets.UTF_8)).isEqualTo("<svg>currentColor</svg>");
+    }
+
+    @Test
+    void shouldReturnEmptyIconByGroupWhenIconResolutionDisabled() {
+        // Given
+        PluginCatalogService service = new PluginCatalogService(httpClient, false, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon("io.kestra.plugin.serdes");
+
+        // Then
+        assertThat(icon).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyIconForNullGroup() {
+        // Given
+        PluginCatalogService service = new PluginCatalogService(httpClient, true, false, executorsUtils);
+
+        // When
+        Optional<byte[]> icon = service.icon((String) null);
+
+        // Then
+        assertThat(icon).isEmpty();
     }
 }

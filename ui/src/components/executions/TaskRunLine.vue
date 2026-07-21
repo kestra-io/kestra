@@ -17,7 +17,7 @@
             </KsIcon>
         </div>
         <div class="task-icon d-none d-md-inline-block me-1">
-            <KsTaskIcon
+            <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
                 onlyIcon
@@ -112,7 +112,8 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {State, KsExecutionStatus, KsTaskIcon} from "@kestra-io/design-system"
+    import {State, KsExecutionStatus} from "@kestra-io/design-system"
+    import TaskIcon from "../plugins/TaskIcon.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import Clock from "vue-material-design-icons/Clock.vue"

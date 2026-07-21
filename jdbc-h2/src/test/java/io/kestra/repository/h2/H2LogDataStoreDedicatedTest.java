@@ -26,6 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @MicronautTest
 @Property(name = "kestra.logs.type", value = "h2")
 @Property(name = "kestra.logs.h2.url", value = "jdbc:h2:mem:logs_dedicated;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE")
+// Use an isolated primary datasource so this test's migration history (which records the log-table
+// migrations applied to the dedicated log database) does not leak into the shared in-memory "public"
+// database used by the other repository tests in the same JVM.
+@Property(name = "datasources.h2.url", value = "jdbc:h2:mem:logs_dedicated_primary;LOCK_TIMEOUT=30000;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE")
 class H2LogDataStoreDedicatedTest {
 
     @Inject

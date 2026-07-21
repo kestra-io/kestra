@@ -42,7 +42,7 @@
                 </KsDropdown>
 
                 <ExecutionActions
-                    v-if="isOverviewTab && overviewActions.length"
+                    v-if="execution && isOverviewTab && overviewActions.length"
                     :actions="overviewActions"
                     :execution="execution"
                 />
@@ -106,8 +106,7 @@
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
-    // FIXME: any - execution is an untyped domain object from the store
-    const execution = computed(() => executionsStore.execution as any) // FIXME: any
+    const execution = computed(() => executionsStore.execution)
 
     const isAllowedEdit = computed(() =>
         execution.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, execution.value.namespace),

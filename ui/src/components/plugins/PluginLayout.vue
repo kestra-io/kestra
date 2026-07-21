@@ -20,7 +20,7 @@
                                 <ArrowLeft />
                             </KsIconButton>
 
-                            <KsTaskIcon
+                            <TaskIcon
                                 class="plugin-header__logo"
                                 :cls="headerIconCls"
                                 onlyIcon
@@ -50,16 +50,17 @@
                                 </p>
                             </div>
                         </div>
-                        <KsMarkdown
-                            v-if="longDescription"
-                            class="plugin-header__long"
-                            :content="longDescription"
-                        />
                     </header>
 
                     <div :class="['plugin-detail__body', {'plugin-detail__body--flat': flat}]">
                         <slot />
                     </div>
+
+                    <KsMarkdown
+                        v-if="longDescription"
+                        class="plugin-header__long"
+                        :content="longDescription"
+                    />
                 </div>
                 <aside v-if="hasOverviewContent" class="plugin-detail__aside">
                     <PluginOverview
@@ -86,7 +87,8 @@
     import {computed, onMounted, watch} from "vue"
     import semver from "semver"
     import {useRoute, useRouter} from "vue-router"
-    import {KsIconButton, KsMarkdown, KsTag, KsTaskIcon, type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import {KsIconButton, KsMarkdown, KsTag, type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
     import PluginToc from "./PluginToc.vue"

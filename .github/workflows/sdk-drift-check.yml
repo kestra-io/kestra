@@ -1,0 +1,116 @@
+name: SDK drift check
+
+# Verifies the committed @kestra-io/kestra-sdk (ui/packages/kestra-sdk/src/openapi) still matches
+# the backend's current OpenAPI spec, WITHOUT regenerating the SDK in the fast (npm) CI.
+#
+# It regenerates only openapi.yml (Gradle, remote-cached), hashes it, and compares to the
+# `// openapi-hash:` stamp at the bottom of the committed SDK index.
+#   - On a PR:      comments asking the author to run `npm run generate:sdk`.
+#   - On develop:   regenerates the SDK, commits it to chore/update-sdk, and opens/updates a PR.
+on:
+  pull_request:
+    paths:
+      - '!{ui,.github}/**'
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: sdk-drift-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  SDK_INDEX: ui/packages/kestra-sdk/src/openapi/index.ts
+
+jobs:
+  drift-check:
+    name: SDK drift check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: kestra-io/actions/composite/setup-build@main
+        with:
+          java-enabled: true
+          java-version: 25
+          node-enabled: true
+          node-version: '22.18.0'
+
+      - name: Generate OpenAPI spec
+        env:
+          GCP_CREDENTIALS: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$GCP_CREDENTIALS" | base64 -d > "$(pwd)/.gcp-service-account.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/.gcp-service-account.json"
+          ./gradlew :webserver:generateOpenapiSpec
+
+      - name: Compare committed SDK hash to spec hash
+        id: compare
+        run: |
+          spec_hash=$(sha256sum openapi.yml | cut -c1-16)
+          committed_hash=$(grep -oP '// openapi-hash: \K[a-f0-9]+' "$SDK_INDEX" || echo "none")
+          echo "spec_hash=$spec_hash"           >> "$GITHUB_OUTPUT"
+          echo "committed_hash=$committed_hash" >> "$GITHUB_OUTPUT"
+          if [ "$spec_hash" = "$committed_hash" ]; then
+            echo "drifted=false" >> "$GITHUB_OUTPUT"
+            echo "SDK is up to date ($spec_hash)."
+          else
+            echo "drifted=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::SDK drift: committed=$committed_hash spec=$spec_hash"
+          fi
+
+      # ---- PR: comment asking the author to regenerate ------------------------------------------
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.compare.outputs.drifted == 'true'
+        uses: kestra-io/actions/actions/comment-update@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          title: "🔄 SDK out of date"
+          template: |
+            This PR changes the OpenAPI spec but the committed `@kestra-io/kestra-sdk` was not
+            regenerated (committed hash `${{ steps.compare.outputs.committed_hash }}` ≠ spec hash
+            `${{ steps.compare.outputs.spec_hash }}`).
+
+            Run `npm run generate:sdk` from `ui/` and commit the result.
+
+      - name: Fail the PR check on drift
+        if: github.event_name == 'pull_request' && steps.compare.outputs.drifted == 'true'
+        run: |
+          echo "::error::Committed SDK is out of date — run 'npm run generate:sdk' from ui/ and commit."
+          exit 1
+
+      # ---- develop: regenerate, commit to chore/update-sdk, open PR -----------------------------
+      - name: Generate GitHub App token
+        if: github.event_name == 'push' && steps.compare.outputs.drifted == 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+
+      - name: Regenerate SDK and open update PR
+        if: github.event_name == 'push' && steps.compare.outputs.drifted == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          cd ui && npm ci && npm run generate:sdk && cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -c chore/update-sdk || git switch chore/update-sdk
+          git add ui/packages/kestra-sdk/src/openapi
+          if git diff --cached --quiet; then
+            echo "No SDK changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(sdk): regenerate @kestra-io/kestra-sdk from current OpenAPI spec"
+          git push --force-with-lease --set-upstream origin chore/update-sdk
+          if ! gh pr view chore/update-sdk --json number >/dev/null 2>&1; then
+            gh pr create --base develop --head chore/update-sdk \
+              --title "chore(sdk): update @kestra-io/kestra-sdk" \
+              --body "Automated regeneration of the committed SDK after an OpenAPI spec change on develop."
+          fi

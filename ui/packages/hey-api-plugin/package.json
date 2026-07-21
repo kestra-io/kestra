@@ -1,0 +1,39 @@
+{
+  "name": "@kestra-io/hey-api-plugin",
+  "version": "0.0.1",
+  "description": "Kestra's shared @hey-api/openapi-ts plugin. Generates tenant-aware, human-friendly SDK wrappers from a Kestra OpenAPI spec. Single source of truth used by the OSS UI SDK, the EE UI SDK, and the client-sdk repo.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "scripts"
+  ],
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "bin": {
+    "hey-api-stamp-hash": "./scripts/stamp-hash.mjs"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "prepare": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@hey-api/openapi-ts": ">=0.97.0"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.97.3",
+    "@types/node": "^26.1.1",
+    "tsdown": "^0.22.0",
+    "typescript": "^6.0.3"
+  }
+}

@@ -2,7 +2,7 @@
   "name": "@kestra-io/kestra-sdk",
   "version": "0.0.0-poc",
   "private": true,
-  "description": "POC: JS/TS client generated from the OSS-only OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. Same package name as the public npm package on purpose — see README.md.",
+  "description": "JS/TS client generated from the OSS OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. The generated code under src/openapi is committed to git. Shares the name of the federation-shared client so plugins and the app use one client (auth + routing). See README.md.",
   "license": "Unlicense",
   "type": "module",
   "exports": {
@@ -12,7 +12,6 @@
   },
   "scripts": {
     "generate:openapi": "openapi-ts",
-    "prebuild": "openapi-ts",
     "build": "tsdown",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
@@ -22,6 +21,7 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.97.3",
+    "@kestra-io/hey-api-plugin": "*",
     "@types/node": "^26.1.1",
     "@types/nprogress": "^0.2.3",
     "tsdown": "^0.22.0",

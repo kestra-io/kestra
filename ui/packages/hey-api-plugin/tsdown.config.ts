@@ -1,28 +1,34 @@
 import {defineConfig} from "tsdown"
 
-export default defineConfig({
-    // Neutral platform: this package's two entries target DIFFERENT environments — the "." codegen
-    // entry runs under Node (and imports node:crypto/node:fs for the spec-hash stamp), while the
-    // "./runtime" entry runs in the browser. Neutral forces neither node nor browser onto either
-    // entry; we just declare the codegen entry's node built-ins as external below.
-    platform: "neutral",
-    entry: {
-        // Generation-time (Node): the @hey-api/openapi-ts plugin (the "." export).
-        index: "src/index.ts",
-        // Runtime (browser): createConfigureClient — the universal fetch setup shipped in every SDK
-        // (the "./runtime" export). Consumers bundle this into their SDK dist via deps.alwaysBundle.
-        runtime: "src/runtime.ts",
+// This package ships two entries that target DIFFERENT environments, so each is built with its own
+// platform:
+//  - "."        (index)   — the @hey-api/openapi-ts codegen plugin, run under Node during generation.
+//  - "./runtime"(runtime) — createConfigureClient, the fetch setup that runs in the browser.
+// Node emits .mjs/.d.mts, browser emits .js/.d.ts — the package.json `exports` map points each
+// subpath at its actual file accordingly.
+export default defineConfig([
+    {
+        entry: {index: "src/index.ts"},
+        platform: "node",
+        format: ["esm"],
+        dts: true,
+        // Clean dist once, here on the first config; the browser config below must NOT clean or it
+        // would wipe this output.
+        clean: true,
+        deps: {
+            // Keep external:
+            //  - node built-ins (node:crypto/node:fs) — imported directly by the codegen entry.
+            //  - @hey-api/* — so the dts bundler does not descend into their (CommonJS) transitive
+            //    type deps (e.g. @types/semver), which rolldown-plugin-dts cannot bundle. Consumers
+            //    provide @hey-api/openapi-ts (optional peer), so the emitted d.ts still resolves.
+            neverBundle: [/^node:/, /^@hey-api\//],
+        },
     },
-    format: ["esm"],
-    deps: {
-        // Never bundle (i.e. keep external):
-        //  - node built-ins (node:crypto/node:fs) — the codegen entry runs in Node and imports them
-        //    directly; declaring them here avoids the "could not resolve" warning under neutral.
-        //  - @hey-api/* — so the dts bundler does not descend into their (CommonJS) transitive type
-        //    deps (e.g. @types/semver), which rolldown-plugin-dts cannot bundle. The codegen entry's
-        //    consumers provide @hey-api/openapi-ts (optional peer), so the emitted d.ts resolves.
-        neverBundle: [/^node:/, /^@hey-api\//],
+    {
+        entry: {runtime: "src/runtime.ts"},
+        platform: "browser",
+        format: ["esm"],
+        dts: true,
+        clean: false,
     },
-    dts: true,
-    clean: true,
-})
+])

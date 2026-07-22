@@ -117,12 +117,12 @@
                 </template>
                 <template #default="scope">
                     <template v-if="col.prop === 'flowId'">
-                        <router-link
+                        <KsEntityLink
                             v-if="scope.row.namespace && scope.row.flowId"
+                            entity="flow"
+                            :value="scope.row.flowId"
                             :to="{name: 'flows/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, id: scope.row.flowId}}"
-                        >
-                            <BreakableText :value="scope.row.flowId" />
-                        </router-link>
+                        />
                         <span v-else><BreakableText :value="scope.row.flowId" /></span>
                         <MarkdownTooltip
                             v-if="scope.row.namespace && scope.row.flowId"
@@ -132,7 +132,12 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'namespace'">
-                        <BreakableText :value="scope.row.namespace" />
+                        <KsEntityLink
+                            v-if="scope.row.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {tenant: route.params?.tenant, id: scope.row.namespace}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'workerId'">
                         <KsId :value="scope.row.workerId" :shrink="true" />

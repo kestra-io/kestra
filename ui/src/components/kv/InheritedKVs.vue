@@ -2,7 +2,12 @@
     <KsTable :data="store.inheritedKVs" tableLayout="auto">
         <KsTableColumn prop="namespace" :label="$t('namespace')">
             <template #default="scope">
-                <code>{{ scope.row.namespace }}</code>
+                <KsEntityLink
+                    v-if="scope.row.namespace"
+                    entity="namespace"
+                    :value="scope.row.namespace"
+                    :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                />
             </template>
         </KsTableColumn>
 

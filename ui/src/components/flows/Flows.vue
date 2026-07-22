@@ -137,10 +137,16 @@
                     sortable="custom"
                     :sortOrders="['ascending', 'descending']"
                     :label="$t('namespace')"
-                    :formatter="(_: any, __: any, cellValue: string) =>
-                        h(BreakableText, {value: cellValue})
-                    "
-                />
+                >
+                    <template #default="scope">
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
+                    </template>
+                </KsTableColumn>
 
                 <KsTableColumn
                     v-else-if="colProp === 'state.startDate' && user?.hasAny(resource.EXECUTION)"
@@ -260,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useTemplateRef, watch, h} from "vue"
+    import {ref, computed, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"

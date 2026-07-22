@@ -240,6 +240,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         return filter.children().stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
     }
 
+    @Override
+    protected Name getColumnName(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.TASK_ID) {
+            return DSL.quotedName("loop_run_task_id");
+        }
+        return super.getColumnName(field);
+    }
+
     private Condition buildDateFilterCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
         if (dateFilter == DateFilter.START_OR_END_DATE && filters != null) {
             List<QueryFilter> dateBoundaryFilters = filters.stream()

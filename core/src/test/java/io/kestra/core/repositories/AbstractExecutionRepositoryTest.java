@@ -1004,6 +1004,44 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void shouldFindLoopSubExecutionsScopedByTaskId() {
+        // Given a parent execution with iterations from two distinct Loop tasks
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution parent = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+
+        TaskRun loop1TaskRun = TaskRun.of(
+            parent, ResolvedTask.of(
+                Return.builder().id("loop1").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+        TaskRun loop2TaskRun = TaskRun.of(
+            parent, ResolvedTask.of(
+                Return.builder().id("loop2").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+
+        for (int i = 0; i < 2; i++) {
+            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i));
+        }
+        for (int i = 0; i < 3; i++) {
+            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i));
+        }
+
+        // When / Then: scoping to a single loop task returns only that task's iterations
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), "loop1");
+        assertThat(loop1Subs).hasSize(2)
+            .allMatch(e -> "loop1".equals(e.getLoopRun().taskId()));
+
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), "loop2");
+        assertThat(loop2Subs).hasSize(3)
+            .allMatch(e -> "loop2".equals(e.getLoopRun().taskId()));
+
+        // A null taskId returns every loop task's iterations
+        List<Execution> allSubs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), null);
+        assertThat(allSubs).hasSize(5);
+    }
+
+    @Test
     protected void shouldFindByLabel() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var exec1 = executionRepository.save(

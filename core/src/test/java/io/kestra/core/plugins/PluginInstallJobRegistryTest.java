@@ -43,9 +43,18 @@ class PluginInstallJobRegistryTest {
     // ─── submit ───────────────────────────────────────────────────────────────
 
     @Test
-    void shouldReturnPendingJobImmediatelyAfterSubmit() {
-        // Given
+    void shouldReturnPendingJobImmediatelyAfterSubmit() throws Exception {
+        // Given — block the install until the job has been asserted, otherwise the worker
+        // thread may already have flipped the job to SUCCEEDED before get() runs
         List<PluginArtifact> artifacts = List.of(artifact("io.kestra.plugin", "plugin-scripts", "1.0.0"));
+        CountDownLatch releaseInstall = new CountDownLatch(1);
+
+        when(pluginManager.install(anyList(), anyList(), anyBoolean(), isNull(), any(TransferListener.class)))
+            .thenAnswer(invocation ->
+            {
+                releaseInstall.await(5, TimeUnit.SECONDS);
+                return artifacts;
+            });
 
         // When
         UUID jobId = registry.submit(artifacts);
@@ -56,6 +65,9 @@ class PluginInstallJobRegistryTest {
         assertThat(job.get().id()).isEqualTo(jobId);
         assertThat(job.get().status()).isIn(PluginInstallJob.Status.PENDING, PluginInstallJob.Status.RUNNING);
         assertThat(job.get().artifacts()).containsExactlyElementsOf(artifacts);
+
+        releaseInstall.countDown();
+        awaitTerminal(jobId, Duration.ofSeconds(5));
     }
 
     @Test

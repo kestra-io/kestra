@@ -18,7 +18,11 @@ import {useUnsavedChangesStore} from "./stores/unsavedChanges"
 import {useMiscStore} from "override/stores/misc"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import TaskIcon from "./components/plugins/TaskIcon.vue"
+import {registerServiceWorker} from "./utils/serviceWorker"
+import {initPwaInstallCapture} from "./utils/pwaInstallState"
 
+void registerServiceWorker()
+initPwaInstallCapture()
 
 const app = createApp(App)
 

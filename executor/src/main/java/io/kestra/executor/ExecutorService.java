@@ -1464,16 +1464,16 @@ public class ExecutorService {
                     log.warn("Unable to submit asset lineage event for {} -> {}", inputAssets, outputIdentifiers, e);
                 }
 
-                // don't update output asserts if task fail
+                // don't update output assets if task fail
                 if (!taskRun.getState().isFailed()) {
-                    taskRun.getAssets().getOutputs().forEach(asset ->
-                    {
+                    // Plain for-loop so a locked-asset InternalException from asyncUpsert propagates and fails the execution (fail-fast, ordering-dependent).
+                    for (var asset : taskRun.getAssets().getOutputs()) {
                         try {
                             assetService.asyncUpsert(assetUser, asset);
                         } catch (QueueException e) {
                             log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
                         }
-                    });
+                    }
                 }
             }
         }

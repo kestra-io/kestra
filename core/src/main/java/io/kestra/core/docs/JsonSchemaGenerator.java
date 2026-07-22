@@ -1183,10 +1183,11 @@ public class JsonSchemaGenerator {
     /**
      * Populate {@code definition} with a minimal permissive schema for a plugin type whose full schema could not be
      * generated. It accepts any property (so valid flows are not falsely rejected) while still pinning the
-     * {@code type} discriminator, so the type keeps autocompleting and validating. Shared by
-     * {@link #injectUnresolvedPluginTypes} (types dropped before generation) and the failure-isolating custom
-     * definition provider in {@link #build} (types that throw during generation), so both emit the same placeholder.
-     * See #12102.
+     * {@code type} discriminator, so the type keeps autocompleting and validating. Called only from
+     * {@link #injectUnresolvedPluginTypes}, which is the single backfill path for both failure modes: types dropped
+     * by {@link #safelyResolveSubtype} because their generics could not be resolved, and types excluded from the
+     * {@code anyOf} on an isolation retry (see {@link #generateRootSchemaIsolatingFailures}) because they threw
+     * during generation. See #12102.
      */
     private static void populatePlaceholderDefinition(ObjectNode definition, String className) {
         definition.put("type", "object");

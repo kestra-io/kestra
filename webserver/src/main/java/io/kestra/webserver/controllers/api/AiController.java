@@ -7,6 +7,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import io.kestra.core.tenant.TenantService;
+import io.kestra.libs.copilot.exceptions.AiException;
 import io.kestra.webserver.services.ai.AiServiceInterface;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.GenerationResult;
@@ -54,9 +55,16 @@ public class AiController {
             return HttpResponse.<String> status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
         }
 
-        GenerationResult result = service
-            .generateFlow(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), flowGenerationPrompt, tenantService.resolveTenant());
-        return toHttpResponse(result);
+        try {
+            GenerationResult result = service
+                .generateFlow(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), flowGenerationPrompt, tenantService.resolveTenant());
+            return toHttpResponse(result);
+        } catch (AiException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("AI flow generation failed.", e);
+            return HttpResponse.<String> status(HttpStatus.SERVICE_UNAVAILABLE).body(providerErrorMessage(e));
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -70,9 +78,33 @@ public class AiController {
             return HttpResponse.<String> status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
         }
 
-        GenerationResult result = service
-            .generateDashboard(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), dashboardGenerationPrompt);
-        return toHttpResponse(result);
+        try {
+            GenerationResult result = service
+                .generateDashboard(new UserInfo(httpClientAddressResolver.resolve(httpRequest), httpRequest.getHeaders().get("X-Kestra-User-Id")), dashboardGenerationPrompt);
+            return toHttpResponse(result);
+        } catch (AiException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("AI dashboard generation failed.", e);
+            return HttpResponse.<String> status(HttpStatus.SERVICE_UNAVAILABLE).body(providerErrorMessage(e));
+        }
+    }
+
+    static String providerErrorMessage(Exception e) {
+        String message = e.getMessage();
+        if (message != null) {
+            String lower = message.toLowerCase();
+            if (lower.contains("401") || lower.contains("unauthorized") || lower.contains("authentication") || lower.contains("api key") || lower.contains("apikey")) {
+                return "AI provider authentication failed. Please verify that the configured API key is valid and has not expired.";
+            }
+            if (lower.contains("429") || lower.contains("too many requests") || lower.contains("rate limit") || lower.contains("ratelimit")) {
+                return "AI provider rate limit exceeded. Please wait a moment before trying again.";
+            }
+            if (lower.contains("quota") || lower.contains("insufficient_quota") || lower.contains("billing")) {
+                return "AI provider quota exceeded or a billing issue was detected. Please check your provider account.";
+            }
+        }
+        return "AI Copilot failed to generate a response. This may be due to a temporary issue with the AI provider. Please try again.";
     }
 
     protected HttpResponse<String> toHttpResponse(GenerationResult result) {

@@ -317,4 +317,45 @@ class AiControllerTest {
         assertThat(exception).isNotNull();
         assertThat(exception.getStatus().getCode()).isEqualTo(503);
     }
+
+    @Test
+    void shouldReturn503WhenProviderReturnsUnauthorized() {
+        // Given: AI provider returns 401
+        extension.stubFor(post(anyUrl()).willReturn(aResponse().withStatus(401).withBody("Unauthorized: Invalid API key")));
+
+        // When
+        HttpClientResponseException exception = catchThrowableOfType(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    "/api/v1/main/ai/generate/flow",
+                    new AiController.FlowGenerationPrompt(IdUtils.create(), "Generate a flow", "yaml", "io.kestra.tests", null)
+                ),
+                String.class
+            )
+        );
+
+        // Then
+        assertThat(exception).isNotNull();
+        assertThat(exception.getStatus().getCode()).isEqualTo(503);
+    }
+
+    @Test
+    void shouldClassifyProviderErrorByKeyword() {
+        // Given / When / Then
+        assertThat(AiController.providerErrorMessage(new RuntimeException("HTTP 401: Unauthorized")))
+            .contains("authentication");
+
+        assertThat(AiController.providerErrorMessage(new RuntimeException("Rate limit exceeded (429)")))
+            .contains("rate limit");
+
+        assertThat(AiController.providerErrorMessage(new RuntimeException("Insufficient quota for this billing period")))
+            .contains("quota");
+
+        assertThat(AiController.providerErrorMessage(new RuntimeException("Connection reset by peer")))
+            .contains("temporary issue");
+
+        assertThat(AiController.providerErrorMessage(new RuntimeException((String) null)))
+            .contains("temporary issue");
+    }
 }

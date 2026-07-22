@@ -9,7 +9,7 @@
                 'json-tree-row-selectable': selectable,
             }"
             :style="{'--depth': row.depth}"
-            @click="selectRow(row.path)"
+            @click="selectRow(row.path, row.value)"
         >
             <span v-if="showGutter" class="json-tree-gutter">{{ index + 1 }}</span>
 
@@ -89,8 +89,6 @@
     import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
-    type JsonTreeMode = "inline" | "rows"
-
     type PreviewFormatter = (value: unknown, context: {kind: "array" | "object", count: number}) => string
 
     interface TreeRow {
@@ -98,6 +96,7 @@
         depth: number;
         label: string;
         valueClass: string;
+        value: unknown;
         display: string;
         isExpandable: boolean;
         isExpanded: boolean;
@@ -108,7 +107,7 @@
         nodeKey?: string | number,
         depth?: number,
         defaultExpanded?: boolean,
-        displayMode?: JsonTreeMode,
+        displayMode?: "inline" | "rows",
         showGutter?: boolean,
         selectable?: boolean,
         basePath?: string,
@@ -208,22 +207,9 @@
         collapsed.value = next
     }
 
-    function getValueAtPath(path: string): unknown {
-        if (!path) return props.value
-        const steps = path.split(/\.|\[|\]/).filter(Boolean)
-        let current: unknown = props.value
-        for (const step of steps) {
-            if (current === null || typeof current !== "object") {
-                return undefined
-            }
-            current = (current as Record<string, unknown>)[step]
-        }
-        return current
-    }
-
-    function selectRow(path: string) {
+    function selectRow(path: string, value: unknown) {
         if (props.selectable) {
-            emit("select", path, getValueAtPath(path))
+            emit("select", path, value)
         }
     }
 
@@ -240,6 +226,7 @@
             result.push({
                 path: childPath,
                 depth,
+                value: child,
                 label: key,
                 valueClass: tokenClass(child),
                 display: expandable ? collapsedPreview(child) : display(child),

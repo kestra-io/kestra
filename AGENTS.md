@@ -314,6 +314,15 @@ dev-tools/setup-worktree.sh ../worktrees/foo
 ```
 This copies the gitignored `cli/src/main/resources/application-*.yml` files from the main checkout into the worktree. Without this step Kestra cannot boot in the worktree. The script is idempotent — safe to re-run.
 
+### Branches and maintained versions
+
+`develop` tracks the next major version (currently 2.0.x) and is still pre-release (RC) — it is **not** what most users run in production. Older major/minor lines are maintained in parallel on their own long-lived `releases/vX.Y.x` branches (e.g. `releases/v1.3.x`), which receive their own bugfix and patch commits independently of `develop`.
+
+**Implication for bug reports:** a reporter's "Kestra Version" (e.g. `1.3.27`) tells you which `releases/vX.Y.x` branch to reproduce and fix against — it is very often *not* `develop`. Code on `develop` can differ substantially from a release branch (components get rewritten, composables renamed or removed, whole features redesigned), so:
+- Always check out the release branch matching the reported version before attempting to reproduce (`git worktree add <path> releases/vX.Y.x`, then run the app there — it needs its own `application-override.yml` copied in and typically its own database, since schemas/migrations diverge between branches).
+- A fix (and its PR) must target the branch the bug actually lives on, not `develop`, unless the bug is confirmed to reproduce there too.
+- Don't assume a bug is fixed just because it doesn't reproduce on `develop` — that branch may have simply rewritten the affected code, independent of any deliberate fix.
+
 ### Security Considerations
 - Use tenant isolation for multi-tenant features
 - Implement proper authorization with `@HasAnyPermission`

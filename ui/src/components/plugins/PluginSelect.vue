@@ -13,7 +13,7 @@
             :value="item.cls"
         >
             <span class="options">
-                <KsTaskIcon
+                <TaskIcon
                     :cls="item?.cls"
                     :onlyIcon="true"
                     :loadIcon="pluginsStore.loadIcon"
@@ -28,7 +28,7 @@
         </KsOption>
 
         <template #prefix>
-            <KsTaskIcon
+            <TaskIcon
                 v-if="modelValue"
                 :cls="modelValue"
                 :onlyIcon="true"
@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
     import {computed, inject, onBeforeMount, ref} from "vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins"
     import {
         FULL_SCHEMA_INJECTION_KEY,
@@ -66,7 +66,7 @@
     })
 
     onBeforeMount(() => {
-        if (blockType === "pluginDefaults" || isPluginBlock) {
+        if (isPluginBlock) {
             pluginsStore.listWithSubgroup({includeDeprecated: false})
         }
         pluginsStore.fetchIcons()
@@ -109,15 +109,8 @@
     })
 
     const taskModels = computed(() => {
-        const entries = blockType === "pluginDefaults"
-            ? (() => {
-                const deprecated = new Set(pluginsStore.deprecatedTypes)
-                return pluginsStore.allTypes
-                    .filter((cls: string) => !deprecated.has(cls) && rootDefinitions.value?.[cls])
-                    .map((cls: string) => ({cls, title: rootDefinitions.value?.[cls]?.title ?? cls}))
-            })()
-            : (Array.from(taskModelsSets.value) as [string, string][])
-                .map(([cls, title]) => ({cls, title}))
+        const entries = (Array.from(taskModelsSets.value) as [string, string][])
+            .map(([cls, title]) => ({cls, title}))
 
         const unique = Array.from(new Map(entries.map(e => [e.cls, e])).values())
         return unique.sort((a, b) => a.cls.localeCompare(b.cls))
@@ -147,7 +140,7 @@
 </script>
 
 <style scoped lang="scss">
-    :deep(div.ks-task-icon) {
+    :deep(div.task-icon) {
         display: inline-block;
         width: var(--ks-font-size-lg);
         height: var(--ks-font-size-lg);
@@ -155,7 +148,7 @@
     }
 
     :deep(.kel-input__prefix-inner) {
-        .ks-task-icon {
+        .task-icon {
             top: 0;
             margin-right: 0;
         }
@@ -176,7 +169,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        :deep(.ks-task-icon) {
+        :deep(.task-icon) {
             width: 2rem;
             height: 2rem;
         }

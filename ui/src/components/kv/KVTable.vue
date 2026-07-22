@@ -96,7 +96,7 @@
                     v-if="scope.row.key !== undefined"
                     :tooltip="$t('copy_to_clipboard')"
                     placement="left"
-                    @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
+                    @click="copyKey(scope.row.key)"
                 >
                     <ContentCopy />
                 </KsIconButton>
@@ -287,7 +287,7 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
     import Eye from "vue-material-design-icons/Eye.vue"
 
-    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
@@ -337,19 +337,20 @@
 
     const editorBindings = useEditorBindings()
 
+    const namespaceFilter = (namespace: string) =>
+        [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
+        const activeFilters = routeQueryToQueryFilters(route.query)
         const kvsResponse = await kvStore.find(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "name:asc"),
-            ...(props.namespace === undefined ? {} : {
-                filters: {
-                    namespace: {
-                        EQUALS: props.namespace,
-                    },
-                },
-            }),
+            filters: [
+                ...activeFilters,
+                ...(props.namespace === undefined ? [] : namespaceFilter(props.namespace)),
+            ],
         }))
 
         let allKvs = kvsResponse.results ?? []
@@ -359,11 +360,7 @@
 
             for (const parentNs of parentNamespaces) {
                 const parentKvsResponse = await kvStore.find(loadQuery({
-                    filters: {
-                        namespace: {
-                            EQUALS: parentNs,
-                        },
-                    },
+                    filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 
                 const parentKvs = parentKvsResponse?.results ?? []
@@ -382,8 +379,11 @@
     }
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return _merge(base, filters)
+        const {page: _p, size: _s, sort: _so, ...rest} = route.query
+        const nonFilterRest = Object.fromEntries(
+            Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
+        )
+        return _merge(base, nonFilterRest)
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
@@ -551,7 +551,7 @@
 
     function durationValidator(_rule: any, value: string, callback: (error?: Error) => void) {
         if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
-            callback(new Error(t("datepicker.error")))
+            callback(new Error(t("invalid duration")))
         } else {
             callback()
         }
@@ -570,7 +570,7 @@
     async function updateKvModal(entry: any) {
         kv.value.namespace = entry.namespace
         kv.value.key = entry.key
-        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
+        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key}) as {type: string, value: any}
         kv.value.type = type
         // Force the type reset before setting the value
         await nextTick()
@@ -588,6 +588,21 @@
         }
         kv.value.update = true
         kv.value.description = entry.description
+
+        if (entry.expirationDate) {
+            const expirationMoment = moment(entry.expirationDate)
+            const now = moment()
+
+            if (expirationMoment.isValid() && expirationMoment.isAfter(now)) {
+                const remainingMilliseconds = Math.round(expirationMoment.diff(now) / 1000) * 1000
+                kv.value.ttl = moment.duration(remainingMilliseconds).toISOString()
+            } else {
+                kv.value.ttl = undefined
+            }
+        } else {
+            kv.value.ttl = undefined
+        }
+
         addKvDrawerVisible.value = true
     }
 
@@ -595,7 +610,7 @@
     const viewKv = ref<{namespace?: string; key?: string; type?: string; value?: string; description?: string}>({})
 
     async function viewKvModal(entry: any) {
-        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key})
+        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key}) as {type: string, value: any}
         const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess()
         viewKv.value = {
             namespace: entry.namespace,
@@ -605,6 +620,11 @@
             description: entry.description,
         }
         viewKvDrawerVisible.value = true
+    }
+
+    async function copyKey(key: string) {
+        await Utils.copy(`{{ kv('${key}') }}`)
+        toast.success(t("copied"))
     }
 
     function removeKv(namespace: string, key: string) {

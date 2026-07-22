@@ -38,7 +38,7 @@
                         :modelValue="blueprint.source"
                     >
                         <template #absolute>
-                            <CopyToClipboard :text="blueprint.source" />
+                            <CopyToClipboard v-if="blueprint.source" :text="blueprint.source" />
                         </template>
                     </KsEditor>
                 </KsSplitterPanel>

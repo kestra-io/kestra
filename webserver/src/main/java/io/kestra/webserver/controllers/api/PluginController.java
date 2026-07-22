@@ -22,8 +22,8 @@ import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.EditionProvider;
+import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
@@ -281,7 +281,7 @@ public class PluginController {
         }
 
         return pluginCatalogService.icon(cls)
-            .<HttpResponse<byte[]>>map(bytes -> HttpResponse.ok(bytes).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE))
+            .<HttpResponse<byte[]>> map(bytes -> HttpResponse.ok(bytes).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE))
             .orElseGet(HttpResponse::notFound);
     }
 
@@ -304,7 +304,8 @@ public class PluginController {
     protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
-            .flatMap(plugin -> {
+            .flatMap(plugin ->
+            {
                 Optional<RegisteredPlugin.IconAndMonochrome> defaultIcon = plugin.iconAndMonochrome("plugin-icon");
                 return Stream.of(
                     plugin.getTasks().stream(),
@@ -328,7 +329,8 @@ public class PluginController {
 
         // add aliases
         Map<String, PluginIcon> aliasIcons = pluginRegistry.plugins().stream()
-            .flatMap(plugin -> {
+            .flatMap(plugin ->
+            {
                 Optional<RegisteredPlugin.IconAndMonochrome> defaultIcon = plugin.iconAndMonochrome("plugin-icon");
                 return plugin.getAliases().values().stream().map(
                     e -> new AbstractMap.SimpleEntry<>(

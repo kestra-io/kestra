@@ -27,15 +27,16 @@ import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
+import io.kestra.core.models.policies.RulePluginInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.ui.PluginUiModule;
 import io.kestra.core.preview.FileRenderer;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.secret.SecretPluginInterface;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.storages.StorageInterface;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -132,6 +133,7 @@ public class PluginScanner {
         List<Class<? extends DataFilter<?, ?>>> dataFilters = new ArrayList<>();
         List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI = new ArrayList<>();
         List<Class<? extends LogExporter<?>>> logExporter = new ArrayList<>();
+        List<Class<? extends RulePluginInterface>> rules = new ArrayList<>();
         List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
         List<Class<? extends FileRenderer>> fileRenderers = new ArrayList<>();
         List<String> guides = new ArrayList<>();
@@ -211,6 +213,10 @@ public class PluginScanner {
                         log.debug("Loading LogExporter plugin: '{}'", plugin.getClass());
                         logExporter.add((Class<? extends LogExporter<?>>) shipper.getClass());
                     }
+                    case RulePluginInterface rule -> {
+                        log.debug("Loading Rule plugin: '{}'", plugin.getClass());
+                        rules.add(rule.getClass());
+                    }
                     case AdditionalPlugin additionalPlugin -> {
                         log.debug("Loading additional plugin: '{}'", plugin.getClass());
                         additionalPlugins.add(additionalPlugin.getClass());
@@ -289,6 +295,7 @@ public class PluginScanner {
             .dataFiltersKPI(dataFiltersKPI)
             .guides(guides)
             .logExporters(logExporter)
+            .rules(rules)
             .additionalPlugins(additionalPlugins)
             .fileRenderers(fileRenderers)
             .aliases(

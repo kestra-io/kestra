@@ -39,7 +39,6 @@ public class V2_0_16WidenLogsTaskIdMigration extends AbstractSQLMigrationScript 
         }
     }
 
-
     private static final String SCRIPT_ID = "2.0.16-widen-logs-task-id-mysql";
     private static final String SQL_RESOURCE = "/migrations/2.0.16-widen-logs-task-id-mysql.sql";
 

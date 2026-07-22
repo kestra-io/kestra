@@ -1,6 +1,6 @@
 <template>
     <KsDropdown trigger="click" placement="bottom-end" :persistent="true">
-        <KsButton link>
+        <KsButton link data-onboarding-target="execution-actions-menu">
             <KsIcon><DotsVertical /></KsIcon>
             <span class="d-none d-lg-inline-block">{{ t("actions") }}</span>
         </KsButton>
@@ -24,6 +24,7 @@
     import {useI18n} from "vue-i18n"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import {asItemKey} from "../layout/navBarActionsContext"
+    import type {Execution} from "../../stores/executions"
 
     interface Action {
         component: Component;
@@ -33,7 +34,7 @@
 
     defineProps<{
         actions: Action[];
-        execution: Record<string, unknown>;
+        execution: Execution;
     }>()
 
     const {t} = useI18n({useScope: "global"})

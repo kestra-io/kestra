@@ -15,6 +15,7 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.quota.Quota;
@@ -122,6 +123,20 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                 {
                     try {
                         final FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+
+                        // A flow that resolves to a FlowWithException (unparsable, or blocked at execution
+                        // pre-flight) cannot be processed: fail the execution fast instead of leaving it stuck.
+                        // Terminated executions are left untouched so a late flow change never rewrites them.
+                        if (flow instanceof FlowWithException flowWithException) {
+                            if (execution.getState().isTerminated()) {
+                                return null;
+                            }
+                            IllegalStateException exception = new IllegalStateException(flowWithException.getException());
+                            Span.current().recordException(exception).setStatus(StatusCode.ERROR);
+                            Execution failedExecution = fail(execution, exception);
+                            return new ExecutorContext(execution).withExecution(failedExecution, "flowWithException");
+                        }
+
                         ExecutorContext executor = new ExecutorContext(execution, flow);
 
                         // schedule it for later if needed
@@ -155,29 +170,27 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                             }
 
                             // handle quotas
-                            if (!ListUtils.isEmpty(flow.getQuotas())) {
-                                Optional<Quota> quota = quotaService.checkAndIncrement(flow);
-                                if (quota.isPresent()) {
-                                    // a quota is exceeded: stop the execution in the desired state
-                                    Execution newExecution = switch (quota.get().getBehavior()) {
-                                        case FAIL -> {
-                                            var failedExecution = execution
-                                                .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
-                                            var logger = runContextLoggerFactory.create(execution);
-                                            logger.emitLogs(failedExecution.logs());
-                                            yield failedExecution.execution();
-                                        }
-                                        case CANCEL -> execution.withState(State.Type.CANCELLED);
-                                    };
+                            Optional<Quota> quota = quotaService.checkAndIncrement(flow);
+                            if (quota.isPresent()) {
+                                // a quota is exceeded: stop the execution in the desired state
+                                Execution newExecution = switch (quota.get().getBehavior()) {
+                                    case FAIL -> {
+                                        var failedExecution = execution
+                                            .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + quota.get().getDuration() + " quota limit exceeded"));
+                                        var logger = runContextLoggerFactory.create(execution);
+                                        logger.emitLogs(failedExecution.logs());
+                                        yield failedExecution.execution();
+                                    }
+                                    case CANCEL -> execution.withState(State.Type.CANCELLED);
+                                };
 
-                                    metricRegistry
-                                        .counter(
-                                            MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
-                                        )
-                                        .increment();
+                                metricRegistry
+                                    .counter(
+                                        MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
+                                    )
+                                    .increment();
 
-                                    return executor.withExecution(newExecution, "processQuotas");
-                                }
+                                return executor.withExecution(newExecution, "processQuotas");
                             }
 
                             // handle concurrency limit

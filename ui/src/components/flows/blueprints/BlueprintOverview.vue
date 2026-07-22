@@ -20,7 +20,7 @@
                     class="task"
                     :class="{missing: missingTasks.includes(task)}"
                 >
-                    <KsTaskIcon :cls="task" :icons="icons" :loadIcon="loadIcon" onlyIcon />
+                    <TaskIcon :cls="task" :icons="icons" :loadIcon="loadIcon" onlyIcon />
                     <span>{{ taskName(task) }}</span>
                 </div>
             </div>
@@ -58,14 +58,15 @@
 <script setup lang="ts">
     import {computed} from "vue"
 
-    import {KsTaskIcon, stringUtils} from "@kestra-io/design-system"
+    import {stringUtils} from "@kestra-io/design-system"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
     import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const props = withDefaults(defineProps<{
-        blueprint?: FlowBlueprint;
+        blueprint?: FlowBlueprint & {kind?: "FLOW" | "DASHBOARD" | "APP"};
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;
         loadIcon?: (cls: string) => Promise<any>;
@@ -163,7 +164,7 @@
             font-size: var(--ks-font-size-xs);
             font-weight: var(--ks-font-weight-regular);
 
-            :deep(.ks-task-icon) {
+            :deep(.task-icon) {
                 flex-shrink: 0;
                 width: 1.5rem;
                 height: 1.5rem;
@@ -172,7 +173,7 @@
             &.missing {
                 color: var(--ks-text-secondary);
 
-                :deep(.ks-task-icon) {
+                :deep(.task-icon) {
                     opacity: 0.4;
                     filter: grayscale(1);
                 }

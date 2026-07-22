@@ -1,3 +1,13 @@
+import {vi} from "vitest";
+
+// executionsStore.findExecutions() calls ExecutionsAPI.searchExecutions() directly, which goes
+// through the SDK's own internal client rather than the axios instance setMockClient() swaps -
+// so it has to be intercepted at the submodule level.
+const mockState = vi.hoisted(() => ({data: {results: [], total: 0}}))
+vi.mock("@kestra-io/kestra-sdk/executions", () => ({
+    searchExecutions: async () => mockState.data,
+}))
+
 import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
 import {useMiscStore} from "override/stores/misc";
@@ -25,13 +35,10 @@ function getDecorators(data) {
                     miscStore.configs = {
                         hiddenLabelsPrefixes: ["system_"]
                     }
+                    mockState.data = data
+
                     const axios = {}
-                    axios.get = function(a) {
-                        if (a.endsWith("executions/search")) {
-                            return Promise.resolve({
-                                data
-                            })
-                        }
+                    axios.get = function() {
                         return Promise.resolve({data: []})
                     }
                     setMockClient(axios);

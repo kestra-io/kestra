@@ -82,7 +82,7 @@
                         </template>
                     </div>
                 </template>
-                <KsPluginCard
+                <PluginCard
                     :iconCls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
                     :icons
                     :loadIcon="pluginsStore.loadIcon"
@@ -102,7 +102,8 @@
     import {ref, computed, markRaw, onMounted, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsPluginCard, KsSearch, KsAlert, KsSkeleton} from "@kestra-io/design-system"
+    import {KsSearch, KsAlert, KsSkeleton} from "@kestra-io/design-system"
+    import PluginCard from "./PluginCard.vue"
     import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.preview.FilePreview;
 import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.FileSerde;
@@ -30,6 +31,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
     title = "ION file renderer",
     description = "Preview ION files inside the Kestra UI."
 )
+@Plugin
 public class IonFileRenderer implements FileRenderer {
     @Override
     public boolean supports(String extension) {

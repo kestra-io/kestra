@@ -1440,7 +1440,14 @@
       "update": "गुप्त जानकारी '{name}' अपडेट करें",
       "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
       "names": "Secrets",
-      "inherited": "Inherited secrets"
+      "inherited": "Inherited secrets",
+      "key": "नाम",
+      "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
+      "name": "गुप्त मान",
+      "description": "विवरण",
+      "descriptionPlaceholder": "इस secret का वर्णन करें",
+      "tags": "टैग",
+      "addTag": "टैग जोड़ें"
     },
     "workerId": "Worker Id",
     "kv": {

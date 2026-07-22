@@ -1440,7 +1440,14 @@
       "update": "Обновить секрет '{name}'",
       "isReadOnly": "Секрет доступен только для чтения",
       "names": "Cекреты",
-      "inherited": "Унаследованные секреты"
+      "inherited": "Унаследованные секреты",
+      "key": "Имя",
+      "keyPlaceholder": "Имя, используемое для ссылки на этот секрет, например, MY_API_TOKEN",
+      "name": "Секретное значение",
+      "description": "Описание",
+      "descriptionPlaceholder": "Опишите этот секрет",
+      "tags": "Теги",
+      "addTag": "Добавить тег"
     },
     "workerId": "Worker Id",
     "kv": {

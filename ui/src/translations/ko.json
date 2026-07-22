@@ -485,7 +485,7 @@
       "intro_step2_title": "tasks 추가",
       "intro_step3_cta": "inputs 참조 보기",
       "intro_step3_desc_mid": ", ",
-      "intro_step3_desc_prefix": "",
+      "intro_step3_desc_prefix": "사용",
       "intro_step3_desc_suffix": "와 Pebble 표현식을 사용하세요.",
       "intro_step3_title": "동적으로 만들기",
       "intro_sub": "YAML로 flow를 만드는 데 필요한 모든 것：속성, inputs, Pebble templating을 한 곳에서.",

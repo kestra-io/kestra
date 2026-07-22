@@ -485,7 +485,7 @@
       "intro_step2_title": "tasksを追加",
       "intro_step3_cta": "inputs リファレンスを見る",
       "intro_step3_desc_mid": "、",
-      "intro_step3_desc_prefix": "",
+      "intro_step3_desc_prefix": "使用",
       "intro_step3_desc_suffix": "とPebble式を使用します。",
       "intro_step3_title": "動的にする",
       "intro_sub": "YAMLでflowを構築するために必要なすべて：プロパティ、inputs、Pebble templatingを一箇所で。",

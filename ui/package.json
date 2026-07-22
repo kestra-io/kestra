@@ -98,7 +98,7 @@
         "patch-package": "^8.0.1",
         "path-browserify": "^1.0.1",
         "pdfjs-dist": "^6.1.200",
-        "pinia": "^3.0.4",
+        "pinia": "^4.0.2",
         "playwright": "^1.61.1",
         "posthog-js": "^1.399.1",
         "prettier": "^3.9.5",

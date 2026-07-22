@@ -1440,7 +1440,14 @@
       "update": "Update secret '{name}'",
       "isReadOnly": "Secret is read-only",
       "names": "Secrets",
-      "inherited": "Inherited secrets"
+      "inherited": "Inherited secrets",
+      "key": "Name",
+      "keyPlaceholder": "Name used to reference this secret, e.g. MY_API_TOKEN",
+      "name": "Secret value",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe this secret",
+      "tags": "Tags",
+      "addTag": "Add tag"
     },
     "workerId": "Worker Id",
     "kv": {

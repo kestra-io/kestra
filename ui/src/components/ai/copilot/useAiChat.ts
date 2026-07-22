@@ -285,8 +285,9 @@ export function useAiChat() {
             await streamSse({url, body, signal: abort.signal, onFrame: reduce})
             // The stream closed cleanly but added nothing to the transcript and left no proposal —
             // e.g. a transient provider hiccup returned only `done`. Surface a notice rather than
-            // leaving the panel silent, so the user knows to retry.
-            if (messages.value.length === countBefore && !pendingConfirmation.value) {
+            // leaving the panel silent, so the user knows to retry. A streamed error event already
+            // surfaces its own reason, so don't stack the empty-turn notice on top of it.
+            if (messages.value.length === countBefore && !pendingConfirmation.value && !errorDetail.value && !error.value) {
                 notice.value = "emptyTurn"
             }
         } catch (e) {

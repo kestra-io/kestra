@@ -44,6 +44,7 @@ import {symlinkAlias} from "./plugins/vite-plugin-symlink-alias.mjs"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
 import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
 import {VitePWA} from "vite-plugin-pwa"
+import {loaderFragment} from "./plugins/loaderFragment.js"
 
 import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
 
@@ -79,6 +80,7 @@ export default defineConfig(({mode}) => {
         },
         plugins: [
             symlinkAlias(__dirname),
+            loaderFragment(),
             vue({
                 template: {
                     compilerOptions: {

@@ -64,7 +64,6 @@ jobs:
 
       - name: Generate GitHub App token for hey-api-plugin release
         id: hey-api-plugin-token
-        working-directory: .
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.GH_BOT_APP_ID }}

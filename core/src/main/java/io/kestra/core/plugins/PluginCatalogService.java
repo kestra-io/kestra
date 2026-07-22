@@ -161,16 +161,22 @@ public class PluginCatalogService {
 
                     String icon = null;
                     if (icons) {
-                        // Get icon
-                        HttpResponse<String> response = httpClient
-                            .toBlocking()
-                            .exchange(
-                                HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + plugin.get("group")),
-                                String.class
-                            );
-                        icon = response.getBody()
-                            .map(svg -> Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8)))
-                            .orElse(null);
+                        // A failure while fetching a single icon must never empty the whole catalog:
+                        // the icon fetch runs inside this stream, so an uncaught exception would abort
+                        // load() entirely and get() would return an empty (and cached) plugin list.
+                        try {
+                            HttpResponse<String> response = httpClient
+                                .toBlocking()
+                                .exchange(
+                                    HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + plugin.get("group")),
+                                    String.class
+                                );
+                            icon = response.getBody()
+                                .map(svg -> Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8)))
+                                .orElse(null);
+                        } catch (Exception e) {
+                            log.warn("Failed to load icon for plugin group '{}': {}", plugin.get("group"), e.getMessage());
+                        }
                     }
 
                     return new PluginManifest(

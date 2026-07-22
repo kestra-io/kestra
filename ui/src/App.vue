@@ -12,6 +12,7 @@
     <OnboardingOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
     <DrillDownDrawer />
+    <PwaInstallPrompt v-if="loaded && route?.name && !route.meta?.anonymous" />
 </template>
 
 <script lang="ts" setup>
@@ -36,6 +37,7 @@
     import DocIdDisplay from "./components/DocIdDisplay.vue"
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue"
     import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
+    import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"
 
     const loaded = ref(false)

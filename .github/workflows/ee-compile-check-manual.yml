@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'kestra-io/kestra'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: EE compile check (via Kestra webhook)
         uses: ./.github/actions/ee-compile-check
         with:

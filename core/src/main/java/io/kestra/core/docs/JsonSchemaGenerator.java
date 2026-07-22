@@ -139,6 +139,7 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
+            injectUnresolvedPluginTypes(objectNode, allowedPluginTypes);
 
             Map<String, Object> schema = MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
             stripEditionRestrictedInputTypes(schema);
@@ -851,16 +852,14 @@ public class JsonSchemaGenerator {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
-                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
-                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .filter(clz -> isSchemaEligiblePlugin(clz, allowedPluginTypes))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
         } else if (declaredType.getErasedType() == AbstractTrigger.class) {
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
-                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
-                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .filter(clz -> isSchemaEligiblePlugin(clz, allowedPluginTypes))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
         } else if (declaredType.getErasedType() == TaskRunner.class) {
@@ -1007,8 +1006,11 @@ public class JsonSchemaGenerator {
                 );
                 return Optional.of(fallback);
             } catch (Exception | LinkageError fallbackException) {
+                // The type cannot be resolved at all. For task/trigger types, injectUnresolvedPluginTypes()
+                // still adds a minimal placeholder definition to the schema so the type keeps autocompleting
+                // and validating (see #12102); other categories (e.g. inputs) are excluded entirely.
                 log.warn(
-                    "Unable to resolve subtype '{}' of '{}' for schema generation, it will be excluded from autocompletion. Cause: [{}] {}",
+                    "Unable to resolve subtype '{}' of '{}' for schema generation. Cause: [{}] {}",
                     clz.getName(),
                     declaredType.getErasedType().getName(),
                     fallbackException.getClass().getSimpleName(),
@@ -1017,6 +1019,87 @@ public class JsonSchemaGenerator {
                 return Optional.empty();
             }
         }
+    }
+
+    /**
+     * Whether a registered plugin class should appear in the generated schema: not internal, and either no
+     * explicit allow-list was given or the class is on it. Shared by {@link #subtypeResolver} (which resolves
+     * eligible types) and {@link #injectUnresolvedPluginTypes} (which reconciles the ones that failed to resolve),
+     * so the two paths cannot drift.
+     */
+    private static boolean isSchemaEligiblePlugin(Class<?> pluginClass, List<String> allowedPluginTypes) {
+        return (allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(pluginClass.getName()))
+            && !io.kestra.core.models.Plugin.isInternal(pluginClass);
+    }
+
+    /**
+     * Reconcile the generated schema with the plugin registry. A task/trigger type that is registered and
+     * schema-eligible but absent from {@code definitions} was dropped because its generic type hierarchy could
+     * not be resolved (e.g. a plugin jar built against an incompatible Kestra version, throwing
+     * {@link TypeNotPresentException}/{@link NoClassDefFoundError} in {@link #safelyResolveSubtype}). Instead of
+     * letting it silently disappear from autocompletion and trigger "unknown type" validation warnings (#12102),
+     * inject a minimal permissive definition and reference it from the base type's {@code anyOf}. The type then
+     * still autocompletes and validates; only its property-level detail is unavailable, since its structure could
+     * not be resolved.
+     */
+    // package-private for testing
+    void injectUnresolvedPluginTypes(ObjectNode objectNode, List<String> allowedPluginTypes) {
+        if (!(objectNode.get("definitions") instanceof ObjectNode definitions)) {
+            return;
+        }
+
+        injectUnresolvedForBase(
+            definitions,
+            Task.class.getName(),
+            getRegisteredPlugins().stream().flatMap(registeredPlugin -> registeredPlugin.getTasks().stream()),
+            allowedPluginTypes
+        );
+        injectUnresolvedForBase(
+            definitions,
+            AbstractTrigger.class.getName(),
+            getRegisteredPlugins().stream().flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()),
+            allowedPluginTypes
+        );
+    }
+
+    private void injectUnresolvedForBase(ObjectNode definitions, String baseDefinitionKey, Stream<? extends Class<?>> candidates, List<String> allowedPluginTypes) {
+        if (!(definitions.get(baseDefinitionKey) instanceof ObjectNode baseDefinition)
+            || !(baseDefinition.get("anyOf") instanceof ArrayNode anyOf)) {
+            return;
+        }
+
+        candidates
+            .filter(clz -> isSchemaEligiblePlugin(clz, allowedPluginTypes))
+            .map(Class::getName)
+            .distinct()
+            .filter(name -> !definitions.has(name))
+            .forEach(name -> {
+                populatePlaceholderDefinition(definitions.putObject(name), name);
+                anyOf.add(MAPPER.createObjectNode().put("$ref", "#/definitions/" + name));
+            });
+    }
+
+    /**
+     * Populate {@code definition} with a minimal permissive schema for a plugin type whose full schema could not be
+     * generated. It accepts any property (so valid flows are not falsely rejected) while still pinning the
+     * {@code type} discriminator, so the type keeps autocompleting and validating. Shared by
+     * {@link #injectUnresolvedPluginTypes} (types dropped before generation) and the failure-isolating custom
+     * definition provider in {@link #build} (types that throw during generation), so both emit the same placeholder.
+     * See #12102.
+     */
+    private static void populatePlaceholderDefinition(ObjectNode definition, String className) {
+        definition.put("type", "object");
+        // the structure could not be resolved, so accept any property rather than falsely rejecting valid ones
+        definition.put("additionalProperties", true);
+        definition.putObject("properties").putObject("type").put("const", className);
+        definition.putArray("required").add("type");
+        definition.put("title", className.substring(className.lastIndexOf('.') + 1));
+        definition.put(
+            "markdownDescription",
+            "The full schema for this plugin could not be generated, likely because it was built against an "
+                + "incompatible Kestra version (see the server logs for the cause). The task remains usable and "
+                + "executable, but property validation and autocompletion are unavailable for it."
+        );
     }
 
     protected List<RegisteredPlugin> getRegisteredPlugins() {

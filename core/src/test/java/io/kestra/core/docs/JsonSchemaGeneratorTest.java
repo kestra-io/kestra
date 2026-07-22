@@ -662,6 +662,51 @@ class JsonSchemaGeneratorTest {
         assertThat(resolved.isEmpty(), is(true));
     }
 
+    @Test
+    void shouldInjectPlaceholderSchemaForUnresolvedTaskType() {
+        // Given: a task type that is registered and schema-eligible, but absent from the generated schema's
+        // Task.anyOf — i.e. it was dropped by safelyResolveSubtype because its generics could not be resolved
+        // (a plugin built against an incompatible Kestra version). See #12102.
+        RegisteredPlugin plugin = RegisteredPlugin.builder()
+            .tasks(List.of(Log.class))
+            .triggers(List.of())
+            .build();
+        JsonSchemaGenerator generator = new JsonSchemaGenerator(pluginRegistry) {
+            @Override
+            protected List<RegisteredPlugin> getRegisteredPlugins() {
+                return List.of(plugin);
+            }
+        };
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.node.ObjectNode schema = mapper.createObjectNode();
+        com.fasterxml.jackson.databind.node.ObjectNode definitions = schema.putObject("definitions");
+        definitions.putObject(Task.class.getName()).putArray("anyOf");
+
+        // When
+        generator.injectUnresolvedPluginTypes(schema, List.of());
+
+        // Then: a minimal permissive definition is injected so the type still validates and autocompletes
+        com.fasterxml.jackson.databind.JsonNode injected = definitions.get(Log.class.getName());
+        assertThat(injected, is(notNullValue()));
+        assertThat(injected.get("type").asText(), is("object"));
+        assertThat(injected.get("additionalProperties").asBoolean(), is(true));
+        assertThat(injected.get("properties").get("type").get("const").asText(), is(Log.class.getName()));
+
+        // and it is referenced from the Task base type's anyOf
+        boolean referenced = false;
+        for (com.fasterxml.jackson.databind.JsonNode ref : definitions.get(Task.class.getName()).get("anyOf")) {
+            if (("#/definitions/" + Log.class.getName()).equals(ref.path("$ref").asText())) {
+                referenced = true;
+            }
+        }
+        assertThat(referenced, is(true));
+
+        // and an already-present type is neither duplicated nor overwritten
+        int anyOfSizeAfterFirst = definitions.get(Task.class.getName()).get("anyOf").size();
+        generator.injectUnresolvedPluginTypes(schema, List.of());
+        assertThat(definitions.get(Task.class.getName()).get("anyOf").size(), is(anyOfSizeAfterFirst));
+    }
+
     @SuperBuilder
     @ToString
     @EqualsAndHashCode

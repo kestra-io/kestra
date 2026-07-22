@@ -215,7 +215,7 @@
         width: var(--ks-spacing-7);
         height: var(--ks-spacing-7);
         border-radius: var(--ks-radius-base);
-        background-color: var(--ks-bg-badge);
+        background-color: var(--ks-bg-tag);
         flex-shrink: 0;
         color: var(--ks-text-primary);
     }
@@ -284,7 +284,7 @@
         width: var(--ks-spacing-6);
         height: var(--ks-spacing-6);
         border-radius: var(--ks-radius-sm);
-        background-color: var(--ks-bg-badge);
+        background-color: var(--ks-bg-tag);
         flex-shrink: 0;
         color: var(--ks-text-primary);
     }

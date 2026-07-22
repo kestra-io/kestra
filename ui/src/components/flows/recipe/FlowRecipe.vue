@@ -300,10 +300,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 2rem;
-        height: 2rem;
+        width: var(--ks-spacing-6);
+        height: var(--ks-spacing-6);
         border-radius: var(--ks-radius-sm);
-        background-color: var(--ks-bg-badge);
+        background-color: var(--ks-bg-tag);
         flex-shrink: 0;
         color: var(--ks-text-primary);
     }

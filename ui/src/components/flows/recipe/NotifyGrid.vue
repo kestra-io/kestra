@@ -140,13 +140,13 @@
     }
 
     .icon-wrap {
-        width: 2rem;
-        height: 2rem;
+        width: var(--ks-spacing-6);
+        height: var(--ks-spacing-6);
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: var(--ks-radius-sm);
-        background-color: var(--ks-bg-badge);
+        background-color: var(--ks-bg-tag);
     }
 
     .channel-icon {

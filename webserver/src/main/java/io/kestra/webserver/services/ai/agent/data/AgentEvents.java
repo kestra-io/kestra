@@ -22,7 +22,14 @@ public final class AgentEvents {
     public record ToolCallEvent(String tool, String kind, @Nullable String family, Map<String, Object> arguments) {
     }
 
-    public record ToolResultEvent(String tool, String outcome) {
+    /**
+     * Mirrors the keys persisted with a tool result so the live stream and a thread reload expose the
+     * same detail to the client.
+     *
+     * @param error  the failure detail when {@code outcome} is {@code "error"} (the tool threw); else {@code null}.
+     * @param reason the rejection detail when {@code outcome} is {@code "rejected"}; else {@code null}.
+     */
+    public record ToolResultEvent(String tool, String outcome, @Nullable String error, @Nullable String reason) {
     }
 
     public record ProposedActionEvent(

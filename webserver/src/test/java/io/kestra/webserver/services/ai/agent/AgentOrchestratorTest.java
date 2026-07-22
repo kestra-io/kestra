@@ -356,6 +356,9 @@ class AgentOrchestratorTest {
         );
         assertThat(toolResultOutcome(sink)).isEqualTo("rejected");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        // the streamed event carries the rejection reason to the frontend (not just the outcome)
+        assertThat(toolResult(sink).reason()).contains("Permission denied");
+        assertThat(toolResult(sink).error()).isNull();
         assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
             .allMatch(
@@ -468,6 +471,9 @@ class AgentOrchestratorTest {
         );
         assertThat(toolResultOutcome(sink)).isEqualTo("error");
         assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        // the streamed event carries the error message to the frontend (not just the outcome)
+        assertThat(toolResult(sink).error()).contains("Execution not found");
+        assertThat(toolResult(sink).reason()).isNull();
         // the error result is durable and carries the tool author's message for the model to read
         assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)
@@ -642,7 +648,11 @@ class AgentOrchestratorTest {
     }
 
     private static String toolResultOutcome(final CollectingSink sink) {
-        return ((AgentEvents.ToolResultEvent) sink.first(AgentEvents.TOOL_RESULT)).outcome();
+        return toolResult(sink).outcome();
+    }
+
+    private static AgentEvents.ToolResultEvent toolResult(final CollectingSink sink) {
+        return (AgentEvents.ToolResultEvent) sink.first(AgentEvents.TOOL_RESULT);
     }
 
     private static String confirmationId(final CollectingSink sink) {

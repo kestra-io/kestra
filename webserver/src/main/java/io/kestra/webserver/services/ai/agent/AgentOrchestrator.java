@@ -35,6 +35,8 @@ import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog.ToolEntry;
 import io.kestra.webserver.services.ai.agent.tool.ToolPermissionDeniedException;
 
+import io.micronaut.core.annotation.Nullable;
+
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
@@ -207,7 +209,7 @@ public class AgentOrchestrator {
             String rejectedText = "REJECTED by user." + (reason != null ? " Reason: " + reason : "");
             ctx.messages().add(ToolExecutionResultMessage.from(held, rejectedText));
             threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()), rejectedResult(reason));
-            emitToolResult(sink, held.name(), "rejected");
+            emitToolResult(sink, held.name(), "rejected", null, reason);
 
             if (ctx.mode() == AgentMode.PLAN) {
                 threadManager.appendAssistantText(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), "Action rejected; the plan has been aborted.");
@@ -237,7 +239,7 @@ public class AgentOrchestrator {
         }
         ctx.messages().add(ToolExecutionResultMessage.from(held, result.text()));
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(held, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result.text()));
-        emitToolResult(sink, held.name(), "ok");
+        emitToolResult(sink, held.name(), "ok", null, null);
         runLoop(ctx, sink);
     }
 
@@ -340,14 +342,14 @@ public class AgentOrchestrator {
         }
         ctx.messages().add(ToolExecutionResultMessage.from(req, result.text()));
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result.text()));
-        emitToolResult(sink, req.name(), "ok");
+        emitToolResult(sink, req.name(), "ok", null, null);
     }
 
     private void rejectTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
         final AgentToolFamily family, final String reason, final TurnEventSink sink) {
         ctx.messages().add(ToolExecutionResultMessage.from(req, reason));
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), rejectedResult(reason));
-        emitToolResult(sink, req.name(), "rejected");
+        emitToolResult(sink, req.name(), "rejected", null, reason);
     }
 
     /**
@@ -359,7 +361,7 @@ public class AgentOrchestrator {
         final AgentToolFamily family, final String message, final TurnEventSink sink) {
         ctx.messages().add(ToolExecutionResultMessage.from(req, "Error: " + message));
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
-        emitToolResult(sink, req.name(), "error");
+        emitToolResult(sink, req.name(), "error", message, null);
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
@@ -486,8 +488,8 @@ public class AgentOrchestrator {
         );
     }
 
-    private void emitToolResult(final TurnEventSink sink, final String tool, final String outcome) {
-        sink.emit(AgentEvents.TOOL_RESULT, new AgentEvents.ToolResultEvent(tool, outcome));
+    private void emitToolResult(final TurnEventSink sink, final String tool, final String outcome, @Nullable final String error, @Nullable final String reason) {
+        sink.emit(AgentEvents.TOOL_RESULT, new AgentEvents.ToolResultEvent(tool, outcome, error, reason));
     }
 
     private void done(final TurnEventSink sink, final AgentThreadStatus status) {

@@ -8,21 +8,14 @@
                 </div>
 
                 <div class="trigger-types" role="radiogroup" :aria-label="$t('recipe.when.trigger_type')" data-test="recipe-trigger-types">
-                    <div
+                    <SelectableTile
                         v-for="card in triggerCards"
                         :key="card.key"
-                        class="trigger-card"
-                        :class="{
-                            selected: recipe.triggerType === card.type && !card.disabled,
-                            disabled: card.disabled,
-                        }"
                         role="radio"
-                        :aria-checked="recipe.triggerType === card.type && !card.disabled"
-                        :aria-disabled="card.disabled"
-                        :tabindex="card.disabled ? -1 : 0"
-                        @click="!card.disabled && selectTrigger(card.type)"
-                        @keydown.enter="!card.disabled && selectTrigger(card.type)"
-                        @keydown.space.prevent="!card.disabled && selectTrigger(card.type)"
+                        :selected="recipe.triggerType === card.type && !card.disabled"
+                        :disabled="card.disabled"
+                        :ariaLabel="card.title"
+                        @select="selectTrigger(card.type)"
                     >
                         <div class="trigger-card-icon">
                             <KsIcon>
@@ -39,7 +32,7 @@
                                 <CheckCircle />
                             </KsIcon>
                         </div>
-                    </div>
+                    </SelectableTile>
                 </div>
 
                 <div class="trigger-panel">
@@ -117,6 +110,7 @@
     import OtherPanel from "./triggerPanels/OtherPanel.vue"
     import NotifyGrid from "./NotifyGrid.vue"
     import RecipeSummary from "./RecipeSummary.vue"
+    import SelectableTile from "./SelectableTile.vue"
 
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import ClockOutline from "vue-material-design-icons/ClockOutline.vue"
@@ -273,37 +267,6 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr));
         gap: var(--ks-spacing-3);
-    }
-
-    .trigger-card {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-3);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        cursor: pointer;
-        transition: border-color var(--ks-duration-fast) var(--ks-ease-standard), background-color var(--ks-duration-fast) var(--ks-ease-standard);
-
-        &:hover:not(.disabled) {
-            border-color: var(--ks-border-strong);
-            background-color: var(--ks-bg-hover);
-        }
-
-        &.selected {
-            border-color: var(--ks-border-focus);
-            background-color: var(--ks-bg-tag-active);
-        }
-
-        &.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--ks-border-focus);
-            outline-offset: 2px;
-        }
     }
 
     .trigger-card-icon {

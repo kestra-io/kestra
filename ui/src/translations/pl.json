@@ -2281,6 +2281,12 @@
     },
     "open source": "Otwarte Źródło",
     "pricing": "Cennik",
-    "license": "Licencja"
+    "license": "Licencja",
+    "pwa": {
+      "install_title": "Zainstaluj Kestra",
+      "install_description": "Zainstaluj Kestra jako aplikację, aby uzyskać szybszy dostęp i pełnoekranowe wrażenia.",
+      "install": "Zainstaluj",
+      "dismiss": "Nie teraz"
+    }
   }
 }

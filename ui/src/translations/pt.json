@@ -2281,6 +2281,12 @@
     },
     "open source": "Código Aberto",
     "pricing": "Preços",
-    "license": "Licença"
+    "license": "Licença",
+    "pwa": {
+      "install_title": "Instalar o Kestra",
+      "install_description": "Instale o Kestra como uma aplicação para um acesso mais rápido e uma experiência em ecrã inteiro.",
+      "install": "Instalar",
+      "dismiss": "Agora não"
+    }
   }
 }

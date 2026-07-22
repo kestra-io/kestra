@@ -2281,6 +2281,12 @@
     },
     "open source": "开源",
     "pricing": "定价",
-    "license": "许可证"
+    "license": "许可证",
+    "pwa": {
+      "install_title": "安装 Kestra",
+      "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
+      "install": "安装",
+      "dismiss": "暂不"
+    }
   }
 }

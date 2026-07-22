@@ -2281,6 +2281,12 @@
     },
     "open source": "오픈 소스",
     "pricing": "가격 책정",
-    "license": "라이선스"
+    "license": "라이선스",
+    "pwa": {
+      "install_title": "Kestra 설치",
+      "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
+      "install": "설치",
+      "dismiss": "나중에"
+    }
   }
 }

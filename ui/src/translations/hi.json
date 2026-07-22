@@ -2281,6 +2281,12 @@
     },
     "open source": "ओपन सोर्स",
     "pricing": "मूल्य निर्धारण",
-    "license": "लाइसेंस"
+    "license": "लाइसेंस",
+    "pwa": {
+      "install_title": "Kestra इंस्टॉल करें",
+      "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
+      "install": "इंस्टॉल करें",
+      "dismiss": "अभी नहीं"
+    }
   }
 }

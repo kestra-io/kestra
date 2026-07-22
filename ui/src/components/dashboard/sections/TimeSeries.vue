@@ -43,7 +43,7 @@
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateFormat, useTheme} from "../../../utils/utils"
-    import {FilterObject} from "../../../utils/filters"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     use([BarChart, LineChart])
 
@@ -52,7 +52,7 @@
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
         short?: boolean;
         execution?: boolean;
@@ -378,7 +378,7 @@
         ])
     }
 
-    function refresh(customFilters?: FilterObject[]) {
+    function refresh(customFilters?: QueryFilter[]) {
         return generate(undefined, customFilters)
     }
 

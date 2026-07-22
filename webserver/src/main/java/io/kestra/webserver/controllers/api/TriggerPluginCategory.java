@@ -1,12 +1,15 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.utils.Enums;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Category bucket for the "Add Trigger" catalog in the UI.
@@ -24,9 +27,15 @@ import io.kestra.core.utils.Enums;
  * even if it otherwise looks like a realtime or polling trigger.
  */
 public enum TriggerPluginCategory {
+    @JsonProperty("core")
     CORE,
+    @JsonProperty("realtime")
     REALTIME,
+    @JsonProperty("app")
     APP,
+    // UNKNOWN is the deserialization fallback and serializes to null (never a wire value),
+    // so it is hidden from the generated OpenAPI schema / SDK enum.
+    @Schema(hidden = true)
     UNKNOWN;
 
     @JsonValue

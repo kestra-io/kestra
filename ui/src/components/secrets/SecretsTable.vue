@@ -157,7 +157,7 @@
                     />
                 </KsFormItem>
                 <KsFormItem :label="$t('secret.key')" prop="key" required inline class="field-item">
-                    <KsInput v-model="secret.key" :disabled="secret.update" required />
+                    <KsInput v-model="secret.key" :disabled="secret.update" :placeholder="$t('secret.keyPlaceholder')" required />
                 </KsFormItem>
                 <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required inline class="field-item">
                     <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
@@ -230,7 +230,7 @@
 
     import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
 
     import action from "../../models/action"
@@ -443,22 +443,26 @@
     const dataTable = useTemplateRef("dataTable")
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return _merge(base, filters)
+        const {page: _p, size: _s, sort: _so, ...rest} = route.query
+        const nonFilterRest = Object.fromEntries(
+            Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
+        )
+        return _merge(base, nonFilterRest)
     }
 
+    const namespaceFilter = (namespace: string) =>
+        [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
+        const activeFilters = routeQueryToQueryFilters(route.query)
         const secretsResponse = await secretsStore.find(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "key:asc"),
-            ...(props.namespace === undefined ? {} : {
-                filters: {
-                    namespace: {
-                        EQUALS: props.namespace,
-                    },
-                },
-            }),
+            filters: [
+                ...activeFilters,
+                ...(props.namespace === undefined ? [] : namespaceFilter(props.namespace)),
+            ],
         }))
 
         emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false)
@@ -470,11 +474,7 @@
 
             for (const parentNs of parentNamespaces) {
                 const parentSecretsResponse = await secretsStore.find(loadQuery({
-                    filters: {
-                        namespace: {
-                            EQUALS: parentNs,
-                        },
-                    },
+                    filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 
                 const parentSecrets = parentSecretsResponse?.results ?? []

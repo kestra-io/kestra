@@ -5,7 +5,6 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -140,7 +139,6 @@ public abstract class AbstractRunnerRetryTest {
         retryCaseTest.retryDynamicTask(execution);
     }
 
-    @FlakyTest(description = "AllowFailure + retry + shared KV state can deadlock; flow gets stuck in RUNNING under CI load")
     @Test
     @ExecuteFlow("flows/valids/retry-with-flowable-errors.yaml")
     void retryWithFlowableErrors(Execution execution) {

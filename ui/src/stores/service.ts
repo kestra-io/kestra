@@ -1,24 +1,19 @@
 import {defineStore} from "pinia"
-import {apiUrlWithoutTenants} from "override/utils/route"
+import {ref} from "vue"
+import * as ServicesAPI from "@kestra-io/kestra-sdk/services"
+import type {ServiceInstance} from "@kestra-io/kestra-sdk"
 
-interface Service {
-    id: string;
-}
+export const useServiceStore = defineStore("service", () => {
+    const service = ref<ServiceInstance | undefined>(undefined)
 
-interface State {
-    service: Service | undefined;
-}
+    async function findServiceById(options: {id: string}): Promise<ServiceInstance> {
+        const result = await ServicesAPI.service(options)
+        service.value = result
+        return result
+    }
 
-export const useServiceStore = defineStore("service", {
-    state: (): State => ({
-        service: undefined,
-    }),
-
-    actions: {
-        async findServiceById(options: {id: string}): Promise<Service> {
-            const response = await this.$http.get<Service>(`${apiUrlWithoutTenants()}/instance/services/${options.id}`)
-            this.service = response.data
-            return response.data
-        },
-    },
+    return {
+        service,
+        findServiceById,
+    }
 })

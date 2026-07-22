@@ -8,16 +8,7 @@
     import {PropType, onMounted} from "vue"
     import FlowConcurrency from "../flows/FlowConcurrency.vue"
     import {useFlowStore} from "../../stores/flow"
-
-    interface ExecutionState {
-        current: string;
-    }
-
-    interface Execution {
-        namespace: string;
-        flowId: string;
-        state: ExecutionState;
-    }
+    import type {Execution} from "../../stores/executions"
 
     const props = defineProps({
         execution: {

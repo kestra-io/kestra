@@ -43,6 +43,9 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Inject
+    private QueueService queueService;
+
     private KestraContext realContext;
     protected NoOpShutdownContext noOpShutdownContext;
 
@@ -51,11 +54,14 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
         realContext = KestraContext.getContext();
         noOpShutdownContext = new NoOpShutdownContext(realContext, new AtomicBoolean(false));
         KestraContext.setContext(noOpShutdownContext);
+        // subscribers shut down the context captured by the QueueService, not the static one
+        queueService.setKestraContext(noOpShutdownContext);
     }
 
     @AfterEach
     void restoreKestraContext() {
         KestraContext.setContext(realContext);
+        queueService.setKestraContext(realContext);
     }
 
     @Test

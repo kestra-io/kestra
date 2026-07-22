@@ -44,6 +44,7 @@
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import {ChartFeature, KsBar, TooltipType, cssVar, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
 
@@ -54,14 +55,13 @@
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import {useTheme} from "../../../utils/utils"
-    import {FilterObject} from "../../../utils/filters"
 
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
         short?: boolean;
     }>(), {

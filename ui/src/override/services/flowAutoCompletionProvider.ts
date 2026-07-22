@@ -348,7 +348,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([])
                 }
-                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key: string}) => QUOTE + kv.key + QUOTE)
+                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key?: string}) => QUOTE + kv.key + QUOTE)
             }
             case "tasksWithState": {
                 return State.arrayAllStates().map(({name}) => QUOTE + name + QUOTE)

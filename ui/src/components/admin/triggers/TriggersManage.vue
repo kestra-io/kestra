@@ -319,7 +319,7 @@
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
+    import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, routeQueryToQueryFilters} from "@kestra-io/design-system"
     import {useToast} from "../../../utils/toast"
     import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -519,7 +519,10 @@
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query as Record<string, any>
-        return _merge(base, restQuery)
+        const nonFilterRest = Object.fromEntries(
+            Object.entries(restQuery).filter(([key]) => !key.startsWith("filters[")),
+        )
+        return _merge(base, nonFilterRest)
     }
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
@@ -530,6 +533,7 @@
             size,
             page,
             sort: sort ?? String(route.query?.sort ?? "triggerId:asc"),
+            filters: routeQueryToQueryFilters(route.query),
         })
 
         const triggersData = await triggerStore.search(query)
@@ -769,7 +773,7 @@
         }
 
         if (queryBulkAction.value) {
-            const query = loadQuery({})
+            const query = loadQuery({filters: routeQueryToQueryFilters(route.query)})
             const options = {...query, ...data}
             const actions = actionMap[queryAction]()
             return actions(options)

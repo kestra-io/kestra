@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
@@ -21,6 +22,7 @@ import jakarta.inject.Inject;
 
 import static io.kestra.core.repositories.AbstractExecutionRepositoryTest.builder;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @MicronautTest
 public abstract class AbstractSQLInjectionTest {
@@ -219,6 +221,36 @@ public abstract class AbstractSQLInjectionTest {
         } finally {
             deleteFlow(flow);
         }
+    }
+
+    private static final String CATASTROPHIC_REGEX_PATTERN = "(a+)+$";
+
+    private QueryFilter catastrophicRegexFilter() {
+        return QueryFilter.builder()
+            .field(QueryFilter.Field.NAMESPACE)
+            .operation(QueryFilter.Op.REGEX)
+            .value(CATASTROPHIC_REGEX_PATTERN)
+            .build();
+    }
+
+    @Test
+    void flowRegexFilterShouldRejectCatastrophicBacktrackingPattern() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        // A REGEX filter prone to catastrophic backtracking must be rejected before reaching the DB engine
+        assertThatThrownBy(() -> flowRepository.find(Pageable.UNPAGED, tenant, List.of(catastrophicRegexFilter())))
+            .as("REGEX with a catastrophic-backtracking pattern should be rejected")
+            .isInstanceOf(InvalidQueryFiltersException.class);
+    }
+
+    @Test
+    void executionRegexFilterShouldRejectCatastrophicBacktrackingPattern() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        // Same guard on the execution repository's QueryFilter path
+        assertThatThrownBy(() -> executionRepository.find(Pageable.from(1, 10), tenant, List.of(catastrophicRegexFilter())))
+            .as("REGEX with a catastrophic-backtracking pattern should be rejected")
+            .isInstanceOf(InvalidQueryFiltersException.class);
     }
 
     private void deleteFlow(Flow flow) {

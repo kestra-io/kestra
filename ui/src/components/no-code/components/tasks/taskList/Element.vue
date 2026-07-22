@@ -1,7 +1,7 @@
 <template>
-    <div @click="handleClick" class="d-flex my-2 p-2 rounded element" :class="{'moved': moved}">
+    <div @click="handleClick" class="d-flex my-2 p-2 element" :class="{'moved': moved}">
         <div v-if="!['inputs', 'layout'].includes(props.parentPathComplete)" class="me-2 icon">
-            <KsTaskIcon v-if="!isPlaceholder" :cls="element.type" :loadIcon="pluginsStore.loadIcon" onlyIcon />
+            <TaskIcon v-if="!isPlaceholder" :cls="element.type" :loadIcon="pluginsStore.loadIcon" onlyIcon />
             <PlusBoxOutline v-else class="placeholder-icon" />
         </div>
 
@@ -43,7 +43,7 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY,
     } from "../../../injectionKeys"
 
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "../../../../plugins/TaskIcon.vue"
 
     const emits = defineEmits(["removeElement", "moveElement"])
 
@@ -101,12 +101,14 @@
 
 .element {
     cursor: pointer;
+    align-items: center;
     background-color: $code-card-color;
     border: 1px solid $code-border-color;
+    border-radius: var(--ks-radius-base);
     transition: all 0.2s ease-in-out;
 
     &:hover {
-        background-color: var(--ks-btn-secondary-bg-hover);
+        background-color: var(--ks-bg-active);
     }
 
     & > .icon {
@@ -144,14 +146,18 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-top: 4px;
         padding: 0;
         border: none;
     }
 
-    .delete-element {        color: var(--ks-btn-primary-text);
+    .delete-element {
+        color: var(--ks-btn-primary-text);
         border: none;
         background-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
     }
 }
 </style>

@@ -115,7 +115,7 @@
         border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         cursor: pointer;
-        transition: border-color 0.15s, background-color 0.15s;
+        transition: border-color var(--ks-duration-fast) var(--ks-ease-standard), background-color var(--ks-duration-fast) var(--ks-ease-standard);
 
         &:hover:not(.unavailable) {
             border-color: var(--ks-border-strong);

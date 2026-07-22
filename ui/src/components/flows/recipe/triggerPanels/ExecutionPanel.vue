@@ -24,7 +24,7 @@
             >
                 {{ $t("recipe.execution.include_sub") }}
             </KsCheckbox>
-            <span class="hint hint-secondary">
+            <span class="hint">
                 {{ recipe.includeSub ? $t("recipe.execution.include_sub_hint_on") : $t("recipe.execution.include_sub_hint_off") }}
             </span>
         </KsFormItem>
@@ -86,9 +86,6 @@
         display: block;
         margin-top: var(--ks-spacing-1);
         font-size: var(--ks-font-size-sm);
-    }
-
-    .hint-secondary {
         color: var(--ks-text-secondary);
     }
 

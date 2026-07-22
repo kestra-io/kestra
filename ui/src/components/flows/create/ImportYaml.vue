@@ -158,7 +158,7 @@
         font-size: var(--ks-font-size-sm);
         color: var(--ks-text-secondary);
         margin-top: var(--ks-spacing-1);
-        font-family: monospace;
+        font-family: var(--ks-font-family-mono, monospace);
         word-break: break-word;
     }
 

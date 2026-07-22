@@ -4,7 +4,10 @@
     >
         <div v-if="dashboardStore.selectedChart" class="w-100">
             <Sections
-                :dashboard="{id: 'default', charts: [dashboardStore.selectedChart]}"
+                :dashboard="{
+                    ...DEFAULT_DASHBOARD,
+                    charts: [dashboardStore.selectedChart]
+                }"
                 :charts="[dashboardStore.selectedChart]"
                 showDefault
             />
@@ -27,7 +30,7 @@
 <script lang="ts" setup>
     import Sections from "../sections/Sections.vue"
     import EmptyVisualDashboard from "../../../assets/empty_visuals/dashboard.svg"
-    import {useDashboardStore} from "../../../stores/dashboard"
+    import {DEFAULT_DASHBOARD, useDashboardStore} from "../../../stores/dashboard"
 
     const dashboardStore = useDashboardStore()
 </script>

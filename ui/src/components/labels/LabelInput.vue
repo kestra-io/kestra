@@ -1,8 +1,16 @@
 <template>
     <div class="label-input">
-        <KsButton class="label-input-add" :icon="Plus" @click="addItem">
-            {{ $t("add label") }}
-        </KsButton>
+        <div class="label-input-header">
+            <div class="label-input-header-content">
+                <slot name="header" />
+            </div>
+            <div class="label-input-header-actions">
+                <KsButton class="label-input-add" :icon="Plus" @click="addItem">
+                    {{ $t("add label") }}
+                </KsButton>
+                <slot name="header-end" />
+            </div>
+        </div>
 
         <div
             class="label-input-row"
@@ -48,6 +56,11 @@
 
     const emit = defineEmits<{
         (e: "update:labels", value: Label[]): void;
+    }>()
+
+    defineSlots<{
+        header?(): unknown
+        "header-end"?(): unknown
     }>()
 
     const locals = ref<Label[]>([])
@@ -112,8 +125,23 @@
         gap: var(--ks-spacing-2);
     }
 
-    .label-input-add {
-        align-self: flex-start;
+    .label-input-header {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    .label-input-header-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .label-input-header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        flex-shrink: 0;
     }
 
     .label-input-row {

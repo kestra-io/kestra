@@ -13,7 +13,7 @@ import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.services.ExpressionCategory;
 import io.kestra.core.services.ExpressionContext;
 import io.kestra.core.services.ExpressionContextService;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.libs.copilot.services.ai.PebbleExpressionsFormatter;
 
 import jakarta.inject.Inject;
@@ -27,7 +27,7 @@ class ExpressionContextServiceTest {
     private ExpressionContextService expressionContextService;
 
     @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowParsingService flowParsingService;
 
     @Inject
     private PebbleExpressionService pebbleExpressionService;
@@ -39,7 +39,7 @@ class ExpressionContextServiceTest {
 
     @lombok.SneakyThrows
     private Flow parseFlow(String yaml) {
-        return pluginDefaultService.parseFlowWithAllDefaults(null, yaml, false);
+        return flowParsingService.parse(null, yaml, false);
     }
 
     @Test

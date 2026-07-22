@@ -4,6 +4,7 @@
         :flowId="flowStore.flow?.id"
         :topbar="false"
         :defaultScopeFilter="false"
+        :embed="embed"
         filter
     />
 </template>
@@ -13,6 +14,10 @@
 
     import {useFlowStore} from "../../stores/flow"
     const flowStore = useFlowStore()
+
+    defineProps<{
+        embed?: boolean;
+    }>()
 
     defineOptions({inheritAttrs: false})
 </script>

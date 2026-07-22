@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ import io.kestra.webserver.controllers.api.PluginController.ApiTriggerPlugin;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -120,6 +122,57 @@ class PluginControllerTest {
         assertThat(response.icon()).isNotNull();
         assertThat(response.icon().getIcon()).isNotNull();
         assertThat(response.icon().getName()).isEqualTo(Log.class.getSimpleName());
+        assertThat(response.icon().getMonochrome()).isFalse();
+        assertThat(response.icon().getHash()).isNotBlank();
+    }
+
+    @Test
+    void iconHashIsStableAndContentAddressed() {
+        PluginController.PluginIconResponse first = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+        PluginController.PluginIconResponse second = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+        PluginController.PluginIconResponse other = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Return.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(first.icon().getHash()).isEqualTo(second.icon().getHash());
+        assertThat(first.icon().getHash()).isNotEqualTo(other.icon().getHash());
+    }
+
+    @Test
+    void iconSvg() {
+        PluginController.PluginIconResponse jsonResponse = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName()),
+            PluginController.PluginIconResponse.class
+        );
+
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/icons/" + Log.class.getName() + "/icon.svg"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("image/svg+xml");
+        assertThat(response.body()).isEqualTo(Base64.getDecoder().decode(jsonResponse.icon().getIcon()));
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).contains("immutable");
+    }
+
+    @Test
+    void iconSvgNotFound() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET(PATH + "/icons/io.kestra.plugin.unknown.Task/icon.svg"),
+                byte[].class
+            )
+        );
+
+        assertThat(exception.code()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test
@@ -134,6 +187,21 @@ class PluginControllerTest {
 
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(response.body().icon()).isNull();
+    }
+
+    @Test
+    void iconByClassFallsBackToPluginDefault() {
+        // A registered class that ships no class- or package-specific icon still resolves one:
+        // it inherits its plugin's default (plugin-icon.svg), so hasIcon is truthful and matches
+        // what the icon.svg endpoint actually serves.
+        PluginController.PluginIconResponse response = client.toBlocking().retrieve(
+            HttpRequest.GET(PATH + "/icons/io.kestra.core.plugins.test.SuperclassTask"),
+            PluginController.PluginIconResponse.class
+        );
+
+        assertThat(response.icon()).isNotNull();
+        assertThat(response.icon().getIcon()).isNotNull();
+        assertThat(response.icon().getName()).isEqualTo("SuperclassTask");
     }
 
     @SuppressWarnings("unchecked")
@@ -212,7 +280,7 @@ class PluginControllerTest {
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(properties.size()).isEqualTo(19);
+        assertThat(properties.size()).isEqualTo(20);
         assertThat(properties.get("id").size()).isEqualTo(5);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }

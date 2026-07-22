@@ -10,7 +10,7 @@ import io.kestra.core.models.QueryFilter;
 public class DateUtils {
     /**
      * @deprecated use {@link TypeConverter#toZonedDateTime(Object)} instead — same strict
-     * ISO-8601 parsing, but throws an unchecked {@code TypeConversionException}.
+     *             ISO-8601 parsing, but throws an unchecked {@code TypeConversionException}.
      */
     @Deprecated(since = "2.0", forRemoval = true)
     public static ZonedDateTime parseZonedDateTime(String render) throws InternalException {

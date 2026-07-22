@@ -157,7 +157,7 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getCls()).isEqualTo("io.kestra.core.models.property.DynamicPropertyExampleTask");
             assertThat(doc.getDefs()).hasSize(9);
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
-            assertThat(properties).hasSize(22);
+            assertThat(properties).hasSize(23);
 
             Map<String, Object> number = (Map<String, Object>) properties.get("number");
             assertThat(number.get("anyOf")).isNotNull();

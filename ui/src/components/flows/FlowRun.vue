@@ -283,8 +283,7 @@
         if (!execution.value?.labels) {
             return []
         }
-        // flow.labels at runtime is Label[] for the execution-context flow
-        const flowLabels = flow.value?.labels as unknown as Label[] | undefined
+        const flowLabels = flow.value?.labels
         if (!flowLabels) {
             return execution.value.labels
         }

@@ -1,13 +1,7 @@
 package io.kestra.jdbc.repository;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.Comparator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,14 +21,11 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.executions.statistics.ExecutionStatistics;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
@@ -249,6 +240,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         return filter.children().stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
     }
 
+    @Override
+    protected Name getColumnName(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.TASK_ID) {
+            return DSL.quotedName("loop_run_task_id");
+        }
+        return super.getColumnName(field);
+    }
+
     private Condition buildDateFilterCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
         if (dateFilter == DateFilter.START_OR_END_DATE && filters != null) {
             List<QueryFilter> dateBoundaryFilters = filters.stream()
@@ -323,218 +322,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         return findAsync(defaultFilter(tenantId), condition);
     }
 
-    @Override
-    public List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
-        @Nullable String query,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy) {
-        ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
-        ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
-
-        Results results = dailyStatisticsQueryForAllTenants(
-            List.of(
-                STATE_CURRENT_FIELD
-            ),
-            query,
-            namespace,
-            flowId,
-            null,
-            finalStartDate,
-            finalEndDate,
-            groupBy,
-            null
-        );
-
-        return dailyStatisticsQueryMapRecord(
-            results.resultsOrRows()
-                .getFirst()
-                .result(),
-            finalStartDate,
-            finalEndDate,
-            groupBy
-        );
-    }
-
-    @Override
-    public List<DailyExecutionStatistics> dailyStatistics(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> states) {
-        ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
-        ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
-
-        Results results = dailyStatisticsQuery(
-            List.of(
-                STATE_CURRENT_FIELD
-            ),
-            query,
-            tenantId,
-            scope,
-            namespace,
-            flowId,
-            null,
-            finalStartDate,
-            finalEndDate,
-            groupBy,
-            states
-        );
-
-        return dailyStatisticsQueryMapRecord(
-            results.resultsOrRows()
-                .getFirst()
-                .result(),
-            finalStartDate,
-            finalEndDate,
-            groupBy
-        );
-    }
-
-    private List<DailyExecutionStatistics> dailyStatisticsQueryMapRecord(
-        Result<Record> records,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupType) {
-        DateUtils.GroupType groupByType = groupType != null ? groupType : DateUtils.groupByType(Duration.between(startDate, endDate));
-
-        return fillDate(
-            records
-                .stream()
-                .map(
-                    record -> ExecutionStatistics.builder()
-                        .date(this.jdbcRepository.getDate(record, groupByType.val()))
-                        .durationMax(record.get("duration_max", Long.class))
-                        .durationMin(record.get("duration_min", Long.class))
-                        .durationSum(record.get("duration_sum", Long.class))
-                        .stateCurrent(record.get("state_current", String.class))
-                        .count(record.get("count", Long.class))
-                        .build()
-                )
-                .collect(Collectors.groupingBy(ExecutionStatistics::getDate))
-                .entrySet()
-                .stream()
-                .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
-                .sorted(Comparator.comparing(DailyExecutionStatistics::getStartDate))
-                .toList(),
-            startDate, endDate
-        );
-    }
-
-    private Results dailyStatisticsQueryForAllTenants(
-        List<Field<?>> fields,
-        @Nullable String query,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        List<FlowFilter> flows,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state) {
-        return dailyStatisticsQuery(
-            this.defaultFilter(),
-            fields,
-            query,
-            null,
-            namespace,
-            flowId,
-            flows,
-            startDate,
-            endDate,
-            groupBy,
-            state
-        );
-    }
-
-    private Results dailyStatisticsQuery(
-        List<Field<?>> fields,
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        List<FlowFilter> flows,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state) {
-        return dailyStatisticsQuery(
-            this.defaultFilter(tenantId),
-            fields,
-            query,
-            scope,
-            namespace,
-            flowId,
-            flows,
-            startDate,
-            endDate,
-            groupBy,
-            state
-        );
-    }
-
-    private Results dailyStatisticsQuery(
-        Condition defaultFilter,
-        List<Field<?>> fields,
-        @Nullable String query,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        List<FlowFilter> flows,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state) {
-        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate), fieldsMapping.get(dateFilterField()), groupBy));
-        List<Field<?>> selectFields = new ArrayList<>(fields);
-        selectFields.addAll(
-            List.of(
-                DSL.count().as("count"),
-                DSL.min(field("state_duration", Long.class)).as("duration_min"),
-                DSL.max(field("state_duration", Long.class)).as("duration_max"),
-                DSL.sum(field("state_duration", Long.class)).as("duration_sum")
-            )
-        );
-        selectFields.addAll(groupByFields(Duration.between(startDate, endDate), fieldsMapping.get(dateFilterField()), groupBy, true));
-
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration ->
-            {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<?> select = context
-                    .select(selectFields)
-                    .from(this.jdbcRepository.getTable())
-                    .where(defaultFilter)
-                    .and(NORMAL_KIND_CONDITION)
-                    .and(START_DATE_FIELD.greaterOrEqual(startDate.toOffsetDateTime()))
-                    .and(START_DATE_FIELD.lessOrEqual(endDate.toOffsetDateTime()));
-
-                select = filteringQuery(select, scope, namespace, flowId, flows, query, null, null, null);
-
-                if (state != null) {
-                    select = select.and(this.statesFilter(state));
-                }
-
-                List<Field<?>> groupFields = new ArrayList<>(fields);
-
-                groupFields.addAll(dateFields);
-
-                SelectHavingStep<?> finalQuery = select
-                    .groupBy(groupFields);
-
-                return finalQuery.fetchMany();
-            });
-    }
-
     private <T extends Record> SelectConditionStep<T> filteringQuery(
         SelectConditionStep<T> select,
         @Nullable List<FlowScope> scope,
@@ -596,89 +383,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         }
 
         return select;
-    }
-
-    private static List<DailyExecutionStatistics> fillDate(List<DailyExecutionStatistics> results, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
-
-        if (groupByType.equals(DateUtils.GroupType.MONTH)) {
-            return fillDate(results, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM", groupByType.val());
-        } else if (groupByType.equals(DateUtils.GroupType.WEEK)) {
-            return fillDate(results, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww", groupByType.val());
-        } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
-            return fillDate(results, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD", groupByType.val());
-        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
-            return fillDate(results, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH", groupByType.val());
-        } else {
-            return fillDate(results, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm", groupByType.val());
-        }
-    }
-
-    private static List<DailyExecutionStatistics> fillDate(
-        List<DailyExecutionStatistics> results,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        ChronoUnit unit,
-        String format,
-        String groupByType) {
-        List<DailyExecutionStatistics> filledResult = new ArrayList<>();
-        ZonedDateTime currentDate = startDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
-
-        // Add one to the end date to include last intervals in the result
-        String formattedEndDate = endDate.plus(1, unit).format(formatter);
-
-        // Comparing date string formatted with only valuable part of the date
-        // allow to avoid cases where latest interval was not included in the result
-        // i.e if endDate is 18:15 and startDate 17:30, when reaching 18:30 it will not handle the 18th hours
-        while (!currentDate.format(formatter).equals(formattedEndDate)) {
-            String finalCurrentDate = currentDate.format(formatter);
-            DailyExecutionStatistics dailyExecutionStatistics = results
-                .stream()
-                .filter(e -> formatter.format(e.getStartDate()).equals(finalCurrentDate))
-                .findFirst()
-                .orElse(
-                    DailyExecutionStatistics.builder()
-                        .startDate(currentDate.toInstant())
-                        .groupBy(groupByType)
-                        .duration(DailyExecutionStatistics.Duration.builder().build())
-                        .build()
-                );
-
-            filledResult.add(dailyExecutionStatistics);
-            currentDate = currentDate.plus(1, unit);
-        }
-
-        return filledResult;
-    }
-
-    private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics> result, String groupByType) {
-        long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value != null ? value : 0).sum();
-        long count = result.stream().map(ExecutionStatistics::getCount).mapToLong(value -> value).sum();
-
-        DailyExecutionStatistics build = DailyExecutionStatistics.builder()
-            .startDate(date)
-            .groupBy(groupByType)
-            .duration(
-                DailyExecutionStatistics.Duration.builder()
-                    .avg(Duration.ofMillis(durationSum / count))
-                    .min(result.stream().map(ExecutionStatistics::getDurationMin).map(x -> x != null ? x : 0).min(Long::compare).map(Duration::ofMillis).orElse(null))
-                    .max(result.stream().map(ExecutionStatistics::getDurationMax).map(x -> x != null ? x : 0).max(Long::compare).map(Duration::ofMillis).orElse(null))
-                    .sum(Duration.ofMillis(durationSum))
-                    .count(count)
-                    .build()
-            )
-            .build();
-
-        result.forEach(
-            record -> build.getExecutionCounts()
-                .compute(
-                    State.Type.valueOf(record.getStateCurrent()),
-                    (type, current) -> record.getCount()
-                )
-        );
-
-        return build;
     }
 
     @Override

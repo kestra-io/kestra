@@ -1,12 +1,9 @@
-import axios from "axios"
+import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
 import {defineStore} from "pinia"
-import {apiUrl} from "override/utils/route"
 
 export const useSecretsStore = defineStore("secrets", () => {
-    async function find(params: {page: number, size: number, filters: {[key: string]: {EQUALS: string}}}) {
-        const {data} = await axios.get(`${apiUrl()}/secrets`, {withCredentials: true, params})
-
-        return data
+    function find(params: Parameters<typeof SecretsAPI.listSecrets>[0]) {
+        return SecretsAPI.listSecrets(params)
     }
 
     return {find}

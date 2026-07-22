@@ -48,7 +48,7 @@ class AiServiceManagerTest {
     @Mock
     ExpressionContextService expressionContextService;
     @Mock
-    io.kestra.core.services.PluginDefaultService pluginDefaultService;
+    io.kestra.core.services.FlowParsingService flowParsingService;
 
     private AiServiceManager buildManager(List<AiProviderConfiguration> providers) {
         when(providersConfiguration.providers()).thenReturn(providers);
@@ -66,7 +66,7 @@ class AiServiceManagerTest {
             namespaceContextTool,
             kestraDocsContextTool,
             expressionContextService,
-            pluginDefaultService
+            flowParsingService
         );
     }
 

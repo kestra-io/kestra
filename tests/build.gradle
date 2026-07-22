@@ -10,7 +10,7 @@ dependencies {
     implementation "io.micronaut.test:micronaut-test-junit5"
 
     implementation "org.junit.jupiter:junit-jupiter-engine"
-    implementation "org.junit.jupiter:junit-jupiter-engine"
+    implementation "org.junit.jupiter:junit-jupiter-params"
 
     api 'org.hamcrest:hamcrest:3.0'
     api 'org.hamcrest:hamcrest-library:3.0'

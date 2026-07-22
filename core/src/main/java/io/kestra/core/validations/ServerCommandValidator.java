@@ -54,20 +54,23 @@ public class ServerCommandValidator {
     /**
      * Validates that the properties required to start the given {@link ServerType} are defined.
      *
-     * <p>This method is side-effect free (it neither logs nor throws) so the same checks can be
+     * <p>
+     * This method is side-effect free (it neither logs nor throws) so the same checks can be
      * reused for on-demand validation.
      *
      * @param environment the configuration environment to validate
-     * @param serverType  the server type whose required properties must be present
+     * @param serverType the server type whose required properties must be present
      * @return the outcome of each required-property check, never {@code null}
      */
     public static List<ConfigValidationResult> validateServerConfiguration(final Environment environment, final ServerType serverType) {
         final Map<String, String> required = ServerType.WORKER.equals(serverType) ? WORKER_REQUIRED_PROPERTIES : ALL_REQUIRED_PROPERTIES;
 
         return required.entrySet().stream()
-            .map(property -> environment.containsProperty(property.getKey())
-                ? ConfigValidationResult.valid(property.getKey())
-                : ConfigValidationResult.invalid(property.getKey(), missingPropertyMessage(property.getKey(), property.getValue())))
+            .map(
+                property -> environment.containsProperty(property.getKey())
+                    ? ConfigValidationResult.valid(property.getKey())
+                    : ConfigValidationResult.invalid(property.getKey(), missingPropertyMessage(property.getKey(), property.getValue()))
+            )
             .toList();
     }
 

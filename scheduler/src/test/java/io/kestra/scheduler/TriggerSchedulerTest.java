@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -31,7 +32,7 @@ import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
@@ -65,7 +66,7 @@ class TriggerSchedulerTest {
     ConditionService conditionService;
 
     @Inject
-    PluginDefaultService pluginDefaultService;
+    FlowParsingService flowParsingService;
 
     @Inject
     SchedulableEvaluator schedulableEvaluator;
@@ -84,6 +85,14 @@ class TriggerSchedulerTest {
         SchedulerClock.setClock(initialSchedulerClock);
         triggerStateStore = new InMemoryTriggerStateStore();
         triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
+    }
+
+    @AfterEach
+    void restoreSchedulerClock() {
+        // SchedulerClock is a JVM-wide static: without a restore, the last fixed clock set by a
+        // test here leaks into every later test class of the fork, whose trigger dates are then
+        // computed against a frozen past instant.
+        SchedulerClock.setClock(Clock.systemDefaultZone());
     }
 
     @Test
@@ -450,7 +459,7 @@ class TriggerSchedulerTest {
                 assertThat(currentTriggerState.isLocked()).isTrue();
                 assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(expectedNextEvaluationNDate.minusMinutes(15).toInstant());
                 assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(expectedNextEvaluationNDate);
+                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate.toInstant());
 
                 // Assert NO Execution
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
@@ -736,9 +745,9 @@ class TriggerSchedulerTest {
             metricRegistry,
             runContextFactory,
             conditionService,
-            pluginDefaultService,
+            flowParsingService,
             schedulableEvaluator,
-            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
+            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, flowParsingService),
             workerJobPublisher,
             triggerExecutionPublisher,
             new SchedulerConfiguration(1, Duration.ZERO, 100)

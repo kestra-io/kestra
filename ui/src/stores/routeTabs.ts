@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {markRaw} from "vue"
+import {computed, markRaw, ref, shallowRef} from "vue"
 import type {Component} from "vue"
 import type {RouteLocationRaw, RouteLocationNormalizedLoaded, Router} from "vue-router"
 
@@ -84,42 +84,42 @@ interface SetTabsPayload {
     displayMode?: RouteTabsDisplayMode;
 }
 
-interface State {
-    tabs: RouteTab[];
-    routeName: string;
-    embedActiveTab: string | undefined;
-    ownerId: symbol | null;
-    displayMode: RouteTabsDisplayMode;
-}
+export const useRouteTabsStore = defineStore("routeTabs", () => {
+    const tabs = ref<RouteTab[]>([])
+    const routeName = ref<string>("")
+    const embedActiveTab = ref<string | undefined>(undefined)
+    const ownerId = shallowRef<symbol | null>(null)
+    const displayMode = ref<RouteTabsDisplayMode>("sidebar")
 
-export const useRouteTabsStore = defineStore("routeTabs", {
-    state: (): State => ({
-        tabs: [],
-        routeName: "",
-        embedActiveTab: undefined,
-        ownerId: null,
-        displayMode: "sidebar",
-    }),
-    getters: {
-        hasTabs: (state): boolean => state.tabs.length > 0,
-        visibleTabs: (state): RouteTab[] => state.tabs.filter(t => !t.hidden),
-    },
-    actions: {
-        setTabs(payload: SetTabsPayload) {
-            this.tabs = payload.tabs.map(t => (t.component ? {...t, component: markRaw(t.component)} : t))
-            this.routeName = payload.routeName ?? ""
-            this.embedActiveTab = payload.embedActiveTab
-            this.ownerId = payload.ownerId
-            this.displayMode = payload.displayMode ?? "sidebar"
-        },
-        clearTabsIfOwner(ownerId: symbol) {
-            if (this.ownerId === ownerId) {
-                this.tabs = []
-                this.routeName = ""
-                this.embedActiveTab = undefined
-                this.ownerId = null
-                this.displayMode = "sidebar"
-            }
-        },
-    },
+    const hasTabs = computed((): boolean => tabs.value.length > 0)
+    const visibleTabs = computed((): RouteTab[] => tabs.value.filter(t => !t.hidden))
+
+    function setTabs(payload: SetTabsPayload) {
+        tabs.value = payload.tabs.map(t => (t.component ? {...t, component: markRaw(t.component)} : t))
+        routeName.value = payload.routeName ?? ""
+        embedActiveTab.value = payload.embedActiveTab
+        ownerId.value = payload.ownerId
+        displayMode.value = payload.displayMode ?? "sidebar"
+    }
+    function clearTabsIfOwner(owner: symbol) {
+        if (ownerId.value === owner) {
+            tabs.value = []
+            routeName.value = ""
+            embedActiveTab.value = undefined
+            ownerId.value = null
+            displayMode.value = "sidebar"
+        }
+    }
+
+    return {
+        tabs,
+        routeName,
+        embedActiveTab,
+        ownerId,
+        displayMode,
+        hasTabs,
+        visibleTabs,
+        setTabs,
+        clearTabsIfOwner,
+    }
 })

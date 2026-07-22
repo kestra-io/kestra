@@ -8,10 +8,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # When an OSS ci start, we trigger an EE one
+  # When an OSS PR opens, run the kestra-ee compile check for its ref (via a
+  # Kestra webhook) and trigger the EE OpenAPI spec check.
   trigger-ee:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout  # required so the local composite action below can resolve
+      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
+      uses: actions/checkout@v7
+
     - name: Generate GitHub App token for kestra-ee dispatch
       id: ee-token
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
@@ -22,9 +27,44 @@ jobs:
         owner: kestra-io
         repositories: kestra-ee
 
-    # PR pre-check: skip if PR from a fork OR EE already has a branch with same name
+      # Run the EE compileJava check for this PR's ref on a Kestra instance and
+      # surface the result inline. The flow resolves the matching kestra-ee ref
+      # itself (same-name branch, else develop), so no branch pre-check is needed.
+    - name: EE compile check (via Kestra webhook)
+      if: ${{ github.event_name == 'pull_request'
+        && github.event.pull_request.number != ''
+        && github.event.pull_request.head.repo.fork == false }}
+      uses: ./.github/actions/ee-compile-check
+      with:
+        webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
+        ref: ${{ github.event.pull_request.head.ref }}
+        commit-sha: ${{ github.event.pull_request.head.sha }}
+        pr-number: ${{ github.event.pull_request.number }}
+        pr-repo: ${{ github.repository }}
+
+      # Always trigger EE OpenAPI check on non-fork PRs
+    - name: Trigger EE OpenAPI spec check
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      if: ${{ github.event_name == 'pull_request'
+        && github.event.pull_request.number != ''
+        && github.event.pull_request.head.repo.fork == false }}
+      with:
+        token: ${{ steps.ee-token.outputs.token }}
+        repository: kestra-io/kestra-ee
+        event-type: "oss-pr-openapi-check"
+        client-payload: >-
+          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
+
+      # ------------------------------------------------------------------------
+      # LEGACY (DISABLED): EE CI used to be triggered by a repository dispatch
+      # ("oss-updated") that ran the full kestra-ee workflow asynchronously and
+      # reported back a commit status. It is superseded by the synchronous
+      # "EE compile check (via Kestra webhook)" step above. Kept here, guarded
+      # by `false &&`, for quick rollback — drop the `false &&` in both `if:`
+      # blocks to re-enable (and disable the webhook step above).
+      # ------------------------------------------------------------------------
     - name: Check EE repo for branch with same name
-      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
+      if: ${{ false && (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) }}
       id: check-ee-branch
       uses: actions/github-script@v9
       with:
@@ -48,32 +88,18 @@ jobs:
             }
           }
 
-      # Targeting pull request (only if not from a fork and EE has no branch with same name)
     - name: Trigger EE Workflow (pull request, with payload)
       uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
-      if: ${{ github.event_name == 'pull_request'
+      if: ${{ false && (github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false
-        && steps.check-ee-branch.outputs.exists == 'false' }}
+        && steps.check-ee-branch.outputs.exists == 'false') }}
       with:
         token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee
         event-type: "oss-updated"
         client-payload: >-
           {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_repo":"${{ github.repository }}"}
-
-      # Always trigger EE OpenAPI check on non-fork PRs (regardless of EE same-name branch)
-    - name: Trigger EE OpenAPI spec check
-      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
-      if: ${{ github.event_name == 'pull_request'
-        && github.event.pull_request.number != ''
-        && github.event.pull_request.head.repo.fork == false }}
-      with:
-        token: ${{ steps.ee-token.outputs.token }}
-        repository: kestra-io/kestra-ee
-        event-type: "oss-pr-openapi-check"
-        client-payload: >-
-          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
 
   file-changes:
     if: ${{ github.event.pull_request.draft == false }}

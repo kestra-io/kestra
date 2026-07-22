@@ -2,7 +2,7 @@
     <div class="w-100 p-4">
         <Sections
             :key="dashboardStore.sourceCode"
-            :dashboard="{id: 'default', charts: []}"
+            :dashboard="DEFAULT_DASHBOARD"
             :charts="charts.map(chart => chart.data).filter(chart => chart !== null)"
             showDefault
         />
@@ -13,7 +13,7 @@
     import {ref, watch} from "vue"
     import Sections from "../sections/Sections.vue"
     import {Chart} from "../types.ts"
-    import {useDashboardStore} from "../../../stores/dashboard"
+    import {DEFAULT_DASHBOARD, useDashboardStore} from "../../../stores/dashboard"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import throttle from "lodash/throttle"
 
@@ -55,7 +55,7 @@
         }
         const errors = await dashboardStore.validateChart(yamlChart)
         if (errors.constraints) {
-            result.error = errors.constraints
+            result.error = errors.constraints as unknown as string[]
         } else {
             result.data = {...chart, content: yamlChart, raw: chart}
         }

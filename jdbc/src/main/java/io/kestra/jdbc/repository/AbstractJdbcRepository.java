@@ -30,6 +30,7 @@ import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.jdbc.services.JdbcFilterService;
 
 import io.micronaut.core.annotation.Nullable;
@@ -83,6 +84,16 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition buildTenantCondition(String tenantId) {
         return tenantId == null ? TENANT_ID_FIELD.isNull() : TENANT_ID_FIELD.eq(tenantId);
+    }
+
+    /**
+     * Null-safe equality condition: {@code field = value} in SQL never matches a NULL value, so a
+     * plain {@code field.eq(value)} silently drops rows when {@code value} is null. Use this whenever
+     * {@code value} models an optional scope that is genuinely persisted as {@code NULL}.
+     */
+    // Used in EE
+    protected <T> Condition eqOrIsNull(Field<T> field, T value) {
+        return value == null ? field.isNull() : field.eq(value);
     }
 
     public static Field<Object> field(String name) {
@@ -487,9 +498,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     private Condition getDateCondition(Object value, Op operation, String dateColumn) {
-        OffsetDateTime dateTime = (value instanceof ZonedDateTime)
-            ? ((ZonedDateTime) value).toOffsetDateTime()
-            : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
+        OffsetDateTime dateTime = TypeConverter.toZonedDateTime(value).toOffsetDateTime();
         return applyDateCondition(dateTime, operation, dateColumn);
     }
 
@@ -648,8 +657,8 @@ public abstract class AbstractJdbcRepository {
     protected Condition handleAttemptNumberField(Object value, QueryFilter.Op operation) {
         Name columnName = getColumnName(QueryFilter.Field.ATTEMPT_NUMBER);
         return switch (operation) {
-            case EQUALS -> DSL.field(columnName).eq(toInteger(value));
-            case NOT_EQUALS -> DSL.field(columnName).ne(toInteger(value));
+            case EQUALS -> DSL.field(columnName).eq(TypeConverter.toInteger(value));
+            case NOT_EQUALS -> DSL.field(columnName).ne(TypeConverter.toInteger(value));
             case IN -> DSL.field(columnName).in(toIntegerList(value));
             case NOT_IN -> DSL.field(columnName).notIn(toIntegerList(value));
             default -> throw new InvalidQueryFiltersException(
@@ -658,22 +667,11 @@ public abstract class AbstractJdbcRepository {
         };
     }
 
-    // ToDo: We should create reusable classes for type conversion
-    private static Integer toInteger(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Number n) {
-            return n.intValue();
-        }
-        return Integer.parseInt(value.toString());
-    }
-
     private static List<Integer> toIntegerList(Object value) {
         if (value instanceof List<?> list) {
-            return list.stream().map(AbstractJdbcRepository::toInteger).toList();
+            return list.stream().map(TypeConverter::toInteger).toList();
         }
-        return List.of(toInteger(value));
+        return List.of(TypeConverter.toInteger(value));
     }
 
     Condition applyDateCondition(OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName) {

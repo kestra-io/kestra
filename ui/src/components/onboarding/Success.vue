@@ -126,7 +126,7 @@
 #welcome-success {
     position: relative;
     overflow: hidden;
-    background: url("./assets/background.svg") center top / cover no-repeat;
+    background: url("./assets/grid.svg") center top / cover no-repeat;
     min-height: calc(100vh - 60px);
     padding-top: 3rem;
     padding-bottom: 3rem;

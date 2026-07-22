@@ -11,6 +11,9 @@ export class BasePage {
         await this.page.getByRole("textbox", {name: "Password"}).fill(shared.password)
         await this.page.getByRole("button", {name: "Login"}).click()
 
+        // wait for the url to not to contain login anymore, which means the login was successful
+        await this.page.waitForURL((url) => !url.toString().includes("login"), {timeout: 10000})
+
         await this.page.goto("/")
 
         await expect(this.page.getByRole("heading", {name: "Default Dashboard"})).toBeVisible()

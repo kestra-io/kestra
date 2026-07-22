@@ -25,6 +25,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.utils.TypeConverter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -228,7 +229,7 @@ public class LoopUntil extends AbstractBranch<LoopUntil.Output> {
         );
 
         return Output.builder()
-            .iterationCount(Integer.parseInt(value) + 1)
+            .iterationCount(TypeConverter.toInteger(value) + 1)
             .build();
     }
 

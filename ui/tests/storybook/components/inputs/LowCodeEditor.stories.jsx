@@ -1,3 +1,12 @@
+import {vi} from "vitest";
+
+// onMounted() calls pluginsStore.fetchIcons(), which hits PluginsAPI.pluginIcons() directly -
+// that goes through the SDK's own internal client rather than the axios instance
+// setMockClient() swaps, so it has to be intercepted at the submodule level.
+vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
+    pluginIcons: async () => ({}),
+}))
+
 import {provide, ref} from "vue";
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../../../../src/components/no-code/injectionKeys";
 import {vueRouter} from "storybook-vue3-router";

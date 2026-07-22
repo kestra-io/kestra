@@ -16,18 +16,18 @@
             <KsTag
                 v-for="value in visibleTags"
                 :key="value"
-                class="namespace-tag"
                 closable
+                type="info"
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
             >
-                <FolderOpenOutline class="tag-icon" />
+                <FolderOpenOutline />
                 {{ value }}
             </KsTag>
             <KsTooltip v-if="hiddenTags.length > 0" placement="top">
                 <template #content>
                     <div v-for="value in hiddenTags" :key="value">{{ value }}</div>
                 </template>
-                <KsTag class="namespace-tag namespace-tag--overflow">
+                <KsTag>
                     +{{ hiddenTags.length }}
                 </KsTag>
             </KsTooltip>
@@ -104,30 +104,3 @@
         }
     })
 </script>
-
-<style scoped lang="scss">
-    .namespace-tag {
-        background-color: var(--ks-log-background-debug) !important;
-        color: var(--ks-status-info);
-        border: 1px solid var(--ks-log-border-debug);
-        padding: 0 6px;
-
-        :deep(.kel-tag__content) {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        :deep(.kel-tag__close) {
-            color: var(--ks-status-info);
-
-            &:hover {
-                background-color: transparent;
-            }
-        }
-    }
-
-    .namespace-tag--overflow {
-        cursor: default;
-    }
-</style>

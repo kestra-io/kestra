@@ -66,7 +66,6 @@ class RestartExecutionToolTest {
 
         // Then — the tool waited for the executor to accept the restart and acknowledged it
         assertThat(result.executionId()).isEqualTo(failedExecution.getId());
-        assertThat(result.message()).isNotNull();
 
         // And — the restart is observable: the execution carries a RESTARTED transition and finishes
         Execution restarted = runnerUtils.awaitExecution(

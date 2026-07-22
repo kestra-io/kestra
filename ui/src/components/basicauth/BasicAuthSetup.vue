@@ -406,7 +406,7 @@
         localStorage.removeItem("basicAuthUserCreated")
         localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
 
-        router.push({name: "welcome"})
+        router.push({name: "ai"})
     }
 </script>
 

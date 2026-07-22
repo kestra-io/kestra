@@ -1,5 +1,5 @@
 <template>
-    <div class="copilot-chat" data-test="copilot-chat">
+    <div class="copilot-chat" :class="`copilot-chat--${layout}`" data-test="copilot-chat">
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
@@ -53,6 +53,9 @@
                         {{ suggestion }}
                     </KsButton>
                 </div>
+
+                <!-- Full-page home only: quick links to Blueprints / Slack (hidden in the dock). -->
+                <CopilotHelp v-if="layout === 'page'" />
             </div>
         </div>
 
@@ -121,18 +124,21 @@
     import CopilotThinking from "./CopilotThinking.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import CopilotContextChip from "./CopilotContextChip.vue"
+    import CopilotHelp from "./CopilotHelp.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext} from "./routeScope"
     import type {Mode, ScopeBinding} from "./types"
     import {useMiscStore} from "override/stores/misc"
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         /** Initial mode; defaults to EDIT. */
         initialMode?: Mode
         /** Scope the user is focused on; sent as `additionalContext` on each turn. */
         inFocus?: ScopeBinding | null
-    }>()
+        /** Surface variant: the right-side "dock" (default) or the full-width "page" home. */
+        layout?: "dock" | "page"
+    }>(), {layout: "dock"})
 
     const {t} = useI18n()
     const route = useRoute()
@@ -336,6 +342,11 @@
         gap: var(--ks-spacing-4);
         width: 100%;
         max-width: 30rem;
+    }
+
+    /* The full-page home gives the hero + composer + help more room than the narrow dock. */
+    .copilot-chat--page .copilot-empty-inner {
+        max-width: 46rem;
     }
 
     .copilot-artwork {

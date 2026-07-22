@@ -15,7 +15,7 @@ jobs:
     steps:
     - name: Checkout  # required so the local composite action below can resolve
       if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Generate GitHub App token for kestra-ee dispatch
       id: ee-token

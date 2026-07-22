@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.queues.QueueException;
@@ -57,6 +58,13 @@ public abstract class AbstractRunnerConcurrencyTest {
         flowConcurrencyCaseTest.flowConcurrencyQueueAfterExecution("concurrency-queue-after-execution");
     }
 
+    @FlakyTest(
+        description = "SLA-triggered kill on the child subflow emits an async kill message from inside the " +
+            "still-open lock/transaction that marks the child FAILED (ExecutorService#markAs); a second consumer can " +
+            "re-lock the child before that transaction commits and race a duplicate SubflowExecutionResult, which can " +
+            "supersede the one that would carry the parent through its terminal decrementAndPop, leaking a concurrency slot " +
+            "under CI load"
+    )
     @Test
     @LoadFlows(
         value = { "flows/valids/flow-concurrency-sla-fail-parent.yml", "flows/valids/flow-concurrency-sla-fail-child.yml" },

@@ -74,7 +74,7 @@ class AbstractJdbcRepositoryTest {
 
     private static final class TestJdbcRepository extends AbstractJdbcRepository<Object> {
         private TestJdbcRepository() {
-            super(new JdbcTableConfig("test", Object.class, "test"), null);
+            super(new JdbcTableConfig("test", Object.class, "test"), null, null);
         }
 
         @Override

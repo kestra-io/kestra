@@ -42,12 +42,17 @@
         </KsTabs>
 
         <!-- Routed pages migrated to child routes: vue-router picks the component.
-             Events flow through Pinia stores, so the wrapper injects no handlers. -->
+             Events flow through Pinia stores, so the wrapper injects no handlers.
+             Suspense ensures the outgoing tab's async component is actually unmounted
+             instead of staying on screen (Vue's default for an unresolved `:is` swap)
+             while the incoming tab's chunk is still loading. -->
         <router-view v-if="useRouterView" v-slot="{Component, route: childRoute}">
             <section
                 :class="[containerClass, {maximized: childRoute.meta.maximized, 'no-overflow': childRoute.meta.noOverflow}]"
             >
-                <component :is="Component" :embed="childRoute.meta.embed ?? true" />
+                <Suspense>
+                    <component :is="Component" :embed="childRoute.meta.embed ?? true" />
+                </Suspense>
             </section>
         </router-view>
 

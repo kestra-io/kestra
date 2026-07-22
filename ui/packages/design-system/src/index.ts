@@ -493,6 +493,7 @@ declare module "vue" {
         KsDropdownMenu: typeof KsDropdownMenu
         KsEmpty: typeof KsEmpty
         KsEmptyState: typeof KsEmptyState
+        KsEntityLink: typeof KsEntityLink
         KsExecutionStatus: typeof KsExecutionStatus
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm

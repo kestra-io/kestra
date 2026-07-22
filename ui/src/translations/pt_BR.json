@@ -2286,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "Destrutivo",
         "idempotent": "Idempotente",
-        "return_direct": "Retorno direto",
-        "view_flow": "Abrir flow"
+        "return_direct": "Retorno direto"
       },
       "connect_tab": {
         "server_url": "URL do Servidor",

@@ -177,7 +177,7 @@ class TriggerControllerTest {
     @Test
     void shouldUnlockTriggerWhenLocked() {
         // GIVEN
-        TriggerState trigger = createTriggerWith(IdUtils.create(), IdUtils.create(), TENANT_ID).locked(Clock.systemDefaultZone(), true);
+        TriggerState trigger = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
         jdbcTriggerRepository.save(trigger);
 
         // WHEN
@@ -673,17 +673,6 @@ class TriggerControllerTest {
                         .build()
                 )
             )
-            .build();
-    }
-
-    private TriggerState createTriggerWith(String flow, String namespace, String triggerId) {
-        return TriggerState.builder()
-            .tenantId(TENANT_ID)
-            .flowId(flow)
-            .namespace(namespace)
-            .triggerId(triggerId)
-            .evaluatedAt(Instant.now())
-            .vnode(VNodes.computeVNodeFromFlow(FlowId.of(TENANT_ID, namespace, flow, null), schedulerConfiguration.vnodes()))
             .build();
     }
 

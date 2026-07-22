@@ -36,7 +36,8 @@
     "Default page": "기본 페이지",
     "confirmation": "확인",
     "common": {
-      "back": "뒤로"
+      "back": "뒤로",
+      "openInNewTab": "새 탭에서 열기"
     },
     "delete confirm": "<code>{name}</code>을(를) 삭제하시겠습니까?",
     "outdated revision save confirmation": {
@@ -692,7 +693,6 @@
     "taskid column details": "마지막으로 실행된 task 및 시도 횟수.",
     "flow already exists": "Flow가 이미 존재합니다",
     "flow already exists message": "namespace <code>{namespace}</code>에 flow <code>{id}</code>가 이미 존재합니다. 새로운 리비전을 생성하시겠습니까?",
-    "plugin_default_already_exists": "<code>{type}</code>에 대한 플러그인 기본값이 이미 존재합니다.",
     "namespace not allowed": "Namespace가 허용되지 않습니다",
     "switch-view": "보기 전환",
     "source and topology": "소스 및 토폴로지",
@@ -1192,6 +1192,12 @@
         "title": "사용자 정의 Blueprints 추가",
         "message": "Kestra Enterprise Edition에서는 조직에만 사용할 수 있는 맞춤형 Blueprints를 생성할 수 있습니다. 이를 모범 사례 템플릿으로 사용하여 팀 내에서 자주 사용하는 workflow를 공유하고, 중앙 집중화하고, 문서화할 수 있습니다."
       },
+      "policies": {
+        "header": "거버넌스 정책",
+        "label": "정책",
+        "message": "정책을 통해 플랫폼 팀은 모든 flow에 걸쳐 규칙을 중앙에서 관리하고 적용할 수 있습니다. — 공유 기본값을 주입하고, 플러그인을 차단하며, 속성 값의 범위를 지정하고, 규정 준수 label을 요구합니다. 규칙은 단계적 배포를 통해 테넌트 또는 namespace 수준에서 적용되며, 주입되거나 대체된 모든 value는 flow 작성자에게 계속 표시됩니다.",
+        "title": "정책으로 모든 flow 관리"
+      },
       "namespace": {
         "edit": {
           "title": "네임스페이스 관리 업그레이드",
@@ -1209,9 +1215,9 @@
           "title": "변수를 중앙에서 관리하세요",
           "message": "Kestra Enterprise Edition에서는 namespace 수준 변수들을 정의하고 관리하여 flow 전반에 걸친 반복적인 구성을 제거할 수 있습니다. 이러한 변수들은 일관성을 보장하고, 구성 업데이트를 간소화하며, 어떤 task나 trigger에서도 쉽게 참조할 수 있어 더 깔끔하고 유지보수하기 쉬운 워크플로우를 만듭니다."
         },
-        "plugin-defaults": {
-          "title": "플러그인 기본값으로 구성 표준화",
-          "message": "Kestra Enterprise Edition에서는 각 flow에서 중복된 설정의 필요성을 줄이기 위해 namespace별 플러그인 기본값을 설정할 수 있습니다. 이 중앙 플러그인 관리 기능은 일관된 구성 설정을 강제하고, 비밀 정보나 변수를 안전하게 참조할 수 있게 하며, 워크플로우의 유지 관리를 간소화합니다."
+        "policies": {
+          "title": "이 namespace 전체에 거버넌스 규칙 적용",
+          "message": "Kestra Enterprise Edition에서, 정책을 통해 이 namespace 및 하위 namespace의 모든 flow에 적용되는 규칙을 정의할 수 있습니다 — 공유 기본값을 주입하고, 속성 값을 제한하며, plugins를 차단하고, 규정 준수 labels를 요구할 수 있으며, 모든 변경 사항은 flow 작성자에게 완전히 표시됩니다."
         },
         "history": {
           "title": "한 곳에서 수정 기록 관리",
@@ -1387,26 +1393,6 @@
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
     "system_namespace": "플랫폼을 시스템 flows로 점검하세요.",
     "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지.",
-    "pluginDefaults": {
-      "title": "플러그인 기본값",
-      "add": "플러그인 기본값 추가",
-      "edit": "플러그인 기본값 편집",
-      "add_subtitle": "새 플러그인 기본값을 해당 속성으로 구성하십시오.",
-      "edit_subtitle": "기존 플러그인 기본 설정 수정",
-      "predefined": "사전 정의된 플러그인",
-      "custom": "사용자 정의 플러그인",
-      "form": "폼",
-      "yaml": "YAML",
-      "select_predefined": "미리 정의된 플러그인 선택",
-      "cancel": "취소",
-      "update": "플러그인 기본값 업데이트",
-      "custom_type": "사용자 정의 플러그인 유형",
-      "custom_placeholder": "플러그인 유형 입력",
-      "use_custom": "사용자 정의 사용",
-      "custom_configure": "사용자 정의 플러그인 유형 - YAML을 사용하여 구성",
-      "yaml_configuration": "YAML 구성",
-      "show_yaml": "YAML 보기"
-    },
     "secret": {
       "add": "생성",
       "update": "비밀 '{name}' 업데이트",
@@ -1526,6 +1512,7 @@
     "documentationMenu": "문서 메뉴",
     "item": "항목",
     "items": "항목",
+    "iterations": "반복",
     "cron": "크론",
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",
@@ -1628,8 +1615,7 @@
         "triggers": "트리거",
         "errors": "오류 처리기",
         "afterExecution": "실행 후",
-        "finally": "마지막으로",
-        "pluginDefaults": "플러그인 기본값"
+        "finally": "마지막으로"
       },
       "fields": {
         "main": {
@@ -1661,7 +1647,6 @@
         "triggers": "트리거 선택",
         "errors": "작업 선택",
         "finally": "작업 선택",
-        "pluginDefaults": "플러그인 선택",
         "afterExecution": "작업 선택",
         "conditions": "조건 선택",
         "inputs": "입력 필드 유형 선택",
@@ -1675,7 +1660,6 @@
         "triggers": "트리거 추가",
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
-        "pluginDefaults": "플러그인 기본값 추가",
         "afterExecution": "실행 후 블록 추가",
         "conditions": "조건 추가",
         "inputs": "입력 필드 추가",
@@ -1792,10 +1776,6 @@
       "concurrency_limits": {
         "title": "동시성 제한이 설정되지 않았습니다.",
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">동시성 제한</a></strong>에 대해 더 읽어보세요."
-      },
-      "pluginDefaults": {
-        "title": "아직 플러그인 기본값이 없습니다!",
-        "content": "플러그인 기본값을 사용하면 플러그인 구성을 중앙에서 관리하고 namespace의 모든 flow와 공유할 수 있습니다."
       },
       "variables": {
         "title": "아직 변수가 없습니다",

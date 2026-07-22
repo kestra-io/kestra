@@ -4,8 +4,6 @@
         type="tests"
         demoCta
         :title="t(`demos.tests.title`)"
-        video="https://www.youtube.com/embed/jMZ9Cs3xxpo"
-        learnMore="https://kestra.io/docs/enterprise/governance/unit-tests"
     >
         <template #description>
             {{ $t(`demos.tests.message`) }}

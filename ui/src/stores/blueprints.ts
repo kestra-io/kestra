@@ -80,10 +80,10 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         const {q, tags, ...rest} = params ?? {}
         const filters: QueryFilter[] = []
         if (q !== undefined && q !== null) {
-            filters.push({field: "QUERY", operation: "EQUALS", value: q})
+            filters.push({field: "q", operation: "EQUALS", value: q})
         }
         if (tags !== undefined && tags !== null) {
-            filters.push({field: "TAGS", operation: "IN", value: Array.isArray(tags) ? tags.join(",") : tags})
+            filters.push({field: "tags", operation: "IN", value: Array.isArray(tags) ? tags.join(",") : tags})
         }
         return {...rest, filters} as Parameters<typeof BlueprintsAPI.searchInternalBlueprints>[0]
     }

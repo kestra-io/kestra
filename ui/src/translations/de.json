@@ -1398,14 +1398,7 @@
       "update": "Aktualisiere Secret '{name}'",
       "isReadOnly": "Geheimnis ist schreibgeschützt",
       "names": "Secrets",
-      "inherited": "Geerbte Secrets",
-      "key": "Name",
-      "keyPlaceholder": "Name, über den dieses Secret referenziert wird, z. B. MY_API_TOKEN",
-      "name": "Geheimer Wert",
-      "description": "Beschreibung",
-      "descriptionPlaceholder": "Beschreiben Sie dieses Secret",
-      "tags": "Tags",
-      "addTag": "Tag hinzufügen"
+      "inherited": "Geerbte Secrets"
     },
     "workerId": "Worker Id",
     "kv": {

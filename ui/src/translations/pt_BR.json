@@ -1398,14 +1398,7 @@
       "update": "Atualizar segredo '{name}'",
       "isReadOnly": "O segredo é somente leitura",
       "names": "Segredos",
-      "inherited": "Segredos herdados",
-      "key": "Nome",
-      "keyPlaceholder": "Nome usado para referenciar este segredo, por ex. MY_API_TOKEN",
-      "name": "Valor do segredo",
-      "description": "Descrição",
-      "descriptionPlaceholder": "Descreva este segredo",
-      "tags": "Tags",
-      "addTag": "Adicionar tag"
+      "inherited": "Segredos herdados"
     },
     "workerId": "Worker Id",
     "kv": {

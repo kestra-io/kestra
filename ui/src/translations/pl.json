@@ -1398,14 +1398,7 @@
       "update": "Aktualizuj sekret '{name}'",
       "isReadOnly": "Sekret jest tylko do odczytu",
       "names": "Secrets",
-      "inherited": "Dziedziczone secrets",
-      "key": "Nazwa",
-      "keyPlaceholder": "Nazwa używana do odwołania się do tego sekretu, np. MY_API_TOKEN",
-      "name": "Wartość sekretu",
-      "description": "Opis",
-      "descriptionPlaceholder": "Opisz ten sekret",
-      "tags": "Tagi",
-      "addTag": "Dodaj tag"
+      "inherited": "Dziedziczone secrets"
     },
     "workerId": "Worker Id",
     "kv": {

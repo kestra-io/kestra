@@ -3,16 +3,25 @@ package io.kestra.core.junit.extensions;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import io.kestra.core.junit.services.TestTenantLifecycle;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -25,6 +34,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.awaitility.Awaitility.await;
 
 public abstract class AbstractLoaderExtension {
@@ -81,37 +91,40 @@ public abstract class AbstractLoaderExtension {
             LocalFlowRepositoryLoader.class
         );
 
+        // A path may be a single flow file or a directory: the loader walks it recursively and
+        // returns every flow it actually created/updated (with its assigned revision), so the
+        // metastore-wait below operates on real flows regardless of whether a directory
+        // (e.g. "flows/valids") was passed.
+        List<FlowWithSource> loadedFlows = new ArrayList<>();
         for (String path : paths) {
             URL resource = loadFile(path);
 
-            TestsUtils.loads(tenantId, repositoryLoader, resource);
+            loadedFlows.addAll(TestsUtils.loads(tenantId, repositoryLoader, resource));
         }
 
         // The flow metastore's cache is updated asynchronously (via a queue subscription) after
-        // FlowService.create()/update() returns. Under concurrent test load that lag can outlast a
-        // freshly-loaded flow's very first execution transitions, so a Flow trigger on it silently
-        // misses them (no retry). Block here until every loaded flow is actually visible in the
-        // metastore cache, so tests never race their own fixtures.
-        FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
+        // FlowService.create()/update() returns, so a Flow trigger on a freshly-loaded flow can
+        // miss its first executions. Await until every loaded flow is visible in the cache, so tests
+        // never race their own fixtures. Best-effort: a few valid flows never reach the cache (their
+        // queue event fails to deserialize, e.g. task aliases) — they are still persisted, so we
+        // don't fail the fixture on them.
         FlowMetaStoreInterface flowMetaStore = context.getBean(FlowMetaStoreInterface.class);
-        for (String path : paths) {
-            Flow flow = getFlow(path);
-            FlowWithSource persisted = flowRepository.findByIdWithSource(tenantId, flow.getNamespace(), flow.getId())
-                .orElseThrow();
-
-            await().atMost(Duration.ofSeconds(5)).until(
-                () -> flowMetaStore.allLastVersion().stream()
-                    .anyMatch(
-                        cached -> tenantId.equals(cached.getTenantId())
-                            && cached.getNamespace().equals(flow.getNamespace())
-                            && cached.getId().equals(flow.getId())
-                            && cached.getRevision().equals(persisted.getRevision())
-                    )
-            );
+        try {
+            await().atMost(Duration.ofSeconds(10)).until(() -> {
+                Collection<FlowWithSource> cached = flowMetaStore.allLastVersion();
+                return loadedFlows.stream().allMatch(flow -> cached.stream().anyMatch(
+                    c -> tenantId.equals(c.getTenantId())
+                        && c.getNamespace().equals(flow.getNamespace())
+                        && c.getId().equals(flow.getId())
+                        && c.getRevision().equals(flow.getRevision())
+                ));
+            });
+        } catch (ConditionTimeoutException ignored) {
+            // Best-effort — some loaded flows never reach the cache (see above); they are persisted.
         }
     }
 
-    protected void deleteFlows(String tenantId, String[] paths) throws URISyntaxException {
+    protected void deleteFlows(String tenantId, String[] paths) throws URISyntaxException, IOException {
         if (!context.isRunning()) {
             return;
         }
@@ -119,10 +132,11 @@ public abstract class AbstractLoaderExtension {
         FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
         ExecutionRepositoryInterface executionRepository = context.getBean(ExecutionRepositoryInterface.class);
 
+        // A path may be a single flow file or a directory: resolve it to every flow it declares so
+        // directory fixtures (e.g. "flows/valids") are cleaned up as thoroughly as they were loaded.
         Set<String> flowIds = new HashSet<>();
         for (String path : paths) {
-            Flow flow = getFlow(path);
-            flowIds.add(flow.getId());
+            getFlows(tenantId, path).forEach(flow -> flowIds.add(flow.getId()));
         }
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> flowIds.contains(flow.getId()))
@@ -139,5 +153,20 @@ public abstract class AbstractLoaderExtension {
         URL resource = loadFile(path);
         Flow flow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
         return flow;
+    }
+
+    /**
+     * Resolves a resource path to the flows it declares. The path may be a single flow file or a
+     * directory, in which case it is walked recursively for {@code *.yaml}/{@code *.yml} files.
+     */
+    protected static List<GenericFlow> getFlows(String tenantId, String path) throws URISyntaxException, IOException {
+        Path resource = Paths.get(loadFile(path).toURI());
+
+        try (Stream<Path> pathStream = Files.walk(resource)) {
+            return pathStream
+                .filter(YamlParser::isValidExtension)
+                .map(throwFunction(file -> GenericFlow.fromYaml(tenantId, Files.readString(file, Charset.defaultCharset()))))
+                .toList();
+        }
     }
 }

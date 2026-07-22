@@ -48,7 +48,7 @@ jobs:
 
       - name: Read version
         id: version
-        run: echo "value=$(npm pkg get version --workspace @kestra-io/hey-api-plugin | jq -r '.\"@kestra-io/hey-api-plugin\"')" >> "$GITHUB_OUTPUT"
+        run: echo "value=$(npm pkg get version --workspace @kestra-io/hey-api-plugin | jq -r '.["@kestra-io/hey-api-plugin"]')" >> "$GITHUB_OUTPUT"
 
       - name: Pack (prepack builds dist)
         # Deterministic tarball name (npm pack: <scope>-<name>-<version>.tgz); avoids parsing

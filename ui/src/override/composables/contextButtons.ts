@@ -1,5 +1,6 @@
 import type {Component} from "vue"
 import {computed} from "vue"
+import {useRoute} from "vue-router"
 
 import {useI18n} from "vue-i18n"
 
@@ -33,6 +34,7 @@ export interface Button {
 
 export function useContextButtons() {
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
 
     const apiStore = useApiStore()
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
@@ -51,6 +53,10 @@ export function useContextButtons() {
                   icon: AiIcon,
 
                   component: CopilotChat,
+                  // The full-page AI Copilot (`/ai`) is the same agent — hide the redundant dock tab there.
+                  get hidden() {
+                      return route.name === "ai"
+                  },
               },
               news: {
                   title: t("contextBar.news"),

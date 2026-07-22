@@ -92,6 +92,20 @@ public class JsonSchemaGenerator {
 
     private final PluginRegistry pluginRegistry;
 
+    /**
+     * Per-invocation isolation state for {@link #subtypeResolver}, used only when a first schema-generation attempt
+     * failed because of one broken plugin (see {@link #generateRootSchemaIsolatingFailures}). Held in a
+     * {@link ThreadLocal} rather than passed through the (overridable) {@code build}/{@code subtypeResolver}
+     * signatures so Enterprise overrides keep working, and so the happy path — which never sets it — is unchanged.
+     * {@code probing} disables subtype expansion so a single type can be schema-generated cheaply and without
+     * recursion; {@code excluded} lists the plugin types to drop from the anyOf on a retry.
+     */
+    private record IsolationContext(boolean probing, Set<String> excluded) {
+        private static final IsolationContext NONE = new IsolationContext(false, Set.of());
+    }
+
+    private final ThreadLocal<IsolationContext> isolation = ThreadLocal.withInitial(() -> IsolationContext.NONE);
+
     @Inject
     public JsonSchemaGenerator(final PluginRegistry pluginRegistry) {
         this.pluginRegistry = pluginRegistry;
@@ -121,18 +135,8 @@ public class JsonSchemaGenerator {
     }
 
     public <T> Map<String, Object> schemas(Class<? extends T> cls, boolean arrayOf, List<String> allowedPluginTypes, boolean withOutputs) {
-        SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
-            SchemaVersion.DRAFT_7,
-            OptionPreset.PLAIN_JSON
-        );
-
-        this.build(builder, true, allowedPluginTypes, withOutputs);
-
-        SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
-
-        SchemaGenerator generator = new SchemaGenerator(schemaGeneratorConfig);
         try {
-            ObjectNode objectNode = generator.generateSchema(cls);
+            ObjectNode objectNode = generateRootSchemaIsolatingFailures(cls, allowedPluginTypes, withOutputs);
             if (arrayOf) {
                 objectNode.put("type", "array");
             }
@@ -146,6 +150,94 @@ public class JsonSchemaGenerator {
             return schema;
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
+        }
+    }
+
+    // package-private for testing
+    ObjectNode generateRootSchema(Class<?> cls, List<String> allowedPluginTypes, boolean withOutputs) {
+        SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
+            SchemaVersion.DRAFT_7,
+            OptionPreset.PLAIN_JSON
+        );
+        this.build(builder, true, allowedPluginTypes, withOutputs);
+        return new SchemaGenerator(builder.build()).generateSchema(cls);
+    }
+
+    /**
+     * Generate the root schema, isolating the failure of any single plugin. victools' {@code generateSchema} is
+     * atomic: if one registered task/trigger cannot be schema-generated (e.g. it was built against an incompatible
+     * Kestra version and a drifted type surfaces via a property or a Swagger {@code @Schema(implementation=...)}),
+     * the whole flow schema aborts and autocompletion breaks for EVERY plugin, not just the offending one (#12102).
+     * On such a failure, probe each eligible task/trigger in isolation, drop the ones that cannot be generated, and
+     * regenerate. The dropped types are re-added as permissive placeholders by {@link #injectUnresolvedPluginTypes},
+     * so they keep autocompleting and validating. The happy path (nothing broken) never probes and is unchanged.
+     */
+    private ObjectNode generateRootSchemaIsolatingFailures(Class<?> cls, List<String> allowedPluginTypes, boolean withOutputs) {
+        try {
+            return generateRootSchema(cls, allowedPluginTypes, withOutputs);
+        } catch (Exception | LinkageError firstFailure) {
+            Set<String> unresolvable = probeUnresolvablePluginTypes(allowedPluginTypes);
+            if (unresolvable.isEmpty()) {
+                // Not a per-plugin isolation problem we can recover from — surface the original failure.
+                throw firstFailure instanceof RuntimeException runtimeException
+                    ? runtimeException
+                    : new IllegalStateException(firstFailure);
+            }
+            log.warn(
+                "Flow schema generation failed; regenerating without {} plugin type(s) that cannot be schema-generated "
+                    + "(they will appear with a permissive placeholder): {}",
+                unresolvable.size(),
+                unresolvable
+            );
+            isolation.set(new IsolationContext(false, unresolvable));
+            try {
+                return generateRootSchema(cls, allowedPluginTypes, withOutputs);
+            } finally {
+                isolation.remove();
+            }
+        }
+    }
+
+    /**
+     * Probe every eligible task/trigger by generating its schema in isolation (with subtype expansion disabled, so
+     * each probe is cheap and cannot recurse through {@code List<Task>}-style properties) and return the names of
+     * those that throw. Called only after a full generation already failed, so its cost is paid only when a broken
+     * plugin is actually present.
+     */
+    // package-private for testing
+    Set<String> probeUnresolvablePluginTypes(List<String> allowedPluginTypes) {
+        isolation.set(new IsolationContext(true, Set.of()));
+        try {
+            SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
+                SchemaVersion.DRAFT_7,
+                OptionPreset.PLAIN_JSON
+            );
+            this.build(builder, true, allowedPluginTypes, false);
+            SchemaGenerator probe = new SchemaGenerator(builder.build());
+
+            Set<String> unresolvable = new HashSet<>();
+            Stream.concat(
+                    getRegisteredPlugins().stream().flatMap(registeredPlugin -> registeredPlugin.getTasks().stream()),
+                    getRegisteredPlugins().stream().flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
+                )
+                .filter(clz -> isSchemaEligiblePlugin(clz, allowedPluginTypes))
+                .distinct()
+                .forEach(clz -> {
+                    try {
+                        probe.generateSchema(clz);
+                    } catch (Exception | LinkageError e) {
+                        unresolvable.add(clz.getName());
+                        log.warn(
+                            "Plugin type '{}' cannot be schema-generated and will be shown with a permissive placeholder. Cause: [{}] {}",
+                            clz.getName(),
+                            e.getClass().getSimpleName(),
+                            e.getMessage()
+                        );
+                    }
+                });
+            return unresolvable;
+        } finally {
+            isolation.remove();
         }
     }
 
@@ -848,18 +940,27 @@ public class JsonSchemaGenerator {
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {
+        IsolationContext isolationContext = isolation.get();
         if (declaredType.getErasedType() == Task.class) {
+            if (isolationContext.probing()) {
+                return null; // probing a single type: skip subtype expansion (cheap, non-recursive)
+            }
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
                 .filter(clz -> isSchemaEligiblePlugin(clz, allowedPluginTypes))
+                .filter(clz -> !isolationContext.excluded().contains(clz.getName()))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
         } else if (declaredType.getErasedType() == AbstractTrigger.class) {
+            if (isolationContext.probing()) {
+                return null; // probing a single type: skip subtype expansion (cheap, non-recursive)
+            }
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
                 .filter(clz -> isSchemaEligiblePlugin(clz, allowedPluginTypes))
+                .filter(clz -> !isolationContext.excluded().contains(clz.getName()))
                 .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
                 .toList();
         } else if (declaredType.getErasedType() == TaskRunner.class) {

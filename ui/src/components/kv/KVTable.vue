@@ -96,7 +96,7 @@
                     v-if="scope.row.key !== undefined"
                     :tooltip="$t('copy_to_clipboard')"
                     placement="left"
-                    @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
+                    @click="copyKey(scope.row.key)"
                 >
                     <ContentCopy />
                 </KsIconButton>
@@ -620,6 +620,11 @@
             description: entry.description,
         }
         viewKvDrawerVisible.value = true
+    }
+
+    async function copyKey(key: string) {
+        await Utils.copy(`{{ kv('${key}') }}`)
+        toast.success(t("copied"))
     }
 
     function removeKv(namespace: string, key: string) {

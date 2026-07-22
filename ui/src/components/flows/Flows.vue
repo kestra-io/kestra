@@ -219,6 +219,7 @@
                         <TriggerAvatar :flow="scope.row" />
                     </template>
                 </KsTableColumn>
+
             </template>
 
             <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">

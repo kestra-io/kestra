@@ -12,6 +12,7 @@ import DemoTests from "../components/demo/Tests.vue"
 import DemoAssets from "../components/demo/Assets.vue"
 import DemoQuotas from "../components/demo/Quotas.vue"
 import DemoPolicies from "../components/demo/Policies.vue"
+import DemoDeploy from "../components/demo/Deploy.vue"
 
 const routes: RouteRecordRaw[] = [
     //Initial
@@ -106,6 +107,7 @@ const routes: RouteRecordRaw[] = [
     {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: DemoQuotas},
     {name: "admin/policies", path: "/:tenant?/admin/policies", component: DemoPolicies},
     {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
+    {name: "deploy/targets", path: "/:tenant?/deploy/targets", component: DemoDeploy},
 ]
 
 export default routes

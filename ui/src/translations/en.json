@@ -1135,6 +1135,9 @@
       }
     },
     "apps": "Apps",
+    "deploy": {
+      "label": "Deploy"
+    },
     "demos": {
       "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Get a Demo",
@@ -1167,6 +1170,10 @@
         "header": "Assets Metadata and Observability",
         "title": "Bring every dataset, service, and dependency into view.",
         "message": "Assets connect observability, lineage, and ownership metadata so platform teams can troubleshoot faster and deploy with confidence."
+      },
+      "deploy": {
+        "title": "Promote Flows Across Environments",
+        "message": "Kestra Enterprise Edition lets you promote flows from one environment to another — such as dev to staging to production — directly from the UI, no Git or CI/CD pipelines required. Review a diff of exactly what will change before promoting, protect sensitive targets with a confirmation gate, spot drift at a glance, and keep a full history of who promoted what, where, and when."
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
@@ -2282,6 +2289,11 @@
     },
     "open source": "Open Source",
     "pricing": "Pricing",
-    "license": "License"
+    "license": "License",
+    "filter": {
+      "table_column": {
+        "flows": {}
+      }
+    }
   }
 }

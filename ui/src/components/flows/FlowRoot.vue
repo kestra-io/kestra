@@ -33,6 +33,7 @@
     import FlowTriggers from "./FlowTriggers.vue"
     import FlowConcurrency from "./FlowConcurrency.vue"
     import DemoAuditLogs from "../demo/AuditLogs.vue"
+    import DemoDeploy from "../demo/Deploy.vue"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
     import {computed, onBeforeUnmount, onUnmounted, ref, watch} from "vue"
@@ -119,6 +120,14 @@
                     maximized: true,
                 })
             }
+
+            tabs.push({
+                name: "deploy",
+                title: t("deploy.label"),
+                component: DemoDeploy,
+                props: {embed: true},
+                locked: true,
+            })
 
             if (user.value && flowStore.flow && user.value.isAllowed(resource.FLOW, action.VIEW, flowStore.flow.namespace)) {
                 tabs.push({

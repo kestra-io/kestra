@@ -76,31 +76,11 @@
             </KsAlert>
 
             <KsFormItem v-if="isPrivate">
-                <div class="auth-list">
-                    <label
-                        v-for="opt in AUTH_OPTIONS"
-                        :key="opt.value"
-                        class="auth-option"
-                        :class="{
-                            'is-selected': form.authType === opt.value,
-                            'is-disabled': isOptionDisabled(opt),
-                        }"
-                    >
-                        <input
-                            v-model="form.authType"
-                            type="radio"
-                            :value="opt.value"
-                            :disabled="isOptionDisabled(opt)"
-                            @change="autoSubmit"
-                        >
-                        <span class="auth-name">{{ t(opt.labelKey) }}</span>
-                        <LockOutline
-                            v-if="opt.ee && isOss"
-                            :size="14"
-                        />
-                        <span class="auth-hint">{{ authHint(opt) }}</span>
-                    </label>
-                </div>
+                <KsRadioCardGroup
+                    v-model="form.authType"
+                    :options="authOptions"
+                    @change="autoSubmit"
+                />
             </KsFormItem>
 
             <KsFormItem
@@ -272,6 +252,16 @@
         }
         return t(opt.hintKey)
     }
+
+    const authOptions = computed(() =>
+        AUTH_OPTIONS.map((opt) => ({
+            value: opt.value,
+            label: t(opt.labelKey),
+            hint: authHint(opt),
+            disabled: isOptionDisabled(opt),
+            icon: opt.ee && isOss.value ? LockOutline : undefined,
+        })),
+    )
 
     const buildPayload = (): McpServerPayload => {
         const isOauth = form.value.authType === "OAUTH"
@@ -458,90 +448,6 @@
     .id-input {
         width: 170px;
         min-height: 30px;
-    }
-
-    .auth-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-2);
-        width: 100%;
-    }
-
-    .auth-option {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-4);
-        padding: var(--ks-spacing-2) var(--ks-spacing-4);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-lg);
-        background: var(--ks-bg-inactive);
-        color: var(--ks-text-primary);
-        cursor: pointer;
-        transition: all 0.15s;
-    }
-
-    .auth-option input[type="radio"] {
-        appearance: none;
-        -webkit-appearance: none;
-        flex-shrink: 0;
-        display: grid;
-        place-content: center;
-        width: 1.25rem;
-        height: 1.25rem;
-        margin: 0;
-        border: 2px solid var(--ks-border-strong);
-        border-radius: 50%;
-        background: transparent;
-        cursor: pointer;
-        transition: border-color 0.15s ease;
-    }
-
-    .auth-option input[type="radio"]::after {
-        content: "";
-        width: 0.625rem;
-        height: 0.625rem;
-        border-radius: 50%;
-        background: var(--ks-toggle-active);
-        transform: scale(0);
-        transition: transform 0.15s ease;
-    }
-
-    .auth-option input[type="radio"]:checked {
-        border-color: var(--ks-toggle-active);
-    }
-
-    .auth-option input[type="radio"]:checked::after {
-        transform: scale(1);
-    }
-
-    .auth-option input[type="radio"]:disabled {
-        cursor: not-allowed;
-    }
-
-    .auth-option.is-selected {
-        border-color: var(--ks-border-strong);
-        background: var(--ks-bg-active);
-    }
-
-    .auth-option.is-disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-
-    .auth-option:hover:not(.is-selected):not(.is-disabled) {
-        border-color: var(--ks-border-strong);
-    }
-
-    .auth-name {
-        font-size: var(--ks-font-size-sm);
-        font-weight: var(--ks-font-weight-regular);
-        color: var(--ks-text-primary);
-    }
-
-    .auth-hint {
-        margin-left: auto;
-        font-size: var(--ks-font-size-sm);
-        color: var(--ks-text-secondary);
     }
 
     .field-hint {

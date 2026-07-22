@@ -117,7 +117,9 @@ export function setupKestraHttp(
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
         const status = error.status
         if (status === 404) {
-            onError("error", error)
+            if (error.config?.showMessageOnError !== false) {
+                onError("error", error)
+            }
         } else if (status !== 401 && status !== 400 && error.response?.data && error.config?.showMessageOnError !== false) {
             onError("message", error)
         }

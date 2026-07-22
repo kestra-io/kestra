@@ -42,7 +42,7 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Setting save(Setting setting) {
-        this.eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.UPDATE));
+        this.eventPublisher.publishEvent(new CrudEvent<>(setting, null, CrudEventType.UPDATE));
 
         return internalSave(setting);
     }

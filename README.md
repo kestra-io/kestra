@@ -73,13 +73,6 @@ Kestra is an open-source, event-driven orchestration platform for data, AI, and 
 
 🧑‍💻 The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is **always managed declaratively in code**, even if you modify your workflows in other ways (UI, CI/CD, Terraform, API calls).
 
-
-<p align="center">
-  <video src="https://github.com/user-attachments/assets/8bb47d22-848d-4281-a0ca-9790803ce1ea" autoplay loop muted playsinline width="640">
-    Your browser does not support the video tag. <a href="https://go.kestra.io/video/product-overview">Watch the demo here</a>.
-  </video>
-</p>
-
 ---
 
 ## 🚀 Quick Start

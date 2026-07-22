@@ -30,9 +30,11 @@
         <div class="editor-section">
             <KsText class="editor-label">{{ $t("new_flow_landing.import.paste_label") }}</KsText>
             <KsEditor
+                v-bind="editorBindings"
                 v-model="yamlContent"
                 lang="yaml"
                 :options="{fullHeight: false, lineNumbers: true}"
+                :navbar="false"
                 class="yaml-editor"
                 data-test="import-yaml-editor"
             />
@@ -73,6 +75,7 @@
 <script setup lang="ts">
     import {ref} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
     import {parseImportYaml, type ImportErrorCode} from "../../../utils/importYamlUtils"
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue"
     import TrayArrowDown from "vue-material-design-icons/TrayArrowDown.vue"
@@ -83,6 +86,7 @@
     }>()
 
     const {t} = useI18n()
+    const editorBindings = useEditorBindings()
 
     const yamlContent = ref("")
     const errorCode = ref<ImportErrorCode | null>(null)

@@ -26,6 +26,7 @@
             <KsCollapseItem name="yaml" :title="$t('recipe.summary.yaml_preview')">
                 <KsEditor
                     v-if="yamlOpen.length > 0"
+                    v-bind="editorBindings"
                     :modelValue="yamlContent"
                     lang="yaml"
                     :readOnly="true"
@@ -52,6 +53,7 @@
 <script setup lang="ts">
     import {ref} from "vue"
     import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     defineProps<{
         summary: string
@@ -64,6 +66,7 @@
         create: []
     }>()
 
+    const editorBindings = useEditorBindings()
     const yamlOpen = ref<string[]>([])
 </script>
 

@@ -16,7 +16,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "9.5.1"
+    id "com.gradleup.shadow" version "9.6.1"
     id "application"
 
     // test
@@ -37,7 +37,7 @@ plugins {
     id "org.owasp.dependencycheck" version "12.2.2" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.2.5"
+    id "io.kestra.gradle.spotless-conventions" version "1.2.6"
 }
 
 idea {
@@ -189,6 +189,18 @@ subprojects {subProj ->
 
         configurations {
             mockitoAgent
+            // Exposes this project's compiled test classes/resources to other projects, replacing the
+            // Gradle 9.5-incompatible `project(':x').sourceSets.test.output` cross-project script access.
+            testArtifacts {
+                canBeConsumed = true
+                canBeResolved = false
+            }
+        }
+
+        artifacts {
+            sourceSets.test.output.files.each { dir ->
+                testArtifacts(dir) { builtBy tasks.named('testClasses') }
+            }
         }
 
         dependencies {
@@ -252,16 +264,6 @@ subprojects {subProj ->
             t.environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
             t.environment 'ENV_TEST1', "true"
             t.environment 'ENV_TEST2', "Pass by env"
-
-
-            // these modules tests were battle tested by @nkwiatkowski so we can allow to try to enable parallel testing on them
-            if (subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
-                // JUnit 5 parallel settings
-                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
-                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
-            }
         }
 
         tasks.register('integrationTest', Test) { Test t ->

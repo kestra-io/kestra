@@ -11,6 +11,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.filter.TestAuthFilter;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
@@ -99,6 +100,22 @@ class MiscControllerTest {
     }
 
     @Test
+    void getLoginConfiguration() {
+        // /api/v1/configs/login is the only config endpoint reachable without authentication:
+        // it must expose isBasicAuthInitialized and nothing else (no version, commit id, queue
+        // type, plugin hash, system namespace, url, ...).
+        TestAuthFilter.ENABLED = false;
+        try {
+            var response = client.toBlocking().retrieve(GET("/api/v1/configs/login"), Argument.mapOf(String.class, Object.class));
+
+            assertThat(response).containsOnlyKeys("isBasicAuthInitialized");
+            assertThat(response.get("isBasicAuthInitialized")).isEqualTo(true);
+        } finally {
+            TestAuthFilter.ENABLED = true;
+        }
+    }
+
+    @Test
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
     void getEmptyValidationErrors() {
         List<String> response = client.toBlocking().retrieve(GET("/api/v1/basicAuthValidationErrors"), Argument.LIST_OF_STRING);
@@ -178,6 +195,100 @@ class MiscControllerTest {
                 .doesNotThrowAnyException();
         } finally {
             basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void login_shouldSetHttpOnlyCookie_withValidCredentials() {
+        String uid = "loginUid";
+        String username = "login.success@kestra.io";
+        String password = "loginPassword1";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+
+        try {
+            var response = client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/login", new MiscController.LoginRequest(username, password))
+            );
+
+            assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+            var cookie = response.getCookie(BasicAuthService.BASIC_AUTH_COOKIE_NAME);
+            assertThat(cookie).isPresent();
+            assertThat(cookie.get().isHttpOnly()).isTrue();
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void login_shouldReject_withInvalidCredentials() {
+        String uid = "loginUid2";
+        String username = "login.fail@kestra.io";
+        String password = "loginPassword2";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+
+        try {
+            assertThatThrownBy(
+                () -> client.toBlocking().exchange(
+                    HttpRequest.POST("/api/v1/login", new MiscController.LoginRequest(username, "wrongPassword"))
+                )
+            ).isInstanceOfSatisfying(
+                HttpClientResponseException.class, ex -> assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+            );
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
+    void login_isReachableWithoutPriorAuthentication() {
+        // /api/v1/login must be reachable by an unauthenticated caller, otherwise nobody could ever log in
+        assertThatThrownBy(
+            () -> client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/login", new MiscController.LoginRequest("nobody@kestra.io", "wrongPassword"))
+            )
+        ).isInstanceOfSatisfying(
+            // rejected for bad credentials, not for missing authentication
+            HttpClientResponseException.class, ex -> assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+        );
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
+    void logout_shouldClearCookie_whenAuthenticated() {
+        String uid = "logoutUid";
+        String username = "logout.success@kestra.io";
+        String password = "logoutPassword1";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+
+        try {
+            var response = client.toBlocking().exchange(POST("/api/v1/logout", null).basicAuth(username, password));
+
+            assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+            var cookie = response.getCookie(BasicAuthService.BASIC_AUTH_COOKIE_NAME);
+            assertThat(cookie).isPresent();
+            assertThat(cookie.get().getMaxAge()).isEqualTo(0);
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
+    void logout_shouldRequireAuthentication() {
+        // unlike /login, /logout must not bypass AuthenticationFilter: an unauthenticated caller has
+        // no session to clear, so the request is rejected rather than silently accepted.
+        // TestAuthFilter transparently attaches a valid Authorization header to every outgoing test
+        // request unless disabled, so it must be turned off to genuinely exercise the unauthenticated path.
+        TestAuthFilter.ENABLED = false;
+        try {
+            assertThatThrownBy(
+                () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/logout", null))
+            ).isInstanceOfSatisfying(
+                HttpClientResponseException.class, ex -> assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+            );
+        } finally {
+            TestAuthFilter.ENABLED = true;
         }
     }
 

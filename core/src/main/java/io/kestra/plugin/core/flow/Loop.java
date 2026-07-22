@@ -355,8 +355,8 @@ public class Loop extends AbstractBranch<Loop.Output> {
         @Schema(title = "The count of running iterations")
         private Integer runningIterations;
 
-        @Schema(title = "The count of terminated iterations")
-        private Integer terminatedIterations;
+        @Schema(title = "The count of terminated iterations per terminal state")
+        private Map<State.Type, Integer> terminatedIterations;
 
         @Schema(
             title = "The list of loop iteration (task runs) outputs, accessible outside of the loop for subsequent tasks",

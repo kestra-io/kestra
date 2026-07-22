@@ -16,23 +16,23 @@ html.dark {
     #{--ks-bg-badge}: $base-gray-cool-800;
     #{--ks-bg-base}: $base-gray-cool-950;
     #{--ks-bg-elevated}: $base-gray-cool-900;
-    #{--ks-bg-error}: $base-gray-cool-950;
+    #{--ks-bg-error}: rgba($base-red-300, 0.1);
     #{--ks-bg-hover}: $base-gray-cool-500;
     #{--ks-bg-hover-elevated}: $base-gray-cool-600;
     #{--ks-bg-inactive}: $base-gray-cool-700;
-    #{--ks-bg-info}: $base-gray-cool-950;
+    #{--ks-bg-info}: rgba($base-blue-300, 0.1);
     #{--ks-bg-input}: $base-gray-cool-950;
     #{--ks-bg-overlay}: $base-gray-cool-800;
     #{--ks-bg-scrim}: rgba($base-gray-cool-950, 0.8);
     #{--ks-bg-sidebar}: $base-gray-cool-900;
-    #{--ks-bg-success}: $base-gray-cool-950;
+    #{--ks-bg-success}: rgba($base-green-400, 0.1);
     #{--ks-bg-surface}: $base-gray-cool-800;
     #{--ks-bg-tabs-default}: $base-gray-cool-600;
     #{--ks-bg-tag}: rgba($base-gray-cool-white, 0.1);
     #{--ks-bg-tag-active}: rgba($base-primary-300, 0.4);
     #{--ks-bg-tag-hover}: rgba($base-primary-300, 0.2);
     #{--ks-bg-tag-inactive}: rgba($base-gray-cool-white, 0.05);
-    #{--ks-bg-warning}: $base-gray-cool-950;
+    #{--ks-bg-warning}: rgba($base-orange-300, 0.1);
 
     /* border */
     #{--ks-border-default}: $base-gray-cool-600;

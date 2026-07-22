@@ -2,6 +2,7 @@ package io.kestra.storage.local;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ public class LocalStorage implements StorageInterface {
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                 String dirPath = dir.toString().replace("\\", "/");
                 if (includeDirectories) {
-                    uris.add(URI.create(dirPath + "/"));
+                    uris.add(pathUri(dirPath + "/"));
                 }
                 return super.preVisitDirectory(Path.of(dirPath), attrs);
             }
@@ -122,7 +123,7 @@ public class LocalStorage implements StorageInterface {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 if (!file.getFileName().toString().endsWith(".metadata")) {
-                    uris.add(URI.create(file.toString().replace("\\", "/")));
+                    uris.add(pathUri(file.toString().replace("\\", "/")));
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -135,7 +136,7 @@ public class LocalStorage implements StorageInterface {
             }
         });
 
-        URI fsPathUri = URI.create(fsPath.toString().replace("\\", "/"));
+        URI fsPathUri = pathUri(fsPath.toString().replace("\\", "/"));
         return uris.stream().sorted(Comparator.reverseOrder())
             .map(fsPathUri::relativize)
             .map(URI::getPath)
@@ -143,7 +144,7 @@ public class LocalStorage implements StorageInterface {
             .map(path ->
             {
                 String prefixPath = prefix.getPath();
-                return URI.create("kestra://" + prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
+                return kestraUri(prefixPath + (prefixPath.endsWith("/") ? "" : "/") + path);
             })
             .toList();
     }
@@ -160,7 +161,7 @@ public class LocalStorage implements StorageInterface {
                 .filter(path -> !path.getFileName().toString().endsWith(".metadata"))
                 .map(throwFunction(file ->
                 {
-                    URI relative = URI.create(
+                    URI relative = pathUri(
                         getLocalPath(tenantId, null).relativize(
                             Path.of(file.toUri())
                         ).toString().replace("\\", "/")
@@ -180,7 +181,7 @@ public class LocalStorage implements StorageInterface {
                 .filter(path -> !path.getFileName().toString().endsWith(".metadata"))
                 .map(throwFunction(file ->
                 {
-                    URI relative = URI.create(
+                    URI relative = pathUri(
                         getInstancePath(null).relativize(
                             Path.of(file.toUri())
                         ).toString().replace("\\", "/")
@@ -228,7 +229,7 @@ public class LocalStorage implements StorageInterface {
             }
         }
 
-        return URI.create("kestra://" + uri.getRawPath());
+        return kestraUri(uri.getPath());
     }
 
     @Override
@@ -270,7 +271,7 @@ public class LocalStorage implements StorageInterface {
         if (!file.exists() && !file.mkdirs()) {
             throw new RuntimeException("Cannot create directory: " + file.getAbsolutePath());
         }
-        return URI.create("kestra://" + uri.getPath());
+        return kestraUri(uri.getPath());
     }
 
     @Override
@@ -284,7 +285,7 @@ public class LocalStorage implements StorageInterface {
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException(e.getMessage());
         }
-        return URI.create("kestra://" + to.getPath());
+        return kestraUri(to.getPath());
     }
 
     @Override
@@ -329,12 +330,28 @@ public class LocalStorage implements StorageInterface {
     private URI getKestraUri(String tenantId, Path path) {
         Path prefix = basePath.toAbsolutePath().resolve(tenantId);
         subPathParentGuard(path, prefix);
-        return URI.create("kestra:///" + prefix.relativize(path).toString().replace("\\", "/"));
+        return kestraUri("/" + prefix.relativize(path).toString().replace("\\", "/"));
     }
 
     private void subPathParentGuard(Path path, Path prefix) {
         if (!path.toAbsolutePath().startsWith(prefix)) {
             throw new IllegalArgumentException("The path must be a subpath of the base path with the tenant ID.");
+        }
+    }
+
+    private static URI pathUri(String path) {
+        try {
+            return new URI(null, null, windowsToUnixPath(path), null);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid storage path: " + path, e);
+        }
+    }
+
+    private static URI kestraUri(String path) {
+        try {
+            return new URI("kestra", "", windowsToUnixPath(path), null, null);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid Kestra storage path: " + path, e);
         }
     }
 }

@@ -44,8 +44,8 @@
                             </div>
                             <div class="logs-toolbar__actions">
                                 <LogDisplaySettings />
-                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
-                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
+                                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
+                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
                             </div>
                         </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
@@ -467,12 +467,11 @@
             display: flex;
             align-items: center;
             margin-left: auto;
+            gap: var(--ks-spacing-2);
         }
 
-        &__btn {
+        :deep(.kel-button) {
             margin: 0;
-            padding: var(--ks-spacing-2);
-            border-radius: var(--ks-radius-base);
         }
     }
 

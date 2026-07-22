@@ -1,5 +1,6 @@
 package io.kestra.worker.processors;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,6 +14,7 @@ import org.slf4j.event.Level;
 
 import com.google.common.base.Throwables;
 
+import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -48,6 +50,7 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
     private final WorkerQueue<LogEntry> workerLogQueue;
     private final WorkerQueue<WorkerTriggerResult> workerTriggerResultQueue;
     private final RunContextInitializer runContextInitializer;
+    private final Duration pollingTriggerTimeout;
 
     public WorkerTriggerProcessor(String workerGroup,
         MetricRegistry metricRegistry,
@@ -56,11 +59,13 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
         RunContextInitializer runContextInitializer,
         WorkerQueue<LogEntry> workerLogQueue,
         WorkerQueue<WorkerTriggerResult> workerTriggerResultQueue,
-        ExecutionKilledManager executionKilledManager) {
+        ExecutionKilledManager executionKilledManager,
+        Duration pollingTriggerTimeout) {
         super(workerGroup, metricRegistry, workerSecurityService, tracer, executionKilledManager);
         this.workerLogQueue = workerLogQueue;
         this.workerTriggerResultQueue = workerTriggerResultQueue;
         this.runContextInitializer = runContextInitializer;
+        this.pollingTriggerTimeout = pollingTriggerTimeout;
     }
 
     /**
@@ -102,10 +107,15 @@ public class WorkerTriggerProcessor extends AbstractWorkerJobProcessor<WorkerTri
                     );
 
                     if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, conditionContext, triggerContext, workerTrigger, pollingTrigger);
+                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, conditionContext, triggerContext, workerTrigger, pollingTrigger, pollingTriggerTimeout);
                         io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
                         if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
+                            if (workerCallable.getException() instanceof TimeoutExceededException) {
+                                metricRegistry
+                                    .counter(MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT, MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION, metricsTags)
+                                    .increment();
+                            }
                             this.handleTriggerError(workerTrigger, triggerContext, conditionContext, workerCallable.getException());
                         }
 

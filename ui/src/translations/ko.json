@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "잘못된 소스 코드",
+    "invalid duration": "유효하지 않은 기간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해주세요.",
     "missingSource": "소스 누락",
     "update": "업데이트",
     "update ok": "업데이트됨",
@@ -35,7 +36,8 @@
     "Default page": "기본 페이지",
     "confirmation": "확인",
     "common": {
-      "back": "뒤로"
+      "back": "뒤로",
+      "openInNewTab": "새 탭에서 열기"
     },
     "delete confirm": "<code>{name}</code>을(를) 삭제하시겠습니까?",
     "outdated revision save confirmation": {
@@ -457,10 +459,53 @@
     },
     "use": "사용",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "유형 복사",
+      "deprecated": "사용 중단",
+      "dynamic": "동적",
+      "filter_all": "전체",
+      "filter_properties": "속성 필터링…",
+      "filter_required": "필수",
+      "intro_callout_prefix": "편집기에서 task의 ",
+      "intro_callout_suffix": "을 클릭하면 이곳에서 plugin 문서를 볼 수 있습니다.",
+      "intro_clear_search": "검색 초기화",
+      "intro_learn_more": "더 알아보기",
+      "intro_no_matches_sub": "검색 조건에 일치하는 함수, 필터 또는 속성이 없습니다.",
+      "intro_no_matches_title": "\"{q}\"에 대한 결과 없음",
+      "intro_result_count": "{count}개 결과",
+      "intro_search_placeholder": "레퍼런스 검색…",
+      "intro_start_here": "시작하기",
+      "intro_step1_cta": "flow 참조 보기",
+      "intro_step1_desc_mid": " 안에서 고유한 ",
+      "intro_step1_desc_prefix": "모든 flow에는 ",
+      "intro_step1_desc_suffix": "가 필요합니다.",
+      "intro_step1_title": "id와 namespace 설정",
+      "intro_step2_cta": "task 참조 보기",
+      "intro_step2_desc": "순서대로 실행되는 원자적 작업입니다. task를 클릭해 문서를 확인하세요.",
+      "intro_step2_title": "tasks 추가",
+      "intro_step3_cta": "inputs 참조 보기",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "사용",
+      "intro_step3_desc_suffix": "와 Pebble 표현식을 사용하세요.",
+      "intro_step3_title": "동적으로 만들기",
+      "intro_sub": "YAML로 flow를 만드는 데 필요한 모든 것：속성, inputs, Pebble templating을 한 곳에서.",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Flow 문서",
       "name": "플러그인",
       "names": "플러그인들",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "개요",
+      "nav_properties": "Properties",
+      "non_dynamic": "비동적",
       "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요.",
-      "release": "릴리스 노트"
+      "release": "릴리스 노트",
+      "required": "필수"
     },
     "last execution date": "마지막 실행 날짜",
     "last execution state": "마지막 상태",
@@ -691,7 +736,6 @@
     "taskid column details": "마지막으로 실행된 task 및 시도 횟수.",
     "flow already exists": "Flow가 이미 존재합니다",
     "flow already exists message": "namespace <code>{namespace}</code>에 flow <code>{id}</code>가 이미 존재합니다. 새로운 리비전을 생성하시겠습니까?",
-    "plugin_default_already_exists": "<code>{type}</code>에 대한 플러그인 기본값이 이미 존재합니다.",
     "namespace not allowed": "Namespace가 허용되지 않습니다",
     "switch-view": "보기 전환",
     "source and topology": "소스 및 토폴로지",
@@ -727,7 +771,6 @@
     },
     "title": "제목",
     "api": "API",
-    "more_actions": "추가 작업",
     "expand error": "실패한 task만 확장",
     "expand all": "모두 확장",
     "collapse all": "모두 축소",
@@ -1191,6 +1234,12 @@
         "title": "사용자 정의 Blueprints 추가",
         "message": "Kestra Enterprise Edition에서는 조직에만 사용할 수 있는 맞춤형 Blueprints를 생성할 수 있습니다. 이를 모범 사례 템플릿으로 사용하여 팀 내에서 자주 사용하는 workflow를 공유하고, 중앙 집중화하고, 문서화할 수 있습니다."
       },
+      "policies": {
+        "header": "거버넌스 정책",
+        "label": "정책",
+        "message": "정책을 통해 플랫폼 팀은 모든 flow에 걸쳐 규칙을 중앙에서 관리하고 적용할 수 있습니다. — 공유 기본값을 주입하고, 플러그인을 차단하며, 속성 값의 범위를 지정하고, 규정 준수 label을 요구합니다. 규칙은 단계적 배포를 통해 테넌트 또는 namespace 수준에서 적용되며, 주입되거나 대체된 모든 value는 flow 작성자에게 계속 표시됩니다.",
+        "title": "정책으로 모든 flow 관리"
+      },
       "namespace": {
         "edit": {
           "title": "네임스페이스 관리 업그레이드",
@@ -1208,9 +1257,9 @@
           "title": "변수를 중앙에서 관리하세요",
           "message": "Kestra Enterprise Edition에서는 namespace 수준 변수들을 정의하고 관리하여 flow 전반에 걸친 반복적인 구성을 제거할 수 있습니다. 이러한 변수들은 일관성을 보장하고, 구성 업데이트를 간소화하며, 어떤 task나 trigger에서도 쉽게 참조할 수 있어 더 깔끔하고 유지보수하기 쉬운 워크플로우를 만듭니다."
         },
-        "plugin-defaults": {
-          "title": "플러그인 기본값으로 구성 표준화",
-          "message": "Kestra Enterprise Edition에서는 각 flow에서 중복된 설정의 필요성을 줄이기 위해 namespace별 플러그인 기본값을 설정할 수 있습니다. 이 중앙 플러그인 관리 기능은 일관된 구성 설정을 강제하고, 비밀 정보나 변수를 안전하게 참조할 수 있게 하며, 워크플로우의 유지 관리를 간소화합니다."
+        "policies": {
+          "title": "이 namespace 전체에 거버넌스 규칙 적용",
+          "message": "Kestra Enterprise Edition에서, 정책을 통해 이 namespace 및 하위 namespace의 모든 flow에 적용되는 규칙을 정의할 수 있습니다 — 공유 기본값을 주입하고, 속성 값을 제한하며, plugins를 차단하고, 규정 준수 labels를 요구할 수 있으며, 모든 변경 사항은 flow 작성자에게 완전히 표시됩니다."
         },
         "history": {
           "title": "한 곳에서 수정 기록 관리",
@@ -1304,7 +1353,7 @@
         "complete": "Complete",
         "save_to_continue": "Press Save in the top bar (right).",
         "execute_to_continue": "1. Press Execute in the top bar (right).\n2. Provide a value for <strong>name</strong>.\n3. Press Execute again in the modal.",
-        "edit_flow_to_continue": "Press Edit flow in the top bar (right).",
+        "edit_flow_to_continue": "작업 메뉴(상단 바 오른쪽)를 열고 ‘Flow 편집’을 선택하세요.",
         "cancel_tutorial": "Cancel tutorial",
         "finish_tutorial": "Finish tutorial"
       },
@@ -1342,7 +1391,7 @@
         "save_flow": "Click Save to continue.",
         "execute_flow": "Run the flow once to continue.",
         "view_logs_status": "Open the execution details and check the logs for `greet`.",
-        "edit_flow_from_execution": "Click `Edit flow` in the top bar to continue.",
+        "edit_flow_from_execution": "계속하려면 작업 메뉴를 열고 ‘Flow 편집’을 클릭하세요.",
         "add_cron_trigger_section": "Create a `triggers` section with a schedule trigger.",
         "add_cron_trigger_type": "Set trigger type to `io.kestra.plugin.core.trigger.Schedule`.",
         "add_cron_trigger_cron": "Add a cron expression, for example: `\"*/5 * * * *\"`.",
@@ -1386,32 +1435,19 @@
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
     "system_namespace": "플랫폼을 시스템 flows로 점검하세요.",
     "system_namespace_description": "유지 관리 작업을 자동화하세요, 실패 경고부터 자동 정리까지.",
-    "pluginDefaults": {
-      "title": "플러그인 기본값",
-      "add": "플러그인 기본값 추가",
-      "edit": "플러그인 기본값 편집",
-      "add_subtitle": "새 플러그인 기본값을 해당 속성으로 구성하십시오.",
-      "edit_subtitle": "기존 플러그인 기본 설정 수정",
-      "predefined": "사전 정의된 플러그인",
-      "custom": "사용자 정의 플러그인",
-      "form": "폼",
-      "yaml": "YAML",
-      "select_predefined": "미리 정의된 플러그인 선택",
-      "cancel": "취소",
-      "update": "플러그인 기본값 업데이트",
-      "custom_type": "사용자 정의 플러그인 유형",
-      "custom_placeholder": "플러그인 유형 입력",
-      "use_custom": "사용자 정의 사용",
-      "custom_configure": "사용자 정의 플러그인 유형 - YAML을 사용하여 구성",
-      "yaml_configuration": "YAML 구성",
-      "show_yaml": "YAML 보기"
-    },
     "secret": {
       "add": "생성",
       "update": "비밀 '{name}' 업데이트",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",
-      "inherited": "상속된 비밀"
+      "inherited": "상속된 비밀",
+      "key": "이름",
+      "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
+      "name": "비밀 value",
+      "description": "설명",
+      "descriptionPlaceholder": "이 비밀을 설명하세요",
+      "tags": "태그",
+      "addTag": "태그 추가"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1525,6 +1561,7 @@
     "documentationMenu": "문서 메뉴",
     "item": "항목",
     "items": "항목",
+    "iterations": "반복",
     "cron": "크론",
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",
@@ -1627,8 +1664,7 @@
         "triggers": "트리거",
         "errors": "오류 처리기",
         "afterExecution": "실행 후",
-        "finally": "마지막으로",
-        "pluginDefaults": "플러그인 기본값"
+        "finally": "마지막으로"
       },
       "fields": {
         "main": {
@@ -1660,7 +1696,6 @@
         "triggers": "트리거 선택",
         "errors": "작업 선택",
         "finally": "작업 선택",
-        "pluginDefaults": "플러그인 선택",
         "afterExecution": "작업 선택",
         "conditions": "조건 선택",
         "inputs": "입력 필드 유형 선택",
@@ -1674,7 +1709,6 @@
         "triggers": "트리거 추가",
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
-        "pluginDefaults": "플러그인 기본값 추가",
         "afterExecution": "실행 후 블록 추가",
         "conditions": "조건 추가",
         "inputs": "입력 필드 추가",
@@ -1791,10 +1825,6 @@
       "concurrency_limits": {
         "title": "동시성 제한이 설정되지 않았습니다.",
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">동시성 제한</a></strong>에 대해 더 읽어보세요."
-      },
-      "pluginDefaults": {
-        "title": "아직 플러그인 기본값이 없습니다!",
-        "content": "플러그인 기본값을 사용하면 플러그인 구성을 중앙에서 관리하고 namespace의 모든 flow와 공유할 수 있습니다."
       },
       "variables": {
         "title": "아직 변수가 없습니다",
@@ -2301,6 +2331,12 @@
     },
     "open source": "오픈 소스",
     "pricing": "가격 책정",
-    "license": "라이선스"
+    "license": "라이선스",
+    "pwa": {
+      "install_title": "Kestra 설치",
+      "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
+      "install": "설치",
+      "dismiss": "나중에"
+    }
   }
 }

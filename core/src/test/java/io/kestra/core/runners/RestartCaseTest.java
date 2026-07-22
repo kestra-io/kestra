@@ -227,7 +227,7 @@ public class RestartCaseTest {
         Execution firstExecution = runnerUtils.runOne(MAIN_TENANT, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
-        var subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId(), null);
         assertThat(subExecutions).hasSize(1);
 
         // first restart: index=0 sub-execution is restarted and succeeds, then index=1 is created and fails
@@ -255,7 +255,7 @@ public class RestartCaseTest {
         assertThat(finishedRestarted1.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestarted1.getState().getCurrent()).isEqualTo(Type.FAILED);
 
-        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId());
+        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId(), null);
         assertThat(subExecutions).hasSize(2);
 
         // second restart: index=1 sub-execution is restarted and succeeds, then index=2 is created and fails
@@ -280,7 +280,7 @@ public class RestartCaseTest {
         assertThat(finishedRestarted2.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestarted2.getState().getCurrent()).isEqualTo(Type.FAILED);
 
-        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId());
+        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId(), null);
         assertThat(subExecutions).hasSize(3);
 
         // third restart: index=2 sub-execution is restarted and succeeds; all 3 iterations done
@@ -306,7 +306,7 @@ public class RestartCaseTest {
         assertThat(finishedRestarted3.getState().getCurrent()).isEqualTo(Type.SUCCESS);
 
         // we must have 3 loop sub-executions at the end — one per iteration, each restarted in place
-        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId());
+        subExecutions = executionRepository.findLoopSubExecutions(firstExecution.getTenantId(), firstExecution.getId(), null);
         assertThat(subExecutions).hasSize(3);
     }
 

@@ -100,6 +100,22 @@ class MiscControllerTest {
     }
 
     @Test
+    void getLoginConfiguration() {
+        // /api/v1/configs/login is the only config endpoint reachable without authentication:
+        // it must expose isBasicAuthInitialized and nothing else (no version, commit id, queue
+        // type, plugin hash, system namespace, url, ...).
+        TestAuthFilter.ENABLED = false;
+        try {
+            var response = client.toBlocking().retrieve(GET("/api/v1/configs/login"), Argument.mapOf(String.class, Object.class));
+
+            assertThat(response).containsOnlyKeys("isBasicAuthInitialized");
+            assertThat(response.get("isBasicAuthInitialized")).isEqualTo(true);
+        } finally {
+            TestAuthFilter.ENABLED = true;
+        }
+    }
+
+    @Test
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
     void getEmptyValidationErrors() {
         List<String> response = client.toBlocking().retrieve(GET("/api/v1/basicAuthValidationErrors"), Argument.LIST_OF_STRING);

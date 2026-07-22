@@ -15,7 +15,6 @@ import org.reactivestreams.Publisher;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
@@ -555,7 +554,7 @@ public class ExecutionService {
             throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
         }
 
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, targetExecution, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(CrudEvent.of(targetExecution, newExecution));
         return newExecution;
     }
 
@@ -894,7 +893,7 @@ public class ExecutionService {
             unpausedExecution = execution.withState(newState);
         }
 
-        this.eventPublisher.publishEvent(new CrudEvent<>(unpausedExecution, execution, CrudEventType.UPDATE));
+        this.eventPublisher.publishEvent(CrudEvent.of(execution, unpausedExecution));
         return unpausedExecution;
     }
 
@@ -913,7 +912,7 @@ public class ExecutionService {
 
         var pausedExecution = execution.withState(State.Type.PAUSED);
 
-        this.eventPublisher.publishEvent(new CrudEvent<>(pausedExecution, execution, CrudEventType.UPDATE));
+        this.eventPublisher.publishEvent(CrudEvent.of(execution, pausedExecution));
         return pausedExecution;
     }
 
@@ -1155,7 +1154,7 @@ public class ExecutionService {
      */
     public Execution updateLabels(Execution execution, List<Label> labels) {
         Execution newExecution = execution.withLabels(labels);
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(CrudEvent.of(execution, newExecution));
         return newExecution;
     }
 
@@ -1317,7 +1316,7 @@ public class ExecutionService {
 
         // for all other states, we just return the same execution,
         // it will be resent to the queue and forced re-processed.
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(CrudEvent.of(execution, newExecution));
         return newExecution;
     }
 
@@ -1380,7 +1379,7 @@ public class ExecutionService {
             .withTaskRunList(newTaskRuns)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
-        eventPublisher.publishEvent(new CrudEvent<>(resumed, execution, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(CrudEvent.of(execution, resumed));
         return resumed;
     }
 
@@ -1389,7 +1388,7 @@ public class ExecutionService {
      */
     public Execution changeState(Execution execution, State.Type newState) {
         Execution changed = execution.withState(newState);
-        eventPublisher.publishEvent(new CrudEvent<>(changed, execution, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(CrudEvent.of(execution, changed));
         return changed;
     }
 
@@ -1400,7 +1399,7 @@ public class ExecutionService {
      */
     public Execution unqueue(Execution execution, State.Type newState) {
         Execution unqueued = concurrencyLimitService.unqueue(execution, newState);
-        eventPublisher.publishEvent(new CrudEvent<>(unqueued, execution, CrudEventType.UPDATE));
+        eventPublisher.publishEvent(CrudEvent.of(execution, unqueued));
         return unqueued;
     }
 }

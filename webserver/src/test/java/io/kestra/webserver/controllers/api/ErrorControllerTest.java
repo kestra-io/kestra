@@ -14,10 +14,14 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.exceptions.ErrorCode;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.webserver.controllers.ErrorController;
+import io.kestra.webserver.responses.ApiError;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -25,6 +29,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
@@ -119,6 +124,71 @@ class ErrorControllerTest {
         String response = exception.getResponse().getBody(String.class).get();
         assertThat(response).contains("Invalid entity: Unrecognized field \\\"unknown\\\" (class io.kestra.core.models.flows.FlowWithSource), not marked as ignorable");
         assertThat(response).contains("\"path\":\"io.kestra.core.models.flows.FlowWithSource[\\\"unknown\\\"]\"");
+    }
+
+    @Test
+    void shouldReturnInvalidEntityCodeWhenEntityIsInvalid() throws JsonProcessingException {
+        Map<String, Object> flow = ImmutableMap.of(
+            "id", IdUtils.create(),
+            "namespace", "io.kestra.test",
+            "tasks", Collections.singletonList(
+                ImmutableMap.of(
+                    "id", IdUtils.create(),
+                    "type", "io.kestra.invalid"
+                )
+            )
+        );
+        String yaml = JacksonMapper.ofYaml().writeValueAsString(flow);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(POST("/api/v1/main/flows", yaml).contentType(MediaType.APPLICATION_YAML_TYPE), Argument.of(Flow.class), Argument.of(Object.class))
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        assertThat(exception.getResponse().getBody(String.class).get()).contains("\"code\":\"INVALID_ENTITY\"");
+    }
+
+    @Test
+    void shouldReturnNotFoundCodeWhenFlowDoesNotExist() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/flows/io.kestra.missing/missing-flow"))
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(NOT_FOUND.getCode());
+        assertThat(exception.getResponse().getBody(String.class).get()).contains("\"code\":\"NOT_FOUND\"");
+    }
+
+    @Test
+    void shouldReturnForbiddenCodeWhenAccessIsDenied() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/test-utils/failing-with-forbidden"))
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(FORBIDDEN.getCode());
+        assertThat(exception.getResponse().getBody(String.class).get()).contains("\"code\":\"FORBIDDEN\"");
+    }
+
+    @Test
+    void shouldReturnInvalidQueryFiltersCodeWhenFiltersAreInvalid() {
+        HttpResponse<JsonError> response = new ErrorController()
+            .error(GET("/api/v1/main/flows/search"), new InvalidQueryFiltersException("foo"));
+
+        assertThat(response.status().getCode()).isEqualTo(BAD_REQUEST.getCode());
+        assertThat(((ApiError) response.body()).getCode()).isEqualTo(ErrorCode.INVALID_QUERY_FILTERS);
+    }
+
+    @Test
+    void shouldReturnTenantNotFoundCodeWhenTenantIsNotMain() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/unknown-tenant/flows/io.kestra.missing/missing-flow"))
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(BAD_REQUEST.getCode());
+        assertThat(exception.getResponse().getBody(String.class).get()).contains("\"code\":\"TENANT_NOT_FOUND\"");
     }
 
     @Test

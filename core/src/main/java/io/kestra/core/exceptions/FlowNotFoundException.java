@@ -37,4 +37,12 @@ public class FlowNotFoundException extends NotFoundException {
     public FlowNotFoundException(final ExecutionId executionId, Integer flowRevision) {
         super(FLOW_NOT_FOUND_MESSAGE.formatted(executionId.tenantId(), executionId.namespace(), executionId.flowId(), flowRevision, executionId.executionId()));
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ErrorCode getErrorCode() {
+        return ErrorCode.FLOW_NOT_FOUND;
+    }
 }

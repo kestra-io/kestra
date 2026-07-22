@@ -3,7 +3,7 @@ package io.kestra.core.exceptions;
 /**
  * General exception that can be throws when a Kestra resource or entity is not found.
  */
-public class NotFoundException extends KestraRuntimeException {
+public class NotFoundException extends KestraRuntimeException implements HasErrorCode {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -20,5 +20,13 @@ public class NotFoundException extends KestraRuntimeException {
      */
     public NotFoundException(final String message) {
         super(message);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ErrorCode getErrorCode() {
+        return ErrorCode.NOT_FOUND;
     }
 }

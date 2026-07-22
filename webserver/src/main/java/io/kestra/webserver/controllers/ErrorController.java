@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
 import io.kestra.core.exceptions.*;
 import io.kestra.libs.copilot.exceptions.AiException;
+import io.kestra.webserver.responses.ApiError;
 
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
@@ -55,7 +56,7 @@ public class ErrorController {
                 typeField.setAccessible(true);
                 Object typeClass = typeField.get(invalidTypeIdException);
 
-                JsonError error = new JsonError("Invalid type: " + typeClass)
+                JsonError error = new ApiError(ErrorCode.INVALID_ENTITY, "Invalid type: " + typeClass)
                     .link(Link.SELF, Link.of(request.getUri()))
                     .embedded(
                         "errors",
@@ -74,7 +75,7 @@ public class ErrorController {
             try {
                 String path = path(jsonMappingException);
 
-                JsonError error = new JsonError("Invalid json mapping")
+                JsonError error = new ApiError(ErrorCode.INVALID_ENTITY, "Invalid json mapping")
                     .link(Link.SELF, Link.of(request.getUri()))
                     .embedded(
                         "errors",
@@ -106,7 +107,7 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ConstraintViolationException e) {
-        JsonError error = new JsonError("Invalid entity: " + e.getMessage())
+        JsonError error = new ApiError(ErrorCode.INVALID_ENTITY, "Invalid entity: " + e.getMessage())
             .link(Link.SELF, Link.of(request.getUri()))
             .embedded(
                 "errors",
@@ -161,6 +162,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ConflictException e) {
         return jsonError(request, e, HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReason());
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, ForbiddenException e) {
+        return jsonError(request, e, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReason());
     }
 
     @Error(global = true)
@@ -225,20 +231,31 @@ public class ErrorController {
     }
 
     public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, HttpStatus status, String reason) {
-        JsonError error = new JsonError(reason)
+        return jsonError(request, status, ErrorCode.fromHttpStatusCode(status.getCode()), reason);
+    }
+
+    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, HttpStatus status, ErrorCode code, String reason) {
+        JsonError error = new ApiError(code, reason)
             .link(Link.SELF, Link.of(request.getUri()));
 
         return jsonError(error, status, reason);
     }
 
     public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
+        return jsonError(request, e, status, ErrorCode.fromHttpStatusCode(status.getCode()), reason);
+    }
+
+    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, ErrorCode code, String reason) {
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
             log.error("Server error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         } else {
             log.trace("Client error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         }
 
-        JsonError error = new JsonError(reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))
+        // An exception-provided code is more specific than the status-level default.
+        ErrorCode effectiveCode = e instanceof HasErrorCode hasErrorCode ? hasErrorCode.getErrorCode() : code;
+
+        JsonError error = new ApiError(effectiveCode, reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))
             .link(Link.SELF, Link.of(request.getUri()));
 
         return jsonError(error, status, reason);

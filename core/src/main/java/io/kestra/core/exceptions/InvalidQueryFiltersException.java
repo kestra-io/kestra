@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * General exception that can be throws when a Kestra entity field is query, but is not valid or existing.
  */
-public class InvalidQueryFiltersException extends KestraRuntimeException {
+public class InvalidQueryFiltersException extends KestraRuntimeException implements HasErrorCode {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final String INVALID_QUERY_FILTER_MESSAGE = "Provided query filters are invalid: %s";
@@ -27,5 +27,13 @@ public class InvalidQueryFiltersException extends KestraRuntimeException {
      */
     public InvalidQueryFiltersException(final String invalid) {
         super(INVALID_QUERY_FILTER_MESSAGE.formatted(invalid));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ErrorCode getErrorCode() {
+        return ErrorCode.INVALID_QUERY_FILTERS;
     }
 }

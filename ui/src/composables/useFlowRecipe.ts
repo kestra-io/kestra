@@ -21,6 +21,7 @@ const DEFAULT_STATE: RecipeState = {
         slack: false,
         teams: false,
         email: false,
+        custom: false,
     },
     slackChannel: "#alerts",
     teamsWebhook: "",
@@ -56,7 +57,7 @@ export function useFlowRecipe() {
 
     const channelAvailability = computed(() => {
         if (!fqcnsLoaded.value || availableFqcns.value.size === 0) {
-            return {slack: true, teams: true, email: true}
+            return {slack: true, teams: true, email: true, custom: true}
         }
         const isExecutionTrigger = recipe.triggerType === "execution"
         return {
@@ -75,11 +76,12 @@ export function useFlowRecipe() {
                     ? NOTIFY_TASK_CONFIGS.email.executionFqcn
                     : NOTIFY_TASK_CONFIGS.email.webhookFqcn,
             ),
+            custom: true,
         }
     })
 
     const hasNotifyChannel = computed(() =>
-        recipe.notify.slack || recipe.notify.teams || recipe.notify.email,
+        recipe.notify.slack || recipe.notify.teams || recipe.notify.email || recipe.notify.custom,
     )
 
     const isTriggerConfigValid = computed(() => {
@@ -104,6 +106,7 @@ export function useFlowRecipe() {
         if (recipe.notify.slack) channels.push("Slack")
         if (recipe.notify.teams) channels.push("Microsoft Teams")
         if (recipe.notify.email) channels.push(t("email"))
+        if (recipe.notify.custom) channels.push(t("recipe.notify.custom_label"))
 
         const channelText = channels.length > 0
             ? channels.join(", ")

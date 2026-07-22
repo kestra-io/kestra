@@ -90,6 +90,9 @@ const messages = {
         "recipe.notify.slack_channel_placeholder": "#alerts",
         "recipe.notify.teams_webhook_placeholder": "Teams incoming webhook URL",
         "recipe.notify.email_to_placeholder": "recipient{'@'}your-domain.com",
+        "recipe.notify.custom_label": "Custom",
+        "recipe.notify.custom_sub": "Add your own notification task",
+        "recipe.notify.custom_note": "A placeholder task is added.",
         "recipe.notify.plugin_unavailable": "Plugin not installed",
         "recipe.create_flow": "Create flow",
         "recipe.blueprints_section_title": "Blueprints",
@@ -202,7 +205,7 @@ describe("FlowRecipe", () => {
 
         // Same bug, same fix, in the notify-channel grid rendered alongside it.
         const channelIcons = wrapper.findAll(".icon-wrap svg")
-        expect(channelIcons.length).toBe(3)
+        expect(channelIcons.length).toBe(4)
     })
 
     test("emits submit with yaml when form is valid and create is clicked", async () => {

@@ -57,6 +57,9 @@
                     size="small"
                     data-test="recipe-email-to"
                 />
+                <span v-else-if="channel.key === 'custom'" class="custom-note">
+                    {{ $t("recipe.notify.custom_note") }}
+                </span>
             </div>
         </div>
     </div>
@@ -69,10 +72,11 @@
     import Slack from "vue-material-design-icons/Slack.vue"
     import MicrosoftTeams from "vue-material-design-icons/MicrosoftTeams.vue"
     import EmailOutline from "vue-material-design-icons/EmailOutline.vue"
+    import DotsHorizontal from "vue-material-design-icons/DotsHorizontal.vue"
 
     const props = defineProps<{
         recipe: RecipeState
-        channelAvailability: {slack: boolean; teams: boolean; email: boolean}
+        channelAvailability: {slack: boolean; teams: boolean; email: boolean; custom: boolean}
         toggleNotify: (key: keyof RecipeState["notify"]) => void
     }>()
 
@@ -96,6 +100,12 @@
             label: t("recipe.notify.email_label"),
             sub: t("recipe.notify.email_sub"),
             icon: EmailOutline,
+        },
+        {
+            key: "custom",
+            label: t("recipe.notify.custom_label"),
+            sub: t("recipe.notify.custom_sub"),
+            icon: DotsHorizontal,
         },
     ]
 </script>
@@ -181,5 +191,11 @@
 
     .channel-config {
         margin-top: var(--ks-spacing-1);
+    }
+
+    .custom-note {
+        display: block;
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
     }
 </style>

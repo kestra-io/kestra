@@ -11,7 +11,7 @@ const baseState = (): RecipeState => ({
     timezone: "Europe/Paris",
     webhookKey: "my-key",
     otherTriggerType: "",
-    notify: {slack: false, teams: false, email: false},
+    notify: {slack: false, teams: false, email: false, custom: false},
     slackChannel: "#alerts",
     teamsWebhook: "",
     emailTo: "",
@@ -193,6 +193,36 @@ describe("recipeToYaml", () => {
             const emailTask = parsed.tasks.find((t: any) => t.id === "notify_email")
             expect(emailTask.type).toBe("io.kestra.plugin.email.MailSend")
             expect(emailTask.htmlTextContent).not.toContain("trigger.executionId")
+        })
+
+        it("custom channel adds an editable Log placeholder task", () => {
+            // Given
+            const state = baseState()
+            state.notify.custom = true
+
+            // When
+            const yaml = recipeToYaml(state, "system")
+
+            // Then
+            const parsed = flowYamlUtils.parse(yaml)
+            const customTask = parsed.tasks.find((t: any) => t.id === "notify_custom")
+            expect(customTask.type).toBe("io.kestra.plugin.core.log.Log")
+            expect(customTask.message).toContain("trigger.executionId")
+        })
+
+        it("custom channel is always emitted even when no plugins are installed", () => {
+            // Given
+            const state = baseState()
+            state.notify.slack = true
+            state.notify.custom = true
+
+            // When — only the Log fqcn is available, so slack is filtered out
+            const yaml = recipeToYaml(state, "system", new Set(["io.kestra.plugin.core.log.Log"]))
+
+            // Then
+            const parsed = flowYamlUtils.parse(yaml)
+            expect(parsed.tasks.find((t: any) => t.id === "notify_slack")).toBeUndefined()
+            expect(parsed.tasks.find((t: any) => t.id === "notify_custom")).toBeDefined()
         })
     })
 

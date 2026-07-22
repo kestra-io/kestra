@@ -17,6 +17,7 @@ export interface RecipeState {
         slack: boolean
         teams: boolean
         email: boolean
+        custom: boolean
     }
     slackChannel: string
     teamsWebhook: string
@@ -162,6 +163,16 @@ function buildNotifyTasks(state: RecipeState, isExecutionTrigger: boolean, avail
             }
             tasks.push(task)
         }
+    }
+
+    if (state.notify.custom) {
+        tasks.push({
+            id: "notify_custom",
+            type: "io.kestra.plugin.core.log.Log",
+            message: isExecutionTrigger
+                ? "Replace this task with your notification of choice — execution {{ trigger.executionId }} reached state {{ trigger.state }}."
+                : "Replace this task with your notification of choice.",
+        })
     }
 
     return tasks

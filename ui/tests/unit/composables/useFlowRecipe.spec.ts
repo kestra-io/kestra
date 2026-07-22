@@ -77,7 +77,13 @@ describe("useFlowRecipe", () => {
 
     it("assumes every channel is available until plugins report otherwise", () => {
         const r = setup()
-        expect(r.channelAvailability.value).toEqual({slack: true, teams: true, email: true})
+        expect(r.channelAvailability.value).toEqual({slack: true, teams: true, email: true, custom: true})
+    })
+
+    it("treats the custom channel as a valid notification choice", () => {
+        const r = setup()
+        r.toggleNotify("custom")
+        expect(r.hasNotifyChannel.value).toBe(true)
     })
 
     it("reset clears the chosen channels and inputs", () => {

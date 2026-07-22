@@ -243,6 +243,7 @@
                             query: {
                                 'filters[parentId][EQUALS]': asTaskRun(currentTaskRun).executionId,
                                 'filters[kind][EQUALS]': 'LOOP',
+                                'filters[taskId][EQUALS]': asTaskRun(currentTaskRun).taskId,
                             }
                         }"
                         size="small"
@@ -253,6 +254,7 @@
                         :currentTaskRunId="asTaskRun(currentTaskRun).id"
                         :loopOutputsByTaskRunId="loopOutputsByTaskRunId"
                         :executionId="asTaskRun(currentTaskRun).executionId"
+                        :taskId="asTaskRun(currentTaskRun).taskId"
                     />
                 </div>
             </DynamicScrollerItem>
@@ -1207,6 +1209,7 @@
     &.attempt-wrapper--transparent {
       background-color: transparent;
       border: none;
+      overflow: visible;
 
       .line {
         border-top: none;

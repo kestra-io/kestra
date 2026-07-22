@@ -294,6 +294,11 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        &:focus-visible {
+            outline: 2px solid var(--ks-border-focus);
+            outline-offset: 2px;
+        }
     }
 
     .trigger-card-icon {

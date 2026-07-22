@@ -18,7 +18,7 @@
             :title="$t('recipe.other.no_results')"
         />
 
-        <div v-else class="trigger-list" data-test="recipe-trigger-list">
+        <div v-else class="trigger-list" role="radiogroup" :aria-label="$t('recipe.other.search_label')" data-test="recipe-trigger-list">
             <div
                 v-for="trigger in filteredTriggers"
                 :key="trigger.type"
@@ -119,6 +119,11 @@
         &.selected {
             border-color: var(--ks-border-focus);
             background-color: var(--ks-bg-tag-active);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--ks-border-focus);
+            outline-offset: 2px;
         }
     }
 

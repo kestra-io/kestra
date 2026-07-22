@@ -76,6 +76,10 @@
                 margin-right: 0;
             }
 
+            &:not(.is-disabled) i {
+                color: var(--ks-icon-muted);
+            }
+
             &:not(.is-disabled):hover,
             &:not(.is-disabled):focus {
                 background-color: var(--ks-bg-hover-elevated);

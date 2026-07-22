@@ -22,11 +22,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # When an OSS ci start, we trigger an EE one
+  # On develop push: fire the full EE CI cross-check async (oss-updated) AND run a
+  # synchronous EE compile gate via the Kestra webhook.
   trigger-ee:
     runs-on: ubuntu-latest
     steps:
-      # Targeting develop branch from develop
+      # Targeting develop branch from develop — async, fire-and-forget full EE CI
       - name: Trigger EE Workflow (develop push, no payload)
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
         uses: kestra-io/actions/composite/repository-dispatch@main
@@ -36,6 +37,21 @@ jobs:
           repository: kestra-io/kestra-ee
           event-type: "oss-updated"
           client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}"}'
+
+      - name: Checkout  # required to resolve the local composite action below
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: actions/checkout@v7
+
+      # Synchronous EE compileJava gate: fails this job (and the run) on compile
+      # failure and posts a compile status on the develop commit.
+      - name: EE compile check (via Kestra webhook)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: ./.github/actions/ee-compile-check
+        with:
+          webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
+          ref: ${{ github.ref_name }}
+          commit-sha: ${{ github.sha }}
+          pr-repo: ${{ github.repository }}
 
   backend-tests:
     name: Backend tests

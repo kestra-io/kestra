@@ -1,3 +1,22 @@
+import {vi} from "vitest";
+
+// triggerStore.search(), flowStore.findFlows() and pluginsStore.listTriggers() all call their
+// generated SDK submodule functions directly, which go through the SDK's own internal client
+// rather than the axios instance setMockClient() swaps - so each has to be intercepted at the
+// submodule level. The Template below still uses setMockClient() as a catch-all for anything
+// exercised by user interaction (unlock/restart/backfill actions), since this story has no
+// play() function driving those paths.
+const mockState = vi.hoisted(() => ({triggers: []}))
+vi.mock("@kestra-io/kestra-sdk/triggers", () => ({
+    searchTriggers: async () => ({results: mockState.triggers, total: mockState.triggers.length}),
+}))
+vi.mock("@kestra-io/kestra-sdk/flows", () => ({
+    searchFlows: async () => ({results: [], total: 0}),
+}))
+vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
+    listTriggerPlugins: async () => ({results: [], total: 0}),
+}))
+
 import Triggers from "../../../../src/components/admin/triggers/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
 import {setMockClient} from "@kestra-io/kestra-sdk"
@@ -101,26 +120,10 @@ const triggersData = [
 
 const Template = (args) => ({
     setup() {
+        mockState.triggers = args.triggers
+
         const store = {}
         store.get = async function (uri) {
-            if (uri.includes("/triggers/search")) {
-                return {
-                    data: {
-                        results: args.triggers,
-                        total: args.triggers.length,
-                    }
-                }
-            }
-
-            if (uri.includes("/flows/search")) {
-                return {
-                    data: {
-                        results: [],
-                        total: 0,
-                    }
-                }
-            }
-
             if (uri.includes("/distinct-namespaces")) {
                 return {
                     data: [
@@ -129,20 +132,6 @@ const Template = (args) => ({
                         "io.kestra.plugin",
                         "io.kestra",
                     ]
-                }
-            }
-
-            // The "add" tab (TriggersGrid) is the default tab and calls
-            // pluginsStore.listTriggers(), which hits this endpoint expecting
-            // {results: [...]}. Left unmocked, response.data.results is
-            // undefined, allTriggers.value becomes undefined, and the
-            // visibleTriggers computed throws trying to .filter() it.
-            if (uri.includes("/plugins/triggers")) {
-                return {
-                    data: {
-                        results: [],
-                        total: 0,
-                    }
                 }
             }
 

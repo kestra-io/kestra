@@ -132,18 +132,6 @@ class FlowWithSourceTest {
                     Schedule.builder().id("schedule").cron("0 1 9 * * *").build()
                 )
             )
-            .pluginDefaults(
-                List.of(
-                    FlowPluginDefault.builder()
-                        .type(Log.class.getName())
-                        .values(
-                            Map.of(
-                                "message", "Default message"
-                            )
-                        )
-                        .build()
-                )
-            )
             .concurrency(
                 Concurrency.builder()
                     .behavior(Concurrency.Behavior.CANCEL)

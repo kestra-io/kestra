@@ -307,17 +307,20 @@
 
     import {useTableColumns} from "../../composables/useTableColumns"
     import useRouteContext from "../../composables/useRouteContext"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
         namespace?: string;
         id?: string | null;
         defaultScopeFilter?: boolean,
+        embed?: boolean;
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
+        embed: false,
     })
 
     const flowStore = useFlowStore()
@@ -397,7 +400,7 @@
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
-    useRouteContext(routeInfo)
+    useRouteContext(routeInfo, props.embed)
 
     const dataTable = useTemplateRef("dataTable")
 
@@ -599,13 +602,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toast.success(t("flows disabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toast.success(t("flows disabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -628,13 +631,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toast.success(t("flows enabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toast.success(t("flows enabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -649,13 +652,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toast.success(t("flows deleted", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toast.success(t("flows deleted", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -723,7 +726,7 @@
             field: "timeRange",
             value: DEFAULT_DURATION,
             operation: "EQUALS",
-        }]
+        } satisfies QueryFilter]
     }
 
     async function exportFlowsAsStream() {

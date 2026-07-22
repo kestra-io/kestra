@@ -67,9 +67,11 @@ public class GrpcChannelManager {
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    private static final AtomicBoolean STATIC_RESOLVER_REGISTERED = new AtomicBoolean(false);
-    // Reference to the registered resolver provider for cleanup
-    private static final AtomicReference<StaticNameResolverProvider> REGISTERED_STATIC_RESOLVER_PROVIDER = new AtomicReference<>();
+    // The static name resolver is stateless (endpoints are encoded in each channel's target URI),
+    // so a single instance is registered once per JVM at class-load time and never deregistered.
+    static {
+        NameResolverRegistry.getDefaultRegistry().register(new StaticNameResolverProvider());
+    }
 
     private static final AtomicBoolean STORAGE_RESOLVER_REGISTERED = new AtomicBoolean(false);
     private static final AtomicReference<StorageNameResolverProvider> REGISTERED_STORAGE_RESOLVER_PROVIDER = new AtomicReference<>();
@@ -177,23 +179,17 @@ public class GrpcChannelManager {
             throw new IllegalStateException("Static configuration requires at least one endpoint");
         }
 
-        List<EquivalentAddressGroup> addresses = staticConfig.endpoints().stream()
+        List<InetSocketAddress> endpoints = staticConfig.endpoints().stream()
             .map(e ->
             {
                 log.debug("Adding static controller endpoint: {}:{}", e.host(), e.port());
-                return new EquivalentAddressGroup(new InetSocketAddress(e.host(), e.port()));
+                return InetSocketAddress.createUnresolved(e.host(), e.port());
             })
             .toList();
 
-        log.info("Configuring static discovery with {} controller endpoint(s)", addresses.size());
+        log.info("Configuring static discovery with {} controller endpoint(s)", endpoints.size());
 
-        // Register the static name resolver provider only once, store reference for cleanup
-        if (STATIC_RESOLVER_REGISTERED.compareAndSet(false, true)) {
-            StaticNameResolverProvider resolverProvider = new StaticNameResolverProvider(addresses);
-            NameResolverRegistry.getDefaultRegistry().register(resolverProvider);
-            REGISTERED_STATIC_RESOLVER_PROVIDER.set(resolverProvider);
-        }
-        return Grpc.newChannelBuilder("static:///controllers", createChannelCredentials());
+        return Grpc.newChannelBuilder(StaticNameResolverProvider.targetFor(endpoints), createChannelCredentials());
     }
 
     /**
@@ -363,15 +359,6 @@ public class GrpcChannelManager {
                     Thread.currentThread().interrupt();
                 }
             }
-        }
-
-        // Unregister the static name resolver provider to prevent memory leaks
-        // and allow clean re-initialization in tests.
-        // Use getAndSet to atomically retrieve and clear, preventing double-deregister races.
-        StaticNameResolverProvider staticProvider = REGISTERED_STATIC_RESOLVER_PROVIDER.getAndSet(null);
-        if (staticProvider != null) {
-            STATIC_RESOLVER_REGISTERED.set(false);
-            deregisterSilently(staticProvider, "static");
         }
 
         StorageNameResolverProvider storageProvider = REGISTERED_STORAGE_RESOLVER_PROVIDER.getAndSet(null);

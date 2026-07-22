@@ -1,6 +1,6 @@
 <template>
     <div ref="container" class="blueprint-icon-stack">
-        <KsTaskIcon
+        <TaskIcon
             v-for="cls in visible"
             :key="cls"
             class="blueprint-icon-stack__icon"
@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, onBeforeUnmount} from "vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
     import type {PluginIconMap} from "../../utils/pluginUtils"
 
     const props = defineProps<{

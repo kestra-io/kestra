@@ -108,7 +108,7 @@
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
 
-    import {useMcpStore, type McpAuthType, type McpServer} from "../../../../stores/mcp"
+    import {useMcpStore, type McpServerAuthType, type McpServer} from "../../../../stores/mcp"
     import {useMiscStore} from "override/stores/misc"
 
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
@@ -150,7 +150,7 @@
         return new URL(path, base).toString()
     })
 
-    const authType = computed<McpAuthType>(
+    const authType = computed<McpServerAuthType>(
         () => mcpStore.server?.authType ?? "BASIC",
     )
     const serverType = computed<McpServer["serverType"]>(

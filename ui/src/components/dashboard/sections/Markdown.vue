@@ -21,18 +21,18 @@
 
     import {KsMarkdown} from "@kestra-io/design-system"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
-    import {FilterObject} from "../../../utils/filters"
 
     const props = defineProps({
         dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
+        filters: {type: Array as PropType<QueryFilter[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     })
 
     const data = ref()
 
     import {useRoute} from "vue-router"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const route = useRoute()
     const {generate} = useChartGenerator(props.dashboardId, props, false)

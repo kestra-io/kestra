@@ -24,6 +24,7 @@ const meta: Meta<typeof KsButton> = {
         plain: {control: "boolean"},
         round: {control: "boolean"},
         circle: {control: "boolean"},
+        square: {control: "boolean"},
         text: {control: "boolean"},
         link: {control: "boolean"},
         bg: {control: "boolean"},
@@ -136,6 +137,33 @@ export const RoundAndCircle: Story = {
             </div>
         `,
     }),
+}
+
+export const Square: Story = {
+    render: () => ({
+        components: {KsButton},
+        setup() {
+            return {DownloadIcon}
+        },
+        template: `
+            <div style="padding:24px;display:flex;gap:12px;align-items:center">
+                <ks-button square :icon="DownloadIcon" size="small" aria-label="Download" />
+                <ks-button square :icon="DownloadIcon" aria-label="Download" />
+                <ks-button square :icon="DownloadIcon" size="large" aria-label="Download" />
+                <ks-button square :icon="DownloadIcon" type="primary" aria-label="Download" />
+            </div>
+        `,
+    }),
+    parameters: {
+        docs: {
+            description: {
+                story: "`square` is an icon-only modifier (the counterpart of `circle`): the width tracks the button height for a true square, independent of the glyph. Don't pair it with a text label.",
+            },
+        },
+    },
+    async play({canvasElement}) {
+        await expect(canvasElement.querySelector(".kel-button.is-square")).toBeTruthy()
+    },
 }
 
 /** Disabled state */

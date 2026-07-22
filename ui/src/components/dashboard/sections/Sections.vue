@@ -88,6 +88,7 @@
 
     import Download from "vue-material-design-icons/Download.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const chartsComponents = ref<{refresh(): void}[]>()
 
@@ -112,11 +113,13 @@
     })
 
     // Make the overview of flows/dashboard/namespace specific
-    const filters = computed(() => {
-        const baseFilters: { field: string; operation: string; value: string | string[] }[] = []
+    const filters = computed<QueryFilter[]>(() => {
+        const baseFilters: QueryFilter[] = []
 
         if (route.name === "flows/update") {
-            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.namespace as string})
+            baseFilters.push({
+                field: "namespace", operation: "EQUALS", value: route.params.namespace as string,
+            })
             baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string})
         }
 
@@ -129,7 +132,7 @@
 
     function exportChart(chart: Chart) {
         dashboardStore.export(props.dashboard, chart, {
-            filters: filters.value.concat(decodeSearchParams(route.query) ?? []),
+            filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? []),
         })
     }
 </script>

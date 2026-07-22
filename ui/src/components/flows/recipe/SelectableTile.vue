@@ -3,6 +3,7 @@
         <button
             type="button"
             class="tile-button"
+            :class="layout"
             :role="role"
             :aria-checked="selected"
             :aria-disabled="disabled || undefined"
@@ -28,11 +29,13 @@
         selected?: boolean
         disabled?: boolean
         ariaLabel?: string
+        layout?: "row" | "column"
     }>(), {
         role: "radio",
         selected: false,
         disabled: false,
         ariaLabel: undefined,
+        layout: "row",
     })
 
     const emit = defineEmits<{
@@ -83,7 +86,6 @@
 
     .tile-button {
         display: flex;
-        align-items: center;
         gap: var(--ks-spacing-2);
         width: 100%;
         padding: var(--ks-spacing-3);
@@ -93,6 +95,15 @@
         font: inherit;
         text-align: left;
         cursor: pointer;
+
+        &.row {
+            align-items: center;
+        }
+
+        &.column {
+            flex-direction: column;
+            align-items: stretch;
+        }
 
         &:disabled {
             cursor: not-allowed;

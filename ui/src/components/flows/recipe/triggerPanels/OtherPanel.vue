@@ -19,17 +19,13 @@
         />
 
         <div v-else class="trigger-list" role="radiogroup" :aria-label="$t('recipe.other.search_label')" data-test="recipe-trigger-list">
-            <div
+            <SelectableTile
                 v-for="trigger in filteredTriggers"
                 :key="trigger.type"
-                class="trigger-row"
-                :class="{selected: recipe.otherTriggerType === trigger.type}"
                 role="radio"
-                :aria-checked="recipe.otherTriggerType === trigger.type"
-                tabindex="0"
-                @click="setOtherTriggerType(trigger.type)"
-                @keydown.enter="setOtherTriggerType(trigger.type)"
-                @keydown.space.prevent="setOtherTriggerType(trigger.type)"
+                :selected="recipe.otherTriggerType === trigger.type"
+                :ariaLabel="trigger.name"
+                @select="setOtherTriggerType(trigger.type)"
             >
                 <TaskIcon :cls="trigger.type" :icons="pluginIcons" class="trigger-icon" />
                 <div class="trigger-info">
@@ -39,13 +35,14 @@
                 <KsIcon v-if="recipe.otherTriggerType === trigger.type" class="check-icon">
                     <Check />
                 </KsIcon>
-            </div>
+            </SelectableTile>
         </div>
     </KsForm>
 </template>
 
 <script setup lang="ts">
     import {computed, onMounted, ref} from "vue"
+    import SelectableTile from "../SelectableTile.vue"
     import TaskIcon from "../../../plugins/TaskIcon.vue"
     import {usePluginsStore} from "../../../../stores/plugins"
     import type {TriggerPluginDto} from "../../../../stores/plugins"
@@ -101,36 +98,10 @@
         overflow-y: auto;
     }
 
-    .trigger-row {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        cursor: pointer;
-        transition: border-color var(--ks-duration-fast) var(--ks-ease-standard), background-color var(--ks-duration-fast) var(--ks-ease-standard);
-
-        &:hover {
-            border-color: var(--ks-border-strong);
-            background-color: var(--ks-bg-hover);
-        }
-
-        &.selected {
-            border-color: var(--ks-border-focus);
-            background-color: var(--ks-bg-tag-active);
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--ks-border-focus);
-            outline-offset: 2px;
-        }
-    }
-
     .trigger-icon {
         flex-shrink: 0;
-        width: 1.5rem;
-        height: 1.5rem;
+        width: var(--ks-spacing-5);
+        height: var(--ks-spacing-5);
     }
 
     .trigger-info {

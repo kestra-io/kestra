@@ -1,21 +1,14 @@
 <template>
     <div class="notify-grid" data-test="recipe-notify-grid">
-        <div
+        <SelectableTile
             v-for="channel in channels"
             :key="channel.key"
-            class="notify-card"
-            :class="{
-                selected: recipe.notify[channel.key as keyof typeof recipe.notify],
-                unavailable: !channelAvailability[channel.key as keyof typeof channelAvailability],
-            }"
             role="checkbox"
-            :aria-checked="recipe.notify[channel.key as keyof typeof recipe.notify]"
-            :aria-disabled="!channelAvailability[channel.key as keyof typeof channelAvailability]"
-            :aria-label="channel.label"
-            :tabindex="channelAvailability[channel.key as keyof typeof channelAvailability] ? 0 : -1"
-            @click="channelAvailability[channel.key as keyof typeof channelAvailability] && toggleNotify(channel.key as keyof typeof recipe.notify)"
-            @keydown.enter="channelAvailability[channel.key as keyof typeof channelAvailability] && toggleNotify(channel.key as keyof typeof recipe.notify)"
-            @keydown.space.prevent="channelAvailability[channel.key as keyof typeof channelAvailability] && toggleNotify(channel.key as keyof typeof recipe.notify)"
+            layout="column"
+            :selected="recipe.notify[channel.key as keyof typeof recipe.notify]"
+            :disabled="!channelAvailability[channel.key as keyof typeof channelAvailability]"
+            :ariaLabel="channel.label"
+            @select="toggleNotify(channel.key as keyof typeof recipe.notify)"
         >
             <div class="card-header">
                 <div class="icon-wrap">
@@ -23,11 +16,9 @@
                         <component :is="channel.icon" />
                     </KsIcon>
                 </div>
-                <KsCheckbox
-                    :modelValue="recipe.notify[channel.key as keyof typeof recipe.notify]"
-                    class="checkbox-passive"
-                    :aria-hidden="true"
-                />
+                <KsIcon class="check-indicator" aria-hidden="true">
+                    <component :is="recipe.notify[channel.key as keyof typeof recipe.notify] ? CheckboxMarked : CheckboxBlankOutline" />
+                </KsIcon>
             </div>
             <span class="channel-label">{{ channel.label }}</span>
             <span class="channel-sub">{{ channel.sub }}</span>
@@ -35,7 +26,7 @@
                 {{ $t("recipe.notify.plugin_unavailable") }}
             </span>
 
-            <div v-if="recipe.notify[channel.key as keyof typeof recipe.notify]" class="channel-config" @click.stop>
+            <template #config>
                 <KsInput
                     v-if="channel.key === 'slack'"
                     v-model="recipe.slackChannel"
@@ -60,19 +51,22 @@
                 <span v-else-if="channel.key === 'custom'" class="custom-note">
                     {{ $t("recipe.notify.custom_note") }}
                 </span>
-            </div>
-        </div>
+            </template>
+        </SelectableTile>
     </div>
 </template>
 
 <script setup lang="ts">
     import {useI18n} from "vue-i18n"
     import type {RecipeState} from "../../../composables/useFlowRecipe"
+    import SelectableTile from "./SelectableTile.vue"
 
     import Slack from "vue-material-design-icons/Slack.vue"
     import MicrosoftTeams from "vue-material-design-icons/MicrosoftTeams.vue"
     import EmailOutline from "vue-material-design-icons/EmailOutline.vue"
     import DotsHorizontal from "vue-material-design-icons/DotsHorizontal.vue"
+    import CheckboxMarked from "vue-material-design-icons/CheckboxMarked.vue"
+    import CheckboxBlankOutline from "vue-material-design-icons/CheckboxBlankOutline.vue"
 
     const props = defineProps<{
         recipe: RecipeState
@@ -117,37 +111,6 @@
         gap: var(--ks-spacing-3);
     }
 
-    .notify-card {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-3);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        cursor: pointer;
-        transition: border-color var(--ks-duration-fast) var(--ks-ease-standard), background-color var(--ks-duration-fast) var(--ks-ease-standard);
-
-        &:hover:not(.unavailable) {
-            border-color: var(--ks-border-strong);
-            background-color: var(--ks-bg-hover);
-        }
-
-        &.selected {
-            border-color: var(--ks-border-focus);
-            background-color: var(--ks-bg-tag-active);
-        }
-
-        &.unavailable {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--ks-border-focus);
-            outline-offset: 2px;
-        }
-    }
-
     .card-header {
         display: flex;
         align-items: center;
@@ -168,8 +131,8 @@
         color: var(--ks-text-primary);
     }
 
-    .checkbox-passive {
-        pointer-events: none;
+    .check-indicator {
+        color: var(--ks-icon-muted);
     }
 
     .channel-label {
@@ -187,10 +150,6 @@
         display: block;
         font-size: var(--ks-font-size-xs);
         color: var(--ks-text-warning);
-    }
-
-    .channel-config {
-        margin-top: var(--ks-spacing-1);
     }
 
     .custom-note {

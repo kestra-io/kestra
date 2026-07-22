@@ -171,6 +171,7 @@ export function recipeToFlowObject(
     state: RecipeState,
     systemNamespace: string,
     availableFqcns: Set<string> = new Set(),
+    flowId: string = SYSTEM_FLOW_RECIPE_ID,
 ): Record<string, unknown> {
     const isExecutionTrigger = state.triggerType === "execution"
     const tasks = buildNotifyTasks(state, isExecutionTrigger, availableFqcns)
@@ -194,7 +195,7 @@ export function recipeToFlowObject(
     }
 
     const flowObj: Record<string, unknown> = {
-        id: SYSTEM_FLOW_RECIPE_ID,
+        id: flowId,
         namespace: systemNamespace,
         tasks: tasks.length > 0 ? tasks : [{id: "placeholder", type: "io.kestra.plugin.core.log.Log", message: "Configure your notification tasks"}],
         triggers,
@@ -203,7 +204,7 @@ export function recipeToFlowObject(
     return flowObj
 }
 
-export function recipeToYaml(state: RecipeState, systemNamespace: string, availableFqcns: Set<string> = new Set()): string {
-    const flowObj = recipeToFlowObject(state, systemNamespace, availableFqcns)
+export function recipeToYaml(state: RecipeState, systemNamespace: string, availableFqcns: Set<string> = new Set(), flowId: string = SYSTEM_FLOW_RECIPE_ID): string {
+    const flowObj = recipeToFlowObject(state, systemNamespace, availableFqcns, flowId)
     return flowYamlUtils.stringify(flowObj)
 }

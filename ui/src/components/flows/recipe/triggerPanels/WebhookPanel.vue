@@ -32,17 +32,17 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
-    import {SYSTEM_FLOW_RECIPE_ID} from "../../../../utils/recipeToYaml"
     import * as Utils from "../../../../utils/utils"
 
     const props = defineProps<{
         recipe: RecipeState
         systemNamespace: string
+        flowId: string
     }>()
 
     const endpointUrl = computed(() => {
         const key = props.recipe.webhookKey || "{key}"
-        return `/api/v1/executions/webhook/${props.systemNamespace}/${SYSTEM_FLOW_RECIPE_ID}/${key}`
+        return `/api/v1/executions/webhook/${props.systemNamespace}/${props.flowId}/${key}`
     })
 
     const copyUrl = () => {

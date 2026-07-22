@@ -57,6 +57,7 @@
                         v-else-if="recipe.triggerType === 'webhook'"
                         :recipe="recipe"
                         :systemNamespace="systemNamespace"
+                        :flowId="flowId"
                     />
                     <OtherPanel
                         v-else-if="recipe.triggerType === 'other'"
@@ -106,7 +107,7 @@
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import {useFlowRecipe} from "../../../composables/useFlowRecipe"
-    import {recipeToYaml} from "../../../utils/recipeToYaml"
+    import {recipeToYaml, SYSTEM_FLOW_RECIPE_ID} from "../../../utils/recipeToYaml"
     import useNamespaces from "../../../composables/useNamespaces"
     import type {TriggerType} from "../../../utils/recipeToYaml"
 
@@ -139,6 +140,8 @@
 
     const systemNamespace = computed(() => props.namespace ?? miscStore.configs?.systemNamespace ?? "system")
 
+    const flowId = `${SYSTEM_FLOW_RECIPE_ID}-${Math.random().toString(36).slice(2, 7)}`
+
     const {recipe, isValid, isTriggerConfigValid, hasNotifyChannel, summary, channelAvailability, availableFqcns, toggleNotify, toggleState, setOtherTriggerType} = useFlowRecipe()
 
     const namespaceOptions = ref<string[]>([])
@@ -159,7 +162,7 @@
 
     const yamlContent = computed(() => {
         try {
-            return recipeToYaml(recipe, systemNamespace.value, availableFqcns.value)
+            return recipeToYaml(recipe, systemNamespace.value, availableFqcns.value, flowId)
         } catch {
             return ""
         }
@@ -219,7 +222,7 @@
             return
         }
         emit("submit", {
-            id: "system-flow-alert",
+            id: flowId,
             namespace: systemNamespace.value,
             yaml: yamlContent.value,
         })

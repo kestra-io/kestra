@@ -44,6 +44,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
     private final DispatchQueueInterface<Execution> executionQueue;
     private final BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
     private final KillSwitchService killSwitchService;
+    private final RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
     public LoopExecutionEventMessageHandler(
@@ -55,7 +56,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         FlowMetaStoreInterface flowMetaStore,
         DispatchQueueInterface<Execution> executionQueue,
         BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
-        KillSwitchService killSwitchService) {
+        KillSwitchService killSwitchService,
+        RunContextLoggerFactory runContextLoggerFactory) {
         this.executorService = executorService;
         this.executionService = executionService;
         this.taskOutputService = taskOutputService;
@@ -65,6 +67,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         this.executionQueue = executionQueue;
         this.followExecutionEventQueue = followExecutionEventQueue;
         this.killSwitchService = killSwitchService;
+        this.runContextLoggerFactory = runContextLoggerFactory;
     }
 
     @Override
@@ -98,6 +101,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 Loop loop = (Loop) executor.getFlow().findTaskByTaskId(message.loopRun().taskId());
 
                 if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
+                    // the failure happened inside an isolated loop sub-execution: log inside the parent exec
+                    logLoopIterationFailure(parentTaskRun, loop, executor, message);
                     // immediately terminate the loop
                     return terminateLoop(parentTaskRun, loop, executor, message.state());
                 } else {
@@ -192,6 +197,18 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 return executorService.handleFailedExecutionFromExecutor(new ExecutorContext(execution), e);
             }
         });
+    }
+
+    private void logLoopIterationFailure(TaskRun parentTaskRun, Loop loop, ExecutorContext executor, LoopExecutionEvent message) {
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(parentTaskRun, loop, executor.getExecution().getKind());
+        runContextLogger.logger().error(
+            "Loop iteration {} ended in {} in sub-execution [[link execution=\"{}\" flowId=\"{}\" namespace=\"{}\"]], check that execution's logs for details",
+            message.loopRun().index(),
+            message.state(),
+            message.executionId(),
+            executor.getExecution().getFlowId(),
+            executor.getExecution().getNamespace()
+        );
     }
 
     private Map<String, Object> buildIterationOutput(LoopExecutionEvent message) {

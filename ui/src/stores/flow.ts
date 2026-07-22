@@ -541,11 +541,10 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function createFlow(options: { flow: string, draft?: boolean }) {
-        return FlowsAPI.createFlow({
-            body: options.flow,
-            draft: options.draft ?? false,
-            showMessageOnError: false,
-        } as Parameters<typeof FlowsAPI.createFlow>[0]).then(data => {
+        return FlowsAPI.createFlow(
+            {body: options.flow, draft: options.draft ?? false},
+            {showMessageOnError: false} as any,
+        ).then(data => {
             const creationPanels = localStorage.getItem(`el-fl-creation-${creationId.value}`) ?? YAML_UTILS.stringify([])
             localStorage.setItem(`el-fl-${flow.value!.namespace}-${flow.value!.id}`, creationPanels)
 

@@ -6,13 +6,13 @@
         one-shot generator (`../AiCopilot.vue` + onboarding WelcomeCopilot) is retired by this change.
     -->
     <div class="copilot-page-root">
-        <TopNavBar :title="t('ai.copilot.title')">
+        <TopNavBar :title="$t('ai.copilot.title')">
             <template #actions>
                 <NavBarActions>
                     <NavBarAction
                         v-if="canCreateFlow"
                         :icon="Plus"
-                        :label="t('welcome_copilot.button_cta')"
+                        :label="$t('welcome_copilot.button_cta')"
                         :to="{name: 'flows/create'}"
                     />
                 </NavBarActions>

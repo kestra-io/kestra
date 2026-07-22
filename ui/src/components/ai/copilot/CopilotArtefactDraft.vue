@@ -1,18 +1,16 @@
 <template>
     <div class="copilot-draft" data-test="copilot-draft">
-        <!-- Header band: what was drafted + whether it validates -->
         <div class="copilot-draft-header">
             <KsText size="small" class="copilot-draft-title">
                 <KsIcon class="copilot-draft-icon"><FileDocumentOutline /></KsIcon>
-                {{ t(`ai.copilot.draft.title.${draft.kind.toLowerCase()}`) }}
+                {{ $t(`ai.copilot.draft.title.${draft.kind.toLowerCase()}`) }}
             </KsText>
             <KsCodeStatus
                 :status="draft.valid ? 'valid' : 'error'"
-                :label="draft.valid ? t('ai.copilot.draft.valid') : t('ai.copilot.draft.invalid')"
+                :label="draft.valid ? $t('ai.copilot.draft.valid') : $t('ai.copilot.draft.invalid')"
             />
         </div>
 
-        <!-- Validation issues to fix, when the draft didn't pass -->
         <KsAlert
             v-if="!draft.valid && draft.constraints"
             type="warning"
@@ -31,7 +29,7 @@
              the EE app path is present — in OSS an app draft never occurs, so no actions show. -->
         <div v-if="showActions" class="copilot-draft-footer">
             <KsButton size="small" data-test="copilot-draft-open" @click="openInEditor(draft)">
-                {{ t("ai.copilot.draft.openInEditor") }}
+                {{ $t("ai.copilot.draft.openInEditor") }}
             </KsButton>
             <KsButton
                 v-if="draft.kind !== 'APP'"
@@ -41,7 +39,7 @@
                 data-test="copilot-draft-apply"
                 @click="apply(draft)"
             >
-                {{ t("ai.copilot.draft.apply") }}
+                {{ $t("ai.copilot.draft.apply") }}
             </KsButton>
         </div>
     </div>
@@ -49,14 +47,12 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import {useApplyDraft} from "./useApplyDraft"
     import type {ArtefactDraftEvent} from "./types"
 
     const props = defineProps<{draft: ArtefactDraftEvent}>()
 
-    const {t} = useI18n()
     const {applying, appSupported, openInEditor, apply} = useApplyDraft()
 
     // Flow + dashboard drafts always have actions; app drafts only when the EE app path is present.

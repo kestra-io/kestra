@@ -20,7 +20,7 @@
             v-model="draft"
             class="copilot-textarea"
             :rows="rows ?? 1"
-            :placeholder="placeholder ?? t('ai.copilot.placeholder')"
+            :placeholder="placeholder ?? $t('ai.copilot.placeholder')"
             :disabled="disabled"
             data-test="copilot-composer-input"
             @keydown="onKeydown"
@@ -58,7 +58,7 @@
                     <KsButton
                         text
                         :icon="Close"
-                        :aria-label="t('ai.copilot.voice.cancel')"
+                        :aria-label="$t('ai.copilot.voice.cancel')"
                         data-test="copilot-voice-cancel"
                         @click="cancelVoice"
                     />
@@ -66,7 +66,7 @@
                         circle
                         type="primary"
                         :icon="Check"
-                        :aria-label="t('ai.copilot.voice.stop')"
+                        :aria-label="$t('ai.copilot.voice.stop')"
                         data-test="copilot-voice-confirm"
                         @click="stopAndValidateVoice"
                     />
@@ -95,7 +95,7 @@
                         text
                         :icon="Microphone"
                         :disabled="disabled"
-                        :aria-label="t('ai.copilot.voice.start')"
+                        :aria-label="$t('ai.copilot.voice.start')"
                         data-test="copilot-mic"
                         @click="toggleVoiceInput"
                     />
@@ -104,7 +104,7 @@
                         type="primary"
                         :icon="ArrowUp"
                         :disabled="!canSubmit"
-                        :aria-label="t('ai.copilot.send')"
+                        :aria-label="$t('ai.copilot.send')"
                         data-test="copilot-send"
                         @click="submit"
                     />

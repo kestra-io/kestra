@@ -2,13 +2,13 @@
     <!-- "Need Help?" section for the full-page copilot home (page layout only): quick links to
          Blueprints and the Slack community. Reuses the existing onboarding copy so no new i18n. -->
     <div class="copilot-help" data-test="copilot-help">
-        <KsText size="small" class="copilot-help-title">{{ t("welcome_copilot.need_help") }}</KsText>
+        <KsText size="small" class="copilot-help-title">{{ $t("welcome_copilot.need_help") }}</KsText>
 
         <RouterLink class="copilot-help-card" :to="{name: 'blueprints', params: {kind: 'community', tab: 'flow'}}">
             <KsIcon class="copilot-help-icon"><FileTreeOutline /></KsIcon>
             <span class="copilot-help-text">
-                <KsText class="copilot-help-card-title">{{ t("welcome_copilot.success_page.items.blueprints.title") }}</KsText>
-                <KsText size="small" class="copilot-help-card-desc">{{ t("welcome_copilot.success_page.items.blueprints.description") }}</KsText>
+                <KsText class="copilot-help-card-title">{{ $t("welcome_copilot.success_page.items.blueprints.title") }}</KsText>
+                <KsText size="small" class="copilot-help-card-desc">{{ $t("welcome_copilot.success_page.items.blueprints.description") }}</KsText>
             </span>
             <KsIcon class="copilot-help-chevron"><ChevronRight /></KsIcon>
         </RouterLink>
@@ -16,8 +16,8 @@
         <a class="copilot-help-card" :href="SLACK_URL" target="_blank" rel="noopener noreferrer">
             <KsIcon class="copilot-help-icon"><Slack /></KsIcon>
             <span class="copilot-help-text">
-                <KsText class="copilot-help-card-title">{{ t("welcome_copilot.success_page.items.slack.title") }}</KsText>
-                <KsText size="small" class="copilot-help-card-desc">{{ t("welcome_copilot.success_page.items.slack.description") }}</KsText>
+                <KsText class="copilot-help-card-title">{{ $t("welcome_copilot.success_page.items.slack.title") }}</KsText>
+                <KsText size="small" class="copilot-help-card-desc">{{ $t("welcome_copilot.success_page.items.slack.description") }}</KsText>
             </span>
             <KsIcon class="copilot-help-chevron"><ChevronRight /></KsIcon>
         </a>
@@ -25,12 +25,10 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
     import Slack from "vue-material-design-icons/Slack.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
-    const {t} = useI18n()
     const SLACK_URL = "https://kestra.io/slack"
 </script>
 

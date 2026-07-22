@@ -1,19 +1,16 @@
 <template>
-    <!-- User prompt -->
     <div v-if="message.role === 'USER'" class="copilot-msg copilot-msg-user">
         <div class="copilot-bubble copilot-bubble-user">
             <KsText size="small" class="copilot-bubble-text">{{ message.content }}</KsText>
         </div>
     </div>
 
-    <!-- Assistant streamed text -->
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
         <div class="copilot-bubble copilot-bubble-assistant">
             <KsMarkdown v-if="message.content" :content="message.content" />
         </div>
     </div>
 
-    <!-- Tool call / tool result — collapsible technical detail -->
     <div v-else-if="message.type === 'TOOL_CALL'" class="copilot-msg copilot-tool" data-test="copilot-tool-call">
         <KsCollapse v-model="expanded">
             <KsCollapseItem name="tool">
@@ -21,7 +18,7 @@
                      rest of the transcript (the default collapse header is larger + primary). -->
                 <template #title>
                     <KsText size="small" class="copilot-tool-label">
-                        {{ t("ai.copilot.toolCall", {tool: message.toolCall?.tool ?? ""}) }}
+                        {{ $t("ai.copilot.toolCall", {tool: message.toolCall?.tool ?? ""}) }}
                     </KsText>
                 </template>
                 <pre class="copilot-tool-args">{{ argsJson }}</pre>
@@ -36,7 +33,7 @@
                 <CloseCircleOutline v-else />
             </KsIcon>
             <KsText size="small" class="copilot-tool-label">
-                {{ t(`ai.copilot.toolResult.${outcome}`, {tool: toolName}) }}
+                {{ $t(`ai.copilot.toolResult.${outcome}`, {tool: toolName}) }}
             </KsText>
         </div>
 
@@ -45,35 +42,30 @@
         <KsCollapse v-if="resultDetail" v-model="expandedResult" data-test="copilot-tool-result-detail">
             <KsCollapseItem name="result">
                 <template #title>
-                    <KsText size="small" class="copilot-tool-label">{{ t("ai.copilot.toolResult.detail") }}</KsText>
+                    <KsText size="small" class="copilot-tool-label">{{ $t("ai.copilot.toolResult.detail") }}</KsText>
                 </template>
                 <pre class="copilot-tool-args">{{ resultDetail }}</pre>
             </KsCollapseItem>
         </KsCollapse>
     </div>
 
-    <!-- Artefact draft — a non-mutating flow/dashboard/app the agent generated -->
     <div v-else-if="message.type === 'ARTEFACT_DRAFT' && message.draft" class="copilot-msg copilot-msg-assistant">
         <CopilotArtefactDraft :draft="message.draft" />
     </div>
 
-    <!-- Cancelled turn — a subtle, centered system marker in the transcript (reload only). -->
     <div v-else-if="message.type === 'CANCELLED'" class="copilot-msg copilot-msg-cancelled" data-test="copilot-cancelled">
-        <KsText size="small" class="copilot-cancelled-label">{{ t("ai.copilot.cancelled") }}</KsText>
+        <KsText size="small" class="copilot-cancelled-label">{{ $t("ai.copilot.cancelled") }}</KsText>
     </div>
 </template>
 
 <script setup lang="ts">
     import {ref, computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
     import CopilotArtefactDraft from "./CopilotArtefactDraft.vue"
     import type {ChatMessage} from "./useAiChat"
 
     const props = defineProps<{message: ChatMessage}>()
-
-    const {t} = useI18n()
 
     const expanded = ref<string[]>([])
     const expandedResult = ref<string[]>([])

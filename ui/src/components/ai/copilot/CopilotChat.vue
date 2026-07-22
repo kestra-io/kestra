@@ -4,7 +4,7 @@
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
             <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
-                {{ t("ai.copilot.newChat") }}
+                {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
             <CopilotThreadControls :activeId="thread?.uid" @select="onSelectThread" />
@@ -15,20 +15,19 @@
             <KsIcon class="copilot-unavailable-icon">
                 <RobotOffOutline />
             </KsIcon>
-            <KsText class="copilot-unavailable-title">{{ t("ai.copilot.unavailable.title") }}</KsText>
-            <KsText size="small" class="copilot-unavailable-detail">{{ t("ai.copilot.unavailable.detail") }}</KsText>
+            <KsText class="copilot-unavailable-title">{{ $t("ai.copilot.unavailable.title") }}</KsText>
+            <KsText size="small" class="copilot-unavailable-detail">{{ $t("ai.copilot.unavailable.detail") }}</KsText>
             <KsButton size="small" data-test="copilot-unavailable-retry" @click="retry">
-                {{ t("ai.copilot.unavailable.retry") }}
+                {{ $t("ai.copilot.unavailable.retry") }}
             </KsButton>
         </div>
 
-        <!-- Empty state: artwork + heading + a centered composer + suggestions (Figma Default variant). -->
         <div v-else-if="isEmpty" class="copilot-empty">
             <div class="copilot-empty-inner">
                 <div class="copilot-artwork">
                     <img :src="logo" alt="" class="copilot-artwork-img" >
                 </div>
-                <KsText size="large" class="copilot-empty-title">{{ t("ai.copilot.empty.title") }}</KsText>
+                <KsText size="large" class="copilot-empty-title">{{ $t("ai.copilot.empty.title") }}</KsText>
                 <CopilotContextChip v-if="activeScope" :scope="activeScope" @clear="scopeDismissed = true" />
                 <CopilotComposer
                     ref="emptyComposer"
@@ -37,7 +36,7 @@
                     v-model:provider="selectedProvider"
                     :providers="providers"
                     :disabled="!canSend"
-                    :placeholder="t('ai.copilot.emptyHelper')"
+                    :placeholder="$t('ai.copilot.emptyHelper')"
                     :rows="3"
                     @submit="onSubmit"
                 />
@@ -54,12 +53,10 @@
                     </KsButton>
                 </div>
 
-                <!-- Full-page home only: quick links to Blueprints / Slack (hidden in the dock). -->
                 <CopilotHelp v-if="layout === 'page'" />
             </div>
         </div>
 
-        <!-- Active conversation: scrolling transcript + composer pinned to the bottom. -->
         <template v-else>
             <KsScrollbar class="copilot-body">
                 <CopilotMessage v-for="message in messages" :key="message.id" :message="message" />
@@ -82,13 +79,13 @@
                  horizontal margin would push it past the panel (100% + margin) and overflow. -->
             <div v-if="error || errorDetail || notice" class="copilot-banner">
                 <KsAlert v-if="error || errorDetail" type="error" data-test="copilot-error">
-                    {{ errorDetail || t(`ai.copilot.error.${error}`) }}
+                    {{ errorDetail || $t(`ai.copilot.error.${error}`) }}
                 </KsAlert>
                 <KsAlert v-else-if="notice" type="warning" data-test="copilot-notice">
                     <div class="copilot-notice-body">
-                        <span>{{ t(`ai.copilot.notice.${notice}`) }}</span>
+                        <span>{{ $t(`ai.copilot.notice.${notice}`) }}</span>
                         <KsButton size="small" data-test="copilot-notice-retry" @click="retryLastTurn">
-                            {{ t("ai.copilot.notice.retry") }}
+                            {{ $t("ai.copilot.notice.retry") }}
                         </KsButton>
                     </div>
                 </KsAlert>

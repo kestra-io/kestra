@@ -4,7 +4,7 @@
         <div class="proposed-action-header">
             <KsText size="small" class="proposed-action-title">{{ title }}</KsText>
             <KsTag v-if="!isPlan && action.family" size="small">{{ action.family }}</KsTag>
-            <KsText size="small" class="proposed-action-status">{{ t("ai.copilot.confirm.pending") }}</KsText>
+            <KsText size="small" class="proposed-action-status">{{ $t("ai.copilot.confirm.pending") }}</KsText>
         </div>
 
         <div class="proposed-action-body">
@@ -37,7 +37,7 @@
                 data-test="copilot-reject"
                 @click="emit('reject')"
             >
-                {{ isPlan ? t("ai.copilot.confirm.revise") : t("ai.copilot.confirm.reject") }}
+                {{ isPlan ? $t("ai.copilot.confirm.revise") : $t("ai.copilot.confirm.reject") }}
             </KsButton>
             <KsButton
                 type="primary"
@@ -46,7 +46,7 @@
                 data-test="copilot-approve"
                 @click="emit('approve')"
             >
-                {{ isPlan ? t("ai.copilot.confirm.approveExecute") : t("ai.copilot.confirm.approve") }}
+                {{ isPlan ? $t("ai.copilot.confirm.approveExecute") : $t("ai.copilot.confirm.approve") }}
             </KsButton>
         </div>
     </div>
@@ -164,7 +164,7 @@
     .proposed-action-arg-value {
         margin: 0;
         min-width: 0;
-        font-family: var(--font-family-monospace, monospace);
+        font-family: var(--ks-font-family-mono);
         color: var(--ks-text-primary);
         word-break: break-word;
     }

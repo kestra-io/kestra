@@ -28,6 +28,8 @@ export interface Button {
     hasUnreadMarker?: boolean;
     unread?: {readonly value: boolean};
     hidden?: boolean;
+    /** Opened programmatically as a stripless panel (never a tab), e.g. the notifications bell. */
+    panelOnly?: boolean;
 
     url?: string;
 }

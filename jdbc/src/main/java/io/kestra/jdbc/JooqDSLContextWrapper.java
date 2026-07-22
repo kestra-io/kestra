@@ -2,6 +2,9 @@ package io.kestra.jdbc;
 
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.jooq.DSLContext;
@@ -73,5 +76,47 @@ public class JooqDSLContextWrapper {
             predicate(),
             () -> dslContext.transactionResult(transactional)
         );
+    }
+
+    /**
+     * Predicate that matches retryable database deadlock exceptions.
+     */
+    static final class DeadlockPredicate implements Predicate<Throwable> {
+        @Override
+        public boolean test(Throwable e) {
+            // Walk the full cause chain: once Postgres aborts a transaction after a deadlock,
+            // a later statement in the same failed attempt surfaces a secondary "current transaction is aborted" exception
+            // that wraps the original deadlock one level deeper.
+            // Track visited causes by identity to stop on a cyclic chain (e.g. a cause pointing back to an exception already seen).
+            Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+            Throwable cause = e.getCause();
+            while (cause != null && seen.add(cause)) {
+                if (isDeadlockOrLockTimeout(cause)) {
+                    return true;
+                }
+                cause = cause.getCause();
+            }
+            return false;
+        }
+
+        private static boolean isDeadlockOrLockTimeout(Throwable cause) {
+            if (!(cause instanceof SQLException sqlException)) {
+                return false;
+            }
+
+            // MySQL/MariaDB vendor codes:
+            // 1213 = ER_LOCK_DEADLOCK
+            // 1205 = ER_LOCK_WAIT_TIMEOUT
+            int vendorCode = sqlException.getErrorCode();
+            if (vendorCode == 1213 || vendorCode == 1205) {
+                return true;
+            }
+
+            return
+            // standard deadlock
+            "40001".equals(sqlException.getSQLState()) ||
+            // postgres deadlock
+                "40P01".equals(sqlException.getSQLState());
+        }
     }
 }

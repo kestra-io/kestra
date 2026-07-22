@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
@@ -660,6 +661,101 @@ class JsonSchemaGeneratorTest {
         Optional<com.fasterxml.classmate.ResolvedType> resolved = JsonSchemaGenerator.safelyResolveSubtype(declaredType, String.class, typeContext);
 
         assertThat(resolved.isEmpty(), is(true));
+    }
+
+    @Test
+    void shouldInjectPlaceholderSchemaForUnresolvedTaskType() {
+        // Given: a task type that is registered and schema-eligible, but absent from the generated schema's
+        // Task.anyOf — i.e. it was dropped by safelyResolveSubtype because its generics could not be resolved
+        // (a plugin built against an incompatible Kestra version). See #12102.
+        RegisteredPlugin plugin = RegisteredPlugin.builder()
+            .tasks(List.of(Log.class))
+            .triggers(List.of())
+            .build();
+        JsonSchemaGenerator generator = new JsonSchemaGenerator(pluginRegistry) {
+            @Override
+            protected List<RegisteredPlugin> getRegisteredPlugins() {
+                return List.of(plugin);
+            }
+        };
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.node.ObjectNode schema = mapper.createObjectNode();
+        com.fasterxml.jackson.databind.node.ObjectNode definitions = schema.putObject("definitions");
+        definitions.putObject(Task.class.getName()).putArray("anyOf");
+
+        // When
+        generator.injectUnresolvedPluginTypes(schema, List.of());
+
+        // Then: a minimal permissive definition is injected so the type still validates and autocompletes
+        com.fasterxml.jackson.databind.JsonNode injected = definitions.get(Log.class.getName());
+        assertThat(injected, is(notNullValue()));
+        assertThat(injected.get("type").asText(), is("object"));
+        assertThat(injected.get("additionalProperties").asBoolean(), is(true));
+        assertThat(injected.get("properties").get("type").get("const").asText(), is(Log.class.getName()));
+
+        // and it is referenced from the Task base type's anyOf
+        boolean referenced = false;
+        for (com.fasterxml.jackson.databind.JsonNode ref : definitions.get(Task.class.getName()).get("anyOf")) {
+            if (("#/definitions/" + Log.class.getName()).equals(ref.path("$ref").asText())) {
+                referenced = true;
+            }
+        }
+        assertThat(referenced, is(true));
+
+        // and an already-present type is neither duplicated nor overwritten
+        int anyOfSizeAfterFirst = definitions.get(Task.class.getName()).get("anyOf").size();
+        generator.injectUnresolvedPluginTypes(schema, List.of());
+        assertThat(definitions.get(Task.class.getName()).get("anyOf").size(), is(anyOfSizeAfterFirst));
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void shouldIsolateASinglePluginThatCannotBeSchemaGenerated() {
+        // Given: two registered tasks; a first full generation that fails (as victools does atomically when one
+        // plugin built against an incompatible Kestra version throws mid-generation), and a probe that pinpoints
+        // Return as the offender. See #12102 — one broken plugin must not take the whole flow schema down.
+        List emptyLists = List.of();
+        RegisteredPlugin plugin = RegisteredPlugin.builder()
+            .tasks(List.of(Log.class, Return.class, Dag.class)).triggers(emptyLists)
+            .taskRunners(emptyLists).assets(emptyLists).assetExporters(emptyLists).charts(emptyLists)
+            .dataFilters(emptyLists).dataFiltersKPI(emptyLists).logExporters(emptyLists)
+            .additionalPlugins(emptyLists).fileRenderers(emptyLists).storages(emptyLists).secrets(emptyLists)
+            .logDataStores(emptyLists).apps(emptyLists).appBlocks(emptyLists).rules(emptyLists)
+            .build();
+        java.util.concurrent.atomic.AtomicInteger fullGenerationAttempts = new java.util.concurrent.atomic.AtomicInteger();
+        JsonSchemaGenerator generator = new JsonSchemaGenerator(pluginRegistry) {
+            @Override
+            protected List<RegisteredPlugin> getRegisteredPlugins() {
+                return List.of(plugin);
+            }
+
+            @Override
+            com.fasterxml.jackson.databind.node.ObjectNode generateRootSchema(Class<?> cls, List<String> allowedPluginTypes, boolean withOutputs) {
+                if (fullGenerationAttempts.getAndIncrement() == 0) {
+                    throw new IllegalArgumentException("simulated whole-schema generation failure");
+                }
+                return super.generateRootSchema(cls, allowedPluginTypes, withOutputs);
+            }
+
+            @Override
+            Set<String> probeUnresolvablePluginTypes(List<String> allowedPluginTypes) {
+                return Set.of(Return.class.getName());
+            }
+        };
+
+        // When
+        Map<String, Object> schema = generator.schemas(Task.class, false, List.of());
+
+        // Then: generation recovered (a retry happened), the good task is fully generated, and the offending one is
+        // present as a permissive placeholder rather than crashing the whole schema.
+        assertThat(fullGenerationAttempts.get(), is(2));
+        Map<String, Object> definitions = (Map<String, Object>) schema.get("definitions");
+        assertThat(definitions.containsKey(Log.class.getName()), is(true));
+
+        Map<String, Object> returnDefinition = (Map<String, Object>) definitions.get(Return.class.getName());
+        assertThat(returnDefinition, is(notNullValue()));
+        assertThat(returnDefinition.get("additionalProperties"), is(true));
+        assertThat(((Map<String, Object>) ((Map<String, Object>) returnDefinition.get("properties")).get("type")).get("const"), is(Return.class.getName()));
     }
 
     @SuperBuilder

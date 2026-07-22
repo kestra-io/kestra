@@ -23,6 +23,7 @@ import io.kestra.webserver.services.ai.agent.AgentPrincipalResolver;
 import io.kestra.webserver.services.ai.agent.AgentTurnContext;
 import io.kestra.webserver.services.ai.agent.AiThreadManager;
 import io.kestra.webserver.services.ai.agent.TurnEventSink;
+import io.kestra.webserver.services.ai.agent.data.AgentEvents;
 import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiConfirmActionRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
@@ -246,7 +247,9 @@ public class AiAgentController {
 
         @Override
         public void error(final Throwable error) {
-            emitter.error(error);
+            String message = error.getMessage() != null ? error.getMessage() : error.getClass().getSimpleName();
+            emit(AgentEvents.ERROR, new AgentEvents.ErrorEvent(message));
+            complete();
         }
     }
 }

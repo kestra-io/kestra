@@ -122,6 +122,7 @@ export const AiEvent = {
     PROPOSED_ACTION: "proposed_action",
     ARTEFACT_DRAFT: "artefact_draft",
     DONE: "done",
+    ERROR: "error",
 } as const
 
 export type AiEventName = (typeof AiEvent)[keyof typeof AiEvent]
@@ -195,6 +196,14 @@ export interface ProposedActionEvent {
 export interface DoneEvent {
     /** The resting ThreadStatus the stream closed into. */
     status: ThreadStatus
+}
+
+/**
+ * A terminal failure delivered as an SSE event (not an HTTP/transport error), so the reason reaches
+ * the client even after the stream has committed. The stream completes right after; no `done` follows.
+ */
+export interface ErrorEvent {
+    message: string
 }
 
 /** A parsed SSE frame: an event name plus its already-JSON-parsed payload. */

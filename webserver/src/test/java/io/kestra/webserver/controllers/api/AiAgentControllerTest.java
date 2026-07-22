@@ -126,6 +126,20 @@ class AiAgentControllerTest {
     }
 
     @Test
+    void shouldEmitErrorEventAndResetIdleWhenModelCallFailsMidStream() {
+        // Given — no scripted response, so the LLM call fails once the stream has started
+        ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.ASK, "q"));
+
+        // When — the stream completes cleanly (no reactive/HTTP error), carrying the failure as an event
+        List<Event<Map>> events = chat(thread.uid(), new ApiChatTurnRequest("what is a trigger?", AgentMode.ASK, null, null));
+
+        // Then — an 'error' event surfaces the reason, no 'done' follows, and the thread is reset to IDLE
+        assertThat(names(events)).contains(AgentEvents.ERROR).doesNotContain(AgentEvents.DONE);
+        assertThat((String) data(events, AgentEvents.ERROR).get("message")).contains("LLM streaming call failed");
+        assertThat(getThread(thread.uid()).status()).isEqualTo(AgentThreadStatus.IDLE);
+    }
+
+    @Test
     void shouldProposeActionAndAwaitConfirmationWhenModelCallsMutateToolInEditMode() {
         // Given
         ApiThreadSummary thread = createThread(new ApiCreateThreadRequest(AgentMode.EDIT, null));

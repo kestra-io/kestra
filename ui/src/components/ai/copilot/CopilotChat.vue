@@ -80,9 +80,9 @@
 
             <!-- Insets via wrapper padding, not a margin on the alert: KsAlert is width:100%, so a
                  horizontal margin would push it past the panel (100% + margin) and overflow. -->
-            <div v-if="error || notice" class="copilot-banner">
-                <KsAlert v-if="error" type="error">
-                    {{ t(`ai.copilot.error.${error}`) }}
+            <div v-if="error || errorDetail || notice" class="copilot-banner">
+                <KsAlert v-if="error || errorDetail" type="error" data-test="copilot-error">
+                    {{ errorDetail || t(`ai.copilot.error.${error}`) }}
                 </KsAlert>
                 <KsAlert v-else-if="notice" type="warning" data-test="copilot-notice">
                     <div class="copilot-notice-body">
@@ -188,7 +188,7 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {thread, messages, status, streaming, error, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread} = useAiChat()
+    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread} = useAiChat()
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })

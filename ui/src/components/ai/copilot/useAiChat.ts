@@ -24,6 +24,7 @@ import {
     type CreateThreadRequest,
     type Decision,
     type DoneEvent,
+    type ErrorEvent,
     type Mode,
     type ProposedActionEvent,
     type ScopeBinding,
@@ -65,6 +66,11 @@ export function useAiChat() {
     const streaming = ref(false)
     /** A translation-key suffix under `ai.copilot.error.*`, or null. Kept locale-agnostic. */
     const error = ref<ErrorCode | null>(null)
+    /**
+     * The server-supplied failure reason from an SSE `error` event (e.g. "LLM streaming call failed:
+     * model not found"). Shown verbatim in preference to the generic `error` code when present.
+     */
+    const errorDetail = ref<string | null>(null)
     /** A non-error notice (e.g. a turn that produced no output) under `ai.copilot.notice.*`, or null. */
     const notice = ref<NoticeCode | null>(null)
     /** The proposal awaiting a confirm/reject decision, if any. */
@@ -152,6 +158,7 @@ export function useAiChat() {
         }
         status.value = data.status
         error.value = null
+        errorDetail.value = null
         notice.value = null
         activeAssistant = null
         messages.value = [...data.messages]
@@ -216,6 +223,7 @@ export function useAiChat() {
     function retry(): void {
         unavailable.value = false
         error.value = null
+        errorDetail.value = null
         notice.value = null
     }
 
@@ -252,6 +260,7 @@ export function useAiChat() {
         status.value = "IDLE"
         streaming.value = false
         error.value = null
+        errorDetail.value = null
         notice.value = null
         pendingConfirmation.value = null
         unavailable.value = false
@@ -265,6 +274,8 @@ export function useAiChat() {
         streaming.value = true
         status.value = "RUNNING"
         notice.value = null
+        error.value = null
+        errorDetail.value = null
         activeAssistant = null
         abort = new AbortController()
         lastTurn = {url, body}
@@ -275,7 +286,7 @@ export function useAiChat() {
             // The stream closed cleanly but added nothing to the transcript and left no proposal —
             // e.g. a transient provider hiccup returned only `done`. Surface a notice rather than
             // leaving the panel silent, so the user knows to retry.
-            if (messages.value.length === countBefore && !pendingConfirmation.value && !error.value) {
+            if (messages.value.length === countBefore && !pendingConfirmation.value) {
                 notice.value = "emptyTurn"
             }
         } catch (e) {
@@ -334,6 +345,16 @@ export function useAiChat() {
                 status.value = (frame.data as DoneEvent).status
                 break
             }
+            case AiEvent.ERROR: {
+                // A terminal failure delivered mid-stream (e.g. the LLM call failed). Surface the
+                // server's reason verbatim and drop back to IDLE; the stream completes right after.
+                activeAssistant = null
+                const message = (frame.data as ErrorEvent).message
+                errorDetail.value = message || null
+                if (!message) error.value = "request"
+                status.value = "IDLE"
+                break
+            }
         }
     }
 
@@ -365,6 +386,7 @@ export function useAiChat() {
         status,
         streaming,
         error,
+        errorDetail,
         notice,
         pendingConfirmation,
         unavailable,

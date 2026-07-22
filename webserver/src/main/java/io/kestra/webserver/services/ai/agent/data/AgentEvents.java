@@ -11,6 +11,7 @@ public final class AgentEvents {
     public static final String PROPOSED_ACTION = "proposed_action";
     public static final String ARTEFACT_DRAFT = "artefact_draft";
     public static final String DONE = "done";
+    public static final String ERROR = "error";
 
     private AgentEvents() {
     }
@@ -41,5 +42,13 @@ public final class AgentEvents {
     }
 
     public record DoneEvent(String status) {
+    }
+
+    /**
+     * A terminal failure surfaced as a normal SSE event (not a reactive/transport error), so the
+     * client receives the failure reason even once the {@code text/event-stream} response has been
+     * committed. The stream is completed right after this event; no {@link DoneEvent} follows.
+     */
+    public record ErrorEvent(String message) {
     }
 }

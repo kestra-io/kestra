@@ -169,6 +169,34 @@ describe("useAiChat", () => {
         expect(chat.error.value).toBe("generic")
     })
 
+    it("surfaces the server reason and resets to IDLE when a turn streams an error event", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "error", data: {message: "LLM streaming call failed: model not found"}}]
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.errorDetail.value).toBe("LLM streaming call failed: model not found")
+        expect(chat.status.value).toBe("IDLE")
+        // An error event must not also raise the emptyTurn notice.
+        expect(chat.notice.value).toBeNull()
+    })
+
+    it("falls back to the request error code when an error event carries no message", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "error", data: {message: ""}}]
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.errorDetail.value).toBeNull()
+        expect(chat.error.value).toBe("request")
+    })
+
+    it("clears a prior error detail when a new turn starts", async () => {
+        const chat = useAiChat()
+        nextFrames = [{event: "error", data: {message: "boom"}}]
+        await chat.sendChat({prompt: "hi"})
+        expect(chat.errorDetail.value).toBe("boom")
+        nextFrames = [{event: "token", data: {text: "ok"}}, {event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "again"})
+        expect(chat.errorDetail.value).toBeNull()
+    })
+
     it("surfaces the emptyTurn notice when a turn streams only done (no output)", async () => {
         const chat = useAiChat()
         nextFrames = [{event: "done", data: {status: "IDLE"}}]

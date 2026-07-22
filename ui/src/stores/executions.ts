@@ -77,6 +77,22 @@ interface LogsState {
     results: any[];
 }
 
+export function normalizeFilePreview(data: any) {
+    if (data?.extension !== "ion" || !Array.isArray(data.content)) {
+        return data
+    }
+
+    // WORKAROUND, related to https://github.com/kestra-io/plugin-aws/issues/456
+    const notObjects = data.content.some((e: any) => typeof e !== "object")
+
+    if (!notObjects) {
+        return data
+    }
+
+    const content = data.content.length === 1 ? data.content[0] : data.content.join("\n")
+    return {...data, type: "TEXT", content}
+}
+
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
 export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {
@@ -170,6 +186,9 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Don't set Content-Type - the browser must generate the multipart boundary itself; an
+    // explicit "multipart/form-data" header (needed under the old axios client) has no boundary
+    // and corrupts the request.
     const replayExecutionWithInputs = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[], formData?: FormData }) => {
         return axios.post(
             `${apiUrl()}/executions/${options.executionId}/actions/replay-with-inputs`,
@@ -179,9 +198,6 @@ export const useExecutionsStore = defineStore("executions", () => {
                     taskRunId: options.taskRunId,
                     revision: options.revision,
                     breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
-                },
-                headers: {
-                    "Content-Type": "multipart/form-data",
                 },
             })
     }
@@ -216,28 +232,24 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Don't set Content-Type - the browser must generate the multipart boundary itself.
     const resume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
         })
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Don't set Content-Type - the browser must generate the multipart boundary itself.
     const validateResume = (options: { id: string; formData: any }) => {
         return axios.post(`${apiUrl()}/executions/${options.id}/actions/resume/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
         })
     }
 
     // Stays on raw axios: no matching endpoint exposed by the generated SDK.
     const resumeFromBreakpoint = (options: { id: string; breakpoints?: string[] }) => {
-        return axios.post<Execution>(
+        return axios.post(
             `${apiUrl()}/executions/${options.id}/actions/resume-from-breakpoint`,
             null,
             {
@@ -305,12 +317,10 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
+    // Don't set Content-Type - the browser must generate the multipart boundary itself.
     const validateExecution = (options: { namespace: string; id: string; formData: any; labels?: string[]; scheduleDate?: string }) => {
-        return axios.post<ValidationResponse>(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
+        return axios.post(`${apiUrl()}/executions/${options.namespace}/${options.id}/validate`, Utils.toFormData(options.formData), {
             timeout: 60 * 60 * 1000,
-            headers: {
-                "content-type": "multipart/form-data",
-            },
             params: {
                 labels: options.labels ?? [],
                 scheduleDate: options.scheduleDate,
@@ -341,12 +351,10 @@ export const useExecutionsStore = defineStore("executions", () => {
             kind: options.kind,
             breakpoints: options.breakpoints ? options.breakpoints.join(",") : undefined,
             revision: options.revision,
-        // Content-Type must be forced to multipart here: the shared client's default
-        // "application/json" header makes axios's transformRequest silently JSON-stringify the
-        // FormData body instead of sending it as multipart (utils.isFormData(data) is true, but
-        // axios still re-encodes it whenever the Content-Type header says JSON) - same override
-        // the raw-axios multipart calls elsewhere in this file (resume, validateExecution, ...) need.
-        }, {timeout: 60 * 60 * 1000, headers: {"Content-Type": "multipart/form-data"}})
+        // Don't set Content-Type here - createExecution() already defaults it to null so the
+        // browser can generate the multipart boundary itself. An explicit "multipart/form-data"
+        // header (needed under the old axios client) has no boundary and corrupts the request.
+        }, {timeout: 60 * 60 * 1000})
     }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {
@@ -376,24 +384,18 @@ export const useExecutionsStore = defineStore("executions", () => {
         } as Parameters<typeof ExecutionsAPI.deleteExecutionsByQuery>[0])
     }
 
-    const sse = ref<EventSource | undefined>(undefined)
+    // Handle to the SDK follow stream backing the currently displayed execution.
+    // Closing it aborts the underlying stream (see subscribeToExecution).
+    const executionSubscription = ref<{ close: () => void } | undefined>(undefined)
 
     function closeSSE() {
-        if (sse.value) {
-            // when closing SSE, the doc seems to say the onerror is called
-            // trying to prevent an unwanted error is displayed for the user
-            sse.value.onerror = () => {}
-
-            sse.value.close()
-            sse.value = undefined
-        }
+        executionSubscription.value?.close()
+        executionSubscription.value = undefined
     }
 
     const route = useRoute()
 
-    const throttledExecutionUpdate = throttle((executionEvent: MessageEvent) => {
-        const parsedExecution = JSON.parse(executionEvent.data)
-
+    const throttledExecutionUpdate = throttle((parsedExecution: Execution) => {
         const flowValue = flow.value
 
         if ((!flowValue ||
@@ -414,59 +416,107 @@ export const useExecutionsStore = defineStore("executions", () => {
         execution.value = parsedExecution
     }, 500)
 
-    const followExecution = (options: { id: string, rawSSE?: boolean }, translate: (itn: string) => string) => {
-        if (!options.rawSSE) {
-            execution.value = undefined
-            closeSSE()
+    /**
+     * Subscribe to an execution's live updates through the SDK follow stream.
+     *
+     * Replaces the previous manual `EventSource` subscription: the SDK yields already
+     * parsed {@link Execution} events on an async stream, so callers only provide
+     * callbacks. The initial "start" stub (an execution carrying only an id, no state)
+     * is skipped, matching the previous `lastEventId === "start"` guard.
+     *
+     * `onEnd` fires exactly once when the stream terminates. `onError` fires additionally
+     * when the stream stops before the terminating "end" event — i.e. a 404 or a lost
+     * connection — mirroring the previous EventSource `onerror` semantics.
+     *
+     * @returns a handle whose `close()` aborts the stream.
+     */
+    function subscribeToExecution(
+        executionId: string,
+        handlers: {
+            onExecution: (execution: Execution) => void;
+            onError?: () => void;
+            onEnd?: () => void;
+        },
+    ): { close: () => void } {
+        const controller = new AbortController()
+        let closed = false
+        let finished = false
+        // The server closes the stream with an "end" event on normal completion; a
+        // termination without it means the connection dropped or the execution was not found.
+        let receivedEnd = false
+
+        const finish = (errored: boolean) => {
+            if (finished || closed) return
+            finished = true
+            if (errored) handlers.onError?.()
+            handlers.onEnd?.()
         }
-        const serverSentEventSource = new EventSource(`${apiUrl()}/executions/${options.id}/follow`, {withCredentials: true})
-        if (options.rawSSE) {
-            return Promise.resolve(serverSentEventSource)
+
+        const close = () => {
+            if (closed) return
+            closed = true
+            controller.abort()
         }
-        sse.value = serverSentEventSource
-        serverSentEventSource.onmessage = (executionEvent) => {
-            const isEnd = executionEvent && executionEvent.lastEventId === "end"
-            // we are receiving a first "fake" event to force initializing the connection: ignoring it
-            if (executionEvent.lastEventId !== "start") {
-                throttledExecutionUpdate(executionEvent)
-            }
-            if (isEnd) {
-                closeSSE()
+
+        ExecutionsAPI.followExecution(
+            {executionId},
+            {
+                signal: controller.signal,
+                // Do not auto-reconnect on a dropped connection: each reconnect opened a
+                // fresh server-side SSE connection whose Netty direct buffers were not
+                // promptly reclaimed, leaking off-heap memory over time (kestra-io/kestra#16982).
+                sseMaxRetryAttempts: 1,
+                onSseEvent: (event: { id?: string }) => {
+                    if (event.id === "end") receivedEnd = true
+                },
+                onSseError: () => finish(true),
+            },
+        )
+            .then(async ({stream}) => {
+                for await (const event of stream) {
+                    if (closed) break
+                    // The server emits a first "fake" event carrying only an id to force the
+                    // connection open; skip it as it has no state to display.
+                    if (!event.state) continue
+                    handlers.onExecution(event as Execution)
+                }
+                finish(!receivedEnd)
+            })
+            .catch(() => finish(true))
+
+        return {close}
+    }
+
+    const followExecution = (options: { id: string }, translate: (itn: string) => string) => {
+        execution.value = undefined
+        closeSSE()
+
+        executionSubscription.value = subscribeToExecution(options.id, {
+            onExecution: (parsedExecution) => throttledExecutionUpdate(parsedExecution),
+            // The follow emitter can only fail with a 404, so a still-undefined execution
+            // means the flow or execution was not found; otherwise the connection was lost.
+            onError: () => {
+                coreStore.message = !execution.value
+                    ? {
+                        variant: "error",
+                        title: translate("error"),
+                        content: {
+                            message: translate("errors.404.flow or execution"),
+                        },
+                    }
+                    : {
+                        variant: "error",
+                        title: translate("something_went_wrong.connection_lost.title"),
+                        content: {
+                            message: translate("something_went_wrong.connection_lost.message"),
+                        },
+                    }
+            },
+            onEnd: () => {
                 throttledExecutionUpdate.flush()
-            }
-        }
-
-        // sse.onerror doesn't return the details of the error
-        // but as our emitter can only throw an error on 404
-        // we can safely assume that the error is a 404
-        // if execution is not defined
-        serverSentEventSource.onerror = () => {
-            if (!execution.value) {
-                coreStore.message = {
-                    variant: "error",
-                    title: translate("error"),
-                    content: {
-                        message: translate("errors.404.flow or execution"),
-                    },
-                }
-            } else {
-                coreStore.message = {
-                    variant: "error",
-                    title: translate("something_went_wrong.connection_lost.title"),
-                    content: {
-                        message: translate("something_went_wrong.connection_lost.message"),
-                    },
-                }
-            }
-
-            // Close the stream on error: EventSource auto-reconnects (~every 3s)
-            // unless explicitly closed, and each reconnect opens a fresh server-side
-            // SSE connection whose Netty direct buffers are not promptly reclaimed,
-            // leaking off-heap memory over time. See kestra-io/kestra#16982.
-            closeSSE()
-        }
-
-        return Promise.resolve(sse.value)
+                closeSSE()
+            },
+        })
     }
 
     function followExecutionDependencies(options: { id: string; expandAll?: boolean }) {
@@ -540,17 +590,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
             params: options,
         }).then(response => {
-            let data = {...response.data}
-
-            // WORKAROUND, related to https://github.com/kestra-io/plugin-aws/issues/456
-            if (data.extension === "ion") {
-                const notObjects = data.content.some((e: any) => typeof e !== "object")
-
-                if (notObjects) {
-                    const content = data.content.length === 1 ? data.content[0] : data.content.join("\n")
-                    data = {...data, type: "TEXT", content}
-                }
-            }
+            const data = normalizeFilePreview({...response.data})
 
             filePreviewB.value = data
             return data
@@ -836,6 +876,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         bulkDeleteExecution,
         queryDeleteExecution,
         closeSSE,
+        subscribeToExecution,
         followExecution,
         followExecutionDependencies,
         followLogs,

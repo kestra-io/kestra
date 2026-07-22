@@ -43,6 +43,8 @@ import {commit} from "./plugins/commit"
 import {symlinkAlias} from "./plugins/vite-plugin-symlink-alias.mjs"
 import {codecovVitePlugin} from "@codecov/vite-plugin"
 import {stripDeadPrebuildDefault} from "./plugins/stripDeadPrebuildDefault.js"
+import {VitePWA} from "vite-plugin-pwa"
+import {loaderFragment} from "./plugins/loaderFragment.js"
 
 import {exports as kestraSdkExports} from "@kestra-io/kestra-sdk/package.json"
 
@@ -78,6 +80,7 @@ export default defineConfig(({mode}) => {
         },
         plugins: [
             symlinkAlias(__dirname),
+            loaderFragment(),
             vue({
                 template: {
                     compilerOptions: {
@@ -116,6 +119,42 @@ export default defineConfig(({mode}) => {
                 bundleName: "ui",
                 uploadToken: process.env.CODECOV_TOKEN,
                 telemetry: false,
+            }),
+            !process.env.STORYBOOK && VitePWA({
+                // registered manually (serviceWorker.ts) so scope derives from the runtime base path
+                injectRegister: null,
+                manifestFilename: "manifest.webmanifest",
+                includeManifestIcons: false,
+                manifest: {
+                    name: "Kestra",
+                    short_name: "Kestra",
+                    description: "Kestra - Declarative Data Orchestration Platform",
+                    start_url: "./",
+                    scope: "./",
+                    display: "standalone",
+                    theme_color: "#631bf3",
+                    background_color: "#ffffff",
+                    icons: [
+                        {src: "pwa-192x192.png", sizes: "192x192", type: "image/png", purpose: "any"},
+                        {src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any"},
+                        {src: "maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable"},
+                    ],
+                },
+                workbox: {
+                    // shell-only precache: JS/CSS stays network-fetched (the assets/ graph is tens of MB)
+                    globPatterns: ["*.{ico,png,css}"],
+                    maximumFileSizeToCacheInBytes: 256 * 1024,
+                    // disabled: index.html carries a per-request CSRF meta (StaticFilter); a cached copy breaks CSRF
+                    navigateFallback: undefined,
+                    skipWaiting: true,
+                    clientsClaim: true,
+                    runtimeCaching: [
+                        {
+                            urlPattern: /\/api\//,
+                            handler: "NetworkOnly",
+                        },
+                    ],
+                },
             }),
         ],
         assetsInclude: ["**/*.md"],

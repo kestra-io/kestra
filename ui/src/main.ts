@@ -6,23 +6,10 @@ import {setupPreloadErrorReloadHandler} from "./utils/preloadErrorReload"
 
 setupPreloadErrorReloadHandler()
 
-const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"}) as Record<string, string>
-function loadNodeTypes(tries = 0) {
-    import("monaco-editor/esm/vs/editor/editor.api").then(({languages}) => {
-        if (languages.typescript) {
-            for (const path in NodeTypesRaw) {
-                languages.typescript.typescriptDefaults.addExtraLib(NodeTypesRaw[path], `file://${path}`)
-            }
-        } else if (tries <= 15) {
-            setTimeout(() => loadNodeTypes(tries + 1), (tries + 1) * 100)
-        }
-    })
-}
-loadNodeTypes()
-
 import App from "./App.vue"
 import initApp from "./utils/init"
-import {setupKestraAxios} from "./utils/kestraAxios"
+import {setupKestraHttp} from "./utils/kestraHttp"
+import {useClient} from "@kestra-io/kestra-sdk"
 import routes from "./routes/routes"
 import en from "./translations/en.json"
 import {setupTenantRouter} from "./composables/useTenant"
@@ -34,7 +21,11 @@ import {useUnsavedChangesStore} from "./stores/unsavedChanges"
 import {useMiscStore} from "override/stores/misc"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import TaskIcon from "./components/plugins/TaskIcon.vue"
+import {registerServiceWorker} from "./utils/serviceWorker"
+import {initPwaInstallCapture} from "./utils/pwaInstallState"
 
+void registerServiceWorker()
+initPwaInstallCapture()
 
 const app = createApp(App)
 
@@ -51,7 +42,7 @@ const handleAuthError = (error: Error, to: {fullPath: string}) => {
     return {name: "setup"}
 }
 
-let axiosInstance: ReturnType<typeof setupKestraAxios> | undefined
+let httpClient: ReturnType<typeof setupKestraHttp> | undefined
 
 function setupAxios(router: Router) {
     const coreStore = useCoreStore()
@@ -66,25 +57,24 @@ function setupAxios(router: Router) {
     }
 
 
-    axiosInstance = setupKestraAxios({}, {
+    httpClient = setupKestraHttp({}, {
         coreStore,
         router,
         beforeLogout,
         isLoggedIn: () => !!BasicAuth.isLoggedIn(),
     })
 
-    // Add CSRF token to every request. Do NOT call configureClient({axios}) after this:
-    // it re-registers a fresh instance for useClient() and drops this interceptor (→ 403).
-    axiosInstance.interceptors.request.use((config) => {
+    // Add CSRF token to every request - covers both generated-endpoint calls and
+    // useClient() ad-hoc calls, since they share client.interceptors under the hood.
+    httpClient.interceptors.request.use((request) => {
         const csrfToken = getCsrfToken()
-        if (csrfToken) {
-            config.headers = config.headers || {}
-            config.headers["X-CSRF-TOKEN"] = csrfToken
-        }
-        return config
+        if (!csrfToken) return request
+        const headers = new Headers(request.headers)
+        headers.set("X-CSRF-TOKEN", csrfToken)
+        return new Request(request, {headers})
     })
 
-    return axiosInstance
+    return useClient()
 }
 
 // FIXME: any - guard args are untyped in the GuardFn interface
@@ -95,12 +85,12 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
 
     try {
         const miscStore = useMiscStore()
-        if(!axiosInstance) {
+        if(!httpClient) {
             setupAxios(router)
         }
-        const configs = await miscStore.loadConfigs()
+        const loginConfig = await miscStore.loadLoginConfig()
 
-        if(!configs.isBasicAuthInitialized) {
+        if(!loginConfig.isBasicAuthInitialized) {
             // Since, Configs takes preference
             // we need to check if any regex validation error in BE.
             const validationErrors = await miscStore.loadBasicAuthValidationErrors()
@@ -142,6 +132,9 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
         if (isSetupInProgress === "true") {
             return {name: "setup"}
         }
+
+        // Now that the user is authenticated, load the full instance configuration.
+        await miscStore.loadConfigs()
     } catch (error) {
         console.error("Error during authentication check:", error)
         return handleAuthError(error as Error, to)

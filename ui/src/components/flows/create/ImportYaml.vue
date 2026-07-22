@@ -143,6 +143,7 @@
     }
 
     .import-title {
+        align-self: flex-start;
         font-size: var(--ks-font-size-xl);
         font-weight: var(--ks-font-weight-semibold);
         margin: 0;
@@ -170,6 +171,7 @@
     .editor-label,
     .upload-label {
         display: block;
+        align-self: flex-start;
         font-weight: var(--ks-font-weight-medium);
         font-size: var(--ks-font-size-sm);
     }

@@ -254,6 +254,7 @@
 
     .section-title {
         margin: 0;
+        align-self: flex-start;
         font-weight: var(--ks-font-weight-semibold);
     }
 

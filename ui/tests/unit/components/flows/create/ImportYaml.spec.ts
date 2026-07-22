@@ -1,6 +1,7 @@
 import {describe, test, expect, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
+import {createPinia} from "pinia"
 
 vi.mock("@kestra-io/topology", () => ({
     flowYamlUtils: {
@@ -33,6 +34,7 @@ const globalConfig = {
     global: {
         plugins: [
             createI18n({legacy: false, locale: "en", messages}),
+            createPinia(),
         ],
         stubs: {
             KsText: {template: "<span><slot /></span>"},

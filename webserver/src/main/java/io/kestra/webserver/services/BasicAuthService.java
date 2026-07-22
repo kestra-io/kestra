@@ -205,6 +205,26 @@ public class BasicAuthService {
     }
 
     /**
+     * Returns {@code true} if {@code username}/{@code password} match the configured credentials.
+     * Used by the login endpoint, which never needs to see the {@value BASIC_AUTH_COOKIE_NAME} token itself.
+     */
+    public boolean validateCredentials(String username, String password) {
+        SaltedBasicAuthCredentials credentials = credentials();
+        if (credentials == null || username == null || password == null) {
+            return false;
+        }
+        return username.equals(credentials.getUsername()) && AuthUtils.matches(credentials.getSalt(), password, credentials.getPassword());
+    }
+
+    /**
+     * Builds the {@value BASIC_AUTH_COOKIE_NAME} cookie token for a set of credentials, i.e. the same
+     * base64(username:password) value historically computed client-side, now issued only by the server.
+     */
+    public static String encodeToken(String username, String password) {
+        return Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
      * Returns {@code true} if the request carries valid basic-auth credentials
      * (either via the {@value BASIC_AUTH_COOKIE_NAME} cookie or an {@code Authorization: Basic} header).
      *

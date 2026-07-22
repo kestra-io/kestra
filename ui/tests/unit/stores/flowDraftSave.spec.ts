@@ -1,14 +1,22 @@
 import {beforeAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
-// Capture the `draft` query param the store sends to the backend on save.
-// Typed with varargs so `put.mock.calls.at(-1)?.[2]` (the request config, index 2) type-checks;
-// an argless `vi.fn(() => …)` infers zero-length call tuples and trips TS2493 under vue-tsc.
-const put = vi.fn((..._args: any[]) => Promise.resolve({status: 200, data: {id: "f", namespace: "ns", draft: false}}))
-const post = vi.fn((..._args: any[]) => Promise.resolve({status: 200, data: {id: "f", namespace: "ns", draft: false}}))
+// Capture the `draft` param the store sends to the backend on save.
+// Typed with varargs so `updateFlow.mock.calls.at(-1)?.[0]` type-checks; an argless
+// `vi.fn(() => …)` infers zero-length call tuples and trips TS2493 under vue-tsc.
+const updateFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
+const createFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
-    useClient: () => ({put, post, get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),
+    useClient: () => ({get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),
+}))
+
+// saveFlow()/createFlow() and validateFlow() go through the SDK's flows submodule, not
+// useClient()'s axios instance
+vi.mock("@kestra-io/kestra-sdk/flows", () => ({
+    validateFlows: vi.fn(() => Promise.resolve([{}])),
+    updateFlow,
+    createFlow,
 }))
 
 // Avoid mounting the notification service when notifySaved fires.
@@ -37,9 +45,9 @@ async function freshStore() {
 }
 
 function lastDraftParam() {
-    // saveFlow() goes through client.put with { params: { draft } }
-    const call = put.mock.calls.at(-1)
-    return call?.[2]?.params?.draft
+    // saveFlow() goes through FlowsAPI.updateFlow({..., draft})
+    const call = updateFlow.mock.calls.at(-1)
+    return call?.[0]?.draft
 }
 
 describe("flow draft save — draft resolution per entry point", () => {
@@ -51,8 +59,8 @@ describe("flow draft save — draft resolution per entry point", () => {
 
     beforeEach(() => {
         localStorage.clear()
-        put.mockClear()
-        post.mockClear()
+        updateFlow.mockClear()
+        createFlow.mockClear()
         setActivePinia(createPinia())
     })
 

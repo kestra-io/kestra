@@ -102,15 +102,15 @@ export function useFlowEditorActions() {
                     labels: ["system.from:ui"],
                 })
 
-                executionsStore.execution = response.data
+                executionsStore.execution = response
                 onboardingStore.recordExecution()
 
                 await router.push({
                     name: "executions/update",
                     params: {
-                        namespace: response.data.namespace,
-                        flowId: response.data.flowId,
-                        id: response.data.id,
+                        namespace: response.namespace,
+                        flowId: response.flowId,
+                        id: response.id,
                         tab: "gantt",
                         tenant: tenant.value,
                     },

@@ -86,6 +86,16 @@ public abstract class AbstractJdbcRepository {
         return tenantId == null ? TENANT_ID_FIELD.isNull() : TENANT_ID_FIELD.eq(tenantId);
     }
 
+    /**
+     * Null-safe equality condition: {@code field = value} in SQL never matches a NULL value, so a
+     * plain {@code field.eq(value)} silently drops rows when {@code value} is null. Use this whenever
+     * {@code value} models an optional scope that is genuinely persisted as {@code NULL}.
+     */
+    // Used in EE
+    protected <T> Condition eqOrIsNull(Field<T> field, T value) {
+        return value == null ? field.isNull() : field.eq(value);
+    }
+
     public static Field<Object> field(String name) {
         return DSL.field(DSL.quotedName(name));
     }

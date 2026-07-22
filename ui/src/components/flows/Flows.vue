@@ -307,17 +307,20 @@
 
     import {useTableColumns} from "../../composables/useTableColumns"
     import useRouteContext from "../../composables/useRouteContext"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
         namespace?: string;
         id?: string | null;
         defaultScopeFilter?: boolean,
+        embed?: boolean;
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
+        embed: false,
     })
 
     const flowStore = useFlowStore()
@@ -397,7 +400,7 @@
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
-    useRouteContext(routeInfo)
+    useRouteContext(routeInfo, props.embed)
 
     const dataTable = useTemplateRef("dataTable")
 
@@ -470,10 +473,24 @@
         data: {
             type: string;
             columns: {
-                date: {field: string; displayName: string};
-                state: {field: string};
-                total: {displayName: string; agg: string};
-                duration: {field: string; displayName: string; agg: string};
+                date: {
+                    field: string;
+                    displayName: string;
+                };
+                state: {
+                    field: string;
+                };
+                total: {
+                    displayName: string;
+                    agg: string;
+                    graphStyle: string;
+                };
+                duration: {
+                    field: string;
+                    displayName: string;
+                    agg: string;
+                    graphStyle: string;
+                };
             };
             where: {field: string; type: string; value: string}[];
         };
@@ -495,14 +512,36 @@
         data: {
             type: "io.kestra.plugin.core.dashboard.data.Executions",
             columns: {
-                date: {field: "START_DATE", displayName: "Date"},
-                state: {field: "STATE"},
-                total: {displayName: "Executions", agg: "COUNT"},
-                duration: {field: "DURATION", displayName: "Duration", agg: "SUM"},
+                date: {
+                    field: "START_DATE",
+                    displayName: "Date",
+                },
+                state: {
+                    field: "STATE",
+                },
+                total: {
+                    displayName: "Executions",
+                    agg: "COUNT",
+                    graphStyle: "BARS",
+                },
+                duration: {
+                    field: "DURATION",
+                    displayName: "Duration",
+                    agg: "SUM",
+                    graphStyle: "LINES",
+                },
             },
             where: [
-                {field: "NAMESPACE", type: "EQUAL_TO", value: "${namespace}"},
-                {field: "FLOW_ID", type: "EQUAL_TO", value: "${flow_id}"},
+                {
+                    field: "NAMESPACE",
+                    type: "EQUAL_TO",
+                    value: "${namespace}",
+                },
+                {
+                    field: "FLOW_ID",
+                    type: "EQUAL_TO",
+                    value: "${flow_id}",
+                },
             ],
         },
     }
@@ -563,13 +602,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toast.success(t("flows disabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toast.success(t("flows disabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -592,13 +631,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toast.success(t("flows enabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toast.success(t("flows enabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -613,13 +652,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toast.success(t("flows deleted", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toast.success(t("flows deleted", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -687,7 +726,7 @@
             field: "timeRange",
             value: DEFAULT_DURATION,
             operation: "EQUALS",
-        }]
+        } satisfies QueryFilter]
     }
 
     async function exportFlowsAsStream() {

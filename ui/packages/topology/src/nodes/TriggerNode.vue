@@ -5,7 +5,6 @@
         :data="formattedData"
         :color="color"
         :icons="icons"
-        :iconComponent="iconComponent"
     >
         <template #title-actions>
             <NodeMenu :actions="actions" />
@@ -29,13 +28,12 @@
 
     defineOptions({name: "Task", inheritAttrs: false})
 
-    const {data, sourcePosition, targetPosition, id, icons, iconComponent} = defineProps<{
+    const {data, sourcePosition, targetPosition, id, icons} = defineProps<{
         data: any;
         sourcePosition: Position;
         targetPosition: Position;
         id: string;
         icons?: Record<string, any>;
-        iconComponent?: any;
     }>()
 
     const emit = defineEmits([EVENTS.DELETE, EVENTS.EDIT, EVENTS.SHOW_DESCRIPTION, EVENTS.EXPAND])

@@ -1,0 +1,10 @@
+diff --git a/node_modules/moment-range/dist/moment-range.d.ts b/node_modules/moment-range/dist/moment-range.d.ts
+index 1bc672f..cffeab5 100644
+--- a/node_modules/moment-range/dist/moment-range.d.ts
++++ b/node_modules/moment-range/dist/moment-range.d.ts
+@@ -1,4 +1,4 @@
+-import * as moment from 'moment';
++import moment from 'moment';
+ import {Moment, unitOfTime} from 'moment';
+ 
+ export class DateRange {

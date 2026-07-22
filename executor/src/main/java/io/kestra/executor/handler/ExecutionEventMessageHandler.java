@@ -15,6 +15,7 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.quota.Quota;
@@ -122,6 +123,20 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                 {
                     try {
                         final FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+
+                        // A flow that resolves to a FlowWithException (unparsable, or blocked at execution
+                        // pre-flight) cannot be processed: fail the execution fast instead of leaving it stuck.
+                        // Terminated executions are left untouched so a late flow change never rewrites them.
+                        if (flow instanceof FlowWithException flowWithException) {
+                            if (execution.getState().isTerminated()) {
+                                return null;
+                            }
+                            IllegalStateException exception = new IllegalStateException(flowWithException.getException());
+                            Span.current().recordException(exception).setStatus(StatusCode.ERROR);
+                            Execution failedExecution = fail(execution, exception);
+                            return new ExecutorContext(execution).withExecution(failedExecution, "flowWithException");
+                        }
+
                         ExecutorContext executor = new ExecutorContext(execution, flow);
 
                         // schedule it for later if needed

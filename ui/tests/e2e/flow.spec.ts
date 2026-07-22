@@ -27,7 +27,7 @@ test.describe("Flow Page", () => {
             await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
             await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
             await page.getByRole("button", {name: "Login"}).click()
-            await page.waitForURL("**/ui/**")
+            await page.waitForURL(url => !url.pathname.includes("/login"))
         })
     })
 

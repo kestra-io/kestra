@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -541,10 +542,14 @@ public class ExecutorService {
                     nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
                 } else {
                     // Case parent task has a retry
-                    AbstractRetry retry = searchForParentRetry(taskRun, executor);
+                    Task parentTaskWithRetry = searchForParentTaskWithRetry(taskRun, executor);
+                    AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                     if (retry != null) {
-                        behavior = retry.getBehavior();
-                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                        // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
+                        if (!isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                            behavior = retry.getBehavior();
+                            nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                        }
                     }
                     // Case flow has a retry
                     else if (executor.getFlow().getRetry() != null) {
@@ -633,7 +638,7 @@ public class ExecutorService {
                                             taskRun, Map.of(
                                                 Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
                                                 Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0,
+                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
                                                 Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
                                             )
                                         );
@@ -648,7 +653,7 @@ public class ExecutorService {
                                             taskRun, Map.of(
                                                 Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
                                                 Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0
+                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
                                             )
                                         );
 
@@ -794,7 +799,7 @@ public class ExecutorService {
         return executor;
     }
 
-    private AbstractRetry searchForParentRetry(TaskRun taskRun, ExecutorContext executor) {
+    private Task searchForParentTaskWithRetry(TaskRun taskRun, ExecutorContext executor) {
         // search in all parents, recursively
         if (taskRun.getParentTaskRunId() != null) {
             String taskId = taskRun.getTaskId();
@@ -806,12 +811,59 @@ public class ExecutorService {
                 }
             } while (parentTask != null && parentTask.getRetry() == null);
 
-            if (parentTask != null) {
-                return parentTask.getRetry();
-            }
+            return parentTask;
         }
 
         return null;
+    }
+
+    /**
+     * Whether the errors/finally branch of the flowable task owning the retry still has non-terminal task runs
+     * for the current failure. Used to prevent a retry timer from firing before those tasks terminate.
+     * <p>
+     * Known scope limitation: only gates the case where the failing task's <b>direct</b> parent is the flowable
+     * owning the retry (mirroring the same direct-parent-only assumption already made by
+     * {@link ExecutionService#retryTask}, which purges errors/finally task runs the same way). If the retry is
+     * owned by a grandparent flowable further up the tree, this check does not apply.
+     */
+    private boolean isErrorOrFinallyHandlingPending(TaskRun taskRun, Task parentTaskWithRetry, ExecutorContext executor, List<TaskRun> nextTaskRuns) {
+        if (!(parentTaskWithRetry instanceof FlowableTask<?> flowableTask) || taskRun.getParentTaskRunId() == null) {
+            return false;
+        }
+
+        Optional<TaskRun> directParentTaskRun = ListUtils.emptyOnNull(executor.getExecution().getTaskRunList()).stream()
+            .filter(t -> t.getId().equals(taskRun.getParentTaskRunId()))
+            .findFirst();
+
+        if (directParentTaskRun.isEmpty() || !directParentTaskRun.get().getTaskId().equals(parentTaskWithRetry.getId())) {
+            return false;
+        }
+
+        Set<String> errorAndFinallyTaskIds = Stream.concat(
+            ListUtils.emptyOnNull(flowableTask.getErrors()).stream(),
+            ListUtils.emptyOnNull(flowableTask.getFinally()).stream()
+        )
+            .map(Task::getId)
+            .collect(Collectors.toSet());
+
+        if (errorAndFinallyTaskIds.isEmpty()) {
+            return false;
+        }
+
+        String parentTaskRunId = directParentTaskRun.get().getId();
+
+        // The errors/finally children may have just been resolved earlier in this same handleFlowableTasks pass, but not merged into the execution yet.
+        // Check the pending list too, otherwise the very first failure would see no sibling task run at all and wrongly conclude "not pending".
+        boolean justResolvedThisPass = nextTaskRuns.stream()
+            .anyMatch(t -> parentTaskRunId.equals(t.getParentTaskRunId()) && errorAndFinallyTaskIds.contains(t.getTaskId()));
+        if (justResolvedThisPass) {
+            return true;
+        }
+
+        return executor.getExecution().getTaskRunList().stream()
+            .filter(t -> parentTaskRunId.equals(t.getParentTaskRunId()))
+            .filter(t -> errorAndFinallyTaskIds.contains(t.getTaskId()))
+            .anyMatch(t -> !t.getState().isTerminated());
     }
 
     private ExecutorContext handlePausedDelay(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws InternalException, QueueException {

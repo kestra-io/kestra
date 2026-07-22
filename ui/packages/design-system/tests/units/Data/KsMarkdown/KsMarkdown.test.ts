@@ -451,6 +451,46 @@ describe("KsMarkdown", () => {
         expect(wrapper.html()).not.toContain("onerror")
     })
 
+    test("renders iframe with a YouTube embed src", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<div class=\"video-container\">\n<iframe src=\"https://www.youtube.com/embed/abc123\" title=\"YouTube video player\" allowfullscreen></iframe>\n</div>"},
+            global: globalConfig,
+        })
+        const iframe = wrapper.find("iframe")
+        expect(iframe.exists()).toBe(true)
+        expect(iframe.attributes("src")).toBe("https://www.youtube.com/embed/abc123")
+    })
+
+    test("strips src from an iframe pointing at a non-YouTube host", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<iframe src=\"https://evil.example.com/phish\"></iframe>"},
+            global: globalConfig,
+        })
+        const iframe = wrapper.find("iframe")
+        expect(iframe.exists()).toBe(true)
+        expect(iframe.attributes("src")).toBeUndefined()
+    })
+
+    test("renders iframe with a youtube-nocookie.com embed src", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<iframe src=\"https://www.youtube-nocookie.com/embed/abc123\"></iframe>"},
+            global: globalConfig,
+        })
+        const iframe = wrapper.find("iframe")
+        expect(iframe.exists()).toBe(true)
+        expect(iframe.attributes("src")).toBe("https://www.youtube-nocookie.com/embed/abc123")
+    })
+
+    test("strips src from an iframe using http instead of https", () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "<iframe src=\"http://www.youtube.com/embed/abc123\"></iframe>"},
+            global: globalConfig,
+        })
+        const iframe = wrapper.find("iframe")
+        expect(iframe.exists()).toBe(true)
+        expect(iframe.attributes("src")).toBeUndefined()
+    })
+
     test("injects custom-component inner HTML verbatim when xssProtection is disabled", () => {
         // markRaw prevents Vue's reactive() from wrapping the component definition
         // when it flows through @vue/test-utils' reactive props bag — without it, mounting

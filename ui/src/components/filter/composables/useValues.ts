@@ -4,7 +4,6 @@ import {useMiscStore} from "override/stores/misc"
 import {FilterValue} from "@kestra-io/design-system"
 
 import {State} from "@kestra-io/design-system"
-import {auditLogTypes} from "../../../models/auditLogTypes"
 import resource from "../../../models/resource"
 import action from "../../../models/action"
 
@@ -121,7 +120,6 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
             value: level,
             color: `var(--ks-log-${level.toLowerCase()})`,
         })),
-        TYPES: auditLogTypes,
         PERMISSIONS: buildFromObject(resource),
         ACTIONS: buildFromObject({
             ...action,

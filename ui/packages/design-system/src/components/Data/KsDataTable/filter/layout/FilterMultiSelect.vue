@@ -30,7 +30,7 @@
                     </KsCheckbox>
                 </button>
                 <button
-                    v-if="modelValue.length > 0"
+                    v-if="isPartiallySelected || allSelected"
                     type="button"
                     class="clear-btn"
                     @click="handleDeselectAll"

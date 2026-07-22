@@ -1,5 +1,5 @@
 <template>
-    <div class="webhook-panel">
+    <KsForm class="webhook-panel" labelPosition="top" @submit.prevent>
         <KsFormItem :label="$t('recipe.webhook.key_label')">
             <KsInput
                 v-model="recipe.webhookKey"
@@ -26,7 +26,7 @@
             </div>
             <span class="hint">{{ $t("recipe.webhook.endpoint_hint") }}</span>
         </KsFormItem>
-    </div>
+    </KsForm>
 </template>
 
 <script setup lang="ts">

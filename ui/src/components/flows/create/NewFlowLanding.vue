@@ -27,7 +27,7 @@
                     {{ $t("new_flow_landing.blank.namespaces_error") }}
                 </KsAlert>
 
-                <KsForm class="primary-card-fields">
+                <KsForm class="primary-card-fields" labelPosition="top" @submit.prevent>
                     <KsFormItem :label="$t('new_flow_landing.blank.id_label')">
                         <KsInput
                             v-model="flowId"

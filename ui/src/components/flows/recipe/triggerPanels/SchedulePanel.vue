@@ -1,5 +1,5 @@
 <template>
-    <div class="schedule-panel">
+    <KsForm class="schedule-panel" labelPosition="top" @submit.prevent>
         <KsFormItem :label="$t('recipe.schedule.frequency')">
             <KsSegmented
                 v-model="selectedFrequency"
@@ -34,7 +34,7 @@
                 />
             </KsSelect>
         </KsFormItem>
-    </div>
+    </KsForm>
 </template>
 
 <script setup lang="ts">

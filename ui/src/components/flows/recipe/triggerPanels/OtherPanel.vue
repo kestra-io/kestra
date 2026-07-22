@@ -1,5 +1,5 @@
 <template>
-    <div class="other-panel">
+    <KsForm class="other-panel" labelPosition="top" @submit.prevent>
         <KsFormItem :label="$t('recipe.other.search_label')">
             <KsInput
                 v-model="searchQuery"
@@ -41,7 +41,7 @@
                 </KsIcon>
             </div>
         </div>
-    </div>
+    </KsForm>
 </template>
 
 <script setup lang="ts">

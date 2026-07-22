@@ -1,5 +1,5 @@
 <template>
-    <div class="execution-panel">
+    <KsForm class="execution-panel" labelPosition="top" @submit.prevent>
         <KsFormItem :label="$t('recipe.execution.watch_namespace')">
             <KsSelect
                 v-model="recipe.watchNamespace"
@@ -46,7 +46,7 @@
                 {{ $t("recipe.execution.states_required") }}
             </span>
         </KsFormItem>
-    </div>
+    </KsForm>
 </template>
 
 <script setup lang="ts">

@@ -1,47 +1,22 @@
 <template>
     <FilePreviewForm
-        v-if="isTextFile"
-        v-model:encoding="encodingModel" 
-        v-model:maxRows="maxRows" 
-        v-model:forceEditor="forceEditor" 
-        :truncated="preview?.truncated" 
+        v-if="isTextFile && !isHtmlFile"
+        v-model:encoding="encodingModel"
+        v-model:maxRows="maxRows"
+        v-model:forceEditor="forceEditor"
+        :truncated="preview?.truncated"
     />
-    <div class="big-file-warning" v-if="bigFile">
-        <KsAlert type="warning" :closable="false">
-            {{ $t("file_preview.big_file_warning", {size: humanSize}) }}
-        </KsAlert>
-        <KsButtonGroup>
-            <KsButton
-                type="primary"
-                @click="bigFile = false;loadPreview()"
-            >
-                {{ $t("file_preview.load_anyway") }}
-            </KsButton>
-            <KsButton
-                type="primary"
-                tag="a"
-                :href="itemUrl(path)"
-                :icon="Download"
-                rel="noopener noreferrer"
-            >
-                {{ $t('download') }}
-            </KsButton>
-        </KsButtonGroup>
-    </div>
-    <div v-else-if="!preview">
-        Loading...
-    </div>
-    <template v-else>
+    <!-- HTML files are rendered in a sandboxed iframe; skip the big-file / loading guards -->
+    <template v-if="isHtmlFile">
         <div class="button-bar">
             <KsText>
                 {{ path.split("/").slice(-1)[0] }}
             </KsText>
-            <KsTag>
+            <KsTag v-if="humanSize">
                 {{ humanSize }}
             </KsTag>
             <div style="flex:1"/>
             <KsButton
-                class=""
                 type="primary"
                 tag="a"
                 :href="itemUrl(path)"
@@ -51,7 +26,62 @@
                 {{ $t('download') }}
             </KsButton>
         </div>
-        <RawPreview v-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
+        <iframe
+            :src="itemUrl(path)"
+            class="html-preview-frame"
+            sandbox="allow-scripts"
+            referrerpolicy="no-referrer"
+            :title="$t('file_preview.html_preview_title')"
+        />
+    </template>
+    <template v-else>
+        <div class="big-file-warning" v-if="bigFile">
+            <KsAlert type="warning" :closable="false">
+                {{ $t("file_preview.big_file_warning", {size: humanSize}) }}
+            </KsAlert>
+            <KsButtonGroup>
+                <KsButton
+                    type="primary"
+                    @click="bigFile = false;loadPreview()"
+                >
+                    {{ $t("file_preview.load_anyway") }}
+                </KsButton>
+                <KsButton
+                    type="primary"
+                    tag="a"
+                    :href="itemUrl(path)"
+                    :icon="Download"
+                    rel="noopener noreferrer"
+                >
+                    {{ $t('download') }}
+                </KsButton>
+            </KsButtonGroup>
+        </div>
+        <div v-else-if="!preview">
+            Loading...
+        </div>
+        <template v-else>
+            <div class="button-bar">
+                <KsText>
+                    {{ path.split("/").slice(-1)[0] }}
+                </KsText>
+                <KsTag>
+                    {{ humanSize }}
+                </KsTag>
+                <div style="flex:1"/>
+                <KsButton
+                    class=""
+                    type="primary"
+                    tag="a"
+                    :href="itemUrl(path)"
+                    :icon="Download"
+                    rel="noopener noreferrer"
+                >
+                    {{ $t('download') }}
+                </KsButton>
+            </div>
+            <RawPreview v-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
+        </template>
     </template>
 </template>
 
@@ -94,6 +124,11 @@
             path: props.path,
         })
     }
+
+    const isHtmlFile = computed(() => {
+        const lower = props.path.toLowerCase()
+        return lower.endsWith(".html") || lower.endsWith(".htm")
+    })
 
     const isTextFile = computed(() => {
         return isTextString(preview.value?.content)
@@ -149,6 +184,7 @@
     watch(
         [maxRows, encodingModel],
         async ([maxRows, encoding]) => {
+            if(isHtmlFile.value) return
             if(maxRows === undefined || encoding === undefined) return
             metadata.value = await getFileMeta()
             if(metadata.value.size === 0) {
@@ -161,8 +197,8 @@
             }
             bigFile.value = metadata.value.size >= BIG_FILE_THRESHOLD
             if(bigFile.value) {
-                // For big files, we want to signal the user that it can take 
-                // significant time to load the preview, so we set maxRows to 
+                // For big files, we want to signal the user that it can take
+                // significant time to load the preview, so we set maxRows to
                 // undefined to disable the limit and load the full file.
                 return
             }
@@ -197,5 +233,11 @@
         align-items: center;
         justify-content: space-between;
         margin-block: 1rem;
+    }
+    .html-preview-frame {
+        width: 100%;
+        min-height: 480px;
+        border: 1px solid var(--ks-border-subtle);
+        border-radius: 4px;
     }
 </style>

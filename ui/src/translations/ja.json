@@ -414,7 +414,8 @@
     },
     "file_preview": {
       "big_file_warning": "このファイルのサイズは{size}です。読み込みに時間がかかり、ブラウザがブロックされる可能性があります。それでも読み込みますか？",
-      "load_anyway": "読み込みを続行"
+      "load_anyway": "読み込みを続行",
+      "html_preview_title": "HTMLファイルのプレビュー"
     },
     "no_variables": "変数は利用できません。",
     "download": "ダウンロード",

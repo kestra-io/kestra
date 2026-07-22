@@ -414,7 +414,8 @@
     },
     "file_preview": {
       "big_file_warning": "Ce fichier fait {size}. Le chargement peut prendre un certain temps et bloquer votre navigateur. Voulez-vous quand même le charger ?",
-      "load_anyway": "Charger quand même"
+      "load_anyway": "Charger quand même",
+      "html_preview_title": "Aperçu du fichier HTML"
     },
     "no_variables": "Aucune variable disponible.",
     "download": "Télécharger",

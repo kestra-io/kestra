@@ -414,7 +414,8 @@
     },
     "file_preview": {
       "big_file_warning": "Ten plik ma rozmiar {size}. Może to chwilę potrwać, blokując przeglądarkę. Czy chcesz go mimo to załadować?",
-      "load_anyway": "Załaduj mimo to"
+      "load_anyway": "Załaduj mimo to",
+      "html_preview_title": "Podgląd pliku HTML"
     },
     "no_variables": "Brak dostępnych zmiennych.",
     "download": "Pobierz",

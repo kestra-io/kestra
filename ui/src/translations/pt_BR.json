@@ -414,7 +414,8 @@
     },
     "file_preview": {
       "big_file_warning": "Este arquivo tem {size}. Pode demorar um pouco para carregar, bloqueando seu navegador. Deseja carregá-lo mesmo assim?",
-      "load_anyway": "Carregar mesmo assim"
+      "load_anyway": "Carregar mesmo assim",
+      "html_preview_title": "Pré-visualização do arquivo HTML"
     },
     "no_variables": "Nenhuma variável disponível.",
     "download": "Baixar",

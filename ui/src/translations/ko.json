@@ -90,10 +90,10 @@
         "execution": "{ns} ({scope})의 flow가 {states} 상태에 도달하면 {channels}를 통해 알림을 보냅니다.",
         "including_sub": "및 하위 namespace",
         "invalid_hint": "최소 하나의 알림 채널을 추가하고 trigger 설정을 완료하세요.",
-        "no_channel": "설정된 채널 없음",
-        "other": "trigger \"{trigger}\"가 실행되면 {channels}를 통해 알림을 보냅니다.",
+        "no_channel": "선택한 채널",
+        "other": "{trigger} trigger가 실행되면 {channels}(으)로 알립니다.",
         "schedule": "일정 \"{cron}\"에 따라 {channels}를 통해 알림을 보냅니다.",
-        "selected_trigger": "선택된 trigger",
+        "selected_trigger": "선택한",
         "title": "요약",
         "webhook": "webhook을 수신하면 {channels}를 통해 알림을 보냅니다.",
         "yaml_preview": "YAML 미리보기"

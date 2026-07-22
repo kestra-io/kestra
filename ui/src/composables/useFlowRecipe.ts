@@ -1,5 +1,6 @@
 import {computed, onMounted, reactive, ref} from "vue"
 import {useI18n} from "vue-i18n"
+import {stringUtils} from "@kestra-io/design-system"
 import type {RecipeState, TriggerType} from "../utils/recipeToYaml"
 import {NOTIFY_TASK_CONFIGS} from "../utils/recipeToYaml"
 import {usePluginsStore} from "../stores/plugins"
@@ -124,7 +125,12 @@ export function useFlowRecipe() {
         case "webhook":
             return t("recipe.summary.webhook", {channels: channelText})
         case "other":
-            return t("recipe.summary.other", {trigger: recipe.otherTriggerType || t("recipe.summary.selected_trigger"), channels: channelText})
+            return t("recipe.summary.other", {
+                trigger: recipe.otherTriggerType
+                    ? stringUtils.afterLastDot(recipe.otherTriggerType)
+                    : t("recipe.summary.selected_trigger"),
+                channels: channelText,
+            })
         default:
             return ""
         }

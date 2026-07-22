@@ -90,10 +90,10 @@
         "execution": "जब {ns} ({scope}) में एक flow स्थिति {states} पर पहुंचे, {channels} के माध्यम से सूचित करें।",
         "including_sub": "और उप-namespaces",
         "invalid_hint": "कम से कम एक नोटिफिकेशन चैनल जोड़ें और trigger कॉन्फ़िगरेशन पूरी करें।",
-        "no_channel": "कोई चैनल कॉन्फ़िगर नहीं",
-        "other": "जब trigger \"{trigger}\" सक्रिय हो, {channels} के माध्यम से सूचित करें।",
+        "no_channel": "आपके चुने गए चैनल",
+        "other": "जब {trigger} trigger सक्रिय होता है, तो {channels} के माध्यम से सूचित करें।",
         "schedule": "शेड्यूल \"{cron}\" पर, {channels} के माध्यम से सूचित करें।",
-        "selected_trigger": "चयनित trigger",
+        "selected_trigger": "चयनित",
         "title": "सारांश",
         "webhook": "जब webhook प्राप्त हो, {channels} के माध्यम से सूचित करें।",
         "yaml_preview": "YAML पूर्वावलोकन"

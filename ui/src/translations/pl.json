@@ -90,10 +90,10 @@
         "execution": "Gdy flow w {ns} ({scope}) osiągnie stan {states}, powiadom przez {channels}.",
         "including_sub": "i pod-namespaces",
         "invalid_hint": "Dodaj co najmniej jeden kanał powiadomień i uzupełnij konfigurację trigger.",
-        "no_channel": "brak skonfigurowanego kanału",
-        "other": "Gdy trigger \"{trigger}\" się aktywuje, powiadom przez {channels}.",
+        "no_channel": "wybrane przez Ciebie kanały",
+        "other": "Gdy trigger {trigger} zostanie wyzwolony, powiadom przez {channels}.",
         "schedule": "Według harmonogramu \"{cron}\", powiadom przez {channels}.",
-        "selected_trigger": "wybrany trigger",
+        "selected_trigger": "wybrany",
         "title": "Podsumowanie",
         "webhook": "Gdy zostanie odebrany webhook, powiadom przez {channels}.",
         "yaml_preview": "Podgląd YAML"

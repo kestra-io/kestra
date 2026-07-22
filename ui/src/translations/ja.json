@@ -90,10 +90,10 @@
         "execution": "{ns} ({scope}) のflowが状態 {states} に達したとき、{channels} で通知します。",
         "including_sub": "およびサブnamespace",
         "invalid_hint": "少なくとも1つの通知チャンネルを追加し、trigger設定を完了してください。",
-        "no_channel": "チャンネル未設定",
-        "other": "trigger「{trigger}」が発火したとき、{channels} で通知します。",
+        "no_channel": "選択したチャンネル",
+        "other": "{trigger} trigger が起動したら、{channels} で通知します。",
         "schedule": "スケジュール「{cron}」で、{channels} で通知します。",
-        "selected_trigger": "選択されたtrigger",
+        "selected_trigger": "選択した",
         "title": "サマリー",
         "webhook": "webhookを受信したとき、{channels} で通知します。",
         "yaml_preview": "YAMLプレビュー"

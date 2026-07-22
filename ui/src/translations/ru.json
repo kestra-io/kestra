@@ -90,10 +90,10 @@
         "execution": "Когда flow в {ns} ({scope}) достигает состояния {states}, уведомить через {channels}.",
         "including_sub": "и дочерние namespaces",
         "invalid_hint": "Добавьте хотя бы один канал уведомлений и завершите настройку trigger.",
-        "no_channel": "нет настроенного канала",
-        "other": "При срабатывании trigger \"{trigger}\", уведомить через {channels}.",
+        "no_channel": "выбранные вами каналы",
+        "other": "Когда срабатывает trigger {trigger}, уведомить через {channels}.",
         "schedule": "По расписанию \"{cron}\", уведомить через {channels}.",
-        "selected_trigger": "выбранный trigger",
+        "selected_trigger": "выбранный",
         "title": "Сводка",
         "webhook": "При получении webhook, уведомить через {channels}.",
         "yaml_preview": "Предварительный просмотр YAML"

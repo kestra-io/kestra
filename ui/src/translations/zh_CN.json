@@ -90,10 +90,10 @@
         "execution": "当{ns} ({scope})中的flow达到状态{states}时，通过{channels}通知。",
         "including_sub": "及子namespace",
         "invalid_hint": "至少添加一个通知渠道并完成trigger配置。",
-        "no_channel": "未配置渠道",
-        "other": "当trigger\"{trigger}\"触发时，通过{channels}通知。",
+        "no_channel": "您选择的渠道",
+        "other": "当 {trigger} trigger 触发时，通过 {channels} 通知。",
         "schedule": "按计划\"{cron}\"，通过{channels}通知。",
-        "selected_trigger": "已选trigger",
+        "selected_trigger": "所选",
         "title": "摘要",
         "webhook": "收到webhook时，通过{channels}通知。",
         "yaml_preview": "YAML预览"

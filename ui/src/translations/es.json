@@ -90,10 +90,10 @@
         "execution": "Cuando un flow en {ns} ({scope}) alcanza el estado {states}, notificar via {channels}.",
         "including_sub": "y sub-namespaces",
         "invalid_hint": "Añade al menos un canal de notificación y completa la configuración del trigger.",
-        "no_channel": "ningún canal configurado",
-        "other": "Cuando el trigger \"{trigger}\" se activa, notificar via {channels}.",
+        "no_channel": "los canales que selecciones",
+        "other": "Cuando el trigger {trigger} se dispara, notificar por {channels}.",
         "schedule": "Según programación \"{cron}\", notificar via {channels}.",
-        "selected_trigger": "trigger seleccionado",
+        "selected_trigger": "seleccionado",
         "title": "Resumen",
         "webhook": "Cuando se recibe un webhook, notificar via {channels}.",
         "yaml_preview": "Previsualizar YAML"

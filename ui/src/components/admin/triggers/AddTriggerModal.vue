@@ -173,7 +173,7 @@
 
     // Provide schema injection context so TaskObject can resolve $ref fields
     // (e.g. inherited labels, workerSelector from parent trigger types).
-    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => triggerPlugin.value?.schema ?? {}))
+    provide(FULL_SCHEMA_INJECTION_KEY, computed(() => (triggerPlugin.value?.schema ?? {}) as any))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => triggerPlugin.value?.schema?.definitions ?? {}))
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => {
         return props.trigger.type ? `#/definitions/${props.trigger.type}` : ""
@@ -274,7 +274,7 @@
 
     const loadDocumentation = async () => {
         try {
-            const doc = await pluginsStore.load({cls: props.trigger.type, commit: false})
+            const doc = await pluginsStore.load({cls: props.trigger.type, commit: false, all: true})
             documentationPlugin.value = {...doc, cls: props.trigger.type}
             triggerPlugin.value = documentationPlugin.value
         } catch {

@@ -24,8 +24,11 @@ import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +49,9 @@ class WorkerTaskResultMessageHandlerTest {
     @Inject
     KillSwitchActionService killSwitchActionService;
 
+    @Inject
+    WorkerTaskResultListener workerTaskResultListener;
+
     @MockBean(KillSwitchService.class)
     KillSwitchService killSwitchService() {
         return mock(KillSwitchService.class);
@@ -54,6 +60,11 @@ class WorkerTaskResultMessageHandlerTest {
     @MockBean(KillSwitchActionService.class)
     KillSwitchActionService killSwitchActionService() {
         return mock(KillSwitchActionService.class);
+    }
+
+    @MockBean(WorkerTaskResultListener.class)
+    WorkerTaskResultListener workerTaskResultListener() {
+        return mock(WorkerTaskResultListener.class);
     }
 
     @BeforeEach
@@ -100,6 +111,70 @@ class WorkerTaskResultMessageHandlerTest {
 
         assertThat(maybeExecutor).isPresent();
         assertThat(maybeExecutor.get().getExecution().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        verify(workerTaskResultListener).onJoined(eq(workerTaskResult), any());
+    }
+
+    @Test
+    void shouldNotNotifyListenersWhenNotJoined() {
+        var workerTaskResult = WorkerTaskResult.builder()
+            .taskRun(TaskRun.builder().executionId("execution").id("taskrun").taskId("task").build())
+            .build();
+
+        var maybeExecutor = workerTaskResultMessageHandler.handle(workerTaskResult);
+
+        assertThat(maybeExecutor).isEmpty();
+        verify(workerTaskResultListener, never()).onJoined(any(), any());
+    }
+
+    @Test
+    void shouldNotifyListenerOnlyOnceOnRedelivery() {
+        var flow = Fixtures.flow();
+        flowRepository.create(GenericFlow.of(flow));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        var taskRun = TaskRun.builder()
+            .executionId(execution.getId())
+            .namespace(execution.getNamespace())
+            .flowId(execution.getFlowId())
+            .id("taskrun")
+            .taskId(flow.getTasks().getFirst().getId())
+            .state(new State().withState(State.Type.SUBMITTED))
+            .build();
+        executionRepository.save(execution.withTaskRunList(Collections.singletonList(taskRun)));
+        var workerTaskResult = WorkerTaskResult.builder()
+            .taskRun(taskRun.withState(State.Type.SUCCESS))
+            .build();
+
+        workerTaskResultMessageHandler.handle(workerTaskResult);
+        var redelivered = workerTaskResultMessageHandler.handle(workerTaskResult);
+
+        // a redelivery of the already-joined result comes back empty and must not be billed again
+        assertThat(redelivered).isEmpty();
+        verify(workerTaskResultListener, times(1)).onJoined(eq(workerTaskResult), any());
+    }
+
+    @Test
+    void shouldKeepProcessingWhenListenerThrows() {
+        doThrow(new RuntimeException("boom")).when(workerTaskResultListener).onJoined(any(), any());
+        var flow = Fixtures.flow();
+        flowRepository.create(GenericFlow.of(flow));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        var taskRun = TaskRun.builder()
+            .executionId(execution.getId())
+            .namespace(execution.getNamespace())
+            .flowId(execution.getFlowId())
+            .id("taskrun")
+            .taskId(flow.getTasks().getFirst().getId())
+            .state(new State().withState(State.Type.SUBMITTED))
+            .build();
+        executionRepository.save(execution.withTaskRunList(Collections.singletonList(taskRun)));
+        var workerTaskResult = WorkerTaskResult.builder()
+            .taskRun(taskRun.withState(State.Type.SUCCESS))
+            .build();
+
+        var maybeExecutor = workerTaskResultMessageHandler.handle(workerTaskResult);
+
+        // a throwing listener must not fail execution processing
+        assertThat(maybeExecutor).isPresent();
     }
 
     @Test
@@ -149,6 +224,7 @@ class WorkerTaskResultMessageHandlerTest {
 
         assertThat(result).isEmpty();
         verify(killSwitchActionService).handle(EvaluationType.IGNORE, execution.getTenantId(), execution.getId());
+        verify(workerTaskResultListener, never()).onJoined(any(), any());
     }
 
     @Test

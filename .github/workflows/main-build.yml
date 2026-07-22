@@ -40,7 +40,7 @@ jobs:
 
       - name: Checkout  # required to resolve the local composite action below
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Synchronous EE compileJava gate: fails this job (and the run) on compile
       # failure and posts a compile status on the develop commit.

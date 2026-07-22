@@ -101,6 +101,45 @@ class StateTest {
     }
 
     @Test
+    void shouldGetLastRunningDurationFromTheLastRunningTransition() {
+        // a retry appends attempts; the window must be the last RUNNING → end, not the first
+        Instant firstRunning = Instant.parse("2024-01-01T00:00:00Z");
+        Instant lastRunning = Instant.parse("2024-01-01T00:10:00Z");
+        Instant end = Instant.parse("2024-01-01T00:10:03Z");
+        State state = new State(
+            State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, firstRunning.minusSeconds(1)),
+                new State.History(State.Type.RUNNING, firstRunning),
+                new State.History(State.Type.FAILED, firstRunning.plusSeconds(4)),
+                new State.History(State.Type.RETRYING, lastRunning.minusSeconds(1)),
+                new State.History(State.Type.RUNNING, lastRunning),
+                new State.History(State.Type.SUCCESS, end)
+            )
+        );
+
+        assertThat(state.lastRunningDuration()).contains(Duration.between(lastRunning, end));
+    }
+
+    @Test
+    void shouldGetEmptyLastRunningDurationWhenNeverRunning() {
+        State state = new State(
+            State.Type.FAILED, List.of(
+                new State.History(State.Type.CREATED, START),
+                new State.History(State.Type.FAILED, END)
+            )
+        );
+
+        assertThat(state.lastRunningDuration()).isEmpty();
+    }
+
+    @Test
+    void shouldGetEmptyLastRunningDurationWhenNotEnded() {
+        State state = new State(State.Type.RUNNING, List.of(new State.History(State.Type.RUNNING, START)));
+
+        assertThat(state.lastRunningDuration()).isEmpty();
+    }
+
+    @Test
     void shouldFormatHumanDurationAsHoursMinutesSeconds() {
         // Given / When / Then
         assertThat(terminatedState().humanDuration()).isEqualTo("01:01:01.000");

@@ -266,7 +266,7 @@
 
     .trigger-types {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
         gap: var(--ks-spacing-3);
     }
 
@@ -322,12 +322,13 @@
     }
 
     .trigger-card-sub {
-        display: block;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
         font-size: var(--ks-font-size-sm);
         color: var(--ks-text-secondary);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .trigger-card-right {

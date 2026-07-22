@@ -87,7 +87,7 @@ export function useHelpers() {
         ...(namespace.value === systemNamespace.value ? [
             {
                 name: "blueprints",
-                title: t("blueprints.title"),
+                title: t("recipe.section_title"),
                 component: SystemBlueprintsTab,
                 props: {namespace: namespace.value},
                 blueprintDetail: true,

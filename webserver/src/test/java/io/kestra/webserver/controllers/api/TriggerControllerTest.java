@@ -620,6 +620,95 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldAcceptSetDisabledWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpResponse<ApiTriggerState> response = client.toBlocking().exchange(
+            HttpRequest.PUT(
+                TRIGGER_PATH + "/set-disabled",
+                new TriggerController.ApiDisableTriggerRequest(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), false, true)
+            ),
+            ApiTriggerState.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.body().disabled()).isFalse();
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByIdsWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        List<TriggerController.ApiTriggerId> triggers = List.of(
+            new TriggerController.ApiTriggerId(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
+        );
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false, true)),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        try {
+            Await.until(() -> !jdbcTriggerRepository.findById(trigger).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be enabled");
+        }
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByQueryWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-query?filters[namespace][EQUALS]=%s&disabled=false&recoverMissedSchedules=true".formatted(namespace), null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        try {
+            Await.until(() -> !jdbcTriggerRepository.findById(trigger).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be enabled");
+        }
+    }
+
+    @Test
     void shouldReturnBadRequestWhenDisableByTriggersMissingBody() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(

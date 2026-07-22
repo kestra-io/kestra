@@ -600,8 +600,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         return Streams.findLast(
             this.taskRunList
                 .stream()
-                .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
-        );
+                .filter(t -> !t.getState().isTerminated() && !t.getState().isPaused())
     }
 
     public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {

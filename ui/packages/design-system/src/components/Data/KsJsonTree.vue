@@ -117,7 +117,7 @@
     }>(), {depth: 0})
 
     const emit = defineEmits<{
-        select: [path: string],
+        select: [path: string, value: any],
     }>()
 
     const {t} = useI18n()
@@ -208,9 +208,22 @@
         collapsed.value = next
     }
 
+    function getValueAtPath(path: string): unknown {
+        if (!path) return props.value
+        const steps = path.split(/\.|\[|\]/).filter(Boolean)
+        let current: unknown = props.value
+        for (const step of steps) {
+            if (current === null || typeof current !== "object") {
+                return undefined
+            }
+            current = (current as Record<string, unknown>)[step]
+        }
+        return current
+    }
+
     function selectRow(path: string) {
         if (props.selectable) {
-            emit("select", path)
+            emit("select", path, getValueAtPath(path))
         }
     }
 

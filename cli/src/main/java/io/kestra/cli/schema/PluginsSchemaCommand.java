@@ -13,7 +13,6 @@ import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.docs.SchemaType;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.DefaultPluginRegistry;
@@ -27,10 +26,10 @@ import picocli.CommandLine;
  * CLI command that generates the per-release plugin schema bundle.
  *
  * <p>
- * Flow, task, trigger, plugindefault and dashboard schemas overlap heavily — they share most of
+ * Flow, task, trigger and dashboard schemas overlap heavily — they share most of
  * their nested plugin/property definitions. Generating each with {@code JsonSchemaGenerator}
  * independently would embed a full, near-duplicate {@code definitions} tree per type. Instead,
- * this command generates all five, then hoists every definition into one shared pool written
+ * this command generates all four, then hoists every definition into one shared pool written
  * once as {@code definitions}, plus a small {@code roots} map of {@code SchemaType} name → the
  * {@code $ref} into that pool for that type's root class:
  * 
@@ -56,7 +55,7 @@ import picocli.CommandLine;
  */
 @CommandLine.Command(
     name = "plugins-schema",
-    description = "Generate the per-release plugin schema bundle (flow, task, trigger, plugindefault, dashboard)",
+    description = "Generate the per-release plugin schema bundle (flow, task, trigger, dashboard)",
     mixinStandardHelpOptions = true
 )
 @Slf4j
@@ -70,7 +69,6 @@ public class PluginsSchemaCommand extends AbstractCommand {
         SchemaType.FLOW, Flow.class,
         SchemaType.TASK, Task.class,
         SchemaType.TRIGGER, AbstractTrigger.class,
-        SchemaType.PLUGINDEFAULT, PluginDefault.class,
         SchemaType.DASHBOARD, Dashboard.class
     );
 

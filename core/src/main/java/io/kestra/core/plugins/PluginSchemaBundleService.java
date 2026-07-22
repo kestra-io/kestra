@@ -40,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
  * Fetches and caches a pre-baked, per-release plugin schema bundle from a remote URL.
  *
  * <p>
- * Task/trigger/plugindefault/dashboard schemas overlap heavily, so the bundle (built by
+ * Flow/task/trigger/dashboard schemas overlap heavily, so the bundle (built by
  * {@code PluginsSchemaCommand}) stores their {@code definitions} once, in a single shared pool,
  * plus a {@code roots} map of {@link SchemaType} name (lower-case) → the {@code $ref} into that
  * pool for that type's root class — see {@code PluginsSchemaCommand}'s Javadoc for the exact

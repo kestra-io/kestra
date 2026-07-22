@@ -93,6 +93,7 @@
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
     import {KsGraph} from "@kestra-io/design-system"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import {useDependencies} from "./composables/useDependencies"
     import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types"
@@ -163,6 +164,7 @@
             where: {field: string; type: string; value: string}[];
         };
         content?: string;
+        [key: string]: unknown;
     }
 
     const chartDefinition = computed<ChartDefinition>(() => {
@@ -208,7 +210,7 @@
             field: "timeRange",
             value: chartDuration.value,
             operation: "EQUALS",
-        }]
+        } satisfies QueryFilter]
     }
 </script>
 

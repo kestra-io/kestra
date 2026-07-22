@@ -7,7 +7,8 @@
 
         <div class="landing-body">
             <KsCard class="primary-card" shadow="never" data-test="blank-flow-card">
-                <div class="primary-card-header">
+                <div class="primary-card-body">
+                    <div class="primary-card-header">
                     <div class="primary-icon">
                         <Plus :size="22" />
                     </div>
@@ -42,6 +43,7 @@
                             filterable
                             allowCreate
                             defaultFirstOption
+                            :loading="namespacesLoading"
                             :placeholder="$t('new_flow_landing.blank.namespace_placeholder')"
                             data-test="blank-flow-namespace"
                         >
@@ -57,12 +59,14 @@
 
                 <KsButton
                     type="primary"
+                    class="open-editor-btn"
                     :disabled="!flowId || !selectedNamespace"
                     data-test="blank-flow-open-editor"
                     @click="openEditor"
                 >
                     {{ $t("new_flow_landing.blank.open_editor") }}
                 </KsButton>
+                </div>
             </KsCard>
 
             <div class="secondary-rows">
@@ -144,13 +148,17 @@
     const selectedNamespace = ref("")
     const namespaceOptions = ref<string[]>([])
     const namespacesError = ref(false)
+    const namespacesLoading = ref(false)
 
     onMounted(async () => {
+        namespacesLoading.value = true
         try {
             const ns = await useNamespaces(500).all()
             namespaceOptions.value = ns.map(n => n.id)
         } catch {
             namespacesError.value = true
+        } finally {
+            namespacesLoading.value = false
         }
     })
 
@@ -192,14 +200,14 @@
         max-width: 36rem;
     }
 
-    .primary-card {
+    .primary-card-body {
         display: flex;
         flex-direction: column;
         gap: var(--ks-spacing-4);
-        padding: var(--ks-spacing-5);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        background-color: var(--ks-bg-surface);
+    }
+
+    .open-editor-btn {
+        align-self: flex-start;
     }
 
     .primary-card-header {

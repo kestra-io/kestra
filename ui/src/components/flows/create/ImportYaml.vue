@@ -2,7 +2,7 @@
     <div class="import-yaml" data-test="import-yaml">
         <div class="import-header">
             <KsButton
-                type="text"
+                link
                 class="back-btn"
                 data-test="import-yaml-back"
                 @click="emit('back')"

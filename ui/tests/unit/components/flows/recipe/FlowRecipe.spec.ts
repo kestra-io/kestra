@@ -145,6 +145,8 @@ const globalConfig = {
             KsEmpty: {template: "<div />"},
             KsSegmented: {template: "<div />"},
             KsEditor: {template: "<div />"},
+            KsCard: {template: "<div><slot /></div>"},
+            KsForm: {template: "<form><slot /></form>"},
         },
     },
 }
@@ -170,7 +172,7 @@ describe("FlowRecipe", () => {
         await new Promise(r => setTimeout(r, 0))
 
         // When — click a trigger card to mark hasInteracted=true
-        const cards = wrapper.findAll("[data-test='recipe-trigger-types'] .trigger-card")
+        const cards = wrapper.findAll("[data-test='recipe-trigger-types'] button[role='radio']")
         if (cards.length > 0) {
             await cards[0].trigger("click")
         }
@@ -182,7 +184,7 @@ describe("FlowRecipe", () => {
 
     test("trigger cards use unique keys (no duplicate key for case vs other)", () => {
         const wrapper = mount(FlowRecipe, globalConfig)
-        const cards = wrapper.findAll("[data-test='recipe-trigger-types'] .trigger-card")
+        const cards = wrapper.findAll("[data-test='recipe-trigger-types'] button[role='radio']")
         expect(cards.length).toBe(5)
     })
 
@@ -219,10 +221,10 @@ describe("FlowRecipe", () => {
         })
         await new Promise(r => setTimeout(r, 0))
 
-        // When — enable email channel by clicking the notify card
-        const emailCard = wrapper.find("[data-test='recipe-notify-grid'] .notify-card:last-child")
-        if (emailCard.exists()) {
-            await emailCard.trigger("click")
+        // When — enable a channel by clicking the last notify tile
+        const channelButtons = wrapper.findAll("[data-test='recipe-notify-grid'] button[role='checkbox']")
+        if (channelButtons.length > 0) {
+            await channelButtons[channelButtons.length - 1].trigger("click")
         }
 
         // Then — wait for reactivity

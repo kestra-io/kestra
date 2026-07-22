@@ -35,11 +35,12 @@
                     </SelectableTile>
                 </div>
 
-                <div class="trigger-panel">
+                <KsCard class="trigger-panel" shadow="never">
                     <ExecutionPanel
                         v-if="recipe.triggerType === 'execution'"
                         :recipe="recipe"
                         :namespaceOptions="namespaceOptions"
+                        :namespacesLoading="namespacesLoading"
                         :toggleState="toggleState"
                     />
                     <SchedulePanel
@@ -57,7 +58,7 @@
                         :recipe="recipe"
                         :setOtherTriggerType="setOtherTriggerType"
                     />
-                </div>
+                </KsCard>
 
                 <div class="section">
                     <KsText tag="h2" class="section-title">{{ $t("recipe.then.title") }}</KsText>
@@ -139,14 +140,18 @@
     const {recipe, isValid, isTriggerConfigValid, hasNotifyChannel, summary, channelAvailability, availableFqcns, toggleNotify, toggleState, setOtherTriggerType} = useFlowRecipe()
 
     const namespaceOptions = ref<string[]>([])
+    const namespacesLoading = ref(false)
     const hasInteracted = ref(false)
 
     onMounted(async () => {
+        namespacesLoading.value = true
         try {
             const ns = await useNamespaces(500).all()
             namespaceOptions.value = ns.map(n => n.id)
         } catch {
             namespaceOptions.value = []
+        } finally {
+            namespacesLoading.value = false
         }
     })
 
@@ -315,13 +320,6 @@
 
     .check-icon {
         color: var(--ks-text-link);
-    }
-
-    .trigger-panel {
-        padding: var(--ks-spacing-4);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        background-color: var(--ks-bg-surface);
     }
 
     .recipe-summary {

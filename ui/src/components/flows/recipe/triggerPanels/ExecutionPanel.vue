@@ -5,6 +5,7 @@
                 v-model="recipe.watchNamespace"
                 filterable
                 clearable
+                :loading="namespacesLoading"
                 :placeholder="$t('recipe.execution.namespace_placeholder')"
                 data-test="recipe-namespace-select"
             >
@@ -53,11 +54,14 @@
     import {STATES} from "@kestra-io/design-system"
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
 
-    defineProps<{
+    withDefaults(defineProps<{
         recipe: RecipeState
         namespaceOptions: string[]
+        namespacesLoading?: boolean
         toggleState: (stateName: string) => void
-    }>()
+    }>(), {
+        namespacesLoading: false,
+    })
 
     const watchableStates = ["FAILED", "WARNING", "SUCCESS", "KILLED", "PAUSED"]
 </script>
@@ -76,8 +80,8 @@
     }
 
     .state-icon {
-        width: 1rem;
-        height: 1rem;
+        width: var(--ks-spacing-4);
+        height: var(--ks-spacing-4);
         vertical-align: middle;
         margin-right: var(--ks-spacing-1);
     }

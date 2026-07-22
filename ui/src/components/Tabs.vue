@@ -42,17 +42,12 @@
         </KsTabs>
 
         <!-- Routed pages migrated to child routes: vue-router picks the component.
-             Events flow through Pinia stores, so the wrapper injects no handlers.
-             Suspense ensures the outgoing tab's async component is actually unmounted
-             instead of staying on screen (Vue's default for an unresolved `:is` swap)
-             while the incoming tab's chunk is still loading. -->
+             Events flow through Pinia stores, so the wrapper injects no handlers. -->
         <router-view v-if="useRouterView" v-slot="{Component, route: childRoute}">
             <section
                 :class="[containerClass, {maximized: childRoute.meta.maximized, 'no-overflow': childRoute.meta.noOverflow}]"
             >
-                <Suspense>
-                    <component :is="Component" :embed="childRoute.meta.embed ?? true" />
-                </Suspense>
+                <component :is="Component" :embed="childRoute.meta.embed ?? true" />
             </section>
         </router-view>
 
@@ -70,7 +65,7 @@
 
 <script setup lang="ts">
     import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, nextTick, h, defineComponent, toHandlers, type Component} from "vue"
-    import {useRoute} from "vue-router"
+    import {useRoute, useRouter} from "vue-router"
     import EnterpriseBadge from "./EnterpriseBadge.vue"
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
     import {useRouteTabsStore, type RouteTab} from "../stores/routeTabs"
@@ -123,6 +118,7 @@
 
     const attrs = useAttrs()
     const route = useRoute()
+    const router = useRouter()
     const routeTabsStore = useRouteTabsStore()
     const activeTabName = useActiveTab()
     const tabsOwnerId = Symbol("route-tabs-owner")
@@ -245,10 +241,38 @@
         selectedBlueprintId.value = undefined
     })
 
+    /**
+     * Each tab's route component is code-split (`() => import(...)`), and vue-router
+     * doesn't commit a navigation until that chunk resolves — so the first visit to
+     * any given tab pays a real network-fetch delay, during which the previous tab
+     * stays fully rendered. Warm every sibling tab's chunk once so switching feels
+     * instant, matching the pre-migration (single eagerly-bundled) experience.
+     */
+    let prefetched = false
+    function prefetchTabs() {
+        if (prefetched || !isRouterDriven.value || !visibleTabs.value.length) return
+        prefetched = true
+        const base = props.routeName || (route?.name as string)
+        for (const tab of visibleTabs.value) {
+            if (!tab.name) continue
+            try {
+                const resolved = router.resolve({name: `${base}/${tab.name}`, params: {...route?.params}})
+                for (const record of resolved.matched) {
+                    const loader = record.components?.default
+                    if (typeof loader === "function") (loader as () => Promise<unknown>)()
+                }
+            } catch {
+                // Tab has no matching child route for this base (e.g. embedded/legacy pages); skip it.
+            }
+        }
+    }
+
     onMounted(() => {
         syncStore()
         setActiveName()
+        nextTick(() => prefetchTabs())
     })
+    watch(visibleTabs, () => prefetchTabs())
     onBeforeUnmount(() => routeTabsStore.clearTabsIfOwner(tabsOwnerId))
 
     const TabBody = defineComponent({

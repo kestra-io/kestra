@@ -39,6 +39,7 @@
     import DrillDownDrawer from "./components/dashboard/DrillDownDrawer.vue"
     import PwaInstallPrompt from "./components/PwaInstallPrompt.vue"
     import {useThemeCycle} from "./composables/useThemeCycle"
+    import {revealApp} from "./utils/loaderReveal"
 
     const loaded = ref(false)
 
@@ -88,11 +89,7 @@
         Utils.switchTheme(miscStore)
         applyFontScale(getAppFontSizeMode())
 
-        const loader = document.getElementById("loader-wrapper")
-        if (loader) loader.style.display = "none"
-        const appContainer = document.getElementById("app-container")
-        if (appContainer) appContainer.style.display = "block"
-        loaded.value = true
+        revealApp(() => { loaded.value = true })
     }
 
     watch(() => route?.meta?.anonymous, async (anonymous) => {

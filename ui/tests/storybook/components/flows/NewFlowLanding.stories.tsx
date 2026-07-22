@@ -34,6 +34,12 @@ const i18n = createI18n({
 
 const pinia = createPinia()
 
+const STORY_ROUTES = [
+    {path: "/", name: "home", component: {template: "<div />"}},
+    {path: "/blueprints/:kind/:tab", name: "blueprints", component: {template: "<div />"}},
+    {path: "/namespaces/:id", name: "namespaces/update", component: {template: "<div />"}},
+]
+
 const meta: Meta<typeof NewFlowLanding> = {
     title: "Flows/Create/NewFlowLanding",
     component: NewFlowLanding,
@@ -47,12 +53,8 @@ const meta: Meta<typeof NewFlowLanding> = {
         // preview router only registers home/about, and named-route resolution
         // has no catch-all fallback.
         vueRouter(
-            [
-                {path: "/", name: "home", component: {template: "<div />"}},
-                {path: "/blueprints/:kind/:tab", name: "blueprints", component: {template: "<div />"}},
-                {path: "/namespaces/:id", name: "namespaces/update", component: {template: "<div />"}},
-            ],
-            {vueRouterOptions: {history: createMemoryHistory()}},
+            STORY_ROUTES,
+            {vueRouterOptions: {history: createMemoryHistory(), routes: STORY_ROUTES}},
         ),
     ],
     parameters: {

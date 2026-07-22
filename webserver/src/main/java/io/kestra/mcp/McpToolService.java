@@ -9,7 +9,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.mcp.models.McpServer;
@@ -182,7 +181,7 @@ public class McpToolService {
                     .withLabels(execution.getLabels())
                     .withInputs(execution.getInputs())
             );
-            eventPublisher.publishEvent(new CrudEvent<>(execution, null, CrudEventType.CREATE));
+            eventPublisher.publishEvent(CrudEvent.create(execution));
 
             String subscriberId = UUID.randomUUID().toString();
             return Flux.<Event<Execution>> create(

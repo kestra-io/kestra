@@ -1209,6 +1209,7 @@
     &.attempt-wrapper--transparent {
       background-color: transparent;
       border: none;
+      overflow: visible;
 
       .line {
         border-top: none;

@@ -131,7 +131,7 @@
 
         .kel-table__body tr:hover > td.kel-table__cell,
         .kel-table__body tr.hover-row > td.kel-table__cell {
-            background-color: var(--ks-bg-hover);
+            background-color: var(--ks-table-row-hover-bg, var(--ks-bg-hover));
         }
 
         th {

@@ -90,6 +90,7 @@
         "execution": "{ns} ({scope}) のflowが状態 {states} に達したとき、{channels} で通知します。",
         "including_sub": "およびサブnamespace",
         "invalid_hint": "少なくとも1つの通知チャンネルを追加し、trigger設定を完了してください。",
+        "invalid_hint_trigger": "trigger の設定を完了してください。",
         "no_channel": "選択したチャンネル",
         "other": "{trigger} trigger が起動したら、{channels} で通知します。",
         "schedule": "スケジュール「{cron}」で、{channels} で通知します。",

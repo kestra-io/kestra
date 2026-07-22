@@ -90,6 +90,7 @@
         "execution": "Wenn ein Flow in {ns} ({scope}) den Zustand {states} erreicht, benachrichtige via {channels}.",
         "including_sub": "und Unter-namespaces",
         "invalid_hint": "Fügen Sie mindestens einen Benachrichtigungskanal hinzu und vervollständigen Sie die trigger-Konfiguration.",
+        "invalid_hint_trigger": "Vervollständigen Sie die Trigger-Konfiguration.",
         "no_channel": "die von Ihnen ausgewählten Kanäle",
         "other": "Wenn der Trigger {trigger} auslöst, Benachrichtigung über {channels}.",
         "schedule": "Nach Zeitplan \"{cron}\", benachrichtige via {channels}.",

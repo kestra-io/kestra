@@ -90,6 +90,7 @@
         "execution": "Когда flow в {ns} ({scope}) достигает состояния {states}, уведомить через {channels}.",
         "including_sub": "и дочерние namespaces",
         "invalid_hint": "Добавьте хотя бы один канал уведомлений и завершите настройку trigger.",
+        "invalid_hint_trigger": "Завершите настройку trigger.",
         "no_channel": "выбранные вами каналы",
         "other": "Когда срабатывает trigger {trigger}, уведомить через {channels}.",
         "schedule": "По расписанию \"{cron}\", уведомить через {channels}.",

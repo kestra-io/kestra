@@ -90,6 +90,7 @@
         "execution": "When a flow in {ns} ({scope}) reaches state {states}, notify via {channels}.",
         "including_sub": "and sub-namespaces",
         "invalid_hint": "Add at least one notification channel and complete the trigger configuration.",
+        "invalid_hint_trigger": "Complete the trigger configuration.",
         "no_channel": "the channels you select",
         "other": "When the {trigger} trigger fires, notify via {channels}.",
         "schedule": "On schedule \"{cron}\", notify via {channels}.",

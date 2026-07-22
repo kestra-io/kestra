@@ -90,6 +90,7 @@
         "execution": "Gdy flow w {ns} ({scope}) osiągnie stan {states}, powiadom przez {channels}.",
         "including_sub": "i pod-namespaces",
         "invalid_hint": "Dodaj co najmniej jeden kanał powiadomień i uzupełnij konfigurację trigger.",
+        "invalid_hint_trigger": "Uzupełnij konfigurację trigger.",
         "no_channel": "wybrane przez Ciebie kanały",
         "other": "Gdy trigger {trigger} zostanie wyzwolony, powiadom przez {channels}.",
         "schedule": "Według harmonogramu \"{cron}\", powiadom przez {channels}.",

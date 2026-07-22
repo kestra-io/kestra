@@ -90,6 +90,7 @@
         "execution": "जब {ns} ({scope}) में एक flow स्थिति {states} पर पहुंचे, {channels} के माध्यम से सूचित करें।",
         "including_sub": "और उप-namespaces",
         "invalid_hint": "कम से कम एक नोटिफिकेशन चैनल जोड़ें और trigger कॉन्फ़िगरेशन पूरी करें।",
+        "invalid_hint_trigger": "trigger कॉन्फ़िगरेशन पूरा करें।",
         "no_channel": "आपके चुने गए चैनल",
         "other": "जब {trigger} trigger सक्रिय होता है, तो {channels} के माध्यम से सूचित करें।",
         "schedule": "शेड्यूल \"{cron}\" पर, {channels} के माध्यम से सूचित करें।",

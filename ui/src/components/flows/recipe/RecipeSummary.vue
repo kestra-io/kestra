@@ -19,7 +19,7 @@
             class="summary-alert"
             :closable="false"
         >
-            {{ $t("recipe.summary.invalid_hint") }}
+            {{ invalidHint }}
         </KsAlert>
 
         <KsCollapse v-model="yamlOpen" class="yaml-preview">
@@ -51,14 +51,17 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {computed, ref} from "vue"
+    import {useI18n} from "vue-i18n"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
-    defineProps<{
+    const props = defineProps<{
         summary: string
         yamlContent: string
         isValid: boolean
+        hasChannel: boolean
+        triggerValid: boolean
         hasInteracted: boolean
     }>()
 
@@ -66,8 +69,19 @@
         create: []
     }>()
 
+    const {t} = useI18n()
     const editorBindings = useEditorBindings()
     const yamlOpen = ref<string[]>([])
+
+    const invalidHint = computed(() => {
+        if (!props.hasChannel && !props.triggerValid) {
+            return t("recipe.summary.invalid_hint")
+        }
+        if (!props.hasChannel) {
+            return t("recipe.then.no_channel_warning")
+        }
+        return t("recipe.summary.invalid_hint_trigger")
+    })
 </script>
 
 <style scoped lang="scss">

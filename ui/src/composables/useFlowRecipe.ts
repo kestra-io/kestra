@@ -82,9 +82,7 @@ export function useFlowRecipe() {
         recipe.notify.slack || recipe.notify.teams || recipe.notify.email,
     )
 
-    const isValid = computed(() => {
-        if (!hasNotifyChannel.value) return false
-
+    const isTriggerConfigValid = computed(() => {
         switch (recipe.triggerType) {
         case "execution":
             return recipe.states.length > 0
@@ -98,6 +96,8 @@ export function useFlowRecipe() {
             return false
         }
     })
+
+    const isValid = computed(() => hasNotifyChannel.value && isTriggerConfigValid.value)
 
     const summary = computed(() => {
         const channels: string[] = []
@@ -160,6 +160,7 @@ export function useFlowRecipe() {
     return {
         recipe,
         isValid,
+        isTriggerConfigValid,
         hasNotifyChannel,
         summary,
         channelAvailability,

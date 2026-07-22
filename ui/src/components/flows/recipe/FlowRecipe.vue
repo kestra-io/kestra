@@ -91,6 +91,8 @@
                     :summary="summary"
                     :yamlContent="yamlContent"
                     :isValid="isValid"
+                    :hasChannel="hasNotifyChannel"
+                    :triggerValid="isTriggerConfigValid"
                     :hasInteracted="hasInteracted"
                     @create="handleCreate"
                 />
@@ -137,7 +139,7 @@
 
     const systemNamespace = computed(() => props.namespace ?? miscStore.configs?.systemNamespace ?? "system")
 
-    const {recipe, isValid, hasNotifyChannel, summary, channelAvailability, availableFqcns, toggleNotify, toggleState, setOtherTriggerType} = useFlowRecipe()
+    const {recipe, isValid, isTriggerConfigValid, hasNotifyChannel, summary, channelAvailability, availableFqcns, toggleNotify, toggleState, setOtherTriggerType} = useFlowRecipe()
 
     const namespaceOptions = ref<string[]>([])
     const hasInteracted = ref(false)

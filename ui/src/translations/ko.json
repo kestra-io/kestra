@@ -485,7 +485,7 @@
       "intro_step2_title": "tasks 추가",
       "intro_step3_cta": "inputs 참조 보기",
       "intro_step3_desc_mid": ", ",
-      "intro_step3_desc_prefix": "",
+      "intro_step3_desc_prefix": "사용",
       "intro_step3_desc_suffix": "와 Pebble 표현식을 사용하세요.",
       "intro_step3_title": "동적으로 만들기",
       "intro_sub": "YAML로 flow를 만드는 데 필요한 모든 것：속성, inputs, Pebble templating을 한 곳에서.",
@@ -1440,7 +1440,14 @@
       "update": "비밀 '{name}' 업데이트",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",
-      "inherited": "상속된 비밀"
+      "inherited": "상속된 비밀",
+      "key": "이름",
+      "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
+      "name": "비밀 value",
+      "description": "설명",
+      "descriptionPlaceholder": "이 비밀을 설명하세요",
+      "tags": "태그",
+      "addTag": "태그 추가"
     },
     "workerId": "Worker Id",
     "kv": {

@@ -485,7 +485,7 @@
       "intro_step2_title": "tasksを追加",
       "intro_step3_cta": "inputs リファレンスを見る",
       "intro_step3_desc_mid": "、",
-      "intro_step3_desc_prefix": "",
+      "intro_step3_desc_prefix": "使用",
       "intro_step3_desc_suffix": "とPebble式を使用します。",
       "intro_step3_title": "動的にする",
       "intro_sub": "YAMLでflowを構築するために必要なすべて：プロパティ、inputs、Pebble templatingを一箇所で。",
@@ -1440,7 +1440,14 @@
       "update": "シークレット '{name}' を更新",
       "isReadOnly": "シークレットは読み取り専用です",
       "names": "Secrets",
-      "inherited": "継承されたsecrets"
+      "inherited": "継承されたsecrets",
+      "key": "名前",
+      "keyPlaceholder": "このシークレットを参照するために使用される名前。例: MY_API_TOKEN",
+      "name": "秘密の値",
+      "description": "説明",
+      "descriptionPlaceholder": "このシークレットの説明",
+      "tags": "タグ",
+      "addTag": "タグを追加"
     },
     "workerId": "Worker Id",
     "kv": {

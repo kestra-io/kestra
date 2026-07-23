@@ -258,26 +258,19 @@ public class Kestra implements Callable<Integer> {
     }
 
     /**
-     * Minimal {@link ApplicationContext} for the {@code kestra migrate} commands: it drops the
-     * eager {@code @Context} beans that only exist to serve a running server or a data/queue role
-     * (see {@link #RUNTIME_STARTUP_PROPERTIES}), including the migration startup trigger. Starting
-     * the context therefore initializes none of them, so nothing queries the database before the
-     * migration is applied. Framework and DI-infrastructure {@code @Context} beans (e.g. value
-     * extraction, expression evaluation) are kept, and the lazily-resolved migration runner, lock,
-     * history store and {@code DataSource} are pulled on demand by the command.
+     * Minimal {@link ApplicationContext} for the {@code kestra migrate} commands: it drops every
+     * <em>conditionally-registered</em> Kestra {@code @Context} bean — the migration startup
+     * trigger, the server/liveness services, any repository/queue-backed startup bean, and the EE
+     * feature validators. Starting the context therefore initializes none of them, so nothing
+     * queries the database (or starts a server/network facet) before the migration is applied.
+     *
+     * <p>
+     * Only <em>unconditional</em> {@code @Context} beans survive: those are Micronaut and Kestra
+     * DI infrastructure (value extraction, expression evaluation, temp-file config, …) that the
+     * command still needs to be instantiated. The migration runner and its lock, history store and
+     * {@code DataSource} are lazy {@code @Singleton}s, pulled on demand by the command.
      */
     private static final class MigrationApplicationContext extends DefaultApplicationContext {
-        /**
-         * Properties whose presence activates a runtime (server/data/queue) role. An eager
-         * {@code @Context} bean gated on any of them is a startup bean we must not initialize in
-         * the migration context — otherwise it would connect to the database (or start a server
-         * facet) before the migration runs.
-         */
-        private static final Set<String> RUNTIME_STARTUP_PROPERTIES = Set.of(
-            "kestra.repository.type",
-            "kestra.queue.type",
-            "kestra.server-type"
-        );
 
         MigrationApplicationContext(ApplicationContextConfiguration configuration) {
             super(configuration);
@@ -286,22 +279,25 @@ public class Kestra implements Callable<Integer> {
         @Override
         protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
             return super.resolveBeanDefinitionReferences().stream()
-                .filter(reference -> !isRuntimeStartupBean(reference))
+                .filter(reference -> !isConditionalKestraStartupBean(reference))
                 .toList();
         }
 
-        private static boolean isRuntimeStartupBean(BeanDefinitionReference<?> reference) {
-            if (!reference.isContextScope()) {
-                return false;
-            }
-            return reference.getAnnotationMetadata()
-                .getAnnotationValuesByType(Requires.class)
-                .stream()
-                .anyMatch(
-                    requires -> requires.stringValue("property")
-                        .map(RUNTIME_STARTUP_PROPERTIES::contains)
-                        .orElse(false)
-                );
+        /**
+         * A Kestra {@code @Context} bean whose registration is conditional (carries a
+         * {@code @Requires}, directly or via a marker stereotype such as
+         * {@code @JdbcRepositoryEnabled}). Such beans exist only to serve a runtime role and must
+         * not eager-initialize in a migration context. Dropping <em>any</em> conditional Kestra
+         * {@code @Context} bean — rather than denylisting specific gating properties — keeps this
+         * robust against beans gated via {@code @Requires(beans = …)}, a different property, or a
+         * stereotype. {@code hasStereotype(Requires.class)} is the same signal Micronaut's own
+         * {@code RequiresCondition} uses, and it reads the reference metadata without loading the
+         * bean class.
+         */
+        private static boolean isConditionalKestraStartupBean(BeanDefinitionReference<?> reference) {
+            return reference.isContextScope()
+                && reference.getBeanDefinitionName().startsWith("io.kestra")
+                && reference.getAnnotationMetadata().hasStereotype(Requires.class);
         }
     }
 }

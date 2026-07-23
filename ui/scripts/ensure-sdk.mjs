@@ -59,5 +59,9 @@ export function checkSpecAndGenerate(uiRoot) {
 // Only run as CLI when executed directly — not when EE's ensure-sdk.mjs imports these functions.
 if (import.meta.url === `file://${process.argv[1]}`) {
     const uiRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
-    process.argv.includes("--check-spec") ? checkSpecAndGenerate(uiRoot) : ensureSdkBundled(uiRoot)
+    if (process.argv.includes("--check-spec")) {
+        checkSpecAndGenerate(uiRoot)
+    } else {
+        ensureSdkBundled(uiRoot)
+    }
 }

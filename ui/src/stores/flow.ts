@@ -213,8 +213,6 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function publishDraft(target?: Flow): Promise<FlowSaveOutcome> {
         if (target) {
-            // Loaded with store:false so the shared editor buffer (flowYaml/flowYamlOrigin), which
-            // may hold unsaved edits from a co-mounted editor, is never touched by this publish.
             const data = await loadFlow({namespace: target.namespace, id: target.id, store: false})
             if (!data?.source) return "blocked"
             await saveFlow({flow: data.source, draft: false})

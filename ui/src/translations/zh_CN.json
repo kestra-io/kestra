@@ -127,6 +127,8 @@
       "last24hours": "最近24小时",
       "last48hours": "最近48小时",
       "last7days": "最近7天",
+      "last14days": "最近 14 天",
+      "last28days": "最近 28 天",
       "last30days": "最近30天",
       "last365days": "最近365天",
       "next5minutes": "接下来的5分钟",
@@ -145,6 +147,8 @@
       "24hours": "24小时",
       "48hours": "48小时",
       "7days": "7天",
+      "14days": "14 天",
+      "28days": "28 天",
       "30days": "30天",
       "365days": "365天",
       "never": "从不",
@@ -1440,7 +1444,14 @@
       "update": "更新密钥 '{name}'",
       "isReadOnly": "Secret 是只读的",
       "names": "秘密",
-      "inherited": "继承的秘密"
+      "inherited": "继承的秘密",
+      "key": "名称",
+      "keyPlaceholder": "用于引用此密钥的名称，例如 MY_API_TOKEN",
+      "name": "秘密值",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此 secret",
+      "tags": "标签",
+      "addTag": "添加标签"
     },
     "workerId": "工作者ID",
     "kv": {

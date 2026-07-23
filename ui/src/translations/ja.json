@@ -127,6 +127,8 @@
       "last24hours": "過去24時間",
       "last48hours": "過去48時間",
       "last7days": "過去7日間",
+      "last14days": "直近14日間",
+      "last28days": "過去28日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
       "next5minutes": "次の5分",
@@ -145,6 +147,8 @@
       "24hours": "24時間",
       "48hours": "48時間",
       "7days": "7日間",
+      "14days": "14日間",
+      "28days": "28日間",
       "30days": "30日間",
       "365days": "365日間",
       "never": "無期限",
@@ -1440,7 +1444,14 @@
       "update": "シークレット '{name}' を更新",
       "isReadOnly": "シークレットは読み取り専用です",
       "names": "Secrets",
-      "inherited": "継承されたsecrets"
+      "inherited": "継承されたsecrets",
+      "key": "名前",
+      "keyPlaceholder": "このシークレットを参照するために使用される名前。例: MY_API_TOKEN",
+      "name": "秘密の値",
+      "description": "説明",
+      "descriptionPlaceholder": "このシークレットの説明",
+      "tags": "タグ",
+      "addTag": "タグを追加"
     },
     "workerId": "Worker Id",
     "kv": {

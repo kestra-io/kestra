@@ -106,7 +106,11 @@ export function useAiChat() {
     /** Creates the thread once and reuses its uid for the rest of the session. */
     async function ensureThread(request: CreateThreadRequest = {}): Promise<ThreadSummary> {
         if (thread.value) return thread.value
-        const {data} = await client.post<ThreadSummary>(base(), request)
+        // `showMessageOnError: false` opts out of the global "page not found" redirect: when no AI
+        // provider is configured the agentic endpoints (`AiAgentController`, `@Requires` the
+        // AiServiceManager bean) aren't registered, so this create 404s — surfaced as the copilot's
+        // own "unavailable" state by sendChat, not a full-page redirect.
+        const {data} = await client.post<ThreadSummary>(base(), request, {showMessageOnError: false} as any)
         thread.value = data
         status.value = data.status
         rememberThread(data.uid)
@@ -207,7 +211,9 @@ export function useAiChat() {
         try {
             active = await ensureThread({mode: request.mode})
         } catch (e) {
-            if (is503(e)) unavailable.value = true
+            // 503 (provider unreachable) or 404 (agentic endpoints not registered — no provider bean)
+            // both mean the copilot can't run: show the "unavailable" state, never a page redirect.
+            if (is503(e) || is404(e)) unavailable.value = true
             else error.value = toErrorCode(e)
             return
         }
@@ -376,6 +382,17 @@ export function useAiChat() {
     function is503(e: unknown): boolean {
         if (e instanceof SseHttpError) return e.status === 503
         return (e as {response?: {status?: number}})?.response?.status === 503
+    }
+
+    /**
+     * True when the failure is a 404 — the agentic AI endpoints aren't registered because no AI
+     * provider is configured (`AiAgentController` is `@Requires(AiServiceManager)`). Treated like a
+     * 503 (copilot unavailable), not the global not-found page.
+     */
+    function is404(e: unknown): boolean {
+        if (e instanceof SseHttpError) return e.status === 404
+        const err = e as {status?: number; response?: {status?: number}}
+        return err?.status === 404 || err?.response?.status === 404
     }
 
     return {

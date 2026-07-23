@@ -53,6 +53,10 @@ function lastDraftParam() {
     return call?.[0]?.draft
 }
 
+function lastUpdateFlowCall() {
+    return updateFlow.mock.calls.at(-1)?.[0]
+}
+
 describe("flow draft save — draft resolution per entry point", () => {
     // First import of the flow store pulls in heavy deps (monaco, ...); warm it so no single test
     // pays that cost and trips the default 5s timeout.
@@ -108,7 +112,7 @@ describe("flow draft save — draft resolution per entry point", () => {
 
     // FlowRun's executionsStore.flow (the run-panel's flow) has no `source` field: publishDraft(target)
     // must load the flow's source itself instead of silently no-op'ing on the missing source.
-    it("publishDraft(target) loads the target's source before publishing, when the caller's flow has none", async () => {
+    it("publishDraft(target) fetches the target's source via loadFlow(store:false) and publishes it", async () => {
         const store = await freshStore()
         store.flowYaml = ""
         const target = {id: "f", namespace: "ns", draft: true} as any
@@ -118,8 +122,34 @@ describe("flow draft save — draft resolution per entry point", () => {
         const outcome = await store.publishDraft(target)
 
         expect(getFlow).toHaveBeenCalledWith(expect.objectContaining({namespace: "ns", id: "f", source: true}))
-        expect(lastDraftParam())
-            .toBe(false)
+        expect(lastUpdateFlowCall())
+            .toMatchObject({body: VALID_FLOW, draft: false})
+        expect(outcome)
+            .toBe("saved")
+    })
+
+    // TriggerFlow/FlowRun is embedded in the flow editor's own top bar, so useFlowStore() (a Pinia
+    // singleton) is shared with Monaco: publishDraft(target) must publish the last-saved draft
+    // source without touching flowYaml/flowYamlOrigin, or it silently wipes unsaved keystrokes.
+    it("publishDraft(target) does not clobber unsaved editor buffer content", async () => {
+        const store = await freshStore()
+        const unsavedEdits = `${VALID_FLOW}  # unsaved local edit\n`
+        store.flowYaml = unsavedEdits
+        store.flowYamlOrigin = VALID_FLOW
+        const target = {id: "f", namespace: "ns", draft: true} as any
+
+        const savedDraftSource = VALID_FLOW.replace("hi", "saved draft revision")
+        getFlow.mockResolvedValueOnce({id: "f", namespace: "ns", draft: true, revision: 1, source: savedDraftSource})
+
+        expect(store.haveChange).toBe(true)
+
+        const outcome = await store.publishDraft(target)
+
+        expect(store.flowYaml).toBe(unsavedEdits)
+        expect(store.flowYamlOrigin).toBe(VALID_FLOW)
+        expect(store.haveChange).toBe(true)
+        expect(lastUpdateFlowCall())
+            .toMatchObject({body: savedDraftSource, draft: false})
         expect(outcome)
             .toBe("saved")
     })

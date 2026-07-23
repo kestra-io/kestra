@@ -7,8 +7,8 @@
         <KsAlert v-if="flow.draft" type="warning" showIcon :closable="false">
             <strong>{{ $t('draft') }}</strong><br>
             {{ $t('draft_flow_warning') }}
-            <div class="draft-publish-action">
-                <KsButton type="primary" size="small" :loading="publishing" @click="onPublishDraft">
+            <div v-if="canPublishDraft" class="draft-publish-action">
+                <KsButton type="primary" size="small" :loading="publishing" data-test="publish-draft" @click="onPublishDraft">
                     {{ $t('publish_draft') }}
                 </KsButton>
             </div>
@@ -130,6 +130,9 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
     import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
@@ -204,6 +207,7 @@
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
     const flowStore = useFlowStore()
+    const authStore = useAuthStore()
 
     const openTab = ref("inputs")
     const inputs = ref<Record<string, unknown>>({})
@@ -227,6 +231,10 @@
     const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
 
+    const canPublishDraft = computed(() =>
+        Boolean(flow.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value.namespace)),
+    )
+
     async function onPublishDraft() {
         if (!flow.value) return
         publishing.value = true
@@ -235,6 +243,10 @@
             const outcome = await flowStore.publishDraft(flow.value)
             if (isSuccessfulFlowSaveOutcome(outcome)) {
                 await executionsStore.loadFlowForExecution({namespace, flowId: id, store: true})
+            }
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000})
             }
         } finally {
             publishing.value = false

@@ -2,6 +2,7 @@ package io.kestra.core.assets;
 
 import java.util.List;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetUser;
@@ -13,7 +14,7 @@ import jakarta.inject.Singleton;
 
 public interface AssetService {
 
-    void asyncUpsert(AssetUser assetUser, Asset asset) throws QueueException;
+    void asyncUpsert(AssetUser assetUser, Asset asset) throws QueueException, InternalException;
 
     Asset syncUpsert(@Nullable Asset inRepository, AssetUser assetUser, Asset assetToUpsert) throws QueueException;
 
@@ -25,7 +26,7 @@ public interface AssetService {
     @Secondary
     class NoopAssetService implements AssetService {
         @Override
-        public void asyncUpsert(AssetUser assetUser, Asset asset) throws QueueException {
+        public void asyncUpsert(AssetUser assetUser, Asset asset) throws QueueException, InternalException {
             // no-op
         }
 

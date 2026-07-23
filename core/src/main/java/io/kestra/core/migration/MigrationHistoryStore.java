@@ -59,6 +59,21 @@ public interface MigrationHistoryStore {
     void validateChecksum(MigrationScript script) throws Exception;
 
     /**
+     * Updates the stored checksum for an already-applied migration script.
+     *
+     * <p>This is intended for explicit operator repair after a migration resource was
+     * intentionally changed and existing environments have already recorded the previous
+     * checksum. It must not execute migration logic.
+     *
+     * @param script the script whose current checksum should be stored
+     * @throws UnsupportedOperationException if checksum repair is not supported by the backend
+     * @throws Exception on backend error
+     */
+    default void updateChecksum(MigrationScript script) throws Exception {
+        throw new UnsupportedOperationException("Migration checksum repair is not supported by " + getClass().getName());
+    }
+
+    /**
      * Records a successfully applied migration script in the history.
      *
      * @param script the applied script

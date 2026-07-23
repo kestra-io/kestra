@@ -10,7 +10,7 @@
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="$t('no_results.kv_pairs')"
-        class="fill-height"
+        :fitHeight="!paneView"
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
     >
@@ -96,7 +96,7 @@
                     v-if="scope.row.key !== undefined"
                     :tooltip="$t('copy_to_clipboard')"
                     placement="left"
-                    @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
+                    @click="copyKey(scope.row.key)"
                 >
                     <ContentCopy />
                 </KsIconButton>
@@ -588,6 +588,21 @@
         }
         kv.value.update = true
         kv.value.description = entry.description
+
+        if (entry.expirationDate) {
+            const expirationMoment = moment(entry.expirationDate)
+            const now = moment()
+
+            if (expirationMoment.isValid() && expirationMoment.isAfter(now)) {
+                const remainingMilliseconds = Math.round(expirationMoment.diff(now) / 1000) * 1000
+                kv.value.ttl = moment.duration(remainingMilliseconds).toISOString()
+            } else {
+                kv.value.ttl = undefined
+            }
+        } else {
+            kv.value.ttl = undefined
+        }
+
         addKvDrawerVisible.value = true
     }
 
@@ -605,6 +620,11 @@
             description: entry.description,
         }
         viewKvDrawerVisible.value = true
+    }
+
+    async function copyKey(key: string) {
+        await Utils.copy(`{{ kv('${key}') }}`)
+        toast.success(t("copied"))
     }
 
     function removeKv(namespace: string, key: string) {

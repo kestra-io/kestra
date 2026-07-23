@@ -72,6 +72,168 @@ class FlowableUtilsTest {
     }
 
     @Test
+    void resolveParallelNexts_retryingChildShouldConsumeConcurrencySlot() {
+        // Given: a Parallel with concurrency=2 and four children a,b,c,d.
+        // First batch (a,b) already dispatched: a is RETRYING (in-flight, will re-attempt),
+        // b is SUCCESS. c and d have no taskRun yet.
+        //
+        // RETRYING is neither isRunning() nor isTerminated(), and it is not CREATED, so it
+        // slips through both the isRunning() concurrency count and the findLastCreated guard.
+        // With the correct "!isTerminated" slot count, one slot is held by the RETRYING task,
+        // leaving room for exactly ONE more child — not two.
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask a = resolvedTask("a");
+        ResolvedTask b = resolvedTask("b");
+        ResolvedTask c = resolvedTask("c");
+        ResolvedTask d = resolvedTask("d");
+
+        TaskRun aRun = TaskRun.of(base, a).withState(State.Type.RETRYING);
+        TaskRun bRun = TaskRun.of(base, b).withState(State.Type.SUCCESS);
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(aRun, bRun))
+            .build();
+
+        // When
+        List<NextTaskRun> next = FlowableUtils.resolveParallelNexts(
+            execution,
+            List.of(a, b, c, d),
+            List.of(),
+            List.of(),
+            null,
+            2
+        );
+
+        // Then: only one slot is free (a is RETRYING = in-flight), so at most one child dispatched.
+        // Non-terminated after dispatch = a(RETRYING) + 1 new = 2 = concurrency. No over-subscription.
+        assertThat(next).hasSize(1);
+        assertThat(next.getFirst().getTaskRun().getTaskId()).isEqualTo("c");
+    }
+
+    @Test
+    void resolveParallelNexts_pausedChildShouldConsumeConcurrencySlot() {
+        // Given: same shape as above, but the in-flight child is PAUSED (e.g. a Pause task
+        // waiting on its delay). PAUSED is also neither isRunning() nor isTerminated() nor
+        // CREATED, so it exhibits the same slot-leak as RETRYING.
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask a = resolvedTask("a");
+        ResolvedTask b = resolvedTask("b");
+        ResolvedTask c = resolvedTask("c");
+        ResolvedTask d = resolvedTask("d");
+
+        TaskRun aRun = TaskRun.of(base, a).withState(State.Type.PAUSED);
+        TaskRun bRun = TaskRun.of(base, b).withState(State.Type.SUCCESS);
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(aRun, bRun))
+            .build();
+
+        // When
+        List<NextTaskRun> next = FlowableUtils.resolveParallelNexts(
+            execution,
+            List.of(a, b, c, d),
+            List.of(),
+            List.of(),
+            null,
+            2
+        );
+
+        // Then: the PAUSED task holds a slot, so only one more child may start.
+        assertThat(next).hasSize(1);
+        assertThat(next.getFirst().getTaskRun().getTaskId()).isEqualTo("c");
+    }
+
+    @Test
+    void resolveParallelNexts_runningChildrenAtLimitShouldDispatchNothing() {
+        // Guard against regression: when both slots are held by RUNNING children (which the
+        // old code already counted correctly), no new child should be dispatched.
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask a = resolvedTask("a");
+        ResolvedTask b = resolvedTask("b");
+        ResolvedTask c = resolvedTask("c");
+        ResolvedTask d = resolvedTask("d");
+
+        TaskRun aRun = TaskRun.of(base, a).withState(State.Type.RUNNING);
+        TaskRun bRun = TaskRun.of(base, b).withState(State.Type.RUNNING);
+
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of(aRun, bRun))
+            .build();
+
+        // When
+        List<NextTaskRun> next = FlowableUtils.resolveParallelNexts(
+            execution,
+            List.of(a, b, c, d),
+            List.of(),
+            List.of(),
+            null,
+            2
+        );
+
+        // Then
+        assertThat(next).isEmpty();
+    }
+
+    @Test
+    void resolveParallelNexts_freshStartShouldDispatchUpToConcurrency() {
+        // Regression guard: with nothing dispatched yet and concurrency=2, exactly two
+        // children must start in the first batch — the fix must not under-dispatch.
+        Execution base = Execution.builder()
+            .id("test-execution")
+            .namespace("io.kestra.test")
+            .flowId("test-flow")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.RUNNING))
+            .build();
+
+        ResolvedTask a = resolvedTask("a");
+        ResolvedTask b = resolvedTask("b");
+        ResolvedTask c = resolvedTask("c");
+        ResolvedTask d = resolvedTask("d");
+
+        // No taskRuns yet
+        Execution execution = base.toBuilder()
+            .taskRunList(List.of())
+            .build();
+
+        // When
+        List<NextTaskRun> next = FlowableUtils.resolveParallelNexts(
+            execution,
+            List.of(a, b, c, d),
+            List.of(),
+            List.of(),
+            null,
+            2
+        );
+
+        // Then
+        assertThat(next).hasSize(2);
+        assertThat(next.stream().map(n -> n.getTaskRun().getTaskId()).toList())
+            .containsExactly("a", "b");
+    }
+
+    @Test
     void resolveValues_withStringJsonArray_shouldReturnListOfStrings() throws Exception {
         // Given
         RunContext runContext = runContextFactory.of();

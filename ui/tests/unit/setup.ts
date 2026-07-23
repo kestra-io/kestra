@@ -40,6 +40,11 @@ if (typeof document !== "undefined" && typeof document.queryCommandSupported !==
 if (typeof document !== "undefined" && typeof document.execCommand !== "function") {
     (document as any).execCommand = () => false
 }
+// pdfjs-dist (pulled in transitively via PdfPreview.vue) constructs a DOMMatrix
+// at module load time, which jsdom doesn't provide.
+if (typeof globalThis.DOMMatrix === "undefined") {
+    (globalThis as any).DOMMatrix = class DOMMatrix {}
+}
 if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
     (window as any).matchMedia = (query: string) => ({
         matches: false,

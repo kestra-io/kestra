@@ -13,8 +13,8 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Version;
 import io.kestra.core.utils.VersionProvider;
@@ -43,7 +43,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final FlowAiCopilot<Flow> flowAiCopilot;
     private final DashboardAiCopilot<Dashboard> dashboardAiCopilot;
     private final ExpressionContextService expressionContextService;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
     private final NamespaceContextTool namespaceContextTool;
     @Nullable
     private volatile KestraDocsContextTool kestraDocsContextTool;
@@ -107,7 +107,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final List<ChatModelListener> listeners,
         final T aiConfiguration,
         final ExpressionContextService expressionContextService,
-        final PluginDefaultService pluginDefaultService) {
+        final FlowParsingService flowParsingService) {
         this.pluginRegistry = pluginRegistry;
         this.jsonSchemaGenerator = jsonSchemaGenerator;
         this.instanceUid = instanceService.fetch();
@@ -117,7 +117,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
         this.expressionContextService = expressionContextService;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.namespaceContextTool = namespaceContextTool;
 
         this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
@@ -184,7 +184,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private String buildPebbleExpressions(@Nullable String tenantId, String flowYaml, @Nullable String namespace) {
         if (flowYaml != null && !flowYaml.isBlank()) {
             try {
-                Flow flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, flowYaml, false);
+                Flow flow = flowParsingService.parse(tenantId, flowYaml, false);
                 return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
             } catch (Exception e) {
                 log.debug("Could not parse flow YAML for pebble expression context, falling back to namespace context: {}", e.getMessage());

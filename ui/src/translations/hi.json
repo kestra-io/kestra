@@ -36,7 +36,8 @@
     "Default page": "पूर्व-निर्धारित पृष्ठ",
     "confirmation": "पुष्टि",
     "common": {
-      "back": "वापस"
+      "back": "वापस",
+      "openInNewTab": "नए टैब में खोलें"
     },
     "delete confirm": "क्या आप वाकई <code>{name}</code> को हटाना चाहते हैं?",
     "outdated revision save confirmation": {
@@ -126,6 +127,8 @@
       "last24hours": "पिछले 24 घंटे",
       "last48hours": "पिछले 48 घंटे",
       "last7days": "पिछले 7 दिन",
+      "last14days": "पिछले 14 दिन",
+      "last28days": "पिछले 28 दिन",
       "last30days": "पिछले 30 दिन",
       "last365days": "पिछले 365 दिन",
       "next5minutes": "अगले 5 मिनट",
@@ -144,6 +147,8 @@
       "24hours": "24 घंटे",
       "48hours": "48 घंटे",
       "7days": "7 दिन",
+      "14days": "14 दिन",
+      "28days": "28 दिन",
       "30days": "30 दिन",
       "365days": "365 दिन",
       "never": "कभी नहीं",
@@ -458,10 +463,53 @@
     },
     "use": "उपयोग करें",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "प्रकार कॉपी करें",
+      "deprecated": "पुराना",
+      "dynamic": "गतिशील",
+      "filter_all": "सभी",
+      "filter_properties": "गुण फ़िल्टर करें…",
+      "filter_required": "आवश्यक",
+      "intro_callout_prefix": "किसी task का ",
+      "intro_callout_suffix": " एडिटर में क्लिक करें, तो उसकी plugin डॉक्यूमेंटेशन यहाँ खुलेगी।",
+      "intro_clear_search": "खोज साफ़ करें",
+      "intro_learn_more": "और जानें",
+      "intro_no_matches_sub": "कोई भी फ़ंक्शन, फ़िल्टर या प्रॉपर्टी आपकी खोज से मेल नहीं खाती।",
+      "intro_no_matches_title": "\"{q}\" के लिए कोई परिणाम नहीं",
+      "intro_result_count": "{count} परिणाम",
+      "intro_search_placeholder": "रेफरेंस में खोजें…",
+      "intro_start_here": "यहाँ से शुरू करें",
+      "intro_step1_cta": "flow संदर्भ देखें",
+      "intro_step1_desc_mid": " के भीतर एक अद्वितीय ",
+      "intro_step1_desc_prefix": "हर flow को ",
+      "intro_step1_desc_suffix": " की ज़रूरत है।",
+      "intro_step1_title": "id और namespace दें",
+      "intro_step2_cta": "task संदर्भ देखें",
+      "intro_step2_desc": "क्रमिक एकल क्रियाएँ। task पर क्लिक करें उसकी docs देखने के लिए।",
+      "intro_step2_title": "tasks जोड़ें",
+      "intro_step3_cta": "inputs संदर्भ देखें",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "उपयोग करें ",
+      "intro_step3_desc_suffix": " और Pebble expressions।",
+      "intro_step3_title": "इसे गतिशील बनाएं",
+      "intro_sub": "YAML में flow बनाने के लिए सब कुछ: प्रॉपर्टीज़, inputs और Pebble templating, एक ही जगह।",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Flow डॉक्यूमेंटेशन",
       "name": "plugin",
       "names": "plugins",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "अवलोकन",
+      "nav_properties": "Properties",
+      "non_dynamic": "गैर-गतिशील",
       "please": "कृपया दाईं ओर एक task चुनें ताकि इसका दस्तावेज़ीकरण देखा जा सके",
-      "release": "रिलीज़ नोट्स"
+      "release": "रिलीज़ नोट्स",
+      "required": "आवश्यक"
     },
     "last execution date": "अंतिम निष्पादन तिथि",
     "last execution state": "अंतिम स्थिति",
@@ -692,7 +740,6 @@
     "taskid column details": "निष्पादित होने वाला अंतिम Task और इसके प्रयासों की संख्या।",
     "flow already exists": "Flow पहले से मौजूद है",
     "flow already exists message": "Flow <code>{id}</code> पहले से ही namespace <code>{namespace}</code> में मौजूद है। क्या आप एक नया संशोधन बनाना चाहते हैं?",
-    "plugin_default_already_exists": "<code>{type}</code> के लिए प्लगइन डिफ़ॉल्ट पहले से मौजूद है।",
     "namespace not allowed": "Namespace की अनुमति नहीं है",
     "switch-view": "दृश्य स्विच करें",
     "source and topology": "स्रोत और टोपोलॉजी",
@@ -728,7 +775,6 @@
     },
     "title": "शीर्षक",
     "api": "API",
-    "more_actions": "अधिक क्रियाएँ",
     "expand error": "केवल असफल Tasks विस्तारित करें",
     "expand all": "सभी विस्तारित करें",
     "collapse all": "सभी संक्षिप्त करें",
@@ -1192,6 +1238,12 @@
         "title": "कस्टम Blueprints जोड़ें",
         "message": "Kestra एंटरप्राइज एडिशन में, आप अपनी संस्था के लिए केवल उपलब्ध कस्टम Blueprints बना सकते हैं। आप इन्हें अपनी टीम में साझा करने, केंद्रीकृत करने और सामान्य रूप से उपयोग किए जाने वाले workflows को दस्तावेज़ करने के लिए सर्वोत्तम-प्रथाओं के टेम्पलेट के रूप में उपयोग कर सकते हैं।"
       },
+      "policies": {
+        "header": "शासन नीतियाँ",
+        "label": "नीतियाँ",
+        "message": "नीतियां प्लेटफ़ॉर्म टीमों को सभी flows में नियमों को केंद्रीय रूप से प्रबंधित और लागू करने में सक्षम बनाती हैं — जैसे साझा डिफ़ॉल्ट इंजेक्ट करना, प्लगइन्स को ब्लॉक करना, प्रॉपर्टी मानों को सीमित करना, और अनुपालन labels की आवश्यकता करना। नियम tenant या namespace स्तर पर चरणबद्ध रोलआउट के साथ लागू होते हैं, और हर इंजेक्ट किया गया या बदला गया value flow लेखकों को दिखाई देता है।",
+        "title": "नीतियों के साथ हर flow का नियमन करें"
+      },
       "namespace": {
         "edit": {
           "title": "अपने Namespace प्रबंधन को अपग्रेड करें",
@@ -1209,9 +1261,9 @@
           "title": "अपने वेरिएबल्स को केंद्रीय रूप से प्रबंधित करें",
           "message": "Kestra Enterprise Edition में, आप namespace-स्तर के वेरिएबल्स को परिभाषित और प्रबंधित कर सकते हैं ताकि flows में दोहराव वाली कॉन्फ़िगरेशन को समाप्त किया जा सके। ये वेरिएबल्स स्थिरता सुनिश्चित करते हैं, कॉन्फ़िगरेशन अपडेट को सरल बनाते हैं, और किसी भी task या trigger द्वारा आसानी से संदर्भित किए जा सकते हैं, जिससे workflows को अधिक साफ और बनाए रखने योग्य बनाया जा सके।"
         },
-        "plugin-defaults": {
-          "title": "प्लगइन डिफॉल्ट्स के साथ कॉन्फ़िगरेशन को मानकीकृत करें",
-          "message": "Kestra एंटरप्राइज एडिशन में, आप namespace-विशिष्ट प्लगइन डिफ़ॉल्ट सेट कर सकते हैं, जिससे प्रत्येक flow में डुप्लिकेट सेटअप की आवश्यकता कम हो जाती है। यह केंद्रीय प्लगइन गवर्नेंस सुसंगत कॉन्फ़िगरेशन को लागू करता है, गुप्त या वेरिएबल्स के सुरक्षित संदर्भ की अनुमति देता है, और आपके workflows के रखरखाव को सरल बनाता है।"
+        "policies": {
+          "title": "इस namespace पर शासन नियम लागू करें",
+          "message": "Kestra Enterprise Edition में, नीतियां आपको ऐसे नियम परिभाषित करने देती हैं जो इस namespace और इसके बच्चों में हर flow पर लागू होते हैं — साझा डिफ़ॉल्ट इंजेक्ट करें, प्रॉपर्टी मानों को प्रतिबंधित करें, plugins को ब्लॉक करें, और अनुपालन labels की आवश्यकता होती है, हर बदलाव flow लेखकों को पूरी तरह से दिखाई देता है।"
         },
         "history": {
           "title": "एक ही स्थान पर Revision History प्रबंधित करें",
@@ -1305,7 +1357,7 @@
         "complete": "पूर्ण करें",
         "save_to_continue": "जारी रखने के लिए ऊपर दाईं ओर Save दबाएँ।",
         "execute_to_continue": "1. ऊपर दाईं ओर Execute दबाएँ।\n2. <strong>name</strong> के लिए एक मान प्रदान करें।\n3. मोडल में फिर से Execute दबाएँ।",
-        "edit_flow_to_continue": "ऊपर दाईं ओर Edit flow दबाएँ।",
+        "edit_flow_to_continue": "क्रियाएँ मेनू (ऊपरी बार, दाईं ओर) खोलें और Flow संपादित करें चुनें।",
         "cancel_tutorial": "ट्यूटोरियल रद्द करें",
         "finish_tutorial": "ट्यूटोरियल समाप्त करें"
       },
@@ -1343,7 +1395,7 @@
         "save_flow": "जारी रखने के लिए Save पर क्लिक करें।",
         "execute_flow": "जारी रखने के लिए फ्लो को एक बार चलाएँ।",
         "view_logs_status": "निष्पादन विवरण खोलें और `greet` के लॉग जाँचें।",
-        "edit_flow_from_execution": "जारी रखने के लिए ऊपर बार में `Edit flow` पर क्लिक करें।",
+        "edit_flow_from_execution": "जारी रखने के लिए क्रियाएँ मेनू खोलें और `Flow संपादित करें` पर क्लिक करें।",
         "add_cron_trigger_section": "`triggers` सेक्शन बनाएँ और एक schedule ट्रिगर जोड़ें।",
         "add_cron_trigger_type": "ट्रिगर प्रकार को `io.kestra.plugin.core.trigger.Schedule` पर सेट करें।",
         "add_cron_trigger_cron": "एक cron अभिव्यक्ति जोड़ें, उदाहरण: `\"*/5 * * * *\"`।",
@@ -1387,32 +1439,19 @@
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
     "system_namespace": "अपने प्लेटफ़ॉर्म को सिस्टम flows के साथ नियंत्रण में रखें।",
     "system_namespace_description": "रखरखाव के tasks को स्वचालित करें, failure alerts से लेकर automated cleanups तक।",
-    "pluginDefaults": {
-      "title": "प्लगइन डिफॉल्ट्स",
-      "add": "प्लगइन डिफ़ॉल्ट जोड़ें",
-      "edit": "प्लगइन डिफ़ॉल्ट संपादित करें",
-      "add_subtitle": "इसके गुणों के साथ एक नया प्लगइन डिफ़ॉल्ट कॉन्फ़िगर करें",
-      "edit_subtitle": "मौजूदा प्लगइन डिफ़ॉल्ट कॉन्फ़िगरेशन को संशोधित करें",
-      "predefined": "पूर्वनिर्धारित प्लगइन",
-      "custom": "कस्टम प्लगइन",
-      "form": "फॉर्म",
-      "yaml": "YAML",
-      "select_predefined": "पूर्वनिर्धारित प्लगइन चुनें",
-      "cancel": "रद्द करें",
-      "update": "प्लगइन डिफ़ॉल्ट अपडेट करें",
-      "custom_type": "कस्टम प्लगइन प्रकार",
-      "custom_placeholder": "प्लगइन प्रकार दर्ज करें",
-      "use_custom": "कस्टम उपयोग करें",
-      "custom_configure": "कस्टम प्लगइन प्रकार - YAML का उपयोग करके कॉन्फ़िगर करें",
-      "yaml_configuration": "YAML कॉन्फ़िगरेशन",
-      "show_yaml": "YAML दिखाएं"
-    },
     "secret": {
       "add": "बनाएं",
       "update": "गुप्त जानकारी '{name}' अपडेट करें",
       "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
       "names": "Secrets",
-      "inherited": "Inherited secrets"
+      "inherited": "Inherited secrets",
+      "key": "नाम",
+      "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
+      "name": "गुप्त मान",
+      "description": "विवरण",
+      "descriptionPlaceholder": "इस secret का वर्णन करें",
+      "tags": "टैग",
+      "addTag": "टैग जोड़ें"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1629,8 +1668,7 @@
         "triggers": "ट्रिगर्स",
         "errors": "त्रुटि हैंडलर्स",
         "afterExecution": "Execution के बाद",
-        "finally": "अंत में",
-        "pluginDefaults": "डिफ़ॉल्ट प्लगइन"
+        "finally": "अंत में"
       },
       "fields": {
         "main": {
@@ -1662,7 +1700,6 @@
         "triggers": "ट्रिगर चुनें",
         "errors": "एक task चुनें",
         "finally": "एक task चुनें",
-        "pluginDefaults": "एक प्लगइन चुनें",
         "afterExecution": "एक task चुनें",
         "conditions": "कंडीशन चुनें",
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",
@@ -1676,7 +1713,6 @@
         "triggers": "ट्रिगर जोड़ें",
         "errors": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
-        "pluginDefaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
         "afterExecution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "conditions": "एक शर्त जोड़ें",
         "inputs": "इनपुट फ़ील्ड जोड़ें",
@@ -1793,10 +1829,6 @@
       "concurrency_limits": {
         "title": "कोई concurrency सीमाएँ निर्धारित नहीं हैं।",
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।"
-      },
-      "pluginDefaults": {
-        "title": "आपके पास अभी तक कोई प्लगइन डिफॉल्ट नहीं है!",
-        "content": "प्लगइन डिफॉल्ट्स आपको अपने प्लगइन कॉन्फ़िगरेशन को केंद्रीय रूप से प्रबंधित करने और इसे आपके namespace के सभी flows के साथ साझा करने की अनुमति देते हैं।"
       },
       "variables": {
         "title": "अभी तक कोई वेरिएबल नहीं है",
@@ -2303,6 +2335,12 @@
     },
     "open source": "ओपन सोर्स",
     "pricing": "मूल्य निर्धारण",
-    "license": "लाइसेंस"
+    "license": "लाइसेंस",
+    "pwa": {
+      "install_title": "Kestra इंस्टॉल करें",
+      "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
+      "install": "इंस्टॉल करें",
+      "dismiss": "अभी नहीं"
+    }
   }
 }

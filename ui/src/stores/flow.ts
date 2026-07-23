@@ -111,6 +111,7 @@ export const useFlowStore = defineStore("flow", () => {
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
+    const previewSource = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>()
@@ -482,6 +483,7 @@ export const useFlowStore = defineStore("flow", () => {
         flow.value = data
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
+        previewSource.value = undefined
         overallTotal.value = 1
 
         return data
@@ -727,7 +729,7 @@ function deleteFlowAndDependencies() {
     function exportFlowByQuery(options: { namespace: string, id: string }) {
         return axios.get(`${apiUrl()}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
             .then(response => {
-                Utils.downloadUrl(response.request.responseURL, "flows.zip")
+                Utils.downloadUrl(response.request?.responseURL ?? "", "flows.zip")
             })
     }
 
@@ -748,8 +750,8 @@ function deleteFlowAndDependencies() {
 
     function importFlows(options: { file: FormData,  failOnError: boolean }) {
          const {file, failOnError} = options
+        // Don't set Content-Type - the browser must generate the multipart boundary itself.
         return axios.post(`${apiUrl()}/flows/import`, file, {
-            headers: {"Content-Type": "multipart/form-data"},
             params: {failOnError},
         }).then(response => {
             return response
@@ -796,7 +798,7 @@ function deleteFlowAndDependencies() {
                 const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
 
                 if (constraintsArray.length) {
-                    validResults.constraints = constraintsArray.join(", ")
+                    validResults.constraints = constraintsArray.join("\n")
                 } else {
                     delete validResults.constraints
                 }
@@ -916,11 +918,13 @@ function deleteFlowAndDependencies() {
     })
 
     const readOnlySystemLabel = computed(() => {
-        if (!flow.value || !flow.value.labels) {
+        if (!flow.value?.labels) {
             return false
         }
 
-        return flow.value.labels.some(label => label.key === "system.readOnly" && label.value === "true")
+        const labelsArray = Array.isArray(flow.value.labels) ? flow.value.labels : Object.entries(flow.value.labels).map(([key, value]) => ({key, value}))
+
+        return labelsArray.some(label => label.key === "system.readOnly" && label.value === "true")
     })
 
     const isReadOnly = computed(() => {
@@ -940,7 +944,7 @@ function deleteFlowAndDependencies() {
                 : []
 
         const constraintsError =
-            flowValidation.value?.constraints?.split(/, ?/) ?? []
+            flowValidation.value?.constraints ? [flowValidation.value.constraints] : []
 
         const errors = [...flowExistsError, ...constraintsError]
 
@@ -1015,6 +1019,7 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
+        previewSource,
         haveChange,
         expandedSubflows,
         metadata,

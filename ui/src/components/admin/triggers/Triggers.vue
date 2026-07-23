@@ -43,7 +43,7 @@
 
     const tabs = computed(() => [
         {name: "add", title: t("triggers_tabs_add"), component: markRaw(TriggersGrid)},
-        {name: "manage", title: t("triggers_tabs_manage"), component: markRaw(TriggersManage)},
+        {name: "manage", title: t("triggers_tabs_manage"), component: markRaw(TriggersManage), fullContainer: true},
     ])
 
     const isManageTab = computed(() => route.params.tab === "manage")

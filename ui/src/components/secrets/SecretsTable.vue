@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex flex-column fill-height">
+    <div class="secrets-table">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -12,7 +12,7 @@
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
-            class="fill-height"
+            :fitHeight="!paneView && !keyOnly"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
         >
             <template #top v-if="!paneView">
@@ -610,6 +610,12 @@
     })
 </script>
 <style scoped lang="scss">
+    .secrets-table {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
     .namespace-tag {
         padding: 0 6px;
 

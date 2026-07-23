@@ -5,14 +5,13 @@
             :key="rule.key"
             class="ks-password-requirements__item"
         >
-            <KsCheckItem :met="rule.met">{{ rule.label ?? t(`password_requirements.${rule.key}`) }}</KsCheckItem>
+            <KsCheckItem :met="rule.met">{{ rule.label ?? $t(`password_requirements.${rule.key}`) }}</KsCheckItem>
         </li>
     </ul>
 </template>
 
 <script setup lang="ts">
     import {computed, watch} from "vue"
-    import {useI18n} from "vue-i18n"
     import KsCheckItem from "../Data/KsCheckItem.vue"
 
     export type PasswordRule = {
@@ -39,7 +38,6 @@
         (e: "update:valid", valid: boolean): void
     }>()
 
-    const {t} = useI18n({useScope: "global"})
 
     const computedRules = computed(() =>
         (props.rules ?? DEFAULT_RULES).map((rule) => ({...rule, met: rule.test(props.password)})),

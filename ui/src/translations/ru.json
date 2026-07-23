@@ -2286,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "Деструктивный",
         "idempotent": "Идемпотентный",
-        "return_direct": "Прямой возврат",
-        "view_flow": "Открыть flow"
+        "return_direct": "Прямой возврат"
       },
       "connect_tab": {
         "server_url": "URL сервера",

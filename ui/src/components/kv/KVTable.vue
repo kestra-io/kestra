@@ -47,7 +47,16 @@
                 sortable="custom"
                 :sortOrders="['ascending', 'descending']"
                 :label="$t('namespace')"
-            />
+            >
+                <template #default="scope">
+                    <KsEntityLink
+                        v-if="scope.row.namespace"
+                        entity="namespace"
+                        :value="scope.row.namespace"
+                        :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                    />
+                </template>
+            </KsTableColumn>
             <KsTableColumn
                 v-else-if="colProp === 'key'"
                 prop="key"

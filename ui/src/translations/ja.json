@@ -2286,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "破壊的",
         "idempotent": "冪等",
-        "return_direct": "直接返却",
-        "view_flow": "flowを開く"
+        "return_direct": "直接返却"
       },
       "connect_tab": {
         "server_url": "サーバーURL",

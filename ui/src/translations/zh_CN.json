@@ -2286,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "破坏性",
         "idempotent": "幂等",
-        "return_direct": "直接返回",
-        "view_flow": "打开 flow"
+        "return_direct": "直接返回"
       },
       "connect_tab": {
         "server_url": "服务器 URL",

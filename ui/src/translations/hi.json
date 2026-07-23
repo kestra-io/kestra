@@ -2286,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "विनाशकारी",
         "idempotent": "Idempotent",
-        "return_direct": "सीधा वापसी",
-        "view_flow": "flow खोलें"
+        "return_direct": "सीधा वापसी"
       },
       "connect_tab": {
         "server_url": "सर्वर URL",

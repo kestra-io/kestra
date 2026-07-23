@@ -1,17 +1,24 @@
 <template>
+    <KsEntityLink
+        v-if="linkData && props.flow"
+        entity="flow"
+        :value="label"
+        :to="{name: 'flows/update', params: {namespace: linkData.NAMESPACE, id: linkData.FLOW_ID}}"
+    />
+
     <RouterLink
-        v-if="linkData"
+        v-else-if="linkData && props.execution"
         :to="{
-            name: props.execution ? 'executions/update' : props.flow ? 'flows/update' : undefined,
+            name: 'executions/update',
             params: {
                 namespace: linkData.NAMESPACE,
-                ...(props.execution && {flowId: linkData.FLOW_ID, id: label,}),
-                ...(props.flow && {id: linkData.FLOW_ID,}),
+                flowId: linkData.FLOW_ID,
+                id: label,
             },
         }"
     >
         <code class="link" :class="{colored: props.colored}">
-            {{ props.execution ? label.slice(0, 8) : label }}
+            {{ label.slice(0, 8) }}
         </code>
     </RouterLink>
 

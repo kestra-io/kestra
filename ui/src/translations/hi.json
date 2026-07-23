@@ -127,6 +127,8 @@
       "last24hours": "पिछले 24 घंटे",
       "last48hours": "पिछले 48 घंटे",
       "last7days": "पिछले 7 दिन",
+      "last14days": "पिछले 14 दिन",
+      "last28days": "पिछले 28 दिन",
       "last30days": "पिछले 30 दिन",
       "last365days": "पिछले 365 दिन",
       "next5minutes": "अगले 5 मिनट",
@@ -145,6 +147,8 @@
       "24hours": "24 घंटे",
       "48hours": "48 घंटे",
       "7days": "7 दिन",
+      "14days": "14 दिन",
+      "28days": "28 दिन",
       "30days": "30 दिन",
       "365days": "365 दिन",
       "never": "कभी नहीं",
@@ -1441,7 +1445,14 @@
       "update": "गुप्त जानकारी '{name}' अपडेट करें",
       "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
       "names": "Secrets",
-      "inherited": "Inherited secrets"
+      "inherited": "Inherited secrets",
+      "key": "नाम",
+      "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
+      "name": "गुप्त मान",
+      "description": "विवरण",
+      "descriptionPlaceholder": "इस secret का वर्णन करें",
+      "tags": "टैग",
+      "addTag": "टैग जोड़ें"
     },
     "workerId": "Worker Id",
     "kv": {

@@ -127,6 +127,8 @@
       "last24hours": "Last 24 hours",
       "last48hours": "Last 48 hours",
       "last7days": "Last 7 days",
+      "last14days": "Last 14 days",
+      "last28days": "Last 28 days",
       "last30days": "Last 30 days",
       "last365days": "Last 365 days",
       "next5minutes": "Next 5 minutes",
@@ -145,6 +147,8 @@
       "24hours": "24 hours",
       "48hours": "48 hours",
       "7days": "7 days",
+      "14days": "14 days",
+      "28days": "28 days",
       "30days": "30 days",
       "365days": "365 days",
       "never": "Never",
@@ -1441,7 +1445,14 @@
       "update": "Update secret '{name}'",
       "isReadOnly": "Secret is read-only",
       "names": "Secrets",
-      "inherited": "Inherited secrets"
+      "inherited": "Inherited secrets",
+      "key": "Name",
+      "keyPlaceholder": "Name used to reference this secret, e.g. MY_API_TOKEN",
+      "name": "Secret value",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe this secret",
+      "tags": "Tags",
+      "addTag": "Add tag"
     },
     "workerId": "Worker Id",
     "kv": {

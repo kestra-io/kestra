@@ -127,6 +127,8 @@
       "last24hours": "지난 24시간",
       "last48hours": "지난 48시간",
       "last7days": "지난 7일",
+      "last14days": "지난 14일",
+      "last28days": "지난 28일",
       "last30days": "지난 30일",
       "last365days": "지난 365일",
       "next5minutes": "다음 5분",
@@ -145,6 +147,8 @@
       "24hours": "24시간",
       "48hours": "48시간",
       "7days": "7일",
+      "14days": "14일",
+      "28days": "28일",
       "30days": "30일",
       "365days": "365일",
       "never": "절대 없음",
@@ -1441,7 +1445,14 @@
       "update": "비밀 '{name}' 업데이트",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",
-      "inherited": "상속된 비밀"
+      "inherited": "상속된 비밀",
+      "key": "이름",
+      "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
+      "name": "비밀 value",
+      "description": "설명",
+      "descriptionPlaceholder": "이 비밀을 설명하세요",
+      "tags": "태그",
+      "addTag": "태그 추가"
     },
     "workerId": "Worker Id",
     "kv": {

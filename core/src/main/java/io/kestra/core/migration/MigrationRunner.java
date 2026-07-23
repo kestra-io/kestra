@@ -152,6 +152,42 @@ public class MigrationRunner implements MigrationRunnerInterface {
     }
 
     /**
+     * Re-synchronizes the stored checksum for a migration script that has already been applied.
+     *
+     * @param scriptId the migration script ID to repair
+     * @throws MigrationLockedException if another process holds the migration lock
+     * @throws Exception if the script is unknown, unapplied, unsupported, or the backend update fails
+     */
+    @Override
+    public void repairChecksum(final String scriptId) throws MigrationLockedException, Exception {
+        if (!lock.tryAcquire()) {
+            throw new MigrationLockedException();
+        }
+
+        try {
+            historyStore.bootstrapIfNeeded();
+
+            MigrationScript script = scripts.stream()
+                .filter(candidate -> candidate.scriptId().equals(scriptId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown migration script [" + scriptId + "]."));
+
+            if (script.checksum() == null) {
+                throw new IllegalArgumentException("Migration script [" + scriptId + "] has no checksum to repair.");
+            }
+
+            if (!historyStore.isApplied(scriptId)) {
+                throw new IllegalStateException("Cannot repair migration script [" + scriptId + "] because it has not been applied.");
+            }
+
+            historyStore.updateChecksum(script);
+            log.info("Migration checksum repaired for script [{}].", scriptId);
+        } finally {
+            lock.release();
+        }
+    }
+
+    /**
      * Returns all scripts that have not yet been applied, sorted by {@code scriptId}.
      * Used by EE to detect pending scripts before deciding whether to run or fail.
      *

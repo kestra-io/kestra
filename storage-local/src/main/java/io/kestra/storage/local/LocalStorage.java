@@ -209,10 +209,11 @@ public class LocalStorage implements StorageInterface {
     }
 
     private static URI putFile(URI uri, StorageObject storageObject, File file) throws IOException {
-        File parent = file.getParentFile();
-        if (!parent.exists()) {
-            parent.mkdirs();
-        }
+        // Files.createDirectories throws a descriptive exception (e.g. AccessDeniedException,
+        // FileAlreadyExistsException) when the parent hierarchy cannot be created, unlike
+        // File#mkdirs whose boolean result was previously ignored and let the subsequent
+        // FileOutputStream fail with a misleading FileNotFoundException.
+        Files.createDirectories(file.toPath().getParent());
 
         try (InputStream data = storageObject.inputStream(); OutputStream outStream = new FileOutputStream(file)) {
             byte[] buffer = new byte[8 * 1024];

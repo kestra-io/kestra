@@ -14,6 +14,7 @@ import picocli.CommandLine;
     subcommands = {
         RunMigrationCommand.class,
         PlanMigrationCommand.class,
+        RepairMigrationCommand.class,
         UnlockMigrationCommand.class
     }
 )

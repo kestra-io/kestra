@@ -941,6 +941,9 @@
       }
     },
     "apps": "Aplicativos",
+    "promote": {
+      "label": "Implantar"
+    },
     "demos": {
       "enterprise_edition": "Edição Enterprise",
       "get_a_demo_button": "Obter uma Demonstração",
@@ -976,6 +979,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "Promover Flows Entre Ambientes",
+        "message": "Kestra Enterprise Edition permite que você promova flows de um ambiente para outro — como de desenvolvimento para homologação para produção — diretamente da UI, sem a necessidade de Git ou pipelines de CI/CD. Revise um diff do que exatamente será alterado antes de promover, proteja alvos sensíveis com um gate de confirmação, identifique desvios rapidamente e mantenha um histórico completo de quem promoveu o quê, onde e quando."
       },
       "IAM": {
         "title": "Gerencie Usuários através do IAM com SSO, SCIM e RBAC",

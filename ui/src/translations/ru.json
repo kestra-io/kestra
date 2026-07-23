@@ -941,6 +941,9 @@
       }
     },
     "apps": "Приложения",
+    "promote": {
+      "label": "Развернуть"
+    },
     "demos": {
       "enterprise_edition": "Enterprise Edition (Корпоративная версия)",
       "get_a_demo_button": "Получить демо-версию",
@@ -976,6 +979,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "Продвигать Flows между средами",
+        "message": "Kestra Enterprise Edition позволяет продвигать flows из одной среды в другую — например, из dev в staging и затем в production — непосредственно из UI, без необходимости использования Git или CI/CD пайплайнов. Просматривайте diff того, что именно изменится перед продвижением, защищайте конфиденциальные цели с помощью подтверждающего шлюза, мгновенно выявляйте расхождения и ведите полную историю того, кто, что, куда и когда продвинул."
       },
       "IAM": {
         "title": "Управление пользователями через IAM с SSO, SCIM и RBAC",

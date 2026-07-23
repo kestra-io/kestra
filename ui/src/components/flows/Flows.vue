@@ -239,6 +239,7 @@
                         <KsDateAgo v-if="scope.row.updated" :date="scope.row.updated" inverted />
                     </template>
                 </KsTableColumn>
+
             </template>
 
             <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">

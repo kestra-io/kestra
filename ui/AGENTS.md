@@ -308,6 +308,7 @@ If your `<style>` block needs to exist:
 | `KsAutocomplete` | Autocomplete input with suggestions |
 | `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
+| `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
 | `KsColorPicker` | Color picker |

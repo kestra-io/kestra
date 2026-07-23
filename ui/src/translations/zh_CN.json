@@ -941,6 +941,9 @@
       }
     },
     "apps": "应用程序",
+    "promote": {
+      "label": "部署"
+    },
     "demos": {
       "enterprise_edition": "企业版",
       "get_a_demo_button": "获取演示",
@@ -976,6 +979,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "跨环境提升 Flow",
+        "message": "Kestra 企业版允许您直接从 UI 将 flow 从一个环境提升到另一个环境 — 例如从开发环境到预发布环境再到生产环境 — 无需 Git 或 CI/CD 流水线。在提升前查看确切的变更 diff，通过确认门保护敏感目标，一目了然地发现偏差，并保留谁在何时何地提升了什么的完整历史记录。"
       },
       "IAM": {
         "title": "通过IAM使用SSO、SCIM和RBAC管理用户",

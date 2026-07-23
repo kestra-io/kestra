@@ -516,6 +516,7 @@
     "execute backfill": "backfillを実行",
     "execute flow behaviour": "Flowを実行",
     "execute flow now ?": "このFlowを実行しますか？",
+    "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "execute the flow": "Flow <code>{id}</code>を実行",
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",

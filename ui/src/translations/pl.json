@@ -516,6 +516,7 @@
     "execute backfill": "Wykonaj backfill",
     "execute flow behaviour": "Wykonaj flow",
     "execute flow now ?": "Czy chcesz wykonać ten flow?",
+    "discard execution confirmation": "Masz niezapisane inputy. Czy na pewno chcesz odrzucić tę wykonanie?",
     "execute the flow": "Wykonaj flow <code>{id}</code>",
     "execution": "Wykonanie",
     "execution already finished": "Wykonanie <code>{executionId}</code> już zakończone",

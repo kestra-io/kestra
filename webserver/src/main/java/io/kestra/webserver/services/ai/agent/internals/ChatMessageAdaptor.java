@@ -7,6 +7,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentThinking;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.serializers.JacksonMapper;
@@ -24,6 +25,16 @@ import io.micronaut.core.annotation.Nullable;
  */
 public final class ChatMessageAdaptor {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
+    /**
+     * AiMessage attribute key under which LangChain4j stores a turn's reasoning signature — Gemini and
+     * Anthropic both use this exact key. We read it off the live response and write it back on projection so
+     * the provider's cross-turn signature requirement is met. Must match LangChain4j's key exactly.
+     */
+    public static final String THINKING_SIGNATURE_KEY = "thinking_signature";
+
+    /** AiMessage attribute key for Anthropic's encrypted/redacted thinking blocks. Must match LangChain4j's key exactly. */
+    public static final String REDACTED_THINKING_KEY = "redacted_thinking";
 
     private ChatMessageAdaptor() {
     }
@@ -51,7 +62,7 @@ public final class ChatMessageAdaptor {
                 }
                 case TOOL_CALL -> {
                     if (m.toolCall() != null) {
-                        out.add(AiMessage.from(toRequest(m.toolCall())));
+                        out.add(toAiMessage(m.toolCall()));
                     }
                 }
                 case TOOL_RESULT -> {
@@ -85,9 +96,59 @@ public final class ChatMessageAdaptor {
     }
 
     public static AgentToolCall toToolCall(final ToolExecutionRequest req, final AgentToolCall.Kind kind, @Nullable final AgentToolFamily family) {
+        return toToolCall(req, kind, family, null);
+    }
+
+    public static AgentToolCall toToolCall(final ToolExecutionRequest req, final AgentToolCall.Kind kind, @Nullable final AgentToolFamily family, @Nullable final AgentThinking thinking) {
         return kind == AgentToolCall.Kind.AUTHORING
-            ? AgentToolCall.authoring(req.id(), req.name(), parseArguments(req.arguments()))
-            : AgentToolCall.platform(req.id(), req.name(), family, parseArguments(req.arguments()));
+            ? AgentToolCall.authoring(req.id(), req.name(), parseArguments(req.arguments()), thinking)
+            : AgentToolCall.platform(req.id(), req.name(), family, parseArguments(req.arguments()), thinking);
+    }
+
+    /**
+     * Snapshot the model turn's reasoning state from the response {@link AiMessage} — the {@code thinking()}
+     * text plus the reasoning attributes LangChain4j stashes ({@code thinking_signature},
+     * {@code redacted_thinking}) — or {@code null} when the provider/model emits none. Captured once per model
+     * turn and persisted on each of that turn's tool calls so they can be replayed to the provider intact.
+     */
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public static AgentThinking thinkingOf(final AiMessage ai) {
+        if (ai == null) {
+            return null;
+        }
+        AgentThinking thinking = new AgentThinking(
+            ai.thinking(),
+            ai.attribute(THINKING_SIGNATURE_KEY, String.class),
+            ai.attribute(REDACTED_THINKING_KEY, List.class)
+        );
+        return thinking.isEmpty() ? null : thinking;
+    }
+
+    /**
+     * Rebuild the model-facing {@link AiMessage} for a persisted tool call, re-attaching the stored reasoning
+     * state (thinking text + signature/redacted attributes) exactly where LangChain4j expects it, so the
+     * provider round-trip stays valid across turns.
+     */
+    private static AiMessage toAiMessage(final AgentToolCall toolCall) {
+        AiMessage.Builder builder = AiMessage.builder().toolExecutionRequests(List.of(toRequest(toolCall)));
+        AgentThinking thinking = toolCall.thinking();
+        if (thinking != null && !thinking.isEmpty()) {
+            if (thinking.text() != null && !thinking.text().isBlank()) {
+                builder.thinking(thinking.text());
+            }
+            Map<String, Object> attributes = new java.util.HashMap<>();
+            if (thinking.signature() != null && !thinking.signature().isBlank()) {
+                attributes.put(THINKING_SIGNATURE_KEY, thinking.signature());
+            }
+            if (thinking.redacted() != null && !thinking.redacted().isEmpty()) {
+                attributes.put(REDACTED_THINKING_KEY, thinking.redacted());
+            }
+            if (!attributes.isEmpty()) {
+                builder.attributes(attributes);
+            }
+        }
+        return builder.build();
     }
 
     @SuppressWarnings("unchecked")

@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai.agent.internals;
 import java.time.Instant;
 import java.util.List;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.Map;
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentMessageRole;
 import io.kestra.core.ai.agent.models.AgentMessageType;
+import io.kestra.core.ai.agent.models.AgentThinking;
 import io.kestra.core.ai.agent.models.AgentToolCall;
 
 import dev.langchain4j.data.message.AiMessage;
@@ -59,6 +61,59 @@ class ChatMessageAdaptorTest {
         // Then — the error result is flagged isError=true on reload; the ok result is not
         assertThat(projectedError.isError()).isTrue();
         assertThat(projectedOk.isError()).isFalse();
+    }
+
+    @Test
+    void shouldReattachReasoningStateWhenProjectingToolCall() {
+        // Given — a persisted tool call carrying the provider's reasoning state (thinking text + opaque
+        // signature); projection must rebuild the AiMessage with both so the cross-turn replay stays valid
+        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"),
+            new AgentThinking("let me search the docs", "sig-abc", null));
+        AgentMessage toolCallRow = AgentMessage.builder()
+            .uid("tc-1")
+            .threadId("thread-1")
+            .role(AgentMessageRole.ASSISTANT)
+            .type(AgentMessageType.TOOL_CALL)
+            .toolCall(call)
+            .traceId("t1")
+            .createdAt(Instant.now())
+            .build();
+
+        // When
+        List<ChatMessage> projected = ChatMessageAdaptor.project(List.of(toolCallRow));
+
+        // Then — the tool request is preserved and the reasoning state is re-attached under the keys
+        // LangChain4j reads back when sending the call to the provider
+        assertThat(projected).hasSize(1).first().isInstanceOf(AiMessage.class);
+        AiMessage ai = (AiMessage) projected.getFirst();
+        assertThat(ai.hasToolExecutionRequests()).isTrue();
+        assertThat(ai.toolExecutionRequests()).first().extracting(ToolExecutionRequest::name).isEqualTo("search-docs");
+        assertThat(ai.thinking()).isEqualTo("let me search the docs");
+        assertThat(ai.attribute(ChatMessageAdaptor.THINKING_SIGNATURE_KEY, String.class)).isEqualTo("sig-abc");
+        assertThat(ChatMessageAdaptor.thinkingOf(ai)).isEqualTo(new AgentThinking("let me search the docs", "sig-abc", null));
+    }
+
+    @Test
+    void shouldOmitReasoningStateWhenToolCallHasNone() {
+        // Given — a legacy/non-thinking-provider tool call with no reasoning state
+        AgentToolCall call = AgentToolCall.platform("c1", "search-docs", null, Map.of("q", "trigger"));
+        AgentMessage toolCallRow = AgentMessage.builder()
+            .uid("tc-2")
+            .threadId("thread-1")
+            .role(AgentMessageRole.ASSISTANT)
+            .type(AgentMessageType.TOOL_CALL)
+            .toolCall(call)
+            .traceId("t1")
+            .createdAt(Instant.now())
+            .build();
+
+        // When
+        AiMessage ai = (AiMessage) ChatMessageAdaptor.project(List.of(toolCallRow)).get(0);
+
+        // Then — nothing spurious is attached, so nothing is sent back to the provider
+        assertThat(ai.thinking()).isNull();
+        assertThat(ai.attribute(ChatMessageAdaptor.THINKING_SIGNATURE_KEY, String.class)).isNull();
+        assertThat(ChatMessageAdaptor.thinkingOf(ai)).isNull();
     }
 
     private static AgentMessage toolResult(final AgentToolCall call, final Map<String, Object> result) {

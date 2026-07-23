@@ -322,7 +322,8 @@ public class AgentOrchestrator {
                 }
 
                 ToolEntry entry = catalog.byName(req.name()).orElseThrow();
-                threadManager.appendToolCall(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ai.text(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()));
+                threadManager.appendToolCall(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ai.text(),
+                    ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family(), ChatMessageAdaptor.thinkingOf(ai)));
 
                 if (entry.writePolicy() == AgentWritePolicy.CONFIRM) {
                     if (heldAction == null) {

@@ -82,7 +82,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 SET @idx_exists = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'executions' AND index_name = 'idx_executions_trigger_id');
-SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_executions_trigger_id ON executions (`trigger_id`)', 'SELECT 1');
+SET @sql = IF(@idx_exists = 0, 'ALTER TABLE executions ADD INDEX idx_executions_trigger_id (`trigger_id`), ALGORITHM=INPLACE, LOCK=NONE', 'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -126,7 +126,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 SET @idx_exists = (SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'executions' AND index_name = 'executions_parent_id');
-SET @sql = IF(@idx_exists = 0, 'CREATE INDEX executions_parent_id ON executions (`deleted`, `tenant_id`, `parent_id`)', 'SELECT 1');
+SET @sql = IF(@idx_exists = 0, 'ALTER TABLE executions ADD INDEX executions_parent_id (`deleted`, `tenant_id`, `parent_id`), ALGORITHM=INPLACE, LOCK=NONE', 'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;

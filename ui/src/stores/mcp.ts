@@ -23,7 +23,7 @@ export const useMcpStore = defineStore("mcp", () => {
     const server = ref<McpServer | null>(null)
 
     const list = async (): Promise<{results: McpServer[], total: number}> => {
-        return McpAPI.listMcps() as Promise<PagedResultsApiMcpServer & {results: McpServer[]}>
+        return McpAPI.listMcps() as Promise<PagedResultsApiMcpServer & {results: McpServer[], total: number}>
     }
 
     const load = async (id: string): Promise<void> => {

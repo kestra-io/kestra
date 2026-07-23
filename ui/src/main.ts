@@ -2,6 +2,9 @@ import {createApp} from "vue"
 import type {Router} from "vue-router"
 
 import "./utils/monacoEnvironment"
+import {setupPreloadErrorReloadHandler} from "./utils/preloadErrorReload"
+
+setupPreloadErrorReloadHandler()
 
 import App from "./App.vue"
 import initApp from "./utils/init"

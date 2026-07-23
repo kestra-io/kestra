@@ -6,7 +6,7 @@
                 type="button"
                 class="toggle"
                 :aria-expanded="expanded"
-                :aria-label="expanded ? t('collapse') : t('expand')"
+                :aria-label="expanded ? $t('collapse') : $t('expand')"
                 @click="expanded = !expanded"
             >
                 <KsIcon size="s" class="chevron" :class="{collapsed: !expanded}"><ChevronDown /></KsIcon>
@@ -42,7 +42,6 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, onMounted, onBeforeUnmount} from "vue"
-    import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
     const props = withDefaults(defineProps<{
@@ -52,7 +51,6 @@
         defaultExpanded?: boolean,
     }>(), {depth: 0})
 
-    const {t} = useI18n()
 
     const expanded = ref(props.defaultExpanded ?? props.depth < 1)
 

@@ -20,7 +20,7 @@ import lombok.ToString;
 @ToString
 public class ClassPluginDocumentation<T> extends AbstractClassDocumentation<T> {
     private static final int CACHE_MAXIMUM_SIZE = 1_000;
-    private static final Duration CACHE_EXPIRE_AFTER_ACCESS = Duration.ofHours(1);
+    private static final Duration CACHE_EXPIRE_AFTER_ACCESS = Duration.ofDays(1);
 
     // Bounded: the keyspace (class name + version + allProperties) is effectively unbounded in EE
     // where multiple plugin versions can be installed, and the generated documentation values are

@@ -203,9 +203,9 @@
         )
     })
 
-    const triggerSchema = computed(() => {
-        const required = triggerPlugin.value?.schema?.properties?.required
-        return required ? {required} : {}
+    const triggerSchema = computed<{required?: string[]}>(() => {
+        const wrapper = triggerPlugin.value?.schema?.properties as unknown as {required?: string[]} | undefined
+        return wrapper?.required ? {required: wrapper.required} : {}
     })
 
     const hasTriggerProperties = computed(() => Object.keys(triggerProperties.value).length > 0)

@@ -12,7 +12,7 @@ import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.PaginationType;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.responses.CursorPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.core.type.Argument;
@@ -91,9 +91,9 @@ class LogControllerCursorTest {
         when(tenantService.resolveTenant()).thenReturn("main");
         when(logRepository.find(any(), any(), any())).thenReturn(cursorPage("next-token"));
 
-        PagedResults<LogEntry> res = client.toBlocking().retrieve(
+        CursorPagedResults<LogEntry> res = client.toBlocking().retrieve(
             GET("/api/v1/main/logs/search"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorPagedResults.class, LogEntry.class)
         );
 
         assertThat(res.getResults()).hasSize(2);
@@ -111,7 +111,7 @@ class LogControllerCursorTest {
 
         client.toBlocking().retrieve(
             GET("/api/v1/main/logs/search?cursor=opaque-token-123"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorPagedResults.class, LogEntry.class)
         );
 
         var captor = forClass(Pageable.class);

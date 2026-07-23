@@ -17,7 +17,7 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
-import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.responses.CursorPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -66,7 +66,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = { "Logs" }, summary = "Search for logs")
-    public PagedResults<LogEntry> searchLogs(
+    public CursorPagedResults<LogEntry> searchLogs(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(
@@ -88,7 +88,7 @@ public class LogController {
             ? Pageable.afterCursor(Pageable.Cursor.of(cursor), page, size, offsetPageable.getSort())
             : offsetPageable;
 
-        return PagedResults.of(
+        return CursorPagedResults.of(
             logRepository.find(
                 pageable,
                 tenantService.resolveTenant(),

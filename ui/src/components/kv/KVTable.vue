@@ -10,7 +10,7 @@
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="$t('no_results.kv_pairs')"
-        class="fill-height"
+        :fitHeight="!paneView"
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
     >

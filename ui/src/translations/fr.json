@@ -415,6 +415,9 @@
     "file_preview": {
       "big_file_warning": "Ce fichier fait {size}. Le chargement peut prendre un certain temps et bloquer votre navigateur. Voulez-vous quand même le charger ?",
       "load_anyway": "Charger quand même",
+      "load_error": "Échec du chargement de l'aperçu du fichier. Il peut s'agir d'un problème temporaire ou d'un problème d'autorisations.",
+      "retry": "Réessayer",
+      "html_asset_warning": "Cet aperçu affiche le HTML dans un cadre isolé. Les ressources locales telles que les images et les feuilles de style référencées par des chemins relatifs ne se chargeront pas.",
       "html_preview_title": "Aperçu du fichier HTML"
     },
     "no_variables": "Aucune variable disponible.",

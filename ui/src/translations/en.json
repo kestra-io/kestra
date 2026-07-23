@@ -419,6 +419,9 @@
     "file_preview": {
       "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
       "load_anyway": "Load anyway",
+      "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
+      "retry": "Retry",
+      "html_asset_warning": "This preview renders the HTML in a sandboxed frame. Local assets such as images and stylesheets referenced by relative paths will not load.",
       "html_preview_title": "HTML file preview"
     },
     "no_variables": "No variables available.",

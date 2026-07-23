@@ -597,6 +597,20 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    // Fetches the complete, untruncated file as text. Unlike filePreview (which
+    // caps rows and bytes for the RAW/TEXT viewer), this returns the whole file
+    // so callers such as the HTML iframe preview can render a valid document.
+    // The /file endpoint sets Content-Disposition: attachment, but that only
+    // affects browser navigation — an XHR reads the body normally, and the
+    // shared client attaches auth automatically.
+    const fileContent = (options: { executionId: string; path: string }): Promise<string> => {
+        return axios.get(`${apiUrl()}/executions/${options.executionId}/file`, {
+            params: {path: options.path},
+            responseType: "text",
+            transformResponse: [(data) => data],
+        }).then(response => response.data as string)
+    }
+
     const setLabels = (options: { executionId: string; labels: any }) => {
         return ExecutionsAPI.setLabelsOnTerminatedExecution({executionId: options.executionId, body: options.labels})
     }
@@ -886,6 +900,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         downloadLogsFile,
         deleteLogs,
         filePreview,
+        fileContent,
         setLabels,
         querySetLabels,
         bulkSetLabels,

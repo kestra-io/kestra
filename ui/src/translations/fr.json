@@ -61,6 +61,8 @@
     "success": "Succès",
     "save": "Enregistrer",
     "save_as_draft": "Enregistrer comme brouillon",
+    "publish": "Publier",
+    "publish_draft": "Publier le brouillon",
     "draft": "Brouillon",
     "draft_flow_warning": "La dernière révision de ce flow est un brouillon. L'exécution utilisera la dernière révision publiée ; publiez le brouillon (ou exécutez-le depuis le Playground) pour exécuter vos derniers changements.",
     "save task": "Enregistrer la tâche",

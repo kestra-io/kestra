@@ -211,6 +211,20 @@ export const useFlowStore = defineStore("flow", () => {
         return "no_op"
     }
 
+    async function publishDraft(target?: Flow): Promise<FlowSaveOutcome> {
+        if (target) {
+            const data = await loadFlow({namespace: target.namespace, id: target.id, store: false})
+            if (!data?.source) return "blocked"
+            await saveFlow({flow: data.source, draft: false})
+            notifySaved(data.id, false)
+            return "saved"
+        }
+        if (!flowYaml.value && flow.value?.source) {
+            flowYaml.value = flow.value.source
+        }
+        return save(false)
+    }
+
     async function onEdit({source, topologyVisible}: {
         source: string,
         editorViewType?: string,
@@ -1032,6 +1046,7 @@ function deleteFlowAndDependencies() {
         saveAll,
         saveAsDraft,
         save,
+        publishDraft,
         onEdit,
         initYamlSource,
         findFlows,

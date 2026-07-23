@@ -53,10 +53,18 @@
         />
 
         <template #primary>
+            <NavBarAction
+                v-if="isEditTab && editorIsAllowedEdit && !deleted && !flowStore.isCreating && editorIsDraft"
+                type="primary"
+                :label="t('publish')"
+                :disabled="editorHasErrors || editorIsReadOnly"
+                @click="editorPublishDraft"
+            />
+
             <KsDropdown
                 v-if="isEditTab && editorIsAllowedEdit && !deleted"
                 splitButton
-                type="primary"
+                :type="editorIsDraft ? 'default' : 'primary'"
                 :disabled="!editorCanSave || editorIsReadOnly"
                 :buttonProps="{disabled: editorHasErrors}"
                 @click="editorSave"
@@ -135,9 +143,11 @@
         hasErrors: editorHasErrors,
         isReadOnly: editorIsReadOnly,
         isAllowedEdit: editorIsAllowedEdit,
+        isDraft: editorIsDraft,
         isPlaygroundAllowed,
         save: editorSave,
         saveAsDraft: editorSaveAsDraft,
+        publishDraft: editorPublishDraft,
         saveAndExecute: editorSaveAndExecute,
         exportYaml: editorExportYaml,
         copyFlow: editorCopyFlow,

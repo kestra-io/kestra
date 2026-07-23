@@ -34,7 +34,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section :class="{'container padding-bottom': topbar}">
+    <section :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -51,6 +51,7 @@
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="$t('no_results.executions')"
             :rowKey="(row: any) => row.id"
+            :fitHeight="fitHeightResolved"
         >
             <template #navbar v-if="isDisplayedTop">
                 <KSFilter
@@ -437,6 +438,7 @@
         embed?: boolean;
         filter?: boolean;
         topbar?: boolean;
+        fitHeight?: boolean;
         id?: string | null;
         statuses?: string[];
         isReadOnly?: boolean;
@@ -450,6 +452,7 @@
         embed: false,
         filter: true,
         topbar: true,
+        fitHeight: undefined,
         id: null,
         statuses: () => [],
         isReadOnly: false,
@@ -460,6 +463,8 @@
         namespace: undefined,
         defaultScopeFilter: false,
     })
+
+    const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
 
     const emit = defineEmits<{
         "state-count": [payload: { runningCount: number; totalCount: number }];
@@ -1061,12 +1066,18 @@
 </script>
 
 <style scoped lang="scss">
-.shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
+.full-container {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    > * {
+        flex: 1;
+    }
 }
 
-.padding-bottom {
-    padding-bottom: 4rem;
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
 .custom-warning {

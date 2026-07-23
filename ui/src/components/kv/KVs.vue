@@ -10,7 +10,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section class="d-flex flex-column fill-height container padding-bottom">
+    <section class="full-container">
         <KVTable />
     </section>
 </template>

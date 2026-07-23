@@ -6,6 +6,8 @@ import {createPinia, setActivePinia} from "pinia"
 // `vi.fn(() => …)` infers zero-length call tuples and trips TS2493 under vue-tsc.
 const updateFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
 const createFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
+// GET /flows/{namespace}/{id} - used by loadFlow() to fetch a flow's source
+const getFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: true, revision: 1, source: ""}))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),
@@ -17,6 +19,7 @@ vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     validateFlows: vi.fn(() => Promise.resolve([{}])),
     updateFlow,
     createFlow,
+    flow: getFlow,
 }))
 
 // Avoid mounting the notification service when notifySaved fires.
@@ -61,6 +64,7 @@ describe("flow draft save — draft resolution per entry point", () => {
         localStorage.clear()
         updateFlow.mockClear()
         createFlow.mockClear()
+        getFlow.mockClear()
         setActivePinia(createPinia())
     })
 
@@ -98,6 +102,32 @@ describe("flow draft save — draft resolution per entry point", () => {
         const store = await freshStore()
         store.flow = {id: "f", namespace: "ns", draft: false} as any
         await store.saveAll()
+        expect(lastDraftParam())
+            .toBe(false)
+    })
+
+    // FlowRun's executionsStore.flow (the run-panel's flow) has no `source` field: publishDraft(target)
+    // must load the flow's source itself instead of silently no-op'ing on the missing source.
+    it("publishDraft(target) loads the target's source before publishing, when the caller's flow has none", async () => {
+        const store = await freshStore()
+        store.flowYaml = ""
+        const target = {id: "f", namespace: "ns", draft: true} as any
+
+        getFlow.mockResolvedValueOnce({id: "f", namespace: "ns", draft: true, revision: 1, source: VALID_FLOW})
+
+        const outcome = await store.publishDraft(target)
+
+        expect(getFlow).toHaveBeenCalledWith(expect.objectContaining({namespace: "ns", id: "f", source: true}))
+        expect(lastDraftParam())
+            .toBe(false)
+        expect(outcome)
+            .toBe("saved")
+    })
+
+    it("publishDraft() with no target publishes the store's own in-progress source", async () => {
+        const store = await freshStore()
+        await store.publishDraft()
+        expect(getFlow).not.toHaveBeenCalled()
         expect(lastDraftParam())
             .toBe(false)
     })

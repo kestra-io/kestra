@@ -211,12 +211,9 @@ export const useFlowStore = defineStore("flow", () => {
         return "no_op"
     }
 
-    // target: pass the flow to publish when the caller's own flow (e.g. FlowRun's executionsStore.flow)
-    // may differ from this store's flow/flowYaml, to avoid publishing stale or unrelated content.
     async function publishDraft(target?: Flow): Promise<FlowSaveOutcome> {
         if (target) {
-            flow.value = target
-            flowYaml.value = target.source
+            await loadFlow({namespace: target.namespace, id: target.id})
         } else if (!flowYaml.value && flow.value?.source) {
             flowYaml.value = flow.value.source
         }

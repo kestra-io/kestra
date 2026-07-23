@@ -129,7 +129,7 @@
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
-    import {useFlowStore} from "../../stores/flow"
+    import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
@@ -231,7 +231,11 @@
         if (!flow.value) return
         publishing.value = true
         try {
-            await flowStore.publishDraft(flow.value)
+            const {namespace, id} = flow.value
+            const outcome = await flowStore.publishDraft(flow.value)
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                await executionsStore.loadFlowForExecution({namespace, flowId: id, store: true})
+            }
         } finally {
             publishing.value = false
         }

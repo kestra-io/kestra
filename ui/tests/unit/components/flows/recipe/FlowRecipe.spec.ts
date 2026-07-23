@@ -32,6 +32,8 @@ vi.mock("@kestra-io/design-system", () => ({
         KILLED: {icon: "div", color: "gray"},
         PAUSED: {icon: "div", color: "blue"},
     },
+    KsEditor: {template: "<div />"},
+    stringUtils: {afterLastDot: (s: string) => s.split(".").pop() ?? s},
 }))
 
 vi.mock("../../../../../src/components/plugins/TaskIcon.vue", () => ({

@@ -23,21 +23,29 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ModeProfiles {
     private static final String PROMPT_RESOURCE = "/ai/agent/prompts/%s.md";
+    private static final String COMMON_RESOURCE = "/ai/agent/prompts/common.md";
 
     private final ToolCatalog catalog;
     private final AgentToolPermissionEvaluator permissionEvaluator;
     private final Map<AgentMode, String> personas;
+    private final String commonPrompt;
 
     @Inject
     public ModeProfiles(final ToolCatalog catalog, final AgentToolPermissionEvaluator permissionEvaluator) {
         this.catalog = catalog;
         this.permissionEvaluator = permissionEvaluator;
         this.personas = loadPersonas();
+        this.commonPrompt = loadCommonPrompt();
     }
 
+    /**
+     * @param systemPrompt the mode persona (or, in EE, a custom per-provider prompt substituted for it).
+     * @param commonPrompt the shared guidance appended to every prompt regardless of mode; may be blank.
+     */
     public record ResolvedProfile(
         AgentMode mode,
         String systemPrompt,
+        String commonPrompt,
         List<ToolSpecification> toolSpecifications,
         Set<String> allowedToolNames) {
     }
@@ -71,7 +79,7 @@ public class ModeProfiles {
         Set<String> allowedNames = allowed.stream()
             .map(ToolCatalog.ToolEntry::name)
             .collect(Collectors.toSet());
-        return new ResolvedProfile(mode, personas.get(mode), specs, allowedNames);
+        return new ResolvedProfile(mode, personas.get(mode), commonPrompt, specs, allowedNames);
     }
 
     private static Map<AgentMode, String> loadPersonas() {
@@ -91,6 +99,21 @@ public class ModeProfiles {
             return new String(is.readAllBytes(), StandardCharsets.UTF_8).strip().intern();
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read Copilot system-prompt resource: " + resource, e);
+        }
+    }
+
+    /**
+     * Loads the shared prompt appended to every mode's prompt. Optional: an absent resource yields an
+     * empty string (nothing is appended) rather than failing Copilot initialization.
+     */
+    private static String loadCommonPrompt() {
+        try (InputStream is = ModeProfiles.class.getResourceAsStream(COMMON_RESOURCE)) {
+            if (is == null) {
+                return "";
+            }
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8).strip().intern();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read Copilot common prompt resource: " + COMMON_RESOURCE, e);
         }
     }
 }

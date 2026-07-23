@@ -8,16 +8,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.ai.agent.models.AgentToolCall;
 import io.kestra.core.ai.agent.models.AgentToolFamily;
 import io.kestra.core.ai.agent.models.AgentWritePolicy;
 import io.kestra.core.ai.agent.models.ArtefactDraft;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.model.chat.request.json.JsonEnumSchema;
+import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
+import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
+import dev.langchain4j.model.chat.request.json.JsonStringSchema;
 import dev.langchain4j.service.tool.DefaultToolExecutor;
 import dev.langchain4j.service.tool.ToolExecutionResult;
 import dev.langchain4j.service.tool.ToolExecutor;
@@ -46,6 +53,8 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class ToolCatalog {
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
     private final List<AiPlatformTool> platformTools;
     private final List<AiAuthoringTool> authoringTools;
     private final DocsMcpToolProvider docsMcpToolProvider;
@@ -177,7 +186,7 @@ public class ToolCatalog {
 
         // Carry the caller context to the @Tool method as a langchain4j managed argument — the executor
         // injects it by type into the tool's AgentCallContext.Context parameter — not a thread-local.
-        ToolExecutionResult executed = entry.executor().executeWithContext(request, AgentCallContext.into(context));
+        ToolExecutionResult executed = entry.executor().executeWithContext(stripEmptyOptionalArgs(entry, request), AgentCallContext.into(context));
         // A tool's single output is its return value; if that value is publishable, the caller (the
         // orchestrator) persists and streams the artefact — the tool never reaches back through a side channel.
         ArtefactDraft artefact = executed.result() instanceof PublishableToolResult publishable ? publishable.artefact() : null;
@@ -189,6 +198,58 @@ public class ToolCatalog {
      * the tool returned a {@link PublishableToolResult} (else {@code null}).
      */
     public record DispatchResult(String text, @Nullable ArtefactDraft artefact) {
+    }
+
+    /**
+     * Drop arguments the model sent as an empty string {@code ""} whose target parameter is not
+     * string-typed. Models routinely emit {@code ""} to mean "I am omitting this optional parameter";
+     * for a numeric/boolean/object/array parameter that empty string is never a valid value, and
+     * langchain4j's argument coercion fails before the {@code @Tool} method ever runs (e.g. {@code
+     * Argument "revision" is not convertable to java.lang.Integer}). Stripping such values lets an
+     * optional parameter fall back to its default instead of turning a harmless omission into a tool
+     * failure. String and enum parameters are left untouched — {@code ""} may be a legitimate value
+     * there, and any genuine problem is better surfaced by the tool itself with an actionable message.
+     */
+    private static ToolExecutionRequest stripEmptyOptionalArgs(final ToolEntry entry, final ToolExecutionRequest request) {
+        String rawArguments = request.arguments();
+        if (rawArguments == null || rawArguments.isBlank()
+            || !(entry.specification().parameters() instanceof JsonObjectSchema schema)
+            || schema.properties() == null) {
+            return request;
+        }
+
+        Map<String, Object> arguments;
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> parsed = MAPPER.readValue(rawArguments, Map.class);
+            arguments = new LinkedHashMap<>(parsed);
+        } catch (Exception e) {
+            // Not our JSON to fix: leave it for the executor's own coercion to report.
+            return request;
+        }
+
+        boolean stripped = arguments.entrySet().removeIf(argument ->
+            "".equals(argument.getValue()) && isNonStringProperty(schema.properties().get(argument.getKey()))
+        );
+        if (!stripped) {
+            return request;
+        }
+
+        try {
+            return ToolExecutionRequest.builder()
+                .id(request.id())
+                .name(request.name())
+                .arguments(MAPPER.writeValueAsString(arguments))
+                .build();
+        } catch (Exception e) {
+            log.warn("Could not re-serialize sanitized arguments for tool '{}'; passing through unchanged.", request.name(), e);
+            return request;
+        }
+    }
+
+    /** A schema property for which an empty string is never a valid value — anything but string/enum. */
+    private static boolean isNonStringProperty(@Nullable final JsonSchemaElement property) {
+        return property != null && !(property instanceof JsonStringSchema) && !(property instanceof JsonEnumSchema);
     }
 
     /**

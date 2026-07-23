@@ -38,6 +38,8 @@ import io.kestra.webserver.services.ai.agent.tool.DocsMcpToolProvider;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -118,6 +120,33 @@ class AgentOrchestratorTest {
         assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .extracting(m -> m.role() + "/" + m.type())
             .containsExactly("USER/TEXT", "ASSISTANT/TEXT");
+        // the resolved system prompt is sent first (via SystemPromptResolver), with the shared common
+        // prompt appended to it (the fenced-code-block guidance from common.md)
+        List<ChatMessage> sent = scriptedModel.lastRequestMessages();
+        assertThat(sent.get(0)).isInstanceOf(SystemMessage.class);
+        assertThat(((SystemMessage) sent.get(0)).text())
+            .isNotBlank()
+            .contains("fenced");
+    }
+
+    @Test
+    void shouldNotPersistAssistantMessageWhenModelReturnsEmptyResponse() {
+        // Given — the model returns an empty response (no text, no tool calls), as Gemini
+        // intermittently does with finishReason=STOP
+        AgentThread thread = newThread(AgentMode.ASK);
+        scriptedModel.enqueue(AiMessage.from(""));
+        CollectingSink sink = new CollectingSink();
+
+        // When
+        orchestrator.runTurn(new AgentTurnContext(thread, "what is a trigger?", AgentMode.ASK, TENANT, null, null, null), sink);
+
+        // Then — the turn ends IDLE, and the empty assistant message is NOT persisted (only the user
+        // prompt remains), so it cannot be replayed as an empty model turn on the next turn
+        assertThat(doneStatus(sink)).isEqualTo(AgentThreadStatus.IDLE.name());
+        assertThat(reload(thread).status()).isEqualTo(AgentThreadStatus.IDLE);
+        assertThat(messageStore.load(thread.tenant(), thread.uid()))
+            .extracting(m -> m.role() + "/" + m.type())
+            .containsExactly("USER/TEXT");
     }
 
     @Test
@@ -474,6 +503,11 @@ class AgentOrchestratorTest {
         // the streamed event carries the error message to the frontend (not just the outcome)
         assertThat(toolResult(sink).error()).contains("Execution not found");
         assertThat(toolResult(sink).reason()).isNull();
+        // the error tool-result fed back to the model is flagged isError=true (not left null)
+        assertThat(scriptedModel.lastRequestMessages())
+            .filteredOn(ToolExecutionResultMessage.class::isInstance)
+            .extracting(m -> ((ToolExecutionResultMessage) m).isError())
+            .containsOnly(Boolean.TRUE);
         // the error result is durable and carries the tool author's message for the model to read
         assertThat(messageStore.load(thread.tenant(), thread.uid()))
             .filteredOn(m -> m.type() == AgentMessageType.TOOL_RESULT)

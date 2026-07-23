@@ -36,7 +36,15 @@ public final class ChatMessageAdaptor {
                 case TEXT -> {
                     switch (m.role()) {
                         case USER -> out.add(UserMessage.from(nullToEmpty(m.content())));
-                        case ASSISTANT -> out.add(AiMessage.from(nullToEmpty(m.content())));
+                        // Never replay an empty assistant/model turn: a blank model message is a
+                        // documented trigger for empty finishReason=STOP responses, so a single empty
+                        // response would otherwise keep poisoning every subsequent turn. Skipping it
+                        // also heals threads that already persisted one before this guard existed.
+                        case ASSISTANT -> {
+                            if (m.content() != null && !m.content().isBlank()) {
+                                out.add(AiMessage.from(m.content()));
+                            }
+                        }
                         default -> {
                             /* SYSTEM/TOOL text: skip */ }
                     }
@@ -48,7 +56,17 @@ public final class ChatMessageAdaptor {
                 }
                 case TOOL_RESULT -> {
                     if (m.toolCall() != null) {
-                        out.add(ToolExecutionResultMessage.from(toRequest(m.toolCall()), toJson(m.toolResult())));
+                        ToolExecutionRequest req = toRequest(m.toolCall());
+                        Map<String, Object> toolResult = m.toolResult();
+                        // Preserve the error flag on reload so a previously-failed tool call is still
+                        // presented to the model (and provider APIs) as an error, matching the live path.
+                        boolean isError = toolResult != null && "error".equals(toolResult.get("outcome"));
+                        out.add(ToolExecutionResultMessage.builder()
+                            .id(req.id())
+                            .toolName(req.name())
+                            .text(toJson(toolResult))
+                            .isError(isError)
+                            .build());
                     }
                 }
                 // PROPOSED_ACTION is superseded by the following TOOL_RESULT — never projected.

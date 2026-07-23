@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import dev.langchain4j.data.message.*;
 import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMessageType;
@@ -38,11 +39,6 @@ import io.kestra.webserver.services.ai.agent.tool.ToolPermissionDeniedException;
 import io.micronaut.core.annotation.Nullable;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.ToolExecutionResultMessage;
-import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.exception.ToolExecutionException;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
@@ -66,6 +62,7 @@ public class AgentOrchestrator {
     private final ToolCatalog catalog;
     private final ModeProfiles modeProfiles;
     private final AiThreadManager threadManager;
+    private final SystemPromptResolver systemPromptResolver;
     private final Duration modelCallTimeout;
     private final int maxContextTurns;
     private final int maxSequentialToolsInvocations;
@@ -76,11 +73,13 @@ public class AgentOrchestrator {
         final ToolCatalog catalog,
         final ModeProfiles modeProfiles,
         final AiThreadManager threadManager,
+        final SystemPromptResolver systemPromptResolver,
         final AgentConfiguration configuration) {
         this.aiServiceManager = aiServiceManager;
         this.catalog = catalog;
         this.modeProfiles = modeProfiles;
         this.threadManager = threadManager;
+        this.systemPromptResolver = systemPromptResolver;
         this.modelCallTimeout = configuration.modelCallTimeout();
         this.maxContextTurns = configuration.maxContextTurns();
         this.maxSequentialToolsInvocations = configuration.maxSequentialToolsInvocations();
@@ -97,7 +96,8 @@ public class AgentOrchestrator {
 
             List<ChatMessage> projected = ChatMessageAdaptor.project(TurnWindow.lastNTurns(threadManager.load(thread.tenant(), thread.uid()), maxContextTurns));
             List<ChatMessage> messages = new ArrayList<>(projected.size() + 2);
-            messages.add(SystemMessage.from(profile.systemPrompt()));
+            String resolvedPrompt = systemPromptResolver.resolve(context.mode(), context.providerId(), profile.systemPrompt());
+            messages.add(SystemMessage.from(withCommonSuffix(resolvedPrompt, profile.commonPrompt())));
             messages.addAll(projected);
             // Caller-supplied context for this turn only: appended at the end so the model sees it as the
             // latest input, but never persisted to the thread history (it is not appended via threadManager).
@@ -122,6 +122,15 @@ public class AgentOrchestrator {
      * @param additionalContext the caller-supplied context map for this turn, may be {@code null}
      * @return the context message to append at the end of the turn's input, or empty
      */
+    /**
+     * Appends the shared common prompt to the resolved (per-mode or custom) system prompt, so the shared
+     * guidance applies to every prompt — including EE custom prompts, which otherwise replace the mode
+     * persona entirely. A blank common prompt leaves the base unchanged.
+     */
+    private static String withCommonSuffix(final String base, final String commonPrompt) {
+        return commonPrompt == null || commonPrompt.isBlank() ? base : base + "\n\n" + commonPrompt;
+    }
+
     private Optional<ChatMessage> additionalContextMessage(final Map<String, Object> additionalContext) {
         if (additionalContext == null || additionalContext.isEmpty()) {
             return Optional.empty();
@@ -155,7 +164,8 @@ public class AgentOrchestrator {
 
             List<ChatMessage> projected = ChatMessageAdaptor.project(TurnWindow.lastNTurns(log, maxContextTurns));
             List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);
-            messages.add(SystemMessage.from(profile.systemPrompt()));
+            String resolvedPrompt = systemPromptResolver.resolve(running.mode(), providerId, profile.systemPrompt());
+            messages.add(SystemMessage.from(withCommonSuffix(resolvedPrompt, profile.commonPrompt())));
             messages.addAll(projected);
 
             boolean planProposal = pending.toolCall() == null;
@@ -267,6 +277,17 @@ public class AgentOrchestrator {
             if (!ai.hasToolExecutionRequests()) {
                 ctx.messages().add(ai);
 
+                // An empty response (no text and no tool calls) — e.g. Gemini's intermittent empty
+                // finishReason=STOP. Do NOT persist it: a blank assistant message would be replayed as an
+                // empty model turn on the next turn (see ChatMessageAdaptor.project), which is itself a
+                // documented trigger for more empty responses. End the turn without polluting the thread.
+                if (ai.text() == null || ai.text().isBlank()) {
+                    log.warn("Model returned an empty response (no text, no tool calls) for thread {}; ending turn without persisting.", ctx.thread().uid());
+                    finishTurn(ctx);
+                    done(sink, AgentThreadStatus.IDLE);
+                    return;
+                }
+
                 if (ctx.mode() == AgentMode.PLAN && !ctx.planApproved().get()) {
                     suspendForPlan(ctx, ai.text(), sink);
                     return;
@@ -280,6 +301,8 @@ public class AgentOrchestrator {
 
             // The model requested tools: this is one sequential tool-calling round-trip. Guard against a
             // runaway reasoning loop — on exhaustion the turn is ended gracefully, not failed.
+            log.info("Copilot thread {}: model requested {} tool call(s): {}", ctx.thread().uid(),
+                ai.toolExecutionRequests().size(), ai.toolExecutionRequests().stream().map(ToolExecutionRequest::name).toList());
             if (ctx.toolInvocations().incrementAndGet() > maxSequentialToolsInvocations) {
                 stopForToolBudget(ctx, sink);
                 return;
@@ -326,6 +349,7 @@ public class AgentOrchestrator {
     }
 
     private void executeTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final ToolEntry entry, final TurnEventSink sink) {
+        log.info("Copilot thread {}: calling tool '{}' (kind={}, family={})", ctx.thread().uid(), req.name(), entry.kind(), entry.family());
         emitToolCall(sink, req, entry.kind(), entry.family());
         ToolCatalog.DispatchResult result;
         try {
@@ -342,11 +366,13 @@ public class AgentOrchestrator {
         }
         ctx.messages().add(ToolExecutionResultMessage.from(req, result.text()));
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, entry.kind(), entry.family()), Map.of("outcome", "ok", "result", result.text()));
+        log.info("Copilot thread {}: tool '{}' returned ok ({} chars)", ctx.thread().uid(), req.name(), result.text() == null ? 0 : result.text().length());
         emitToolResult(sink, req.name(), "ok", null, null);
     }
 
     private void rejectTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
         final AgentToolFamily family, final String reason, final TurnEventSink sink) {
+        log.info("Copilot thread {}: tool '{}' rejected: {}", ctx.thread().uid(), req.name(), reason);
         ctx.messages().add(ToolExecutionResultMessage.from(req, reason));
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), rejectedResult(reason));
         emitToolResult(sink, req.name(), "rejected", null, reason);
@@ -359,7 +385,16 @@ public class AgentOrchestrator {
      */
     private void failTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
         final AgentToolFamily family, final String message, final TurnEventSink sink) {
-        ctx.messages().add(ToolExecutionResultMessage.from(req, "Error: " + message));
+        log.warn("Copilot thread {}: tool '{}' failed: {}", ctx.thread().uid(), req.name(), message);
+        // Mark the result as an error so the model (and provider APIs, e.g. Gemini's functionResponse)
+        // see it as a failed tool call rather than a normal result — ToolExecutionResultMessage.from(..)
+        // leaves isError null.
+        ctx.messages().add(ToolExecutionResultMessage.builder()
+            .id(req.id())
+            .toolName(req.name())
+            .text("Error: " + message)
+            .isError(true)
+            .build());
         threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
         emitToolResult(sink, req.name(), "error", message, null);
     }

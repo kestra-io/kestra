@@ -21,7 +21,7 @@ class HasSourceTest {
 
         // When - Then the unsupported type is reported as an IllegalArgumentException
         // instead of a StringIndexOutOfBoundsException raised by substring(-1)
-        assertThatThrownBy(() -> HasSource.readSourceFile(fileUpload, (source, name) ->
+        assertThatThrownBy(() -> HasSource.readSourceFile(null, fileUpload, (source, name) ->
         {
         }))
             .isInstanceOf(IllegalArgumentException.class)

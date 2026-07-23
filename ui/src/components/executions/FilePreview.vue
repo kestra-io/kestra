@@ -6,8 +6,32 @@
         v-model:forceEditor="forceEditor"
         :truncated="preview?.truncated"
     />
-    <!-- HTML files are rendered in a sandboxed iframe; skip the big-file / loading guards -->
-    <template v-if="isHtmlFile">
+    <div class="big-file-warning" v-if="bigFile">
+        <KsAlert type="warning" :closable="false">
+            {{ $t("file_preview.big_file_warning", {size: humanSize}) }}
+        </KsAlert>
+        <KsButtonGroup>
+            <KsButton
+                type="primary"
+                @click="bigFile = false;loadPreview()"
+            >
+                {{ $t("file_preview.load_anyway") }}
+            </KsButton>
+            <KsButton
+                type="primary"
+                tag="a"
+                :href="itemUrl(path)"
+                :icon="Download"
+                rel="noopener noreferrer"
+            >
+                {{ $t('download') }}
+            </KsButton>
+        </KsButtonGroup>
+    </div>
+    <div v-else-if="!preview">
+        Loading...
+    </div>
+    <template v-else>
         <div class="button-bar">
             <KsText>
                 {{ path.split("/").slice(-1)[0] }}
@@ -26,62 +50,23 @@
                 {{ $t('download') }}
             </KsButton>
         </div>
+        <!--
+            Use srcdoc instead of src so the sandboxed iframe receives the HTML text directly,
+            bypassing the Content-Disposition:attachment header the /file endpoint sets.
+            sandbox="allow-scripts" lets inline scripts run (e.g. Plotly charts) but blocks
+            access to the parent page's cookies and storage (no allow-same-origin).
+            Note: relative asset references (img, link, script src) inside the HTML will not
+            resolve — only self-contained documents are fully supported in this preview.
+        -->
         <iframe
-            :src="itemUrl(path)"
+            v-if="isHtmlFile"
+            :srcdoc="preview.content ?? ''"
             class="html-preview-frame"
             sandbox="allow-scripts"
             referrerpolicy="no-referrer"
             :title="$t('file_preview.html_preview_title')"
         />
-    </template>
-    <template v-else>
-        <div class="big-file-warning" v-if="bigFile">
-            <KsAlert type="warning" :closable="false">
-                {{ $t("file_preview.big_file_warning", {size: humanSize}) }}
-            </KsAlert>
-            <KsButtonGroup>
-                <KsButton
-                    type="primary"
-                    @click="bigFile = false;loadPreview()"
-                >
-                    {{ $t("file_preview.load_anyway") }}
-                </KsButton>
-                <KsButton
-                    type="primary"
-                    tag="a"
-                    :href="itemUrl(path)"
-                    :icon="Download"
-                    rel="noopener noreferrer"
-                >
-                    {{ $t('download') }}
-                </KsButton>
-            </KsButtonGroup>
-        </div>
-        <div v-else-if="!preview">
-            Loading...
-        </div>
-        <template v-else>
-            <div class="button-bar">
-                <KsText>
-                    {{ path.split("/").slice(-1)[0] }}
-                </KsText>
-                <KsTag>
-                    {{ humanSize }}
-                </KsTag>
-                <div style="flex:1"/>
-                <KsButton
-                    class=""
-                    type="primary"
-                    tag="a"
-                    :href="itemUrl(path)"
-                    :icon="Download"
-                    rel="noopener noreferrer"
-                >
-                    {{ $t('download') }}
-                </KsButton>
-            </div>
-            <RawPreview v-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
-        </template>
+        <RawPreview v-else-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
     </template>
 </template>
 
@@ -176,16 +161,19 @@
             .filePreview({
                 executionId: props.executionId,
                 path: props.path,
-                maxRows: maxRows.value,
+                // HTML is not line-oriented; skip the row cap so the full document is loaded.
+                // The BIG_FILE_THRESHOLD guard above prevents fetching excessively large files.
+                maxRows: isHtmlFile.value ? undefined : maxRows.value,
                 encoding: encodingModel.value,
             })
     }
 
     watch(
         [maxRows, encodingModel],
-        async ([maxRows, encoding]) => {
-            if(isHtmlFile.value) return
-            if(maxRows === undefined || encoding === undefined) return
+        async ([mRows, encoding]) => {
+            // encoding must be set before any fetch; non-HTML files also need maxRows.
+            if(encoding === undefined) return
+            if(!isHtmlFile.value && mRows === undefined) return
             metadata.value = await getFileMeta()
             if(metadata.value.size === 0) {
                 preview.value = {

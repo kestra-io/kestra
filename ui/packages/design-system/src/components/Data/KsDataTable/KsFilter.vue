@@ -35,7 +35,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, provide, onMounted, watch} from "vue"
+    import {ref, computed, provide, inject, onMounted, watch} from "vue"
+    import {useRoute} from "vue-router"
     import {useMediaQuery} from "@vueuse/core"
     import type {
         AppliedFilter,
@@ -49,6 +50,7 @@
     import {newGroupId} from "./filter/composables/useFilterGroups"
     import {useDataOptions} from "./filter/composables/useDataOptions"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./filter/utils/filterInjectionKeys.ts"
+    import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, type SavedFilterAction} from "./filter/utils/filterAnalytics"
     import MainFilter from "./filter/MainFilter.vue"
     import MobileFilter from "./filter/MobileFilter.vue"
     import RawFilter from "./filter/RawFilter.vue"
@@ -133,9 +135,33 @@
         props.defaultDuration,
     )
 
-    const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
-        props.prefix,
-    )
+    const {
+        savedFilters,
+        saveFilter: persistFilter,
+        updateSavedFilter: persistFilterUpdate,
+        deleteSavedFilter: removeSavedFilter,
+    } = useSavedFilters(props.prefix)
+
+    const route = useRoute()
+    const trackSavedFilter = inject(SAVED_FILTER_ANALYTICS_INJECTION_KEY, undefined)
+    const reportSavedFilter = (action: SavedFilterAction, filtersCount: number) => {
+        trackSavedFilter?.({action, page: String(route.name ?? route.path), filtersCount})
+    }
+
+    const saveFilter = (name: string, description: string, filters: AppliedFilter[]) => {
+        persistFilter(name, description, filters)
+        reportSavedFilter("save", filters.length)
+    }
+
+    const updateSavedFilter = (id: string, name: string, description: string, filters: AppliedFilter[]) => {
+        persistFilterUpdate(id, name, description, filters)
+        reportSavedFilter("update", filters.length)
+    }
+
+    const deleteSavedFilter = (savedFilter: SavedFilter) => {
+        removeSavedFilter(savedFilter)
+        reportSavedFilter("delete", savedFilter.filters.length)
+    }
 
     const {chartVisible, updateChart, refreshData: tableRefreshData} = useDataOptions(
         props.tableOptions,
@@ -162,6 +188,8 @@
     const hasAppliedFilters = computed(() => appliedFilters.value?.length > 0)
 
     const loadSavedFilter = (savedFilter: SavedFilter) => {
+        reportSavedFilter("apply", savedFilter.filters.length)
+
         // Filters saved before nested groups were supported only carry a flat list.
         if (savedFilter.groups && savedFilter.groups.length > 0) {
             replaceTree(savedFilter.groups, savedFilter.topLogical ?? "OR")

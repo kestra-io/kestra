@@ -1,20 +1,19 @@
 <template>
     <div class="empty-state">
         <component :is="icon ?? FilterRemoveOutlineIcon" class="empty-icon" />
-        <strong>{{ title ?? t("ks_no_data.no_results") }}</strong>
+        <strong>{{ title ?? $t("ks_no_data.no_results") }}</strong>
         <p v-if="$slots.default"><slot /></p>
         <!-- eslint-disable-next-line vue/no-v-html -->
         <p v-else-if="description" v-html="description" />
         <template v-else>
-            <p>{{ t("ks_no_data.nothing_here") }}</p>
-            <p>{{ t("ks_no_data.will_appear") }}</p>
+            <p>{{ $t("ks_no_data.nothing_here") }}</p>
+            <p>{{ $t("ks_no_data.will_appear") }}</p>
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
     import type {Component} from "vue"
-    import {useI18n} from "vue-i18n"
     import FilterRemoveOutlineIcon from "vue-material-design-icons/FilterRemoveOutline.vue"
 
     defineProps<{
@@ -23,7 +22,6 @@
         icon?: Component
     }>()
 
-    const {t} = useI18n({useScope: "global"})
 </script>
 
 <style scoped lang="scss">

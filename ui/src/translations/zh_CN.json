@@ -134,7 +134,8 @@
         "trigger_type": "trigger类型"
       },
       "hero_eyebrow": "您的 system flow",
-      "hero_empty": "选择一个 trigger 和一个渠道以预览您的 flow。"
+      "hero_empty": "选择一个 trigger 和一个渠道以预览您的 flow。",
+      "browse_blueprints": "更想从模板开始？浏览社区 system blueprints"
     },
     "toggle menu": "切换菜单",
     "panel actions": "面板操作",

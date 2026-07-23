@@ -134,7 +134,8 @@
         "trigger_type": "Trigger-Typ"
       },
       "hero_eyebrow": "Ihr System-Flow",
-      "hero_empty": "Wählen Sie einen Trigger und einen Kanal, um Ihren Flow in der Vorschau zu sehen."
+      "hero_empty": "Wählen Sie einen Trigger und einen Kanal, um Ihren Flow in der Vorschau zu sehen.",
+      "browse_blueprints": "Lieber mit einer Vorlage starten? Community-System-Blueprints durchsuchen"
     },
     "toggle menu": "Menü umschalten",
     "panel actions": "Panelaktionen",

@@ -134,7 +134,8 @@
         "trigger_type": "triggerの種類"
       },
       "hero_eyebrow": "あなたの system flow",
-      "hero_empty": "trigger とチャンネルを選ぶと flow をプレビューできます。"
+      "hero_empty": "trigger とチャンネルを選ぶと flow をプレビューできます。",
+      "browse_blueprints": "テンプレートから始めますか？コミュニティの system blueprints を見る"
     },
     "toggle menu": "メニューを切り替え",
     "panel actions": "パネルアクション",

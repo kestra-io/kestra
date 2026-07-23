@@ -134,7 +134,8 @@
         "trigger_type": "trigger 유형"
       },
       "hero_eyebrow": "내 system flow",
-      "hero_empty": "trigger와 채널을 선택하면 flow를 미리 볼 수 있습니다."
+      "hero_empty": "trigger와 채널을 선택하면 flow를 미리 볼 수 있습니다.",
+      "browse_blueprints": "템플릿부터 시작하시겠어요? 커뮤니티 system blueprints 둘러보기"
     },
     "toggle menu": "메뉴 전환",
     "panel actions": "패널 작업",

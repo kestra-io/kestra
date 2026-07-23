@@ -1,15 +1,23 @@
 <template>
     <div class="system-blueprints-tab">
-        <div class="recipe-section">
+        <div class="recipe-header">
             <h2 class="section-heading">{{ $t("recipe.section_title") }}</h2>
             <p class="section-sub">{{ $t("recipe.section_subtitle") }}</p>
-            <FlowRecipe :namespace="systemNamespace" @submit="handleRecipeSubmit" />
         </div>
 
-        <div class="blueprints-section">
-            <h2 class="section-heading">{{ $t("recipe.blueprints_section_title") }}</h2>
-            <BlueprintsBrowser tab="community" :system="true" :embed="true" />
-        </div>
+        <FlowRecipe :namespace="systemNamespace" @submit="handleRecipeSubmit" />
+
+        <router-link
+            :to="{name: 'blueprints', params: {tenant: route.params.tenant, kind: 'flow', tab: 'community'}}"
+            class="blueprint-link"
+            data-test="system-blueprints-link"
+        >
+            <div class="blueprint-link-icon">
+                <ViewGridOutline :size="20" />
+            </div>
+            <span class="blueprint-link-text">{{ $t("recipe.browse_blueprints") }}</span>
+            <ChevronRight :size="16" class="blueprint-link-arrow" />
+        </router-link>
     </div>
 </template>
 
@@ -18,7 +26,8 @@
     import {useRouter, useRoute} from "vue-router"
     import {useMiscStore} from "override/stores/misc"
     import FlowRecipe from "./recipe/FlowRecipe.vue"
-    import BlueprintsBrowser from "./blueprints/BlueprintsBrowser.vue"
+    import ViewGridOutline from "vue-material-design-icons/ViewGridOutline.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {RECIPE_PRESET_KEY} from "../../utils/storageKeys"
 
     const props = withDefaults(defineProps<{
@@ -47,27 +56,69 @@
     .system-blueprints-tab {
         display: flex;
         flex-direction: column;
-        gap: var(--ks-spacing-6);
     }
 
-    .recipe-section {
-        border-bottom: 1px solid var(--ks-border-default);
-        padding-bottom: var(--ks-spacing-6);
+    .recipe-header {
+        margin: 0 var(--ks-spacing-4);
     }
 
     .section-heading {
-        margin: 0 var(--ks-spacing-4) var(--ks-spacing-1);
+        margin: 0 0 var(--ks-spacing-1);
         font-size: var(--ks-font-size-xl);
         font-weight: var(--ks-font-weight-semibold);
     }
 
     .section-sub {
-        margin: 0 var(--ks-spacing-4) var(--ks-spacing-4);
+        margin: 0;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
     }
 
-    .blueprints-section {
-        padding-bottom: var(--ks-spacing-4);
+    .blueprint-link {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        margin: var(--ks-spacing-2) var(--ks-spacing-4) var(--ks-spacing-6);
+        padding: var(--ks-spacing-3) var(--ks-spacing-4);
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        background-color: var(--ks-bg-surface);
+        color: var(--ks-text-secondary);
+        text-decoration: none;
+        transition: border-color var(--ks-duration-fast) var(--ks-ease-standard),
+            color var(--ks-duration-fast) var(--ks-ease-standard);
+
+        &:hover {
+            border-color: var(--ks-border-strong);
+            color: var(--ks-text-primary);
+        }
+
+        &:focus-visible {
+            outline: var(--ks-border-width-base) solid var(--ks-border-focus);
+            outline-offset: var(--ks-spacing-px);
+        }
+    }
+
+    .blueprint-link-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--ks-spacing-6);
+        height: var(--ks-spacing-6);
+        border-radius: var(--ks-radius-sm);
+        background-color: var(--ks-bg-tag);
+        flex-shrink: 0;
+        color: var(--ks-text-primary);
+    }
+
+    .blueprint-link-text {
+        flex: 1;
+        min-width: 0;
+        font-size: var(--ks-font-size-sm);
+    }
+
+    .blueprint-link-arrow {
+        flex-shrink: 0;
+        color: var(--ks-icon-muted);
     }
 </style>

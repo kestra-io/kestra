@@ -134,7 +134,8 @@
         "trigger_type": "Tipo di trigger"
       },
       "hero_eyebrow": "Il tuo system flow",
-      "hero_empty": "Scegli un trigger e un canale per vedere l'anteprima del tuo flow."
+      "hero_empty": "Scegli un trigger e un canale per vedere l'anteprima del tuo flow.",
+      "browse_blueprints": "Preferisci partire da un modello? Sfoglia i system blueprints della community"
     },
     "toggle menu": "Attiva/disattiva menu",
     "panel actions": "Azioni del pannello",

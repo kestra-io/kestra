@@ -340,25 +340,20 @@ class MigrationRunnerTest {
     }
 
     @Test
-    void initOnStartup_skipsWhenSkipAutoRunIsTrue() {
-        // Given
+    void autoRun_appliesAllPendingScripts() throws Exception {
+        // Given: OSS autoRun() applies every pending script (this is what MigrationStartupRunner
+        // triggers at context startup).
         AtomicInteger callCount = new AtomicInteger(0);
         MigrationRunner runner = new MigrationRunner(
             noOpLock, new InMemoryHistoryStore(),
             List.of(simpleScript("2.0.01-upgrade", callCount::incrementAndGet))
         );
 
-        try {
-            MigrationRunner.setSkipAutoRun(true);
+        // When
+        runner.autoRun();
 
-            // When
-            runner.initOnStartup();
-
-            // Then
-            assertThat(callCount.get()).isEqualTo(0);
-        } finally {
-            MigrationRunner.setSkipAutoRun(false);
-        }
+        // Then
+        assertThat(callCount.get()).isEqualTo(1);
     }
 
     @Test

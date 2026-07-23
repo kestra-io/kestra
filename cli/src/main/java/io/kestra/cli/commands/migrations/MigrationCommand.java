@@ -1,6 +1,5 @@
 package io.kestra.cli.commands.migrations;
 
-import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.Kestra;
 
 import lombok.SneakyThrows;
@@ -19,7 +18,7 @@ import picocli.CommandLine;
     }
 )
 @Slf4j
-public class MigrationCommand extends AbstractCommand {
+public class MigrationCommand extends AbstractMigrationCommand {
     @SneakyThrows
     @Override
     public Integer call() throws Exception {

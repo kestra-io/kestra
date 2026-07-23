@@ -12,13 +12,13 @@ import io.micronaut.data.model.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CursorPagedResultsTest {
+class CursorOrOffsetPagedResultsTest {
 
     @Test
     void offsetPageExposesTotalAndNoCursor() {
         Page<String> page = Page.of(List.of("a", "b"), Pageable.from(1, 2), 42L);
 
-        CursorPagedResults<String> results = CursorPagedResults.of(page);
+        CursorOrOffsetPagedResults<String> results = CursorOrOffsetPagedResults.of(page);
 
         assertThat(results.getResults()).containsExactly("a", "b");
         assertThat(results.getType()).isEqualTo(PaginationType.OFFSET);
@@ -31,7 +31,7 @@ class CursorPagedResultsTest {
         List<Pageable.Cursor> cursors = List.of(Pageable.Cursor.of("cursor-a"), Pageable.Cursor.of("cursor-b"));
         CursoredPage<String> page = CursoredPage.of(List.of("a", "b"), Pageable.from(1, 2), cursors, null);
 
-        CursorPagedResults<String> results = CursorPagedResults.of(page);
+        CursorOrOffsetPagedResults<String> results = CursorOrOffsetPagedResults.of(page);
 
         assertThat(results.getResults()).containsExactly("a", "b");
         assertThat(results.getType()).isEqualTo(PaginationType.CURSOR);

@@ -11,19 +11,22 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Paged response for stores that may paginate by cursor instead of offset (e.g. an external log store with no
- * exact row count). Kept as a separate type from {@link PagedResults} rather than a shared {@code total} field:
- * only this cursor-capable path can legitimately omit {@code total}, so the OpenAPI schema (and generated SDK
- * types) can still mark {@code total} as required on every other, offset-only, endpoint.
+ * Paged response for stores that may not know their exact row count (e.g. an external log store):
+ * {@code total} is only present when the backing store can compute it. Kept as a separate type from
+ * {@link PagedResults} rather than a shared {@code total} field: only this path can legitimately omit
+ * {@code total}, so the OpenAPI schema (and generated SDK types) can still mark {@code total} as required
+ * on every other, always-countable, endpoint. When {@code total} is absent, pagination falls back to an
+ * opaque cursor ({@code type}/{@code nextCursor}) since there is no page count to offset from.
  */
 @Getter
 @NoArgsConstructor
-public class CursorPagedResults<T> {
+public class CursorOrOffsetPagedResults<T> {
     @NotNull
     private List<T> results;
 
     /**
-     * Exact total row count — present in offset mode, omitted in cursor mode (a cursor store has no total).
+     * Exact total row count — present when the store can compute it (offset mode), omitted when it can't
+     * (cursor mode).
      */
     private Long total;
 
@@ -50,8 +53,8 @@ public class CursorPagedResults<T> {
      * carried verbatim as a lone {@code String} element. We read it from {@link CursoredPage#nextPageable()} — the
      * position to resume after this page — and leave it null on an empty (last) page.
      */
-    public static <T> CursorPagedResults<T> of(Page<T> page) {
-        CursorPagedResults<T> pagedResults = new CursorPagedResults<>();
+    public static <T> CursorOrOffsetPagedResults<T> of(Page<T> page) {
+        CursorOrOffsetPagedResults<T> pagedResults = new CursorOrOffsetPagedResults<>();
         pagedResults.results = page.getContent();
 
         if (page.hasTotalSize()) {

@@ -11,8 +11,9 @@ import lombok.NoArgsConstructor;
 
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows
- * its row count, so both {@code results} and {@code total} are always present. Stores that may instead paginate by
- * cursor (no exact total available) use {@link CursorPagedResults} — see that class for why the two are kept apart.
+ * its row count, so both {@code results} and {@code total} are always present. A store that may not know its
+ * total (e.g. an external log store) uses {@link CursorOrOffsetPagedResults} — see that class for why the two
+ * are kept apart.
  */
 @Getter
 @NoArgsConstructor

@@ -21,9 +21,13 @@ Only needed when the OSS API changes. From `ui/`:
 npm run generate:sdk
 ```
 
-That is the **only** path that invokes Gradle. It: generates `openapi.yml` (Gradle) → builds the
-shared plugin → runs `openapi-ts` (generate + convert + hash-stamp) → bundles `dist/`. Commit the
-resulting `src/openapi/` changes (and the regenerated `package.json` `exports` map).
+That is the **only** path that invokes Gradle. It: generates `openapi.yml` (Gradle) → hashes it and
+compares against the `OPENAPI_SPEC_HASH` already committed in `src/openapi/sdk/shared.gen.ts` → if
+they match, the committed SDK is already correct for the current spec and the rest is skipped; if
+they differ, builds the shared plugin → runs `openapi-ts` (generate + convert + hash-stamp) →
+bundles `dist/`. This makes `generate:sdk` cheap to run speculatively (e.g. after any backend change)
+since a no-op spec diff short-circuits before the expensive steps. Commit the resulting
+`src/openapi/` changes (and the regenerated `package.json` `exports` map) when it does regenerate.
 
 Everyday commands never regenerate: `ui/scripts/ensure-sdk.mjs` (the `predev` / `prebuild` /
 `precheck:types` hook) only bundles the already-committed `src/openapi` into `dist/` when `dist/` is

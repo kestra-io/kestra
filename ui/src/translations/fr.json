@@ -1135,6 +1135,9 @@
       }
     },
     "apps": "Applications",
+    "deploy": {
+      "label": "Déployer"
+    },
     "demos": {
       "enterprise_edition": "Édition Enterprise",
       "get_a_demo_button": "Obtenir une démo",
@@ -1167,6 +1170,10 @@
         "header": "Métadonnées des actifs et Observabilité",
         "title": "Amenez chaque dataset, service et dépendance en vue.",
         "message": "Les assets connectent les métadonnées d'observabilité, de lignée et de propriété afin que les équipes de la plateforme puissent résoudre les problèmes plus rapidement et déployer en toute confiance."
+      },
+      "deploy": {
+        "title": "Promouvoir les Flows entre les environnements",
+        "message": "Kestra Enterprise Edition vous permet de promouvoir des flows d'un environnement à un autre — par exemple, de dev à staging à production — directement depuis l'interface utilisateur, sans nécessiter de pipelines Git ou CI/CD. Examinez un diff de ce qui va changer exactement avant de promouvoir, protégez les cibles sensibles avec un mécanisme de confirmation, repérez les dérives en un coup d'œil, et conservez un historique complet de qui a promu quoi, où et quand."
       },
       "IAM": {
         "title": "Gérer les utilisateurs via IAM avec SSO, SCIM et RBAC",

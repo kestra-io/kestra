@@ -10,6 +10,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.utils.VersionProvider;
 
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
@@ -19,6 +20,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
@@ -34,6 +36,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
+    // Plugin schemas depend on the set of installed plugins, which can change while the server runs.
+    // They must therefore be revalidated on every use (via ETag) instead of being cached blindly, otherwise
+    // the editor keeps validating/completing against a stale schema after a plugin is added or removed (#12102).
+    private static final String REVALIDATE_CACHE_DIRECTIVE = "no-cache";
 
     @Inject
     protected JsonSchemaGenerator jsonSchemaGenerator;
@@ -44,6 +50,9 @@ public class PluginController {
     @Inject
     protected JsonSchemaCache jsonSchemaCache;
 
+    @Inject
+    protected VersionProvider versionProvider;
+
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
@@ -53,10 +62,15 @@ public class PluginController {
     )
     public HttpResponse<Map<String, Object>> getSchemasFromType(
         @Parameter(description = "The schema needed") @PathVariable SchemaType type,
-        @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf) {
-        return HttpResponse.ok()
-            .body(jsonSchemaCache.getSchemaForType(type, arrayOf))
-            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf,
+        @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
+        final String etag = schemaETag("schema", type, arrayOf);
+        if (etag.equals(ifNoneMatch)) {
+            return notModified(etag);
+        }
+        return HttpResponse.ok(jsonSchemaCache.getSchemaForType(type, arrayOf))
+            .header(HttpHeaders.ETAG, etag)
+            .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
 
     @Get(uri = "properties/{type}")
@@ -67,10 +81,30 @@ public class PluginController {
         description = "The schema will be a [JSON Schema Draft 7](http://json-schema.org/draft-07/schema)"
     )
     public HttpResponse<Map<String, Object>> getPropertiesFromType(
-        @Parameter(description = "The schema needed") @PathVariable SchemaType type) {
-        return HttpResponse.ok()
-            .body(jsonSchemaCache.getPropertiesForType(type))
-            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        @Parameter(description = "The schema needed") @PathVariable SchemaType type,
+        @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
+        final String etag = schemaETag("properties", type, false);
+        if (etag.equals(ifNoneMatch)) {
+            return notModified(etag);
+        }
+        return HttpResponse.ok(jsonSchemaCache.getPropertiesForType(type))
+            .header(HttpHeaders.ETAG, etag)
+            .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
+    }
+
+    /**
+     * Builds a strong ETag for a plugin schema response. The tag changes whenever the installed plugin
+     * set changes (via {@link PluginRegistry#hash()}) or the server version changes, so browsers holding a
+     * previously cached schema revalidate and receive the fresh one instead of a stale cached copy.
+     */
+    private String schemaETag(final String kind, final SchemaType type, final boolean arrayOf) {
+        return "\"" + kind + "-" + type + "-" + arrayOf + "-" + versionProvider.getVersion() + "-" + pluginRegistry.hash() + "\"";
+    }
+
+    private <T> HttpResponse<T> notModified(final String etag) {
+        return HttpResponse.<T>notModified()
+            .header(HttpHeaders.ETAG, etag)
+            .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
 
     @Get(uri = "inputs")

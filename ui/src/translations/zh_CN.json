@@ -51,7 +51,8 @@
         "namespace_placeholder": "选择namespace",
         "states": "在这些状态时",
         "states_required": "请至少选择一个状态。",
-        "watch_namespace": "监控namespace"
+        "watch_namespace": "监控namespace",
+        "states_recommended": "FAILED 是告警的推荐默认值。"
       },
       "notify": {
         "email_label": "电子邮件",
@@ -100,12 +101,14 @@
         "selected_trigger": "所选",
         "title": "摘要",
         "webhook": "收到webhook时，通过{channels}通知。",
-        "yaml_preview": "YAML预览"
+        "yaml_preview": "YAML预览",
+        "preview_title": "预览",
+        "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "请至少选择一个通知渠道。",
         "subtitle": "选择通知团队的方式。",
-        "title": "则"
+        "title": "则进行通知"
       },
       "trigger": {
         "case_sub": "仅EE功能",
@@ -127,9 +130,11 @@
       },
       "when": {
         "subtitle": "选择触发此系统flow的条件。",
-        "title": "当",
+        "title": "当此事件发生时",
         "trigger_type": "trigger类型"
-      }
+      },
+      "hero_eyebrow": "您的 system flow",
+      "hero_empty": "选择一个 trigger 和一个渠道以预览您的 flow。"
     },
     "toggle menu": "切换菜单",
     "panel actions": "面板操作",

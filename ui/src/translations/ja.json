@@ -51,7 +51,8 @@
         "namespace_placeholder": "namespaceを選択",
         "states": "これらの状態のとき",
         "states_required": "少なくとも1つの状態を選択してください。",
-        "watch_namespace": "namespaceを監視"
+        "watch_namespace": "namespaceを監視",
+        "states_recommended": "FAILED はアラートの推奨デフォルトです。"
       },
       "notify": {
         "email_label": "メール",
@@ -100,12 +101,14 @@
         "selected_trigger": "選択した",
         "title": "サマリー",
         "webhook": "webhookを受信したとき、{channels} で通知します。",
-        "yaml_preview": "YAMLプレビュー"
+        "yaml_preview": "YAMLプレビュー",
+        "preview_title": "プレビュー",
+        "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "少なくとも1つの通知チャンネルを選択してください。",
         "subtitle": "チームへの通知方法を選択します。",
-        "title": "そのとき"
+        "title": "そのとき通知する"
       },
       "trigger": {
         "case_sub": "EE専用機能",
@@ -127,9 +130,11 @@
       },
       "when": {
         "subtitle": "このシステムflowをトリガーするものを選択します。",
-        "title": "いつ",
+        "title": "これが起きたら",
         "trigger_type": "triggerの種類"
-      }
+      },
+      "hero_eyebrow": "あなたの system flow",
+      "hero_empty": "trigger とチャンネルを選ぶと flow をプレビューできます。"
     },
     "toggle menu": "メニューを切り替え",
     "panel actions": "パネルアクション",

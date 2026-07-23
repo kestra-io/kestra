@@ -51,7 +51,8 @@
         "namespace_placeholder": "namespace auswählen",
         "states": "Bei diesen Zuständen",
         "states_required": "Wählen Sie mindestens einen Zustand.",
-        "watch_namespace": "namespace überwachen"
+        "watch_namespace": "namespace überwachen",
+        "states_recommended": "FAILED ist die empfohlene Standardeinstellung für Benachrichtigungen."
       },
       "notify": {
         "email_label": "E-Mail",
@@ -100,12 +101,14 @@
         "selected_trigger": "ausgewählte",
         "title": "Zusammenfassung",
         "webhook": "Wenn ein Webhook empfangen wird, benachrichtige via {channels}.",
-        "yaml_preview": "YAML-Vorschau"
+        "yaml_preview": "YAML-Vorschau",
+        "preview_title": "Vorschau",
+        "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "Wählen Sie mindestens einen Benachrichtigungskanal.",
         "subtitle": "Wählen Sie, wie Sie Ihr Team benachrichtigen möchten.",
-        "title": "DANN"
+        "title": "Dann benachrichtigen"
       },
       "trigger": {
         "case_sub": "Nur in EE verfügbar",
@@ -127,9 +130,11 @@
       },
       "when": {
         "subtitle": "Wählen Sie aus, was diesen System-Flow auslöst.",
-        "title": "WANN",
+        "title": "Wenn dies passiert",
         "trigger_type": "Trigger-Typ"
-      }
+      },
+      "hero_eyebrow": "Ihr System-Flow",
+      "hero_empty": "Wählen Sie einen Trigger und einen Kanal, um Ihren Flow in der Vorschau zu sehen."
     },
     "toggle menu": "Menü umschalten",
     "panel actions": "Panelaktionen",

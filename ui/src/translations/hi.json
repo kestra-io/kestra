@@ -51,7 +51,8 @@
         "namespace_placeholder": "namespace चुनें",
         "states": "इन स्थितियों पर",
         "states_required": "कम से कम एक स्थिति चुनें।",
-        "watch_namespace": "namespace देखें"
+        "watch_namespace": "namespace देखें",
+        "states_recommended": "अलर्ट के लिए FAILED अनुशंसित डिफ़ॉल्ट है।"
       },
       "notify": {
         "email_label": "ईमेल",
@@ -100,12 +101,14 @@
         "selected_trigger": "चयनित",
         "title": "सारांश",
         "webhook": "जब webhook प्राप्त हो, {channels} के माध्यम से सूचित करें।",
-        "yaml_preview": "YAML पूर्वावलोकन"
+        "yaml_preview": "YAML पूर्वावलोकन",
+        "preview_title": "पूर्वावलोकन",
+        "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "कम से कम एक नोटिफिकेशन चैनल चुनें।",
         "subtitle": "चुनें कि अपनी टीम को कैसे सूचित करें।",
-        "title": "तब"
+        "title": "तब सूचित करें"
       },
       "trigger": {
         "case_sub": "केवल EE सुविधा",
@@ -127,9 +130,11 @@
       },
       "when": {
         "subtitle": "चुनें कि इस सिस्टम flow को क्या ट्रिगर करता है।",
-        "title": "जब",
+        "title": "जब यह हो",
         "trigger_type": "trigger प्रकार"
-      }
+      },
+      "hero_eyebrow": "आपका system flow",
+      "hero_empty": "अपने flow का पूर्वावलोकन देखने के लिए एक trigger और एक चैनल चुनें।"
     },
     "toggle menu": "मेनू टॉगल करें",
     "panel actions": "पैनल क्रियाएँ",

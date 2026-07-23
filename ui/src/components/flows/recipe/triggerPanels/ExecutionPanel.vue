@@ -46,12 +46,17 @@
             <span v-if="recipe.states.length === 0" class="hint hint-error">
                 {{ $t("recipe.execution.states_required") }}
             </span>
+            <span v-else-if="recipe.states.includes('FAILED')" class="hint hint-reco">
+                <Check class="hint-icon" />
+                {{ $t("recipe.execution.states_recommended") }}
+            </span>
         </KsFormItem>
     </KsForm>
 </template>
 
 <script setup lang="ts">
     import {STATES} from "@kestra-io/design-system"
+    import Check from "vue-material-design-icons/Check.vue"
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
 
     withDefaults(defineProps<{
@@ -95,5 +100,17 @@
 
     .hint-error {
         color: var(--ks-text-error);
+    }
+
+    .hint-reco {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        color: var(--ks-text-success);
+    }
+
+    .hint-icon {
+        display: inline-flex;
+        font-size: var(--ks-font-size-md);
     }
 </style>

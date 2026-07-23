@@ -51,7 +51,8 @@
         "namespace_placeholder": "Wybierz namespace",
         "states": "Dla tych stanów",
         "states_required": "Wybierz co najmniej jeden stan.",
-        "watch_namespace": "Monitoruj namespace"
+        "watch_namespace": "Monitoruj namespace",
+        "states_recommended": "FAILED to zalecana wartość domyślna dla alertów."
       },
       "notify": {
         "email_label": "E-mail",
@@ -100,12 +101,14 @@
         "selected_trigger": "wybrany",
         "title": "Podsumowanie",
         "webhook": "Gdy zostanie odebrany webhook, powiadom przez {channels}.",
-        "yaml_preview": "Podgląd YAML"
+        "yaml_preview": "Podgląd YAML",
+        "preview_title": "Podgląd",
+        "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "Wybierz co najmniej jeden kanał powiadomień.",
         "subtitle": "Wybierz sposób powiadamiania zespołu.",
-        "title": "WTEDY"
+        "title": "Wtedy powiadom"
       },
       "trigger": {
         "case_sub": "Tylko funkcja EE",
@@ -127,9 +130,11 @@
       },
       "when": {
         "subtitle": "Wybierz, co wyzwala ten flow systemowy.",
-        "title": "KIEDY",
+        "title": "Gdy to nastąpi",
         "trigger_type": "Typ trigger"
-      }
+      },
+      "hero_eyebrow": "Twój system flow",
+      "hero_empty": "Wybierz trigger i kanał, aby zobaczyć podgląd flow."
     },
     "toggle menu": "Przełącz menu",
     "panel actions": "Akcje panelu",

@@ -1,16 +1,8 @@
 <template>
     <KsCard class="summary-card" data-test="recipe-summary-card">
         <div class="summary-header">
-            <span class="summary-title">{{ $t("recipe.summary.title") }}</span>
-        </div>
-
-        <div class="summary-body">
-            <span v-if="summary" class="summary-sentence" data-test="recipe-summary-sentence">
-                {{ summary }}
-            </span>
-            <span v-else class="summary-empty">
-                {{ $t("recipe.summary.empty") }}
-            </span>
+            <span class="summary-title">{{ $t("recipe.summary.preview_title") }}</span>
+            <span class="summary-live">{{ $t("recipe.summary.live") }}</span>
         </div>
 
         <KsAlert
@@ -22,24 +14,23 @@
             {{ invalidHint }}
         </KsAlert>
 
-        <KsCollapse v-model="yamlOpen" class="yaml-preview">
-            <KsCollapseItem name="yaml" :title="$t('recipe.summary.yaml_preview')">
-                <KsEditor
-                    v-if="yamlOpen.length > 0"
-                    v-bind="editorBindings"
-                    :modelValue="yamlContent"
-                    lang="yaml"
-                    :readOnly="true"
-                    :navbar="false"
-                    class="yaml-editor"
-                    data-test="recipe-yaml-preview"
-                />
-            </KsCollapseItem>
-        </KsCollapse>
+        <div class="yaml-preview">
+            <KsEditor
+                v-bind="editorBindings"
+                :modelValue="yamlContent"
+                lang="yaml"
+                :readOnly="true"
+                :navbar="false"
+                :options="{fullHeight: false}"
+                class="yaml-editor"
+                data-test="recipe-yaml-preview"
+            />
+        </div>
 
         <div class="summary-actions">
             <KsButton
                 type="primary"
+                class="create-btn"
                 :disabled="!isValid"
                 data-test="recipe-create-btn"
                 @click="$emit('create')"
@@ -51,13 +42,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     const props = defineProps<{
-        summary: string
         yamlContent: string
         isValid: boolean
         hasChannel: boolean
@@ -71,7 +61,6 @@
 
     const {t} = useI18n()
     const editorBindings = useEditorBindings()
-    const yamlOpen = ref<string[]>([])
 
     const invalidHint = computed(() => {
         if (!props.hasChannel && !props.triggerValid) {
@@ -95,8 +84,11 @@
     }
 
     .summary-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         padding-bottom: var(--ks-spacing-2);
-        border-bottom: 1px solid var(--ks-border-default);
+        border-bottom: var(--ks-border-width-thin) solid var(--ks-border-default);
     }
 
     .summary-title {
@@ -105,40 +97,31 @@
         font-weight: var(--ks-font-weight-semibold);
     }
 
-    .summary-body {
-        min-height: 3rem;
-    }
-
-    .summary-sentence {
-        display: block;
-        line-height: 1.6;
-    }
-
-    .summary-empty {
-        display: block;
-        font-style: italic;
-        color: var(--ks-text-secondary);
+    .summary-live {
+        font-size: var(--ks-font-size-2xs);
+        font-weight: var(--ks-font-weight-semibold);
+        letter-spacing: 0.06em;
+        color: var(--ks-text-muted);
     }
 
     .summary-alert {
-        margin-top: var(--ks-spacing-2);
-    }
-
-    .yaml-preview {
-        border-top: 1px solid var(--ks-border-default);
-        padding-top: var(--ks-spacing-2);
+        margin: 0;
     }
 
     .yaml-editor {
-        height: 12rem;
+        height: 14rem;
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         overflow: hidden;
     }
 
     .summary-actions {
         display: flex;
-        justify-content: flex-end;
         padding-top: var(--ks-spacing-2);
-        border-top: 1px solid var(--ks-border-default);
+        border-top: var(--ks-border-width-thin) solid var(--ks-border-default);
+    }
+
+    .create-btn {
+        width: 100%;
     }
 </style>

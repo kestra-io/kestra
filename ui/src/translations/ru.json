@@ -51,7 +51,8 @@
         "namespace_placeholder": "Выберите namespace",
         "states": "При этих состояниях",
         "states_required": "Выберите хотя бы одно состояние.",
-        "watch_namespace": "Наблюдать за namespace"
+        "watch_namespace": "Наблюдать за namespace",
+        "states_recommended": "FAILED — рекомендуемое значение по умолчанию для оповещений."
       },
       "notify": {
         "email_label": "Электронная почта",
@@ -100,12 +101,14 @@
         "selected_trigger": "выбранный",
         "title": "Сводка",
         "webhook": "При получении webhook, уведомить через {channels}.",
-        "yaml_preview": "Предварительный просмотр YAML"
+        "yaml_preview": "Предварительный просмотр YAML",
+        "preview_title": "Предпросмотр",
+        "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "Выберите хотя бы один канал уведомлений.",
         "subtitle": "Выберите способ уведомления команды.",
-        "title": "ТОГДА"
+        "title": "Тогда уведомить"
       },
       "trigger": {
         "case_sub": "Только функция EE",
@@ -127,9 +130,11 @@
       },
       "when": {
         "subtitle": "Выберите, что запускает этот системный flow.",
-        "title": "КОГДА",
+        "title": "Когда это происходит",
         "trigger_type": "Тип trigger"
-      }
+      },
+      "hero_eyebrow": "Ваш system flow",
+      "hero_empty": "Выберите trigger и канал, чтобы увидеть предпросмотр flow."
     },
     "toggle menu": "Переключить меню",
     "panel actions": "Действия панели",

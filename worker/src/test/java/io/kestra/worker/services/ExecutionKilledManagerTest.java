@@ -501,6 +501,32 @@ class ExecutionKilledManagerTest {
         assertThat(callCount.get()).isEqualTo(1);
     }
 
+    @Test
+    void shouldKillMatchingTaskRunOnly() {
+        // Given
+        AtomicReference<State.Type> killedState1 = new AtomicReference<>();
+        AtomicReference<State.Type> killedState2 = new AtomicReference<>();
+
+        WorkerTask task1 = createMockWorkerTask("exec-1", null, "taskrun-1");
+        WorkerTask task2 = createMockWorkerTask("exec-1", null, "taskrun-2");
+
+        manager.register("job-1", task1, killedState1::set);
+        manager.register("job-2", task2, killedState2::set);
+
+        ExecutionKilledExecution killEvent = ExecutionKilledExecution.builder()
+            .executionId("exec-1")
+            .taskRunId("taskrun-1")
+            .executionState(State.Type.FAILED)
+            .build();
+
+        // When
+        manager.onKillReceived(killEvent);
+
+        // Then
+        assertThat(killedState1.get()).isEqualTo(State.Type.FAILED);
+        assertThat(killedState2.get()).isNull();
+    }
+
     // --- Helper methods ---
 
     private static final AtomicInteger TASK_RUN_ID_SEQUENCE = new AtomicInteger();
@@ -517,7 +543,7 @@ class ExecutionKilledManagerTest {
 
         WorkerTask workerTask = mock(WorkerTask.class);
         when(workerTask.getTaskRun()).thenReturn(taskRun);
-        when(workerTask.uid()).thenReturn("task-" + executionId);
+        when(workerTask.uid()).thenReturn("task-" + executionId + "-" + taskRunId);
         return workerTask;
     }
 

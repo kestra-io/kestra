@@ -48,6 +48,15 @@
                     :attemptIndex="attemptIndex"
                     @follow="emit('follow', $event)"
                 />
+
+                <Interrupt
+                    component="KsDropdownItem"
+                    :key="`interrupt-${attemptIndex}-${selectedAttempt?.state.startDate}`"
+                    :execution="execution"
+                    :taskRun="taskRun"
+                    :attemptIndex="attemptIndex"
+                    @follow="emit('follow', $event)"
+                />
                 <TaskEdit
                     v-if="canReadFlow"
                     :readOnly="true"
@@ -111,6 +120,7 @@
     import Restart from "./overview/components/actions/Restart.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
+    import Interrupt from "./Interrupt.vue"
     import Outputs from "./Outputs.vue"
     import WorkerInfo from "./WorkerInfo.vue"
     import TaskEdit from "../flows/TaskEdit.vue"

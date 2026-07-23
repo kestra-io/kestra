@@ -82,7 +82,9 @@ public class ExecutionKilledManager {
     public void onKillReceived(ExecutionKilled killed) {
         if (killed instanceof ExecutionKilledExecution killedExecution) {
             log.info("[tenant: {}] [execution: {}] Received kill command", killedExecution.getTenantId(), killedExecution.getExecutionId());
-            killedExecutions.put(killedExecution.getExecutionId(), killedExecution);
+            if (killedExecution.getTaskRunId() == null) {
+                killedExecutions.put(killedExecution.getExecutionId(), killedExecution);
+            }
 
             workerKilledCounter.increment();
 
@@ -91,7 +93,8 @@ public class ExecutionKilledManager {
             {
                 if (killableJob.job() instanceof WorkerTask workerTask && killedExecution.isEqual(workerTask)) {
                     Logs.logTaskRun(workerTask.getTaskRun(), Level.INFO, "Killing running task");
-                    killableJob.interruptAction().accept(State.Type.KILLED);
+                    State.Type killState = killedExecution.getExecutionState() != null ? killedExecution.getExecutionState() : State.Type.KILLED;
+                    killableJob.interruptAction().accept(killState);
                 }
             });
         } else if (killed instanceof ExecutionKilledTrigger killedTrigger) {

@@ -34,6 +34,11 @@ public class ExecutionKilledExecution extends ExecutionKilled implements TenantI
     io.kestra.core.models.flows.State.Type executionState;
 
     /**
+     * The taskRun to be killed.
+     */
+    String taskRunId;
+
+    /**
      * Specifies whether killing the execution, also kill all sub-flow executions.
      */
     Boolean isOnKillCascade;
@@ -47,7 +52,11 @@ public class ExecutionKilledExecution extends ExecutionKilled implements TenantI
     public boolean isEqual(WorkerTask workerTask) {
         String taskTenantId = workerTask.getTaskRun().getTenantId();
         String taskExecutionId = workerTask.getTaskRun().getExecutionId();
-        return (taskTenantId == null || taskTenantId.equals(this.tenantId)) && taskExecutionId.equals(this.executionId);
+        boolean isExecutionEqual = (taskTenantId == null || taskTenantId.equals(this.tenantId)) && taskExecutionId.equals(this.executionId);
+        if (!isExecutionEqual) {
+            return false;
+        }
+        return this.taskRunId == null || this.taskRunId.equals(workerTask.getTaskRun().getId());
     }
 
     @Override

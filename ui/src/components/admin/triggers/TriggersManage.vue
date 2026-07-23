@@ -8,6 +8,7 @@
             :currentPage="urlPage"
             :pageSize="urlSize"
             :defaultSort="{prop: 'flowId', order: 'ascending'}"
+            fitHeight
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
             :rowClassName="getClasses"
@@ -859,6 +860,10 @@
 
 <style scoped lang="scss">
     .triggers-manage {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
         :deep(tr.no-expand .kel-table__expand-icon) {
             pointer-events: none;
 

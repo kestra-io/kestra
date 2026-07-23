@@ -19,6 +19,7 @@ export interface Tab {
     props?: Record<string, any>;
     count?: number;
     blueprintDetail?: boolean;
+    fullContainer?: boolean;
 }
 
 export interface Breadcrumb {
@@ -106,9 +107,11 @@ export function useHelpers() {
             props: {
                 namespace: namespace.value,
                 topbar: false,
+                fitHeight: true,
                 defaultScopeFilter: false,
                 embed: true,
             },
+            fullContainer: true,
         },
         {
             name: "executions",
@@ -117,10 +120,12 @@ export function useHelpers() {
             props: {
                 namespace: namespace.value,
                 topbar: false,
+                fitHeight: true,
                 visibleCharts: true,
                 embed: true,
                 defaultScopeFilter: false,
             },
+            fullContainer: true,
         },
         {
             name: "dependencies",

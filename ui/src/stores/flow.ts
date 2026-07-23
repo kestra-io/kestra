@@ -797,7 +797,7 @@ function deleteFlowAndDependencies() {
                 const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
 
                 if (constraintsArray.length) {
-                    validResults.constraints = constraintsArray.join(", ")
+                    validResults.constraints = constraintsArray.join("\n")
                 } else {
                     delete validResults.constraints
                 }
@@ -939,7 +939,7 @@ function deleteFlowAndDependencies() {
                 : []
 
         const constraintsError =
-            flowValidation.value?.constraints?.split(/, ?/) ?? []
+            flowValidation.value?.constraints ? [flowValidation.value.constraints] : []
 
         const errors = [...flowExistsError, ...constraintsError]
 

@@ -77,6 +77,22 @@ interface LogsState {
     results: any[];
 }
 
+export function normalizeFilePreview(data: any) {
+    if (data?.extension !== "ion" || !Array.isArray(data.content)) {
+        return data
+    }
+
+    // WORKAROUND, related to https://github.com/kestra-io/plugin-aws/issues/456
+    const notObjects = data.content.some((e: any) => typeof e !== "object")
+
+    if (!notObjects) {
+        return data
+    }
+
+    const content = data.content.length === 1 ? data.content[0] : data.content.join("\n")
+    return {...data, type: "TEXT", content}
+}
+
 export type {Label, StateHistory as Histories} from "@kestra-io/kestra-sdk"
 
 export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> & {
@@ -461,7 +477,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                     if (closed) break
                     // The server emits a first "fake" event carrying only an id to force the
                     // connection open; skip it as it has no state to display.
-                    if (!event.state) continue
+                    if (!(event as Execution).state) continue
                     handlers.onExecution(event as Execution)
                 }
                 finish(!receivedEnd)
@@ -574,17 +590,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         return axios.get(`${apiUrl()}/executions/${options.executionId}/file/preview`, {
             params: options,
         }).then(response => {
-            let data = {...response.data}
-
-            // WORKAROUND, related to https://github.com/kestra-io/plugin-aws/issues/456
-            if (data.extension === "ion") {
-                const notObjects = data.content.some((e: any) => typeof e !== "object")
-
-                if (notObjects) {
-                    const content = data.content.length === 1 ? data.content[0] : data.content.join("\n")
-                    data = {...data, type: "TEXT", content}
-                }
-            }
+            const data = normalizeFilePreview({...response.data})
 
             filePreviewB.value = data
             return data

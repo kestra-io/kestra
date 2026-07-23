@@ -14,7 +14,7 @@
             :style="{color: `var(--ks-log-${levelLower})`}"
             :role="clickableLevel ? 'button' : undefined"
             :tabindex="clickableLevel ? 0 : undefined"
-            :title="clickableLevel ? t('filter_for') : undefined"
+            :title="clickableLevel ? $t('filter_for') : undefined"
             @click="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.enter="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.space.prevent="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
@@ -58,10 +58,8 @@
     import {logsFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault, DENSITY_PADDING} from "../../composables/useLogDisplay"
     import {Log} from "../../stores/logs"
     import {useRouter} from "vue-router"
-    import {useI18n} from "vue-i18n"
     import * as Filters from "../../utils/filters"
 
-    const {t} = useI18n()
 
     // Props
     const props = defineProps<{

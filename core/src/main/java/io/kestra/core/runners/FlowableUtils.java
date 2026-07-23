@@ -361,10 +361,14 @@ public class FlowableUtils {
         // all tasks run
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
 
-        // find all running and deal concurrency
+        // Count every in-flight (non-terminated) taskRun as consuming a concurrency slot.
+        // Using isRunning() here under-counts: RETRYING, PAUSED, SUBMITTED and QUEUED taskRuns
+        // are neither isRunning() nor isTerminated(), and (unlike CREATED) they are not caught
+        // by the findLastCreated guard below — so with isRunning() they leak past the limit and
+        // allow more children to start than `concurrency` permits.
         long runningCount = taskRuns
             .stream()
-            .filter(taskRun -> taskRun.getState().isRunning())
+            .filter(taskRun -> !taskRun.getState().isTerminated())
             .count();
 
         if (concurrency > 0 && runningCount > concurrency) {

@@ -313,8 +313,12 @@ public abstract class AbstractJdbcRepository<T> {
                 return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
             }
             case "week" -> {
-                LocalDate weekDate = LocalDate.ofYearDay(year, week * 7);
-                return weekDate.atStartOfDay().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant(ZonedDateTime.now().getOffset());
+                // week * 7 can fall outside the 1..365/366 day-of-year range (e.g. week 53 -> 371, or
+                // week 0 returned by some SQL WEEK() modes), which would make ofYearDay throw, so clamp it.
+                int maxDayOfYear = LocalDate.of(year, 12, 31).getDayOfYear();
+                int dayOfYear = Math.min(Math.max(week * 7, 1), maxDayOfYear);
+                LocalDate weekDate = LocalDate.ofYearDay(year, dayOfYear).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                return weekDate.atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant();
             }
             case "month" -> {
                 return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();

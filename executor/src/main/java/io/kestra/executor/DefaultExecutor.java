@@ -21,7 +21,6 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
-import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -87,10 +86,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private final FlowMetaStoreInterface flowMetaStore;
 
     private final ExecutionStateStore executionStateStore;
-    private final ExecutionQueuedStateStore executionQueuedStateStore;
     private final ExecutionDelayStateStore executionDelayStateStore;
     private final SLAMonitorStateStore slaMonitorStateStore;
-    private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
+    private final ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor;
     private final TriggerEventQueue triggerEventQueue;
 
     private final MetricRegistry metricRegistry;
@@ -154,10 +152,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
         MaintenanceService maintenanceService,
         FlowMetaStoreInterface flowMetaStore,
         ExecutionStateStore executionStateStore,
-        ExecutionQueuedStateStore executionQueuedStateStore,
         ExecutionDelayStateStore executionDelayStateStore,
         SLAMonitorStateStore slaMonitorStateStore,
-        ConcurrencyLimitStateStore concurrencyLimitStateStore,
+        ConcurrencySlotReleaseProcessor concurrencySlotReleaseProcessor,
         TriggerEventQueue triggerEventQueue,
         MetricRegistry metricRegistry,
         RunContextFactory runContextFactory,
@@ -192,10 +189,9 @@ public class DefaultExecutor extends AbstractService implements Executor {
         this.maintenanceService = maintenanceService;
         this.flowMetaStore = flowMetaStore;
         this.executionStateStore = executionStateStore;
-        this.executionQueuedStateStore = executionQueuedStateStore;
         this.executionDelayStateStore = executionDelayStateStore;
         this.slaMonitorStateStore = slaMonitorStateStore;
-        this.concurrencyLimitStateStore = concurrencyLimitStateStore;
+        this.concurrencySlotReleaseProcessor = concurrencySlotReleaseProcessor;
         this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
         this.runContextFactory = runContextFactory;
@@ -762,49 +758,17 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     slaMonitorStateStore.purge(executor.getExecution().getId());
                 }
 
-                // check if there exists a queued execution and submit it to the execution queue
-                if (executor.getFlow().getConcurrency() != null) {
-                    // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
-                    boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
-                        && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
-                        && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
-                    // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
-                    boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
-                        && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
-                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
-                    boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
-                    if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
-                        if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
-                            var finalFlow = executor.getFlow();
+                // release the concurrency slots (a no-op when no limit applies to the flow),
+                // then check if there exists a queued execution and submit it to the execution queue.
+                // Transactional outbox: the processor pops inside the concurrency-limit
+                // store's transaction and only returns the execution; it is emitted here,
+                // after releaseThenPop() has committed (same rule as executionDelayLoop).
+                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor);
+                if (popped.isPresent()) {
+                    executionQueue.emit(popped.get());
 
-                            // Pop the next queued execution atomically with decrement/increment to avoid race conditions
-                            // that could leave executions stuck in the queue indefinitely (see issue #13785)
-                            concurrencyLimitStateStore.decrementAndPop(
-                                finalFlow,
-                                executionQueuedStateStore,
-                                throwBiConsumer((dslContext, queued) ->
-                                {
-                                    var newExecution = queued.withState(State.Type.RUNNING);
-                                    executionQueue.emit(newExecution);
-                                    metricRegistry.counter(
-                                        MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION,
-                                        metricRegistry.tags(newExecution)
-                                    ).increment();
-
-                                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                                    processFlowTriggers(newExecution);
-                                })
-                            );
-                        } else {
-                            int newLimit = concurrencyLimitStateStore.decrement(executor.getFlow());
-                            if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
-                                log.error(
-                                    "Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.",
-                                    executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId()
-                                );
-                            }
-                        }
-                    }
+                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                    processFlowTriggers(popped.get());
                 }
 
                 // purge the trigger: reset scheduler trigger at end

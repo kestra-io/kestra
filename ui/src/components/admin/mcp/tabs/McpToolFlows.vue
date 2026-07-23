@@ -20,6 +20,7 @@
 
         <KsDataTable
             v-else
+            fitHeight
             :data="filteredTools"
             :total="filteredTools.length"
             :loading="loading"
@@ -89,19 +90,20 @@
                         </div>
                     </template>
                     <template v-else-if="col.prop === 'flow'">
-                        <router-link
+                        <KsEntityLink
+                            v-if="(scope.row as McpTool).flowId"
+                            entity="flow"
+                            :value="(scope.row as McpTool).flowId"
                             :to="flowRouteFor(scope.row as McpTool)"
-                            class="flow-link"
-                            :title="t('mcp.tools.view_flow')"
-                        >
-                            <span class="flow-id">{{ (scope.row as McpTool).flowId }}</span>
-                        </router-link>
+                        />
                     </template>
                     <template v-else-if="col.prop === 'namespace'">
-                        <span class="namespace">
-                            <FolderOpenOutline />
-                            {{ (scope.row as McpTool).namespace }}
-                        </span>
+                        <KsEntityLink
+                            v-if="(scope.row as McpTool).namespace"
+                            entity="namespace"
+                            :value="(scope.row as McpTool).namespace"
+                            :to="namespaceRouteFor(scope.row as McpTool)"
+                        />
                     </template>
                 </template>
             </KsTableColumn>
@@ -133,7 +135,6 @@
     import {useToolFlowCreation} from "../useToolFlowCreation"
 
     import {KsButton, KsDataTable, KsFilter as KSFilter, KsId, KsTableColumn, KsTag, decodeSearchParams} from "@kestra-io/design-system"
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Empty from "../../../layout/empty/Empty.vue"
 
@@ -266,6 +267,16 @@
         }
     }
 
+    function namespaceRouteFor(tool: McpTool): RouteLocationRaw {
+        return {
+            name: "namespaces/update",
+            params: {
+                id: tool.namespace,
+                ...(route.params.tenant ? {tenant: route.params.tenant} : {}),
+            },
+        }
+    }
+
     async function load() {
         const id = serverId.value
         if (!id) {
@@ -285,6 +296,12 @@
 </script>
 
 <style lang="scss" scoped>
+    .mcp-tools {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
     .mono {
         font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-sm);
@@ -312,29 +329,5 @@
     .annotation {
         border: none;
         background: var(--ks-bg-tag);
-    }
-
-    .flow-link {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        color: var(--ks-text-primary);
-        text-decoration: none;
-
-        &:hover {
-            color: var(--ks-text-link);
-        }
-    }
-
-    .flow-id {
-        font-family: var(--ks-font-family-mono);
-        font-size: var(--ks-font-size-sm);
-    }
-
-    .namespace {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        color: var(--ks-text-primary);
     }
 </style>

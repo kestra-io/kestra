@@ -7,6 +7,11 @@
         <KsAlert v-if="flow.draft" type="warning" showIcon :closable="false">
             <strong>{{ $t('draft') }}</strong><br>
             {{ $t('draft_flow_warning') }}
+            <div class="draft-publish-action">
+                <KsButton type="primary" size="small" :loading="publishing" @click="onPublishDraft">
+                    {{ $t('publish_draft') }}
+                </KsButton>
+            </div>
         </KsAlert>
         <div class="flow-execution-checks-alerts">
             <KsAlert v-for="alert in checks || []" :type="toAlertType(alert.style)" :closable="false" :key="alert.message">
@@ -124,6 +129,7 @@
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
+    import {useFlowStore} from "../../stores/flow"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
@@ -197,6 +203,7 @@
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
+    const flowStore = useFlowStore()
 
     const openTab = ref("inputs")
     const inputs = ref<Record<string, unknown>>({})
@@ -215,9 +222,20 @@
 
     const form = ref<FormInstance | null>(null)
     const inputsFormRef = ref<InstanceType<typeof InputsForm> | null>(null)
+    const publishing = ref(false)
 
     const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
+
+    async function onPublishDraft() {
+        if (!flow.value) return
+        publishing.value = true
+        try {
+            await flowStore.publishDraft(flow.value)
+        } finally {
+            publishing.value = false
+        }
+    }
 
     // a flow with FORM inputs renders the wizard; the footer Execute is gated on the recap step
     const hasFormInputs = computed(() => (flow.value?.inputs ?? []).some((input: {type?: string}) => input.type === "FORM"))
@@ -424,6 +442,10 @@
 <style scoped lang="scss">
     .flow-execution-checks-alerts {
         margin-bottom: 1rem;
+    }
+
+    .draft-publish-action {
+        margin-top: var(--ks-spacing-2);
     }
     :deep(.kel-collapse) {
         border-radius: var(--kel-border-radius-round);

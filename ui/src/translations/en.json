@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "Your system flow",
       "hero_empty": "Pick a trigger and a channel to preview your flow.",
-      "browse_blueprints": "Prefer to start from a template? Browse community system blueprints"
+      "browse_blueprints": "Prefer to start from a template? Browse community system blueprints",
+      "steps": {
+        "trigger_title": "Trigger",
+        "trigger_desc": "When it runs",
+        "trigger_heading": "When should this flow run?",
+        "notify_title": "Notify",
+        "notify_desc": "Who hears about it",
+        "notify_heading": "How should we notify your team?",
+        "review_title": "Review",
+        "review_desc": "Check & create",
+        "review_heading": "Review your system flow"
+      }
     },
     "toggle menu": "Toggle menu",
     "panel actions": "Panel actions",

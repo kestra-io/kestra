@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "您的 system flow",
       "hero_empty": "选择一个 trigger 和一个渠道以预览您的 flow。",
-      "browse_blueprints": "更想从模板开始？浏览社区 system blueprints"
+      "browse_blueprints": "更想从模板开始？浏览社区 system blueprints",
+      "steps": {
+        "trigger_title": "触发器",
+        "trigger_desc": "何时运行",
+        "trigger_heading": "此 flow 应何时运行？",
+        "notify_title": "通知",
+        "notify_desc": "谁会收到",
+        "notify_heading": "如何通知您的团队？",
+        "review_title": "检查",
+        "review_desc": "检查并创建",
+        "review_heading": "检查您的 system flow"
+      }
     },
     "toggle menu": "切换菜单",
     "panel actions": "面板操作",

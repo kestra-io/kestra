@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "आपका system flow",
       "hero_empty": "अपने flow का पूर्वावलोकन देखने के लिए एक trigger और एक चैनल चुनें।",
-      "browse_blueprints": "टेम्पलेट से शुरू करना पसंद करेंगे? समुदाय के system blueprints ब्राउज़ करें"
+      "browse_blueprints": "टेम्पलेट से शुरू करना पसंद करेंगे? समुदाय के system blueprints ब्राउज़ करें",
+      "steps": {
+        "trigger_title": "ट्रिगर",
+        "trigger_desc": "कब चलता है",
+        "trigger_heading": "यह flow कब चलना चाहिए?",
+        "notify_title": "सूचित करें",
+        "notify_desc": "किसे पता चलता है",
+        "notify_heading": "हम आपकी टीम को कैसे सूचित करें?",
+        "review_title": "समीक्षा",
+        "review_desc": "जाँचें और बनाएँ",
+        "review_heading": "अपने system flow की समीक्षा करें"
+      }
     },
     "toggle menu": "मेनू टॉगल करें",
     "panel actions": "पैनल क्रियाएँ",

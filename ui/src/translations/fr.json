@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "Votre system flow",
       "hero_empty": "Choisissez un trigger et un canal pour prévisualiser votre flow.",
-      "browse_blueprints": "Vous préférez partir d'un modèle ? Parcourir les system blueprints de la communauté"
+      "browse_blueprints": "Vous préférez partir d'un modèle ? Parcourir les system blueprints de la communauté",
+      "steps": {
+        "trigger_title": "Déclencheur",
+        "trigger_desc": "Quand il s'exécute",
+        "trigger_heading": "Quand ce flow doit-il s'exécuter ?",
+        "notify_title": "Notifier",
+        "notify_desc": "Qui est prévenu",
+        "notify_heading": "Comment notifier votre équipe ?",
+        "review_title": "Vérifier",
+        "review_desc": "Contrôler & créer",
+        "review_heading": "Vérifiez votre system flow"
+      }
     },
     "toggle menu": "Basculer le menu",
     "panel actions": "Actions du panneau",

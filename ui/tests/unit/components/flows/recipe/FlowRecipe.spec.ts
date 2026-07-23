@@ -149,35 +149,39 @@ const globalConfig = {
             KsEditor: {template: "<div />"},
             KsCard: {template: "<div><slot /></div>"},
             KsForm: {template: "<form><slot /></form>"},
+            KsSteps: {template: "<div><slot /></div>"},
+            KsStep: {template: "<div />"},
         },
     },
 }
 
 import FlowRecipe from "../../../../../src/components/flows/recipe/FlowRecipe.vue"
 
+const next = async (wrapper: ReturnType<typeof mount>) => {
+    await wrapper.find("[data-test='recipe-next-btn']").trigger("click")
+    await wrapper.vm.$nextTick()
+}
+
 describe("FlowRecipe", () => {
-    test("Create button is disabled when no notification channel is selected", async () => {
-        // Given
+    test("Next is disabled on the notify step until a channel is selected", async () => {
+        // Given — a valid default trigger (execution + FAILED), advance to the notify step
         const wrapper = mount(FlowRecipe, globalConfig)
         await new Promise(r => setTimeout(r, 0))
+        await next(wrapper)
 
-        // Then
-        const createBtn = wrapper.find("[data-test='recipe-create-btn']")
-        if (createBtn.exists()) {
-            expect((createBtn.element as HTMLButtonElement).disabled).toBe(true)
-        }
+        // Then — the notify step is shown and Next is blocked without a channel
+        expect(wrapper.find("[data-test='recipe-step-notify']").exists()).toBe(true)
+        const nextBtn = wrapper.find("[data-test='recipe-next-btn']")
+        expect((nextBtn.element as HTMLButtonElement).disabled).toBe(true)
     })
 
-    test("shows no-channel warning after interacting without selecting a channel", async () => {
+    test("shows no-channel warning on the notify step when no channel is selected", async () => {
         // Given
         const wrapper = mount(FlowRecipe, globalConfig)
         await new Promise(r => setTimeout(r, 0))
 
-        // When — click a trigger card to mark hasInteracted=true
-        const cards = wrapper.findAll("[data-test='recipe-trigger-types'] button[role='radio']")
-        if (cards.length > 0) {
-            await cards[0].trigger("click")
-        }
+        // When — advance to the notify step
+        await next(wrapper)
 
         // Then — warning visible because no channel is selected
         const alert = wrapper.find("[data-test='recipe-no-channel-alert']")
@@ -190,7 +194,7 @@ describe("FlowRecipe", () => {
         expect(cards.length).toBe(5)
     })
 
-    test("renders a real icon for every trigger-type card", async () => {
+    test("renders a real icon for every trigger-type card and channel", async () => {
         // Regression: ISSUE-001 — KsIcon has no `name` prop, so `<KsIcon
         // :name="card.icon" />` silently rendered an empty icon for every
         // trigger-type card. Found by /qa on 2026-07-03.
@@ -204,15 +208,15 @@ describe("FlowRecipe", () => {
         })
         await new Promise(r => setTimeout(r, 0))
 
-        const icons = wrapper.findAll(".trigger-card-icon svg")
-        expect(icons.length).toBe(5)
+        // Trigger step: one icon per trigger-type tile
+        expect(wrapper.findAll(".trigger-card-icon svg").length).toBe(5)
 
-        // Same bug, same fix, in the notify-channel grid rendered alongside it.
-        const channelIcons = wrapper.findAll(".icon-wrap svg")
-        expect(channelIcons.length).toBe(4)
+        // Notify step: one icon per channel tile
+        await next(wrapper)
+        expect(wrapper.findAll(".icon-wrap svg").length).toBe(4)
     })
 
-    test("emits submit with yaml when form is valid and create is clicked", async () => {
+    test("emits submit with yaml once a channel is picked and create is clicked", async () => {
         // Given
         const wrapper = mount(FlowRecipe, {
             ...globalConfig,
@@ -223,13 +227,20 @@ describe("FlowRecipe", () => {
         })
         await new Promise(r => setTimeout(r, 0))
 
-        // When — enable a channel by clicking the last notify tile
+        // When — advance to notify, pick a channel, advance to review, click create
+        await next(wrapper)
         const channelButtons = wrapper.findAll("[data-test='recipe-notify-grid'] button[role='checkbox']")
-        if (channelButtons.length > 0) {
-            await channelButtons[channelButtons.length - 1].trigger("click")
-        }
-
-        // Then — wait for reactivity
+        await channelButtons[channelButtons.length - 1].trigger("click")
         await wrapper.vm.$nextTick()
+        await next(wrapper)
+        const createBtn = wrapper.find("[data-test='recipe-create-btn']")
+        expect(createBtn.exists()).toBe(true)
+        await createBtn.trigger("click")
+        await wrapper.vm.$nextTick()
+
+        // Then — submit fires with the generated yaml
+        const submits = wrapper.emitted("submit")
+        expect(submits).toBeTruthy()
+        expect((submits![0][0] as {yaml: string}).yaml).toContain("io.kestra.plugin.core.trigger.Flow")
     })
 })

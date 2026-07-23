@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "Ihr System-Flow",
       "hero_empty": "Wählen Sie einen Trigger und einen Kanal, um Ihren Flow in der Vorschau zu sehen.",
-      "browse_blueprints": "Lieber mit einer Vorlage starten? Community-System-Blueprints durchsuchen"
+      "browse_blueprints": "Lieber mit einer Vorlage starten? Community-System-Blueprints durchsuchen",
+      "steps": {
+        "trigger_title": "Auslöser",
+        "trigger_desc": "Wann er läuft",
+        "trigger_heading": "Wann soll dieser Flow ausgeführt werden?",
+        "notify_title": "Benachrichtigen",
+        "notify_desc": "Wer erfährt davon",
+        "notify_heading": "Wie sollen wir Ihr Team benachrichtigen?",
+        "review_title": "Prüfen",
+        "review_desc": "Prüfen & erstellen",
+        "review_heading": "Überprüfen Sie Ihren System-Flow"
+      }
     },
     "toggle menu": "Menü umschalten",
     "panel actions": "Panelaktionen",

@@ -1,21 +1,18 @@
 <template>
     <div class="flow-recipe" data-test="flow-recipe">
-        <div class="recipe-hero">
-            <span class="hero-eyebrow">{{ $t("recipe.hero_eyebrow") }}</span>
-            <p class="hero-sentence" aria-live="polite" data-test="recipe-hero-sentence">
-                <template v-if="summary">{{ summary }}</template>
-                <span v-else class="hero-empty">{{ $t("recipe.hero_empty") }}</span>
-            </p>
-        </div>
+        <div class="recipe-wizard">
+            <div class="wizard-rail">
+                <KsSteps :space="52" direction="vertical" :active="activeStep" finishStatus="success">
+                    <KsStep :title="$t('recipe.steps.trigger_title')" :description="$t('recipe.steps.trigger_desc')" />
+                    <KsStep :title="$t('recipe.steps.notify_title')" :description="$t('recipe.steps.notify_desc')" />
+                    <KsStep :title="$t('recipe.steps.review_title')" :description="$t('recipe.steps.review_desc')" />
+                </KsSteps>
+            </div>
 
-        <div class="recipe-layout">
-            <div class="recipe-builder">
-                <KsCard class="recipe-block" shadow="never">
-                    <div class="block-head">
-                        <span class="block-num">1</span>
-                        <KsText tag="h2" class="block-title">{{ $t("recipe.when.title") }}</KsText>
-                    </div>
-                    <span class="block-sub">{{ $t("recipe.when.subtitle") }}</span>
+            <KsCard class="wizard-body" shadow="never">
+                <div v-if="activeStep === 0" class="wizard-step" data-test="recipe-step-trigger">
+                    <KsText tag="h2" class="wizard-heading">{{ $t("recipe.steps.trigger_heading") }}</KsText>
+                    <span class="wizard-sub">{{ $t("recipe.when.subtitle") }}</span>
 
                     <div class="trigger-types" role="radiogroup" :aria-label="$t('recipe.when.trigger_type')" data-test="recipe-trigger-types">
                         <SelectableTile
@@ -65,14 +62,11 @@
                             :setOtherTriggerType="setOtherTriggerType"
                         />
                     </div>
-                </KsCard>
+                </div>
 
-                <KsCard class="recipe-block" shadow="never">
-                    <div class="block-head">
-                        <span class="block-num">2</span>
-                        <KsText tag="h2" class="block-title">{{ $t("recipe.then.title") }}</KsText>
-                    </div>
-                    <span class="block-sub">{{ $t("recipe.then.subtitle") }}</span>
+                <div v-else-if="activeStep === 1" class="wizard-step" data-test="recipe-step-notify">
+                    <KsText tag="h2" class="wizard-heading">{{ $t("recipe.steps.notify_heading") }}</KsText>
+                    <span class="wizard-sub">{{ $t("recipe.then.subtitle") }}</span>
 
                     <NotifyGrid
                         :recipe="recipe"
@@ -84,24 +78,54 @@
                         v-if="hasInteracted && !hasNotifyChannel"
                         type="warning"
                         :closable="false"
-                        class="block-alert"
+                        class="wizard-alert"
                         data-test="recipe-no-channel-alert"
                     >
                         {{ $t("recipe.then.no_channel_warning") }}
                     </KsAlert>
-                </KsCard>
-            </div>
+                </div>
 
-            <div class="recipe-summary">
-                <RecipeSummary
-                    :yamlContent="yamlContent"
-                    :isValid="isValid"
-                    :hasChannel="hasNotifyChannel"
-                    :triggerValid="isTriggerConfigValid"
-                    :hasInteracted="hasInteracted"
-                    @create="handleCreate"
-                />
-            </div>
+                <div v-else class="wizard-step" data-test="recipe-step-review">
+                    <KsText tag="h2" class="wizard-heading">{{ $t("recipe.steps.review_heading") }}</KsText>
+
+                    <div class="review-hero">
+                        <span class="hero-eyebrow">{{ $t("recipe.hero_eyebrow") }}</span>
+                        <p class="hero-sentence" aria-live="polite" data-test="recipe-hero-sentence">
+                            <template v-if="summary">{{ summary }}</template>
+                            <span v-else class="hero-empty">{{ $t("recipe.hero_empty") }}</span>
+                        </p>
+                    </div>
+
+                    <RecipeSummary
+                        :yamlContent="yamlContent"
+                        :isValid="isValid"
+                        :hasChannel="hasNotifyChannel"
+                        :triggerValid="isTriggerConfigValid"
+                        :hasInteracted="hasInteracted"
+                        @create="handleCreate"
+                    />
+                </div>
+
+                <div class="wizard-nav">
+                    <KsButton
+                        v-if="activeStep > 0"
+                        data-test="recipe-back-btn"
+                        @click="prevStep"
+                    >
+                        {{ $t("back") }}
+                    </KsButton>
+                    <span class="wizard-nav-spacer" />
+                    <KsButton
+                        v-if="activeStep < 2"
+                        type="primary"
+                        :disabled="!canAdvance"
+                        data-test="recipe-next-btn"
+                        @click="nextStep"
+                    >
+                        {{ $t("next") }}
+                    </KsButton>
+                </div>
+            </KsCard>
         </div>
     </div>
 </template>
@@ -151,6 +175,22 @@
     const namespaceOptions = ref<string[]>([])
     const namespacesLoading = ref(false)
     const hasInteracted = ref(false)
+    const activeStep = ref(0)
+
+    const canAdvance = computed(() => {
+        if (activeStep.value === 0) return isTriggerConfigValid.value
+        if (activeStep.value === 1) return hasNotifyChannel.value
+        return true
+    })
+
+    const nextStep = () => {
+        hasInteracted.value = true
+        if (canAdvance.value && activeStep.value < 2) activeStep.value += 1
+    }
+
+    const prevStep = () => {
+        if (activeStep.value > 0) activeStep.value -= 1
+    }
 
     onMounted(async () => {
         namespacesLoading.value = true
@@ -242,13 +282,52 @@
         padding: var(--ks-spacing-4);
     }
 
-    .recipe-hero {
-        padding: var(--ks-spacing-5) var(--ks-spacing-6);
+    .recipe-wizard {
+        display: grid;
+        grid-template-columns: 14rem minmax(0, 1fr);
+        gap: var(--ks-spacing-5);
+        align-items: start;
+
+        @media (max-width: 900px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .wizard-rail {
+        position: sticky;
+        top: var(--ks-spacing-4);
+        padding: var(--ks-spacing-4) 0;
+    }
+
+    .wizard-body {
+        min-width: 0;
+    }
+
+    .wizard-step {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wizard-heading {
+        margin: 0;
+        align-self: flex-start;
+        font-size: var(--ks-font-size-lg);
+        font-weight: var(--ks-font-weight-semibold);
+    }
+
+    .wizard-sub {
+        display: block;
+        margin: var(--ks-spacing-1) 0 var(--ks-spacing-4);
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+    }
+
+    .review-hero {
+        padding: var(--ks-spacing-4) var(--ks-spacing-5);
         margin-bottom: var(--ks-spacing-4);
-        background-color: var(--ks-bg-surface);
-        border: var(--ks-border-width-thin) solid var(--ks-border-default);
+        background-color: var(--ks-bg-base);
         border-left: var(--ks-border-width-thick, 4px) solid var(--ks-border-focus);
-        border-radius: var(--ks-radius-lg);
+        border-radius: var(--ks-radius-base);
     }
 
     .hero-eyebrow {
@@ -262,7 +341,7 @@
 
     .hero-sentence {
         margin: var(--ks-spacing-2) 0 0;
-        font-size: var(--ks-font-size-xl);
+        font-size: var(--ks-font-size-lg);
         font-weight: var(--ks-font-weight-medium);
         line-height: 1.6;
         color: var(--ks-text-primary);
@@ -273,58 +352,6 @@
         font-style: italic;
     }
 
-    .recipe-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 22rem;
-        gap: var(--ks-spacing-5);
-        align-items: start;
-
-        @media (max-width: 900px) {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .recipe-builder {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-4);
-    }
-
-    .block-head {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        margin-bottom: var(--ks-spacing-1);
-    }
-
-    .block-num {
-        flex: none;
-        width: var(--ks-spacing-5);
-        height: var(--ks-spacing-5);
-        border-radius: var(--ks-radius-round, 999px);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: var(--ks-font-size-sm);
-        font-weight: var(--ks-font-weight-semibold);
-        background-color: var(--ks-bg-tag-active);
-        color: var(--ks-text-primary);
-    }
-
-    .block-title {
-        margin: 0;
-        align-self: center;
-        font-size: var(--ks-font-size-lg);
-        font-weight: var(--ks-font-weight-semibold);
-    }
-
-    .block-sub {
-        display: block;
-        margin: 0 0 var(--ks-spacing-4) calc(var(--ks-spacing-5) + var(--ks-spacing-3));
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-sm);
-    }
-
     .trigger-config {
         margin-top: var(--ks-spacing-4);
         padding: var(--ks-spacing-4);
@@ -333,8 +360,21 @@
         background-color: var(--ks-bg-base);
     }
 
-    .block-alert {
+    .wizard-alert {
         margin-top: var(--ks-spacing-4);
+    }
+
+    .wizard-nav {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin-top: var(--ks-spacing-5);
+        padding-top: var(--ks-spacing-4);
+        border-top: var(--ks-border-width-thin) solid var(--ks-border-default);
+    }
+
+    .wizard-nav-spacer {
+        flex: 1;
     }
 
     .trigger-types {
@@ -382,9 +422,5 @@
         flex-shrink: 0;
         margin-left: auto;
         font-size: var(--ks-font-size-xs);
-    }
-
-    .recipe-summary {
-        min-width: 0;
     }
 </style>

@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "O seu system flow",
       "hero_empty": "Escolha um trigger e um canal para pré-visualizar o seu flow.",
-      "browse_blueprints": "Prefere começar a partir de um modelo? Explore os system blueprints da comunidade"
+      "browse_blueprints": "Prefere começar a partir de um modelo? Explore os system blueprints da comunidade",
+      "steps": {
+        "trigger_title": "Gatilho",
+        "trigger_desc": "Quando é executado",
+        "trigger_heading": "Quando este flow deve ser executado?",
+        "notify_title": "Notificar",
+        "notify_desc": "Quem é avisado",
+        "notify_heading": "Como devemos notificar a sua equipa?",
+        "review_title": "Rever",
+        "review_desc": "Verificar e criar",
+        "review_heading": "Reveja o seu system flow"
+      }
     },
     "toggle menu": "Alternar menu",
     "panel actions": "Ações do painel",

@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "あなたの system flow",
       "hero_empty": "trigger とチャンネルを選ぶと flow をプレビューできます。",
-      "browse_blueprints": "テンプレートから始めますか？コミュニティの system blueprints を見る"
+      "browse_blueprints": "テンプレートから始めますか？コミュニティの system blueprints を見る",
+      "steps": {
+        "trigger_title": "トリガー",
+        "trigger_desc": "実行のタイミング",
+        "trigger_heading": "この flow はいつ実行しますか？",
+        "notify_title": "通知",
+        "notify_desc": "誰に伝えるか",
+        "notify_heading": "チームにどう通知しますか？",
+        "review_title": "確認",
+        "review_desc": "確認して作成",
+        "review_heading": "system flow を確認する"
+      }
     },
     "toggle menu": "メニューを切り替え",
     "panel actions": "パネルアクション",

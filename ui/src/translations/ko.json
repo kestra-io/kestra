@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "내 system flow",
       "hero_empty": "trigger와 채널을 선택하면 flow를 미리 볼 수 있습니다.",
-      "browse_blueprints": "템플릿부터 시작하시겠어요? 커뮤니티 system blueprints 둘러보기"
+      "browse_blueprints": "템플릿부터 시작하시겠어요? 커뮤니티 system blueprints 둘러보기",
+      "steps": {
+        "trigger_title": "트리거",
+        "trigger_desc": "실행 시점",
+        "trigger_heading": "이 flow는 언제 실행되어야 하나요?",
+        "notify_title": "알림",
+        "notify_desc": "누가 알게 되는지",
+        "notify_heading": "팀에 어떻게 알릴까요?",
+        "review_title": "검토",
+        "review_desc": "확인 후 생성",
+        "review_heading": "system flow 검토"
+      }
     },
     "toggle menu": "메뉴 전환",
     "panel actions": "패널 작업",

@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "Twój system flow",
       "hero_empty": "Wybierz trigger i kanał, aby zobaczyć podgląd flow.",
-      "browse_blueprints": "Wolisz zacząć od szablonu? Przeglądaj systemowe blueprints społeczności"
+      "browse_blueprints": "Wolisz zacząć od szablonu? Przeglądaj systemowe blueprints społeczności",
+      "steps": {
+        "trigger_title": "Wyzwalacz",
+        "trigger_desc": "Kiedy działa",
+        "trigger_heading": "Kiedy ten flow ma być uruchamiany?",
+        "notify_title": "Powiadom",
+        "notify_desc": "Kto się dowie",
+        "notify_heading": "Jak powiadomić Twój zespół?",
+        "review_title": "Przegląd",
+        "review_desc": "Sprawdź i utwórz",
+        "review_heading": "Przejrzyj swój systemowy flow"
+      }
     },
     "toggle menu": "Przełącz menu",
     "panel actions": "Akcje panelu",

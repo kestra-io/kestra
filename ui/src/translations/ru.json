@@ -135,7 +135,18 @@
       },
       "hero_eyebrow": "Ваш system flow",
       "hero_empty": "Выберите trigger и канал, чтобы увидеть предпросмотр flow.",
-      "browse_blueprints": "Предпочитаете начать с шаблона? Просмотрите system blueprints сообщества"
+      "browse_blueprints": "Предпочитаете начать с шаблона? Просмотрите system blueprints сообщества",
+      "steps": {
+        "trigger_title": "Триггер",
+        "trigger_desc": "Когда запускается",
+        "trigger_heading": "Когда должен запускаться этот flow?",
+        "notify_title": "Уведомление",
+        "notify_desc": "Кто узнает",
+        "notify_heading": "Как уведомить вашу команду?",
+        "review_title": "Проверка",
+        "review_desc": "Проверить и создать",
+        "review_heading": "Проверьте свой system flow"
+      }
     },
     "toggle menu": "Переключить меню",
     "panel actions": "Действия панели",

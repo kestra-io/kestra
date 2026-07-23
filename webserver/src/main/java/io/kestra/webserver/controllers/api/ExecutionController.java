@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 import javax.annotation.CheckReturnValue;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
@@ -383,7 +382,6 @@ public class ExecutionController {
         } catch (IllegalVariableEvaluationException e) {
             return EvalResult.builder()
                 .error(e.getMessage())
-                .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
     }
@@ -414,7 +412,6 @@ public class ExecutionController {
         } catch (IllegalVariableEvaluationException e) {
             return EvalResult.builder()
                 .error(e.getMessage())
-                .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
     }
@@ -444,7 +441,6 @@ public class ExecutionController {
     public static class EvalResult {
         String result;
         String error;
-        String stackTrace;
     }
 
     @ExecuteOn(TaskExecutors.IO)

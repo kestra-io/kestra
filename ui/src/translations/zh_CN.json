@@ -516,6 +516,7 @@
     "execute backfill": "执行回填",
     "execute flow behaviour": "执行流程",
     "execute flow now ?": "是否要执行此流程？",
+    "discard execution confirmation": "您有未保存的输入。您确定要放弃此执行吗？",
     "execute the flow": "执行流程 <code>{id}</code>",
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",

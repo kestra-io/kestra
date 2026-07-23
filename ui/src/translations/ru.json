@@ -516,6 +516,7 @@
     "execute backfill": "Выполнить заполнение",
     "execute flow behaviour": "Выполнить flow",
     "execute flow now ?": "Вы хотите выполнить этот flow?",
+    "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",

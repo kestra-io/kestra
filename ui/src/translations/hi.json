@@ -516,6 +516,7 @@
     "execute backfill": "Backfill निष्पादित करें",
     "execute flow behaviour": "Flow निष्पादित करें",
     "execute flow now ?": "क्या आप इस flow को निष्पादित करना चाहते हैं?",
+    "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",

@@ -516,6 +516,7 @@
     "execute backfill": "backfill 실행",
     "execute flow behaviour": "Flow 실행",
     "execute flow now ?": "이 flow를 실행하시겠습니까?",
+    "discard execution confirmation": "저장되지 않은 input이 있습니다. 이 실행을 취소하시겠습니까?",
     "execute the flow": "Flow <code>{id}</code> 실행",
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",

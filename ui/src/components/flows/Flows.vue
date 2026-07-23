@@ -19,7 +19,7 @@
             </NavBarActions>
         </template>
     </TopNavBar>
-    <section :class="{container: topbar}">
+    <section :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -38,6 +38,7 @@
             :no-data-text="$t('no_results.flows')"
             class="flows-table"
             :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+            :fitHeight="fitHeightResolved"
         >
             <template #top>
                 <KSFilter
@@ -311,17 +312,21 @@
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
+        fitHeight?: boolean;
         namespace?: string;
         id?: string | null;
         defaultScopeFilter?: boolean,
         embed?: boolean;
     }>(), {
         topbar: true,
+        fitHeight: undefined,
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
         embed: false,
     })
+
+    const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
 
     const flowStore = useFlowStore()
     const apiStore = useApiStore()
@@ -737,6 +742,16 @@
 </script>
 
 <style scoped lang="scss">
+.full-container {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    > * {
+        flex: 1;
+    }
+}
+
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }

@@ -178,6 +178,7 @@ section#charts {
                     right: 1.25rem;
                 }
             }
+
         }
 
         #charts_buttons {

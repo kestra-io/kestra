@@ -12,6 +12,7 @@
             :tabindex="disabled ? -1 : 0"
             @click="onSelect"
         >
+            <span v-if="indicator === 'radio'" class="tile-radio-mark" aria-hidden="true" />
             <slot />
         </button>
 
@@ -30,12 +31,14 @@
         disabled?: boolean
         ariaLabel?: string
         layout?: "row" | "column"
+        indicator?: "radio" | "none"
     }>(), {
         role: "radio",
         selected: false,
         disabled: false,
         ariaLabel: undefined,
         layout: "row",
+        indicator: "none",
     })
 
     const emit = defineEmits<{
@@ -116,5 +119,28 @@
 
     .tile-config {
         padding: 0 var(--ks-spacing-3) var(--ks-spacing-3);
+    }
+
+    .tile-radio-mark {
+        flex: none;
+        width: var(--ks-spacing-4);
+        height: var(--ks-spacing-4);
+        border-radius: var(--ks-radius-round, 999px);
+        border: var(--ks-border-width-base) solid var(--ks-border-strong);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .selected .tile-radio-mark {
+        border-color: var(--ks-border-focus);
+    }
+
+    .selected .tile-radio-mark::after {
+        content: "";
+        width: var(--ks-spacing-2);
+        height: var(--ks-spacing-2);
+        border-radius: var(--ks-radius-round, 999px);
+        background-color: var(--ks-border-focus);
     }
 </style>

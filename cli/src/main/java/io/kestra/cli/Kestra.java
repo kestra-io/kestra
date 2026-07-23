@@ -12,6 +12,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
+import io.kestra.cli.commands.migrations.AbstractMigrationCommand;
 import io.kestra.cli.commands.migrations.MigrationCommand;
 import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import io.kestra.cli.commands.plugins.PluginCommand;
@@ -23,6 +24,11 @@ import io.kestra.cli.services.EnvironmentProvider;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.context.ApplicationContextConfiguration;
+import io.micronaut.context.DefaultApplicationContext;
+import io.micronaut.context.DefaultApplicationContextBuilder;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.inject.BeanDefinitionReference;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -171,12 +177,16 @@ public class Kestra implements Callable<Integer> {
         CommandLine commandLine,
         String[] environments) {
 
-        ApplicationContextBuilder builder = ApplicationContext
-            .builder()
+        Class<?> cls = commandLine.getCommandSpec().userObject().getClass();
+
+        // Pure migration commands run in a minimal context that never registers the other
+        // Kestra @Context beans (repositories, server services, the migration startup trigger),
+        // so nothing touches the database before the migration is applied explicitly.
+        ApplicationContextBuilder builder = (AbstractMigrationCommand.class.isAssignableFrom(cls)
+            ? new MigrationApplicationContextBuilder()
+            : ApplicationContext.builder())
             .mainClass(mainClass)
             .environments(environments);
-
-        Class<?> cls = commandLine.getCommandSpec().userObject().getClass();
 
         if (AbstractCommand.class.isAssignableFrom(cls)) {
             Map<String, Object> properties = new HashMap<>();
@@ -234,5 +244,64 @@ public class Kestra implements Callable<Integer> {
      */
     private static boolean isPracticalCommand(CommandLine commandLine) {
         return !(commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested());
+    }
+
+    /**
+     * Builder that produces a {@link MigrationApplicationContext} while applying all the standard
+     * properties/environments/property-sources wiring of {@link DefaultApplicationContextBuilder#build()}.
+     */
+    private static final class MigrationApplicationContextBuilder extends DefaultApplicationContextBuilder {
+        @Override
+        protected ApplicationContext newApplicationContext() {
+            return new MigrationApplicationContext(this);
+        }
+    }
+
+    /**
+     * Minimal {@link ApplicationContext} for the {@code kestra migrate} commands: it drops the
+     * eager {@code @Context} beans that only exist to serve a running server or a data/queue role
+     * (see {@link #RUNTIME_STARTUP_PROPERTIES}), including the migration startup trigger. Starting
+     * the context therefore initializes none of them, so nothing queries the database before the
+     * migration is applied. Framework and DI-infrastructure {@code @Context} beans (e.g. value
+     * extraction, expression evaluation) are kept, and the lazily-resolved migration runner, lock,
+     * history store and {@code DataSource} are pulled on demand by the command.
+     */
+    private static final class MigrationApplicationContext extends DefaultApplicationContext {
+        /**
+         * Properties whose presence activates a runtime (server/data/queue) role. An eager
+         * {@code @Context} bean gated on any of them is a startup bean we must not initialize in
+         * the migration context — otherwise it would connect to the database (or start a server
+         * facet) before the migration runs.
+         */
+        private static final Set<String> RUNTIME_STARTUP_PROPERTIES = Set.of(
+            "kestra.repository.type",
+            "kestra.queue.type",
+            "kestra.server-type"
+        );
+
+        MigrationApplicationContext(ApplicationContextConfiguration configuration) {
+            super(configuration);
+        }
+
+        @Override
+        protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
+            return super.resolveBeanDefinitionReferences().stream()
+                .filter(reference -> !isRuntimeStartupBean(reference))
+                .toList();
+        }
+
+        private static boolean isRuntimeStartupBean(BeanDefinitionReference<?> reference) {
+            if (!reference.isContextScope()) {
+                return false;
+            }
+            return reference.getAnnotationMetadata()
+                .getAnnotationValuesByType(Requires.class)
+                .stream()
+                .anyMatch(
+                    requires -> requires.stringValue("property")
+                        .map(RUNTIME_STARTUP_PROPERTIES::contains)
+                        .orElse(false)
+                );
+        }
     }
 }

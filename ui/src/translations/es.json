@@ -36,7 +36,8 @@
     "Default page": "Página predeterminada",
     "confirmation": "Confirmación",
     "common": {
-      "back": "Atrás"
+      "back": "Atrás",
+      "openInNewTab": "Abrir en nueva pestaña"
     },
     "delete confirm": "¿Estás seguro de eliminar <code>{name}</code>?",
     "outdated revision save confirmation": {
@@ -126,6 +127,8 @@
       "last24hours": "Últimas 24 horas",
       "last48hours": "Últimas 48 horas",
       "last7days": "Últimos 7 días",
+      "last14days": "Últimos 14 días",
+      "last28days": "Últimos 28 días",
       "last30days": "Últimos 30 días",
       "last365days": "Últimos 365 días",
       "next5minutes": "Próximos 5 minutos",
@@ -144,6 +147,8 @@
       "24hours": "24 horas",
       "48hours": "48 horas",
       "7days": "7 días",
+      "14days": "14 días",
+      "28days": "28 días",
       "30days": "30 días",
       "365days": "365 días",
       "never": "Nunca",
@@ -458,10 +463,53 @@
     },
     "use": "Usar",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "Copiar tipo",
+      "deprecated": "Obsoleto",
+      "dynamic": "dinámico",
+      "filter_all": "Todo",
+      "filter_properties": "Filtrar propiedades…",
+      "filter_required": "Obligatorio",
+      "intro_callout_prefix": "Haz clic en el ",
+      "intro_callout_suffix": " de un task en el editor para abrir su documentación de plugin aquí.",
+      "intro_clear_search": "Limpiar búsqueda",
+      "intro_learn_more": "Más información",
+      "intro_no_matches_sub": "Ninguna función, filtro o propiedad coincide con tu búsqueda.",
+      "intro_no_matches_title": "Sin resultados para \"{q}\"",
+      "intro_result_count": "{count} resultados",
+      "intro_search_placeholder": "Buscar en la referencia…",
+      "intro_start_here": "Empieza aquí",
+      "intro_step1_cta": "Ver la referencia de flow",
+      "intro_step1_desc_mid": " dentro de un ",
+      "intro_step1_desc_prefix": "Cada flow necesita un ",
+      "intro_step1_desc_suffix": " único.",
+      "intro_step1_title": "Define id y namespace",
+      "intro_step2_cta": "Ver la referencia de task",
+      "intro_step2_desc": "Acciones atómicas que se ejecutan en orden. Haz clic en un task para ver su documentación.",
+      "intro_step2_title": "Agrega tasks",
+      "intro_step3_cta": "Ver la referencia de inputs",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "Usa ",
+      "intro_step3_desc_suffix": " y expresiones Pebble.",
+      "intro_step3_title": "Házelo dinámico",
+      "intro_sub": "Todo lo que necesitas para crear un flow en YAML: propiedades, inputs y Pebble templating, en un solo lugar.",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Documentación de flow",
       "name": "Plugin",
       "names": "Plugins",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "Resumen",
+      "nav_properties": "Properties",
+      "non_dynamic": "no dinámico",
       "please": "Por favor elige una tarea a la derecha para ver su documentación",
-      "release": "Notas de la versión"
+      "release": "Notas de la versión",
+      "required": "Obligatorio"
     },
     "last execution date": "Fecha de última ejecución",
     "last execution state": "Último estado",
@@ -692,7 +740,6 @@
     "taskid column details": "Última task siendo ejecutada y su número de intentos.",
     "flow already exists": "Flow ya existe",
     "flow already exists message": "El flow <code>{id}</code> ya existe en el namespace <code>{namespace}</code>. ¿Desea crear una nueva revisión?",
-    "plugin_default_already_exists": "El plugin predeterminado para <code>{type}</code> ya existe.",
     "namespace not allowed": "Namespace no permitido",
     "switch-view": "Cambiar vista",
     "source and topology": "Fuente y topología",
@@ -728,7 +775,6 @@
     },
     "title": "Título",
     "api": "API",
-    "more_actions": "Más acciones",
     "expand error": "Expandir solo tasks fallidas",
     "expand all": "Expandir todo",
     "collapse all": "Colapsar todo",
@@ -1192,6 +1238,12 @@
         "title": "Agregar Blueprints Personalizados",
         "message": "En Kestra Enterprise Edition, puedes crear Blueprints personalizados disponibles solo para tu organización. Puedes usarlos como plantillas de mejores prácticas para compartir, centralizar y documentar flujos de trabajo comúnmente utilizados en tu equipo."
       },
+      "policies": {
+        "header": "Políticas de Gobernanza",
+        "label": "Políticas",
+        "message": "Las Políticas permiten a los equipos de plataforma gestionar y aplicar reglas de forma centralizada en todos los flows — inyectar valores predeterminados compartidos, bloquear plugins, limitar valores de propiedades y requerir labels de cumplimiento. Las reglas se aplican a nivel de tenant o namespace con despliegue por fases, y cada valor inyectado o reemplazado permanece visible para los autores de flows.",
+        "title": "Gestionar cada flow con Políticas"
+      },
       "namespace": {
         "edit": {
           "title": "Mejora la Gestión de tu Namespace",
@@ -1209,9 +1261,9 @@
           "title": "Gobierne Centralmente Sus Variables",
           "message": "En Kestra Enterprise Edition, puedes definir y gestionar variables a nivel de namespace para eliminar configuraciones repetitivas a través de los flows. Estas variables aseguran consistencia, simplifican las actualizaciones de configuración y pueden ser fácilmente referenciadas por cualquier task o trigger para flujos de trabajo más limpios y mantenibles."
         },
-        "plugin-defaults": {
-          "title": "Estandarizar la Configuración con Valores Predeterminados del Plugin",
-          "message": "En Kestra Enterprise Edition, puedes establecer valores predeterminados de plugins específicos del namespace, reduciendo la necesidad de configuraciones duplicadas en cada flow. Esta gobernanza central de plugins aplica configuraciones consistentes, permite la referencia segura de secretos o variables, y simplifica el mantenimiento de tus workflows."
+        "policies": {
+          "title": "Aplicar Reglas de Gobernanza en este namespace",
+          "message": "En Kestra Enterprise Edition, las Políticas te permiten definir reglas que se aplican a cada flow en este namespace y sus hijos — inyectar valores predeterminados compartidos, restringir valores de propiedad, bloquear plugins y requerir labels de cumplimiento, con cada cambio totalmente visible para los autores del flow."
         },
         "history": {
           "title": "Gestionar el Historial de Revisiones en un Solo Lugar",
@@ -1305,7 +1357,7 @@
         "complete": "Completar",
         "save_to_continue": "Pulsa Guardar en la barra superior (derecha).",
         "execute_to_continue": "1. Pulsa Ejecutar en la barra superior (derecha).\n2. Proporciona un valor para <strong>name</strong>.\n3. Pulsa Ejecutar de nuevo en el modal.",
-        "edit_flow_to_continue": "Pulsa Editar flujo en la barra superior (derecha).",
+        "edit_flow_to_continue": "Abre el menú de acciones (barra superior, a la derecha) y selecciona Editar flujo.",
         "cancel_tutorial": "Cancelar tutorial",
         "finish_tutorial": "Finalizar tutorial"
       },
@@ -1343,7 +1395,7 @@
         "save_flow": "Haz clic en Guardar para continuar.",
         "execute_flow": "Ejecuta el flujo una vez para continuar.",
         "view_logs_status": "Abre los detalles de ejecución y revisa los logs de `greet`.",
-        "edit_flow_from_execution": "Haz clic en `Editar flujo` en la barra superior para continuar.",
+        "edit_flow_from_execution": "Abre el menú de acciones y haz clic en `Editar flujo` para continuar.",
         "add_cron_trigger_section": "Crea una sección `triggers` con un trigger de programación.",
         "add_cron_trigger_type": "Establece el tipo de trigger en `io.kestra.plugin.core.trigger.Schedule`.",
         "add_cron_trigger_cron": "Añade una expresión cron, por ejemplo: `\"*/5 * * * *\"`.",
@@ -1387,32 +1439,19 @@
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
     "system_namespace": "Mantén tu plataforma bajo control con los system flows.",
     "system_namespace_description": "Automatiza tareas de mantenimiento, desde alertas de fallo hasta limpiezas automatizadas.",
-    "pluginDefaults": {
-      "title": "Valores Predeterminados del Plugin",
-      "add": "Agregar Plugin Predeterminado",
-      "edit": "Editar Plugin Default",
-      "add_subtitle": "Configurar un nuevo plugin predeterminado con sus propiedades",
-      "edit_subtitle": "Modificar la configuración predeterminada del plugin existente",
-      "predefined": "Plugin Predefinido",
-      "custom": "Plugin Personalizado",
-      "form": "Formulario",
-      "yaml": "YAML",
-      "select_predefined": "Seleccionar Plugin Predefinido",
-      "cancel": "Cancelar",
-      "update": "Actualizar Plugin Default",
-      "custom_type": "Tipo de plugin personalizado",
-      "custom_placeholder": "Ingrese el tipo de plugin",
-      "use_custom": "Usar Personalizado",
-      "custom_configure": "Tipo de plugin personalizado - configurar usando YAML",
-      "yaml_configuration": "Configuración YAML",
-      "show_yaml": "Mostrar YAML"
-    },
     "secret": {
       "add": "Crear",
       "update": "Actualizar secreto '{name}'",
       "isReadOnly": "El secreto es de solo lectura",
       "names": "Secrets",
-      "inherited": "Secrets heredados"
+      "inherited": "Secrets heredados",
+      "key": "Nombre",
+      "keyPlaceholder": "Nombre para referenciar este secreto, ej. MY_API_TOKEN",
+      "name": "Valor secreto",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe este secreto",
+      "tags": "Etiquetas",
+      "addTag": "Añadir etiqueta"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1526,6 +1565,7 @@
     "documentationMenu": "Menú de documentación",
     "item": "elemento",
     "items": "elementos",
+    "iterations": "Iteraciones",
     "cron": "Cron",
     "execution_started": "¡La ejecución ha comenzado!",
     "execution_failed": "¡Ejecución fallida!",
@@ -1628,8 +1668,7 @@
         "triggers": "Disparadores",
         "errors": "Manejadores de Errores",
         "afterExecution": "Después de la Ejecución",
-        "finally": "Finalmente",
-        "pluginDefaults": "Predeterminados del Plugin"
+        "finally": "Finalmente"
       },
       "fields": {
         "main": {
@@ -1661,7 +1700,6 @@
         "triggers": "Seleccione un trigger",
         "errors": "Selecciona una task",
         "finally": "Seleccionar una task",
-        "pluginDefaults": "Seleccionar un plugin",
         "afterExecution": "Seleccionar una task",
         "conditions": "Seleccione una condición",
         "inputs": "Seleccione un tipo de campo de input",
@@ -1675,7 +1713,6 @@
         "triggers": "Agregar un trigger",
         "errors": "Agregar un manejador de errores",
         "finally": "Agregar un bloque finally",
-        "pluginDefaults": "Agregar un plugin predeterminado",
         "afterExecution": "Agregar un bloque después de la ejecución",
         "conditions": "Agregar una condición",
         "inputs": "Agregar un campo de input",
@@ -1792,10 +1829,6 @@
       "concurrency_limits": {
         "title": "No se han establecido límites de concurrencia.",
         "content": "Lea más sobre los <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Límites de Concurrency</a></strong> en nuestra documentación."
-      },
-      "pluginDefaults": {
-        "title": "¡Aún no tienes valores predeterminados de plugin!",
-        "content": "Los valores predeterminados del plugin te permiten gobernar centralmente la configuración de tu plugin y compartirla con todos los flows en tu namespace."
       },
       "variables": {
         "title": "Aún no hay variables",
@@ -2302,6 +2335,12 @@
     },
     "open source": "Código Abierto",
     "pricing": "Precios",
-    "license": "Licencia"
+    "license": "Licencia",
+    "pwa": {
+      "install_title": "Instalar Kestra",
+      "install_description": "Instala Kestra como una aplicación para un acceso más rápido y una experiencia a pantalla completa.",
+      "install": "Instalar",
+      "dismiss": "Ahora no"
+    }
   }
 }

@@ -157,7 +157,7 @@
                     />
                 </KsFormItem>
                 <KsFormItem :label="$t('secret.key')" prop="key" required inline class="field-item">
-                    <KsInput v-model="secret.key" :disabled="secret.update" required />
+                    <KsInput v-model="secret.key" :disabled="secret.update" :placeholder="$t('secret.keyPlaceholder')" required />
                 </KsFormItem>
                 <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required inline class="field-item">
                     <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
@@ -451,7 +451,7 @@
     }
 
     const namespaceFilter = (namespace: string) =>
-        [{field: "NAMESPACE" as const, operation: "EQUALS" as const, value: namespace}]
+        [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         const activeFilters = routeQueryToQueryFilters(route.query)

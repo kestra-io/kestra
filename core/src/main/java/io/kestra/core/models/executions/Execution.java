@@ -682,7 +682,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return this.taskRunList
             .reversed()
             .stream()
-            .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
+            .filter(t -> !t.getState().isTerminated() && !t.getState().isPaused())
             .findFirst();
     }
 

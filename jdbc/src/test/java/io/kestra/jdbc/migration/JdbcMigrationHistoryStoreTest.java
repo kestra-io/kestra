@@ -87,6 +87,29 @@ class JdbcMigrationHistoryStoreTest {
     }
 
     @Test
+    void updateChecksum_updatesAppliedScriptChecksum() throws Exception {
+        // Given
+        store.markApplied(script("2.0", "original-checksum"), 10L);
+
+        // When
+        store.updateChecksum(script("2.0", "current-checksum"));
+
+        // Then
+        assertThatNoException().isThrownBy(() -> store.validateChecksum(script("2.0", "current-checksum")));
+        assertThatThrownBy(() -> store.validateChecksum(script("2.0", "original-checksum")))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Checksum mismatch");
+    }
+
+    @Test
+    void updateChecksum_rejectsUnknownScript() {
+        // Given / When / Then
+        assertThatThrownBy(() -> store.updateChecksum(script("missing", "checksum")))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Cannot repair checksum for unapplied migration [missing]");
+    }
+
+    @Test
     void shouldReturnFalseForLegacyUpgradeOnFreshInstall() throws Exception {
         // Given: fresh H2 database with no flyway_schema_history table
         assertThat(store.detectLegacyUpgrade()).isFalse();

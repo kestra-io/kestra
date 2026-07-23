@@ -1,0 +1,84 @@
+name: Release hey-api-plugin
+
+# Manually-triggered release of @kestra-io/hey-api-plugin as a GitHub Release tarball — NOT published
+# to npm. The OSS and EE UIs consume the plugin as an npm workspace (no release needed); only the
+# external client-sdk repo consumes it, and it does so via the release .tgz URL (see client-sdk's
+# package.json). Keeping it off npm avoids a public package while still sharing one source of truth.
+#
+# The release itself is published to kestra-io/hey-api-plugin, NOT this repo: kestra-io/kestra's tag
+# ruleset only allows vX.Y.Z release tags for actual product releases, and this repo's Releases page
+# is watched by clients and the website for "latest release per branch" — a hey-api-plugin-vX.Y.Z tag
+# here would either violate that ruleset or pollute that page. kestra-io/hey-api-plugin has no source
+# of its own; it exists solely to host these tarballs. Publishing there uses the same GH_BOT app
+# token pattern as the kestra-ee dispatch in pull-request.yml, scoped to just that one repo.
+#
+# The released version is whatever is in ui/packages/hey-api-plugin/package.json — bump that in a
+# normal commit first, then dispatch this workflow. It fails if the tag already exists (bump first).
+on:
+  workflow_dispatch:
+    inputs:
+      skip-test:
+        description: "Skip typecheck"
+        required: false
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.18
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        if: inputs.skip-test != 'true'
+        run: npm run typecheck --workspace @kestra-io/hey-api-plugin
+
+      - name: Read version
+        id: version
+        run: echo "value=$(npm pkg get version --workspace @kestra-io/hey-api-plugin | jq -r '.["@kestra-io/hey-api-plugin"]')" >> "$GITHUB_OUTPUT"
+
+      - name: Pack (prepack builds dist)
+        # Deterministic tarball name (npm pack: <scope>-<name>-<version>.tgz); avoids parsing
+        # `npm pack --json`, whose stdout is polluted by the prepack build logs.
+        run: npm pack --workspace @kestra-io/hey-api-plugin --pack-destination .
+
+      - name: Generate GitHub App token for hey-api-plugin release
+        id: hey-api-plugin-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: hey-api-plugin
+
+      - name: Create GitHub Release with the tarball
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ steps.hey-api-plugin-token.outputs.token }}
+        run: |
+          version="${{ steps.version.outputs.value }}"
+          tarball="ui/kestra-io-hey-api-plugin-${version}.tgz"
+          gh release create "v${version}" "$tarball" \
+            --repo kestra-io/hey-api-plugin \
+            --title "@kestra-io/hey-api-plugin v${version}" \
+            --notes "Shared Kestra SDK generator plugin + fetch runtime, built from kestra-io/kestra's ui/packages/hey-api-plugin. Consumed by client-sdk via this release tarball; the OSS and EE UIs consume the same source directly as an npm workspace. Not published to npm."

@@ -6,8 +6,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.queues.*;
 import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.Indexer;
@@ -36,6 +38,10 @@ public class DefaultIndexer extends AbstractService implements Indexer {
 
     private final MetricRepositoryInterface metricRepository;
     private final DispatchQueueInterface<MetricEntry> metricQueue;
+
+    private final ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
+    private final DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue;
+
     private final MetricRegistry metricRegistry;
     // Thread-safe: populated by run() but iterated from doStop() on the context-close thread.
     private final List<QueueSubscriber<?>> subscribers = new CopyOnWriteArrayList<>();
@@ -49,6 +55,8 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         DispatchQueueInterface<LogEntry> logQueue,
         MetricRepositoryInterface metricRepositor,
         DispatchQueueInterface<MetricEntry> metricQueue,
+        ExecutionStatisticsRepositoryInterface executionStatisticsRepository,
+        DispatchQueueInterface<ExecutionStatistic> executionStatisticQueue,
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         IgnoreExecutionService ignoreExecutionService,
@@ -59,6 +67,8 @@ public class DefaultIndexer extends AbstractService implements Indexer {
         this.logQueue = logQueue;
         this.metricRepository = metricRepositor;
         this.metricQueue = metricQueue;
+        this.executionStatisticsRepository = executionStatisticsRepository;
+        this.executionStatisticQueue = executionStatisticQueue;
         this.metricRegistry = metricRegistry;
         this.ignoreExecutionService = ignoreExecutionService;
         this.queueService = queueService;
@@ -82,6 +92,7 @@ public class DefaultIndexer extends AbstractService implements Indexer {
     protected void startQueues() {
         this.sendBatch(logQueue, logRepository);
         this.sendBatch(metricQueue, metricRepository);
+        this.sendBatch(executionStatisticQueue, executionStatisticsRepository);
     }
 
     protected <T extends DispatchEvent> void sendBatch(DispatchQueueInterface<T> queueInterface, IndexingRepository<T> indexingRepository) {

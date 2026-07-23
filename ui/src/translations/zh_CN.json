@@ -36,7 +36,8 @@
     "Default page": "默认页面",
     "confirmation": "确认",
     "common": {
-      "back": "返回"
+      "back": "返回",
+      "openInNewTab": "在新标签页中打开"
     },
     "delete confirm": "确定要删除 <code>{name}</code> 吗？",
     "outdated revision save confirmation": {
@@ -126,6 +127,8 @@
       "last24hours": "最近24小时",
       "last48hours": "最近48小时",
       "last7days": "最近7天",
+      "last14days": "最近 14 天",
+      "last28days": "最近 28 天",
       "last30days": "最近30天",
       "last365days": "最近365天",
       "next5minutes": "接下来的5分钟",
@@ -144,6 +147,8 @@
       "24hours": "24小时",
       "48hours": "48小时",
       "7days": "7天",
+      "14days": "14 天",
+      "28days": "28 天",
       "30days": "30天",
       "365days": "365天",
       "never": "从不",
@@ -458,10 +463,53 @@
     },
     "use": "使用",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "复制类型",
+      "deprecated": "已弃用",
+      "dynamic": "动态",
+      "filter_all": "全部",
+      "filter_properties": "筛选属性…",
+      "filter_required": "必填",
+      "intro_callout_prefix": "点击编辑器中某个task的",
+      "intro_callout_suffix": "，即可在此打开其plugin文档。",
+      "intro_clear_search": "清除搜索",
+      "intro_learn_more": "了解更多",
+      "intro_no_matches_sub": "没有函数、过滤器或属性与您的搜索匹配。",
+      "intro_no_matches_title": "“{q}”没有匹配结果",
+      "intro_result_count": "{count} 个结果",
+      "intro_search_placeholder": "搜索参考文档…",
+      "intro_start_here": "从这里开始",
+      "intro_step1_cta": "查看 flow 参考",
+      "intro_step1_desc_mid": "中需要唯一的",
+      "intro_step1_desc_prefix": "每个flow在",
+      "intro_step1_desc_suffix": "。",
+      "intro_step1_title": "设置 id 和 namespace",
+      "intro_step2_cta": "查看 task 参考",
+      "intro_step2_desc": "按顺序执行的原子操作。点击task查看其文档。",
+      "intro_step2_title": "添加tasks",
+      "intro_step3_cta": "查看 inputs 参考",
+      "intro_step3_desc_mid": "、",
+      "intro_step3_desc_prefix": "使用",
+      "intro_step3_desc_suffix": "和Pebble表达式。",
+      "intro_step3_title": "使其动态化",
+      "intro_sub": "构建YAML flow所需的一切：属性、inputs和Pebble templating，集于一处。",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Flow文档",
       "name": "插件",
       "names": "插件",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "概览",
+      "nav_properties": "Properties",
+      "non_dynamic": "非动态",
       "please": "请选择右侧的一个任务以查看其文档",
-      "release": "发行说明"
+      "release": "发行说明",
+      "required": "必填"
     },
     "last execution date": "最后执行日期",
     "last execution state": "上一次状态",
@@ -692,7 +740,6 @@
     "taskid column details": "最后执行的任务及其尝试次数。",
     "flow already exists": "流程已存在",
     "flow already exists message": "flow <code>{id}</code> 已存在于 namespace <code>{namespace}</code>。您要创建一个新的修订版本吗？",
-    "plugin_default_already_exists": "<code>{type}</code>的插件默认值已存在。",
     "namespace not allowed": "不允许的命名空间",
     "switch-view": "切换视图",
     "source and topology": "源代码和拓扑",
@@ -728,7 +775,6 @@
     },
     "title": "标题",
     "api": "API",
-    "more_actions": "更多操作",
     "expand error": "仅展开失败的任务",
     "expand all": "展开所有",
     "collapse all": "折叠所有",
@@ -1192,6 +1238,12 @@
         "title": "添加自定义蓝图",
         "message": "在 Kestra 企业版中，您可以创建仅供您的组织使用的自定义 Blueprints。您可以将它们用作最佳实践模板，以便在团队中共享、集中和记录常用的工作流。"
       },
+      "policies": {
+        "header": "治理策略",
+        "label": "策略",
+        "message": "策略让平台团队能够集中管理和执行适用于所有 flow 的规则 — 注入共享默认值、阻止插件、限制属性值并要求合规 label。规则通过分阶段发布应用于租户或 namespace 级别，并且每个注入或替换的 value 对 flow 作者保持可见。",
+        "title": "通过策略治理每个 flow"
+      },
       "namespace": {
         "edit": {
           "title": "升级您的Namespace管理",
@@ -1209,9 +1261,9 @@
           "title": "集中管理您的变量",
           "message": "在 Kestra 企业版中，您可以定义和管理 namespace 级别的变量，以消除跨 flow 的重复配置。这些变量确保了一致性，简化了配置更新，并且可以被任何 task 或 trigger 轻松引用，从而实现更简洁、更易维护的工作流。"
         },
-        "plugin-defaults": {
-          "title": "使用插件默认值标准化配置",
-          "message": "在 Kestra Enterprise Edition 中，您可以设置特定于 namespace 的插件默认值，从而减少每个 flow 中重复设置的需求。这种集中的插件管理强制执行一致的配置，允许安全引用机密或变量，并简化工作流的维护。"
+        "policies": {
+          "title": "在此 namespace 中强制执行治理规则",
+          "message": "在 Kestra 企业版中，策略允许您定义适用于此 namespace 及其子级中每个 flow 的规则 — 注入共享默认值、限制属性值、阻止插件以及要求合规性 label，每次更改都对 flow 作者完全可见。"
         },
         "history": {
           "title": "在一个地方管理修订历史",
@@ -1305,7 +1357,7 @@
         "complete": "完成",
         "save_to_continue": "请在顶部右侧点击“Save”。",
         "execute_to_continue": "1. 在顶部右侧点击“Execute”。\n2. 为 <strong>name</strong> 提供一个值。\n3. 在弹窗中再次点击“Execute”。",
-        "edit_flow_to_continue": "请在顶部右侧点击“Edit flow”。",
+        "edit_flow_to_continue": "打开操作菜单（顶部栏右侧）并选择“编辑流程”。",
         "cancel_tutorial": "取消教程",
         "finish_tutorial": "完成教程"
       },
@@ -1343,7 +1395,7 @@
         "save_flow": "点击“Save”以继续。",
         "execute_flow": "请运行一次 Flow 以继续。",
         "view_logs_status": "打开执行详情并检查 `greet` 的日志。",
-        "edit_flow_from_execution": "点击顶部栏中的“Edit flow”以继续。",
+        "edit_flow_from_execution": "打开操作菜单并点击“编辑流程”以继续。",
         "add_cron_trigger_section": "创建一个包含计划触发器的 `triggers` 部分。",
         "add_cron_trigger_type": "将触发器类型设置为 `io.kestra.plugin.core.trigger.Schedule`。",
         "add_cron_trigger_cron": "添加一个 Cron 表达式，例如：`\"*/5 * * * *\"`。",
@@ -1387,32 +1439,19 @@
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "system_namespace": "保持您的平台通过系统flows进行检查。",
     "system_namespace_description": "自动化维护任务，从故障警报到自动清理。",
-    "pluginDefaults": {
-      "title": "插件默认值",
-      "add": "添加插件默认值",
-      "edit": "编辑插件默认值",
-      "add_subtitle": "配置新插件默认值及其属性",
-      "edit_subtitle": "修改现有插件默认配置",
-      "predefined": "预定义插件",
-      "custom": "自定义插件",
-      "form": "表单",
-      "yaml": "YAML",
-      "select_predefined": "选择预定义插件",
-      "cancel": "取消",
-      "update": "更新插件默认值",
-      "custom_type": "自定义插件类型",
-      "custom_placeholder": "输入插件类型",
-      "use_custom": "使用自定义",
-      "custom_configure": "自定义插件类型 - 使用 YAML 配置",
-      "yaml_configuration": "YAML 配置",
-      "show_yaml": "显示 YAML"
-    },
     "secret": {
       "add": "创建",
       "update": "更新密钥 '{name}'",
       "isReadOnly": "Secret 是只读的",
       "names": "秘密",
-      "inherited": "继承的秘密"
+      "inherited": "继承的秘密",
+      "key": "名称",
+      "keyPlaceholder": "用于引用此密钥的名称，例如 MY_API_TOKEN",
+      "name": "秘密值",
+      "description": "描述",
+      "descriptionPlaceholder": "描述此 secret",
+      "tags": "标签",
+      "addTag": "添加标签"
     },
     "workerId": "工作者ID",
     "kv": {
@@ -1526,6 +1565,7 @@
     "documentationMenu": "文档菜单",
     "item": "项目",
     "items": "项目",
+    "iterations": "迭代次数",
     "cron": "定时任务",
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",
@@ -1628,8 +1668,7 @@
         "triggers": "触发器",
         "errors": "错误处理程序",
         "afterExecution": "执行后",
-        "finally": "最后",
-        "pluginDefaults": "插件默认值"
+        "finally": "最后"
       },
       "fields": {
         "main": {
@@ -1661,7 +1700,6 @@
         "triggers": "选择一个trigger",
         "errors": "选择一个task",
         "finally": "选择一个task",
-        "pluginDefaults": "选择插件",
         "afterExecution": "选择一个task",
         "conditions": "选择条件",
         "inputs": "选择一个input字段类型",
@@ -1675,7 +1713,6 @@
         "triggers": "添加一个trigger",
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
-        "pluginDefaults": "添加插件默认值",
         "afterExecution": "添加执行后块",
         "conditions": "添加条件",
         "inputs": "添加一个input字段",
@@ -1792,10 +1829,6 @@
       "concurrency_limits": {
         "title": "未设置并发限制。",
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">并发限制</a></strong>的信息。"
-      },
-      "pluginDefaults": {
-        "title": "您还没有插件默认值！",
-        "content": "插件默认设置允许您集中管理插件配置，并与namespace中的所有flow共享。"
       },
       "variables": {
         "title": "尚无变量",
@@ -2302,6 +2335,12 @@
     },
     "open source": "开源",
     "pricing": "定价",
-    "license": "许可证"
+    "license": "许可证",
+    "pwa": {
+      "install_title": "安装 Kestra",
+      "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
+      "install": "安装",
+      "dismiss": "暂不"
+    }
   }
 }

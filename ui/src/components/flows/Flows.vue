@@ -314,11 +314,13 @@
         namespace?: string;
         id?: string | null;
         defaultScopeFilter?: boolean,
+        embed?: boolean;
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
+        embed: false,
     })
 
     const flowStore = useFlowStore()
@@ -398,7 +400,7 @@
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
-    useRouteContext(routeInfo)
+    useRouteContext(routeInfo, props.embed)
 
     const dataTable = useTemplateRef("dataTable")
 
@@ -721,7 +723,7 @@
     function chartFilters() {
         const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
         return [{
-            field: "TIME_RANGE",
+            field: "timeRange",
             value: DEFAULT_DURATION,
             operation: "EQUALS",
         } satisfies QueryFilter]

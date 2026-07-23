@@ -15,6 +15,7 @@ import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.quota.Quota;
@@ -25,6 +26,7 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.*;
+import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.trace.Tracer;
@@ -53,6 +55,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private final ExecutionDelayStateStore executionDelayStateStore;
     private final SLAMonitorStateStore slaMonitorStateStore;
     private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
+    private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final ExecutorService executorService;
     private final WorkerQueueService workerGroupService;
     private final QuotaService quotaService;
@@ -73,6 +76,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         ExecutionDelayStateStore executionDelayStateStore,
         SLAMonitorStateStore slaMonitorStateStore,
         ConcurrencyLimitStateStore concurrencyLimitStateStore,
+        ConcurrencyLimitResolver concurrencyLimitResolver,
         ExecutorService executorService,
         WorkerQueueService workerGroupService,
         QuotaService quotaService,
@@ -90,6 +94,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
         this.executionDelayStateStore = executionDelayStateStore;
         this.slaMonitorStateStore = slaMonitorStateStore;
         this.concurrencyLimitStateStore = concurrencyLimitStateStore;
+        this.concurrencyLimitResolver = concurrencyLimitResolver;
         this.executorService = executorService;
         this.workerGroupService = workerGroupService;
         this.quotaService = quotaService;
@@ -123,6 +128,20 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                 {
                     try {
                         final FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+
+                        // A flow that resolves to a FlowWithException (unparsable, or blocked at execution
+                        // pre-flight) cannot be processed: fail the execution fast instead of leaving it stuck.
+                        // Terminated executions are left untouched so a late flow change never rewrites them.
+                        if (flow instanceof FlowWithException flowWithException) {
+                            if (execution.getState().isTerminated()) {
+                                return null;
+                            }
+                            IllegalStateException exception = new IllegalStateException(flowWithException.getException());
+                            Span.current().recordException(exception).setStatus(StatusCode.ERROR);
+                            Execution failedExecution = fail(execution, exception);
+                            return new ExecutorContext(execution).withExecution(failedExecution, "flowWithException");
+                        }
+
                         ExecutorContext executor = new ExecutorContext(execution, flow);
 
                         // schedule it for later if needed
@@ -184,8 +203,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                 return executor.withExecution(newExecution, "processQuotas");
                             }
 
-                            // handle concurrency limit
-                            if (flow.getConcurrency() != null) {
+                            // handle concurrency limits — flow, namespace and tenant scoped; an execution that
+                            // runs claims one slot in every scope, the first limit reached defines the behavior
+                            List<ScopedConcurrencyLimit> concurrencyLimits = concurrencyLimitResolver.resolveLimits(flow);
+                            if (!concurrencyLimits.isEmpty()) {
                                 ExecutionRunning executionRunning = ExecutionRunning.builder()
                                     .tenantId(executor.getFlow().getTenantId())
                                     .namespace(executor.getFlow().getNamespace())
@@ -194,7 +215,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
                                     .build();
 
-                                ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) ->
+                                ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, concurrencyLimits, (txContext, runningCounts) ->
                                 {
                                     Integer queueSize = flow.getConcurrency().getQueueSize();
                                     int queuedCount = queueSize == null ? 0 : executionQueuedStateStore.count(txContext, flow.getTenantId(), flow.getNamespace(), flow.getId());
@@ -203,9 +224,13 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                         return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
                                     }
                                     if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                    ExecutionRunning computed = executorService.processExecutionRunning(concurrencyLimits, runningCounts, executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                                    if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
+                                        return Pair.of(computed, true);
+                                    } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
                                         executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
                                     }
-                                    return Pair.of(computed, concurrencyLimit);
+                                    return Pair.of(computed, false);
                                 });
 
                                 // if the execution is queued or terminated due to concurrency limit, we stop here
@@ -214,6 +239,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                         Span.current().setStatus(StatusCode.ERROR, "Execution ended in state " + processed.getExecution().getState().getCurrent().name());
                                     }
                                     return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
+                                }
+
+                                // the execution claimed one slot in every scope: remember them so the release
+                                // decrements exactly these, even if the definitions change while it runs
+                                if (execution.getMetadata() != null) {
+                                    executor.withExecution(
+                                        execution.withMetadata(execution.getMetadata().withConcurrencyScopes(concurrencyLimits.stream().map(ScopedConcurrencyLimit::uid).toList())),
+                                        "handleConcurrencyLimit"
+                                    );
                                 }
                             }
                         }

@@ -2,13 +2,14 @@ package io.kestra.runner.h2;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.kestra.core.serializers.JacksonMapper;
 
@@ -24,7 +25,17 @@ public final class H2Functions {
     }
 
     private static final Scope scope = Scope.newEmptyScope();
-    private static final ConcurrentHashMap<String, JsonQuery> QUERY_CACHE = new ConcurrentHashMap<>();
+
+    /**
+     * Caches compiled jq expressions to avoid recompiling on every row. The set of expressions is
+     * unbounded in practice because some are built from user-supplied label keys (see the
+     * {@code JQ_STRING(... CONCAT('... select(.key == "', {key}, '") ...'))} filters in the H2
+     * repository services), so the cache is size-bounded to keep memory usage stable.
+     */
+    private static final Cache<String, JsonQuery> QUERY_CACHE = Caffeine.newBuilder()
+        .maximumSize(1000)
+        .recordStats()
+        .build();
 
     static {
         BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
@@ -94,7 +105,7 @@ public final class H2Functions {
 
     @SneakyThrows
     private static List<JsonNode> jq(String value, String expression) {
-        JsonQuery q = QUERY_CACHE.computeIfAbsent(expression, H2Functions::compileQuery);
+        JsonQuery q = QUERY_CACHE.get(expression, H2Functions::compileQuery);
 
         final List<JsonNode> out = new ArrayList<>();
         JsonNode in = JacksonMapper.ofJson().readTree(value);

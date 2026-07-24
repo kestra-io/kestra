@@ -22,7 +22,6 @@
 
     import {ref, computed, watch, onMounted, provide, defineAsyncComponent} from "vue"
     import {useRoute} from "vue-router"
-    import {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "@kestra-io/design-system"
     import {useApiStore} from "./stores/api"
     import {useLayoutStore} from "./stores/layout"
     import {useCoreStore} from "./stores/core"
@@ -32,7 +31,7 @@
     import * as BasicAuth from "./utils/basicAuth"
     import {applyFontScale, getAppFontSizeMode} from "./utils/appFontSize"
     import {initPosthogIfEnabled} from "./utils/posthog"
-    import {trackSavedFilter} from "./utils/savedFilterTracking"
+    import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter} from "./utils/savedFilterTracking"
     import ErrorToast from "./components/ErrorToast.vue"
     import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"

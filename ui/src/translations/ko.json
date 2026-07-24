@@ -61,6 +61,8 @@
     "success": "성공",
     "save": "저장",
     "save_as_draft": "초안으로 저장",
+    "publish": "게시",
+    "publish_draft": "초안 게시",
     "draft": "초안",
     "draft_flow_warning": "이 flow의 최신 리비전은 초안입니다. 실행은 대신 최신 게시된 리비전을 기준으로 수행됩니다. 최신 변경 사항을 실행하려면 초안을 게시하거나 Playground에서 실행하세요.",
     "save task": "Task 저장",
@@ -127,6 +129,8 @@
       "last24hours": "지난 24시간",
       "last48hours": "지난 48시간",
       "last7days": "지난 7일",
+      "last14days": "지난 14일",
+      "last28days": "지난 28일",
       "last30days": "지난 30일",
       "last365days": "지난 365일",
       "next5minutes": "다음 5분",
@@ -145,6 +149,8 @@
       "24hours": "24시간",
       "48hours": "48시간",
       "7days": "7일",
+      "14days": "14일",
+      "28days": "28일",
       "30days": "30일",
       "365days": "365일",
       "never": "절대 없음",
@@ -2280,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "파괴적",
         "idempotent": "멱등",
-        "return_direct": "직접 반환",
-        "view_flow": "flow 열기"
+        "return_direct": "직접 반환"
       },
       "connect_tab": {
         "server_url": "서버 URL",

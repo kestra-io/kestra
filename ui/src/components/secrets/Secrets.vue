@@ -10,7 +10,7 @@
             </ul>
         </template>
     </Navbar>
-    <section class="d-flex flex-column fill-height padding-bottom container">
+    <section :class="miscStore.configs?.secretsEnabled === undefined ? 'd-flex flex-column fill-height container' : 'full-container'">
         <div v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
             <div class="oss-secrets-block d-flex flex-column gap-4">
                 <SecretsTable

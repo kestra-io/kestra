@@ -61,6 +61,8 @@
     "success": "सफलता",
     "save": "सहेजें",
     "save_as_draft": "ड्राफ़्ट के रूप में सहेजें",
+    "publish": "प्रकाशित करें",
+    "publish_draft": "ड्राफ़्ट प्रकाशित करें",
     "draft": "ड्राफ़्ट",
     "draft_flow_warning": "इस flow का नवीनतम रिवीज़न एक ड्राफ़्ट है। निष्पादन इसके बजाय नवीनतम प्रकाशित रिवीज़न पर चलेगा - अपने नवीनतम बदलावों को चलाने के लिए ड्राफ़्ट प्रकाशित करें (या उसे Playground से चलाएँ)।",
     "save task": "Task सहेजें",
@@ -127,6 +129,8 @@
       "last24hours": "पिछले 24 घंटे",
       "last48hours": "पिछले 48 घंटे",
       "last7days": "पिछले 7 दिन",
+      "last14days": "पिछले 14 दिन",
+      "last28days": "पिछले 28 दिन",
       "last30days": "पिछले 30 दिन",
       "last365days": "पिछले 365 दिन",
       "next5minutes": "अगले 5 मिनट",
@@ -145,6 +149,8 @@
       "24hours": "24 घंटे",
       "48hours": "48 घंटे",
       "7days": "7 दिन",
+      "14days": "14 दिन",
+      "28days": "28 दिन",
       "30days": "30 दिन",
       "365days": "365 दिन",
       "never": "कभी नहीं",
@@ -2280,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "विनाशकारी",
         "idempotent": "Idempotent",
-        "return_direct": "सीधा वापसी",
-        "view_flow": "flow खोलें"
+        "return_direct": "सीधा वापसी"
       },
       "connect_tab": {
         "server_url": "सर्वर URL",

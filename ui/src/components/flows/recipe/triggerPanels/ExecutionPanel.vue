@@ -39,7 +39,7 @@
                     pill
                     @change="toggleState(stateName)"
                 >
-                    <component :is="STATES[stateName].icon" class="state-icon" :style="{color: STATES[stateName].color}" />
+                    <component :is="STATES[stateName].icon" class="state-icon" :style="{color: `var(--ks-status-${stateName.toLowerCase()})`}" />
                     {{ stateName }}
                 </KsCheckTag>
             </div>

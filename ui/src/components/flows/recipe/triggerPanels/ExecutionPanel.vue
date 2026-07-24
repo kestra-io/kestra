@@ -106,11 +106,12 @@
         display: inline-flex;
         align-items: center;
         gap: var(--ks-spacing-1);
-        color: var(--ks-text-success);
+        color: var(--ks-text-secondary);
     }
 
     .hint-icon {
         display: inline-flex;
         font-size: var(--ks-font-size-md);
+        color: var(--ks-text-success);
     }
 </style>

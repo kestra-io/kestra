@@ -4,13 +4,11 @@
     <KsAlert
         v-if="visible"
         type="warning"
-        title="SDK out of date"
+        :title="message"
         closable
         class="sdk-drift-banner"
         @close="dismiss"
-    >
-        The generated SDK looks out of date with this backend's OpenAPI spec (SDK {{ detail?.committedHash }} ≠ backend {{ detail?.liveHash }}). Run `npm run generate:sdk` from ui/ and refresh.
-    </KsAlert>
+    />
 </template>
 
 <script setup lang="ts">
@@ -20,6 +18,13 @@
     const {detail, dismissed, dismiss} = useSdkDriftBanner()
 
     const visible = computed(() => detail.value !== null && !dismissed.value)
+
+    // Single-line title (no description slot) keeps this compact — see the height cap below.
+    const message = computed(() =>
+        `SDK out of date: the generated SDK looks out of date with this backend's OpenAPI spec ` +
+        `(SDK ${detail.value?.committedHash} ≠ backend ${detail.value?.liveHash}). ` +
+        "Run `npm run generate:sdk` from ui/ and refresh.",
+    )
 </script>
 
 <style lang="scss" scoped>
@@ -29,5 +34,11 @@
         border-top: none;
         border-radius: 0;
         flex-shrink: 0;
+        // Capped at 70px per design review — no --ks-spacing-* token lands exactly there, so this
+        // falls back to a raw rem value rather than a hardcoded px per ui/AGENTS.md.
+        max-height: 4.375rem;
+        padding-top: var(--ks-spacing-2);
+        padding-bottom: var(--ks-spacing-2);
+        overflow: hidden;
     }
 </style>

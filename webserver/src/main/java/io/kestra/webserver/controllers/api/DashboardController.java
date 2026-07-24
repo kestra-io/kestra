@@ -78,6 +78,13 @@ public class DashboardController {
     private static final String DEFAULT_FLOW_DEFINITION_RESOURCE = "dashboards/default_flow_definition.yaml";
     private static final String DEFAULT_NAMESPACE_DEFINITION_RESOURCE = "dashboards/default_namespace_definition.yaml";
 
+    // Bundled resources never change at runtime, read them once instead of on every call
+    private static final Map<String, String> DEFAULT_DASHBOARD_DEFINITIONS = Map.of(
+        "main", Dashboard.readClasspathResource(DEFAULT_MAIN_DEFINITION_RESOURCE),
+        "flow", Dashboard.readClasspathResource(DEFAULT_FLOW_DEFINITION_RESOURCE),
+        "namespace", Dashboard.readClasspathResource(DEFAULT_NAMESPACE_DEFINITION_RESOURCE)
+    );
+
     @Inject
     private DashboardRepositoryInterface dashboardRepository;
 
@@ -126,11 +133,7 @@ public class DashboardController {
     @Get(uri = "defaults/definitions")
     @Operation(tags = { "Dashboards" }, summary = "Get the built-in default dashboard definitions")
     public Map<String, String> getDefaultDashboardDefinitions() {
-        return Map.of(
-            "main", Dashboard.readClasspathResource(DEFAULT_MAIN_DEFINITION_RESOURCE),
-            "flow", Dashboard.readClasspathResource(DEFAULT_FLOW_DEFINITION_RESOURCE),
-            "namespace", Dashboard.readClasspathResource(DEFAULT_NAMESPACE_DEFINITION_RESOURCE)
-        );
+        return DEFAULT_DASHBOARD_DEFINITIONS;
     }
 
     @ExecuteOn(TaskExecutors.IO)

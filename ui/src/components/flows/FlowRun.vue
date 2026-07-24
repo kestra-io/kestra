@@ -104,9 +104,7 @@
                             {{ $t(buttonText) }}
                         </KsButton>
                     </span>
-                    <KsText v-if="validationMessage" type="danger" size="small">
-                        {{ validationMessage }}
-                    </KsText>
+                    <ValidationMessages :messages="validationMessages" />
                 </div>
             </div>
         </KsForm>
@@ -145,6 +143,7 @@
     import WebhookCurl from "./WebhookCurl.vue"
     import InputsForm from "../../components/inputs/InputsForm.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
+    import ValidationMessages from "./ValidationMessages.vue"
 
     type AlertType = "success" | "warning" | "info" | "error"
     
@@ -259,14 +258,15 @@
         hasForbiddenUserSystemLabels(executionLabels.value),
     )
 
-    const validationMessage = computed(() => {
+    const validationMessages = computed(() => {
+        const messages: string[] = []
         if (haveBadLabels.value) {
-            return t("wrong labels")
+            messages.push(t("wrong labels"))
         }
         if (haveForbiddenSystemLabels.value) {
-            return t("forbidden system labels")
+            messages.push(t("forbidden system labels"))
         }
-        return undefined
+        return messages
     })
 
     const flowCanBeExecuted = computed(() =>
@@ -314,7 +314,7 @@
         flowCanBeExecuted,
         hasBlockingChecks,
         showExecuteButton,
-        validationMessage,
+        validationMessages,
         buttonText: props.buttonText,
         buttonIcon: props.buttonIcon,
         buttonTestId: props.buttonTestId,

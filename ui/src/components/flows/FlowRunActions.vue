@@ -20,15 +20,14 @@
                 {{ $t(flowRun?.buttonText ?? "launch execution") }}
             </KsButton>
         </span>
-        <KsText v-if="flowRun?.validationMessage" type="danger" size="small">
-            {{ flowRun.validationMessage }}
-        </KsText>
+        <ValidationMessages :messages="flowRun?.validationMessages ?? []" />
     </div>
 </template>
 
 <script setup lang="ts">
     import type {Component} from "vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import ValidationMessages from "./ValidationMessages.vue"
 
     interface FlowRunInstance {
         submit: () => void
@@ -40,7 +39,7 @@
         buttonIcon: Component
         buttonTestId: string
         showExecuteButton: boolean
-        validationMessage?: string
+        validationMessages?: string[]
     }
 
     defineProps<{flowRun: FlowRunInstance | null}>()

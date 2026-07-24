@@ -418,4 +418,64 @@ public class HttpRequest {
                 .build();
         }
     }
+
+    /**
+     * A {@code multipart/form-data} body kept as received, part by part.
+     * <p>
+     * Unlike {@link MultipartRequestBody}, which builds an outgoing body from a map of values, this body keeps
+     * each part as it arrived: its bytes, and, for a file part, its filename and content type. It is used for
+     * incoming requests, where those bytes must survive untouched.
+     */
+    @Getter
+    @AllArgsConstructor
+    @SuperBuilder
+    public static class MultipartFormDataRequestBody extends RequestBody {
+        @Builder.Default
+        private String contentType = ContentType.MULTIPART_FORM_DATA.getMimeType();
+
+        private Charset charset;
+
+        private List<Part> content;
+
+        public HttpEntity to() throws IOException {
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+
+            if (this.charset != null) {
+                builder.setCharset(this.charset);
+            }
+
+            this.content.forEach(part ->
+            {
+                ContentType partContentType = part.contentType() != null ? ContentType.parse(part.contentType()) : ContentType.DEFAULT_BINARY;
+
+                builder.addPart(part.name(), new ByteArrayBody(part.content(), partContentType, part.filename()));
+            });
+
+            return builder.build();
+        }
+
+        public static MultipartFormDataRequestBody of(List<Part> parts) {
+            return MultipartFormDataRequestBody.builder()
+                .content(parts)
+                .charset(StandardCharsets.UTF_8)
+                .build();
+        }
+
+        /**
+         * A single part of a {@code multipart/form-data} body.
+         *
+         * @param name        the form field name of the part
+         * @param filename    the name of the uploaded file, {@code null} for a part that is not a file
+         * @param contentType the content type of the part, {@code null} if the client did not send one
+         * @param content     the content of the part, as received
+         */
+        public record Part(String name, String filename, String contentType, byte[] content) {
+            /**
+             * @return whether this part is a file, i.e. whether the client sent a filename for it
+             */
+            public boolean isFile() {
+                return this.filename != null;
+            }
+        }
+    }
 }

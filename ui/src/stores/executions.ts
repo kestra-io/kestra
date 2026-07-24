@@ -607,7 +607,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         return axios.get(`${apiUrl()}/executions/${options.executionId}/file`, {
             params: {path: options.path},
             responseType: "text",
-            transformResponse: [(data) => data],
+            transformResponse: [(data: string) => data],
         }).then(response => response.data as string)
     }
 

@@ -16,10 +16,15 @@
 // that exact instance, so the caller supplies its own. This keeps the runtime free of any hard
 // dependency (no axios, no @hey-api/*).
 
-import {EnterpriseFeatureError, type EnterpriseFeatureConfig} from "./errors"
+import {EnterpriseFeatureError, SdkVersionMismatchError, type EnterpriseFeatureConfig} from "./errors"
 
-export {EnterpriseFeatureError} from "./errors"
+export {EnterpriseFeatureError, SdkVersionMismatchError} from "./errors"
 export type {EnterpriseFeatureConfig, EnterpriseFeatureMatch} from "./errors"
+
+/** Response header set by a Kestra server on every 404, naming its edition ("OSS" or "EE"). */
+const EDITION_HEADER = "X-Kestra-Edition"
+/** Response header set by a Kestra server on a 404 caused by a genuine, specific not-found lookup. */
+const ENTITY_HEADER = "X-Kestra-Entity"
 
 /** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
 interface FetchInterceptor {
@@ -209,10 +214,25 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
 
             // An EE-only route 404s on an OSS server the same way a genuinely-missing resource
             // does — matchRoute is what tells the two apart (it only matches the fixed set of
-            // EE-only routes, never an arbitrary "flow not found").
-            if (status === 404 && enterpriseFeature && request && opts?.url) {
+            // EE-only routes, never an arbitrary "flow not found"). But matchRoute alone isn't
+            // enough: a real EE server can also 404 on a route with a path param that genuinely
+            // doesn't exist (e.g. GET /invitations/{id} for a deleted invitation), and a real EE
+            // server can 404 on a route the SDK expects simply because the SDK/server versions are
+            // out of sync. The X-Kestra-Entity/X-Kestra-Edition response headers (present on
+            // servers new enough to set them; absent otherwise) disambiguate both cases without an
+            // extra round trip:
+            //  - X-Kestra-Entity present  -> a genuine, specific not-found. Never an EE-detection
+            //    candidate, regardless of edition.
+            //  - X-Kestra-Entity absent, X-Kestra-Edition: EE -> the route is missing despite a
+            //    confirmed EE server: an SDK/server version mismatch, not a licensing issue.
+            //  - X-Kestra-Entity absent, X-Kestra-Edition: OSS or header missing entirely (older
+            //    server predating this contract) -> today's conservative EnterpriseFeatureError.
+            if (status === 404 && enterpriseFeature && request && opts?.url && !response.headers.get(ENTITY_HEADER)) {
                 const match = enterpriseFeature.matchRoute(request.method, opts.url)
                 if (match) {
+                    if (response.headers.get(EDITION_HEADER) === "EE") {
+                        return new SdkVersionMismatchError({feature: match.feature, status})
+                    }
                     return new EnterpriseFeatureError({
                         feature: match.feature,
                         docsUrl: enterpriseFeature.docsUrl(match.feature),

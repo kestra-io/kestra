@@ -21,6 +21,7 @@ import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -35,6 +36,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller
 public class ErrorController {
+    /**
+     * Response header naming the kind of resource that was looked up and not found, set only when the thrown
+     * {@link NotFoundException} carries that context (see {@link NotFoundException#entity()}). Absence of this
+     * header on a 404 does not mean anything by itself — it's simply not set for unmatched routes or for the
+     * other not-found idioms ({@link NoSuchElementException}, {@link FileNotFoundException}, a bare 404 response).
+     */
+    public static final String ENTITY_HEADER = "X-Kestra-Entity";
+
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, JsonParseException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
@@ -155,7 +164,9 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, NotFoundException e) {
-        return jsonError(request, e, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReason());
+        MutableHttpResponse<JsonError> response = jsonError(request, e, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReason());
+        e.entity().ifPresent(entity -> response.getHeaders().add(ENTITY_HEADER, entity));
+        return response;
     }
 
     @Error(global = true)
@@ -218,20 +229,20 @@ public class ErrorController {
         return jsonError(request, e, e.getStatus(), e.getStatus().getReason());
     }
 
-    private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {
+    private static MutableHttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {
         return HttpResponse
             .<JsonError> status(status, reason)
             .body(jsonError);
     }
 
-    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, HttpStatus status, String reason) {
+    public static MutableHttpResponse<JsonError> jsonError(HttpRequest<?> request, HttpStatus status, String reason) {
         JsonError error = new JsonError(reason)
             .link(Link.SELF, Link.of(request.getUri()));
 
         return jsonError(error, status, reason);
     }
 
-    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
+    public static MutableHttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
             log.error("Server error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         } else {

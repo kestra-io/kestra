@@ -34,6 +34,32 @@ export class EnterpriseFeatureError extends Error {
     }
 }
 
+/**
+ * Thrown by `createConfigureClient`'s error interceptor instead of {@link EnterpriseFeatureError}
+ * when a request 404s against a route in the EE-only registry, but the server's response confirms
+ * it *is* an Enterprise Edition server (via the `X-Kestra-Edition: EE` response header). A real EE
+ * server missing a route the SDK expects means the SDK and server versions are out of sync — not
+ * that the feature requires an upgrade, which is why this is a distinct type with different
+ * messaging rather than a variant of `EnterpriseFeatureError`'s "talk to sales" copy.
+ */
+export class SdkVersionMismatchError extends Error {
+    /** HTTP status of the underlying response. Always 404. */
+    readonly status: number
+    /** Feature identifier supplied by the matching `EnterpriseFeatureConfig`, e.g. "audit-logs". */
+    readonly feature: string
+
+    constructor(options: { feature: string; status?: number }) {
+        super(
+            `Route for the '${options.feature}' feature was not found on this server, but the server reports itself `
+            + "as Kestra Enterprise Edition. This usually means your Kestra SDK and server versions are out of sync — "
+            + "check that both are on compatible versions.",
+        )
+        this.name = "SdkVersionMismatchError"
+        this.status = options.status ?? 404
+        this.feature = options.feature
+    }
+}
+
 /** A route matched as Enterprise-Edition-only. */
 export interface EnterpriseFeatureMatch {
     /** Human-readable feature identifier, e.g. "audit-logs". Passed to `docsUrl`/`contactSalesUrl`. */

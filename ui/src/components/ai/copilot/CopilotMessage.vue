@@ -53,6 +53,16 @@
         <CopilotArtefactDraft :draft="message.draft" />
     </div>
 
+    <!-- A past proposal, read-only in the transcript. The still-pending one is rendered by the
+         interactive ProposedActionCard in CopilotChat, so `isPending` suppresses it here (no double). -->
+    <div
+        v-else-if="message.type === 'PROPOSED_ACTION' && !isPending"
+        class="copilot-msg copilot-msg-assistant"
+        data-test="copilot-proposed-history"
+    >
+        <ProposedActionCard :action="historicalProposal" resolved />
+    </div>
+
     <div v-else-if="message.type === 'CANCELLED'" class="copilot-msg copilot-msg-cancelled" data-test="copilot-cancelled">
         <KsText size="small" class="copilot-cancelled-label">{{ $t("ai.copilot.cancelled") }}</KsText>
     </div>
@@ -63,9 +73,27 @@
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
     import CopilotArtefactDraft from "./CopilotArtefactDraft.vue"
+    import ProposedActionCard from "./ProposedActionCard.vue"
+    import type {ProposedActionEvent} from "./types"
     import type {ChatMessage} from "./useAiChat"
 
-    const props = defineProps<{message: ChatMessage}>()
+    const props = defineProps<{
+        message: ChatMessage
+        /** True when this PROPOSED_ACTION is the active one (shown by CopilotChat's interactive card). */
+        isPending?: boolean
+    }>()
+
+    // Display-only proposal for a historical PROPOSED_ACTION message: the live event carries the full
+    // proposal; a reloaded one carries the summary as `content` and the held tool as `toolCall`.
+    const historicalProposal = computed<ProposedActionEvent>(() =>
+        props.message.proposedAction ?? {
+            confirmationId: "",
+            summary: props.message.content ?? "",
+            tool: props.message.toolCall?.tool ?? null,
+            family: props.message.toolCall?.family ?? null,
+            arguments: props.message.toolCall?.arguments ?? null,
+        },
+    )
 
     const expanded = ref<string[]>([])
     const expandedResult = ref<string[]>([])

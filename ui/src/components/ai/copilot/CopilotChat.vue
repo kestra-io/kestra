@@ -59,7 +59,12 @@
 
         <template v-else>
             <KsScrollbar class="copilot-body">
-                <CopilotMessage v-for="message in messages" :key="message.id" :message="message" />
+                <CopilotMessage
+                    v-for="message in messages"
+                    :key="message.id"
+                    :message="message"
+                    :isPending="message.id === pendingProposalMessageId"
+                />
 
                 <CopilotThinking v-if="thinking" />
 
@@ -201,6 +206,14 @@
     // Empty state shows until the first turn produces a message, a proposal, or an error.
     const isEmpty = computed(
         () => messages.value.length === 0 && !pendingConfirmation.value && !error.value && !notice.value,
+    )
+
+    // The pending proposal is always the last PROPOSED_ACTION message; the interactive card below the
+    // transcript renders it, so CopilotMessage skips it inline (past proposals still render read-only).
+    const pendingProposalMessageId = computed(() =>
+        pendingConfirmation.value
+            ? [...messages.value].reverse().find((m) => m.type === "PROPOSED_ACTION")?.id ?? null
+            : null,
     )
 
     // "Thinking…" placeholder while the model is working but hasn't produced its next output

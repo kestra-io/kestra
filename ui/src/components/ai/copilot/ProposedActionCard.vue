@@ -4,7 +4,7 @@
         <div class="proposed-action-header">
             <KsText size="small" class="proposed-action-title">{{ title }}</KsText>
             <KsTag v-if="!isPlan && action.family" size="small">{{ action.family }}</KsTag>
-            <KsText size="small" class="proposed-action-status">{{ $t("ai.copilot.confirm.pending") }}</KsText>
+            <KsText v-if="!resolved" size="small" class="proposed-action-status">{{ $t("ai.copilot.confirm.pending") }}</KsText>
         </div>
 
         <div class="proposed-action-body">
@@ -29,7 +29,7 @@
             </dl>
         </div>
 
-        <div class="proposed-action-footer">
+        <div v-if="!resolved" class="proposed-action-footer">
             <KsButton
                 text
                 :disabled="disabled"
@@ -61,6 +61,8 @@
         action: ProposedActionEvent
         /** Disabled once a decision has been sent (stream in flight). */
         disabled?: boolean
+        /** Historical (already-decided) proposal in the transcript: no footer actions, no pending status. */
+        resolved?: boolean
     }>()
 
     const emit = defineEmits<{

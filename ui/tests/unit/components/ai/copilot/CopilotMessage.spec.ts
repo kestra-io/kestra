@@ -103,4 +103,41 @@ describe("CopilotMessage", () => {
         expect(marker.exists()).toBe(true)
         expect(marker.text()).toBe("Turn cancelled")
     })
+
+    it("renders a resolved PROPOSED_ACTION inline as a read-only card (no confirm/reject buttons)", () => {
+        const w = mountMessage({
+            id: "8", role: "ASSISTANT", type: "PROPOSED_ACTION",
+            proposedAction: {confirmationId: "c1", tool: "restart-execution", family: "ACT", summary: "Restart execution exec-1", arguments: {executionId: "exec-1"}},
+        })
+        const card = w.find("[data-test=\"copilot-proposed-history\"]")
+        expect(card.exists()).toBe(true)
+        expect(card.text()).toContain("Restart execution exec-1")
+        expect(card.text()).toContain("exec-1")
+        // Read-only: the interactive actions belong to the pending card in CopilotChat, not here.
+        expect(w.find("[data-test=\"copilot-approve\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-reject\"]").exists()).toBe(false)
+    })
+
+    it("suppresses the PROPOSED_ACTION inline when it is the pending one", () => {
+        const w = mount(CopilotMessage, {
+            props: {
+                message: {id: "9", role: "ASSISTANT", type: "PROPOSED_ACTION", proposedAction: {confirmationId: "c2", tool: "restart-execution", summary: "x", arguments: {}}},
+                isPending: true,
+            },
+            global: mountGlobal,
+        })
+        expect(w.find("[data-test=\"copilot-proposed-history\"]").exists()).toBe(false)
+    })
+
+    it("rebuilds a reloaded PROPOSED_ACTION from content + the paired toolCall", () => {
+        const w = mountMessage({
+            id: "10", role: "ASSISTANT", type: "PROPOSED_ACTION",
+            content: "Update flow demo",
+            toolCall: {tool: "update-flow", kind: "PLATFORM", family: "MUTATE", arguments: {namespace: "x", flowId: "demo"}},
+        })
+        const card = w.find("[data-test=\"copilot-proposed-history\"]")
+        expect(card.exists()).toBe(true)
+        expect(card.text()).toContain("Update flow demo")
+        expect(card.text()).toContain("demo")
+    })
 })

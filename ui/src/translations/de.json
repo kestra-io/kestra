@@ -61,6 +61,8 @@
     "success": "Erfolg",
     "save": "Speichern",
     "save_as_draft": "Als Entwurf speichern",
+    "publish": "Veröffentlichen",
+    "publish_draft": "Entwurf veröffentlichen",
     "draft": "Entwurf",
     "draft_flow_warning": "Die neueste Revision dieses flow ist ein Entwurf. Die Ausführung verwendet stattdessen die neueste veröffentlichte Revision – veröffentlichen Sie den Entwurf (oder führen Sie ihn im Playground aus), um Ihre letzten Änderungen auszuführen.",
     "save task": "Task speichern",
@@ -2398,8 +2400,7 @@
         "open_world": "Open world",
         "destructive": "Destruktiv",
         "idempotent": "Idempotent",
-        "return_direct": "Direktrückgabe",
-        "view_flow": "flow öffnen"
+        "return_direct": "Direktrückgabe"
       },
       "connect_tab": {
         "server_url": "Server-URL",

@@ -61,6 +61,8 @@
     "success": "成功",
     "save": "保存",
     "save_as_draft": "保存为草稿",
+    "publish": "发布",
+    "publish_draft": "发布草稿",
     "draft": "草稿",
     "draft_flow_warning": "此 flow 的最新修订版本为草稿。执行将改为基于最新已发布的修订版本运行——发布草稿（或在 Playground 中运行）以执行您的最新更改。",
     "save task": "保存任务",
@@ -2398,8 +2400,7 @@
         "open_world": "Open world",
         "destructive": "破坏性",
         "idempotent": "幂等",
-        "return_direct": "直接返回",
-        "view_flow": "打开 flow"
+        "return_direct": "直接返回"
       },
       "connect_tab": {
         "server_url": "服务器 URL",

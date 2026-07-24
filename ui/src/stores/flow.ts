@@ -108,6 +108,7 @@ export const useFlowStore = defineStore("flow", () => {
     const executeFlow = ref<boolean>(false)
     const lastSaveFlow = ref<string>()
     const isCreating = ref<boolean>(false)
+    const readonlyToastShown = ref(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
     const previewSource = ref<string | undefined>(undefined)
@@ -210,6 +211,20 @@ export const useFlowStore = defineStore("flow", () => {
         return "no_op"
     }
 
+    async function publishDraft(target?: Flow): Promise<FlowSaveOutcome> {
+        if (target) {
+            const data = await loadFlow({namespace: target.namespace, id: target.id, store: false})
+            if (!data?.source) return "blocked"
+            await saveFlow({flow: data.source, draft: false})
+            notifySaved(data.id, false)
+            return "saved"
+        }
+        if (!flowYaml.value && flow.value?.source) {
+            flowYaml.value = flow.value.source
+        }
+        return save(false)
+    }
+
     async function onEdit({source, topologyVisible}: {
         source: string,
         editorViewType?: string,
@@ -230,10 +245,13 @@ export const useFlowStore = defineStore("flow", () => {
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
-                    coreStore.message = {
-                        variant: "error",
-                        title: t("readonly property"),
-                        message: t("namespace and id readonly"),
+                    if (!readonlyToastShown.value) {
+                        readonlyToastShown.value = true
+                        coreStore.message = {
+                            variant: "warning",
+                            title: t("readonly property"),
+                            message: t("namespace and id readonly"),
+                        }
                     }
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
                         source,
@@ -483,6 +501,7 @@ export const useFlowStore = defineStore("flow", () => {
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
         previewSource.value = undefined
+        readonlyToastShown.value = false
         overallTotal.value = 1
 
         return data
@@ -1025,6 +1044,7 @@ function deleteFlowAndDependencies() {
         saveAll,
         saveAsDraft,
         save,
+        publishDraft,
         onEdit,
         initYamlSource,
         findFlows,

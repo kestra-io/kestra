@@ -241,4 +241,28 @@ describe("CopilotChat", () => {
         expect(spy).toHaveBeenCalled()
         delete (HTMLElement.prototype as unknown as {scrollIntoView?: unknown}).scrollIntoView
     })
+
+    // Accessibility: a screen reader must hear streamed output and be told when the surface errors.
+    it("exposes the transcript as a polite live log, flagged busy while a turn streams", () => {
+        state.messages.value = [{id: "1", role: "ASSISTANT", type: "TEXT", content: "hi"}]
+        state.streaming.value = true
+        const body = mountChat().find(".copilot-body")
+        expect(body.attributes("role")).toBe("log")
+        expect(body.attributes("aria-live")).toBe("polite")
+        expect(body.attributes("aria-busy")).toBe("true")
+    })
+
+    it("marks the transcript not busy once the turn settles", () => {
+        state.messages.value = [{id: "1", role: "ASSISTANT", type: "TEXT", content: "hi"}]
+        expect(mountChat().find(".copilot-body").attributes("aria-busy")).toBe("false")
+    })
+
+    it("announces the error banner assertively and the empty-turn notice politely", () => {
+        state.error.value = "turnCap"
+        expect(mountChat().find("[data-test=\"copilot-error\"]").attributes("role")).toBe("alert")
+
+        state.error.value = null
+        state.notice.value = "emptyTurn"
+        expect(mountChat().find("[data-test=\"copilot-notice\"]").attributes("role")).toBe("status")
+    })
 })

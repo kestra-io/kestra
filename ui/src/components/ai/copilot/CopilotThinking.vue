@@ -1,6 +1,8 @@
 <template>
-    <!-- Shown while the model is working before its next output arrives. -->
-    <div class="copilot-thinking" data-test="copilot-thinking">
+    <!-- Shown while the model is working before its next output arrives. Decorative: the rotating
+         flavour words would spam a screen reader, so it's hidden from the a11y tree — the transcript's
+         `aria-busy` + the streamed tokens convey "working" instead. -->
+    <div class="copilot-thinking" data-test="copilot-thinking" aria-hidden="true">
         <Transition name="copilot-word" mode="out-in">
             <KsText :key="word" size="small" class="copilot-thinking-label">{{ word }}</KsText>
         </Transition><span

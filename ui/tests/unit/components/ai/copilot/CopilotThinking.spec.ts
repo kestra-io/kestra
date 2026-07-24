@@ -16,7 +16,10 @@ describe("CopilotThinking", () => {
     it("renders a rotating orchestration word with an animated dots element", () => {
         vi.spyOn(Math, "random").mockReturnValue(0) // start on the first word
         const w = mountThinking()
-        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        const indicator = w.find("[data-test=\"copilot-thinking\"]")
+        expect(indicator.exists()).toBe(true)
+        // Decorative: the rotating flavour words are hidden from the a11y tree (no screen-reader spam).
+        expect(indicator.attributes("aria-hidden")).toBe("true")
         expect(w.text()).toContain("Orchestrating")
         // The rising dots are a decorative, aria-hidden pseudo-element host.
         const dots = w.find(".copilot-thinking-dots")

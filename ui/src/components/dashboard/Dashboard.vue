@@ -113,7 +113,7 @@
         }
     }
     const useDefaultDashboardBundledInUI = async () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(await getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(await getDefaultDashboardBundledInUI()), title: t("dashboards.default"), deleted: false}
         isDashboardBundledWithUI.value = true
     }
 

@@ -1,11 +1,11 @@
 import {computed, nextTick, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import type {AxiosRequestConfig, AxiosResponse} from "axios"
+import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
 
-const response: AxiosRequestConfig = {responseType: "blob" as const}
+const response: AxiosLikeConfig = {responseType: "blob" as const}
 const validateStatus = (status: number) => status === 200 || status === 404
-const downloadHandler = (res: AxiosResponse, filename: string, extension: string) => {
+const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string) => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     const url = window.URL.createObjectURL(blob)
 

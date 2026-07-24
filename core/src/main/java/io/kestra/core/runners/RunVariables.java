@@ -642,7 +642,7 @@ public final class RunVariables {
             {
                 if (taskRun.getState() != null) {
                     if (taskRun.getValue() == null) {
-                        Map<String, Object> stateMap = new HashMap<>();
+                        Map<String, Object> stateMap = HashMap.newHashMap(2);
                         stateMap.put("state", taskRun.getState().getCurrent());
                         tasksMap.put(taskRun.getTaskId(), stateMap);
                     } else {

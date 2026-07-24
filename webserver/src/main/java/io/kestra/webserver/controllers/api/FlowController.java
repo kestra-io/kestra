@@ -63,6 +63,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
@@ -225,7 +226,7 @@ public class FlowController {
     @Operation(tags = { "Flows" }, summary = "Search for flows")
     public PagedResults<Flow> searchFlows(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
             description = "The sort of current page", examples = {
                 @ExampleObject(name = "Sort by namespace in ascending order", value = "namespace:asc"),
@@ -256,7 +257,7 @@ public class FlowController {
     @Operation(tags = { "Flows" }, summary = "Search for flows source code")
     public PagedResults<SearchResult<Flow>> searchFlowsBySourceCode(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace) throws HttpStatusException {

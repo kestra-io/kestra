@@ -52,7 +52,7 @@ export const useLogsStore = defineStore("logs", () => {
     }
 
     function downloadLogs(options: Record<string, any>) {
-        const params = toSearchParams({...options, page: 1, size: options.size ?? 10000})
+        const params = toSearchParams({...options, page: 1, size: options.size ?? 1000})
         return LogsAPI.searchLogs(params)
             .then(response => {
                 const results = (response.results ?? []) as unknown as Log[]

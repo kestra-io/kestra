@@ -54,12 +54,17 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.LESS_THAN_OR_EQUAL_TO],
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                    ],
                     comparatorLabels: {
                         [Comparators.GREATER_THAN_OR_EQUAL_TO]: "At or Above",
                         [Comparators.LESS_THAN_OR_EQUAL_TO]: "At or Below",
                     },
-                    valueType: "select",
+                    valueType: "multi-select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs")
                         return VALUES.LEVELS
@@ -70,6 +75,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                             : "INFO"
                     ),
                     visibleByDefault: true,
+                    colored: true,
                 },
                 {
                     key: "timeRange",

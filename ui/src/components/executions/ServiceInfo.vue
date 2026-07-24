@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
     import {ref, onMounted} from "vue"
-    import {useServiceStore} from "../../stores/service"
+    import * as ServicesAPI from "@kestra-io/kestra-sdk/services"
 
     interface Props {
         component?: string;
@@ -26,11 +26,10 @@
         follow: []
     }>()
 
-    const serviceStore = useServiceStore()
     const service = ref()
 
     const load = async () => {
-        service.value = await serviceStore.findServiceById({id: props.serviceId})
+        service.value = await ServicesAPI.service({id: props.serviceId})
     }
 
     onMounted(() => {

@@ -4,10 +4,17 @@ import {mountGlobal} from "./_helpers"
 
 // The page registers a route title on mount — no-op it, there's no router in the unit env.
 vi.mock("../../../../../src/composables/useRouteContext", () => ({default: () => {}}))
-// Drive the "Create flow from scratch" action from the test via the auth store's permission check.
+// Drive the header action + the COPILOT permission gate from the test via the auth store.
 let canCreateFlow = true
+let canUseCopilot = true
 vi.mock("override/stores/auth", () => ({
-    useAuthStore: () => ({user: {hasAnyActionOnAnyNamespace: () => canCreateFlow}}),
+    useAuthStore: () => ({user: {hasAnyActionOnAnyNamespace: () => canCreateFlow, hasAny: () => canUseCopilot}}),
+}))
+// The page redirects users without COPILOT to their dashboards — capture the navigation.
+const replace = vi.fn()
+vi.mock("vue-router", () => ({
+    useRoute: () => ({params: {tenant: "acme"}}),
+    useRouter: () => ({replace}),
 }))
 
 import CopilotPage from "../../../../../src/components/ai/copilot/CopilotPage.vue"
@@ -36,6 +43,8 @@ const mountPage = () =>
 describe("CopilotPage", () => {
     beforeEach(() => {
         canCreateFlow = true
+        canUseCopilot = true
+        replace.mockReset()
     })
 
     it("hosts CopilotChat in the full-page layout under the AI Copilot title", () => {
@@ -58,5 +67,19 @@ describe("CopilotPage", () => {
         canCreateFlow = false
         const w = mountPage()
         expect(w.find(".navbar-action").exists()).toBe(false)
+    })
+
+    it("renders the copilot for a user with the COPILOT permission (no redirect)", () => {
+        const w = mountPage()
+        expect(w.find(".copilot-chat-stub").exists()).toBe(true)
+        expect(replace).not.toHaveBeenCalled()
+    })
+
+    it("redirects a user without the COPILOT permission to their dashboards", () => {
+        canUseCopilot = false
+        const w = mountPage()
+        // The surface is not rendered, and the user is sent to the tenant's dashboards.
+        expect(w.find(".copilot-chat-stub").exists()).toBe(false)
+        expect(replace).toHaveBeenCalledWith({name: "home", params: {tenant: "acme"}})
     })
 })

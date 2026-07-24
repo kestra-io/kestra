@@ -11,6 +11,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -526,6 +527,8 @@ public class HttpClient implements Closeable {
         HttpRequest request,
         HttpClientContext httpClientContext,
         HttpClientResponseHandler<HttpResponse<T>> responseHandler) throws HttpClientException {
+        validateUri(request.getUri());
+
         try {
             return this.client.execute(request.to(runContext), httpClientContext, responseHandler);
         } catch (SocketException e) {
@@ -540,6 +543,25 @@ public class HttpClient implements Closeable {
             }
 
             throw new RuntimeException(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void validateUri(URI uri) {
+        String requestUri = uri.toString();
+        List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
+        List<String> deniedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
+
+        // first check that if there is an allow list, it matches one
+        if (!allowedList.isEmpty()) {
+            if (allowedList.stream().noneMatch(requestUri::startsWith)) {
+                throw new IllegalArgumentException("The URI " +  requestUri + " is not in the configured allowed list (kestra.tasks.http.allowed-list).");
+            }
+        }
+
+        // then check that there are no exclusion for it
+        if (deniedList.stream().anyMatch(requestUri::startsWith)) {
+            throw new IllegalArgumentException("The URI " +  requestUri + " is in the configured denied list (kestra.tasks.http.denied-list).");
         }
     }
 

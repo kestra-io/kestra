@@ -205,7 +205,7 @@ public class ToolCatalog {
      * string-typed. Models routinely emit {@code ""} to mean "I am omitting this optional parameter";
      * for a numeric/boolean/object/array parameter that empty string is never a valid value, and
      * langchain4j's argument coercion fails before the {@code @Tool} method ever runs (e.g. {@code
-     * Argument "revision" is not convertable to java.lang.Integer}). Stripping such values lets an
+     * Argument "revision" is not convertible to java.lang.Integer}). Stripping such values lets an
      * optional parameter fall back to its default instead of turning a harmless omission into a tool
      * failure. String and enum parameters are left untouched — {@code ""} may be a legitimate value
      * there, and any genuine problem is better surfaced by the tool itself with an actionable message.

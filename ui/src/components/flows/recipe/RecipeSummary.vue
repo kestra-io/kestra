@@ -109,7 +109,7 @@
     }
 
     .yaml-editor {
-        height: 14rem;
+        height: 26rem;
         border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         overflow: hidden;

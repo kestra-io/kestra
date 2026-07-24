@@ -2,7 +2,7 @@
     <div class="flow-recipe" data-test="flow-recipe">
         <div class="recipe-wizard">
             <div class="wizard-rail">
-                <KsSteps :space="52" direction="vertical" :active="activeStep" finishStatus="success">
+                <KsSteps :space="72" direction="vertical" :active="activeStep" finishStatus="success">
                     <KsStep :title="$t('recipe.steps.trigger_title')" :description="$t('recipe.steps.trigger_desc')" />
                     <KsStep :title="$t('recipe.steps.notify_title')" :description="$t('recipe.steps.notify_desc')" />
                     <KsStep :title="$t('recipe.steps.review_title')" :description="$t('recipe.steps.review_desc')" />
@@ -320,6 +320,10 @@
         margin: var(--ks-spacing-1) 0 var(--ks-spacing-4);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
+    }
+
+    .wizard-heading + .review-hero {
+        margin-top: var(--ks-spacing-4);
     }
 
     .review-hero {

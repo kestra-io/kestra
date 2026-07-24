@@ -36,12 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller
 public class ErrorController {
-    /**
-     * Response header naming the kind of resource that was looked up and not found, set only when the thrown
-     * {@link NotFoundException} carries that context (see {@link NotFoundException#entity()}). Absence of this
-     * header on a 404 does not mean anything by itself — it's simply not set for unmatched routes or for the
-     * other not-found idioms ({@link NoSuchElementException}, {@link FileNotFoundException}, a bare 404 response).
-     */
+    /** Header naming the entity that was looked up and not found; see {@link NotFoundException#entity()}. */
     public static final String ENTITY_HEADER = "X-Kestra-Entity";
 
     @Error(global = true)

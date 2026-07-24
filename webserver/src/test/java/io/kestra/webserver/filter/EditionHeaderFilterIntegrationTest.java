@@ -12,10 +12,7 @@ import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * End-to-end wiring checks for {@link EditionHeaderFilter}: confirms the {@code X-Kestra-Edition} header is set
- * on real 404 responses and only on 404 responses.
- */
+/** End-to-end wiring checks: {@link EditionHeaderFilter} sets {@code X-Kestra-Edition} only on 404 responses. */
 @MicronautTest(rebuildContext = true)
 class EditionHeaderFilterIntegrationTest {
     @Inject

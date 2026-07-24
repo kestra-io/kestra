@@ -29,12 +29,9 @@ public class NotFoundException extends KestraRuntimeException {
     }
 
     /**
-     * Creates a new {@link NotFoundException} instance tagged with the kind of resource that was looked up.
-     * <p>
-     * The entity name is surfaced to API clients (e.g. via a response header) so a 404 caused by a genuine,
-     * specific not-found lookup can be told apart from a 404 caused by an unmatched route.
+     * Creates a new {@link NotFoundException} instance tagged with the entity that was not found.
      *
-     * @param entity  the kind of resource that was not found, e.g. a module-local {@code Resource} enum constant.
+     * @param entity  the kind of resource, e.g. a module-local {@code Resource} enum constant.
      * @param message the error message.
      */
     public NotFoundException(final Enum<?> entity, final String message) {

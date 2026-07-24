@@ -209,9 +209,8 @@ public class AiAgentController {
     }
 
     private void requireProvider(final String providerId) {
-        // The agentic loop needs a real, streaming-capable provider. Without one, the manager
-        // falls back to a non-streaming ApiAiService, so a null-check alone lets the turn start
-        // and fail mid-stream — check hasConfiguredProvider() so we reject up front with 503.
+        // The agentic loop needs a configured, streaming-capable provider. Reject up front with 503 when
+        // none is configured or the requested provider is unknown, rather than letting a turn fail mid-stream.
         if (!aiServiceManager.hasConfiguredProvider() || aiServiceManager.getAiService(providerId) == null) {
             throw new HttpStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI Copilot is not available: no AI provider is configured or reachable.");
         }

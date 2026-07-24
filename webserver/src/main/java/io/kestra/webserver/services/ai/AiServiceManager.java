@@ -12,7 +12,6 @@ import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
-import io.kestra.webserver.services.ai.api.ApiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiConfiguration;
 import io.kestra.webserver.services.posthog.PosthogService;
@@ -21,8 +20,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,7 +37,6 @@ public class AiServiceManager {
     protected final KestraDocsContextTool kestraDocsContextTool;
 
     public AiServiceManager(
-        @Client("api") HttpClient apiHttpClient,
         AiProvidersConfiguration providersConfiguration,
         Environment environment,
         // inject dependencies needed for AiService
@@ -82,38 +78,31 @@ public class AiServiceManager {
             );
         }
 
-        if (!configs.isEmpty()) {
-            PropertyPlaceholderResolver placeholderResolver = environment.getPlaceholderResolver();
-            for (AiProviderConfiguration rawProvider : configs) {
-                AiProviderConfiguration provider = resolveConfigurationPlaceholders(rawProvider, placeholderResolver);
-                AiServiceInterface aiService = createAiService(
-                    provider,
-                    pluginRegistry,
-                    jsonSchemaGenerator,
-                    versionProvider,
-                    instanceService,
-                    posthogService,
-                    listeners,
-                    expressionContextService,
-                    flowParsingService
-                );
-                if (aiService == null) {
-                    log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
-                    continue;
-                }
-                if (provider.isDefault()) {
-                    defaultProviderId = provider.id();
-                }
-                aiServices.put(provider.id(), aiService);
-                hasConfiguredProvider = true;
+        // AI Copilot requires an explicitly configured provider. When none is configured no service is
+        // registered, and the Copilot surfaces as unavailable until the user adds a provider.
+        PropertyPlaceholderResolver placeholderResolver = environment.getPlaceholderResolver();
+        for (AiProviderConfiguration rawProvider : configs) {
+            AiProviderConfiguration provider = resolveConfigurationPlaceholders(rawProvider, placeholderResolver);
+            AiServiceInterface aiService = createAiService(
+                provider,
+                pluginRegistry,
+                jsonSchemaGenerator,
+                versionProvider,
+                instanceService,
+                posthogService,
+                listeners,
+                expressionContextService,
+                flowParsingService
+            );
+            if (aiService == null) {
+                log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
+                continue;
             }
-        } else {
-            try {
-                defaultProviderId = "api";
-                aiServices.put(defaultProviderId, new ApiAiService(apiHttpClient.toBlocking(), instanceService));
-            } catch (Exception e) {
-                log.warn("Failed to initialize API AI service (api.kestra.io may be unreachable), AI Copilot will be disabled.", e);
+            if (provider.isDefault()) {
+                defaultProviderId = provider.id();
             }
+            aiServices.put(provider.id(), aiService);
+            hasConfiguredProvider = true;
         }
     }
 

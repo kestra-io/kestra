@@ -16,7 +16,6 @@ import io.kestra.webserver.services.posthog.PosthogService;
 
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertyPlaceholderResolver;
-import io.micronaut.http.client.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -28,10 +27,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AiServiceManagerTest {
 
-    @Mock
-    HttpClient apiHttpClient;
-    @Mock
-    io.micronaut.http.client.BlockingHttpClient blockingHttpClient;
     @Mock
     AiProvidersConfiguration providersConfiguration;
     @Mock
@@ -64,7 +59,6 @@ class AiServiceManagerTest {
         lenient().when(placeholderResolver.resolveRequiredPlaceholders(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
 
         return new AiServiceManager(
-            apiHttpClient,
             providersConfiguration,
             environment,
             pluginRegistry,
@@ -82,8 +76,6 @@ class AiServiceManagerTest {
 
     @Test
     void hasConfiguredProviderShouldBeFalseWhenNoProvidersConfigured() {
-        when(apiHttpClient.toBlocking()).thenReturn(blockingHttpClient);
-
         AiServiceManager manager = buildManager(null);
 
         assertThat(manager.hasConfiguredProvider()).isFalse();
@@ -91,8 +83,6 @@ class AiServiceManagerTest {
 
     @Test
     void hasConfiguredProviderShouldBeFalseWhenProviderListEmpty() {
-        when(apiHttpClient.toBlocking()).thenReturn(blockingHttpClient);
-
         AiServiceManager manager = buildManager(List.of());
 
         assertThat(manager.hasConfiguredProvider()).isFalse();

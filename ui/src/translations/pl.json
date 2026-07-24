@@ -61,6 +61,8 @@
     "success": "Sukces",
     "save": "Zapisz",
     "save_as_draft": "Zapisz jako wersję roboczą",
+    "publish": "Opublikuj",
+    "publish_draft": "Opublikuj wersję roboczą",
     "draft": "Wersja robocza",
     "draft_flow_warning": "Najnowsza rewizja tego flow jest wersją roboczą. Wykonanie zostanie uruchomione na najnowszej opublikowanej rewizji – opublikuj wersję roboczą (lub uruchom ją z Playground), aby wykonać najnowsze zmiany.",
     "save task": "Zapisz Task",
@@ -2284,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "Destrukcyjny",
         "idempotent": "Idempotentny",
-        "return_direct": "Zwrot bezpośredni",
-        "view_flow": "Otwórz flow"
+        "return_direct": "Zwrot bezpośredni"
       },
       "connect_tab": {
         "server_url": "URL serwera",

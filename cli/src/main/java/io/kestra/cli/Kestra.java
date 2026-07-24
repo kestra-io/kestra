@@ -12,6 +12,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
+import io.kestra.cli.commands.migrations.AbstractMigrationCommand;
 import io.kestra.cli.commands.migrations.MigrationCommand;
 import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import io.kestra.cli.commands.plugins.PluginCommand;
@@ -23,6 +24,11 @@ import io.kestra.cli.services.EnvironmentProvider;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.context.ApplicationContextConfiguration;
+import io.micronaut.context.DefaultApplicationContext;
+import io.micronaut.context.DefaultApplicationContextBuilder;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.inject.BeanDefinitionReference;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -171,12 +177,16 @@ public class Kestra implements Callable<Integer> {
         CommandLine commandLine,
         String[] environments) {
 
-        ApplicationContextBuilder builder = ApplicationContext
-            .builder()
+        Class<?> cls = commandLine.getCommandSpec().userObject().getClass();
+
+        // Pure migration commands run in a minimal context that never registers the other
+        // Kestra @Context beans (repositories, server services, the migration startup trigger),
+        // so nothing touches the database before the migration is applied explicitly.
+        ApplicationContextBuilder builder = (AbstractMigrationCommand.class.isAssignableFrom(cls)
+            ? new MigrationApplicationContextBuilder()
+            : ApplicationContext.builder())
             .mainClass(mainClass)
             .environments(environments);
-
-        Class<?> cls = commandLine.getCommandSpec().userObject().getClass();
 
         if (AbstractCommand.class.isAssignableFrom(cls)) {
             Map<String, Object> properties = new HashMap<>();
@@ -234,5 +244,60 @@ public class Kestra implements Callable<Integer> {
      */
     private static boolean isPracticalCommand(CommandLine commandLine) {
         return !(commandLine.isUsageHelpRequested() || commandLine.isVersionHelpRequested());
+    }
+
+    /**
+     * Builder that produces a {@link MigrationApplicationContext} while applying all the standard
+     * properties/environments/property-sources wiring of {@link DefaultApplicationContextBuilder#build()}.
+     */
+    private static final class MigrationApplicationContextBuilder extends DefaultApplicationContextBuilder {
+        @Override
+        protected ApplicationContext newApplicationContext() {
+            return new MigrationApplicationContext(this);
+        }
+    }
+
+    /**
+     * Minimal {@link ApplicationContext} for the {@code kestra migrate} commands: it drops every
+     * <em>conditionally-registered</em> Kestra {@code @Context} bean — the migration startup
+     * trigger, the server/liveness services, any repository/queue-backed startup bean, and the EE
+     * feature validators. Starting the context therefore initializes none of them, so nothing
+     * queries the database (or starts a server/network facet) before the migration is applied.
+     *
+     * <p>
+     * Only <em>unconditional</em> {@code @Context} beans survive: those are Micronaut and Kestra
+     * DI infrastructure (value extraction, expression evaluation, temp-file config, …) that the
+     * command still needs to be instantiated. The migration runner and its lock, history store and
+     * {@code DataSource} are lazy {@code @Singleton}s, pulled on demand by the command.
+     */
+    private static final class MigrationApplicationContext extends DefaultApplicationContext {
+
+        MigrationApplicationContext(ApplicationContextConfiguration configuration) {
+            super(configuration);
+        }
+
+        @Override
+        protected List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
+            return super.resolveBeanDefinitionReferences().stream()
+                .filter(reference -> !isConditionalKestraStartupBean(reference))
+                .toList();
+        }
+
+        /**
+         * A Kestra {@code @Context} bean whose registration is conditional (carries a
+         * {@code @Requires}, directly or via a marker stereotype such as
+         * {@code @JdbcRepositoryEnabled}). Such beans exist only to serve a runtime role and must
+         * not eager-initialize in a migration context. Dropping <em>any</em> conditional Kestra
+         * {@code @Context} bean — rather than denylisting specific gating properties — keeps this
+         * robust against beans gated via {@code @Requires(beans = …)}, a different property, or a
+         * stereotype. {@code hasStereotype(Requires.class)} is the same signal Micronaut's own
+         * {@code RequiresCondition} uses, and it reads the reference metadata without loading the
+         * bean class.
+         */
+        private static boolean isConditionalKestraStartupBean(BeanDefinitionReference<?> reference) {
+            return reference.isContextScope()
+                && reference.getBeanDefinitionName().startsWith("io.kestra")
+                && reference.getAnnotationMetadata().hasStereotype(Requires.class);
+        }
     }
 }

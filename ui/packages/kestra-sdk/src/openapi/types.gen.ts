@@ -666,6 +666,7 @@ export type ExecutionKind = 'NORMAL' | 'TEST' | 'PLAYGROUND' | 'LOOP';
 export type ExecutionMetadata = {
     attemptNumber?: number;
     originalCreatedDate: string;
+    concurrencyScopes?: Array<string>;
 };
 
 export type ExecutionRepositoryInterfaceDateFilter = 'START_DATE' | 'END_DATE' | 'START_OR_END_DATE';
@@ -1314,6 +1315,13 @@ export type MiscControllerConfiguration = {
 export type MiscControllerEnvironment = {
     name?: string;
     color?: string;
+};
+
+/**
+ * Minimal configuration exposed to unauthenticated callers for the login/setup UI.
+ */
+export type MiscControllerLoginConfiguration = {
+    isBasicAuthInitialized?: boolean;
 };
 
 export type MiscControllerLoginRequest = {
@@ -2394,6 +2402,22 @@ export type GetConfigurationResponses = {
 };
 
 export type GetConfigurationResponse = GetConfigurationResponses[keyof GetConfigurationResponses];
+
+export type GetLoginConfigurationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/configs/login';
+};
+
+export type GetLoginConfigurationResponses = {
+    /**
+     * getLoginConfiguration 200 response
+     */
+    200: MiscControllerLoginConfiguration;
+};
+
+export type GetLoginConfigurationResponse = GetLoginConfigurationResponses[keyof GetLoginConfigurationResponses];
 
 export type LoginData = {
     body: MiscControllerLoginRequest;

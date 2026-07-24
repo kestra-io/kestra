@@ -55,12 +55,12 @@
             >
                 <template #default="scope">
                     <template v-if="col.prop === 'namespace'">
-                        <KsTag
-                            class="namespace-tag"
-                        >
-                            <FolderOpenOutline />
-                            {{ scope.row?.namespace }}
-                        </KsTag>
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'description'">
                         {{ scope.row?.description }}
@@ -223,7 +223,6 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
@@ -614,16 +613,6 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
-    }
-
-    .namespace-tag {
-        padding: 0 6px;
-
-        :deep(.kel-tag__content) {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
     }
 
     .secret-tag-row {

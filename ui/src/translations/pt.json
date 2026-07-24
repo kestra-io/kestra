@@ -61,6 +61,8 @@
     "success": "Sucesso",
     "save": "Salvar",
     "save_as_draft": "Guardar como rascunho",
+    "publish": "Publicar",
+    "publish_draft": "Publicar rascunho",
     "draft": "Rascunho",
     "draft_flow_warning": "A revisão mais recente deste flow é um rascunho. A execução será feita sobre a revisão publicada mais recente; publique o rascunho (ou execute-o no Playground) para executar as suas alterações mais recentes.",
     "save task": "Salvar Task",
@@ -2284,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "Destrutivo",
         "idempotent": "Idempotente",
-        "return_direct": "Retorno direto",
-        "view_flow": "Abrir flow"
+        "return_direct": "Retorno direto"
       },
       "connect_tab": {
         "server_url": "URL do Servidor",

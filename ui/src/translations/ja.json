@@ -61,6 +61,8 @@
     "success": "Success",
     "save": "保存",
     "save_as_draft": "下書きとして保存",
+    "publish": "公開",
+    "publish_draft": "下書きを公開",
     "draft": "下書き",
     "draft_flow_warning": "この flow の最新リビジョンは下書きです。実行は代わりに最新の公開済みリビジョンに対して行われます。最新の変更を実行するには、下書きを公開するか Playground から実行してください。",
     "save task": "Taskを保存",
@@ -2284,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "破壊的",
         "idempotent": "冪等",
-        "return_direct": "直接返却",
-        "view_flow": "flowを開く"
+        "return_direct": "直接返却"
       },
       "connect_tab": {
         "server_url": "サーバーURL",

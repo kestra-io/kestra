@@ -46,8 +46,7 @@
 
     const values = computed(() => props.modelValue ?? (props.schema as Record<string, unknown> | undefined)?.default)
 
-    // chartId autocomplete stays live even when dashboardId is empty: it then
-    // falls back to the "_default" sentinel dashboard's charts.
+    // Empty dashboardId falls back to the "_default" sentinel dashboard's charts
     const dashboardId = computed(() => (props.task?.dashboardId as string | undefined) ?? "_default")
 
     watch(dashboardId, async () => {

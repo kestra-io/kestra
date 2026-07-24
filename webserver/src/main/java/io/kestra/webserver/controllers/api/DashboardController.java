@@ -3,7 +3,6 @@ package io.kestra.webserver.controllers.api;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +12,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.Setting;
@@ -56,6 +56,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -73,12 +74,6 @@ import static io.kestra.core.utils.DateUtils.validateTimeline;
 public class DashboardController {
     public static final Pattern DASHBOARD_ID_PATTERN = Pattern.compile("^id:.*$", Pattern.MULTILINE);
 
-    /**
-     * Reserved id resolving to the built-in default dashboard definition. Not a real stored dashboard, never
-     * shown in dashboard id autocompletion — it's a backend/API sentinel only (e.g. used by export tooling
-     * when no explicit dashboardId is provided).
-     */
-    public static final String DEFAULT_DASHBOARD_ID = "_default";
     private static final String DEFAULT_MAIN_DEFINITION_RESOURCE = "dashboards/default_main_definition.yaml";
     private static final String DEFAULT_FLOW_DEFINITION_RESOURCE = "dashboards/default_flow_definition.yaml";
     private static final String DEFAULT_NAMESPACE_DEFINITION_RESOURCE = "dashboards/default_namespace_definition.yaml";
@@ -114,8 +109,8 @@ public class DashboardController {
     @Operation(tags = { "Dashboards" }, summary = "Get a dashboard")
     public DashboardResponse getDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id) throws ConstraintViolationException {
-        if (DEFAULT_DASHBOARD_ID.equals(id)) {
-            return new DashboardResponse(defaultDashboard());
+        if (Dashboard.DEFAULT_DASHBOARD_ID.equals(id)) {
+            return new DashboardResponse(Dashboard.defaultDashboard(tenantService.resolveTenant()));
         }
 
         return dashboardRepository.get(tenantService.resolveTenant(), id).map(d ->
@@ -132,37 +127,21 @@ public class DashboardController {
     @Operation(tags = { "Dashboards" }, summary = "Get the built-in default dashboard definitions")
     public Map<String, String> getDefaultDashboardDefinitions() {
         return Map.of(
-            "main", readClasspathResource(DEFAULT_MAIN_DEFINITION_RESOURCE),
-            "flow", readClasspathResource(DEFAULT_FLOW_DEFINITION_RESOURCE),
-            "namespace", readClasspathResource(DEFAULT_NAMESPACE_DEFINITION_RESOURCE)
+            "main", Dashboard.readClasspathResource(DEFAULT_MAIN_DEFINITION_RESOURCE),
+            "flow", Dashboard.readClasspathResource(DEFAULT_FLOW_DEFINITION_RESOURCE),
+            "namespace", Dashboard.readClasspathResource(DEFAULT_NAMESPACE_DEFINITION_RESOURCE)
         );
-    }
-
-    private Dashboard defaultDashboard() {
-        String yaml = readClasspathResource(DEFAULT_MAIN_DEFINITION_RESOURCE);
-
-        return YamlParser.parse(yaml, Dashboard.class).toBuilder()
-            .id(DEFAULT_DASHBOARD_ID)
-            .tenantId(tenantService.resolveTenant())
-            .sourceCode("id: " + DEFAULT_DASHBOARD_ID + "\n" + yaml)
-            .deleted(false)
-            .build();
-    }
-
-    private String readClasspathResource(String path) {
-        try (var is = getClass().getClassLoader().getResourceAsStream(path)) {
-            if (is == null) {
-                throw new IllegalStateException("Missing resource: " + path);
-            }
-            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.APPLICATION_YAML)
-    @Operation(tags = { "Dashboards" }, summary = "Create a dashboard from yaml source")
+    @Operation(
+        tags = { "Dashboards" }, summary = "Create a dashboard from yaml source",
+        responses = @ApiResponse(
+            responseCode = "422",
+            description = "If the dashboard id is reserved ('" + Dashboard.DEFAULT_DASHBOARD_ID + "')"
+        )
+    )
     public HttpResponse<DashboardResponse> createDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
         Dashboard dashboardParsed = parseDashboard(dashboard);
@@ -218,7 +197,13 @@ public class DashboardController {
 
     @Put(uri = "{id}", consumes = MediaType.APPLICATION_YAML)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Dashboards" }, summary = "Update a dashboard")
+    @Operation(
+        tags = { "Dashboards" }, summary = "Update a dashboard",
+        responses = @ApiResponse(
+            responseCode = "422",
+            description = "If the dashboard id is reserved ('" + Dashboard.DEFAULT_DASHBOARD_ID + "')"
+        )
+    )
     public HttpResponse<DashboardResponse> updateDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard) throws ConstraintViolationException {
@@ -248,18 +233,8 @@ public class DashboardController {
     }
 
     private void assertNotReservedId(String id, Dashboard dashboardParsed) {
-        if (DEFAULT_DASHBOARD_ID.equals(id)) {
-            throw new ConstraintViolationException(
-                Collections.singleton(
-                    ManualConstraintViolation.of(
-                        "'" + DEFAULT_DASHBOARD_ID + "' is a reserved dashboard id",
-                        dashboardParsed,
-                        Dashboard.class,
-                        "dashboard.id",
-                        id
-                    )
-                )
-            );
+        if (Dashboard.DEFAULT_DASHBOARD_ID.equals(id)) {
+            throw new InvalidException(dashboardParsed, "Dashboard id '" + Dashboard.DEFAULT_DASHBOARD_ID + "' is reserved");
         }
     }
 
@@ -353,7 +328,7 @@ public class DashboardController {
 
         filters = formatLabelsFilters(filters);
 
-        Dashboard dashboard = DEFAULT_DASHBOARD_ID.equals(id) ? defaultDashboard() : dashboardRepository.get(tenantId, id).orElse(null);
+        Dashboard dashboard = Dashboard.DEFAULT_DASHBOARD_ID.equals(id) ? Dashboard.defaultDashboard(tenantId) : dashboardRepository.get(tenantId, id).orElse(null);
         if (dashboard == null) {
             return null;
         }
@@ -559,7 +534,7 @@ public class DashboardController {
         if (format == ExportFormat.ION) {
             FileSerde.writeAll(byteArrayOutputStream, Flux.fromIterable(rows)).block();
         } else {
-            var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream);
+            var outputStreamWriter = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
             CSVUtils.toCSV(outputStreamWriter, rows);
         }
 

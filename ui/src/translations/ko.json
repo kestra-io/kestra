@@ -1936,6 +1936,10 @@
       "viewAll": "전체 보기",
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
       "export": "CSV로 내보내기",
+      "exportTo": {
+        "csv": "CSV로 내보내기",
+        "ion": "ION으로 내보내기"
+      },
       "quick_filters": {
         "all": "전체",
         "running": "실행 중",

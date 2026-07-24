@@ -64,7 +64,7 @@ class DashboardControllerTest {
     DashboardRepositoryInterface dashboardRepository;
 
     @Test
-    void full() throws JsonProcessingException {
+    void shouldSupportFullDashboardLifecycle() throws JsonProcessingException {
         String dashboardYaml = """
             id: full
             title: Some Dashboard
@@ -320,7 +320,7 @@ class DashboardControllerTest {
     // The goal is to cover the legacy implementation that was autogenerating id so it was present on the backend but the source code didn't contain it.
     // We now mandate the id within the dashboard source code and if it's not yet there, the "get" API should add it to the existing source if it's not there so that it's added on the next save.
     @Test
-    void sourceShouldHaveIdAddedIfNotPresent() throws JsonProcessingException {
+    void shouldAddIdToSourceCodeWhenNotPresent() throws JsonProcessingException {
         String dashboardYaml = """
             title: Some Dashboard
             description: Default overview dashboard
@@ -374,7 +374,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void cantHaveMultipleDashboardsWithSameId() {
+    void shouldRejectDashboardCreationWhenIdAlreadyExists() {
         String dashboardYaml = """
             id: cantHaveMultipleDashboardsWithSameId
             title: Some Dashboard
@@ -427,7 +427,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void update() {
+    void shouldUpdateDashboardAndRejectIdChange() {
         String dashboardYaml = """
             id: update
             title: Some Dashboard
@@ -515,7 +515,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void mandatoryId() {
+    void shouldRejectDashboardCreationWhenIdIsMissing() {
         String dashboardYaml = """
             title: Some Dashboard
             description: Default overview dashboard
@@ -563,7 +563,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void exportACustomDashboardChartToCsv() {
+    void shouldExportASavedDashboardTableChartToCsvAndIon() {
         var uuid = IdUtils.create();
         var fakeNamespace = "a-namespace_" + uuid;
         var logTimestamp = Instant.now();
@@ -644,7 +644,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void exportADefaultDashboardChartToCsv() {
+    void shouldExportAnAdHocPreviewChartToCsv() {
         var uuid = IdUtils.create();
         var fakeNamespace = "a-namespace_" + uuid;
         var logTimestamp = Instant.now();
@@ -700,7 +700,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void exportNonTableDataChartToCsv() {
+    void shouldExportANonTableDataChartToCsv() {
         var uuid = IdUtils.create();
         var fakeNamespace = "a-namespace_" + uuid;
         var fakeExecutionId = "an-execution-id" + uuid;
@@ -759,7 +759,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void exportKpiChartToCsvAndIon() {
+    void shouldExportAKpiChartToCsvAndIon() {
         var uuid = IdUtils.create();
         var fakeNamespace = "a-namespace_" + uuid;
         var fakeExecutionId = "an-execution-id" + uuid;
@@ -826,7 +826,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void exportMarkdownChartIsRejected() {
+    void shouldRejectExportOfMarkdownChart() {
         String dashboardYaml = """
             id: exportMarkdownChartIsRejected
             title: A dashboard with a markdown chart
@@ -856,7 +856,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void exportDefaultDashboardSentinelChart() {
+    void shouldExportChartFromDefaultDashboardSentinel() {
         // the "_default" id is a reserved sentinel resolving to the built-in default dashboard, not a stored one
         DashboardController.DashboardResponse defaultDashboard = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/_default"),
@@ -875,7 +875,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void getDefaultDashboardDefinitionsReturnsBuiltins() {
+    void shouldReturnBuiltinDefaultDashboardDefinitions() {
         Map definitions = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/defaults/definitions"),
             Map.class
@@ -887,7 +887,7 @@ class DashboardControllerTest {
     }
 
     @Test
-    void cannotCreateDashboardWithReservedDefaultId() {
+    void shouldRejectDashboardCreationWithReservedDefaultId() {
         String dashboardYaml = """
             id: _default
             title: Some Dashboard
@@ -913,11 +913,11 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: dashboard.id: '_default' is a reserved dashboard id");
+        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid Dashboard: Dashboard id '_default' is reserved");
     }
 
     @Test
-    void cannotUpdateDashboardToReservedDefaultId() {
+    void shouldRejectDashboardUpdateToReservedDefaultId() {
         String dashboardYaml = """
             id: _default
             title: Some Dashboard
@@ -943,11 +943,11 @@ class DashboardControllerTest {
             )
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
-        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: dashboard.id: '_default' is a reserved dashboard id");
+        assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: Dashboard id '_default' is reserved");
     }
 
     @Test
-    void previewWithLabels() {
+    void shouldPreviewChartFilteredByLabels() {
         String namespace = TestsUtils.randomNamespace();
         executionRepository.save(
             Execution.builder()

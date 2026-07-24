@@ -1936,6 +1936,10 @@
       "viewAll": "Alle anzeigen",
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
       "export": "Exportieren nach CSV",
+      "exportTo": {
+        "csv": "Exportieren als CSV",
+        "ion": "Nach ION exportieren"
+      },
       "quick_filters": {
         "all": "Alle",
         "running": "Läuft",

@@ -21,7 +21,7 @@
 
     // Single-line title (no description slot) keeps this compact — see the height cap below.
     const message = computed(() =>
-        `SDK out of date: the generated SDK looks out of date with this backend's OpenAPI spec ` +
+        "SDK out of date: the generated SDK looks out of date with this backend's OpenAPI spec " +
         `(SDK ${detail.value?.committedHash} ≠ backend ${detail.value?.liveHash}). ` +
         "Run `npm run generate:sdk` from ui/ and refresh.",
     )

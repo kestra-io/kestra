@@ -65,7 +65,6 @@
 
         &.selected {
             border-color: var(--ks-border-focus);
-            background-color: var(--ks-bg-tag-active);
         }
 
         &:has(.tile-button:hover:not(:disabled)) {
@@ -74,7 +73,7 @@
         }
 
         &.selected:has(.tile-button:hover:not(:disabled)) {
-            background-color: var(--ks-bg-tag-active);
+            border-color: var(--ks-border-focus);
         }
 
         &:has(.tile-button:focus-visible) {

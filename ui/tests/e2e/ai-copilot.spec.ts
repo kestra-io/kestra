@@ -23,6 +23,7 @@ const D = {
     send: "[data-test=\"copilot-send\"]",
     card: "[data-test=\"copilot-proposed-action\"]",
     approve: "[data-test=\"copilot-approve\"]",
+    reject: "[data-test=\"copilot-reject\"]",
 }
 
 test.describe("AI Copilot", () => {
@@ -119,6 +120,103 @@ test.describe("AI Copilot", () => {
         await page.locator(D.approve).click()
         await expect(page.locator(D.chat)).toContainText("Done — it's running again.")
         await expect(card).toBeHidden()
+    })
+
+    test("declines a proposed action and hands control back to the composer", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["token", {text: "I'll delete the flow company.team/legacy."}],
+                    ["proposed_action", {confirmationId: "cf-rej", tool: "delete-flow", family: "MUTATE", summary: "Delete flow company.team/legacy"}],
+                    ["done", {status: "AWAITING_CONFIRMATION"}],
+                ]),
+            })
+        })
+        // Capture the confirm request so we can assert the decline is sent as a REJECT decision.
+        let confirmBody: {confirmationId?: string; decision?: string} | null = null
+        await page.route("**/ai/threads/*/confirm", async (route) => {
+            confirmBody = route.request().postDataJSON()
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["token", {text: "Okay, I won't delete it — tell me what to change."}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+
+        await page.locator(D.input).fill("delete the legacy flow")
+        await page.locator(D.send).click()
+
+        const card = page.locator(D.card)
+        await expect(card).toBeVisible()
+        await expect(card).toContainText("Delete flow company.team/legacy")
+        // An action proposal offers a plain "Reject" (the plan "Reply to revise" wording is for plans).
+        await expect(page.locator(D.reject)).toHaveText("Reject")
+
+        await page.locator(D.reject).click()
+
+        // The rejection is sent as REJECT on the same confirmation id, the turn resumes with the
+        // acknowledgement, the card is dismissed, and the composer is usable again for a revision.
+        await expect(page.locator(D.chat)).toContainText("Okay, I won't delete it — tell me what to change.")
+        expect(confirmBody).toMatchObject({confirmationId: "cf-rej", decision: "REJECT"})
+        await expect(card).toBeHidden()
+        await expect(page.locator(D.input)).toBeEnabled()
+    })
+
+    test("revises a proposed plan instead of executing it", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["token", {text: "Here's how I'd approach it."}],
+                    // A plan carries steps and NO tool — the card renders as a plan whose decline
+                    // action reads "Reply to revise" rather than "Reject".
+                    ["proposed_action", {
+                        confirmationId: "cf-plan",
+                        steps: [
+                            {title: "Create the flow", detail: "company.team/report"},
+                            {title: "Add a schedule trigger", detail: "daily at 08:00"},
+                        ],
+                    }],
+                    ["done", {status: "AWAITING_CONFIRMATION"}],
+                ]),
+            })
+        })
+        let confirmBody: {confirmationId?: string; decision?: string} | null = null
+        await page.route("**/ai/threads/*/confirm", async (route) => {
+            confirmBody = route.request().postDataJSON()
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["token", {text: "Sure — what should I change about the plan?"}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+
+        await page.locator(D.input).fill("set up a daily report flow")
+        await page.locator(D.send).click()
+
+        const card = page.locator(D.card)
+        await expect(card).toBeVisible()
+        await expect(card).toContainText("Proposed plan")
+        await expect(card).toContainText("Create the flow")
+        // A plan is revised, not rejected — the decline affordance reflects that.
+        await expect(page.locator(D.reject)).toHaveText("Reply to revise")
+
+        await page.locator(D.reject).click()
+
+        // Revising a plan is still a REJECT decision; control returns to the composer to re-plan.
+        await expect(page.locator(D.chat)).toContainText("Sure — what should I change about the plan?")
+        expect(confirmBody).toMatchObject({confirmationId: "cf-plan", decision: "REJECT"})
+        await expect(card).toBeHidden()
+        await expect(page.locator(D.input)).toBeEnabled()
     })
 
     test("surfaces a notice when a turn returns no output", async ({page}) => {

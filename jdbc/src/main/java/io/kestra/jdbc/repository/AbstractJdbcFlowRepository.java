@@ -23,6 +23,7 @@ import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.SourceMatch;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -37,6 +38,7 @@ import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Flows;
@@ -55,6 +57,9 @@ import reactor.core.publisher.FluxSink;
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
 
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
+
+    // Bounds the fetch: regex queries cannot be pre-filtered in SQL, so precise matching runs in Java over this cap.
+    private static final int MAX_SOURCE_SEARCH_CANDIDATES = 1000;
 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     public static final Field<String> SOURCE_FIELD = field("source_code", String.class);
@@ -879,7 +884,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace) {
+    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -888,7 +893,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 SelectConditionStep<Record> select = this.fullTextSelect(tenantId, context, Collections.singletonList(field("source_code")));
 
-                if (query != null) {
+                if (query != null && !regex) {
                     select = select.and(this.findSourceCodeCondition(query));
                 }
 
@@ -896,15 +901,25 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     select = select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.startsWith(namespace + ".")));
                 }
 
-                return (ArrayListTotal) this.jdbcRepository.fetchPage(
-                    context,
-                    select,
-                    pageable,
-                    record -> new SearchResult<>(
-                        this.jdbcRepository.map(record),
-                        this.jdbcRepository.fragments(query, record.getValue("source_code", String.class))
-                    )
-                );
+                List<SearchResult<Flow>> results = select
+                    .limit(MAX_SOURCE_SEARCH_CANDIDATES)
+                    .fetch()
+                    .stream()
+                    .map(record -> new SearchResult<>(
+                        (Flow) this.jdbcRepository.map(record),
+                        query == null
+                            ? List.<SourceMatch>of()
+                            : SourceSearchMatcher.findMatches(record.getValue("source_code", String.class), query, caseSensitive, wholeWord, regex, scope),
+                        true
+                    ))
+                    .filter(result -> query == null || !result.getMatches().isEmpty())
+                    .sorted(java.util.Comparator.comparing((SearchResult<Flow> r) -> r.getModel().getNamespace())
+                        .thenComparing(r -> r.getModel().getId()))
+                    .toList();
+
+                return pageable == null || pageable.getSize() == -1
+                    ? new ArrayListTotal<>(results, results.size())
+                    : ArrayListTotal.of(pageable, results);
             });
     }
 

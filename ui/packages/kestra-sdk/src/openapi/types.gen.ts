@@ -6035,7 +6035,7 @@ export type SearchFlowsBySourceCodeResponses = {
     /**
      * searchFlowsBySourceCode 200 response
      */
-    200: PagedResultsSearchResultFlow;
+    200: PagedResultsSourceSearchResult;
 };
 
 export type SearchFlowsBySourceCodeResponse = SearchFlowsBySourceCodeResponses[keyof SearchFlowsBySourceCodeResponses];
@@ -8311,3 +8311,146 @@ export type GetUsagesResponses = {
 };
 
 export type GetUsagesResponse = GetUsagesResponses[keyof GetUsagesResponses];
+
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
+export type PagedResultsSourceSearchResult = {
+    results: Array<SourceSearchResult>;
+    total: number;
+};
+
+export type SourceMatch = {
+    line?: number;
+    column?: number;
+    snippet?: string;
+};
+
+export type SourceSearchResult = {
+    namespace?: string;
+    id?: string;
+    editable?: boolean;
+    matches?: Array<SourceMatch>;
+};
+
+export type SourceSearchScope = 'ALL' | 'TASKS' | 'TRIGGERS' | 'INPUTS';
+
+export type SourceSearchReplaceApplyRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    scope?: SourceSearchScope | null;
+    replacement: string;
+    flows: Array<IdWithNamespace>;
+};
+
+export type SourceSearchReplaceApplyResponse = {
+    updated?: Array<FlowWithSource>;
+    skipped?: Array<IdWithNamespace>;
+};
+
+export type SourceSearchReplaceLineRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    replacement: string;
+    namespace: string;
+    id: string;
+    line?: number;
+    column?: number;
+};
+
+export type SourceSearchReplacePreviewRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    namespace?: string | null;
+    scope?: SourceSearchScope | null;
+    replacement: string;
+};
+
+export type SourceSearchReplacePreviewResponse = {
+    totalMatches?: number;
+    totalFlows?: number;
+    editableFlowCount?: number;
+    flows?: Array<SourceSearchReplacePreviewResponseFlowMatches>;
+};
+
+export type SourceSearchReplacePreviewResponseFlowMatches = {
+    namespace?: string;
+    id?: string;
+    editable?: boolean;
+    matches?: Array<SourceSearchReplacePreviewResponseMatch>;
+};
+
+export type SourceSearchReplacePreviewResponseMatch = {
+    line?: number;
+    before?: string;
+    after?: string;
+};
+
+export type ApplyReplaceBySourceCodeData = {
+    /**
+     * The search query, replacement and target flows
+     */
+    body: SourceSearchReplaceApplyRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/apply';
+};
+
+export type ApplyReplaceBySourceCodeResponses = {
+    /**
+     * applyReplaceBySourceCode 200 response
+     */
+    200: SourceSearchReplaceApplyResponse;
+};
+
+export type ApplyReplaceBySourceCodeResponse = ApplyReplaceBySourceCodeResponses[keyof ApplyReplaceBySourceCodeResponses];
+
+export type ReplaceLineBySourceCodeData = {
+    /**
+     * The search query, replacement and target match line
+     */
+    body: SourceSearchReplaceLineRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/line';
+};
+
+export type ReplaceLineBySourceCodeResponses = {
+    /**
+     * replaceLineBySourceCode 200 response
+     */
+    200: SourceSearchReplaceApplyResponse;
+};
+
+export type ReplaceLineBySourceCodeResponse = ReplaceLineBySourceCodeResponses[keyof ReplaceLineBySourceCodeResponses];
+
+export type PreviewReplaceBySourceCodeData = {
+    /**
+     * The search query and replacement
+     */
+    body: SourceSearchReplacePreviewRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/preview';
+};
+
+export type PreviewReplaceBySourceCodeResponses = {
+    /**
+     * previewReplaceBySourceCode 200 response
+     */
+    200: SourceSearchReplacePreviewResponse;
+};
+
+export type PreviewReplaceBySourceCodeResponse = PreviewReplaceBySourceCodeResponses[keyof PreviewReplaceBySourceCodeResponses];

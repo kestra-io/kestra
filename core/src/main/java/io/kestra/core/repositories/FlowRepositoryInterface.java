@@ -224,7 +224,12 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters);
 
-    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace);
+    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, boolean caseSensitive, boolean wholeWord, boolean regex, SourceSearchScope scope, @Nullable String tenantId, @Nullable String namespace);
+
+    @Deprecated
+    default ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace) {
+        return findSourceCode(pageable, query, false, false, false, SourceSearchScope.ALL, tenantId, namespace);
+    }
 
     List<String> findDistinctNamespace(String tenantId);
 

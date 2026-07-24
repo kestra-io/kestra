@@ -17,7 +17,6 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
-import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
@@ -42,8 +41,15 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.models.flows.SourceSearchReplaceApplyRequest;
+import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
+import io.kestra.webserver.models.flows.SourceSearchReplaceLineRequest;
+import io.kestra.webserver.models.flows.SourceSearchReplacePreviewRequest;
+import io.kestra.webserver.models.flows.SourceSearchReplacePreviewResponse;
+import io.kestra.webserver.models.flows.SourceSearchResult;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.services.SourceSearchService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 
@@ -65,6 +71,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -107,6 +114,9 @@ public class FlowController {
 
     @Inject
     private SecurityConfiguration securityConfiguration;
+
+    @Inject
+    private SourceSearchService sourceSearchService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -260,13 +270,83 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/source")
     @Operation(tags = { "Flows" }, summary = "Search for flows source code")
-    public PagedResults<SearchResult<Flow>> searchFlowsBySourceCode(
+    public PagedResults<SourceSearchResult> searchFlowsBySourceCode(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
+<<<<<<< HEAD
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+||||||| parent of dda5cda927 (feat(flows): VS Code-style find & replace for Source Search)
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+=======
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+>>>>>>> dda5cda927 (feat(flows): VS Code-style find & replace for Source Search)
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace) throws HttpStatusException {
-        return PagedResults.of(flowRepository.findSourceCode(PageableUtils.from(page, size, sort), query, tenantService.resolveTenant(), namespace));
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "Whether the query must match with exact case") @QueryValue(defaultValue = "false") boolean caseSensitive,
+        @Parameter(description = "Whether the query must match on word boundaries only") @QueryValue(defaultValue = "false") boolean wholeWord,
+        @Parameter(description = "Whether the query is a regular expression rather than a literal string") @QueryValue(defaultValue = "false") boolean regex,
+        @Parameter(description = "Restricts matches to a top-level section of the flow YAML") @QueryValue(defaultValue = "all") SourceSearchScope scope) throws HttpStatusException {
+        return PagedResults.of(sourceSearchService.search(
+            PageableUtils.from(page, size),
+            tenantService.resolveTenant(),
+            namespace,
+            query,
+            caseSensitive,
+            wholeWord,
+            regex,
+            scope
+        ));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/source/replace/preview")
+    @Operation(tags = { "Flows" }, summary = "Preview a Source Search replace-all operation", description = "Computes the matched lines and their proposed replacement for every matching flow, without persisting anything.")
+    public SourceSearchReplacePreviewResponse previewReplaceBySourceCode(@RequestBody(description = "The search query and replacement") @Body @Valid SourceSearchReplacePreviewRequest request) {
+        return sourceSearchService.preview(
+            tenantService.resolveTenant(),
+            request.namespace(),
+            request.query(),
+            request.caseSensitive(),
+            request.wholeWord(),
+            request.regex(),
+            request.scopeOrAll(),
+            request.replacement()
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/source/replace/apply")
+    @Operation(tags = { "Flows" }, summary = "Apply a Source Search replace-all operation", description = "Replaces every match in the given flows and persists the new revisions. Flows the caller is not allowed to edit are skipped.")
+    public SourceSearchReplaceApplyResponse applyReplaceBySourceCode(@RequestBody(description = "The search query, replacement and target flows") @Body @Valid SourceSearchReplaceApplyRequest request) throws QueueException {
+        return sourceSearchService.apply(
+            tenantService.resolveTenant(),
+            request.query(),
+            request.caseSensitive(),
+            request.wholeWord(),
+            request.regex(),
+            request.scopeOrAll(),
+            request.replacement(),
+            request.flows()
+        );
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/source/replace/line")
+    @Operation(tags = { "Flows" }, summary = "Apply a Source Search replace on a single match line", description = "Replaces the matches on one line of one flow and persists the new revision. Returns the flow as skipped if it is not editable or fails validation.")
+    public SourceSearchReplaceApplyResponse replaceLineBySourceCode(@RequestBody(description = "The search query, replacement and target match line") @Body @Valid SourceSearchReplaceLineRequest request) throws QueueException {
+        return sourceSearchService.applyLine(
+            tenantService.resolveTenant(),
+            request.query(),
+            request.caseSensitive(),
+            request.wholeWord(),
+            request.regex(),
+            request.replacement(),
+            request.namespace(),
+            request.id(),
+            request.line(),
+            request.column()
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)

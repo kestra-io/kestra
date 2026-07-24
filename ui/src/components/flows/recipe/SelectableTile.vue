@@ -79,7 +79,7 @@
 
         &:has(.tile-button:focus-visible) {
             outline: var(--ks-border-width-base) solid var(--ks-border-focus);
-            outline-offset: var(--ks-spacing-px);
+            outline-offset: var(--ks-spacing-1);
         }
 
         &.disabled {

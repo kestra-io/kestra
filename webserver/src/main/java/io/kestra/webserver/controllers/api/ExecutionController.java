@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 import javax.annotation.CheckReturnValue;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
@@ -38,6 +39,7 @@ import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
+import io.kestra.core.http.HttpRequest.MultipartFormDataRequestBody;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -107,6 +109,8 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.server.multipart.MultipartBody;
 import io.micronaut.http.server.types.files.StreamedFile;
@@ -116,6 +120,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -564,8 +569,40 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        return this.webhook(namespace, id, key, path, request);
+        HttpRequest<byte[]> request) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, MicronautHttpService.from(request));
+    }
+
+    // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
+    // the spec already describes; a second operation on the same path and method would shadow it.
+    @Hidden
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @SingleResult
+    public Mono<HttpResponse<?>> triggerExecutionByPostWebhookMultipart(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
+        @Nullable @Body MultipartBody parts,
+        HttpRequest<?> request) {
+        return this.webhookMultipart(namespace, id, key, path, parts, request);
+    }
+
+    // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
+    // the spec already describes; a second operation on the same path and method would shadow it.
+    @Hidden
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @SingleResult
+    public Mono<HttpResponse<?>> triggerExecutionByPutWebhookMultipart(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
+        @Nullable @Body MultipartBody parts,
+        HttpRequest<?> request) {
+        return this.webhookMultipart(namespace, id, key, path, parts, request);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -578,8 +615,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        return this.webhook(namespace, id, key, path, request);
+        HttpRequest<byte[]> request) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, MicronautHttpService.from(request));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -592,8 +629,61 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        return this.webhook(namespace, id, key, path, request);
+        HttpRequest<byte[]> request) throws IllegalVariableEvaluationException {
+        return this.webhook(namespace, id, key, path, MicronautHttpService.from(request));
+    }
+
+    /**
+     * Collect the parts of a {@code multipart/form-data} webhook request, then evaluate the webhook with them.
+     * The parts are read as received, so that binary content reaches the flow intact.
+     */
+    private Mono<HttpResponse<?>> webhookMultipart(
+        String namespace,
+        String id,
+        String key,
+        String path,
+        MultipartBody parts,
+        HttpRequest<?> request) {
+        // Each part is read on the thread it is emitted on: its buffer is released as soon as it has been emitted.
+        return (parts == null ? Flux.<CompletedPart> empty() : Flux.from(parts))
+            .<MultipartFormDataRequestBody.Part> handle((part, sink) ->
+            {
+                try {
+                    sink.next(toMultipartPart(part));
+                } catch (IOException e) {
+                    sink.error(e);
+                } finally {
+                    if (part instanceof CompletedFileUpload fileUpload) {
+                        fileUpload.discard();
+                    }
+                }
+            })
+            .collectList()
+            .flatMap(collectedParts ->
+            {
+                var body = MultipartFormDataRequestBody.builder()
+                    .contentType(request.getContentType().map(MediaType::getName).orElse(MediaType.MULTIPART_FORM_DATA))
+                    .charset(StandardCharsets.UTF_8)
+                    .content(collectedParts)
+                    .build();
+
+                try {
+                    return this.webhook(namespace, id, key, path, MicronautHttpService.from(request, body));
+                } catch (IllegalVariableEvaluationException e) {
+                    return Mono.error(e);
+                }
+            });
+    }
+
+    private static MultipartFormDataRequestBody.Part toMultipartPart(CompletedPart part) throws IOException {
+        String filename = part instanceof CompletedFileUpload fileUpload ? StringUtils.trimToNull(fileUpload.getFilename()) : null;
+
+        return new MultipartFormDataRequestBody.Part(
+            part.getName(),
+            filename,
+            part.getContentType().map(MediaType::getName).orElse(null),
+            part.getBytes()
+        );
     }
 
     private Mono<HttpResponse<?>> webhook(
@@ -601,7 +691,7 @@ public class ExecutionController {
         String id,
         String key,
         String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        io.kestra.core.http.HttpRequest request) throws IllegalVariableEvaluationException {
         Optional<Flow> find = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
         return webhook(find, key, path, request);
     }
@@ -610,7 +700,7 @@ public class ExecutionController {
         Optional<Flow> maybeFlow,
         String key,
         String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        io.kestra.core.http.HttpRequest request) throws IllegalVariableEvaluationException {
         if (maybeFlow.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
         }
@@ -653,7 +743,7 @@ public class ExecutionController {
 
         // Webhook context
         var webhookContext = new WebhookContext(
-            MicronautHttpService.from(request),
+            request,
             path,
             flow,
             webhook,

@@ -92,6 +92,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -1168,6 +1169,82 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(execution.getTrigger().getVariables().get("body")).isEqualTo("{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}");
 
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    @LoadFlows({ "flows/valids/webhook.yaml" })
+    void shouldExposePartsWhenWebhookReceivesMultipartFormData() {
+        // Given — a binary file, containing byte sequences that are not valid UTF-8, and a plain form field
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+        byte[] photo = binaryContent();
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("photo", "result.jpg", MediaType.IMAGE_JPEG_TYPE, photo)
+            .addPart("note", "looks good")
+            .build();
+
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key, body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        // Then — the file part reaches the flow byte-identical, and the other part as a form field
+        Map<String, Object> variables = execution.getTrigger().getVariables();
+        List<Map<String, Object>> parts = (List<Map<String, Object>>) variables.get("parts");
+
+        assertThat(parts).hasSize(1);
+        assertThat(parts.getFirst().get("name")).isEqualTo("photo");
+        assertThat(parts.getFirst().get("filename")).isEqualTo("result.jpg");
+        assertThat(parts.getFirst().get("contentType")).isEqualTo(MediaType.IMAGE_JPEG);
+        assertThat(parts.getFirst().get("size")).isEqualTo(photo.length);
+        assertThat(Base64.getDecoder().decode((String) parts.getFirst().get("content"))).isEqualTo(photo);
+        assertThat((Map<String, List<String>>) variables.get("formFields")).containsExactly(entry("note", List.of("looks good")));
+        assertThat(variables.get("body")).isNull();
+        assertThat(variables.get("bodyBase64")).isNull();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/webhook.yaml" })
+    void shouldExposeBodyBase64WhenWebhookReceivesBinaryBody() {
+        // Given
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+        byte[] content = binaryContent();
+
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key, content)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+            Execution.class
+        );
+
+        // Then — the body reaches the flow byte-identical, and is not decoded as text
+        Map<String, Object> variables = execution.getTrigger().getVariables();
+
+        assertThat(Base64.getDecoder().decode((String) variables.get("bodyBase64"))).isEqualTo(content);
+        assertThat(variables.get("body")).isNull();
+        assertThat(variables.get("parts")).isNull();
+    }
+
+    /**
+     * @return content that a UTF-8 round-trip would corrupt, so that a test asserting on it detects any decoding
+     */
+    private static byte[] binaryContent() {
+        byte[] content = new byte[512];
+        new Random(42).nextBytes(content);
+
+        // Make sure the content is not valid UTF-8, whatever the random bytes are.
+        content[0] = (byte) 0xC3;
+        content[1] = (byte) 0x28;
+        content[2] = (byte) 0xFF;
+
+        return content;
     }
 
     @Test

@@ -24,7 +24,13 @@ const D = {
     card: "[data-test=\"copilot-proposed-action\"]",
     approve: "[data-test=\"copilot-approve\"]",
     reject: "[data-test=\"copilot-reject\"]",
+    draft: "[data-test=\"copilot-draft\"]",
+    draftOpen: "[data-test=\"copilot-draft-open\"]",
+    draftApply: "[data-test=\"copilot-draft-apply\"]",
 }
+
+// A minimal, valid-enough flow whose namespace + id the direct-apply path can parse.
+const FLOW_YAML = "id: applied\nnamespace: company.team\ntasks:\n  - id: log\n    type: io.kestra.plugin.core.log.Log\n    message: hi"
 
 test.describe("AI Copilot", () => {
     test.beforeEach(async ({page}) => {
@@ -217,6 +223,89 @@ test.describe("AI Copilot", () => {
         expect(confirmBody).toMatchObject({confirmationId: "cf-plan", decision: "REJECT"})
         await expect(card).toBeHidden()
         await expect(page.locator(D.input)).toBeEnabled()
+    })
+
+    test("accepts a flow draft into the flow editor with the drafted YAML", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["token", {text: "Here's a flow draft."}],
+                    ["artefact_draft", {draftId: "d1", kind: "FLOW", yaml: "id: demo\nnamespace: company.team\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n    message: hi", valid: true, constraints: null}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+
+        await page.locator(D.input).fill("draft me a flow")
+        await page.locator(D.send).click()
+
+        const draft = page.locator(D.draft)
+        await expect(draft).toBeVisible()
+        await expect(draft).toContainText("id: demo")
+
+        await page.locator(D.draftOpen).click()
+        // Hands the drafted YAML to the flow create editor via the blueprint-source handoff.
+        await page.waitForURL(/\/flows\/new\?.*blueprintId=copilot-draft/)
+        expect(decodeURIComponent(page.url())).toContain("id: demo")
+    })
+
+    test("accepts a dashboard draft into the dashboard editor", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["artefact_draft", {draftId: "d2", kind: "DASHBOARD", yaml: "id: my-dash\ntitle: My Dashboard\ncharts: []", valid: true, constraints: null}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+
+        await page.locator(D.input).fill("draft me a dashboard")
+        await page.locator(D.send).click()
+        await expect(page.locator(D.draft)).toBeVisible()
+
+        await page.locator(D.draftOpen).click()
+        // The dashboard create editor seeds itself from the `sourceYaml` query.
+        await page.waitForURL(/\/dashboards\/new\?.*sourceYaml=/)
+        expect(decodeURIComponent(page.url())).toContain("id: my-dash")
+    })
+
+    test("applies a flow draft directly and navigates to the created flow", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["artefact_draft", {draftId: "d3", kind: "FLOW", yaml: FLOW_YAML, valid: true, constraints: null}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+        // Stub the create so nothing is really written; capture the posted body.
+        let createdBody: string | null = null
+        await page.route((u) => u.pathname.endsWith("/flows"), async (route) => {
+            if (route.request().method() === "POST") {
+                createdBody = route.request().postData()
+                await route.fulfill({status: 200, contentType: "application/json", body: JSON.stringify({id: "applied", namespace: "company.team"})})
+            } else {
+                await route.continue()
+            }
+        })
+
+        await page.locator(D.input).fill("apply this flow")
+        await page.locator(D.send).click()
+        await expect(page.locator(D.draft)).toBeVisible()
+
+        await page.locator(D.draftApply).click()
+        // Confirm the "create this flow?" prompt (scope to the modal — the draft card also has an "Apply").
+        await page.getByRole("dialog").getByRole("button", {name: "Apply", exact: true}).click()
+
+        // The flow was created from the drafted YAML, then the app navigated to it.
+        await page.waitForURL(/\/flows\/edit\/company\.team\/applied/)
+        expect(createdBody).toContain("id: applied")
     })
 
     test("surfaces a notice when a turn returns no output", async ({page}) => {

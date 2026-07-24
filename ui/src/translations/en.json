@@ -61,6 +61,8 @@
     "success": "Success",
     "save": "Save",
     "save_as_draft": "Save as draft",
+    "publish": "Publish",
+    "publish_draft": "Publish draft",
     "draft": "Draft",
     "draft_flow_warning": "The latest revision of this flow is a draft. The execution will run against the latest published revision instead - publish the draft (or run it from the playground) to execute your latest changes.",
     "save task": "Save Task",
@@ -127,6 +129,8 @@
       "last24hours": "Last 24 hours",
       "last48hours": "Last 48 hours",
       "last7days": "Last 7 days",
+      "last14days": "Last 14 days",
+      "last28days": "Last 28 days",
       "last30days": "Last 30 days",
       "last365days": "Last 365 days",
       "next5minutes": "Next 5 minutes",
@@ -145,6 +149,8 @@
       "24hours": "24 hours",
       "48hours": "48 hours",
       "7days": "7 days",
+      "14days": "14 days",
+      "28days": "28 days",
       "30days": "30 days",
       "365days": "365 days",
       "never": "Never",
@@ -2280,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "Destructive",
         "idempotent": "Idempotent",
-        "return_direct": "Return direct",
-        "view_flow": "Open flow"
+        "return_direct": "Return direct"
       },
       "connect_tab": {
         "server_url": "Server URL",

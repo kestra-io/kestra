@@ -61,6 +61,8 @@
     "success": "Sucesso",
     "save": "Salvar",
     "save_as_draft": "Salvar como rascunho",
+    "publish": "Publicar",
+    "publish_draft": "Publicar rascunho",
     "draft": "Rascunho",
     "draft_flow_warning": "A revisão mais recente deste flow é um rascunho. A execução será feita na revisão publicada mais recente; publique o rascunho (ou execute-o no Playground) para executar suas alterações mais recentes.",
     "save task": "Salvar Task",
@@ -127,6 +129,8 @@
       "last24hours": "Últimas 24 horas",
       "last48hours": "Últimas 48 horas",
       "last7days": "Últimos 7 dias",
+      "last14days": "Últimos 14 dias",
+      "last28days": "Últimos 28 dias",
       "last30days": "Últimos 30 dias",
       "last365days": "Últimos 365 dias",
       "next5minutes": "Próximos 5 minutos",
@@ -145,6 +149,8 @@
       "24hours": "24 horas",
       "48hours": "48 horas",
       "7days": "7 dias",
+      "14days": "14 dias",
+      "28days": "28 dias",
       "30days": "30 dias",
       "365days": "365 dias",
       "never": "Nunca",
@@ -2280,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "Destrutivo",
         "idempotent": "Idempotente",
-        "return_direct": "Retorno direto",
-        "view_flow": "Abrir flow"
+        "return_direct": "Retorno direto"
       },
       "connect_tab": {
         "server_url": "URL do Servidor",

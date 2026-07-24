@@ -2,7 +2,7 @@
     <TopNavBar :title="details.title" :breadcrumb="details.breadcrumb">
         <template v-if="showCreateToolFlow" #actions>
             <KsButton type="primary" :icon="Plus" @click="createToolFlow">
-                {{ t("mcp.tools.create_tool_flow") }}
+                {{ $t("mcp.tools.create_tool_flow") }}
             </KsButton>
         </template>
     </TopNavBar>
@@ -12,7 +12,6 @@
 <script lang="ts" setup>
     import {computed, watch, onMounted} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import {useI18n} from "vue-i18n"
     import Plus from "vue-material-design-icons/Plus.vue"
     import TopNavBar from "../layout/TopNavBar.vue"
     import Tabs from "../Tabs.vue"
@@ -22,7 +21,6 @@
     import {useToolFlowCreation} from "./mcp/useToolFlowCreation"
     import useRouteContext from "../../composables/useRouteContext"
 
-    const {t} = useI18n({useScope: "global"})
     const route = useRoute()
     const router = useRouter()
     const mcpStore = useMcpStore()

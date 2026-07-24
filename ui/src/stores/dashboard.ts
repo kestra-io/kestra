@@ -16,7 +16,6 @@ import * as Utils from "../utils/utils"
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
 import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
-import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
 import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -40,6 +39,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const defaultDashboards = ref<DashboardSettings>()
     const chartErrors = ref<string[]>([])
     const isCreating = ref<boolean>(false)
+    const readonlyToastShown = ref(false)
 
     const sourceCode = ref("")
     const sourceCodeOrigin = ref("")
@@ -81,7 +81,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function loadDefaults() {
-        defaultDashboards.value = await DashboardsAdminAPI.defaultDashboards()
+        // "get default dashboards" lives under a different SDK tag per edition (dashboards in OSS,
+        // dashboards-admin in EE) but the same REST path, so go through the raw client to stay
+        // edition-agnostic (same approach as the custom-blueprint reads).
+        const {data} = await axios.get<DashboardSettings>(`${apiUrl()}/dashboards/settings/default-dashboards`)
+        defaultDashboards.value = data
         return defaultDashboards.value
     }
 
@@ -92,7 +96,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         // TenantController is hardcoded to the "main" tenant (this OSS build is single-tenant),
         // and its `id` path param isn't the SDK's auto-filled `tenant` param, so it must be passed
         // explicitly here to match.
-        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboards({id: "main", ...def})
+        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboard({id: "main", ...def} as Parameters<typeof TenantsAPI.setTenantDefaultDashboard>[0])
     }
 
     const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
@@ -183,6 +187,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
+        readonlyToastShown.value = false
 
         return activeDashboard.value
     }
@@ -330,10 +335,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
         }
 
         if (!isCreating.value && dbId !== undefined && YAML_UTILS.parse(sourceCode.value).id !== dbId) {
-            coreStore.message = {
-                variant: "error",
-                title: t("readonly property"),
-                message: t("dashboards.edition.id readonly"),
+            if (!readonlyToastShown.value) {
+                readonlyToastShown.value = true
+                coreStore.message = {
+                    variant: "warning",
+                    title: t("readonly property"),
+                    message: t("dashboards.edition.id readonly"),
+                }
             }
 
             await nextTick()

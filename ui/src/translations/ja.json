@@ -61,6 +61,8 @@
     "success": "Success",
     "save": "保存",
     "save_as_draft": "下書きとして保存",
+    "publish": "公開",
+    "publish_draft": "下書きを公開",
     "draft": "下書き",
     "draft_flow_warning": "この flow の最新リビジョンは下書きです。実行は代わりに最新の公開済みリビジョンに対して行われます。最新の変更を実行するには、下書きを公開するか Playground から実行してください。",
     "save task": "Taskを保存",
@@ -127,6 +129,8 @@
       "last24hours": "過去24時間",
       "last48hours": "過去48時間",
       "last7days": "過去7日間",
+      "last14days": "直近14日間",
+      "last28days": "過去28日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
       "next5minutes": "次の5分",
@@ -145,6 +149,8 @@
       "24hours": "24時間",
       "48hours": "48時間",
       "7days": "7日間",
+      "14days": "14日間",
+      "28days": "28日間",
       "30days": "30日間",
       "365days": "365日間",
       "never": "無期限",
@@ -2280,8 +2286,7 @@
         "open_world": "Open world",
         "destructive": "破壊的",
         "idempotent": "冪等",
-        "return_direct": "直接返却",
-        "view_flow": "flowを開く"
+        "return_direct": "直接返却"
       },
       "connect_tab": {
         "server_url": "サーバーURL",

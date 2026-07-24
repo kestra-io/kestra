@@ -171,9 +171,9 @@
             padding: 1.5rem 1rem !important;
             font-family: "JetBrains Mono", monospace;
             background-color: var(--ks-bg-surface);
-            white-space: normal;
+            white-space: pre-wrap;
             border-top: 1px solid var(--ks-border-default);
-            text-wrap: wrap;
+            word-break: break-word;
             min-height: fit-content;
             color: var(--ks-text-primary);
         }

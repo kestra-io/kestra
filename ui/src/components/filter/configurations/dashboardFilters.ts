@@ -94,7 +94,6 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_IN,
                         Comparators.EQUALS,
                         Comparators.CONTAINS,
-                        Comparators.NOT_CONTAINS,
                         Comparators.IS_NOT_NULL,
                         Comparators.IS_NULL,
                     ],
@@ -122,6 +121,7 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     description: t("filter.flowId.description"),
                     comparators: [
                         Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
                         Comparators.ENDS_WITH,
@@ -154,7 +154,6 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     comparators: [
                         Comparators.EQUALS,
                         Comparators.CONTAINS,
-                        Comparators.NOT_CONTAINS,
                         Comparators.IS_NOT_NULL,
                         Comparators.IS_NULL,
                     ],
@@ -195,7 +194,6 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     comparators: [
                         Comparators.EQUALS,
                         Comparators.CONTAINS,
-                        Comparators.NOT_CONTAINS,
                         Comparators.IS_NOT_NULL,
                         Comparators.IS_NULL,
                     ],

@@ -470,7 +470,7 @@ public class FlowController {
         Optional<Flow> existingFlow = flowRepository.findById(tenantId, namespace, id);
 
         if (existingFlow.isEmpty()) {
-            return HttpResponse.status(HttpStatus.NOT_FOUND);
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow '%s.%s' was not found.".formatted(namespace, id));
         }
 
         // Parse source as RawFlow. Draft is metadata about the revision, not part of the YAML

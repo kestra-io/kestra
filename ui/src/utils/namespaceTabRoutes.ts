@@ -19,7 +19,7 @@ export const NAMESPACE_TAB_NAMES = [
     "credentials",
     "assets",
     "variables",
-    "plugin-defaults",
+    "policies",
     "kv",
     "reusable-inputs",
     "files",

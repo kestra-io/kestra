@@ -1,13 +1,15 @@
 <template>
+    <!-- English only, no i18n keys: this banner only ever renders in a local dev build (see the
+         defineAsyncComponent guard in App.vue), never in front of a real end user. -->
     <KsAlert
         v-if="visible"
         type="warning"
-        :title="$t('sdkDrift.title')"
+        title="SDK out of date"
         closable
         class="sdk-drift-banner"
         @close="dismiss"
     >
-        {{ $t("sdkDrift.message", {committed: detail?.committedHash, live: detail?.liveHash}) }}
+        The generated SDK looks out of date with this backend's OpenAPI spec (SDK {{ detail?.committedHash }} ≠ backend {{ detail?.liveHash }}). Run `npm run generate:sdk` from ui/ and refresh.
     </KsAlert>
 </template>
 

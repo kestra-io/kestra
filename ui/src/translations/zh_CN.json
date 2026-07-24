@@ -2342,10 +2342,6 @@
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",
       "install": "安装",
       "dismiss": "暂不"
-    },
-    "sdkDrift": {
-      "title": "SDK out of date",
-      "message": "The generated SDK looks out of date with this backend's OpenAPI spec (SDK {committed} \u2260 backend {live}). Run `npm run generate:sdk` from ui/ and refresh."
     }
   }
 }

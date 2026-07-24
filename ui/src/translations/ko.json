@@ -2342,10 +2342,6 @@
       "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
       "install": "설치",
       "dismiss": "나중에"
-    },
-    "sdkDrift": {
-      "title": "SDK out of date",
-      "message": "The generated SDK looks out of date with this backend's OpenAPI spec (SDK {committed} \u2260 backend {live}). Run `npm run generate:sdk` from ui/ and refresh."
     }
   }
 }

@@ -2342,10 +2342,6 @@
       "install_description": "Installez Kestra comme application pour un accès plus rapide et une expérience plein écran.",
       "install": "Installer",
       "dismiss": "Pas maintenant"
-    },
-    "sdkDrift": {
-      "title": "SDK out of date",
-      "message": "The generated SDK looks out of date with this backend's OpenAPI spec (SDK {committed} \u2260 backend {live}). Run `npm run generate:sdk` from ui/ and refresh."
     }
   }
 }

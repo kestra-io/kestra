@@ -356,22 +356,21 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                                 log.info(msg);
 
-                                // Respect the parent task's configured logLevel (e.g. plugin defaults setting
-                                // logLevel: WARN): emitLog bypasses the regular logging pipeline, so without this
-                                // check the INFO creation log is persisted regardless of configuration (#16238).
+                                // Bind the logger to the parent task so its configured logLevel (e.g. plugin
+                                // defaults setting logLevel: WARN) applies to the creation log, which is emitted
+                                // directly and therefore bypasses the regular logging pipeline (#16238).
                                 Task parentTask = flow.findTaskByTaskIdOrNull(subflowExecution.getParentTaskRun().getTaskId());
-                                Level minLevel = parentTask != null ? parentTask.getLogLevel() : null;
-                                if (minLevel == null || Level.INFO.toInt() >= minLevel.toInt()) {
-                                    var logger = runContextLoggerFactory.create(execution);
-                                    logger.emitLog(
-                                        LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
-                                            .level(Level.INFO)
-                                            .message(msg)
-                                            .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())
-                                            .thread(Thread.currentThread().getName())
-                                            .build()
-                                    );
-                                }
+                                var logger = parentTask != null
+                                    ? runContextLoggerFactory.create(subflowExecution.getParentTaskRun(), parentTask, subflowExecution.getExecution().getKind())
+                                    : runContextLoggerFactory.create(execution);
+                                logger.emitLogIfEnabled(
+                                    LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
+                                        .level(Level.INFO)
+                                        .message(msg)
+                                        .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())
+                                        .thread(Thread.currentThread().getName())
+                                        .build()
+                                );
 
                                 executionQueue.emit(subflowExecution.getExecution());
                             }));

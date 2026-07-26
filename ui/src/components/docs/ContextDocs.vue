@@ -32,7 +32,7 @@
                 <DocsMenu />
                 <DocsLayout>
                     <template #content>
-                        <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
+                        <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :components="proseComponents" />
                     </template>
                 </DocsLayout>
             </template>

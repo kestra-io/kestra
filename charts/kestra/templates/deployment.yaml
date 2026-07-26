@@ -172,9 +172,6 @@ spec:
             - "-c"
             - | 
                 exec /app/kestra server {{ $type }} \
-                {{- if and (eq $type "worker") (ne $name "worker") }}
-                --worker-group={{ $name }} \
-                {{- end }}
                 {{- if $content.workerThreads }}
                 {{- if eq $type "standalone" }}
                 --worker-thread={{ $content.workerThreads }} \

@@ -35,6 +35,27 @@ describe("logLevelQuery", () => {
             ).toEqual({value: "INFO", direction: "max"})
         })
 
+        test("reads the NOT_IN filter as a not_in direction", () => {
+            expect(
+                readRouteLevelFilter({"filters[level][NOT_IN]": "TRACE,DEBUG"}),
+            ).toEqual({value: "TRACE,DEBUG", direction: "not_in"})
+        })
+
+        test("reads the IN filter as an in direction", () => {
+            expect(
+                readRouteLevelFilter({"filters[level][IN]": "WARN,ERROR"}),
+            ).toEqual({value: "WARN,ERROR", direction: "in"})
+        })
+
+        test("prefers GREATER_THAN_OR_EQUAL_TO/LESS_THAN_OR_EQUAL_TO over IN/NOT_IN", () => {
+            expect(
+                readRouteLevelFilter({
+                    "filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO",
+                    "filters[level][IN]": "WARN,ERROR",
+                }),
+            ).toEqual({value: "INFO", direction: "min"})
+        })
+
         test("reads the legacy EQUALS filter as a min direction", () => {
             expect(
                 readRouteLevelFilter({"filters[level][EQUALS]": "WARN"}),
@@ -57,7 +78,7 @@ describe("logLevelQuery", () => {
         })
 
         test("flags an unsupported level comparator", () => {
-            expect(hasUnsupportedRouteLevelComparator({"filters[level][IN]": "INFO"})).toBe(true)
+            expect(hasUnsupportedRouteLevelComparator({"filters[level][CONTAINS]": "INFO"})).toBe(true)
         })
 
         test("accepts the GREATER_THAN_OR_EQUAL_TO comparator", () => {
@@ -70,6 +91,14 @@ describe("logLevelQuery", () => {
             expect(
                 hasUnsupportedRouteLevelComparator({"filters[level][LESS_THAN_OR_EQUAL_TO]": "INFO"}),
             ).toBe(false)
+        })
+
+        test("accepts the IN comparator", () => {
+            expect(hasUnsupportedRouteLevelComparator({"filters[level][IN]": "WARN,ERROR"})).toBe(false)
+        })
+
+        test("accepts the NOT_IN comparator", () => {
+            expect(hasUnsupportedRouteLevelComparator({"filters[level][NOT_IN]": "WARN,ERROR"})).toBe(false)
         })
 
         test("accepts the legacy EQUALS comparator", () => {
@@ -106,6 +135,22 @@ describe("logLevelQuery", () => {
             ).toEqual({value: "ERROR", direction: "min"})
         })
 
+        test("reads an IN comparator as an in direction, joining the array", () => {
+            expect(
+                readAppliedLevelFilter(
+                    applied([{key: "level", value: ["WARN", "ERROR"], comparator: Comparators.IN}]),
+                ),
+            ).toEqual({value: "WARN,ERROR", direction: "in"})
+        })
+
+        test("reads a NOT_IN comparator as a not_in direction, joining the array", () => {
+            expect(
+                readAppliedLevelFilter(
+                    applied([{key: "level", value: ["TRACE", "DEBUG"], comparator: Comparators.NOT_IN}]),
+                ),
+            ).toEqual({value: "TRACE,DEBUG", direction: "not_in"})
+        })
+
         test("returns undefined when no level filter is present", () => {
             expect(
                 readAppliedLevelFilter(applied([{key: "namespace", value: "demo"}])),
@@ -127,6 +172,18 @@ describe("logLevelQuery", () => {
         test("sets a LESS_THAN_OR_EQUAL_TO filter for a max-direction level", () => {
             expect(normalizeRouteLevelFilter({}, {value: "INFO", direction: "max"})).toEqual({
                 "filters[level][LESS_THAN_OR_EQUAL_TO]": "INFO",
+            })
+        })
+
+        test("sets an IN filter for an in-direction level", () => {
+            expect(normalizeRouteLevelFilter({}, {value: "WARN,ERROR", direction: "in"})).toEqual({
+                "filters[level][IN]": "WARN,ERROR",
+            })
+        })
+
+        test("sets a NOT_IN filter for a not_in-direction level", () => {
+            expect(normalizeRouteLevelFilter({}, {value: "TRACE,DEBUG", direction: "not_in"})).toEqual({
+                "filters[level][NOT_IN]": "TRACE,DEBUG",
             })
         })
 
@@ -181,6 +238,18 @@ describe("logLevelQuery", () => {
         test("maps a max direction to LESS_THAN_OR_EQUAL_TO", () => {
             expect(levelToRequestParams({value: "INFO", direction: "max"})).toEqual({
                 "filters[level][LESS_THAN_OR_EQUAL_TO]": "INFO",
+            })
+        })
+
+        test("maps an in direction to IN", () => {
+            expect(levelToRequestParams({value: "WARN,ERROR", direction: "in"})).toEqual({
+                "filters[level][IN]": "WARN,ERROR",
+            })
+        })
+
+        test("maps a not_in direction to NOT_IN", () => {
+            expect(levelToRequestParams({value: "TRACE,DEBUG", direction: "not_in"})).toEqual({
+                "filters[level][NOT_IN]": "TRACE,DEBUG",
             })
         })
 

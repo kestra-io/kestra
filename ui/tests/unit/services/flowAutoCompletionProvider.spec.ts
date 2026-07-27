@@ -36,6 +36,19 @@ triggers:
 id: my-flow
 namespace: my.namespace`
 
+const flowWithDashboardExportTask = [
+    "tasks:",
+    "  - id: dashboardExport",
+    "    type: io.kestra.plugin.kestra.dashboards.Export",
+    "    dashboardId: my-dashboard",
+    "    chartId: my-chart",
+    "  - id: dashboardExportNoDashboard",
+    "    type: io.kestra.plugin.kestra.dashboards.Export",
+    "    chartId: my-chart",
+    "id: my-flow",
+    "namespace: my.namespace",
+].join("\n")
+
 const flowWithOutputsAutocompleteInTask = [
     "tasks:",
     "  - id: download",
@@ -142,6 +155,22 @@ const mcpStore = {
     list: vi.fn(() => Promise.resolve({results: [{id: "default"}, {id: "analytics-server"}], total: 2})),
 } as any
 
+const dashboardStore = {
+    searchIds: vi.fn(() => Promise.resolve([{id: "my-dashboard", title: "My Dashboard"}, {id: "other-dashboard", title: "Other"}])),
+    chartsById: vi.fn((id: string) => {
+        if (id === "my-dashboard") {
+            return Promise.resolve([
+                {id: "my-chart", type: "io.kestra.plugin.core.dashboard.chart.Bar"},
+                {id: "markdown-chart", type: "io.kestra.plugin.core.dashboard.chart.Markdown"},
+            ])
+        }
+        if (id === "_default") {
+            return Promise.resolve([{id: "default-chart", type: "io.kestra.plugin.core.dashboard.chart.Table"}])
+        }
+        return Promise.resolve([])
+    }),
+} as any
+
 const mockFunctions = [
     {name: "kv", arguments: [{name: "key", defaultValue: "'my_key'"}, {name: "namespace", defaultValue: "flow.namespace"}, {name: "errorOnMissing", defaultValue: null}]},
     {name: "now", arguments: [{name: "format", defaultValue: null}, {name: "timeZone", defaultValue: null}, {name: "existingFormat", defaultValue: null}, {name: "locale", defaultValue: null}]},
@@ -151,7 +180,7 @@ const mockFunctions = [
     {name: "subflow", arguments: [{name: "namespace", defaultValue: null}, {name: "id", defaultValue: null}]},
 ]
 
-const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore)
+const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, dashboardStore)
 const parsed = YAML_UTILS.parse(defaultFlow)
 const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse(flowWithOutputsAutocompleteInTask)
 
@@ -161,7 +190,7 @@ describe("FlowAutoCompletionProvider", () => {
     })
 
     it("root autocompletions include variables and function snippets", async () => {
-        const result = await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore).rootFieldAutoCompletion()
+        const result = await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, dashboardStore).rootFieldAutoCompletion()
 
         // Variables come first
         expect(result).toContain("outputs")
@@ -264,6 +293,21 @@ tasks:
 
         // With newline already inserted
         expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"])
+    })
+
+    it("dashboardId/chartId autocompletions", async () => {
+        const flow = flowWithDashboardExportTask
+        const parsedFlow = YAML_UTILS.parse(flow)
+
+        expect(await provider.valueAutoCompletion(flow, parsedFlow, YAML_UTILS.localizeElementAtIndex(flow, flow.indexOf("dashboardId:") + "dashboardId:".length))).toEqual(["my-dashboard", "other-dashboard"])
+
+        // chartId depends on the sibling dashboardId and excludes non-exportable (Markdown) charts
+        const firstChartIdIndex = flow.indexOf("chartId:")
+        expect(await provider.valueAutoCompletion(flow, parsedFlow, YAML_UTILS.localizeElementAtIndex(flow, firstChartIdIndex + "chartId:".length))).toEqual(["my-chart"])
+
+        // chartId stays live even when dashboardId is missing: falls back to the "_default" sentinel dashboard
+        const secondChartIdIndex = flow.lastIndexOf("chartId:")
+        expect(await provider.valueAutoCompletion(flow, parsedFlow, YAML_UTILS.localizeElementAtIndex(flow, secondChartIdIndex + "chartId:".length))).toEqual(["default-chart"])
     })
 
     it("function autocompletions", async () => {

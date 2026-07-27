@@ -79,6 +79,7 @@
         task: any;
         required?: string[];
         disabled?: boolean;
+        siblingKeys?: string[];
     }>()
 
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent")
@@ -136,7 +137,7 @@
     const {getBlockComponent} = useBlockComponent()
 
     const type = computed(() => {
-        return getBlockComponent.value(props.schema ?? {}, props.fieldKey)
+        return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
     })
 </script>
 

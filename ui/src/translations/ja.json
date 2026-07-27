@@ -61,6 +61,8 @@
     "success": "Success",
     "save": "保存",
     "save_as_draft": "下書きとして保存",
+    "publish": "公開",
+    "publish_draft": "下書きを公開",
     "draft": "下書き",
     "draft_flow_warning": "この flow の最新リビジョンは下書きです。実行は代わりに最新の公開済みリビジョンに対して行われます。最新の変更を実行するには、下書きを公開するか Playground から実行してください。",
     "save task": "Taskを保存",
@@ -127,6 +129,8 @@
       "last24hours": "過去24時間",
       "last48hours": "過去48時間",
       "last7days": "過去7日間",
+      "last14days": "直近14日間",
+      "last28days": "過去28日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
       "next5minutes": "次の5分",
@@ -145,6 +149,8 @@
       "24hours": "24時間",
       "48hours": "48時間",
       "7days": "7日間",
+      "14days": "14日間",
+      "28days": "28日間",
       "30days": "30日間",
       "365days": "365日間",
       "never": "無期限",
@@ -459,10 +465,53 @@
     },
     "use": "使用",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "タイプをコピー",
+      "deprecated": "非推奨",
+      "dynamic": "動的",
+      "filter_all": "すべて",
+      "filter_properties": "プロパティを絞り込む…",
+      "filter_required": "必須",
+      "intro_callout_prefix": "エディタtaskの",
+      "intro_callout_suffix": "をクリックすると、そのpluginのドキュメントがここに表示されます。",
+      "intro_clear_search": "検索をクリア",
+      "intro_learn_more": "詳細を見る",
+      "intro_no_matches_sub": "検索に一致する関数、フィルター、またはプロパティはありません。",
+      "intro_no_matches_title": "「{q}」の結果なし",
+      "intro_result_count": "{count} 件の結果",
+      "intro_search_placeholder": "リファレンスを検索…",
+      "intro_start_here": "はじめに",
+      "intro_step1_cta": "flow リファレンスを見る",
+      "intro_step1_desc_mid": "内に一意の",
+      "intro_step1_desc_prefix": "すべてのflowには",
+      "intro_step1_desc_suffix": "が必要です。",
+      "intro_step1_title": "id と namespace を設定",
+      "intro_step2_cta": "task リファレンスを見る",
+      "intro_step2_desc": "順番に実行されるアトミックなアクションです。taskをクリックしてdocsを確認できます。",
+      "intro_step2_title": "tasksを追加",
+      "intro_step3_cta": "inputs リファレンスを見る",
+      "intro_step3_desc_mid": "、",
+      "intro_step3_desc_prefix": "使用",
+      "intro_step3_desc_suffix": "とPebble式を使用します。",
+      "intro_step3_title": "動的にする",
+      "intro_sub": "YAMLでflowを構築するために必要なすべて：プロパティ、inputs、Pebble templatingを一箇所で。",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Flowドキュメント",
       "name": "プラグイン",
       "names": "プラグイン",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "概要",
+      "nav_properties": "Properties",
+      "non_dynamic": "非動的",
       "please": "ドキュメントを見るには右側のTaskを選択してください",
-      "release": "リリースノート"
+      "release": "リリースノート",
+      "required": "必須"
     },
     "last execution date": "最後の実行日",
     "last execution state": "最終状態",
@@ -728,7 +777,6 @@
     },
     "title": "タイトル",
     "api": "API",
-    "more_actions": "その他のアクション",
     "expand error": "失敗したtaskのみ展開",
     "expand all": "すべて展開",
     "collapse all": "すべて折りたたむ",
@@ -788,6 +836,17 @@
       "tooltip": "トリガーを再起動する"
     },
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
+    "trigger enable dialog": {
+      "title": "trigger を有効化",
+      "bulk title": "{{count}} triggers を有効にする",
+      "description": "この trigger は、無効化されている間にスケジュールが実行されなかった可能性があります。",
+      "bulk description": "選択されたトリガーは、無効化されている間にスケジュールを見逃した可能性があります。",
+      "strategy": "使用する戦略を選択してください:",
+      "options": {
+        "skip": "見逃されたスケジュールを回復しない",
+        "follow": "triggerのプロパティ設定に従う"
+      }
+    },
     "flow source not found": "フローソースが見つかりません",
     "date format": "日付形式",
     "timezone": "タイムゾーン",
@@ -1311,7 +1370,7 @@
         "complete": "完了",
         "save_to_continue": "右上の「Save」をクリックしてください。",
         "execute_to_continue": "1. 右上の「Execute」をクリックします。\n2. <strong>name</strong> に値を入力します。\n3. モーダルで再度「Execute」をクリックします。",
-        "edit_flow_to_continue": "右上の「Edit flow」をクリックしてください。",
+        "edit_flow_to_continue": "アクションメニュー（上部バー右側）を開き、「Flowを編集」を選択してください。",
         "cancel_tutorial": "チュートリアルをキャンセル",
         "finish_tutorial": "チュートリアルを終了"
       },
@@ -1349,7 +1408,7 @@
         "save_flow": "続行するには「Save」をクリックしてください。",
         "execute_flow": "続行するにはフローを一度実行してください。",
         "view_logs_status": "実行詳細を開き、`greet` のログを確認してください。",
-        "edit_flow_from_execution": "上部バーの「Edit flow」をクリックして続行してください。",
+        "edit_flow_from_execution": "アクションメニューを開き、「Flowを編集」をクリックして続行してください。",
         "add_cron_trigger_section": "`triggers` セクションを作成し、スケジュールトリガーを追加してください。",
         "add_cron_trigger_type": "トリガータイプを `io.kestra.plugin.core.trigger.Schedule` に設定してください。",
         "add_cron_trigger_cron": "cron式を追加してください。例：`\"*/5 * * * *\"`。",
@@ -1398,7 +1457,14 @@
       "update": "シークレット '{name}' を更新",
       "isReadOnly": "シークレットは読み取り専用です",
       "names": "Secrets",
-      "inherited": "継承されたsecrets"
+      "inherited": "継承されたsecrets",
+      "key": "名前",
+      "keyPlaceholder": "このシークレットを参照するために使用される名前。例: MY_API_TOKEN",
+      "name": "秘密の値",
+      "description": "説明",
+      "descriptionPlaceholder": "このシークレットの説明",
+      "tags": "タグ",
+      "addTag": "タグを追加"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1881,6 +1947,10 @@
       "viewAll": "すべて表示",
       "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
       "export": "CSVにエクスポート",
+      "exportTo": {
+        "csv": "CSVにエクスポート",
+        "ion": "ION にエクスポート"
+      },
       "quick_filters": {
         "all": "すべて",
         "running": "実行中",
@@ -2231,8 +2301,7 @@
         "open_world": "Open world",
         "destructive": "破壊的",
         "idempotent": "冪等",
-        "return_direct": "直接返却",
-        "view_flow": "flowを開く"
+        "return_direct": "直接返却"
       },
       "connect_tab": {
         "server_url": "サーバーURL",
@@ -2282,6 +2351,12 @@
     },
     "open source": "オープンソース",
     "pricing": "料金",
-    "license": "ライセンス"
+    "license": "ライセンス",
+    "pwa": {
+      "install_title": "Kestra をインストール",
+      "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",
+      "install": "インストール",
+      "dismiss": "後で"
+    }
   }
 }

@@ -61,6 +61,8 @@
     "success": "Erfolg",
     "save": "Speichern",
     "save_as_draft": "Als Entwurf speichern",
+    "publish": "Veröffentlichen",
+    "publish_draft": "Entwurf veröffentlichen",
     "draft": "Entwurf",
     "draft_flow_warning": "Die neueste Revision dieses flow ist ein Entwurf. Die Ausführung verwendet stattdessen die neueste veröffentlichte Revision – veröffentlichen Sie den Entwurf (oder führen Sie ihn im Playground aus), um Ihre letzten Änderungen auszuführen.",
     "save task": "Task speichern",
@@ -127,6 +129,8 @@
       "last24hours": "Letzte 24 Stunden",
       "last48hours": "Letzte 48 Stunden",
       "last7days": "Letzte 7 Tage",
+      "last14days": "Letzte 14 Tage",
+      "last28days": "Letzte 28 Tage",
       "last30days": "Letzte 30 Tage",
       "last365days": "Letzte 365 Tage",
       "next5minutes": "Nächste 5 Minuten",
@@ -145,6 +149,8 @@
       "24hours": "24 Stunden",
       "48hours": "48 Stunden",
       "7days": "7 Tage",
+      "14days": "14 Tage",
+      "28days": "28 Tage",
       "30days": "30 Tage",
       "365days": "365 Tage",
       "never": "Nie",
@@ -459,10 +465,53 @@
     },
     "use": "Verwenden",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "Typ kopieren",
+      "deprecated": "Veraltet",
+      "dynamic": "dynamisch",
+      "filter_all": "Alle",
+      "filter_properties": "Eigenschaften filtern…",
+      "filter_required": "Erforderlich",
+      "intro_callout_prefix": "Klicke auf das ",
+      "intro_callout_suffix": " eines task im Editor, um dessen Plugin-Dokumentation hier zu öffnen.",
+      "intro_clear_search": "Suche zurücksetzen",
+      "intro_learn_more": "Mehr erfahren",
+      "intro_no_matches_sub": "Keine Funktionen, Filter oder Eigenschaften entsprechen deiner Suche.",
+      "intro_no_matches_title": "Keine Ergebnisse für \"{q}\"",
+      "intro_result_count": "{count} Ergebnisse",
+      "intro_search_placeholder": "Referenz durchsuchen…",
+      "intro_start_here": "Erste Schritte",
+      "intro_step1_cta": "flow-Referenz ansehen",
+      "intro_step1_desc_mid": " innerhalb eines ",
+      "intro_step1_desc_prefix": "Jeder flow benötigt eine eindeutige ",
+      "intro_step1_desc_suffix": ".",
+      "intro_step1_title": "id & namespace festlegen",
+      "intro_step2_cta": "task-Referenz ansehen",
+      "intro_step2_desc": "Atomare Aktionen, die der Reihe nach ausgeführt werden. Klicke auf einen task, um dessen Dokumentation zu sehen.",
+      "intro_step2_title": "tasks hinzufügen",
+      "intro_step3_cta": "inputs-Referenz ansehen",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "Nutze ",
+      "intro_step3_desc_suffix": " und Pebble-Ausdrücke.",
+      "intro_step3_title": "Dynamisch gestalten",
+      "intro_sub": "Alles, was du brauchst, um einen flow in YAML zu erstellen: Eigenschaften, inputs und Pebble-Templating an einem Ort.",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Flow-Dokumentation",
       "name": "Plugin",
       "names": "Plugins",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "Übersicht",
+      "nav_properties": "Properties",
+      "non_dynamic": "nicht dynamisch",
       "please": "Bitte wählen Sie rechts einen Task aus, um dessen Dokumentation zu sehen",
-      "release": "Versionshinweise"
+      "release": "Versionshinweise",
+      "required": "Erforderlich"
     },
     "last execution date": "Letztes Ausführungsdatum",
     "last execution state": "Letzter Zustand",
@@ -728,7 +777,6 @@
     },
     "title": "Titel",
     "api": "API",
-    "more_actions": "Weitere Aktionen",
     "expand error": "Nur fehlgeschlagene Tasks ausklappen",
     "expand all": "Alle ausklappen",
     "collapse all": "Alle einklappen",
@@ -788,6 +836,17 @@
       "tooltip": "Den Trigger neu starten"
     },
     "trigger disabled": "Trigger ist in der Flow-Quelle deaktiviert",
+    "trigger enable dialog": {
+      "title": "Trigger aktivieren",
+      "bulk title": "Aktivieren Sie {count} Trigger",
+      "description": "Dieser Trigger könnte Zeitpläne verpasst haben, während er deaktiviert war.",
+      "bulk description": "Die ausgewählten Trigger könnten Zeitpläne verpasst haben, während sie deaktiviert waren.",
+      "strategy": "Wählen Sie die zu verwendende Strategie:",
+      "options": {
+        "skip": "Verpasste Zeitpläne nicht nachholen",
+        "follow": "Der Konfiguration des Triggers {property} folgen"
+      }
+    },
     "flow source not found": "Flow-Quelle nicht gefunden",
     "date format": "Datumsformat",
     "timezone": "Zeitzone",
@@ -1311,7 +1370,7 @@
         "complete": "Abschließen",
         "save_to_continue": "Klicken Sie oben rechts in der Leiste auf „Speichern“.",
         "execute_to_continue": "1. Klicken Sie oben rechts in der Leiste auf „Ausführen“.\n2. Geben Sie einen Wert für <strong>name</strong> an.\n3. Klicken Sie im Dialog erneut auf „Ausführen“.",
-        "edit_flow_to_continue": "Klicken Sie oben rechts in der Leiste auf „Flow bearbeiten“.",
+        "edit_flow_to_continue": "Öffnen Sie das Aktionsmenü (oben rechts in der Leiste) und wählen Sie „Flow bearbeiten“.",
         "cancel_tutorial": "Tutorial abbrechen",
         "finish_tutorial": "Tutorial beenden"
       },
@@ -1349,7 +1408,7 @@
         "save_flow": "Klicken Sie auf „Speichern“, um fortzufahren.",
         "execute_flow": "Führen Sie den Flow einmal aus, um fortzufahren.",
         "view_logs_status": "Öffnen Sie die Ausführungsdetails und prüfen Sie die Logs für `greet`.",
-        "edit_flow_from_execution": "Klicken Sie oben in der Leiste auf „Flow bearbeiten“, um fortzufahren.",
+        "edit_flow_from_execution": "Öffnen Sie das Aktionsmenü und klicken Sie auf „Flow bearbeiten“, um fortzufahren.",
         "add_cron_trigger_section": "Erstellen Sie einen Abschnitt `triggers` mit einem Schedule-Trigger.",
         "add_cron_trigger_type": "Setzen Sie den Trigger-Typ auf `io.kestra.plugin.core.trigger.Schedule`.",
         "add_cron_trigger_cron": "Fügen Sie einen Cron-Ausdruck hinzu, z. B.: `\"*/5 * * * *\"`.",
@@ -1398,7 +1457,14 @@
       "update": "Aktualisiere Secret '{name}'",
       "isReadOnly": "Geheimnis ist schreibgeschützt",
       "names": "Secrets",
-      "inherited": "Geerbte Secrets"
+      "inherited": "Geerbte Secrets",
+      "key": "Name",
+      "keyPlaceholder": "Name, der zur Referenzierung dieses Geheimnisses verwendet wird, z.B. MY_API_TOKEN",
+      "name": "Geheimniswert",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Beschreiben Sie dieses Geheimnis",
+      "tags": "Tags",
+      "addTag": "Tag hinzufügen"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1881,6 +1947,10 @@
       "viewAll": "Alle anzeigen",
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
       "export": "Exportieren nach CSV",
+      "exportTo": {
+        "csv": "Exportieren als CSV",
+        "ion": "Nach ION exportieren"
+      },
       "quick_filters": {
         "all": "Alle",
         "running": "Läuft",
@@ -2231,8 +2301,7 @@
         "open_world": "Open world",
         "destructive": "Destruktiv",
         "idempotent": "Idempotent",
-        "return_direct": "Direktrückgabe",
-        "view_flow": "flow öffnen"
+        "return_direct": "Direktrückgabe"
       },
       "connect_tab": {
         "server_url": "Server-URL",
@@ -2282,6 +2351,12 @@
     },
     "open source": "Open Source",
     "pricing": "Preise",
-    "license": "Lizenz"
+    "license": "Lizenz",
+    "pwa": {
+      "install_title": "Kestra installieren",
+      "install_description": "Installieren Sie Kestra als App für einen schnelleren Zugriff und ein Vollbild-Erlebnis.",
+      "install": "Installieren",
+      "dismiss": "Nicht jetzt"
+    }
   }
 }

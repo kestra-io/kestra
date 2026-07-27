@@ -15,7 +15,6 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
-import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.services.FlowAutoLoader;
@@ -66,12 +65,6 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
 
     @Option(names = { "-p", "--plugins" }, description = "Path to plugins directory")
     protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
-
-    @SuppressWarnings("unused")
-    public static Map<String, Object> propertiesOverrides() {
-        MigrationRunner.setSkipAutoRun(true);
-        return Map.of();
-    }
 
     @Override
     public Integer call() throws Exception {

@@ -20,6 +20,13 @@ export const TEXT_COMPARATORS = [
     Comparators.ENDS_WITH,
     Comparators.STARTS_WITH,
 ]
+// Range/threshold comparators always target a single bound value
+export const RANGE_COMPARATORS = [
+    Comparators.GREATER_THAN,
+    Comparators.LESS_THAN,
+    Comparators.GREATER_THAN_OR_EQUAL_TO,
+    Comparators.LESS_THAN_OR_EQUAL_TO,
+]
 
 export interface DateFilterOption {
     value: string;
@@ -139,6 +146,7 @@ export interface SavedFilter {
     description?: string;
     filters: AppliedFilter[];
     groups?: FilterGroup[];
+    topLogical?: LogicalOperator;
 }
 
 export interface FilterConfiguration {

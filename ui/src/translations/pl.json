@@ -61,6 +61,8 @@
     "success": "Sukces",
     "save": "Zapisz",
     "save_as_draft": "Zapisz jako wersję roboczą",
+    "publish": "Opublikuj",
+    "publish_draft": "Opublikuj wersję roboczą",
     "draft": "Wersja robocza",
     "draft_flow_warning": "Najnowsza rewizja tego flow jest wersją roboczą. Wykonanie zostanie uruchomione na najnowszej opublikowanej rewizji – opublikuj wersję roboczą (lub uruchom ją z Playground), aby wykonać najnowsze zmiany.",
     "save task": "Zapisz Task",
@@ -127,6 +129,8 @@
       "last24hours": "Ostatnie 24 godziny",
       "last48hours": "Ostatnie 48 godzin",
       "last7days": "Ostatnie 7 dni",
+      "last14days": "Ostatnie 14 dni",
+      "last28days": "Ostatnie 28 dni",
       "last30days": "Ostatnie 30 dni",
       "last365days": "Ostatnie 365 dni",
       "next5minutes": "Następne 5 minut",
@@ -145,6 +149,8 @@
       "24hours": "24 godziny",
       "48hours": "48 godzin",
       "7days": "7 dni",
+      "14days": "14 dni",
+      "28days": "28 dni",
       "30days": "30 dni",
       "365days": "365 dni",
       "never": "Nigdy",
@@ -459,10 +465,53 @@
     },
     "use": "Użyj",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "Kopiuj typ",
+      "deprecated": "Przestarzałe",
+      "dynamic": "dynamiczny",
+      "filter_all": "Wszystkie",
+      "filter_properties": "Filtruj właściwości…",
+      "filter_required": "Wymagane",
+      "intro_callout_prefix": "Kliknij ",
+      "intro_callout_suffix": " zadania w edytorze, aby otworzyć tutaj dokumentację wtyczki.",
+      "intro_clear_search": "Wyczyść wyszukiwanie",
+      "intro_learn_more": "Dowiedz się więcej",
+      "intro_no_matches_sub": "Żadna funkcja, filtr ani właściwość nie pasuje do Twojego wyszukiwania.",
+      "intro_no_matches_title": "Brak wyników dla \"{q}\"",
+      "intro_result_count": "{count} wyników",
+      "intro_search_placeholder": "Przeszukaj dokumentację…",
+      "intro_start_here": "Zacznij tutaj",
+      "intro_step1_cta": "Zobacz dokumentację flow",
+      "intro_step1_desc_mid": " w obrębie ",
+      "intro_step1_desc_prefix": "Każdy flow potrzebuje unikalnego ",
+      "intro_step1_desc_suffix": ".",
+      "intro_step1_title": "Nadaj id i namespace",
+      "intro_step2_cta": "Zobacz dokumentację task",
+      "intro_step2_desc": "Niepodzielne akcje wykonywane w kolejności. Kliknij task, aby zobaczyć jego dokumentację.",
+      "intro_step2_title": "Dodaj tasks",
+      "intro_step3_cta": "Zobacz dokumentację inputs",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "Używaj ",
+      "intro_step3_desc_suffix": " i wyrażeń Pebble.",
+      "intro_step3_title": "Uczyń to dynamicznym",
+      "intro_sub": "Wszystko, czego potrzebujesz do tworzenia flow w YAML: właściwości, inputs i Pebble templating w jednym miejscu.",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Dokumentacja flow",
       "name": "Plugin",
       "names": "Plugins",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "Przegląd",
+      "nav_properties": "Properties",
+      "non_dynamic": "niestatyczny",
       "please": "Proszę wybrać task po prawej, aby zobaczyć jego dokumentację",
-      "release": "Informacje o wydaniu"
+      "release": "Informacje o wydaniu",
+      "required": "Wymagane"
     },
     "last execution date": "Data ostatniego wykonania",
     "last execution state": "Ostatni stan",
@@ -728,7 +777,6 @@
     },
     "title": "Tytuł",
     "api": "API",
-    "more_actions": "Więcej akcji",
     "expand error": "Rozwiń tylko nieudane tasks",
     "expand all": "Rozwiń wszystko",
     "collapse all": "Zwiń wszystko",
@@ -788,6 +836,17 @@
       "tooltip": "Uruchom ponownie trigger"
     },
     "trigger disabled": "Trigger jest wyłączony w źródle Flow",
+    "trigger enable dialog": {
+      "title": "Włącz trigger",
+      "bulk title": "Włącz {count} triggers",
+      "description": "Ten trigger mógł przegapić harmonogramy, gdy był wyłączony.",
+      "bulk description": "Wybrane triggery mogły pominąć harmonogramy, gdy były wyłączone.",
+      "strategy": "Wybierz strategię do użycia:",
+      "options": {
+        "skip": "Nie odzyskuj pominiętych harmonogramów",
+        "follow": "Postępuj zgodnie z konfiguracją {property} triggera"
+      }
+    },
     "flow source not found": "Źródło flow nie znalezione",
     "date format": "Format daty",
     "timezone": "Strefa czasowa",
@@ -1311,7 +1370,7 @@
         "complete": "Zakończ",
         "save_to_continue": "Kliknij Zapisz w górnym pasku (po prawej).",
         "execute_to_continue": "1. Kliknij Uruchom w górnym pasku (po prawej).\n2. Podaj wartość dla <strong>name</strong>.\n3. Kliknij ponownie Uruchom w oknie modalnym.",
-        "edit_flow_to_continue": "Kliknij Edytuj flow w górnym pasku (po prawej).",
+        "edit_flow_to_continue": "Otwórz menu akcji (górny pasek, po prawej) i wybierz Edytuj flow.",
         "cancel_tutorial": "Anuluj samouczek",
         "finish_tutorial": "Zakończ samouczek"
       },
@@ -1349,7 +1408,7 @@
         "save_flow": "Kliknij Zapisz, aby kontynuować.",
         "execute_flow": "Uruchom flow raz, aby kontynuować.",
         "view_logs_status": "Otwórz szczegóły wykonania i sprawdź logi dla `greet`.",
-        "edit_flow_from_execution": "Kliknij `Edytuj flow` w górnym pasku, aby kontynuować.",
+        "edit_flow_from_execution": "Otwórz menu akcji i kliknij `Edytuj flow`, aby kontynuować.",
         "add_cron_trigger_section": "Utwórz sekcję `triggers` z wyzwalaczem harmonogramu.",
         "add_cron_trigger_type": "Ustaw typ wyzwalacza na `io.kestra.plugin.core.trigger.Schedule`.",
         "add_cron_trigger_cron": "Dodaj wyrażenie cron, np.: `\"*/5 * * * *\"`.",
@@ -1398,7 +1457,14 @@
       "update": "Aktualizuj sekret '{name}'",
       "isReadOnly": "Sekret jest tylko do odczytu",
       "names": "Secrets",
-      "inherited": "Dziedziczone secrets"
+      "inherited": "Dziedziczone secrets",
+      "key": "Nazwa",
+      "keyPlaceholder": "Nazwa używana do odwoływania się do tego sekretu, np. MY_API_TOKEN",
+      "name": "Wartość tajna",
+      "description": "Opis",
+      "descriptionPlaceholder": "Opisz ten sekret",
+      "tags": "Tagi",
+      "addTag": "Dodaj tag"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1881,6 +1947,10 @@
       "viewAll": "Pokaż wszystko",
       "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
       "export": "Eksportuj do CSV",
+      "exportTo": {
+        "csv": "Eksportuj do CSV",
+        "ion": "Eksportuj do ION"
+      },
       "quick_filters": {
         "all": "Wszystkie",
         "running": "Uruchomione",
@@ -2231,8 +2301,7 @@
         "open_world": "Open world",
         "destructive": "Destrukcyjny",
         "idempotent": "Idempotentny",
-        "return_direct": "Zwrot bezpośredni",
-        "view_flow": "Otwórz flow"
+        "return_direct": "Zwrot bezpośredni"
       },
       "connect_tab": {
         "server_url": "URL serwera",
@@ -2282,6 +2351,12 @@
     },
     "open source": "Otwarte Źródło",
     "pricing": "Cennik",
-    "license": "Licencja"
+    "license": "Licencja",
+    "pwa": {
+      "install_title": "Zainstaluj Kestra",
+      "install_description": "Zainstaluj Kestra jako aplikację, aby uzyskać szybszy dostęp i pełnoekranowe wrażenia.",
+      "install": "Zainstaluj",
+      "dismiss": "Nie teraz"
+    }
   }
 }

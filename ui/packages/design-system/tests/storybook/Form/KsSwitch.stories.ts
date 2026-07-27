@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
+import {expect} from "storybook/test"
 import KsSwitch from "../../../src/components/Form/KsSwitch.vue"
 
 const meta: Meta<typeof KsSwitch> = {
@@ -89,4 +90,16 @@ export const Disabled: Story = {
         setup() { return {value: ref(true)} },
         template: "<div style=\"padding:24px\"><ks-switch v-model=\"value\" disabled /></div>",
     }),
+    async play({canvasElement}) {
+        const element = canvasElement.querySelector(".kel-switch.is-disabled.is-checked")
+        const core = element?.querySelector(".kel-switch__core")
+        await expect(core).toBeTruthy()
+
+        const activeColor = document.createElement("span")
+        activeColor.style.backgroundColor = "var(--ks-toggle-active)"
+        canvasElement.append(activeColor)
+        await expect(getComputedStyle(core as Element).backgroundColor)
+            .toBe(getComputedStyle(activeColor).backgroundColor)
+        activeColor.remove()
+    },
 }

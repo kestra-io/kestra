@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileAlreadyExistsException;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
@@ -61,5 +62,34 @@ class LocalStorageTest extends StorageTestSuite {
             IllegalArgumentException.class,
             () -> storageInterface.get(IdUtils.create(), null, traversal)
         );
+    }
+
+    // When the parent directory hierarchy cannot be created (here: a regular file occupies a
+    // path segment), put must fail with a descriptive exception naming the offending path —
+    // not the misleading FileNotFoundException that surfaced while File#mkdirs' boolean
+    // result was ignored (see issue #17093).
+    @Test
+    void shouldFailWithDescriptiveErrorWhenParentDirectoryCannotBeCreated() throws URISyntaxException, IOException {
+        // Given: a regular file at the path where the parent directory would be created
+        String tenantId = IdUtils.create();
+        storageInterface.put(
+            tenantId,
+            null,
+            new URI("/parent-conflict/blocking"),
+            new ByteArrayInputStream("i am a file, not a directory".getBytes())
+        );
+
+        // When: putting an object whose parent path traverses that regular file
+        // Then: the failure names the conflicting path instead of a misleading "not found"
+        FileAlreadyExistsException exception = assertThrows(
+            FileAlreadyExistsException.class,
+            () -> storageInterface.put(
+                tenantId,
+                null,
+                new URI("/parent-conflict/blocking/child.ion"),
+                new ByteArrayInputStream("Hello World".getBytes())
+            )
+        );
+        assertTrue(exception.getMessage().contains("blocking"));
     }
 }

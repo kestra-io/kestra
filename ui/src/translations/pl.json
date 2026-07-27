@@ -184,6 +184,7 @@
     "last execution status": "Ostatni status wykonania",
     "jump to...": "Przejdź do...",
     "contextBar": {
+      "ai": "SI",
       "news": "Wiadomości",
       "docs": "Dokumentacja",
       "help": "Pomoc",
@@ -1947,6 +1948,10 @@
       "viewAll": "Pokaż wszystko",
       "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
       "export": "Eksportuj do CSV",
+      "exportTo": {
+        "csv": "Eksportuj do CSV",
+        "ion": "Eksportuj do ION"
+      },
       "quick_filters": {
         "all": "Wszystkie",
         "running": "Uruchomione",
@@ -2051,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Zadaj pytanie dotyczące swoich danych. Przykładowa podpowiedź: Pokaż mi wskaźnik sukcesu moich flows z ostatnich 7 dni."
+      },
+      "copilot": {
+        "title": "Asystent SI",
+        "placeholder": "Powiedz mi, co zbudować…",
+        "send": "Wyślij",
+        "mode": {
+          "ask": "Pytaj",
+          "edit": "Edytuj",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Przekształć swój pomysł w przepływ pracy"
+        },
+        "toolCall": "Uruchamianie {tool}",
+        "context": {
+          "execution": "Wykonanie: {id}",
+          "flow": "Flow: {{flow}}",
+          "namespace": "Namespace: {{namespace}}"
+        },
+        "toolResult": {
+          "detail": "Szczegóły",
+          "error": "{{tool}} nie powiodło się",
+          "ok": "{tool} zakończono",
+          "rejected": "{{tool}} odrzucony"
+        },
+        "confirm": {
+          "planTitle": "Proponowany plan",
+          "actionTitle": "Proponowana akcja",
+          "approve": "Zatwierdź",
+          "approveExecute": "Zatwierdź i wykonaj",
+          "reject": "Odrzuć",
+          "reasonPlaceholder": "Odpowiedz, aby poprawić…",
+          "pending": "Oczekuje na zatwierdzenie",
+          "revise": "Odpowiedz, aby poprawić"
+        },
+        "notice": {
+          "emptyTurn": "Asystent nie zwrócił odpowiedzi. Spróbuj ponownie.",
+          "retry": "Ponów próbę"
+        },
+        "cancelled": "Tura anulowana",
+        "error": {
+          "turnCap": "Ta rozmowa osiągnęła swój limit — rozpocznij nowy czat.",
+          "turnInProgress": "Runda jest już w toku.",
+          "request": "Żądanie nie powiodło się. Spróbuj ponownie.",
+          "generic": "Coś poszło nie tak. Proszę spróbować ponownie."
+        },
+        "emptyHelper": "Mogę edytować ten flow, generować testy, tworzyć szkielet powiązanych plików lub wyjaśnić, jak to działa.",
+        "suggestions": {
+          "errorHandling": "Dodaj obsługę błędów",
+          "unitTest": "Wygeneruj test jednostkowy",
+          "explain": "Wyjaśnij ten flow",
+          "dbt": "Uruchom potok dbt"
+        },
+        "voice": {
+          "start": "Rozpocznij wprowadzanie głosowe",
+          "stop": "Zatrzymaj i wstaw",
+          "cancel": "Anuluj wprowadzanie głosowe"
+        },
+        "unavailable": {
+          "title": "AI Copilot nie jest dostępny",
+          "detail": "Żaden dostawca AI nie jest skonfigurowany. Poproś administratora o jego konfigurację, a następnie spróbuj ponownie.",
+          "retry": "Spróbuj ponownie"
+        },
+        "thinking": "Przetwarzanie",
+        "thinkingWords": [
+          "Orchestrowanie",
+          "Harmonogramowanie",
+          "Sekwencjonowanie",
+          "Routing",
+          "Wysyłanie",
+          "Kolejkowanie",
+          "Wyzwalanie",
+          "Wykonywanie",
+          "Koordynowanie",
+          "Udostępnianie",
+          "Rozwiązywanie",
+          "Komponowanie",
+          "Montowanie",
+          "Planowanie",
+          "Mapowanie",
+          "Połączenia",
+          "Rozgałęzienie",
+          "Synchronizowanie",
+          "Uzgadnianie",
+          "Materializowanie",
+          "Kompilowanie",
+          "Walidacja",
+          "Propagowanie",
+          "Konwergowanie"
+        ],
+        "newChat": "Nowy czat",
+        "recents": "Ostatnie",
+        "recentsEmpty": "Brak ostatnich rozmów jeszcze",
+        "draft": {
+          "openInEditor": "Otwórz w edytorze",
+          "apply": "Zastosuj",
+          "applyTitle": "Zastosuj flow",
+          "applyConfirm": "Zastosować flow {namespace}.{id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
+          "applyConfirmDashboard": "Zastosować pulpit {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
+          "applyError": "Nie udało się zastosować flow. Proszę spróbować ponownie.",
+          "applyErrorDashboard": "Nie udało się zastosować pulpitu. Spróbuj ponownie.",
+          "applyNoTarget": "Ten szkic nie ma namespace ani id do zastosowania.",
+          "applyTitleDashboard": "Zastosuj pulpit",
+          "title": {
+            "flow": "Proponowany flow",
+            "dashboard": "Proponowany panel",
+            "app": "Proponowana aplikacja"
+          },
+          "valid": "Prawidłowy",
+          "invalid": "Wymaga zmian",
+          "copy": "Kopiuj YAML",
+          "copied": "Skopiowano"
+        }
       }
     },
     "playground": {

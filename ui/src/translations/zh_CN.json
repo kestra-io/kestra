@@ -184,6 +184,7 @@
     "last execution status": "上次执行状态",
     "jump to...": "跳转到...",
     "contextBar": {
+      "ai": "人工智能",
       "news": "新闻",
       "docs": "文档",
       "help": "帮助",
@@ -1947,6 +1948,10 @@
       "viewAll": "查看全部",
       "chart_preview": "单击图表源代码以查看其预览",
       "export": "导出为CSV",
+      "exportTo": {
+        "csv": "导出为 CSV",
+        "ion": "导出到 ION"
+      },
       "quick_filters": {
         "all": "全部",
         "running": "运行中",
@@ -2051,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "询问有关您数据的问题。示例提示：显示我过去7天内的flow成功率。"
+      },
+      "copilot": {
+        "title": "AI 副驾驶",
+        "placeholder": "告诉我构建什么…",
+        "send": "发送",
+        "mode": {
+          "ask": "询问",
+          "edit": "编辑",
+          "plan": "计划"
+        },
+        "empty": {
+          "title": "将您的想法转化为工作流"
+        },
+        "toolCall": "正在运行 {tool}",
+        "context": {
+          "execution": "执行：{id}",
+          "flow": "Flow：{{flow}}",
+          "namespace": "Namespace: {{namespace}}"
+        },
+        "toolResult": {
+          "detail": "详情",
+          "error": "{{tool}} 失败",
+          "ok": "{{tool}} 已完成",
+          "rejected": "{{tool}} 拒绝"
+        },
+        "confirm": {
+          "planTitle": "建议计划",
+          "actionTitle": "建议操作",
+          "approve": "批准",
+          "approveExecute": "批准并执行",
+          "reject": "拒绝",
+          "reasonPlaceholder": "回复以修订",
+          "pending": "待批准",
+          "revise": "回复以修改"
+        },
+        "notice": {
+          "emptyTurn": "助手未返回响应。请重试。",
+          "retry": "重试"
+        },
+        "cancelled": "轮次已取消",
+        "error": {
+          "turnCap": "此对话已达上限 — 开启新对话。",
+          "turnInProgress": "一个周期已在进行中。",
+          "request": "请求失败。请重试。",
+          "generic": "出错了。请重试。"
+        },
+        "emptyHelper": "我可以编辑这个 flow，生成测试，搭建相关文件，或者解释它是如何工作的。",
+        "suggestions": {
+          "errorHandling": "添加错误处理",
+          "unitTest": "生成单元测试",
+          "explain": "解释此 flow",
+          "dbt": "运行 dbt 管道"
+        },
+        "voice": {
+          "start": "开始语音输入",
+          "stop": "停止并插入",
+          "cancel": "取消语音输入"
+        },
+        "unavailable": {
+          "title": "AI Copilot 不可用",
+          "detail": "未配置 AI 提供商。请管理员设置，然后重试。",
+          "retry": "重试"
+        },
+        "thinking": "思考中",
+        "thinkingWords": [
+          "编排",
+          "调度",
+          "序列",
+          "路由",
+          "正在调度",
+          "排队中",
+          "Triggering",
+          "执行中",
+          "协调",
+          "置备",
+          "解析中",
+          "编排",
+          "组装",
+          "计划",
+          "映射",
+          "连接",
+          "分支",
+          "正在同步",
+          "协调中",
+          "具体化",
+          "正在编译",
+          "正在验证",
+          "正在传播",
+          "汇聚"
+        ],
+        "newChat": "新建聊天",
+        "recents": "最近",
+        "recentsEmpty": "暂无最近对话",
+        "draft": {
+          "openInEditor": "在编辑器中打开",
+          "apply": "应用",
+          "applyTitle": "应用 flow",
+          "applyConfirm": "应用 flow {{namespace}}.{{id}}？它将被创建，如果已存在则会被覆盖。",
+          "applyConfirmDashboard": "应用仪表盘 {id}？它将被创建，如果已存在则会覆盖。",
+          "applyError": "无法应用该 flow。请重试。",
+          "applyErrorDashboard": "未能应用仪表盘。请重试。",
+          "applyNoTarget": "这个草稿没有可应用的 namespace 或 id。",
+          "applyTitleDashboard": "应用仪表盘",
+          "title": {
+            "flow": "建议的 flow",
+            "dashboard": "建议的仪表盘",
+            "app": "拟议应用"
+          },
+          "valid": "有效",
+          "invalid": "需要修改",
+          "copy": "复制 YAML",
+          "copied": "已复制"
+        }
       }
     },
     "playground": {

@@ -654,7 +654,6 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError =
 export type ExecutionControllerEvalResult = {
     result?: string;
     error?: string;
-    stackTrace?: string;
 };
 
 export type ExecutionControllerExecutionResponse = Execution & {

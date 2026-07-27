@@ -15,8 +15,8 @@
     </KsIconButton>
 
     <KsDropdown v-else-if="actions.length > 1" trigger="click" placement="right-start" @click.stop>
-        <KsIconButton :aria-label="t('more actions')" class="node-action-button">
-            <DotsVertical :alt="t('more actions')" />
+        <KsIconButton :aria-label="$t('more actions')" class="node-action-button">
+            <DotsVertical :alt="$t('more actions')" />
         </KsIconButton>
         <template #dropdown>
             <KsDropdownMenu>
@@ -36,7 +36,6 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n"
     import {KsIconButton, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
 
@@ -54,7 +53,6 @@
 
     defineProps<{actions: NodeAction[]}>()
 
-    const {t} = useI18n()
 </script>
 
 <style scoped lang="scss">

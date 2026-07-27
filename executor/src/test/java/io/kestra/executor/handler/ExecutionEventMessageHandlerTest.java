@@ -12,6 +12,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.quota.Quota;
@@ -94,6 +95,44 @@ class ExecutionEventMessageHandlerTest {
         assertThat(maybeExecutor).isPresent();
         assertThat(maybeExecutor.get().getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
         assertThat(maybeExecutor.get().getExecution().getTaskRunList()).hasSize(1);
+    }
+
+    @Test
+    void shouldStampTheClaimedConcurrencyScopesOnAdmission() {
+        // Given: a flow with a concurrency limit
+        var flow = flowRepository.create(
+            GenericFlow.of(
+                Fixtures.flowWithConcurrency(
+                    Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(2).build()
+                )
+            )
+        );
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        executionRepository.save(execution);
+
+        // When
+        var maybeExecutor = executionEventMessageHandler.handle(new ExecutionEvent(execution, ExecutionEventType.CREATED));
+
+        // Then: the execution remembers the scopes it claimed a slot in, so the release
+        // decrements exactly these even if the limit definition changes while it runs
+        assertThat(maybeExecutor).isPresent();
+        assertThat(maybeExecutor.get().getExecution().getMetadata().getConcurrencyScopes())
+            .containsExactly("tenant|namespace|" + flow.getId());
+    }
+
+    @Test
+    void shouldNotStampConcurrencyScopesWhenNoLimitApplies() {
+        // Given: a flow without any concurrency limit
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flow()));
+        var execution = Execution.newExecution(flow, Collections.emptyList());
+        executionRepository.save(execution);
+
+        // When
+        var maybeExecutor = executionEventMessageHandler.handle(new ExecutionEvent(execution, ExecutionEventType.CREATED));
+
+        // Then
+        assertThat(maybeExecutor).isPresent();
+        assertThat(maybeExecutor.get().getExecution().getMetadata().getConcurrencyScopes()).isNull();
     }
 
     @Test

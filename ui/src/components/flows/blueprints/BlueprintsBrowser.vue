@@ -11,6 +11,7 @@
                 :currentPage="urlPage"
                 :pageSize="urlSize"
                 :noGutter="!embed && !system"
+                :fitHeight="!embed && !system"
                 @ready="ready = true"
                 @page-changed="onPageChanged"
             >

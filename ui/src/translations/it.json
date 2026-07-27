@@ -61,6 +61,8 @@
     "success": "Success",
     "save": "Salva",
     "save_as_draft": "Salva come bozza",
+    "publish": "Pubblica",
+    "publish_draft": "Pubblica bozza",
     "draft": "Bozza",
     "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
     "save task": "Salva Task",
@@ -127,6 +129,8 @@
       "last24hours": "Ultime 24 ore",
       "last48hours": "Ultime 48 ore",
       "last7days": "Ultimi 7 giorni",
+      "last14days": "Ultimi 14 giorni",
+      "last28days": "Ultimi 28 giorni",
       "last30days": "Ultimi 30 giorni",
       "last365days": "Ultimi 365 giorni",
       "next5minutes": "Prossimi 5 minuti",
@@ -145,6 +149,8 @@
       "24hours": "24 ore",
       "48hours": "48 ore",
       "7days": "7 giorni",
+      "14days": "14 giorni",
+      "28days": "28 giorni",
       "30days": "30 giorni",
       "365days": "365 giorni",
       "never": "Mai",
@@ -830,6 +836,17 @@
       "tooltip": "Riavvia il trigger"
     },
     "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
+    "trigger enable dialog": {
+      "title": "Abilita trigger",
+      "bulk title": "Abilita {count} triggers",
+      "description": "Questo trigger potrebbe aver saltato delle pianificazioni mentre era disabilitato.",
+      "bulk description": "I trigger selezionati potrebbero aver perso delle pianificazioni mentre erano disabilitati.",
+      "strategy": "Seleziona la strategia da utilizzare:",
+      "options": {
+        "skip": "Non recuperare le pianificazioni mancate",
+        "follow": "Segui la configurazione {property} del trigger"
+      }
+    },
     "flow source not found": "Sorgente del flow non trovata",
     "date format": "Formato data",
     "timezone": "Fuso orario",
@@ -1930,6 +1947,10 @@
       "viewAll": "Vedi tutti",
       "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
       "export": "Esporta in CSV",
+      "exportTo": {
+        "csv": "Esporta in CSV",
+        "ion": "Esporta in ION"
+      },
       "quick_filters": {
         "all": "Tutti",
         "running": "In esecuzione",
@@ -2280,8 +2301,7 @@
         "open_world": "Open world",
         "destructive": "Distruttivo",
         "idempotent": "Idempotente",
-        "return_direct": "Ritorno diretto",
-        "view_flow": "Apri flow"
+        "return_direct": "Ritorno diretto"
       },
       "connect_tab": {
         "server_url": "URL del server",

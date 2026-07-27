@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex flex-column fill-height">
+    <div class="secrets-table">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -12,7 +12,7 @@
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
-            class="fill-height"
+            :fitHeight="!paneView && !keyOnly"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
         >
             <template #top v-if="!paneView">
@@ -55,12 +55,12 @@
             >
                 <template #default="scope">
                     <template v-if="col.prop === 'namespace'">
-                        <KsTag
-                            class="namespace-tag"
-                        >
-                            <FolderOpenOutline />
-                            {{ scope.row?.namespace }}
-                        </KsTag>
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'description'">
                         {{ scope.row?.description }}
@@ -223,7 +223,6 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
@@ -610,14 +609,10 @@
     })
 </script>
 <style scoped lang="scss">
-    .namespace-tag {
-        padding: 0 6px;
-
-        :deep(.kel-tag__content) {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+    .secrets-table {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
     }
 
     .secret-tag-row {

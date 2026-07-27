@@ -434,6 +434,10 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
+    protected Condition notLevelsCondition(List<Level> levels) {
+        return field("level").notIn(levels.stream().map(level -> level.name()).toList());
+    }
+
     public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean numeratorFilter) {
         // A store that can't aggregate (canAggregate() == false) yields a zero KPI instead of running a query, so

@@ -2,7 +2,7 @@
     <div v-if="name" id="environment">
         <span class="dot" />
         <span class="name" :title="name">{{ name }}</span>
-        <span class="label">{{ t("environment") }}</span>
+        <span class="label">{{ $t("environment") }}</span>
     </div>
 </template>
 
@@ -11,9 +11,7 @@
     import {useLayoutStore} from "../../stores/layout"
     import {useMiscStore} from "override/stores/misc"
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
 
-    const {t} = useI18n()
     const layoutStore = useLayoutStore()
     const miscStore = useMiscStore()
 

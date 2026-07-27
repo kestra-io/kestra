@@ -21,7 +21,9 @@ const routes: KestraRouteRecord[] = [
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
     // New onboarding pages, initial one and the success one after the user has completed the onboarding flow.
-    {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
+    // The AI Copilot full-page home (#7909). Replaces the old `welcome` route — login, setup, the
+    // sidebar logo, and the tutorial-success "restart" all navigate here directly now.
+    {name: "ai", path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
     {name: "welcome/success", path: "/:tenant?/welcome/success", component: () => import("../components/onboarding/Success.vue")},
 
     //Dashboards

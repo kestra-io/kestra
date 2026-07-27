@@ -58,11 +58,12 @@ function lastUpdateFlowCall() {
 }
 
 describe("flow draft save — draft resolution per entry point", () => {
-    // First import of the flow store pulls in heavy deps (monaco, ...); warm it so no single test
-    // pays that cost and trips the default 5s timeout.
+    // First import of the flow store pulls in heavy deps (monaco, element-plus — the latter is
+    // inlined for the test transform, see vitest.config.unit.js); warm it so no single test pays
+    // that cost and trips the default 5s timeout.
     beforeAll(async () => {
         await import("../../../src/stores/flow")
-    }, 30000)
+    }, 90000)
 
     beforeEach(() => {
         localStorage.clear()

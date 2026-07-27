@@ -14,11 +14,11 @@ describe("KsDurationPicker", () => {
         expect(wrapper.find(".ks-duration-picker").exists()).toBe(true)
     })
 
-    test("renders all 7 number inputs", () => {
+    test("renders all 4 number inputs", () => {
         const wrapper = mount(KsDurationPicker, {
             global: globalConfig,
         })
-        expect(wrapper.findAll(".ks-duration-picker__field").length).toBe(7)
+        expect(wrapper.findAll(".ks-duration-picker__field").length).toBe(4)
     })
 
     test("renders custom duration text input", () => {
@@ -28,9 +28,23 @@ describe("KsDurationPicker", () => {
         expect(wrapper.find(".ks-duration-picker__custom").exists()).toBe(true)
     })
 
+    test("disables unit inputs and custom duration input", () => {
+        const wrapper = mount(KsDurationPicker, {
+            props: {disabled: true},
+            global: globalConfig,
+        })
+
+        const unitInputs = wrapper.findAll(".ks-duration-picker__field input")
+        expect(unitInputs).toHaveLength(4)
+        unitInputs.forEach((input) => {
+            expect(input.attributes("disabled")).toBeDefined()
+        })
+        expect(wrapper.find(".ks-duration-picker__custom input").attributes("disabled")).toBeDefined()
+    })
+
     test("parses modelValue on mount and populates fields", async () => {
         const wrapper = mount(KsDurationPicker, {
-            props: {modelValue: "P1Y2M3W4DT5H6M7S"},
+            props: {modelValue: "P4DT5H6M7S"},
             global: globalConfig,
         })
         await wrapper.vm.$nextTick()
@@ -55,7 +69,7 @@ describe("KsDurationPicker", () => {
 
     test("emits update:modelValue with ISO string when modelValue provided", async () => {
         const wrapper = mount(KsDurationPicker, {
-            props: {modelValue: "P1Y"},
+            props: {modelValue: "P1D"},
             global: globalConfig,
         })
         await wrapper.vm.$nextTick()
@@ -66,7 +80,7 @@ describe("KsDurationPicker", () => {
 
     test("reacts to modelValue prop change", async () => {
         const wrapper = mount(KsDurationPicker, {
-            props: {modelValue: "P1Y"},
+            props: {modelValue: "P1D"},
             global: globalConfig,
         })
         await wrapper.vm.$nextTick()
@@ -76,6 +90,22 @@ describe("KsDurationPicker", () => {
 
         const emitted = wrapper.emitted("update:modelValue")
         expect(emitted).toBeTruthy()
+    })
+
+    test("rejects calendar-based (year/month/week) durations as invalid", async () => {
+        const wrapper = mount(KsDurationPicker, {
+            global: globalConfig,
+        })
+
+        const customInputEl = wrapper.find(".ks-duration-picker__custom input")
+        await customInputEl.setValue("P1Y")
+        await customInputEl.trigger("input")
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.text()).toContain("Invalid ISO 8601 duration: P1Y")
+        const emitted = wrapper.emitted("update:modelValue")
+        const lastEmit = emitted![emitted!.length - 1]
+        expect(lastEmit[0]).toBeNull()
     })
 
     test("custom duration input shows invalid message for bad input", async () => {

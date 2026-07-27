@@ -2,8 +2,8 @@
     <TopNavBar :title="routeInfo.title" />
 
     <Empty v-if="data?.results === undefined || data?.results.length === 0" type="concurrency_limits" />
-    <section v-else class="container">
-        <KsDataTable :total="data?.total ?? 0">
+    <section v-else class="full-container">
+        <KsDataTable :total="data?.total ?? 0" fitHeight>
             <template #table>
                 <KsTable
                     :data="data?.results"

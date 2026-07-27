@@ -329,6 +329,8 @@ public abstract class AbstractLogDataStoreTest {
         leaf(Group.LEVELS, Field.LEVEL, Op.LESS_THAN_OR_EQUAL_TO, Level.ERROR, "exec-trace", "exec-debug", "exec-info", "exec-warn", "exec-error"),
         leaf(Group.LEVELS, Field.LEVEL, Op.GREATER_THAN_OR_EQUAL_TO, Level.ERROR, "exec-error"),
         leaf(Group.LEVELS, Field.LEVEL, Op.LESS_THAN_OR_EQUAL_TO, Level.TRACE, "exec-trace"),
+        leaf(Group.LEVELS, Field.LEVEL, Op.IN, List.of(Level.WARN, Level.ERROR), "exec-warn", "exec-error"),
+        leaf(Group.LEVELS, Field.LEVEL, Op.NOT_IN, List.of(Level.WARN, Level.ERROR), "exec-trace", "exec-debug", "exec-info"),
 
         // TASK_ID / TASK_RUN_ID / ATTEMPT_NUMBER (TASKS)
         leaf(Group.TASKS, Field.TASK_ID, Op.EQUALS, "load-data", "exec-load-data"),

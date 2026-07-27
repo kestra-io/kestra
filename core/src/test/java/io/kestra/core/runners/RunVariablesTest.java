@@ -336,6 +336,39 @@ class RunVariablesTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void shouldBuildTasksMapWhenSameTaskIdHasValuelessAndValuedTaskRuns() {
+        // Given — the crash order: a valueless taskRun for "hello" recorded first (stored as an
+        // immutable Map.of in computeTasksMap), then another taskRun for the SAME id carrying a
+        // value (as produced by a Loop/iteration whose parent context is concatenated in). This is
+        // the SubflowExecutionEnd queue crash: computeTasksMap must not put() into an immutable map.
+        TaskRun valueless = TaskRun.builder()
+            .id(IdUtils.create()).taskId("hello").executionId("exec-id")
+            .namespace("ns").flowId("flow").state(new State())
+            .build();
+        TaskRun valued = TaskRun.builder()
+            .id(IdUtils.create()).taskId("hello").executionId("exec-id")
+            .namespace("ns").flowId("flow").value("item-1").state(new State())
+            .build();
+
+        Execution execution = Execution.builder()
+            .id("exec-id").namespace("ns").flowId("flow").state(new State())
+            .taskRunList(List.of(valueless, valued))
+            .build();
+
+        // When
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then — the valueless state and the per-value state coexist under the same task id
+        Map<String, Object> tasks = (Map<String, Object>) variables.get("tasks");
+        Map<String, Object> hello = (Map<String, Object>) tasks.get("hello");
+        assertThat(hello).containsKey("state");
+        assertThat(hello).containsKey("item-1");
+    }
+
+    @Test
     void shouldExposeFlowVarsWhenNoExecution() {
         Flow flow = Flow.builder()
             .id("id-value")

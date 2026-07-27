@@ -16,19 +16,19 @@
             <div class="log-value-menu">
                 <button v-if="filterable" type="button" class="log-value-action" @click="apply(false)">
                     <MagnifyPlusOutline :size="16" />
-                    <span>{{ t("filter_for") }}</span>
+                    <span>{{ $t("filter_for") }}</span>
                 </button>
                 <button v-if="filterable" type="button" class="log-value-action" @click="apply(true)">
                     <MagnifyMinusOutline :size="16" />
-                    <span>{{ t("filter_out") }}</span>
+                    <span>{{ $t("filter_out") }}</span>
                 </button>
                 <button type="button" class="log-value-action" @click="copyValue">
                     <ContentCopy :size="16" />
-                    <span>{{ t("copy_value") }}</span>
+                    <span>{{ $t("copy_value") }}</span>
                 </button>
                 <router-link v-if="to" :to="to" class="log-value-action" @click="open = false">
                     <OpenInNew :size="16" />
-                    <span>{{ t("open_page") }}</span>
+                    <span>{{ $t("open_page") }}</span>
                 </router-link>
             </div>
         </template>
@@ -37,7 +37,6 @@
 
 <script setup lang="ts">
     import {ref} from "vue"
-    import {useI18n} from "vue-i18n"
     import MagnifyPlusOutline from "vue-material-design-icons/MagnifyPlusOutline.vue"
     import MagnifyMinusOutline from "vue-material-design-icons/MagnifyMinusOutline.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -55,7 +54,6 @@
         filter: [{field: string, value: string, negate: boolean}]
     }>()
 
-    const {t} = useI18n()
     const open = ref(false)
 
     const apply = (negate: boolean) => {

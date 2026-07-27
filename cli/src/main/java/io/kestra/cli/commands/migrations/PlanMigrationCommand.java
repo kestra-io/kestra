@@ -1,9 +1,7 @@
 package io.kestra.cli.commands.migrations;
 
 import java.util.List;
-import java.util.Map;
 
-import io.kestra.cli.AbstractCommand;
 import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
@@ -29,21 +27,13 @@ import picocli.CommandLine;
     description = "Show the pending database migration scripts without applying them",
     mixinStandardHelpOptions = true
 )
-public class PlanMigrationCommand extends AbstractCommand {
+public class PlanMigrationCommand extends AbstractMigrationCommand {
 
     @Inject
     private MigrationRunner migrationRunner;
 
     @CommandLine.Option(names = { "-s", "--sql" }, description = "Also print the SQL of each pending migration (SQL-based migrations only).")
     private boolean sql = false;
-
-    @SuppressWarnings("unused")
-    public static Map<String, Object> propertiesOverrides() {
-        // Prevent the eager @Context MigrationRunner from applying migrations on startup,
-        // so this command can report what is pending without changing the database.
-        MigrationRunner.setSkipAutoRun(true);
-        return Map.of();
-    }
 
     @Override
     public Integer call() throws Exception {

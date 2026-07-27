@@ -98,15 +98,25 @@ public class ExecutorService {
         this.taskOutputService = taskOutputService;
     }
 
-    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
-        // if concurrency was removed, it can be null as we always get the latest flow definition
-        if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
-            return switch (flow.getConcurrency().getBehavior()) {
+    /**
+     * Evaluate the scoped concurrency limits in order against their running counts: the first
+     * limit reached defines the behavior applied to the execution; when none is reached the
+     * execution runs.
+     */
+    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, ExecutionRunning executionRunning) {
+        for (int i = 0; i < limits.size(); i++) {
+            ScopedConcurrencyLimit limit = limits.get(i);
+            int runningCount = runningCounts.get(i);
+            if (runningCount < limit.concurrency().getLimit()) {
+                continue;
+            }
+
+            return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {
                     Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
-                        "Execution is queued due to concurrency limit exceeded, {} running(s)",
+                        "Execution is queued due to " + scopeDescription(limit) + "concurrency limit exceeded, {} running(s)",
                         runningCount
                     );
                     var newExecution = executionRunning.getExecution().withState(State.Type.QUEUED);
@@ -121,7 +131,8 @@ public class ExecutorService {
                     .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
                     .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
                 case FAIL -> {
-                    var failedExecution = executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded"));
+                    var failedExecution = executionRunning.getExecution()
+                        .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + scopeDescription(limit) + "concurrency limit exceeded"));
                     var logger = runContextLoggerFactory.create(executionRunning.getExecution());
                     logger.emitLogs(failedExecution.logs());
                     yield executionRunning
@@ -132,10 +143,22 @@ public class ExecutorService {
             };
         }
 
-        // if under the limit, run it!
+        // if under every limit, run it!
+        return runExecutionRunning(executionRunning);
+    }
+
+    private static ExecutionRunning runExecutionRunning(ExecutionRunning executionRunning) {
         return executionRunning
             .withExecution(executionRunning.getExecution().withState(State.Type.RUNNING))
             .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+    }
+
+    private static String scopeDescription(ScopedConcurrencyLimit limit) {
+        return switch (limit.scope()) {
+            case FLOW -> "";
+            case NAMESPACE -> "namespace '" + limit.namespace() + "' ";
+            case TENANT -> "tenant ";
+        };
     }
 
     public ExecutorContext process(ExecutorContext executor) {
@@ -1464,16 +1487,16 @@ public class ExecutorService {
                     log.warn("Unable to submit asset lineage event for {} -> {}", inputAssets, outputIdentifiers, e);
                 }
 
-                // don't update output asserts if task fail
+                // don't update output assets if task fail
                 if (!taskRun.getState().isFailed()) {
-                    taskRun.getAssets().getOutputs().forEach(asset ->
-                    {
+                    // Plain for-loop so a locked-asset InternalException from asyncUpsert propagates and fails the execution (fail-fast, ordering-dependent).
+                    for (var asset : taskRun.getAssets().getOutputs()) {
                         try {
                             assetService.asyncUpsert(assetUser, asset);
                         } catch (QueueException e) {
                             log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
                         }
-                    });
+                    }
                 }
             }
         }

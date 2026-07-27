@@ -35,6 +35,18 @@ public final class PostgresLogRepositoryService {
         );
     }
 
+    public static Condition notLevelsCondition(List<Level> levels) {
+        return DSL.condition(
+            "level not in (" +
+                levels
+                    .stream()
+                    .map(s -> "'" + s + "'::log_level")
+                    .collect(Collectors.joining(", "))
+                +
+                ")"
+        );
+    }
+
     @SuppressWarnings("unchecked")
     public static <F extends Enum<F>> SelectConditionStep<org.jooq.Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService,
         List<AbstractFilter<F>> filters, Map<F, String> fieldsMapping) {

@@ -23,7 +23,7 @@
                     target="_blank"
                     :href="video"
                 >
-                    {{ t("ks_empty_state.watch_the_video") }}
+                    {{ $t("ks_empty_state.watch_the_video") }}
                 </KsButton>
             </div>
 
@@ -34,7 +34,7 @@
                 target="_blank"
                 rel="noopener"
             >
-                {{ t("ks_empty_state.learn_more") }}
+                {{ $t("ks_empty_state.learn_more") }}
                 <ArrowTopRight :size="14" />
             </a>
         </div>
@@ -43,7 +43,6 @@
 
 <script setup lang="ts">
     import {useNetwork} from "@vueuse/core"
-    import {useI18n} from "vue-i18n"
     import ArrowTopRight from "vue-material-design-icons/ArrowTopRight.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
 
@@ -62,7 +61,6 @@
     }>()
 
     const {isOnline} = useNetwork()
-    const {t} = useI18n({useScope: "global"})
 </script>
 
 <style lang="scss" scoped>

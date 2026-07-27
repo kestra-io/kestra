@@ -43,6 +43,48 @@ import { formDataBodySerializer } from "./openapi/client"
 export const configureClient = createConfigureClient(client, formDataBodySerializer)
 ```
 
+### Signaling Enterprise-only routes (`EnterpriseFeatureError`)
+
+`client-sdk` is the **one published SDK** and it ships every method — OSS and Enterprise Edition
+alike — because it can't know at publish time which kind of server a consumer will point it at. A
+call to an EE-only method (e.g. `listAuditLogs`) against an OSS server 404s, indistinguishable at
+first glance from an ordinary "resource not found" 404.
+
+`createConfigureClient` takes an optional third argument, `enterpriseFeature`, so that consumer can
+turn that 404 into a typed, actionable `EnterpriseFeatureError` instead of the generic normalized
+`Error`:
+
+```ts
+import { createConfigureClient, EnterpriseFeatureError } from "@kestra-io/hey-api-plugin/runtime"
+import { client } from "./openapi/client.gen"
+import { formDataBodySerializer } from "./openapi/client"
+
+export const configureClient = createConfigureClient(client, formDataBodySerializer, {
+    // method + the *templated* OpenAPI path (e.g. "/api/v1/{tenant}/audit-logs/search"),
+    // never the resolved URL — path params aren't substituted at this point.
+    matchRoute: (method, path) => ENTERPRISE_ONLY_ROUTES[`${method} ${path}`],
+    docsUrl: (feature) => `https://kestra.io/docs/enterprise-edition/${feature}`,
+    contactSalesUrl: (feature) =>
+        `https://kestra.io/contact-sales?utm_source=sdk&utm_medium=error&feature=${feature}`,
+})
+```
+
+```ts
+try {
+    await listAuditLogs()
+} catch (e) {
+    if (e instanceof EnterpriseFeatureError) {
+        // e.feature, e.docsUrl, e.contactSalesUrl are structured data — build your own
+        // "Upgrade to unlock X" UI instead of parsing e.message.
+    }
+}
+```
+
+`ENTERPRISE_ONLY_ROUTES` is deliberately **not** built by this package: computing it (e.g. diffing
+the EE spec's operations against the OSS spec at generation time) is a `client-sdk`-only concern —
+the OSS and EE UI SDKs never need it and shouldn't pay for it. Omit `enterpriseFeature` entirely and
+behavior is unchanged from before this option existed.
+
 ## Codegen: the plugin
 
 ```ts

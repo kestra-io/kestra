@@ -16,6 +16,11 @@
 // that exact instance, so the caller supplies its own. This keeps the runtime free of any hard
 // dependency (no axios, no @hey-api/*).
 
+import {EnterpriseFeatureError, type EnterpriseFeatureConfig} from "./errors"
+
+export {EnterpriseFeatureError} from "./errors"
+export type {EnterpriseFeatureConfig, EnterpriseFeatureMatch} from "./errors"
+
 /** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
 interface FetchInterceptor {
     clear: () => void;
@@ -36,6 +41,8 @@ export interface ConfigurableFetchClient {
 interface ResolvedRequestOptionsLike {
     bodySerializer?: unknown;
     parseAs?: "json" | "text" | "blob" | "stream" | "arrayBuffer" | "formData" | (string & {});
+    /** The templated OpenAPI path passed to the SDK call, e.g. "/api/v1/{tenant}/audit-logs/search" — NOT the resolved URL. */
+    url?: string;
     [key: string]: unknown;
 }
 
@@ -67,11 +74,16 @@ function serializeQueryValue(val: unknown): string | undefined {
  * @param client the SDK's fetch client singleton (from its generated `client.gen`)
  * @param formDataBodySerializer the SDK's own multipart serializer (from its generated core), used
  *        to detect multipart endpoints by identity so we don't force `application/json` on them
+ * @param enterpriseFeature optional — when set, a 404 whose route matches
+ *        `enterpriseFeature.matchRoute` throws an {@link EnterpriseFeatureError} instead of the
+ *        generic normalized error below. Only the SDK that spans both editions (client-sdk) needs
+ *        this; the OSS/EE UI SDKs can omit it entirely and behavior is unchanged.
  * @returns a `configureClient(clientConfig?)` that installs the Kestra setup and returns `client`
  */
 export function createConfigureClient<TClient extends ConfigurableFetchClient>(
     client: TClient,
     formDataBodySerializer: FormDataBodySerializer,
+    enterpriseFeature?: EnterpriseFeatureConfig,
 ) {
     type ClientConfig = Parameters<TClient["setConfig"]>[0];
 
@@ -185,10 +197,31 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
         // Enrich thrown errors with the HTTP status while preserving Error semantics.
         // The fetch client throws parsed response data (often plain objects/strings),
         // but many existing call sites and tests expect thrown values to be Error instances.
-        client.interceptors.error.use((error: unknown, response: Response | undefined): unknown => {
+        client.interceptors.error.use((
+            error: unknown,
+            response: Response | undefined,
+            request: Request | undefined,
+            opts: ResolvedRequestOptionsLike | undefined,
+        ): unknown => {
             if (!response) return error
 
             const status = response.status
+
+            // An EE-only route 404s on an OSS server the same way a genuinely-missing resource
+            // does — matchRoute is what tells the two apart (it only matches the fixed set of
+            // EE-only routes, never an arbitrary "flow not found").
+            if (status === 404 && enterpriseFeature && request && opts?.url) {
+                const match = enterpriseFeature.matchRoute(request.method, opts.url)
+                if (match) {
+                    return new EnterpriseFeatureError({
+                        feature: match.feature,
+                        docsUrl: enterpriseFeature.docsUrl(match.feature),
+                        contactSalesUrl: enterpriseFeature.contactSalesUrl(match.feature),
+                        status,
+                    })
+                }
+            }
+
             const asObject = error !== null && typeof error === "object" ? error as Record<string, unknown> : undefined
             const rawMessage =
                 (error instanceof Error && error.message) ||

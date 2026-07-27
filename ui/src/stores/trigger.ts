@@ -41,6 +41,8 @@ interface TriggerDisabledOptions {
     flowId: string;
     triggerId: string;
     disabled: boolean;
+    /** When true, missed schedules are recovered on enable according to the trigger's own configuration. */
+    recoverMissedSchedules?: boolean;
 }
 
 /** Bulk trigger id list, as forwarded raw by callers (e.g. a data table's row selection). */
@@ -121,7 +123,7 @@ export const useTriggerStore = defineStore("trigger", () => {
         return TriggersAPI.disabledTriggersByQuery(options)
     }
 
-    async function setDisabledByTriggers(options: {triggers: TriggerIdList, disabled: boolean}) {
+    async function setDisabledByTriggers(options: {triggers: TriggerIdList, disabled: boolean, recoverMissedSchedules?: boolean}) {
         return TriggersAPI.disabledTriggersByIds(options)
     }
 

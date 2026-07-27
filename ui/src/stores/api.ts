@@ -6,6 +6,7 @@ import {useMiscStore} from "override/stores/misc"
 import {capturePosthogEvent, disablePosthog} from "../utils/posthog"
 import {ensureUid} from "../utils/uid"
 import {PendingEventsBuffer} from "../utils/analytics/pendingEvents"
+import {resolvePosthogEventName} from "../utils/analytics/eventNaming"
 
 export const API_URL = "https://api.kestra.io"
 
@@ -186,7 +187,7 @@ export const useApiStore = defineStore("api", () => {
         delete finalData.date
         delete finalData.counter
 
-        const eventName = type === "PAGE" ? "$pageview" : data.type.toLowerCase()
+        const eventName = type === "PAGE" ? "$pageview" : resolvePosthogEventName(data.type, finalData as Record<string, any>)
 
         if (type === "PAGE") {
             const origin = data.page?.origin ?? window.location.origin

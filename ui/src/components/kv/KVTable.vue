@@ -10,7 +10,7 @@
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="$t('no_results.kv_pairs')"
-        class="fill-height"
+        :fitHeight="!paneView"
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
     >
@@ -47,7 +47,16 @@
                 sortable="custom"
                 :sortOrders="['ascending', 'descending']"
                 :label="$t('namespace')"
-            />
+            >
+                <template #default="scope">
+                    <KsEntityLink
+                        v-if="scope.row.namespace"
+                        entity="namespace"
+                        :value="scope.row.namespace"
+                        :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                    />
+                </template>
+            </KsTableColumn>
             <KsTableColumn
                 v-else-if="colProp === 'key'"
                 prop="key"

@@ -67,6 +67,8 @@
             v-if="filter.buttons.value?.savedFilters?.shown !== false"
             ref="saveFiltersRef"
             :appliedFilters="filter.appliedFilters.value"
+            :groups="filter.groups.value"
+            :topLogical="filter.topLogical.value"
             :editingFilter="filter.editingFilter.value"
             :savedFilters="filter.savedFilters.value"
             @save="handleSave"
@@ -158,11 +160,20 @@
             name,
             description,
             filter.appliedFilters.value,
+            filter.groups.value,
+            filter.topLogical.value,
         )
     }
 
     const handleEdit = (id: string, name: string, description: string) => {
-        filter.updateSavedFilter(id, name, description, filter.appliedFilters.value)
+        filter.updateSavedFilter(
+            id,
+            name,
+            description,
+            filter.appliedFilters.value,
+            filter.groups.value,
+            filter.topLogical.value,
+        )
     }
 
     const handleLoad = (savedFilter: any) => {

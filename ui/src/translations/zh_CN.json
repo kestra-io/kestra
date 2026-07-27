@@ -61,6 +61,8 @@
     "success": "成功",
     "save": "保存",
     "save_as_draft": "保存为草稿",
+    "publish": "发布",
+    "publish_draft": "发布草稿",
     "draft": "草稿",
     "draft_flow_warning": "此 flow 的最新修订版本为草稿。执行将改为基于最新已发布的修订版本运行——发布草稿（或在 Playground 中运行）以执行您的最新更改。",
     "save task": "保存任务",
@@ -127,6 +129,8 @@
       "last24hours": "最近24小时",
       "last48hours": "最近48小时",
       "last7days": "最近7天",
+      "last14days": "最近 14 天",
+      "last28days": "最近 28 天",
       "last30days": "最近30天",
       "last365days": "最近365天",
       "next5minutes": "接下来的5分钟",
@@ -145,6 +149,8 @@
       "24hours": "24小时",
       "48hours": "48小时",
       "7days": "7天",
+      "14days": "14 天",
+      "28days": "28 天",
       "30days": "30天",
       "365days": "365天",
       "never": "从不",
@@ -834,6 +840,17 @@
       "tooltip": "重新启动trigger"
     },
     "trigger disabled": "在Flow源中触发器已禁用",
+    "trigger enable dialog": {
+      "title": "启用 trigger",
+      "bulk title": "启用 {{count}} triggers",
+      "description": "此 trigger 在被禁用期间可能错过了计划。",
+      "bulk description": "选定的 triggers 在它们被禁用期间可能错过了调度。",
+      "strategy": "选择要使用的策略：",
+      "options": {
+        "skip": "不要恢复遗漏的调度",
+        "follow": "遵循 trigger 的 {property} 配置"
+      }
+    },
     "flow source not found": "未找到flow源",
     "date format": "日期格式",
     "timezone": "时区",
@@ -1934,6 +1951,10 @@
       "viewAll": "查看全部",
       "chart_preview": "单击图表源代码以查看其预览",
       "export": "导出为CSV",
+      "exportTo": {
+        "csv": "导出为 CSV",
+        "ion": "导出到 ION"
+      },
       "quick_filters": {
         "all": "全部",
         "running": "运行中",
@@ -2284,8 +2305,7 @@
         "open_world": "Open world",
         "destructive": "破坏性",
         "idempotent": "幂等",
-        "return_direct": "直接返回",
-        "view_flow": "打开 flow"
+        "return_direct": "直接返回"
       },
       "connect_tab": {
         "server_url": "服务器 URL",

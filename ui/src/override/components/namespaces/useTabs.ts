@@ -55,6 +55,7 @@ export function useTabs() {
             title: t("kv.name"),
             component: KVTable,
             props: {namespace},
+            fullContainer: true,
         },
         {
             ...lockedProps("history"),

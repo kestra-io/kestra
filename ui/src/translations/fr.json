@@ -61,6 +61,8 @@
     "success": "Succès",
     "save": "Enregistrer",
     "save_as_draft": "Enregistrer comme brouillon",
+    "publish": "Publier",
+    "publish_draft": "Publier le brouillon",
     "draft": "Brouillon",
     "draft_flow_warning": "La dernière révision de ce flow est un brouillon. L'exécution utilisera la dernière révision publiée ; publiez le brouillon (ou exécutez-le depuis le Playground) pour exécuter vos derniers changements.",
     "save task": "Enregistrer la tâche",
@@ -127,6 +129,8 @@
       "last24hours": "24 dernières heures",
       "last48hours": "48 dernières heures",
       "last7days": "7 derniers jours",
+      "last14days": "Les 14 derniers jours",
+      "last28days": "Les 28 derniers jours",
       "last30days": "30 derniers jours",
       "last365days": "365 derniers jours",
       "next5minutes": "Les 5 prochaines minutes",
@@ -145,6 +149,8 @@
       "24hours": "24 heures",
       "48hours": "48 heures",
       "7days": "7 jours",
+      "14days": "14 jours",
+      "28days": "28 jours",
       "30days": "30 jours",
       "365days": "365 jours",
       "never": "Jamais",
@@ -834,6 +840,17 @@
       "tooltip": "Redémarrer le trigger"
     },
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
+    "trigger enable dialog": {
+      "title": "Activer le trigger",
+      "bulk title": "Activer {count} triggers",
+      "description": "Ce trigger a pu manquer des planifications pendant qu'il était désactivé.",
+      "bulk description": "Les triggers sélectionnés ont pu manquer des planifications pendant qu'ils étaient désactivés.",
+      "strategy": "Sélectionnez la stratégie à utiliser :",
+      "options": {
+        "skip": "Ne pas récupérer les planifications manquées",
+        "follow": "Suivre la configuration {property} du trigger"
+      }
+    },
     "flow source not found": "Source du flow introuvable",
     "date format": "Format de date",
     "timezone": "Fuseau horaire",
@@ -1933,7 +1950,11 @@
       "others": "Autres",
       "viewAll": "Tout voir",
       "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
-      "export": "Exporter vers CSV",
+      "export": "Exporter",
+      "exportTo": {
+        "csv": "Exporter vers CSV",
+        "ion": "Exporter vers ION"
+      },
       "quick_filters": {
         "all": "Tout",
         "running": "En cours",
@@ -2284,8 +2305,7 @@
         "open_world": "Open world",
         "destructive": "Destructif",
         "idempotent": "Idempotent",
-        "return_direct": "Retour direct",
-        "view_flow": "Ouvrir le flow"
+        "return_direct": "Retour direct"
       },
       "connect_tab": {
         "server_url": "URL du serveur",

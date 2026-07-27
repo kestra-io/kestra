@@ -61,6 +61,8 @@
     "success": "Success",
     "save": "Save",
     "save_as_draft": "Save as draft",
+    "publish": "Publish",
+    "publish_draft": "Publish draft",
     "draft": "Draft",
     "draft_flow_warning": "The latest revision of this flow is a draft. The execution will run against the latest published revision instead - publish the draft (or run it from the playground) to execute your latest changes.",
     "save task": "Save Task",
@@ -838,6 +840,17 @@
       "tooltip": "Restart the trigger"
     },
     "trigger disabled": "Trigger is disabled within Flow source",
+    "trigger enable dialog": {
+      "title": "Enable trigger",
+      "bulk title": "Enable {count} triggers",
+      "description": "This trigger may have missed schedules while it was disabled.",
+      "bulk description": "The selected triggers may have missed schedules while they were disabled.",
+      "strategy": "Select the strategy to use:",
+      "options": {
+        "skip": "Do not recover missed schedules",
+        "follow": "Follow the trigger's {property} configuration"
+      }
+    },
     "flow source not found": "Flow source not found",
     "date format": "Date format",
     "timezone": "Timezone",
@@ -1937,7 +1950,11 @@
       "others": "Others",
       "viewAll": "View all",
       "chart_preview": "Click on a chart source code to see its preview",
-      "export": "Export to CSV",
+      "export": "Export",
+      "exportTo": {
+        "csv": "Export to CSV",
+        "ion": "Export to ION"
+      },
       "quick_filters": {
         "all": "All",
         "running": "Running",
@@ -2288,8 +2305,7 @@
         "open_world": "Open world",
         "destructive": "Destructive",
         "idempotent": "Idempotent",
-        "return_direct": "Return direct",
-        "view_flow": "Open flow"
+        "return_direct": "Return direct"
       },
       "connect_tab": {
         "server_url": "Server URL",

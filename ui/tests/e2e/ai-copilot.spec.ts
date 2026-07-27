@@ -248,7 +248,8 @@ test.describe("AI Copilot", () => {
         await page.locator(D.draftOpen).click()
         // Hands the drafted YAML to the flow create editor via the blueprint-source handoff.
         await page.waitForURL(/\/flows\/new\?.*blueprintId=copilot-draft/)
-        expect(decodeURIComponent(page.url())).toContain("id: demo")
+        // Read the query param via URLSearchParams (form-decodes `+`→space); decodeURIComponent doesn't.
+        expect(new URL(page.url()).searchParams.get("blueprintSourceYaml")).toContain("id: demo")
     })
 
     test("accepts a dashboard draft into the dashboard editor", async ({page}) => {
@@ -270,7 +271,8 @@ test.describe("AI Copilot", () => {
         await page.locator(D.draftOpen).click()
         // The dashboard create editor seeds itself from the `sourceYaml` query.
         await page.waitForURL(/\/dashboards\/new\?.*sourceYaml=/)
-        expect(decodeURIComponent(page.url())).toContain("id: my-dash")
+        // Read the query param via URLSearchParams (form-decodes `+`→space); decodeURIComponent doesn't.
+        expect(new URL(page.url()).searchParams.get("sourceYaml")).toContain("id: my-dash")
     })
 
     test("applies a flow draft directly and navigates to the created flow", async ({page}) => {

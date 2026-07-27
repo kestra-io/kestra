@@ -1,4 +1,4 @@
-import {computed, nextTick, ref, watch} from "vue"
+import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
 import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
@@ -23,9 +23,7 @@ import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import _throttle from "lodash/throttle"
-import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
-import {useI18n} from "vue-i18n"
 import {RouteLocation} from "vue-router"
 
 export const DEFAULT_DASHBOARD = {
@@ -47,7 +45,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }>()
     const chartErrors = ref<string[]>([])
     const isCreating = ref<boolean>(false)
-    const readonlyToastShown = ref(false)
+    // const readonlyToastShown = ref(false)
 
     const sourceCode = ref("")
     const sourceCodeOrigin = ref("")
@@ -82,7 +80,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return {...dashboard, isDefault: isADefaultForThisRoute}
         })
         if(!isThereADefault){
-            const defaultDashboardBundledInUI = {...DEFAULT_DASHBOARD, title: t("dashboards.default"), isDefault: true}
+            const defaultDashboardBundledInUI = {...DEFAULT_DASHBOARD, title: "default", isDefault: true}
             dashboardList.value = [defaultDashboardBundledInUI, ...dashboardList.value]
         }
         return dashboardList.value
@@ -217,7 +215,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
         activeDashboard.value = data
         sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
-        readonlyToastShown.value = false
 
         return activeDashboard.value
     }
@@ -350,40 +347,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     const errors = ref<string[] | undefined>()
     const warnings = ref<string[] | undefined>()
-    const coreStore = useCoreStore()
-
-    const {t} = useI18n()
-
-    watch(sourceCode, _throttle(async () => {
-        const errorsResult = await validateDashboard(sourceCode.value)
-
-        const dbId = activeDashboard.value?.id
-        if (errorsResult.constraints) {
-            errors.value = [errorsResult.constraints]
-        } else {
-            errors.value = undefined
-        }
-
-        if (!isCreating.value && dbId !== undefined && YAML_UTILS.parse(sourceCode.value).id !== dbId) {
-            if (!readonlyToastShown.value) {
-                readonlyToastShown.value = true
-                coreStore.message = {
-                    variant: "warning",
-                    title: t("readonly property"),
-                    message: t("dashboards.edition.id readonly"),
-                }
-            }
-
-            await nextTick()
-            if(sourceCode.value && dbId){
-                sourceCode.value = YAML_UTILS.replaceBlockWithPath({
-                    source: sourceCode.value,
-                    path: "id",
-                    newContent: dbId,
-                })
-            }
-        }
-    }, 300, {trailing: true, leading: false}))
 
     return {
         activeDashboard,

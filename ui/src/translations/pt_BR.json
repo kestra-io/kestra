@@ -836,6 +836,17 @@
       "tooltip": "Reiniciar o trigger"
     },
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
+    "trigger enable dialog": {
+      "title": "Habilitar trigger",
+      "bulk title": "Habilitar {count} triggers",
+      "description": "Este trigger pode ter perdido agendamentos enquanto estava desabilitado.",
+      "bulk description": "Os triggers selecionados podem ter perdido agendamentos enquanto estavam desabilitados.",
+      "strategy": "Selecione a estratégia a ser usada:",
+      "options": {
+        "skip": "Não recuperar agendamentos perdidos",
+        "follow": "Seguir a configuração de {property} do trigger"
+      }
+    },
     "flow source not found": "Fonte do flow não encontrada",
     "date format": "Formato de data",
     "timezone": "Fuso horário",
@@ -1936,6 +1947,10 @@
       "viewAll": "Ver tudo",
       "chart_preview": "Clique no código-fonte de um gráfico para ver sua pré-visualização",
       "export": "Exportar para CSV",
+      "exportTo": {
+        "csv": "Exportar para CSV",
+        "ion": "Exportar para ION"
+      },
       "quick_filters": {
         "all": "Todos",
         "running": "Em execução",

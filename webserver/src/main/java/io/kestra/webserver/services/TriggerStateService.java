@@ -34,6 +34,7 @@ import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -309,14 +310,16 @@ public class TriggerStateService {
     /**
      * Enables or disables a trigger and waits for the scheduler to acknowledge.
      *
+     * @param recoverMissedSchedules when {@code true}, missed schedules are recovered on enable according to the
+     *                               trigger's own configuration; {@code null} or {@code false} means they are skipped.
      * @throws NotFoundException if the flow or trigger does not exist.
      * @throws ConflictException if the change failed.
      */
-    public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled) throws NotFoundException, ConflictException {
+    public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled, @Nullable Boolean recoverMissedSchedules) throws NotFoundException, ConflictException {
         validateToggleable(trigger);
         awaitBlockingAction(
             trigger.uid(),
-            operationId -> triggerEventQueue.send(new SetDisableTrigger(trigger, disabled).withOperationId(operationId)),
+            operationId -> triggerEventQueue.send(new SetDisableTrigger(trigger, disabled, recoverMissedSchedules).withOperationId(operationId)),
             "Set disabled"
         );
         return refresh(trigger, "set-disabled");
@@ -325,7 +328,7 @@ public class TriggerStateService {
     /**
      * Enables or disables the given triggers. Missing triggers are silently skipped.
      */
-    public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled) {
+    public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         List<TriggerId> toggleable = triggers.stream()
             .filter(id ->
             {
@@ -338,14 +341,14 @@ public class TriggerStateService {
             })
             .toList();
         return submitBatch(
-            toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled).withOperationId(operationId))
+            toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId))
         );
     }
 
     /**
      * Enables or disables triggers matching the given filters.
      */
-    public ApiAsyncOperationResponse toggleAllMatching(String tenant, List<QueryFilter> filters, boolean disabled) {
+    public ApiAsyncOperationResponse toggleAllMatching(String tenant, List<QueryFilter> filters, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         String operationId = IdUtils.create();
         int count = triggerRepository.find(tenant, filters)
             .map(trigger ->
@@ -353,7 +356,7 @@ public class TriggerStateService {
                 TriggerId id = TriggerId.of(trigger);
                 try {
                     validateToggleable(id);
-                    triggerEventQueue.send(new SetDisableTrigger(id, disabled).withOperationId(operationId));
+                    triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId));
                     return 1;
                 } catch (NotFoundException ignored) {
                     return 0;

@@ -4036,11 +4036,13 @@ export const _064E031A6 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
     filters?: Array<QueryFilter> | null;
     disabled?: boolean;
+    recoverMissedSchedules?: boolean | null;
 }, options?: Options<never, ThrowOnError>): RequestResult<DisabledTriggersByQueryResponses, unknown, ThrowOnError> => {
     const params = buildClientParams([parameters], [{ args: [
                 { in: 'path', key: 'tenant' },
                 { in: 'query', key: 'filters' },
-                { in: 'query', key: 'disabled' }
+                { in: 'query', key: 'disabled' },
+                { in: 'query', key: 'recoverMissedSchedules' }
             ] }]);
     return (options?.client ?? client).post<DisabledTriggersByQueryResponses, unknown, ThrowOnError>({
         url: '/api/v1/{tenant}/triggers/set-disabled/by-query',

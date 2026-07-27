@@ -29,6 +29,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.security.SecurityConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExpressionCategory;
@@ -102,6 +103,9 @@ public class FlowController {
 
     @Inject
     private ExpressionContextService expressionContextService;
+
+    @Inject
+    private SecurityConfiguration securityConfiguration;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -857,7 +861,7 @@ public class FlowController {
         String tenantId = tenantService.resolveTenant();
         final List<String> wrongFiles = new ArrayList<>();
         try {
-            HasSource.readSourceFile(fileUpload, (source, name) ->
+            HasSource.readSourceFile(securityConfiguration.zipBombProtection(), fileUpload, (source, name) ->
             {
                 try {
                     this.importFlow(tenantId, source);

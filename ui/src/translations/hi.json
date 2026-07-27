@@ -836,6 +836,17 @@
       "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
+    "trigger enable dialog": {
+      "title": "trigger सक्षम करें",
+      "bulk title": "सक्षम करें {count} triggers",
+      "description": "यह trigger अक्षम होने के दौरान शेड्यूल चूक गया होगा।",
+      "bulk description": "चुने गए triggers शायद निर्धारित समय चूक गए होंगे जब वे अक्षम थे।",
+      "strategy": "उपयोग करने के लिए रणनीति चुनें:",
+      "options": {
+        "skip": "छूटी हुई अनुसूचियां पुनर्प्राप्त न करें",
+        "follow": "trigger के गुणधर्म कॉन्फ़िगरेशन का पालन करें"
+      }
+    },
     "flow source not found": "Flow source नहीं मिला",
     "date format": "दिनांक प्रारूप",
     "timezone": "समय क्षेत्र",
@@ -1936,6 +1947,10 @@
       "viewAll": "सभी देखें",
       "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
       "export": "CSV में निर्यात करें",
+      "exportTo": {
+        "csv": "CSV में निर्यात करें",
+        "ion": "ION को निर्यात करें"
+      },
       "quick_filters": {
         "all": "सभी",
         "running": "चल रहा है",

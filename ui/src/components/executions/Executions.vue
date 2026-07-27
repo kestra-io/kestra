@@ -34,7 +34,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section :class="{'container padding-bottom': topbar}">
+    <section :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -51,6 +51,7 @@
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="$t('no_results.executions')"
             :rowKey="(row: any) => row.id"
+            :fitHeight="fitHeightResolved"
         >
             <template #navbar v-if="isDisplayedTop">
                 <KSFilter
@@ -174,7 +175,6 @@
                 :label="col.label"
                 :class="col.prop === 'flowRevision' ? 'shrink' : ''"
                 :align="col.prop === 'inputs' ? 'center' : undefined"
-                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => h(BreakableText, {value: cellValue})) : undefined"
                 :sortable="isColumnSortable(col.prop) ? 'custom' : false"
                 :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
             >
@@ -189,15 +189,20 @@
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
                     <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
-                        <span :title="scope.row?.namespace"><BreakableText :value="scope.row?.namespace" /></span>
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
-                        <router-link
-                            :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}
-                            }"
-                        >
-                            <BreakableText :value="scope.row?.flowId" />
-                        </router-link>
+                        <KsEntityLink
+                            v-if="scope.row?.flowId"
+                            entity="flow"
+                            :value="scope.row.flowId"
+                            :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
                         <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
@@ -432,7 +437,6 @@
     import {filterValidLabels, keepSupportedFilters} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import BreakableText from "../BreakableText"
     import * as Utils from "../../utils/utils"
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 
@@ -462,6 +466,7 @@
         embed?: boolean;
         filter?: boolean;
         topbar?: boolean;
+        fitHeight?: boolean;
         id?: string | null;
         statuses?: string[];
         isReadOnly?: boolean;
@@ -475,6 +480,7 @@
         embed: false,
         filter: true,
         topbar: true,
+        fitHeight: undefined,
         id: null,
         statuses: () => [],
         isReadOnly: false,
@@ -485,6 +491,8 @@
         namespace: undefined,
         defaultScopeFilter: false,
     })
+
+    const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
 
     const emit = defineEmits<{
         "state-count": [payload: { runningCount: number; totalCount: number }];
@@ -1093,12 +1101,18 @@
 </script>
 
 <style scoped lang="scss">
-.shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
+.full-container {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    > * {
+        flex: 1;
+    }
 }
 
-.padding-bottom {
-    padding-bottom: 4rem;
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
 .custom-warning {

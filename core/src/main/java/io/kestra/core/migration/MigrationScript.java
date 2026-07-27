@@ -13,9 +13,10 @@ import io.micronaut.core.annotation.Nullable;
  * Represents a single versioned migration script.
  *
  * <p>
- * Implementations are Micronaut {@code @Singleton} beans. Because {@code MigrationRunner} is a
- * {@code @Context} bean, all dependencies injected into a script are eagerly instantiated during
- * application startup. Scripts must only depend on low-level infrastructure:
+ * Implementations are Micronaut {@code @Singleton} beans. Because the {@code @Context}
+ * {@code MigrationStartupRunner} resolves the runner (and therefore every script) during
+ * application startup, all dependencies injected into a script are eagerly instantiated at that
+ * early stage. Scripts must only depend on low-level infrastructure:
  * {@code DataSource} / {@code JooqDSLContextWrapper} for JDBC, {@code OpenSearchClient} for
  * Elasticsearch, storages, and simple {@code @ConfigurationProperties} records. Never inject
  * repositories or services — their transitive dependencies will fail to initialize at this early

@@ -5,17 +5,13 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.annotation.Order;
-import io.micronaut.core.order.Ordered;
-import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
-import lombok.SneakyThrows;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Orchestrates the execution of all pending {@link MigrationScript}s on startup.
+ * Orchestrates the execution of all pending {@link MigrationScript}s.
  *
  * <p>
  * This bean is backend-agnostic — it delegates all storage and locking concerns to
@@ -23,10 +19,12 @@ import lombok.extern.slf4j.Slf4j;
  * active repository backend (JDBC or Elasticsearch).
  *
  * <p>
- * This service is {@code @Context} — it is eagerly initialized during
- * {@code ApplicationContext.start()}, before any repository or service bean queries the database.
- * {@link #initOnStartup()} runs all pending migrations unconditionally in OSS; EE overrides
- * this method to add opt-in auto-run behavior and fresh-instance detection.
+ * This is an ordinary {@code @Singleton} service. Automatic migration on startup is triggered by
+ * the {@code @Context} {@link MigrationStartupRunner}, which calls {@link #autoRun()} before any
+ * repository or service bean queries the database. {@link #autoRun()} runs all pending migrations
+ * unconditionally in OSS; EE overrides it to add opt-in auto-run behavior and fresh-instance
+ * detection. The {@code kestra migrate} CLI commands resolve this bean in a minimal context (which
+ * does not register {@link MigrationStartupRunner}) and invoke the relevant method directly.
  *
  * <p>
  * Execution flow:
@@ -42,8 +40,7 @@ import lombok.extern.slf4j.Slf4j;
  * </ol>
  */
 @Slf4j
-@Context
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Singleton
 @Requires(property = "kestra.repository.type")
 public class MigrationRunner implements MigrationRunnerInterface {
 
@@ -53,17 +50,6 @@ public class MigrationRunner implements MigrationRunnerInterface {
      * (the schema already exists from Flyway migrations).
      */
     static final List<String> INIT_SCRIPT_IDS = List.of("0-init", "0-init-ee", "0-init-queue", "0-init-queue-ee");
-
-    /**
-     * Set to {@code true} by CLI commands (e.g. {@code migrate run}, {@code migrate unlock})
-     * that handle migrations explicitly. When set, {@link #initOnStartup()} skips automatic
-     * migration execution during context startup.
-     */
-    protected static volatile boolean skipAutoRun = false;
-
-    public static void setSkipAutoRun(boolean skip) {
-        skipAutoRun = skip;
-    }
 
     protected volatile boolean hasRun = false;
 
@@ -82,29 +68,14 @@ public class MigrationRunner implements MigrationRunnerInterface {
     }
 
     /**
-     * Called once at context startup (eagerly, before any repository bean is initialized).
-     * Delegates to {@link #autoRun()} so EE can override startup behavior without
-     * needing to redeclare {@code @PostConstruct} (which is not inherited by overriding methods
-     * in Micronaut's compile-time annotation processing).
-     */
-    @PostConstruct
-    @SneakyThrows
-    protected final void initOnStartup() {
-        if (skipAutoRun) {
-            log.debug("Migration auto-run skipped (skipAutoRun flag set).");
-            return;
-        }
-        autoRun();
-    }
-
-    /**
-     * Runs migrations at context startup. OSS always applies all pending scripts.
-     * EE overrides this to respect the {@code kestra.migration.auto} configuration
-     * and handle fresh-instance detection.
+     * Runs migrations at startup, invoked by {@link MigrationStartupRunner} before any repository
+     * bean is initialized. OSS always applies all pending scripts. EE overrides this to respect the
+     * {@code kestra.migration.auto} configuration and handle fresh-instance detection.
      *
      * @throws Exception if a migration fails
      */
-    protected void autoRun() throws Exception {
+    @Override
+    public void autoRun() throws Exception {
         runAlways();
     }
 
@@ -149,6 +120,42 @@ public class MigrationRunner implements MigrationRunnerInterface {
             lock.release();
         }
         hasRun = true;
+    }
+
+    /**
+     * Re-synchronizes the stored checksum for a migration script that has already been applied.
+     *
+     * @param scriptId the migration script ID to repair
+     * @throws MigrationLockedException if another process holds the migration lock
+     * @throws Exception if the script is unknown, unapplied, unsupported, or the backend update fails
+     */
+    @Override
+    public void repairChecksum(final String scriptId) throws MigrationLockedException, Exception {
+        if (!lock.tryAcquire()) {
+            throw new MigrationLockedException();
+        }
+
+        try {
+            historyStore.bootstrapIfNeeded();
+
+            MigrationScript script = scripts.stream()
+                .filter(candidate -> candidate.scriptId().equals(scriptId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown migration script [" + scriptId + "]."));
+
+            if (script.checksum() == null) {
+                throw new IllegalArgumentException("Migration script [" + scriptId + "] has no checksum to repair.");
+            }
+
+            if (!historyStore.isApplied(scriptId)) {
+                throw new IllegalStateException("Cannot repair migration script [" + scriptId + "] because it has not been applied.");
+            }
+
+            historyStore.updateChecksum(script);
+            log.info("Migration checksum repaired for script [{}].", scriptId);
+        } finally {
+            lock.release();
+        }
     }
 
     /**

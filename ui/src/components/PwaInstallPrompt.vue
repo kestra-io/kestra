@@ -2,20 +2,20 @@
     <KsAlert
         v-if="visible"
         type="info"
-        :title="t('pwa.install_title')"
+        :title="$t('pwa.install_title')"
         closable
         class="pwa-install-prompt"
         @close="dismiss"
     >
         <p class="pwa-install-description">
-            {{ t("pwa.install_description") }}
+            {{ $t("pwa.install_description") }}
         </p>
         <div class="pwa-install-actions">
             <KsButton type="primary" size="small" @click="install">
-                {{ t("pwa.install") }}
+                {{ $t("pwa.install") }}
             </KsButton>
             <KsButton text size="small" @click="dismiss">
-                {{ t("pwa.dismiss") }}
+                {{ $t("pwa.dismiss") }}
             </KsButton>
         </div>
     </KsAlert>
@@ -23,10 +23,8 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import {usePwaInstall} from "../composables/usePwaInstall"
 
-    const {t} = useI18n({useScope: "global"})
     const {canInstall, promptInstall, dismiss, dismissed} = usePwaInstall()
 
     const visible = computed(() => canInstall.value && !dismissed.value)

@@ -61,6 +61,8 @@
     "success": "Éxito",
     "save": "Guardar",
     "save_as_draft": "Guardar como borrador",
+    "publish": "Publicar",
+    "publish_draft": "Publicar borrador",
     "draft": "Borrador",
     "draft_flow_warning": "La última revisión de este flow es un borrador. La ejecución se realizará sobre la última revisión publicada; publica el borrador (o ejecútalo desde el Playground) para ejecutar tus últimos cambios.",
     "save task": "Guardar tarea",
@@ -127,6 +129,8 @@
       "last24hours": "Últimas 24 horas",
       "last48hours": "Últimas 48 horas",
       "last7days": "Últimos 7 días",
+      "last14days": "Últimos 14 días",
+      "last28days": "Últimos 28 días",
       "last30days": "Últimos 30 días",
       "last365days": "Últimos 365 días",
       "next5minutes": "Próximos 5 minutos",
@@ -145,6 +149,8 @@
       "24hours": "24 horas",
       "48hours": "48 horas",
       "7days": "7 días",
+      "14days": "14 días",
+      "28days": "28 días",
       "30days": "30 días",
       "365days": "365 días",
       "never": "Nunca",
@@ -830,6 +836,17 @@
       "tooltip": "Reiniciar el trigger"
     },
     "trigger disabled": "El trigger está deshabilitado dentro del Flow source",
+    "trigger enable dialog": {
+      "title": "Habilitar trigger",
+      "bulk title": "Habilitar {count} triggers",
+      "description": "Este trigger puede haber perdido programaciones mientras estaba deshabilitado.",
+      "bulk description": "Los triggers seleccionados pueden haber perdido programaciones mientras estaban deshabilitados.",
+      "strategy": "Seleccionar la estrategia a usar:",
+      "options": {
+        "skip": "No recuperar programaciones omitidas",
+        "follow": "Seguir la configuración {property} del trigger"
+      }
+    },
     "flow source not found": "Fuente de flow no encontrada",
     "date format": "Formato de fecha",
     "timezone": "Zona horaria",
@@ -1930,6 +1947,10 @@
       "viewAll": "Ver todo",
       "chart_preview": "Haz clic en un código fuente del gráfico para ver su vista previa",
       "export": "Exportar a CSV",
+      "exportTo": {
+        "csv": "Exportar a CSV",
+        "ion": "Exportar a ION"
+      },
       "quick_filters": {
         "all": "Todos",
         "running": "En ejecución",
@@ -2280,8 +2301,7 @@
         "open_world": "Open world",
         "destructive": "Destructivo",
         "idempotent": "Idempotente",
-        "return_direct": "Retorno directo",
-        "view_flow": "Abrir flow"
+        "return_direct": "Retorno directo"
       },
       "connect_tab": {
         "server_url": "URL del servidor",

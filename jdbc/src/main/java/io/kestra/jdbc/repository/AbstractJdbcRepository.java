@@ -639,19 +639,34 @@ public abstract class AbstractJdbcRepository {
     }
 
     private Condition handleLevelField(Object value, QueryFilter.Op operation) {
-        Level level = value instanceof Level ? (Level) value : Level.valueOf((String) value);
-
         return switch (operation) {
-            case GREATER_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMin(level));
-            case LESS_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMax(level));
+            case GREATER_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMin(toLevel(value)));
+            case LESS_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMax(toLevel(value)));
+            case IN -> levelsCondition(toLevelList(value));
+            case NOT_IN -> notLevelsCondition(toLevelList(value));
             default -> throw new InvalidQueryFiltersException(
                 "Unsupported operation for LEVEL: " + operation
             );
         };
     }
 
+    private static Level toLevel(Object value) {
+        return value instanceof Level level ? level : Level.valueOf((String) value);
+    }
+
+    private static List<Level> toLevelList(Object value) {
+        if (value instanceof List<?> list) {
+            return list.stream().map(AbstractJdbcRepository::toLevel).toList();
+        }
+        return List.of(toLevel(value));
+    }
+
     protected Condition levelsCondition(List<Level> levels) {
         return field("level").in(levels.stream().map(level -> level.name()).toList());
+    }
+
+    protected Condition notLevelsCondition(List<Level> levels) {
+        return field("level").notIn(levels.stream().map(level -> level.name()).toList());
     }
 
     protected Condition handleAttemptNumberField(Object value, QueryFilter.Op operation) {

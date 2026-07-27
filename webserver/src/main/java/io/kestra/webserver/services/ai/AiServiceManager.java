@@ -9,8 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.ai.api.ApiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiAiService;
@@ -34,7 +34,7 @@ public class AiServiceManager {
     private String defaultProviderId;
     private boolean hasConfiguredProvider = false;
     protected final ExpressionContextService expressionContextService;
-    protected final PluginDefaultService pluginDefaultService;
+    protected final FlowParsingService flowParsingService;
     protected final NamespaceContextTool namespaceContextTool;
     protected final KestraDocsContextTool kestraDocsContextTool;
 
@@ -52,10 +52,10 @@ public class AiServiceManager {
         @Nullable NamespaceContextTool namespaceContextTool,
         @Nullable KestraDocsContextTool kestraDocsContextTool,
         ExpressionContextService expressionContextService,
-        PluginDefaultService pluginDefaultService) {
+        FlowParsingService flowParsingService) {
         this.providersConfiguration = providersConfiguration;
         this.expressionContextService = expressionContextService;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.namespaceContextTool = namespaceContextTool;
         this.kestraDocsContextTool = kestraDocsContextTool;
 
@@ -92,7 +92,7 @@ public class AiServiceManager {
                     posthogService,
                     listeners,
                     expressionContextService,
-                    pluginDefaultService
+                    flowParsingService
                 );
                 if (aiService == null) {
                     log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
@@ -123,7 +123,7 @@ public class AiServiceManager {
         PosthogService posthogService,
         List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
         ExpressionContextService expressionContextService,
-        PluginDefaultService pluginDefaultService) {
+        FlowParsingService flowParsingService) {
         String type = provider.type();
         Map<String, Object> configMap = provider.configuration();
         if (configMap == null) {
@@ -134,7 +134,7 @@ public class AiServiceManager {
         if (!"gemini".equals(type)) {
             throw new IllegalArgumentException(
                 "Unsupported AI provider type '" + type + "' for Kestra OSS. Only 'gemini' is supported. " +
-                "Other providers (openai, anthropic, ollama, etc.) require Kestra Enterprise Edition."
+                    "Other providers (openai, anthropic, ollama, etc.) require Kestra Enterprise Edition."
             );
         }
 
@@ -144,7 +144,8 @@ public class AiServiceManager {
 
             GeminiConfiguration geminiConfig = mapper.convertValue(configMap, GeminiConfiguration.class);
             AiService<?> service = new GeminiAiService(
-                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners, geminiConfig, expressionContextService, pluginDefaultService
+                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, this.namespaceContextTool, provider.displayName(), listeners, geminiConfig,
+                expressionContextService, flowParsingService
             );
             if (this.kestraDocsContextTool != null) {
                 service.setKestraDocsContextTool(this.kestraDocsContextTool);

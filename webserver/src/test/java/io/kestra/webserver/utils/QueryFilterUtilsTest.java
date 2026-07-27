@@ -1,7 +1,6 @@
 package io.kestra.webserver.utils;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -10,7 +9,6 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 public class QueryFilterUtilsTest {
     ZonedDateTime date = ZonedDateTime.parse("2024-05-27T15:00:00+02:00[Europe/Paris]");

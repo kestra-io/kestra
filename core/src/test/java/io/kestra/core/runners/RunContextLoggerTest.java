@@ -12,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
+import org.slf4j.event.KeyValuePair;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.Execution;
@@ -23,11 +24,10 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.utils.TestsUtils;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.slf4j.event.KeyValuePair;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -287,10 +287,12 @@ class RunContextLoggerTest {
             .attempts(List.of(TaskRunAttempt.builder().build()))
             .build();
 
-        runContextLogger.emitDynamicTaskRunLogs(dynamicTaskRun, List.of(
-            new DynamicTaskRunLog(Level.INFO, "info dropped by filter"),
-            new DynamicTaskRunLog(Level.ERROR, "error kept")
-        ));
+        runContextLogger.emitDynamicTaskRunLogs(
+            dynamicTaskRun, List.of(
+                new DynamicTaskRunLog(Level.INFO, "info dropped by filter"),
+                new DynamicTaskRunLog(Level.ERROR, "error kept")
+            )
+        );
 
         List<LogEntry> queueLogs = TestsUtils.awaitLogs(logs, 1);
         assertThat(queueLogs).hasSize(1);
@@ -323,9 +325,11 @@ class RunContextLoggerTest {
             .attempts(List.of(TaskRunAttempt.builder().build()))
             .build();
 
-        runContextLogger.emitDynamicTaskRunLogs(dynamicTaskRun, List.of(
-            new DynamicTaskRunLog(Level.INFO, "to file super-secret-value")
-        ));
+        runContextLogger.emitDynamicTaskRunLogs(
+            dynamicTaskRun, List.of(
+                new DynamicTaskRunLog(Level.INFO, "to file super-secret-value")
+            )
+        );
 
         runContextLogger.closeLogFile();
         String fileContent = java.nio.file.Files.readString(runContextLogger.getLogFile().toPath());
@@ -353,8 +357,7 @@ class RunContextLoggerTest {
             Level.TRACE,
             false
         );
-        ch.qos.logback.classic.Logger perRunLogger =
-            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        ch.qos.logback.classic.Logger perRunLogger = (ch.qos.logback.classic.Logger) runContextLogger.logger();
 
         // the per-run MDC carries the dynamic taskrun identity (taskRunId/taskId), not just the
         // execution context — so forwarded server logs are attributed to the dynamic taskrun too
@@ -379,8 +382,7 @@ class RunContextLoggerTest {
             false
         );
         // initializeLogger() populates the per-run LoggerContext's MDC adapter on this thread.
-        ch.qos.logback.classic.Logger perRunLogger =
-            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        ch.qos.logback.classic.Logger perRunLogger = (ch.qos.logback.classic.Logger) runContextLogger.logger();
 
         LoggingEvent original = new LoggingEvent(
             RunContextLoggerTest.class.getName(),
@@ -418,8 +420,7 @@ class RunContextLoggerTest {
             Level.TRACE,
             false
         );
-        ch.qos.logback.classic.Logger perRunLogger =
-            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        ch.qos.logback.classic.Logger perRunLogger = (ch.qos.logback.classic.Logger) runContextLogger.logger();
         var adapter = perRunLogger.getLoggerContext().getMDCAdapter();
 
         assertThat(adapter.getCopyOfContextMap())
@@ -472,8 +473,7 @@ class RunContextLoggerTest {
             Level.TRACE,
             false
         );
-        ch.qos.logback.classic.Logger perRunLogger =
-            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        ch.qos.logback.classic.Logger perRunLogger = (ch.qos.logback.classic.Logger) runContextLogger.logger();
 
         LoggingEvent original = new LoggingEvent(
             RunContextLoggerTest.class.getName(),

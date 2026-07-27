@@ -46,15 +46,17 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(
-                configuration -> new HashSet<>(DSL
-                    .using(configuration)
-                    .select(field("namespace"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId, false))
-                    .and(lastCondition())
-                    .groupBy(field("namespace"))
-                    .fetch()
-                    .map(record -> record.getValue("namespace", String.class)))
+                configuration -> new HashSet<>(
+                    DSL
+                        .using(configuration)
+                        .select(field("namespace"))
+                        .from(this.jdbcRepository.getTable())
+                        .where(this.defaultFilter(tenantId, false))
+                        .and(lastCondition())
+                        .groupBy(field("namespace"))
+                        .fetch()
+                        .map(record -> record.getValue("namespace", String.class))
+                )
             );
     }
 

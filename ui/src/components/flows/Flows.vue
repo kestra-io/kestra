@@ -19,7 +19,7 @@
             </NavBarActions>
         </template>
     </TopNavBar>
-    <section :class="{container: topbar}">
+    <section :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -38,6 +38,7 @@
             :no-data-text="$t('no_results.flows')"
             class="flows-table"
             :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+            :fitHeight="fitHeightResolved"
         >
             <template #top>
                 <KSFilter
@@ -136,10 +137,16 @@
                     sortable="custom"
                     :sortOrders="['ascending', 'descending']"
                     :label="$t('namespace')"
-                    :formatter="(_: any, __: any, cellValue: string) =>
-                        h(BreakableText, {value: cellValue})
-                    "
-                />
+                >
+                    <template #default="scope">
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
+                    </template>
+                </KsTableColumn>
 
                 <KsTableColumn
                     v-else-if="colProp === 'state.startDate' && user?.hasAny(resource.EXECUTION)"
@@ -259,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useTemplateRef, watch, h} from "vue"
+    import {ref, computed, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
@@ -292,6 +299,7 @@
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
+    import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
     import action from "../../models/action"
@@ -307,18 +315,25 @@
 
     import {useTableColumns} from "../../composables/useTableColumns"
     import useRouteContext from "../../composables/useRouteContext"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
+        fitHeight?: boolean;
         namespace?: string;
         id?: string | null;
         defaultScopeFilter?: boolean,
+        embed?: boolean;
     }>(), {
         topbar: true,
+        fitHeight: undefined,
         namespace: undefined,
         id: undefined,
         defaultScopeFilter: false,
+        embed: false,
     })
+
+    const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
 
     const flowStore = useFlowStore()
     const apiStore = useApiStore()
@@ -397,7 +412,7 @@
 
     const routeInfo = computed(() => ({title: t("flows")}))
 
-    useRouteContext(routeInfo)
+    useRouteContext(routeInfo, props.embed)
 
     const dataTable = useTemplateRef("dataTable")
 
@@ -456,32 +471,8 @@
 
     const selectionIds = computed(() => selection.value.map((flow: any) => ({id: flow.id, namespace: flow.namespace})))
 
-    interface ChartDefinition {
-        id: string;
-        type: string;
-        chartOptions: {
-            displayName: string;
-            description: string;
-            legend: {enabled: boolean};
-            column: string;
-            colorByColumn: string;
-            width: number;
-        };
-        data: {
-            type: string;
-            columns: {
-                date: {field: string; displayName: string};
-                state: {field: string};
-                total: {displayName: string; agg: string};
-                duration: {field: string; displayName: string; agg: string};
-            };
-            where: {field: string; type: string; value: string}[];
-        };
-        content?: string;
-    }
-
     // Chart definition for mappedChart
-    const CHART_DEFINITION: ChartDefinition = {
+    const CHART_DEFINITION: Chart = {
         id: "total_executions_timeseries",
         type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
         chartOptions: {
@@ -495,14 +486,36 @@
         data: {
             type: "io.kestra.plugin.core.dashboard.data.Executions",
             columns: {
-                date: {field: "START_DATE", displayName: "Date"},
-                state: {field: "STATE"},
-                total: {displayName: "Executions", agg: "COUNT"},
-                duration: {field: "DURATION", displayName: "Duration", agg: "SUM"},
+                date: {
+                    field: "START_DATE",
+                    displayName: "Date",
+                },
+                state: {
+                    field: "STATE",
+                },
+                total: {
+                    displayName: "Executions",
+                    agg: "COUNT",
+                    graphStyle: "BARS",
+                },
+                duration: {
+                    field: "DURATION",
+                    displayName: "Duration",
+                    agg: "SUM",
+                    graphStyle: "LINES",
+                },
             },
             where: [
-                {field: "NAMESPACE", type: "EQUAL_TO", value: "${namespace}"},
-                {field: "FLOW_ID", type: "EQUAL_TO", value: "${flow_id}"},
+                {
+                    field: "NAMESPACE",
+                    type: "EQUAL_TO",
+                    value: "${namespace}",
+                },
+                {
+                    field: "FLOW_ID",
+                    type: "EQUAL_TO",
+                    value: "${flow_id}",
+                },
             ],
         },
     }
@@ -563,13 +576,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toast.success(t("flows disabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.data.count}))
+                        toast.success(t("flows disabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -592,13 +605,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toast.success(t("flows enabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.data.count}))
+                        toast.success(t("flows enabled", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -613,13 +626,13 @@
             () => {
                 if (queryBulkAction.value) {
                     return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toast.success(t("flows deleted", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
                 } else {
                     return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.data.count}))
+                        toast.success(t("flows deleted", {count: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -681,7 +694,7 @@
         return MAPPED_CHARTS
     }
 
-    function chartFilters() {
+    function chartFilters(): QueryFilter[] {
         const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
         return [{
             field: "timeRange",
@@ -698,6 +711,16 @@
 </script>
 
 <style scoped lang="scss">
+.full-container {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    > * {
+        flex: 1;
+    }
+}
+
 .shadow {
     box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }

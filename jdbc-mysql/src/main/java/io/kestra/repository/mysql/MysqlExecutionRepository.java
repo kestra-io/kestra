@@ -6,18 +6,17 @@ import java.util.*;
 import org.jooq.Condition;
 import org.jooq.Field;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.RepositoryBean;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
-import io.micronaut.context.event.ApplicationEventPublisher;
 
-import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 

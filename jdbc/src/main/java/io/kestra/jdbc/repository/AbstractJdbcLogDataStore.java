@@ -1,0 +1,566 @@
+package io.kestra.jdbc.repository;
+
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+import org.slf4j.event.Level;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.LogDataStoreInterface;
+import io.kestra.core.repositories.log.LogDataStoreAccessControl;
+import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.jdbc.JdbcTableConfig;
+import io.kestra.jdbc.JdbcTableConfigsFactory;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.LogJdbcDataSourceProvider;
+import io.kestra.jdbc.services.JdbcFilterService;
+import io.kestra.plugin.core.dashboard.data.Logs;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.Nullable;
+import lombok.Getter;
+import reactor.core.publisher.Flux;
+
+public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
+
+    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
+    private static final String DATE_COLUMN = "timestamp";
+
+    public AbstractJdbcLogDataStore(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
+        super(jdbcRepository);
+
+        this.filterService = filterService;
+    }
+
+    /**
+     * No-arg constructor for log-store plugins that are deserialized from configuration and wire
+     * their {@code jdbcRepository} + {@link #filterService} later, in {@code init(ApplicationContext)}.
+     *
+     * @see io.kestra.core.plugins.ApplicationContextInitializable
+     */
+    protected AbstractJdbcLogDataStore() {
+        super(null);
+    }
+
+    /**
+     * Wires this deserialized log-store plugin's runtime dependencies from the application context:
+     * the {@link JdbcFilterService}, and the {@code jdbcRepository} — either a fresh dialect
+     * repository bound to the dedicated log datasource (when {@code kestra.logs.<type>.url} is set),
+     * or the shared {@code @Named("logs")} repository (the primary datasource) otherwise.
+     *
+     * @param applicationContext the application context to resolve beans from.
+     * @param dedicatedRepositoryFactory builds the dialect-specific repository for the dedicated
+     *        datasource (e.g. {@code (config, wrapper) -> new H2Repository<>(config, wrapper)}).
+     */
+    @SuppressWarnings("unchecked")
+    protected void initFrom(final ApplicationContext applicationContext,
+        final BiFunction<JdbcTableConfig, JooqDSLContextWrapper, io.kestra.jdbc.AbstractJdbcRepository<LogEntry>> dedicatedRepositoryFactory) {
+        this.filterService = applicationContext.getBean(JdbcFilterService.class);
+        this.accessControl = applicationContext.getBean(LogDataStoreAccessControl.class);
+        // Field-injected on bean-managed repositories; set explicitly here since the plugin is deserialized.
+        this.systemFlowsConfiguration = applicationContext.getBean(io.kestra.core.contexts.configuration.SystemFlowsConfiguration.class);
+
+        LogJdbcDataSourceProvider provider = applicationContext.getBean(LogJdbcDataSourceProvider.class);
+        if (provider.isDedicated()) {
+            JdbcTableConfig tableConfig = new JdbcTableConfigsFactory.InstantiableJdbcTableConfig("logs", LogEntry.class, provider.table());
+            this.jdbcRepository = dedicatedRepositoryFactory.apply(tableConfig, provider.dedicatedWrapper());
+        } else {
+            this.jdbcRepository = (io.kestra.jdbc.AbstractJdbcRepository<LogEntry>) applicationContext
+                .findBean(io.kestra.jdbc.AbstractJdbcRepository.class, Qualifiers.byName("logs"))
+                .orElseThrow(() -> new IllegalStateException("No AbstractJdbcRepository named 'logs' found"));
+        }
+    }
+
+    abstract protected Condition findCondition(String query);
+
+    protected Condition findQueryCondition(String query) {
+        return findCondition(query);
+    }
+
+    @Getter
+    protected JdbcFilterService filterService;
+
+    /**
+     * Access-control + delete-audit collaborator. Defaults to the global no-op so legacy beans that
+     * do not call {@link #initFrom} behave exactly as before; log-store plugins set the real bean in
+     * {@code init(ApplicationContext)} (the EE bean enforces namespace ACL + publishes audit events).
+     */
+    protected LogDataStoreAccessControl accessControl = LogDataStoreAccessControl.GLOBAL;
+
+    protected Map<Logs.Fields, String> getFieldsMapping() {
+        return Map.of(
+            Logs.Fields.DATE, DATE_COLUMN, Logs.Fields.NAMESPACE, "namespace", Logs.Fields.FLOW_ID, "flow_id", Logs.Fields.TASK_ID, "task_id", Logs.Fields.EXECUTION_ID, "execution_id",
+            Logs.Fields.TASK_RUN_ID, "taskrun_id",
+            Logs.Fields.ATTEMPT_NUMBER, "attempt_number", Logs.Fields.TRIGGER_ID, "trigger_id", Logs.Fields.LEVEL, "level", Logs.Fields.MESSAGE, "message"
+        );
+    }
+
+    protected Map<Logs.Fields, String> getWhereMapping() {
+        return getFieldsMapping();
+    }
+
+    @Override
+    public Set<Logs.Fields> dateFields() {
+        return Set.of(Logs.Fields.DATE);
+    }
+
+    @Override
+    public Logs.Fields dateFilterField() {
+        return Logs.Fields.DATE;
+    }
+
+    @Override
+    public Page<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
+        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
+        return toOffsetPage(findPage(pageable, tenantId, condition), pageable);
+    }
+
+    /**
+     * JDBC log stores paginate by offset with an exact total (the default {@code PaginationType.OFFSET}).
+     * Wrap the {@link ArrayListTotal} produced by the shared paging helpers into a Micronaut {@link Page}
+     * carrying that total, so the interface can also expose cursor pages from external stores.
+     */
+    private static Page<LogEntry> toOffsetPage(ArrayListTotal<LogEntry> result, Pageable pageable) {
+        return Page.of(result, pageable, result.getTotal());
+    }
+
+    /**
+     * Two log table columns don't line up with the default {@link QueryFilter.Field#name()}
+     * lower-cased derivation:
+     * <ul>
+     * <li>{@code TASK_RUN_ID} maps to {@code taskrun_id} (one word), not {@code task_run_id}</li>
+     * <li>{@code KIND} maps to {@code execution_kind}, not {@code kind}</li>
+     * </ul>
+     * Override the mapping for those; the rest of the column names match.
+     */
+    @Override
+    protected Name getColumnName(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.TASK_RUN_ID) {
+            return DSL.quotedName("taskrun_id");
+        }
+        if (field == QueryFilter.Field.KIND) {
+            return DSL.quotedName("execution_kind");
+        }
+        return super.getColumnName(field);
+    }
+
+    @Override
+    public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
+        // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
+        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
+            condition = NORMAL_KIND_CONDITION.and(condition);
+        }
+        return findAsync(tenantId, condition, field(DATE_COLUMN).asc());
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel) {
+        return findByExecutionId(tenantId, executionId, minLevel, true);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdWithoutAcl(String tenantId, String executionId, Level minLevel) {
+        return findByExecutionId(tenantId, executionId, minLevel, false);
+    }
+
+    private List<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, boolean withAccessControl) {
+        return this.query(tenantId, field("execution_id").eq(executionId), minLevel, withAccessControl);
+    }
+
+    @Override
+    public Page<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, Pageable pageable) {
+        return toOffsetPage(this.query(tenantId, field("execution_id").eq(executionId), minLevel, pageable), pageable);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionId(String tenantId, String namespace, String flowId, String executionId, Level minLevel) {
+        return this.query(tenantId, field("execution_id").eq(executionId).and(field("namespace").eq(namespace)).and(field("flow_id").eq(flowId)), minLevel, true);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel) {
+        return findByExecutionIdAndTaskId(tenantId, executionId, taskId, minLevel, true);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskIdWithoutAcl(String tenantId, String executionId, String taskId, Level minLevel) {
+        return findByExecutionIdAndTaskId(tenantId, executionId, taskId, minLevel, false);
+    }
+
+    private List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, boolean withAccessControl) {
+        return this.query(tenantId, field("execution_id").eq(executionId).and(field("task_id").eq(taskId)), minLevel, withAccessControl);
+    }
+
+    @Override
+    public Page<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, Pageable pageable) {
+        return toOffsetPage(this.query(tenantId, field("execution_id").eq(executionId).and(field("task_id").eq(taskId)), minLevel, pageable), pageable);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskId(String tenantId, String namespace, String flowId, String executionId, String taskId, Level minLevel) {
+        return this
+            .query(tenantId, field("execution_id").eq(executionId).and(field("namespace").eq(namespace)).and(field("flow_id").eq(flowId)).and(field("task_id").eq(taskId)), minLevel, true);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel) {
+        return findByExecutionIdAndTaskRunId(tenantId, executionId, taskRunId, minLevel, true);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskRunIdWithoutAcl(String tenantId, String executionId, String taskRunId, Level minLevel) {
+        return findByExecutionIdAndTaskRunId(tenantId, executionId, taskRunId, minLevel, false);
+    }
+
+    private List<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel, boolean withAccessControl) {
+        return this.query(tenantId, field("execution_id").eq(executionId).and(field("taskrun_id").eq(taskRunId)), minLevel, withAccessControl);
+    }
+
+    @Override
+    public Page<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel, Pageable pageable) {
+        return toOffsetPage(this.query(tenantId, field("execution_id").eq(executionId).and(field("taskrun_id").eq(taskRunId)), minLevel, pageable), pageable);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt) {
+        return findByExecutionIdAndTaskRunIdAndAttempt(tenantId, executionId, taskRunId, minLevel, attempt, true);
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskRunIdAndAttemptWithoutAcl(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt) {
+        return findByExecutionIdAndTaskRunIdAndAttempt(tenantId, executionId, taskRunId, minLevel, attempt, false);
+    }
+
+    private List<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, boolean withAccessControl) {
+        return this.query(tenantId, field("execution_id").eq(executionId).and(field("taskrun_id").eq(taskRunId)).and(field("attempt_number").eq(attempt)), minLevel, withAccessControl);
+    }
+
+    @Override
+    public Page<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
+        return toOffsetPage(
+            this.query(tenantId, field("execution_id").eq(executionId).and(field("taskrun_id").eq(taskRunId)).and(field("attempt_number").eq(attempt)), minLevel, pageable), pageable
+        );
+    }
+
+    @Override
+    public Integer purge(Execution execution) {
+        // A store that can't delete on demand (canPurge() == false, e.g. a retention/TTL-only cloud store) no-ops
+        // and reports 0 — callers already tolerate that. Enforced here so the contract can't be violated by a
+        // reduced-capability subclass, and so no delete-audit is fired for a deletion that never happened.
+        if (!canPurge()) {
+            return 0;
+        }
+        return purge(DSL.noCondition(), field("execution_id", String.class).eq(execution.getId()));
+    }
+
+    @Override
+    public Integer purge(List<Execution> executions) {
+        if (!canPurge()) {
+            return 0;
+        }
+        return purge(DSL.noCondition(), field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()));
+    }
+
+    @Override
+    public void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt) {
+        if (!canPurge()) {
+            return;
+        }
+        accessControl.onDeleteByQuery(tenantId, executionId, taskId, taskRunId, minLevel, attempt);
+
+        this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
+        {
+            DSLContext context = DSL.using(configuration);
+
+            var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId)).and(field("execution_id").eq(executionId));
+
+            if (taskId != null) {
+                delete = delete.and(field("task_id").eq(taskId));
+            }
+
+            if (taskRunId != null) {
+                delete = delete.and(field("taskrun_id").eq(taskRunId));
+            }
+
+            if (minLevel != null) {
+                delete = delete.and(minLevel(minLevel));
+            }
+
+            if (attempt != null) {
+                delete = delete.and(field("attempt_number").eq(attempt));
+            }
+
+            delete.execute();
+        });
+    }
+
+    @Override
+    public void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId) {
+        if (!canPurge()) {
+            return;
+        }
+        this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
+        {
+            DSLContext context = DSL.using(configuration);
+
+            var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId)).and(field("namespace").eq(namespace)).and(field("flow_id").eq(flowId));
+
+            if (triggerId != null) {
+                delete = delete.and(field("trigger_id").eq(triggerId));
+            }
+
+            delete.execute();
+        });
+    }
+
+    @Override
+    public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, Integer batchSize) {
+        if (!canPurge()) {
+            return 0;
+        }
+        Condition condition = buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
+
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
+            if (batchSize != null && configuration.dialect().family() == SQLDialect.MYSQL) {
+                int total = 0;
+                int deleted;
+                do {
+                    deleted = DSL.using(configuration)
+                        .delete(this.jdbcRepository.getTable())
+                        .where(condition)
+                        .limit(batchSize)
+                        .execute();
+                    total += deleted;
+                } while (deleted > 0);
+                return total;
+            }
+            return DSL.using(configuration).delete(this.jdbcRepository.getTable()).where(condition).execute();
+        });
+    }
+
+    private Condition buildDeleteCondition(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean purgeExecutionLogs, boolean purgeNonExecutionLogs) {
+        Condition condition = this.defaultFilter(tenantId)
+            .and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
+
+        if (startDate != null) {
+            condition = condition.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
+        }
+        if (namespace != null) {
+            // Without a flowId, the namespace is a prefix: it matches the namespace itself and all
+            // its descendants, consistent with the documented behavior and PurgeExecutions. With a
+            // flowId, it targets that flow's exact namespace.
+            if (flowId != null) {
+                condition = condition.and(field("namespace").eq(namespace));
+            } else {
+                condition = condition.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+            }
+        }
+        if (flowId != null) {
+            condition = condition.and(field("flow_id").eq(flowId));
+        }
+        if (executionId != null) {
+            condition = condition.and(field("execution_id").eq(executionId));
+        }
+        if (logLevels != null) {
+            condition = condition.and(levelsCondition(logLevels));
+        }
+        if (purgeExecutionLogs && !purgeNonExecutionLogs) {
+            condition = condition.and(field("execution_id").isNotNull());
+        } else if (purgeNonExecutionLogs && !purgeExecutionLogs) {
+            condition = condition.and(field("execution_id").isNull());
+        }
+
+        return condition;
+    }
+
+    @Override
+    public void deleteByFilters(String tenantId, List<QueryFilter> filters) {
+        if (!canPurge()) {
+            return;
+        }
+        this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
+            DSLContext context = DSL.using(configuration);
+
+            var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId));
+            delete = delete.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+
+            return delete.execute();
+        });
+    }
+
+    private ArrayListTotal<LogEntry> query(String tenantId, Condition condition, Level minLevel, Pageable pageable) {
+        var theCondition = minLevel != null ? condition.and(minLevel(minLevel)) : condition;
+        return findPage(pageable, tenantId, theCondition);
+    }
+
+    private List<LogEntry> query(String tenantId, Condition condition, Level minLevel, boolean withAccessControl) {
+        var defaultFilter = withAccessControl ? this.defaultFilter(tenantId) : this.defaultFilterWithNoACL(tenantId);
+        var theCondition = minLevel != null ? condition.and(minLevel(minLevel)) : condition;
+        return find(defaultFilter, theCondition, field(DATE_COLUMN).sort(SortOrder.ASC));
+    }
+
+    private Condition minLevel(Level minLevel) {
+        return levelsCondition(LogEntry.findLevelsByMin(minLevel));
+    }
+
+    protected Condition levelsCondition(List<Level> levels) {
+        return field("level").in(levels.stream().map(level -> level.name()).toList());
+    }
+
+    protected Condition notLevelsCondition(List<Level> levels) {
+        return field("level").notIn(levels.stream().map(level -> level.name()).toList());
+    }
+
+    public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean numeratorFilter) {
+        // A store that can't aggregate (canAggregate() == false) yields a zero KPI instead of running a query, so
+        // dashboards render "No data" — the store owns this, consumers (the dashboard engine) stay backend-agnostic.
+        if (!canAggregate()) {
+            return 0.0;
+        }
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
+            DSLContext context = DSL.using(configuration);
+            ColumnDescriptor<Logs.Fields> columnDescriptor = dataFilter.getColumns();
+            Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
+            if (columnDescriptor.getAgg() != null) {
+                field = filterService.buildAggregation(field, columnDescriptor.getAgg());
+            }
+
+            List<AbstractFilter<Logs.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getWhere()));
+            if (numeratorFilter) {
+                filters.addAll(dataFilter.getNumerator());
+            }
+
+            SelectConditionStep selectStep = context.select(field).from(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId));
+
+            var selectConditionStep = where(selectStep, filterService, filters, getFieldsMapping()).and(NORMAL_KIND_CONDITION);
+
+            Record result = selectConditionStep.fetchOne();
+            if (result != null) {
+                return result.getValue(field, Double.class);
+            } else {
+                return null;
+            }
+        });
+    }
+
+    @Override
+    public ArrayListTotal<Map<String, Object>> fetchData(String tenantId, DataFilter<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> descriptors, ZonedDateTime startDate,
+        ZonedDateTime endDate, Pageable pageable) {
+        // A store that can't aggregate (canAggregate() == false) yields no rows instead of running a query.
+        if (!canAggregate()) {
+            return new ArrayListTotal<>(List.of(), 0);
+        }
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
+            DSLContext context = DSL.using(configuration);
+
+            Map<String, ? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            boolean hasAgg = descriptors.getColumns().entrySet().stream().anyMatch(col -> col.getValue().getAgg() != null);
+            // Generate custom fields for date as they probably need formatting
+            // If they don't have aggs, we format datetime to minutes
+            List<Field<Date>> dateFields = generateDateFields(descriptors, getFieldsMapping(), startDate, endDate, dateFields(), hasAgg ? null : DateUtils.GroupType.MINUTE);
+
+            // Init request
+            SelectConditionStep<Record> selectConditionStep = select(context, filterService, columnsWithoutDate, dateFields, this.getFieldsMapping(), this.jdbcRepository.getTable(), tenantId);
+
+            // Apply Where filter
+            selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping()).and(NORMAL_KIND_CONDITION);
+
+            List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream().filter(column -> column.getAgg() == null).toList();
+
+            // Apply GroupBy for aggregation
+            SelectHavingStep<Record> selectHavingStep = groupBy(selectConditionStep, columnsWithoutDateWithOutAggs, dateFields, getFieldsMapping());
+
+            // Apply OrderBy
+            SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
+
+            // Fetch and paginate if provided
+            return fetchSeekStep(selectSeekStep, pageable);
+        });
+    }
+
+    @Override
+    protected Condition defaultFilterWithNoACL(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter(String tenantId) {
+        return defaultFilterWithNoACL(tenantId).and(aclCondition());
+    }
+
+    /**
+     * Translates the {@link io.kestra.core.models.AccessScope} from {@link #accessControl} into a jOOQ
+     * condition: {@code GLOBAL} → no restriction, {@code DENY_ALL} → match nothing,
+     * {@code NAMESPACES} → the namespace (or its children) is in the allowed set.
+     */
+    protected Condition aclCondition() {
+        io.kestra.core.models.AccessScope scope = accessControl.namespaceScope();
+        return switch (scope.kind()) {
+            case GLOBAL -> DSL.trueCondition();
+            case DENY_ALL -> DSL.falseCondition();
+            case NAMESPACES -> {
+                List<Condition> ors = new ArrayList<>();
+                for (String namespace : scope.namespaces()) {
+                    ors.add(field("namespace").eq(namespace));
+                    ors.add(field("namespace").startsWith(namespace + "."));
+                }
+                yield DSL.or(ors);
+            }
+        };
+    }
+
+    @Override
+    protected Condition defaultFilter(Boolean allowDeleted) {
+        return this.defaultFilter();
+    }
+
+    @Override
+    protected Condition defaultFilterWithNoACL(String tenantId, boolean deleted) {
+        return this.defaultFilterWithNoACL(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
+        return this.defaultFilter(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter() {
+        return DSL.trueCondition();
+    }
+
+    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
+}

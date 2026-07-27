@@ -12,10 +12,9 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DisplayExpressionRenderer;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.tenant.TenantService;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -38,7 +37,7 @@ public class ExpressionController {
     private final TenantService tenantService;
     private final ExecutionRepositoryInterface executionRepository;
     private final FlowRepositoryInterface flowRepository;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
     private final RunContextFactory runContextFactory;
     private final DisplayExpressionRenderer displayExpressionRenderer;
 
@@ -47,14 +46,13 @@ public class ExpressionController {
         TenantService tenantService,
         ExecutionRepositoryInterface executionRepository,
         FlowRepositoryInterface flowRepository,
-        PluginDefaultService pluginDefaultService,
+        FlowParsingService flowParsingService,
         RunContextFactory runContextFactory,
-        DisplayExpressionRenderer displayExpressionRenderer
-    ) {
+        DisplayExpressionRenderer displayExpressionRenderer) {
         this.tenantService = tenantService;
         this.executionRepository = executionRepository;
         this.flowRepository = flowRepository;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.runContextFactory = runContextFactory;
         this.displayExpressionRenderer = displayExpressionRenderer;
     }
@@ -62,7 +60,7 @@ public class ExpressionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/render", consumes = MediaType.APPLICATION_JSON)
     @Operation(
-        tags = {"Expressions"},
+        tags = { "Expressions" },
         summary = "Render Pebble expressions for display",
         description = "Renders a list of Pebble expressions for display purposes only, using a restricted engine: " +
             "secret() is masked as [secret: KEY], env() is kept raw, only a safe allowlist of pure functions is " +
@@ -87,7 +85,7 @@ public class ExpressionController {
 
         // A flow source (e.g. an unsaved editor draft) takes priority over the persisted flow.
         if (request.flow() != null) {
-            FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), request.flow(), false);
+            FlowWithSource flow = flowParsingService.parse(tenantService.resolveTenant(), request.flow(), false);
 
             return flowVariables(flow);
         }
@@ -113,10 +111,10 @@ public class ExpressionController {
         @Nullable @Schema(description = "Resolve against this execution's context") String executionId,
         @Nullable @Schema(description = "Resolve against this flow's context (with flowId)") String namespace,
         @Nullable @Schema(description = "Resolve against this flow's context (with namespace)") String flowId,
-        @Nullable @Schema(description = "Resolve against this flow source's context (YAML)") String flow
-    ) {}
+        @Nullable @Schema(description = "Resolve against this flow source's context (YAML)") String flow) {
+    }
 
     public record RenderedExpressions(
-        @Schema(description = "Rendered values keyed by their raw expression") Map<String, String> rendered
-    ) {}
+        @Schema(description = "Rendered values keyed by their raw expression") Map<String, String> rendered) {
+    }
 }

@@ -264,9 +264,11 @@ public class FlowConcurrencyCaseTest {
             Await.await()
                 .during(Duration.ofMillis(100))
                 .atMost(Duration.ofSeconds(5))
-                .until(() -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
-                    .map(e -> e.getState().isQueued())
-                    .orElse(false));
+                .until(
+                    () -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
+                        .map(e -> e.getState().isQueued())
+                        .orElse(false)
+                );
         } finally {
             runnerUtils.killExecution(execution2);
             runnerUtils.killExecution(execution3);
@@ -295,9 +297,11 @@ public class FlowConcurrencyCaseTest {
             Await.await()
                 .during(Duration.ofMillis(100))
                 .atMost(Duration.ofSeconds(5))
-                .until(() -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
-                    .map(e -> e.getState().isQueued())
-                    .orElse(false));
+                .until(
+                    () -> executionRepository.findById(execution3.getTenantId(), execution3.getId())
+                        .map(e -> e.getState().isQueued())
+                        .orElse(false)
+                );
         } finally {
             runnerUtils.killExecution(execution1);
             runnerUtils.killExecution(execution3);

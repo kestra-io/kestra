@@ -31,7 +31,6 @@
             <TaskNode
                 v-bind="taskProps"
                 :icons="icons"
-                :iconComponent="iconComponent"
                 :playgroundEnabled="playgroundEnabled"
                 :playgroundReadyToStart="playgroundReadyToStart"
                 :replayEnabled="replayEnabled"
@@ -64,7 +63,6 @@
             <BasicNode
                 v-bind="taskProps"
                 :icons="icons"
-                :iconComponent="iconComponent"
             />
         </template>
 
@@ -72,7 +70,6 @@
             <TriggerNode
                 v-bind="triggerProps as any"
                 :icons="icons"
-                :iconComponent="iconComponent"
                 :isReadOnly="isReadOnly"
                 :isAllowedEdit="isAllowedEdit"
                 @delete="emit(EVENTS.DELETE, $event)"
@@ -144,7 +141,6 @@
 <script lang="ts" setup>
     import {computed, nextTick, onMounted, provide, ref, watch} from "vue"
     import {useVueFlow, VueFlow, Panel} from "@vue-flow/core"
-    import type {XYPosition} from "@vue-flow/core"
     import {ControlButton, Controls} from "@vue-flow/controls"
     import {Background} from "@vue-flow/background"
     import ClusterNode from "./nodes/ClusterNode.vue"
@@ -162,9 +158,7 @@
     import ArrowExpandAll from "vue-material-design-icons/ArrowExpandAll.vue"
     import {cssVar as cssVariable, State, KsSwitch, KsTooltip} from "@kestra-io/design-system"
     import {CLUSTER_PREFIX} from "./utils/constants"
-    import * as flowYamlUtils from "./utils/flowYamlUtils"
     import {type CustomActionConfig, type ShowDetailsConfig, EVENTS, NODE_SIZES} from "./utils/constants"
-    import * as Utils from "./utils/utils"
     import * as VueFlowUtils from "./utils/vueFlowUtils"
     import {useScreenshot} from "./composables/useScreenshot"
     import {EXECUTION_INJECTION_KEY, SUBFLOWS_EXECUTIONS_INJECTION_KEY, SHOW_EXTRA_DETAILS_INJECTION_KEY} from "./injectionKeys"
@@ -182,7 +176,6 @@
         namespace?: string;
         expandedSubflows?: string[];
         icons?: Record<string, any>;
-        iconComponent?: any;
         enableSubflowInteraction?: boolean;
         execution?: any;
         subflowsExecutions?: Record<string, any[]>;
@@ -206,7 +199,6 @@
         namespace: undefined,
         expandedSubflows: () => [],
         icons: () => ({}),
-        iconComponent: undefined,
         execution: undefined,
         enableSubflowInteraction: true,
         playgroundEnabled: false,
@@ -222,10 +214,8 @@
 
     const isRunning = computed(() => State.isRunning(props.execution?.state?.current) === true)
 
-    const dragging = ref(false)
     const showExtraDetails = ref(false)
-    const lastPosition = ref<XYPosition | null>()
-    const {getNodes, getEdges, getElements, onNodeDrag, onNodeDragStart, onNodeDragStop, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
+    const {getNodes, getEdges, getElements, onNodesInitialized, fitView, zoomIn, zoomOut, setElements, removeEdges, removeNodes, removeSelectedElements, vueFlowRef} = useVueFlow(props.id)
     const edgeReplacer = ref({})
     const hiddenNodes = ref<string[]>([])
     const collapsed = ref(new Set<string>())
@@ -270,8 +260,6 @@
             EVENTS.ADD_TASK,
             "toggle-orientation",
             "loading",
-            "swapped-task",
-            "message",
             "expand-subflow",
             EVENTS.SHOW_CONDITION,
             EVENTS.SHOW_CUSTOM_ACTION,
@@ -353,7 +341,6 @@
     }
 
     const HOVERED_NODE_CLASS = "topology-node-hovered"
-    const DROP_TARGET_CLASS = "topology-node-drop-target"
 
     function setNodeInteractionClass(node: any, cls: string, add: boolean) {
         const classes = (node.class || "").split(" ").filter(Boolean)
@@ -367,13 +354,11 @@
     }
 
     const onMouseOver = (node: any) => {
-        if (!dragging.value) {
-            VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
-                if (n?.type === "task") {
-                    setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
-                }
-            })
-        }
+        VueFlowUtils.linkedElements(props.id, node.uid).forEach((n) => {
+            if (n?.type === "task") {
+                setNodeInteractionClass(n, HOVERED_NODE_CLASS, true)
+            }
+        })
     }
 
     const onMouseLeave = () => {
@@ -385,106 +370,7 @@
             .forEach(n => {
                 n.style = {...n.style, opacity: "1"}
                 setNodeInteractionClass(n, HOVERED_NODE_CLASS, false)
-                setNodeInteractionClass(n, DROP_TARGET_CLASS, false)
             })
-    }
-
-    onNodeDragStart((e) => {
-        dragging.value = true
-        resetNodesStyle()
-        e.node.style = {...e.node.style, zIndex: 1976}
-        lastPosition.value = e.node.position
-    })
-
-    onNodeDragStop((e: any) => {
-        dragging.value = false
-        if (e.intersections && checkIntersections(e.intersections, e.node) === null) {
-            const taskNode1 = e.node
-            const taskNode2 = e.intersections.find((n: any) => n.type === "task")
-            if (taskNode2) {
-                try {
-                    if (props.source) {
-                        emit("swapped-task", {
-                            newSource: flowYamlUtils.swapBlocks({
-                                source: props.source,
-                                section: "tasks",
-                                key1: Utils.afterLastDot(taskNode1.id) ?? "",
-                                key2: Utils.afterLastDot(taskNode2.id) ?? "",
-                            }),
-                            swappedTasks: [taskNode1.id, taskNode2.id],
-                        })
-                    }
-                } catch (err: any) {
-                    emit("message", {
-                        variant: "error",
-                        title: "cannot swap tasks",
-                        message: `${err.message}, ${err.messageOptions}`,
-                    })
-                    taskNode1.position = lastPosition.value
-                }
-            } else {
-                taskNode1.position = lastPosition.value
-            }
-        } else {
-            e.node.position = lastPosition.value
-        }
-        resetNodesStyle()
-        e.node.style = {...e.node.style, zIndex: 5}
-        lastPosition.value = null
-    })
-
-    const subflowPrefixes = computed(() => {
-        if (!props.flowGraph?.clusters) {
-            return []
-        }
-
-        return props.flowGraph.clusters.filter(cluster => cluster.cluster.type.endsWith("SubflowGraphCluster"))
-            .map(cluster => cluster.cluster.taskNode.uid + ".")
-    })
-
-    onNodeDrag((e: any) => {
-        resetNodesStyle()
-        getNodes.value.filter(n => n.id !== e.node.id).forEach(n => {
-            if (n.type === "trigger" || (n.type === "task" && (n.id.startsWith(e.node.id + ".") || e.node.id.startsWith(n.id + "."))) || subflowPrefixes?.value?.some(subflowPrefix => n.id.startsWith(subflowPrefix))) {
-                n.style = {...n.style, opacity: "0.5"}
-            } else {
-                n.style = {...n.style, opacity: "1"}
-            }
-        })
-        if (e.intersections && !checkIntersections(e.intersections, e.node) && e.intersections.filter((n: any) => n.type === "task").length === 1) {
-            e.intersections.forEach((n: any) => {
-                if (n.type === "task") {
-                    setNodeInteractionClass(n, DROP_TARGET_CLASS, true)
-                }
-            })
-            setNodeInteractionClass(e.node, DROP_TARGET_CLASS, true)
-        }
-    })
-
-    const checkIntersections = (intersections: any, node: any) => {
-        const tasksMeet = intersections.filter((n: any) => n.type === "task").map((n: any) => Utils.afterLastDot(n.id))
-        if (tasksMeet.length > 1) {
-            return "toomuchtaskerror"
-        }
-        try {
-            if (tasksMeet.length === 1 && props.source
-                && flowYamlUtils.isParentChildrenRelation({
-                    source: props.source,
-                    sections: ["tasks", "triggers"],
-                    key1: Utils.afterLastDot(tasksMeet[0]) ?? "",
-                    key2: Utils.afterLastDot(node.id) ?? "",
-                    keyName: "id",
-                })
-            ) {
-                return "parentchildrenerror"
-            }
-        } catch {
-            return "parentchildrenerror"
-        }
-        if (intersections.filter((n: any) => n.type === "trigger").length > 0) {
-            return "triggererror"
-        }
-        return null
     }
 
     const collapseCluster = (clusterUid: string, regenerate: boolean) => {

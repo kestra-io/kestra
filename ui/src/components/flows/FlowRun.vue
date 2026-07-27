@@ -7,6 +7,11 @@
         <KsAlert v-if="flow.draft" type="warning" showIcon :closable="false">
             <strong>{{ $t('draft') }}</strong><br>
             {{ $t('draft_flow_warning') }}
+            <div v-if="canPublishDraft" class="draft-publish-action">
+                <KsButton type="primary" size="small" :loading="publishing" data-test="publish-draft" @click="onPublishDraft">
+                    {{ $t('publish_draft') }}
+                </KsButton>
+            </div>
         </KsAlert>
         <div class="flow-execution-checks-alerts">
             <KsAlert v-for="alert in checks || []" :type="toAlertType(alert.style)" :closable="false" :key="alert.message">
@@ -124,6 +129,10 @@
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
+    import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
@@ -197,6 +206,8 @@
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
+    const flowStore = useFlowStore()
+    const authStore = useAuthStore()
 
     const openTab = ref("inputs")
     const inputs = ref<Record<string, unknown>>({})
@@ -215,9 +226,32 @@
 
     const form = ref<FormInstance | null>(null)
     const inputsFormRef = ref<InstanceType<typeof InputsForm> | null>(null)
+    const publishing = ref(false)
 
     const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
+
+    const canPublishDraft = computed(() =>
+        Boolean(flow.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value.namespace)),
+    )
+
+    async function onPublishDraft() {
+        if (!flow.value) return
+        publishing.value = true
+        try {
+            const {namespace, id} = flow.value
+            const outcome = await flowStore.publishDraft(flow.value)
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                await executionsStore.loadFlowForExecution({namespace, flowId: id, store: true})
+            }
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000})
+            }
+        } finally {
+            publishing.value = false
+        }
+    }
 
     // a flow with FORM inputs renders the wizard; the footer Execute is gated on the recap step
     const hasFormInputs = computed(() => (flow.value?.inputs ?? []).some((input: {type?: string}) => input.type === "FORM"))
@@ -284,8 +318,7 @@
         if (!execution.value?.labels) {
             return []
         }
-        // flow.labels at runtime is Label[] for the execution-context flow
-        const flowLabels = flow.value?.labels as unknown as Label[] | undefined
+        const flowLabels = flow.value?.labels
         if (!flowLabels) {
             return execution.value.labels
         }
@@ -385,7 +418,8 @@
                                 newTab: newTab.value,
                                 id: flow.value.id,
                                 namespace: flow.value.namespace,
-                                revision: flow.value.revision,
+                                // Drafts are playground-only: omit the revision so the backend runs the latest published one.
+                                revision: flow.value.draft ? undefined : flow.value.revision,
                                 labels: labelStrings,
                                 scheduleDate: moment(scheduleDate.value)
                                     .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
@@ -424,6 +458,10 @@
 <style scoped lang="scss">
     .flow-execution-checks-alerts {
         margin-bottom: 1rem;
+    }
+
+    .draft-publish-action {
+        margin-top: var(--ks-spacing-2);
     }
     :deep(.kel-collapse) {
         border-radius: var(--kel-border-radius-round);

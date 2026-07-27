@@ -18,23 +18,21 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.scheduler.events.TriggerCreated;
+import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
-
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.scheduler.events.TriggerCreated;
-import io.kestra.core.scheduler.events.TriggerEvent;
-import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
-import io.kestra.core.scheduler.events.TriggerUpdated;
 
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
@@ -87,22 +85,15 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenValidatingFlowGivenDefaults() {
+    void shouldReturnTrueWhenValidatingFlow() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
               - id: log
                 type: io.kestra.plugin.core.log.Log
                 message: This is a message
-            pluginDefaults:
-              - type: io.kestra.plugin.core
-                values:
-                  level: WARN
-                  uri: https://kestra.io
             """;
         // When
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
@@ -113,22 +104,15 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenValidatingFlowWithFilenameGivenDefaults() {
+    void shouldReturnTrueWhenValidatingFlowWithFilename() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
               - id: log
                 type: io.kestra.plugin.core.log.Log
                 message: This is a message
-            pluginDefaults:
-              - type: io.kestra.plugin.core
-                values:
-                  level: WARN
-                  uri: https://kestra.io
             """;
         // When
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource("flow.yaml", source)));
@@ -139,18 +123,19 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnNoWarningsWhenPropertiesProvidedByPluginDefaults() {
+    void shouldReturnConstraintWhenFlowUsesRemovedPluginDefaults() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: This is a message
             pluginDefaults:
-              - type: io.kestra.plugin.core.http.Download
+              - type: io.kestra.plugin.core.log.Log
                 values:
-                  uri: https://kestra.io
+                  level: WARN
             """;
 
         // When
@@ -158,8 +143,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).isNull();
-        assertThat(results.getFirst().getWarnings()).isEmpty();
+        assertThat(results.getFirst().getConstraints()).contains("pluginDefaults");
     }
 
     @Test
@@ -228,6 +212,27 @@ class FlowServiceTest {
         assertThat(fromDb.isPresent()).isTrue();
         assertThat(fromDb.get().getRevision()).isEqualTo(1);
         assertThat(fromDb.get().getSource()).isEqualTo(oldSource);
+    }
+
+    @Test
+    void importFlow_ShouldEmitTriggerCreatedEventForNewTriggerInSyncedFlow() throws FlowProcessingException, QueueException {
+        reset(triggerEventQueue);
+
+    String source = """
+        id: import_with_trigger
+        namespace: some.namespace
+        triggers:
+          - id: daily
+            type: io.kestra.plugin.core.trigger.Schedule
+            cron: "0 6 * * *"
+        tasks:
+          - id: task
+            type: io.kestra.plugin.core.log.Log
+            message: Hello""";
+
+    flowService.importFlow("my-tenant", source);
+    verify(triggerEventQueue).send(any());
+    
     }
 
     @Test
@@ -871,8 +876,8 @@ class FlowServiceTest {
             tasks: []
             """.formatted(flowId, TEST_NAMESPACE);
 
-        assertThatThrownBy(() ->
-            flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source))
+        assertThatThrownBy(
+            () -> flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source))
         ).isInstanceOf(jakarta.validation.ConstraintViolationException.class);
     }
 
@@ -959,8 +964,7 @@ class FlowServiceTest {
         FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
 
         try {
-            Optional<jakarta.validation.ConstraintViolationException> violations =
-                flowService.validateForExecution(saved.toFlow());
+            Optional<jakarta.validation.ConstraintViolationException> violations = flowService.validateForExecution(saved.toFlow());
             assertThat(violations).isPresent();
             // The flow has at least one violation - we don't pin the exact message so this stays
             // robust against bean-validation message wording changes.

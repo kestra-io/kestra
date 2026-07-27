@@ -25,9 +25,9 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.runners.ReusableInputsExpander;
+import io.kestra.core.serializers.JacksonMapper;
 
 import io.micronaut.core.annotation.Nullable;
-import io.kestra.core.serializers.JacksonMapper;
 
 /**
  * The base interface for FLow.

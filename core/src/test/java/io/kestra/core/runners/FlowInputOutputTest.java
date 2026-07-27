@@ -22,11 +22,11 @@ import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.EmailInput;
 import io.kestra.core.models.flows.input.FileInput;
+import io.kestra.core.models.flows.input.FloatInput;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.InputAndValue;
-import io.kestra.core.models.flows.input.EmailInput;
-import io.kestra.core.models.flows.input.FloatInput;
 import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
@@ -465,7 +465,8 @@ class FlowInputOutputTest {
             .build();
 
         List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(brokenExpression, brokenDefault, requiredMissing), null, DEFAULT_TEST_EXECUTION, Map.of());
+            List.of(brokenExpression, brokenDefault, requiredMissing), null, DEFAULT_TEST_EXECUTION, Map.of()
+        );
 
         assertThat(values.get(0).exceptions())
             .as("expression render failure is a render error")
@@ -651,8 +652,10 @@ class FlowInputOutputTest {
 
         // When
         Map<String, Object> result = flowInputOutput
-            .readExecutionInputs(flow, executionId,
-                Flux.just(new MemoryCompletedPart("greeting", "hello".getBytes(StandardCharsets.UTF_8))))
+            .readExecutionInputs(
+                flow, executionId,
+                Flux.just(new MemoryCompletedPart("greeting", "hello".getBytes(StandardCharsets.UTF_8)))
+            )
             .block();
 
         // Then
@@ -672,8 +675,10 @@ class FlowInputOutputTest {
 
         // When
         Map<String, Object> result = flowInputOutput
-            .readExecutionInputs(flow, executionId,
-                Flux.just(new MemoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8))))
+            .readExecutionInputs(
+                flow, executionId,
+                Flux.just(new MemoryCompletedFileUpload("upload", "data.csv", "col1,col2".getBytes(StandardCharsets.UTF_8)))
+            )
             .block();
 
         // Then
@@ -687,9 +692,11 @@ class FlowInputOutputTest {
         FormInput form = FormInput.builder()
             .id("environment")
             .type(Type.FORM)
-            .inputs(List.of(
-                StringInput.builder().id("region").type(Type.STRING).build()
-            ))
+            .inputs(
+                List.of(
+                    StringInput.builder().id("region").type(Type.STRING).build()
+                )
+            )
             .build();
 
         // When expanded
@@ -708,16 +715,20 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .inputs(List.of(
-                FormInput.builder()
-                    .id("environment")
-                    .type(Type.FORM)
-                    .inputs(List.of(
-                        StringInput.builder().id("region").type(Type.STRING).required(true).build()
-                    ))
-                    .build(),
-                StringInput.builder().id("api_key").type(Type.STRING).required(true).build()
-            ))
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("environment")
+                        .type(Type.FORM)
+                        .inputs(
+                            List.of(
+                                StringInput.builder().id("region").type(Type.STRING).required(true).build()
+                            )
+                        )
+                        .build(),
+                    StringInput.builder().id("api_key").type(Type.STRING).required(true).build()
+                )
+            )
             .build();
 
         // When submitting dotted part names
@@ -739,15 +750,19 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .inputs(List.of(
-                FormInput.builder()
-                    .id("environment")
-                    .type(Type.FORM)
-                    .inputs(List.of(
-                        StringInput.builder().id("region").type(Type.STRING).defaults(Property.ofValue("EU")).build()
-                    ))
-                    .build()
-            ))
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("environment")
+                        .type(Type.FORM)
+                        .inputs(
+                            List.of(
+                                StringInput.builder().id("region").type(Type.STRING).defaults(Property.ofValue("EU")).build()
+                            )
+                        )
+                        .build()
+                )
+            )
             .build();
 
         // When submitting nothing
@@ -764,20 +779,24 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .inputs(List.of(
-                FormInput.builder()
-                    .id("credentials")
-                    .type(Type.FORM)
-                    .inputs(List.of(
-                        SecretInput.builder()
-                            .id("api_key")
-                            .type(Type.SECRET)
-                            .defaults(Property.ofExpression("{{ secret('???') }}"))
-                            .required(false)
-                            .build()
-                    ))
-                    .build()
-            ))
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("credentials")
+                        .type(Type.FORM)
+                        .inputs(
+                            List.of(
+                                SecretInput.builder()
+                                    .id("api_key")
+                                    .type(Type.SECRET)
+                                    .defaults(Property.ofExpression("{{ secret('???') }}"))
+                                    .required(false)
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
             .build();
 
         // When reading inputs (read path does not obfuscate)
@@ -796,19 +815,23 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .inputs(List.of(
-                FormInput.builder()
-                    .id("credentials")
-                    .type(Type.FORM)
-                    .inputs(List.of(
-                        SecretInput.builder()
-                            .id("api_key")
-                            .type(Type.SECRET)
-                            .required(true)
-                            .build()
-                    ))
-                    .build()
-            ))
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("credentials")
+                        .type(Type.FORM)
+                        .inputs(
+                            List.of(
+                                SecretInput.builder()
+                                    .id("api_key")
+                                    .type(Type.SECRET)
+                                    .required(true)
+                                    .build()
+                            )
+                        )
+                        .build()
+                )
+            )
             .build();
 
         Map<String, Object> result = flowInputOutput.readExecutionInputs(
@@ -826,26 +849,29 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .inputs(List.of(
-                FormInput.builder()
-                    .id("creds")
-                    .type(Type.FORM)
-                    .inputs(List.of(
-                        SecretInput.builder().id("token").type(Type.SECRET).required(true).build()
-                    ))
-                    .build(),
-                ReusableInputsInput.builder()
-                    .id("block")
-                    .type(Type.REUSABLE_INPUTS)
-                    .ref("my-block")
-                    .required(false)
-                    .build()
-            ))
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("creds")
+                        .type(Type.FORM)
+                        .inputs(
+                            List.of(
+                                SecretInput.builder().id("token").type(Type.SECRET).required(true).build()
+                            )
+                        )
+                        .build(),
+                    ReusableInputsInput.builder()
+                        .id("block")
+                        .type(Type.REUSABLE_INPUTS)
+                        .ref("my-block")
+                        .required(false)
+                        .build()
+                )
+            )
             .build();
 
         // Stub expander: resolves the REUSABLE_INPUTS reference to a single SECRET child
-        ReusableInputsExpander stubExpander = (tenantId, ns, input, path) ->
-            List.of(SecretInput.builder().id(input.getId() + ".api_key").type(Type.SECRET).required(true).build());
+        ReusableInputsExpander stubExpander = (tenantId, ns, input, path) -> List.of(SecretInput.builder().id(input.getId() + ".api_key").type(Type.SECRET).required(true).build());
 
         List<String> secretIds = flow.resolvableInputs(stubExpander).stream()
             .filter(i -> i.getType() == Type.SECRET)
@@ -861,16 +887,20 @@ class FlowInputOutputTest {
         Flow flow = Flow.builder()
             .id("test-flow")
             .namespace("io.kestra.test")
-            .inputs(List.of(
-                FormInput.builder()
-                    .id("environment")
-                    .type(Type.FORM)
-                    .inputs(List.of(
-                        StringInput.builder().id("region").type(Type.STRING).required(true).build()
-                    ))
-                    .build(),
-                StringInput.builder().id("api_key").type(Type.STRING).required(true).build()
-            ))
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("environment")
+                        .type(Type.FORM)
+                        .inputs(
+                            List.of(
+                                StringInput.builder().id("region").type(Type.STRING).required(true).build()
+                            )
+                        )
+                        .build(),
+                    StringInput.builder().id("api_key").type(Type.STRING).required(true).build()
+                )
+            )
             .build();
 
         // When resolving submitted dotted part names. resolveInputs is the synchronous core of
@@ -901,7 +931,8 @@ class FlowInputOutputTest {
 
         // When
         List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", ""));
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", "")
+        );
 
         // Then — resolves to null without throwing
         assertThat(values).hasSize(1);
@@ -921,7 +952,8 @@ class FlowInputOutputTest {
 
         // When
         List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", ""));
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", "")
+        );
 
         // Then — the declared default is applied instead of throwing
         assertThat(values).hasSize(1);
@@ -941,7 +973,8 @@ class FlowInputOutputTest {
 
         // When
         List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", ""));
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("integerValue", "")
+        );
 
         // Then — a "missing required" validation error, not a parse error
         assertThat(values).hasSize(1);
@@ -962,7 +995,8 @@ class FlowInputOutputTest {
 
         // When
         List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("textValue", ""));
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("textValue", "")
+        );
 
         // Then — "" is preserved as-is for text types
         assertThat(values).hasSize(1);
@@ -981,7 +1015,8 @@ class FlowInputOutputTest {
 
         // When
         List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("floatValue", ""));
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("floatValue", "")
+        );
 
         // Then — resolves to null without throwing
         assertThat(values).hasSize(1);
@@ -1001,7 +1036,8 @@ class FlowInputOutputTest {
 
         // When
         List<InputAndValue> values = flowInputOutput.resolveInputs(
-            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("emailValue", ""));
+            List.of(input), null, DEFAULT_TEST_EXECUTION, Map.of("emailValue", "")
+        );
 
         // Then — "" is preserved for EMAIL inputs
         assertThat(values).hasSize(1);

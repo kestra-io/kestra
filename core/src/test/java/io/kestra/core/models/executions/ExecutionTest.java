@@ -203,6 +203,62 @@ class ExecutionTest {
     }
 
     @Test
+    void shouldFindLastNotTerminatedWhenLastTaskRunIsTerminated() {
+        // Given a task run list whose last run is terminated (SUCCESS) but is preceded by a running one
+        Execution execution = Execution.builder()
+            .taskRunList(List.of(
+                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+            ))
+            .build();
+
+        // When looking for the last not terminated task run
+
+        // Then the running run is returned, not the trailing terminated one
+        assertThat(execution.findLastNotTerminated())
+            .isPresent()
+            .get()
+            .extracting(TaskRun::getId)
+            .isEqualTo("running");
+    }
+
+    @Test
+    void shouldFindLastNotTerminatedWhenLastTaskRunIsPaused() {
+        // Given a task run list whose last run is paused but is preceded by a running one
+        Execution execution = Execution.builder()
+            .taskRunList(List.of(
+                TaskRun.builder().id("running").state(new State(State.Type.RUNNING, new State())).build(),
+                TaskRun.builder().id("paused").state(new State(State.Type.PAUSED, new State())).build()
+            ))
+            .build();
+
+        // When looking for the last not terminated task run
+
+        // Then the paused run is skipped and the running run is returned
+        assertThat(execution.findLastNotTerminated())
+            .isPresent()
+            .get()
+            .extracting(TaskRun::getId)
+            .isEqualTo("running");
+    }
+
+    @Test
+    void shouldNotFindLastNotTerminatedWhenAllTaskRunsAreTerminated() {
+        // Given a task run list where every run is terminated
+        Execution execution = Execution.builder()
+            .taskRunList(List.of(
+                TaskRun.builder().id("failed").state(new State(State.Type.FAILED, new State())).build(),
+                TaskRun.builder().id("success").state(new State(State.Type.SUCCESS, new State())).build()
+            ))
+            .build();
+
+        // When looking for the last not terminated task run
+
+        // Then no task run is returned
+        assertThat(execution.findLastNotTerminated()).isEmpty();
+    }
+
+    @Test
     void originalId() {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
@@ -311,10 +367,12 @@ class ExecutionTest {
             .build();
         Execution execution = Execution.builder()
             .id(IdUtils.create())
-            .taskRunList(List.of(
-                TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
-                TaskRun.builder().id(IdUtils.create()).taskId("cancelled").state(new State(State.Type.CANCELLED, new State())).build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder().id(IdUtils.create()).taskId("failed").state(new State(State.Type.FAILED, new State())).build(),
+                    TaskRun.builder().id(IdUtils.create()).taskId("cancelled").state(new State(State.Type.CANCELLED, new State())).build()
+                )
+            )
             .build();
 
         // When guessing the final state
@@ -334,13 +392,15 @@ class ExecutionTest {
     private static Execution executionWithTaskRun(String taskId, State.Type state) {
         return Execution.builder()
             .id(IdUtils.create())
-            .taskRunList(List.of(
-                TaskRun.builder()
-                    .id(IdUtils.create())
-                    .taskId(taskId)
-                    .state(new State(state, new State()))
-                    .build()
-            ))
+            .taskRunList(
+                List.of(
+                    TaskRun.builder()
+                        .id(IdUtils.create())
+                        .taskId(taskId)
+                        .state(new State(state, new State()))
+                        .build()
+                )
+            )
             .build();
     }
 }

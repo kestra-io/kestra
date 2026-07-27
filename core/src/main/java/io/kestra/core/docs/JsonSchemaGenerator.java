@@ -88,8 +88,7 @@ public class JsonSchemaGenerator {
 
     // Matches the offset-style timezone strings ZoneId.of() accepts but that are not in getAvailableZoneIds():
     // `Z`, `+HH[:MM[:SS]]`, and `(UTC|GMT|UT)[+-]HH[:MM[:SS]]`.
-    private static final String TIMEZONE_OFFSET_PATTERN =
-        "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
+    private static final String TIMEZONE_OFFSET_PATTERN = "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
 
     private final PluginRegistry pluginRegistry;
 
@@ -189,9 +188,11 @@ public class JsonSchemaGenerator {
 
     @SuppressWarnings("unchecked")
     private static boolean isExcludedDiscriminatorBranch(Object branch, Set<String> excluded) {
-        if (branch instanceof Map<?, ?> map
-            && ((Map<String, Object>) map).get("properties") instanceof Map<?, ?> properties
-            && ((Map<String, Object>) properties).get("type") instanceof Map<?, ?> type) {
+        if (
+            branch instanceof Map<?, ?> map
+                && ((Map<String, Object>) map).get("properties") instanceof Map<?, ?> properties
+                && ((Map<String, Object>) properties).get("type") instanceof Map<?, ?> type
+        ) {
             return excluded.contains(String.valueOf(((Map<String, Object>) type).get("const")));
         }
         return false;
@@ -361,8 +362,10 @@ public class JsonSchemaGenerator {
                 @Override
                 protected List<ResolvedType> resolveTargetTypeOverrides(MemberScope<?, ?> member) {
                     Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
-                    if (schema != null && schema.implementation() == Object.class
-                        && member.getDeclaredType().getErasedType() == io.kestra.core.models.tasks.retrys.AbstractRetry.class) {
+                    if (
+                        schema != null && schema.implementation() == Object.class
+                            && member.getDeclaredType().getErasedType() == io.kestra.core.models.tasks.retrys.AbstractRetry.class
+                    ) {
                         return null;
                     }
                     return super.resolveTargetTypeOverrides(member);
@@ -958,8 +961,7 @@ public class JsonSchemaGenerator {
         } else if (declaredType.getErasedType() == io.kestra.core.models.flows.Input.class) {
             // Resolve the input subtypes from the @JsonSubTypes registry, filtering out edition-restricted ones
             // (e.g. REUSABLE_INPUTS) so they don't appear in the open-source flow schema. EE includes them all.
-            com.fasterxml.jackson.annotation.JsonSubTypes subTypes =
-                io.kestra.core.models.flows.Input.class.getAnnotation(com.fasterxml.jackson.annotation.JsonSubTypes.class);
+            com.fasterxml.jackson.annotation.JsonSubTypes subTypes = io.kestra.core.models.flows.Input.class.getAnnotation(com.fasterxml.jackson.annotation.JsonSubTypes.class);
             if (subTypes == null) {
                 return null;
             }

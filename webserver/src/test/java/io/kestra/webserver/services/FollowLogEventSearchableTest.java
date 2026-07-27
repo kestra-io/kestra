@@ -40,7 +40,7 @@ class FollowLogEventSearchableTest {
     private static final Instant T_FUTURE = Instant.parse("2020-12-31T00:00:00Z");
 
     private static final FollowLogEvent baseEvent = new FollowLogEvent(
-        null,                  // tenantId
+        null, // tenantId
         "io.kestra.demo",
         "demo-flow",
         "load-data",
@@ -178,6 +178,10 @@ class FollowLogEventSearchableTest {
         new PredicateCase(baseEvent, filter(Field.LEVEL, Op.GREATER_THAN_OR_EQUAL_TO, Level.ERROR), false),
         new PredicateCase(baseEvent, filter(Field.LEVEL, Op.LESS_THAN_OR_EQUAL_TO, Level.INFO), true),
         new PredicateCase(baseEvent, filter(Field.LEVEL, Op.LESS_THAN_OR_EQUAL_TO, Level.TRACE), false),
+        new PredicateCase(baseEvent, filter(Field.LEVEL, Op.IN, List.of(Level.INFO, Level.ERROR)), true),
+        new PredicateCase(baseEvent, filter(Field.LEVEL, Op.IN, List.of(Level.WARN, Level.ERROR)), false),
+        new PredicateCase(baseEvent, filter(Field.LEVEL, Op.NOT_IN, List.of(Level.WARN, Level.ERROR)), true),
+        new PredicateCase(baseEvent, filter(Field.LEVEL, Op.NOT_IN, List.of(Level.INFO, Level.ERROR)), false),
 
         new PredicateCase(baseEvent, filter(Field.EXECUTION_ID, Op.EQUALS, "exec-123"), true),
         new PredicateCase(baseEvent, filter(Field.EXECUTION_ID, Op.EQUALS, "other"), false),

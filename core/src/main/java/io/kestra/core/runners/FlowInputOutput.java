@@ -37,6 +37,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.TypeConverter;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.multipart.CompletedFileUpload;
@@ -547,14 +548,14 @@ public class FlowInputOutput {
                     String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
                     yield EncryptedString.from(encrypted);
                 }
-                case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
+                case INT -> TypeConverter.toInteger(current);
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
-                case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
-                case BOOL -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
-                case DATETIME -> current instanceof Instant ? current : Instant.parse(current.toString());
-                case DATE -> current instanceof LocalDate ? current : LocalDate.parse(current.toString());
-                case TIME -> current instanceof LocalTime ? current : LocalTime.parse(current.toString());
-                case DURATION -> current instanceof Duration ? current : Duration.parse(current.toString());
+                case FLOAT -> TypeConverter.toFloat(current);
+                case BOOL -> TypeConverter.toBoolean(current);
+                case DATETIME -> TypeConverter.toInstant(current);
+                case DATE -> TypeConverter.toLocalDate(current);
+                case TIME -> TypeConverter.toLocalTime(current);
+                case DURATION -> TypeConverter.toDuration(current);
                 case FILE -> {
                     URI uri = URI.create(current.toString().replace(File.separator, "/"));
 

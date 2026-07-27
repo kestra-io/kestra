@@ -26,7 +26,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Mono;
 
-
 @SuperBuilder
 @ToString
 @EqualsAndHashCode(callSuper = true)
@@ -197,16 +196,18 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         Execution execution = maybeExecution.get();
 
         return context.webhookService().startExecution(execution)
-            .flatMap(__ -> {
+            .flatMap(__ ->
+            {
                 if (!this.wait) {
-                    return Mono.<HttpResponse<?>>just(HttpResponse.of(context.webhookService().executionResponse(execution)));
+                    return Mono.<HttpResponse<?>> just(HttpResponse.of(context.webhookService().executionResponse(execution)));
                 }
 
                 return context
                     .webhookService()
                     .followExecution(execution, context.flow())
                     .last()
-                    .flatMap(event -> {
+                    .flatMap(event ->
+                    {
                         try {
                             RunContext runContext = context.webhookService().runContext(context.flow(), event.getData());
                             int responseCode = runContext.render(this.responseCode).as(Integer.class).orElse(event.getData().getState().isFailed() ? 500 : 200);
@@ -214,7 +215,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                             HttpResponse<?> response = this.getReturnOutputs()
                                 ? buildOutputResponse(event.getData().getOutputs(), responseContentType, HttpResponse.Status.valueOf(responseCode))
                                 : HttpResponse.of(HttpResponse.Status.valueOf(responseCode), context.webhookService().executionResponse(event.getData()));
-                            return Mono.<HttpResponse<?>>just(response);
+                            return Mono.<HttpResponse<?>> just(response);
                         } catch (Exception e) {
                             return Mono.error(e);
                         }

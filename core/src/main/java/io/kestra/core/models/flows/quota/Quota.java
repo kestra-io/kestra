@@ -1,13 +1,14 @@
 package io.kestra.core.models.flows.quota;
 
+import java.time.Duration;
+
+import org.hibernate.validator.constraints.time.DurationMin;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.validator.constraints.time.DurationMin;
-
-import java.time.Duration;
 
 /**
  * Represents a quota for a flow.

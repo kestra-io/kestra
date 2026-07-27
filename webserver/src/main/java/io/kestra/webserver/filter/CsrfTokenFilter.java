@@ -9,8 +9,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -42,8 +42,8 @@ public class CsrfTokenFilter implements Ordered {
     private final HttpServerConfiguration serverConfiguration;
 
     public CsrfTokenFilter(List<CsrfTokenResolver<HttpRequest<?>>> csrfTokenResolvers,
-                            CsrfTokenValidator<HttpRequest<?>> csrfTokenValidator,
-                            HttpServerConfiguration serverConfiguration) {
+        CsrfTokenValidator<HttpRequest<?>> csrfTokenValidator,
+        HttpServerConfiguration serverConfiguration) {
         this.csrfTokenResolvers = csrfTokenResolvers;
         this.csrfTokenValidator = csrfTokenValidator;
         this.serverConfiguration = serverConfiguration;
@@ -66,13 +66,17 @@ public class CsrfTokenFilter implements Ordered {
 
         String csrfToken = resolveCsrfToken(request);
         if (StringUtils.isEmpty(csrfToken)) {
-            log.debug("CSRF rejected for {} {}: cookie-authenticated request with no CSRF token (missing X-CSRF-TOKEN header/field)",
-                request.getMethod(), request.getPath());
+            log.debug(
+                "CSRF rejected for {} {}: cookie-authenticated request with no CSRF token (missing X-CSRF-TOKEN header/field)",
+                request.getMethod(), request.getPath()
+            );
             return HttpResponse.status(HttpStatus.FORBIDDEN);
         }
         if (!csrfTokenValidator.validateCsrfToken(request, csrfToken)) {
-            log.debug("CSRF rejected for {} {}: token present but failed validation (bad signature or mismatched token)",
-                request.getMethod(), request.getPath());
+            log.debug(
+                "CSRF rejected for {} {}: token present but failed validation (bad signature or mismatched token)",
+                request.getMethod(), request.getPath()
+            );
             return HttpResponse.status(HttpStatus.FORBIDDEN);
         }
 

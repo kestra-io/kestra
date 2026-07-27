@@ -8,6 +8,7 @@
             :flowGraph
             :tags
             :icons="pluginsStore.icons"
+            :loadIcon="pluginsStore.loadIcon"
             @back="goBack"
         >
             <template #actions="{hasMissingPlugins, missingPlugins}">
@@ -35,6 +36,7 @@
         :blueprint
         :tags
         :icons="pluginsStore.icons"
+        :loadIcon="pluginsStore.loadIcon"
         :kind
         @back="goBack"
     />
@@ -156,6 +158,8 @@
     }
 
     onMounted(async () => {
+        pluginsStore.fetchIcons()
+
         const blueprintData = await blueprintsStore.getBlueprint({
             type: (props.combinedView ? props.blueprintType : route.params?.tab) as any,
             kind: props.kind as any,

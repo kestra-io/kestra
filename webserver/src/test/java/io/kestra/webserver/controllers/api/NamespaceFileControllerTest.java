@@ -139,6 +139,19 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void getRevisionsWithoutLeadingSlash() throws IOException, URISyntaxException {
+        // The UI's file explorer builds paths without a leading slash (e.g. "test.txt" for a root-level file),
+        // while namespace file metadata is always stored with a normalized leading slash ("/test.txt").
+        String namespace = TestsUtils.randomNamespace();
+        Namespace namespaceStorage = namespaceFactory.of(TENANT_ID, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello World".getBytes()));
+
+        List<NamespaceFileRevision> res = client.toBlocking()
+            .retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/revisions?path=test.txt"), Argument.of(List.class, NamespaceFileRevision.class));
+        assertThat(res).containsExactlyInAnyOrder(new NamespaceFileRevision(1));
+    }
+
+    @Test
     void namespaceRootGetFileMetadatasWithoutPreCreation() {
         String namespace = TestsUtils.randomNamespace();
         FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats"), TestFileAttributes.class);
@@ -463,16 +476,22 @@ class NamespaceFileControllerTest {
         namespaceStorage.putFile(Path.of("/test.txt"), new ByteArrayInputStream("Hello".getBytes()));
 
         // Path traversal via ".." should be rejected on all mutating / read endpoints
-        Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/foo/../../test.txt")));
-        Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats?path=/foo/../../test.txt"), TestFileAttributes.class));
-        Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/foo/../.."), TestFileAttributes[].class));
-        Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/foo/../../test.txt", null)));
-        Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo/../../test.txt&to=/bar", null)));
+        Assertions
+            .assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files?path=/foo/../../test.txt")));
+        Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/stats?path=/foo/../../test.txt"), TestFileAttributes.class)
+        );
+        Assertions.assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + namespace + "/files/directory?path=/foo/../.."), TestFileAttributes[].class)
+        );
+        Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/foo/../../test.txt", null))
+        );
+        Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + namespace + "/files?from=/foo/../../test.txt&to=/bar", null))
+        );
     }
 
     @Test
@@ -490,17 +509,19 @@ class NamespaceFileControllerTest {
             .build();
 
         // Write primitive: POST with a forward-slash traversal path must be rejected
-        Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(
+        Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
                 HttpRequest.POST("/api/v1/main/namespaces/" + namespace + "/files?path=/x/../../../escaped.txt", body)
                     .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
-            ));
+            )
+        );
 
         // Delete primitive: DELETE with a forward-slash traversal path must be rejected
-        Assertions.assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(
+        Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
                 HttpRequest.DELETE("/api/v1/main/namespaces/" + namespace + "/files?path=/x/../../../safe.txt", null)
-            ));
+            )
+        );
 
         // The legitimate file must be unaffected
         assertThat(namespaceStorage.exists(Path.of("/safe.txt"))).isTrue();

@@ -1,6 +1,7 @@
 package io.kestra.core.docs;
 
 import java.net.URISyntaxException;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,6 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
-
-import java.time.ZoneId;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
@@ -674,8 +673,10 @@ class JsonSchemaGeneratorTest {
             var defProps = (Map<String, Map<String, Object>>) taskDef.get("properties");
 
             // $group must be at top level so the no-code editor can pick it up
-            assertThat("properties() path: $group must be at top level for Property<Boolean>",
-                prop.get("$group"), is("reliability"));
+            assertThat(
+                "properties() path: $group must be at top level for Property<Boolean>",
+                prop.get("$group"), is("reliability")
+            );
 
             // Check schemas() path — what does the definition actually look like?
             Map<String, Object> taskDefFailOnMissing = null;
@@ -694,8 +695,10 @@ class JsonSchemaGeneratorTest {
             assertThat("schemas() path: failOnMissing definition must be found", taskDefFailOnMissing, is(notNullValue()));
 
             // $group must be at top level in the full schemas() path too
-            assertThat("schemas() path: $group must be at top level for Property<Boolean>",
-                taskDefFailOnMissing.get("$group"), is("reliability"));
+            assertThat(
+                "schemas() path: $group must be at top level for Property<Boolean>",
+                taskDefFailOnMissing.get("$group"), is("reliability")
+            );
         });
     }
 

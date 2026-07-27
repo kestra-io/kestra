@@ -62,7 +62,9 @@ public abstract class AbstractFlow implements FlowInterface {
 
     @NotNull
     @Builder.Default
-    @Schema(description = "Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.")
+    @Schema(
+        description = "Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly."
+    )
     boolean draft = false;
 
     @Hidden

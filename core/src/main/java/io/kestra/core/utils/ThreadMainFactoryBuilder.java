@@ -13,7 +13,8 @@ public final class ThreadMainFactoryBuilder {
     public static ThreadFactory build(String name) {
         return new ThreadFactoryBuilder()
             .setNameFormat(name)
-            .setUncaughtExceptionHandler(ThreadUncaughtExceptionHandler.INSTANCE)
+            // a new handler per factory: it captures the KestraContext current at build time
+            .setUncaughtExceptionHandler(new ThreadUncaughtExceptionHandler())
             .build();
     }
 }

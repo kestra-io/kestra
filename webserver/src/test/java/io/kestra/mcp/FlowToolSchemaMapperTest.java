@@ -1,5 +1,16 @@
 package io.kestra.mcp;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.FieldSource;
+
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
@@ -9,18 +20,9 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
+
 import io.modelcontextprotocol.spec.McpSchema;
 import lombok.Builder;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.FieldSource;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,7 +52,7 @@ class FlowToolSchemaMapperTest {
             .build(),
         InputConversionTestCase.builder()
             .input(DateInput.builder().type(Type.DATE).after(LocalDate.of(2024, 1, 1)).before(LocalDate.of(2025, 1, 1)).build())
-             .expectedSchema(Map.of("type", "string", "format", "date", "description", "Must be on or after 2024-01-01. Must be on or before 2025-01-01."))
+            .expectedSchema(Map.of("type", "string", "format", "date", "description", "Must be on or after 2024-01-01. Must be on or before 2025-01-01."))
             .build(),
         InputConversionTestCase.builder()
             .input(DateInput.builder().type(Type.DATE).description("The target day.").after(LocalDate.of(2024, 1, 1)).build())
@@ -104,14 +106,19 @@ class FlowToolSchemaMapperTest {
             .input(JsonInput.builder().type(Type.JSON).jsonSchema("""
                 {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}
                 """).build())
-            .expectedSchema(Map.of(
-                "type", "object",
-                "properties", Map.of("name", Map.of("type", "string")),
-                "required", List.of("name")
-            ))
+            .expectedSchema(
+                Map.of(
+                    "type", "object",
+                    "properties", Map.of("name", Map.of("type", "string")),
+                    "required", List.of("name")
+                )
+            )
             .build(),
         InputConversionTestCase.builder()
-            .input(MultiselectInput.builder().type(Type.MULTISELECT).itemType(Type.STRING).values(List.of(new io.kestra.core.models.flows.input.ValueOption("x", "x"), new io.kestra.core.models.flows.input.ValueOption("y", "y"))).build())
+            .input(
+                MultiselectInput.builder().type(Type.MULTISELECT).itemType(Type.STRING)
+                    .values(List.of(new io.kestra.core.models.flows.input.ValueOption("x", "x"), new io.kestra.core.models.flows.input.ValueOption("y", "y"))).build()
+            )
             .expectedSchema(Map.of("type", "array", "items", Map.of("type", "string", "enum", List.of("x", "y")), "uniqueItems", true))
             .build(),
         InputConversionTestCase.builder()
@@ -119,7 +126,10 @@ class FlowToolSchemaMapperTest {
             .expectedSchema(Map.of("type", "string"))
             .build(),
         InputConversionTestCase.builder()
-            .input(SelectInput.builder().type(Type.SELECT).values(List.of(new io.kestra.core.models.flows.input.ValueOption("a", "a"), new io.kestra.core.models.flows.input.ValueOption("b", "b"))).build())
+            .input(
+                SelectInput.builder().type(Type.SELECT)
+                    .values(List.of(new io.kestra.core.models.flows.input.ValueOption("a", "a"), new io.kestra.core.models.flows.input.ValueOption("b", "b"))).build()
+            )
             .expectedSchema(Map.of("type", "string", "enum", List.of("a", "b")))
             .build(),
         InputConversionTestCase.builder()
@@ -149,7 +159,8 @@ class FlowToolSchemaMapperTest {
     );
 
     @Builder
-    private record InputConversionTestCase(Input<?> input, Map<String, Object> expectedSchema) {}
+    private record InputConversionTestCase(Input<?> input, Map<String, Object> expectedSchema) {
+    }
 
     @Test
     void shouldThrowIllegalArgumentExceptionWhenConvertingJsonInputWithInvalidJsonSchema() {
@@ -249,7 +260,8 @@ class FlowToolSchemaMapperTest {
     );
 
     @Builder
-    private record OutputConversionTestCase(Output output, Map<String, Object> expectedSchema) {}
+    private record OutputConversionTestCase(Output output, Map<String, Object> expectedSchema) {
+    }
 
     @Test
     void shouldMapAllHintsCorrectlyWhenBuildingToolWithAnnotations() {
@@ -300,12 +312,14 @@ class FlowToolSchemaMapperTest {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace("test")
-            .tasks(List.of(
-                Return.builder()
-                    .id("task").type(Return.class.getName())
-                    .format(Property.ofValue("test"))
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id("task").type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
             .inputs(inputs)
             .build();
     }

@@ -306,8 +306,10 @@ class AiControllerTest {
         HttpClientResponseException exception = catchThrowableOfType(
             HttpClientResponseException.class,
             () -> client.toBlocking().exchange(
-                HttpRequest.POST("/api/v1/main/ai/generate/flow",
-                    new AiController.FlowGenerationPrompt(IdUtils.create(), "Generate a flow", "yaml", "io.kestra.tests", "nonexistent-provider")),
+                HttpRequest.POST(
+                    "/api/v1/main/ai/generate/flow",
+                    new AiController.FlowGenerationPrompt(IdUtils.create(), "Generate a flow", "yaml", "io.kestra.tests", "nonexistent-provider")
+                ),
                 String.class
             )
         );

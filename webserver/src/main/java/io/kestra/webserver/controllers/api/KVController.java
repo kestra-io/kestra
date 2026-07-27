@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
@@ -17,6 +16,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -63,7 +63,8 @@ public class KVController {
                 @ExampleObject(name = "Sort by description in descending order", value = "description:desc"),
             }
         ) @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat(Resource.KV_METADATA) List<QueryFilter> filters) throws IOException {
+        @Parameter(description = "Filters. PHP-style nested query is used - example: `filters[namespace][IN]=company.team`") @QueryFilterFormat(Resource.KV_METADATA) List<QueryFilter> filters)
+        throws IOException {
         return PagedResults.of(kvStoreService.list(PageableUtils.from(page, size, sort, this::sortMapper), tenantService.resolveTenant(), null, filters));
     }
 
@@ -128,7 +129,7 @@ public class KVController {
         @RequestBody(description = "The value of the key") @Body String value) throws IOException {
         String description = httpHeaders.get("description");
         String ttl = httpHeaders.get("ttl");
-        KVMetadata metadata = new KVMetadata(description, ttl == null ? null : Duration.parse(ttl));
+        KVMetadata metadata = new KVMetadata(description, TypeConverter.toDuration(ttl));
         try {
             // use ION mapper to properly handle timestamp
             JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);

@@ -67,7 +67,8 @@ public class PebbleEngineFactory {
      * Allowlist of functions that are safe to invoke when resolving expressions for display:
      * pure, deterministic, side-effect-free transformations (parsing and calendar helpers).
      *
-     * <p>This is intentionally an <em>allowlist</em>, not a denylist. Any function not listed here
+     * <p>
+     * This is intentionally an <em>allowlist</em>, not a denylist. Any function not listed here
      * — including {@code kv}, {@code render}, {@code decrypt}, {@code fetchContext}, file IO,
      * non-deterministic generators, and any function added in the future or contributed by a plugin —
      * is kept raw by default. Display resolution is security-sensitive, so the safe default is
@@ -91,11 +92,11 @@ public class PebbleEngineFactory {
      * Returns a PebbleEngine suitable for safe display-time expression resolution.
      *
      * <ul>
-     *   <li>{@code secret(...)} → {@code [secret: KEY]} without invoking the real service.</li>
-     *   <li>{@code env(...)} → kept raw (see issue #16874: env vars are not resolved for display).</li>
-     *   <li>Functions in {@link #SAFE_DISPLAY_FUNCTIONS} (pure parsing / calendar helpers) work normally.</li>
-     *   <li>Every other function is removed from the engine, so any expression that calls one fails
-     *       to evaluate and the caller keeps the raw expression.</li>
+     * <li>{@code secret(...)} → {@code [secret: KEY]} without invoking the real service.</li>
+     * <li>{@code env(...)} → kept raw (see issue #16874: env vars are not resolved for display).</li>
+     * <li>Functions in {@link #SAFE_DISPLAY_FUNCTIONS} (pure parsing / calendar helpers) work normally.</li>
+     * <li>Every other function is removed from the engine, so any expression that calls one fails
+     * to evaluate and the caller keeps the raw expression.</li>
      * </ul>
      */
     public PebbleEngine createRestricted() {
@@ -116,16 +117,19 @@ public class PebbleEngineFactory {
         PebbleEngine.Builder builder = newPebbleEngineBuilder();
 
         this.applicationContext.getBeansOfType(Extension.class).stream()
-            .map(e -> functionsToMask.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
-                ? extensionWithMaskedFunctions(renderer, e, functionsToMask)
-                : e)
+            .map(
+                e -> functionsToMask.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
+                    ? extensionWithMaskedFunctions(renderer, e, functionsToMask)
+                    : e
+            )
             .forEach(builder::extension);
 
         return builder.build();
     }
 
     private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initial, List<String> maskedFunctions) {
-        return wrapExtension(initial, entry -> {
+        return wrapExtension(initial, entry ->
+        {
             if (maskedFunctions.contains(entry.getKey())) {
                 return Map.entry(entry.getKey(), new MaskingFunction(entry.getValue(), "******"));
             } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
@@ -219,12 +223,17 @@ public class PebbleEngineFactory {
             }
 
             Map<String, Function> result = new HashMap<>();
-            functions.forEach((name, function) -> {
+            functions.forEach((name, function) ->
+            {
                 if (SAFE_DISPLAY_FUNCTIONS.contains(name)) {
                     result.put(name, function);
                 } else if (name.equals(SecretFunction.NAME)) {
-                    result.put(name, new InterceptingFunction(function,
-                        args -> "[secret: " + args.getOrDefault("key", "?") + "]"));
+                    result.put(
+                        name, new InterceptingFunction(
+                            function,
+                            args -> "[secret: " + args.getOrDefault("key", "?") + "]"
+                        )
+                    );
                 }
                 // Everything else (env(), kv(), now(), uuid(), read(), …) is dropped.
             });
@@ -246,8 +255,9 @@ public class PebbleEngineFactory {
     private static Extension wrapExtension(Extension initial, FunctionEntryMapper entryMapper) {
         return (Extension) Proxy.newProxyInstance(
             initial.getClass().getClassLoader(),
-            new Class<?>[] {Extension.class},
-            (proxy, method, methodArgs) -> {
+            new Class<?>[] { Extension.class },
+            (proxy, method, methodArgs) ->
+            {
                 if (method.getName().equals("getFunctions")) {
                     return initial.getFunctions().entrySet().stream()
                         .map(entryMapper::apply)

@@ -1,15 +1,5 @@
 package io.kestra.plugin.core.preview;
 
-import io.kestra.core.preview.FilePreview;
-import io.kestra.core.preview.FileRenderer;
-import io.kestra.core.serializers.FileSerde;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +7,18 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.preview.FileRenderer;
+import io.kestra.core.serializers.FileSerde;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -27,6 +29,7 @@ import java.util.Optional;
     title = "Text file renderer",
     description = "Preview text files inside the Kestra UI, supported extensions: txt, md."
 )
+@Plugin
 public class TextFileRenderer implements FileRenderer {
     private static final int MAX_SIZE_IN_BYTES = 2_097_152; // 2 MB
 
@@ -78,7 +81,7 @@ public class TextFileRenderer implements FileRenderer {
 
     private FilePreview.Type computeType(String extension) {
         return switch (extension.toLowerCase()) {
-            case "md"-> FilePreview.Type.MARKDOWN;
+            case "md" -> FilePreview.Type.MARKDOWN;
             default -> FilePreview.Type.TEXT;
         };
     }

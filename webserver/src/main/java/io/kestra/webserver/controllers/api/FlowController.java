@@ -28,14 +28,15 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.security.SecurityConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExpressionCategory;
 import io.kestra.core.services.ExpressionContext;
 import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.GraphService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
@@ -79,7 +80,7 @@ public class FlowController {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowParsingService flowParsingService;
 
     @Inject
     private ModelValidator modelValidator;
@@ -101,6 +102,9 @@ public class FlowController {
 
     @Inject
     private ExpressionContextService expressionContextService;
+
+    @Inject
+    private SecurityConfiguration securityConfiguration;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -156,7 +160,7 @@ public class FlowController {
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows)
         throws ConstraintViolationException, IllegalVariableEvaluationException, FlowProcessingException {
         try {
-            FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), flow, false);
+            FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), flow, false);
             return graphService.flowGraph(flowParsed, subflows);
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {
@@ -856,7 +860,7 @@ public class FlowController {
         String tenantId = tenantService.resolveTenant();
         final List<String> wrongFiles = new ArrayList<>();
         try {
-            HasSource.readSourceFile(fileUpload, (source, name) ->
+            HasSource.readSourceFile(securityConfiguration.zipBombProtection(), fileUpload, (source, name) ->
             {
                 try {
                     this.importFlow(tenantId, source);
@@ -903,7 +907,7 @@ public class FlowController {
         @RequestBody(description = "The flow source code") @Body String source,
         @Parameter(description = "Optional task ID to scope outputs to prior tasks") @Nullable @QueryValue String taskId) throws ConstraintViolationException {
         try {
-            FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), source, false);
+            FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), source, false);
             return expressionContextService.buildExpressionContext(flowParsed, taskId, excludedExpressionCategories(flowParsed));
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {

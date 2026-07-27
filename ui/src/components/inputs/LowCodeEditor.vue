@@ -36,8 +36,6 @@
             @show-custom-action="showCustomAction"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
-            @swapped-task="onSwappedTask"
-            @message="message"
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         >
@@ -108,16 +106,24 @@
                 </KsTabPane>
                 <KsTabPane :label="$t('outputs')" name="outputs">
                     <div class="tab-body outputs-view">
-                        <section v-for="taskRun in selectedTask.taskRuns" :key="taskRun.id" class="taskrun-card">
+                        <section
+                            v-for="taskRun in selectedTask.taskRuns"
+                            :key="taskRun.id"
+                            class="taskrun-card"
+                            v-ks-loading="isLoadingTaskRunOutputs(taskRun.id)"
+                        >
                             <div v-if="selectedTask.taskRuns.length > 1" class="taskrun-card__header">
                                 <KsExecutionStatus size="small" :status="taskRun.state.current" />
                                 <code class="taskrun-card__value">{{ taskRun.value ?? taskRun.id }}</code>
                             </div>
                             <Vars
-                                v-if="taskRun.outputs && Object.keys(taskRun.outputs).length > 0"
-                                :data="taskRun.outputs"
+                                v-if="taskRunOutputsById[taskRun.id] && Object.keys(taskRunOutputsById[taskRun.id]).length > 0"
+                                :data="taskRunOutputsById[taskRun.id]"
                             />
-                            <span v-else class="taskrun-card__empty">{{ $t("no outputs available") }}</span>
+                            <span
+                                v-else-if="!isLoadingTaskRunOutputs(taskRun.id)"
+                                class="taskrun-card__empty"
+                            >{{ $t("no outputs available") }}</span>
                         </section>
                     </div>
                 </KsTabPane>
@@ -218,10 +224,11 @@
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology} from "@kestra-io/topology"
-    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog} from "@kestra-io/design-system"
+    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import {useAuthStore} from "override/stores/auth"
@@ -471,7 +478,6 @@
         "on-edit",
         "loading",
         "expand-subflow",
-        "swapped-task",
     ])
 
     const coreStore = useCoreStore()
@@ -502,6 +508,8 @@
     const inspectTab = ref<"logs" | "outputs" | "metrics">("logs")
     const isReplayPickerOpen = ref(false)
     const selectedTask = ref()
+    const taskRunOutputsById = ref<Record<string, Record<string, unknown>>>({})
+    const loadingOutputsTaskRunIds = ref<Set<string>>(new Set())
     const replayExecution = ref()
     const replayTaskRun = ref()
     const replayRef = ref<InstanceType<typeof Restart>>()
@@ -673,6 +681,42 @@
 
     const showOutputs = (event: unknown) => openInspect(event, "outputs")
 
+    function isLoadingTaskRunOutputs(taskRunId: string): boolean {
+        return loadingOutputsTaskRunIds.value.has(taskRunId)
+    }
+
+    async function fetchTaskRunOutputs(executionId: string, taskRunId: string) {
+        if (taskRunOutputsById.value[taskRunId] || loadingOutputsTaskRunIds.value.has(taskRunId)) {
+            return
+        }
+        loadingOutputsTaskRunIds.value.add(taskRunId)
+        try {
+            taskRunOutputsById.value = {
+                ...taskRunOutputsById.value,
+                [taskRunId]: await loadTaskRunOutputs(executionId, taskRunId),
+            }
+        } finally {
+            loadingOutputsTaskRunIds.value.delete(taskRunId)
+        }
+    }
+
+    // Task run outputs live behind a dedicated endpoint since Kestra 2.0 (they are no
+    // longer embedded on the taskRun objects in selectedTask.taskRuns) — fetch them
+    // lazily once the outputs tab is actually shown.
+    watch(
+        [selectedTask, inspectTab, isInspectOpen],
+        ([task, tab, open]) => {
+            const executionId = task?.execution?.id
+            if (!open || tab !== "outputs" || !executionId) {
+                return
+            }
+            for (const taskRun of task.taskRuns ?? []) {
+                fetchTaskRunOutputs(executionId, taskRun.id)
+            }
+        },
+        {immediate: true},
+    )
+
     const openReplayDialog = (taskExecution: unknown, taskRun: unknown) => {
         replayExecution.value = taskExecution
         replayTaskRun.value = taskRun
@@ -744,19 +788,6 @@
         customActionMeta.value = event.customAction
         isShowCustomActionOpen.value = true
         isDrawerOpen.value = true
-    }
-
-    const onSwappedTask = (event: any) => {
-        emit("swapped-task", event.swappedTasks)
-        emit("on-edit", event.newSource, true)
-    }
-
-    const message = (event: any) => {
-        coreStore.message = {
-            variant: event.variant,
-            title: t(event.title),
-            message: t(event.message),
-        }
     }
 
     const expandSubflow = (event: any) => {

@@ -19,41 +19,43 @@ class PebbleUtilTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "{{ secret('KEY') }}",
-        "{% if true %}val{% endif %}",
-        "prefix {{ expr }} suffix"
-    })
+    @ValueSource(
+        strings = {
+            "{{ secret('KEY') }}",
+            "{% if true %}val{% endif %}",
+            "prefix {{ expr }} suffix"
+        }
+    )
     void containsOpeningBlockDelimiterReturnsTrue(String value) {
         assertThat(PebbleUtil.containsOpeningBlockDelimiter(value)).isTrue();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"plain-text", "{# comment #}", "no delimiters here"})
+    @ValueSource(strings = { "plain-text", "{# comment #}", "no delimiters here" })
     void containsOpeningBlockDelimiterReturnsFalse(String value) {
         assertThat(PebbleUtil.containsOpeningBlockDelimiter(value)).isFalse();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"{{ expr }}", "{%- raw -%}"})
+    @ValueSource(strings = { "{{ expr }}", "{%- raw -%}" })
     void startsWithOpeningBlockDelimiterReturnsTrue(String value) {
         assertThat(PebbleUtil.startsWithOpeningBlockDelimiter(value)).isTrue();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"plain-text", "prefix {{ expr }}", "{# comment"})
+    @ValueSource(strings = { "plain-text", "prefix {{ expr }}", "{# comment" })
     void startsWithOpeningBlockDelimiterReturnsFalse(String value) {
         assertThat(PebbleUtil.startsWithOpeningBlockDelimiter(value)).isFalse();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"{{ expr }}", "{% if true %}val{% endif %}"})
+    @ValueSource(strings = { "{{ expr }}", "{% if true %}val{% endif %}" })
     void endsWithClosingBlockDelimiterReturnsTrue(String value) {
         assertThat(PebbleUtil.endsWithClosingBlockDelimiter(value)).isTrue();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"plain-text", "{{ expr }} suffix", "comment #}"})
+    @ValueSource(strings = { "plain-text", "{{ expr }} suffix", "comment #}" })
     void endsWithClosingBlockDelimiterReturnsFalse(String value) {
         assertThat(PebbleUtil.endsWithClosingBlockDelimiter(value)).isFalse();
     }

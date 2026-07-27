@@ -21,7 +21,9 @@ Default.args = {
 };
 Default.play = async ({canvasElement}) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByRole("button", {name: /add label/i})).toBeVisible();
+  const addButton = canvas.getByRole("button", {name: /add label/i});
+  await expect(addButton).toBeVisible();
+  await expect(addButton.closest(".label-input-header")).not.toBeNull();
   await expect(canvasElement.querySelectorAll(".label-input-row").length).toBe(1);
 };
 
@@ -53,4 +55,73 @@ WithExistingLabels.play = async ({canvasElement}) => {
 
   await userEvent.click(within(canvasElement).getByRole("button", {name: /add label/i}));
   await waitFor(() => expect(canvasElement.querySelectorAll(".label-input-row").length).toBe(2));
+};
+
+const HeaderSlotsTemplate: StoryFn<typeof LabelInput> = (args) => ({
+  setup() {
+    const model = ref(args.labels);
+    return () => (
+      <LabelInput {...args} labels={model.value} onUpdate:labels={(labs) => model.value = labs}>
+        {{
+          header: () => <span style="font-weight: 600">Set labels</span>,
+          "header-end": () => <button aria-label="Close">✕</button>,
+        }}
+      </LabelInput>
+    );
+  }
+});
+
+export const WithHeaderSlots = HeaderSlotsTemplate.bind({});
+WithHeaderSlots.args = {
+  labels: [{
+    key: "example-label",
+    value: "example-value",
+  }],
+};
+WithHeaderSlots.play = async ({canvasElement}) => {
+  const canvas = within(canvasElement);
+  const addButton = canvas.getByRole("button", {name: /add label/i});
+  const closeButton = canvas.getByRole("button", {name: /close/i});
+  await expect(addButton).toBeVisible();
+  await expect(closeButton).toBeVisible();
+  const header = canvasElement.querySelector(".label-input-header") as HTMLElement;
+  await expect(header.contains(canvas.getByText("Set labels"))).toBe(true);
+  await expect(header.contains(addButton)).toBe(true);
+  await expect(header.contains(closeButton)).toBe(true);
+  // the Add button comes before host extras inside the actions cluster
+  await expect(addButton.compareDocumentPosition(closeButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+};
+
+export const WithHeaderSlotsDark = HeaderSlotsTemplate.bind({});
+WithHeaderSlotsDark.args = WithHeaderSlots.args;
+WithHeaderSlotsDark.parameters = {
+  themes: {themeOverride: "dark"},
+};
+
+const NarrowLongTitleTemplate: StoryFn<typeof LabelInput> = (args) => ({
+  setup() {
+    const model = ref(args.labels);
+    return () => (
+      <div style="width: 400px">
+        <LabelInput {...args} labels={model.value} onUpdate:labels={(labs) => model.value = labs}>
+          {{
+            header: () => <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block">A very long title that should truncate instead of pushing the actions out of the popover</span>,
+          }}
+        </LabelInput>
+      </div>
+    );
+  }
+});
+
+export const NarrowLongTitle = NarrowLongTitleTemplate.bind({});
+NarrowLongTitle.args = {
+  labels: [],
+};
+NarrowLongTitle.play = async ({canvasElement}) => {
+  const canvas = within(canvasElement);
+  const addButton = canvas.getByRole("button", {name: /add label/i});
+  await expect(addButton).toBeVisible();
+  // the actions cluster must stay inside the 400px container
+  const container = canvasElement.querySelector(".label-input") as HTMLElement;
+  await expect(addButton.getBoundingClientRect().right).toBeLessThanOrEqual(container.getBoundingClientRect().right + 1);
 };

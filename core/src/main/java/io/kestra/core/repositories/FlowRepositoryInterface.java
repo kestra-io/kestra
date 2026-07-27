@@ -10,7 +10,6 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.namespaces.NamespaceInterface;
-import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.plugin.core.dashboard.data.Flows;
 
 import io.micronaut.data.model.Pageable;
@@ -183,6 +182,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix);
 
+    /**
+     * Lists flows in a namespace that are eligible for execution, i.e., excluding deleted and disabled flows.
+     */
     List<FlowForExecution> findByNamespaceExecutable(String tenantId, String namespace);
 
     List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace);
@@ -226,6 +228,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     List<String> findDistinctNamespace(String tenantId);
 
+    /**
+     * Lists distinct namespaces that contain at least one executable flow, i.e., excluding deleted and disabled flows
+     */
     List<String> findDistinctNamespaceExecutable(String tenantId);
 
     default List<String> findDistinctNamespace(String tenantId, String prefix) {

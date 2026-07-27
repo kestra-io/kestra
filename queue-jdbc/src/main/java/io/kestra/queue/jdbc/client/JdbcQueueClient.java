@@ -66,10 +66,12 @@ public class JdbcQueueClient {
             String message = current.getMessage();
             if (message != null) {
                 String lower = message.toLowerCase();
-                if (message.contains("unsupported Unicode escape sequence") ||
-                    lower.contains("surrogate") ||
-                    lower.contains("unicode escape") ||
-                    lower.contains("invalid unicode")) {
+                if (
+                    message.contains("unsupported Unicode escape sequence") ||
+                        lower.contains("surrogate") ||
+                        lower.contains("unicode escape") ||
+                        lower.contains("invalid unicode")
+                ) {
                     return true;
                 }
             }

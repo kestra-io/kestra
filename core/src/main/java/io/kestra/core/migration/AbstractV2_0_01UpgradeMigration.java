@@ -21,7 +21,8 @@ public abstract class AbstractV2_0_01UpgradeMigration implements MigrationScript
     /**
      * {@inheritDoc}
      *
-     * <p>Derived from {@link #sqlResources()} so the resource path is declared only once.
+     * <p>
+     * Derived from {@link #sqlResources()} so the resource path is declared only once.
      */
     @Override
     public String checksum() {

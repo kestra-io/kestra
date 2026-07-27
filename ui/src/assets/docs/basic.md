@@ -372,7 +372,7 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble?u
 | `{{ trigger.namespace }}`           | The namespace of the flow that triggers the current flow.                                                                                                                |
 | `{{ trigger.flowId }}`              | The ID of the flow that triggers the current flow.                                                                                                                       |
 | `{{ trigger.flowRevision }}`        | The revision of the flow that triggers the current flow.                                                                                                                 |
-| `{{ trigger._context.id }}`         | The if of the trigger that executes the current flow.                                                                                                                    |
+| `{{ trigger._context.id }}`         | The ID of the trigger that executes the current flow.                                                                                                                    |
 | `{{ trigger._context.type }}`       | The type of the trigger that executes the current flow.                                                                                                                  |
 | `{{ envs.foo }}`                    | Accesses environment variable `ENV_FOO` (by default prefixed with `ENV_`).                                                                                               |
 | `{{ kestra.environment }}`          | Accesses Environment variables such as `kestra.environment.name.` Must be set in your [configuration](https://kestra.io/docs/configuration#kestra-url) to be accessible. |

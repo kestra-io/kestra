@@ -1,21 +1,5 @@
 package io.kestra.cli.schema;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.kestra.core.models.Plugin;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.plugins.RegisteredPlugin;
-import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.context.annotation.EachProperty;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.io.service.SoftServiceLoader;
-import io.micronaut.inject.BeanDefinitionReference;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -35,6 +19,24 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.ServiceConfigurationError;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.kestra.core.models.Plugin;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.plugins.RegisteredPlugin;
+
+import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.EachProperty;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.io.service.SoftServiceLoader;
+import io.micronaut.inject.BeanDefinitionReference;
 
 final class ConfigurationSchemaGenerator {
 
@@ -64,7 +66,8 @@ final class ConfigurationSchemaGenerator {
         for (var entry : rawPrefixes.entrySet()) {
             Class<?> clazz = entry.getKey();
             String prefix = resolvePrefix(clazz);
-            if (prefix.isEmpty()) continue;
+            if (prefix.isEmpty())
+                continue;
 
             ObjectNode target = navigateOrCreate(root, prefix);
 
@@ -113,7 +116,8 @@ final class ConfigurationSchemaGenerator {
         for (RegisteredPlugin registeredPlugin : pluginRegistry.plugins()) {
             for (Class<?> storageClass : registeredPlugin.getStorages()) {
                 Optional<String> pluginId = Plugin.getId(storageClass);
-                if (pluginId.isEmpty()) continue;
+                if (pluginId.isEmpty())
+                    continue;
 
                 String id = pluginId.get();
                 typeEnum.add(id);
@@ -147,7 +151,8 @@ final class ConfigurationSchemaGenerator {
         for (RegisteredPlugin registeredPlugin : pluginRegistry.plugins()) {
             for (Class<?> secretClass : registeredPlugin.getSecrets()) {
                 Optional<String> pluginId = Plugin.getId(secretClass);
-                if (pluginId.isEmpty()) continue;
+                if (pluginId.isEmpty())
+                    continue;
 
                 String id = pluginId.get();
                 typeEnum.add(id);
@@ -174,12 +179,14 @@ final class ConfigurationSchemaGenerator {
         Set<String> seen = new HashSet<>();
 
         for (var prop : getPluginPropertyFields(clazz)) {
-            if (!seen.add(prop.name())) continue;
+            if (!seen.add(prop.name()))
+                continue;
             processProperty(properties, required, prop, false);
         }
 
         for (var prop : getPluginPropertyMethods(clazz)) {
-            if (!seen.add(prop.name())) continue;
+            if (!seen.add(prop.name()))
+                continue;
             processProperty(properties, required, prop, false);
         }
 
@@ -190,7 +197,7 @@ final class ConfigurationSchemaGenerator {
     }
 
     private void processProperty(ObjectNode properties, List<String> required,
-                                 PropertyInfo prop, boolean includeBindableDefaults) {
+        PropertyInfo prop, boolean includeBindableDefaults) {
         String key = toKebabCase(prop.name());
         ObjectNode propSchema = typeToSchema(prop.genericType());
         applySchemaAnnotation(propSchema, prop.annotations());
@@ -231,9 +238,12 @@ final class ConfigurationSchemaGenerator {
         List<PropertyInfo> props = new ArrayList<>();
         for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
-                if (Modifier.isStatic(f.getModifiers())) continue;
-                if (Modifier.isTransient(f.getModifiers())) continue;
-                if (!hasPluginPropertyAnnotation(f.getAnnotations())) continue;
+                if (Modifier.isStatic(f.getModifiers()))
+                    continue;
+                if (Modifier.isTransient(f.getModifiers()))
+                    continue;
+                if (!hasPluginPropertyAnnotation(f.getAnnotations()))
+                    continue;
                 props.add(new PropertyInfo(f.getName(), f.getType(), f.getGenericType(), f.getAnnotations()));
             }
         }
@@ -244,9 +254,11 @@ final class ConfigurationSchemaGenerator {
         List<PropertyInfo> props = new ArrayList<>();
         for (Class<?> iface : getAllInterfaces(clazz)) {
             for (Method m : iface.getDeclaredMethods()) {
-                if (!hasPluginPropertyAnnotation(m.getAnnotations())) continue;
+                if (!hasPluginPropertyAnnotation(m.getAnnotations()))
+                    continue;
                 String name = extractPropertyName(m.getName());
-                if (name == null) continue;
+                if (name == null)
+                    continue;
                 props.add(new PropertyInfo(name, m.getReturnType(), m.getGenericReturnType(), m.getAnnotations()));
             }
         }
@@ -291,14 +303,14 @@ final class ConfigurationSchemaGenerator {
     }
 
     private void discoverConfigClasses() {
-        SoftServiceLoader<BeanDefinitionReference> loader =
-            SoftServiceLoader.load(BeanDefinitionReference.class);
+        SoftServiceLoader<BeanDefinitionReference> loader = SoftServiceLoader.load(BeanDefinitionReference.class);
 
         var iterator = loader.iterator();
         while (iterator.hasNext()) {
             try {
                 var sd = iterator.next();
-                if (!sd.isPresent()) continue;
+                if (!sd.isPresent())
+                    continue;
                 BeanDefinitionReference<?> ref = sd.load();
                 var meta = ref.getAnnotationMetadata();
 
@@ -379,7 +391,8 @@ final class ConfigurationSchemaGenerator {
         List<String> required = new ArrayList<>();
 
         for (var prop : getClassProperties(clazz)) {
-            if (rawPrefixes.containsKey(prop.type())) continue;
+            if (rawPrefixes.containsKey(prop.type()))
+                continue;
             processProperty(properties, required, prop, true);
         }
 
@@ -393,7 +406,8 @@ final class ConfigurationSchemaGenerator {
 
     private void applySchemaAnnotation(ObjectNode node, Annotation[] annotations) {
         for (Annotation a : annotations) {
-            if (!a.annotationType().getName().equals(SCHEMA_ANNOTATION)) continue;
+            if (!a.annotationType().getName().equals(SCHEMA_ANNOTATION))
+                continue;
             try {
                 String title = (String) a.annotationType().getMethod("title").invoke(a);
                 if (title != null && !title.isEmpty()) {
@@ -434,7 +448,8 @@ final class ConfigurationSchemaGenerator {
         }
     }
 
-    private record PropertyInfo(String name, Class<?> type, Type genericType, Annotation[] annotations) {}
+    private record PropertyInfo(String name, Class<?> type, Type genericType, Annotation[] annotations) {
+    }
 
     private List<PropertyInfo> getClassProperties(Class<?> clazz) {
         if (clazz.isRecord()) {
@@ -446,8 +461,10 @@ final class ConfigurationSchemaGenerator {
         List<PropertyInfo> props = new ArrayList<>();
         for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
             for (Field f : c.getDeclaredFields()) {
-                if (Modifier.isStatic(f.getModifiers())) continue;
-                if (Modifier.isTransient(f.getModifiers())) continue;
+                if (Modifier.isStatic(f.getModifiers()))
+                    continue;
+                if (Modifier.isTransient(f.getModifiers()))
+                    continue;
                 props.add(new PropertyInfo(f.getName(), f.getType(), f.getGenericType(), f.getAnnotations()));
             }
         }
@@ -472,7 +489,8 @@ final class ConfigurationSchemaGenerator {
     private boolean isNullable(Annotation[] annotations) {
         for (Annotation a : annotations) {
             String name = a.annotationType().getSimpleName();
-            if ("Nullable".equals(name)) return true;
+            if ("Nullable".equals(name))
+                return true;
         }
         return false;
     }
@@ -480,15 +498,19 @@ final class ConfigurationSchemaGenerator {
     private boolean isNonNull(Annotation[] annotations) {
         for (Annotation a : annotations) {
             String name = a.annotationType().getSimpleName();
-            if ("NotNull".equals(name) || "NonNull".equals(name) || "Nonnull".equals(name)
-                || "NotEmpty".equals(name) || "NotBlank".equals(name)) return true;
+            if (
+                "NotNull".equals(name) || "NonNull".equals(name) || "Nonnull".equals(name)
+                    || "NotEmpty".equals(name) || "NotBlank".equals(name)
+            )
+                return true;
         }
         return false;
     }
 
     private boolean hasAnnotation(Annotation[] annotations, Class<? extends Annotation> target) {
         for (Annotation a : annotations) {
-            if (target.isAssignableFrom(a.annotationType())) return true;
+            if (target.isAssignableFrom(a.annotationType()))
+                return true;
         }
         return false;
     }
@@ -497,11 +519,23 @@ final class ConfigurationSchemaGenerator {
         if (type == boolean.class || type == Boolean.class) {
             schema.put("default", Boolean.parseBoolean(value));
         } else if (type == int.class || type == Integer.class) {
-            try { schema.put("default", Integer.parseInt(value)); } catch (NumberFormatException e) { schema.put("default", value); }
+            try {
+                schema.put("default", Integer.parseInt(value));
+            } catch (NumberFormatException e) {
+                schema.put("default", value);
+            }
         } else if (type == long.class || type == Long.class) {
-            try { schema.put("default", Long.parseLong(value)); } catch (NumberFormatException e) { schema.put("default", value); }
+            try {
+                schema.put("default", Long.parseLong(value));
+            } catch (NumberFormatException e) {
+                schema.put("default", value);
+            }
         } else if (type == double.class || type == Double.class || type == float.class || type == Float.class) {
-            try { schema.put("default", Double.parseDouble(value)); } catch (NumberFormatException e) { schema.put("default", value); }
+            try {
+                schema.put("default", Double.parseDouble(value));
+            } catch (NumberFormatException e) {
+                schema.put("default", value);
+            }
         } else {
             schema.put("default", value);
         }
@@ -579,9 +613,11 @@ final class ConfigurationSchemaGenerator {
         } else if (Path.class.isAssignableFrom(type)) {
             node.put("type", "string");
             node.put("format", "path");
-        } else if (Instant.class.isAssignableFrom(type)
-                   || ZonedDateTime.class.isAssignableFrom(type)
-                   || LocalDateTime.class.isAssignableFrom(type)) {
+        } else if (
+            Instant.class.isAssignableFrom(type)
+                || ZonedDateTime.class.isAssignableFrom(type)
+                || LocalDateTime.class.isAssignableFrom(type)
+        ) {
             node.put("type", "string");
             node.put("format", "date-time");
         } else if (LocalDate.class.isAssignableFrom(type)) {
@@ -622,12 +658,14 @@ final class ConfigurationSchemaGenerator {
     }
 
     static String toKebabCase(String camelCase) {
-        if (camelCase == null || camelCase.isEmpty()) return camelCase;
+        if (camelCase == null || camelCase.isEmpty())
+            return camelCase;
         return camelCase
             .replaceAll("([a-z0-9])([A-Z])", "$1-$2")
             .replaceAll("([A-Z])([A-Z][a-z])", "$1-$2")
             .toLowerCase();
     }
 
-    ConfigurationSchemaGenerator() {}
+    ConfigurationSchemaGenerator() {
+    }
 }

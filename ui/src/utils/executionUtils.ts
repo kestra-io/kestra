@@ -1,19 +1,10 @@
-import {AxiosInstance} from "axios"
+import type {useClient} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
+import type {Execution} from "../stores/executions"
 
-interface Execution {
-    id: string,
-    state: {
-        histories?: any[]
-    },
-    taskRunList: Array<{
-        state?: {
-            current: string
-        }
-    }>
-}
+type KestraClient = ReturnType<typeof useClient>
 
-export function waitFor($http: AxiosInstance, execution: {id: string}, predicate: (data: any) => boolean) {
+export function waitFor($http: KestraClient, execution: {id: string}, predicate: (data: any) => boolean) {
     return new Promise((resolve) => {
         const callback = () => {
             $http.get(`${apiUrl()}/executions/${execution.id}`).then(response => {
@@ -37,14 +28,14 @@ export function waitFor($http: AxiosInstance, execution: {id: string}, predicate
 }
 
 export function findTaskRunsByState(execution: Execution, state: string)  {
-    return execution.taskRunList.filter((taskRun) => taskRun.state?.current === state)
+    return (execution.taskRunList ?? []).filter((taskRun) => taskRun.state?.current === state)
 }
 
 export function statePredicate(execution: Execution, current: {state: {histories?: any[]}}) {
     return (current.state.histories?.length ?? 0) >= (execution.state.histories?.length ?? 0)
 }
 
-export function waitForState($http: AxiosInstance, execution: Execution) {
+export function waitForState($http: KestraClient, execution: Execution) {
     return waitFor($http, execution, (current) => {
         return statePredicate(execution, current)
     })

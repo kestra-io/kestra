@@ -1,7 +1,5 @@
 package io.kestra.core.migration;
 
-import io.micronaut.core.annotation.Nullable;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -9,13 +7,16 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 
+import io.micronaut.core.annotation.Nullable;
+
 /**
  * Represents a single versioned migration script.
  *
  * <p>
- * Implementations are Micronaut {@code @Singleton} beans. Because {@code MigrationRunner} is a
- * {@code @Context} bean, all dependencies injected into a script are eagerly instantiated during
- * application startup. Scripts must only depend on low-level infrastructure:
+ * Implementations are Micronaut {@code @Singleton} beans. Because the {@code @Context}
+ * {@code MigrationStartupRunner} resolves the runner (and therefore every script) during
+ * application startup, all dependencies injected into a script are eagerly instantiated at that
+ * early stage. Scripts must only depend on low-level infrastructure:
  * {@code DataSource} / {@code JooqDSLContextWrapper} for JDBC, {@code OpenSearchClient} for
  * Elasticsearch, storages, and simple {@code @ConfigurationProperties} records. Never inject
  * repositories or services — their transitive dependencies will fail to initialize at this early
@@ -61,10 +62,12 @@ public interface MigrationScript {
      * A stable checksum used for integrity verification.
      * If a script is found in the history table with a different checksum, startup fails.
      *
-     * <p>For SQL-based migrations, use {@link #checksumOfResources(String...)} to derive the
+     * <p>
+     * For SQL-based migrations, use {@link #checksumOfResources(String...)} to derive the
      * checksum from the SQL file content — any change to the file is detected automatically.
      *
-     * <p>For Java-only migrations (no SQL resource), return {@code null} to skip checksum
+     * <p>
+     * For Java-only migrations (no SQL resource), return {@code null} to skip checksum
      * validation. This follows the Flyway convention: Java bytecode is not a stable hash
      * source (it varies across JDK versions), so checksum verification is not meaningful
      * for pure Java scripts.
@@ -84,7 +87,8 @@ public interface MigrationScript {
     /**
      * Classpath path(s) to the SQL resource(s) this migration executes, in execution order.
      *
-     * <p>This is the single source of truth for a SQL-backed migration's resource: SQL migrations
+     * <p>
+     * This is the single source of truth for a SQL-backed migration's resource: SQL migrations
      * declare it here and derive their {@link #checksum()} (and, where applicable, {@link #migrate()})
      * from it. It also lets tooling preview the SQL a migration would run without applying it
      * (e.g. the {@code migrate plan --sql} command).

@@ -1,31 +1,148 @@
 diff --git a/node_modules/monaco-yaml/yaml.worker.js b/node_modules/monaco-yaml/yaml.worker.js
-index beade0d..e626744 100644
+index beade0d..afe321c 100644
 --- a/node_modules/monaco-yaml/yaml.worker.js
 +++ b/node_modules/monaco-yaml/yaml.worker.js
-@@ -3007,7 +3007,7 @@ var BaseValidator = class {
+@@ -2982,15 +2982,58 @@ var BaseValidator = class {
+         matchingSchemas.add(ms);
+       }
+     }
++    const getTypeDiscriminatorSchema = (subSchema) => {
++      if (!subSchema) {
++        return null;
++      }
++      if (subSchema.properties && subSchema.properties.type) {
++        return subSchema.properties.type;
++      }
++      if (Array.isArray(subSchema.allOf)) {
++        for (const member of subSchema.allOf) {
++          const resolved = asSchema2(member);
++          if (resolved?.properties?.type) {
++            return resolved.properties.type;
++          }
++        }
++      }
++      return null;
++    };
++    const isNodeTypeDiscriminatorMatched = (node2, subSchema) => {
++      if (node2.type !== "object") {
++        return false;
++      }
++      const typeProp = getTypeDiscriminatorSchema(subSchema);
++      if (!typeProp) {
++        return false;
++      }
++      const typePropertyNode = node2.properties?.find((p) => p.keyNode?.value === "type");
++      if (!typePropertyNode?.valueNode) {
++        return false;
++      }
++      const nodeTypeValue = typePropertyNode.valueNode.value;
++      return typeof typeProp.const !== "undefined"
++        ? typeProp.const === nodeTypeValue
++        : Array.isArray(typeProp.enum) && typeProp.enum.includes(nodeTypeValue);
++    };
+     const testAlternatives = (alternatives, maxOneMatch) => {
+       const subMatches = [];
+       const noPropertyMatches = [];
+       const validResults = [];
+       let bestMatch = null;
++      let alternativeIndex = -1;
++      const discriminatorMatches = alternatives.map(
++        (subSchemaRef) => isNodeTypeDiscriminatorMatched(node, asSchema2(subSchemaRef))
++      );
++      const hasTypeDiscriminator = alternatives.some(
++        (subSchemaRef) => getTypeDiscriminatorSchema(asSchema2(subSchemaRef)) !== null
++      );
+       for (const subSchemaRef of alternatives) {
++        alternativeIndex++;
+         const subSchema = { ...asSchema2(subSchemaRef) };
+         const subValidationResult = new ValidationResult2(isKubernetes);
+         const subMatchingSchemas = matchingSchemas.newSub();
++        const isSubDiscriminatorMatched = discriminatorMatches[alternativeIndex] || false;
+         this.validateNode(node, subSchema, schema, subValidationResult, subMatchingSchemas, options);
+         if (!subValidationResult.hasProblems() || callFromAutoComplete) {
+           subMatches.push(subSchema);
+@@ -3003,11 +3046,11 @@ var BaseValidator = class {
+           validResults.push(subValidationResult);
+         }
+         if (!bestMatch) {
+-          bestMatch = { schema: subSchema, validationResult: subValidationResult, matchingSchemas: subMatchingSchemas };
++          bestMatch = { schema: subSchema, validationResult: subValidationResult, matchingSchemas: subMatchingSchemas, isDiscriminatorMatched: isSubDiscriminatorMatched };
          } else if (isKubernetes) {
            bestMatch = this.alternativeComparison(subValidationResult, bestMatch, subSchema, subMatchingSchemas);
          } else {
 -          bestMatch = this.genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas);
-+          bestMatch = this.genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas, callFromAutoComplete);
++          bestMatch = this.genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas, callFromAutoComplete, hasTypeDiscriminator, isSubDiscriminatorMatched);
          }
        }
        if (subMatches.length > 1 && (subMatches.length > 1 || noPropertyMatches.length === 0) && maxOneMatch) {
-@@ -3686,7 +3686,7 @@ var BaseValidator = class {
+@@ -3686,7 +3729,23 @@ var BaseValidator = class {
      }
      return bestMatch;
    }
 -  genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas) {
-+  genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas, callFromAutoComplete) {
++  genericComparison(node, maxOneMatch, subValidationResult, bestMatch, subSchema, subMatchingSchemas, callFromAutoComplete, hasTypeDiscriminator, isSubDiscriminatorMatched) {
++    const isBestDiscriminatorMatched = bestMatch.isDiscriminatorMatched || false;
++    if (isSubDiscriminatorMatched && !isBestDiscriminatorMatched) {
++      subMatchingSchemas.merge(bestMatch.matchingSchemas);
++      return { schema: subSchema, validationResult: subValidationResult, matchingSchemas: subMatchingSchemas, isDiscriminatorMatched: true };
++    }
++    if (isBestDiscriminatorMatched && !isSubDiscriminatorMatched) {
++      if (callFromAutoComplete && !maxOneMatch) {
++        this.mergeValidationMatches(bestMatch, subMatchingSchemas, subValidationResult);
++      }
++      return bestMatch;
++    }
++    if (hasTypeDiscriminator && !isBestDiscriminatorMatched && !isSubDiscriminatorMatched) {
++      this.mergeValidationMatches(bestMatch, subMatchingSchemas, subValidationResult);
++      bestMatch.validationResult.problems = bestMatch.validationResult.problems.filter((p) => p.code !== ErrorCode.EnumValueMismatch);
++      return bestMatch;
++    }
      if (!maxOneMatch && !subValidationResult.hasProblems() && !bestMatch.validationResult.hasProblems()) {
        bestMatch.matchingSchemas.merge(subMatchingSchemas);
        bestMatch.validationResult.propertiesMatches += subValidationResult.propertiesMatches;
-@@ -3695,7 +3695,7 @@ var BaseValidator = class {
+@@ -3694,8 +3753,9 @@ var BaseValidator = class {
+     } else {
        const compareResult = subValidationResult.compareGeneric(bestMatch.validationResult);
        if (compareResult > 0 || compareResult === 0 && maxOneMatch && bestMatch.schema.type === "object" && node.type !== "null" && node.type !== bestMatch.schema.type) {
-         bestMatch = { schema: subSchema, validationResult: subValidationResult, matchingSchemas: subMatchingSchemas };
+-        bestMatch = { schema: subSchema, validationResult: subValidationResult, matchingSchemas: subMatchingSchemas };
 -      } else if (compareResult === 0 || (node.value === null || node.type === "null") && node.length === 0) {
++        subMatchingSchemas.merge(bestMatch.matchingSchemas);
++        bestMatch = { schema: subSchema, validationResult: subValidationResult, matchingSchemas: subMatchingSchemas, isDiscriminatorMatched: isSubDiscriminatorMatched };
 +      } else if (compareResult === 0 || (node.value === null || node.type === "null") && node.length === 0 || callFromAutoComplete && !maxOneMatch && subValidationResult.propertiesValueMatches > 0) {
          this.mergeValidationMatches(bestMatch, subMatchingSchemas, subValidationResult);
        }
      }
+@@ -8448,6 +8508,25 @@ ${indent}`);
+     if (node && (parentKey !== null || isSeq7(node))) {
+       const separatorAfter = "";
+       const matchingSchemas = doc.getMatchingSchemas(schema.schema, -1, null, doComplete);
++      let currentNodeType = null;
++      if (node.items) {
++        for (const typeProp of node.items) {
++          if (isScalar6(typeProp.key) && typeProp.key.value === "type" && typeProp.value && isScalar6(typeProp.value)) {
++            currentNodeType = typeProp.value.value;
++            break;
++          }
++        }
++      }
++      // We only keep completions from branches whose discriminator matches the current node.
++      const schemaTypeMatches = (s) => {
++        const discriminator = s.schema && s.schema.properties && s.schema.properties.type;
++        if (!discriminator) return false;
++        const valueMatchesCurrentType = (v) => v && (v === currentNodeType || v.startsWith(currentNodeType));
++        if (discriminator.const !== undefined) return valueMatchesCurrentType(discriminator.const);
++        if (Array.isArray(discriminator.enum)) return discriminator.enum.some(valueMatchesCurrentType);
++        return false;
++      };
++      const filteredSchemas = currentNodeType ? matchingSchemas.filter(schemaTypeMatches) : [];
+       for (const s of matchingSchemas) {
+         if (s.node.internalNode === node && !s.inverted && s.schema) {
+           if (s.schema.items) {
+@@ -8470,6 +8549,7 @@ ${indent}`);
+           if (s.schema.properties) {
+             const propertySchema = s.schema.properties[parentKey];
+             if (propertySchema) {
++              if (currentNodeType && parentKey !== "type" && filteredSchemas.length && !schemaTypeMatches(s)) continue;
+               this.addSchemaValueCompletions(propertySchema, separatorAfter, collector, types, ignoreScalars);
+             }
+           }

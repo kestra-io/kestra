@@ -23,6 +23,8 @@ public class DailyExecutionStatistics {
     @NotNull
     private Duration duration;
 
+    private Duration taskRunsDuration;
+
     @Builder.Default
     @JsonInclude
     private Map<State.Type, Long> executionCounts = new HashMap<>(

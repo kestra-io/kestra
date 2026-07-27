@@ -1,9 +1,10 @@
 package io.kestra.core.models;
 
-import io.micronaut.http.multipart.CompletedFileUpload;
+import java.io.ByteArrayInputStream;
+
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
+import io.micronaut.http.multipart.CompletedFileUpload;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -20,7 +21,9 @@ class HasSourceTest {
 
         // When - Then the unsupported type is reported as an IllegalArgumentException
         // instead of a StringIndexOutOfBoundsException raised by substring(-1)
-        assertThatThrownBy(() -> HasSource.readSourceFile(fileUpload, (source, name) -> {}))
+        assertThatThrownBy(() -> HasSource.readSourceFile(null, fileUpload, (source, name) ->
+        {
+        }))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Cannot import file of type");
     }

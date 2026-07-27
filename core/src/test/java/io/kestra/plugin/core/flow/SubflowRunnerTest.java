@@ -146,14 +146,17 @@ class SubflowRunnerTest {
         // with the fix both parent and child should reach SUCCESS.
 
         // When
-        Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-nullable-input-parent",
-            null, (f, e) -> Map.of("integerValue", ""));
+        Execution parentExecution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests", "subflow-nullable-input-parent",
+            null, (f, e) -> Map.of("integerValue", "")
+        );
 
         // Then — parent reaches SUCCESS
         assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         String childExecutionId = (String) taskOutputService.getOutputs(
-            parentExecution.findTaskRunsByTaskId("subflow").getFirst()).get("executionId");
+            parentExecution.findTaskRunsByTaskId("subflow").getFirst()
+        ).get("executionId");
         assertThat(childExecutionId).isNotBlank();
 
         Execution childExecution = executionRepository.findById(MAIN_TENANT, childExecutionId).orElseThrow();
@@ -167,8 +170,10 @@ class SubflowRunnerTest {
     void subflowShouldTransmitKind() throws QueueException, io.kestra.core.exceptions.InternalException {
         Flow parent = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "subflow-parent").orElseThrow();
         String executionId = IdUtils.create();
-        executionCommandQueue.emit(Create.of(new ExecutionId(parent.getTenantId(), parent.getNamespace(), parent.getId(), executionId, parent.getRevision()))
-            .withKind(ExecutionKind.TEST));
+        executionCommandQueue.emit(
+            Create.of(new ExecutionId(parent.getTenantId(), parent.getNamespace(), parent.getId(), executionId, parent.getRevision()))
+                .withKind(ExecutionKind.TEST)
+        );
 
         Execution parentExecution = runnerUtils.awaitFlowExecution(
             e -> executionId.equals(e.getId()) && e.getState().isTerminated(),

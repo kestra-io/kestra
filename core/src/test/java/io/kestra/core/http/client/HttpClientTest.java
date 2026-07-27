@@ -65,7 +65,6 @@ import reactor.core.publisher.Flux;
 
 import static org.apache.commons.lang3.ArrayUtils.toPrimitive;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -174,6 +173,23 @@ class HttpClientTest {
     }
 
     @Test
+    void shouldOfferGzipButNeverBrotli() throws IllegalVariableEvaluationException, HttpClientException, IOException {
+        // Given / When: the client advertises its accepted encodings to the server
+        try (HttpClient client = client()) {
+            HttpResponse<String> response = client.request(
+                HttpRequest.of(URI.create(embeddedServerUri + "/http/accept-encoding")),
+                String.class
+            );
+
+            // Then: gzip/deflate are offered (compression preserved) but Brotli (br) is never negotiated,
+            // so httpclient5 never invokes brotli4j and cannot throw UnsatisfiedLinkError.
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).contains("gzip");
+            assertThat(response.getBody()).doesNotContain("br");
+        }
+    }
+
+    @Test
     void getJsonMap() throws IllegalVariableEvaluationException, HttpClientException, IOException {
         try (HttpClient client = client()) {
             HttpResponse<Map<String, String>> response = client.request(
@@ -210,6 +226,23 @@ class HttpClientTest {
             assertThat(response.getStatus().getCode()).isEqualTo(200);
             assertThat(response.getBody()).isEqualTo("{\"ping\":\"pong\"}");
             assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
+        }
+    }
+
+    @Test
+    void shouldDenyUrlFromConfig() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://dangerous-url.com")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com is in the configured denied list (kestra.tasks.http.denied-list).");
+
+            exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://dangerous-url.com/path")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com/path is in the configured denied list (kestra.tasks.http.denied-list).");
         }
     }
 
@@ -444,6 +477,28 @@ class HttpClientTest {
     }
 
     @Test
+    void shouldFailWithClearMessageWhenProxyAddressSetWithoutPort() {
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> client(
+                b -> b
+                    .configuration(
+                        HttpConfiguration.builder()
+                            .proxy(
+                                ProxyConfiguration.builder()
+                                    .type(Property.ofValue(Proxy.Type.HTTP))
+                                    .address(Property.ofValue("10.242.3.60"))
+                                    .build()
+                            )
+                            .build()
+                    )
+            )
+        );
+
+        assertThat(exception.getMessage()).contains("proxy port is required");
+    }
+
+    @Test
     void shouldReturnResponseForAllowedResponseCode() throws IOException, IllegalVariableEvaluationException, HttpClientException {
         try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowedResponseCodes(Property.ofValue(List.of(404))).build()))) {
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/error?status=404")));
@@ -469,11 +524,15 @@ class HttpClientTest {
     @Test
     void shouldSucceedWithTcpExtendedKeepAliveDisabled() throws IllegalVariableEvaluationException, HttpClientException, IOException {
         // Given - extended TCP keep-alive disabled (fix for Windows workers)
-        try (HttpClient client = client(b -> b.configuration(
-            HttpConfiguration.builder()
-                .enabledTcpExtendedKeepAlive(Property.ofValue(false))
-                .build()
-        ))) {
+        try (
+            HttpClient client = client(
+                b -> b.configuration(
+                    HttpConfiguration.builder()
+                        .enabledTcpExtendedKeepAlive(Property.ofValue(false))
+                        .build()
+                )
+            )
+        ) {
             // When
             HttpResponse<String> response = client.request(
                 HttpRequest.of(URI.create(embeddedServerUri + "/http/text")),
@@ -540,6 +599,13 @@ class HttpClientTest {
         @Produces(MediaType.TEXT_PLAIN)
         public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request) {
             return io.micronaut.http.HttpResponse.ok(request.getContentType().orElseThrow().toString());
+        }
+
+        @Get("accept-encoding")
+        @Produces(MediaType.TEXT_PLAIN)
+        public io.micronaut.http.HttpResponse<String> acceptEncoding(io.micronaut.http.HttpRequest<?> request) {
+            String encoding = request.getHeaders().get(HttpHeaders.ACCEPT_ENCODING);
+            return io.micronaut.http.HttpResponse.ok(encoding == null ? "" : encoding);
         }
 
         @Get("json")

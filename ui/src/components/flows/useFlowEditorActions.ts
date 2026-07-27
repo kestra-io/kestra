@@ -23,6 +23,7 @@ export function useFlowEditorActions() {
     const hasErrors = computed(() => (flowStore.flowErrors?.length ?? 0) > 0)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
+    const isDraft = computed(() => flowStore.flow?.draft ?? false)
     const tenant = computed(() => route.params.tenant)
 
     async function flushDirtyFiles() {
@@ -75,6 +76,20 @@ export function useFlowEditorActions() {
         }
     }
 
+    async function publishDraft() {
+        try {
+            const outcome = await flowStore.publishDraft()
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                onboardingStore.recordSave()
+            }
+            await flushDirtyFiles()
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000})
+            }
+        }
+    }
+
     async function saveAndExecute() {
         try {
             const isCreating = flowStore.isCreating
@@ -94,25 +109,23 @@ export function useFlowEditorActions() {
                 const response = await executionsStore.triggerExecution({
                     namespace: flowStore.flow.namespace,
                     id: flowStore.flow.id,
-                    // Execute the revision we just saved (mirrors FlowRun.vue) so "Save & Execute" runs
-                    // exactly what is in the editor. Without it a draft would resolve to the latest
-                    // non-draft revision - running a stale published version, or failing outright when
-                    // the flow has only draft revisions.
-                    revision: flowStore.flow.revision,
+                    // Run the revision we just saved - except drafts, which are playground-only:
+                    // omit the revision so the backend runs the latest published one.
+                    revision: flowStore.flow.draft ? undefined : flowStore.flow.revision,
                     formData: undefined,
                     kind: "NORMAL",
                     labels: ["system.from:ui"],
                 })
 
-                executionsStore.execution = response.data
+                executionsStore.execution = response
                 onboardingStore.recordExecution()
 
                 await router.push({
                     name: "executions/update",
                     params: {
-                        namespace: response.data.namespace,
-                        flowId: response.data.flowId,
-                        id: response.data.id,
+                        namespace: response.namespace,
+                        flowId: response.flowId,
+                        id: response.id,
                         tab: "gantt",
                         tenant: tenant.value,
                     },
@@ -201,11 +214,13 @@ export function useFlowEditorActions() {
         hasErrors,
         isReadOnly,
         isAllowedEdit,
+        isDraft,
         isPlaygroundEnabled,
         isPlaygroundAllowed,
         // actions
         save,
         saveAsDraft,
+        publishDraft,
         saveAndExecute,
         exportYaml,
         copyFlow,

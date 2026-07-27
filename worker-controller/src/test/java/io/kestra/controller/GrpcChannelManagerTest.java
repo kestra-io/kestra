@@ -398,29 +398,40 @@ class GrpcChannelManagerTest {
     }
 
     @Test
-    void shouldUnregisterResolverOnClose() {
-        // Given - create two channel managers with static config
-        WorkerControllersConfiguration config = createStaticConfig(
-            List.of(new Endpoint("localhost", 9096))
-        );
+    void shouldSupportManagersWithOverlappingLifetimesAndDifferentEndpoints() {
+        // Given - two channel managers with static configs pointing at different controllers,
+        // alive at the same time in the same JVM (as happens with successive test contexts).
+        // The shared, stateless name resolver must serve both channels from their own target URI.
         GrpcChannelConfiguration channelConfig = createDefaultChannelConfig();
+        GrpcChannelManager manager1 = new GrpcChannelManager(
+            channelConfig, createDefaultGrpcConfig(),
+            createStaticConfig(List.of(new Endpoint("localhost", 9096))), null
+        );
+        GrpcChannelManager manager2 = new GrpcChannelManager(
+            channelConfig, createDefaultGrpcConfig(),
+            createStaticConfig(List.of(new Endpoint("localhost", 9097))), null
+        );
 
-        // First manager registers the resolver
-        GrpcChannelManager manager1 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
+        // When - both initialize, then the first one closes
         manager1.init();
-
-        // Close first manager - should unregister resolver
+        manager2.init();
         manager1.close();
 
-        // Second manager should be able to register a new resolver
-        GrpcChannelManager manager2 = new GrpcChannelManager(channelConfig, createDefaultGrpcConfig(), config, null);
-        manager2.init();
-
-        // Then - both should work without conflict
+        // Then - the surviving manager's channel is unaffected by the other's lifecycle
         assertThat(manager2.getDefaultChannel()).isNotNull();
+        assertThat(((ManagedChannel) manager2.getDefaultChannel()).isShutdown()).isFalse();
+
+        // And a manager created after a close still works (the resolver stays registered JVM-wide)
+        GrpcChannelManager manager3 = new GrpcChannelManager(
+            channelConfig, createDefaultGrpcConfig(),
+            createStaticConfig(List.of(new Endpoint("localhost", 9098))), null
+        );
+        manager3.init();
+        assertThat(manager3.getDefaultChannel()).isNotNull();
 
         // Cleanup
         manager2.close();
+        manager3.close();
     }
 
     // Helper methods

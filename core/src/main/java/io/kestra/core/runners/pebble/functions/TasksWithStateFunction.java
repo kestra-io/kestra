@@ -12,6 +12,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class TasksWithStateFunction implements KestraFunction {
     public static final String NAME = "tasksWithState";
+
     public List<String> getArgumentNames() {
         return List.of("state");
     }

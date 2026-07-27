@@ -1,10 +1,12 @@
 package io.kestra.core.services;
 
+import java.util.Optional;
+
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.quota.Quota;
-import jakarta.inject.Singleton;
+import io.kestra.core.utils.ListUtils;
 
-import java.util.Optional;
+import jakarta.inject.Singleton;
 
 /**
  * Service to manage quotas.
@@ -17,8 +19,13 @@ public class QuotaService {
      * When a quota is exceeded, all other quotas are not incremented and the quota is returned.
      *
      * @return the quota that was exceeded if any
+     * @implNote Quotas are an EE feature, on OSS this service throws unconditionally if the flow has quotas.
      */
     public Optional<Quota> checkAndIncrement(FlowInterface flow) {
-        throw new UnsupportedOperationException("Quotas are an EE feature");
+        if (!ListUtils.isEmpty(flow.getQuotas())) {
+            throw new UnsupportedOperationException("Quotas are an EE feature");
+        }
+
+        return Optional.empty();
     }
 }

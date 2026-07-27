@@ -47,8 +47,10 @@ class PageableUtilsTest {
         Function<String, String> mapper = Map.of("id", "id")::get;
 
         // When an unknown sort field is supplied
-        HttpStatusException e = assertThrows(HttpStatusException.class,
-            () -> PageableUtils.from(1, 10, List.of("unknownColumn:asc"), mapper));
+        HttpStatusException e = assertThrows(
+            HttpStatusException.class,
+            () -> PageableUtils.from(1, 10, List.of("unknownColumn:asc"), mapper)
+        );
 
         // Then a 422 is returned with the unknown field name
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());

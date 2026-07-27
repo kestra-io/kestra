@@ -1,14 +1,15 @@
 package io.kestra.core.models.triggers;
 
+import java.time.Duration;
+import java.time.LocalTime;
+
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.validations.WindowValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.Duration;
-import java.time.LocalTime;
 
 @Builder
 @Getter
@@ -82,10 +83,10 @@ public class Window {
      * <p>
      * The {@link TimeWindow.Type} is inferred from the fields that are set:
      * <ul>
-     *   <li>{@code deadline} set → {@link TimeWindow.Type#DAILY_TIME_DEADLINE}</li>
-     *   <li>{@code from} and {@code to} both set → {@link TimeWindow.Type#DAILY_TIME_WINDOW}</li>
-     *   <li>{@code lookback} set → {@link TimeWindow.Type#SLIDING_WINDOW}</li>
-     *   <li>otherwise → {@link TimeWindow.Type#DURATION_WINDOW} (with {@code every} as window and {@code offset} as windowAdvance)</li>
+     * <li>{@code deadline} set → {@link TimeWindow.Type#DAILY_TIME_DEADLINE}</li>
+     * <li>{@code from} and {@code to} both set → {@link TimeWindow.Type#DAILY_TIME_WINDOW}</li>
+     * <li>{@code lookback} set → {@link TimeWindow.Type#SLIDING_WINDOW}</li>
+     * <li>otherwise → {@link TimeWindow.Type#DURATION_WINDOW} (with {@code every} as window and {@code offset} as windowAdvance)</li>
      * </ul>
      *
      * @return a {@link TimeWindow} equivalent of this window

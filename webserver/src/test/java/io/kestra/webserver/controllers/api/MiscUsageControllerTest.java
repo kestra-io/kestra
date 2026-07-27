@@ -1,11 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
-import io.micronaut.context.annotation.Property;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.reactor.http.client.ReactorHttpClient;

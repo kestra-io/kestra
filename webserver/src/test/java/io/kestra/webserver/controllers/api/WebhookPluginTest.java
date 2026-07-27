@@ -2,11 +2,10 @@ package io.kestra.webserver.controllers.api;
 
 import java.util.Map;
 
-import io.kestra.core.junit.annotations.LoadFlows;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.runners.TestRunnerUtils;
 
 import io.micronaut.http.HttpStatus;

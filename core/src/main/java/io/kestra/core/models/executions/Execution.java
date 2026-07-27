@@ -648,7 +648,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return this
             .getTaskRunList()
             .stream()
-            .filter(t -> resolvedTaskMap.containsKey(IdUtils.fromParts(t.getTaskId(), t.getValue()))
+            .filter(
+                t -> resolvedTaskMap.containsKey(IdUtils.fromParts(t.getTaskId(), t.getValue()))
                     && (parentTaskRun == null || parentTaskRun.getId().equals(t.getParentTaskRunId()))
             )
             .toList();
@@ -681,7 +682,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         return this.taskRunList
             .reversed()
             .stream()
-            .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
+            .filter(t -> !t.getState().isTerminated() && !t.getState().isPaused())
             .findFirst();
     }
 

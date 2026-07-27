@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 
@@ -29,21 +30,20 @@ public record Replay(
     @With @JsonProperty @Nullable String taskRunId,
     @With @JsonProperty @Nullable Integer revision,
     @With @JsonProperty @Nullable String breakpoints,
-    @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable Map<String, Object> inputs
-) implements ExecutionCommand {
+    @With @JsonInclude(JsonInclude.Include.NON_EMPTY) @Nullable Map<String, Object> inputs) implements ExecutionCommand {
 
     /**
      * Creates a {@code Replay} command from the given source execution and pre-generated new execution ID.
      *
      * @param sourceExecution the execution to replay
-     * @param newExecutionId  pre-generated ID for the new execution
-     * @param taskRunId       optional task run ID to restart from
-     * @param revision        optional flow revision override
-     * @param breakpoints     optional comma-separated breakpoint IDs
+     * @param newExecutionId pre-generated ID for the new execution
+     * @param taskRunId optional task run ID to restart from
+     * @param revision optional flow revision override
+     * @param breakpoints optional comma-separated breakpoint IDs
      */
     public static Replay from(Execution sourceExecution, String newExecutionId,
-                              @Nullable String taskRunId, @Nullable Integer revision,
-                              @Nullable String breakpoints) {
+        @Nullable String taskRunId, @Nullable Integer revision,
+        @Nullable String breakpoints) {
         return new Replay(
             sourceExecution.getTenantId(),
             sourceExecution.getNamespace(),

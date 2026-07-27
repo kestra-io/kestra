@@ -34,7 +34,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section :class="{'container padding-bottom': topbar}">
+    <section :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -51,6 +51,7 @@
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="$t('no_results.executions')"
             :rowKey="(row: any) => row.id"
+            :fitHeight="fitHeightResolved"
         >
             <template #navbar v-if="isDisplayedTop">
                 <KSFilter
@@ -72,7 +73,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault class="mb-4" />
+                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts showDefault class="mb-4" />
             </template>
 
             <template #bulk-actions>
@@ -162,7 +163,7 @@
                         }"
                         class="execution-id"
                     >
-                        <KsId :value="scope.row?.id" :shrink="true" />
+                        <KsId :value="scope.row?.id" :shrink="true" placement="right" />
                     </RouterLink>
                 </template>
             </KsTableColumn>
@@ -173,8 +174,7 @@
                 :prop="col.prop"
                 :label="col.label"
                 :class="col.prop === 'flowRevision' ? 'shrink' : ''"
-                :align="col.prop === 'inputs' || col.prop === 'outputs' ? 'center' : undefined"
-                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => h(BreakableText, {value: cellValue})) : undefined"
+                :align="col.prop === 'inputs' ? 'center' : undefined"
                 :sortable="isColumnSortable(col.prop) ? 'custom' : false"
                 :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
             >
@@ -189,15 +189,20 @@
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
                     <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
-                        <span :title="scope.row?.namespace"><BreakableText :value="scope.row?.namespace" /></span>
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
-                        <router-link
-                            :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}
-                            }"
-                        >
-                            <BreakableText :value="scope.row?.flowId" />
-                        </router-link>
+                        <KsEntityLink
+                            v-if="scope.row?.flowId"
+                            entity="flow"
+                            :value="scope.row.flowId"
+                            :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
                         <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
@@ -221,16 +226,6 @@
                             </template>
                             <div>
                                 <Import v-if="scope.row?.inputs" class="fs-5" />
-                            </div>
-                        </KsTooltip>
-                    </template>
-                    <template v-else-if="col.prop === 'outputs'">
-                        <KsTooltip>
-                            <template #content>
-                                <pre class="mb-0">{{ JSON.stringify(scope.row?.outputs, null, "\t") }}</pre>
-                            </template>
-                            <div>
-                                <Export v-if="scope.row?.outputs" class="fs-5" />
                             </div>
                         </KsTooltip>
                     </template>
@@ -385,7 +380,6 @@
     import Delete from "vue-material-design-icons/Delete.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
     import Import from "vue-material-design-icons/Import.vue"
-    import Export from "vue-material-design-icons/Export.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import RunFast from "vue-material-design-icons/RunFast.vue"
     import PlayBox from "vue-material-design-icons/PlayBox.vue"
@@ -418,7 +412,6 @@
     import {filterValidLabels, keepSupportedFilters} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import BreakableText from "../BreakableText"
     import * as Utils from "../../utils/utils"
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 
@@ -436,6 +429,7 @@
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
+    import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
 
     const {t} = useI18n()
     const toast = useToast()
@@ -447,6 +441,7 @@
         embed?: boolean;
         filter?: boolean;
         topbar?: boolean;
+        fitHeight?: boolean;
         id?: string | null;
         statuses?: string[];
         isReadOnly?: boolean;
@@ -460,6 +455,7 @@
         embed: false,
         filter: true,
         topbar: true,
+        fitHeight: undefined,
         id: null,
         statuses: () => [],
         isReadOnly: false,
@@ -470,6 +466,8 @@
         namespace: undefined,
         defaultScopeFilter: false,
     })
+
+    const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
 
     const emit = defineEmits<{
         "state-count": [payload: { runningCount: number; totalCount: number }];
@@ -551,12 +549,6 @@
             description: t("filter.table_column.executions.inputs"),
         },
         {
-            label: t("outputs"),
-            prop: "outputs",
-            default: false,
-            description: t("filter.table_column.executions.outputs"),
-        },
-        {
             label: t("task id"),
             prop: "taskRunList.taskId",
             default: false,
@@ -594,7 +586,7 @@
     )
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
+        return !["labels", "flowRevision", "inputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
     }
 
     const selectionMapper = (execution: any) => {
@@ -826,7 +818,7 @@
             const ac = actionMap[queryAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.data.count}))
+                    toast.success(t(success, {executionCount: r.count}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 })
@@ -840,7 +832,7 @@
             const ac = actionMap[byIdAction]()
             return ac(options)
                 .then((r: any) => {
-                    toast.success(t(success, {executionCount: r.data.count}))
+                    toast.success(t(success, {executionCount: r.count}))
                     toggleAllUnselected()
                     dataTable.value?.reload()
                 }).catch((e: any) => {
@@ -1020,7 +1012,7 @@
                         data: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.data.count}))
+                        toast.success(t("Set labels done", {executionCount: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     })
@@ -1031,7 +1023,7 @@
                         executionLabels: filtered.labels,
                     })
                     .then((r: any) => {
-                        toast.success(t("Set labels done", {executionCount: r.data.count}))
+                        toast.success(t("Set labels done", {executionCount: r.count}))
                         toggleAllUnselected()
                         dataTable.value?.reload()
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
@@ -1077,12 +1069,18 @@
 </script>
 
 <style scoped lang="scss">
-.shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
+.full-container {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    > * {
+        flex: 1;
+    }
 }
 
-.padding-bottom {
-    padding-bottom: 4rem;
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
 .custom-warning {

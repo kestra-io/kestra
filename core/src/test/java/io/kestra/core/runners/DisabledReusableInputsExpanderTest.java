@@ -2,12 +2,12 @@ package io.kestra.core.runners;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.StringInput;
-
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

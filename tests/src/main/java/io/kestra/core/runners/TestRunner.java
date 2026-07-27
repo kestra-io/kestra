@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -94,21 +93,56 @@ public class TestRunner implements Runnable, AutoCloseable {
         // so test runs that don't exercise SystemTasks don't pay for the
         // SystemWorker's thread pool and queue subscriptions.
         if (systemWorkerEnabled) {
-            systemWorkerProvider.ifPresent(worker -> {
+            systemWorkerProvider.ifPresent(worker ->
+            {
                 poolExecutor.execute(worker::start);
                 servers.add(worker);
             });
         }
 
         try {
-            Await.await().atMost(getRunningTimeout()).until(() -> servers.stream().allMatch(s -> Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning()));
+            Await.await().atMost(getRunningTimeout()).until(
+                () -> servers.stream().allMatch(TestRunner::isStarted) || servers.stream().anyMatch(TestRunner::hasFailedToStart)
+            );
         } catch (ConditionTimeoutException e) {
             throw new RuntimeException(
-                servers.stream().filter(s -> !Optional.ofNullable(s.getState()).orElse(Service.ServiceState.RUNNING).isRunning())
-                    .map(Service::getClass)
+                servers.stream().filter(s -> !isStarted(s))
+                    .map(s -> s.getClass().getSimpleName() + " (state: " + s.getState() + ")")
                     .toList() + " not started in time"
             );
         }
+
+        List<Service> failed = servers.stream().filter(TestRunner::hasFailedToStart).toList();
+        if (!failed.isEmpty()) {
+            throw new RuntimeException(
+                failed.stream()
+                    .map(s -> s.getClass().getSimpleName() + " (state: " + s.getState() + ")")
+                    .toList() + " terminated during startup: the context was most likely shut down by an uncaught exception, check the logs above for the root cause"
+            );
+        }
+    }
+
+    /**
+     * A service is only considered started once it reached RUNNING (or MAINTENANCE).
+     */
+    private static boolean isStarted(Service service) {
+        Service.ServiceState state = service.getState();
+        return Service.ServiceState.RUNNING == state || Service.ServiceState.MAINTENANCE == state;
+    }
+
+    /**
+     * A service can never (re)reach RUNNING once it left the CREATED, RUNNING and MAINTENANCE
+     * states: seeing any other state during startup means the service — usually the whole
+     * context — was shut down underneath us, so keeping on waiting would only time out and
+     * hide the root cause. A {@code null} state means the service has not registered yet and
+     * is still starting.
+     */
+    private static boolean hasFailedToStart(Service service) {
+        Service.ServiceState state = service.getState();
+        return state != null
+            && Service.ServiceState.CREATED != state
+            && Service.ServiceState.RUNNING != state
+            && Service.ServiceState.MAINTENANCE != state;
     }
 
     private Duration getRunningTimeout() {

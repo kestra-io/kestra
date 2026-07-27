@@ -3,6 +3,8 @@ package io.kestra.webserver.controllers.api;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import io.kestra.core.ai.agent.models.AgentThread;
@@ -60,6 +62,8 @@ public class AiAgentController {
     private final AgentOrchestrator orchestrator;
     private final AgentPrincipalResolver principalResolver;
     private final int maxTurnsPerThread;
+    private final int maxConcurrentTurns;
+    private final Semaphore turnGate;
     private final ExecutorService executor;
 
     @Inject
@@ -81,7 +85,9 @@ public class AiAgentController {
         this.orchestrator = orchestrator;
         this.principalResolver = principalResolver;
         this.maxTurnsPerThread = configuration.maxTurnsPerThread();
-        this.executor = executorsUtils.maxCachedThreadPool(8, "ai-agent-orchestrator");
+        this.maxConcurrentTurns = configuration.maxConcurrentTurns();
+        this.turnGate = new Semaphore(maxConcurrentTurns, false);
+        this.executor = executorsUtils.cachedVirtualThreadPool("ai-agent-orchestrator");
     }
 
     @PreDestroy
@@ -138,17 +144,22 @@ public class AiAgentController {
         }
 
         AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
-        // Atomically claim the thread (IDLE -> RUNNING) before scheduling the async turn; if a turn is
-        // already in flight the claim fails, so we reject here rather than racing on the executor pool.
-        AgentThread running = threadManager.tryMarkRunning(thread, mode, AgentThreadStatus.IDLE)
-            .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
 
-        AgentPrincipal principal = principalResolver.resolve();
-        return stream(
-            sink -> orchestrator.runTurn(
-                new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal, request.additionalContext()), sink
-            )
-        );
+        acquireTurnPermit();
+        try {
+            AgentThread running = threadManager.tryMarkRunning(thread, mode, AgentThreadStatus.IDLE)
+                .orElseThrow(() -> new ConflictException("A turn is already in flight for thread '" + threadId + "'"));
+
+            AgentPrincipal principal = principalResolver.resolve();
+            return stream(
+                sink -> orchestrator.runTurn(
+                    new AgentTurnContext(running, request.prompt(), mode, tenant, request.providerId(), principal, request.additionalContext()), sink
+                )
+            );
+        } catch (RuntimeException e) {
+            turnGate.release();
+            throw e;
+        }
     }
 
     @Post(uri = "/{threadId}/confirm", produces = MediaType.TEXT_EVENT_STREAM)
@@ -170,28 +181,63 @@ public class AiAgentController {
             throw new NotFoundException("No pending action for confirmationId %s".formatted(request.confirmationId()));
         }
 
-        // Atomically claim the awaiting thread (AWAITING_CONFIRMATION -> RUNNING) before scheduling the
-        // resumed turn, mirroring the chat path so a concurrent turn is rejected here rather than racing.
-        AgentThread running = threadManager.tryMarkRunning(thread, thread.mode(), AgentThreadStatus.AWAITING_CONFIRMATION)
-            .orElseThrow(() -> new ConflictException("A turn is already in flight for thread %s".formatted(threadId)));
+        acquireTurnPermit();
+        try {
+            AgentThread running = threadManager.tryMarkRunning(thread, thread.mode(), AgentThreadStatus.AWAITING_CONFIRMATION)
+                .orElseThrow(() -> new ConflictException("A turn is already in flight for thread %s".formatted(threadId)));
 
-        boolean approve = request.decision() == ApiDecision.APPROVE;
+            boolean approve = request.decision() == ApiDecision.APPROVE;
 
-        AgentPrincipal principal = principalResolver.resolve();
-        return stream(sink -> orchestrator.resume(running, request.providerId(), approve, request.reason(), principal, sink));
+            AgentPrincipal principal = principalResolver.resolve();
+            return stream(sink -> orchestrator.resume(running, request.providerId(), approve, request.reason(), principal, sink));
+        } catch (RuntimeException e) {
+            turnGate.release();
+            throw e;
+        }
     }
 
+    /**
+     * Acquires a turn permit or rejects with 429 when the node is at capacity. Saturation is transient and
+     * retryable, so {@code TOO_MANY_REQUESTS} is returned rather than queueing the turn silently.
+     */
+    private void acquireTurnPermit() {
+        if (!turnGate.tryAcquire()) {
+            throw new HttpStatusException(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "AI Copilot is at capacity (%d concurrent turns); retry shortly.".formatted(maxConcurrentTurns)
+            );
+        }
+    }
+
+    /**
+     * Offloads the turn onto a virtual thread and adapts it onto an SSE {@link Flux}. Takes ownership of the
+     * turn permit acquired by the caller: the permit is released exactly once — either when the offloaded
+     * task finishes (success or error) or when the client cancels before the task starts — guarded by an
+     * {@link AtomicBoolean} so the two paths never double-release.
+     */
     private Flux<Event<Object>> stream(final Consumer<TurnEventSink> work) {
         return Flux.create(emitter ->
         {
             FluxTurnEventSink sink = new FluxTurnEventSink(emitter);
-            emitter.onCancel(sink::markCancelled);
+            AtomicBoolean released = new AtomicBoolean();
+            Runnable release = () -> {
+                if (released.compareAndSet(false, true)) {
+                    turnGate.release();
+                }
+            };
+            emitter.onCancel(() ->
+            {
+                sink.markCancelled();
+                release.run();
+            });
             executor.execute(() ->
             {
                 try {
                     work.accept(sink);
                 } catch (Exception e) {
                     sink.error(e);
+                } finally {
+                    release.run();
                 }
             });
         }, FluxSink.OverflowStrategy.BUFFER);

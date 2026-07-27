@@ -23,7 +23,14 @@ class InMemoryAgentStoreTest {
     private static final String TENANT = "tenant-a";
 
     private static InMemoryAgentStore store(final Duration ttl, final int cap) {
-        return new InMemoryAgentStore(new AgentConfiguration(Duration.ofMinutes(5), "url", 25, 50, 10, ttl, cap));
+        // InMemoryAgentStore reads only these two fields; the rest are left at their builder defaults so
+        // adding a new AgentConfiguration field never touches this test.
+        return new InMemoryAgentStore(
+            AgentConfiguration.builder()
+                .inMemoryConversationTtl(ttl)
+                .maxInMemoryConversations(cap)
+                .build()
+        );
     }
 
     private static InMemoryAgentStore store() {

@@ -4,6 +4,7 @@ import java.time.Duration;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.bind.annotation.Bindable;
+import lombok.Builder;
 
 /**
  * Configuration for the AI Copilot agent, under {@code kestra.ai.agent}.
@@ -18,6 +19,10 @@ import io.micronaut.core.bind.annotation.Bindable;
  *        (default 25 — deliberately below langchain4j's 100, as each round-trip is a paid model call).
  * @param maxTurnsPerThread the maximum number of user turns a single conversation thread may hold
  *        before new turns are refused, as a cost/abuse guardrail (default 50).
+ * @param maxConcurrentTurns the per-node ceiling on simultaneously-running agent turns; once reached,
+ *        new turns are rejected with 429 rather than queued. A cost/provider-load guardrail: turns run
+ *        on virtual threads, so the thread count is a non-issue and this knob purely bounds concurrent
+ *        provider load (default 32).
  * @param maxContextTurns the maximum number of most-recent turns replayed into the model context each
  *        turn; older turns stay persisted for history but are windowed out of the prompt. Windowing is
  *        by whole turns (grouped on {@code traceId}) so tool-call/result pairs are never split
@@ -32,11 +37,13 @@ import io.micronaut.core.bind.annotation.Bindable;
  *        live conversations (default 50). Ignored when a durable backend is in use.
  */
 @ConfigurationProperties("kestra.ai.agent")
+@Builder
 public record AgentConfiguration(
     @Bindable(defaultValue = "PT5M") Duration modelCallTimeout,
     @Bindable(defaultValue = "https://api.kestra.io/v1/mcp") String docsMcpUrl,
     @Bindable(defaultValue = "25") int maxSequentialToolsInvocations,
     @Bindable(defaultValue = "50") int maxTurnsPerThread,
+    @Bindable(defaultValue = "32") int maxConcurrentTurns,
     @Bindable(defaultValue = "10") int maxContextTurns,
     @Bindable(defaultValue = "PT1H") Duration inMemoryConversationTtl,
     @Bindable(defaultValue = "50") int maxInMemoryConversations) {

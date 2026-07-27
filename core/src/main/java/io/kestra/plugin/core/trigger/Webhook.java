@@ -42,7 +42,7 @@ import reactor.core.publisher.Mono;
     description = """
         Exposes a signed endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow. Secured by the required `key`; keep it secret.
 
-        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. A binary body is available base64-encoded as `trigger.bodyBase64`, and a `multipart/form-data` body as `trigger.parts` (files, content base64-encoded) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
+        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. A binary body is base64-encoded on `trigger.body`, and a `multipart/form-data` body is available as `trigger.parts` (files, content base64-encoded) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
 
         Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
@@ -269,8 +269,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     }
 
     /**
-     * Expose the request body on the trigger output: a text body as {@code body}, a binary body as
-     * {@code bodyBase64}, and a {@code multipart/form-data} body as {@code parts} and {@code formFields}.
+     * Expose the request body on the trigger output: a text body as {@code body}, a binary body as {@code body}
+     * base64-encoded, and a {@code multipart/form-data} body as {@code parts} and {@code formFields}.
      * Bytes are base64-encoded because trigger variables carry text, not binary.
      *
      * @param output      the output being built
@@ -281,7 +281,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         return switch (requestBody) {
             case null -> output;
             case HttpRequest.MultipartFormDataRequestBody multipart -> withMultipartBody(output, multipart);
-            case HttpRequest.ByteArrayRequestBody binary -> output.bodyBase64(BASE64_ENCODER.encodeToString(binary.getContent()));
+            case HttpRequest.ByteArrayRequestBody binary -> output.body(BASE64_ENCODER.encodeToString(binary.getContent()));
             case HttpRequest.StringRequestBody text -> {
                 String body = text.getContent();
 
@@ -303,13 +303,13 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         multipart.getContent().forEach(part ->
         {
             if (part.isFile()) {
-                parts.add(new Output.Part(
-                    part.name(),
-                    part.filename(),
-                    part.contentType(),
-                    part.content().length,
-                    BASE64_ENCODER.encodeToString(part.content())
-                ));
+                parts.add(Output.Part.builder()
+                    .name(part.name())
+                    .filename(part.filename())
+                    .contentType(part.contentType())
+                    .size(part.content().length)
+                    .content(BASE64_ENCODER.encodeToString(part.content()))
+                    .build());
             } else {
                 formFields.computeIfAbsent(part.name(), name -> new ArrayList<>()).add(new String(part.content(), charset));
             }
@@ -347,17 +347,13 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             title = "The full body for the webhook request",
             description = "We try to deserialize the incoming request as JSON (array or object).\n" +
                 "If we can't deserialize, the full body will be available as a string.\n" +
-                "Only set for a text body: a binary body is available as `bodyBase64`, and a `multipart/form-data` body as `parts` and `formFields`."
+                "A binary body - one whose content type is neither text, JSON, XML, form-urlencoded, YAML nor CSV - is " +
+                "base64-encoded, as base64 is how bytes travel through the text-based trigger variables. Use the " +
+                "`content-type` request header to tell a base64-encoded body apart from a plain text one.\n" +
+                "Not set for a `multipart/form-data` request, which is available as `parts` and `formFields`."
         )
         @NotNull
         private Object body;
-
-        @Schema(
-            title = "The base64-encoded body for the webhook request",
-            description = "Only set when the request body is binary, i.e. when its content type is neither text, JSON, XML, " +
-                "form-urlencoded, YAML nor CSV; base64 is how bytes travel through the text-based trigger variables."
-        )
-        private String bodyBase64;
 
         @Schema(
             title = "The file parts of a `multipart/form-data` webhook request",
@@ -382,15 +378,43 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
 
         /**
          * A file part of a {@code multipart/form-data} webhook request.
-         *
-         * @param name        the form field name of the part
-         * @param filename    the name of the uploaded file
-         * @param contentType the content type of the part, {@code null} if the caller did not send one
-         * @param size        the size of the part content in bytes, before base64 encoding
-         * @param content     the part content, base64-encoded
          */
+        @Builder
+        @ToString
+        @EqualsAndHashCode
+        @Getter
+        @NoArgsConstructor
+        @AllArgsConstructor
         @Schema(title = "A file part of a `multipart/form-data` webhook request")
-        public record Part(String name, String filename, String contentType, int size, String content) {
+        public static class Part {
+            @Schema(title = "The form field name of the part")
+            @NotNull
+            private String name;
+
+            @Schema(title = "The name of the uploaded file")
+            @NotNull
+            private String filename;
+
+            @Schema(
+                title = "The content type of the part",
+                description = "Not set if the caller did not send one for this part."
+            )
+            private String contentType;
+
+            @Schema(
+                title = "The size of the part content in bytes",
+                description = "The size of the content as received, before base64 encoding."
+            )
+            @NotNull
+            private Integer size;
+
+            @Schema(
+                title = "The content of the part, base64-encoded",
+                description = "Base64 is how bytes travel through the text-based trigger variables, so that binary " +
+                    "content such as an image reaches the flow intact."
+            )
+            @NotNull
+            private String content;
         }
     }
 }

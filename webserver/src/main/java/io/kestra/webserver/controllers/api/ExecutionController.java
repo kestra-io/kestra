@@ -572,6 +572,21 @@ public class ExecutionController {
     @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by POST webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
+    @RequestBody(
+        description = "The webhook payload, of any content type. A `multipart/form-data` payload is handled by a " +
+            "dedicated route: its file parts reach the flow as `trigger.parts` and its other parts as `trigger.formFields`.",
+        content = {
+            @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    description = "A form whose part names are chosen by the caller: each file part is exposed on " +
+                        "`trigger.parts`, each other part on `trigger.formFields`."
+                )
+            )
+        }
+    )
     @SingleResult
     public Mono<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -632,6 +647,21 @@ public class ExecutionController {
     @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by PUT webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
+    @RequestBody(
+        description = "The webhook payload, of any content type. A `multipart/form-data` payload is handled by a " +
+            "dedicated route: its file parts reach the flow as `trigger.parts` and its other parts as `trigger.formFields`.",
+        content = {
+            @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    description = "A form whose part names are chosen by the caller: each file part is exposed on " +
+                        "`trigger.parts`, each other part on `trigger.formFields`."
+                )
+            )
+        }
+    )
     @SingleResult
     public Mono<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -653,18 +683,17 @@ public class ExecutionController {
         String path,
         MultipartBody parts,
         HttpRequest<?> request) {
-        // Each part is read on the thread it is emitted on: its buffer is released as soon as it has been emitted.
+        // Reading a part is blocking, so it happens off the event loop thread that emits it, as file inputs are
+        // read in FlowInputOutput#readData. Note that CompletedPart#getBytes already releases the part, so it
+        // must not be discarded here: once the read no longer runs inside onNext, that would release it twice.
         return (parts == null ? Flux.<CompletedPart> empty() : Flux.from(parts))
+            .publishOn(Schedulers.boundedElastic())
             .<MultipartFormDataRequestBody.Part> handle((part, sink) ->
             {
                 try {
                     sink.next(toMultipartPart(part));
                 } catch (IOException e) {
                     sink.error(e);
-                } finally {
-                    if (part instanceof CompletedFileUpload fileUpload) {
-                        fileUpload.discard();
-                    }
                 }
             })
             .collectList()

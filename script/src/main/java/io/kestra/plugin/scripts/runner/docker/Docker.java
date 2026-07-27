@@ -614,8 +614,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
                 if (exitCode != 0) {
                     if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
-                        // On failure, still attempt to download outputs if VOLUME strategy is used
-                        downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
+                        downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled);
                     }
 
                     throw new TaskException(exitCode, defaultLogConsumer);
@@ -624,7 +623,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 }
 
                 if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
-                    downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
+                    downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands, hasFilesToDownload || outputDirectoryEnabled);
                 }
 
                 return TaskRunnerResult.<DockerTaskRunnerDetailResult> builder()
@@ -701,7 +700,22 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             "Tried Docker host: " + resolvedHost;
     }
 
-    private void downloadOutputFiles(String execId, DockerClient dockerClient, RunContext runContext, TaskCommands taskCommands) throws IOException {
+    /**
+     * Syncs the container working directory back into the local working directory after the command has run.
+     * <p>
+     * A files volume is created as soon as the task uploads input files, so this sync runs even for a task that
+     * declares no output. That is intentional: besides collecting declared outputs, the sync is what lets a
+     * subsequent run reusing the same working directory (e.g. a {@code WorkingDirectory} task passing files between
+     * its subtasks) see what was produced here — the container volume itself is not shared across runs.
+     * <p>
+     * On a large or flaky working directory the archive stream can be truncated
+     * ({@code org.apache.hc.core5.http.TruncatedChunkException}, an {@link IOException}). When the task declared
+     * outputs we surface the failure — the caller is waiting for those files. When it declared none, the download is
+     * only a best-effort working-directory sync, so we log and continue rather than fail an otherwise successful run.
+     *
+     * @param outputsDeclared whether the task declared {@code outputFiles} or enabled the output directory
+     */
+    private void downloadOutputFiles(String execId, DockerClient dockerClient, RunContext runContext, TaskCommands taskCommands, boolean outputsDeclared) throws IOException {
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
         try (
             InputStream is = copyArchiveFromContainerCmd.exec();
@@ -724,6 +738,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     }
                 }
             }
+        } catch (IOException e) {
+            if (outputsDeclared) {
+                throw e;
+            }
+            runContext.logger().warn("Unable to sync the working directory back from the container; the task declares no output files, so continuing without failing the run.", e);
         }
     }
 

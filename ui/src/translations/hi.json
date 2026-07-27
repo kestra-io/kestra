@@ -61,6 +61,8 @@
     "success": "सफलता",
     "save": "सहेजें",
     "save_as_draft": "ड्राफ़्ट के रूप में सहेजें",
+    "publish": "प्रकाशित करें",
+    "publish_draft": "ड्राफ़्ट प्रकाशित करें",
     "draft": "ड्राफ़्ट",
     "draft_flow_warning": "इस flow का नवीनतम रिवीज़न एक ड्राफ़्ट है। निष्पादन इसके बजाय नवीनतम प्रकाशित रिवीज़न पर चलेगा - अपने नवीनतम बदलावों को चलाने के लिए ड्राफ़्ट प्रकाशित करें (या उसे Playground से चलाएँ)।",
     "save task": "Task सहेजें",
@@ -127,6 +129,8 @@
       "last24hours": "पिछले 24 घंटे",
       "last48hours": "पिछले 48 घंटे",
       "last7days": "पिछले 7 दिन",
+      "last14days": "पिछले 14 दिन",
+      "last28days": "पिछले 28 दिन",
       "last30days": "पिछले 30 दिन",
       "last365days": "पिछले 365 दिन",
       "next5minutes": "अगले 5 मिनट",
@@ -145,6 +149,8 @@
       "24hours": "24 घंटे",
       "48hours": "48 घंटे",
       "7days": "7 दिन",
+      "14days": "14 दिन",
+      "28days": "28 दिन",
       "30days": "30 दिन",
       "365days": "365 दिन",
       "never": "कभी नहीं",
@@ -459,10 +465,53 @@
     },
     "use": "उपयोग करें",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "प्रकार कॉपी करें",
+      "deprecated": "पुराना",
+      "dynamic": "गतिशील",
+      "filter_all": "सभी",
+      "filter_properties": "गुण फ़िल्टर करें…",
+      "filter_required": "आवश्यक",
+      "intro_callout_prefix": "किसी task का ",
+      "intro_callout_suffix": " एडिटर में क्लिक करें, तो उसकी plugin डॉक्यूमेंटेशन यहाँ खुलेगी।",
+      "intro_clear_search": "खोज साफ़ करें",
+      "intro_learn_more": "और जानें",
+      "intro_no_matches_sub": "कोई भी फ़ंक्शन, फ़िल्टर या प्रॉपर्टी आपकी खोज से मेल नहीं खाती।",
+      "intro_no_matches_title": "\"{q}\" के लिए कोई परिणाम नहीं",
+      "intro_result_count": "{count} परिणाम",
+      "intro_search_placeholder": "रेफरेंस में खोजें…",
+      "intro_start_here": "यहाँ से शुरू करें",
+      "intro_step1_cta": "flow संदर्भ देखें",
+      "intro_step1_desc_mid": " के भीतर एक अद्वितीय ",
+      "intro_step1_desc_prefix": "हर flow को ",
+      "intro_step1_desc_suffix": " की ज़रूरत है।",
+      "intro_step1_title": "id और namespace दें",
+      "intro_step2_cta": "task संदर्भ देखें",
+      "intro_step2_desc": "क्रमिक एकल क्रियाएँ। task पर क्लिक करें उसकी docs देखने के लिए।",
+      "intro_step2_title": "tasks जोड़ें",
+      "intro_step3_cta": "inputs संदर्भ देखें",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "उपयोग करें ",
+      "intro_step3_desc_suffix": " और Pebble expressions।",
+      "intro_step3_title": "इसे गतिशील बनाएं",
+      "intro_sub": "YAML में flow बनाने के लिए सब कुछ: प्रॉपर्टीज़, inputs और Pebble templating, एक ही जगह।",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Flow डॉक्यूमेंटेशन",
       "name": "plugin",
       "names": "plugins",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "अवलोकन",
+      "nav_properties": "Properties",
+      "non_dynamic": "गैर-गतिशील",
       "please": "कृपया दाईं ओर एक task चुनें ताकि इसका दस्तावेज़ीकरण देखा जा सके",
-      "release": "रिलीज़ नोट्स"
+      "release": "रिलीज़ नोट्स",
+      "required": "आवश्यक"
     },
     "last execution date": "अंतिम निष्पादन तिथि",
     "last execution state": "अंतिम स्थिति",
@@ -787,6 +836,17 @@
       "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
+    "trigger enable dialog": {
+      "title": "trigger सक्षम करें",
+      "bulk title": "सक्षम करें {count} triggers",
+      "description": "यह trigger अक्षम होने के दौरान शेड्यूल चूक गया होगा।",
+      "bulk description": "चुने गए triggers शायद निर्धारित समय चूक गए होंगे जब वे अक्षम थे।",
+      "strategy": "उपयोग करने के लिए रणनीति चुनें:",
+      "options": {
+        "skip": "छूटी हुई अनुसूचियां पुनर्प्राप्त न करें",
+        "follow": "trigger के गुणधर्म कॉन्फ़िगरेशन का पालन करें"
+      }
+    },
     "flow source not found": "Flow source नहीं मिला",
     "date format": "दिनांक प्रारूप",
     "timezone": "समय क्षेत्र",
@@ -1397,7 +1457,14 @@
       "update": "गुप्त जानकारी '{name}' अपडेट करें",
       "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
       "names": "Secrets",
-      "inherited": "Inherited secrets"
+      "inherited": "Inherited secrets",
+      "key": "नाम",
+      "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
+      "name": "गुप्त मान",
+      "description": "विवरण",
+      "descriptionPlaceholder": "इस secret का वर्णन करें",
+      "tags": "टैग",
+      "addTag": "टैग जोड़ें"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1880,6 +1947,10 @@
       "viewAll": "सभी देखें",
       "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
       "export": "CSV में निर्यात करें",
+      "exportTo": {
+        "csv": "CSV में निर्यात करें",
+        "ion": "ION को निर्यात करें"
+      },
       "quick_filters": {
         "all": "सभी",
         "running": "चल रहा है",
@@ -2230,8 +2301,7 @@
         "open_world": "Open world",
         "destructive": "विनाशकारी",
         "idempotent": "Idempotent",
-        "return_direct": "सीधा वापसी",
-        "view_flow": "flow खोलें"
+        "return_direct": "सीधा वापसी"
       },
       "connect_tab": {
         "server_url": "सर्वर URL",
@@ -2281,6 +2351,12 @@
     },
     "open source": "ओपन सोर्स",
     "pricing": "मूल्य निर्धारण",
-    "license": "लाइसेंस"
+    "license": "लाइसेंस",
+    "pwa": {
+      "install_title": "Kestra इंस्टॉल करें",
+      "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",
+      "install": "इंस्टॉल करें",
+      "dismiss": "अभी नहीं"
+    }
   }
 }

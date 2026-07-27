@@ -61,6 +61,8 @@
     "success": "성공",
     "save": "저장",
     "save_as_draft": "초안으로 저장",
+    "publish": "게시",
+    "publish_draft": "초안 게시",
     "draft": "초안",
     "draft_flow_warning": "이 flow의 최신 리비전은 초안입니다. 실행은 대신 최신 게시된 리비전을 기준으로 수행됩니다. 최신 변경 사항을 실행하려면 초안을 게시하거나 Playground에서 실행하세요.",
     "save task": "Task 저장",
@@ -127,6 +129,8 @@
       "last24hours": "지난 24시간",
       "last48hours": "지난 48시간",
       "last7days": "지난 7일",
+      "last14days": "지난 14일",
+      "last28days": "지난 28일",
       "last30days": "지난 30일",
       "last365days": "지난 365일",
       "next5minutes": "다음 5분",
@@ -145,6 +149,8 @@
       "24hours": "24시간",
       "48hours": "48시간",
       "7days": "7일",
+      "14days": "14일",
+      "28days": "28일",
       "30days": "30일",
       "365days": "365일",
       "never": "절대 없음",
@@ -459,10 +465,53 @@
     },
     "use": "사용",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "유형 복사",
+      "deprecated": "사용 중단",
+      "dynamic": "동적",
+      "filter_all": "전체",
+      "filter_properties": "속성 필터링…",
+      "filter_required": "필수",
+      "intro_callout_prefix": "편집기에서 task의 ",
+      "intro_callout_suffix": "을 클릭하면 이곳에서 plugin 문서를 볼 수 있습니다.",
+      "intro_clear_search": "검색 초기화",
+      "intro_learn_more": "더 알아보기",
+      "intro_no_matches_sub": "검색 조건에 일치하는 함수, 필터 또는 속성이 없습니다.",
+      "intro_no_matches_title": "\"{q}\"에 대한 결과 없음",
+      "intro_result_count": "{count}개 결과",
+      "intro_search_placeholder": "레퍼런스 검색…",
+      "intro_start_here": "시작하기",
+      "intro_step1_cta": "flow 참조 보기",
+      "intro_step1_desc_mid": " 안에서 고유한 ",
+      "intro_step1_desc_prefix": "모든 flow에는 ",
+      "intro_step1_desc_suffix": "가 필요합니다.",
+      "intro_step1_title": "id와 namespace 설정",
+      "intro_step2_cta": "task 참조 보기",
+      "intro_step2_desc": "순서대로 실행되는 원자적 작업입니다. task를 클릭해 문서를 확인하세요.",
+      "intro_step2_title": "tasks 추가",
+      "intro_step3_cta": "inputs 참조 보기",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "사용",
+      "intro_step3_desc_suffix": "와 Pebble 표현식을 사용하세요.",
+      "intro_step3_title": "동적으로 만들기",
+      "intro_sub": "YAML로 flow를 만드는 데 필요한 모든 것：속성, inputs, Pebble templating을 한 곳에서.",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Flow 문서",
       "name": "플러그인",
       "names": "플러그인들",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "개요",
+      "nav_properties": "Properties",
+      "non_dynamic": "비동적",
       "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요.",
-      "release": "릴리스 노트"
+      "release": "릴리스 노트",
+      "required": "필수"
     },
     "last execution date": "마지막 실행 날짜",
     "last execution state": "마지막 상태",
@@ -787,6 +836,17 @@
       "tooltip": "트리거 재시작"
     },
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
+    "trigger enable dialog": {
+      "title": "trigger 활성화",
+      "bulk title": "{{count}}개의 triggers 활성화",
+      "description": "이 trigger는 비활성화된 동안 스케줄이 누락되었을 수 있습니다.",
+      "bulk description": "선택된 trigger는 비활성화된 동안 스케줄을 놓쳤을 수 있습니다.",
+      "strategy": "사용할 전략을 선택하세요:",
+      "options": {
+        "skip": "누락된 스케줄을 복구하지 마십시오",
+        "follow": "trigger의 {property} 구성에 따름"
+      }
+    },
     "flow source not found": "Flow source를 찾을 수 없음",
     "date format": "날짜 형식",
     "timezone": "시간대",
@@ -1397,7 +1457,14 @@
       "update": "비밀 '{name}' 업데이트",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",
-      "inherited": "상속된 비밀"
+      "inherited": "상속된 비밀",
+      "key": "이름",
+      "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
+      "name": "비밀 value",
+      "description": "설명",
+      "descriptionPlaceholder": "이 비밀을 설명하세요",
+      "tags": "태그",
+      "addTag": "태그 추가"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1880,6 +1947,10 @@
       "viewAll": "전체 보기",
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
       "export": "CSV로 내보내기",
+      "exportTo": {
+        "csv": "CSV로 내보내기",
+        "ion": "ION으로 내보내기"
+      },
       "quick_filters": {
         "all": "전체",
         "running": "실행 중",
@@ -2230,8 +2301,7 @@
         "open_world": "Open world",
         "destructive": "파괴적",
         "idempotent": "멱등",
-        "return_direct": "직접 반환",
-        "view_flow": "flow 열기"
+        "return_direct": "직접 반환"
       },
       "connect_tab": {
         "server_url": "서버 URL",
@@ -2281,6 +2351,12 @@
     },
     "open source": "오픈 소스",
     "pricing": "가격 책정",
-    "license": "라이선스"
+    "license": "라이선스",
+    "pwa": {
+      "install_title": "Kestra 설치",
+      "install_description": "더 빠른 접근과 전체 화면 경험을 위해 Kestra를 앱으로 설치하세요.",
+      "install": "설치",
+      "dismiss": "나중에"
+    }
   }
 }

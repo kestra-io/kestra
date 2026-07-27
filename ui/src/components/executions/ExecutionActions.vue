@@ -2,7 +2,7 @@
     <KsDropdown trigger="click" placement="bottom-end" :persistent="true">
         <KsButton link data-onboarding-target="execution-actions-menu">
             <KsIcon><DotsVertical /></KsIcon>
-            <span class="d-none d-lg-inline-block">{{ t("actions") }}</span>
+            <span class="d-none d-lg-inline-block">{{ $t("actions") }}</span>
         </KsButton>
         <template #dropdown>
             <KsDropdownMenu>
@@ -21,7 +21,6 @@
 
 <script setup lang="ts">
     import {provide, type Component} from "vue"
-    import {useI18n} from "vue-i18n"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import {asItemKey} from "../layout/navBarActionsContext"
     import type {Execution} from "../../stores/executions"
@@ -37,7 +36,6 @@
         execution: Execution;
     }>()
 
-    const {t} = useI18n({useScope: "global"})
 
     provide(asItemKey, true)
 </script>

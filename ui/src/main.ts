@@ -2,6 +2,9 @@ import {createApp} from "vue"
 import type {Router} from "vue-router"
 
 import "./utils/monacoEnvironment"
+import {setupPreloadErrorReloadHandler} from "./utils/preloadErrorReload"
+
+setupPreloadErrorReloadHandler()
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -18,7 +21,11 @@ import {useUnsavedChangesStore} from "./stores/unsavedChanges"
 import {useMiscStore} from "override/stores/misc"
 import {TASK_ICON_INJECTION_KEY} from "@kestra-io/design-system"
 import TaskIcon from "./components/plugins/TaskIcon.vue"
+import {registerServiceWorker} from "./utils/serviceWorker"
+import {initPwaInstallCapture} from "./utils/pwaInstallState"
 
+void registerServiceWorker()
+initPwaInstallCapture()
 
 const app = createApp(App)
 
@@ -81,9 +88,9 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
         if(!httpClient) {
             setupAxios(router)
         }
-        const configs = await miscStore.loadConfigs()
+        const loginConfig = await miscStore.loadLoginConfig()
 
-        if(!configs.isBasicAuthInitialized) {
+        if(!loginConfig.isBasicAuthInitialized) {
             // Since, Configs takes preference
             // we need to check if any regex validation error in BE.
             const validationErrors = await miscStore.loadBasicAuthValidationErrors()
@@ -125,6 +132,9 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
         if (isSetupInProgress === "true") {
             return {name: "setup"}
         }
+
+        // Now that the user is authenticated, load the full instance configuration.
+        await miscStore.loadConfigs()
     } catch (error) {
         console.error("Error during authentication check:", error)
         return handleAuthError(error as Error, to)

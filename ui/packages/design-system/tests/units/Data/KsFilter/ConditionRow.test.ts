@@ -35,6 +35,128 @@ const baseFilter: AppliedFilter = {
 const mountRow = (filter: AppliedFilter) =>
     mount(ConditionRow, {props: {filter, allKeys: [multiKey]}, global: globalConfig})
 
+const rangeAndSetKey: FilterKeyConfig = {
+    key: "level",
+    label: "Level",
+    valueType: "multi-select",
+    comparators: [
+        Comparators.GREATER_THAN_OR_EQUAL_TO,
+        Comparators.LESS_THAN_OR_EQUAL_TO,
+        Comparators.IN,
+        Comparators.NOT_IN,
+    ],
+    valueProvider: async () => [
+        {label: "WARN", value: "WARN"},
+        {label: "ERROR", value: "ERROR"},
+    ],
+}
+
+const mountLevelRow = (filter: AppliedFilter) =>
+    mount(ConditionRow, {props: {filter, allKeys: [rangeAndSetKey]}, global: globalConfig})
+
+describe("ConditionRow range comparators on a multi-select field", () => {
+    test("renders a plain select (not the multi-select popover) for GREATER_THAN_OR_EQUAL_TO", () => {
+        const wrapper = mountLevelRow({
+            id: "f1",
+            key: "level",
+            keyLabel: "Level",
+            comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
+            comparatorLabel: "At or Above",
+            value: "WARN",
+            valueLabel: "WARN",
+        })
+
+        expect(wrapper.findComponent(FilterMultiSelect).exists()).toBe(false)
+        expect(wrapper.find(".cond-value-select").exists()).toBe(true)
+    })
+
+    test("renders the multi-select popover for IN", () => {
+        const wrapper = mountLevelRow({
+            id: "f1",
+            key: "level",
+            keyLabel: "Level",
+            comparator: Comparators.IN,
+            comparatorLabel: "In",
+            value: ["WARN", "ERROR"],
+            valueLabel: "WARN, ERROR",
+        })
+
+        expect(wrapper.findComponent(FilterMultiSelect).exists()).toBe(true)
+        expect(wrapper.find(".cond-value-select").exists()).toBe(false)
+    })
+
+    test("resets a stale multi-value when switching from IN to GREATER_THAN_OR_EQUAL_TO", async () => {
+        const wrapper = mountLevelRow({
+            id: "f1",
+            key: "level",
+            keyLabel: "Level",
+            comparator: Comparators.IN,
+            comparatorLabel: "In",
+            value: ["WARN", "ERROR"],
+            valueLabel: "WARN, ERROR",
+        })
+
+        const opSelect = wrapper.findComponent(".cond-op")
+        opSelect.vm.$emit("update:modelValue", Comparators.GREATER_THAN_OR_EQUAL_TO)
+        await nextTick()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates).toBeTruthy()
+        expect(updates!.at(-1)![0]).toMatchObject({
+            comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
+            value: "",
+            valueLabel: "",
+        })
+    })
+
+    test("resets a stale scalar value when switching from GREATER_THAN_OR_EQUAL_TO to IN", async () => {
+        const wrapper = mountLevelRow({
+            id: "f1",
+            key: "level",
+            keyLabel: "Level",
+            comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
+            comparatorLabel: "At or Above",
+            value: "WARN",
+            valueLabel: "WARN",
+        })
+
+        const opSelect = wrapper.findComponent(".cond-op")
+        opSelect.vm.$emit("update:modelValue", Comparators.IN)
+        await nextTick()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates).toBeTruthy()
+        expect(updates!.at(-1)![0]).toMatchObject({
+            comparator: Comparators.IN,
+            value: [],
+            valueLabel: "",
+        })
+    })
+
+    test("keeps the value when switching between the two range comparators", async () => {
+        const wrapper = mountLevelRow({
+            id: "f1",
+            key: "level",
+            keyLabel: "Level",
+            comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
+            comparatorLabel: "At or Above",
+            value: "WARN",
+            valueLabel: "WARN",
+        })
+
+        const opSelect = wrapper.findComponent(".cond-op")
+        opSelect.vm.$emit("update:modelValue", Comparators.LESS_THAN_OR_EQUAL_TO)
+        await nextTick()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates).toBeTruthy()
+        expect(updates!.at(-1)![0]).toMatchObject({
+            comparator: Comparators.LESS_THAN_OR_EQUAL_TO,
+            value: "WARN",
+        })
+    })
+})
+
 describe("ConditionRow multi-select commit on close", () => {
     test("commits a staged multi-select selection when unmounted (e.g. modal dismissed by overlay click)", async () => {
         const wrapper = mountRow(baseFilter)

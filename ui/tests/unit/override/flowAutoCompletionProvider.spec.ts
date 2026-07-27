@@ -9,6 +9,7 @@ function provider() {
         {} as any,
         {} as any,
         {} as any,
+        {} as any,
     )
 }
 

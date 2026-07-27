@@ -61,6 +61,8 @@
     "success": "Sucesso",
     "save": "Salvar",
     "save_as_draft": "Salvar como rascunho",
+    "publish": "Publicar",
+    "publish_draft": "Publicar rascunho",
     "draft": "Rascunho",
     "draft_flow_warning": "A revisão mais recente deste flow é um rascunho. A execução será feita na revisão publicada mais recente; publique o rascunho (ou execute-o no Playground) para executar suas alterações mais recentes.",
     "save task": "Salvar Task",
@@ -127,6 +129,8 @@
       "last24hours": "Últimas 24 horas",
       "last48hours": "Últimas 48 horas",
       "last7days": "Últimos 7 dias",
+      "last14days": "Últimos 14 dias",
+      "last28days": "Últimos 28 dias",
       "last30days": "Últimos 30 dias",
       "last365days": "Últimos 365 dias",
       "next5minutes": "Próximos 5 minutos",
@@ -145,6 +149,8 @@
       "24hours": "24 horas",
       "48hours": "48 horas",
       "7days": "7 dias",
+      "14days": "14 dias",
+      "28days": "28 dias",
       "30days": "30 dias",
       "365days": "365 dias",
       "never": "Nunca",
@@ -459,10 +465,53 @@
     },
     "use": "Usar",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "Copiar tipo",
+      "deprecated": "Descontinuado",
+      "dynamic": "dinâmico",
+      "filter_all": "Todos",
+      "filter_properties": "Filtrar propriedades…",
+      "filter_required": "Obrigatório",
+      "intro_callout_prefix": "Clique no ",
+      "intro_callout_suffix": " de um task no editor para abrir a documentação do plugin aqui.",
+      "intro_clear_search": "Limpar pesquisa",
+      "intro_learn_more": "Saiba mais",
+      "intro_no_matches_sub": "Nenhuma função, filtro ou propriedade corresponde à sua pesquisa.",
+      "intro_no_matches_title": "Sem resultados para \"{q}\"",
+      "intro_result_count": "{count} resultados",
+      "intro_search_placeholder": "Pesquisar na referência…",
+      "intro_start_here": "Comece aqui",
+      "intro_step1_cta": "Ver a referência de flow",
+      "intro_step1_desc_mid": " dentro de um ",
+      "intro_step1_desc_prefix": "Cada flow precisa de um ",
+      "intro_step1_desc_suffix": " único.",
+      "intro_step1_title": "Defina id e namespace",
+      "intro_step2_cta": "Ver a referência de task",
+      "intro_step2_desc": "Ações atômicas executadas em ordem. Clique em um task para ver a documentação.",
+      "intro_step2_title": "Adicione tasks",
+      "intro_step3_cta": "Ver a referência de inputs",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "Use ",
+      "intro_step3_desc_suffix": " e expressões Pebble.",
+      "intro_step3_title": "Torne-o dinâmico",
+      "intro_sub": "Tudo o que você precisa para criar um flow em YAML: propriedades, inputs e Pebble templating, tudo em um só lugar.",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Documentação do flow",
       "name": "Plugin",
       "names": "Plugins",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "Visão geral",
+      "nav_properties": "Properties",
+      "non_dynamic": "não dinâmico",
       "please": "Por favor, escolha uma task à direita para ver sua documentação",
-      "release": "Notas de lançamento"
+      "release": "Notas de lançamento",
+      "required": "Obrigatório"
     },
     "last execution date": "Data da última execução",
     "last execution state": "Último estado",
@@ -787,6 +836,17 @@
       "tooltip": "Reiniciar o trigger"
     },
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
+    "trigger enable dialog": {
+      "title": "Habilitar trigger",
+      "bulk title": "Habilitar {count} triggers",
+      "description": "Este trigger pode ter perdido agendamentos enquanto estava desabilitado.",
+      "bulk description": "Os triggers selecionados podem ter perdido agendamentos enquanto estavam desabilitados.",
+      "strategy": "Selecione a estratégia a ser usada:",
+      "options": {
+        "skip": "Não recuperar agendamentos perdidos",
+        "follow": "Seguir a configuração de {property} do trigger"
+      }
+    },
     "flow source not found": "Fonte do flow não encontrada",
     "date format": "Formato de data",
     "timezone": "Fuso horário",
@@ -1397,7 +1457,14 @@
       "update": "Atualizar segredo '{name}'",
       "isReadOnly": "O segredo é somente leitura",
       "names": "Segredos",
-      "inherited": "Segredos herdados"
+      "inherited": "Segredos herdados",
+      "key": "Nome",
+      "keyPlaceholder": "Nome usado para referenciar este segredo, ex: MY_API_TOKEN",
+      "name": "Valor do segredo",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Descreva este segredo",
+      "tags": "Etiquetas",
+      "addTag": "Adicionar tag"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1880,6 +1947,10 @@
       "viewAll": "Ver tudo",
       "chart_preview": "Clique no código-fonte de um gráfico para ver sua pré-visualização",
       "export": "Exportar para CSV",
+      "exportTo": {
+        "csv": "Exportar para CSV",
+        "ion": "Exportar para ION"
+      },
       "quick_filters": {
         "all": "Todos",
         "running": "Em execução",
@@ -2230,8 +2301,7 @@
         "open_world": "Open world",
         "destructive": "Destrutivo",
         "idempotent": "Idempotente",
-        "return_direct": "Retorno direto",
-        "view_flow": "Abrir flow"
+        "return_direct": "Retorno direto"
       },
       "connect_tab": {
         "server_url": "URL do Servidor",
@@ -2281,6 +2351,12 @@
     },
     "open source": "Código Aberto",
     "pricing": "Preços",
-    "license": "Licença"
+    "license": "Licença",
+    "pwa": {
+      "install_title": "Instalar o Kestra",
+      "install_description": "Instale o Kestra como um aplicativo para acesso mais rápido e uma experiência em tela cheia.",
+      "install": "Instalar",
+      "dismiss": "Agora não"
+    }
   }
 }

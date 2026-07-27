@@ -425,7 +425,7 @@ public record QueryFilter(
         LEVEL("level") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.LESS_THAN_OR_EQUAL_TO);
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.LESS_THAN_OR_EQUAL_TO, Op.IN, Op.NOT_IN);
             }
         },
         @JsonProperty("path")

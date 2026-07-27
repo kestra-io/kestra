@@ -350,6 +350,69 @@ test.describe("AI Copilot", () => {
         await expect(chip).toBeVisible()
         await expect(chip).toContainText("e2e-context-flow")
     })
+
+    test("sends the mode chosen in the mode selector", async ({page}) => {
+        let chatBody: {mode?: string} | null = null
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            chatBody = route.request().postDataJSON()
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([["token", {text: "planning"}], ["done", {status: "IDLE"}]]),
+            })
+        })
+
+        // Switch the composer from the default (Edit) to Plan via the mode selector, then send.
+        await page.locator("[data-test=\"copilot-mode-selector\"]").click()
+        await page.getByRole("menuitem", {name: "Plan", exact: true}).click()
+        await page.locator(D.input).fill("plan something")
+        await page.locator(D.send).click()
+
+        await expect(page.locator(D.chat)).toContainText("planning")
+        // The chosen mode is carried on the chat turn request.
+        expect(chatBody).toMatchObject({mode: "PLAN"})
+    })
+
+    test("surfaces an error alert when the stream emits an error event", async ({page}) => {
+        await page.route("**/ai/threads/*/chat", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "text/event-stream",
+                body: sse([
+                    ["error", {message: "The model provider is unavailable."}],
+                    ["done", {status: "IDLE"}],
+                ]),
+            })
+        })
+        await page.locator(D.input).fill("hello?")
+        await page.locator(D.send).click()
+
+        const alert = page.locator("[data-test=\"copilot-error\"]")
+        await expect(alert).toBeVisible()
+        await expect(alert).toContainText("The model provider is unavailable.")
+    })
+
+    test("shows the unavailable state on a failed thread create and clears it on retry", async ({page}) => {
+        // A 503 on thread creation (no provider configured) → the dedicated unavailable state,
+        // never the global not-found redirect.
+        await page.route("**/api/v1/*/ai/threads", async (route) => {
+            if (route.request().method() === "POST") {
+                await route.fulfill({status: 503, contentType: "application/json", body: "{}"})
+            } else {
+                await route.continue()
+            }
+        })
+        await page.locator(D.input).fill("hi")
+        await page.locator(D.send).click()
+
+        const unavailable = page.locator("[data-test=\"copilot-unavailable\"]")
+        await expect(unavailable).toBeVisible()
+
+        // Retry clears the unavailable state and returns to the composer.
+        await page.locator("[data-test=\"copilot-unavailable-retry\"]").click()
+        await expect(unavailable).toBeHidden()
+        await expect(page.locator(D.input)).toBeVisible()
+    })
 })
 
 /**

@@ -11,8 +11,10 @@ const meta: Meta<typeof KsDurationPicker> = {
         docs: {
             description: {
                 component:
-                    "KsDurationPicker allows users to input an ISO 8601 duration (e.g. `P1Y2M3DT4H5M6S`) " +
-                    "either via individual number fields for each unit, or by typing the duration string directly.",
+                    "KsDurationPicker allows users to input an ISO 8601 duration (e.g. `P3DT4H5M6S`) " +
+                    "either via individual number fields for each unit, or by typing the duration string directly. " +
+                    "It is limited to days/hours/minutes/seconds — the units `java.time.Duration` (fixed-length) " +
+                    "can represent — so years, months and weeks are not supported.",
             },
         },
     },
@@ -51,7 +53,7 @@ export const WithValue: Story = {
     render: () => ({
         components: {KsDurationPicker},
         setup() {
-            const value = ref<string | null>("P1Y2M3DT4H30M")
+            const value = ref<string | null>("P3DT4H30M")
             return {value}
         },
         template: `
@@ -98,7 +100,7 @@ export const DateOnly: Story = {
     render: () => ({
         components: {KsDurationPicker},
         setup() {
-            const value = ref<string | null>("P2Y6M15D")
+            const value = ref<string | null>("P15D")
             return {value}
         },
         template: `

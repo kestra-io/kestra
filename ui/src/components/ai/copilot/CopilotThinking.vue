@@ -76,16 +76,22 @@
         clean up). Sits at the end of the line so growing/shrinking never reflows other text.
     */
     .copilot-thinking-dots::after {
-        content: ".";
+        content: "...";
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
-        animation: copilot-thinking-dots 1.2s linear infinite;
+        /* Reveal 1→3 dots by animating the visible WIDTH — reliable in every browser. The previous
+           approach animated the `content` string, which several engines refuse to animate, so the
+           dots sometimes rendered as a single static dot. */
+        display: inline-block;
+        width: 3ch;
+        overflow: hidden;
+        white-space: pre;
+        vertical-align: bottom;
+        animation: copilot-thinking-dots 1.5s steps(3, jump-none) infinite;
     }
 
     @keyframes copilot-thinking-dots {
-        0%   { content: "."; }
-        33%  { content: ".."; }
-        66%  { content: "..."; }
-        100% { content: "."; }
+        from { width: 1ch; }
+        to   { width: 3ch; }
     }
 </style>

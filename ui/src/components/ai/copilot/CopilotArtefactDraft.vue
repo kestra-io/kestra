@@ -67,6 +67,9 @@
 
 <style scoped>
     .copilot-draft {
+        /* Fill the assistant column (up to the 90% gutter) so the YAML preview uses the available
+           width instead of shrinking to its longest line. */
+        width: 100%;
         max-width: 90%;
         border: 1px solid var(--ks-border-subtle);
         border-radius: var(--ks-radius-lg);

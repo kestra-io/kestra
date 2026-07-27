@@ -102,8 +102,6 @@ export const useFlowStore = defineStore("flow", () => {
     const metrics = ref<any[]>()
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
-    const lastSaveFlow = ref<string>()
-    const openAiCopilot = ref<boolean>(false)
     const isCreating = ref<boolean>(false)
     const readonlyToastShown = ref(false)
     const flowYaml = ref<string>("")
@@ -1011,8 +1009,6 @@ function deleteFlowAndDependencies() {
         metrics,
         tasksWithMetrics,
         executeFlow,
-        lastSaveFlow,
-        openAiCopilot,
         isCreating,
         flowYaml,
         flowYamlOrigin,
@@ -1023,8 +1019,6 @@ function deleteFlowAndDependencies() {
         setTrigger,
         removeTrigger,
         setExecuteFlow,
-        onSaveMetadata,
-        setOpenAiCopilot,
         saveAll,
         saveAsDraft,
         save,

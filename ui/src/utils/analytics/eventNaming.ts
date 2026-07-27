@@ -26,6 +26,13 @@ const OSSAUTH_NAMES: Record<string, string> = {
 }
 
 const ONBOARDING_NAMES: Record<string, string> = {
+    // Product tour: `onboarding.event` names the event, `onboarding.action` carries the step it
+    // happened on, so a single event name can be broken down per step.
+    tour_offered: "app.onboarding-tour.offered",
+    tour_started: "app.onboarding-tour.started",
+    tour_continued: "app.onboarding-tour.continued",
+    tour_completed: "app.onboarding-tour.completed",
+    tour_closed: "app.onboarding-tour.closed",
     step_viewed: "app.onboarding-step.viewed",
     step_next_clicked: "app.onboarding-step.advanced",
     step_auto_advanced: "app.onboarding-step.auto-advanced",
@@ -47,7 +54,10 @@ function resolveOssAuth(properties: Record<string, any>): string {
 }
 
 function resolveOnboarding(properties: Record<string, any>): string {
-    return ONBOARDING_NAMES[properties.onboarding?.action] ?? "onboarding"
+    const onboarding = properties.onboarding ?? {}
+    return ONBOARDING_NAMES[onboarding.event]
+        ?? ONBOARDING_NAMES[onboarding.action]
+        ?? "onboarding"
 }
 
 const SPLIT_EVENT_RESOLVERS: Record<string, (properties: Record<string, any>) => string> = {

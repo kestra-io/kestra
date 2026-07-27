@@ -83,11 +83,11 @@
         }
 
         &.is-tutorial {
-            color: #4dabf7;
+            color: #8b5cf6;
         }
 
         &.is-blueprints {
-            color: #8b5cf6;
+            color: #4dabf7;
         }
 
         &.is-slack {

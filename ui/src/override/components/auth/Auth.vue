@@ -67,9 +67,10 @@
     const router = useRouter()
     const axios = useClient()
 
+    // The permanent way back into the product tour, once the left menu entry is gone.
     const startTutorial = computed(() => ({
-        name: "flows/create",
-        query: {onboarding: "guided", reset: "true"},
+        name: "ai",
+        query: {tour: "start"},
         params: {tenant: route.params.tenant},
     }))
 

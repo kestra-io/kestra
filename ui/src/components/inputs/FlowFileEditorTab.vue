@@ -71,7 +71,7 @@
     import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
-    import {useOnboardingV2Store} from "../../stores/onboardingV2"
+    import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
 
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -93,7 +93,7 @@
     // Ctrl/⌘+Alt+Shift+K opens the AI Copilot (the v2 context-dock tab). Suppressed during the
     // guided onboarding tour.
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (onboardingStore.isGuidedActive) {
+        if (tourStore.isGuidedActive) {
             return
         }
         if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && props.flow) {
@@ -213,7 +213,7 @@
     const pluginsStore = usePluginsStore()
     const namespacesStore = useNamespacesStore()
     const miscStore = useMiscStore()
-    const onboardingStore = useOnboardingV2Store()
+    const tourStore = useProductTourStore()
     const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0)
 
     const editorScrollKey = computed(() => {
@@ -300,7 +300,7 @@
         }
 
         if (isSuccessfulFlowSaveOutcome(result)) {
-            onboardingStore.recordSave()
+            tourStore.recordSave()
         }
     }
 

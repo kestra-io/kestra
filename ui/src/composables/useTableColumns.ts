@@ -5,6 +5,8 @@ export interface ColumnConfig {
     label: string;
     prop: string;
     default: boolean;
+    /** Keeps a column readable when the table has to share a narrow window. */
+    minWidth?: number;
     description?: string;
     condition?: () => boolean;
 }

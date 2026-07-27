@@ -4,6 +4,16 @@
     <div class="copilot-help" data-test="copilot-help">
         <KsText size="small" class="copilot-help-title">{{ $t("welcome_copilot.need_help") }}</KsText>
 
+        <!-- The product tour, where the retired welcome page used to offer it. -->
+        <RouterLink class="copilot-help-card" :to="{name: 'ai', query: {tour: 'start'}}">
+            <KsIcon class="copilot-help-icon"><Play /></KsIcon>
+            <span class="copilot-help-text">
+                <KsText class="copilot-help-card-title">{{ $t("onboarding.tour.menu") }}</KsText>
+                <KsText size="small" class="copilot-help-card-desc">{{ $t("onboarding.tour.menu_description") }}</KsText>
+            </span>
+            <KsIcon class="copilot-help-chevron"><ChevronRight /></KsIcon>
+        </RouterLink>
+
         <RouterLink class="copilot-help-card" :to="{name: 'blueprints', params: {kind: 'flow', tab: 'community'}}">
             <KsIcon class="copilot-help-icon"><FileTreeOutline /></KsIcon>
             <span class="copilot-help-text">
@@ -26,6 +36,7 @@
 
 <script setup lang="ts">
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue"
+    import Play from "vue-material-design-icons/Play.vue"
     import Slack from "vue-material-design-icons/Slack.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 

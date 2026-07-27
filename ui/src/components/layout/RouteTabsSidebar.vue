@@ -28,11 +28,16 @@
                 </KsTooltip>
             </template>
         </div>
+
+        <!-- Only on the Blueprints page, where the rail has room and the readers are new. -->
+        <ProductTourNudge />
     </KsSideBar>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
+
+    import ProductTourNudge from "../onboarding/tour/ProductTourNudge.vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import type {RouteLocationRaw} from "vue-router"

@@ -1,18 +1,33 @@
 import {useRoute} from "vue-router"
 import {useApiStore} from "../stores/api"
 import {pageFromRoute} from "../utils/eventsRouter"
-import {FIRST_FLOW_STEP_IDS, type OnboardingStepType} from "../components/onboarding/guides/firstFlowGuide"
+import {TOUR_SCENE_IDS} from "../components/onboarding/tour/tourScenes"
 
-export const ONBOARDING_V2_SEMVER = "2.0.0"
-export const ONBOARDING_V2_EXPERIENCE = "first_flow_tutorial"
-export const ONBOARDING_V2_TEMPLATE = "first_flow_tutorial"
+/** Bumped from 2.0.0 with the new tour, so its events are distinguishable from the old guide's. */
+export const TOUR_ANALYTICS_VERSION = "3.0.0"
+export const TOUR_ANALYTICS_EXPERIENCE = "product_tour"
+
+/**
+ * Events the product tour reports, resolved to `app.onboarding-tour.*` in PostHog.
+ *
+ * `offered` fires when the invitation appears and `started` when it is accepted, so the start rate
+ * is one over the other. `continued` fires on every step the user moves through, so the funnel can be
+ * read step by step from the `action` property. `completed` covers the early exit offered on a
+ * milestone as well as the last step.
+ */
+export type OnboardingTourEvent =
+    | "tour_offered"
+    | "tour_started"
+    | "tour_continued"
+    | "tour_completed"
+    | "tour_closed";
 
 interface TrackOnboardingOptions {
-    action: string;
+    /** Names the event. */
+    event: OnboardingTourEvent;
+    /** The step it happened on, reported as the `action` property. */
+    action?: string | null;
     mode?: "guided" | "self_serve" | null;
-    stepId?: string | null;
-    stepType?: OnboardingStepType;
-    validationMessage?: string;
     additional?: Record<string, unknown>;
 }
 
@@ -21,31 +36,27 @@ export function useOnboardingAnalytics() {
     const route = useRoute()
 
     const trackOnboarding = ({
+        event,
         action,
         mode,
-        stepId,
-        stepType,
-        validationMessage,
         additional = {},
     }: TrackOnboardingOptions) => {
-        const step =
-            stepId && FIRST_FLOW_STEP_IDS.includes(stepId)
-                ? FIRST_FLOW_STEP_IDS.indexOf(stepId) + 1
-                : undefined
+        const step = action && TOUR_SCENE_IDS.includes(action)
+            ? TOUR_SCENE_IDS.indexOf(action) + 1
+            : undefined
 
         apiStore.events({
             type: "ONBOARDING",
             onboarding: {
-                version: ONBOARDING_V2_SEMVER,
-                experience: ONBOARDING_V2_EXPERIENCE,
-                template: ONBOARDING_V2_TEMPLATE,
-                guideId: "first_flow",
-                mode,
+                version: TOUR_ANALYTICS_VERSION,
+                experience: TOUR_ANALYTICS_EXPERIENCE,
+                template: TOUR_ANALYTICS_EXPERIENCE,
+                guideId: "product_tour",
+                event,
+                // The step name, per the tracking plan: one event name, broken down by step.
                 action,
-                stepId,
-                stepType,
                 step,
-                validationMessage,
+                mode,
                 ...additional,
             },
             page: pageFromRoute(route),

@@ -52,9 +52,12 @@
                     <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
                 </template>
             </KsTableColumn>
+            <!-- The id and the type are what a trigger is recognised by, so they keep a minimum
+                 width and the table scrolls instead of wrapping them one character per line. -->
             <KsTableColumn
                 prop="id"
                 :label="$t('id')"
+                :minWidth="140"
             >
                 <template #default="scope">
                     <code>
@@ -68,6 +71,7 @@
                 :key="col.prop"
                 :prop="col.prop"
                 :label="col.label"
+                :minWidth="col.minWidth"
                 :sortable="DATE_COLUMNS.includes(col.prop)"
                 :sortOrders="DATE_COLUMNS.includes(col.prop) ? ['ascending', 'descending'] : undefined"
             >
@@ -161,49 +165,65 @@
                 </template>
             </KsTableColumn>
 
-            <KsTableColumn columnKey="row-actions" className="row-action">
+            <!-- Pinned: with the identifiers keeping their width, the table can scroll, and the
+                 actions of a row have to stay reachable. -->
+            <KsTableColumn columnKey="row-actions" className="row-action" fixed="right">
                 <template #default="scope">
-                    <KsDropdown trigger="click" placement="bottom-end">
-                        <KsButton
-                            :icon="DotsVertical"
-                            link
-                            size="small"
-                            :aria-label="$t('actions')"
-                        />
-                        <template #dropdown>
-                            <KsDropdownMenu>
-                                <KsDropdownItem @click="openDetails(scope.row)">
-                                    <TextSearch class="mr-1" />
-                                    {{ $t("details") }}
-                                </KsDropdownItem>
-                                <KsDropdownItem
-                                    v-if="userCan(action.RESTART)"
-                                    :disabled="!scope.row.locked"
-                                    @click="restart(scope.row)"
-                                >
-                                    <Restart class="mr-1" />
-                                    {{ $t("restart") }}
-                                </KsDropdownItem>
-                                <KsDropdownItem
-                                    v-if="userCan(action.UNLOCK) && scope.row.kind !== 'REALTIME'"
-                                    :disabled="!scope.row.locked"
-                                    @click="unlock(scope.row)"
-                                >
-                                    <LockOff class="mr-1" />
-                                    {{ $t("unlock") }}
-                                </KsDropdownItem>
-                                <KsDropdownItem
-                                    v-if="userCan(action.DELETE)"
-                                    divided
-                                    class="danger"
-                                    @click="confirmDeleteTrigger(scope.row)"
-                                >
-                                    <Delete class="mr-1" />
-                                    {{ $t("delete") }}
-                                </KsDropdownItem>
-                            </KsDropdownMenu>
-                        </template>
-                    </KsDropdown>
+                    <div class="row-actions-cell">
+                        <!-- Webhook triggers can be tried out from here, with the payload of the
+                             request in the dialog. -->
+                        <KsTooltip v-if="canSendTestEvent(scope.row)" :content="$t('test_event.button')">
+                            <KsButton
+                                data-onboarding-target="trigger-test-event-button"
+                                link
+                                size="small"
+                                :icon="FlashOutline"
+                                :aria-label="$t('test_event.button')"
+                                @click="sendTestEvent(scope.row)"
+                            />
+                        </KsTooltip>
+                        <KsDropdown trigger="click" placement="bottom-end">
+                            <KsButton
+                                :icon="DotsVertical"
+                                link
+                                size="small"
+                                :aria-label="$t('actions')"
+                            />
+                            <template #dropdown>
+                                <KsDropdownMenu>
+                                    <KsDropdownItem @click="openDetails(scope.row)">
+                                        <TextSearch class="mr-1" />
+                                        {{ $t("details") }}
+                                    </KsDropdownItem>
+                                    <KsDropdownItem
+                                        v-if="userCan(action.RESTART)"
+                                        :disabled="!scope.row.locked"
+                                        @click="restart(scope.row)"
+                                    >
+                                        <Restart class="mr-1" />
+                                        {{ $t("restart") }}
+                                    </KsDropdownItem>
+                                    <KsDropdownItem
+                                        v-if="userCan(action.UNLOCK) && scope.row.kind !== 'REALTIME'"
+                                        :disabled="!scope.row.locked"
+                                        @click="unlock(scope.row)"
+                                    >
+                                        <LockOff class="mr-1" />
+                                        {{ $t("unlock") }}
+                                    </KsDropdownItem>
+                                    <KsDropdownItem
+                                        v-if="userCan(action.DELETE)"
+                                        divided
+                                        class="danger"
+                                        @click="confirmDeleteTrigger(scope.row)"
+                                    >
+                                        <Delete class="mr-1" />
+                                        {{ $t("delete") }}
+                                    </KsDropdownItem>
+                                </KsDropdownMenu>
+                            </template>
+                        </KsDropdown>
+                    </div>
                 </template>
             </KsTableColumn>
         </KsDataTable>
@@ -233,6 +253,8 @@
             </template>
         </Empty>
     </div>
+
+    <TestEventDialog v-model="isTestEventOpen" :target="testEventTarget" @sent="onTestEventSent" />
 
     <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose">
         <template #header>
@@ -312,6 +334,7 @@
     import LockOff from "vue-material-design-icons/LockOff.vue"
     import Restart from "vue-material-design-icons/Restart.vue"
     import TextSearch from "vue-material-design-icons/TextSearch.vue"
+    import FlashOutline from "vue-material-design-icons/FlashOutline.vue"
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 
     import {KsDataTable, KsDropdown, KsDropdownMenu, KsDropdownItem, KsFilter as KSFilter, KsMarkdown, KsTag, KsTooltip} from "@kestra-io/design-system"
@@ -332,6 +355,9 @@
     import {useAuthStore} from "override/stores/auth"
     import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
     import {searchTriggersForFlow} from "../../utils/triggers"
+    import {useProductTourStore} from "../../stores/productTour"
+    import TestEventDialog, {type TestEventTarget} from "./TestEventDialog.vue"
+    import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
 
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
@@ -379,31 +405,37 @@
             label: t("type"),
             prop: "type",
             default: true,
+            minWidth: 260,
         },
         {
             label: t("execution id"),
             prop: "executionId",
             default: true,
+            minWidth: 140,
         },
         {
             label: t("last trigger date"),
             prop: "lastTriggeredDate",
             default: true,
+            minWidth: 150,
         },
         {
             label: t("next evaluation date"),
             prop: "nextEvaluationDate",
             default: true,
+            minWidth: 150,
         },
         {
             label: t("last evaluation date"),
             prop: "evaluatedAt",
             default: true,
+            minWidth: 150,
         },
         {
             label: t("state updated date"),
             prop: "updatedAt",
             default: false,
+            minWidth: 150,
         },
     ])
 
@@ -641,6 +673,42 @@
         isOpen.value = true
     }
 
+    /* Send test event: only offered while the product tour is running. */
+    const tourStore = useProductTourStore()
+    const testEventTarget = ref<TestEventTarget | null>(null)
+    const isTestEventOpen = ref(false)
+
+    /**
+     * A webhook trigger can be tried out by anyone who is allowed to create executions: sending the
+     * event is the same request an external system would make, and it creates a real execution.
+     */
+    const canSendTestEvent = (row: any) =>
+        row?.type === WEBHOOK_TRIGGER_TYPE
+        && Boolean(row?.key)
+        && Boolean(authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flowStore.flow?.namespace))
+
+    const sendTestEvent = (row: any) => {
+        testEventTarget.value = {
+            namespace: row.namespace ?? flowStore.flow?.namespace ?? "",
+            flowId: row.flowId ?? flowStore.flow?.id ?? "",
+            triggerId: row.triggerId ?? row.id,
+            key: row.key,
+        }
+        isTestEventOpen.value = true
+    }
+
+    /**
+     * An event sent from this dialog counts as the tour's step: it is the same request the tour makes,
+     * so the execution it created is the one the next step talks about.
+     */
+    const onTestEventSent = (result: {executionId?: string}) => {
+        if (!tourStore.isGuidedActive || !result?.executionId) return
+        tourStore.setTourState({
+            eventExecutionId: result.executionId,
+            lastExecutionId: result.executionId,
+        })
+    }
+
     const dataTable = useTemplateRef<any>("dataTable")
     const canCheck = computed<boolean>(() => userCan(action.UPDATE) ?? false)
     const selection = computed<any[]>(() => dataTable.value?.selection ?? [])
@@ -765,6 +833,14 @@
 // (full-width-table behaviour); restore the standard gutter for this tab.
 .triggers-tab {
     padding-inline: var(--ks-spacing-5);
+}
+
+// Keeps the tour's test event button on the same line as the actions menu.
+.row-actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ks-spacing-1);
 }
 
 .pickers {

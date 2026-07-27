@@ -34,7 +34,10 @@
                             </div>
 
                             <template v-if="selectedValue === undefined">
-                                <KsNoData :title="$t('variable_explorer.select_prompt')" />
+                                <KsNoData
+                                    :title="$t('variable_explorer.select_prompt')"
+                                    :description="$t('variable_explorer.select_hint')"
+                                />
                             </template>
 
                             <KsEditor
@@ -90,6 +93,7 @@
     import {ref, computed, watch} from "vue"
     import {useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {
         KsSplitter,
@@ -112,6 +116,7 @@
     import FilePreview from "../FilePreview.vue"
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const editorBindings = useEditorBindings()
 
     const executionsStore = useExecutionsStore()
@@ -254,12 +259,45 @@
 
     /* ------------------------------- Selection ------------------------------- */
 
+    /** `?expression=trigger.body` opens the debugger on that expression, ready to be evaluated. */
+    function seededExpression() {
+        const seed = route.query.expression?.toString()
+        return seed ? `{{ ${seed} }}` : ""
+    }
+
+    /**
+     * `?select=trigger.variables` opens that item in the viewer, so a link can land on a value
+     * instead of on the prompt to pick one. Applied once, as soon as the item exists.
+     */
+    let selectionApplied = false
+
+    function applySeededSelection(available: ExplorerSection[]) {
+        const target = route.query.select?.toString()
+        if (selectionApplied || !target) {
+            return
+        }
+        const item = available.flatMap((section) => section.items)
+            .find((candidate) => candidate.expression === target)
+        if (!item) {
+            return
+        }
+        selectionApplied = true
+        void selectItem(item).then(() => {
+            // Selecting an item rewrites the debugger's expression, and the link's own wins.
+            const seed = seededExpression()
+            if (seed) {
+                expression.value = seed
+            }
+        })
+    }
+
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
-    // Suggested expression handed to the debugger; follows the current selection.
-    const expression = ref<string>("")
+    // Suggested expression handed to the debugger; follows the current selection. A link can seed it
+    // with `?expression=`, to point at what is worth evaluating on this execution.
+    const expression = ref<string>(seededExpression())
 
     const isExpandableValue = computed(
         () => selectedValue.value !== null && typeof selectedValue.value === "object",
@@ -326,6 +364,9 @@
         expression.value = `{{ ${path} }}`
         previewedValue.value = value
     }
+
+    // Below the selection refs on purpose: this runs while the component sets up, and reads them.
+    watch(sections, applySeededSelection, {immediate: true})
 
     /* --------------------------------- Viewer -------------------------------- */
 

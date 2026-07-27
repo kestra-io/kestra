@@ -1949,6 +1949,7 @@ export type TriggerControllerApiDisableTriggerRequest = {
     flowId?: string;
     triggerId?: string;
     disabled?: boolean;
+    recoverMissedSchedules?: boolean | null;
 };
 
 export type TriggerControllerApiTriggerId = {
@@ -1960,6 +1961,7 @@ export type TriggerControllerApiTriggerId = {
 export type TriggerControllerSetDisabledRequest = {
     triggers: Array<TriggerControllerApiTriggerId>;
     disabled: boolean;
+    recoverMissedSchedules?: boolean | null;
 };
 
 /**
@@ -7760,6 +7762,10 @@ export type DisabledTriggersByQueryData = {
          * The disabled state
          */
         disabled?: boolean;
+        /**
+         * When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped
+         */
+        recoverMissedSchedules?: boolean | null;
     };
     url: '/api/v1/{tenant}/triggers/set-disabled/by-query';
 };

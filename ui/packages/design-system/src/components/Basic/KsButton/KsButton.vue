@@ -7,6 +7,7 @@
         <ElButton
             :aria-label="tooltip"
             v-bind="({...filteredProps(), ...$attrs} as any)"
+            :class="{'is-square': square}"
             @click="emit('click', $event)"
             plain
         >
@@ -24,6 +25,7 @@
     <ElButton
         v-else
         v-bind="({...filteredProps(), ...$attrs} as any)"
+        :class="{'is-square': square}"
         @click="emit('click', $event)"
         plain
     >
@@ -53,7 +55,7 @@
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
         size?: "small" | "default" | "large" | ""
         disabled?: boolean
-        icon?: string | Component
+        icon?: string | object
         nativeType?: "button" | "submit" | "reset"
         loading?: boolean
         text?: boolean
@@ -62,6 +64,7 @@
         autofocus?: boolean
         round?: boolean
         circle?: boolean
+        square?: boolean
         color?: string
         tag?: string | Component
         tooltip?: string
@@ -78,7 +81,7 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement"])
+    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square"])
 </script>
 
 <style lang="scss">
@@ -119,8 +122,18 @@
         --kel-button-border-color: var(--ks-btn-secondary-border-default);
         --kel-button-disabled-text-color: var(--ks-text-inactive);
 
+        [class*="kel-icon"] + span {
+            margin-left: var(--ks-spacing-2);
+        }
+
         &.kel-button--small {
             border-radius: var(--kel-border-radius-small);
+        }
+
+        &.is-square {
+            aspect-ratio: 1;
+            padding-left: 0;
+            padding-right: 0;
         }
 
         &.is-plain:not(.is-text) {
@@ -167,6 +180,12 @@
                 --kel-button-active-bg-color: var(--ks-btn-primary-bg-active);
                 --kel-button-active-border-color: var(--ks-btn-primary-bg-active);
             }
+        }
+
+        &.is-link {
+            --kel-button-text-color: var(--ks-text-secondary);
+            --kel-button-hover-link-text-color: var(--ks-text-primary);
+            --kel-button-active-color: var(--ks-text-primary);
         }
 
         &.is-text {

@@ -1,27 +1,28 @@
 package io.kestra.mcp;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.mcp.models.McpSession;
-import io.kestra.core.mcp.models.McpSessionEvent;
-import io.kestra.core.mcp.models.McpSessionEvent.McpSessionEventType;
-import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueSubscriber;
-import io.kestra.core.mcp.repositories.McpSessionRepositoryInterface;
-import io.kestra.core.server.ServerInstance;
-import io.modelcontextprotocol.spec.McpStreamableServerSession;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.mcp.models.McpSession;
+import io.kestra.core.mcp.models.McpSessionEvent;
+import io.kestra.core.mcp.models.McpSessionEvent.McpSessionEventType;
+import io.kestra.core.mcp.repositories.McpSessionRepositoryInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.core.server.ServerInstance;
+
+import io.modelcontextprotocol.spec.McpStreamableServerSession;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Singleton
@@ -46,7 +47,8 @@ public class McpSessionService {
             log.info("Purged {} orphaned MCP sessions older than {}", purged, SESSION_PURGE_AGE);
         }
 
-        sessionSubscriber = mcpSessionQueue.subscriber().subscribe(either -> {
+        sessionSubscriber = mcpSessionQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.warn("Failed to deserialize MCP session event: {}", either.getRight().getMessage());
                 return;
@@ -153,7 +155,8 @@ public class McpSessionService {
      */
     public void close(KestraMcpTransportContext context) {
         sessionRepository.find(context.getTenantId(), context.getServerId(), context.getSessionId())
-            .ifPresent(session -> {
+            .ifPresent(session ->
+            {
                 sessionRepository.delete(context.getTenantId(), context.getSessionId());
                 emit(new McpSessionEvent(session, McpSessionEventType.DELETED));
             });

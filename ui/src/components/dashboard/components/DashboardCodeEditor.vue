@@ -14,7 +14,7 @@
                 :navbar="false"
                 @cursor="cursor"
                 :original="hasDraft ? dashboardStore.sourceCode : undefined"
-                :options="{diffOverviewBar: false, diffSideBySide: false}"
+                :options="{diffOverviewBar: false, diffSideBySide: false, editor: {padding: {top: 16}}}"
             >
                 <template #absolute>
                     <AITriggerButton

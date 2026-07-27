@@ -1,12 +1,14 @@
 import type {Component} from "vue"
+import {computed} from "vue"
 
 import {useI18n} from "vue-i18n"
 
-import {useNetwork} from "@vueuse/core"
+import {useNetwork, useStorage} from "@vueuse/core"
 const {isOnline} = useNetwork()
 
 import ContextNews from "../../components/layout/ContextNews.vue"
 import ContextDocs from "../../components/docs/ContextDocs.vue"
+import {useApiStore} from "../../stores/api"
 
 import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
 import FileDocument from "vue-material-design-icons/FileDocument.vue"
@@ -15,18 +17,30 @@ import Github from "vue-material-design-icons/Github.vue"
 import Calendar from "vue-material-design-icons/Calendar.vue"
 import Star from "vue-material-design-icons/Star.vue"
 
-interface Button {
+export interface Button {
     title: string;
-    icon: Component;
+    icon?: Component;
 
     component?: Component;
     hasUnreadMarker?: boolean;
+    unread?: {readonly value: boolean};
+    hidden?: boolean;
 
     url?: string;
 }
 
 export function useContextButtons() {
     const {t} = useI18n({useScope: "global"})
+
+    const apiStore = useApiStore()
+    const lastNewsReadDate = useStorage<string | null>("feeds", null)
+    const newsUnread = computed<boolean>(() => {
+        const feeds = apiStore.feeds
+        return Boolean(
+            lastNewsReadDate.value === null ||
+            (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate))),
+        )
+    })
 
     const buttons: Record<string, Button> = isOnline.value
         ? {
@@ -36,6 +50,7 @@ export function useContextButtons() {
 
                   component: ContextNews,
                   hasUnreadMarker: true,
+                  unread: newsUnread,
               },
               docs: {
                   title: t("contextBar.docs"),

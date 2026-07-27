@@ -36,23 +36,25 @@
         </KsAlert>
 
         <template v-else-if="result !== undefined">
-            <h2>{{ $t("eval.preview") }}</h2>
-            <VarValue
-                v-if="execution && isFileResult"
-                :value="result"
-                :execution="execution"
-            />
-            <KsEditor
-                v-else
-                v-bind="editorBindings"
-                :readOnly="true"
-                :inline="true"
-                :navbar="false"
-                :options="{showScroll: true, fullHeight: false, customHeight: 8}"
-                :modelValue="result"
-                :lang="resultLang"
-                class="result"
-            />
+            <div class="result-section">
+                <span class="result-label">{{ $t("eval.preview") }}</span>
+                <VarValue
+                    v-if="execution && isFileResult"
+                    :value="result"
+                    :execution="execution"
+                />
+                <KsEditor
+                    v-else
+                    v-bind="editorBindings"
+                    :readOnly="true"
+                    :inline="true"
+                    :navbar="false"
+                    :options="{showScroll: true, fullHeight: false, customHeight: 8}"
+                    :modelValue="result"
+                    :lang="resultLang"
+                    class="result"
+                />
+            </div>
         </template>
     </div>
 </template>
@@ -159,14 +161,32 @@
         overflow: auto;
     }
 
-    h2{
+    h2 {
         margin: 0;
-        margin-top: 1.5rem;
         font-size: var(--ks-font-size-sm);
+        font-weight: 600;
     }
 
-    h2:first-of-type {
-        margin-top: 0;
+    .result-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+        border-top: 1px solid var(--ks-border-default);
+        padding-top: var(--ks-spacing-3);
+    }
+
+    .result-label {
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .result {
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-spacing-2);
+        background: var(--ks-bg-base);
     }
 }
 </style>

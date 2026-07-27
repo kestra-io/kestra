@@ -9,6 +9,8 @@ export const EVENTS = {
     OPEN_LINK: "openLink",
     ADD_TASK: "addTask",
     SHOW_LOGS: "showLogs",
+    SHOW_OUTPUTS: "showOutputs",
+    REPLAY_TASK: "replayTask",
     MOUSE_OVER: "mouseover",
     MOUSE_LEAVE: "mouseleave",
     ADD_ERROR: "addError",

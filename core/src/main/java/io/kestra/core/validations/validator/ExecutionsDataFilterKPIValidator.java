@@ -27,14 +27,14 @@ public class ExecutionsDataFilterKPIValidator implements ConstraintValidator<Exe
 
         List<String> violations = new ArrayList<>();
 
-        if (executionsDataFilter.getColumns().getField() == Executions.Fields.LABELS && executionsDataFilter.getColumns().getLabelKey() == null) {
-            violations.add("Column must have a `labelKey`.");
+        if (executionsDataFilter.getColumns().getField() == Executions.Fields.LABELS && executionsDataFilter.getColumns().getKey() == null) {
+            violations.add("Column must have a `key`.");
         }
 
         executionsDataFilter.getNumerator().forEach(filter ->
         {
-            if (filter.getField() == Executions.Fields.LABELS && filter.getLabelKey() == null) {
-                violations.add("Label filters must have a `labelKey`.");
+            if (filter.getField() == Executions.Fields.LABELS && filter.getKey() == null) {
+                violations.add("Label filters must have a `key`.");
             }
         });
 

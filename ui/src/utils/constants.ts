@@ -38,6 +38,7 @@ export const storageKeys = {
     DATE_FORMAT_STORAGE_KEY: "dateFormat",
     TIMEZONE_STORAGE_KEY: "timezone",
     SAVED_FILTERS_PREFIX: "saved_filters",
+    EXECUTE_FORM_VALUES_PREFIX: "executeFormValues",
     FILTER_DATA_OPTIONS_PREFIX: "filterDataOptions",
     FILTER_ORDER_PREFIX: "filter-order",
     LOGS_VIEW_TYPE: "logsViewType",
@@ -53,15 +54,12 @@ export const stateDisplayValues = {
     INPROGRESS: "IN-PROGRESS",
 } as const
 
-export const PLUGIN_DEFAULTS_SECTION = "plugin defaults"
-
 export const SECTIONS_MAP = {
     tasks: "tasks",
     triggers: "triggers",
     "error handlers": "errors",
     finally: "finally",
     "after execution": "afterExecution",
-    [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
 } as const
 
 export const groupMemberships = {

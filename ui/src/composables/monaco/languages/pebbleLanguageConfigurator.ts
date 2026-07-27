@@ -69,7 +69,7 @@ export function registerPebbleAutocompletion(
             const startOfWordColumn = position.column - rootPebbleVariableMatcher.matches[1].length
             return {
                 incomplete: true,
-                suggestions: (await (autoCompletion.rootFieldAutoCompletion()))
+                suggestions: (await (autoCompletion.rootFieldAutoCompletion({source: model.getValue(), offset: model.getOffsetAt(position)})))
                     .map(s => propertySuggestion(s, {
                         lineNumber: position.lineNumber,
                         startColumn: startOfWordColumn,

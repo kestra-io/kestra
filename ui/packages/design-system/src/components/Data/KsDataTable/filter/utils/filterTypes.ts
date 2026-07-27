@@ -20,6 +20,13 @@ export const TEXT_COMPARATORS = [
     Comparators.ENDS_WITH,
     Comparators.STARTS_WITH,
 ]
+// Range/threshold comparators always target a single bound value
+export const RANGE_COMPARATORS = [
+    Comparators.GREATER_THAN,
+    Comparators.LESS_THAN,
+    Comparators.GREATER_THAN_OR_EQUAL_TO,
+    Comparators.LESS_THAN_OR_EQUAL_TO,
+]
 
 export interface DateFilterOption {
     value: string;
@@ -64,6 +71,11 @@ export interface FilterKeyConfig {
     customDateMode?: "single" | "range";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
+    /**
+     * When `false`, the filter is a global AND scope: it cannot be added to or moved into a
+     * conditional group, and is omitted from the "add field" menu. Defaults to `true`.
+     */
+    groupable?: boolean;
     /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */
     dateFilterOptions?: DateFilterOption[];
     /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
@@ -75,6 +87,8 @@ export interface FilterKeyConfig {
      * level filter rather than "Greater Than or Equal").
      */
     comparatorLabels?: Partial<Record<Comparators, string>>;
+    /** When `true`, renders colored status tags in multi-select value display. */
+    colored?: boolean;
 }
 
 export interface FilterValue {
@@ -132,6 +146,7 @@ export interface SavedFilter {
     description?: string;
     filters: AppliedFilter[];
     groups?: FilterGroup[];
+    topLogical?: LogicalOperator;
 }
 
 export interface FilterConfiguration {

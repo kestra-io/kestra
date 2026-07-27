@@ -19,18 +19,18 @@
                 id="flowFileEditorTab"
                 ref="editorRefElement"
                 class="flex-1"
-                :modelValue="hasDraft ? draftSource : source"
+                :modelValue="hasDraft ? draftSource : (hasPreview ? flowStore.previewSource : source)"
                 :schemaType="flow ? 'flow': undefined"
                 :lang="lang"
                 :navbar="false"
-                :readOnly="flow && flowStore.isReadOnly"
+                :readOnly="(flow && flowStore.isReadOnly) || hasPreview"
                 :path="path"
                 :options="{
                     creating: isCreating,
                     diffOverviewBar: false,
                     scrollKey: editorScrollKey,
                     diffSideBySide: false,
-                    editor: flow ? {padding: {top: 16}} : undefined,
+                    editor: {padding: {top: 16}},
                 }"
                 @update:model-value="editorUpdate"
                 @cursor="updatePluginDocumentation"
@@ -38,7 +38,7 @@
                 @execute="execute"
                 @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
                 @mouse-leave="() => highlightHoveredTask(-1)"
-                :original="hasDraft ? source : undefined"
+                :original="hasDraft || hasPreview ? source : undefined"
             >
                 <template #absolute>
                     <AITriggerButton
@@ -47,7 +47,7 @@
                         :opened="aiCopilotOpened"
                         @click="() => { draftSource = undefined; openAiCopilot(); }"
                     />
-                    <ContentSave v-if="!flow" @click="saveFileContent" />
+                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
                 </template>
                 <template v-if="playgroundStore.enabled" #widget-content>
                     <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -63,6 +63,11 @@
 <script lang="ts">
     export const FILES_SET_DIRTY_INJECTION_KEY = Symbol("files-set-dirty-injection-key") as InjectionKey<(payload: { path: string; dirty: boolean }) => void>
     export const FILES_UPDATE_CONTENT_INJECTION_KEY = Symbol("files-update-content-injection-key") as InjectionKey<(payload: { path: string; content: string }) => void>
+    // Shared channel that lets actions outside the editor (e.g. restoring a revision)
+    // push fresh content into an already-open file tab so it refreshes in place.
+    // Keyed by file path; the entry object reference changes on each push so the
+    // editor tab can react even when restoring the same content twice.
+    export const FILES_REFRESH_CONTENT_INJECTION_KEY = Symbol("files-refresh-content-injection-key") as InjectionKey<Ref<Record<string, { content: string }>>>
 
     export interface EditorTabProps {
         name: string;
@@ -74,7 +79,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue"
+    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {apiUrl} from "override/utils/route"
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api"
@@ -285,6 +290,20 @@
 
     const updateContent = inject(FILES_UPDATE_CONTENT_INJECTION_KEY)
 
+    // React to content pushed from outside the editor (e.g. restoring a revision):
+    // refresh the already-open tab in place instead of relying on a close/reopen,
+    // which is a no-op for an open file because the tab keeps the same cached uid.
+    const externalContentUpdates = inject(FILES_REFRESH_CONTENT_INJECTION_KEY, undefined)
+    watch(() => (props.path ? externalContentUpdates?.value[props.path] : undefined), (update) => {
+        if (!update || props.flow) return
+        sourceNS.value = update.content
+        // restored content becomes the new clean baseline so the tab is not flagged dirty
+        savedSourceNS.value = update.content
+        if (props.path) {
+            updateContent?.({path: props.path, content: update.content})
+        }
+    })
+
     function editorUpdate(newValue: string){
         if (editorContent.value === newValue) {
             return
@@ -329,12 +348,7 @@
         clearTimeout(timeout.value)
         if(!editorRefElement.value?.getEditor()) return
 
-        const creating = flowStore.isCreating
-
-        // Use saveAll() for consistency with the Save button behavior
-        const result = creating
-            ? await flowStore.save()
-            : await flowStore.saveAll()
+        const result = await flowStore.saveAll()
 
         if (result === "redirect_to_update") {
             await router.push({
@@ -369,7 +383,7 @@
             event.preventDefault()
             if (props.flow) {
                 saveFlowYaml()
-            } else {
+            } else if (isDirty.value) {
                 saveFileContent()
             }
         }
@@ -403,6 +417,8 @@
 
     const hasDraft = computed(() => draftSource.value !== undefined)
 
+    const hasPreview = computed(() => props.flow && !hasDraft.value && flowStore.previewSource !== undefined)
+
     const {
         playgroundStore,
         highlightHoveredTask,
@@ -413,5 +429,11 @@
 <style scoped lang="scss">
     .image-preview {
         margin: 2rem;
+    }
+
+    .save-disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
     }
 </style>

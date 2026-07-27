@@ -1,23 +1,28 @@
 package io.kestra.core.runners.pebble.filters;
 
-import io.kestra.core.utils.RegexUtils;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Filter;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import io.kestra.core.utils.RegexUtils;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.Filter;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 /**
  * Pebble filter that replaces portions of a string matching a regular expression.
  *
- * <p>Usage: {@code {{ "hello world" | regexReplace(regex="world", replacement="java") }}}</p>
+ * <p>
+ * Usage: {@code {{ "hello world" | regexReplace(regex="world", replacement="java") }}}
+ * </p>
  *
- * <p>Capture groups can be referenced in the replacement string using {@code $1}, {@code $2}, etc.</p>
+ * <p>
+ * Capture groups can be referenced in the replacement string using {@code $1}, {@code $2}, etc.
+ * </p>
  *
  * @see RegexMatchFilter
  * @see RegexExtractFilter

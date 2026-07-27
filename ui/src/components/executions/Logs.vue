@@ -10,55 +10,36 @@
             @search="filter = $event"
             @filter="syncFromAppliedFilters"
         />
-        <QuickFilters
-            :levels="logLevels"
-            :level="effectiveLevelValue?.value"
-            :showInterval="false"
-            :levelLabel="t('filter.level_log_executions.label')"
-            @update:level="(value) => setLevelRouteValue({value, direction: 'min'})"
-        />
-        <Collapse>
-            <KsFormItem v-for="logLevel in currentLevelOrLower" :key="logLevel">
-                <LogLevelNavigator
-                    v-if="countByLogLevel[logLevel] > 0"
-                    :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
-                    :level="logLevel"
-                    :totalCount="countByLogLevel[logLevel]"
-                    @previous="previousLogForLevel(logLevel)"
-                    @next="nextLogForLevel(logLevel)"
-                    @close="logCursor = undefined"
-                    class="w-100"
-                />
-            </KsFormItem>
-            <KsFormItem>
-                <KsButton @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
+        <div class="logs-toolbar">
+            <div class="logs-toolbar__left">
+                <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
+                    <LogLevelNavigator
+                        v-if="countByLogLevel[logLevel] > 0"
+                        :cursorIdx="cursorLogLevel === logLevel ? cursorIdxForLevel : undefined"
+                        :level="logLevel"
+                        :totalCount="countByLogLevel[logLevel]"
+                        @previous="previousLogForLevel(logLevel)"
+                        @next="nextLogForLevel(logLevel)"
+                        @close="logCursor = undefined"
+                    />
+                </template>
+                <KsButton class="logs-toolbar__text-btn" @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                     {{ logDisplayButtonText }}
                 </KsButton>
-            </KsFormItem>
-            <KsFormItem>
-                <KsTooltip
-                    :content="!raw_view ? t('logs_view.raw_details') : t('logs_view.compact_details')"
-                >
-                    <KsButton @click="toggleViewType" :icon="logViewTypeButtonIcon">
+                <KsTooltip :content="!raw_view ? t('logs_view.raw_details') : t('logs_view.compact_details')">
+                    <KsButton class="logs-toolbar__text-btn" @click="toggleViewType" :icon="logViewTypeButtonIcon">
                         {{ !raw_view ? t('logs_view.raw') : t('logs_view.compact') }}
                     </KsButton>
                 </KsTooltip>
-            </KsFormItem>
-            <KsFormItem>
-                <KsButtonGroup class="ks-b-group">
-                    <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="emit('follow', $event)" />
-                    <KsIconButton :tooltip="t('download logs')" @click="downloadContent()">
-                        <Download />
-                    </KsIconButton>
-                    <KsIconButton :tooltip="t('copy logs')" @click="copyAllLogs()">
-                        <ContentCopy />
-                    </KsIconButton>
-                    <KsIconButton :tooltip="t('refresh')" @click="loadLogs()">
-                        <Refresh />
-                    </KsIconButton>
-                </KsButtonGroup>
-            </KsFormItem>
-        </Collapse>
+            </div>
+            <div class="logs-toolbar__actions">
+                <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="emit('follow', $event)" />
+                <LogDisplaySettings />
+                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
+                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
+                <KsButton square type="default" size="default" :icon="Refresh" :aria-label="t('refresh')" :tooltip="t('refresh')" @click="loadLogs()" />
+            </div>
+        </div>
 
         <TaskRunDetails
             v-if="!raw_view"
@@ -76,8 +57,9 @@
             :showProgressBar="false"
         />
         <KsCard v-else class="attempt-wrapper" style="--kel-card-padding: 0">
-            <KsEmpty
+            <KsNoData
                 v-if="Array.isArray((executionsStore.logs as any)) && temporalLogs.length === 0"
+                :title="t('no_logs_data_title')"
                 :description="t('no_logs_data_description')"
             />
             <DynamicScroller
@@ -117,24 +99,24 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, useTemplateRef} from "vue"
+    import {computed, nextTick, ref, watch, useTemplateRef, onUnmounted} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useLogExecutionsFilter} from "../filter/configurations"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
+    import LogDisplaySettings from "../logs/LogDisplaySettings.vue"
     import Download from "vue-material-design-icons/Download.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import ViewList from "vue-material-design-icons/ViewList.vue"
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue"
-    import {KsIconButton} from "@kestra-io/design-system"
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller"
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
-    import Collapse from "../layout/Collapse.vue"
 
     import * as Utils from "../../utils/utils"
+    import {useToast} from "../../utils/toast"
     import LogLine from "../logs/LogLine.vue"
     import Restart from "./overview/components/actions/Restart.vue"
     import * as LogUtils from "../../utils/logs"
@@ -148,12 +130,10 @@
         normalizeRouteLevelFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
+        State,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
-    import {useValues} from "../filter/composables/useValues"
-    import QuickFilters from "../filter/QuickFilters.vue"
-
     function distinctFilter(value: string, index: number, array: string[]) {
         return array.indexOf(value) === index
     }
@@ -175,14 +155,39 @@
     }
 
     const {t} = useI18n()
+    const toast = useToast()
 
     const emit = defineEmits<{
         follow: [event: unknown]
     }>()
 
+    const props = withDefaults(defineProps<{
+        playground?: boolean
+    }>(), {
+        playground: false,
+    })
+
     const executionsStore = useExecutionsStore()
 
-    const logExecutionsFilter = useLogExecutionsFilter()
+    // The kind this execution's logs belong to, or undefined for NORMAL (the backend default).
+    const executionKind = computed<string | undefined>(() => {
+        const kind = props.playground
+            ? "PLAYGROUND"
+            : (executionsStore.execution as {kind?: string} | undefined)?.kind
+        return kind && kind !== "NORMAL" ? kind : undefined
+    })
+
+    // Per-execution log views default to NORMAL kind on the backend; surface this execution's own
+    // kind when it isn't NORMAL (e.g. PLAYGROUND) so its logs still load.
+    const kindParams = computed<Record<string, string>>(() => {
+        const params: Record<string, string> = {}
+        if (executionKind.value) {
+            params["filters[kind][IN]"] = executionKind.value
+        }
+        return params
+    })
+
+    const logExecutionsFilter = useLogExecutionsFilter(() => props.playground, () => executionKind.value)
     const defaultLogLevel = computed(
         () => localStorage.getItem("defaultLogLevel") || "INFO",
     )
@@ -191,7 +196,6 @@
         routeValue: routeLevel,
         effectiveValue: effectiveLevel,
         syncFromAppliedFilters,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy({
         defaultValue: () => ({value: defaultLogLevel.value, direction: "min" as const}),
         applyDefaultIfMissing: () => true,
@@ -205,9 +209,6 @@
     // Narrow the type from the composable's union return type
     const effectiveLevelValue = computed(() => effectiveLevel.value as LevelFilterValue | undefined)
     const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
-
-    const {VALUES} = useValues("logs")
-    const logLevels = VALUES.LEVELS
 
     const filter = ref<string | undefined>(undefined)
     const openedTaskrunsCount = ref(0)
@@ -227,29 +228,110 @@
     const route = useRoute()
     filter.value = (route.query.q as string) || undefined
 
-    // watchers
-    watch(
-        () => executionsStore.execution,
-        (execution, oldExecution) => {
-            if (execution && !oldExecution && raw_view.value && !logsLoading.value && !executionsStore.logs?.results?.length) {
-                loadLogs()
+    const logsSSE = ref<EventSource | undefined>(undefined)
+    let sseBuffer: any[] = [] // FIXME: any
+    let sseFlushTimer: ReturnType<typeof setTimeout> | undefined
+
+    const flushSseBuffer =  () => {
+        sseFlushTimer = undefined
+        if (!sseBuffer.length) return
+        const raw = executionsStore.logs as any // FIXME: any
+        const current: any[] = Array.isArray(raw) ? raw : (raw?.results ?? [])
+        const results = current.concat(sseBuffer)
+        sseBuffer = []
+        executionsStore.logs = {total: results.length, results}
+    }
+
+    const closeLogsSSE = () => {
+        if (logsSSE.value) {
+            logsSSE.value.close()
+            logsSSE.value = undefined
+        }
+        if (sseFlushTimer) {
+            clearTimeout(sseFlushTimer)
+            sseFlushTimer = undefined
+        }
+        sseBuffer = []
+    }
+
+    const streamLogs = () => {
+        closeLogsSSE()
+        executionsStore.logs = {total: 0, results: []}
+        executionsStore.followLogs({
+            id: executionId.value!,
+            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
+        }).then((sse: EventSource) => {
+            logsSSE.value = sse
+            sse.onmessage = (event: MessageEvent) => {
+                // ignore the initial "start" keep-alive event
+                if (event.lastEventId === "start") return
+                sseBuffer.push(JSON.parse(event.data))
+                if (!sseFlushTimer) {
+                    sseFlushTimer = setTimeout(flushSseBuffer, 200)
+                }
             }
+            // Close on error: without this, EventSource auto-reconnects (~every 3s)
+            // and each reconnect opens a fresh server-side log-follow stream whose
+            // Netty direct buffers are not promptly reclaimed, leaking off-heap
+            // memory over time. See kestra-io/kestra#16982.
+            sse.onerror = () => {
+                closeLogsSSE()
+            }
+        })
+    }
+
+    const refreshTemporalLogs = () => {
+        if (!executionId.value) return
+        const currentState = executionsStore.execution?.state?.current
+        if (currentState && State.isRunning(currentState)) {
+            streamLogs()
+        } else {
+            closeLogsSSE()
+            executionsStore.logs = {total: 0, results: []}
+            logsLoading.value = false
+            loadLogs()
+        }
+    }
+
+    const isExecutionRunning = computed(() => {
+        const current = executionsStore.execution?.state?.current
+        return !!current && State.isRunning(current)
+    })
+
+    watch(
+        [executionId, isExecutionRunning, raw_view],
+        ([id, , isRaw]) => {
+            if (!id || !isRaw) {
+                closeLogsSSE()
+                return
+            }
+            refreshTemporalLogs()
         },
         {immediate: true},
     )
 
     watch(routeLevel, () => {
-        if (raw_view.value && executionsStore.execution) {
-            executionsStore.logs = {total: 0, results: []}
-            logsLoading.value = false
-            loadLogs()
+        if (raw_view.value && executionId.value) {
+            refreshTemporalLogs()
         }
     })
 
+    onUnmounted(closeLogsSSE)
+
     watch(logCursor, (newValue) => {
-        if (newValue !== undefined && raw_view.value) {
-            scrollToLog(newValue)
+        if (newValue === undefined) {
+            return
         }
+        if (raw_view.value) {
+            scrollToLog(newValue)
+        } else {
+            (logs.value as any)?.scrollToLog?.(newValue)
+        }
+        nextTick(() => requestAnimationFrame(() => {
+            const selected = [...document.querySelectorAll<HTMLElement>(".log-wrapper .line.selected")]
+                .find((line) => line.getBoundingClientRect().top > -10000)
+            selected?.scrollIntoView({block: "center", behavior: "smooth"})
+        }))
     })
 
     // computed
@@ -272,14 +354,6 @@
             index,
             uid: `${logLine.taskRunId ?? ""}-${logLine.attemptNumber ?? 0}-${logLine.timestamp}-${index}`,
         }))
-    })
-
-    const downloadName = computed(() => {
-        // FIXME: any - moment is a global filter
-        const now = new Date()
-        const pad = (n: number) => String(n).padStart(2, "0")
-        const formatted = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
-        return `kestra-execution-${formatted}-${executionId.value}.log`
     })
 
     const logDisplayButtonText = computed(() =>
@@ -340,27 +414,26 @@
         logsLoading.value = true
         executionsStore.loadLogs({
             executionId: executionId.value!,
-            params: levelToRequestParams(effectiveLevelValue.value),
+            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
         }).finally(() => {
             logsLoading.value = false
         })
     }
 
     function downloadContent() {
-        executionsStore.downloadLogs({
+        executionsStore.downloadLogsFile({
             executionId: executionId.value!,
-            params: levelToRequestParams(effectiveLevelValue.value),
-        }).then((response: unknown) => {
-            Utils.downloadUrl(window.URL.createObjectURL(new Blob([response as BlobPart])), downloadName.value)
+            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
         })
     }
 
     function copyAllLogs() {
         executionsStore.downloadLogs({
             executionId: executionId.value!,
-            params: levelToRequestParams(effectiveLevelValue.value),
+            params: {...levelToRequestParams(effectiveLevelValue.value), ...kindParams.value},
         }).then((response: unknown) => {
             Utils.copy(response as string)
+            toast.success(t("logs_copied"))
         })
     }
 
@@ -447,21 +520,38 @@
     }
   }
 
-  .ks-b-group {
-    min-width: auto!important;
-    max-width: max-content !important;
-  }
+  .logs-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: var(--ks-spacing-2) 0;
+    margin-bottom: var(--ks-spacing-2);
+    background: var(--ks-bg-base);
 
-  :deep(.kel-form) {
-    padding: 1rem 1rem 0.5rem 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--ks-border-default);
-    border-radius: 0.5rem;
-    background-color: var(--ks-bg-surface);
-    box-shadow: 2px 3px 3px 0px var(--ks-shadow-element);
-  }
+    &__left {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--ks-spacing-2);
+    }
 
-  :deep(.kel-form-item) {
-    margin-bottom: 0.5rem !important;
+    &__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--ks-spacing-2);
+      margin-left: auto;
+    }
+
+    &__text-btn {
+      font-size: var(--ks-font-size-xs);
+    }
+
+    :deep(.kel-button) {
+        margin: 0;
+    }
   }
 </style>

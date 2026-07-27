@@ -1,7 +1,7 @@
 <template>
     <Header v-if="header && dashboard" :dashboard :load />
 
-    <section id="filter" class="filterPadding">
+    <section id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
         <KSFilter
             :key="`dashboard__${dashboard.id}`"
             :prefix="`dashboard__${dashboard.id}`"
@@ -14,13 +14,6 @@
             }"
             :showSearchInput="false"
             :defaultDuration="dashboard.timeWindow?.default"
-        />
-        <QuickFilters
-            :intervals="quickIntervals"
-            :timeRange="selectedTimeRange"
-            :intervalLabel="t('filter.timeRange_dashboard.label')"
-            :showLevel="false"
-            @update:timeRange="onQuickFilterTimeRange"
         />
     </section>
 
@@ -43,8 +36,6 @@
     import Header from "./components/Header.vue"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import Sections from "./sections/Sections.vue"
-    import QuickFilters from "../filter/QuickFilters.vue"
-    import {useQuickIntervalFilter} from "../filter/composables/useQuickIntervalFilter"
 
     import {
         useDashboardFilter,
@@ -70,7 +61,7 @@
     import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw"
 
     import {useRoute, useRouter} from "vue-router"
-    import {useDashboardStore} from "../../stores/dashboard"
+    import {DEFAULT_DASHBOARD, useDashboardStore} from "../../stores/dashboard"
     import {useCoreStore} from "../../stores/core.ts"
     import {useI18n} from "vue-i18n"
 
@@ -79,7 +70,6 @@
     const coreStore = useCoreStore()
     const dashboardStore = useDashboardStore()
     const {t} = useI18n()
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     defineOptions({inheritAttrs: false})
 
@@ -99,7 +89,7 @@
         }
     })
 
-    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "default", charts: []})
+    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? DEFAULT_DASHBOARD)
     const isDashboardBundledWithUI = ref<boolean>(false)
     const charts = ref<Chart[]>([])
 
@@ -126,7 +116,7 @@
         }
     }
     const useDefaultDashboardBundledInUI = () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
+        dashboardStore.activeDashboard = {...DEFAULT_DASHBOARD, ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
         isDashboardBundledWithUI.value = true
     }
 
@@ -201,7 +191,11 @@
 <style scoped lang="scss">
 
 .filterPadding {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
     padding: 0 2rem;
+}
+
+.noMarginTop {
+    margin-top: 0;
 }
 </style>

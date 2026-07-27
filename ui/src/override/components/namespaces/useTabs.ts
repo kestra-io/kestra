@@ -46,15 +46,16 @@ export function useTabs() {
             title: t("variables"),
         },
         {
-            ...lockedProps("plugin-defaults"),
-            name: "plugin-defaults",
-            title: t("pluginDefaults.title"),
+            ...lockedProps("policies"),
+            name: "policies",
+            title: t("demos.policies.label"),
         },
         {
             name: "kv",
             title: t("kv.name"),
             component: KVTable,
             props: {namespace},
+            fullContainer: true,
         },
         {
             ...lockedProps("history"),

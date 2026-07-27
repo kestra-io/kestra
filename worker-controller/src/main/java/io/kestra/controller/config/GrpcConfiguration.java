@@ -10,7 +10,7 @@ import io.micronaut.core.bind.annotation.Bindable;
  *        Enabling reflection allows clients to query the server for available services and methods,
  *        which can be useful for debugging and development tools. Defaults to false.
  * @param maxInboundMessageSize Maximum inbound message size in bytes, applied to both the gRPC server and client channel.
- *        Defaults to {@link Integer#MAX_VALUE} (no limit).
+ *        Defaults to {@code 10485760} (10 MB).
  */
 @ConfigurationProperties("kestra.grpc")
 public record GrpcConfiguration(

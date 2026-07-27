@@ -64,6 +64,31 @@ describe("KsExecutionStatus", () => {
         expect(wrapper.find(".ks-execution-status__icon").exists()).toBe(false)
     })
 
+    test("is not clickable by default", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--clickable").exists()).toBe(false)
+    })
+
+    test("applies clickable class when clickable prop is true", () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "SUCCESS", clickable: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-execution-status--clickable").exists()).toBe(true)
+    })
+
+    test("emits a native click when clickable", async () => {
+        const wrapper = mount(KsExecutionStatus, {
+            props: {status: "FAILED", clickable: true},
+            global: globalConfig,
+        })
+        await wrapper.find("button").trigger("click")
+        expect(wrapper.emitted("click")).toHaveLength(1)
+    })
+
     test("renders all status variants", () => {
         const statuses = [
             "CREATED", "RESTARTED", "SUCCESS", "RUNNING", "KILLING",

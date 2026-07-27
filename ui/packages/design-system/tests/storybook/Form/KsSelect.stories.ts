@@ -18,6 +18,7 @@ const meta: Meta<typeof KsSelect> = {
         collapseTags: {control: "boolean"},
         disabled: {control: "boolean"},
         allowCreate: {control: "boolean"},
+        loading: {control: "boolean"},
     },
     parameters: {
         docs: {
@@ -211,6 +212,31 @@ export const Disabled: Story = {
         await expect(
             trigger.getAttribute("disabled") !== null || trigger.getAttribute("aria-disabled") === "true",
         ).toBe(true)
+    },
+}
+
+/** Loading – spinning suffix icon while options are (re)computed */
+export const Loading: Story = {
+    render: (args) => ({
+        components: {KsSelect, ElOption},
+        setup() {
+            const value = ref("")
+            return {args, value, LOG_LEVELS}
+        },
+        template: `
+            <div style="padding:24px;min-height:320px;display:flex;flex-direction:column;gap:24px">
+                <ks-select v-model="value" v-bind="args" style="width:240px">
+                    <ks-option v-for="l in LOG_LEVELS" :key="l" :value="l" :label="l" />
+                </ks-select>
+                <ks-select v-model="value" v-bind="args" disabled placeholder="Computing…" style="width:240px">
+                    <ks-option v-for="l in LOG_LEVELS" :key="l" :value="l" :label="l" />
+                </ks-select>
+            </div>
+        `,
+    }),
+    args: {loading: true, placeholder: "Loading options…"},
+    async play({canvasElement}) {
+        await expect(canvasElement.querySelector(".kel-icon.is-loading")).toBeTruthy()
     },
 }
 

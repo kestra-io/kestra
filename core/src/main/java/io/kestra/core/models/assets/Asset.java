@@ -31,7 +31,7 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     protected String namespace;
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._-]*")
+    @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*")
     @Size(min = 1, max = 150)
     protected String id;
 
@@ -102,6 +102,12 @@ public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
 
     @JsonAnySetter
     public void setMetadata(String name, Object value) {
+        // `metadataList` is an ElasticSearch indexing-only projection of `metadata` (see EE ElasticSearchAssetRepository).
+        // Fresh indices exclude it from _source, but existing/upgraded indices may still return it; never fold it back
+        // into the metadata map.
+        if ("metadataList".equals(name)) {
+            return;
+        }
         metadata.put(name, value);
     }
 

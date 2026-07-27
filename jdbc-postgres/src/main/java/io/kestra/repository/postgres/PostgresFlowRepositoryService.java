@@ -26,7 +26,9 @@ public abstract class PostgresFlowRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                conditions.add(DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)));
+                conditions.add(
+                    DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class))
+                );
             });
         }
 
@@ -61,7 +63,11 @@ public abstract class PostgresFlowRepositoryService {
             labelValues.forEach((key, value) ->
             {
                 if (operation.equals(EQUALS)) {
-                    conditions.add(DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)));
+                    conditions.add(
+                        DSL.condition(
+                            "value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)
+                        )
+                    );
                 } else if (operation.equals(QueryFilter.Op.NOT_EQUALS)) {
                     // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
                     String extractValueSql = "(SELECT jsonb_path_query_first(value, '$.labels[*] ? (@.key == $labelKey).value', jsonb_build_object('labelKey', {0}::text))#>>'{}')";

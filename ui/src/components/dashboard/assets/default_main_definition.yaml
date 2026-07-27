@@ -44,6 +44,7 @@ charts:
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
       displayName: In Progress
+      description: running now
       numberType: FLAT
       width: 3
     data:
@@ -88,7 +89,7 @@ charts:
         enabled: true
       column: date
       colorByColumn: state
-      width: 9
+      width: 8
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
@@ -111,9 +112,10 @@ charts:
     type: io.kestra.plugin.core.dashboard.chart.Pie
     chartOptions:
       displayName: Total Executions
+      description: By status
       graphStyle: DONUT
       tooltip: ALL
-      width: 3
+      width: 4
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:

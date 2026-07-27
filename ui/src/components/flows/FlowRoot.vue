@@ -5,7 +5,7 @@
             :activeTabName="activeTabName"
         />
         <section
-            v-if="isEditTabActive && activeTab"
+            v-if="activeTab"
             :class="[containerClass, {maximized: activeTab.maximized, 'no-overflow': activeTab.noOverflow}, 'padding']"
         >
             <component
@@ -15,12 +15,6 @@
                 @expand-subflow="updateExpandedSubflows"
             />
         </section>
-        <Tabs
-            v-else
-            routeName="flows/update"
-            :tabs="tabs"
-            @expand-subflow="updateExpandedSubflows"
-        />
     </template>
 </template>
 
@@ -41,9 +35,10 @@
     import DemoAuditLogs from "../demo/AuditLogs.vue"
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
-    import {computed, onBeforeUnmount, onMounted, onUnmounted, ref, watch} from "vue"
+    import {computed, onBeforeUnmount, onUnmounted, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import useRouteContext from "../../composables/useRouteContext"
 
     export interface Tab {
         name: string
@@ -112,6 +107,7 @@
                     name: "executions",
                     component: FlowExecutions,
                     title: t("executions"),
+                    props: {embed: true},
                 })
             }
 
@@ -194,16 +190,12 @@
         })
 
         function syncTabsToStore() {
-            if (isEditTabActive.value) {
-                routeTabsStore.setTabs({
-                    ownerId: tabsOwnerId,
-                    tabs: tabs.value,
-                    routeName: "flows/update",
-                    displayMode: "select",
-                })
-            } else {
-                routeTabsStore.clearTabsIfOwner(tabsOwnerId)
-            }
+            routeTabsStore.setTabs({
+                ownerId: tabsOwnerId,
+                tabs: tabs.value,
+                routeName: "flows/update",
+                displayMode: "select",
+            })
         }
 
         function updateExpandedSubflows(expandedSubflows: any) {
@@ -216,8 +208,6 @@
         })
 
         const activeTabName = computed(() => activeTab.value?.name ?? "home")
-
-        const isEditTabActive = computed(() => activeTab.value?.name === "edit")
 
         const containerClass = computed(() => {
             if (activeTab.value?.locked) return {"px-0": true, "full-container": true}
@@ -244,20 +234,9 @@
 
         const ready = computed(() => user.value && flowStore.flow)
 
-        // RouteContext mixin: update document title on route change
-        function handleTitle() {
-            let baseTitle: string
-            if (document.title.lastIndexOf("|") > 0) {
-                baseTitle = document.title.substring(document.title.lastIndexOf("|") + 1)
-            } else {
-                baseTitle = document.title
-            }
-            document.title = routeInfo.value.title + " | " + baseTitle
-        }
+        useRouteContext(routeInfo)
 
-        watch(() => route.fullPath, () => handleTitle())
-
-        watch([tabs, isEditTabActive], () => syncTabsToStore(), {immediate: true, deep: true})
+        watch(tabs, () => syncTabsToStore(), {immediate: true, deep: true})
 
         watch(route, (newValue, oldValue) => {
             if (oldValue.name === newValue.name) {
@@ -289,7 +268,7 @@
 
         // created logic
         if (!route.params.tab) {
-            const tab = localStorage.getItem("flowDefaultTab") || "overview"
+            const tab = localStorage.getItem("flowDefaultTab") || "edit"
             router.replace({
                 name: "flows/update",
                 params: {...route.params, tab},
@@ -304,8 +283,6 @@
         flowStore.isCreating = false
         load()
 
-        onMounted(() => handleTitle())
-
         onBeforeUnmount(() => {
             routeTabsStore.clearTabsIfOwner(tabsOwnerId)
         })
@@ -319,7 +296,6 @@
             tabs,
             activeTab,
             activeTabName,
-            isEditTabActive,
             containerClass,
             routeInfo,
             ready,
@@ -330,11 +306,10 @@
 
 <script setup lang="ts">
     import FlowRootTopBar from "./FlowRootTopBar.vue"
-    import Tabs from "../Tabs.vue"
 
     withDefaults(defineProps<{embed?: boolean}>(), {embed: false})
 
-    const {tabs, activeTab, activeTabName, isEditTabActive, containerClass, routeInfo, ready, updateExpandedSubflows} = useFlowRoot()
+    const {activeTab, activeTabName, containerClass, routeInfo, ready, updateExpandedSubflows} = useFlowRoot()
 </script>
 <style scoped lang="scss">
     .gray-700 {

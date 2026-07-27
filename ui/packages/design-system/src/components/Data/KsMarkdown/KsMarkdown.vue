@@ -79,6 +79,19 @@
         return result
     }
 
+    // Raw HTML video embeds in docs are YouTube-only; restrict `iframe src` to YouTube's
+    // own embed hosts so the shared xss whitelist below can't be used to embed arbitrary sites.
+    const IFRAME_ALLOWED_HOSTS = ["www.youtube.com", "www.youtube-nocookie.com"]
+
+    function isAllowedIframeSrc(value: string): boolean {
+        try {
+            const url = new URL(value)
+            return url.protocol === "https:" && IFRAME_ALLOWED_HOSTS.includes(url.hostname)
+        } catch {
+            return false
+        }
+    }
+
     function htmlEscape(content: string): string {
         return xss(content, {
             whiteList: {
@@ -95,6 +108,7 @@
                 h1: ["id", "class"], h2: ["id", "class"], h3: ["id", "class"],
                 h4: ["id", "class"], h5: ["id", "class"], h6: ["id", "class"],
                 hr: [],
+                iframe: ["src", "title", "width", "height", "allow", "allowfullscreen", "referrerpolicy", "frameborder", "class"],
                 img: ["src", "alt", "title", "width", "height", "class"],
                 kbd: [],
                 li: ["class"], ol: ["start", "class"], ul: ["class"],
@@ -114,6 +128,12 @@
                 button: ["type", "class", "aria-label"],
             },
             stripIgnoreTag: true,
+            onTagAttr: function (tag: string, name: string, value: string) {
+                if (tag === "iframe" && name === "src" && !isAllowedIframeSrc(value)) {
+                    return ""
+                }
+                return undefined
+            },
             onIgnoreTagAttr: function (_tag: string, name: string, value: string) {
                 if (name.startsWith("data-")) {
                     return name + "=\"" + escapeAttrValue(value) + "\""
@@ -150,7 +170,7 @@
 
         const attrs = parseHtmlAttributes(attrsStr.trim())
         const slots = innerHtml.trim()
-            ? {default: () => [h("span", {innerHTML: innerHtml})]}
+            ? {default: () => [h("span", {innerHTML: props.xssProtection ? htmlEscape(innerHtml) : innerHtml})]}
             : undefined
         return h(component as any, attrs, slots)
     }
@@ -485,7 +505,6 @@
         }
 
         p {
-            margin: 0.75rem 0;
             &:first-child { margin-top: 0; }
             &:last-child { margin-bottom: 0; }
         }
@@ -524,7 +543,7 @@
                 }
 
                 .ks-markdown__copy-btn {
-                    padding-right: 0;
+                    padding: var(--ks-spacing-1);
                     right: -2px;
                     top: 2px;
                     position: relative;
@@ -532,14 +551,20 @@
                     background: var(--ks-bg-base);
                     cursor: pointer;
                     color: var(--kel-text-color-placeholder);
+                    display: grid;
+                    place-items: center;
 
                     &:hover {
                         color: var(--kel-text-color-primary);
                     }
 
+                    > * {
+                        grid-area: 1 / 1;
+                    }
+
                     .ks-markdown__copy-btn-ok {
                         transition: opacity 0.15s ease;
-                        margin-right: 0.25rem;
+                        background: var(--ks-bg-base);
                         color: var(--ks-text-success);
                         opacity: 0;
                     }

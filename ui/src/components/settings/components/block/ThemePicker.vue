@@ -51,11 +51,13 @@
     .theme-picker {
         display: flex;
         gap: 0.5rem;
-        flex-wrap: wrap;
 
         &__option.kel-button {
+            flex: 1 1 0;
+            min-width: 0;
+            margin: 0;
             padding: 0;
-            width: 9rem;
+            width: auto;
             height: auto;
             min-height: 0;
 

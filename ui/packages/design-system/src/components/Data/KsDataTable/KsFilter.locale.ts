@@ -4,6 +4,7 @@ export default {
         none: "None",
         filter: {
             "update": "Update",
+            "update conditions hint": "The currently applied filters will replace this saved filter's conditions.",
             "save": "Save",
             "footer_apply": "Apply",
             "cancel": "Cancel",
@@ -39,8 +40,18 @@ export default {
             "or": "OR",
             "and": "AND",
             "in any": "in any",
-            "add_condition_group": "+ Add condition group",
+            "add_condition_group": "Add condition group",
             "add_condition_group_tooltip": "Add another condition group",
+            "add_condition": "Add condition",
+            "add_advanced_filter": "Add advanced filter",
+            "advanced_filter": "Advanced filter",
+            "mobile_filters": "Filters",
+            "filters_title": "Filters",
+            "all_filters": "All Filters",
+            "my_filters_saved": "My Filters saved",
+            "rule_count": "{count} rule",
+            "rules_count": "{count} rules",
+            "where": "Where",
             "remove_condition_group": "Remove this condition group",
             "drag_group": "Drag to combine with another group",
             "unwrap_group": "Ungroup",
@@ -54,6 +65,9 @@ export default {
             "unrenderable_body": "This query uses nesting the visual filter editor can't represent. Edit it directly here, or apply to simplify.",
             "drag to reorder columns": "Drag to reorder columns",
             "empty": "You don't have any saved filter yet.",
+            "save current": "Save current filters",
+            "empty title": "No saved filters yet",
+            "empty subtitle": "Save your active filter to reuse it later",
             "save duplicate": "A filter with this name already exists.",
             "active key value pairs": "Active Key/Value pairs",
             "kv_pair_selected": "{count} Key/Value pairs selected",
@@ -162,6 +176,13 @@ export default {
             "state": {
                 "label": "State",
                 "description": "Filter by execution state",
+            },
+            "state_group": {
+                "running": "Running",
+                "paused": "Paused",
+                "completed": "Completed",
+                "failed": "Failed",
+                "other": "Other",
             },
             "childFilter": {
                 "label": "Hierarchy",
@@ -289,6 +310,14 @@ export default {
                 "description": "Filter by aggregation method",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Display title shown to AI agents",
+                    "annotations": "Behavioural hints declared on the tool (read-only, destructive, etc.)",
+                    "flow": "The flow that defines this tool",
+                    "namespace": "Namespace of the flow that defines this tool",
+                    "triggerId": "Trigger id within the flow, distinct from the tool name",
+                    "description": "What the tool does and when an agent should call it",
+                },
                 "flows": {
                     "id": "Unique flow identifier",
                     "labels": "Flow labels (key:value format)",
@@ -372,6 +401,7 @@ export default {
                 "plugin_filters": "Plugin Search",
             },
             "search_placeholders": {
+                "search_mcp_tools": "Search MCP tools",
                 "search_executions": "Search executions",
                 "search_dashboards": "Search dashboards...",
                 "search_flows": "Search flows",
@@ -392,7 +422,13 @@ export default {
         "filter": {
             "active key value pairs": "Aktive Key/Value-Paare",
             "add key value pair": "Schlüssel/Wert-Paar hinzufügen",
-            "add_condition_group": "+ Bedingungsgruppe hinzufügen",
+            "add_condition_group": "Bedingungsgruppe hinzufügen",
+            "advanced_filter": "Erweiterter Filter",
+            "add_advanced_filter": "Erweiterten Filter hinzufügen",
+            "add_condition": "Bedingung hinzufügen",
+            "rule_count": "{count} Regel",
+            "rules_count": "{count} Regeln",
+            "where": "Wo",
             "add_condition_group_tooltip": "Weitere Bedingungsgruppe hinzufügen",
             "aggregation": {
                 "description": "Nach Aggregationsmethode filtern",
@@ -445,6 +481,9 @@ export default {
                 "description": "Nach Email filtern",
             },
             "empty": "Sie haben noch keinen gespeicherten Filter.",
+            "save current": "Aktuelle Filter speichern",
+            "empty title": "Noch keine gespeicherten Filter",
+            "empty subtitle": "Speichern Sie Ihren aktiven Filter, um ihn später wiederzuverwenden",
             "enabled": {
                 "description": "Nach aktiviert filtern",
                 "label": "Aktiviert",
@@ -564,6 +603,7 @@ export default {
             },
             "search options": "Suche...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP-Tools durchsuchen",
                 "search_blueprints": "Blueprints durchsuchen",
                 "search_dashboards": "Dashboards durchsuchen...",
                 "search_executions": "Ausführungen suchen",
@@ -589,7 +629,22 @@ export default {
                 "description": "Nach Zustand der Ausführung filtern",
                 "label": "Zustand",
             },
+            "state_group": {
+                "running": "Laufend",
+                "paused": "Pausiert",
+                "completed": "Abgeschlossen",
+                "failed": "Fehlgeschlagen",
+                "other": "Sonstige",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Anzeigetitel, der KI-Agenten angezeigt wird",
+                    "annotations": "Verhaltenshinweise, die für das Tool deklariert sind (read-only, destructive usw.)",
+                    "flow": "Der flow, der dieses Tool definiert",
+                    "namespace": "Namespace des flow, der dieses Tool definiert",
+                    "triggerId": "Trigger-id innerhalb des flow, unterscheidet sich vom Tool-Namen",
+                    "description": "Was das Tool tut und wann ein Agent es aufrufen sollte",
+                },
                 "blueprints": {
                     "tags": "Tags, die mit dem Blueprint verknüpft sind",
                 },
@@ -746,6 +801,7 @@ export default {
             "unrenderable_title": "Komplexe Abfrage",
             "unwrap_group": "Gruppierung aufheben",
             "update": "Aktualisieren",
+            "update conditions hint": "Die aktuell angewandten Filter ersetzen die Bedingungen dieses gespeicherten Filters.",
             "username": {
                 "description": "Nach Benutzername filtern",
                 "label": "Benutzername",
@@ -763,7 +819,13 @@ export default {
         filter: {
             "active key value pairs": "Pares de Key/Value activos",
             "add key value pair": "Agregar par de Key/Value",
-            "add_condition_group": "+ Añadir grupo de condiciones",
+            "add_condition_group": "Añadir grupo de condiciones",
+            "advanced_filter": "Filtro avanzado",
+            "add_advanced_filter": "Añadir filtro avanzado",
+            "add_condition": "Añadir condición",
+            "rule_count": "{count} regla",
+            "rules_count": "{count} reglas",
+            "where": "Donde",
             "add_condition_group_tooltip": "Añadir otro grupo de condiciones",
             "aggregation": {
                 "description": "Filtrar por método de agregación",
@@ -816,6 +878,9 @@ export default {
                 "description": "Filtrar por email",
             },
             "empty": "Todavía no tienes ningún filtro guardado.",
+            "save current": "Guardar filtros actuales",
+            "empty title": "Aún no hay filtros guardados",
+            "empty subtitle": "Guarda tu filtro activo para reutilizarlo más tarde",
             "enabled": {
                 "description": "Filtrar por habilitado",
                 "label": "Habilitado",
@@ -935,6 +1000,7 @@ export default {
             },
             "search options": "Buscar...",
             "search_placeholders": {
+                "search_mcp_tools": "Buscar herramientas MCP",
                 "search_blueprints": "Buscar blueprints",
                 "search_dashboards": "Buscar dashboards...",
                 "search_executions": "Buscar ejecuciones",
@@ -960,7 +1026,22 @@ export default {
                 "description": "Filtrar por estado de ejecución",
                 "label": "Estado",
             },
+            "state_group": {
+                "running": "En ejecución",
+                "paused": "Pausado",
+                "completed": "Completado",
+                "failed": "Fallido",
+                "other": "Otro",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título mostrado a los agentes de IA",
+                    "annotations": "Indicadores de comportamiento declarados en la herramienta (read-only, destructive, etc.)",
+                    "flow": "El flow que define esta herramienta",
+                    "namespace": "Namespace del flow que define esta herramienta",
+                    "triggerId": "Id del trigger dentro del flow, distinto del nombre de la herramienta",
+                    "description": "Qué hace la herramienta y cuándo debe llamarla un agente",
+                },
                 "blueprints": {
                     "tags": "Etiquetas asociadas con el blueprint",
                 },
@@ -1117,6 +1198,7 @@ export default {
             "unrenderable_title": "Consulta compleja",
             "unwrap_group": "Desagrupar",
             "update": "Actualizar",
+            "update conditions hint": "Los filtros actualmente aplicados reemplazarán las condiciones de este filter guardado.",
             "username": {
                 "description": "Filtrar por nombre de usuario",
                 "label": "Nombre de usuario",
@@ -1134,7 +1216,13 @@ export default {
         filter: {
             "active key value pairs": "Paires de Key/Value actives",
             "add key value pair": "Ajouter une paire clé/valeur",
-            "add_condition_group": "+ Ajouter un groupe de conditions",
+            "add_condition_group": "Ajouter un groupe de conditions",
+            "advanced_filter": "Filtre avancé",
+            "add_advanced_filter": "Ajouter un filtre avancé",
+            "add_condition": "Ajouter une condition",
+            "rule_count": "{count} règle",
+            "rules_count": "{count} règles",
+            "where": "Où",
             "add_condition_group_tooltip": "Ajouter un autre groupe de conditions",
             "aggregation": {
                 "description": "Filtrer par méthode d'agrégation",
@@ -1187,6 +1275,9 @@ export default {
                 "description": "Filtrer par email",
             },
             "empty": "Vous n'avez pas encore de filtre enregistré.",
+            "save current": "Enregistrer les filtres actuels",
+            "empty title": "Aucun filtre enregistré",
+            "empty subtitle": "Enregistrez votre filtre actif pour le réutiliser plus tard",
             "enabled": {
                 "description": "Filtrer par activé",
                 "label": "Activé",
@@ -1306,6 +1397,7 @@ export default {
             },
             "search options": "Rechercher...",
             "search_placeholders": {
+                "search_mcp_tools": "Rechercher des outils MCP",
                 "search_blueprints": "Rechercher des blueprints",
                 "search_dashboards": "Rechercher des tableaux de bord...",
                 "search_executions": "Rechercher des exécutions",
@@ -1331,7 +1423,22 @@ export default {
                 "description": "Filtrer par état d'exécution",
                 "label": "État",
             },
+            "state_group": {
+                "running": "En cours",
+                "paused": "En pause",
+                "completed": "Terminé",
+                "failed": "Échoué",
+                "other": "Autre",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Titre affiché aux agents IA",
+                    "annotations": "Indications de comportement déclarées sur l'outil (read-only, destructive, etc.)",
+                    "flow": "Le flow qui définit cet outil",
+                    "namespace": "Namespace du flow qui définit cet outil",
+                    "triggerId": "Id du trigger dans le flow, distinct du nom de l'outil",
+                    "description": "Ce que fait l'outil et quand un agent doit l'appeler",
+                },
                 "blueprints": {
                     "tags": "Étiquettes associées au blueprint",
                 },
@@ -1488,6 +1595,7 @@ export default {
             "unrenderable_title": "Requête complexe",
             "unwrap_group": "Dégrouper",
             "update": "Mettre à jour",
+            "update conditions hint": "Les filtres actuellement appliqués remplaceront les conditions de ce filter enregistré.",
             "username": {
                 "description": "Filtrer par nom d'utilisateur",
                 "label": "Nom d'utilisateur",
@@ -1505,7 +1613,13 @@ export default {
         filter: {
             "active key value pairs": "सक्रिय Key/Value जोड़े",
             "add key value pair": "कुंजी/मान जोड़ी जोड़ें",
-            "add_condition_group": "+ शर्त समूह जोड़ें",
+            "add_condition_group": "शर्त समूह जोड़ें",
+            "advanced_filter": "उन्नत फ़िल्टर",
+            "add_advanced_filter": "उन्नत फ़िल्टर जोड़ें",
+            "add_condition": "शर्त जोड़ें",
+            "rule_count": "{count} नियम",
+            "rules_count": "{count} नियम",
+            "where": "जहां",
             "add_condition_group_tooltip": "एक और शर्त समूह जोड़ें",
             "aggregation": {
                 "description": "एग्रीगेशन विधि द्वारा फ़िल्टर करें",
@@ -1558,6 +1672,9 @@ export default {
                 "description": "ईमेल द्वारा फ़िल्टर करें",
             },
             "empty": "आपके पास अभी तक कोई सहेजा हुआ फ़िल्टर नहीं है।",
+            "save current": "वर्तमान फ़िल्टर सहेजें",
+            "empty title": "अभी तक कोई सहेजा हुआ फ़िल्टर नहीं",
+            "empty subtitle": "बाद में पुन: उपयोग के लिए अपना सक्रिय फ़िल्टर सहेजें",
             "enabled": {
                 "description": "सक्षम द्वारा फ़िल्टर करें",
                 "label": "सक्रिय",
@@ -1677,6 +1794,7 @@ export default {
             },
             "search options": "खोजें...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP टूल खोजें",
                 "search_blueprints": "ब्लूप्रिंट्स खोजें",
                 "search_dashboards": "डैशबोर्ड खोजें...",
                 "search_executions": "निष्पादन खोजें",
@@ -1702,7 +1820,22 @@ export default {
                 "description": "कार्य स्थिति द्वारा फ़िल्टर करें",
                 "label": "स्थिति",
             },
+            "state_group": {
+                "running": "चल रहा है",
+                "paused": "रुका हुआ",
+                "completed": "पूर्ण",
+                "failed": "विफल",
+                "other": "अन्य",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "AI एजेंट्स को दिखाया जाने वाला शीर्षक",
+                    "annotations": "टूल पर घोषित व्यवहार संकेत (read-only, destructive, आदि)",
+                    "flow": "वह flow जो इस टूल को परिभाषित करता है",
+                    "namespace": "उस flow का namespace जो इस टूल को परिभाषित करता है",
+                    "triggerId": "flow के भीतर trigger id, टूल नाम से अलग",
+                    "description": "टूल क्या करता है और एजेंट को इसे कब कॉल करना चाहिए",
+                },
                 "blueprints": {
                     "tags": "ब्लूप्रिंट से जुड़े टैग्स",
                 },
@@ -1859,6 +1992,7 @@ export default {
             "unrenderable_title": "जटिल क्वेरी",
             "unwrap_group": "समूह हटाएं",
             "update": "अपडेट",
+            "update conditions hint": "वर्तमान में लागू filter इस सहेजे गए filter की शर्तों को बदल देंगे।",
             "username": {
                 "description": "उपयोगकर्ता नाम द्वारा फ़िल्टर करें",
                 "label": "उपयोगकर्ता नाम",
@@ -1876,7 +2010,13 @@ export default {
         filter: {
             "active key value pairs": "Coppie chiave/valore attive",
             "add key value pair": "Aggiungi coppia Key/Value",
-            "add_condition_group": "+ Aggiungi gruppo di condizioni",
+            "add_condition_group": "Aggiungi gruppo di condizioni",
+            "advanced_filter": "Filtro avanzato",
+            "add_advanced_filter": "Aggiungi filtro avanzato",
+            "add_condition": "Aggiungi condizione",
+            "rule_count": "{count} regola",
+            "rules_count": "{count} regole",
+            "where": "Dove",
             "add_condition_group_tooltip": "Aggiungi un altro gruppo di condizioni",
             "aggregation": {
                 "description": "Filtra per metodo di aggregazione",
@@ -1929,6 +2069,9 @@ export default {
                 "description": "Filtra per email",
             },
             "empty": "Non hai ancora nessun filtro salvato.",
+            "save current": "Salva i filtri correnti",
+            "empty title": "Nessun filtro salvato",
+            "empty subtitle": "Salva il filtro attivo per riutilizzarlo in seguito",
             "enabled": {
                 "description": "Filtra per abilitato",
                 "label": "Abilitato",
@@ -2048,6 +2191,7 @@ export default {
             },
             "search options": "Cerca...",
             "search_placeholders": {
+                "search_mcp_tools": "Cerca strumenti MCP",
                 "search_blueprints": "Cerca blueprint",
                 "search_dashboards": "Cerca dashboard...",
                 "search_executions": "Cerca esecuzioni",
@@ -2073,7 +2217,22 @@ export default {
                 "description": "Filtra per stato di esecuzione",
                 "label": "Zustato",
             },
+            "state_group": {
+                "running": "In esecuzione",
+                "paused": "In pausa",
+                "completed": "Completato",
+                "failed": "Non riuscito",
+                "other": "Altro",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Titolo visualizzato agli agenti IA",
+                    "annotations": "Indicazioni di comportamento dichiarate sullo strumento (read-only, destructive, ecc.)",
+                    "flow": "Il flow che definisce questo strumento",
+                    "namespace": "Namespace del flow che definisce questo strumento",
+                    "triggerId": "Id del trigger all'interno del flow, distinto dal nome dello strumento",
+                    "description": "Cosa fa lo strumento e quando un agente dovrebbe chiamarlo",
+                },
                 "blueprints": {
                     "tags": "Tag associati al blueprint",
                 },
@@ -2230,6 +2389,7 @@ export default {
             "unrenderable_title": "Query complessa",
             "unwrap_group": "Separa gruppo",
             "update": "Aggiorna",
+            "update conditions hint": "I filtri attualmente applicati sostituiranno le condizioni di questo filter salvato.",
             "username": {
                 "description": "Filtra per nome utente",
                 "label": "Nome utente",
@@ -2247,7 +2407,13 @@ export default {
         filter: {
             "active key value pairs": "アクティブなKey/Valueペア",
             "add key value pair": "キー/Valueペアを追加",
-            "add_condition_group": "+ 条件グループを追加",
+            "add_condition_group": "条件グループを追加",
+            "advanced_filter": "詳細フィルター",
+            "add_advanced_filter": "詳細フィルターを追加",
+            "add_condition": "条件を追加",
+            "rule_count": "{count} 件のルール",
+            "rules_count": "{count} 件のルール",
+            "where": "条件",
             "add_condition_group_tooltip": "別の条件グループを追加",
             "aggregation": {
                 "description": "集約方法でフィルター",
@@ -2300,6 +2466,9 @@ export default {
                 "description": "Emailでフィルター",
             },
             "empty": "まだ保存されたフィルターがありません。",
+            "save current": "現在のフィルターを保存",
+            "empty title": "保存されたフィルターはまだありません",
+            "empty subtitle": "アクティブなフィルターを保存して後で再利用できます",
             "enabled": {
                 "description": "有効でフィルター",
                 "label": "有効",
@@ -2419,6 +2588,7 @@ export default {
             },
             "search options": "検索...",
             "search_placeholders": {
+                "search_mcp_tools": "MCPツールを検索",
                 "search_blueprints": "ブループリントを検索",
                 "search_dashboards": "ダッシュボードを検索...",
                 "search_executions": "実行を検索",
@@ -2444,7 +2614,22 @@ export default {
                 "description": "実行状態でフィルター",
                 "label": "状態",
             },
+            "state_group": {
+                "running": "実行中",
+                "paused": "一時停止",
+                "completed": "完了",
+                "failed": "失敗",
+                "other": "その他",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "AIエージェントに表示されるタイトル",
+                    "annotations": "ツールに宣言された動作のヒント（read-only、destructive など）",
+                    "flow": "このツールを定義する flow",
+                    "namespace": "このツールを定義する flow の namespace",
+                    "triggerId": "flow 内の trigger id（ツール名とは異なる）",
+                    "description": "ツールの機能と、エージェントが呼び出すべきタイミング",
+                },
                 "blueprints": {
                     "tags": "ブループリントに関連付けられたタグ",
                 },
@@ -2601,6 +2786,7 @@ export default {
             "unrenderable_title": "複雑なクエリ",
             "unwrap_group": "グループ解除",
             "update": "更新",
+            "update conditions hint": "現在適用されているfilterが、この保存されたfilterの条件に置き換わります。",
             "username": {
                 "description": "ユーザー名でフィルター",
                 "label": "ユーザー名",
@@ -2618,7 +2804,13 @@ export default {
         filter: {
             "active key value pairs": "활성 Key/Value 쌍",
             "add key value pair": "Key/Value 쌍 추가",
-            "add_condition_group": "+ 조건 그룹 추가",
+            "add_condition_group": "조건 그룹 추가",
+            "advanced_filter": "고급 필터",
+            "add_advanced_filter": "고급 필터 추가",
+            "add_condition": "조건 추가",
+            "rule_count": "규칙 {count}개",
+            "rules_count": "규칙 {count}개",
+            "where": "조건",
             "add_condition_group_tooltip": "다른 조건 그룹 추가",
             "aggregation": {
                 "description": "집계 방법으로 필터링",
@@ -2671,6 +2863,9 @@ export default {
                 "description": "email로 필터링",
             },
             "empty": "저장된 필터가 아직 없습니다.",
+            "save current": "현재 필터 저장",
+            "empty title": "저장된 필터가 아직 없습니다",
+            "empty subtitle": "활성 필터를 저장하여 나중에 다시 사용하세요",
             "enabled": {
                 "description": "사용 가능 여부로 필터링",
                 "label": "사용 가능",
@@ -2790,6 +2985,7 @@ export default {
             },
             "search options": "검색...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP 도구 검색",
                 "search_blueprints": "블루프린트 검색",
                 "search_dashboards": "대시보드 검색...",
                 "search_executions": "실행 검색",
@@ -2815,7 +3011,22 @@ export default {
                 "description": "실행 상태별 필터링",
                 "label": "상태",
             },
+            "state_group": {
+                "running": "실행 중",
+                "paused": "일시 중지",
+                "completed": "완료",
+                "failed": "실패",
+                "other": "기타",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "AI 에이전트에게 표시되는 제목",
+                    "annotations": "도구에 선언된 동작 힌트 (read-only, destructive 등)",
+                    "flow": "이 도구를 정의하는 flow",
+                    "namespace": "이 도구를 정의하는 flow의 namespace",
+                    "triggerId": "flow 내의 trigger id (도구 이름과 다름)",
+                    "description": "도구의 기능과 에이전트가 호출해야 하는 시점",
+                },
                 "blueprints": {
                     "tags": "블루프린트와 연결된 태그",
                 },
@@ -2972,6 +3183,7 @@ export default {
             "unrenderable_title": "복잡한 쿼리",
             "unwrap_group": "그룹 해제",
             "update": "업데이트",
+            "update conditions hint": "현재 적용된 filter가 이 저장된 filter의 조건을 대체합니다.",
             "username": {
                 "description": "사용자 이름으로 필터링",
                 "label": "사용자 이름",
@@ -2989,7 +3201,13 @@ export default {
         filter: {
             "active key value pairs": "Aktywne pary klucz/wartość",
             "add key value pair": "Dodaj parę Key/Value",
-            "add_condition_group": "+ Dodaj grupę warunków",
+            "add_condition_group": "Dodaj grupę warunków",
+            "advanced_filter": "Filtr zaawansowany",
+            "add_advanced_filter": "Dodaj filtr zaawansowany",
+            "add_condition": "Dodaj warunek",
+            "rule_count": "{count} reguła",
+            "rules_count": "{count} reguły",
+            "where": "Gdzie",
             "add_condition_group_tooltip": "Dodaj kolejną grupę warunków",
             "aggregation": {
                 "description": "Filtruj według metody agregacji",
@@ -3042,6 +3260,9 @@ export default {
                 "description": "Filtruj według email",
             },
             "empty": "Nie masz jeszcze żadnego zapisanego filtra.",
+            "save current": "Zapisz bieżące filtry",
+            "empty title": "Brak zapisanych filtrów",
+            "empty subtitle": "Zapisz aktywny filtr, aby użyć go ponownie później",
             "enabled": {
                 "description": "Filtruj według enabled",
                 "label": "Włączone",
@@ -3161,6 +3382,7 @@ export default {
             },
             "search options": "Szukaj...",
             "search_placeholders": {
+                "search_mcp_tools": "Wyszukaj narzędzia MCP",
                 "search_blueprints": "Wyszukaj blueprinty",
                 "search_dashboards": "Szukaj pulpitów...",
                 "search_executions": "Wyszukaj wykonania",
@@ -3186,7 +3408,22 @@ export default {
                 "description": "Filtruj według stanu wykonania",
                 "label": "Zmienny",
             },
+            "state_group": {
+                "running": "W toku",
+                "paused": "Wstrzymano",
+                "completed": "Zakończono",
+                "failed": "Nie powiodło się",
+                "other": "Inne",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Tytuł wyświetlany agentom AI",
+                    "annotations": "Wskazówki dotyczące zachowania zadeklarowane dla narzędzia (read-only, destructive itp.)",
+                    "flow": "flow, który definiuje to narzędzie",
+                    "namespace": "Namespace flow, który definiuje to narzędzie",
+                    "triggerId": "Id trigger w obrębie flow, inne niż nazwa narzędzia",
+                    "description": "Co robi narzędzie i kiedy agent powinien je wywołać",
+                },
                 "blueprints": {
                     "tags": "Tagi powiązane z blueprintem",
                 },
@@ -3343,6 +3580,7 @@ export default {
             "unrenderable_title": "Złożone zapytanie",
             "unwrap_group": "Rozgrupuj",
             "update": "Aktualizuj",
+            "update conditions hint": "Aktualnie zastosowane filtry zastąpią warunki tego zapisanego filter.",
             "username": {
                 "description": "Filtruj według nazwy użytkownika",
                 "label": "Nazwa użytkownika",
@@ -3360,7 +3598,13 @@ export default {
         filter: {
             "active key value pairs": "Pares de Key/Value Ativos",
             "add key value pair": "Adicionar par Chave/Valor",
-            "add_condition_group": "+ Adicionar grupo de condições",
+            "add_condition_group": "Adicionar grupo de condições",
+            "advanced_filter": "Filtro avançado",
+            "add_advanced_filter": "Adicionar filtro avançado",
+            "add_condition": "Adicionar condição",
+            "rule_count": "{count} regra",
+            "rules_count": "{count} regras",
+            "where": "Onde",
             "add_condition_group_tooltip": "Adicionar outro grupo de condições",
             "aggregation": {
                 "description": "Filtrar por método de agregação",
@@ -3413,6 +3657,9 @@ export default {
                 "description": "Filtrar por email",
             },
             "empty": "Você ainda não tem nenhum filtro salvo.",
+            "save current": "Salvar filtros atuais",
+            "empty title": "Nenhum filtro salvo ainda",
+            "empty subtitle": "Salve seu filtro ativo para reutilizá-lo mais tarde",
             "enabled": {
                 "description": "Filtrar por habilitado",
                 "label": "Habilitado",
@@ -3532,6 +3779,7 @@ export default {
             },
             "search options": "Pesquisar...",
             "search_placeholders": {
+                "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_blueprints": "Pesquisar blueprints",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_executions": "Pesquisar execuções",
@@ -3557,7 +3805,22 @@ export default {
                 "description": "Filtrar por estado de execução",
                 "label": "Zestado",
             },
+            "state_group": {
+                "running": "A executar",
+                "paused": "Pausado",
+                "completed": "Concluído",
+                "failed": "Falhado",
+                "other": "Outro",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título exibido aos agentes de IA",
+                    "annotations": "Dicas de comportamento declaradas na ferramenta (read-only, destructive, etc.)",
+                    "flow": "O flow que define esta ferramenta",
+                    "namespace": "Namespace do flow que define esta ferramenta",
+                    "triggerId": "Id do trigger dentro do flow, distinto do nome da ferramenta",
+                    "description": "O que a ferramenta faz e quando um agente deve chamá-la",
+                },
                 "blueprints": {
                     "tags": "Tags associados ao blueprint",
                 },
@@ -3714,6 +3977,7 @@ export default {
             "unrenderable_title": "Consulta complexa",
             "unwrap_group": "Desagrupar",
             "update": "Atualizar",
+            "update conditions hint": "Os filtros atualmente aplicados substituirão as condições deste filter guardado.",
             "username": {
                 "description": "Filtrar por nome de usuário",
                 "label": "Nome de Usuário",
@@ -3731,7 +3995,13 @@ export default {
         filter: {
             "active key value pairs": "Pares de Key/Value Ativos",
             "add key value pair": "Adicionar par chave/valor",
-            "add_condition_group": "+ Adicionar grupo de condições",
+            "add_condition_group": "Adicionar grupo de condições",
+            "advanced_filter": "Filtro avançado",
+            "add_advanced_filter": "Adicionar filtro avançado",
+            "add_condition": "Adicionar condição",
+            "rule_count": "{count} regra",
+            "rules_count": "{count} regras",
+            "where": "Onde",
             "add_condition_group_tooltip": "Adicionar outro grupo de condições",
             "aggregation": {
                 "description": "Filtrar por método de agregação",
@@ -3784,6 +4054,9 @@ export default {
                 "description": "Filtrar por email",
             },
             "empty": "Você ainda não tem nenhum filtro salvo.",
+            "save current": "Salvar filtros atuais",
+            "empty title": "Nenhum filtro salvo ainda",
+            "empty subtitle": "Salve seu filtro ativo para reutilizá-lo mais tarde",
             "enabled": {
                 "description": "Filtrar por habilitado",
                 "label": "Habilitado",
@@ -3903,6 +4176,7 @@ export default {
             },
             "search options": "Pesquisar...",
             "search_placeholders": {
+                "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_blueprints": "Pesquisar blueprints",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_executions": "Pesquisar execuções",
@@ -3928,7 +4202,22 @@ export default {
                 "description": "Filtrar por estado de execução",
                 "label": "Zestado",
             },
+            "state_group": {
+                "running": "Em execução",
+                "paused": "Pausado",
+                "completed": "Concluído",
+                "failed": "Falhou",
+                "other": "Outro",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título exibido aos agentes de IA",
+                    "annotations": "Dicas de comportamento declaradas na ferramenta (read-only, destructive, etc.)",
+                    "flow": "O flow que define esta ferramenta",
+                    "namespace": "Namespace do flow que define esta ferramenta",
+                    "triggerId": "Id do trigger dentro do flow, distinto do nome da ferramenta",
+                    "description": "O que a ferramenta faz e quando um agente deve chamá-la",
+                },
                 "blueprints": {
                     "tags": "Tags associados ao blueprint",
                 },
@@ -4085,6 +4374,7 @@ export default {
             "unrenderable_title": "Consulta complexa",
             "unwrap_group": "Desagrupar",
             "update": "Atualizar",
+            "update conditions hint": "Os filtros atualmente aplicados substituirão as condições deste filter salvo.",
             "username": {
                 "description": "Filtrar por nome de usuário",
                 "label": "Nome de Usuário",
@@ -4102,7 +4392,13 @@ export default {
         filter: {
             "active key value pairs": "Активные пары Key/Value",
             "add key value pair": "Добавить пару Key/Value",
-            "add_condition_group": "+ Добавить группу условий",
+            "add_condition_group": "Добавить группу условий",
+            "advanced_filter": "Расширенный фильтр",
+            "add_advanced_filter": "Добавить расширенный фильтр",
+            "add_condition": "Добавить условие",
+            "rule_count": "{count} правило",
+            "rules_count": "{count} правила",
+            "where": "Где",
             "add_condition_group_tooltip": "Добавить ещё одну группу условий",
             "aggregation": {
                 "description": "Фильтр по методу агрегации",
@@ -4155,6 +4451,9 @@ export default {
                 "description": "Фильтр по email",
             },
             "empty": "У вас еще нет сохраненных фильтров.",
+            "save current": "Сохранить текущие фильтры",
+            "empty title": "Пока нет сохраненных фильтров",
+            "empty subtitle": "Сохраните активный фильтр, чтобы использовать его позже",
             "enabled": {
                 "description": "Фильтр по включенным",
                 "label": "Включено",
@@ -4274,6 +4573,7 @@ export default {
             },
             "search options": "Поиск...",
             "search_placeholders": {
+                "search_mcp_tools": "Поиск инструментов MCP",
                 "search_blueprints": "Поиск blueprints",
                 "search_dashboards": "Искать панели...",
                 "search_executions": "Поиск выполнений",
@@ -4299,7 +4599,22 @@ export default {
                 "description": "Фильтр по состоянию выполнения",
                 "label": "Состояние",
             },
+            "state_group": {
+                "running": "Выполняется",
+                "paused": "Приостановлено",
+                "completed": "Завершено",
+                "failed": "Ошибка",
+                "other": "Другое",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Заголовок, отображаемый ИИ-агентам",
+                    "annotations": "Подсказки о поведении, объявленные для инструмента (read-only, destructive и т. д.)",
+                    "flow": "flow, который определяет этот инструмент",
+                    "namespace": "Namespace flow, который определяет этот инструмент",
+                    "triggerId": "Id trigger в пределах flow, отличается от имени инструмента",
+                    "description": "Что делает инструмент и когда агент должен его вызвать",
+                },
                 "blueprints": {
                     "tags": "Теги, связанные с blueprint",
                 },
@@ -4456,6 +4771,7 @@ export default {
             "unrenderable_title": "Сложный запрос",
             "unwrap_group": "Разгруппировать",
             "update": "Обновить",
+            "update conditions hint": "Текущие применённые filter заменят условия этого сохранённого filter.",
             "username": {
                 "description": "Фильтр по имени пользователя",
                 "label": "Имя пользователя",
@@ -4473,7 +4789,13 @@ export default {
         filter: {
             "active key value pairs": "活动的Key/Value对",
             "add key value pair": "添加Key/Value对",
-            "add_condition_group": "+ 添加条件组",
+            "add_condition_group": "添加条件组",
+            "advanced_filter": "高级筛选",
+            "add_advanced_filter": "添加高级筛选",
+            "add_condition": "添加条件",
+            "rule_count": "{count} 条规则",
+            "rules_count": "{count} 条规则",
+            "where": "条件",
             "add_condition_group_tooltip": "添加另一个条件组",
             "aggregation": {
                 "description": "按聚合方法筛选",
@@ -4526,6 +4848,9 @@ export default {
                 "description": "按 email 筛选",
             },
             "empty": "您还没有保存任何过滤器。",
+            "save current": "保存当前过滤器",
+            "empty title": "暂无已保存的过滤器",
+            "empty subtitle": "保存当前过滤器以便稍后重复使用",
             "enabled": {
                 "description": "按启用筛选",
                 "label": "启用",
@@ -4645,6 +4970,7 @@ export default {
             },
             "search options": "搜索...",
             "search_placeholders": {
+                "search_mcp_tools": "搜索 MCP 工具",
                 "search_blueprints": "搜索blueprint",
                 "search_dashboards": "搜索仪表板...",
                 "search_executions": "搜索执行",
@@ -4670,7 +4996,22 @@ export default {
                 "description": "按执行状态筛选",
                 "label": "状态",
             },
+            "state_group": {
+                "running": "运行中",
+                "paused": "已暂停",
+                "completed": "已完成",
+                "failed": "失败",
+                "other": "其他",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "向 AI 智能体显示的标题",
+                    "annotations": "在工具上声明的行为提示（read-only、destructive 等）",
+                    "flow": "定义此工具的 flow",
+                    "namespace": "定义此工具的 flow 的 namespace",
+                    "triggerId": "flow 内的 trigger id（与工具名称不同）",
+                    "description": "工具的功能以及智能体何时应调用它",
+                },
                 "blueprints": {
                     "tags": "与blueprint关联的标签",
                 },
@@ -4827,6 +5168,7 @@ export default {
             "unrenderable_title": "复杂查询",
             "unwrap_group": "取消分组",
             "update": "更新",
+            "update conditions hint": "当前应用的filter将替换此保存的filter的条件。",
             "username": {
                 "description": "按用户名筛选",
                 "label": "用户名",

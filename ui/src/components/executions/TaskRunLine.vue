@@ -1,5 +1,9 @@
 <template>
-    <div v-if="!hideHeader" class="taskrun-header">
+    <div
+        v-if="!hideHeader"
+        class="taskrun-header"
+        :style="{'--depth': depth}"
+    >
         <div>
             <KsIcon
                 v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
@@ -13,11 +17,11 @@
             </KsIcon>
         </div>
         <div class="task-icon d-none d-md-inline-block me-1">
-            <KsTaskIcon
+            <TaskIcon
                 :cls="taskType(currentTaskRun)"
                 v-if="taskType(currentTaskRun)"
                 onlyIcon
-                :icons="pluginsStore.icons"
+                :loadIcon="pluginsStore.loadIcon"
             />
         </div>
 
@@ -27,14 +31,14 @@
         >
             <KsTooltip>
                 <template #content>
-                    {{ t("from") }} :
+                    {{ $t("from") }} :
                     {{ dateFilter(selectedAttempt(currentTaskRun).state.startDate) }}
                     <br>
-                    {{ t("to") }} :
+                    {{ $t("to") }} :
                     {{ dateFilter(selectedAttempt(currentTaskRun).state.endDate) }}
                     <br>
                     <Clock />
-                    <strong>{{ t("duration") }}:</strong>
+                    <strong>{{ $t("duration") }}:</strong>
                     {{ humanizeDuration(selectedAttempt(currentTaskRun).state.duration) }}
                 </template>
                 <span>
@@ -53,7 +57,13 @@
         </div>
 
         <div class="task-status">
-            <KsExecutionStatus size="small" :status="currentTaskRun.state.current" />
+            <KsExecutionStatus
+                size="small"
+                :status="currentTaskRun.state.current"
+                clickable
+                :aria-label="$t('filter by status', {status: currentTaskRun.state.current})"
+                @click.stop="navigateToStateFilter(currentTaskRun.state.current)"
+            />
         </div>
 
         <slot name="buttons" />
@@ -77,13 +87,13 @@
             :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
             <template #label="{value}">
-                {{ `${t('attempt')} ${(value ?? 0) + 1}/${attempts(currentTaskRun).length}` }}
+                {{ `${$t('attempt')} ${(value ?? 0) + 1}/${attempts(currentTaskRun).length}` }}
             </template>
             <KsOption
                 v-for="(_, index) in attempts(currentTaskRun)"
                 :key="`attempt-${index}-${currentTaskRun.id}`"
                 :value="index"
-                :label="`${t('attempt')} ${index + 1}`"
+                :label="`${$t('attempt')} ${index + 1}`"
             />
         </KsSelect>
 
@@ -101,9 +111,10 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
-    import {State, KsExecutionStatus, KsTaskIcon} from "@kestra-io/design-system"
+    import {State, KsExecutionStatus} from "@kestra-io/design-system"
+    import TaskIcon from "../plugins/TaskIcon.vue"
     import TaskRunActions from "./TaskRunActions.vue"
+    import {useStateFilter} from "../filter/composables/useStateFilter"
     import Clock from "vue-material-design-icons/Clock.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
@@ -113,8 +124,8 @@
     import {usePluginsStore} from "../../stores/plugins"
     import {date as dateFilter, humanizeDuration} from "../../utils/filters"
 
-    const {t} = useI18n()
     const pluginsStore = usePluginsStore()
+    const {navigateToStateFilter} = useStateFilter()
 
     interface Props {
         currentTaskRun: any
@@ -127,6 +138,7 @@
         logs?: any[]
         filter?: string
         hideHeader?: boolean
+        depth?: number
     }
 
     const props = withDefaults(defineProps<Props>(), {
@@ -138,6 +150,7 @@
         logs: () => [],
         filter: "",
         hideHeader: false,
+        depth: 0,
     })
 
     const emit = defineEmits<{
@@ -239,6 +252,7 @@
 
     .taskrun-header {
         background-color: var(--ks-bg-surface);
+        padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
 
         .task-icon {
             width: 36px;

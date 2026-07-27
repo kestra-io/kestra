@@ -1,11 +1,13 @@
 package io.kestra.executor.handler;
 
+import java.util.List;
 import java.util.Optional;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.executor.ExecutionStateStore;
@@ -21,19 +23,32 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<WorkerTaskResult> {
-    @Inject
-    private ExecutionStateStore executionStateStore;
+    private final ExecutionStateStore executionStateStore;
+
+    private final ExecutorService executorService;
+
+    private final FlowMetaStoreInterface flowMetaStore;
+
+    private final KillSwitchService killSwitchService;
+    private final KillSwitchActionService killSwitchActionService;
+
+    private final List<WorkerTaskResultListener> workerTaskResultListeners;
 
     @Inject
-    private ExecutorService executorService;
-
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
-
-    @Inject
-    private KillSwitchService killSwitchService;
-    @Inject
-    private KillSwitchActionService killSwitchActionService;
+    public WorkerTaskResultMessageHandler(
+        ExecutionStateStore executionStateStore,
+        ExecutorService executorService,
+        FlowMetaStoreInterface flowMetaStore,
+        KillSwitchService killSwitchService,
+        KillSwitchActionService killSwitchActionService,
+        List<WorkerTaskResultListener> workerTaskResultListeners) {
+        this.executionStateStore = executionStateStore;
+        this.executorService = executorService;
+        this.flowMetaStore = flowMetaStore;
+        this.killSwitchService = killSwitchService;
+        this.killSwitchActionService = killSwitchActionService;
+        this.workerTaskResultListeners = workerTaskResultListeners;
+    }
 
     @Override
     public Optional<ExecutorContext> handle(WorkerTaskResult message) {
@@ -50,7 +65,7 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
             executorService.log(log, true, message);
         }
 
-        return executionStateStore.lock(message.getTaskRun().getExecutionId(), execution ->
+        Optional<ExecutorContext> result = executionStateStore.lock(message.getTaskRun().getExecutionId(), execution ->
         {
             ExecutorContext current = new ExecutorContext(execution);
 
@@ -76,5 +91,22 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
 
             return null;
         });
+
+        // a present result means the taskrun was joined here (redeliveries come back empty): notify listeners once
+        if (result.isPresent()) {
+            notifyJoined(message, result.get().getExecution());
+        }
+
+        return result;
+    }
+
+    private void notifyJoined(WorkerTaskResult message, Execution execution) {
+        for (WorkerTaskResultListener listener : workerTaskResultListeners) {
+            try {
+                listener.onJoined(message, execution);
+            } catch (Exception e) {
+                log.error("Worker task result listener {} failed", listener.getClass().getName(), e);
+            }
+        }
     }
 }

@@ -9,6 +9,7 @@ export const useTopNavStore = defineStore("topNav", () => {
     const beta = ref<boolean>(false)
     const hasTitleSlot = ref<boolean>(false)
     const hasDescriptionSlot = ref<boolean>(false)
+    const hideMainIcon = ref<boolean>(false)
     const ownerId = shallowRef<symbol | null>(null)
 
     return {
@@ -18,6 +19,7 @@ export const useTopNavStore = defineStore("topNav", () => {
         beta,
         hasTitleSlot,
         hasDescriptionSlot,
+        hideMainIcon,
         ownerId,
     }
 })

@@ -2,7 +2,7 @@ import {ComputedRef} from "vue"
 import type {JSONSchema} from "../../components/plugins/schema/utils/schemaUtils"
 import {YamlElement} from "@kestra-io/topology"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-import {QUOTE, YamlAutoCompletion, functionToSnippet} from "../../services/autoCompletionProvider"
+import {QUOTE, YamlAutoCompletion, functionToSnippet, type RootCompletionContext} from "../../services/autoCompletionProvider"
 import RegexProvider from "../../utils/regex"
 import {State} from "@kestra-io/design-system"
 import {usePluginsStore} from "../../stores/plugins"
@@ -13,6 +13,10 @@ import {useNamespacesStore} from "override/stores/namespaces"
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []))
 }
+
+// Pebble functions only valid inside a flow-root input's `values`/`expression` (rendered on the
+// webserver). Suggested only in that context; the backend rejects them anywhere else.
+const INPUT_ONLY_FUNCTIONS = ["subflow"]
 
 export class FlowAutoCompletion extends YamlAutoCompletion {
     flowsInputsCache: Record<string, string[]> = {}
@@ -38,7 +42,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         this.completionSource = completionSource
     }
 
-    async rootFieldAutoCompletion(): Promise<string[]> {
+    async rootFieldAutoCompletion(context?: RootCompletionContext): Promise<string[]> {
         const variables = [
             "outputs",
             "inputs",
@@ -58,9 +62,41 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         ]
 
         const functions = await this.functionsWithDefaults()
-        const functionSnippets = functions.map(fn => functionToSnippet(fn))
+        // subflow() blocks until the subflow terminates, so the backend only allows it at flow-input
+        // render time; only suggest it inside a flow-root input's `values`/`expression`.
+        const allowInputOnly = this.isInputValuesContext(context)
+        const functionSnippets = functions
+            .filter(fn => allowInputOnly || !INPUT_ONLY_FUNCTIONS.includes(fn.name))
+            .map(fn => functionToSnippet(fn))
 
         return [...variables, ...functionSnippets]
+    }
+
+    private isInputValuesContext(context?: RootCompletionContext): boolean {
+        if (context === undefined) {
+            return false
+        }
+
+        try {
+            const localized = YAML_UTILS.localizeElementAtIndex(context.source, context.offset)
+            if (localized === undefined || (localized.key !== "values" && localized.key !== "expression")) {
+                return false
+            }
+
+            const parents = localized.parents ?? []
+            const root: any = parents[0]
+            const inputDefinition: any = parents[parents.length - 1]
+            const rootInputs = root?.inputs
+            if (!Array.isArray(rootInputs)) {
+                return false
+            }
+
+            // confirm the enclosing map is one of the flow-root input definitions (excludes task
+            // properties named `values` and trigger `inputs`, which are key/value, not definitions)
+            return rootInputs.some((input: {id?: string}) => input?.id != null && input.id === inputDefinition?.id)
+        } catch {
+            return false
+        }
     }
 
     private tasks(source: string): any[] {
@@ -195,6 +231,15 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                     return await this.outputsFor(match[1], source)
                 }
 
+                // progressive autocomplete into a FORM group: `inputs.environment.` -> region, data_center
+                const formMatch = parentField.match(/^inputs\.([^.]+)$/)
+                if (formMatch) {
+                    const form = parsed?.inputs?.find(
+                        (input: {id?: string; type?: string}) => input.id === formMatch[1] && input.type === "FORM",
+                    )
+                    return Promise.resolve(form?.inputs?.map((child: {id?: string}) => child.id) ?? [])
+                }
+
                 return Promise.resolve([])
             }
         }
@@ -303,10 +348,34 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([])
                 }
-                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key: string}) => QUOTE + kv.key + QUOTE)
+                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key?: string}) => QUOTE + kv.key + QUOTE)
             }
             case "tasksWithState": {
                 return State.arrayAllStates().map(({name}) => QUOTE + name + QUOTE)
+            }
+            case "subflow": {
+                // subflow(namespace='...', id='...'): the arg under the cursor is the last one parsed
+                const argNames = Object.keys(args)
+                const currentArg = argNames[argNames.length - 1]
+                if (currentArg === "namespace") {
+                    const availableNamespaces = this.namespacesStore.autocomplete
+                        ?? await this.namespacesStore.loadAutocomplete()
+                    return availableNamespaces.map((namespace: string) => QUOTE + namespace + QUOTE)
+                }
+                if (currentArg === "id") {
+                    const namespace = this.extractArgValue(namespaceArg)
+                    if (namespace === undefined) {
+                        return Promise.resolve([])
+                    }
+                    let flowIds: string[] = (await this.flowStore.flowsByNamespace(namespace))
+                        .map((flow: {id: string}) => flow.id)
+                    // avoid suggesting the flow itself: subflow() on its own id recurses (depth-capped)
+                    if (parsed?.id !== undefined && parsed?.namespace === namespace) {
+                        flowIds = flowIds.filter(flowId => flowId !== parsed?.id)
+                    }
+                    return flowIds.map(flowId => QUOTE + flowId + QUOTE)
+                }
+                break
             }
         }
         return Promise.resolve([])

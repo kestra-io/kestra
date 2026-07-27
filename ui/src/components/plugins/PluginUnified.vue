@@ -2,7 +2,7 @@
     <div>
         <div class="p-4">
             <h1>
-                <KsTaskIcon
+                <TaskIcon
                     class="icon"
                     :onlyIcon="true"
                     :cls="currentIcon"
@@ -47,8 +47,9 @@
 
 <script setup lang="ts">
     import {ref, onMounted, computed, watch} from "vue"
-    import {isEntryAPluginElementPredicate} from "../../utils/pluginUtils"
-    import {KsTaskIcon, KsMarkdown} from "@kestra-io/design-system"
+    import {isEntryAPluginElementPredicate, type PluginIconMap} from "../../utils/pluginUtils"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
     import RowLink from "../misc/RowLink.vue"
     import {usePluginsStore} from "../../stores/plugins"
     import {getShortName, formatPluginTitle} from "../../utils/global"
@@ -79,7 +80,7 @@
     const plugin = ref<any>({})
     const groupedElements = ref<Record<string, Record<string, string[]>>>({})
     const elementsData = ref<Record<string, string[]>>({})
-    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({})
+    const icons = ref<PluginIconMap>({})
     const subgroupTitles = ref<Record<string, string>>({})
 
     const isSubgroupView = computed(() => !!props.subgroup)
@@ -186,7 +187,7 @@
     .section {
         h2 {
             color: var(--ks-text-primary);
-            font-size: 1.20rem;
+            font-size: var(--ks-font-size-lg);
             font-weight: 600;
             padding: 0 1.25rem;
             margin-bottom: 1rem;
@@ -205,7 +206,7 @@
         h2 {
             margin-bottom: 1rem;
             color: var(--ks-text-primary);
-            font-size: 1.10rem;
+            font-size: var(--ks-font-size-lg);
             font-weight: 600;
         }
 

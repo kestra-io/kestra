@@ -64,6 +64,15 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.triggers_default_tab')"
+                :description="$t('settings.blocks.configuration.descriptions.triggers_default_tab')"
+            >
+                <KsSelect fit :modelValue="settings.triggersDefaultTab" @update:model-value="onTriggersDefaultTab">
+                    <KsOption v-for="item in triggersDefaultTabOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')"
                 :description="$t('settings.blocks.configuration.descriptions.auto_refresh_interval')"
             >
@@ -88,16 +97,37 @@
             <SettingRow
                 stacked
                 :label="$t('settings.blocks.theme.fields.color_mode')"
-                :description="$t('settings.blocks.theme.descriptions.color_mode')"
             >
+                <template #description>
+                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode')" /><br>
+                    <span v-html="$t('settings.blocks.theme.descriptions.color_mode_shortcut')" />
+                </template>
                 <ThemePicker :modelValue="settings.theme" :options="themeOptions" @update:model-value="onTheme" />
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.app_font_size')"
+                :description="$t('settings.blocks.theme.descriptions.app_font_size')"
+            >
+                <KsSelect fit :modelValue="settings.appFontSize" @update:model-value="onAppFontSize">
+                    <KsOption v-for="item in appFontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
             </SettingRow>
 
             <SettingRow
                 :label="$t('settings.blocks.theme.fields.logs_font_size')"
                 :description="$t('settings.blocks.theme.descriptions.logs_font_size')"
             >
-                <KsSelect fit :modelValue="settings.logsFontSize" @update:model-value="onLogsFontSize">
+                <KsSelect fit :modelValue="logsFontSize" @update:model-value="onLogsFontSize">
+                    <KsOption v-for="item in fontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
+                :label="$t('settings.blocks.theme.fields.editor_font_size')"
+                :description="$t('settings.blocks.theme.descriptions.editor_font_size')"
+            >
+                <KsSelect fit :modelValue="effectiveEditorFontSize" @update:model-value="onFontSize">
                     <KsOption v-for="item in fontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
                 </KsSelect>
             </SettingRow>
@@ -107,16 +137,9 @@
                 :description="$t('settings.blocks.theme.descriptions.editor_font_family')"
             >
                 <KsSelect fit :modelValue="settings.editorFontFamily" @update:model-value="onFontFamily">
-                    <KsOption v-for="item in fontFamilyOptions" :key="item.value" :label="item.text" :value="item.value" />
-                </KsSelect>
-            </SettingRow>
-
-            <SettingRow
-                :label="$t('settings.blocks.theme.fields.editor_font_size')"
-                :description="$t('settings.blocks.theme.descriptions.editor_font_size')"
-            >
-                <KsSelect fit :modelValue="settings.editorFontSize" @update:model-value="onFontSize">
-                    <KsOption v-for="item in fontSizeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                    <KsOption v-for="item in fontFamilyOptions" :key="item.value" :label="item.text" :value="item.value">
+                        <span :style="{fontFamily: item.value}">{{ item.text }}</span>
+                    </KsOption>
                 </KsSelect>
             </SettingRow>
 
@@ -224,13 +247,14 @@
     import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
     import moment from "moment-timezone"
-
     import useRouteContext from "../../composables/useRouteContext"
     import {useToast} from "../../utils/toast"
     import {date as dateFilter} from "../../utils/filters"
     import * as Utils from "../../utils/utils"
     import type {SelectedTheme} from "../../utils/utils"
     import {logDisplayTypes, storageKeys, executeFlowBehaviours} from "../../utils/constants"
+    import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
+    import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
     import {defaultNamespace} from "../../composables/useNamespaces"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../stores/layout"
@@ -261,8 +285,10 @@
         [storageKeys.EXECUTE_FLOW_BEHAVIOUR]: [`${CONFIG}.fields.execute_flow`, `${CONFIG}.descriptions.execute_flow`],
         executeDefaultTab: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
         flowDefaultTab: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
+        triggersDefaultTab: [`${CONFIG}.fields.triggers_default_tab`, `${CONFIG}.descriptions.triggers_default_tab`],
         [storageKeys.AUTO_REFRESH_INTERVAL]: [`${CONFIG}.fields.auto_refresh_interval`, `${CONFIG}.descriptions.auto_refresh_interval`],
         editorPlayground: [`${CONFIG}.fields.playground`, `${CONFIG}.descriptions.playground`],
+        [APP_FONT_SIZE_KEY]: [`${THEME}.fields.app_font_size`, `${THEME}.descriptions.app_font_size`],
         logsFontSize: [`${THEME}.fields.logs_font_size`, `${THEME}.descriptions.logs_font_size`],
         editorFontFamily: [`${THEME}.fields.editor_font_family`, `${THEME}.descriptions.editor_font_family`],
         editorFontSize: [`${THEME}.fields.editor_font_size`, `${THEME}.descriptions.editor_font_size`],
@@ -291,12 +317,12 @@
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
         executeDefaultTab: localStorage.getItem("executeDefaultTab") || "gantt",
-        flowDefaultTab: localStorage.getItem("flowDefaultTab") || "overview",
+        flowDefaultTab: localStorage.getItem("flowDefaultTab") || "edit",
+        triggersDefaultTab: localStorage.getItem("triggersDefaultTab") || "add",
         autoRefreshInterval: parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL) ?? "") || 10,
         theme: Utils.getSelectedTheme(),
-        logsFontSize: parseInt(localStorage.getItem("logsFontSize") ?? "") || 12,
+        appFontSize: appFontSizeMode.value,
         editorFontFamily: localStorage.getItem("editorFontFamily") || "'JetBrains Mono', monospace",
-        editorFontSize: parseInt(localStorage.getItem("editorFontSize") ?? "") || 12,
         autofoldTextEditor: localStorage.getItem("autofoldTextEditor") === "true",
         hoverTextEditor: localStorage.getItem("hoverTextEditor") === "true",
         lang: Utils.getLang(),
@@ -342,6 +368,12 @@
     ])
 
     const fontSizeOptions = computed(() => FONT_SIZES.map((size) => ({value: size, label: `${size}px`})))
+
+    const appFontSizeOptions = computed<{value: AppFontSizeMode; label: string}[]>(() => [
+        {value: "small", label: t("settings.blocks.theme.app_font_size_options.small")},
+        {value: "medium", label: t("settings.blocks.theme.app_font_size_options.medium")},
+        {value: "large", label: t("settings.blocks.theme.app_font_size_options.large")},
+    ])
 
     const autoRefreshOptions = computed(() => AUTO_REFRESH_INTERVALS.map((seconds) => ({value: seconds, label: `${seconds}`})))
 
@@ -401,6 +433,11 @@
         {value: "auditlogs", label: t("auditlogs")},
     ])
 
+    const triggersDefaultTabOptions = computed(() => [
+        {value: "add", label: t("triggers_tabs_add")},
+        {value: "manage", label: t("triggers_tabs_manage")},
+    ])
+
     const dateFormats = [
         {value: "YYYY-MM-DDTHH:mm:ssZ"},
         {value: "YYYY-MM-DD hh:mm:ss A"},
@@ -429,11 +466,11 @@
         notifySaved(meta?.[0], meta?.[1])
     }
 
-    function notifySaved(labelKey?: string, descriptionKey?: string) {
+    function notifySaved(labelKey?: string, descriptionKey?: string, bodyOverride?: string) {
         const title = labelKey
             ? t("settings.updated", {name: t(labelKey)})
             : t("saved")
-        const body = descriptionKey ? t(descriptionKey) : t("settings.label")
+        const body = bodyOverride ?? (descriptionKey ? t(descriptionKey) : t("settings.label"))
         toast.success(body, title)
     }
 
@@ -498,6 +535,11 @@
         persist("flowDefaultTab", value)
     }
 
+    function onTriggersDefaultTab(value: string) {
+        settings.triggersDefaultTab = value
+        persist("triggersDefaultTab", value)
+    }
+
     function onAutoRefreshInterval(value: number) {
         settings.autoRefreshInterval = value
         persist(storageKeys.AUTO_REFRESH_INTERVAL, value)
@@ -505,12 +547,21 @@
 
     function onTheme(value: string) {
         settings.theme = value as SelectedTheme
-        Utils.switchTheme(miscStore, value)
-        notifySaved(`${THEME}.fields.color_mode`, `${THEME}.descriptions.color_mode`)
+        Utils.switchTheme(miscStore, value as SelectedTheme)
+        const mode = themeOptions.value.find((option) => option.value === value)?.label ?? value
+        notifySaved(`${THEME}.fields.color_mode`, undefined, t(`${THEME}.confirmations.color_mode`, {mode}))
+    }
+
+    function onAppFontSize(value: AppFontSizeMode) {
+        settings.appFontSize = value
+        appFontSizeMode.value = value
+        applyFontScale(value)
+        const meta = SETTING_TOASTS[APP_FONT_SIZE_KEY]
+        notifySaved(meta?.[0], meta?.[1])
     }
 
     function onLogsFontSize(value: number) {
-        settings.logsFontSize = value
+        logsFontSizeOverride.value = value
         persist("logsFontSize", value)
     }
 
@@ -520,7 +571,7 @@
     }
 
     function onFontSize(value: number) {
-        settings.editorFontSize = value
+        editorFontSizeOverride.value = value
         persist("editorFontSize", value)
     }
 
@@ -539,8 +590,7 @@
         persist("editorPlayground", settings.editorPlayground)
     }
 
-    function onEnvName(value: string | number) {
-        settings.envName = String(value)
+    function onEnvName() {
         layoutStore.setEnvName(settings.envName)
         notifySaved(`${THEME}.fields.environment_name`)
     }
@@ -592,3 +642,17 @@
         settings.theme = Utils.getSelectedTheme()
     }, {immediate: true})
 </script>
+
+<style scoped lang="scss">
+:deep(kbd) {
+    display: inline-block;
+    padding: 0.1em 0.4em;
+    border: 1px solid var(--ks-border-default);
+    border-radius: 3px;
+    background: var(--ks-bg-surface);
+    color: var(--ks-text-primary);
+    font-family: inherit;
+    font-size: var(--ks-font-size-xs);
+    line-height: 1.4;
+}
+</style>

@@ -16,7 +16,7 @@
         />
         <PrevNext :execution />
     </div>
-    <KsEmpty
+    <KsNoData
         v-else
         id="empty"
         :description="$t('execution not found', {executionId: route.params.id})"

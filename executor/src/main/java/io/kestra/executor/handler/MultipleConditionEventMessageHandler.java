@@ -17,14 +17,19 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class MultipleConditionEventMessageHandler implements MessageHandler<MultipleConditionEvent> {
-    @Inject
-    private FlowTriggerService flowTriggerService;
+    private final FlowTriggerService flowTriggerService;
+    private final MultipleConditionStateStore multipleConditionStateStore;
+    private final DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
-    private MultipleConditionStateStore multipleConditionStateStore;
-
-    @Inject
-    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+    public MultipleConditionEventMessageHandler(
+        FlowTriggerService flowTriggerService,
+        MultipleConditionStateStore multipleConditionStateStore,
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue) {
+        this.flowTriggerService = flowTriggerService;
+        this.multipleConditionStateStore = multipleConditionStateStore;
+        this.executionCommandQueue = executionCommandQueue;
+    }
 
     @Override
     public void handle(MultipleConditionEvent message) {

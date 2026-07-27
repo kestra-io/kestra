@@ -25,20 +25,9 @@ export default defineProject({
             "tests/e2e/**",
             "node_modules/**",
             "tests/unit/**/translation.spec.js",
+            // Design system runs in its own CI job with its own config/setup; no more double run.
+            "packages/design-system/**",
         ],
-        coverage: {
-            include: [
-                "src/**/*.{js,ts,vue}",
-            ],
-            exclude: [
-                "stylelint.config.mjs",
-                "storybook-static/**",
-                "**/.storybook/**",
-                "**/*.stories.*",
-                "**/*.d.ts",
-                "**/*.json",
-            ],
-        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

@@ -1,6 +1,7 @@
 <template>
     <ElDropdown
         :persistent="false"
+        :popperOptions="POPPER_OPTIONS"
         v-bind="$attrs"
     >
         <template v-if="$slots.default" #default>
@@ -16,6 +17,13 @@
     import {ElDropdown} from "element-plus"
 
     defineOptions({inheritAttrs: false})
+
+    const POPPER_OPTIONS = {
+        modifiers: [
+            {name: "flip", options: {rootBoundary: "viewport", padding: 8}},
+            {name: "preventOverflow", options: {rootBoundary: "viewport", padding: 8}},
+        ],
+    }
 
     defineSlots<{
         default?(): unknown
@@ -66,6 +74,10 @@
 
             i {
                 margin-right: 0;
+            }
+
+            &:not(.is-disabled) i {
+                color: var(--ks-icon-muted);
             }
 
             &:not(.is-disabled):hover,

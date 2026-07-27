@@ -83,7 +83,9 @@ public interface HasSource {
                     }
                 }
             } else {
-                throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
+                int extensionIndex = fileName.lastIndexOf('.');
+                String type = extensionIndex >= 0 ? fileName.substring(extensionIndex) : fileName;
+                throw new IllegalArgumentException("Cannot import file of type " + type);
             }
         }
     }

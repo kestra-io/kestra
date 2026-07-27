@@ -68,7 +68,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async (options?: {search?: string}) => {
                         const search = options?.search?.trim()
                         const ids = await useExecutionsStore().findDistinctFieldValues({
-                            field: "FLOW_ID",
+                            field: "flowId",
                             filters: search ? {"filters[flowId][CONTAINS]": search} : undefined,
                             size: 100,
                         })
@@ -101,6 +101,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                     searchable: true,
                     visibleByDefault: true,
+                    colored: true,
                 },
                 {
                     key: "scope",
@@ -131,6 +132,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
                         return VALUES.RELATIVE_DATE

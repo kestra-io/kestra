@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -21,10 +21,10 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ExecutionLogService {
 
-    private final LogRepositoryInterface logRepository;
+    private final LogDataStoreInterface logRepository;
 
     @Inject
-    public ExecutionLogService(LogRepositoryInterface logRepository) {
+    public ExecutionLogService(LogDataStoreInterface logRepository) {
         this.logRepository = logRepository;
     }
 

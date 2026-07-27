@@ -1,8 +1,10 @@
 package io.kestra.core.storages;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
@@ -285,5 +287,43 @@ class InternalNamespaceTest {
         // Then
         assertThat(directory.isDirectory()).isTrue();
         assertThat(directory.uri().toString()).matches(uri -> uri.endsWith("my-directory/"));
+    }
+
+    @Test
+    void shouldServeLatestAvailableRevisionWhenLatestRevisionObjectIsMissing() throws IOException, URISyntaxException {
+        // Given a file with two revisions whose latest-revision object has been removed from storage
+        // out-of-band, leaving the metadata index ahead of storage (the drift that produced 404s).
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/a.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/a.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+
+        URI latestRevisionUri = NamespaceFile.of(namespaceId, Path.of("a.txt"), 2).storagePath().toUri();
+        storageInterface.delete(MAIN_TENANT, namespaceId, latestRevisionUri);
+
+        // When
+        String content;
+        try (InputStream is = namespace.getFileContent(Path.of("/a.txt"), null)) {
+            content = new String(is.readAllBytes());
+        }
+
+        // Then it falls back to the latest revision still present in storage instead of throwing
+        assertThat(content).isEqualTo("v1");
+    }
+
+    @Test
+    void shouldThrowWhenNoRevisionObjectExistsInStorage() throws IOException, URISyntaxException {
+        // Given a file whose every revision object has been removed from storage
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataStateStore);
+
+        namespace.putFile(Path.of("/a.txt"), new ByteArrayInputStream("v1".getBytes()));
+        namespace.putFile(Path.of("/a.txt"), new ByteArrayInputStream("v2".getBytes())); // OVERWRITE -> revision 2
+        storageInterface.delete(MAIN_TENANT, namespaceId, NamespaceFile.of(namespaceId, Path.of("a.txt"), 1).storagePath().toUri());
+        storageInterface.delete(MAIN_TENANT, namespaceId, NamespaceFile.of(namespaceId, Path.of("a.txt"), 2).storagePath().toUri());
+
+        // When / Then
+        Assertions.assertThrows(FileNotFoundException.class, () -> namespace.getFileContent(Path.of("/a.txt"), null));
     }
 }

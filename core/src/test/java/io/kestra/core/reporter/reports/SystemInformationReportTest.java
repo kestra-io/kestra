@@ -36,6 +36,8 @@ class SystemInformationReportTest {
         assertThat(event.host().getOs().getFamily()).isNotNull();
         assertThat(event.configurations().getRepositoryType()).isEqualTo("h2");
         assertThat(event.configurations().getQueueType()).isEqualTo("h2");
+        // kestra.logs.type is not configured here, so the raw property reports null (logs kept in the main DB)
+        assertThat(event.configurations().getLogDataStoreType()).isNull();
     }
 
     @MockBean(SettingRepositoryInterface.class)

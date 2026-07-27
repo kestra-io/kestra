@@ -114,6 +114,34 @@ export const DateOnly: Story = {
     }),
 }
 
+export const Disabled: Story = {
+    render: () => ({
+        components: {KsDurationPicker},
+        setup() {
+            const value = ref<string | null>("P1Y2M3DT4H30M")
+            return {value}
+        },
+        template: `
+            <div style="padding:24px">
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+                    <ks-duration-picker v-model="value" disabled />
+                </div>
+                <span style="display:block;margin-top:12px;font-size:13px;opacity:0.6">
+                    Value: {{ value ?? '(null)' }}
+                </span>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const inputs = canvas.getAllByRole("spinbutton")
+        inputs.forEach((input) => {
+            expect(input).toBeDisabled()
+        })
+        await expect(canvas.getByRole("textbox")).toBeDisabled()
+    },
+}
+
 /** Interactive – shows live binding with a form */
 export const InForm: Story = {
     render: () => ({

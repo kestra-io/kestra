@@ -32,7 +32,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -129,7 +128,8 @@ class GrpcWorkerIOSenderTest {
     void shouldRetryOnceOnUnauthenticatedError() {
         // Given - first call fails with UNAUTHENTICATED, second succeeds
         AtomicInteger callCount = new AtomicInteger(0);
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             OpaqueData req = inv.getArgument(0);
             StreamObserver<OpaqueData> obs = inv.getArgument(1);
             if (callCount.getAndIncrement() == 0) {
@@ -150,7 +150,8 @@ class GrpcWorkerIOSenderTest {
         ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
         await()
             .atMost(Duration.ofSeconds(3))
-            .untilAsserted(() -> {
+            .untilAsserted(() ->
+            {
                 verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
                     .sendWorkerTaskResults(captor.capture(), any());
             });
@@ -165,7 +166,8 @@ class GrpcWorkerIOSenderTest {
     void shouldRequeueAndRedeliverWhenSendFailsWithRetryableError() throws Exception {
         // Given - first send fails with UNAVAILABLE (controller unreachable), subsequent sends succeed
         AtomicInteger callCount = new AtomicInteger(0);
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             OpaqueData req = inv.getArgument(0);
             StreamObserver<OpaqueData> obs = inv.getArgument(1);
             if (callCount.getAndIncrement() == 0) {
@@ -179,17 +181,21 @@ class GrpcWorkerIOSenderTest {
 
         WorkerTaskResult result = buildTaskResult(Map.of("key", "value"));
 
-        // When - the first send fails and the result is re-queued instead of dropped...
+        // When - the first send fails and the result is re-queued instead of dropped.
         taskResultSender.send(List.of(result));
-        // ...and the next loop iteration redrives it (the second send succeeds)
-        taskResultSender.doOnLoop();
 
-        // Then - the controller eventually receives the result (initial attempt + redelivery)
+        // Then - the loop redrives until the controller receives the result (initial attempt +
+        // redelivery). doOnLoop() runs inside the await because the first send fails asynchronously
+        // on a gRPC callback thread, so a single redrive could poll before the item is re-queued.
         ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
         await()
-            .atMost(Duration.ofSeconds(5))
-            .untilAsserted(() -> verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
-                .sendWorkerTaskResults(captor.capture(), any()));
+            .atMost(Duration.ofSeconds(10))
+            .untilAsserted(() ->
+            {
+                taskResultSender.doOnLoop();
+                verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
+                    .sendWorkerTaskResults(captor.capture(), any());
+            });
 
         WorkerTaskResult redelivered = deserialize(captor.getAllValues().getLast()).records().getFirst();
         assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());
@@ -202,7 +208,8 @@ class GrpcWorkerIOSenderTest {
         // mapper fires and resends a stripped failed-state result; that fallback resend then fails once with
         // UNAVAILABLE (transient partition) before finally succeeding on redelivery.
         AtomicInteger callCount = new AtomicInteger(0);
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             OpaqueData req = inv.getArgument(0);
             StreamObserver<OpaqueData> obs = inv.getArgument(1);
             int call = callCount.getAndIncrement();
@@ -219,17 +226,21 @@ class GrpcWorkerIOSenderTest {
 
         WorkerTaskResult result = buildTaskResult(Map.of("key", "value"));
 
-        // When - RESOURCE_EXHAUSTED triggers the fallback resend, which fails transiently and is re-queued...
+        // When - RESOURCE_EXHAUSTED triggers the fallback resend, which fails transiently and is re-queued.
         taskResultSender.send(List.of(result));
-        // ...and the next loop iteration redrives the fallback result (the third send succeeds)
-        taskResultSender.doOnLoop();
 
-        // Then - the failed-state result (no outputs) is eventually delivered rather than dropped
+        // Then - the loop redrives until the failed-state result (no outputs) is delivered rather than
+        // dropped. doOnLoop() runs inside the await because the failures arrive asynchronously on gRPC
+        // callback threads, so a single redrive could poll before the fallback result is re-queued.
         ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
         await()
-            .atMost(Duration.ofSeconds(5))
-            .untilAsserted(() -> verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(3))
-                .sendWorkerTaskResults(captor.capture(), any()));
+            .atMost(Duration.ofSeconds(10))
+            .untilAsserted(() ->
+            {
+                taskResultSender.doOnLoop();
+                verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(3))
+                    .sendWorkerTaskResults(captor.capture(), any());
+            });
 
         WorkerTaskResult redelivered = deserialize(captor.getAllValues().getLast()).records().getFirst();
         assertThat(redelivered.getTaskRun().getId()).isEqualTo(result.getTaskRun().getId());

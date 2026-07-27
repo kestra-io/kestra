@@ -75,9 +75,9 @@
                             class="ai-custom-textarea ai-custom-textarea-onboarding"
                         />
                         <template v-else>
-                            <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
+                            <KsText tag="div" class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
                             <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
-                            <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
+                            <KsText tag="div" class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                         </template>
                         <KsText v-if="error && !props.onboarding" type="danger" size="small" class="error-msg">
                             {{ error }}
@@ -188,9 +188,9 @@
                     class="ai-custom-textarea"
                 />
                 <template v-else>
-                    <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
+                    <KsText tag="div" class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
                     <KsMarkdown class="mt-2" :content="highlightedAiConfiguration" />
-                    <div class="el-text keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
+                    <KsText tag="div" class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
                 </template>
                 <KsText v-if="error" type="danger" size="small" class="error-msg">
                     {{ error }}
@@ -266,7 +266,7 @@
 
 <script setup lang="ts">
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
-    import {Loading} from "@element-plus/icons-vue"
+    import Loading from "vue-material-design-icons/Loading.vue"
     import AlertBox from "vue-material-design-icons/AlertBox.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Close from "vue-material-design-icons/Close.vue"

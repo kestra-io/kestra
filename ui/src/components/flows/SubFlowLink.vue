@@ -1,12 +1,12 @@
 <template>
     <component :icon="AxisYArrow" :is="component" @click="click" class="node-action" size="small">
-        <span v-if="component !== 'el-button'">{{ $t('sub flow') }}</span>
+        <span v-if="component !== 'KsButton'">{{ $t('sub flow') }}</span>
     </component>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useRouter, useRoute} from "vue-router"
     import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue"
 
@@ -18,7 +18,7 @@
         tabFlow?: string;
         tabExecution?: string;
     }>(), {
-        component: "el-button",
+        component: "KsButton",
         tabFlow: "overview",
         tabExecution: "overview",
         executionId: undefined,
@@ -37,12 +37,6 @@
     const tab = computed(() => {
         return props.executionId ? props.tabExecution : props.tabFlow
     })
-
-    interface Execution {
-        id: string;
-        namespace: string;
-        flowId: string;
-    }
 
     const params = (execution?: Execution) => {
         if (execution) {

@@ -13,6 +13,9 @@ import {
     findUnrenderableFilterKeys,
     serializeFiltersToString,
     parseFiltersFromString,
+    validStructureSignature,
+    pickStarterField,
+    routeQueryToQueryFilters,
 } from "@kestra-io/design-system"
 import type {FilterGroup, LeafFilterGroup, WrapperGroup} from "@kestra-io/design-system"
 
@@ -44,6 +47,16 @@ describe("Filter Helpers", () => {
             ])
         })
 
+        it("decodes a global timeRange alongside grouped filters without a groupIndex", () => {
+            expect(decodeSearchParams({
+                "filters[timeRange][EQUALS]": "PT24H",
+                "filters[or][0][state][EQUALS]": "RUNNING",
+            })).toEqual([
+                {field: "timeRange", value: "PT24H", operation: "EQUALS"},
+                {field: "state", value: "RUNNING", operation: "EQUALS", groupIndex: 0, topLogical: "OR"},
+            ])
+        })
+
         it("should decode wrapper-nested params with both operators", () => {
             expect(decodeSearchParams({"filters[or][0][and][1][namespace][EQUALS]": "io.kestra"})).toEqual([
                 {
@@ -56,6 +69,95 @@ describe("Filter Helpers", () => {
                     wrapperLogical: "AND",
                 },
             ])
+        })
+    })
+
+    describe("routeQueryToQueryFilters", () => {
+        it("builds a simple leaf filter", () => {
+            expect(routeQueryToQueryFilters({"filters[namespace][EQUALS]": "io.kestra"})).toEqual([
+                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            ])
+        })
+
+        it("keeps the irregular q/groupList field values as-is (already the wire form)", () => {
+            expect(routeQueryToQueryFilters({"filters[q][EQUALS]": "hello"})).toEqual([
+                {field: "q", operation: "EQUALS", value: "hello"},
+            ])
+            expect(routeQueryToQueryFilters({"filters[groupList][EQUALS]": "team"})).toEqual([
+                {field: "groupList", operation: "EQUALS", value: "team"},
+            ])
+        })
+
+        it("keeps a comma-joined IN/NOT_IN value as a plain string", () => {
+            expect(routeQueryToQueryFilters({"filters[namespace][IN]": "a,b,c"})).toEqual([
+                {field: "namespace", operation: "IN", value: "a,b,c"},
+            ])
+        })
+
+        it("merges multiple label sub-keys sharing an operation into one filter", () => {
+            expect(routeQueryToQueryFilters({
+                "filters[labels][EQUALS][env]": "prod",
+                "filters[labels][EQUALS][team]": "backend",
+            })).toEqual([
+                {field: "labels", operation: "EQUALS", value: {env: "prod", team: "backend"}},
+            ])
+        })
+
+        it("builds a top-level OR group", () => {
+            expect(routeQueryToQueryFilters({
+                "filters[or][0][state][EQUALS]": "RUNNING",
+                "filters[or][1][state][EQUALS]": "FAILED",
+            })).toEqual([
+                {
+                    field: "", operation: "", logical: "OR",
+                    children: [
+                        {field: "state", operation: "EQUALS", value: "RUNNING"},
+                        {field: "state", operation: "EQUALS", value: "FAILED"},
+                    ],
+                },
+            ])
+        })
+
+        it("flattens a single-branch AND group back to a plain leaf", () => {
+            expect(routeQueryToQueryFilters({"filters[and][0][state][EQUALS]": "RUNNING"})).toEqual([
+                {field: "state", operation: "EQUALS", value: "RUNNING"},
+            ])
+        })
+
+        it("builds a nested wrapper group (OR containing an AND)", () => {
+            expect(routeQueryToQueryFilters({
+                "filters[or][0][and][0][namespace][EQUALS]": "io.kestra",
+                "filters[or][0][and][1][state][EQUALS]": "RUNNING",
+                "filters[or][1][state][EQUALS]": "FAILED",
+            })).toEqual([
+                {
+                    field: "", operation: "", logical: "OR",
+                    children: [
+                        {
+                            field: "", operation: "", logical: "AND",
+                            children: [
+                                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+                                {field: "state", operation: "EQUALS", value: "RUNNING"},
+                            ],
+                        },
+                        {field: "state", operation: "EQUALS", value: "FAILED"},
+                    ],
+                },
+            ])
+        })
+
+        it("builds the timeRange GTE/LTE pair as two independent leaves", () => {
+            expect(routeQueryToQueryFilters({
+                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2023-01-01T00:00:00.000Z",
+                "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2023-01-31T23:59:59.000Z",
+            })).toEqual([
+                {field: "startDate", operation: "GREATER_THAN_OR_EQUAL_TO", value: "2023-01-01T00:00:00.000Z"},
+                {field: "endDate", operation: "LESS_THAN_OR_EQUAL_TO", value: "2023-01-31T23:59:59.000Z"},
+            ])
+        })
+
+        it("ignores non-filters keys", () => {
+            expect(routeQueryToQueryFilters({page: "1", size: "25", sort: "id:asc"})).toEqual([])
         })
     })
 
@@ -127,6 +229,39 @@ describe("Filter Helpers", () => {
             expect(encodeFilterGroupsToQuery(groups, keyOfComparator, "AND")).toEqual({
                 "filters[and][0][state][EQUALS]": "RUNNING",
                 "filters[and][1][namespace][EQUALS]": "io.kestra",
+            })
+        })
+
+        it("keeps timeRange global (no group prefix) across multiple OR groups", () => {
+            const groups: FilterGroup[] = [
+                leaf("g1", [
+                    {key: "timeRange", comparator: Comparators.EQUALS, value: "PT24H"},
+                    {key: "state", comparator: Comparators.EQUALS, value: "RUNNING"},
+                ]),
+                leaf("g2", [{key: "state", comparator: Comparators.EQUALS, value: "FAILED"}]),
+            ]
+            expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
+                "filters[timeRange][EQUALS]": "PT24H",
+                "filters[or][0][state][EQUALS]": "RUNNING",
+                "filters[or][1][state][EQUALS]": "FAILED",
+            })
+        })
+
+        it("keeps a custom timeRange range global (startDate/endDate) across multiple OR groups", () => {
+            const startDate = new Date("2024-01-01T00:00:00Z")
+            const endDate = new Date("2024-01-31T23:59:59Z")
+            const groups: FilterGroup[] = [
+                leaf("g1", [
+                    {key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}},
+                    {key: "state", comparator: Comparators.EQUALS, value: "RUNNING"},
+                ]),
+                leaf("g2", [{key: "state", comparator: Comparators.EQUALS, value: "FAILED"}]),
+            ]
+            expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
+                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": startDate.toISOString(),
+                "filters[endDate][LESS_THAN_OR_EQUAL_TO]": endDate.toISOString(),
+                "filters[or][0][state][EQUALS]": "RUNNING",
+                "filters[or][1][state][EQUALS]": "FAILED",
             })
         })
 
@@ -321,5 +456,99 @@ describe("Filter Helpers", () => {
             expect(isSearchPath("executions/list")).toBe(true)
             expect(isSearchPath("/unknown")).toBe(false)
         })
+    })
+})
+
+describe("validStructureSignature", () => {
+    const valid = (key: string, comparator = Comparators.IN, value: any = ["x"]) => ({key, comparator, value})
+    const empty = (key: string) => ({key, comparator: Comparators.IN, value: []})
+
+    it("ignores in-progress (empty) conditions", () => {
+        const withEmpty: FilterGroup[] = [leaf("g1", [valid("namespace"), empty("flowId")])]
+        const withoutEmpty: FilterGroup[] = [leaf("g2", [valid("namespace")])]
+        expect(validStructureSignature(withEmpty)).toBe(validStructureSignature(withoutEmpty))
+    })
+
+    it("ignores leaf ids (random ids must not change the signature)", () => {
+        expect(validStructureSignature([leaf("a", [valid("state")])]))
+            .toBe(validStructureSignature([leaf("zzz", [valid("state")])]))
+    })
+
+    it("distinguishes two top groups from one group holding the same filters", () => {
+        const twoGroups: FilterGroup[] = [leaf("a", [valid("namespace")]), leaf("b", [valid("state")])]
+        const oneGroup: FilterGroup[] = [leaf("c", [valid("namespace"), valid("state")])]
+        expect(validStructureSignature(twoGroups)).not.toBe(validStructureSignature(oneGroup))
+    })
+
+    it("distinguishes a wrapper AND from a wrapper OR", () => {
+        const children = [leaf("a", [valid("namespace")]), leaf("b", [valid("state")])]
+        const and: FilterGroup[] = [wrapper("w", "AND", children)]
+        const or: FilterGroup[] = [wrapper("w", "OR", children)]
+        expect(validStructureSignature(and)).not.toBe(validStructureSignature(or))
+    })
+
+    it("changes when a value changes", () => {
+        const failed: FilterGroup[] = [leaf("a", [valid("state", Comparators.IN, ["FAILED"])])]
+        const success: FilterGroup[] = [leaf("a", [valid("state", Comparators.IN, ["SUCCESS"])])]
+        expect(validStructureSignature(failed)).not.toBe(validStructureSignature(success))
+    })
+
+    it("treats a single-valid-child wrapper like the leaf it unwraps to on the wire", () => {
+        const wrapperWithInProgressChild: FilterGroup[] = [
+            wrapper("w", "OR", [leaf("c1", [valid("namespace")]), leaf("c2", [empty("flowId")])]),
+        ]
+        const unwrappedLeaf: FilterGroup[] = [leaf("g", [valid("namespace")])]
+        expect(validStructureSignature(wrapperWithInProgressChild))
+            .toBe(validStructureSignature(unwrappedLeaf))
+    })
+
+    it("keeps a wrapper distinct once it holds two valid children", () => {
+        const wrapperTwoValid: FilterGroup[] = [
+            wrapper("w", "OR", [leaf("c1", [valid("namespace")]), leaf("c2", [valid("state")])]),
+        ]
+        const oneLeaf: FilterGroup[] = [leaf("g", [valid("namespace"), valid("state")])]
+        expect(validStructureSignature(wrapperTwoValid)).not.toBe(validStructureSignature(oneLeaf))
+    })
+})
+
+describe("pickStarterField", () => {
+    const key = (k: string, comparators: Comparators[] = [Comparators.IN], groupable = true) =>
+        ({key: k, label: k, comparators, groupable}) as any
+    const keys = [key("namespace"), key("flowId"), key("state", [Comparators.IN, Comparators.NOT_IN])]
+
+    it("picks the first key not already used in the target leaf", () => {
+        expect(pickStarterField(keys, [{key: "namespace", comparator: Comparators.IN}])?.key.key).toBe("flowId")
+    })
+
+    it("picks the first groupable key when the leaf is empty", () => {
+        expect(pickStarterField(keys, [])?.key.key).toBe("namespace")
+    })
+
+    it("falls back to an unused comparator when every key is already used", () => {
+        const used = [
+            {key: "namespace", comparator: Comparators.IN},
+            {key: "flowId", comparator: Comparators.IN},
+            {key: "state", comparator: Comparators.IN},
+        ]
+        expect(pickStarterField(keys, used)).toEqual({key: keys[2], comparator: Comparators.NOT_IN})
+    })
+
+    it("never returns null while a groupable key exists (the add-condition dead-click bug)", () => {
+        const everyPairUsed = [
+            {key: "namespace", comparator: Comparators.IN},
+            {key: "flowId", comparator: Comparators.IN},
+            {key: "state", comparator: Comparators.IN},
+            {key: "state", comparator: Comparators.NOT_IN},
+        ]
+        expect(pickStarterField(keys, everyPairUsed)).not.toBeNull()
+    })
+
+    it("excludes non-groupable keys and keys without comparators", () => {
+        const mixed = [key("timeRange", [Comparators.EQUALS], false), key("broken", []), key("namespace")]
+        expect(pickStarterField(mixed, [])?.key.key).toBe("namespace")
+    })
+
+    it("returns null when there are no groupable keys", () => {
+        expect(pickStarterField([key("timeRange", [Comparators.EQUALS], false)], [])).toBeNull()
     })
 })

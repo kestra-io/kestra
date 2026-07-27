@@ -12,9 +12,9 @@ import org.reactivestreams.Publisher;
 
 import io.kestra.webserver.configuration.WebserverConfiguration;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Inject;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -29,10 +29,12 @@ import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
 import io.micronaut.security.csrf.CsrfConfiguration;
 import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Filter("/ui/**")
+@Requires(property = "kestra.webserver.ui.enabled", notEquals = "false", defaultValue = "true")
 public class StaticFilter implements HttpServerFilter {
     @Nullable
     @Value("${micronaut.server.context-path}")
@@ -105,7 +107,12 @@ public class StaticFilter implements HttpServerFilter {
             return response;
         }
 
-        String csrfToken = csrfTokenGenerator.get().generateCsrfToken(request);
+        // Reuse the existing cookie token so multiple tabs and BFCache-restored pages
+        // all share one stable token. Generate only when the cookie is absent.
+        String csrfToken = request.getCookies()
+            .findCookie(csrfConfiguration.get().getCookieName())
+            .map(Cookie::getValue)
+            .orElseGet(() -> csrfTokenGenerator.get().generateCsrfToken(request));
         if (csrfToken == null) {
             return response;
         }

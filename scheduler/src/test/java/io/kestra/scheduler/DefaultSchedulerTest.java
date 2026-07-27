@@ -38,7 +38,7 @@ import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.MaintenanceService;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
@@ -76,7 +76,7 @@ class DefaultSchedulerTest {
     ConditionService conditionService;
 
     @Inject
-    PluginDefaultService pluginDefaultService;
+    FlowParsingService flowParsingService;
 
     @Inject
     SchedulableEvaluator schedulableEvaluator;
@@ -147,7 +147,7 @@ class DefaultSchedulerTest {
             // WHEN - THEN
             assertThatThrownBy(() -> scheduler.start(2))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Scheduler already started");
+                .hasMessage("Service already started");
         }
     }
 
@@ -229,7 +229,8 @@ class DefaultSchedulerTest {
             maintenanceService.setMaintenanceMode(true);
 
             // THEN — loops stop asynchronously, poll until they're all stopped
-            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
                 assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
                 assertThat(scheduler.schedulingLoops()).allMatch(Predicate.not(TriggerSchedulingLoop::isRunning));
             });
@@ -238,7 +239,8 @@ class DefaultSchedulerTest {
             maintenanceService.setMaintenanceMode(false);
 
             // THEN — loops restart asynchronously, poll until they're all running
-            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+            {
                 assertThat(scheduler.schedulingLoops().size()).isEqualTo(2);
                 assertThat(scheduler.schedulingLoops()).allMatch(TriggerSchedulingLoop::isRunning);
             });
@@ -252,9 +254,9 @@ class DefaultSchedulerTest {
             metricRegistry,
             runContextFactory,
             conditionService,
-            pluginDefaultService,
+            flowParsingService,
             schedulableEvaluator,
-            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
+            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, flowParsingService),
             triggerWorkerJobPublisher,
             triggerExecutionPublisher,
             SCHEDULER_CONFIGURATION

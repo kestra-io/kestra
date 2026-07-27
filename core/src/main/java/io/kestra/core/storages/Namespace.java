@@ -109,12 +109,12 @@ public interface Namespace {
      * Retrieves the content of the namespace file at the given path.
      *
      * @param path the file path.
-     * @param version optionally a file version, otherwise will retrieve the latest.
+     * @param revision optionally a file revision, otherwise will retrieve the latest.
      * @return the {@link InputStream}.
      * @throws IllegalArgumentException if the given {@link Path} is {@code null} or invalid.
      * @throws IOException if an error happens while accessing the file.
      */
-    InputStream getFileContent(Path path, @Nullable Integer version) throws IOException;
+    InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException;
 
     /**
      * Retrieves the metadata of the namespace file at the given path.

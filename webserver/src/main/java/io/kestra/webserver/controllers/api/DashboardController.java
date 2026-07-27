@@ -347,6 +347,7 @@ public class DashboardController {
     private FetchChartDataQuery buildChartPreviewDataQuery(PreviewRequest previewRequest) {
         String tenantId = tenantService.resolveTenant();
         Chart<?> chart = YamlParser.parse(previewRequest.chart(), Chart.class);
+        modelValidator.validate(chart);
         ChartFiltersOverrides globalFilter = previewRequest.globalFilter();
 
         List<QueryFilter> filters = globalFilter != null ? globalFilter.getFilters() : null;

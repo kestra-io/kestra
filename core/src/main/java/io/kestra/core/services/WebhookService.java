@@ -10,15 +10,15 @@ import org.apache.hc.core5.net.URIBuilder;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.executor.command.Create;
-import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
@@ -27,6 +27,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
+import io.kestra.plugin.core.trigger.WebhookInputRenderException;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -34,7 +35,6 @@ import io.micronaut.http.sse.Event;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -101,7 +101,8 @@ public class WebhookService {
      * @param context The webhook context containing request, path, flow, and services
      * @param trigger The webhook trigger
      * @param output The trigger output to attach to the execution
-     * @return The prepared execution, or empty if conditions are not met
+     * @return The prepared execution, or empty if the trigger conditions are not met
+     * @throws WebhookInputRenderException if the trigger inputs cannot be rendered or processed
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
         Execution execution = Execution.builder()
@@ -139,8 +140,10 @@ public class WebhookService {
                 renderedInputs = readExecutionInputs(flow, execution, renderedInputs);
                 execution = execution.withInputs(renderedInputs);
             } catch (Exception e) {
-                log.warn("Unable to render the webhook inputs. Webhook will be ignored", e);
-                return Optional.empty(); // Input rendering failed
+                // Distinct from "conditions not met": a rendering failure is a real error and must
+                // not be silently turned into a 204, so we surface it to the caller.
+                log.warn("Unable to render the webhook inputs", e);
+                throw new WebhookInputRenderException("Unable to render the webhook inputs", e);
             }
         }
 
@@ -161,7 +164,8 @@ public class WebhookService {
         Optional<String> traceParent = openTelemetry
             .map(OpenTelemetry::getPropagators)
             .map(ContextPropagators::getTextMapPropagator)
-            .map(propagator -> {
+            .map(propagator ->
+            {
                 Map<String, String> carrier = new HashMap<>();
                 propagator.inject(Context.current(), carrier, Map::put);
                 return carrier.get("traceparent");
@@ -176,7 +180,8 @@ public class WebhookService {
 
         return asyncOperationWaiter.submit(
             execution.getId(),
-            operationId -> {
+            operationId ->
+            {
                 try {
                     executionCommandQueue.emit(command.withOperationId(operationId));
                     eventPublisher.publishEvent(CrudEvent.create(execution));

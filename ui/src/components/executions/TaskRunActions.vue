@@ -16,7 +16,7 @@
                 </KsDropdownItem>
                 <SubFlowLink
                     v-if="isSubflow"
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     tabExecution="logs"
                     :executionId="taskRun.outputs.executionId"
                 />
@@ -24,12 +24,13 @@
                 <Metrics :taskRun="taskRun" :execution="execution" />
 
                 <Outputs
-                    :outputs="taskRun.outputs"
+                    :taskRun="taskRun"
+                    :executionId="execution.id"
                     :execution="execution"
                 />
 
                 <Restart
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
                     isReplay
                     tooltipPosition="left"
@@ -40,7 +41,7 @@
                 />
 
                 <ChangeStatus
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
                     :execution="execution"
                     :taskRun="taskRun"
@@ -50,7 +51,7 @@
                 <TaskEdit
                     v-if="canReadFlow"
                     :readOnly="true"
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :taskId="taskRun.taskId"
                     section="tasks"
                     :flowId="execution.flowId"
@@ -77,7 +78,7 @@
                     {{ t("delete logs") }}
                 </KsDropdownItem>
                 <WorkerInfo
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     v-if="hasWorkerId !== null"
                     :taskRun="taskRun"
                     @follow="emit('follow', $event)"
@@ -248,8 +249,8 @@
 <style scoped lang="scss">
     .task-run-buttons {
         padding: 0 .5rem;
-        border: 1px solid var(--ks-border-default);
-        background-color: var(--ks-btn-secondary-bg-default) !important;
+        border: none;
+        background: transparent !important;
 
         &:not(:hover) {
             background: var(--ks-btn-secondary-bg-inactive);

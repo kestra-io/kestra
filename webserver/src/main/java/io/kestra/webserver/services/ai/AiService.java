@@ -12,6 +12,8 @@ import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Version;
@@ -20,15 +22,12 @@ import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
 import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
 import io.kestra.libs.copilot.models.in.PluginMetadata;
 import io.kestra.libs.copilot.services.ai.*;
-import io.kestra.core.services.ExpressionContextService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.webserver.services.posthog.PosthogService;
-
-import io.micronaut.core.annotation.Nullable;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.service.AiServices;
+import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +43,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private final FlowAiCopilot<Flow> flowAiCopilot;
     private final DashboardAiCopilot<Dashboard> dashboardAiCopilot;
     private final ExpressionContextService expressionContextService;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
     private final NamespaceContextTool namespaceContextTool;
     @Nullable
     private volatile KestraDocsContextTool kestraDocsContextTool;
@@ -81,15 +80,18 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         var builder = AiServices.builder(FlowYamlBuilder.class)
             .chatModel(this.chatModel(this.listeners("FlowYamlBuilder", conversationId)));
         List<Object> tools = new ArrayList<>();
-        if (namespaceContextTool != null) tools.add(namespaceContextTool);
-        if (kestraDocsContextTool != null) tools.add(kestraDocsContextTool);
+        if (namespaceContextTool != null)
+            tools.add(namespaceContextTool);
+        if (kestraDocsContextTool != null)
+            tools.add(kestraDocsContextTool);
         return tools.isEmpty() ? builder.build() : builder.tools(tools).build();
     }
 
     protected DashboardYamlBuilder dashboardYamlBuilder(String conversationId) {
         var builder = AiServices.builder(DashboardYamlBuilder.class)
             .chatModel(this.chatModel(this.listeners("DashboardYamlBuilder", conversationId)));
-        if (kestraDocsContextTool != null) builder.tools(kestraDocsContextTool);
+        if (kestraDocsContextTool != null)
+            builder.tools(kestraDocsContextTool);
         return builder.build();
     }
 
@@ -105,7 +107,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         final List<ChatModelListener> listeners,
         final T aiConfiguration,
         final ExpressionContextService expressionContextService,
-        final PluginDefaultService pluginDefaultService) {
+        final FlowParsingService flowParsingService) {
         this.pluginRegistry = pluginRegistry;
         this.jsonSchemaGenerator = jsonSchemaGenerator;
         this.instanceUid = instanceService.fetch();
@@ -115,7 +117,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
         this.listeners = listeners;
         this.aiConfiguration = aiConfiguration;
         this.expressionContextService = expressionContextService;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.namespaceContextTool = namespaceContextTool;
 
         this.flowAiCopilot = new FlowAiCopilot<>(Flow.class);
@@ -182,7 +184,7 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     private String buildPebbleExpressions(@Nullable String tenantId, String flowYaml, @Nullable String namespace) {
         if (flowYaml != null && !flowYaml.isBlank()) {
             try {
-                Flow flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, flowYaml, false);
+                Flow flow = flowParsingService.parse(tenantId, flowYaml, false);
                 return PebbleExpressionsFormatter.format(expressionContextService.buildExpressionContext(flow, null).toDisplayNameMap());
             } catch (Exception e) {
                 log.debug("Could not parse flow YAML for pebble expression context, falling back to namespace context: {}", e.getMessage());
@@ -211,7 +213,8 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
     public <B> B buildAiService(Class<B> serviceClass, String spanName, String conversationId) {
         var builder = AiServices.builder(serviceClass)
             .chatModel(this.chatModel(this.listeners(spanName, conversationId)));
-        if (kestraDocsContextTool != null) builder.tools(kestraDocsContextTool);
+        if (kestraDocsContextTool != null)
+            builder.tools(kestraDocsContextTool);
         return builder.build();
     }
 

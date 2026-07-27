@@ -1,5 +1,6 @@
 {
   "en": {
+    "loading": "Loading...",
     "more actions": "More actions",
     "toggle menu": "Toggle menu",
     "panel actions": "Panel actions",
@@ -27,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Invalid source code",
+    "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
     "missingSource": "Missing source",
     "update": "Update",
     "update ok": "is updated",
@@ -34,7 +36,8 @@
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "common": {
-      "back": "Back"
+      "back": "Back",
+      "openInNewTab": "Open in new tab"
     },
     "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
     "outdated revision save confirmation": {
@@ -57,9 +60,16 @@
     "is deprecated": "is deprecated",
     "success": "Success",
     "save": "Save",
+    "save_as_draft": "Save as draft",
+    "publish": "Publish",
+    "publish_draft": "Publish draft",
+    "draft": "Draft",
+    "draft_flow_warning": "The latest revision of this flow is a draft. The execution will run against the latest published revision instead - publish the draft (or run it from the playground) to execute your latest changes.",
     "save task": "Save Task",
     "saved": "Successfully saved",
+    "saved as draft": "Successfully saved as draft",
     "saved done": "<em>{name}</em> is successfully saved",
+    "saved as draft done": "<em>{name}</em> is successfully saved as draft",
     "multiple saved done": "{name} have been saved",
     "fileTypeNotAllowed": "File type not allowed. Accepted types: {types}",
     "delete": "Delete",
@@ -74,6 +84,10 @@
     "Per page": "per page",
     "new": "New",
     "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "review your inputs": "Review your inputs",
     "edit flow": "Edit flow",
     "executions": "Executions",
     "execution": "Execution",
@@ -82,9 +96,13 @@
     "details": "Details",
     "overview": "Overview",
     "gantt": "Gantt",
+    "gantt_no_tasks_executed": "This execution ended without running any task.\nCheck its overview and logs for the reason.",
+    "gantt_no_tasks_match_filters": "Try adjusting the search, state, or log-level filters.",
+    "gantt_no_tasks_match_filters_title": "No tasks match the selected filters.",
     "logs": "Logs",
     "no_logs_data": "No Data",
-    "no_logs_data_description": "No logs found for the selected filters. <br> Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
+    "no_logs_data_description": "Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
+    "no_logs_data_title": "No logs found for the selected filters.",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -99,6 +117,7 @@
     "prev_execution": "Previous execution",
     "next_execution": "Next execution",
     "datepicker": {
+      "invalid duration": "Invalid duration format. Please use ISO 8601 (e.g., PT30M, P1D).",
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
       "duration example": "Example: 'P1DT1H1M1S'",
       "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",
@@ -110,6 +129,8 @@
       "last24hours": "Last 24 hours",
       "last48hours": "Last 48 hours",
       "last7days": "Last 7 days",
+      "last14days": "Last 14 days",
+      "last28days": "Last 28 days",
       "last30days": "Last 30 days",
       "last365days": "Last 365 days",
       "next5minutes": "Next 5 minutes",
@@ -128,6 +149,8 @@
       "24hours": "24 hours",
       "48hours": "48 hours",
       "7days": "7 days",
+      "14days": "14 days",
+      "28days": "28 days",
       "30days": "30 days",
       "365days": "365 days",
       "never": "Never",
@@ -273,6 +296,7 @@
     "reuse original inputs": "Reuse original inputs",
     "modify inputs": "Modify inputs",
     "replay inputs new required": "This revision has inputs. You will be prompted to fill them in.",
+    "replay select taskrun": "Select the task run to replay from:",
     "change state tooltip": "Change the execution state",
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",
@@ -287,6 +311,9 @@
     "resumed title": "Resume execution <code>{id}</code>",
     "resumed confirm": "Are you sure you want to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
+    "resume from breakpoint title": "Resume execution <code>{id}</code> from breakpoint",
+    "resume from breakpoint done": "Execution is resumed from breakpoint",
+    "breakpoints": "Breakpoints",
     "pause": "Pause",
     "pause title": "Pause execution <code>{id}</code>.<br/>Note that currently running tasks will still be processed, and the execution will have to be resumed manually.",
     "pause confirm": "Are you sure you want to pause execution <code>{id}</code>?",
@@ -304,10 +331,12 @@
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
     "no data current task": "There's no data available for the current task",
+    "no metrics available": "No metrics recorded for this task run.",
+    "no outputs available": "No outputs available for this task run.",
     "outputs": "Outputs",
-    "flow_outputs": "Flow Outputs",
-    "no_flow_outputs": "No outputs available.",
+    "flow_inputs": "Flow Inputs",
     "output": "Output",
+    "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "Debug Expression",
       "render": "Render",
@@ -329,6 +358,7 @@
     "trigger refresh": "Trigger refresh",
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
+    "filter by status": "Filter executions by {status} status",
     "topology-graph": {
       "graph-orientation": "Graph orientation",
       "zoom-in": "Zoom in",
@@ -389,11 +419,12 @@
       "n_items": "[ {count} items ]"
     },
     "file_preview": {
-        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
-        "load_anyway": "Load anyway"
+      "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "load_anyway": "Load anyway"
     },
     "no_variables": "No variables available.",
     "download": "Download",
+    "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
@@ -419,14 +450,68 @@
       "custom": "Custom Blueprints",
       "flows": "Flow Blueprints",
       "apps": "App Blueprints",
-      "dashboards": "Dashboard Blueprints"
+      "dashboards": "Dashboard Blueprints",
+      "detail": {
+        "category": "Category type",
+        "links": "Link & Resources",
+        "openInEditor": "Open in Edit Flow"
+      },
+      "missingPlugins": {
+        "title": "Missing plugins",
+        "description": "This blueprint uses tasks from plugin(s) that aren't installed on this instance: {plugins}. Install them to use this blueprint.",
+        "card": "Requires plugin(s) not installed on this instance: {plugins}",
+        "install": "Install plugins"
+      }
     },
     "use": "Use",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "Copy type",
+      "deprecated": "Deprecated",
+      "dynamic": "dynamic",
+      "filter_all": "All",
+      "filter_properties": "Filter properties…",
+      "filter_required": "Required",
+      "intro_callout_prefix": "Click a task's ",
+      "intro_callout_suffix": " in the editor to open its plugin documentation right here.",
+      "intro_clear_search": "Clear search",
+      "intro_learn_more": "Learn more",
+      "intro_no_matches_sub": "No functions, filters, or properties match your search.",
+      "intro_no_matches_title": "No matches for \"{q}\"",
+      "intro_result_count": "{count} results",
+      "intro_search_placeholder": "Search the reference…",
+      "intro_start_here": "Start here",
+      "intro_step1_cta": "View flow reference",
+      "intro_step1_desc_mid": " within a ",
+      "intro_step1_desc_prefix": "Every flow needs a unique ",
+      "intro_step1_desc_suffix": ".",
+      "intro_step1_title": "Give it an id & namespace",
+      "intro_step2_cta": "View task reference",
+      "intro_step2_desc": "Atomic actions, run in order. Click a task to see its docs.",
+      "intro_step2_title": "Add tasks",
+      "intro_step3_cta": "View inputs reference",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "Use ",
+      "intro_step3_desc_suffix": " and Pebble expressions.",
+      "intro_step3_title": "Make it dynamic",
+      "intro_sub": "Everything you need to build a flow in YAML: properties, inputs, and Pebble templating, all in one place.",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Flow documentation",
       "name": "Plugin",
       "names": "Plugins",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "Overview",
+      "nav_properties": "Properties",
+      "non_dynamic": "non-dynamic",
       "please": "Please choose a task on the right to see its documentation",
-      "release": "Release notes"
+      "release": "Release notes",
+      "required": "Required"
     },
     "last execution date": "Last execution date",
     "last execution state": "Last state",
@@ -435,6 +520,7 @@
     "date count": "{count} on the {date}",
     "revisions": "Revisions",
     "no revisions found": "Only one revision exists for this flow",
+    "no revisions": "No Revisions",
     "see full revision": "See full revision",
     "side-by-side": "side-by-side",
     "line-by-line": "line-by-line",
@@ -509,11 +595,13 @@
     "unsaved changes": "Unsaved Changes",
     "unsaved changes warning": "You have unsaved changes. If you leave this page, your changes will be lost.",
     "leave page": "Leave Page",
+    "open full page": "Open Full Page",
+    "drill down preview": "Preview",
     "Editor theme": "Editor theme",
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-       "404": {
+      "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
@@ -590,7 +678,7 @@
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
-    "execution not found": "Execution <code>{executionId}</code> is not found.",
+    "execution not found": "Execution {executionId} is not found.",
     "execution not in state PAUSED": "Execution <code>{executionId}</code> not in state PAUSED",
     "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
     "execution already finished": "Execution <code>{executionId}</code> already finished",
@@ -654,7 +742,6 @@
     "taskid column details": "Last task being executed and its number of attempts.",
     "flow already exists": "Flow already exists",
     "flow already exists message": "Flow <code>{id}</code> already exists in namespace <code>{namespace}</code>. Do you want to create a new revision?",
-    "plugin_default_already_exists": "Plugin default for <code>{type}</code> already exists.",
     "namespace not allowed": "Namespace not allowed",
     "switch-view": "Switch view",
     "source and topology": "Source and topology",
@@ -690,12 +777,29 @@
     },
     "title": "Title",
     "api": "API",
-    "more_actions": "More Actions",
     "expand error": "Expand only failed tasks",
     "expand all": "Expand all",
     "collapse all": "Collapse all",
     "expand": "Expand",
     "collapse": "Collapse",
+    "filter by this value": "Filter by this value",
+    "filter_for": "Filter for",
+    "filter_out": "Filter out",
+    "copy_value": "Copy value",
+    "open_page": "Open page",
+    "logs_copied": "Logs copied to your clipboard",
+    "expand_by_default": "Expand structured logs by default",
+    "show raw": "Show raw",
+    "similar lines": "similar lines",
+    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
+    "display_settings": "Display settings",
+    "density": "Density",
+    "density_compact": "Compact",
+    "density_normal": "Normal",
+    "density_expanded": "Expanded",
+    "pretty_json": "Pretty JSON",
+    "body_line_clamp": "Limit line height",
+    "font size": "Font size",
     "log expand setting": "Log default display",
     "environment": "Environment",
     "environment name setting": "Environment name",
@@ -732,6 +836,17 @@
       "tooltip": "Restart the trigger"
     },
     "trigger disabled": "Trigger is disabled within Flow source",
+    "trigger enable dialog": {
+      "title": "Enable trigger",
+      "bulk title": "Enable {count} triggers",
+      "description": "This trigger may have missed schedules while it was disabled.",
+      "bulk description": "The selected triggers may have missed schedules while they were disabled.",
+      "strategy": "Select the strategy to use:",
+      "options": {
+        "skip": "Do not recover missed schedules",
+        "follow": "Follow the trigger's {property} configuration"
+      }
+    },
     "flow source not found": "Flow source not found",
     "date format": "Date format",
     "timezone": "Timezone",
@@ -783,9 +898,15 @@
         "hide": "Hide namespace files"
       },
       "filter": "Filter",
+      "new_file": "New File",
+      "read_only": "You don't have permission to manage files in this namespace",
       "no_items": {
         "heading": "No files found in your namespace yet.",
         "paragraph": "Create or import files to share code across flows in your namespace."
+      },
+      "no_selection": {
+        "heading": "No Files Selected",
+        "description": "Select a file from the tree to view its content."
       },
       "tree": {
         "expand": "Expand all folders",
@@ -871,7 +992,7 @@
     "backfill": "Backfill",
     "Set labels tooltip": "Set labels to the execution",
     "Set labels": "Set labels",
-    "set_extra_labels": "Set extra labels",
+    "manage labels": "Manage labels",
     "Set labels to execution": "Add or update the labels of the execution <code>{id}</code>",
     "Set labels done": "Successfully set the labels of the execution",
     "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code> executions(s)?",
@@ -970,6 +1091,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
+            "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
             "auto_refresh_interval": "Auto Refresh Interval"
           },
@@ -981,6 +1103,7 @@
             "execute_flow": "Where execution results open after triggering a run.",
             "execute_default_tab": "Tab selected when navigating to an execution.",
             "flow_default_tab": "Tab selected when navigating to a flow.",
+            "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
             "playground": "Run tasks individually in the editor playground."
           }
@@ -988,21 +1111,22 @@
         "theme": {
           "label": "Appearance",
           "fields": {
-            "theme": "Theme",
-            "color_mode": "Color mode",
-            "editor_font_size": "Editor Font Size",
-            "logs_font_size": "Logs Font Size",
-            "editor_font_family": "Editor Font Family",
-            "editor_folding_stratgy": "Automatic Code Folding in the Editor",
-            "editor_hover_description": "Hover on property to see description",
-            "environment_name": "Environment Name",
-            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
-            "environment_color": "Environment Color",
+            "app_font_size": "App Font Size",
             "chart_color_scheme": {
               "label": "Chart Color Scheme",
               "classic": "Classic",
               "kestra": "Kestra"
-            }
+            },
+            "color_mode": "Color mode",
+            "editor_folding_stratgy": "Automatic Code Folding in the Editor",
+            "editor_font_family": "Editor Font Family",
+            "editor_font_size": "Editor Font Size",
+            "editor_hover_description": "Hover on property to see description",
+            "environment_color": "Environment Color",
+            "environment_name": "Environment Name",
+            "environment_name_tooltip": "This environment name is set from the config but can be changed.",
+            "logs_font_size": "Logs Font Size",
+            "theme": "Theme"
           },
           "color_modes": {
             "dark_2": "Dark 2.0",
@@ -1010,15 +1134,25 @@
             "light": "Light",
             "sync": "Sync with system"
           },
+          "confirmations": {
+            "color_mode": "Your interface is now using the `{mode}` theme."
+          },
           "descriptions": {
             "color_mode": "Choose your preferred interface theme.",
+            "color_mode_shortcut": "Tip: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> to cycle themes from anywhere.",
             "logs_font_size": "Font size used in log viewers and terminals.",
             "editor_font_family": "Monospace font used in the YAML editor.",
             "editor_font_size": "Font size used in the YAML and no-code editors.",
             "editor_folding_stratgy": "Collapse long YAML blocks by default when opening a flow.",
             "editor_hover_description": "Show property descriptions on hover in the editor.",
             "environment_name": "Display name for the current environment, shown in the navigation.",
-            "environment_color": "Accent color used for the current environment in the navigation."
+            "environment_color": "Accent color used for the current environment in the navigation.",
+            "app_font_size": "Scale factor applied to all interface font sizes."
+          },
+          "app_font_size_options": {
+            "small": "Small",
+            "medium": "Medium",
+            "large": "Large"
           }
         },
         "localization": {
@@ -1105,6 +1239,10 @@
         "title": "Track Changes with Audit Logs",
         "message": "Kestra Enterprise Edition logs every activity with robust, immutable records, making it easy to track changes, maintain compliance, and troubleshoot issues."
       },
+      "quotas": {
+        "title": "Enforce Execution Quotas on Flows",
+        "message": "Kestra Enterprise Edition lets you define quotas on flows to limit the number of concurrent or total executions within a time window. Quotas help you protect shared infrastructure, enforce SLAs, and prevent runaway workflows from consuming excessive resources."
+      },
       "instance": {
         "title": "Manage Infrastructure Across Your Instance",
         "message": "Kestra Enterprise Edition provides an operational dashboard to help you observe the health of your platform and track the uptime metrics of all services such as a.o. Workers, Schedulers, and Executors. From the same page, you can also create Announcements to notify your users about planned downtime, and you can enter a maintenance mode which temporarily puts all services and workflow executions into a paused state to perform an upgrade."
@@ -1112,6 +1250,12 @@
       "blueprints": {
         "title": "Add Custom Blueprints",
         "message": "In Kestra Enterprise Edition, you can create custom Blueprints only available to your organization. You can use them as best-practices templates to share, centralize, and document commonly used workflows in your team."
+      },
+      "policies": {
+        "header": "Governance Policies",
+        "label": "Policies",
+        "message": "Policies let platform teams centrally manage and enforce rules across all flows — inject shared defaults, block plugins, bound property values, and require compliance labels. Rules apply at the tenant or namespace level with staged rollout, and every injected or replaced value stays visible to flow authors.",
+        "title": "Govern Every Flow with Policies"
       },
       "namespace": {
         "edit": {
@@ -1130,9 +1274,9 @@
           "title": "Centrally Govern Your Variables",
           "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
         },
-        "plugin-defaults": {
-          "title": "Standardize Configuration with Plugin Defaults",
-          "message": "In Kestra Enterprise Edition, you can set namespace-specific plugin defaults, reducing the need for duplicated setup in each flow. This central plugin governance enforces consistent configurations, allows secure referencing of secrets or variables, and simplifies maintenance of your workflows."
+        "policies": {
+          "title": "Enforce Governance Rules Across This Namespace",
+          "message": "In Kestra Enterprise Edition, Policies let you define rules that apply to every flow in this namespace and its children — inject shared defaults, restrict property values, block plugins, and require compliance labels, with every change fully visible to flow authors."
         },
         "history": {
           "title": "Manage Revision History in One Place",
@@ -1226,7 +1370,7 @@
         "complete": "Complete",
         "save_to_continue": "Press Save in the top bar (right).",
         "execute_to_continue": "1. Press Execute in the top bar (right).\n2. Provide a value for <strong>name</strong>.\n3. Press Execute again in the modal.",
-        "edit_flow_to_continue": "Press Edit flow in the top bar (right).",
+        "edit_flow_to_continue": "Open the actions menu (top bar, right) and select Edit flow.",
         "cancel_tutorial": "Cancel tutorial",
         "finish_tutorial": "Finish tutorial"
       },
@@ -1264,7 +1408,7 @@
         "save_flow": "Click Save to continue.",
         "execute_flow": "Run the flow once to continue.",
         "view_logs_status": "Open the execution details and check the logs for `greet`.",
-        "edit_flow_from_execution": "Click `Edit flow` in the top bar to continue.",
+        "edit_flow_from_execution": "Open the actions menu and click `Edit flow` to continue.",
         "add_cron_trigger_section": "Create a `triggers` section with a schedule trigger.",
         "add_cron_trigger_type": "Set trigger type to `io.kestra.plugin.core.trigger.Schedule`.",
         "add_cron_trigger_cron": "Add a cron expression, for example: `\"*/5 * * * *\"`.",
@@ -1276,6 +1420,7 @@
     },
     "enable concurrency": "Enable concurrency",
     "auditlogs": "Audit Logs",
+    "quotas": "Quotas",
     "iam": "IAM",
     "tenant": {
       "name": "Tenant",
@@ -1307,32 +1452,19 @@
     "no_namespaces": "Zero namespaces match the search criteria.",
     "system_namespace": "Keep your platform in check with system flows.",
     "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
-    "pluginDefaults": {
-      "title": "Plugin Defaults",
-      "add": "Add Plugin Default",
-      "edit": "Edit Plugin Default",
-      "add_subtitle": "Configure a new plugin default with its properties",
-      "edit_subtitle": "Modify the existing plugin default configuration",
-      "predefined": "Predefined Plugin",
-      "custom": "Custom Plugin",
-      "form": "Form",
-      "yaml": "YAML",
-      "select_predefined": "Select Predefined Plugin",
-      "cancel": "Cancel",
-      "update": "Update Plugin Default",
-      "custom_type": "Custom plugin type",
-      "custom_placeholder": "Enter plugin type",
-      "use_custom": "Use Custom",
-      "custom_configure": "Custom plugin type - configure using YAML",
-      "yaml_configuration": "YAML Configuration",
-      "show_yaml": "Show YAML"
-    },
     "secret": {
       "add": "Create",
       "update": "Update secret '{name}'",
       "isReadOnly": "Secret is read-only",
       "names": "Secrets",
-      "inherited": "Inherited secrets"
+      "inherited": "Inherited secrets",
+      "key": "Name",
+      "keyPlaceholder": "Name used to reference this secret, e.g. MY_API_TOKEN",
+      "name": "Secret value",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe this secret",
+      "tags": "Tags",
+      "addTag": "Add tag"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1443,9 +1575,10 @@
     "remove_bookmark": "Are you sure you want to remove this bookmark?",
     "showLess": "Show less",
     "showMore": "Show more",
-    "documentationMenu": "Documentation menu",
+    "documentationMenu": "Docs menu",
     "item": "item",
     "items": "items",
+    "iterations": "Iterations",
     "cron": "Cron",
     "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!",
@@ -1548,8 +1681,7 @@
         "triggers": "Triggers",
         "errors": "Error Handlers",
         "afterExecution": "After Execution",
-        "finally": "Finally",
-        "pluginDefaults": "Plugin Defaults"
+        "finally": "Finally"
       },
       "fields": {
         "main": {
@@ -1581,7 +1713,6 @@
         "triggers": "Select a trigger",
         "errors": "Select a task",
         "finally": "Select a task",
-        "pluginDefaults": "Select a plugin",
         "afterExecution": "Select a task",
         "conditions": "Select a condition",
         "inputs": "Select an input field type",
@@ -1595,7 +1726,6 @@
         "triggers": "Add a trigger",
         "errors": "Add an error handler",
         "finally": "Add a finally block",
-        "pluginDefaults": "Add a plugin default",
         "afterExecution": "Add an after execution block",
         "conditions": "Add a condition",
         "inputs": "Add an input field",
@@ -1664,6 +1794,7 @@
     "runners": "Runners",
     "select": "Select your {{section}}",
     "for flow": "for flow",
+    "forbidden system labels": "Only system.correlationId can be used as a system label",
     "confirm": "Confirm",
     "taskRunners": "Task Runners",
     "additionalPlugins": "Additional Plugins",
@@ -1672,6 +1803,10 @@
     "dataFilters": "Data Filters",
     "logExporters": "Log Exporters",
     "empty": {
+      "namespaceFiles": {
+        "title": "No files in this namespace yet",
+        "content": "Namespace Files work like a project folder for this namespace. Store Python, SQL, dbt or Terraform code, then reference any file in your flows with"
+      },
       "announcements": {
         "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
@@ -1708,9 +1843,9 @@
         "title": "No concurrency limits are set.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
       },
-      "pluginDefaults": {
-        "title": "You have no plugin defaults yet!",
-        "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
+      "variables": {
+        "title": "No variables yet",
+        "content": "Add key-value pairs to share configuration across flows. Child namespaces inherit them automatically, and you can reference any value with"
       },
       "workerRegistrationTokens": {
         "title": "You have no registration tokens yet!",
@@ -1755,8 +1890,8 @@
         "content": "Here you can manage all the plugins installed on your Kestra instance. Newly installed plugins may not be immediately available in all Kestra services, depending on the configuration of your instance."
       },
       "panels": {
-        "title": "No panels are currently open.",
-        "content": "Open Flow Code or No-Code to start editing your flows, or select another panel (Topology, Documentation, Namespace Files, Blueprints, Context) for related features."
+        "title": "No panel open",
+        "content": "You've closed all panels.\nPick a tab above to continue."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
@@ -1806,6 +1941,10 @@
       "deletion": {
         "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
       },
+      "no_description": "No description",
+      "no_description_hint": "Add a description to this flow to document what it does.<br>Markdown is supported.",
+      "others": "Others",
+      "viewAll": "View all",
       "chart_preview": "Click on a chart source code to see its preview",
       "export": "Export to CSV",
       "quick_filters": {
@@ -1819,8 +1958,7 @@
     },
     "setup": {
       "login": "Login",
-      "login_title": "Sign in",
-      "login_subtitle": "Enter your credentials to access your Kestra instance",
+      "login_title": "Sign in to Kestra",
       "logout": "Logout",
       "troubleshooting": "Trouble signing in?",
       "steps": {
@@ -1844,7 +1982,9 @@
         "firstName": "First Name",
         "lastName": "Last Name",
         "password": "Password",
-        "password_requirements": "At least 8 characters with 1 uppercase letter and 1 number."
+        "password_requirements": "At least 8 characters with 1 uppercase letter and 1 number.",
+        "username": "Username",
+        "username_hint": "Must be a valid email address."
       },
       "validation": {
         "email_required": "Email is required",
@@ -1853,6 +1993,7 @@
         "firstName_required": "First name required",
         "lastName_required": "Last name required",
         "password_invalid": "Invalid password",
+        "password_required": "Password is required",
         "incorrect_creds": "Invalid username or password. Make sure your credentials are correct.",
         "config_message": "Make sure to update your configuration to fix this error message"
       },
@@ -2100,10 +2241,14 @@
       }
     },
     "mcp": {
+      "your_servers": "Your Servers",
+      "servers_count": "{count} MCP Servers",
+      "managed_by_kestra": "Managed by Kestra",
       "servers": "MCP Servers",
       "server": "MCP Server",
+      "client_setup": "Client setup",
       "page_description": "Expose your Kestra flows as tools for MCP-compatible AI agents",
-      "create": "Create Server",
+      "create": "Create a Server",
       "save": "Save Changes",
       "connect": "Connect",
       "copy_url": "Copy URL",
@@ -2112,7 +2257,9 @@
       "server_type": "Server Type",
       "auth_type": "Authentication",
       "private": "Private",
+      "private_server": "Private server",
       "public": "Public",
+      "public_hint": "Warning: Public servers require no authentication. Anyone with the URL can call every tool exposed by this server, with no namespace or permission checks. Use only for servers safe to expose externally.",
       "basic_auth": "Basic Auth",
       "api_token": "API Token",
       "oauth": "OAuth",
@@ -2128,6 +2275,7 @@
       "no_oauth_providers": "No OIDC providers configured in this instance",
       "delete_confirm": "Are you sure you want to delete this MCP server?",
       "no_servers": "No MCP servers found. Create your first server to expose MCP Tool triggers to external AI agents.",
+      "server_id": "Servers ID",
       "id_placeholder": "e.g. my-mcp-server",
       "id_invalid": "ID must start with a lowercase letter or digit, and contain only lowercase letters, digits, hyphens, or underscores",
       "main_tenant": "main",
@@ -2149,8 +2297,7 @@
         "open_world": "Open world",
         "destructive": "Destructive",
         "idempotent": "Idempotent",
-        "return_direct": "Return direct",
-        "view_flow": "Open flow"
+        "return_direct": "Return direct"
       },
       "connect_tab": {
         "server_url": "Server URL",
@@ -2191,6 +2338,21 @@
       "errors": {
         "label": "{count} Error(s)"
       }
+    },
+    "source_search": {
+      "match_count": "{count} match | {count} matches",
+      "open_flow": "Open flow",
+      "preview_empty": "Select a result to preview. Click a flow in the results list to see its source.",
+      "preview_error": "Failed to load flow source"
+    },
+    "open source": "Open Source",
+    "pricing": "Pricing",
+    "license": "License",
+    "pwa": {
+      "install_title": "Install Kestra",
+      "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",
+      "install": "Install",
+      "dismiss": "Not now"
     }
   }
 }

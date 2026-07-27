@@ -8,6 +8,7 @@
             :currentPage="urlPage"
             :pageSize="urlSize"
             :defaultSort="{prop: 'flowId', order: 'ascending'}"
+            fitHeight
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
             :rowClassName="getClasses"
@@ -34,13 +35,6 @@
                     }"
                     :defaultScope="false"
                     :defaultTimeRange="false"
-                />
-                <QuickFilters
-                    :intervals="quickIntervals"
-                    :timeRange="selectedTimeRange"
-                    :intervalLabel="t('filter.timeRange_trigger.label')"
-                    :showLevel="false"
-                    @update:timeRange="onQuickFilterTimeRange"
                 />
             </template>
 
@@ -123,12 +117,12 @@
                 </template>
                 <template #default="scope">
                     <template v-if="col.prop === 'flowId'">
-                        <router-link
+                        <KsEntityLink
                             v-if="scope.row.namespace && scope.row.flowId"
+                            entity="flow"
+                            :value="scope.row.flowId"
                             :to="{name: 'flows/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, id: scope.row.flowId}}"
-                        >
-                            <BreakableText :value="scope.row.flowId" />
-                        </router-link>
+                        />
                         <span v-else><BreakableText :value="scope.row.flowId" /></span>
                         <MarkdownTooltip
                             v-if="scope.row.namespace && scope.row.flowId"
@@ -138,7 +132,12 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'namespace'">
-                        <BreakableText :value="scope.row.namespace" />
+                        <KsEntityLink
+                            v-if="scope.row.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {tenant: route.params?.tenant, id: scope.row.namespace}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'workerId'">
                         <KsId :value="scope.row.workerId" :shrink="true" />
@@ -201,9 +200,11 @@
                         :disabled="!scope.row.codeDisabled"
                         effect="light"
                     >
+                        <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
+                             moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
-                            @change="(value: string | number | boolean) => setDisabled(scope.row, Boolean(value))"
+                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
                             :disabled="scope.row.codeDisabled"
                         />
                     </KsTooltip>
@@ -241,7 +242,7 @@
                                     {{ $t("restart") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
-                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK)"
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                     :disabled="!scope.row.locked"
                                     @click="unlock(scope.row)"
                                 >
@@ -318,6 +319,16 @@
                 </KsButton>
             </template>
         </KsDialog>
+
+        <TriggerEnableDialog
+            v-model="isEnableDialogOpen"
+            :count="enableDialogTrigger ? undefined : (queryBulkAction ? total : selection?.length)"
+            @confirm="onEnableDialogConfirm"
+        >
+            <p v-if="!enableDialogTrigger">
+                {{ $t("bulk action async warning") }}
+            </p>
+        </TriggerEnableDialog>
     </div>
 </template>
 
@@ -326,7 +337,7 @@
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
+    import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem, routeQueryToQueryFilters} from "@kestra-io/design-system"
     import {useToast} from "../../../utils/toast"
     import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
@@ -335,8 +346,6 @@
     import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations"
-    import {useQuickIntervalFilter} from "../../filter/composables/useQuickIntervalFilter"
-    import QuickFilters from "../../filter/QuickFilters.vue"
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
     import {useDiscardGuard} from "../../../composables/useDiscardGuard"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
@@ -357,6 +366,7 @@
     import BackfillBanner from "../../flows/BackfillBanner.vue"
     import Vars from "../../executions/Vars.vue"
     import MarkdownTooltip from "../../layout/MarkdownTooltip.vue"
+    import TriggerEnableDialog from "../../triggers/TriggerEnableDialog.vue"
 
     const triggerFilter = useTriggerFilter()
 
@@ -364,7 +374,6 @@
     const router = useRouter()
     const toast = useToast()
     const {t} = useI18n({useScope: "global"})
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     const authStore = useAuthStore()
     const flowStore = useFlowStore()
@@ -529,7 +538,10 @@
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query as Record<string, any>
-        return _merge(base, restQuery)
+        const nonFilterRest = Object.fromEntries(
+            Object.entries(restQuery).filter(([key]) => !key.startsWith("filters[")),
+        )
+        return _merge(base, nonFilterRest)
     }
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
@@ -540,6 +552,7 @@
             size,
             page,
             sort: sort ?? String(route.query?.sort ?? "triggerId:asc"),
+            filters: routeQueryToQueryFilters(route.query),
         })
 
         const triggersData = await triggerStore.search(query)
@@ -696,6 +709,12 @@
         })
     }
 
+    const isEnableDialogOpen = ref(false)
+    // The schedule trigger being enabled; null when enabling in bulk.
+    const enableDialogTrigger = ref<any>(null)
+
+    const isScheduleTrigger = (row: any) => row?.kind === "SCHEDULE" || row?.type === "io.kestra.plugin.core.trigger.Schedule"
+
     const setDisabled = (trigger: any, value: boolean) => {
         if (trigger.codeDisabled) {
             KsMessage({
@@ -706,7 +725,16 @@
             })
             return
         }
-        triggerStore.setDisabled({...trigger, disabled: !value})
+        if (value && isScheduleTrigger(trigger)) {
+            enableDialogTrigger.value = trigger
+            isEnableDialogOpen.value = true
+            return
+        }
+        doSetDisabled(trigger, !value)
+    }
+
+    const doSetDisabled = (trigger: any, disabled: boolean, recoverMissedSchedules?: boolean) => {
+        triggerStore.setDisabled({...trigger, disabled, recoverMissedSchedules})
             .then((updatedTrigger: any) => {
                 toast.saved(updatedTrigger.triggerId)
                 triggers.value = triggers.value?.map((tr: any) => {
@@ -718,6 +746,19 @@
                         : tr
                 })
             })
+    }
+
+    const onEnableDialogConfirm = (recoverMissedSchedules?: boolean) => {
+        if (enableDialogTrigger.value) {
+            doSetDisabled(enableDialogTrigger.value, false, recoverMissedSchedules)
+        } else {
+            genericConfirmCallback(
+                "setDisabledByQuery",
+                "setDisabledByTriggers",
+                "bulk success disabled status.false",
+                {disabled: false, recoverMissedSchedules},
+            )
+        }
     }
 
     const confirmDeleteTrigger = (trigger: TriggerDeleteOptions) => {
@@ -779,7 +820,7 @@
         }
 
         if (queryBulkAction.value) {
-            const query = loadQuery({})
+            const query = loadQuery({filters: routeQueryToQueryFilters(route.query)})
             const options = {...query, ...data}
             const actions = actionMap[queryAction]()
             return actions(options)
@@ -822,6 +863,14 @@
     }
 
     const setDisabledTriggers = (bool: boolean) => {
+        // Enabling may recover missed schedules: the dialog carries both the confirmation and the
+        // recovery choice. In query mode trigger types are unknowable so it is always shown; in
+        // selection mode only when the selection contains a schedule trigger.
+        if (!bool && (queryBulkAction.value || selection.value?.some((sel: any) => isScheduleTrigger(findRowBySelection(sel))))) {
+            enableDialogTrigger.value = null
+            isEnableDialogOpen.value = true
+            return
+        }
         genericConfirmAction(
             `bulk disabled status.${bool}`,
             "setDisabledByQuery",
@@ -830,6 +879,9 @@
             {disabled: bool},
         )
     }
+
+    const findRowBySelection = (sel: any) => triggersMerged.value.find((row: any) =>
+        (row.triggerId ?? row.id) === sel.triggerId && row.flowId === sel.flowId && row.namespace === sel.namespace)
 
     const checkBackfill = computed(() => {
         if (!backfill.value?.start) {
@@ -865,6 +917,10 @@
 
 <style scoped lang="scss">
     .triggers-manage {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
         :deep(tr.no-expand .kel-table__expand-icon) {
             pointer-events: none;
 

@@ -3,13 +3,14 @@ package io.kestra.core.runners.pebble.functions;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
 
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.getVariables;
 import static org.assertj.core.api.Assertions.assertThat;

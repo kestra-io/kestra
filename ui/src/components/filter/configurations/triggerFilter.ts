@@ -71,6 +71,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange_trigger.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async (meta?: FilterMeta) => {
                         return meta?.dateFilter === "LAST_TRIGGERED_DATE"
                             ? VALUES.RELATIVE_DATE

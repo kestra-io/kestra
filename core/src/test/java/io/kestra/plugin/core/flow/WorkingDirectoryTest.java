@@ -12,11 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.executions.ExecutionKind;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -38,6 +33,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -56,6 +52,7 @@ import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -84,7 +81,7 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory-loop.yaml"})
+    @LoadFlows({ "flows/valids/working-directory-loop.yaml" })
     void each() throws TimeoutException, QueueException, InternalException {
         suite.loop(runnerUtils);
     }
@@ -183,14 +180,13 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(2);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+            List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
             assertThat(subExecutions).hasSize(1);
 
-            List<Execution> subSubExecutions = executionRepository.findLoopSubExecutions(subExecutions.getFirst().getTenantId(), subExecutions.getFirst().getId());
+            List<Execution> subSubExecutions = executionRepository.findLoopSubExecutions(subExecutions.getFirst().getTenantId(), subExecutions.getFirst().getId(), null);
             assertThat(subExecutions).hasSize(1);
 
-
-            List<Execution> subSubSubExecutions = executionRepository.findLoopSubExecutions(subSubExecutions.getFirst().getTenantId(), subSubExecutions.getFirst().getId());
+            List<Execution> subSubSubExecutions = executionRepository.findLoopSubExecutions(subSubExecutions.getFirst().getTenantId(), subSubExecutions.getFirst().getId(), null);
             assertThat(subSubSubExecutions).hasSize(1);
 
             assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("2_end").getFirst()).get("value")).startsWith("kestra://");
@@ -286,7 +282,7 @@ public class WorkingDirectoryTest {
                 )
             ).containsAllEntriesOf(Map.of("uris", Collections.emptyMap()));
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-            assertTrue(storageInterface.exists(MAIN_TENANT, null, cacheURI));
+            await().atMost(Duration.ofSeconds(10)).until(() -> storageInterface.exists(MAIN_TENANT, null, cacheURI));
 
             // a second run should use the cache so the task `exists` should output the cached file
             execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-cache");
@@ -310,7 +306,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
             assertThat(subExecutions.size()).isEqualTo(1);
             assertThat(((String) taskOutputService.getOutputs(subExecutions.getFirst().findTaskRunsByTaskId("log-taskrun").getFirst()).get("value"))).contains("1");
         }
@@ -321,7 +317,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
             assertThat(subExecutions.size()).isEqualTo(1);
             assertThat(((String) taskOutputService.getOutputs(subExecutions.getFirst().findTaskRunsByTaskId("log-workerparent").getFirst()).get("value")))
                 .contains("{\"task\":{\"id\":\"seq\"}}");

@@ -23,7 +23,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.settings.DashboardSettings;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -55,7 +55,7 @@ class DashboardControllerTest {
     ReactorHttpClient client;
 
     @Inject
-    LogRepositoryInterface logRepository;
+    LogDataStoreInterface logRepository;
 
     @Inject
     ExecutionRepositoryInterface executionRepository;
@@ -749,5 +749,36 @@ class DashboardControllerTest {
         assertThat(chartData).isNotNull();
         assertThat(chartData.getTotal()).isEqualTo(1);
         assertThat(chartData.getResults().get(0).get("execution_id")).isEqualTo(idForLabelAC);
+    }
+
+    @Test
+    void previewShouldRejectCatastrophicRegexInWhereClause() {
+        // A REGEX filter embedded directly in an ad-hoc (non-persisted) chart definition must be
+        // rejected before it ever reaches a repository backend — this endpoint bypasses the normal
+        // dashboard create/update validation, so the chart itself must still be validated.
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_id:
+                  field: ID
+              where:
+                - field: NAMESPACE
+                  type: REGEX
+                  value: "(a+)+"
+            """;
+
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, null);
+
+        HttpClientResponseException httpClientResponseException = Assertions.assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+                PagedResults.class
+            )
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
+        assertThat(httpClientResponseException.getMessage()).contains("catastrophic backtracking");
     }
 }

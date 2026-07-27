@@ -52,6 +52,7 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.AdditionalPlugin;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.TimezoneId;
 
@@ -87,8 +88,7 @@ public class JsonSchemaGenerator {
 
     // Matches the offset-style timezone strings ZoneId.of() accepts but that are not in getAvailableZoneIds():
     // `Z`, `+HH[:MM[:SS]]`, and `(UTC|GMT|UT)[+-]HH[:MM[:SS]]`.
-    private static final String TIMEZONE_OFFSET_PATTERN =
-        "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
+    private static final String TIMEZONE_OFFSET_PATTERN = "^(Z|[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?|(UTC|GMT|UT)[+-]\\d{2}(:?\\d{2})?(:?\\d{2})?)$";
 
     private final PluginRegistry pluginRegistry;
 
@@ -140,10 +140,62 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
-            return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
+            Map<String, Object> schema = MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
+            stripEditionRestrictedInputTypes(schema);
+            return schema;
         } catch (Exception e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
+    }
+
+    /**
+     * Strip edition-restricted input types (those excluded by {@link #includeInputSubtype}, i.e. {@code @EeOnly} ones
+     * such as {@code REUSABLE_INPUTS}) from the generated flow schema. The {@code Type} enum is carried in two places:
+     * the {@code enum} arrays (the {@code type} discriminator and {@code ArrayInput.itemType}) AND the polymorphic
+     * {@code anyOf}/{@code oneOf}/{@code allOf} discriminator branches ({@code {properties:{type:{const:...}}}}); both
+     * must be pruned. Open-source removes the {@code @EeOnly} types; the Enterprise override of
+     * {@code includeInputSubtype} keeps them all, so the excluded set is empty here (no-op).
+     */
+    private void stripEditionRestrictedInputTypes(Object node) {
+        Set<String> excluded = Arrays.stream(io.kestra.core.models.flows.Type.values())
+            .filter(type -> !this.includeInputSubtype(type.cls()))
+            .map(Enum::name)
+            .collect(Collectors.toSet());
+
+        if (!excluded.isEmpty()) {
+            stripEditionRestrictedInputTypes(node, excluded);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void stripEditionRestrictedInputTypes(Object node, Set<String> excluded) {
+        if (node instanceof Map<?, ?> rawMap) {
+            Map<String, Object> map = (Map<String, Object>) rawMap;
+
+            if (map.get("enum") instanceof List<?> enumValues) {
+                enumValues.removeIf(value -> excluded.contains(String.valueOf(value)));
+            }
+            for (String key : List.of("anyOf", "oneOf", "allOf")) {
+                if (map.get(key) instanceof List<?> branches) {
+                    branches.removeIf(branch -> isExcludedDiscriminatorBranch(branch, excluded));
+                }
+            }
+            map.values().forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+        } else if (node instanceof List<?> list) {
+            list.forEach(value -> stripEditionRestrictedInputTypes(value, excluded));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean isExcludedDiscriminatorBranch(Object branch, Set<String> excluded) {
+        if (
+            branch instanceof Map<?, ?> map
+                && ((Map<String, Object>) map).get("properties") instanceof Map<?, ?> properties
+                && ((Map<String, Object>) properties).get("type") instanceof Map<?, ?> type
+        ) {
+            return excluded.contains(String.valueOf(((Map<String, Object>) type).get("const")));
+        }
+        return false;
     }
 
     private void removeRequiredOnPropsWithDefaults(ObjectNode objectNode) {
@@ -310,8 +362,10 @@ public class JsonSchemaGenerator {
                 @Override
                 protected List<ResolvedType> resolveTargetTypeOverrides(MemberScope<?, ?> member) {
                     Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
-                    if (schema != null && schema.implementation() == Object.class
-                        && member.getDeclaredType().getErasedType() == io.kestra.core.models.tasks.retrys.AbstractRetry.class) {
+                    if (
+                        schema != null && schema.implementation() == Object.class
+                            && member.getDeclaredType().getErasedType() == io.kestra.core.models.tasks.retrys.AbstractRetry.class
+                    ) {
                         return null;
                     }
                     return super.resolveTargetTypeOverrides(member);
@@ -825,7 +879,7 @@ public class JsonSchemaGenerator {
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
-        } else if (AdditionalPlugin.class.isAssignableFrom(declaredType.getErasedType())) { // base type for addition plugin is not AdditionalPlugin but a subtype of AdditionalPlugin.
+        } else if (AdditionalPlugin.class.isAssignableFrom(declaredType.getErasedType())) { // base type for additional plugin is not AdditionalPlugin but a subtype of AdditionalPlugin.
             return getRegisteredPlugins()
                 .stream()
                 .flatMap(registeredPlugin -> registeredPlugin.getAdditionalPlugins().stream())
@@ -833,6 +887,14 @@ public class JsonSchemaGenerator {
                 .filter(cls -> declaredType.getErasedType().isAssignableFrom(cls))
                 .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(cls -> cls != declaredType.getErasedType())
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .map(typeContext::resolve)
+                .toList();
+        } else if (declaredType.getErasedType() == FileRenderer.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
@@ -896,9 +958,30 @@ public class JsonSchemaGenerator {
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();
+        } else if (declaredType.getErasedType() == io.kestra.core.models.flows.Input.class) {
+            // Resolve the input subtypes from the @JsonSubTypes registry, filtering out edition-restricted ones
+            // (e.g. REUSABLE_INPUTS) so they don't appear in the open-source flow schema. EE includes them all.
+            com.fasterxml.jackson.annotation.JsonSubTypes subTypes = io.kestra.core.models.flows.Input.class.getAnnotation(com.fasterxml.jackson.annotation.JsonSubTypes.class);
+            if (subTypes == null) {
+                return null;
+            }
+            return java.util.Arrays.stream(subTypes.value())
+                .map(com.fasterxml.jackson.annotation.JsonSubTypes.Type::value)
+                .filter(this::includeInputSubtype)
+                .flatMap(clz -> safelyResolveSubtype(declaredType, clz, typeContext).stream())
+                .collect(Collectors.toList());
         }
 
         return null;
+    }
+
+    /**
+     * Whether the given {@link io.kestra.core.models.flows.Input} subtype should appear in the generated flow
+     * schema. The open-source generator hides {@link io.kestra.core.models.flows.input.EeOnly}-annotated inputs;
+     * the EE generator overrides this to include them.
+     */
+    protected boolean includeInputSubtype(Class<?> subtype) {
+        return !subtype.isAnnotationPresent(io.kestra.core.models.flows.input.EeOnly.class);
     }
 
     protected static Optional<ResolvedType> safelyResolveSubtype(ResolvedType declaredType, Class<?> clz, TypeContext typeContext) {

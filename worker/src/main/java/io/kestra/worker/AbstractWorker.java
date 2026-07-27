@@ -3,12 +3,12 @@ package io.kestra.worker;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -43,12 +43,12 @@ import static io.kestra.core.server.Service.ServiceState.TERMINATED_GRACEFULLY;
 /**
  * Common base class for worker-like services that:
  * <ul>
- *   <li>fetch worker jobs through a {@link JobFetcher} (gRPC pull or direct
- *       queue subscription);</li>
- *   <li>execute them through a per-instance {@link WorkerJobExecutor};</li>
- *   <li>forward emitted events (results, logs, metrics) through a list of
- *       {@link WorkerIOSender}s (gRPC senders or direct-queue senders);</li>
- *   <li>react to maintenance mode by pausing / resuming the fetcher.</li>
+ * <li>fetch worker jobs through a {@link JobFetcher} (gRPC pull or direct
+ * queue subscription);</li>
+ * <li>execute them through a per-instance {@link WorkerJobExecutor};</li>
+ * <li>forward emitted events (results, logs, metrics) through a list of
+ * {@link WorkerIOSender}s (gRPC senders or direct-queue senders);</li>
+ * <li>react to maintenance mode by pausing / resuming the fetcher.</li>
  * </ul>
  * <p>
  * Subclasses customize <em>which</em> fetcher and which IO senders are used,
@@ -68,12 +68,15 @@ public abstract class AbstractWorker extends AbstractService {
     protected final List<WorkerIOSender> workerIOSenders;
     protected final ExecutorService workerIOThreadsExecutor;
 
-    protected final AtomicBoolean initialized = new AtomicBoolean(false);
     protected final AtomicBoolean skipGracefulTermination = new AtomicBoolean(false);
 
-    protected final List<Disposable> disposables = new ArrayList<>();
+    // Thread-safe: populated by start() but iterated from doStop()/stopNow() on other threads.
+    protected final List<Disposable> disposables = new CopyOnWriteArrayList<>();
 
     protected String workerGroupId;
+
+    // Single per-Worker meter deriving the task completion rate from worker.ended.count.
+    private RateMeter rateMeter;
 
     protected AbstractWorker(
         final ServiceType serviceType,
@@ -84,8 +87,7 @@ public abstract class AbstractWorker extends AbstractService {
         final MaintenanceService maintenanceService,
         final MetricRegistry metricRegistry,
         final ServerConfig serverConfig,
-        final String ioThreadNamePrefix
-    ) {
+        final String ioThreadNamePrefix) {
         super(serviceType, eventPublisher);
         this.workerJobExecutor = workerJobExecutor;
         this.jobFetcher = jobFetcher;
@@ -115,10 +117,17 @@ public abstract class AbstractWorker extends AbstractService {
      * Starts the worker.
      */
     public void start(int numThreads) {
-        if (!this.initialized.compareAndSet(false, true)) {
-            throw new IllegalStateException("Worker already started");
-        }
+        guardedStart(() -> doStart(numThreads), () ->
+        {
+            setState(maintenanceService.isInMaintenanceMode() ? ServiceState.MAINTENANCE : ServiceState.RUNNING);
+            log.info("Worker started with {} thread(s)", numThreads);
+        });
+    }
 
+    private void doStart(int numThreads) {
+        // May block for a while: WorkerAgent performs a gRPC handshake with the controller here.
+        // A stop() requested during that window waits (bounded) for this method to complete, then
+        // tears down everything it created.
         this.workerGroupId = resolveWorkerGroupId();
 
         this.setState(ServiceState.CREATED);
@@ -140,6 +149,10 @@ public abstract class AbstractWorker extends AbstractService {
             numThreads + WorkerQueueRegistry.bufferSize(numThreads),
             metricRegistry.workerGroupTags(workerGroupId)
         );
+        // Tasks-completed throughput (tasks/s), surfaced in the Worker Group UI. The
+        // rate is derived from the existing worker.ended.count counter and sampled on
+        // each heartbeat (see getMetrics) — no extra metric is registered.
+        this.rateMeter = new RateMeter(metricRegistry, workerGroupId);
 
         WorkerContext workerContext = new WorkerContext(getId(), workerGroupId, numThreads);
 
@@ -167,16 +180,19 @@ public abstract class AbstractWorker extends AbstractService {
             jobFetcher.pause();
         }
 
-        setState(inMaintenanceMode ? ServiceState.MAINTENANCE : ServiceState.RUNNING);
-
+        // The controller dispatches jobs to any connected stream regardless of the worker's state.
+        // Don't start fetching when a stop is already pending.
+        if (isStopRequested()) {
+            log.info("Worker stop is pending, not starting the job fetcher");
+            return;
+        }
         jobFetcher.init(workerContext);
         workerIOThreadsExecutor.submit(jobFetcher);
-
-        log.info("Worker started with {} thread(s)", numThreads);
     }
 
     private void enterMaintenance() {
         this.jobFetcher.pause();
+        this.workerJobExecutor.stopRealtimeTriggers();
         this.setState(ServiceState.MAINTENANCE);
     }
 
@@ -208,13 +224,33 @@ public abstract class AbstractWorker extends AbstractService {
 
         String ownGroup = WorkerGroups.normalize(this.workerGroupId);
         // Only expose worker-level (global) gauges in the heartbeat.
-        return metrics
+        Set<Metric> result = metrics
             .flatMap(metric -> metricRegistry.findGauges(metric).stream())
             .filter(gauge -> ownGroup.equals(gauge.getId().getTag(MetricRegistry.TAG_WORKER_GROUP)))
-            .filter(gauge -> gauge.getId().getTag(MetricRegistry.TAG_TENANT_ID) == null
-                && gauge.getId().getTag(MetricRegistry.TAG_NAMESPACE_ID) == null)
+            .filter(
+                gauge -> gauge.getId().getTag(MetricRegistry.TAG_TENANT_ID) == null
+                    && gauge.getId().getTag(MetricRegistry.TAG_NAMESPACE_ID) == null
+            )
             .map(Metric::of)
             .collect(Collectors.toSet());
+
+        // Task completion rate (tasks/s). Sampled here rather than registered as a
+        // Micrometer gauge — the heartbeat is the only consumer, and getMetrics() is
+        // serialized by the liveness manager so the meter is sampled single-threaded.
+        if (rateMeter != null) {
+            result.add(
+                new Metric(
+                    MetricRegistry.METRIC_WORKER_TASKS_RATE,
+                    "GAUGE",
+                    MetricRegistry.METRIC_WORKER_TASKS_RATE_DESCRIPTION,
+                    null,
+                    List.of(new Metric.Tag(MetricRegistry.TAG_WORKER_GROUP, ownGroup)),
+                    rateMeter.sampleRatePerSecond()
+                )
+            );
+        }
+
+        return result;
     }
 
     @Override

@@ -8,7 +8,7 @@ const meta: Meta<typeof KsTabs> = {
     component: KsTabs,
     tags: ["autodocs"],
     argTypes: {
-        type: {control: "select", options: ["", "box", "card", "border-card"]},
+        type: {control: "select", options: ["", "box", "segmented", "card", "border-card"]},
     },
     parameters: {
         docs: {description: {component: "KsTabs is the Kestra design-system abstraction over `ElTabs` from Element Plus. Only the props, events and slots actually used across the Kestra UI are exposed."}},
@@ -50,6 +50,24 @@ export const Box: Story = {
                         <KsTabPane label="Tab 6" name="tab6">Tab 6</KsTabPane>
                         <KsTabPane label="Tab 7" name="tab7">Tab 7</KsTabPane>
                         <KsTabPane label="Tab 8" name="tab8">Tab 8</KsTabPane>
+                    </KsTabs>
+                </div>
+            )
+        },
+    }),
+}
+
+/** Self-contained segmented control — a contained pill group for inline use in forms and modals. */
+export const Segmented: Story = {
+    render: () => ({
+        setup() {
+            const active = ref("bug")
+            return () => (
+                <div style="padding:24px">
+                    <KsTabs v-model={active.value} type="segmented">
+                        <KsTabPane label="Bug" name="bug">Bug content</KsTabPane>
+                        <KsTabPane label="Feature" name="feature">Feature content</KsTabPane>
+                        <KsTabPane label="Question" name="question">Question content</KsTabPane>
                     </KsTabs>
                 </div>
             )

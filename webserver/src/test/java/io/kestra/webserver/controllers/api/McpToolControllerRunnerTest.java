@@ -1,23 +1,36 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.CountDownLatchTask;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.plugin.core.execution.Fail;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
+
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
@@ -28,17 +41,7 @@ import io.modelcontextprotocol.spec.HttpHeaders;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.ProtocolVersions;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,8 +52,8 @@ import static org.assertj.core.api.Assertions.tuple;
  * <p>
  * The {@code execution-timeout} is set to {@code PT5S} so that:
  * <ul>
- *   <li>Success tests complete well within the window (~1-2 s with queue overhead).</li>
- *   <li>The timeout test finishes exactly at 5 s instead of the default 5-minute wait.</li>
+ * <li>Success tests complete well within the window (~1-2 s with queue overhead).</li>
+ * <li>The timeout test finishes exactly at 5 s instead of the default 5-minute wait.</li>
  * </ul>
  */
 @KestraTest(startRunner = true)
@@ -135,7 +138,7 @@ class McpToolControllerRunnerTest {
             McpSchema.JSONRPC_VERSION,
             McpSchema.METHOD_TOOLS_CALL,
             3,
-            new McpSchema.CallToolRequest(toolName, Map.of(), null)  // "message" arg omitted
+            new McpSchema.CallToolRequest(toolName, Map.of(), null) // "message" arg omitted
         );
 
         // When
@@ -153,7 +156,7 @@ class McpToolControllerRunnerTest {
     void shouldReturnTimeoutErrorViaSseWhenToolCallExecutionTimesOut() {
         // Given
         String serverId = saveServer(false, null);
-        CountDownLatch neverReleasedLatch = new CountDownLatch(1);  // intentionally never counted down
+        CountDownLatch neverReleasedLatch = new CountDownLatch(1); // intentionally never counted down
         String toolName = saveFlowWithBlockingCountDownLatch(serverId, neverReleasedLatch);
         String sessionId = initialize(serverId);
 
@@ -193,15 +196,17 @@ class McpToolControllerRunnerTest {
         CountDownLatch completionLatch = new CountDownLatch(1);
         CountDownLatch continueLatch = new CountDownLatch(1);
         CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(completionLatch, continueLatch, Duration.ofSeconds(10));
-        flowRepository.create(GenericFlow.of(
-            Flow.builder()
-                .id(flowId)
-                .namespace(TEST_NAMESPACE)
-                .tenantId(TenantService.MAIN_TENANT)
-                .tasks(List.of(task))
-                .triggers(List.of(trigger))
-                .build()
-        ));
+        flowRepository.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .id(flowId)
+                    .namespace(TEST_NAMESPACE)
+                    .tenantId(TenantService.MAIN_TENANT)
+                    .tasks(List.of(task))
+                    .triggers(List.of(trigger))
+                    .build()
+            )
+        );
 
         String sessionId = initialize(serverId);
         McpSchema.JSONRPCRequest callRequest = new McpSchema.JSONRPCRequest(
@@ -232,15 +237,87 @@ class McpToolControllerRunnerTest {
             );
     }
 
+    @Test
+    void shouldNestFormGroupedInputsWhenExecutionCreated() throws InterruptedException {
+        // Given a flow whose only input is a FORM grouping a single child
+        String serverId = saveServer(false, null);
+        String flowId = IdUtils.create();
+        McpToolTrigger trigger = McpToolTrigger.builder()
+            .id("mcp-trigger")
+            .type(McpToolTrigger.class.getName())
+            .toolName("tool-" + flowId.toLowerCase())
+            .title("Form Test Tool")
+            .toolDescription("Verifies FORM-grouped inputs are nested on the execution")
+            .mcpServer(serverId)
+            .build();
+
+        FormInput environmentForm = FormInput.builder()
+            .id("environment")
+            .type(Type.FORM)
+            .inputs(
+                List.of(
+                    StringInput.builder()
+                        .id("region")
+                        .type(Type.STRING)
+                        .required(false)
+                        .build()
+                )
+            )
+            .build();
+
+        CountDownLatch completionLatch = new CountDownLatch(1);
+        CountDownLatch continueLatch = new CountDownLatch(1);
+        CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(completionLatch, continueLatch, Duration.ofSeconds(10));
+        flowRepository.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .id(flowId)
+                    .namespace(TEST_NAMESPACE)
+                    .tenantId(TenantService.MAIN_TENANT)
+                    .inputs(List.of(environmentForm))
+                    .tasks(List.of(task))
+                    .triggers(List.of(trigger))
+                    .build()
+            )
+        );
+
+        String sessionId = initialize(serverId);
+        McpSchema.JSONRPCRequest callRequest = new McpSchema.JSONRPCRequest(
+            McpSchema.JSONRPC_VERSION,
+            McpSchema.METHOD_TOOLS_CALL,
+            3,
+            // The MCP schema exposes the FORM child by its dotted leaf path
+            new McpSchema.CallToolRequest(trigger.getToolName(), Map.of("environment.region", "EU"), null)
+        );
+
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(continueLatch::countDown, 1, TimeUnit.SECONDS);
+        try {
+            // When
+            client.toBlocking().retrieve(mcpPost(serverId, callRequest, sessionId), String.class);
+            assertThat(completionLatch.await(5, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            scheduler.shutdown();
+        }
+
+        // Then the stored execution inputs are nested under the form id, not flat-dotted
+        ArrayListTotal<Execution> executions = executionRepository.findByFlowId(TenantService.MAIN_TENANT, TEST_NAMESPACE, flowId, Pageable.unpaged());
+        assertThat(executions).hasSize(1);
+        assertThat(executions.getFirst().getInputs())
+            .isEqualTo(Map.of("environment", Map.of("region", "EU")));
+    }
+
     private String saveServer(boolean disabled, String instructions) {
         String serverName = "server-" + IdUtils.create();
-        McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverName, null,
-            instructions, null, null, null, null, disabled, false, false, null, null);
+        McpServer mcpServer = new McpServer(
+            TenantService.MAIN_TENANT, serverName, null,
+            instructions, null, null, null, null, disabled, false, false, null, null
+        );
         return mcpServerRepository.save(null, mcpServer).id();
     }
 
     private String serverUrl(String serverName) {
-        return MCP_TOOL_PATH + "/" + serverName ;
+        return MCP_TOOL_PATH + "/" + serverName;
     }
 
     private MutableHttpRequest<String> mcpPost(String serverName, String body) {
@@ -286,15 +363,17 @@ class McpToolControllerRunnerTest {
             completionLatch, continueLatch, Duration.ofSeconds(10)
         );
 
-        flowRepository.create(GenericFlow.of(
-            Flow.builder()
-                .id(IdUtils.create())
-                .namespace(TEST_NAMESPACE)
-                .tenantId(TenantService.MAIN_TENANT)
-                .tasks(List.of(task))
-                .triggers(List.of(trigger))
-                .build()
-        ));
+        flowRepository.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .id(IdUtils.create())
+                    .namespace(TEST_NAMESPACE)
+                    .tenantId(TenantService.MAIN_TENANT)
+                    .tasks(List.of(task))
+                    .triggers(List.of(trigger))
+                    .build()
+            )
+        );
         return toolName;
     }
 
@@ -311,20 +390,22 @@ class McpToolControllerRunnerTest {
             .build();
 
         CountDownLatchTask task = CountDownLatchTask.getTaskForCountDownLatch(
-            new CountDownLatch(1),  // completion latch — never reached; await blocks first
-            neverReleasedLatch,     // await latch — never counts down within the test window
-            Duration.ofSeconds(60)  // longer than PT5S MCP timeout so the MCP fires first
+            new CountDownLatch(1), // completion latch — never reached; await blocks first
+            neverReleasedLatch, // await latch — never counts down within the test window
+            Duration.ofSeconds(60) // longer than PT5S MCP timeout so the MCP fires first
         );
 
-        flowRepository.create(GenericFlow.of(
-            Flow.builder()
-                .id(IdUtils.create())
-                .namespace(TEST_NAMESPACE)
-                .tenantId(TenantService.MAIN_TENANT)
-                .tasks(List.of(task))
-                .triggers(List.of(trigger))
-                .build()
-        ));
+        flowRepository.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .id(IdUtils.create())
+                    .namespace(TEST_NAMESPACE)
+                    .tenantId(TenantService.MAIN_TENANT)
+                    .tasks(List.of(task))
+                    .triggers(List.of(trigger))
+                    .build()
+            )
+        );
         return toolName;
     }
 
@@ -353,16 +434,18 @@ class McpToolControllerRunnerTest {
             .condition(Property.ofExpression("{{ inputs.message is empty }}"))
             .build();
 
-        flowRepository.create(GenericFlow.of(
-            Flow.builder()
-                .id(IdUtils.create())
-                .namespace(TEST_NAMESPACE)
-                .tenantId(TenantService.MAIN_TENANT)
-                .inputs(List.of(messageInput))
-                .tasks(List.of(conditionalFail))
-                .triggers(List.of(trigger))
-                .build()
-        ));
+        flowRepository.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .id(IdUtils.create())
+                    .namespace(TEST_NAMESPACE)
+                    .tenantId(TenantService.MAIN_TENANT)
+                    .inputs(List.of(messageInput))
+                    .tasks(List.of(conditionalFail))
+                    .triggers(List.of(trigger))
+                    .build()
+            )
+        );
         return toolName;
     }
 }

@@ -23,7 +23,7 @@
                     target="_blank"
                     :href="video"
                 >
-                    {{ t("ks_empty_state.watch_the_video") }}
+                    {{ $t("ks_empty_state.watch_the_video") }}
                 </KsButton>
             </div>
 
@@ -34,7 +34,7 @@
                 target="_blank"
                 rel="noopener"
             >
-                {{ t("ks_empty_state.learn_more") }}
+                {{ $t("ks_empty_state.learn_more") }}
                 <ArrowTopRight :size="14" />
             </a>
         </div>
@@ -43,7 +43,6 @@
 
 <script setup lang="ts">
     import {useNetwork} from "@vueuse/core"
-    import {useI18n} from "vue-i18n"
     import ArrowTopRight from "vue-material-design-icons/ArrowTopRight.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
 
@@ -62,7 +61,6 @@
     }>()
 
     const {isOnline} = useNetwork()
-    const {t} = useI18n({useScope: "global"})
 </script>
 
 <style lang="scss" scoped>
@@ -110,8 +108,8 @@
 
 .ks-empty-state__title {
     margin: 0;
-    font-size: 18px;
-    line-height: 22px;
+    font-size: var(--ks-font-size-xl);
+    line-height: var(--ks-line-height-tight);
     color: var(--ks-text-primary);
     font-weight: var(--ks-font-weight-semibold);
 }
@@ -119,9 +117,9 @@
 .ks-empty-state__description {
     margin: 0;
     width: 100%;
-    font-size: 14px;
+    font-size: var(--ks-font-size-base);
     color: var(--ks-text-secondary);
-    line-height: 18px;
+    line-height: var(--ks-line-height-tight);
 }
 
 .ks-empty-state__actions {
@@ -138,7 +136,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: var(--ks-font-size-xs);
+    font-size: var(--ks-font-size-sm);
     color: var(--ks-text-secondary);
     text-decoration: none;
 

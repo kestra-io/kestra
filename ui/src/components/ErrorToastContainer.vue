@@ -2,7 +2,6 @@
     <KsButton
         v-if="isFlowContext"
         @click="fixWithAi"
-        class="el-button--small"
         size="small"
     >
         <AiIcon class="me-1" />

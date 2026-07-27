@@ -118,3 +118,133 @@ describe("VueFlowUtils", () => {
         expect(VueFlowUtils.areTasksIdenticalInGraphUntilTask(previousGraph, currentGraph, "task4")).toBeFalsy()
     })
 })
+
+describe("generateGraph CHOICE edge labels", () => {
+    const generate = (flowGraph: any) =>
+        VueFlowUtils.generateGraph(
+            "vfid",
+            "flow",
+            "ns",
+            flowGraph,
+            undefined,
+            [],
+            false,
+            {},
+            new Set(),
+            [],
+            true,
+            false,
+            false,
+        ) ?? []
+
+    const issueFlowGraph = {
+        nodes: [
+            {
+                uid: "root.render-language",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "render-language", type: "io.kestra.plugin.core.flow.Switch"},
+            },
+            {
+                uid: "root.render-language.french",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "french", type: "io.kestra.plugin.core.debug.Return"},
+            },
+            {
+                uid: "root.render-language.german",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "german", type: "io.kestra.plugin.core.debug.Return"},
+            },
+            {
+                uid: "root.render-language.english",
+                type: "io.kestra.core.models.hierarchies.GraphTask",
+                task: {id: "english", type: "io.kestra.plugin.core.debug.Return"},
+            },
+        ],
+        edges: [
+            {
+                source: "root.render-language",
+                target: "root.render-language.french",
+                relation: {relationType: "CHOICE", value: "French"},
+            },
+            {
+                source: "root.render-language",
+                target: "root.render-language.german",
+                relation: {relationType: "CHOICE", value: "German"},
+            },
+            {
+                source: "root.render-language",
+                target: "root.render-language.english",
+                relation: {relationType: "CHOICE", value: "defaults"},
+            },
+        ],
+        clusters: [],
+    } as any
+
+    test("propagates each case key from the issue flow to its CHOICE edge", () => {
+        const edges = generate(issueFlowGraph).filter((e: any) => e.type === "edge")
+
+        const frenchEdge = edges.find((e: any) => e.target === "root.render-language.french") as any
+        expect(frenchEdge?.data?.value).toBe("French")
+        expect(frenchEdge?.data?.relationType).toBe("CHOICE")
+
+        const germanEdge = edges.find((e: any) => e.target === "root.render-language.german") as any
+        expect(germanEdge?.data?.value).toBe("German")
+        expect(germanEdge?.data?.relationType).toBe("CHOICE")
+
+        const englishEdge = edges.find((e: any) => e.target === "root.render-language.english") as any
+        expect(englishEdge?.data?.value).toBe("defaults")
+        expect(englishEdge?.data?.relationType).toBe("CHOICE")
+    })
+
+    test("does not set a case value on non-CHOICE edges", () => {
+        const sequentialFlowGraph = {
+            nodes: [
+                {
+                    uid: "root.task1",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "task1", type: "io.kestra.plugin.core.debug.Return"},
+                },
+                {
+                    uid: "root.task2",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "task2", type: "io.kestra.plugin.core.debug.Return"},
+                },
+            ],
+            edges: [
+                {
+                    source: "root.task1",
+                    target: "root.task2",
+                    relation: {relationType: "SEQUENTIAL"},
+                },
+            ],
+            clusters: [],
+        } as any
+
+        const edge = generate(sequentialFlowGraph).filter((e: any) => e.type === "edge")[0] as any
+        expect(edge?.data?.value).toBeUndefined()
+        expect(edge?.data?.relationType).toBe("SEQUENTIAL")
+    })
+
+    test("leaves edge data fields undefined when relation is missing", () => {
+        const minimalFlowGraph = {
+            nodes: [
+                {
+                    uid: "root.a",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "a", type: "io.kestra.plugin.core.debug.Return"},
+                },
+                {
+                    uid: "root.b",
+                    type: "io.kestra.core.models.hierarchies.GraphTask",
+                    task: {id: "b", type: "io.kestra.plugin.core.debug.Return"},
+                },
+            ],
+            edges: [{source: "root.a", target: "root.b"}],
+            clusters: [],
+        } as any
+
+        const edge = generate(minimalFlowGraph).filter((e: any) => e.type === "edge")[0] as any
+        expect(edge?.data?.value).toBeUndefined()
+        expect(edge?.data?.relationType).toBeUndefined()
+    })
+})

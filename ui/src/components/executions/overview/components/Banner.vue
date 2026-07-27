@@ -24,7 +24,9 @@
             </div>
 
             <div class="execution-banner__top">
-                <span class="execution-banner__flow">{{ execution.flowId }}</span>
+                <router-link class="execution-banner__flow" :to="createLink('flows', execution)">
+                    {{ execution.flowId }}
+                </router-link>
 
                 <span class="execution-banner__id">
                     <code>{{ execution.id }}</code>
@@ -375,6 +377,12 @@
             font-weight: 700;
             font-size: var(--ks-font-size-xl);
             color: var(--ks-text-primary);
+            text-decoration: none;
+
+            &:hover {
+                color: var(--ks-text-link);
+                text-decoration: underline;
+            }
         }
 
         &__id {

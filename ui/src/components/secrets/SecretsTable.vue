@@ -237,7 +237,7 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {useSecretsStore} from "../../stores/secrets"
+    import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useSecretsFilter} from "../filter/configurations"
@@ -292,7 +292,6 @@
     const route = useRoute()
     const router = useRouter()
     const authStore = useAuthStore()
-    const secretsStore = useSecretsStore()
     const namespacesStore = useNamespacesStore()
 
     const form = ref<FormInstance>()
@@ -454,7 +453,7 @@
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         const activeFilters = routeQueryToQueryFilters(route.query)
-        const secretsResponse = await secretsStore.find(loadQuery({
+        const secretsResponse = await SecretsAPI.listSecrets(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "key:asc"),
@@ -472,7 +471,7 @@
             const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1)
 
             for (const parentNs of parentNamespaces) {
-                const parentSecretsResponse = await secretsStore.find(loadQuery({
+                const parentSecretsResponse = await SecretsAPI.listSecrets(loadQuery({
                     filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 

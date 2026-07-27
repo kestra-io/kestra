@@ -1948,6 +1948,10 @@
       "viewAll": "Ver todo",
       "chart_preview": "Haz clic en un código fuente del gráfico para ver su vista previa",
       "export": "Exportar a CSV",
+      "exportTo": {
+        "csv": "Exportar a CSV",
+        "ion": "Exportar a ION"
+      },
       "quick_filters": {
         "all": "Todos",
         "running": "En ejecución",

@@ -1947,7 +1947,11 @@
       "others": "Others",
       "viewAll": "View all",
       "chart_preview": "Click on a chart source code to see its preview",
-      "export": "Export to CSV",
+      "export": "Export",
+      "exportTo": {
+        "csv": "Export to CSV",
+        "ion": "Export to ION"
+      },
       "quick_filters": {
         "all": "All",
         "running": "Running",

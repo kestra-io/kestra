@@ -1948,6 +1948,10 @@
       "viewAll": "查看全部",
       "chart_preview": "单击图表源代码以查看其预览",
       "export": "导出为CSV",
+      "exportTo": {
+        "csv": "导出为 CSV",
+        "ion": "导出到 ION"
+      },
       "quick_filters": {
         "all": "全部",
         "running": "运行中",

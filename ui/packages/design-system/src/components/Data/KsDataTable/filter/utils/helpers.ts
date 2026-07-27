@@ -1,6 +1,7 @@
 import type {LocationQuery} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
 import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
+import type { QueryFilter, QueryFilterField, QueryFilterOp } from "@kestra-io/kestra-sdk"
 
 const decodeURIComponentSafely = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)
@@ -58,20 +59,6 @@ export interface DecodedParam {
 
 
 /**
- * A backend `QueryFilter` node (see `core/src/main/java/io/kestra/core/models/QueryFilter.java`):
- * either a leaf (`field`/`operation`/`value`) or a logical group (`logical`/`children`).
- * Kept structurally loose (no dependency on `@kestra-io/kestra-sdk`, which this package must not
- * depend on) — callers with the generated SDK's stricter `QueryFilter` type should cast.
- */
-export interface QueryFilter {
-    field: string
-    operation: string
-    value?: unknown
-    logical?: LogicalOperator
-    children?: QueryFilter[]
-}
-
-/**
  * Builds one logical position in the filter tree, mirroring the backend's
  * `QueryFilterFormatBinder.NodeBuilder`: direct leaves land here directly, LABELS leaves sharing an
  * operation are merged into one filter with a map value, and nested `[and|or][N]` segments descend
@@ -79,7 +66,7 @@ export interface QueryFilter {
  */
 class FilterNodeBuilder {
     private readonly directLeaves: QueryFilter[] = []
-    private readonly labelsByOp = new Map<string, Record<string, string>>()
+    private readonly labelsByOp = new Map<QueryFilterOp, Record<string, string>>()
     private readonly subNodes = new Map<LogicalOperator, Map<number, FilterNodeBuilder>>()
 
     descend(logical: LogicalOperator, index: number): FilterNodeBuilder {
@@ -90,7 +77,7 @@ class FilterNodeBuilder {
         return slot
     }
 
-    addLeaf(field: string, operation: string, subKey: string | undefined, value: string | string[]) {
+    addLeaf(field: QueryFilterField, operation: QueryFilterOp, subKey: string | undefined, value: string | string[]) {
         const scalarValue = Array.isArray(value) ? value[0] : value
 
         if (field === "labels" && subKey) {
@@ -119,12 +106,12 @@ class FilterNodeBuilder {
                 if (slotItems.length === 0) return
                 branches.push(slotItems.length === 1
                     ? slotItems[0]
-                    : {field: "", operation: "", logical: "AND", children: slotItems})
+                    : {field: "", operation: "", logical: "AND", children: slotItems} as any)
             })
             if (branches.length === 0) return
             items.push(branches.length === 1 && logical === "AND"
                 ? branches[0]
-                : {field: "", operation: "", logical, children: branches})
+                : {field: "", operation: "", logical, children: branches} as any)
         })
 
         return items
@@ -153,7 +140,7 @@ export const routeQueryToQueryFilters = (query: LocationQuery): QueryFilter[] =>
         for (const segment of chain) {
             target = target.descend(segment.logical, segment.index)
         }
-        target.addLeaf(field, operation, subKey, decodeURIComponentSafely(value) as string | string[])
+        target.addLeaf(field as QueryFilterField, operation as QueryFilterOp, subKey, decodeURIComponentSafely(value) as string | string[])
     }
 
     return root.build()

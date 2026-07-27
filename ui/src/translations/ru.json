@@ -836,6 +836,17 @@
       "tooltip": "Перезапустить trigger"
     },
     "trigger disabled": "Триггер отключен в источнике Flow",
+    "trigger enable dialog": {
+      "title": "Включить trigger",
+      "bulk title": "Включить {count} triggers",
+      "description": "Этот trigger мог пропустить расписания, пока он был отключен.",
+      "bulk description": "Выбранные триггеры могли пропустить расписания, пока они были отключены.",
+      "strategy": "Выберите стратегию для использования:",
+      "options": {
+        "skip": "Не восстанавливать пропущенные расписания",
+        "follow": "Следовать конфигурации {property} trigger'а"
+      }
+    },
     "flow source not found": "Источник flow не найден",
     "date format": "Формат даты",
     "timezone": "Часовой пояс",

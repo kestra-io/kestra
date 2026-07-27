@@ -4,6 +4,7 @@ import {
     COMPARATOR_LABELS,
     Comparators,
     KV_COMPARATORS,
+    RANGE_COMPARATORS,
     TEXT_COMPARATORS,
 } from "./filterTypes"
 import {type DecodedParam, keyOfComparator} from "./helpers"
@@ -92,6 +93,9 @@ export const processFieldValue = (
     comparator: Comparators,
 ): {value: AppliedFilter["value"]; valueLabel: string} => {
     const isTextOp = TEXT_COMPARATORS.includes(comparator)
+    // Range/threshold comparators (GTE/LTE/…) always target one bound value.
+    // Other comparators (IN/NOT_IN) are multi-value.
+    const isSingleValueOp = isTextOp || RANGE_COMPARATORS.includes(comparator)
 
     if (config?.valueType === "key-value" && KV_COMPARATORS.includes(comparator)) {
         const combinedValue = params.map(p => p?.value as string)
@@ -103,7 +107,7 @@ export const processFieldValue = (
         }
     }
 
-    if (config?.valueType === "multi-select" && !isTextOp) {
+    if (config?.valueType === "multi-select" && !isSingleValueOp) {
         const combinedValue = params.flatMap(p =>
             Array.isArray(p?.value) ? p.value : (p?.value as string)?.split(",") ?? [],
         )

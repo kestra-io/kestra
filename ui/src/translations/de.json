@@ -836,6 +836,17 @@
       "tooltip": "Den Trigger neu starten"
     },
     "trigger disabled": "Trigger ist in der Flow-Quelle deaktiviert",
+    "trigger enable dialog": {
+      "title": "Trigger aktivieren",
+      "bulk title": "Aktivieren Sie {count} Trigger",
+      "description": "Dieser Trigger könnte Zeitpläne verpasst haben, während er deaktiviert war.",
+      "bulk description": "Die ausgewählten Trigger könnten Zeitpläne verpasst haben, während sie deaktiviert waren.",
+      "strategy": "Wählen Sie die zu verwendende Strategie:",
+      "options": {
+        "skip": "Verpasste Zeitpläne nicht nachholen",
+        "follow": "Der Konfiguration des Triggers {property} folgen"
+      }
+    },
     "flow source not found": "Flow-Quelle nicht gefunden",
     "date format": "Datumsformat",
     "timezone": "Zeitzone",
@@ -1936,6 +1947,10 @@
       "viewAll": "Alle anzeigen",
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
       "export": "Exportieren nach CSV",
+      "exportTo": {
+        "csv": "Exportieren als CSV",
+        "ion": "Nach ION exportieren"
+      },
       "quick_filters": {
         "all": "Alle",
         "running": "Läuft",

@@ -836,6 +836,17 @@
       "tooltip": "トリガーを再起動する"
     },
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
+    "trigger enable dialog": {
+      "title": "trigger を有効化",
+      "bulk title": "{{count}} triggers を有効にする",
+      "description": "この trigger は、無効化されている間にスケジュールが実行されなかった可能性があります。",
+      "bulk description": "選択されたトリガーは、無効化されている間にスケジュールを見逃した可能性があります。",
+      "strategy": "使用する戦略を選択してください:",
+      "options": {
+        "skip": "見逃されたスケジュールを回復しない",
+        "follow": "triggerのプロパティ設定に従う"
+      }
+    },
     "flow source not found": "フローソースが見つかりません",
     "date format": "日付形式",
     "timezone": "タイムゾーン",
@@ -1936,6 +1947,10 @@
       "viewAll": "すべて表示",
       "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
       "export": "CSVにエクスポート",
+      "exportTo": {
+        "csv": "CSVにエクスポート",
+        "ion": "ION にエクスポート"
+      },
       "quick_filters": {
         "all": "すべて",
         "running": "実行中",

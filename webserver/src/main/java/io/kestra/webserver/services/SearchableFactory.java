@@ -190,6 +190,16 @@ public class SearchableFactory {
                 QueryFilter.Field.LEVEL, QueryFilter.Op.LESS_THAN_OR_EQUAL_TO,
                 (event, v) -> event.level() != null && event.level().toInt() <= toLevel(v).toInt()
             )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.LEVEL, QueryFilter.Op.IN,
+                (event, v) -> v instanceof List<?> list
+                    && list.stream().anyMatch(item -> levelMatches(event, item))
+            )
+            .searchableQueryFilterExtractor(
+                QueryFilter.Field.LEVEL, QueryFilter.Op.NOT_IN,
+                (event, v) -> !(v instanceof List<?> list)
+                    || list.stream().noneMatch(item -> levelMatches(event, item))
+            )
 
             .searchableQueryFilterExtractor(
                 QueryFilter.Field.EXECUTION_ID, FollowLogEvent::executionId,
@@ -271,5 +281,9 @@ public class SearchableFactory {
 
     private static Level toLevel(Object value) {
         return value instanceof Level lvl ? lvl : Level.valueOf(value.toString());
+    }
+
+    private static boolean levelMatches(FollowLogEvent event, Object value) {
+        return event.level() != null && event.level().toInt() == toLevel(value).toInt();
     }
 }

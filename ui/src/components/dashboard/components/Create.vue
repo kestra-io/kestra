@@ -18,9 +18,6 @@
     import TopNavBar from "../../../components/layout/TopNavBar.vue"
     import useRouteContext from "../../../composables/useRouteContext"
 
-    import YAML_MAIN from "../assets/default_main_definition.yaml?raw"
-    import YAML_FLOW from "../assets/default_flow_definition.yaml?raw"
-    import YAML_NAMESPACE from "../assets/default_namespace_definition.yaml?raw"
     import MultiPanelDashboardEditorView from "./MultiPanelDashboardEditorView.vue"
 
     const route = useRoute()
@@ -69,11 +66,12 @@
                 dashboardStore.sourceCode = "id: " + blueprintId + "\n" + dashboardStore.sourceCode
             }
         } else {
+            const definitions = await dashboardStore.loadDefaultDefinitions()
             if (name === "flows/update") {
                 const {namespace, id} = JSON.parse(params as string)
-                dashboardStore.sourceCode = processFlowYaml(YAML_FLOW, namespace, id)
+                dashboardStore.sourceCode = processFlowYaml(definitions.flow, namespace, id)
             } else {
-                dashboardStore.sourceCode = name === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN
+                dashboardStore.sourceCode = name === "namespaces/update" ? definitions.namespace : definitions.main
             }
 
             dashboardStore.sourceCode = "id: " + getRandomID() + "\n" + dashboardStore.sourceCode

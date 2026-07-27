@@ -1,12 +1,15 @@
 import {computed, nextTick, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-const blobResponse = {responseType: "blob" as const}
-const downloadHandler = (res: {data: Blob}, filename: string) => {
+import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
+
+const response: AxiosLikeConfig = {responseType: "blob" as const}
+const validateStatus = (status: number) => status === 200 || status === 404
+const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string) => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     const url = window.URL.createObjectURL(blob)
 
-    Utils.downloadUrl(url, `${filename}.csv`)
+    Utils.downloadUrl(url, `${filename}.${extension}`)
 }
 
 import {apiUrl} from "override/utils/route"
@@ -37,6 +40,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const selectedChart = ref<Chart>()
     const activeDashboard = ref<Dashboard>()
     const defaultDashboards = ref<DashboardSettings>()
+    const defaultDefinitions = ref<{
+        main: string,
+        flow: string,
+        namespace: string,
+    }>()
     const chartErrors = ref<string[]>([])
     const isCreating = ref<boolean>(false)
     const readonlyToastShown = ref(false)
@@ -87,6 +95,28 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const {data} = await axios.get<DashboardSettings>(`${apiUrl()}/dashboards/settings/default-dashboards`)
         defaultDashboards.value = data
         return defaultDashboards.value
+    }
+
+    async function loadDefaultDefinitions() {
+        if (!defaultDefinitions.value) {
+            const res = await axios.get(`${apiUrl()}/dashboards/defaults/definitions`)
+            defaultDefinitions.value = res.data
+        }
+        return defaultDefinitions.value!
+    }
+
+    // side-effect-free lookups for autocompletion, deliberately not going through
+    // list()/load() which mutate dashboardList/activeDashboard and would clobber
+    // whatever the user is currently viewing/editing elsewhere in the app.
+    async function searchIds(): Promise<{ id: string; title?: string }[]> {
+        const res = await axios.get(`${apiUrl()}/dashboards?size=100`)
+        return (res.data as { results: { id: string; title?: string }[] }).results
+    }
+
+    async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
+        const res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
+        if (res.status === 404) return []
+        return (res.data as Dashboard).charts ?? []
     }
 
     async function saveDefaults(defaultDashboardsRequest: DashboardSettings) {
@@ -231,17 +261,17 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.previewChart(request)
     }
 
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides) {
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV") {
         const isDefault = dashboard.id === "default"
 
-        const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`
+        const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`
         const payload = isDefault ? {chart: chart.content, globalFilter: parameters} : parameters
 
         const filename = `chart__${chart.id}`
 
         return axios
-            .post(`${apiUrl()}/dashboards${path}`, payload, blobResponse)
-            .then((res) => downloadHandler(res, filename))
+            .post(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
+            .then((res) => downloadHandler(res, filename, format.toLowerCase()))
     }
 
     const pluginsStore = usePluginsStore()
@@ -366,6 +396,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
         getUserDashboardStorageKey,
         defaultDashboards,
         loadDefaults,
+        defaultDefinitions,
+        loadDefaultDefinitions,
+        searchIds,
+        chartsById,
         saveDefaults,
         create,
         update,

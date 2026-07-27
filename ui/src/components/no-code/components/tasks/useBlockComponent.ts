@@ -5,13 +5,13 @@ export function useBlockComponent() {
     const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY)
     const definitions = definitionsRef?.value ?? {}
 
-    const getBlockComponent = ref<(property: any, key?: string) => any>(() => {
+    const getBlockComponent = ref<(property: any, key?: string, siblingKeys?: string[]) => any>(() => {
         return h("div", {class: "no-code-skeleton"}, "Loading...")
     })
-    
+
     onMounted(async () => {
         const module = await import("./getTaskComponent")
-        getBlockComponent.value = (property: any, key?: string) => module.getTaskComponent(property, definitions, key)
+        getBlockComponent.value = (property: any, key?: string, siblingKeys?: string[]) => module.getTaskComponent(property, definitions, key, siblingKeys)
     })
 
     return {

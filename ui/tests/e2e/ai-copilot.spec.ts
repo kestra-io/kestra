@@ -345,3 +345,39 @@ test.describe("AI Copilot", () => {
         await expect(chip).toContainText("e2e-context-flow")
     })
 })
+
+/**
+ * The full-page `/ai` surface (#7909 onboarding cutover) — the same CopilotChat as the dock, hosted
+ * in the "page" layout. No dock here; we navigate straight to the route.
+ */
+test.describe("AI Copilot — full-page /ai surface", () => {
+    test.beforeEach(async ({page}) => {
+        await test.step("login", async () => {
+            await page.goto("/ui")
+            await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
+            await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
+            await page.getByRole("button", {name: "Login"}).click()
+            await page.waitForTimeout(2000)
+            for (let i = 0; i < 3; i++) {
+                try { await page.goto("/ui", {waitUntil: "domcontentloaded"}); break } catch { await page.waitForTimeout(1000) }
+            }
+            await expect(page.getByRole("heading", {name: "Default Dashboard"})).toBeVisible({timeout: 25000})
+        })
+    })
+
+    test("hosts the copilot full-page at /ai with the page-only Need Help section", async ({page}) => {
+        const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
+        await page.goto(`/ui/${tenant}/ai`, {waitUntil: "domcontentloaded"})
+
+        // The copilot mounts as the full-page host (fresh context → empty state, no dock).
+        await expect(page.locator(D.chat)).toBeVisible({timeout: 15000})
+        await expect(page.locator(D.input)).toBeVisible()
+
+        // "Need Help?" renders only in the page layout (`v-if="layout === 'page'"`), so its presence
+        // confirms this is the full-page surface rather than the right-side dock.
+        const help = page.locator("[data-test=\"copilot-help\"]")
+        await expect(help).toBeVisible()
+        await expect(help).toContainText("Blueprints")
+        await expect(help).toContainText("Slack")
+    })
+})

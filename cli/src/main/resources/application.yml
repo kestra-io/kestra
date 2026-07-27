@@ -54,6 +54,16 @@ micronaut:
           - /metrics/.+
           - /prometheus(\?.*)?
     http-version: HTTP_1_1
+    # Not enabled here (each deployment/reverse-proxy override decides whether CORS is on and for
+    # which origins) - only pre-declares the headers a browser client needs exposed once CORS is
+    # enabled under this configuration name, so client-sdk's 404 disambiguation (X-Kestra-Entity /
+    # X-Kestra-Edition response headers) isn't silently invisible to cross-origin JS callers.
+    cors:
+      configurations:
+        web:
+          exposed-headers:
+            - X-Kestra-Entity
+            - X-Kestra-Edition
   security:
     filter:
       enabled: false

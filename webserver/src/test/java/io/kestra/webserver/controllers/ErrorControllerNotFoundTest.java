@@ -11,7 +11,7 @@ import io.micronaut.http.hateoas.JsonError;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ErrorControllerTest {
+class ErrorControllerNotFoundTest {
     private enum TestEntity {
         WIDGET
     }

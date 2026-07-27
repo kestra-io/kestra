@@ -5,7 +5,7 @@
         <section
             v-bind="$attrs"
             class="main-container"
-            :class="{'blueprints-margin': !combinedView, 'detail-view': !!selectedBlueprintId}"
+            :class="{'blueprints-margin': !combinedView, 'detail-view': !!selectedBlueprintId, 'full-container': !embed}"
         >
             <BlueprintDetail
                 v-if="selectedBlueprintId"

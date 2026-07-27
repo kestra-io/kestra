@@ -291,7 +291,10 @@
     const downloading = ref(false)
 
     const openDownload = () => {
-        downloadLevel.value = effectiveLogLevel.value?.value
+        const level = effectiveLogLevel.value
+        downloadLevel.value = level?.direction === "min" || level?.direction === "max"
+            ? level.value
+            : undefined
         downloadTimeRange.value = selectedTimeRange.value ?? undefined
         downloadOpen.value = true
     }

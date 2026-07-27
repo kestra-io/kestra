@@ -11,6 +11,7 @@
  *     payload (multiple `data:` lines are joined with "\n")
  *   - lines starting with ":" are comments and ignored
  */
+import {useClient} from "@kestra-io/kestra-sdk"
 import type {AiEventName, AiSseFrame} from "./types"
 
 export interface StreamSseOptions {
@@ -31,14 +32,8 @@ export interface StreamSseOptions {
  * is delivered so callers can surface it (e.g. 409 when the thread is not IDLE).
  */
 export async function streamSse({url, body, onFrame, signal}: StreamSseOptions): Promise<void> {
-    const response = await fetch(url, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "text/event-stream",
-        },
-        body: JSON.stringify(body),
+    const response = await useClient().stream(url, body, {
+        headers: {Accept: "text/event-stream"},
         signal,
     })
 

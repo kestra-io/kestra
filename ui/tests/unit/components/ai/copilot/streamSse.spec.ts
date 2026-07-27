@@ -1,4 +1,11 @@
-import {describe, it, expect, vi, afterEach} from "vitest"
+import {describe, it, expect, vi, beforeEach} from "vitest"
+
+// streamSse goes through useClient().stream() so the shared interceptors (CSRF header,
+// progress) apply — mock it at the SDK boundary; the facade's own behavior is covered
+// by the client-facade spec.
+const streamMock = vi.fn()
+vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({stream: streamMock})}))
+
 import {parseFrame, streamSse, SseHttpError} from "../../../../../src/components/ai/copilot/streamSse"
 
 /** Builds a Response-like whose body streams `chunks` as separate reads. */
@@ -72,21 +79,22 @@ describe("parseFrame", () => {
 })
 
 describe("streamSse", () => {
-    afterEach(() => vi.unstubAllGlobals())
+    beforeEach(() => streamMock.mockReset())
 
-    it("POSTs JSON with the SSE Accept header and streams frames in order", async () => {
-        const fetchMock = vi.fn().mockResolvedValue(
+    it("streams through useClient().stream with the SSE Accept header and delivers frames in order", async () => {
+        streamMock.mockResolvedValue(
             sseResponse(["event: token\ndata: {\"text\":\"Hi\"}\n\n", "event: done\ndata: {\"status\":\"IDLE\"}\n\n"]),
         )
-        vi.stubGlobal("fetch", fetchMock)
 
         const frames: {event: string; data: unknown}[] = []
-        await streamSse({url: "/x/chat", body: {prompt: "hi"}, onFrame: (f) => frames.push(f)})
+        const abort = new AbortController()
+        await streamSse({url: "/x/chat", body: {prompt: "hi"}, signal: abort.signal, onFrame: (f) => frames.push(f)})
 
-        const [, init] = fetchMock.mock.calls[0]
-        expect(init.method).toBe("POST")
-        expect(init.headers.Accept).toBe("text/event-stream")
-        expect(JSON.parse(init.body)).toEqual({prompt: "hi"})
+        const [url, body, config] = streamMock.mock.calls[0]
+        expect(url).toBe("/x/chat")
+        expect(body).toEqual({prompt: "hi"})
+        expect(config.headers.Accept).toBe("text/event-stream")
+        expect(config.signal).toBe(abort.signal)
         expect(frames).toEqual([
             {event: "token", data: {text: "Hi"}},
             {event: "done", data: {status: "IDLE"}},
@@ -94,16 +102,14 @@ describe("streamSse", () => {
     })
 
     it("reassembles an event split across chunk boundaries", async () => {
-        vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-            sseResponse(["event: to", "ken\ndata: {\"text\":\"split\"}", "\n\n"]),
-        ))
+        streamMock.mockResolvedValue(sseResponse(["event: to", "ken\ndata: {\"text\":\"split\"}", "\n\n"]))
         const frames: {event: string; data: unknown}[] = []
         await streamSse({url: "/x", body: {}, onFrame: (f) => frames.push(f)})
         expect(frames).toEqual([{event: "token", data: {text: "split"}}])
     })
 
     it("throws SseHttpError with the status on a non-2xx response", async () => {
-        vi.stubGlobal("fetch", vi.fn().mockResolvedValue(sseResponse([], {ok: false, status: 409})))
+        streamMock.mockResolvedValue(sseResponse([], {ok: false, status: 409}))
         await expect(streamSse({url: "/x", body: {}, onFrame: () => {}}))
             .rejects.toBeInstanceOf(SseHttpError)
     })

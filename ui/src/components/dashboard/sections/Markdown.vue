@@ -41,7 +41,7 @@
 
     const getData = async () => {
         if (isFlowDescription.value) data.value = getPropertyValue(await generate(), "description") || null
-        else data.value = props.chart.content ?? props.chart.source?.content
+        else data.value = props.chart.source?.content
     }
 
 

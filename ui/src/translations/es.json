@@ -836,6 +836,17 @@
       "tooltip": "Reiniciar el trigger"
     },
     "trigger disabled": "El trigger está deshabilitado dentro del Flow source",
+    "trigger enable dialog": {
+      "title": "Habilitar trigger",
+      "bulk title": "Habilitar {count} triggers",
+      "description": "Este trigger puede haber perdido programaciones mientras estaba deshabilitado.",
+      "bulk description": "Los triggers seleccionados pueden haber perdido programaciones mientras estaban deshabilitados.",
+      "strategy": "Seleccionar la estrategia a usar:",
+      "options": {
+        "skip": "No recuperar programaciones omitidas",
+        "follow": "Seguir la configuración {property} del trigger"
+      }
+    },
     "flow source not found": "Fuente de flow no encontrada",
     "date format": "Formato de fecha",
     "timezone": "Zona horaria",
@@ -1936,6 +1947,10 @@
       "viewAll": "Ver todo",
       "chart_preview": "Haz clic en un código fuente del gráfico para ver su vista previa",
       "export": "Exportar a CSV",
+      "exportTo": {
+        "csv": "Exportar a CSV",
+        "ion": "Exportar a ION"
+      },
       "quick_filters": {
         "all": "Todos",
         "running": "En ejecución",

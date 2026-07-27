@@ -836,6 +836,17 @@
       "tooltip": "Uruchom ponownie trigger"
     },
     "trigger disabled": "Trigger jest wyłączony w źródle Flow",
+    "trigger enable dialog": {
+      "title": "Włącz trigger",
+      "bulk title": "Włącz {count} triggers",
+      "description": "Ten trigger mógł przegapić harmonogramy, gdy był wyłączony.",
+      "bulk description": "Wybrane triggery mogły pominąć harmonogramy, gdy były wyłączone.",
+      "strategy": "Wybierz strategię do użycia:",
+      "options": {
+        "skip": "Nie odzyskuj pominiętych harmonogramów",
+        "follow": "Postępuj zgodnie z konfiguracją {property} triggera"
+      }
+    },
     "flow source not found": "Źródło flow nie znalezione",
     "date format": "Format daty",
     "timezone": "Strefa czasowa",
@@ -1936,6 +1947,10 @@
       "viewAll": "Pokaż wszystko",
       "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
       "export": "Eksportuj do CSV",
+      "exportTo": {
+        "csv": "Eksportuj do CSV",
+        "ion": "Eksportuj do ION"
+      },
       "quick_filters": {
         "all": "Wszystkie",
         "running": "Uruchomione",

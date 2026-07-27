@@ -10,6 +10,7 @@ import org.reactivestreams.Publisher;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -470,7 +471,7 @@ public class FlowController {
         Optional<Flow> existingFlow = flowRepository.findById(tenantId, namespace, id);
 
         if (existingFlow.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow '%s.%s' was not found.".formatted(namespace, id));
+            throw new FlowNotFoundException(namespace, id);
         }
 
         // Parse source as RawFlow. Draft is metadata about the revision, not part of the YAML

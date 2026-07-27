@@ -125,7 +125,9 @@ test.describe("AI Copilot", () => {
 
         await page.locator(D.approve).click()
         await expect(page.locator(D.chat)).toContainText("Done — it's running again.")
-        await expect(card).toBeHidden()
+        // Resolved in place: the interactive approve/reject controls go away (the proposal then
+        // renders as a read-only history card, which reuses the copilot-proposed-action data-test).
+        await expect(page.locator(D.approve)).toBeHidden()
     })
 
     test("declines a proposed action and hands control back to the composer", async ({page}) => {
@@ -169,7 +171,9 @@ test.describe("AI Copilot", () => {
         // acknowledgement, the card is dismissed, and the composer is usable again for a revision.
         await expect(page.locator(D.chat)).toContainText("Okay, I won't delete it — tell me what to change.")
         expect(confirmBody).toMatchObject({confirmationId: "cf-rej", decision: "REJECT"})
-        await expect(card).toBeHidden()
+        // Resolved in place: the interactive approve/reject controls go away (the proposal then
+        // renders as a read-only history card, which reuses the copilot-proposed-action data-test).
+        await expect(page.locator(D.approve)).toBeHidden()
         await expect(page.locator(D.input)).toBeEnabled()
     })
 
@@ -221,7 +225,9 @@ test.describe("AI Copilot", () => {
         // Revising a plan is still a REJECT decision; control returns to the composer to re-plan.
         await expect(page.locator(D.chat)).toContainText("Sure — what should I change about the plan?")
         expect(confirmBody).toMatchObject({confirmationId: "cf-plan", decision: "REJECT"})
-        await expect(card).toBeHidden()
+        // Resolved in place: the interactive approve/reject controls go away (the proposal then
+        // renders as a read-only history card, which reuses the copilot-proposed-action data-test).
+        await expect(page.locator(D.approve)).toBeHidden()
         await expect(page.locator(D.input)).toBeEnabled()
     })
 

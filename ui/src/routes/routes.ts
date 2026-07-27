@@ -13,7 +13,16 @@ import DemoAssets from "../components/demo/Assets.vue"
 import DemoQuotas from "../components/demo/Quotas.vue"
 import DemoPolicies from "../components/demo/Policies.vue"
 
-const routes: RouteRecordRaw[] = [
+/**
+ * A route record, plus the `ossOnly` marker.
+ *
+ * Editions that build their route table on top of this one (EE) drop every record flagged
+ * `ossOnly`. Flag a route when the page it renders drives OSS-only backend endpoints, so it
+ * cannot work — and must not be reachable — outside the open-source edition.
+ */
+export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
+
+const routes: KestraRouteRecord[] = [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
@@ -89,7 +98,9 @@ const routes: RouteRecordRaw[] = [
     {name: "admin/mcp-servers/create", path: "/:tenant?/admin/mcp-servers/new/:tab?",                 component: () => import("../components/admin/McpServer.vue")},
 
     //Setup
-    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
+    // ossOnly: the wizard posts to /api/v1/{tenant}/basicAuth, an OSS-only endpoint backed by a
+    // bean that does not exist when micronaut.security is enabled. EE has its own first-run flow.
+    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}, ossOnly: true},
     //Login
     {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
 

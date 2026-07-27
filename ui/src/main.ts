@@ -33,13 +33,14 @@ const app = createApp(App)
 // the design system depending on the app's plugin-icon API
 app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)
 
-const handleAuthError = (error: Error, to: {fullPath: string}) => {
-    if (error.message?.includes("401")) {
-        BasicAuth.logout()
-        const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
-        return {name: "login", query: fromPath ? {from: fromPath} : {}}
-    }
-    return {name: "setup"}
+// Fail closed: an unexpected error while probing the pre-auth endpoints tells us nothing about
+// whether this instance needs the first-run wizard, so send the user to the login page. Setup is
+// only reachable from the positive isBasicAuthInitialized === false signal in beforeResolve —
+// treating an error as "not initialized" parked EE users on the OSS wizard, which then 403s.
+const handleAuthError = (to: {fullPath: string}) => {
+    BasicAuth.logout()
+    const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
+    return {name: "login", query: fromPath ? {from: fromPath} : {}}
 }
 
 let httpClient: ReturnType<typeof setupKestraHttp> | undefined
@@ -137,7 +138,7 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
         await miscStore.loadConfigs()
     } catch (error) {
         console.error("Error during authentication check:", error)
-        return handleAuthError(error as Error, to)
+        return handleAuthError(to)
     }
 }
 

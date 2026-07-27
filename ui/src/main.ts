@@ -33,10 +33,7 @@ const app = createApp(App)
 // the design system depending on the app's plugin-icon API
 app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)
 
-// Fail closed: an unexpected error while probing the pre-auth endpoints tells us nothing about
-// whether this instance needs the first-run wizard, so send the user to the login page. Setup is
-// only reachable from the positive isBasicAuthInitialized === false signal in beforeResolve —
-// treating an error as "not initialized" parked EE users on the OSS wizard, which then 403s.
+// Fail closed: an error probing the pre-auth endpoints is no evidence that setup is needed.
 const handleAuthError = (to: {fullPath: string}) => {
     BasicAuth.logout()
     const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined

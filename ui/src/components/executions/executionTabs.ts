@@ -59,10 +59,10 @@ export const EXECUTION_TAB_ROUTES: RouteRecordRaw[] = [
         meta: {tab: "dependencies", title: "dependencies", maximized: true},
     },
     {
-        name: `${EXECUTION_PARENT_ROUTE}/auditlogs`,
-        path: "auditlogs",
+        name: `${EXECUTION_PARENT_ROUTE}/audit-logs`,
+        path: "audit-logs",
         component: () => import("../demo/AuditLogs.vue"),
-        meta: {tab: "auditlogs", title: "auditlogs", maximized: true, locked: true},
+        meta: {tab: "audit-logs", title: "auditlogs", maximized: true, locked: true},
     },
     {
         name: `${EXECUTION_PARENT_ROUTE}/assets`,

@@ -430,7 +430,7 @@
         {value: "metrics", label: t("metrics")},
         {value: "dependencies", label: t("dependencies")},
         {value: "concurrency", label: t("concurrency")},
-        {value: "auditlogs", label: t("auditlogs")},
+        {value: "audit-logs", label: t("auditlogs")},
     ])
 
     const triggersDefaultTabOptions = computed(() => [

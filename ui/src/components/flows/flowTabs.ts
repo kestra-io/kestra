@@ -105,11 +105,11 @@ export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
         meta: {tab: "concurrency", title: "concurrency"},
     },
     {
-        name: `${FLOW_PARENT_ROUTE}/auditlogs`,
-        path: "auditlogs",
+        name: `${FLOW_PARENT_ROUTE}/audit-logs`,
+        path: "audit-logs",
         component: () => import("../demo/AuditLogs.vue"),
         props: {embed: true},
-        meta: {tab: "auditlogs", title: "auditlogs", locked: true},
+        meta: {tab: "audit-logs", title: "auditlogs", locked: true},
     },
 ]
 

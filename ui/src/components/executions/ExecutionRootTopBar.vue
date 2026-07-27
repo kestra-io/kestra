@@ -11,7 +11,7 @@
         <template #actions>
             <slot name="actions" />
             <div
-                v-if="hasVisibleActions && activeTab !== 'auditlogs'"
+                v-if="hasVisibleActions && activeTab !== 'audit-logs'"
                 class="d-flex align-items-center gap-2"
             >
                 <ul v-if="!isOverviewTab" class="d-none d-xl-flex align-items-center">

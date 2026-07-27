@@ -76,6 +76,12 @@ kestra:
       - type: io.kestra.core.runners.test.task.Alias
         values:
           prop0: value0
+
+  tasks:
+    http:
+      denied-list:
+        - http://dangerous-url.com
+
   grpc:
     maxRetryAttempts: 1
     shutdownTimeout: 3s

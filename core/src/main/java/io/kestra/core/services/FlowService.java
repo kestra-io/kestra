@@ -438,9 +438,15 @@ public class FlowService {
                 )
                 .orElseGet(() -> FlowWithSource.of(flowToImport, source).toBuilder().tenantId(tenantId).revision(1).build());
         } else {
-            return maybeExisting
+            FlowWithSource saved = maybeExisting
                 .map(previous -> flowRepository.update(flow, previous))
                 .orElseGet(() -> flowRepository.create(flow));
+            try {
+                impactDownstreamConsumers(saved);
+            } catch (QueueException e) {
+                throw new FlowProcessingException(e.getMessage(), e);
+            }
+            return saved;
         }
     }
 

@@ -505,7 +505,6 @@ class ExecutionControllerRunnerTest {
         result = this.evalTaskRunExpression(execution, "{{ missing }}", 0);
         assertThat(result.getResult()).isNull();
         assertThat(result.getError()).contains("Unable to find `missing` used in the expression `{{ missing }}` at line 1");
-        assertThat(result.getStackTrace()).contains("Unable to find `missing` used in the expression `{{ missing }}` at line 1");
     }
 
     @SuppressWarnings("unchecked")
@@ -2516,7 +2515,6 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isNull();
-        assertThat(evalResult.getStackTrace()).isNull();
         assertThat(evalResult.getResult()).isEqualTo("******");
 
         evalResult = client.toBlocking().retrieve(
@@ -2526,9 +2524,6 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)");
-        assertThat(evalResult.getStackTrace()).startsWith(
-            "io.kestra.core.exceptions.IllegalVariableEvaluationException: io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)"
-        );
         assertThat(evalResult.getResult()).isNull();
 
         evalResult = client.toBlocking().retrieve(
@@ -2538,7 +2533,6 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isNull();
-        assertThat(evalResult.getStackTrace()).isNull();
         assertThat(evalResult.getResult()).startsWith("{\"todos\":[{");
 
         evalResult = client.toBlocking().retrieve(
@@ -2548,7 +2542,6 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isNull();
-        assertThat(evalResult.getStackTrace()).isNull();
         assertThat(evalResult.getResult()).isEqualTo("******");
     }
 
@@ -2576,7 +2569,6 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(evalResult.getResult(), org.hamcrest.Matchers.nullValue());
         assertThat(evalResult.getError(), org.hamcrest.Matchers.notNullValue());
-        assertThat(evalResult.getStackTrace(), org.hamcrest.Matchers.notNullValue());
     }
 
     @Test

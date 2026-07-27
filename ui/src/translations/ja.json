@@ -1947,6 +1947,10 @@
       "viewAll": "すべて表示",
       "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
       "export": "CSVにエクスポート",
+      "exportTo": {
+        "csv": "CSVにエクスポート",
+        "ion": "ION にエクスポート"
+      },
       "quick_filters": {
         "all": "すべて",
         "running": "実行中",

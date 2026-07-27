@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import io.kestra.core.exceptions.KestraRuntimeException;
 import org.apache.commons.io.FileUtils;
 
 import io.kestra.core.models.annotations.Plugin;
@@ -131,7 +132,7 @@ public class LocalStorage implements StorageInterface {
             // This can happen for concurrent deletion while traversing folders so we skip in such case
             @Override
             public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                log.warn("Failed to visit file " + file + " while searching all by prefix for path " + prefix.getPath(), exc);
+                log.warn("Failed to visit file {} while searching all by prefix for path {}", file, prefix.getPath(), exc);
                 return FileVisitResult.SKIP_SUBTREE;
             }
         });
@@ -170,8 +171,18 @@ public class LocalStorage implements StorageInterface {
                 }))
                 .toList();
         } catch (NoSuchFileException e) {
-            throw new FileNotFoundException(e.getMessage());
+            throw newFileNotFound(uri, e);
+
         }
+    }
+
+    /**
+     * To prevent information disclosure, we don't include the cause exception message in the thrown exception.
+     * We log the original cause in DEBUG for analysis.
+     */
+    private static IOException newFileNotFound(URI uri, IOException cause) {
+        log.debug("No such file {}", uri, cause);
+        return new FileNotFoundException("File not found for URI: " + uri.toString());
     }
 
     @Override
@@ -190,7 +201,7 @@ public class LocalStorage implements StorageInterface {
                 }))
                 .toList();
         } catch (NoSuchFileException e) {
-            throw new FileNotFoundException(e.getMessage());
+            throw newFileNotFound(uri, e);
         }
     }
 
@@ -209,10 +220,11 @@ public class LocalStorage implements StorageInterface {
     }
 
     private static URI putFile(URI uri, StorageObject storageObject, File file) throws IOException {
-        File parent = file.getParentFile();
-        if (!parent.exists()) {
-            parent.mkdirs();
-        }
+        // Files.createDirectories throws a descriptive exception (e.g. AccessDeniedException,
+        // FileAlreadyExistsException) when the parent hierarchy cannot be created, unlike
+        // File#mkdirs whose boolean result was previously ignored and let the subsequent
+        // FileOutputStream fail with a misleading FileNotFoundException.
+        Files.createDirectories(file.toPath().getParent());
 
         try (InputStream data = storageObject.inputStream(); OutputStream outStream = new FileOutputStream(file)) {
             byte[] buffer = new byte[8 * 1024];
@@ -234,23 +246,27 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public FileAttributes getAttributes(String tenantId, @Nullable String namespace, URI uri) throws IOException {
-        return getAttributeFromPath(getLocalPath(tenantId, uri));
+        try {
+            return getAttributeFromPath(getLocalPath(tenantId, uri));
+        } catch (NoSuchFileException e) {
+            throw newFileNotFound(uri, e);
+        }
     }
 
     @Override
     public FileAttributes getInstanceAttributes(@Nullable String namespace, URI uri) throws IOException {
-        return getAttributeFromPath(getInstancePath(uri));
+        try {
+            return getAttributeFromPath(getInstancePath(uri));
+        } catch (NoSuchFileException e) {
+            throw newFileNotFound(uri, e);
+        }
     }
 
     private static LocalFileAttributes getAttributeFromPath(Path path) throws IOException {
-        try {
-            return LocalFileAttributes.builder()
-                .filePath(path)
-                .basicFileAttributes(Files.readAttributes(path, BasicFileAttributes.class))
-                .build();
-        } catch (NoSuchFileException e) {
-            throw new FileNotFoundException(e.getMessage());
-        }
+        return LocalFileAttributes.builder()
+            .filePath(path)
+            .basicFileAttributes(Files.readAttributes(path, BasicFileAttributes.class))
+            .build();
     }
 
     @Override
@@ -269,7 +285,7 @@ public class LocalStorage implements StorageInterface {
         }
         File file = path.toFile();
         if (!file.exists() && !file.mkdirs()) {
-            throw new RuntimeException("Cannot create directory: " + file.getAbsolutePath());
+            throw new KestraRuntimeException("Cannot create directory for URI: " + uri);
         }
         return kestraUri(uri.getPath());
     }
@@ -283,7 +299,7 @@ public class LocalStorage implements StorageInterface {
                 StandardCopyOption.ATOMIC_MOVE
             );
         } catch (NoSuchFileException e) {
-            throw new FileNotFoundException(e.getMessage());
+            throw newFileNotFound(from, e);
         }
         return kestraUri(to.getPath());
     }

@@ -477,7 +477,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                     if (closed) break
                     // The server emits a first "fake" event carrying only an id to force the
                     // connection open; skip it as it has no state to display.
-                    if (!event.state) continue
+                    if (!(event as Execution).state) continue
                     handlers.onExecution(event as Execution)
                 }
                 finish(!receivedEnd)

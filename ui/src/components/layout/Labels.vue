@@ -18,12 +18,14 @@
                 +{{ hiddenLabels.length }}
             </KsCheckTag>
             <template #content>
-                <div
-                    v-for="(label, index) in hiddenLabels"
-                    :key="index"
-                >
-                    {{ labelText(label) }}
-                </div>
+                <ul class="labels-overflow__list">
+                    <li
+                        v-for="(label, index) in hiddenLabels"
+                        :key="index"
+                    >
+                        {{ labelText(label) }}
+                    </li>
+                </ul>
             </template>
         </KsTooltip>
     </span>
@@ -155,6 +157,16 @@
 
     html.light & {
         color: var(--label-text-active);
+    }
+}
+
+.labels-overflow__list {
+    margin: 0;
+    padding-left: var(--ks-spacing-3);
+    list-style: disc;
+
+    li + li {
+        margin-top: var(--ks-spacing-1);
     }
 }
 </style>

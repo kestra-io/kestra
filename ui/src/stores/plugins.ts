@@ -192,14 +192,11 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     const plugin = ref<PluginComponent>()
     const versions = ref<string[]>()
-    const pluginAllProps = ref<any>()
     const plugins = ref<Plugin[]>()
 
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
-    const inputSchema = ref<any>()
-    const inputsType = ref<any>()
     const schemaType = ref<Record<string, any>>()
     const forceIncludeProperties = ref<string[]>()
 
@@ -338,12 +335,8 @@ export const usePluginsStore = defineStore("plugins", () => {
             ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all})
             : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all})) as PluginComponent
 
-        if (options.commit !== false) {
-            if (options.all === true) {
-                pluginAllProps.value = data
-            } else {
-                plugin.value = data
-            }
+        if (options.commit !== false && options.all !== true) {
+            plugin.value = data
         }
 
         if (!options.all) {
@@ -360,20 +353,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         return data
-    }
-
-    function loadInputsType() {
-        return PluginsAPI.allInputTypes().then(data => {
-            inputsType.value = data
-            return data
-        })
-    }
-
-    function loadInputSchema(options: {type: string}) {
-        return PluginsAPI.schemaFromInputType({type: options.type as Parameters<typeof PluginsAPI.schemaFromInputType>[0]["type"]}).then(data => {
-            inputSchema.value = data
-            return data
-        })
     }
 
     function lazyLoadSchemaType(options: {type: string}) {
@@ -510,12 +489,9 @@ export const usePluginsStore = defineStore("plugins", () => {
         // state
         plugin,
         versions,
-        pluginAllProps,
         plugins,
         pluginsDocumentation,
         editorPlugin,
-        inputSchema,
-        inputsType,
         schemaType,
         currentlyLoading,
         forceIncludeProperties,
@@ -540,8 +516,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadInstalledPluginTypes,
         load,
         loadVersions,
-        loadInputsType,
-        loadInputSchema,
         loadSchemaType,
         lazyLoadSchemaType,
         updateDocumentation,

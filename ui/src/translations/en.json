@@ -837,6 +837,17 @@
       "tooltip": "Restart the trigger"
     },
     "trigger disabled": "Trigger is disabled within Flow source",
+    "trigger enable dialog": {
+      "title": "Enable trigger",
+      "bulk title": "Enable {count} triggers",
+      "description": "This trigger may have missed schedules while it was disabled.",
+      "bulk description": "The selected triggers may have missed schedules while they were disabled.",
+      "strategy": "Select the strategy to use:",
+      "options": {
+        "skip": "Do not recover missed schedules",
+        "follow": "Follow the trigger's {property} configuration"
+      }
+    },
     "flow source not found": "Flow source not found",
     "date format": "Date format",
     "timezone": "Timezone",

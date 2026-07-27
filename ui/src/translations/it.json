@@ -837,6 +837,17 @@
       "tooltip": "Riavvia il trigger"
     },
     "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
+    "trigger enable dialog": {
+      "title": "Abilita trigger",
+      "bulk title": "Abilita {count} triggers",
+      "description": "Questo trigger potrebbe aver saltato delle pianificazioni mentre era disabilitato.",
+      "bulk description": "I trigger selezionati potrebbero aver perso delle pianificazioni mentre erano disabilitati.",
+      "strategy": "Seleziona la strategia da utilizzare:",
+      "options": {
+        "skip": "Non recuperare le pianificazioni mancate",
+        "follow": "Segui la configurazione {property} del trigger"
+      }
+    },
     "flow source not found": "Sorgente del flow non trovata",
     "date format": "Formato data",
     "timezone": "Fuso orario",

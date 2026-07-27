@@ -148,9 +148,11 @@
                         :content="$t('trigger disabled')"
                         :disabled="!scope.row.sourceDisabled"
                     >
+                        <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
+                             moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.sourceDisabled)"
-                            @change="setDisabled(scope.row, $event as boolean)"
+                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
                             inlinePrompt
                             class="switch-text"
                             :disabled="scope.row.sourceDisabled"
@@ -279,6 +281,12 @@
         </template>
     </KsDialog>
 
+    <TriggerEnableDialog
+        v-model="isEnableDialogOpen"
+        :count="enableDialogTrigger ? undefined : selection.length"
+        @confirm="onEnableDialogConfirm"
+    />
+
     <KsDrawer
         v-if="isOpen"
         v-model="isOpen"
@@ -312,6 +320,7 @@
     import BackfillBanner from "./BackfillBanner.vue"
     import Empty from "../layout/empty/Empty.vue"
     import LogsWrapper from "../logs/LogsWrapper.vue"
+    import TriggerEnableDialog from "../triggers/TriggerEnableDialog.vue"
 
     import action from "../../models/action"
     import resource from "../../models/resource"
@@ -571,12 +580,39 @@
             })
     }
 
+    const isEnableDialogOpen = ref(false)
+    // The schedule trigger being enabled; null when enabling the bulk selection.
+    const enableDialogTrigger = ref<any>(null)
+
+    const isScheduleTrigger = (row: any) => row?.kind === "SCHEDULE" || isSchedule(row?.type)
+
     const setDisabled = (trigger: any, value: boolean) => {
-        triggerStore.setDisabled({...trigger, disabled: !value})
+        if (value && isScheduleTrigger(trigger)) {
+            enableDialogTrigger.value = trigger
+            isEnableDialogOpen.value = true
+            return
+        }
+        doSetDisabled(trigger, !value)
+    }
+
+    const doSetDisabled = (trigger: any, disabled: boolean, recoverMissedSchedules?: boolean) => {
+        triggerStore.setDisabled({...trigger, disabled, recoverMissedSchedules})
             .then(() => {
                 toast.saved(trigger.triggerId)
                 loadDataAfterAction()
             })
+    }
+
+    const onEnableDialogConfirm = (recoverMissedSchedules?: boolean) => {
+        if (enableDialogTrigger.value) {
+            doSetDisabled(enableDialogTrigger.value, false, recoverMissedSchedules)
+        } else {
+            runBulk(
+                () => triggerStore.setDisabledByTriggers({triggers: selection.value, disabled: false, recoverMissedSchedules}),
+                "bulk success disabled status.false",
+                t("enable"),
+            )
+        }
     }
 
     const unlock = (trigger: any) => {
@@ -629,6 +665,11 @@
     }
 
     const bulkSetDisabled = (disabled: boolean) => {
+        if (!disabled && selection.value.some((sel: any) => isScheduleTrigger(findRowBySelection(sel)))) {
+            enableDialogTrigger.value = null
+            isEnableDialogOpen.value = true
+            return
+        }
         const confirmKey = disabled ? "bulk disabled status.true" : "bulk disabled status.false"
         const successKey = disabled ? "bulk success disabled status.true" : "bulk success disabled status.false"
         const actionLabel = disabled ? t("disable") : t("enable")
@@ -641,6 +682,9 @@
             ),
         )
     }
+
+    const findRowBySelection = (sel: any) =>
+        triggersWithType.value.find((row: any) => (row.triggerId ?? row.id) === sel.triggerId)
 
     const bulkUnlock = () => {
         toast.confirm(

@@ -837,6 +837,17 @@
       "tooltip": "Redémarrer le trigger"
     },
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
+    "trigger enable dialog": {
+      "title": "Activer le trigger",
+      "bulk title": "Activer {count} triggers",
+      "description": "Ce trigger a pu manquer des planifications pendant qu'il était désactivé.",
+      "bulk description": "Les triggers sélectionnés ont pu manquer des planifications pendant qu'ils étaient désactivés.",
+      "strategy": "Sélectionnez la stratégie à utiliser :",
+      "options": {
+        "skip": "Ne pas récupérer les planifications manquées",
+        "follow": "Suivre la configuration {property} du trigger"
+      }
+    },
     "flow source not found": "Source du flow introuvable",
     "date format": "Format de date",
     "timezone": "Fuseau horaire",

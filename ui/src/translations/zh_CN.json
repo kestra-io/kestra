@@ -837,6 +837,17 @@
       "tooltip": "重新启动trigger"
     },
     "trigger disabled": "在Flow源中触发器已禁用",
+    "trigger enable dialog": {
+      "title": "启用 trigger",
+      "bulk title": "启用 {{count}} triggers",
+      "description": "此 trigger 在被禁用期间可能错过了计划。",
+      "bulk description": "选定的 triggers 在它们被禁用期间可能错过了调度。",
+      "strategy": "选择要使用的策略：",
+      "options": {
+        "skip": "不要恢复遗漏的调度",
+        "follow": "遵循 trigger 的 {property} 配置"
+      }
+    },
     "flow source not found": "未找到flow源",
     "date format": "日期格式",
     "timezone": "时区",

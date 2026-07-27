@@ -84,6 +84,12 @@ const routes: KestraRouteRecord[] = [
         name: NAMESPACE_PARENT_ROUTE,
         path: "/:tenant?/namespaces/edit/:id",
         component: () => import("../components/namespaces/Namespace.vue"),
+        // Resolve legacy deep-links `{name: "namespaces/update", params: {tab}}` and bare
+        // `/:id` URLs to the matching child route, preserving params and query.
+        redirect: (to) => {
+            const tab = (to.params.tab as string) || "overview"
+            return {name: `${NAMESPACE_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
+        },
         children: createNamespaceTabRoutes(),
     },
 

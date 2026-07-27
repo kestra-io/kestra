@@ -1205,12 +1205,11 @@ class ExecutionControllerRunnerTest {
         assertThat(Base64.getDecoder().decode((String) parts.getFirst().get("content"))).isEqualTo(photo);
         assertThat((Map<String, List<String>>) variables.get("formFields")).containsExactly(entry("note", List.of("looks good")));
         assertThat(variables.get("body")).isNull();
-        assertThat(variables.get("bodyBase64")).isNull();
     }
 
     @Test
     @LoadFlows({ "flows/valids/webhook.yaml" })
-    void shouldExposeBodyBase64WhenWebhookReceivesBinaryBody() {
+    void shouldExposeBase64EncodedBodyWhenWebhookReceivesBinaryBody() {
         // Given
         Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook").orElseThrow();
         String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
@@ -1224,11 +1223,10 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        // Then — the body reaches the flow byte-identical, and is not decoded as text
+        // Then — the body reaches the flow byte-identical, base64-encoded rather than decoded as text
         Map<String, Object> variables = execution.getTrigger().getVariables();
 
-        assertThat(Base64.getDecoder().decode((String) variables.get("bodyBase64"))).isEqualTo(content);
-        assertThat(variables.get("body")).isNull();
+        assertThat(Base64.getDecoder().decode((String) variables.get("body"))).isEqualTo(content);
         assertThat(variables.get("parts")).isNull();
     }
 

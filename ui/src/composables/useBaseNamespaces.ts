@@ -20,15 +20,11 @@ export const VALIDATE = {validateStatus: (status: number) => status === 200 || s
 
 export const useBaseNamespacesStore = () => {
     const namespace = ref<any>(undefined)
-    const namespaces = ref<any[] | undefined>(undefined)
-    const secrets = ref<any[] | undefined>(undefined)
     const inheritedSecrets = ref<any>(undefined)
-    const kvs = ref<any[] | undefined>(undefined)
     const inheritedKVs = ref<any>(undefined)
     const inheritedKVModalVisible = ref(false)
     const addKvModalVisible = ref(false)
     const autocomplete = ref<string[]>()
-    const total = ref(0)
     const existing = ref(true)
 
     const axios = useClient()
@@ -40,14 +36,9 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function search(options: {commit?: boolean, sort?: string, [key: string]: any}): Promise<PagedResultsNamespace> {
-        const {commit, sort, ...rest} = options
-        const shouldCommit = commit !== false
+        const {commit: _commit, sort, ...rest} = options
 
         const data = await NamespaceAPI.searchNamespaces({...rest, sort: sort ? [sort] : undefined})
-        if (shouldCommit) {
-            namespaces.value = data.results
-            total.value = data.total ?? 0
-        }
         return data
     }
 
@@ -76,7 +67,7 @@ export const useBaseNamespacesStore = () => {
 
     async function kvsList(item: {id: string}) {
         const data = await KvAPI.listAllKeys({filters: [{field: "namespace", operation: "EQUALS", value: item.id}] as any})
-        return kvs.value = data?.results
+        return data?.results
     }
 
     async function kv(payload: {namespace: string; key: string}) {
@@ -119,12 +110,9 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
-    async function listSecrets({id, commit: shouldCommit}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
+    async function listSecrets({id}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
         try {
             const data = await SecretsAPI.listSecrets({filters: [{field: "namespace", operation: "EQUALS", value: id}] as any}) as any
-            if (shouldCommit !== false) {
-                secrets.value = data.results
-            }
             return data
         } catch (e: any) {
             if (e.status === 404) return {total: 0, results: [], readOnly: false}
@@ -246,16 +234,12 @@ export const useBaseNamespacesStore = () => {
         autocomplete,
         loadAutocomplete,
         search,
-        total,
         load,
         update,
         loadDependencies,
         existing,
         namespace,
-        namespaces,
-        secrets,
         inheritedSecrets,
-        kvs,
         inheritedKVModalVisible,
         addKvModalVisible,
         kvsList,

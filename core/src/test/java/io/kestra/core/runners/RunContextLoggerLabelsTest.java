@@ -94,7 +94,7 @@ class RunContextLoggerLabelsTest {
         Task task = mock(Task.class);
         when(task.getLogLevel()).thenReturn(Level.TRACE);
         when(task.isLogToFile()).thenReturn(false);
-        WorkerTaskData data = new WorkerTaskData(Map.of(RunVariables.LABELS, Label.toNestedMap(List.of(labels))), List.of(), null);
+        WorkerTaskData data = new WorkerTaskData(Map.of(RunVariables.LABELS, Label.toNestedMap(List.of(labels))), List.of(), List.of(), null);
         return WorkerTask.builder().taskRun(taskRun).task(task).data(data).build();
     }
 

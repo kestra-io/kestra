@@ -420,11 +420,11 @@ public class HttpRequest {
     }
 
     /**
-     * A {@code multipart/form-data} body kept as received, part by part.
+     * A {@code multipart/form-data} body as received, part by part.
      * <p>
-     * Unlike {@link MultipartRequestBody}, which builds an outgoing body from a map of values, this body keeps
-     * each part as it arrived: its bytes, and, for a file part, its filename and content type. It is used for
-     * incoming requests, where those bytes must survive untouched.
+     * Unlike {@link MultipartRequestBody}, which builds an outgoing body from a map of values, this body describes
+     * an incoming one: a file part has already been streamed into Kestra's internal storage and carries its URI,
+     * while a part that is not a file carries its content as received.
      */
     @Getter
     @AllArgsConstructor
@@ -437,45 +437,53 @@ public class HttpRequest {
 
         private List<Part> content;
 
-        public HttpEntity to() throws IOException {
-            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-
-            if (this.charset != null) {
-                builder.setCharset(this.charset);
-            }
-
-            this.content.forEach(part ->
-            {
-                ContentType partContentType = part.contentType() != null ? ContentType.parse(part.contentType()) : ContentType.DEFAULT_BINARY;
-
-                builder.addPart(part.name(), new ByteArrayBody(part.content(), partContentType, part.filename()));
-            });
-
-            return builder.build();
-        }
-
-        public static MultipartFormDataRequestBody of(List<Part> parts) {
-            return MultipartFormDataRequestBody.builder()
-                .content(parts)
-                .charset(StandardCharsets.UTF_8)
-                .build();
+        /**
+         * {@inheritDoc}
+         *
+         * @throws UnsupportedOperationException always, as this body describes an incoming request
+         */
+        @Override
+        public HttpEntity to() {
+            throw new UnsupportedOperationException(
+                "An incoming multipart/form-data body cannot be sent as an outgoing request: the content of its file parts lives in Kestra's internal storage."
+            );
         }
 
         /**
-         * A single part of a {@code multipart/form-data} body.
+         * A single part of an incoming {@code multipart/form-data} body.
+         */
+        public sealed interface Part {
+            /**
+             * @return the form field name of the part
+             */
+            String name();
+
+            /**
+             * @return the content type of the part, {@code null} if the caller did not send one
+             */
+            String contentType();
+        }
+
+        /**
+         * A file part, whose content has been stored in Kestra's internal storage.
          *
          * @param name        the form field name of the part
-         * @param filename    the name of the uploaded file, {@code null} for a part that is not a file
-         * @param contentType the content type of the part, {@code null} if the client did not send one
+         * @param filename    the name of the uploaded file
+         * @param contentType the content type of the part, {@code null} if the caller did not send one
+         * @param size        the size of the content in bytes
+         * @param uri         the URI of the content in Kestra's internal storage
+         */
+        public record FilePart(String name, String filename, String contentType, long size, URI uri) implements Part {
+        }
+
+        /**
+         * A part that is not a file, whose content is carried as received.
+         *
+         * @param name        the form field name of the part
+         * @param contentType the content type of the part, {@code null} if the caller did not send one
          * @param content     the content of the part, as received
          */
-        public record Part(String name, String filename, String contentType, byte[] content) {
-            /**
-             * @return whether this part is a file, i.e. whether the client sent a filename for it
-             */
-            public boolean isFile() {
-                return this.filename != null;
-            }
+        public record FormFieldPart(String name, String contentType, byte[] content) implements Part {
         }
     }
 }

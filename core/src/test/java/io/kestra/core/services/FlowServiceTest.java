@@ -111,6 +111,27 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldReturnConstraintWhenPluginDefaultsRefIsUnknown() {
+        // Given — a task references a pluginDefaultsRef that does not resolve to any plugin-defaults
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: broken
+                type: io.kestra.plugin.core.debug.Return
+                format: "should never run"
+                pluginDefaultsRef: does-not-exist
+            """;
+
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
+
+        // Then — surfaced as a constraint error naming the unresolved ref (same check create/update enforce)
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).contains("does-not-exist");
+    }
+
+    @Test
     void importFlow() throws FlowProcessingException {
         String source = """
             id: import
@@ -592,5 +613,32 @@ class FlowServiceTest {
 
         // Then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldResolveNestedFormInputPathWhenRenderingChecks() {
+        // Given a check referencing a FORM child via its nested path, e.g. {{ inputs.environment.region }}
+        Check check = Check.builder()
+            .condition("{{ inputs.environment.region == 'EU' }}")
+            .message("region must be EU")
+            .behavior(Check.Behavior.FAIL_EXECUTION)
+            .build();
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(check));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+
+        // When inputs are passed as the NESTED map (what ExecutionController/CreateExecutionForm hand in
+        // for FORM inputs, via MapUtils.flattenToNestedMap), the nested path resolves like the create path does.
+        List<Check> nestedEu = flowService.getFailedChecks(flow, Map.of("environment", Map.of("region", "EU")));
+        List<Check> nestedUs = flowService.getFailedChecks(flow, Map.of("environment", Map.of("region", "US")));
+
+        // Then EU satisfies the condition (no failed check) and US fails it.
+        assertThat(nestedEu).isEmpty();
+        assertThat(nestedUs).containsExactly(check);
+
+        // And a flat-dotted map (the un-nested form) cannot resolve the path — proving the nesting is required.
+        List<Check> flatDotted = flowService.getFailedChecks(flow, Map.of("environment.region", "EU"));
+        assertThat(flatDotted).isNotEmpty();
     }
 }

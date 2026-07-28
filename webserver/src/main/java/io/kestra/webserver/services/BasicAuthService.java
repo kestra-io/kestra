@@ -1,7 +1,12 @@
 package io.kestra.webserver.services;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.*;
+import java.util.HexFormat;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +26,8 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.cookie.Cookie;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -36,14 +43,23 @@ import lombok.NoArgsConstructor;
 public class BasicAuthService {
     public static final String BASIC_AUTH_SETTINGS_KEY = "kestra.server.basic-auth";
     public static final String BASIC_AUTH_ERROR_CONFIG = "kestra.server.authentication-configuration-error";
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$");
+    public static final String BASIC_AUTH_COOKIE_NAME = "BASIC_AUTH";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*");
     private static final int EMAIL_PASSWORD_MAX_LEN = 256;
+
+    /**
+     * SHA-256 of the last successfully verified token, or {@code null} if not yet verified or
+     * invalidated. Because there is only one valid username/password at any time, a single field
+     * is sufficient. Cleared by {@link #save} whenever credentials change.
+     */
+    private final AtomicReference<String> lastVerifiedTokenSha256 = new AtomicReference<>();
 
     @Inject
     private SettingRepositoryInterface settingRepository;
 
     @Inject
+    @VisibleForTesting
     BasicAuthConfiguration basicAuthConfiguration;
 
     @Inject
@@ -66,6 +82,10 @@ public class BasicAuthService {
     @VisibleForTesting
     @PostConstruct
     public void init() {
+        // Compatibility layer: upgrade any legacy SHA-512 stored password to bcrypt.
+        // This replaces the JDBC migration that is unavailable in the 1.3 branch.
+        migrateLegacyPassword();
+
         if (
             basicAuthConfiguration == null ||
                 (StringUtils.isBlank(basicAuthConfiguration.getUsername()) && StringUtils.isBlank(basicAuthConfiguration.getPassword()))
@@ -88,6 +108,27 @@ public class BasicAuthService {
                     .build()
             );
         }
+    }
+
+    /**
+     * If the stored password is a legacy SHA-512 hex string (does not start with the bcrypt
+     * modular-crypt prefix {@code $2}), wraps it in bcrypt in-place.  No plaintext is needed:
+     * the SHA-512 digest itself becomes the bcrypt input, matching the algorithm used by
+     * {@link AuthUtils#hashPassword} so that subsequent verifications work transparently.
+     */
+    private void migrateLegacyPassword() {
+        var credentials = this.configuration().credentials();
+        if (credentials == null || credentials.getPassword() == null || credentials.getPassword().startsWith("$2")) {
+            return;
+        }
+        String bcryptHash = AuthUtils.bcryptDigest(credentials.getPassword());
+        settingRepository.save(
+            Setting.builder()
+                .key(BASIC_AUTH_SETTINGS_KEY)
+                .value(new SaltedBasicAuthCredentials(credentials.getSalt(), credentials.getUsername(), bcryptHash))
+                .build()
+        );
+        lastVerifiedTokenSha256.set(null);
     }
 
     public void save(BasicAuthCredentials basicAuthCredentials) {
@@ -124,18 +165,28 @@ public class BasicAuthService {
         String salt = previousConfiguredCredentials == null
             ? null
             : previousConfiguredCredentials.getSalt();
-        SaltedBasicAuthCredentials saltedNewConfiguration = SaltedBasicAuthCredentials.salt(
-            salt,
-            basicAuthCredentials.getUsername(),
-            basicAuthCredentials.getPassword()
-        );
-        if (!saltedNewConfiguration.equals(previousConfiguredCredentials)) {
+
+        // bcrypt is non-deterministic, so we cannot compare hashes directly.
+        // Use matches() to determine whether the credentials actually changed.
+        boolean unchanged = previousConfiguredCredentials != null
+            && previousConfiguredCredentials.getUsername().equals(basicAuthCredentials.getUsername())
+            && AuthUtils.matches(previousConfiguredCredentials.getSalt(), basicAuthCredentials.getPassword(), previousConfiguredCredentials.getPassword());
+
+        if (!unchanged) {
+            SaltedBasicAuthCredentials saltedNewConfiguration = SaltedBasicAuthCredentials.salt(
+                salt,
+                basicAuthCredentials.getUsername(),
+                basicAuthCredentials.getPassword()
+            );
             settingRepository.save(
                 Setting.builder()
                     .key(BASIC_AUTH_SETTINGS_KEY)
                     .value(saltedNewConfiguration)
                     .build()
             );
+
+            // Invalidate the token cache so an old password stops working immediately.
+            lastVerifiedTokenSha256.set(null);
 
             ossAuthEventPublisher.publishEventAsync(
                 OssAuthEvent.builder()
@@ -164,7 +215,9 @@ public class BasicAuthService {
             .map(value -> JacksonMapper.ofJson(false).convertValue(value, SaltedBasicAuthCredentials.class))
             .orElse(null);
         return new ConfiguredBasicAuth(
-            this.basicAuthConfiguration != null ? this.basicAuthConfiguration.realm : null, this.basicAuthConfiguration != null ? this.basicAuthConfiguration.openUrls : null, credentials
+            this.basicAuthConfiguration != null ? this.basicAuthConfiguration.realm : null,
+            this.basicAuthConfiguration != null ? this.basicAuthConfiguration.openUrls : null,
+            credentials
         );
     }
 
@@ -174,6 +227,95 @@ public class BasicAuthService {
         return configuration.credentials() != null &&
             !StringUtils.isBlank(configuration.credentials().getUsername()) &&
             !StringUtils.isBlank(configuration.credentials().getPassword());
+    }
+
+    /**
+     * Returns {@code true} if the request carries valid basic-auth credentials
+     * (either via the {@value BASIC_AUTH_COOKIE_NAME} cookie or an {@code Authorization: Basic} header).
+     *
+     * <p>bcrypt verification is only performed on a cache miss. Subsequent requests
+     * with the same token pay only a SHA-256 hash cost, keeping per-request latency
+     * negligible while the at-rest hash remains bcrypt-strength.
+     */
+    public boolean isAuthenticated(HttpRequest<?> request) {
+        SaltedBasicAuthCredentials credentials = configuration().credentials();
+        if (credentials == null) {
+            return false;
+        }
+        Optional<String> encoded = extractFromCookie(request).or(() -> extractFromAuthorizationHeader(request));
+        if (encoded.isEmpty()) {
+            return false;
+        }
+        try {
+            String token = encoded.get();
+            String tokenSha256 = sha256Hex(token);
+
+            // Fast path: same token as last verified — skip bcrypt entirely.
+            // compare via MessageDigest.isEqual to prevent timing attacks
+            String cachedTokenSha256 = lastVerifiedTokenSha256.get();
+            if (cachedTokenSha256 != null && MessageDigest.isEqual(
+                tokenSha256.getBytes(StandardCharsets.UTF_8),
+                cachedTokenSha256.getBytes(StandardCharsets.UTF_8))) {
+                return true;
+            }
+
+            String decoded = new String(Base64.getDecoder().decode(token));
+            int colonIdx = decoded.indexOf(':');
+            if (colonIdx < 0) {
+                return false;
+            }
+            String username = decoded.substring(0, colonIdx);
+            String password = decoded.substring(colonIdx + 1);
+
+            boolean valid = username.equals(credentials.getUsername())
+                && AuthUtils.matches(credentials.getSalt(), password, credentials.getPassword());
+
+            // Wrong passwords always pay the full bcrypt cost; only cache successes.
+            if (valid) {
+                lastVerifiedTokenSha256.set(tokenSha256);
+            }
+            return valid;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private Optional<String> extractFromCookie(HttpRequest<?> request) {
+        try {
+            Cookie cookie = request.getCookies().get(BASIC_AUTH_COOKIE_NAME);
+            if (cookie != null) {
+                return Optional.of(cookie.getValue());
+            }
+        } catch (Exception ignored) {}
+        // Fallback: parse the raw Cookie header directly (handles Micronaut's SimpleHttpRequest in unit tests).
+        String raw = request.getHeaders().get("Cookie");
+        if (raw == null) {
+            return Optional.empty();
+        }
+        for (String pair : raw.split(";")) {
+            int eq = pair.indexOf('=');
+            if (eq > 0 && BASIC_AUTH_COOKIE_NAME.equals(pair.substring(0, eq).trim())) {
+                return Optional.of(pair.substring(eq + 1).trim());
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> extractFromAuthorizationHeader(HttpRequest<?> request) {
+        return request.getHeaders()
+            .getAuthorization()
+            .filter(auth -> auth.toLowerCase().startsWith("basic"))
+            .map(cred -> cred.substring("Basic ".length()));
+    }
+
+    private static String sha256Hex(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(bytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 
     @Getter
@@ -230,7 +372,7 @@ public class BasicAuthService {
             return new SaltedBasicAuthCredentials(
                 salt1,
                 username,
-                AuthUtils.encodePassword(salt1, password)
+                AuthUtils.hashPassword(salt1, password)
             );
         }
     }

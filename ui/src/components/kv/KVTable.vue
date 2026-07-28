@@ -109,6 +109,19 @@
                     </template>
                 </el-table-column>
 
+                <el-table-column v-if="!paneView" columnKey="view" className="row-action">
+                    <template #default="scope">
+                        <IconButton
+                            v-if="!canUpdate(scope.row) && canRead(scope.row)"
+                            :tooltip="$t('show')"
+                            placement="left"
+                            @click="viewKvModal(scope.row)"
+                        >
+                            <Eye />
+                        </IconButton>
+                    </template>
+                </el-table-column>
+
                 <el-table-column v-if="!paneView" columnKey="update" className="row-action">
                     <template #default="scope">
                         <IconButton
@@ -237,6 +250,30 @@
     </Drawer>
 
     <Drawer
+        v-if="viewKvDrawerVisible"
+        v-model="viewKvDrawerVisible"
+        :title="$t('show')"
+    >
+        <el-form class="ks-horizontal">
+            <el-form-item v-if="viewKv.namespace" :label="$t('namespace')">
+                <el-input :modelValue="viewKv.namespace" disabled />
+            </el-form-item>
+            <el-form-item :label="$t('key')">
+                <el-input :modelValue="viewKv.key" disabled />
+            </el-form-item>
+            <el-form-item :label="$t('kv.type')">
+                <el-input :modelValue="viewKv.type" disabled />
+            </el-form-item>
+            <el-form-item :label="$t('value')">
+                <el-input type="textarea" :rows="5" :modelValue="viewKv.value" readonly />
+            </el-form-item>
+            <el-form-item v-if="viewKv.description" :label="$t('description')">
+                <el-input :modelValue="viewKv.description" disabled />
+            </el-form-item>
+        </el-form>
+    </Drawer>
+
+    <Drawer
         v-if="namespacesStore.inheritedKVModalVisible"
         v-model="namespacesStore.inheritedKVModalVisible"
         :title="$t('kv.inherited')"
@@ -256,12 +293,14 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
+    import Eye from "vue-material-design-icons/Eye.vue";
 
     import Id from "../Id.vue";
     import IconButton from "../IconButton.vue";
     import Drawer from "../Drawer.vue";
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";
+    import {formatKvValueForDisplay} from "./kvValueDisplay";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
@@ -502,6 +541,10 @@
         return kvItem.namespace !== undefined && authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, kvItem.namespace);
     }
 
+    function canRead(kvItem: {namespace: string}) {
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(permission.KVSTORE, action.READ, kvItem.namespace);
+    }
+
     function jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
         try {
             const parsed = JSON.parse(value);
@@ -555,6 +598,22 @@
         kv.value.update = true;
         kv.value.description = entry.description;
         addKvDrawerVisible.value = true;
+    }
+
+    const viewKvDrawerVisible = ref(false);
+    const viewKv = ref<{namespace?: string; key?: string; type?: string; value?: string; description?: string}>({});
+
+    async function viewKvModal(entry: any) {
+        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key});
+        const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess();
+        viewKv.value = {
+            namespace: entry.namespace,
+            key: entry.key,
+            type,
+            value: formatKvValueForDisplay(type, value, userTimezone),
+            description: entry.description,
+        };
+        viewKvDrawerVisible.value = true;
     }
 
     function removeKv(namespace: string, key: string) {

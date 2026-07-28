@@ -191,11 +191,13 @@ export const usePluginsStore = defineStore("plugins", () => {
         return response.data;
     }
 
+    const docsLoading = ref(false);
     async function load(options: LoadOptions) {
         if (options.cls === undefined) {
             throw new Error("missing required cls");
         }
 
+        docsLoading.value = true;
         const id = options.version ? `${options.cls}/${options.version}` : options.cls;
         const cacheKey = options.hash ? options.hash + id : id;
         const cachedPluginDoc = pluginsDocumentation.value[cacheKey];
@@ -205,11 +207,11 @@ export const usePluginsStore = defineStore("plugins", () => {
             })
             return cachedPluginDoc;
         }
-
+        
         const url = options.version ?
-            `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
-            `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
-
+        `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
+        `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
+        
         const response = await axios.get<PluginComponent>(url, options.all ? {
             params: {
                 all: options.all,
@@ -228,6 +230,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         if (!options.all) {
             pluginsDocumentation.value[cacheKey] = response.data;
         }
+
 
         return response.data;
     }
@@ -364,6 +367,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         listWithSubgroup,
         load,
         loadVersions,
+        docsLoading,
         loadInputsType,
         loadInputSchema,
         loadSchemaType,

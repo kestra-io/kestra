@@ -15,11 +15,13 @@
                 :initialInputs="flow.inputs"
                 :selectedTrigger="selectedTrigger"
                 :flow="flow"
+                mode="wizard"
                 v-model="inputs"
                 :executeClicked="executeClicked"
                 @confirm="onSubmit($refs.form)"
                 @update:model-value-no-default="values => inputsNoDefaults=values"
                 @update:checks="values => checks=values"
+                @update:on-recap="value => inputsOnRecap = value"
             />
 
             <el-collapse v-model="collapseName">
@@ -57,7 +59,7 @@
                         </el-button>
                     </el-form-item>
                 </div>
-                <div class="right-align">
+                <div class="right-align" v-if="!hasFormInputs || inputsOnRecap">
                     <el-form-item class="submit">
                         <span data-onboarding-target="flow-execute-confirm-button">
                             <el-button
@@ -96,7 +98,8 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
-    import {normalize} from "../../utils/inputs";
+    import {normalize, flattenInputs} from "../../utils/inputs";
+    import get from "lodash/get";
     import Curl from "./Curl.vue";
     import WebhookCurl from "./WebhookCurl.vue";
     import InputsForm from "../../components/inputs/InputsForm.vue";
@@ -129,7 +132,9 @@
                 collapseName: undefined,
                 newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB,
                 executeClicked: false,
-                checks: []
+                checks: [],
+                // wizard recap state: the footer Execute button only appears once every step is filled
+                inputsOnRecap: false
             };
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
@@ -141,11 +146,20 @@
             execution() {
                 return this.executionsStore.execution
             },
+            // a flow with FORM inputs renders the wizard; the footer Execute is gated on the recap step
+            hasFormInputs() {
+                return (this.flow?.inputs ?? []).some(input => input.type === "FORM");
+            },
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
             flowCanBeExecuted() {
                 return this.flow && !this.flow.disabled && !this.haveBadLabels;
+            },
+            isDirty() {
+                return Object.keys(this.inputsNoDefaults).length > 0 ||
+                    this.executionLabels.some(label => label.key || label.value) ||
+                    this.scheduleDate !== undefined;
             },
             hasWebhookTriggers() {
                 if (!this.flow?.triggers) {
@@ -185,13 +199,17 @@
                     return;
                 }
 
-                const nonEmptyInputNames = Object.keys(this.execution.inputs);
-                this.flow.inputs
-                    .filter(input => nonEmptyInputNames.includes(input.id))
-                    .forEach(input => {
-                        let value = this.execution.inputs[input.id];
-                        inputsForm.inputsValues[input.id] = normalize(input.type, value);
-                        const meta = inputsForm.inputsMetaData.find(m => m.id === input.id);
+                // execution.inputs is nested (FORM groups -> {environment:{region:"EU"}}); the model is
+                // flat-keyed by dotted leaf id, so walk each leaf's dotted path into the nested inputs.
+                const executionInputs = this.execution.inputs ?? {};
+                flattenInputs(this.flow.inputs)
+                    .forEach(leaf => {
+                        const value = get(executionInputs, leaf.id);
+                        if (value === undefined) {
+                            return;
+                        }
+                        inputsForm.inputsValues[leaf.id] = normalize(leaf.type, value);
+                        const meta = inputsForm.inputsMetaData.find(m => m.id === leaf.id);
                         if (meta) {
                             meta.isDefault = false;
                         }

@@ -239,7 +239,14 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
             }
 
             if (namespace != null) {
-                delete = delete.and(field("namespace").eq(namespace));
+                // Without a flowId, the namespace is a prefix: it matches the namespace itself and all
+                // its descendants, consistent with the documented behavior and PurgeExecutions. With a
+                // flowId, it targets that flow's exact namespace.
+                if (flowId != null) {
+                    delete = delete.and(field("namespace").eq(namespace));
+                } else {
+                    delete = delete.and(field("namespace").eq(namespace).or(field("namespace").startsWith(namespace + ".")));
+                }
             }
 
             if (flowId != null) {

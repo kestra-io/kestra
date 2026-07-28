@@ -26,13 +26,13 @@
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRun" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
         </el-dialog>
         <el-dialog
             v-if="isSelectFlowOpen"
             v-model="isSelectFlowOpen"
             destroyOnClose
-            :beforeClose="() => reset()"
+            :beforeClose="(done) => beforeSelectFlowClose(done)"
             :appendToBody="true"
             :width="dialogWidth"
         >
@@ -69,7 +69,7 @@
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
-                        <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+                        <FlowRun ref="selectFlowRun" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </el-form-item>
             </el-form>
@@ -120,6 +120,7 @@
             return {
                 isOpen: false,
                 isSelectFlowOpen: false,
+                isConfirmingClose: false,
                 localFlow: undefined,
                 localNamespace: undefined,
                 isLargeScreen: useMediaQuery("(min-width: 768px)"),
@@ -181,9 +182,30 @@
                 this.localFlow = undefined;
                 this.localNamespace = undefined;
             },
+            confirmDiscardIfDirty(isDirty, done){
+                if (!isDirty) {
+                    this.reset();
+                    done();
+                    return;
+                }
+                if (this.isConfirmingClose) {
+                    return;
+                }
+                this.isConfirmingClose = true;
+                this.$toast()
+                    .confirm(this.$t("discard execution confirmation"), () => {
+                        this.reset();
+                        done();
+                    })
+                    .finally(() => {
+                        this.isConfirmingClose = false;
+                    });
+            },
             beforeClose(done){
-                this.reset();
-                done()
+                this.confirmDiscardIfDirty(this.$refs.flowRun?.isDirty, done);
+            },
+            beforeSelectFlowClose(done){
+                this.confirmDiscardIfDirty(this.$refs.selectFlowRun?.isDirty, done);
             }
         },
         computed: {

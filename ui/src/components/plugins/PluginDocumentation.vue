@@ -35,6 +35,7 @@
                         <Markdown 
                             font-size-var="font-size-base"
                             :source="content"
+                            @rendered="pluginsStore.docsLoading = false"
                         />
                     </template>
                 </SchemaToHtml>
@@ -47,12 +48,12 @@
             :class="{'position-absolute': absolute}"
             :showSearch="true"
             :collapseExamples="true"
+            @rendered="pluginsStore.docsLoading = false"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-
     import {computed} from "vue";
     import Markdown from "../layout/Markdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";

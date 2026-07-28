@@ -67,6 +67,32 @@ class FlowTriggerServiceTest {
     }
 
     @Test
+    void computeExecutionsFromFlowTriggersShouldReturnForNormalCondition() {
+        var simpleFlow = aSimpleFlow();
+        var flowWithFlowTrigger = Flow.builder()
+            .id("flow-with-flow-trigger")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(List.of(simpleLogTask()))
+            .triggers(
+                List.of(
+                    flowTriggerWithNoConditions()
+                )
+            )
+            .build();
+
+        var simpleFlowExecution = Execution.newExecution(simpleFlow, EMPTY_LABELS).withState(State.Type.SUCCESS).toBuilder().kind(ExecutionKind.NORMAL).build();
+
+        var resultingExecutionsToRun = flowTriggerService.computeExecutionsFromFlowTriggerConditions(
+            simpleFlowExecution,
+            flowWithFlowTrigger
+        );
+
+        assertThat(resultingExecutionsToRun).size().isEqualTo(1);
+        assertThat(resultingExecutionsToRun.getFirst().getFlowId()).isEqualTo(flowWithFlowTrigger.getId());
+    }
+
+    @Test
     void computeExecutionsFromFlowTriggers_none() {
         var simpleFlow = aSimpleFlow();
 

@@ -1,5 +1,10 @@
 {
   "ru": {
+    "loading": "Загрузка...",
+        "back": "Назад",
+        "next": "Далее",
+        "done": "Готово",
+        "review your inputs": "Проверьте введённые данные",
     "Add flow": "Добавить flow",
     "Default log level": "Уровень log по умолчанию",
     "Default namespace": "Namespace по умолчанию",
@@ -569,6 +574,7 @@
     "execute backfill": "Выполнить заполнение",
     "execute flow behaviour": "Выполнить flow",
     "execute flow now ?": "Вы хотите выполнить этот flow?",
+    "discard execution confirmation": "У вас есть несохраненные input. Вы уверены, что хотите отменить эту execution?",
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
@@ -1128,6 +1134,7 @@
     "light_version": "Легкая версия",
     "line-by-line": "построчно",
     "loaded x dependencies": "{count} зависимости загружены",
+    "loading": "Загрузка...",
     "log expand setting": "Отображение logs по умолчанию",
     "logExporters": "Экспортеры Log",
     "logs": "Логи",

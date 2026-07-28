@@ -1,12 +1,14 @@
 package io.kestra.core.storages;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.WindowsUtils;
 
 import jakarta.annotation.Nullable;
@@ -145,12 +147,21 @@ public record NamespaceFile(
             storagePath += ".v" + version;
         }
 
-        return new NamespaceFile(
-            pathWithoutLeadingSlash,
-            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/") + (isDirectory(path) ? "/" : "")),
-            namespace,
-            version
-        );
+        // Use the multi-argument URI constructor so that URI-illegal characters (e.g. spaces)
+        // are percent-encoded (space → %20) while legal URI path characters (e.g. '+') are
+        // preserved unchanged — keeping "a b.txt" and "a+b.txt" as two distinct stored objects.
+        String uriPath = namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/")
+            + (isDirectory(path) ? "/" : "");
+        try {
+            return new NamespaceFile(
+                pathWithoutLeadingSlash,
+                new URI(StorageContext.KESTRA_SCHEME, "", uriPath, null),
+                namespace,
+                version
+            );
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid namespace file path: " + path, e);
+        }
     }
 
     public static Path normalize(Path path) {
@@ -161,12 +172,15 @@ public record NamespaceFile(
         if (!compatiblePath.startsWith("/")) {
             compatiblePath = "/" + compatiblePath;
         }
-        return Path.of(compatiblePath);
+        if (FileUtils.isParentTraversal(compatiblePath)) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
+        return Path.of(compatiblePath).normalize();
     }
 
     /**
      * Returns the path of file relative to the namespace.
-     * 
+     *
      * @return The path.
      */
     public Path filePath() {

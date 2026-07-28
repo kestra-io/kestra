@@ -85,7 +85,7 @@
     const flowWarnings = computed(() => {
         const outdatedWarning =
             flowStore.flowValidation?.outdated && !flowStore.isCreating
-                ? flowStore.flowValidation?.constraints?.split(", ") ?? []
+                ? [`${t("outdated revision save confirmation.update.description")} ${t("outdated revision save confirmation.update.details")}`]
                 : [];
 
         const deprecationWarnings =

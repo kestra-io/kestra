@@ -1,5 +1,10 @@
 {
   "fr": {
+    "loading": "Chargement...",
+        "back": "Retour",
+        "next": "Suivant",
+        "done": "Terminé",
+        "review your inputs": "Vérifiez vos entrées",
     "Add flow": "Ajouter un flow",
     "Default log level": "Niveau de log par défaut",
     "Default namespace": "Espace de nom par défaut",
@@ -569,6 +574,7 @@
     "execute backfill": "Exécuter le backfill",
     "execute flow behaviour": "Exécuter le flow",
     "execute flow now ?": "Voulez-vous exécuter ce flow ?",
+    "discard execution confirmation": "Vous avez des inputs non enregistrés. Êtes-vous sûr de vouloir abandonner cette exécution ?",
     "execute the flow": "Exécuter le flow <code>{id}</code>",
     "execution": "Exécution",
     "execution already finished": "Exécution <code>{executionId}</code> déjà terminée",
@@ -1128,6 +1134,7 @@
     "light_version": "Version légère",
     "line-by-line": "ligne par ligne",
     "loaded x dependencies": "{count} dépendances chargées",
+    "loading": "Chargement...",
     "log expand setting": "Affichage par défaut des journaux",
     "logExporters": "Exportateurs de Logs",
     "logs": "Fichiers journaux",

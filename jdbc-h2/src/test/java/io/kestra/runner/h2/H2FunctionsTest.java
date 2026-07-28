@@ -54,4 +54,54 @@ class H2FunctionsTest {
         String[] jqString = H2Functions.jqStringArray("{\"a\": [\"1\", \"2\", \"3\"]}", ".a");
         assertThat(List.of(jqString)).containsExactlyInAnyOrder("1", "2", "3");
     }
+
+    @Test
+    void shouldEscapeJqStringNullValue() {
+        // Given / When / Then
+        assertThat(H2Functions.escapeJqString(null)).isNull();
+    }
+
+    @Test
+    void shouldEscapeJqStringMetacharacters() {
+        // Given
+        String input = "key\\with\"quotes";
+
+        // When
+        String escaped = H2Functions.escapeJqString(input);
+
+        // Then — backslash must be escaped before double-quote to avoid double-escaping
+        assertThat(escaped).isEqualTo("key\\\\with\\\"quotes");
+    }
+
+    @Test
+    void shouldEscapeJqStringNamedControlCharacters() {
+        // Given — named control characters: LF, CR, TAB, BS, FF
+        assertThat(H2Functions.escapeJqString("\n")).isEqualTo("\\n");
+        assertThat(H2Functions.escapeJqString("\r")).isEqualTo("\\r");
+        assertThat(H2Functions.escapeJqString("\t")).isEqualTo("\\t");
+        assertThat(H2Functions.escapeJqString("\b")).isEqualTo("\\b");
+        assertThat(H2Functions.escapeJqString("\f")).isEqualTo("\\f");
+    }
+
+    @Test
+    void shouldEscapeJqStringRawControlCharacters() {
+        // Given — U+0001 (SOH) and U+001F (US), which have no named JSON escape
+        assertThat(H2Functions.escapeJqString("")).isEqualTo("\\u0001");
+        assertThat(H2Functions.escapeJqString("")).isEqualTo("\\u001f");
+    }
+
+    @Test
+    void shouldEscapeJqStringAndProduceValidJqProgram() {
+        // Given — a key crafted to break out of a jq string literal if unescaped
+        String maliciousKey = "x\") | .password | (\"";
+        String escaped = H2Functions.escapeJqString(maliciousKey);
+
+        // When — embed in a real jq expression and evaluate
+        String json = "{\"labels\":[{\"key\":\"safe\",\"value\":\"v\"}]}";
+        String expression = ".labels[]? | select(.key == \"" + escaped + "\") | .value";
+        String result = H2Functions.jqString(json, expression);
+
+        // Then — no match (injection neutralised), no exception
+        assertThat(result).isNull();
+    }
 }

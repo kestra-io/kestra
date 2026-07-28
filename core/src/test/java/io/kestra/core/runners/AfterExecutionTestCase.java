@@ -93,4 +93,14 @@ public class AfterExecutionTestCase {
         Map<String, Object> outputs = (Map<String, Object>) afterExecution.getOutputs().get("values");
         assertThat(outputs.get("state")).isEqualTo("SUCCESS");
     }
+
+    public void shouldCallFlowableTasksAfterExecution(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(4);
+
+        assertThat(execution.findTaskRunsByTaskId("mytask").getFirst().getState().getCurrent()).isEqualTo(SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent()).isEqualTo(SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after_if_log").getFirst().getState().getCurrent()).isEqualTo(SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("after_end").getFirst().getState().getCurrent()).isEqualTo(SUCCESS);
+    }
 }

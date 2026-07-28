@@ -1,5 +1,10 @@
 {
   "ko": {
+    "loading": "로딩 중...",
+        "back": "뒤로",
+        "next": "다음",
+        "done": "완료",
+        "review your inputs": "입력 내용을 검토하세요",
     "Add flow": "Flow 추가",
     "Default log level": "기본 log 레벨",
     "Default namespace": "기본 namespace",
@@ -569,6 +574,7 @@
     "execute backfill": "backfill 실행",
     "execute flow behaviour": "Flow 실행",
     "execute flow now ?": "이 flow를 실행하시겠습니까?",
+    "discard execution confirmation": "저장되지 않은 input이 있습니다. 이 실행을 취소하시겠습니까?",
     "execute the flow": "Flow <code>{id}</code> 실행",
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
@@ -1128,6 +1134,7 @@
     "light_version": "라이트 버전",
     "line-by-line": "줄별로",
     "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
+    "loading": "로딩 중...",
     "log expand setting": "기본 Log 표시",
     "logExporters": "로그 Exporters",
     "logs": "Logs",

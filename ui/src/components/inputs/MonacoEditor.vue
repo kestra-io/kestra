@@ -952,7 +952,11 @@
 
         observeAndResizeSuggestWidget();
 
-        setTimeout(() => monaco.editor.remeasureFonts(), 1)
+        // Remeasure once now for the already-cached font, and again once web fonts finish
+        // loading — otherwise Monaco caches fallback-font glyph widths and the caret drifts
+        // as you type. See https://github.com/microsoft/monaco-editor/issues/392
+        setTimeout(() => monaco.editor.remeasureFonts(), 1);
+        document.fonts.ready.then(() => monaco.editor.remeasureFonts());
         emit("editorDidMount", editorResolved.value);
 
         /* Handle resizing. */

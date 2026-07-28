@@ -1,5 +1,10 @@
 {
   "hi": {
+    "loading": "लोड हो रहा है...",
+        "back": "वापस",
+        "next": "अगला",
+        "done": "पूर्ण",
+        "review your inputs": "अपने इनपुट्स की समीक्षा करें",
     "Add flow": "Flow जोड़ें",
     "Default log level": "पूर्व-निर्धारित log स्तर",
     "Default namespace": "पूर्व-निर्धारित namespace",
@@ -569,6 +574,7 @@
     "execute backfill": "Backfill निष्पादित करें",
     "execute flow behaviour": "Flow निष्पादित करें",
     "execute flow now ?": "क्या आप इस flow को निष्पादित करना चाहते हैं?",
+    "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
@@ -1128,6 +1134,7 @@
     "light_version": "लाइट संस्करण",
     "line-by-line": "लाइन-बाय-लाइन",
     "loaded x dependencies": "{count} निर्भरताएँ लोड की गईं",
+    "loading": "लोड हो रहा है...",
     "log expand setting": "Log डिफ़ॉल्ट प्रदर्शन",
     "logExporters": "लॉग Exporters",
     "logs": "Logs",

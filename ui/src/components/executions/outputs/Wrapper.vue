@@ -457,7 +457,7 @@
 .outputs {
     display: flex;
     width: 100%;
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
 }
 
@@ -562,7 +562,7 @@
             & .task-label {
                 width: 100%;
                 max-width: 100%;
-                
+
                 & .task-iteration-value {
                     display: inline-block;
                     width: 80px;

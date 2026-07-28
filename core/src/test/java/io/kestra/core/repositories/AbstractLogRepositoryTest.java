@@ -335,6 +335,26 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
+    void deleteByQueryWithNamespacePrefix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        LogEntry parent = logEntry(tenant, Level.INFO, "exec-parent").namespace("io.kestra.purge").build();
+        LogEntry child = logEntry(tenant, Level.INFO, "exec-child").namespace("io.kestra.purge.child").build();
+        LogEntry sibling = logEntry(tenant, Level.INFO, "exec-sibling").namespace("io.kestra.purgeother").build();
+        logRepository.save(parent);
+        logRepository.save(child);
+        logRepository.save(sibling);
+
+        // Without a flowId, the namespace is a prefix: the namespace itself and its descendants are
+        // purged, while sibling namespaces sharing a textual prefix (io.kestra.purgeother) are kept.
+        int deleted = logRepository.deleteByQuery(tenant, "io.kestra.purge", null, null, null, null, ZonedDateTime.now().plusMinutes(1));
+
+        assertThat(deleted).isEqualTo(2);
+        assertThat(logRepository.findByExecutionId(tenant, parent.getExecutionId(), null)).isEmpty();
+        assertThat(logRepository.findByExecutionId(tenant, child.getExecutionId(), null)).isEmpty();
+        assertThat(logRepository.findByExecutionId(tenant, sibling.getExecutionId(), null)).hasSize(1);
+    }
+
+    @Test
     void findAllAsync() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO).build());
@@ -394,6 +414,21 @@ public abstract class AbstractLogRepositoryTest {
         );
 
         assertThat(results).isEqualTo(1.0);
+    }
+
+    @Test
+    void shouldPersistTaskIdLongerThan150Chars() {
+        // A plugin-generated taskId (e.g. Ansible "<host> | <play> : <task>") can exceed the legacy
+        // VARCHAR(150) task_id column and crash-loop the indexer; the column now allows up to 256.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String longTaskId = "a".repeat(200);
+        LogEntry log = logEntry(tenant, Level.INFO, "execLongTaskId").taskId(longTaskId).build();
+
+        LogEntry saved = logRepository.save(log);
+
+        List<LogEntry> found = logRepository.findByExecutionIdAndTaskId(tenant, saved.getExecutionId(), longTaskId, null);
+        assertThat(found).hasSize(1);
+        assertThat(found.getFirst().getTaskId()).isEqualTo(longTaskId);
     }
 
     @Test

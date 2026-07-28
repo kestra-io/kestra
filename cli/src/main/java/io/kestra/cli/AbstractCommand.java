@@ -202,6 +202,10 @@ public abstract class AbstractCommand extends BaseCommand implements Callable<In
     }
 
     @SuppressWarnings({ "unused" })
+    void setConfig(Path config) {
+        this.config = config;
+    }
+
     public Map<String, Object> propertiesFromConfig() {
         if (this.config.toFile().exists()) {
             YamlPropertySourceLoader yamlPropertySourceLoader = new YamlPropertySourceLoader();

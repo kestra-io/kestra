@@ -7,10 +7,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -317,6 +320,11 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    void pluginDefaultsRefNotFound() throws Exception {
+        pluginDefaultsCaseTest.pluginDefaultsRefNotFound();
+    }
+
+    @Test
     @LoadFlows(
         value = { "flows/valids/switch.yaml",
             "flows/valids/task-flow.yaml",
@@ -620,8 +628,21 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/after-execution-flowable.yaml")
+    public void shouldCallFlowableTasksAfterExecution(Execution execution) {
+        afterExecutionTestCase.shouldCallFlowableTasksAfterExecution(execution);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/after-execution-listener.yaml")
     public void shouldCallTasksAfterListener(Execution execution) {
         afterExecutionTestCase.shouldCallTasksAfterListener(execution);
+    }
+
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent execution-state race ('currently at the ...')")
+    @Test
+    @LoadFlows(value = { "flows/valids/waitfor-nested.yaml" }, tenantId = "waitfornested")
+    void waitforNestedThreeLevels() throws Exception {
+        loopUntilTestCaseTest.waitforNestedThreeLevels("waitfornested");
     }
 }

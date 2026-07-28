@@ -54,20 +54,22 @@
                                             <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                             <ChevronDown v-else />
                                         </div>
-                                        <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
-                                            <template #content>
-                                                <code>{{ item.name }}</code>
-                                                <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
-                                            </template>
-                                            <span v-if="verticalLayout" class="task-name">
-                                                <code :title="item.name">{{ item.name }}</code>
-                                                <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
-                                            </span>
-                                            <span v-else>
-                                                <code>{{ item.name }}</code>
-                                                <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
-                                            </span>
-                                        </el-tooltip>
+                                        <div class="task-label" :style="{'--depth': item.depth || 0}">
+                                            <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
+                                                <template #content>
+                                                    <code>{{ item.name }}</code>
+                                                    <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
+                                                </template>
+                                                <span v-if="verticalLayout" class="task-name">
+                                                    <code :title="item.name">{{ item.name }}</code>
+                                                    <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
+                                                </span>
+                                                <span v-else>
+                                                    <code>{{ item.name }}</code>
+                                                    <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
+                                                </span>
+                                            </el-tooltip>
+                                        </div>
                                         <div>
                                             <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                                 <template #content>
@@ -676,6 +678,15 @@
 
                 > * {
                     padding: 1rem .5rem;
+                }
+
+                .task-label {
+                    flex: 1;
+                    min-width: 0;
+                    display: flex;
+                    align-items: center;
+                    // indent dynamically-generated child taskruns under their parent
+                    padding-left: calc(.5rem + (var(--depth, 0) * 1.5rem));
                 }
 
                 .el-tooltip__trigger {

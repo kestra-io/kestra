@@ -2,12 +2,15 @@ package io.kestra.webserver.utils;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.exceptions.HttpStatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,5 +39,19 @@ class PageableUtilsTest {
         assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1, List.of("key:asc"), toUpper));
         assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1, List.of("key:asc")));
         assertThrows(IllegalArgumentException.class, () -> PageableUtils.from(1, -1));
+    }
+
+    @Test
+    void shouldThrowWhenSortFieldIsUnknown() {
+        // Given a mapper that only knows "id" — any other field returns null
+        Function<String, String> mapper = Map.of("id", "id")::get;
+
+        // When an unknown sort field is supplied
+        HttpStatusException e = assertThrows(HttpStatusException.class,
+            () -> PageableUtils.from(1, 10, List.of("unknownColumn:asc"), mapper));
+
+        // Then a 422 is returned with the unknown field name
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+        assertThat(e.getMessage()).contains("unknownColumn");
     }
 }

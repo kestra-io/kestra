@@ -68,6 +68,7 @@
             :plugin="currentDocumentationPlugin"
         />
     </div>
+    <div class="docs-spinner" v-if="pluginsStore.docsLoading" />
 </template>
 
 <script setup lang="ts">
@@ -258,8 +259,8 @@
 
     const hasIcon = (cls: string) => !!icons.value?.[cls];
 
-    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
     const miscStore = useMiscStore();
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
 
     const navigateToEditorPlugin = async (editorPlugin: {cls: string, version?: string}) => {
         if (!editorPlugin?.cls) return;
@@ -288,8 +289,13 @@
 
         pushNavigationItem(getSimpleType(pluginCls), "element", {cls: pluginCls});
         currentView.value = "documentation";
-        const pluginData = await pluginsStore.load({cls: pluginCls, version: pluginVersion, hash: hash.value});
-        currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, ...pluginData} : editorPlugin;
+        // only load the plugin docs if the plugin is not already loaded in the store
+        if(pluginsStore.plugin?.cls !== pluginCls || pluginsStore.plugin?.version !== pluginVersion) {
+            const pluginData = await pluginsStore.load({cls: pluginCls, version: pluginVersion, hash: hash.value});
+            currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, ...pluginData} : editorPlugin;
+        } else {
+            currentDocumentationPlugin.value = pluginsStore.plugin;
+        }
     };
 
     const findSubgroupForPlugin = (plugin: any, pluginCls: string) => {
@@ -317,6 +323,21 @@
 </script>
 
 <style scoped lang="scss">
+.docs-spinner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 24px;
+    height: 24px;
+    z-index: 9999;
+    opacity: 0.5;
+
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle fill='none' stroke='%23ccc' stroke-width='10' cx='50' cy='50' r='35'/><path fill='%23ccc' d='M50 15a35 35 0 1 1-24.75 10.25L50 50z'><animateTransform attributeName='transform' type='rotate' from='0 50 50' to='360 50 50' dur='1s' repeatCount='indefinite'/></path></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+    animation: spin 1s linear infinite;
+}
+
 .breadcrumb {
     padding: 0.5rem 1rem;
     border-bottom: 1px solid var(--ks-border-primary);

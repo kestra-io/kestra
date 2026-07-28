@@ -127,7 +127,12 @@ public class VariableRenderer {
             }
 
         } catch (IOException | PebbleException e) {
-            String alternativeRender = this.alternativeRender(e, (String) inline, variables);
+            // The Handlebars fallback only bridges legacy syntax differences; it can't fix a real
+            // runtime error (e.g. secret() failing because Vault is unreachable) and would only mask
+            // it behind a cryptic syntax error. Skip it in that case and let the real cause propagate.
+            boolean hasNonTemplateCause = findNonTemplateCause(e) != null;
+
+            String alternativeRender = hasNonTemplateCause ? null : this.alternativeRender(e, (String) inline, variables);
             if (alternativeRender == null) {
                 if (e instanceof PebbleException pebbleException) {
                     throw properPebbleException(pebbleException);
@@ -163,6 +168,25 @@ public class VariableRenderer {
      * @return The rendered string.
      */
     protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return null;
+    }
+
+    /**
+     * Walks the cause chain looking for a failure that did not originate from template parsing/evaluation
+     * itself - i.e. a function or filter (e.g. {@code secret()}) that executed and failed for a real
+     * reason, surfaced as a non-Pebble wrapped cause. Such failures must be propagated rather than masked
+     * by the Handlebars fallback. Pure parse/attribute errors (legacy Handlebars syntax) have no wrapped
+     * non-Pebble cause, so the fallback is still attempted for those.
+     *
+     * @param e the exception thrown by the default Pebble renderer.
+     * @return  the underlying non-template cause if any, otherwise {@code null}.
+     */
+    private static Throwable findNonTemplateCause(Throwable e) {
+        for (Throwable cause = e.getCause(); cause != null; cause = cause.getCause()) {
+            if (!(cause instanceof PebbleException)) {
+                return cause;
+            }
+        }
         return null;
     }
 

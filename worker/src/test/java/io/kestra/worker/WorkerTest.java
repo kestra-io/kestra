@@ -1,11 +1,14 @@
 package io.kestra.worker;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assertions;
@@ -14,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
@@ -28,6 +32,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.execution.Fail;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -145,6 +150,7 @@ class WorkerTest {
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent 'Await failed to terminate within PT1M'")
     @Test
     void killed() throws InterruptedException, TimeoutException, QueueException {
         Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);
@@ -269,6 +275,83 @@ class WorkerTest {
             .findFirst()
             .orElseThrow();
         assertThat(result.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    void shouldEmitFailedResultWhenTaskFailsOnItsOwnDuringShutdownDrain() throws Exception {
+        // Given: shutdown=true (drain window active) but shutdownInterrupted=false (grace period not elapsed)
+        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
+        setWorkerFlag(worker, "shutdown", true);
+        setWorkerFlag(worker, "shutdownInterrupted", false);
+
+        List<WorkerTaskResult> results = new CopyOnWriteArrayList<>();
+        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> results.add(either.getLeft()));
+
+        // When: run a task that fails on its own (not interrupted by the worker)
+        invokeRun(worker, failWorkerTask());
+
+        // Then: result must be emitted — the genuine failure must not be swallowed (regression for #17124)
+        Await.until(
+            () -> results.stream().anyMatch(r -> r.getTaskRun().getState().isFailed()),
+            Duration.ofMillis(100),
+            Duration.ofSeconds(10)
+        );
+        assertThat(results).anyMatch(r -> r.getTaskRun().getState().isFailed());
+        receive.blockLast(Duration.ofSeconds(1));
+    }
+
+    @Test
+    void shouldDropFailedResultWhenTaskWasInterruptedByShutdown() throws Exception {
+        // Given: shutdown=true AND shutdownInterrupted=true (grace period elapsed, worker forcibly interrupted)
+        DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
+        setWorkerFlag(worker, "shutdown", true);
+        setWorkerFlag(worker, "shutdownInterrupted", true);
+
+        List<WorkerTaskResult> results = new CopyOnWriteArrayList<>();
+        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> results.add(either.getLeft()));
+
+        // When: run a task that ends in FAILED state (because it was interrupted by the forced shutdown)
+        invokeRun(worker, failWorkerTask());
+
+        // Then: result must NOT be emitted — the executor will resubmit the task
+        // (all results except the RUNNING interim emit come from run(); RUNNING emits before the shutdown check)
+        Thread.sleep(200);
+        assertThat(results).noneMatch(r -> r.getTaskRun().getState().isFailed());
+        receive.blockLast(Duration.ofSeconds(1));
+    }
+
+    private void setWorkerFlag(DefaultWorker worker, String fieldName, boolean value) throws Exception {
+        Field field = DefaultWorker.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        ((AtomicBoolean) field.get(worker)).set(value);
+    }
+
+    private void invokeRun(DefaultWorker worker, WorkerTask workerTask) throws Exception {
+        Method runMethod = DefaultWorker.class.getDeclaredMethod("run", WorkerTask.class, Boolean.class);
+        runMethod.setAccessible(true);
+        runMethod.invoke(worker, workerTask, false);
+    }
+
+    private WorkerTask failWorkerTask() {
+        Fail task = Fail.builder()
+            .type(Fail.class.getName())
+            .id("drain-fail-test")
+            .build();
+
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unit-test")
+            .tasks(Collections.singletonList(task))
+            .build();
+
+        Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+        ResolvedTask resolvedTask = ResolvedTask.of(task);
+
+        return WorkerTask.builder()
+            .runContext(runContextFactory.of(ImmutableMap.of("key", "value")))
+            .task(task)
+            .taskRun(TaskRun.of(execution, resolvedTask))
+            .build();
     }
 
     private WorkerTask workerTask(long sleepDuration) {

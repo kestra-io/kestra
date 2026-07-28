@@ -16,6 +16,7 @@ import picocli.CommandLine;
         ReindexCommand.class,
         DatabaseCommand.class,
         SubmitQueuedCommand.class,
+        PurgeQueueCommand.class,
         StateStoreCommand.class
     }
 )

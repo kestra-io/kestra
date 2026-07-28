@@ -13,6 +13,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.AbstractJdbcRepository;
+import io.kestra.runner.h2.H2Functions;
 
 public abstract class H2ExecutionRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<Execution> jdbcRepository, String query, Map<String, String> labels) {
@@ -25,7 +26,7 @@ public abstract class H2ExecutionRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(key, String.class));
+                Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(H2Functions.escapeJqString(key), String.class));
                 if (value == null) {
                     conditions.add(valueField.isNull());
                 } else {
@@ -53,7 +54,7 @@ public abstract class H2ExecutionRepositoryService {
             var labels = input.left().get();
             labels.forEach((key, value) ->
             {
-                Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val((String) key, String.class));
+                Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(H2Functions.escapeJqString((String) key), String.class));
                 switch (operation) {
                     case EQUALS -> conditions.add(value == null ? valueField.isNull() : valueField.eq((String) value));
                     case NOT_EQUALS, NOT_IN ->

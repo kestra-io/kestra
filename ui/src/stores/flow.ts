@@ -78,7 +78,6 @@ export interface Flow {
 export type FlowSaveOutcome =
     | "saved"
     | "redirect_to_update"
-    | "confirmOutdatedSaveDialog"
     | "blocked"
     | "no_op";
 
@@ -109,7 +108,6 @@ export const useFlowStore = defineStore("flow", () => {
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
-    const confirmOutdatedSaveDialog = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>();
@@ -144,11 +142,30 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (!flow.value) return "blocked";
         const source = flowYaml.value;
+        const validation = await onEdit({source});
+        if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+            return "no_op";
+        }
         const outcome = await saveWithoutRevisionGuard();
         if (isSuccessfulFlowSaveOutcome(outcome)) {
             flowYamlOrigin.value = source;
         }
         return outcome;
+    }
+
+    function confirmOutdatedSave(): Promise<boolean> {
+        const key = "outdated revision save confirmation.update";
+        return ElMessageBox({
+            title: t(`${key}.title`),
+            message: () => h("div", null, [
+                h("p", null, `${t(`${key}.description`)} ${t(`${key}.details`)}`),
+            ]),
+            showCancelButton: true,
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("cancel"),
+            center: false,
+            showClose: false,
+        }).then(() => true).catch(() => false);
     }
 
     const route = useRoute();
@@ -166,8 +183,8 @@ export const useFlowStore = defineStore("flow", () => {
 
         if (source) {
             const validation = await onEdit({source});
-            if (validation?.outdated && !isCreating.value) {
-                return "confirmOutdatedSaveDialog";
+            if (validation?.outdated && !isCreating.value && !(await confirmOutdatedSave())) {
+                return "no_op";
             }
             const outcome = await saveWithoutRevisionGuard();
             if (isSuccessfulFlowSaveOutcome(outcome)) {
@@ -948,7 +965,6 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
-        confirmOutdatedSaveDialog,
         haveChange,
         expandedSubflows,
         metadata,

@@ -11,12 +11,15 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.GraphUtils;
 
 import jakarta.inject.Inject;
@@ -33,6 +36,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PluginDefaultsCaseTest {
     @Inject
     private TestRunnerUtils runnerUtils;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    public void pluginDefaultsRefNotFound() throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
+        // FlowService.create/update reject unresolved refs, so the only way an unresolved ref reaches runtime is a
+        // flow that became invalid after creation (e.g. its namespace plugin-defaults was removed). We reproduce
+        // that by storing the flow directly through the repository, which bypasses the ref validation.
+        String source = """
+            id: plugin-defaults-ref-not-found
+            namespace: io.kestra.tests
+            tasks:
+              - id: broken
+                type: io.kestra.plugin.core.debug.Return
+                format: "should never run"
+                pluginDefaultsRef: does-not-exist
+            """;
+        FlowWithSource created = flowRepository.create(GenericFlow.fromYaml(MAIN_TENANT, source));
+
+        try {
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "plugin-defaults-ref-not-found", Duration.ofSeconds(60));
+
+            // the task references a pluginDefaultsRef that does not resolve: it must fail at runtime
+            assertThat(execution.getState().getCurrent()).isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+            assertThat(execution.getTaskRunList()).hasSize(1);
+            assertThat(execution.getTaskRunList().getFirst().getTaskId()).isEqualTo("broken");
+            assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(io.kestra.core.models.flows.State.Type.FAILED);
+        } finally {
+            flowRepository.delete(created);
+        }
+    }
 
     public void taskDefaults() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "plugin-defaults", Duration.ofSeconds(60));

@@ -7,6 +7,14 @@
                 :class="{'without-backdrop': !props.backdrop}"
             >
                 <div class="onboarding-success-card">
+                    <button
+                        class="onboarding-success-card__close"
+                        type="button"
+                        :aria-label="$t('close')"
+                        @click="close"
+                    >
+                        <Close />
+                    </button>
                     <h3>{{ $t("welcome_copilot.success_popup.title") }}</h3>
                     <p>{{ $t("welcome_copilot.success_popup.description") }}</p>
 
@@ -34,6 +42,7 @@
 <script setup lang="ts">
     import {computed, nextTick} from "vue";
     import {useRoute, useRouter} from "vue-router";
+    import Close from "vue-material-design-icons/Close.vue";
 
     const props = withDefaults(defineProps<{
         modelValue: boolean;
@@ -56,6 +65,10 @@
         name: "welcome/success",
         params: {tenant: route.params.tenant},
     }));
+
+    function close() {
+        emit("update:modelValue", false);
+    }
 
     async function goToTutorial() {
         if (!props.modelValue) {
@@ -101,6 +114,23 @@
         background: var(--ks-background-card);
         box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
         text-align: center;
+
+        .onboarding-success-card__close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            display: flex;
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: var(--ks-content-secondary);
+            cursor: pointer;
+            line-height: 0;
+
+            &:hover {
+                color: var(--ks-content-primary);
+            }
+        }
 
         h3 {
             margin: 0 0 0.75rem;

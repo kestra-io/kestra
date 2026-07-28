@@ -37,6 +37,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -118,7 +119,7 @@ public class MiscController {
     protected EditionProvider editionProvider;
 
     @Inject
-    PebbleExpressionService pebbleExpressionService;
+    protected PebbleExpressionService pebbleExpressionService;
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
@@ -132,7 +133,7 @@ public class MiscController {
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
             .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
-            .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
+            .isAnonymousUsageEnabled(isAnonymousUsageEnabled)
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .isTemplateEnabled(templateRepository.isPresent())
             .preview(
@@ -179,7 +180,7 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
     public HttpResponse<Void> createBasicAuth(
-        @RequestBody @Body BasicAuthCredentials basicAuthCredentials) {
+        @RequestBody @Valid @Body BasicAuthCredentials basicAuthCredentials) {
         basicAuthService
             .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
             .save(basicAuthCredentials);

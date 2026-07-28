@@ -51,6 +51,7 @@ public abstract class AbstractRunnerConcurrencyTest {
         flowConcurrencyCaseTest.flowConcurrencyWithForEachItem("flow-concurrency-with-for-each-item");
     }
 
+    @FlakyTest(description = "flaky on CI — release triage 2026-06: intermittent concurrency-queue restart timing")
     @Test
     @LoadFlows(value = { "flows/valids/flow-concurrency-queue-fail.yml" }, tenantId = "concurrency-queue-restarted")
     protected void concurrencyQueueRestarted() throws Exception {

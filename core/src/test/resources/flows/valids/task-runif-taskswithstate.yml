@@ -1,0 +1,28 @@
+id: task-runif-taskswithstate
+namespace: io.kestra.tests
+
+# Reproduces Pylon #1984: tasksWithState() inside runIf is rendered executor-side,
+# where tasks.<id>.state is a State.Type enum. The function must match it the same
+# way it matches the String form used in worker-side message rendering.
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World!
+
+  - id: will_fail
+    type: io.kestra.plugin.core.execution.Fail
+
+finally:
+  # runIf TRUE: there is a FAILED task -> must RUN (this is the bug: was skipped)
+  - id: write_execution_context
+    type: io.kestra.plugin.core.execution.SetVariables
+    runIf: "{{ tasksWithState(state='FAILED') is not empty }}"
+    variables:
+      hadFailure: ["yes"]
+
+  # runIf FALSE: there IS a failure so 'is empty' is false -> must be SKIPPED
+  - id: skipped_when_failures_exist
+    type: io.kestra.plugin.core.log.Log
+    runIf: "{{ tasksWithState(state='FAILED') is empty }}"
+    message: should be skipped because a failure exists

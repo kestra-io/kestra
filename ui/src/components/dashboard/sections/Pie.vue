@@ -34,12 +34,13 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts";
+    import {defaultConfig, getConsistentHEXColor, chartSegmentDrillDown} from "../composables/charts";
     import {totalsDurationLegend, totalsLegend} from "../composables/useLegend";
 
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
+    import {useMiscStore} from "override/stores/misc";
     import {FilterObject} from "../../../utils/filters";
 
     const route = useRoute();
@@ -59,6 +60,27 @@
 
     const columns = props.chart.data?.columns ?? {};
     const isDuration = Object.values(columns).find((c: Record<string, any>) => c.agg !== undefined)?.field === "DURATION";
+
+    const aggregator = Object.entries(columns).reduce<{
+        value?: { label: string; key: string };
+        field?: { label: string; key: string };
+    }>(
+        (result, [key, column]) => {
+            const col = column as Record<string, any>;
+            const type = "agg" in col ? "value" : "field";
+            result[type] = {
+                label: col.displayName ?? col.agg,
+                key,
+            };
+            return result;
+        },
+        {},
+    );
+
+    const dimensionColumn = computed(() => {
+        const dimensionKey = aggregator.field?.key;
+        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; labelKey?: string} | undefined;
+    });
 
     const theme = useTheme();
 
@@ -84,10 +106,31 @@
                 },
             },
             onClick: (_e: ChartEvent, elements: ActiveElement[]) => {
-                chartClick(moment, router, route, {}, parsedData.value, elements, "dataset");
+                onSegmentClick(elements);
             },
         }, theme.value);
     });
+
+    function onSegmentClick(elements: ActiveElement[]) {
+        if (!elements?.length) return;
+        const label = parsedData.value.labels[elements[0].index];
+        if (!label) return;
+        const drillDown = chartSegmentDrillDown(props.chart, dimensionColumn.value, label);
+        if (!drillDown) return;
+        router.push({
+            name: drillDown.name,
+            params: {tenant: route.params.tenant},
+            query: {
+                ...drillDown.query,
+                scope: "USER",
+                size: 100,
+                page: 1,
+                ...(drillDown.timeFiltered
+                    ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+                    : {}),
+            },
+        });
+    }
 
     const centerPlugin = computed(() => ({
         id: "centerPlugin",
@@ -158,21 +201,6 @@
             const date = moment(value as moment.MomentInput, moment.ISO_8601, true);
             return date.isValid() ? date.format("YYYY-MM-DD") : String(value);
         };
-        const aggregator = Object.entries(columns).reduce<{
-            value?: { label: string; key: string };
-            field?: { label: string; key: string };
-        }>(
-            (result, [key, column]) => {
-                const col = column as Record<string, any>;
-                const type = "agg" in col ? "value" : "field";
-                result[type] = {
-                    label: col.displayName ?? col.agg,
-                    key,
-                };
-                return result;
-            },
-            {},
-        );
 
         const results: Record<string, number> = Object.create(null);
 

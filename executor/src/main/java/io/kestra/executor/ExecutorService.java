@@ -12,6 +12,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.assets.AssetService;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.PluginDefaultsRefNotFoundException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.AssetIdentifier;
@@ -180,6 +181,12 @@ public class ExecutorService {
                     && executor.getExecution().getState().getCurrent() != State.Type.QUEUED
             ) {
                 executor = this.handleNext(executor);
+            }
+
+            // process children of running flowable tasks; also runs in KILLED state so that
+            // afterExecution flowable tasks (e.g. If) can resolve their child tasks
+            if (executor.getExecution().getState().getCurrent() != State.Type.KILLING
+                    && executor.getExecution().getState().getCurrent() != State.Type.QUEUED) {
                 executor = this.handleChildNext(executor);
             }
 
@@ -331,10 +338,9 @@ public class ExecutorService {
                 List<TaskRun> taskRunByTasks = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
 
                 if (taskRunByTasks.stream().filter(t -> t.getState().isTerminated()).count() == taskRunByTasks.size()) {
-                    return childWorkerTaskTypeToWorkerTask(
-                        Optional.of(State.Type.KILLED),
-                        parentTaskRun
-                    );
+                    // Use withStateAndAttempt so the last attempt gets an end date; withState alone
+                    // leaves the attempt in RUNNING, causing the UI to show a stuck duration counter.
+                    return Optional.of(new WorkerTaskResult(parentTaskRun.withStateAndAttempt(State.Type.KILLED)));
                 }
             }
         }
@@ -371,7 +377,13 @@ public class ExecutorService {
                 );
 
                 if (!nexts.isEmpty()) {
-                    return saveFlowableOutput(nexts, executor);
+                    List<TaskRun> taskRuns = saveFlowableOutput(nexts, executor);
+                    if (Boolean.TRUE.equals(parentTaskRun.getForceExecution())) {
+                        return taskRuns.stream()
+                            .map(taskRun -> taskRun.withForceExecution(true))
+                            .toList();
+                    }
+                    return taskRuns;
                 }
             } catch (Exception e) {
                 log.warn("Unable to resolve the next tasks to run", e);
@@ -491,7 +503,7 @@ public class ExecutorService {
         List<TaskRun> running = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().isRunning())
+            .filter(taskRun -> taskRun.getState().getCurrent().onlyRunning())
             .toList();
 
         // Remove functional style to avoid (class io.kestra.core.exceptions.IllegalVariableEvaluationException cannot be cast to class java.lang.RuntimeException'
@@ -876,6 +888,13 @@ public class ExecutorService {
                     .task(task)
                     .executionKind(executor.getExecution().getKind())
                     .build();
+                // a surviving 'pluginDefaultsRef' means plugin-default injection could not resolve the referenced
+                // plugin-defaults: fail the task-run instead of sending a bad job to the worker
+                if (task.getPluginDefaultsRef() != null) {
+                    runContext.logger()
+                        .error(new PluginDefaultsRefNotFoundException(task.getPluginDefaultsRef()).getMessage());
+                    return workerTask.withTaskRun(workerTask.getTaskRun().fail());
+                }
                 // Get worker group
                 Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(executor.getFlow(), workerTask);
                 if (workerGroup.isPresent()) {
@@ -1493,7 +1512,7 @@ public class ExecutorService {
             .map(taskRun ->
             {
                 try {
-                    return execution.withTaskRun(taskRun.withState(state));
+                    return execution.withTaskRun(taskRun.withStateAndAttempt(state));
                 } catch (InternalException e) {
                     // in case we cannot update the last not terminated task run, we ignore it
                     return execution;

@@ -2,10 +2,10 @@ package io.kestra.core.services;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,11 +35,15 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
@@ -49,8 +53,12 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.http.multipart.CompletedPart;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.ContextPropagators;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -101,6 +109,17 @@ public class ExecutionService {
 
     @Inject
     private VariablesService variablesService;
+
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
+    private QueueInterface<Execution> executionQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    private QueueInterface<ExecutionKilled> killQueue;
+
+    @Inject
+    private Optional<OpenTelemetry> openTelemetry;
 
     public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
         Execution execution = getExecution(tenant, executionId, withACL);
@@ -162,27 +181,42 @@ public class ExecutionService {
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
-        AtomicReference<Boolean> firstDone = new AtomicReference<>(false);
+        if (execution.getTaskRunList() == null) {
+            return execution.withState(State.Type.RUNNING);
+        }
+
+        // Pre-build an id→TaskRun map, so ancestor-chain walks are O(1) per step.
+        Map<String, TaskRun> byId = execution.getTaskRunList().stream()
+            .collect(Collectors.toMap(TaskRun::getId, t -> t));
+
+        // Remove all descendants (not just direct children) of the iterating LoopUntil so that nested
+        // LoopUntil tasks start the next iteration with a clean state and don't inherit stale outputs.
         List<TaskRun> newTaskRuns = execution
             .getTaskRunList()
             .stream()
-            .map(taskRun ->
-            {
+            .map(taskRun -> {
                 if (taskRun.getId().equals(flowableTaskRunId)) {
                     return taskRun.resetAttempts().incrementIteration();
                 }
-
-                if (flowableTaskRunId.equals(taskRun.getParentTaskRunId())) {
-                    // Clean children
+                if (isDescendantOf(taskRun, flowableTaskRunId, byId)) {
                     return null;
                 }
-
                 return taskRun;
             })
             .filter(Objects::nonNull)
             .toList();
 
         return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
+    }
+
+    private boolean isDescendantOf(TaskRun taskRun, String ancestorId, Map<String, TaskRun> byId) {
+        String parentId = taskRun.getParentTaskRunId();
+        while (parentId != null) {
+            if (ancestorId.equals(parentId)) return true;
+            TaskRun parent = byId.get(parentId);
+            parentId = parent != null ? parent.getParentTaskRunId() : null;
+        }
+        return false;
     }
 
     public Execution pauseFlowable(Execution execution, TaskRun updateFlowableTaskRun) throws InternalException {
@@ -451,9 +485,19 @@ public class ExecutionService {
                         } else if (newState == State.Type.KILLING) {
                             targetState = State.Type.KILLED;
                         }
+                    } else if (newState == State.Type.KILLING) {
+                        // when killing a paused execution, terminate the Pause task directly instead of
+                        // resuming it to RUNNING; otherwise its subtasks would be spawned during the kill
+                        // (regression covered by ExecutionControllerRunnerTest.killExecutionPaused).
+                        targetState = State.Type.KILLED;
                     } else {
-                        // we should set the state to RUNNING so that subtasks are executed
-                        targetState = State.Type.RUNNING;
+                        // when killing, terminate immediately without executing subtasks
+                        if (newState == State.Type.KILLING) {
+                            targetState = State.Type.KILLED;
+                        } else {
+                            // we should set the state to RUNNING so that subtasks are executed
+                            targetState = State.Type.RUNNING;
+                        }
                     }
                     newTaskRun = newTaskRun.withState(targetState);
                 } else {
@@ -991,6 +1035,71 @@ public class ExecutionService {
         List<ResolvedTask> validListeners = conditionService.findValidListeners(flow, execution);
         List<ResolvedTask> afterExecution = resolveAfterExecutionTasks(flow);
         return execution.isTerminated(validListeners) && execution.isTerminated(afterExecution);
+    }
+
+    /**
+     * Start the given execution and block the calling thread until it reaches a terminal state, then
+     * return the terminal {@link Execution} (with computed flow-level outputs).
+     * <p>
+     * MUST only be called from a blocking-friendly thread (e.g. {@code TaskExecutors.IO}), never from a
+     * worker thread or a Netty event loop: a bounded worker pool blocking on a child execution can
+     * deadlock once slots are exhausted.
+     * <p>
+     * Polls the execution repository rather than the streaming service: a fast execution can terminate
+     * before any streaming subscriber is registered for its id. If the timeout elapses (or the calling
+     * thread is interrupted) the still-running orphan execution is asked to stop, to avoid a resource leak.
+     *
+     * @param execution the execution to start
+     * @param flow      the flow associated with the execution
+     * @param timeout   the maximum time to wait for the execution to terminate
+     * @return the terminal execution
+     */
+    public Execution runAndWait(Execution execution, Flow flow, Duration timeout) {
+        try {
+            // inject the traceparent then start the execution by emitting it to the execution queue
+            // (mirrors WebhookService#startExecution)
+            openTelemetry
+                .map(OpenTelemetry::getPropagators)
+                .map(ContextPropagators::getTextMapPropagator)
+                .ifPresent(propagator -> propagator.inject(Context.current(), execution, ExecutionTextMapSetter.INSTANCE));
+
+            executionQueue.emit(execution);
+            eventPublisher.publishEvent(CrudEvent.create(execution));
+
+            // poll the repository until the execution is fully terminated
+            return Await.until(
+                () -> {
+                    Execution candidate = executionRepository.findById(execution.getTenantId(), execution.getId()).orElse(null);
+                    return candidate != null && isFullyTerminated(flow, candidate) ? candidate : null;
+                },
+                Duration.ofMillis(100),
+                timeout
+            );
+        } catch (Exception e) {
+            // timeout, queue failure, or interruption: the child execution may still be running on the
+            // executor, request its kill so we don't leak a runaway execution.
+            requestKill(execution);
+            throw e instanceof RuntimeException re ? re : new RuntimeException(e);
+        }
+    }
+
+    private boolean isFullyTerminated(Flow flow, Execution execution) {
+        return isTerminated(flow, execution)
+            && ListUtils.emptyOnNull(execution.getTaskRunList()).stream().allMatch(taskRun -> taskRun.getState().isTerminated());
+    }
+
+    private void requestKill(Execution execution) {
+        try {
+            killQueue.emit(
+                ExecutionKilledExecution.builder()
+                    .executionId(execution.getId())
+                    .state(ExecutionKilled.State.REQUESTED)
+                    .tenantId(execution.getTenantId())
+                    .build()
+            );
+        } catch (Exception e) {
+            log.warn("Unable to request kill of orphan execution '{}'", execution.getId(), e);
+        }
     }
 
     /**

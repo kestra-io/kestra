@@ -41,8 +41,13 @@ async function fetchExpressionFunctions(): Promise<string[]> {
     return cachedFunctions;
 }
 
+export interface RootCompletionContext {
+    source: string;
+    offset: number;
+}
+
 export class PebbleAutoCompletion {
-    rootFieldAutoCompletion(): Promise<string[]> {
+    rootFieldAutoCompletion(_context?: RootCompletionContext): Promise<string[]> {
         return Promise.resolve([]);
     }
 

@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.TimeoutExceededException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.assets.Asset;
@@ -123,6 +124,9 @@ public class DefaultWorker implements Worker {
     private ServerConfig serverConfig;
 
     @Inject
+    private WorkerConfig workerConfig;
+
+    @Inject
     private RunContextInitializer runContextInitializer;
 
     @Inject
@@ -158,6 +162,7 @@ public class DefaultWorker implements Worker {
     private final ExecutorService executorService;
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final AtomicBoolean shutdownInterrupted = new AtomicBoolean(false);
     private final AtomicBoolean init = new AtomicBoolean(false);
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
@@ -614,10 +619,15 @@ public class DefaultWorker implements Worker {
                     );
 
                     if (workerTrigger.getTrigger() instanceof PollingTriggerInterface pollingTrigger) {
-                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger);
+                        WorkerTriggerCallable workerCallable = new WorkerTriggerCallable(runContext, workerTrigger, pollingTrigger, workerConfig.pollingTriggerTimeout());
                         io.kestra.core.models.flows.State.Type state = callJob(workerCallable);
 
                         if (workerCallable.getException() != null || !state.equals(SUCCESS)) {
+                            if (workerCallable.getException() instanceof TimeoutExceededException) {
+                                metricRegistry
+                                    .counter(MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT, MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
+                                    .increment();
+                            }
                             this.handleTriggerError(workerTrigger, workerCallable.getException());
                         }
 
@@ -752,9 +762,14 @@ public class DefaultWorker implements Worker {
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
 
-            if (shutdown.get() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
-                // if the Worker is terminating and the task is not in success, it may have been terminated by the worker
-                // in this case; we return immediately without emitting any result as it would be resubmitted (except if WorkerTaskRestartStrategy is NEVER)
+            if (shutdown.get() && shutdownInterrupted.get() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
+                // The Worker is terminating and forcibly interrupted this still-running task (grace period
+                // elapsed or force shutdown), so its failed state is an artifact of the shutdown, not a real
+                // failure: we return immediately without emitting any result as it will be resubmitted
+                // (except if WorkerTaskRestartStrategy is NEVER).
+                // A task that reached a FAILED state on its own during the drain window is NOT interrupted
+                // (shutdownInterrupted is false), so it falls through and its terminal result is emitted —
+                // otherwise its genuine failure would be silently dropped and the execution stuck RUNNING.
                 List<WorkerTaskResult> dynamicWorkerResults = workerTask.getRunContext().dynamicWorkerResults();
                 List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
                 return new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
@@ -1090,6 +1105,7 @@ public class DefaultWorker implements Worker {
         } else {
             log.info("Terminating now and skip waiting for tasks completions.");
             this.receiveCancellations.forEach(Runnable::run);
+            this.shutdownInterrupted.set(true);
             this.executorService.shutdownNow();
             closeQueue();
             terminatedGracefully = false;
@@ -1132,6 +1148,7 @@ public class DefaultWorker implements Worker {
                     boolean gracefullyShutdown = this.executorService.awaitTermination(remaining, TimeUnit.MILLISECONDS);
                     if (!gracefullyShutdown) {
                         log.warn("Worker still has some pending threads after `terminationGracePeriod`. Forcing shutdown now.");
+                        this.shutdownInterrupted.set(true);
                         this.executorService.shutdownNow();
                     }
 

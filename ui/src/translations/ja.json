@@ -1,5 +1,10 @@
 {
   "ja": {
+    "loading": "読み込み中...",
+        "back": "戻る",
+        "next": "次へ",
+        "done": "完了",
+        "review your inputs": "入力内容を確認してください",
     "Add flow": "Flowを追加",
     "Default log level": "デフォルトlogレベル",
     "Default namespace": "デフォルトnamespace",
@@ -569,6 +574,7 @@
     "execute backfill": "backfillを実行",
     "execute flow behaviour": "Flowを実行",
     "execute flow now ?": "このFlowを実行しますか？",
+    "discard execution confirmation": "未保存のinputがあります。このexecutionを破棄してもよろしいですか？",
     "execute the flow": "Flow <code>{id}</code>を実行",
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
@@ -1128,6 +1134,7 @@
     "light_version": "ライトバージョン",
     "line-by-line": "行ごと表示",
     "loaded x dependencies": "{count}件の依存関係が読み込まれました",
+    "loading": "読み込み中...",
     "log expand setting": "Logのデフォルト表示",
     "logExporters": "ログエクスポーター",
     "logs": "Logs",

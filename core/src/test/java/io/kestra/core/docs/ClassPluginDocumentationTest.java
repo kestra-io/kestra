@@ -44,7 +44,7 @@ class ClassPluginDocumentationTest {
 
             assertThat(doc.getDocExamples().size()).isEqualTo(2);
             assertThat(doc.getIcon()).isNotNull();
-            assertThat(doc.getInputs().size()).isEqualTo(5);
+            assertThat(doc.getInputs().size()).isEqualTo(6);
             assertThat(doc.getDocLicense()).isEqualTo("EE");
 
             // simple
@@ -150,7 +150,7 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getCls()).isEqualTo("io.kestra.core.models.property.DynamicPropertyExampleTask");
             assertThat(doc.getDefs()).hasSize(9);
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
-            assertThat(properties).hasSize(22);
+            assertThat(properties).hasSize(23);
 
             Map<String, Object> number = (Map<String, Object>) properties.get("number");
             assertThat(number.get("anyOf")).isNotNull();

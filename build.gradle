@@ -37,7 +37,7 @@ plugins {
     id "com.vanniktech.maven.publish" version "0.36.0"
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.0.3"
+    id "io.kestra.gradle.spotless-conventions" version "1.2.6"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.0" apply false
@@ -177,6 +177,7 @@ allprojects {
             api group: 'commons-io', name: 'commons-io'
             api group: 'org.apache.commons', name: 'commons-lang3'
             api "io.swagger.core.v3:swagger-annotations"
+            api "com.google.code.findbugs:jsr305" // brings @CheckReturnValue and already in path in core
         }
     }
 }
@@ -198,6 +199,9 @@ subprojects {subProj ->
         }
         compileJava {
             // We use 21 release (target) level temporary, will be switched to 25 for 2.0
+            options.release = 21
+        }
+        compileTestJava {
             options.release = 21
         }
 

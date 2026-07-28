@@ -464,6 +464,11 @@ export function useDependencies(
 
         sse.value.onerror = () => {
             coreStore.message = {variant: "error", title: t("error"), message: t("something_went_wrong.loading_execution")};
+
+            // Close on error: EventSource auto-reconnects unless explicitly closed,
+            // and each reconnect leaks a server-side SSE connection (Netty direct
+            // buffers) over time. See kestra-io/kestra#16982.
+            closeSSE();
         };
     };
 

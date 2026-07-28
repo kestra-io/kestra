@@ -1,12 +1,14 @@
 package io.kestra.core.services;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,6 +35,9 @@ import io.kestra.plugin.core.condition.Expression;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.AppenderBase;
 import jakarta.inject.Inject;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -134,6 +139,172 @@ class PluginDefaultServiceTest {
     }
 
     @Test
+    void shouldComposeNonForcedParentAndChildDefaults() {
+        // Given: a broad default injects a taskRunner, a specific default decorates it — both non-forced.
+        // This is the reported bug: without the re-descent fix, the specific default is never applied.
+        Map<String, List<PluginDefault>> defaults = Map.of(
+            "io.kestra",
+            List.of(new PluginDefault("io.kestra", false, Map.of("taskRunner", Map.of("type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes")))),
+            "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+            List.of(new PluginDefault("io.kestra.plugin.ee.kubernetes.runner.Kubernetes", false, Map.of("namespace", "the-namespace")))
+        );
+
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(Map.of("id", "my-task", "type", "io.kestra.plugin.scripts.python.Commands"))
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(flow, defaults);
+
+        // Then: the created taskRunner carries both its type (from the broad default) and the params (from the specific one)
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.plugin.scripts.python.Commands",
+                        "taskRunner", Map.of(
+                            "type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+                            "namespace", "the-namespace"
+                        )
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldComposeNonForcedParentWithForcedChildDefault() {
+        // Given: broad default (non-forced) injects a taskRunner, specific default (forced) decorates it
+        Map<String, List<PluginDefault>> defaults = Map.of(
+            "io.kestra",
+            List.of(new PluginDefault("io.kestra", false, Map.of("taskRunner", Map.of("type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes")))),
+            "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+            List.of(new PluginDefault("io.kestra.plugin.ee.kubernetes.runner.Kubernetes", true, Map.of("namespace", "forced-namespace")))
+        );
+
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(Map.of("id", "my-task", "type", "io.kestra.plugin.scripts.python.Commands"))
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(flow, defaults);
+
+        // Then
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.plugin.scripts.python.Commands",
+                        "taskRunner", Map.of(
+                            "type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+                            "namespace", "forced-namespace"
+                        )
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldApplyForcedDefaultToExistingNestedNode() {
+        // Mirrors the forced pass of innerInjectDefault: the taskRunner already exists (created by the
+        // non-forced pass) and a forced default overrides the user-provided value on it.
+        Map<String, List<PluginDefault>> forced = Map.of(
+            "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+            List.of(new PluginDefault("io.kestra.plugin.ee.kubernetes.runner.Kubernetes", true, Map.of("namespace", "forced-namespace")))
+        );
+
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(
+                Map.of(
+                    "id", "my-task",
+                    "type", "io.kestra.plugin.scripts.python.Commands",
+                    "taskRunner", Map.of("type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes", "namespace", "user-namespace")
+                )
+            )
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(flow, forced);
+
+        // Then: forced wins over the user value
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.plugin.scripts.python.Commands",
+                        "taskRunner", Map.of(
+                            "type", "io.kestra.plugin.ee.kubernetes.runner.Kubernetes",
+                            "namespace", "forced-namespace"
+                        )
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldComposeMultiLevelInjectedDefaultsAndTerminate() {
+        // Three non-forced defaults chaining injected nodes. Child types stay under the `io.kestra` prefix,
+        // so the broad D1 could re-match them — the exclusion must keep it out of the subtrees it produced
+        // (otherwise this would inject forever / not terminate).
+        Map<String, List<PluginDefault>> defaults = Map.of(
+            "io.kestra",
+            List.of(new PluginDefault("io.kestra", false, Map.of("childRunner", Map.of("type", "io.kestra.runner.Level2")))),
+            "io.kestra.runner.Level2",
+            List.of(new PluginDefault("io.kestra.runner.Level2", false, Map.of("p2", "v2", "grandRunner", Map.of("type", "io.kestra.runner.Level3")))),
+            "io.kestra.runner.Level3",
+            List.of(new PluginDefault("io.kestra.runner.Level3", false, Map.of("p3", "v3")))
+        );
+
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(Map.of("id", "my-task", "type", "io.kestra.plugin.scripts.python.Commands"))
+        );
+
+        // When
+        Object result = pluginDefaultService.recursiveDefaults(flow, defaults);
+
+        // Then
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.plugin.scripts.python.Commands",
+                        "childRunner", Map.of(
+                            "type", "io.kestra.runner.Level2",
+                            "p2", "v2",
+                            "grandRunner", Map.of(
+                                "type", "io.kestra.runner.Level3",
+                                "p3", "v3"
+                            )
+                        )
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
     public void injectFlowAndGlobals() throws FlowProcessingException, JsonProcessingException {
         String source = String.format(
             """
@@ -220,8 +391,10 @@ class PluginDefaultServiceTest {
         var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
         FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
 
-        // Then
-        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(2));
+        // Then — forced defaults follow admin-first precedence (kestra-ee#8262): they stamp over the
+        // accumulated result, so the LAST matching forced default wins. With two same-level forced
+        // defaults the later-declared one (set: 3) wins, not the earlier one.
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(3));
     }
 
     @Test
@@ -429,6 +602,398 @@ class PluginDefaultServiceTest {
 
         // Then
         assertThat(((Log) injected.getTasks().getFirst()).getLevel().toString(), is(Level.INFO.name()));
+    }
+
+    @Test
+    void shouldApplyRefDefaultToNestedTaskRunner() {
+        // a nested taskRunner carrying its own pluginDefaultsRef receives the referenced plugin-defaults
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(
+                Map.of(
+                    "id", "my-task",
+                    "type", "io.kestra.test",
+                    "taskRunner", Map.of("type", "io.kestra.runner", "pluginDefaultsRef", "runner-cfg")
+                )
+            )
+        );
+        Map<String, PluginDefaultService.RefMatch> refDefaults = Map.of(
+            "runner-cfg", new PluginDefaultService.RefMatch(
+                new PluginDefault("io.kestra.runner", false, "runner-cfg", Map.of("cpus", 4)),
+                java.util.Set.of("io.kestra.runner")
+            )
+        );
+
+        // When — apply then consume the marker (the two passes the injection pipeline runs)
+        Object applied = pluginDefaultService.recursiveRefDefaults(flow, refDefaults, java.util.Set.of());
+        Object result = pluginDefaultService.stripAppliedRefMarkers(applied, refDefaults);
+
+        // Then — type matches (io.kestra.runner), values applied, marker consumed
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of(
+                        "id", "my-task",
+                        "type", "io.kestra.test",
+                        "taskRunner", Map.of("type", "io.kestra.runner", "cpus", 4)
+                    )
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldNotApplyRefDefaultOnTypeMismatch() {
+        // the named plugin-defaults is declared for a different type than the referencing plugin
+        Map<String, Object> flow = Map.of(
+            "id", "test",
+            "namespace", "type",
+            "tasks", List.of(
+                Map.of("id", "my-task", "type", "io.kestra.other", "pluginDefaultsRef", "runner-cfg")
+            )
+        );
+        Map<String, PluginDefaultService.RefMatch> refDefaults = Map.of(
+            "runner-cfg", new PluginDefaultService.RefMatch(
+                new PluginDefault("io.kestra.runner", false, "runner-cfg", Map.of("cpus", 4)),
+                java.util.Set.of("io.kestra.runner")
+            )
+        );
+
+        // When
+        Object applied = pluginDefaultService.recursiveRefDefaults(flow, refDefaults, java.util.Set.of());
+        Object result = pluginDefaultService.stripAppliedRefMarkers(applied, refDefaults);
+
+        // Then — not applied (no 'cpus'), marker kept so it surfaces as unresolved/inapplicable
+        Assertions.assertEquals(
+            Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of("id", "my-task", "type", "io.kestra.other", "pluginDefaultsRef", "runner-cfg")
+                )
+            ), result
+        );
+    }
+
+    @Test
+    void shouldApplyRefDefaultDeclaredWithAliasType() throws FlowProcessingException {
+        // the named default is declared with a plugin alias; addAliases canonicalizes it so it still matches
+        // a task referencing it by the canonical type
+        String source = """
+                id: ref-alias-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: referencing
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  pluginDefaultsRef: cfg
+
+                pluginDefaults:
+                - type: io.kestra.core.services.DefaultTesterAlias
+                  ref: cfg
+                  values:
+                    value: 7
+            """;
+
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // applied despite the alias/canonical type mismatch, and the marker consumed
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(7));
+        assertThat(injected.getTasks().getFirst().getPluginDefaultsRef(), is((String) null));
+    }
+
+    @Test
+    void shouldApplyRefDefaultOnlyToReferencingPlugin() throws FlowProcessingException {
+        // Given — same-type tasks; only one opts into the named default
+        String source = """
+                id: ref-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: referencing
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  pluginDefaultsRef: cfg
+                - id: plain
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  ref: cfg
+                  values:
+                    value: 7
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(7));
+        assertThat(((DefaultTester) injected.getTasks().get(1)).getValue(), is((Integer) null));
+    }
+
+    @Test
+    void shouldSuppressTypeMatchedDefaultWhenRefIsSet() throws FlowProcessingException {
+        // Given — a type-matched default AND a ref default; the referencing task must get only the ref default
+        String source = """
+                id: ref-suppress-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: referencing
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  pluginDefaultsRef: cfg
+
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  values:
+                    value: 1
+                    defaultValue: typed
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  ref: cfg
+                  values:
+                    value: 7
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then — ref default applied, type-matched default ('defaultValue') suppressed
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is(7));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getDefaultValue(), is("default"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldEnforceForcedTypeDefaultOnRefPluginAndWarn() {
+        // capture WARN from PluginDefaultService logger
+        Logger serviceLogger = (Logger) LoggerFactory.getLogger(PluginDefaultService.class);
+        List<ILoggingEvent> capturedLogs = new ArrayList<>();
+        AppenderBase<ILoggingEvent> appender = new AppenderBase<>() {
+            @Override
+            protected void append(ILoggingEvent event) {
+                capturedLogs.add(event);
+            }
+        };
+        appender.setContext(serviceLogger.getLoggerContext());
+        appender.start();
+        serviceLogger.addAppender(appender);
+
+        try {
+            Map<String, Object> flow = Map.of(
+                "id", "test",
+                "namespace", "type",
+                "tasks", List.of(
+                    Map.of("id", "my-task", "type", "io.kestra.test", "pluginDefaultsRef", "cfg")
+                )
+            );
+            Map<String, List<PluginDefault>> forced = Map.of(
+                "io.kestra.test",
+                List.of(new PluginDefault("io.kestra.test", true, Map.of("forced-key", "enforced")))
+            );
+
+            // When — forced pass over a plugin that opted into a named default
+            Object result = pluginDefaultService.recursiveDefaults(flow, forced, true);
+
+            // Then — forced default is enforced despite pluginDefaultsRef, and a WARN is logged
+            Map<String, Object> task = (Map<String, Object>) ((List<Object>) ((Map<String, Object>) result).get("tasks")).getFirst();
+            assertThat(task.get("forced-key"), is("enforced"));
+            assertThat(
+                capturedLogs.stream()
+                    .filter(e -> e.getLevel() == ch.qos.logback.classic.Level.WARN)
+                    .anyMatch(e -> e.getFormattedMessage().contains("pluginDefaultsRef")),
+                is(true)
+            );
+        } finally {
+            serviceLogger.detachAppender(appender);
+        }
+    }
+
+    @Test
+    void shouldYieldToTaskValueForNonForcedRef() throws FlowProcessingException {
+        // Given — non-forced ref default, task sets the property explicitly
+        String source = """
+                id: ref-nonforced-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: referencing
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  pluginDefaultsRef: cfg
+                  set: 1
+
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  ref: cfg
+                  values:
+                    set: 99
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then — explicit task value wins
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(1));
+    }
+
+    @Test
+    void shouldLetFlowForcedRefOverrideTaskValue() throws FlowProcessingException {
+        // Given — 'forced: true' on a flow-level ref default IS honored on this release line (1.3 lets flows
+        // enforce, unlike develop where flow-level 'forced' was removed): the forced ref overrides the task value.
+        // (A namespace- or global-forced ref of the same name would still win via admin-first precedence.)
+        String source = """
+                id: ref-forced-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: referencing
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  pluginDefaultsRef: cfg
+                  set: 1
+
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  ref: cfg
+                  forced: true
+                  values:
+                    set: 99
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then — flow-level 'forced' is honored, so the ref value overrides the explicit task value
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(99));
+    }
+
+    @Test
+    void shouldIgnoreUnknownRef() throws FlowProcessingException {
+        // Given — task references a ref that does not exist
+        String source = """
+                id: ref-unknown-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: referencing
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  pluginDefaultsRef: nope
+                  set: 5
+
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  ref: cfg
+                  values:
+                    value: 7
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then — task unchanged; the 'cfg' default is not applied by type either
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(5));
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getValue(), is((Integer) null));
+        assertThat(injected.getTasks().getFirst().getPluginDefaultsRef(), is("nope"));
+    }
+
+    @Test
+    void shouldStrictParseRefFields() throws FlowProcessingException {
+        // Given — strict parsing must accept the new fields: pluginDefaultsRef on the task, ref + forced on the default
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        GenericFlow flow = GenericFlow.fromYaml(
+            tenant, """
+                  id: ref-strict-test
+                  namespace: io.kestra.tests
+
+                  tasks:
+                  - id: referencing
+                    type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                    pluginDefaultsRef: cfg
+                    set: 1
+
+                  pluginDefaults:
+                  - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                    ref: cfg
+                    forced: true
+                    values:
+                      set: 99
+                """
+        );
+
+        // When — strictParsing = true
+        FlowWithSource injected = pluginDefaultService.injectAllDefaults(flow, true);
+
+        // Then — ref resolved; 'forced' is honored at flow level on this release line, so the ref value wins,
+        // and the marker is consumed (stripped) once the default is applied
+        assertThat(((DefaultTester) injected.getTasks().getFirst()).getSet(), is(99));
+        assertThat(injected.getTasks().getFirst().getPluginDefaultsRef(), is((String) null));
+    }
+
+    @Test
+    void shouldReportUnresolvedRefForValidation() throws FlowProcessingException {
+        // Given — one resolvable ref and one unknown ref
+        String source = """
+                id: ref-validate-test
+                namespace: io.kestra.tests
+
+                tasks:
+                - id: ok
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  pluginDefaultsRef: known
+                - id: broken
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  pluginDefaultsRef: missing
+
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+                  ref: known
+                  values:
+                    value: 1
+            """;
+
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // When / Then — only the unknown ref survives and is reported
+        assertThat(pluginDefaultService.unresolvedPluginDefaultsRefs(injected), is(java.util.Set.of("missing")));
+    }
+
+    @Test
+    void shouldApplyRefDefaultToTrigger() throws FlowProcessingException {
+        // Given — a trigger opts into a named default
+        String source = """
+                id: ref-trigger-test
+                namespace: io.kestra.tests
+
+                triggers:
+                - id: trigger
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTriggerTester
+                  pluginDefaultsRef: cfg
+
+                tasks:
+                - id: test
+                  type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
+
+                pluginDefaults:
+                - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTriggerTester
+                  ref: cfg
+                  values:
+                    set: 42
+            """;
+
+        // When
+        var tenant = TestsUtils.randomTenant(PluginDefaultServiceTest.class.getSimpleName());
+        FlowWithSource injected = pluginDefaultService.parseFlowWithAllDefaults(tenant, source, false);
+
+        // Then
+        assertThat(((DefaultTriggerTester) injected.getTriggers().getFirst()).getSet(), is(42));
     }
 
     @SuperBuilder

@@ -7,6 +7,62 @@ import throttle from "lodash/throttle";
 import {useRoute} from "vue-router";
 import {CLUSTER_PREFIX} from "@kestra-io/ui-libs/src/utils/constants.ts";
 import {useAxios} from "../utils/axios";
+import {InputType} from "../utils/inputs";
+
+export interface Check {
+    message: string
+    style: string
+    behavior: string
+}
+
+export interface InputError {
+    message: string;
+    // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
+    // input `defaults` Pebble expression that threw) rather than a value validation error
+    renderError?: boolean;
+}
+
+export interface ValidationResponse {
+    checks?: Check[];
+    inputs: Array<{
+        enabled: boolean;
+        input: InputMetaData;
+        errors?: InputError[];
+        value?: unknown;
+        isDefault?: boolean;
+    }>;
+}
+
+export interface ValidationEventPayload {
+    formData: FormData | undefined;
+    inputsMetaData: InputMetaData[];
+    callback: (response: ValidationResponse) => void;
+}
+
+export interface InputMetaData {
+    id: string;
+    type: InputType
+    displayName?: string;
+    description?: string;
+    required?: boolean;
+    defaults?: unknown;
+    value?: unknown;
+    values?: string[];
+    options?: string[];
+    errors?: InputError[];
+    isDefault?: boolean;
+    isRadio?: boolean;
+    allowCustomValue?: boolean;
+    min?: number;
+    max?: number;
+    allowedFileExtensions?: string[];
+    accept?: string;
+    prefill?: unknown;
+    // present only on the raw flow inputs (props.initialInputs); the rendered
+    // validate response strips `expression`, keeping `dependsOn` at most
+    expression?: string;
+    dependsOn?: unknown;
+}
 
 interface LogsState {
     total: number;
@@ -428,6 +484,12 @@ export const useExecutionsStore = defineStore("executions", () => {
                     }
                 };
             }
+
+            // Close the stream on error: EventSource auto-reconnects (~every 3s)
+            // unless explicitly closed, and each reconnect opens a fresh server-side
+            // SSE connection whose Netty direct buffers are not promptly reclaimed,
+            // leaking off-heap memory over time. See kestra-io/kestra#16982.
+            closeSSE();
         }
 
         return Promise.resolve(sse.value);

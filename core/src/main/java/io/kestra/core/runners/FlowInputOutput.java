@@ -121,7 +121,9 @@ public class FlowInputOutput {
         return readData(inputs, execution, data, true).map(inputData -> this.readExecutionInputs(inputs, flow, execution, inputData));
     }
 
-    private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
+    private Mono<Map<String, Object>> readData(List<Input<?>> rawInputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
+        // Expand FORM inputs so FILE part matching works against dotted leaf ids.
+        final List<Input<?>> inputs = Input.expandToLeaves(rawInputs);
         return Flux.from(data)
             .publishOn(Schedulers.boundedElastic()).<Map.Entry<String, String>> handle((input, sink) ->
             {
@@ -256,8 +258,12 @@ public class FlowInputOutput {
             return Collections.emptyList();
         }
 
+        // Expand FORM inputs into dotted-id leaves so resolution runs on a flat list and the nested
+        // payload reassembles via flattenToNestedMap. Idempotent on already-expanded leaves.
+        final List<Input<?>> leafInputs = Input.expandToLeaves(inputs);
+
         final Map<String, ResolvableInput> resolvableInputMap = Collections.unmodifiableMap(
-            inputs.stream()
+            leafInputs.stream()
                 .map(input -> ResolvableInput.of(input, data.get(input.getId())))
                 .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new))
         );
@@ -308,23 +314,40 @@ public class FlowInputOutput {
                 return resolvable.get();
             }
 
-            // render input
-            input = RenderableInput.mayRenderInput(input, expression ->
-            {
-                try {
-                    return runContext.renderTyped(expression);
-                } catch (IllegalVariableEvaluationException e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            });
+            // render input (e.g. a SELECT's dynamic `expression` values). A failure here means the field
+            // itself can't be rendered, so flag it as a render error so the UI can surface it eagerly.
+            try {
+                input = RenderableInput.mayRenderInput(input, expression ->
+                {
+                    try {
+                        return runContext.renderTyped(expression);
+                    } catch (IllegalVariableEvaluationException e) {
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                });
+            } catch (Exception e) {
+                resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
+                return resolvable.get();
+            }
             resolvable.setInput(input);
 
             Object value = resolvable.get().value();
 
-            // resolve default if needed
+            // Pebble renders a null reference as ""; treat "" as absent for non-text types.
+            if (value instanceof String s && s.isEmpty() && !isTextType(input.getType())) {
+                value = null;
+            }
+
+            // resolve default if needed; a `defaults` that is a Pebble expression (e.g. subflow()/secret())
+            // can itself fail to render — that is also a broken field, so flag it as a render error.
             if (value == null && input.getDefaults() != null) {
                 RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
-                value = resolveDefaultValue(input, runContextForDefault);
+                try {
+                    value = resolveDefaultValue(input, runContextForDefault);
+                } catch (Exception e) {
+                    resolvable.resolveWithError(InputOutputValidationException.ofRenderError(e.getMessage(), input));
+                    return resolvable.get();
+                }
                 resolvable.isDefault(true);
             }
 
@@ -371,7 +394,19 @@ public class FlowInputOutput {
             case JSON, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
             case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
+            case FORM -> throw new IllegalStateException("FORM inputs must be expanded before resolution");
         };
+    }
+
+    /**
+     * Returns {@code true} for input types that treat an empty string as a valid value.
+     * All other types (INT, FLOAT, BOOL, DATE/TIME variants, DURATION, JSON, YAML, URI, FILE,
+     * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
+     * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
+     */
+    private static boolean isTextType(Type type) {
+        return type == Type.STRING || type == Type.SELECT
+            || type == Type.EMAIL || type == Type.SECRET;
     }
 
     @SuppressWarnings("unchecked")
@@ -385,20 +420,21 @@ public class FlowInputOutput {
     }
 
     private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
-        Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(
-            dependencies.entrySet()
-                .stream()
-                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll)
-        );
+        Map<String, Object> flatInputs = dependencies.entrySet()
+            .stream()
+            .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll);
         // Hack: Pre-inject all inputs that have a default value with 'null' to prevent
         // RunContextFactory from attempting to render them when absent, which could
         // otherwise cause an exception if a Pebble expression is involved.
-        List<Input<?>> inputs = Optional.ofNullable(flow).map(FlowInterface::getInputs).orElse(List.of());
+        // FORM inputs are expanded to dotted leaves first, and defaults are injected into the flat map
+        // before nesting so they end up under the form key (e.g. inputs.environment.region).
+        List<Input<?>> inputs = flow == null ? List.of() : flow.resolvableInputs();
         for (Input<?> input : inputs) {
-            if (input.getDefaults() != null && !flattenInputs.containsKey(input.getId())) {
-                flattenInputs.put(input.getId(), null);
+            if (input.getDefaults() != null && !flatInputs.containsKey(input.getId())) {
+                flatInputs.put(input.getId(), null);
             }
         }
+        Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(flatInputs);
         return runContextFactory.of(flow, execution, vars -> vars.withInputs(flattenInputs), decryptSecrets);
     }
 
@@ -530,6 +566,7 @@ public class FlowInputOutput {
                         yield asList;
                     }
                 }
+                case FORM -> throw new IllegalStateException("FORM inputs must be expanded before resolution");
             };
         } catch (IllegalArgumentException | ConstraintViolationException e) {
             throw e;

@@ -24,6 +24,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
+import io.kestra.core.exceptions.PluginDefaultsRefNotFoundException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.conditions.Condition;
@@ -402,21 +403,15 @@ public abstract class AbstractScheduler implements Scheduler {
                         RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules())
                             .orElseGet(() -> schedule.defaultRecoverMissedSchedules(runContext));
                         try {
-                            Trigger lastUpdate = trigger.get();
-                            if (recoverMissedSchedules == RecoverMissedSchedules.LAST) {
-                                ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
-                                if (previousDate.isAfter(trigger.get().getDate())) {
-                                    lastUpdate = trigger.get().toBuilder().nextExecutionDate(previousDate).build();
-
-                                    this.triggerState.update(lastUpdate);
-                                }
-                            } else {
-                                ZonedDateTime nextEvaluationDate = schedule.nextEvaluationDate();
-                                if (recoverMissedSchedules == RecoverMissedSchedules.NONE && !Objects.equals(trigger.get().getNextExecutionDate(), nextEvaluationDate)) {
-                                    lastUpdate = trigger.get().toBuilder().nextExecutionDate(nextEvaluationDate).build();
-
-                                    this.triggerState.update(lastUpdate);
-                                }
+                            // Re-read the trigger from its store rather than trusting the snapshot taken at the start of this
+                            // method: the executor may have just unlocked it (cleared the executionId) concurrently, and acting
+                            // on a stale snapshot could resurrect that lock.
+                            Trigger current = this.triggerState.findLast(trigger.get()).orElse(trigger.get());
+                            Trigger lastUpdate = current;
+                            Optional<Trigger> toPersist = computeScheduleInitialization(schedule, current, recoverMissedSchedules, conditionContext);
+                            if (toPersist.isPresent()) {
+                                lastUpdate = toPersist.get();
+                                this.triggerState.update(lastUpdate);
                             }
                             // Used for schedulableNextDate
                             FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
@@ -435,6 +430,34 @@ public abstract class AbstractScheduler implements Scheduler {
         }
 
         this.isReady = true;
+    }
+
+    /**
+     * Computes the Schedule trigger state to persist when the flow-change listener re-initializes a trigger.
+     * Returns an empty {@link Optional} when nothing should be written.
+     *
+     * @param current the current trigger state to base the decision on
+     */
+    @VisibleForTesting
+    static Optional<Trigger> computeScheduleInitialization(Schedulable schedule, Trigger current, RecoverMissedSchedules recoverMissedSchedules, ConditionContext conditionContext) throws Exception {
+        // Never rewrite a locked trigger (an execution is in flight). Its next execution date is owned by the
+        // execution-termination path; rewriting it here from a possibly stale snapshot could resurrect a stale
+        // executionId and lock the trigger forever.
+        if (current.getExecutionId() != null) {
+            return Optional.empty();
+        }
+        if (recoverMissedSchedules == RecoverMissedSchedules.LAST) {
+            ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
+            if (previousDate.isAfter(current.getDate())) {
+                return Optional.of(current.toBuilder().nextExecutionDate(previousDate).build());
+            }
+        } else if (recoverMissedSchedules == RecoverMissedSchedules.NONE) {
+            ZonedDateTime nextEvaluationDate = schedule.nextEvaluationDate();
+            if (!Objects.equals(current.getNextExecutionDate(), nextEvaluationDate)) {
+                return Optional.of(current.toBuilder().nextExecutionDate(nextEvaluationDate).build());
+            }
+        }
+        return Optional.empty();
     }
 
     private void enterMaintenance() {
@@ -712,11 +735,17 @@ public abstract class AbstractScheduler implements Scheduler {
                             if (this.interval(f.getAbstractTrigger()) != null) {
                                 // If it has an interval, the Worker will execute the trigger.
                                 // Normally, only the Schedule trigger has no interval.
+                                // a surviving 'pluginDefaultsRef' means plugin-default injection could not resolve the
+                                // referenced plugin-defaults: fail the trigger evaluation instead of sending a bad job to the worker
+                                if (f.getAbstractTrigger().getPluginDefaultsRef() != null) {
+                                    throw new PluginDefaultsRefNotFoundException(f.getAbstractTrigger().getPluginDefaultsRef());
+                                }
                                 Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
                                 var flowWithTrigger = f.toBuilder().triggerContext(triggerRunning).build();
                                 try {
-                                    this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
-                                    this.sendWorkerTriggerToWorker(flowWithTrigger);
+                                    if (this.sendWorkerTriggerToWorker(flowWithTrigger)) {
+                                        this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
+                                    }
                                 } catch (InternalException e) {
                                     Logs.logTrigger(
                                         f.getTriggerContext(),
@@ -1085,7 +1114,15 @@ public abstract class AbstractScheduler implements Scheduler {
         );
     }
 
-    private void sendWorkerTriggerToWorker(FlowWithWorkerTrigger flowWithTrigger) throws InternalException {
+    /**
+     * Sends a worker trigger evaluation job to a worker.
+     *
+     * @return {@code true} if the job was actually dispatched to a worker, {@code false} for every
+     *         no-dispatch outcome (no worker group for the key, FAIL/CANCEL fallback when no worker is
+     *         available, or a queue emission error). The caller must only take the trigger evaluation
+     *         lock when this returns {@code true}, otherwise the trigger would stay locked forever.
+     */
+    private boolean sendWorkerTriggerToWorker(FlowWithWorkerTrigger flowWithTrigger) throws InternalException {
         if (log.isDebugEnabled()) {
             Logs.logTrigger(
                 flowWithTrigger.getTriggerContext(),
@@ -1110,32 +1147,44 @@ public abstract class AbstractScheduler implements Scheduler {
                 String workerGroupKey = runContext.render(workerGroup.get().getKey());
                 if (WorkerGroup.isDefault(workerGroupKey)) {
                     this.workerJobQueue.emit(workerTrigger);
+                    return true;
                 } else if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                     // Check whether at-least one worker is available
                     if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {
                         this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                        return true;
                     } else {
                         WorkerGroup.Fallback fallback = workerGroup.map(WorkerGroup::getFallback).orElse(WorkerGroup.Fallback.WAIT);
-                        switch (fallback) {
-                            case FAIL -> runContext.logger()
-                                .error("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
-                            case CANCEL -> runContext.logger()
-                                .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                        return switch (fallback) {
+                            case FAIL -> {
+                                runContext.logger()
+                                    .error("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                                yield false;
+                            }
+                            case CANCEL -> {
+                                runContext.logger()
+                                    .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                                yield false;
+                            }
                             case WAIT -> {
                                 runContext.logger()
                                     .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
                                 this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                                yield true;
                             }
-                        }
+                        };
                     }
                 } else {
                     runContext.logger().error("No worker group exist for key '{}', ignoring the trigger.", workerGroupKey);
+                    return false;
                 }
             } else {
                 this.workerJobQueue.emit(workerTrigger);
+                return true;
             }
         } catch (QueueException e) {
             log.error("Unable to emit the Worker Trigger job", e);
+            return false;
         }
     }
 

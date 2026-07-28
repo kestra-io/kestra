@@ -50,16 +50,12 @@ public class Exponential extends AbstractRetry {
 
     @Override
     public Instant nextRetryDate(Integer attemptCount, Instant lastAttempt) {
-        Duration computedInterval = interval.multipliedBy(
-            (long) (this.delayFactor == null ? 2 : this.delayFactor.intValue()) * (attemptCount - 1)
-        );
-        Instant next = lastAttempt.plus(computedInterval);
-        if (next.isAfter(lastAttempt.plus(maxInterval))) {
-
-            return lastAttempt.plus(maxInterval);
-        }
-
-        return next;
+        double factor = this.delayFactor == null ? 2d : this.delayFactor;
+        double delayMillis = interval.toMillis() * Math.pow(factor, attemptCount - 1);
+        long maxMillis = maxInterval.toMillis();
+        // delayMillis may be Double.POSITIVE_INFINITY for very large attemptCount — the >= guard handles that correctly
+        long cappedMillis = delayMillis >= maxMillis ? maxMillis : Math.round(delayMillis);
+        return lastAttempt.plusMillis(cappedMillis);
     }
 
     @AssertTrue(message = "'interval' must be less than 'maxDuration'")

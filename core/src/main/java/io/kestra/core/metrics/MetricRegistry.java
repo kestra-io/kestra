@@ -138,6 +138,10 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION = "Queue duration to receive and consume a batch of messages";
     public static final String METRIC_QUEUE_POLL_SIZE = "queue.poll.size";
     public static final String METRIC_QUEUE_POLL_SIZE_DESCRIPTION = "Size of a poll to the queue (message batch size)";
+    public static final String METRIC_SSE_CONNECTIONS_ACTIVE = "sse.connections.active";
+    public static final String METRIC_SSE_CONNECTIONS_ACTIVE_DESCRIPTION = "Number of currently-open Server-Sent Events (SSE) follow connections";
+    public static final String METRIC_SSE_CONNECTIONS_OPENED_TOTAL = "sse.connections.opened.total";
+    public static final String METRIC_SSE_CONNECTIONS_OPENED_TOTAL_DESCRIPTION = "The total number of Server-Sent Events (SSE) follow connections opened";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
@@ -148,6 +152,7 @@ public class MetricRegistry {
     public static final String TAG_WORKER_GROUP = "worker_group";
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
+    public static final String TAG_SSE_TYPE = "sse_type";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
     public static final String TAG_QUEUE_CONSUMER = "consumer";
     public static final String TAG_QUEUE_CONSUMER_GROUP = "consumer_group";

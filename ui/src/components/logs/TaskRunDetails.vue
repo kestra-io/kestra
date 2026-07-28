@@ -23,6 +23,7 @@
                 <el-card class="attempt-wrapper">
                     <TaskRunLine
                         :currentTaskRun="currentTaskRun"
+                        :depth="currentTaskRun.depth ?? 0"
                         :followedExecution="followedExecution"
                         :flow="flow"
                         :forcedAttemptNumber="forcedAttemptNumber"
@@ -459,11 +460,40 @@
                 return Download;
             },
             currentTaskRuns() {
-                return (
-                    this.followedExecution?.taskRunList?.filter((tr) =>
-                        this.taskRunId ? tr.id === this.taskRunId : true,
-                    ) ?? []
-                );
+                const taskRunList = this.followedExecution?.taskRunList ?? [];
+
+                if (this.taskRunId) {
+                    return taskRunList
+                        .filter((tr) => tr.id === this.taskRunId)
+                        .map((tr) => ({...tr, depth: 0}));
+                }
+
+                // Order taskruns parent → child and annotate depth, so dynamically-generated
+                // taskruns (e.g. each Ansible play/task or dbt model) render indented under
+                // their parent taskrun.
+                const byId = Object.fromEntries(taskRunList.map((tr) => [tr.id, tr]));
+                const childrenByParent = {};
+                const roots = [];
+                for (const tr of taskRunList) {
+                    if (tr.parentTaskRunId && byId[tr.parentTaskRunId]) {
+                        (childrenByParent[tr.parentTaskRunId] ??= []).push(tr);
+                    } else {
+                        roots.push(tr);
+                    }
+                }
+
+                const ordered = [];
+                const walk = (nodes, depth) => {
+                    for (const node of nodes) {
+                        ordered.push({...node, depth});
+                        const children = childrenByParent[node.id];
+                        if (children) {
+                            walk(children, depth + 1);
+                        }
+                    }
+                };
+                walk(roots, 0);
+                return ordered;
             },
             params() {
                 let params = {minLevel: this.level};
@@ -734,6 +764,13 @@
                                 this.throttledExecutionUpdate.flush();
                             }
                         };
+
+                        // Close on error: without this, EventSource auto-reconnects
+                        // and each reconnect leaks a server-side SSE connection
+                        // (Netty direct buffers) over time. See kestra-io/kestra#16982.
+                        this.executionSSE.onerror = (_) => {
+                            this.closeTargetExecutionSSE();
+                        };
                     });
             },
             followLogs(executionId) {
@@ -774,6 +811,12 @@
                                 "something_went_wrong.loading_execution",
                             ),
                         };
+
+                        // Close on error: EventSource auto-reconnects unless
+                        // explicitly closed, and each reconnect leaks a server-side
+                        // log-follow stream (Netty direct buffers) over time.
+                        // See kestra-io/kestra#16982.
+                        this.closeLogsSSE();
                     };
                 });
             },

@@ -148,4 +148,40 @@ class NamespaceFileTest {
         assertThat(toLogicalPath(unixPath2)).isEqualTo("/folder/file.txt");
     }
 
+    @Test
+    void shouldThrowOnPathTraversalWithDoubleDots() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("/foo/../../etc/passwd")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("/../etc")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("..")));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> NamespaceFile.normalize(Path.of("foo/../../../bar")));
+    }
+
+    @Test
+    void shouldAllowLegitimatePathsWithSingleDotAndMultiLevelDirs() {
+        assertThat(toLogicalPath(NamespaceFile.normalize(Path.of("/foo/./bar")))).isEqualTo("/foo/bar");
+        assertThat(toLogicalPath(NamespaceFile.normalize(Path.of("/foo/bar")))).isEqualTo("/foo/bar");
+        assertThat(toLogicalPath(NamespaceFile.normalize(Path.of("/file..with..dots")))).isEqualTo("/file..with..dots");
+    }
+
+    @Test
+    void shouldDistinguishSpaceAndPlusInStorageUri() {
+        // Regression: "a b.txt" (space) and "a+b.txt" (literal '+') must map to distinct storage URIs.
+        // Previously, URLEncoder.encode(space) = '+', causing both names to collide on the same object.
+        NamespaceFile spaceFile = NamespaceFile.of(NAMESPACE, Path.of("/a b.txt"));
+        NamespaceFile plusFile  = NamespaceFile.of(NAMESPACE, Path.of("/a+b.txt"));
+
+        // Space must be percent-encoded in the URI (URI-illegal → %20); '+' must remain '+' (URI-legal).
+        assertThat(spaceFile.uri().toString()).contains("%20");
+        assertThat(spaceFile.uri().toString()).doesNotContain("a+b.txt");
+        assertThat(plusFile.uri().toString()).contains("a+b.txt");
+        assertThat(plusFile.uri().toString()).doesNotContain("%20");
+
+        // The two URIs must be distinct — no silent collision.
+        assertThat(spaceFile.uri()).isNotEqualTo(plusFile.uri());
+
+        // storagePath() must round-trip back to the decoded path.
+        assertThat(spaceFile.storagePath().toString()).endsWith("a b.txt");
+        assertThat(plusFile.storagePath().toString()).endsWith("a+b.txt");
+    }
+
 }

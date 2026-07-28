@@ -26,8 +26,12 @@
 
 <script setup lang="ts">
     import {ref, watch, nextTick, onBeforeUnmount, onMounted, computed} from "vue";
+    import {useRouter} from "vue-router";
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import * as Markdown from "../../utils/markdown";
+    import linkifyRouterMd from "../logs/linkify";
+
+    const router = useRouter();
 
     /**
      * Unified component props
@@ -38,6 +42,7 @@
             permalink?: boolean;
             fontSizeVar?: string;
             html?: boolean;
+            linkify?: boolean;
             showSearch?: boolean;
             collapseExamples?: boolean;
             variant?: "default" | "enhanced";
@@ -48,6 +53,7 @@
             permalink: false,
             fontSizeVar: "font-size-sm",
             html: true,
+            linkify: true,
             showSearch: false, // good default for OSS docs
             collapseExamples: false,
             variant: "enhanced",
@@ -112,6 +118,10 @@
         themeObserver.observe(html, {attributes: true, attributeFilter: ["class"]});
     });
 
+    const emit = defineEmits<{
+        (e: "rendered"): void;
+    }>();
+
     /**
      * Main render function
      */
@@ -126,11 +136,13 @@
             html: props.html,
             variant: props.variant,
             showCopyButtons: props.showCopyButtons,
+            linkify: props.linkify,
         });
 
         await nextTick();
         enhanceContent();
         applySearchFilter();
+        emit("rendered");
     }
 
     /**
@@ -141,6 +153,7 @@
         const root = markdownContainer.value;
         if (!root) return;
 
+        linkifyRouterMd(root, router);
         transformTables(root);
         setupCardToggles(root);
         setupCollapsibles(root);

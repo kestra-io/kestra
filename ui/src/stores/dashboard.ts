@@ -346,7 +346,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     const errors = ref<string[] | undefined>()
-    const warnings = ref<string[] | undefined>()
 
     return {
         activeDashboard,
@@ -374,7 +373,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
         export: exportDashboard,
         loadChart,
         errors,
-        warnings,
 
         schema,
         definitions,

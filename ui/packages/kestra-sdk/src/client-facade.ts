@@ -29,6 +29,11 @@ export interface AxiosLikeResponse<T = any> {
     request?: { responseURL: string }
 }
 
+export interface StreamConfig {
+    headers?: Record<string, string>
+    signal?: AbortSignal
+}
+
 /** Minimal shape of the @hey-api/client-fetch client this facade reads. */
 interface InterceptedFetchClient {
     interceptors: {
@@ -71,6 +76,15 @@ export interface AxiosLikeClient {
     put: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
     delete: <T = any>(url: string, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
     patch: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => Promise<AxiosLikeResponse<T>>
+    /**
+     * POSTs `data` and resolves with the RAW `Response`, body unconsumed, so callers can read it
+     * incrementally — e.g. POST-based SSE streams, which `EventSource` cannot issue. Runs the same
+     * shared request/response interceptors as the axios-like methods (CSRF header, progress, any
+     * EE additions), so streaming endpoints never need to reimplement that cross-cutting logic.
+     * Unlike the axios-like methods, a non-2xx response is RETURNED, not thrown, and error
+     * interceptors are NOT run: streaming callers own their error UX (no global toasts/redirects).
+     */
+    stream: (url: string, data?: any, config?: StreamConfig) => Promise<Response>
 }
 
 export function createClientFacade(
@@ -165,18 +179,47 @@ export function createClientFacade(
         return {data: responseData, status: response.status, headers: headersObj, request: {responseURL: response.url}}
     }
 
+    /** See {@link AxiosLikeClient.stream} — raw-Response variant of axiosLikeRequest for streaming endpoints. */
+    async function streamRequest(url: string, data?: any, config: StreamConfig = {}): Promise<Response> {
+        const headers = new Headers({...commonHeaders, ...(config.headers ?? {})})
+        let body: BodyInit | undefined
+        if (data !== undefined) {
+            if (typeof data === "string") {
+                body = data
+            } else {
+                body = JSON.stringify(data)
+                if (!headers.has("content-type")) {
+                    headers.set("content-type", "application/json")
+                }
+            }
+        }
+
+        const interceptorOptions = {...config} as unknown as ResolvedRequestOptions
+        let request = new Request(url, {method: "POST", headers, body, credentials: "include", redirect: "follow", signal: config.signal})
+        for (const fn of client.interceptors.request.fns) {
+            if (fn) request = await fn(request, interceptorOptions)
+        }
+
+        let response = await fetch(request)
+        for (const fn of client.interceptors.response.fns) {
+            if (fn) response = await fn(response, request, interceptorOptions)
+        }
+        return response
+    }
+
     const axiosLikeClient: AxiosLikeClient = {
         defaults: {headers: {common: commonHeaders}},
         get: <T = any>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("GET", url, undefined, config),
         post: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("POST", url, data, config),
         put: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PUT", url, data, config),
-        delete: <T = any>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("DELETE", url, undefined, config),
+        delete: <T = any>(url: string, config?: AxiosLikeConfig) => axiosLikeRequest<T>("DELETE", url, config?.data, config),
         patch: <T = any>(url: string, data?: any, config?: AxiosLikeConfig) => axiosLikeRequest<T>("PATCH", url, data, config),
+        stream: streamRequest,
     }
 
     /** Set a mock client instance controlled in tests. */
     function setMockClient(mockClient: Partial<AxiosLikeClient> = {}) {
-        for (const method of ["get", "post", "put", "delete", "patch"] as const) {
+        for (const method of ["get", "post", "put", "delete", "patch", "stream"] as const) {
             if (mockClient[method]) {
                 (axiosLikeClient as any)[method] = mockClient[method] as any
             }

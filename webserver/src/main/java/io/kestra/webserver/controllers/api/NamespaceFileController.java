@@ -21,6 +21,8 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.security.ProtectedZipInputStream;
+import io.kestra.core.security.SecurityConfiguration;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
@@ -60,6 +62,8 @@ public class NamespaceFileController {
     private NamespaceFactory namespaceFactory;
     @Inject
     private NamespaceFileService namespaceFileService;
+    @Inject
+    private SecurityConfiguration securityConfiguration;
 
     private final List<Pattern> forbiddenPathPatterns = List.of(
         Pattern.compile("/" + FLOWS_FOLDER + "(/.*)?$")
@@ -202,7 +206,7 @@ public class NamespaceFileController {
         String tenantId = tenantService.resolveTenant();
         List<NamespaceFile> createdFiles = new ArrayList<>();
         if (fileContent.getFilename().toLowerCase().endsWith(".zip")) {
-            try (ZipInputStream archive = new ZipInputStream(fileContent.getInputStream())) {
+            try (ZipInputStream archive = ProtectedZipInputStream.of(fileContent.getInputStream(), securityConfiguration.zipBombProtection())) {
                 ZipEntry entry;
                 while ((entry = archive.getNextEntry()) != null) {
                     if (entry.isDirectory()) {

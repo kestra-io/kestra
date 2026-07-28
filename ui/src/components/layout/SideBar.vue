@@ -106,7 +106,7 @@
         collapsed?: boolean,
     }>(), {
         showLink: true,
-        logoTo: () => ({name: "welcome"}),
+        logoTo: () => ({name: "ai"}),
         collapsed: false,
     })
 

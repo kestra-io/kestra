@@ -8,20 +8,15 @@ import {Flow} from "./flow"
 export const useCoreStore = defineStore("core", () => {
     const message = ref<Message>()
     const error = ref<any>()
-    const monacoYamlConfigured = ref(false)
-    const tutorialFlows = ref<Flow[]>([])
 
     async function readTutorialFlows() {
         const flows = await FlowsAPI.listFlowsByNamespace({namespace: TUTORIAL_NAMESPACE}) as Flow[]
-        tutorialFlows.value = flows
         return flows
     }
 
     return {
         message,
         error,
-        monacoYamlConfigured,
-        tutorialFlows,
         readTutorialFlows,
     }
 })

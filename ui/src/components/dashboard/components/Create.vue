@@ -58,9 +58,12 @@
     onMounted(async () => {
         dashboardStore.isCreating = true
 
-        const {blueprintId, name, params} = route.query
+        const {blueprintId, name, params, sourceYaml} = route.query
 
-        if (blueprintId) {
+        if (sourceYaml) {
+            // Seed directly from a handed-off source (e.g. an AI Copilot dashboard draft).
+            dashboardStore.sourceCode = sourceYaml as string
+        } else if (blueprintId) {
             dashboardStore.sourceCode = await blueprintsStore.getBlueprintSource({type: "community", kind: "dashboard", id: blueprintId as string})
             if (!/^id:.*$/m.test(dashboardStore.sourceCode ?? "")) {
                 dashboardStore.sourceCode = "id: " + blueprintId + "\n" + dashboardStore.sourceCode

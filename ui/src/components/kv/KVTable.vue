@@ -320,7 +320,7 @@
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import {useKvStore} from "../../stores/kvs.ts"
+    import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 
     import _merge from "lodash/merge"
     const dataTable = useTemplateRef("dataTable")
@@ -342,7 +342,6 @@
 
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
-    const kvStore = useKvStore()
 
     const editorBindings = useEditorBindings()
 
@@ -352,7 +351,7 @@
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
         const activeFilters = routeQueryToQueryFilters(route.query)
-        const kvsResponse = await kvStore.find(loadQuery({
+        const kvsResponse = await KvAPI.listAllKeys(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "name:asc"),
@@ -368,7 +367,7 @@
             const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1)
 
             for (const parentNs of parentNamespaces) {
-                const parentKvsResponse = await kvStore.find(loadQuery({
+                const parentKvsResponse = await KvAPI.listAllKeys(loadQuery({
                     filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 

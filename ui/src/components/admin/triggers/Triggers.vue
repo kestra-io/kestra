@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="$t('triggers')">
-        <template v-if="isManageTab" #additional-right>
+        <template v-if="isManageTab" #actions>
             <ul>
                 <li>
                     <KsButton :icon="Download" @click="exportTriggers">
@@ -25,32 +25,34 @@
     import TriggersManage from "./TriggersManage.vue"
 
     import useRouteContext from "../../../composables/useRouteContext"
-    import {useTriggerStore} from "../../../stores/trigger"
+    import {exportTriggersAsCSV} from "../../../utils/triggers"
 
     const VALID_TABS = ["add", "manage"] as const
-    const DEFAULT_TAB: ValidTab = "add"
 
     type ValidTab = typeof VALID_TABS[number];
+
+    const storedDefaultTab = localStorage.getItem("triggersDefaultTab") ?? ""
+    const DEFAULT_TAB: ValidTab = VALID_TABS.includes(storedDefaultTab as ValidTab) ? storedDefaultTab as ValidTab : "add"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
     const router = useRouter()
-    const triggerStore = useTriggerStore()
 
     useRouteContext(computed(() => ({title: t("triggers")})))
 
     const tabs = computed(() => [
         {name: "add", title: t("triggers_tabs_add"), component: markRaw(TriggersGrid)},
-        {name: "manage", title: t("triggers_tabs_manage"), component: markRaw(TriggersManage)},
+        {name: "manage", title: t("triggers_tabs_manage"), component: markRaw(TriggersManage), fullContainer: true},
     ])
 
     const isManageTab = computed(() => route.params.tab === "manage")
 
     watch(() => route.params.tab, (tab) => {
-        if (tab !== undefined && !VALID_TABS.includes(tab as ValidTab)) {
-            router.replace({name: "admin/triggers", params: {...route.params, tab: DEFAULT_TAB}})
+        const resolved = VALID_TABS.includes(tab as ValidTab) ? tab as ValidTab : DEFAULT_TAB
+        if (tab !== resolved) {
+            router.replace({name: "admin/triggers", params: {...route.params, tab: resolved}})
         }
     }, {immediate: true})
 
-    const exportTriggers = () => triggerStore.exportTriggersAsCSV(route.query)
+    const exportTriggers = () => exportTriggersAsCSV(route.query)
 </script>

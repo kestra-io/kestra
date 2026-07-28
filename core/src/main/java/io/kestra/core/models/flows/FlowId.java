@@ -23,6 +23,10 @@ public interface FlowId {
 
     String getTenantId();
 
+    default FlowId toFlowId() {
+        return new Default(this.getTenantId(), this.getNamespace(), this.getId(), this.getRevision());
+    }
+
     static String uid(FlowId flow) {
         return uid(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.ofNullable(flow.getRevision()));
     }

@@ -6,13 +6,15 @@
             @click="handleToggle"
         >
             <span class="collapse-button__label">
-                <component :is="collapsed ? MenuRight : MenuDown" v-if="arrow" class="arrow" />
                 {{ clickableText }}
                 <slot name="additionalButtonText" />
             </span>
             <span v-if="$slots.buttonRight" class="collapse-button__right">
                 <slot name="buttonRight" :collapsed="collapsed" />
             </span>
+            <KsIcon v-if="arrow" size="base" class="collapse-button__chevron">
+                <component :is="collapsed ? ChevronDown : ChevronUp" />
+            </KsIcon>
         </summary>
         <div v-if="$slots.content" :id="`${href}-body`">
             <div>
@@ -25,8 +27,9 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import {useBrowserLocation} from "@vueuse/core"
-    import MenuRight from "vue-material-design-icons/MenuRight.vue"
-    import MenuDown from "vue-material-design-icons/MenuDown.vue"
+    import {KsIcon} from "@kestra-io/design-system"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
 
     const props = withDefaults(defineProps<{
         href?: string;
@@ -98,12 +101,13 @@
     .collapse-button {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
+        justify-content: flex-start;
+        gap: var(--ks-spacing-2);
         padding: 0;
         border: none;
         background: none;
-        font-weight: 700;
+        font-size: var(--ks-font-size-md);
+        font-weight: 600;
 
         &:focus {
             outline: none;
@@ -114,7 +118,7 @@
     .collapse-button__label {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--ks-spacing-2);
     }
 
     .collapse-button__right {

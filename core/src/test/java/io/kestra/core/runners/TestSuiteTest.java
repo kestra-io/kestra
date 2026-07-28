@@ -18,7 +18,6 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.TaskOutputService;
@@ -35,9 +34,6 @@ import static org.assertj.core.api.Assertions.within;
 
 @KestraTest(startRunner = true)
 class TestSuiteTest {
-
-    @Inject
-    protected DispatchQueueInterface<Execution> executionQueue;
 
     @Inject
     protected TestRunnerUtils runnerUtils;

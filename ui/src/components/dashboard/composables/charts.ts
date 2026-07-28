@@ -1,262 +1,99 @@
-import _merge from "lodash/merge"
-import * as Utils from "../../../utils/utils"
-import {State} from "@kestra-io/design-system"
+import {ref} from "vue"
+
 import {cssVar} from "@kestra-io/design-system"
 import {getSchemeValue} from "../../../utils/scheme"
 
-import {useMiscStore} from "override/stores/misc"
-
-export function tooltip(tooltipModel: {
-    title?: string[];
-    body?: { lines: string[] }[];
-    labelColors: {
-        backgroundColor: string;
-        borderColor: string
-    }[];
-}) {
-    const titleLines = tooltipModel.title || []
-    const bodyLines = (tooltipModel.body || []).map((r) => r.lines)
-
-    if (tooltipModel.body) {
-        let innerHtml = ""
-
-        titleLines.forEach(function (title) {
-            innerHtml += "<h6>" + title + "</h6>"
-        })
-
-        bodyLines.forEach(function (body, i) {
-            if (body.length > 0) {
-                const colors = tooltipModel.labelColors[i]
-                let style = "background:" + colors.backgroundColor
-                style += "; border-color:" + colors.borderColor
-                const span = "<span class=\"square\" style=\"" + style + "\"></span>"
-                innerHtml += span + body + "<br />"
-            }
-        })
-
-        return innerHtml
-    }
-
-    return undefined
+export interface RankedStackedBars {
+    categories: string[]
+    series: {name: string; data: number[]}[]
+    totals: number[]
+    othersCount: number
+    othersNames: string[]
 }
 
-export function defaultConfig(override: {
-    [key: string]: any;
-}, theme?: "dark" | "light") {
-    const protectedTheme = theme ?? Utils.getTheme()
-    const color = protectedTheme === "dark" ? "#FFFFFF" : cssVar("--ks-gray-700")
+export const DEFAULT_BAR_CATEGORY_LIMIT = 8
 
-    return _merge(
-        {
-            animation: false as const,
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 2,
-                },
-            },
-            scales: {
-                x: {
-                    display: false,
-                    title: {color},
-                    ticks: {color},
-                    border: {color: cssVar("--ks-border-default")},
-                },
-                y: {
-                    display: false,
-                    title: {color},
-                    ticks: {color},
-                    border: {color: cssVar("--ks-border-default")},
-                },
-                yB: {
-                    display: false,
-                    title: {color},
-                    ticks: {color},
-                },
-            },
-            elements: {
-                line: {
-                    borderWidth: 1,
-                    fill: "start",
-                    tension: 0.3,
-                },
-                point: {
-                    radius: 0,
-                    hoverRadius: 0,
-                },
-            },
-            plugins: {
-                legend: {
-                    display: false,
-                },
-                tooltip: {
-                    mode: "index" as const,
-                    intersect: false,
-                    enabled: false,
-                    boxPadding: 5,
-                    usePointStyle: true,
-                    multiKeyBackground: "#000000",
-                },
-            },
-        },
-        override,
-    )
-}
+export function rankStackedBars(
+    rows: Record<string, unknown>[],
+    opts: {categoryKey: string; stackKeys: string[]; valueKey: string; limit?: number},
+): RankedStackedBars {
+    const {categoryKey, stackKeys, valueKey} = opts
+    const limit = opts.limit ?? DEFAULT_BAR_CATEGORY_LIMIT
 
-export function extractState(value: any) {
-    if (!value || typeof value !== "string") return value
-
-    if (value.includes(",")) {
-        const stateNames = State.arrayAllStates().map(state => state.name)
-        const matchedState = value.split(",")
-            .map(part => part.trim())
-            .find(part => stateNames.includes(part.toUpperCase()))
-        return matchedState || value
-    }
-
-    return value
-}
-
-export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label", filters: Record<string, any> = {}) {
-    const query: Record<string, any> = {}
-
-    if (elements && parsedData) {
-        if (elements.length > 0) {
-            const element = elements[0]
-            let state
-            if (type === "label") {
-                // For Bar charts that use dataset labels for state
-                state = parsedData.datasets[element.datasetIndex].label
-            } else if (type === "dataset") {
-                // For Pie/Doughnut charts that use labels array for state
-                state = parsedData.labels[element.index]
-            }
-            if (state) {
-                query.state = extractState(state)
-                query.scope = "USER"
-                query.size = 100
-                query.page = 1
-            }
+    const grouped = new Map<string, Record<string, number>>()
+    for (const row of rows ?? []) {
+        const category = String(row[categoryKey] ?? "")
+        const stack = stackKeys.map((k) => row[k]).join(", ")
+        const value = Number(row[valueKey] ?? 0)
+        let bucket = grouped.get(category)
+        if (!bucket) {
+            bucket = {}
+            grouped.set(category, bucket)
         }
+        bucket[stack] = (bucket[stack] ?? 0) + value
     }
 
-    if (event.date) {
-        const formattedDate = moment(
-            event.date,
-            moment.localeData().longDateFormat("L"),
-        )
-        query.startDate = formattedDate.toISOString(true)
-        query.endDate = formattedDate.add(1, "d").toISOString(true)
+    const totalOf = (bucket: Record<string, number>) => Object.values(bucket).reduce((a, b) => a + b, 0)
+
+    const ranked = [...grouped.entries()]
+        .map(([name, bucket]) => ({name, bucket, total: totalOf(bucket)}))
+        .sort((a, b) => b.total - a.total)
+
+    const stacks = [...new Set(ranked.flatMap((r) => Object.keys(r.bucket)))]
+
+    const overflow = limit > 0 && ranked.length > limit
+    const top = overflow ? ranked.slice(0, limit) : ranked
+    const rest = overflow ? ranked.slice(limit) : []
+
+    const categories = top.map((r) => r.name)
+    const totals = top.map((r) => r.total)
+    const series = stacks.map((stack) => ({name: stack, data: top.map((r) => r.bucket[stack] ?? 0)}))
+
+    if (rest.length) {
+        const othersBucket: Record<string, number> = {}
+        for (const r of rest) for (const stack of stacks) othersBucket[stack] = (othersBucket[stack] ?? 0) + (r.bucket[stack] ?? 0)
+        series.forEach((s) => s.data.push(othersBucket[s.name] ?? 0))
+        totals.push(totalOf(othersBucket))
     }
 
-    if (event.startDate) {
-        query.startDate = moment(event.startDate).toISOString(true)
-    }
-
-    if (event.endDate) {
-        query.endDate = moment(event.endDate).toISOString(true)
-    }
-
-    if (event.status) {
-        query.status = event.status.toUpperCase()
-    }
-
-    if (event.state) {
-        query.state = extractState(event.state)
-    }
-
-    if (route.query.namespace) {
-        query.namespace = route.query.namespace
-    }
-
-    if (route.query.q) {
-        query.q = route.query.q
-    }
-
-    if (event.namespace && event.flowId) {
-        router.push({
-            name: "flows/update",
-            params: {
-                namespace: event.namespace,
-                id: event.flowId,
-                tab: "executions",
-                tenant: route.params.tenant,
-            },
-            query: query,
-        })
-    } else {
-        if (event.namespace) {
-            query.namespace = event.namespace
-        }
-
-        router.push({
-            name: "executions/list",
-            params: {
-                tenant: route.params.tenant,
-            },
-            query: {
-                ...query,
-                ...filters,
-                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H",
-            },
-        })
-    }
+    return {categories, series, totals, othersCount: rest.length, othersNames: rest.map((r) => r.name)}
 }
 
-export function backgroundFromState(state: string, alpha = 1) {
-    const hex = State.color()[state]
-    if (!hex) {
-        return null
+function hashToHexColor(value: string): string {
+    let hash = 0x811c9dc5
+    for (let i = 0; i < value.length; i++) {
+        hash ^= value.charCodeAt(i)
+        hash = (hash * 0x01000193) >>> 0
     }
 
-    const [r, g, b] = hex.match(/\w\w/g)?.map((x) => parseInt(x, 16)) ?? [0, 0, 0]
-    return `rgba(${r},${g},${b},${alpha})`
-}
+    hash ^= hash >>> 16
+    hash *= 0x85ebca6b
+    hash ^= hash >>> 13
+    hash *= 0xc2b2ae35
+    hash ^= hash >>> 16
 
-export function getConsistentHEXColor(_theme: "light" | "dark", value: string) {
-    // TODO: This was added as part of https://github.com/kestra-io/kestra/issues/10055
-    // Idea is to separate the value to parts and only use the status
-    // Needs to be made more generic and robust as part of the https://github.com/kestra-io/kestra/issues/9149#issuecomment-2969506266
-    const result = value?.includes(",") ? value.split(",").pop()?.trim() : value
-
-    let hex
-
-    hex = getSchemeValue(result as any, "executions")
-    if (hex && hex !== "transparent") {
-        return hex
-    }
-
-    hex = getSchemeValue(result as any, "logs")
-    if (hex && hex !== "transparent") {
-        return hex
-    }
-
-    // FNV-1a Hash Algorithm
-    let hash = 0x811c9dc5 // FNV offset basis (32-bit)
-    const fnvPrime = 0x01000193 // FNV prime (32-bit)
-
-    for (let i = 0; i < (value ?? "").length; i++) {
-        hash ^= value.charCodeAt(i) // XOR with character code
-        hash = (hash * fnvPrime) >>> 0 // Multiply by FNV prime and ensure 32-bit
-    }
-
-    // Bit-mixing step (to ensure greater differentiation)
-    hash ^= hash >>> 16 // XOR with a shifted version
-    hash *= 0x85ebca6b // Multiply with a large prime
-    hash ^= hash >>> 13 // XOR again with another shift
-    hash *= 0xc2b2ae35 // Multiply with another large prime
-    hash ^= hash >>> 16 // Final XOR with a shift
-
-    // Generate a HEX color from the hash
     return `#${((hash >>> 0) & 0xffffff).toString(16).padStart(6, "0")}`
 }
 
-export function getStateColor(state: string) {
-    return State.getStateColor(state)
+export function getConsistentHEXColor(_theme: "light" | "dark", value: string): string {
+    const status = (value?.includes(",") ? value.split(",").pop()?.trim() : value) ?? ""
+
+    const tokenColor = status ? cssVar(`--ks-chart-${status.toLowerCase()}`) : ""
+    if (tokenColor) {
+        return tokenColor
+    }
+
+    for (const scheme of ["executions", "logs"] as const) {
+        const hex = getSchemeValue(status, scheme)
+        if (hex && hex !== "transparent") {
+            return hex
+        }
+    }
+
+    return hashToHexColor(value ?? "")
 }
 
-export function getFormat(groupBy?: string) {
+export function getFormat(groupBy?: string): string | undefined {
     switch (groupBy) {
         case "minute":
             return "LT"
@@ -268,4 +105,28 @@ export function getFormat(groupBy?: string) {
         case "month":
             return "MM.YYYY"
     }
+}
+
+/**
+ * Tracks which chart series are toggled off via the legend. Feed `legendSelected(names)`
+ * into the ECharts `legend.selected` option so the hidden state survives chart re-renders
+ * (an imperative `legendToggleSelect` dispatch resets on the next setOption).
+ */
+export function useLegendToggle() {
+    const hidden = ref(new Set<string>())
+
+    function onLegendToggle(name: string) {
+        const next = new Set(hidden.value)
+        if (next.has(name)) next.delete(name)
+        else next.add(name)
+        hidden.value = next
+    }
+
+    function legendSelected(names: (string | null | undefined)[]): Record<string, boolean> {
+        return Object.fromEntries(
+            names.filter((name): name is string => name != null).map((name) => [name, !hidden.value.has(name)]),
+        )
+    }
+
+    return {onLegendToggle, legendSelected}
 }

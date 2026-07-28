@@ -5,10 +5,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Optional;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.*;
 
 import jakarta.validation.constraints.NotNull;

@@ -1,18 +1,13 @@
 <template>
     <div class="schema-root">
-        <div class="schema-header">
-            <div v-if="schema.properties?.$beta" class="beta-banner" role="alert">
-                <p>
-                    This plugin is currently in beta. While it is considered safe for use, please be aware that its API
-                    could change in ways that are not compatible with earlier versions in future releases, or it might
-                    become unsupported.
-                </p>
-            </div>
+        <div v-if="!compact" class="schema-header">
+            <KsAlert v-if="schema.properties?.$beta" type="info" :closable="false">
+                This plugin is currently in beta. While it is considered safe for use, please be aware that its API
+                could change in ways that are not compatible with earlier versions in future releases, or it might
+                become unsupported.
+            </KsAlert>
 
-            <div v-if="schema.properties?.title" class="plugin-title markdown">
-                <slot name="markdown" :content="normalizeColons(schema.properties.title)" />
-            </div>
-            <div v-if="schema.properties?.description" class="markdown">
+            <div v-if="schema.properties?.description" class="markdown plugin-description">
                 <slot name="markdown" :content="normalizeColons(schema.properties.description)" />
             </div>
 
@@ -25,73 +20,105 @@
             />
         </div>
 
-        <div :key="pluginType" class="schema-sections">
-            <SchemaSection
-                v-if="examples"
-                class="plugin-section"
-                clickableText="Examples"
-                href="examples"
-                :noUrlChange
+        <div :key="pluginType" class="schema-sections" :class="{compact}">
+            <div
+                v-if="compact && schema.properties?.description"
+                v-show="activeSection === 'overview'"
+                data-section="overview"
+                class="compact-overview markdown"
             >
-                <template #content>
-                    <div class="examples-list">
-                        <template v-for="(example, index) in examples" :key="`${pluginType}-${index}`">
-                            <div class="example-block">
-                                <div class="markdown">
-                                    <slot
-                                        v-if="example.title"
-                                        name="markdown"
-                                        :content="normalizeColons(example.title)"
+                <slot name="markdown" :content="normalizeColons(schema.properties.description)" />
+            </div>
+
+            <div
+                v-if="examples"
+                v-show="!compact || activeSection === 'examples'"
+                data-section="examples"
+            >
+                <SchemaSection
+                    class="plugin-section"
+                    clickableText="Examples"
+                    href="examples"
+                    :arrow="!compact"
+                    :initiallyExpanded="compact"
+                    :noUrlChange
+                >
+                    <template #content>
+                        <div class="examples-list">
+                            <template v-for="(example, index) in examples" :key="`${pluginType}-${index}`">
+                                <div class="example-block">
+                                    <div class="markdown">
+                                        <slot
+                                            v-if="example.title"
+                                            name="markdown"
+                                            :content="normalizeColons(example.title)"
+                                        />
+                                    </div>
+                                    <SchemaToCode
+                                        v-if="example.code"
+                                        :highlighter="highlighter"
+                                        :language="example.lang ?? 'yaml'"
+                                        :theme="codeTheme"
+                                        :code="generateExampleCode(example)"
                                     />
                                 </div>
-                                <SchemaToCode
-                                    v-if="example.code"
-                                    :highlighter="highlighter"
-                                    :language="example.lang ?? 'yaml'"
-                                    :theme="codeTheme"
-                                    :code="generateExampleCode(example)"
-                                />
-                            </div>
-                            <hr v-if="index < examples.length - 1" class="example-divider">
-                        </template>
-                    </div>
-                </template>
-            </SchemaSection>
+                                <hr v-if="index < examples.length - 1" class="example-divider">
+                            </template>
+                        </div>
+                    </template>
+                </SchemaSection>
+            </div>
 
-            <SchemaPropertiesSection
+            <div
                 v-if="schema.properties?.properties"
-                class="plugin-section"
-                :properties="schema.properties.properties"
-                :definitions="schema.definitions"
-                sectionName="Properties"
-                href="properties"
-                :initiallyExpanded="propsInitiallyExpanded"
-                :forceInclude="forceIncludeProperties"
-                :noUrlChange
+                v-show="!compact || activeSection === 'properties'"
+                data-section="properties"
             >
-                <template #markdown="{content}">
-                    <div class="markdown">
-                        <slot name="markdown" :content="content" />
-                    </div>
-                </template>
-            </SchemaPropertiesSection>
+                <SchemaPropertiesSection
+                    class="plugin-section"
+                    :properties="schema.properties.properties"
+                    :definitions="schema.definitions"
+                    sectionName="Properties"
+                    href="properties"
+                    labelColor="var(--ks-text-blue)"
+                    :initiallyExpanded="propsInitiallyExpanded || compact"
+                    :forceInclude="forceIncludeProperties"
+                    :noUrlChange
+                    :compact
+                    showFilter
+                >
+                    <template #markdown="{content}">
+                        <div class="markdown">
+                            <slot name="markdown" :content="content" />
+                        </div>
+                    </template>
+                </SchemaPropertiesSection>
+            </div>
 
-            <SchemaPropertiesSection
+            <div
                 v-if="schema.outputs?.properties && Object.keys(schema.outputs.properties).length > 0"
-                class="plugin-section"
-                :properties="schema.outputs.properties"
-                :definitions="schema.definitions"
-                sectionName="Outputs"
-                href="outputs"
-                :showDynamic="false"
-                :noUrlChange
+                v-show="!compact || activeSection === 'outputs'"
+                data-section="outputs"
             >
-                <template #markdown="{content}">
-                    <div class="markdown">
-                        <slot name="markdown" :content="content" />
-                    </div>
-                </template>
-            </SchemaPropertiesSection>
+                <SchemaPropertiesSection
+                    class="plugin-section"
+                    :properties="schema.outputs.properties"
+                    :definitions="schema.definitions"
+                    sectionName="Outputs"
+                    href="outputs"
+                    labelColor="var(--ks-text-green)"
+                    :showDynamic="false"
+                    :initiallyExpanded="compact"
+                    :noUrlChange
+                    :compact
+                >
+                    <template #markdown="{content}">
+                        <div class="markdown">
+                            <slot name="markdown" :content="content" />
+                        </div>
+                    </template>
+                </SchemaPropertiesSection>
+            </div>
 
             <SchemaPropertiesSection
                 v-if="schema.properties?.$metrics"
@@ -168,6 +195,7 @@
 <script setup lang="ts">
     import {computed, nextTick, onMounted, onUnmounted, ref, watch} from "vue"
     import type {HighlighterCore} from "shiki/core"
+    import {KsAlert} from "@kestra-io/design-system"
     import SchemaSection from "./SchemaSection.vue"
     import SchemaPropertiesSection from "./SchemaPropertiesSection.vue"
     import SchemaToCode from "./SchemaToCode.vue"
@@ -184,12 +212,20 @@
         propsInitiallyExpanded?: boolean;
         forceIncludeProperties?: string[];
         noUrlChange?: boolean;
+        compact?: boolean;
+        activeSection?: string;
     }>(), {
         darkMode: true,
         propsInitiallyExpanded: false,
         forceIncludeProperties: () => [],
         noUrlChange: false,
+        compact: false,
+        activeSection: "overview",
     })
+
+    const emit = defineEmits<{
+        "section-counts": [{properties?: number; outputs?: number; examples?: boolean}]
+    }>()
 
     const definitionsExpanded = ref(false)
     const expandedDefinitions = ref<Set<string>>(new Set())
@@ -221,6 +257,28 @@
         definitionsExpanded.value = true
         expandedDefinitions.value.add(definitionKey)
     }
+
+    const emitSectionCounts = () => {
+        const propertiesCount = props.schema.properties?.properties
+            ? Object.keys(props.schema.properties.properties).length
+            : undefined
+        const outputsCount = props.schema.outputs?.properties && Object.keys(props.schema.outputs.properties).length > 0
+            ? Object.keys(props.schema.outputs.properties).length
+            : undefined
+        emit("section-counts", {
+            properties: propertiesCount,
+            outputs: outputsCount,
+            examples: Boolean(examples.value?.length),
+        })
+    }
+
+    watch([() => props.schema, () => props.pluginType], () => {
+        emitSectionCounts()
+
+        if (props.schema.definitions) {
+            checkHashAndExpand()
+        }
+    })
 
     const checkHashAndExpand = async () => {
         const hash = window.location.hash.slice(1)
@@ -260,13 +318,8 @@
         requestAnimationFrame(attemptScroll)
     }
 
-    watch([() => props.schema, () => props.pluginType], () => {
-        if (props.schema.definitions) {
-            checkHashAndExpand()
-        }
-    })
-
     onMounted(() => {
+        emitSectionCounts()
         checkHashAndExpand()
         window.addEventListener("hashchange", checkHashAndExpand)
     })
@@ -290,26 +343,19 @@
         gap: 1rem;
     }
 
-    .beta-banner {
-        display: flex;
-        padding: 0.5rem !important;
-        margin-bottom: 0.5rem;
-        background-color: var(--ks-bg-info);
-        border: 1px solid var(--ks-border-info);
-        border-left-width: 0.25rem;
-        border-radius: 0.5rem;
-
-        p {
-            color: var(--ks-status-info);
-        }
+    .plugin-description :deep(p),
+    .plugin-description :deep(li) {
+        color: var(--ks-text-secondary);
     }
 
-    .plugin-title {
-        font-size: var(--ks-font-size-lg);
-
-        :deep(p) {
-            font-size: var(--ks-font-size-base);
-        }
+    .schema-sections.compact :deep(.plugin-section > .collapse-button) {
+        font-size: var(--ks-font-size-xs);
+        font-weight: var(--ks-font-weight-bold);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--ks-text-muted);
+        pointer-events: none;
+        margin-bottom: var(--ks-spacing-3);
     }
 
     .examples-list {
@@ -320,6 +366,7 @@
     .example-block {
         display: flex;
         flex-direction: column;
+        gap: 1rem
     }
 
     .example-block-tight {
@@ -360,33 +407,13 @@
             margin-bottom: 0;
         }
 
-        .collapse-button {
-            font-size: var(--ks-font-size-lg);
-            line-height: 1.5rem;
-        }
-
-        .material-design-icon {
-            &, & * {
-                height: 1.5rem;
-                width: 1.5rem;
-                bottom: 0;
-            }
-        }
-
-        .material-design-icon:not(.property .material-design-icon) {
-            &, & * {
-                height: 2rem;
-                width: 2rem;
-            }
-        }
-
-        > .collapse-button:not(.collapsed) {
-            color: var(--ks-text-link);
-        }
-
         [id$="-body"]:not(#examples-body) span {
-            font-size: var(--ks-font-size-sm);
+            font-size: var(--ks-font-size-xs);
             font-weight: 400;
+        }
+
+        > .collapse-button {
+            margin-bottom: var(--ks-spacing-2);
         }
     }
 </style>

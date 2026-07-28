@@ -1,8 +1,10 @@
 package io.kestra.plugin.core.http;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @KestraTest
 class DownloadTest {
     private static final String CSV_CONTENT = "id,name,value\n1,foo,100\n2,bar,200\n3,baz,300\n";
+    private static final String GZIP_CONTENT = "the quick brown fox jumps over the lazy dog\n".repeat(64);
 
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -145,6 +148,27 @@ class DownloadTest {
         Download.Output output = task.run(runContext);
 
         assertThat(this.storageInterface.get(MAIN_TENANT, null, output.getUri()).readAllBytes().length).isEqualTo(10000 * 12);
+    }
+
+    @Test
+    void gzip() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/gzip"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        // A gzip-encoded response advertises a Content-Length equal to the compressed size, which differs from the
+        // decoded bytes written to storage. The task must not fail with "Invalid size" and must store the full content.
+        Download.Output output = assertDoesNotThrow(() -> task.run(runContext));
+
+        assertThat(IOUtils.toString(this.storageInterface.get(MAIN_TENANT, null, output.getUri()), StandardCharsets.UTF_8))
+            .isEqualTo(GZIP_CONTENT);
     }
 
     @Test
@@ -283,6 +307,20 @@ class DownloadTest {
         public HttpResponse<byte[]> csv() {
             return HttpResponse.ok(CSV_CONTENT.getBytes(StandardCharsets.UTF_8))
                 .contentType(io.micronaut.http.MediaType.TEXT_CSV_TYPE);
+        }
+
+        @Get("gzip")
+        public HttpResponse<byte[]> gzip() throws IOException {
+            ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+            try (GZIPOutputStream gzipStream = new GZIPOutputStream(compressed)) {
+                gzipStream.write(GZIP_CONTENT.getBytes(StandardCharsets.UTF_8));
+            }
+
+            // Return already-compressed bytes with an explicit Content-Encoding so the framework does not re-encode;
+            // the byte[] body makes the server emit a Content-Length equal to the compressed size.
+            return HttpResponse.ok(compressed.toByteArray())
+                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+                .contentType(io.micronaut.http.MediaType.TEXT_PLAIN_TYPE);
         }
 
         @Get("500")

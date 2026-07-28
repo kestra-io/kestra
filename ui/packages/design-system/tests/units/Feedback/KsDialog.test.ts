@@ -23,4 +23,20 @@ describe("KsDialog", () => {
         wrapper.vm.$emit("close")
         expect(wrapper.emitted("close")).toBeTruthy()
     })
+
+    test("uses 750px width when large", () => {
+        const wrapper = mount(KsDialog, {
+            props: {modelValue: true, large: true},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("min(750px, 90vw)")
+    })
+
+    test("explicit width overrides large", () => {
+        const wrapper = mount(KsDialog, {
+            props: {modelValue: true, large: true, width: "60%"},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent({name: "ElDialog"}).props("width")).toBe("60%")
+    })
 })

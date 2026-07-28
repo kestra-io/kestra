@@ -2,6 +2,8 @@ import {computed} from "vue"
 import moment from "moment"
 import {useMiscStore} from "override/stores/misc"
 
+export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
 export function uid() {
     return String.fromCharCode(Math.floor(Math.random() * 26) + 97) +
         Math.random().toString(16).slice(2) +
@@ -19,18 +21,29 @@ export function isFile(value: unknown): boolean {
     return typeof value === "string" && PREFIXES.some(p => value.startsWith(p))
 }
 
+/**
+ * Returns `true` when the value is an Ion internal-storage file (i.e. passes {@link isFile}
+ * and the URI ends with a `.ion` extension, case-insensitive).
+ *
+ * @param value Value to validate.
+ * @returns `true` if the value is an Ion file URI.
+ */
+export function isIon(value: unknown): boolean {
+    return isFile(value) && typeof value === "string" && value.toLowerCase().endsWith(".ion")
+}
+
 export function flatten(object: Record<string, any>) {
-    return Object.assign({}, function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any> {
+    return Object.assign({}, ...function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any>[] {
         if (child === null) {
-            return {[path.join(".")]: null}
+            return [{[path.join(".")]: null}]
         }
 
-        return Object
+        return ([] as Record<string, any>[]).concat(...Object
             .keys(child)
             .map(key => typeof child[key] === "object" ?
                 _flatten(child[key], path.concat([key])) :
-                ({[path.concat([key]).join(".")]: child[key]}),
-            )
+                [{[path.concat([key]).join(".")]: child[key]}],
+            ))
     }(object))
 }
 
@@ -152,11 +165,11 @@ export function extractFileNameFromContentDisposition(header: string | null | un
     return null // Return null if no filename is found
 }
 
-export function switchTheme(miscStore: any, theme?: string) {
+export function switchTheme(miscStore: {theme: SelectedTheme}, theme?: SelectedTheme) {
     // default theme
     if (theme === undefined) {
         if (localStorage.getItem("theme")) {
-            theme = localStorage.getItem("theme")!
+            theme = localStorage.getItem("theme") as SelectedTheme
         } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
             theme = "dark"
         } else {
@@ -164,41 +177,52 @@ export function switchTheme(miscStore: any, theme?: string) {
         }
     }
 
+    const disableTransitions = document.createElement("style")
+    disableTransitions.appendChild(document.createTextNode("*,*::before,*::after{transition:none !important}"))
+    document.head.appendChild(disableTransitions)
+
     // class name
     const htmlClass = document.getElementsByTagName("html")[0].classList
 
+    const themeClasses = ["dark", "light", "syncWithSystem", "dark-2"]
     function removeClasses() {
-        htmlClass.forEach((cls) => {
-            if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
-                htmlClass.remove(cls)
-            }
-        })
+        themeClasses.forEach((cls) => htmlClass.remove(cls))
     }
     removeClasses()
 
     if (theme === "syncWithSystem") {
-        removeClasses()
         const systemTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
         htmlClass.add(theme, systemTheme)
     }
+    else if (theme === "dark-2") {
+        htmlClass.add("dark", "dark-2")
+    }
     else {
-        removeClasses()
         htmlClass.add(theme)
     }
 
     miscStore.theme = theme
 
     localStorage.setItem("theme", theme)
+
+    void document.body.offsetHeight
+    requestAnimationFrame(() => disableTransitions.remove())
+}
+
+export type SelectedTheme = "syncWithSystem" | "dark" | "dark-2" | "light"
+
+export function getSelectedTheme(): SelectedTheme {
+    return (localStorage.getItem("theme") as SelectedTheme | null) ?? "syncWithSystem"
 }
 
 export function getTheme(): "light" | "dark" {
-    let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light"
+    let theme = getSelectedTheme()
 
     if (theme === "syncWithSystem") {
-        theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
     }
 
-    return theme
+    return theme === "light" ? "light" : "dark"
 }
 
 export function getLang() {
@@ -283,7 +307,10 @@ export function getParentNamespaces(namespace: string): string[] {
 
 export const useTheme = () => {
     const miscStore = useMiscStore()
-    return computed<"light" | "dark">(() => miscStore.theme as "light" | "dark")
+    return computed<"light" | "dark">(() => {
+        void miscStore.theme
+        return getTheme()
+    })
 }
 
 export function resolve$ref(fullSchema: Record<string, any>, obj: Record<string, any>) {

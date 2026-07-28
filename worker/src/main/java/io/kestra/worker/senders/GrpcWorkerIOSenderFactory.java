@@ -44,7 +44,10 @@ public class GrpcWorkerIOSenderFactory {
             {
                 Logs.logTaskRun(result.getTaskRun(), Level.ERROR, "Failed to send result. Cause: outputs exceeds maximum size.");
                 return result.withTaskRun(result.getTaskRun().fail()).withOutputs(null);
-            }
+            },
+            // Task results must survive a transient network partition: re-queue and redrive rather than
+            // drop, otherwise a completed task is left stuck RUNNING because its result is lost.
+            true
         );
     }
 
@@ -61,7 +64,9 @@ public class GrpcWorkerIOSenderFactory {
             WorkerTriggerResult.class,
             SendStrategy.PER_ITEM,
             controllerServiceStub::sendWorkerTriggerResults,
-            null
+            null,
+            // Trigger results are terminal work output — re-queue on a transient network partition, like task results.
+            true
         );
     }
 
@@ -78,7 +83,9 @@ public class GrpcWorkerIOSenderFactory {
             LogEntry.class,
             SendStrategy.BATCH,
             controllerServiceStub::sendWorkerLogEntries,
-            null
+            null,
+            // Logs are best-effort and high-volume: re-queuing could back-pressure the worker, so drop on failure.
+            false
         );
     }
 
@@ -95,7 +102,9 @@ public class GrpcWorkerIOSenderFactory {
             MetricEntry.class,
             SendStrategy.BATCH,
             controllerServiceStub::sendWorkerMetricEntries,
-            null
+            null,
+            // Metrics are best-effort and high-volume: drop on failure rather than back-pressure the worker.
+            false
         );
     }
 }

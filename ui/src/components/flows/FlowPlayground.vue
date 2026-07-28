@@ -11,7 +11,7 @@
                     :execution="executionsStore.execution"
                 />
                 <KsDropdown trigger="click" placement="bottom-end">
-                    <KsButton :icon="DotsVertical" link class="tab-icon" />
+                    <KsButton :icon="DotsVertical" link class="tab-icon" :aria-label="$t('playground actions')" />
                     <template #dropdown>
                         <KsDropdownMenu class="m-2">
                             <KsDropdownItem :icon="Backspace" @click="playgroundStore.clearExecutions()">
@@ -51,6 +51,7 @@
                     <component
                         :is="activeTab.component"
                         :key="activeTab.name"
+                        v-bind="activeTab.props"
                     />
                 </div>
                 <div v-else class="empty-state">
@@ -80,9 +81,8 @@
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Gantt from "../executions/Gantt.vue"
-    // @ts-expect-error no types on logs
     import Logs from "../executions/Logs.vue"
-    import ExecutionOutput from "../executions/outputs/Wrapper.vue"
+    import ExecutionVariableExplorer from "../executions/outputs/ExecutionVariableExplorer.vue"
     import ExecutionMetric from "../executions/ExecutionMetric.vue"
     import PlaygroundLog from "./playground/PlaygroundLog.vue"
     import {usePlaygroundStore} from "../../stores/playground"
@@ -97,6 +97,7 @@
             name: "logs",
             title: t("logs"),
             component: markRaw(Logs),
+            props: {playground: true},
         },
         {
             name: "gantt",
@@ -106,7 +107,7 @@
         {
             name: "outputs",
             title: t("outputs"),
-            component: markRaw(ExecutionOutput),
+            component: markRaw(ExecutionVariableExplorer),
         },
         {
             name: "metrics",
@@ -145,7 +146,7 @@
     }
 
     .small-text {
-        font-size: .8rem;
+        font-size: var(--ks-font-size-sm);
     }
 
     .playground {
@@ -174,7 +175,7 @@
     .title-section {
         display: flex;
         align-items: center;
-        font-size: .8rem;
+        font-size: var(--ks-font-size-sm);
         font-weight: normal;
         line-height: 1.2rem;
         .tab-icon {

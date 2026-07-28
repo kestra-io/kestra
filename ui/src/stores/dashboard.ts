@@ -1,43 +1,51 @@
-import {computed, nextTick, ref, watch} from "vue"
+import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import type {AxiosRequestConfig, AxiosResponse} from "axios"
+import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
 
-const header: AxiosRequestConfig = {headers: {"Content-Type": "application/x-yaml"}}
-const response: AxiosRequestConfig = {responseType: "blob" as const}
+const response: AxiosLikeConfig = {responseType: "blob" as const}
 const validateStatus = (status: number) => status === 200 || status === 404
-const downloadHandler = (res: AxiosResponse, filename: string) => {
+const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string) => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     const url = window.URL.createObjectURL(blob)
 
-    Utils.downloadUrl(url, `${filename}.csv`)
+    Utils.downloadUrl(url, `${filename}.${extension}`)
 }
 
-import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
+import {apiUrl} from "override/utils/route"
 
 import * as Utils from "../utils/utils"
 
-import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/types.ts"
-import {useClient} from "@kestra-io/kestra-sdk"
+import type {Dashboard, Chart} from "../components/dashboard/types.ts"
+import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
+import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
+import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import _throttle from "lodash/throttle"
-import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
-import {useI18n} from "vue-i18n"
 import {RouteLocation} from "vue-router"
+
+export const DEFAULT_DASHBOARD = {
+    id: "default",
+    title: "",
+    deleted: false,
+    charts: [],
+} as const satisfies Dashboard
 
 export const useDashboardStore = defineStore("dashboard", () => {
     const dashboardList = ref<{ id: string; title: string; isDefault: boolean }[]>()
     const selectedChart = ref<Chart>()
     const activeDashboard = ref<Dashboard>()
-    const defaultDashboards = ref<{
-         defaultHomeDashboard?: string,
-         defaultFlowOverviewDashboard?: string,
-         defaultNamespaceOverviewDashboard?: string,
+    const defaultDashboards = ref<DashboardSettings>()
+    const defaultDefinitions = ref<{
+        main: string,
+        flow: string,
+        namespace: string,
     }>()
     const chartErrors = ref<string[]>([])
     const isCreating = ref<boolean>(false)
+    // const readonlyToastShown = ref(false)
 
     const sourceCode = ref("")
     const sourceCodeOrigin = ref("")
@@ -61,11 +69,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function list(options: Record<string, any>, route: RouteLocation): Promise<{ id: string; title: string; isDefault: boolean }[]> {
         const {sort, ...params} = options
-        const apiResponse = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params})
-        const res = apiResponse.data as { results: { id: string; title: string }[]}
+        const res = await DashboardsAPI.searchDashboards({...params, size: 100, sort: sort ? [sort] : undefined})
         await loadDefaults()
         let isThereADefault = false
-        dashboardList.value = res.results.map(dashboard => {
+        dashboardList.value = (res.results as { id: string; title: string }[]).map(dashboard => {
             const isADefaultForThisRoute = isAdminDefinedDefaultDashboard(dashboard.id, route)
             if(isADefaultForThisRoute){
                 isThereADefault = true
@@ -73,28 +80,51 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return {...dashboard, isDefault: isADefaultForThisRoute}
         })
         if(!isThereADefault){
-            const defaultDashboardBundledInUI = {id: "default", title: t("dashboards.default"), isDefault: true}
+            const defaultDashboardBundledInUI = {...DEFAULT_DASHBOARD, title: "default", isDefault: true}
             dashboardList.value = [defaultDashboardBundledInUI, ...dashboardList.value]
         }
         return dashboardList.value
     }
 
     async function loadDefaults() {
-        const res = await axios.get(`${apiUrl()}/dashboards/settings/default-dashboards`)
-        defaultDashboards.value = res.data
+        // "get default dashboards" lives under a different SDK tag per edition (dashboards in OSS,
+        // dashboards-admin in EE) but the same REST path, so go through the raw client to stay
+        // edition-agnostic (same approach as the custom-blueprint reads).
+        const {data} = await axios.get<DashboardSettings>(`${apiUrl()}/dashboards/settings/default-dashboards`)
+        defaultDashboards.value = data
         return defaultDashboards.value
     }
 
-    async function saveDefaults(defaultDashboardsRequest: {
-        defaultHomeDashboard?: string,
-        defaultFlowOverviewDashboard?: string,
-        defaultNamespaceOverviewDashboard?: string,
-    }) {
+    async function loadDefaultDefinitions() {
+        if (!defaultDefinitions.value) {
+            const res = await axios.get(`${apiUrl()}/dashboards/defaults/definitions`)
+            defaultDefinitions.value = res.data
+        }
+        return defaultDefinitions.value!
+    }
+
+    // side-effect-free lookups for autocompletion, deliberately not going through
+    // list()/load() which mutate dashboardList/activeDashboard and would clobber
+    // whatever the user is currently viewing/editing elsewhere in the app.
+    async function searchIds(): Promise<{ id: string; title?: string }[]> {
+        const res = await axios.get(`${apiUrl()}/dashboards?size=100`)
+        return (res.data as { results: { id: string; title?: string }[] }).results
+    }
+
+    async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
+        const res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
+        if (res.status === 404) return []
+        return (res.data as Dashboard).charts ?? []
+    }
+
+    async function saveDefaults(defaultDashboardsRequest: DashboardSettings) {
         const loadedDef = await loadDefaults()
         const def = {...loadedDef, ...defaultDashboardsRequest}
 
-        const res = await axios.post(`${apiUrlWithoutTenants()}/tenants/main/settings/default-dashboards`, def, {headers: {"Content-Type": "application/json"}})
-        defaultDashboards.value = res.data
+        // TenantController is hardcoded to the "main" tenant (this OSS build is single-tenant),
+        // and its `id` path param isn't the SDK's auto-filled `tenant` param, so it must be passed
+        // explicitly here to match.
+        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboard({id: "main", ...def} as Parameters<typeof TenantsAPI.setTenantDefaultDashboard>[0])
     }
 
     const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
@@ -175,73 +205,70 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
-        let res
+        let data
         try{
-            res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
+            data = await DashboardsAPI.dashboard({id}) as Dashboard
         } catch {
             return undefined
         }
 
-        if (res.status === 404){
-            return undefined
-        }
-
-        activeDashboard.value = res.data
-        sourceCode.value = res.data.sourceCode ?? ""
+        activeDashboard.value = data
+        sourceCode.value = data.sourceCode ?? ""
         sourceCodeOrigin.value = sourceCode.value
 
         return activeDashboard.value
     }
 
     async function create(source: Dashboard["sourceCode"]) {
-        const res = await axios.post(`${apiUrl()}/dashboards`, source, header)
+        const data = await DashboardsAPI.createDashboard({body: source ?? ""})
         sourceCodeOrigin.value = source ?? ""
-        return res.data
+        return data
     }
 
     async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
-        const res = await axios.put(`${apiUrl()}/dashboards/${id}`, source, header)
+        const data = await DashboardsAPI.updateDashboard({id, body: source ?? ""})
         sourceCodeOrigin.value = source ?? ""
-        return res.data
+        return data
     }
 
     async function deleteDashboard(id: Dashboard["id"]) {
-        const res = await axios.delete(`${apiUrl()}/dashboards/${id}`)
-        return res.data
+        return DashboardsAPI.deleteDashboard({id})
     }
 
     async function validateDashboard(source: Dashboard["sourceCode"]) {
-        const res = await axios.post(`${apiUrl()}/dashboards/validate`, source, header)
-        return res.data
+        return DashboardsAPI.validateDashboard({body: source ?? ""})
     }
 
-    async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: Parameters) {
-        const res = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {validateStatus})
-        return res.data
+    async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
+        try {
+            return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
+        } catch (e: any) {
+            if (e.status === 404) return undefined
+            throw e
+        }
     }
 
     async function validateChart(source: string) {
-        const res = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, header)
-        chartErrors.value = res.data
-        return res.data
+        const data = await DashboardsAPI.validateChart({body: source})
+        chartErrors.value = data.constraints ? [data.constraints] : []
+        return data
     }
 
-    async function chartPreview(request: Request) {
-        const res = await axios.post(`${apiUrl()}/dashboards/charts/preview`, request)
-        return res.data
+    async function chartPreview(request: Parameters<typeof DashboardsAPI.previewChart>[0]) {
+        return DashboardsAPI.previewChart(request)
     }
 
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: Parameters) {
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV") {
         const isDefault = dashboard.id === "default"
 
-        const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`
+        const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`
         const payload = isDefault ? {chart: chart.content, globalFilter: parameters} : parameters
 
         const filename = `chart__${chart.id}`
 
         return axios
-            .post(`${apiUrl()}/dashboards${path}`, payload, response)
-            .then((res) => downloadHandler(res, filename))
+            .post(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
+            .then((res) => downloadHandler(res, filename, format.toLowerCase()))
     }
 
     const pluginsStore = usePluginsStore()
@@ -319,38 +346,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     const errors = ref<string[] | undefined>()
-    const warnings = ref<string[] | undefined>()
-    const coreStore = useCoreStore()
-
-    const {t} = useI18n()
-
-    watch(sourceCode, _throttle(async () => {
-        const errorsResult = await validateDashboard(sourceCode.value)
-
-        const dbId = activeDashboard.value?.id
-        if (errorsResult.constraints) {
-            errors.value = [errorsResult.constraints]
-        } else {
-            errors.value = undefined
-        }
-
-        if (!isCreating.value && dbId !== undefined && YAML_UTILS.parse(sourceCode.value).id !== dbId) {
-            coreStore.message = {
-                variant: "error",
-                title: t("readonly property"),
-                message: t("dashboards.edition.id readonly"),
-            }
-
-            await nextTick()
-            if(sourceCode.value && dbId){
-                sourceCode.value = YAML_UTILS.replaceBlockWithPath({
-                    source: sourceCode.value,
-                    path: "id",
-                    newContent: dbId,
-                })
-            }
-        }
-    }, 300, {trailing: true, leading: false}))
 
     return {
         activeDashboard,
@@ -363,6 +358,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
         getUserDashboardStorageKey,
         defaultDashboards,
         loadDefaults,
+        defaultDefinitions,
+        loadDefaultDefinitions,
+        searchIds,
+        chartsById,
         saveDefaults,
         create,
         update,
@@ -374,7 +373,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
         export: exportDashboard,
         loadChart,
         errors,
-        warnings,
 
         schema,
         definitions,

@@ -3,6 +3,9 @@ import {ref} from "vue"
 import {within, userEvent, expect} from "storybook/test"
 import KsButton from "../../../src/components/Basic/KsButton/KsButton.vue"
 import KsDialog from "../../../src/components/Feedback/KsDialog.vue"
+import KsForm from "../../../src/components/Form/KsForm/KsForm.vue"
+import KsFormItem from "../../../src/components/Form/KsForm/KsFormItem.vue"
+import KsInput from "../../../src/components/Form/KsInput.vue"
 
 const meta: Meta<typeof KsDialog> = {
     title: "Components/Feedback/KsDialog",
@@ -73,6 +76,67 @@ export const CustomWidth: Story = {
             </div>
         `,
     }),
+}
+
+/** Large – widens the dialog to 756px (capped at 90vw) */
+export const Large: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            return {visible}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open large dialog</ks-button>
+                <ks-dialog v-model="visible" title="Large Dialog" large destroy-on-close>
+                    <p>This dialog uses the <code>large</code> prop for a 756px width.</p>
+                    <template #footer>
+                        <ks-button type="primary" @click="visible = false">Close</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+}
+
+/** Form layout – `formLayout` gives a form inside the dialog consistent padding, column flow and gap */
+export const FormLayout: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog, KsForm, KsFormItem, KsInput},
+        setup() {
+            const visible = ref(false)
+            const form = ref({name: "", description: ""})
+            return {visible, form}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open form dialog</ks-button>
+                <ks-dialog v-model="visible" title="Add a new group" form-layout destroy-on-close>
+                    <ks-form :model="form">
+                        <ks-form-item label="Name">
+                            <ks-input v-model="form.name" />
+                        </ks-form-item>
+                        <ks-form-item label="Description">
+                            <ks-input v-model="form.description" />
+                        </ks-form-item>
+                    </ks-form>
+                    <template #footer>
+                        <ks-button @click="visible = false">Cancel</ks-button>
+                        <ks-button type="primary" @click="visible = false">Create</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await userEvent.click(canvas.getByRole("button", {name: "Open form dialog"}))
+        const form = document.querySelector(".kel-dialog.is-form-layout form")
+        await expect(form).toBeTruthy()
+        await expect(getComputedStyle(form as Element).display).toBe("flex")
+        await expect(getComputedStyle(form as Element).flexDirection).toBe("column")
+    },
 }
 
 /** Destroy on close – remounts content each time */

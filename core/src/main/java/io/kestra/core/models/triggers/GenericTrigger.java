@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -24,7 +24,7 @@ public class GenericTrigger implements TriggerInterface {
     private String version;
     private String id;
     private String type;
-    private WorkerGroup workerGroup;
+    private WorkerSelector workerSelector;
 
     @JsonIgnore
     @Builder.Default

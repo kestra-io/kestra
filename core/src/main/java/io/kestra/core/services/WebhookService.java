@@ -7,23 +7,27 @@ import java.util.stream.Collectors;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
 
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
+import io.kestra.plugin.core.trigger.WebhookInputRenderException;
 import io.kestra.plugin.core.trigger.WebhookResponse;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -31,11 +35,11 @@ import io.micronaut.http.sse.Event;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 
@@ -58,13 +62,19 @@ public class WebhookService {
     private UriProvider uriProvider;
 
     @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private AsyncOperationWaiter asyncOperationWaiter;
+
+    @Inject
+    private AsyncOperationsConfiguration asyncOperationsConfiguration;
 
     /**
      * Parse query parameters from the webhook request URI.
@@ -91,7 +101,8 @@ public class WebhookService {
      * @param context The webhook context containing request, path, flow, and services
      * @param trigger The webhook trigger
      * @param output The trigger output to attach to the execution
-     * @return The prepared execution, or empty if conditions are not met
+     * @return The prepared execution, or empty if the trigger conditions are not met
+     * @throws WebhookInputRenderException if the trigger inputs cannot be rendered or processed
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
         Execution execution = Execution.builder()
@@ -129,8 +140,10 @@ public class WebhookService {
                 renderedInputs = readExecutionInputs(flow, execution, renderedInputs);
                 execution = execution.withInputs(renderedInputs);
             } catch (Exception e) {
-                log.warn("Unable to render the webhook inputs. Webhook will be ignored", e);
-                return Optional.empty(); // Input rendering failed
+                // Distinct from "conditions not met": a rendering failure is a real error and must
+                // not be silently turned into a 204, so we surface it to the caller.
+                log.warn("Unable to render the webhook inputs", e);
+                throw new WebhookInputRenderException("Unable to render the webhook inputs", e);
             }
         }
 
@@ -138,27 +151,46 @@ public class WebhookService {
     }
 
     /**
-     * Start the execution by injecting trace context and emitting it to the execution queue.
+     * Start the execution by injecting trace context, emitting a {@link Create} command to the
+     * execution queue tagged with an {@code operationId}, and waiting asynchronously for the
+     * executor to confirm processing via {@link AsyncOperationProcessedEvent}.
      *
      * @param execution The execution to start
-     * @throws QueueException If there is an error emitting to the queue
+     * @return a {@link Mono} that completes with the processed event once the executor confirms,
+     *         or signals a {@link java.util.concurrent.TimeoutException} if no confirmation
+     *         arrives within the configured timeout
      */
-    public void startExecution(Execution execution) throws QueueException {
-        // inject the traceparent into the execution
-        Optional<TextMapPropagator> propagator = openTelemetry
+    public Mono<AsyncOperationProcessedEvent> startExecution(Execution execution) {
+        Optional<String> traceParent = openTelemetry
             .map(OpenTelemetry::getPropagators)
-            .map(ContextPropagators::getTextMapPropagator);
+            .map(ContextPropagators::getTextMapPropagator)
+            .map(propagator ->
+            {
+                Map<String, String> carrier = new HashMap<>();
+                propagator.inject(Context.current(), carrier, Map::put);
+                return carrier.get("traceparent");
+            });
 
-        propagator.ifPresent(
-            textMapPropagator -> textMapPropagator.inject(
-                Context.current(),
-                execution,
-                ExecutionTextMapSetter.INSTANCE
-            )
+        Create command = Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+            .withKind(execution.getKind())
+            .withTrigger(execution.getTrigger())
+            .withLabels(execution.getLabels())
+            .withInputs(execution.getInputs())
+            .withTraceParent(traceParent.orElse(null));
+
+        return asyncOperationWaiter.submit(
+            execution.getId(),
+            operationId ->
+            {
+                try {
+                    executionCommandQueue.emit(command.withOperationId(operationId));
+                    eventPublisher.publishEvent(CrudEvent.create(execution));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            },
+            asyncOperationsConfiguration.waitTimeout()
         );
-
-        executionQueue.emit(execution);
-        eventPublisher.publishEvent(CrudEvent.create(execution));
     }
 
     /**

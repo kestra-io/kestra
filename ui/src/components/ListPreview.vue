@@ -29,15 +29,15 @@
         <KsPagination
             v-if="totalPages > 1"
             :total="props.value.length"
-            :size="(pageSize as any)"
-            :page="currentPage"
-            @page-changed="onPageChanged"
+            :sizes="[10, 20, 50, 100]"
+            v-model:pageSize="pageSize"
+            v-model:currentPage="currentPage"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, watch} from "vue"
 
     const MAX_CELL_CHARS = 2000
 
@@ -66,15 +66,9 @@
         return (currentPage.value - 1) * pageSize.value + index + 1
     }
 
-    const onPageChanged = (payload: { page?: number; size?: number }): void => {
-        if (payload.page !== undefined) {
-            currentPage.value = payload.page
-        }
-        if (payload.size !== undefined) {
-            pageSize.value = payload.size
-        }
+    watch([currentPage, () => pageSize.value], () => {
         expandedCells.value.clear()
-    }
+    })
 
     const generateTableColumns = computed(() => {
         const allKeys = new Set<string>()

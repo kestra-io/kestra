@@ -17,6 +17,7 @@ test.describe("Executions' view Bulk Actions", () => {
                 await executionsApi.generateExecutionViaApi([["foo", "bar"]])
             }
             await executionsApi.generateExecutionViaApi([["a", "b"]])
+            await page.reload()
         })
 
         await test.step("Filter just the executions featuring the 'foo:bar' label", async () => {
@@ -56,6 +57,7 @@ test.describe("Executions' view Bulk Actions", () => {
                 await executionsApi.generateExecutionViaApi([["foo", "bar"]])
             }
             await executionsApi.generateExecutionViaApi([["a", "b"]])
+            await page.reload()
         })
 
         await test.step("Filter just 'FAILED' executions featuring the 'foo:bar' label", async () => {
@@ -102,6 +104,7 @@ test.describe("Executions' view Bulk Actions", () => {
                 await executionsApi.generateExecutionViaApi([["foo", "bar"]])
             }
             await executionsApi.generateExecutionViaApi([["a", "b"]])
+            await page.reload()
         })
 
         await test.step("Filter just 'FAILED' executions featuring the 'foo:bar' label", async () => {

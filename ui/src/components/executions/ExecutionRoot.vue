@@ -17,7 +17,6 @@
     import {useExecutionRoot} from "./composables/useExecutionRoot"
     import useRouteContext from "../../composables/useRouteContext"
     import Tabs from "../../components/Tabs.vue"
-    //@ts-expect-error no declaration file
     import ExecutionRootTopBar from "./ExecutionRootTopBar.vue"
 
     const executionsStore = useExecutionsStore()

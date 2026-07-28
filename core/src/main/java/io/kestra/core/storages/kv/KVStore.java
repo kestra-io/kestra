@@ -29,17 +29,17 @@ public interface KVStore {
         return this.storageUri(key, 1);
     }
 
-    default URI storageUri(String key, int version) {
-        return KVStore.storageUri(key, namespace(), version);
+    default URI storageUri(String key, int revision) {
+        return KVStore.storageUri(key, namespace(), revision);
     }
 
-    static URI storageUri(String key, String namespace, int version) {
-        String fileName = kvFileName(key, version);
+    static URI storageUri(String key, String namespace, int revision) {
+        String fileName = kvFileName(key, revision);
         return URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + (fileName.isEmpty() ? fileName : ("/" + fileName)));
     }
 
-    static String kvFileName(String key, int version) {
-        return key == null ? "" : (key + ".ion") + (version > 1 ? (".v" + version) : "");
+    static String kvFileName(String key, int revision) {
+        return key == null ? "" : (key + ".ion") + (revision > 1 ? (".v" + revision) : "");
     }
 
     /**

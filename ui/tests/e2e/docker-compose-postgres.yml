@@ -70,4 +70,4 @@ services:
       dind:
         condition: service_started
       postgres:
-        condition: service_started
+        condition: service_healthy

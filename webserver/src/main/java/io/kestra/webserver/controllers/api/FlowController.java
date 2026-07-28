@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -16,6 +15,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.hierarchies.FlowGraph;
@@ -28,22 +28,24 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.security.SecurityConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.services.ExpressionCategory;
+import io.kestra.core.services.ExpressionContext;
+import io.kestra.core.services.ExpressionContextService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.GraphService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.core.services.ExpressionCategory;
-import io.kestra.core.services.ExpressionContext;
-import io.kestra.core.services.ExpressionContextService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
@@ -78,7 +80,7 @@ public class FlowController {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowParsingService flowParsingService;
 
     @Inject
     private ModelValidator modelValidator;
@@ -100,6 +102,9 @@ public class FlowController {
 
     @Inject
     private ExpressionContextService expressionContextService;
+
+    @Inject
+    private SecurityConfiguration securityConfiguration;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -155,7 +160,7 @@ public class FlowController {
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows)
         throws ConstraintViolationException, IllegalVariableEvaluationException, FlowProcessingException {
         try {
-            FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), flow, false);
+            FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), flow, false);
             return graphService.flowGraph(flowParsed, subflows);
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {
@@ -232,8 +237,7 @@ public class FlowController {
             }
         ) @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters
-    ) throws HttpStatusException {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws HttpStatusException {
         return PagedResults.of(
             flowRepository.find(
                 PageableUtils.from(page, size, sort),
@@ -267,8 +271,48 @@ public class FlowController {
     @Post(consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = { "Flows" }, summary = "Create a flow from yaml source")
     public HttpResponse<FlowWithSource> createFlow(
-        @RequestBody(description = "The flow source code") @Body String flow) throws ConstraintViolationException {
-        return HttpResponse.ok(doCreate(parseFlowSource(flow)));
+        @RequestBody(description = "The flow source code") @Body String flow,
+        @Parameter(description = "Save the flow as a draft. Drafts are not picked up by webhooks, schedules or subflows and are not validated for constraint violations.")
+        @QueryValue(defaultValue = "false") boolean draft) throws ConstraintViolationException {
+        final String tenantId = tenantService.resolveTenant();
+
+        // Draft is metadata about the revision, not part of the YAML body, so it comes from the
+        // request parameter (similar to how `revision` is excluded). A draft may be saved with a
+        // constraint-invalid body (unknown properties, missing tasks, ...): we fall back to reading
+        // the identity from the raw source. Unlike updateFlow, the create path has no path variables,
+        // so the body must still be parseable enough to extract `namespace` and `id` - a flow cannot
+        // be persisted without them, so a syntactically unparsable create is still rejected.
+        GenericFlow genericFlow;
+        try {
+            genericFlow = parseFlowSource(flow).toBuilder().draft(draft).build();
+        } catch (ConstraintViolationException e) {
+            if (!draft) {
+                throw e;
+            }
+            Map<String, Object> raw = YamlParser.parse(flow, Map.class, false);
+            genericFlow = draftFromSource(
+                tenantId,
+                Objects.toString(raw.get("namespace"), null),
+                Objects.toString(raw.get("id"), null),
+                flow
+            );
+        }
+        return HttpResponse.ok(doCreate(genericFlow));
+    }
+
+    /**
+     * Builds a draft {@link GenericFlow} from a source that failed constraint validation, keeping
+     * the provided identity. Drafts are deliberately allowed to be invalid since the backend is
+     * the authoritative validator.
+     */
+    private static GenericFlow draftFromSource(final String tenantId, final String namespace, final String id, final String source) {
+        return GenericFlow.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .id(id)
+            .source(source)
+            .draft(true)
+            .build();
     }
 
     @SneakyThrows
@@ -423,7 +467,9 @@ public class FlowController {
     public HttpResponse<FlowWithSource> updateFlow(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @RequestBody(description = "The flow source code") @Body String source) throws ConstraintViolationException, FlowProcessingException, QueueException {
+        @RequestBody(description = "The flow source code") @Body String source,
+        @Parameter(description = "Save the flow as a draft. Drafts are not picked up by webhooks, schedules or subflows and are not validated for constraint violations.")
+        @QueryValue(defaultValue = "false") boolean draft) throws ConstraintViolationException, FlowProcessingException, QueueException {
         final String tenantId = tenantService.resolveTenant();
         Optional<Flow> existingFlow = flowRepository.findById(tenantId, namespace, id);
 
@@ -431,8 +477,19 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
 
-        // Parse source as RawFlow.
-        GenericFlow genericFlow = GenericFlow.fromYaml(tenantId, source);
+        // Parse source as RawFlow. Draft is metadata about the revision, not part of the YAML
+        // the user wrote (similar to how `revision` is excluded), so it comes from the request
+        // parameter rather than from the YAML body.
+        // For draft saves, tolerate unparsable YAML by falling back to the path-variable identity.
+        GenericFlow genericFlow;
+        try {
+            genericFlow = GenericFlow.fromYaml(tenantId, source).toBuilder().draft(draft).build();
+        } catch (ConstraintViolationException e) {
+            if (!draft) {
+                throw e;
+            }
+            genericFlow = draftFromSource(tenantId, namespace, id, source);
+        }
 
         try {
             return HttpResponse.ok(doUpdateFlow(genericFlow, existingFlow.get()));
@@ -674,7 +731,7 @@ public class FlowController {
     )
     public HttpResponse<byte[]> exportFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) throws IOException {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws IOException {
         var flows = flowRepository.findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
         var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
@@ -702,9 +759,10 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Delete flows returned by the query parameters."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> deleteFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) throws QueueException {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws QueueException {
         List<Flow> list = flowRepository
             .findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters)
             .stream()
@@ -720,6 +778,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Delete flows by their IDs."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> deleteFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws QueueException {
         List<Flow> list = ids
@@ -737,9 +796,10 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Disable flows returned by the query parameters."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> disableFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws Exception {
         return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(filters, true).size()).build());
     }
 
@@ -749,6 +809,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Disable flows by their IDs."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> disableFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws Exception {
 
@@ -761,9 +822,10 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Enable flows returned by the query parameters."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> enableFlowsByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) throws Exception {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) throws Exception {
         return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(filters, false).size()).build());
     }
 
@@ -773,6 +835,7 @@ public class FlowController {
         tags = { "Flows" },
         summary = "Enable flows by their IDs."
     )
+    @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = BulkResponse.class)) })
     public HttpResponse<BulkResponse> enableFlowsByIds(
         @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids) throws Exception {
 
@@ -797,7 +860,7 @@ public class FlowController {
         String tenantId = tenantService.resolveTenant();
         final List<String> wrongFiles = new ArrayList<>();
         try {
-            HasSource.readSourceFile(fileUpload, (source, name) ->
+            HasSource.readSourceFile(securityConfiguration.zipBombProtection(), fileUpload, (source, name) ->
             {
                 try {
                     this.importFlow(tenantId, source);
@@ -822,7 +885,7 @@ public class FlowController {
     @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux<String>> exportFlows(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
-        @QueryFilterFormat List<QueryFilter> filters) {
+        @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
                 flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
@@ -844,7 +907,7 @@ public class FlowController {
         @RequestBody(description = "The flow source code") @Body String source,
         @Parameter(description = "Optional task ID to scope outputs to prior tasks") @Nullable @QueryValue String taskId) throws ConstraintViolationException {
         try {
-            FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), source, false);
+            FlowWithSource flowParsed = flowParsingService.parse(tenantService.resolveTenant(), source, false);
             return expressionContextService.buildExpressionContext(flowParsed, taskId, excludedExpressionCategories(flowParsed));
         } catch (FlowProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException cve) {

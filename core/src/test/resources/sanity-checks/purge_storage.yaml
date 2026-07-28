@@ -1,0 +1,41 @@
+id: purge_storage
+namespace: sanitychecks.core
+description: |
+  Sanity check for io.kestra.plugin.core.storage.PurgeStorage.
+  Phase 1: dryRun=true must preview matches without deleting (deletedFilesCount = 0).
+  Phase 2: dryRun=false must actually delete (deletedFilesCount > 0).
+
+tasks:
+  - id: write_marker
+    type: io.kestra.plugin.core.storage.Write
+    content: |
+      sanity-check marker
+    extension: .txt
+
+  - id: purge_dry_run
+    type: io.kestra.plugin.core.storage.PurgeStorage
+    namespace: sanitychecks.core
+    flowId: purge_storage
+    endDate: "{{ now() | dateAdd(1, 'DAYS') }}"
+    dryRun: true
+
+  - id: assert_dry_run_shape
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.purge_dry_run.scannedCount >= 1 }}"
+      - "{{ outputs.purge_dry_run.purgedCount >= 1 }}"
+      - "{{ outputs.purge_dry_run.deletedFilesCount == 0 }}"
+
+  - id: purge_real
+    type: io.kestra.plugin.core.storage.PurgeStorage
+    namespace: sanitychecks.core
+    flowId: purge_storage
+    endDate: "{{ now() | dateAdd(1, 'DAYS') }}"
+    dryRun: false
+
+  - id: assert_real_shape
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.purge_real.scannedCount >= 1 }}"
+      - "{{ outputs.purge_real.purgedCount >= 1 }}"
+      - "{{ outputs.purge_real.deletedFilesCount > 0 }}"

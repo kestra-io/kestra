@@ -64,7 +64,6 @@
 <script setup lang="ts">
     import {computed, onMounted, ref} from "vue"
     import {useRoute} from "vue-router"
-    // @ts-expect-error types to be done
     import DateRange from "../../layout/DateRange.vue"
     import TimeSelect from "./TimeSelect.vue"
     import moment from "moment"

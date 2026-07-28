@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 
@@ -23,6 +23,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     searchable: true,
                     visibleByDefault: true,
+                    colored: true,
                 },
                 {
                     key: "scope",
@@ -64,6 +65,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions")
                         return VALUES.RELATIVE_DATE
@@ -73,7 +75,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         {value: "END_DATE", label: t("filter.timeRange.dateFilter.endDate")},
                         {value: "START_OR_END_DATE", label: t("filter.timeRange.dateFilter.startOrEndDate")},
                     ],
-                    keyLabelProvider: (meta?: Record<string, string>) => {
+                    keyLabelProvider: (meta?: FilterMeta) => {
                         switch (meta?.dateFilter) {
                         case "END_DATE": return t("filter.timeRange.chip.end")
                         case "START_OR_END_DATE": return t("filter.timeRange.chip.startOrEnd")

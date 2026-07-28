@@ -2,7 +2,6 @@
     <KsDialog
         v-model="isVisible"
         :title="$t('setup.titles.survey')"
-        width="550px"
         :showClose="true"
         :closeOnClickModal="false"
         :closeOnPressEscape="true"

@@ -17,6 +17,7 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.utils.Logs;
 
+import io.micrometer.core.instrument.Counter;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +38,6 @@ public class ExecutionKilledManager {
 
     private static final Duration KILLED_CACHE_TTL = Duration.ofHours(24);
 
-    private final MetricRegistry metricRegistry;
-
     /**
      * Cache of killed execution IDs with TTL auto-eviction.
      */
@@ -49,12 +48,17 @@ public class ExecutionKilledManager {
      */
     private final ConcurrentHashMap<String, KillableJob> runningJobs = new ConcurrentHashMap<>();
 
+    private final Counter workerKilledCounter;
+
     @Inject
     public ExecutionKilledManager(MetricRegistry metricRegistry) {
-        this.metricRegistry = metricRegistry;
         this.killedExecutions = Caffeine.newBuilder()
             .expireAfterWrite(KILLED_CACHE_TTL)
             .build();
+        this.workerKilledCounter = metricRegistry.counter(
+            MetricRegistry.METRIC_WORKER_KILLED_COUNT,
+            MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION
+        );
     }
 
     /**
@@ -67,9 +71,7 @@ public class ExecutionKilledManager {
             log.info("[tenant: {}] [execution: {}] Received kill command", killedExecution.getTenantId(), killedExecution.getExecutionId());
             killedExecutions.put(killedExecution.getExecutionId(), killedExecution);
 
-            metricRegistry
-                .counter(MetricRegistry.METRIC_WORKER_KILLED_COUNT, MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION)
-                .increment();
+            workerKilledCounter.increment();
 
             // Kill any matching running jobs
             runningJobs.forEach((_, killableJob) ->

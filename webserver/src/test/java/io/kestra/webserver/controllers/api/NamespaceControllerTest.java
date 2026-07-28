@@ -20,8 +20,6 @@ import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.plugin.core.log.Log;
-import io.kestra.webserver.models.api.secret.ApiSecretListResponse;
-import io.kestra.webserver.models.api.secret.ApiSecretMeta;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -96,7 +94,7 @@ public class NamespaceControllerTest {
         assertThat(list.getResults().get(1).getId()).isEqualTo("my");
 
         list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/namespaces/search?q=ns"),
+            HttpRequest.GET("/api/v1/main/namespaces/search?filters[q][EQUALS]=ns"),
             Argument.of(PagedResults.class, Namespace.class)
         );
         assertThat(list.getTotal()).isEqualTo(3L);
@@ -106,7 +104,7 @@ public class NamespaceControllerTest {
             HttpRequest.GET("/api/v1/main/namespaces/search?page=4&size=2&sort=id:desc"),
             Argument.of(PagedResults.class, Namespace.class)
         );
-        assertThat(list.getTotal()).isEqualTo(0L);
+        assertThat(list.getTotal()).isEqualTo(6L);
         assertThat(list.getResults()).isEmpty();
     }
 

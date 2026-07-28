@@ -6,9 +6,9 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.*;
 
+import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
-import io.kestra.core.async.AsyncOperation;
 import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
@@ -17,6 +17,8 @@ import io.kestra.core.utils.IdUtils;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 @JsonSubTypes(
     {
+        @JsonSubTypes.Type(value = Create.class, name = "CREATE"),
+        @JsonSubTypes.Type(value = Replay.class, name = "REPLAY"),
         @JsonSubTypes.Type(value = ChangeTaskRunState.class, name = "CHANGE_TASK_RUN_STATE"),
         @JsonSubTypes.Type(value = ForceRun.class, name = "FORCE_RUN"),
         @JsonSubTypes.Type(value = Pause.class, name = "PAUSE"),

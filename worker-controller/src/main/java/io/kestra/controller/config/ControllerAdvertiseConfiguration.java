@@ -13,15 +13,15 @@ import io.micronaut.core.bind.annotation.Bindable;
  * in internal storage, so that workers configured with
  * {@code kestra.worker.controllers.type=STORAGE} can discover it dynamically.
  *
- * @param enabled           Whether the controller publishes its endpoint to internal storage.
- *                          Defaults to {@code false}; set to {@code true} to opt in to self-advertisement
- *                          when workers use {@code kestra.worker.controllers.type=STORAGE}.
- * @param host              The host that should be advertised to workers. When {@code null}, falls back
- *                          to {@link io.kestra.core.utils.Network#localHostname()}. Should be set
- *                          explicitly in containerized environments where the local hostname is not reachable.
+ * @param enabled Whether the controller publishes its endpoint to internal storage.
+ *        Defaults to {@code false}; set to {@code true} to opt in to self-advertisement
+ *        when workers use {@code kestra.worker.controllers.type=STORAGE}.
+ * @param host The host that should be advertised to workers. When {@code null}, falls back
+ *        to {@link io.kestra.core.utils.Network#localHostname()}. Should be set
+ *        explicitly in containerized environments where the local hostname is not reachable.
  * @param heartbeatInterval How often the controller refreshes its registry entry. The published TTL
- *                          is {@code heartbeatInterval * 3} so that up to two missed schedules do not
- *                          cause workers to prematurely drop the entry. Defaults to 5 minutes.
+ *        is {@code heartbeatInterval * 3} so that up to two missed schedules do not
+ *        cause workers to prematurely drop the entry. Defaults to 5 minutes.
  */
 @ConfigurationProperties("kestra.controller.advertise")
 public record ControllerAdvertiseConfiguration(

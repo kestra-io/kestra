@@ -2,7 +2,6 @@ package io.kestra.cli.commands.flows;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -10,9 +9,9 @@ import java.util.zip.ZipFile;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.migration.MigrationRunnerInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 
-import io.kestra.core.migration.MigrationRunnerInterface;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;

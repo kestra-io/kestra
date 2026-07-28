@@ -8,108 +8,102 @@
         :endPlaceholder="$t('end date')"
     />
 </template>
-<script>
+<script setup lang="ts">
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
     import moment from "moment"
+    import {getCurrentInstance} from "vue"
 
-    export default {
-        emits: ["update:modelValue"],
-        data() {
-            return {
-                lang: {
-                    formatLocale: {
-                        firstDayOfWeek: 1,
-                    },
-                    monthBeforeYear: false,
-                },
-                shortcuts: [
-                    {
-                        text: this.$t("datepicker.today"),
-                        value: () => ([
-                            this.$moment().startOf("day").toDate(),
-                            this.$moment().endOf("day").toDate(),
-                        ]),
-                    },
-                    {
-                        text: this.$t("datepicker.yesterday"),
-                        value: () => ([
-                            this.$moment().add(-1, "day").startOf("day").toDate(),
-                            this.$moment().add(-1, "day").endOf("day").toDate(),
-                        ]),
-                    },
-                    {
-                        text: this.$t("datepicker.dayBeforeYesterday"),
-                        value: () => ([
-                            this.$moment().add(-2, "day").startOf("day").toDate(),
-                            this.$moment().add(-2, "day").endOf("day").toDate(),
-                        ]),
-                    },
-                    {
-                        text: this.$t("datepicker.thisWeek"),
-                        value: () => ([
-                            this.$moment().startOf("isoWeek").toDate(),
-                            this.$moment().endOf("isoWeek").toDate(),
-                        ]),
-                    },
-                    {
-                        text: this.$t("datepicker.previousWeek"),
-                        value: () => ([
-                            this.$moment().add(-1, "week").startOf("isoWeek").toDate(),
-                            this.$moment().add(-1, "week").endOf("isoWeek").toDate(),
-                        ]),
-                    },
-                    {
-                        text: this.$t("datepicker.thisMonth"),
-                        value: () => ([
-                            this.$moment().startOf("month").toDate(),
-                            this.$moment().endOf("month").toDate(),
-                        ]),
-                    },
-                    {
-                        text: this.$t("datepicker.previousMonth"),
-                        value: () => ([
-                            this.$moment().add(-1, "month").startOf("month").toDate(),
-                            this.$moment().add(-1, "month").endOf("month").toDate(),
-                        ]),
-                    },
-                    {
-                        text: this.$t("datepicker.thisYear"),
-                        value: () => ([
-                            this.$moment().startOf("year").toDate(),
-                            this.$moment().endOf("year").toDate(),
-                        ]),
-                    },
-                    {
-                        text: this.$t("datepicker.previousYear"),
-                        value: () => ([
-                            this.$moment().add(-1, "year").startOf("year").toDate(),
-                            this.$moment().add(-1, "year").endOf("year").toDate(),
-                        ]),
-                    },
-                ],
-            }
+    const props = withDefaults(defineProps<{
+        startDate?: string
+        endDate?: string
+    }>(), {
+        startDate: undefined,
+        endDate: undefined,
+    })
+
+    const emit = defineEmits<{
+        "update:modelValue": [{startDate: string | undefined; endDate: string | undefined}]
+    }>()
+
+    const {t} = useI18n()
+    // Access $moment from globalProperties since it's registered as a plugin
+    const instance = getCurrentInstance()
+    // FIXME: any - $moment is registered as a global property via Vue plugin
+    const $moment = instance?.appContext.config.globalProperties.$moment as any // FIXME: any
+
+    const shortcuts = computed(() => [
+        {
+            text: t("datepicker.today"),
+            value: () => ([
+                $moment().startOf("day").toDate(),
+                $moment().endOf("day").toDate(),
+            ]),
         },
-        props: {
-            startDate: {
-                type: String,
-                default: undefined,
-            },
-            endDate: {
-                type: String,
-                default: undefined,
-            },
+        {
+            text: t("datepicker.yesterday"),
+            value: () => ([
+                $moment().add(-1, "day").startOf("day").toDate(),
+                $moment().add(-1, "day").endOf("day").toDate(),
+            ]),
         },
-        methods: {
-            onDate(value) {
-                this.$emit("update:modelValue", {
-                    "startDate": value != null && value[0] ? moment(value[0]).toISOString(true) : undefined,
-                    "endDate": value != null && value[1] ? moment(value[1]).toISOString(true) : undefined,
-                })
-            },
+        {
+            text: t("datepicker.dayBeforeYesterday"),
+            value: () => ([
+                $moment().add(-2, "day").startOf("day").toDate(),
+                $moment().add(-2, "day").endOf("day").toDate(),
+            ]),
         },
-        computed: {
-            date() {
-                return [new Date(this.startDate), new Date(this.endDate)]
-            },
+        {
+            text: t("datepicker.thisWeek"),
+            value: () => ([
+                $moment().startOf("isoWeek").toDate(),
+                $moment().endOf("isoWeek").toDate(),
+            ]),
         },
+        {
+            text: t("datepicker.previousWeek"),
+            value: () => ([
+                $moment().add(-1, "week").startOf("isoWeek").toDate(),
+                $moment().add(-1, "week").endOf("isoWeek").toDate(),
+            ]),
+        },
+        {
+            text: t("datepicker.thisMonth"),
+            value: () => ([
+                $moment().startOf("month").toDate(),
+                $moment().endOf("month").toDate(),
+            ]),
+        },
+        {
+            text: t("datepicker.previousMonth"),
+            value: () => ([
+                $moment().add(-1, "month").startOf("month").toDate(),
+                $moment().add(-1, "month").endOf("month").toDate(),
+            ]),
+        },
+        {
+            text: t("datepicker.thisYear"),
+            value: () => ([
+                $moment().startOf("year").toDate(),
+                $moment().endOf("year").toDate(),
+            ]),
+        },
+        {
+            text: t("datepicker.previousYear"),
+            value: () => ([
+                $moment().add(-1, "year").startOf("year").toDate(),
+                $moment().add(-1, "year").endOf("year").toDate(),
+            ]),
+        },
+    ])
+
+    const date = computed(() => [new Date(props.startDate!), new Date(props.endDate!)])
+
+    function onDate(value: [Date, Date] | null) {
+        emit("update:modelValue", {
+            "startDate": value != null && value[0] ? moment(value[0]).toISOString(true) : undefined,
+            "endDate": value != null && value[1] ? moment(value[1]).toISOString(true) : undefined,
+        })
     }
 </script>

@@ -7,16 +7,21 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.FlowBlockedException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -24,6 +29,9 @@ import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @KestraTest
 @org.junit.jupiter.api.parallel.Execution(org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD)
@@ -32,11 +40,15 @@ class DefaultFlowMetaStoreTest {
     private DefaultFlowMetaStore flowMetaStore;
 
     @Inject
+    private FlowWithDefaultCache flowWithDefaultCache;
+
+    @Inject
     private FlowService flowService;
 
     @AfterEach
     void clean() {
         flowMetaStore.clearCache();
+        flowWithDefaultCache.flushAll();
     }
 
     @Test
@@ -184,6 +196,111 @@ class DefaultFlowMetaStoreTest {
             .findByIdFromTask(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty(), test.getTenantId(), test.getNamespace(), test.getId());
 
         assertThat(maybeFlow).isEmpty();
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    void findByIdFromTaskShouldResolveLatestNonDraftWhenCachedHeadIsADraft() {
+        // A subflow with no explicit revision resolves the child flow via findByIdFromTask -> findById
+        // with an empty revision. If the latest (cached) revision is a draft it must be dropped and the
+        // latest NON-draft revision returned from the execution-time lookup, so a subflow never runs a
+        // draft child (mirroring webhooks/schedules/Flow triggers). Deterministic unit: the metastore
+        // cache is seeded from findAllWithSourceForAllTenants() in the constructor.
+        String tenant = TenantService.MAIN_TENANT;
+        String namespace = "io.kestra.tests";
+        String id = IdUtils.create();
+
+        FlowWithSource draftHead = FlowWithSource.builder()
+            .tenantId(tenant).namespace(namespace).id(id).revision(2).draft(true)
+            .tasks(List.of(Return.builder().id("return").format(Property.ofValue("draft")).type(Return.class.getName()).build()))
+            .build();
+        FlowWithSource publishedRevision = FlowWithSource.builder()
+            .tenantId(tenant).namespace(namespace).id(id).revision(1).draft(false)
+            .tasks(List.of(Return.builder().id("return").format(Property.ofValue("published")).type(Return.class.getName()).build()))
+            .build();
+
+        FlowRepositoryInterface repository = mock(FlowRepositoryInterface.class);
+        // the metastore caches the latest revision (the draft head) at construction...
+        when(repository.findAllWithSourceForAllTenants()).thenReturn(List.of(draftHead));
+        // ...and the execution-time (draft-filtering) lookup returns the latest non-draft revision.
+        when(repository.findByIdWithSourceForExecution(tenant, namespace, id)).thenReturn(Optional.of(publishedRevision));
+
+        DefaultFlowMetaStore metaStore = new DefaultFlowMetaStore(
+            repository,
+            mock(FlowParsingService.class),
+            mock(RunContextLoggerFactory.class),
+            mock(BroadcastQueueInterface.class),
+            mock(FlowWithDefaultCache.class)
+        );
+
+        Optional<FlowInterface> resolved = metaStore.findByIdFromTask(
+            tenant, namespace, id, Optional.empty(),
+            tenant, namespace, id
+        );
+
+        assertThat(resolved).isPresent();
+        assertThat(resolved.get().getRevision()).isEqualTo(1);
+        assertThat(resolved.get().isDraft()).isFalse();
+        // the draft head must not be served from cache; the non-draft fallback must be used
+        verify(repository).findByIdWithSourceForExecution(tenant, namespace, id);
+    }
+
+    @Test
+    void shouldSurfaceBlockedFlowAsFlowWithExceptionOnExecutionPath() throws FlowProcessingException {
+        // Given a parsing service rejecting the flow at runtime
+        FlowWithSource flow = createFlow().toBuilder().revision(1).build();
+        FlowParsingService parsingService = mock(FlowParsingService.class);
+        when(parsingService.parseForRuntime(flow)).thenThrow(new FlowBlockedException("Blocked by governance policy"));
+        DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
+
+        // When
+        Optional<FlowWithSource> resolved = metaStore.findByExecutionThenInjectDefaults(executionOf(flow));
+
+        // Then the rejection is surfaced as a FlowWithException the executor fails fast on — never a throw
+        assertThat(resolved).isPresent();
+        assertThat(resolved.get()).isInstanceOf(FlowWithException.class);
+        assertThat(((FlowWithException) resolved.get()).getException()).contains("Blocked by governance policy");
+    }
+
+    @Test
+    void shouldDegradeToStoredFlowWhenRuntimeParsingFailsOnExecutionPath() throws FlowProcessingException {
+        // Given a parsing service failing on a non-governance error
+        FlowWithSource flow = createFlow().toBuilder().revision(1).build();
+        FlowParsingService parsingService = mock(FlowParsingService.class);
+        when(parsingService.parseForRuntime(flow)).thenThrow(new FlowProcessingException("invalid"));
+        DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
+
+        // When
+        Optional<FlowWithSource> resolved = metaStore.findByExecutionThenInjectDefaults(executionOf(flow));
+
+        // Then the execution proceeds with the flow as stored — never a throw
+        assertThat(resolved).isPresent();
+        assertThat(resolved.get()).isNotInstanceOf(FlowWithException.class);
+        assertThat(resolved.get().getId()).isEqualTo(flow.getId());
+    }
+
+    @SuppressWarnings("unchecked")
+    private DefaultFlowMetaStore metaStore(FlowWithSource cachedFlow, FlowParsingService parsingService) {
+        FlowRepositoryInterface repository = mock(FlowRepositoryInterface.class);
+        when(repository.findAllWithSourceForAllTenants()).thenReturn(List.of(cachedFlow));
+
+        RunContextLoggerFactory loggerFactory = mock(RunContextLoggerFactory.class);
+        when(loggerFactory.create(org.mockito.ArgumentMatchers.any(Execution.class))).thenReturn(mock(RunContextLogger.class));
+
+        FlowWithDefaultCache withDefaultCache = mock(FlowWithDefaultCache.class);
+        when(withDefaultCache.getIfPresent(org.mockito.ArgumentMatchers.anyString())).thenReturn(Optional.empty());
+
+        return new DefaultFlowMetaStore(repository, parsingService, loggerFactory, mock(BroadcastQueueInterface.class), withDefaultCache);
+    }
+
+    private static Execution executionOf(FlowWithSource flow) {
+        return Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(flow.getRevision())
+            .build();
     }
 
     private FlowWithSource createFlow() {

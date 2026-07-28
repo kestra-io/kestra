@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/component-api-style -- render-function component; setup() returning h() cannot be expressed with <script setup> -->
 <script lang="ts">
     import {h, defineComponent} from "vue"
     import {useDocStore} from "../../stores/doc"

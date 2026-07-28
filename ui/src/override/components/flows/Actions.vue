@@ -46,20 +46,38 @@
             @click="editorExportYaml"
         />
         <NavBarAction
-            v-if="isEditTab && canEdit && !deleted && !flowStore.isCreating"
+            v-if="isEditTab && canDelete && !deleted && !flowStore.isCreating"
             :icon="Delete"
             :label="t('delete')"
-            @click="confirmDeleteFlow"
+            @click="editorDeleteFlow"
         />
 
         <template #primary>
             <NavBarAction
-                v-if="isEditTab && editorIsAllowedEdit && !deleted"
+                v-if="isEditTab && editorIsAllowedEdit && !deleted && !flowStore.isCreating && editorIsDraft"
                 type="primary"
-                :label="t('save')"
-                :disabled="!editorCanSave || editorHasErrors || editorIsReadOnly"
-                @click="editorSave"
+                :label="t('publish')"
+                :disabled="editorHasErrors || editorIsReadOnly"
+                @click="editorPublishDraft"
             />
+
+            <KsDropdown
+                v-if="isEditTab && editorIsAllowedEdit && !deleted"
+                splitButton
+                :type="editorIsDraft ? 'default' : 'primary'"
+                :disabled="!editorCanSave || editorIsReadOnly"
+                :buttonProps="{disabled: editorHasErrors}"
+                @click="editorSave"
+            >
+                {{ t('save') }}
+                <template #dropdown>
+                    <KsDropdownMenu>
+                        <KsDropdownItem :icon="FileDocumentEditOutline" @click="editorSaveAsDraft">
+                            {{ t('save_as_draft') }}
+                        </KsDropdownItem>
+                    </KsDropdownMenu>
+                </template>
+            </KsDropdown>
 
             <TriggerFlow
                 v-if="shouldShowExecute"
@@ -86,6 +104,7 @@
     import Download from "vue-material-design-icons/Download.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
     import PlayBoxOutline from "vue-material-design-icons/PlayBoxOutline.vue"
+    import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue"
     import NavBarActions from "../../../components/layout/NavBarActions.vue"
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
     import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
@@ -124,8 +143,11 @@
         hasErrors: editorHasErrors,
         isReadOnly: editorIsReadOnly,
         isAllowedEdit: editorIsAllowedEdit,
+        isDraft: editorIsDraft,
         isPlaygroundAllowed,
         save: editorSave,
+        saveAsDraft: editorSaveAsDraft,
+        publishDraft: editorPublishDraft,
         saveAndExecute: editorSaveAndExecute,
         exportYaml: editorExportYaml,
         copyFlow: editorCopyFlow,
@@ -145,7 +167,7 @@
     )
 
     const canExecute = computed(() =>
-        flow.value && authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flow.value.namespace),
+        flow.value && authStore.user?.isAllowed(resource.FLOW, action.EXECUTE, flow.value.namespace),
     )
 
     const shouldShowExecute = computed(() => {
@@ -158,6 +180,10 @@
 
     const canEdit = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value?.namespace),
+    )
+
+    const canDelete = computed(() =>
+        authStore.user?.isAllowed(resource.FLOW, action.DELETE, flow.value?.namespace),
     )
 
     const editFlow = () => {
@@ -198,10 +224,5 @@
         })
     }
 
-    function confirmDeleteFlow() {
-        toast.confirm(
-            t("delete confirm", {name: flow.value?.id ?? ""}),
-            () => editorDeleteFlow(),
-        )
-    }
+
 </script>

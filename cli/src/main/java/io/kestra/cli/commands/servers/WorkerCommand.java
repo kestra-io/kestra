@@ -5,14 +5,12 @@ import java.util.Map;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Worker;
-import org.awaitility.Awaitility;
+import io.kestra.core.utils.Await;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "worker",
@@ -26,9 +24,6 @@ public class WorkerCommand extends AbstractServerCommand {
     @Option(names = { "-t", "--thread" }, description = "The max number of worker threads, defaults to eight times the number of available processors")
     private int thread = Worker.defaultNumThreads();
 
-    @Option(names = { "-g", "--worker-group" }, description = "The worker group key, must match the regex [a-zA-Z0-9_-]+ (EE only)")
-    private String workerGroupKey = null;
-
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
         return Map.of("kestra.server-type", ServerType.WORKER);
@@ -37,22 +32,14 @@ public class WorkerCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
 
-        KestraContext.getContext().injectWorkerConfigs(thread, workerGroupKey);
+        KestraContext.getContext().injectWorkerConfigs(thread);
 
         super.call();
 
-        if (this.workerGroupKey != null && !this.workerGroupKey.matches("[a-zA-Z0-9_-]+")) {
-            throw new IllegalArgumentException("The --worker-group option must match the [a-zA-Z0-9_-]+ pattern");
-        }
-
-        workerProvider.get().start(this.thread, this.workerGroupKey);
+        workerProvider.get().start(this.thread);
 
         Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
-    }
-
-    public String workerGroupKey() {
-        return workerGroupKey;
     }
 }

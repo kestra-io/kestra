@@ -1,12 +1,14 @@
 package io.kestra.core.storages;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.utils.FileUtils;
 import io.kestra.core.utils.WindowsUtils;
 
 import jakarta.annotation.Nullable;
@@ -17,15 +19,15 @@ import jakarta.annotation.Nullable;
  * @param path The path of file relative to the namespace.
  * @param uri The URI of the namespace file in the Kestra's internal storage.
  * @param namespace The namespace of the file.
- * @param version The version of the file.
+ * @param revision The revision of the file.
  */
 public record NamespaceFile(
     String path,
     URI uri,
     String namespace,
-    int version) {
+    int revision) {
 
-    private static final Pattern capturePathWithoutVersion = Pattern.compile("(.*)(?:\\.v\\d+)?$");
+    private static final Pattern capturePathWithoutRevision = Pattern.compile("(.*)(?:\\.v\\d+)?$");
 
     public NamespaceFile(Path path, URI uri, String namespace) {
         this(path.toString(), uri, namespace, 1);
@@ -55,7 +57,7 @@ public record NamespaceFile(
         return of(
             metadata.getNamespace(),
             metadata.getPath(),
-            metadata.getVersion()
+            metadata.getRevision()
         );
     }
 
@@ -66,9 +68,9 @@ public record NamespaceFile(
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
-    public static NamespaceFile of(final String namespace, @Nullable final URI uri, int version) {
+    public static NamespaceFile of(final String namespace, @Nullable final URI uri, int revision) {
         if (uri == null || uri.equals(URI.create("/"))) {
-            return of(namespace, (Path) null, version);
+            return of(namespace, (Path) null, revision);
         }
 
         Path path = Path.of(WindowsUtils.windowsToUnixPath(uri.getPath()));
@@ -88,9 +90,9 @@ public record NamespaceFile(
                     )
                 );
             }
-            namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path), version);
+            namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path), revision);
         } else {
-            namespaceFile = of(namespace, path, version);
+            namespaceFile = of(namespace, path, revision);
         }
 
         boolean trailingSlash = uri.toString().endsWith("/");
@@ -103,7 +105,7 @@ public record NamespaceFile(
             namespaceFile.path,
             URI.create(namespaceFile.uri.toString() + "/"),
             namespaceFile.namespace,
-            version
+            revision
         );
     }
 
@@ -118,39 +120,48 @@ public record NamespaceFile(
      * @param namespace The namespace - cannot be {@code null}.
      * @return a new {@link NamespaceFile} object
      */
-    public static NamespaceFile of(final String namespace, @Nullable final Path path, int version) {
+    public static NamespaceFile of(final String namespace, @Nullable final Path path, int revision) {
         Objects.requireNonNull(namespace, "namespace cannot be null");
         if (path == null || path.equals(Path.of("/"))) {
             return new NamespaceFile(
                 "",
                 URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.namespaceFilePrefix(namespace) + "/"),
                 namespace,
-                // Directory always has a single version
+                // Directory always has a single revision
                 1
             );
         }
 
-        return of(namespace, path.toString(), version);
+        return of(namespace, path.toString(), revision);
     }
 
-    public static NamespaceFile of(String namespace, String path, int version) {
+    public static NamespaceFile of(String namespace, String path, int revision) {
         Path namespacePrefixPath = Path.of(StorageContext.namespaceFilePrefix(namespace));
         // Need to remove starting trailing slash for Windows
         String pathWithoutLeadingSlash = path.replaceFirst("^[.]*[\\\\|/]+", "");
 
-        version = NamespaceFile.isDirectory(pathWithoutLeadingSlash) ? 1 : version;
+        revision = NamespaceFile.isDirectory(pathWithoutLeadingSlash) ? 1 : revision;
 
         String storagePath = pathWithoutLeadingSlash;
-        if (!pathWithoutLeadingSlash.endsWith("/") && version > 1) {
-            storagePath += ".v" + version;
+        if (!pathWithoutLeadingSlash.endsWith("/") && revision > 1) {
+            storagePath += ".v" + revision;
         }
 
-        return new NamespaceFile(
-            pathWithoutLeadingSlash,
-            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/") + (isDirectory(path) ? "/" : "")),
-            namespace,
-            version
-        );
+        // Use the multi-argument URI constructor so that URI-illegal characters (e.g. spaces)
+        // are percent-encoded (space → %20) while legal URI path characters (e.g. '+') are
+        // preserved unchanged — keeping "a b.txt" and "a+b.txt" as two distinct stored objects.
+        String uriPath = namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/")
+            + (isDirectory(path) ? "/" : "");
+        try {
+            return new NamespaceFile(
+                pathWithoutLeadingSlash,
+                new URI(StorageContext.KESTRA_SCHEME, "", uriPath, null),
+                namespace,
+                revision
+            );
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid namespace file path: " + path, e);
+        }
     }
 
     public static Path normalize(Path path) {
@@ -161,17 +172,20 @@ public record NamespaceFile(
         if (!compatiblePath.startsWith("/")) {
             compatiblePath = "/" + compatiblePath;
         }
-        return Path.of(compatiblePath);
+        if (FileUtils.isParentTraversal(compatiblePath)) {
+            throw new IllegalArgumentException("File should be accessed with their full path and not using relative '..' path.");
+        }
+        return Path.of(compatiblePath).normalize();
     }
 
     /**
      * Returns the path of file relative to the namespace.
-     * 
+     *
      * @return The path.
      */
     public Path filePath() {
         String strPath = path;
-        Matcher matcher = capturePathWithoutVersion.matcher(strPath);
+        Matcher matcher = capturePathWithoutRevision.matcher(strPath);
         if (matcher.matches()) {
             strPath = matcher.group(1);
         }

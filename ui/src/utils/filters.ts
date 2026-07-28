@@ -3,9 +3,6 @@ import {storageKeys} from "../utils/constants"
 import moment from "moment-timezone"
 import {durationUtils} from "@kestra-io/design-system"
 
-export function invisibleSpace (value:string) {
-        return value.replace(/\./g, "\u200B.")
-}
 export function humanizeDuration (value:string, options?:any) {
     return durationUtils.humanDuration(value, options)
 }
@@ -40,7 +37,6 @@ export interface FilterObject{
 }
 
 export default {
-    invisibleSpace,
     humanizeDuration,
     humanizeNumber,
     cap,

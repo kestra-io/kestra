@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import io.kestra.core.models.Label;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 
@@ -60,6 +60,13 @@ public abstract class AbstractFlow implements FlowInterface {
     @Builder.Default
     boolean deleted = false;
 
+    @NotNull
+    @Builder.Default
+    @Schema(
+        description = "Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly."
+    )
+    boolean draft = false;
+
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
@@ -84,6 +91,6 @@ public abstract class AbstractFlow implements FlowInterface {
     Map<String, Object> variables;
 
     @Valid
-    private WorkerGroup workerGroup;
-
+    @Schema(description = "Routing requirements (tags + fallback) for this flow.")
+    private WorkerSelector workerSelector;
 }

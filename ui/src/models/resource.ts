@@ -1,6 +1,7 @@
 export default {
     FLOW: "FLOW",
     EXECUTION: "EXECUTION",
+    TRIGGER: "TRIGGER",
     NAMESPACE: "NAMESPACE",
     KVSTORE: "KVSTORE",
     DASHBOARD: "DASHBOARD",

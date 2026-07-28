@@ -25,10 +25,11 @@ public class EditionProvider {
         Optional<Setting> editionSetting = settingRepository.findByKey(Setting.INSTANCE_EDITION);
         if (editionSetting.isEmpty() || !editionSetting.get().getValue().equals(edition)) {
             settingRepository.save(
-                    Setting.builder()
-                            .key(Setting.INSTANCE_EDITION)
-                            .value(edition)
-                            .build());
+                Setting.builder()
+                    .key(Setting.INSTANCE_EDITION)
+                    .value(edition)
+                    .build()
+            );
         }
     }
 

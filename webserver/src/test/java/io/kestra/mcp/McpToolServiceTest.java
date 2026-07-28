@@ -1,27 +1,35 @@
 package io.kestra.mcp;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.namespaces.Namespace;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.DateInput;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
 import io.kestra.plugin.core.trigger.Schedule;
+
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -200,14 +208,90 @@ class McpToolServiceTest {
         }
     }
 
+    @Test
+    void shouldReturnInputValidationErrorWhenValueViolatesBound() {
+        // Given — a DATE input that must be on or after 2024-01-01, called with an earlier date
+        Flow flow = buildFlowWithInputs(
+            List.of(
+                DateInput.builder().id("time").type(Type.DATE).required(true).after(LocalDate.of(2024, 1, 1)).build()
+            )
+        );
+
+        // When
+        List<String> errors = mcpToolService.collectInputValidationErrors(flow, minimalExecution(flow), Map.of("time", "2020-01-01"));
+
+        // Then
+        assertThat(errors).hasSize(1);
+        assertThat(errors.getFirst()).contains("time").contains("2024-01-01");
+    }
+
+    @Test
+    void shouldReturnNoInputValidationErrorWhenValueWithinBound() {
+        // Given
+        Flow flow = buildFlowWithInputs(
+            List.of(
+                DateInput.builder().id("time").type(Type.DATE).required(true).after(LocalDate.of(2024, 1, 1)).build()
+            )
+        );
+
+        // When
+        List<String> errors = mcpToolService.collectInputValidationErrors(flow, minimalExecution(flow), Map.of("time", "2024-06-01"));
+
+        // Then
+        assertThat(errors).isEmpty();
+    }
+
+    @Test
+    void shouldReturnInputValidationErrorWhenRequiredInputMissing() {
+        // Given
+        Flow flow = buildFlowWithInputs(
+            List.of(
+                StringInput.builder().id("name").type(Type.STRING).required(true).build()
+            )
+        );
+
+        // When
+        List<String> errors = mcpToolService.collectInputValidationErrors(flow, minimalExecution(flow), Map.of());
+
+        // Then
+        assertThat(errors).anyMatch(error -> error.contains("name"));
+    }
+
+    private static Execution minimalExecution(Flow flow) {
+        return Execution.builder()
+            .id(IdUtils.create())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .state(new State())
+            .build();
+    }
+
+    private Flow buildFlowWithInputs(List<io.kestra.core.models.flows.Input<?>> inputs) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .namespace("namespace")
+            .inputs(inputs)
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
+            .build();
+    }
+
     @SuppressWarnings("unchecked")
     private List<AbstractTrigger> addServerIdToMcpTrigger(List<AbstractTrigger> triggers) {
-        return triggers.stream().map(trigger -> {
-                if (trigger instanceof McpToolTrigger toolTrigger) {
-                    return toolTrigger.toBuilder().mcpServer(SERVER_ID).build();
-                }
-                return trigger;
+        return triggers.stream().map(trigger ->
+        {
+            if (trigger instanceof McpToolTrigger toolTrigger) {
+                return toolTrigger.toBuilder().mcpServer(SERVER_ID).build();
             }
+            return trigger;
+        }
         ).toList();
     }
 
@@ -215,13 +299,15 @@ class McpToolServiceTest {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace("namespace")
-            .tasks(List.of(
-                Return.builder()
-                    .id("task")
-                    .type(Return.class.getName())
-                    .format(Property.ofValue("test"))
-                    .build()
-            ))
+            .tasks(
+                List.of(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
             .triggers(addServerIdToMcpTrigger(triggers))
             .build();
     }

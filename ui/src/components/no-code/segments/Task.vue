@@ -13,7 +13,7 @@
     import {ref, watch, computed, inject, nextTick} from "vue"
     import {SECTIONS} from "@kestra-io/design-system"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-    import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants"
+    import {SECTIONS_MAP} from "../../../utils/constants"
     import {
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
@@ -91,7 +91,7 @@
 
     const flowStore = useFlowStore()
     const validateTask = (task?: string) => {
-        if(section.value !== PLUGIN_DEFAULTS_SECTION && task){
+        if(task){
             clearTimeout(timer.value)
             timer.value = setTimeout(() => {
                 if (lastValidatedValue.value !== task) {

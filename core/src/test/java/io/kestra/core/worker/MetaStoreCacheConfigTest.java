@@ -1,10 +1,11 @@
 package io.kestra.core.worker;
 
-import io.micronaut.context.ApplicationContext;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.context.ApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,10 +23,14 @@ class MetaStoreCacheConfigTest {
 
     @Test
     void shouldOverrideFromProperties() {
-        try (ApplicationContext ctx = ApplicationContext.run(Map.of(
-            "kestra.worker.metastore-cache.maximum-size", "500",
-            "kestra.worker.metastore-cache.expire-after-access", "PT10M"
-        ))) {
+        try (
+            ApplicationContext ctx = ApplicationContext.run(
+                Map.of(
+                    "kestra.worker.metastore-cache.maximum-size", "500",
+                    "kestra.worker.metastore-cache.expire-after-access", "PT10M"
+                )
+            )
+        ) {
             MetaStoreCacheConfig config = ctx.getBean(MetaStoreCacheConfig.class);
 
             assertThat(config.maximumSize()).isEqualTo(500L);

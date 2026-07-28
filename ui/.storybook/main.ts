@@ -29,6 +29,17 @@ const config: StorybookConfig = {
             viteConfig.resolve.alias = AliasConfig
         }
 
+        // Silence "Sourcemap for X points to a source file outside its package"
+        // warnings from node_modules — cross-package scss sourcemap references.
+        if (viteConfig.customLogger) {
+            const isElementPlusSourcemapWarning = (msg: string) =>
+                /sourcemap/i.test(msg) && msg.includes("points to a source file outside its package") && msg.includes("node_modules")
+            const origWarn = viteConfig.customLogger.warn.bind(viteConfig.customLogger)
+            const origWarnOnce = viteConfig.customLogger.warnOnce.bind(viteConfig.customLogger)
+            viteConfig.customLogger.warn = (msg, opts) => { if (!isElementPlusSourcemapWarning(msg)) origWarn(msg, opts) }
+            viteConfig.customLogger.warnOnce = (msg, opts) => { if (!isElementPlusSourcemapWarning(msg)) origWarnOnce(msg, opts) }
+        }
+
         return mergeConfig(viteConfig, {
             define: {"process.env": {}},
         })

@@ -37,8 +37,7 @@ public class WorkerAgent extends AbstractWorker implements Worker {
         List<GrpcWorkerIOSender<?>> workerIOSenders,
         MaintenanceService maintenanceService,
         MetricRegistry metricRegistry,
-        ServerConfig serverConfig
-    ) {
+        ServerConfig serverConfig) {
         super(
             ServiceType.WORKER,
             eventPublisher,
@@ -56,14 +55,13 @@ public class WorkerAgent extends AbstractWorker implements Worker {
     /**
      * {@inheritDoc}
      * <p>
-     * Resolves the worker group by performing the gRPC handshake against the
-     * worker controller. The controller may override the user-supplied key
-     * with a server-assigned group.
+     * Resolves the Worker Queue id by performing the gRPC handshake against
+     * the worker controller. The controller normalizes an unresolved id to
+     * {@link io.kestra.core.worker.WorkerGroups#DEFAULT_ID}.
      */
     @Override
-    protected String resolveWorkerGroup(String workerGroupKey) {
-        WorkerConnectionService.ConnectionResult connectionResult =
-            workerConnectionService.connect(getId(), workerGroupKey);
-        return connectionResult.workerGroup();
+    protected String resolveWorkerGroupId() {
+        WorkerConnectionService.ConnectionResult connectionResult = workerConnectionService.connect(getId());
+        return connectionResult.workerGroupId();
     }
 }

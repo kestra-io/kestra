@@ -42,6 +42,16 @@ interface Cluster {
     branchType: BranchType;
 }
 
+interface FlowGraphEdge {
+    source: string;
+    target: string;
+    relation?: {
+        relationType?: string;
+        value?: string;
+    };
+    unused?: boolean;
+}
+
 export interface FlowGraph {
     nodes: MinimalNode[];
     clusters: {
@@ -51,7 +61,7 @@ export interface FlowGraph {
             uid: string;
         }[];
     }[];
-    edges: GraphEdge[];
+    edges: FlowGraphEdge[];
 }
 
 type EdgeReplacer = Record<string, string>;
@@ -130,7 +140,6 @@ export function generateDagreGraph(
     flowGraph: {nodes: any; clusters: any; edges: any},
     hiddenNodes: string[],
     isHorizontal: boolean,
-    clustersWithoutRootNode: string[],
     edgeReplacer: EdgeReplacer,
     collapsed: Set<string>,
     clusterToNode: MinimalNode[],
@@ -155,7 +164,7 @@ export function generateDagreGraph(
 
     for (const cluster of flowGraph.clusters || []) {
         const nodeUid = cluster.cluster.uid.replace(CLUSTER_PREFIX, "")
-        if (clustersWithoutRootNode.includes(cluster.cluster.uid) && collapsed.has(nodeUid)) {
+        if (collapsed.has(nodeUid)) {
             const node = {uid: nodeUid, type: "collapsedcluster"}
             const dimensions = getNodeDimensions(node, getNodeWidth, getNodeHeight)
             dagreGraph.setNode(nodeUid, dimensions)
@@ -181,7 +190,7 @@ export function generateDagreGraph(
     }
 
     for (const edge of flowGraph.edges || []) {
-        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes)
+        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes, collapsed)
         if (newEdge) {
             dagreGraph.setEdge(newEdge.source, newEdge.target)
         }
@@ -241,10 +250,12 @@ export function replaceIfCollapsed(
     target: string,
     edgeReplacer: EdgeReplacer,
     hiddenNodes: string[],
+    collapsed: Set<string>,
 ) {
     const newSource = edgeReplacer[source] ? edgeReplacer[source] : source
     const newTarget = edgeReplacer[target] ? edgeReplacer[target] : target
-    if (newSource === newTarget || hiddenNodes.includes(newSource) || hiddenNodes.includes(newTarget)) {
+    const isHidden = (uid: string) => hiddenNodes.includes(uid) && !collapsed.has(uid)
+    if (newSource === newTarget || isHidden(newSource) || isHidden(newTarget)) {
         return null
     }
     return {target: newTarget, source: newSource}
@@ -267,7 +278,8 @@ export function flowHaveTasks(source: string): boolean {
 
 export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
     if (node.uid === TRIGGERS_NODE_UID) return "success"
-    if (isTriggerNode(node) || isCollapsedCluster(node)) return "success"
+    if (isTriggerNode(node)) return "success"
+    if (isCollapsedCluster(node)) return "flowable-task"
     if (node.type.endsWith("SubflowGraphTask")) return "primary"
     if (node.branchType == BranchType.ERROR) return "danger"
     if (node.branchType == BranchType.FINALLY) return "warning"
@@ -276,7 +288,7 @@ export function nodeColor(node: MinimalNode, collapsed: Set<string>) {
 }
 
 export function haveAdd(
-    edge: GraphEdge,
+    edge: FlowGraphEdge,
     nodeByUid: Record<string, MinimalNode>,
     clustersRootTaskUids: string[],
     readOnlyUidPrefixes: string[],
@@ -323,7 +335,7 @@ export function haveAdd(
 }
 
 export function getEdgeColor(
-    edge: GraphEdge,
+    edge: FlowGraphEdge,
     nodeByUid: Record<string, MinimalNode>,
     clusterByNodeUid: Record<string, Cluster>,
 ) {
@@ -345,6 +357,17 @@ export function getEdgeColor(
         : [sourceBranchType, targetBranchType].includes(BranchType.FINALLY)
           ? "warning"
           : null
+}
+
+export function getEdgeColorToken(edgeColor: string | null): string {
+    switch (edgeColor) {
+        case "danger":
+            return "var(--ks-border-error)"
+        case "warning":
+            return "var(--ks-status-warning)"
+        default:
+            return "var(--ks-topology-dash)"
+    }
 }
 
 export function generateGraph(
@@ -372,7 +395,6 @@ export function generateGraph(
     animated: boolean = true,
 ): Elements | undefined {
     const elements: Elements = []
-    const clustersWithoutRootNode = [CLUSTER_PREFIX + TRIGGERS_NODE_UID]
 
     if (!flowGraph || (flowSource && !flowHaveTasks(flowSource))) {
         console.warn("No flow graph or tasks found")
@@ -415,7 +437,6 @@ export function generateGraph(
         flowGraph,
         hiddenNodes,
         isHorizontal,
-        clustersWithoutRootNode,
         edgeReplacer,
         collapsed,
         clusterToNode,
@@ -468,7 +489,7 @@ export function generateGraph(
                         clusterUid === TRIGGERS_NODE_UID && !isHorizontal
                             ? NODE_SIZES.TRIGGER_CLUSTER_HEIGHT + "px"
                             : dagreNode.height + "px",
-                    borderRadius: "var(--ks-border-radius)",
+                    borderRadius: "var(--ks-radius-base)",
                     padding: "0.5rem",
                 },
                 data: {
@@ -485,7 +506,7 @@ export function generateGraph(
     }
 
     for (const node of flowGraph.nodes.concat(clusterToNode)) {
-        if (!hiddenNodes.includes(node.uid)) {
+        if (!hiddenNodes.includes(node.uid) || node.type === "collapsedcluster") {
             const dagreNode = dagreGraph.node(node.uid)
             let nodeType = "task"
             if (isClusterRootOrEnd(node)) {
@@ -498,7 +519,11 @@ export function generateGraph(
                 nodeType = "collapsedcluster"
             }
 
-            const color = nodeColor(node, collapsed)
+            let color = nodeColor(node, collapsed)
+            if (node.type === "collapsedcluster") {
+                const clusterDef = rawClusters.find((c) => c.uid === CLUSTER_PREFIX + node.uid)
+                if (clusterDef) color = computeClusterColor(clusterDef)
+            }
             const isReadOnlyTask =
                 isReadOnly ||
                 node.task?.type?.includes("$") ||
@@ -517,12 +542,12 @@ export function generateGraph(
                 style: {
                     width: nodeDimensions.width + "px",
                     height: nodeDimensions.height + "px",
-                    ...(node.type === "collapsedcluster" ? {borderRadius: "var(--ks-border-radius)"} : {}),
+                    ...(node.type === "collapsedcluster" ? {borderRadius: "var(--ks-radius-base)"} : {}),
                 },
                 sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal ? Position.Left : Position.Top,
                 parentNode: cluster ? cluster.uid : undefined,
-                draggable: nodeType === "task" ? !isReadOnlyTask : false,
+                draggable: false,
                 data: {
                     node: node,
                     parent: cluster ? cluster : undefined,
@@ -546,7 +571,7 @@ export function generateGraph(
     const edges = flowGraph.edges ?? []
 
     for (const edge of edges) {
-        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes)
+        const newEdge = replaceIfCollapsed(edge.source, edge.target, edgeReplacer, hiddenNodes, collapsed)
         if (newEdge) {
             const edgeColor = getEdgeColor(edge, nodeByUid, clusterByNodeUid)
             const targetNodeType = nodeByUid[newEdge.target]?.type ?? ""
@@ -574,9 +599,7 @@ export function generateGraph(
                                   ? nodeByUid[newEdge.target].branchType?.toLocaleLowerCase()
                                   : "custom"),
                           type: MarkerType.ArrowClosed,
-                          color: edgeColor
-                              ? `var(--ks-border-${edgeColor})`
-                              : "var(--ks-topology-edge-color)",
+                          color: getEdgeColorToken(edgeColor),
                       },
                 data: {
                     haveAdd:
@@ -589,7 +612,9 @@ export function generateGraph(
                         nodeByUid[edge.target].type.endsWith("GraphTrigger") ||
                         edge.source.startsWith(TRIGGERS_NODE_UID),
                     color: edgeColor,
-                    unused: (edge as any).unused,
+                    unused: edge.unused,
+                    value: edge.relation?.value,
+                    relationType: edge.relation?.relationType,
                 },
                 style: {zIndex: 10},
                 animated: animated,
@@ -610,10 +635,10 @@ export function isClusterRootOrEnd(node: MinimalNode) {
 }
 
 export function computeClusterColor(cluster: Cluster) {
-    if (cluster.uid === CLUSTER_PREFIX + TRIGGERS_NODE_UID) return "success"
-    if (cluster.type.endsWith("SubflowGraphCluster")) return "primary"
-    if (cluster.branchType === BranchType.ERROR) return "danger"
-    return "blue"
+    if (cluster.uid === CLUSTER_PREFIX + TRIGGERS_NODE_UID) return "triggers"
+    if (cluster.type.endsWith("SubflowGraphCluster")) return "subflow"
+    if (cluster.branchType === BranchType.ERROR) return "errors"
+    return "flowable-task"
 }
 
 export function isExpandableTask(
@@ -645,13 +670,13 @@ export function getTargetNodesEdges(graph: FlowGraph, nodeUid?: string) {
 }
 
 export function getNextTaskNodes(graph: FlowGraph, initialNode: MinimalNode) {
-    let edges: GraphEdge[],
+    let edges: FlowGraphEdge[],
         nextTaskNodes: MinimalNode[],
         nodeUIDs: string[] = [initialNode.uid]
     do {
         edges = nodeUIDs
             .flatMap((uid) => getTargetNodesEdges(graph, uid))
-            .filter(Boolean) as GraphEdge[]
+            .filter(Boolean) as FlowGraphEdge[]
         if (edges.length === 0) return []
         nodeUIDs = edges.map((edge) => edge.target)
         nextTaskNodes = graph.nodes.filter((node) => nodeUIDs.includes(node.uid) && node.task)

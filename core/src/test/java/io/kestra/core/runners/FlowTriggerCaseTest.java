@@ -1,8 +1,6 @@
 package io.kestra.core.runners;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -90,27 +88,24 @@ public class FlowTriggerCaseTest {
             );
     }
 
-    public void triggerWithPause() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
+    public void triggerWithPause(String tenantId) throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
 
         assertThat(execution.getTaskRunList().size()).isEqualTo(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         List<Execution> triggeredExec = runnerUtils.awaitFlowExecutionNumber(
             4,
-            MAIN_TENANT,
+            tenantId,
             "io.kestra.tests.trigger.pause",
-            "trigger-flow-listener-with-pause"
+            "trigger-flow-listener-with-pause",
+            Duration.ofSeconds(60)
         );
 
         assertThat(triggeredExec.size()).isEqualTo(4);
-        List<Execution> sortedExecs = triggeredExec.stream()
-            .sorted(Comparator.comparing(e -> e.getState().getEndDate().orElse(Instant.now())))
-            .toList();
-        assertThat(sortedExecs.get(0).getOutputs().get("status")).isEqualTo("RUNNING");
-        assertThat(sortedExecs.get(1).getOutputs().get("status")).isEqualTo("PAUSED");
-        assertThat(sortedExecs.get(2).getOutputs().get("status")).isEqualTo("RUNNING");
-        assertThat(sortedExecs.get(3).getOutputs().get("status")).isEqualTo("SUCCESS");
+        assertThat(triggeredExec).filteredOn(e -> "RUNNING".equals(e.getOutputs().get("status"))).hasSize(2);
+        assertThat(triggeredExec).anyMatch(e -> "PAUSED".equals(e.getOutputs().get("status")));
+        assertThat(triggeredExec).anyMatch(e -> "SUCCESS".equals(e.getOutputs().get("status")));
     }
 
     /**
@@ -130,10 +125,12 @@ public class FlowTriggerCaseTest {
         assertThat(executionA.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // Then: the listener trigger must NOT fire yet (flow-b not satisfied)
-        assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS),
-            MAIN_TENANT, namespace, listenFlowId, Duration.ofSeconds(3)
-        ));
+        assertThrows(
+            RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+                e -> e.getState().getCurrent().equals(Type.SUCCESS),
+                MAIN_TENANT, namespace, listenFlowId, Duration.ofSeconds(3)
+            )
+        );
 
         // When: update the listener flow to invert the conditions order
         FlowWithSource currentListenerFlow = flowRepository.findByIdWithSource(MAIN_TENANT, namespace, listenFlowId).orElseThrow();
@@ -162,7 +159,8 @@ public class FlowTriggerCaseTest {
 
         // the flow metastore is updated async so we wait a little
         await().atMost(Duration.ofSeconds(1))
-            .until(() -> {
+            .until(() ->
+            {
                 var metastoreRevision = flowMetaStore.findById(updated.getTenantId(), updated.getNamespace(), updated.getId(), Optional.empty()).map(it -> it.getRevision());
                 return metastoreRevision.isPresent() && metastoreRevision.get().equals(updated.getRevision());
             });

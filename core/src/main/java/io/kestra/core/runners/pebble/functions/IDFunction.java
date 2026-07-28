@@ -10,6 +10,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 public class IDFunction implements KestraFunction {
     public static final String NAME = "id";
+
     @Override
     public Object execute(
         Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {

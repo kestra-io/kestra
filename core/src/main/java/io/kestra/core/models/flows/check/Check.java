@@ -29,6 +29,15 @@ public class Check {
 
     /**
      * The condition to evaluate.
+     * <p>
+     * The expression must render to a real boolean {@code true} or {@code false}. A value that renders
+     * to anything else (for example the string {@code "true"} or {@code "yes"}, or a number) is treated
+     * as a <em>failed</em> check, because evaluation uses a strict {@code Boolean.TRUE.equals(...)} test.
+     * <p>
+     * If the expression cannot be evaluated at all (for example an undefined variable or a syntax error),
+     * the check fails safe: the execution is hard-blocked with {@link Behavior#BLOCK_EXECUTION} and
+     * {@link Style#ERROR}, overriding the declared {@code behavior} and {@code style} — a broken gate must
+     * never let a run through.
      */
     @NotNull
     @NotEmpty

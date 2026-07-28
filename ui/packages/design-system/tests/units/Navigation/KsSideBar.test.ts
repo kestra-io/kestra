@@ -91,16 +91,18 @@ describe("KsSideBarSection", () => {
         const btn = wrapper.find("button.ks-sidebar-section__title")
 
         // Initially expanded
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style") ?? "").not.toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeUndefined()
         expect(btn.attributes("aria-expanded")).toBe("true")
 
         await btn.trigger("click")
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).not.toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
         expect(btn.attributes("aria-expanded")).toBe("false")
         expect(wrapper.emitted("toggle")?.[0]).toEqual([true])
 
         await btn.trigger("click")
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style") ?? "").not.toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).toContain("is-open")
         expect(wrapper.emitted("toggle")?.[1]).toEqual([false])
     })
 
@@ -110,8 +112,71 @@ describe("KsSideBarSection", () => {
             props: {title: "Workspace", collapsible: true, defaultCollapsed: true},
             slots: {default: "<a class='child'>Flows</a>"},
         })
-        expect(wrapper.find(".ks-sidebar-section__body").attributes("style")).toContain("display: none")
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).not.toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
         expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
+    })
+
+    test("controlled mode: collapsed prop drives the displayed state", async () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace", collapsible: true, collapsed: true},
+            slots: {default: "<a class='child'>Flows</a>"},
+        })
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).not.toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
+        expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
+
+        await wrapper.setProps({collapsed: false})
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeUndefined()
+        expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("true")
+    })
+
+    test("controlled mode: clicking emits update:collapsed without mutating internal state", async () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace", collapsible: true, collapsed: false},
+            slots: {default: "<a class='child'>Flows</a>"},
+        })
+
+        await wrapper.find("button.ks-sidebar-section__title").trigger("click")
+
+        expect(wrapper.emitted("update:collapsed")?.[0]).toEqual([true])
+        expect(wrapper.emitted("toggle")?.[0]).toEqual([true])
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).toContain("is-open")
+        expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("true")
+    })
+
+    test("controlled mode: defaultCollapsed change does NOT override the controlled value", async () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace", collapsible: true, collapsed: true, defaultCollapsed: true},
+            slots: {default: "<a class='child'>Flows</a>"},
+        })
+        await wrapper.setProps({defaultCollapsed: false})
+        expect(wrapper.find(".ks-sidebar-section__body").classes()).not.toContain("is-open")
+        expect(wrapper.find(".ks-sidebar-section__body-inner").attributes("inert")).toBeDefined()
+        expect(wrapper.find("button.ks-sidebar-section__title").attributes("aria-expanded")).toBe("false")
+    })
+
+    test("renders the suffix slot inside the collapsible title", () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace", collapsible: true},
+            slots: {suffix: "<span class='dot'>•</span>"},
+        })
+        expect(wrapper.find("button.ks-sidebar-section__title .dot").exists()).toBe(true)
+    })
+
+    test("renders the suffix slot inside the non-collapsible title", () => {
+        const wrapper = mount(KsSideBarSection, {
+            global: globalConfig,
+            props: {title: "Workspace"},
+            slots: {suffix: "<span class='dot'>•</span>"},
+        })
+        expect(wrapper.find(".ks-sidebar-section__title .dot").exists()).toBe(true)
+        expect(wrapper.find(".ks-sidebar-section__title-text").text()).toBe("Workspace")
     })
 })
 

@@ -27,7 +27,7 @@ test.describe("Flow Page", () => {
             await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
             await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
             await page.getByRole("button", {name: "Login"}).click()
-            await page.waitForURL("**/ui/**")
+            await page.waitForURL(url => !url.pathname.includes("/login"))
         })
     })
 
@@ -43,7 +43,8 @@ test.describe("Flow Page", () => {
 
             await page.getByRole("button", {name: "Save", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
-            await page.getByRole("link", {name: "Overview"}).click()
+            await page.locator(".tab-select").click()
+            await page.getByRole("option", {name: "Overview"}).click()
         })
 
         await test.step("execute the flow", async () => {
@@ -66,7 +67,6 @@ test.describe("Flow Page", () => {
         await page.goto("/ui/flows")
 
         await test.step("create a the flow by pasting the YAML", async () => {
-            await page.locator("#side-menu .sidebar-toggle").click()
             await expect(page.getByRole("button", {name: "Create", exact: true})).toBeVisible()
             await page.getByRole("button", {name: "Create", exact: true}).click()
             await page.waitForURL("**/flows/new")
@@ -79,9 +79,10 @@ test.describe("Flow Page", () => {
             await monacoEditor.blur()
             await expect(page.getByTestId("monaco-editor").getByText(flowId)).toBeVisible()
 
-            await page.getByRole("button", {name: "Save"}).click()
+            await page.getByRole("button", {name: "Save", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
-            await page.getByRole("link", {name: "Overview"}).click()
+            await page.locator(".tab-select").click()
+            await page.getByRole("option", {name: "Overview"}).click()
             await expect(page.locator("#app").getByText(flowId)).toBeVisible()
         })
 

@@ -62,14 +62,9 @@ public class NoOpShutdownContext extends KestraContext {
     }
 
     @Override
-    public Optional<String> getWorkerGroupKey() {
-        return delegate != null ? delegate.getWorkerGroupKey() : Optional.empty();
-    }
-
-    @Override
-    public void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey) {
+    public void injectWorkerConfigs(Integer maxNumThreads) {
         if (delegate != null)
-            delegate.injectWorkerConfigs(maxNumThreads, workerGroupKey);
+            delegate.injectWorkerConfigs(maxNumThreads);
     }
 
     @Override

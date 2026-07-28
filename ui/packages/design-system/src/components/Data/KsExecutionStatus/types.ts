@@ -13,7 +13,7 @@ import Restore from "vue-material-design-icons/Restore.vue"
 import Cancel from "vue-material-design-icons/Cancel.vue"
 import SkipNextCircleOutline from "vue-material-design-icons/SkipNextCircleOutline.vue"
 import ClockTimeFourOutline from "vue-material-design-icons/ClockTimeFourOutline.vue"
-import Restart from "vue-material-design-icons/Restart.vue"
+import RestartAlert from "vue-material-design-icons/RestartAlert.vue"
 
 export interface ExecutionStatusModel {
     name: string;
@@ -110,7 +110,7 @@ export const EXECUTION_STATUSES: Record<string, ExecutionStatusModel> = Object.f
     },
     RETRYING: {
         name: "RETRYING",
-        icon: Restart,
+        icon: RestartAlert,
         isRunning: false,
         isKillable: true,
         isFailed: false,

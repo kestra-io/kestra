@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.controller.grpc.services.WorkerJobDispatcher;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
@@ -33,8 +34,6 @@ import io.kestra.core.worker.Controller;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Sleep;
 import io.kestra.plugin.core.flow.WorkingDirectory;
-
-import io.kestra.controller.grpc.services.WorkerJobDispatcher;
 import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.micronaut.context.ApplicationContext;
@@ -86,7 +85,7 @@ class WorkerTest {
 
         // When
         try (Worker worker = applicationContext.createBean(Worker.class)) {
-            worker.start(1, null);
+            worker.start(1);
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(1)), null));
 
             await()
@@ -133,7 +132,7 @@ class WorkerTest {
 
         // When
         try (Worker worker = applicationContext.createBean(Worker.class)) {
-            worker.start(1, null);
+            worker.start(1);
             workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
 
             await()
@@ -155,7 +154,7 @@ class WorkerTest {
         String executionId = IdUtils.create();
 
         try (Worker worker = applicationContext.createBean(Worker.class)) {
-            worker.start(2, null);
+            worker.start(2);
 
             await()
                 .atMost(Duration.ofSeconds(10))
@@ -173,10 +172,13 @@ class WorkerTest {
             await()
                 .atMost(Duration.ofSeconds(10))
                 .pollInterval(Duration.ofMillis(100))
-                .until(() -> worker.getRunningJobs().size() >= 2
-                    && results.stream().anyMatch(r ->
-                        r.getTaskRun().getExecutionId().equals(executionId)
-                        && r.getTaskRun().getState().getCurrent() == State.Type.RUNNING));
+                .until(
+                    () -> worker.getRunningJobs().size() >= 2
+                        && results.stream().anyMatch(
+                            r -> r.getTaskRun().getExecutionId().equals(executionId)
+                                && r.getTaskRun().getState().getCurrent() == State.Type.RUNNING
+                        )
+                );
 
             // When
             ExecutionKilledExecution killedExecution = ExecutionKilledExecution.builder()

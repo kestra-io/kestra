@@ -1,9 +1,8 @@
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import {defineComponent} from "vue"
+import {collapseEmptyValues} from "../utils/collapseEmptyValues"
 
-export function collapseEmptyValues(value: any): any {
-    return value === "" || value === null || JSON.stringify(value) === "{}" ? undefined : value
-}
+export {collapseEmptyValues}
 
 export default defineComponent({
     props: {

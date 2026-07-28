@@ -715,6 +715,8 @@ export type ExecutionUsage = {
     dailyExecutionsCount?: Array<DailyExecutionStatistics>;
 };
 
+export type ExportFormat = 'CSV' | 'ION';
+
 export type ExpressionContext = {
     categories?: {
         taskOutputs?: Array<unknown>;
@@ -3070,6 +3072,13 @@ export type CreateDashboardData = {
     url: '/api/v1/{tenant}/dashboards';
 };
 
+export type CreateDashboardErrors = {
+    /**
+     * If the dashboard id is reserved ('_default')
+     */
+    422: unknown;
+};
+
 export type CreateDashboardResponses = {
     /**
      * createDashboard 200 response
@@ -3079,23 +3088,28 @@ export type CreateDashboardResponses = {
 
 export type CreateDashboardResponse = CreateDashboardResponses[keyof CreateDashboardResponses];
 
-export type ExportChartToCsvData = {
+export type ExportChartData = {
     body: DashboardControllerPreviewRequest;
     path: {
         tenant: string;
     };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/charts/export/to-csv';
+    query?: {
+        /**
+         * The export format
+         */
+        format?: ExportFormat;
+    };
+    url: '/api/v1/{tenant}/dashboards/charts/export';
 };
 
-export type ExportChartToCsvResponses = {
+export type ExportChartResponses = {
     /**
-     * exportChartToCsv 200 response
+     * exportChart 200 response
      */
     200: string;
 };
 
-export type ExportChartToCsvResponse = ExportChartToCsvResponses[keyof ExportChartToCsvResponses];
+export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
 
 export type PreviewChartData = {
     body: DashboardControllerPreviewRequest;
@@ -3114,6 +3128,26 @@ export type PreviewChartResponses = {
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];
+
+export type GetDefaultDashboardDefinitionsData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/dashboards/defaults/definitions';
+};
+
+export type GetDefaultDashboardDefinitionsResponses = {
+    /**
+     * getDefaultDashboardDefinitions 200 response
+     */
+    200: {
+        [key: string]: string;
+    };
+};
+
+export type GetDefaultDashboardDefinitionsResponse = GetDefaultDashboardDefinitionsResponses[keyof GetDefaultDashboardDefinitionsResponses];
 
 export type GetDefaultDashboardsData = {
     body?: never;
@@ -3233,6 +3267,13 @@ export type UpdateDashboardData = {
     url: '/api/v1/{tenant}/dashboards/{id}';
 };
 
+export type UpdateDashboardErrors = {
+    /**
+     * If the dashboard id is reserved ('_default')
+     */
+    422: unknown;
+};
+
 export type UpdateDashboardResponses = {
     /**
      * updateDashboard 200 response
@@ -3271,7 +3312,7 @@ export type GetDashboardChartDataResponses = {
 
 export type GetDashboardChartDataResponse = GetDashboardChartDataResponses[keyof GetDashboardChartDataResponses];
 
-export type ExportDashboardChartDataToCsvData = {
+export type ExportDashboardChartData = {
     /**
      * The filters to apply, some can override chart definition like labels & namespace
      */
@@ -3287,18 +3328,23 @@ export type ExportDashboardChartDataToCsvData = {
         chartId: string;
         tenant: string;
     };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}/export/to-csv';
+    query?: {
+        /**
+         * The export format
+         */
+        format?: ExportFormat;
+    };
+    url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}/export';
 };
 
-export type ExportDashboardChartDataToCsvResponses = {
+export type ExportDashboardChartResponses = {
     /**
-     * exportDashboardChartDataToCSV 200 response
+     * exportDashboardChart 200 response
      */
     200: string;
 };
 
-export type ExportDashboardChartDataToCsvResponse = ExportDashboardChartDataToCsvResponses[keyof ExportDashboardChartDataToCsvResponses];
+export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
 
 export type SearchExecutionsByFlowIdData = {
     body?: never;

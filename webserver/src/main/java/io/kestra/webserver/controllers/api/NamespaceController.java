@@ -32,6 +32,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
@@ -136,7 +137,7 @@ public class NamespaceController<N extends Namespace> {
     @SuppressWarnings("unchecked")
     public PagedResults<N> searchNamespaces(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Return only existing namespace") @QueryValue(value = "existing", defaultValue = "false") Boolean existingOnly,
         @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat(QueryFilter.Resource.NAMESPACE) List<QueryFilter> filters) throws HttpStatusException {

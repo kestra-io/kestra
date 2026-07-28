@@ -51,7 +51,6 @@
                 class="toggle"
                 :aria-expanded="expanded"
                 :aria-label="expanded ? t('ksJsonTree.collapse') : t('ksJsonTree.expand')"
-                :aria-label="expanded ? $t('collapse') : $t('expand')"
                 @click="expanded = !expanded"
             >
                 <KsIcon size="s" class="chevron" :class="{collapsed: !expanded}"><ChevronDown /></KsIcon>

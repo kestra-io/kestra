@@ -25,7 +25,7 @@
                     :key="result.url"
                     class="search-result"
                     :class="{'selected': index === selectedIndex}"
-                    :href="result.parsedUrl.replace(/^docs\//, '')"
+                    :href="result.parsedUrl.replace(/^https?:\/\/[^/]+/, '').replace(/^\//, '')"
                     useRaw
                     :data-index="index"
                     @click="resetSearch"

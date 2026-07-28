@@ -9,7 +9,7 @@
         >
             <div class="card h-100">
                 <div class="card-body d-flex align-items-center">
-                    <span class="card-icon">
+                    <span v-if="item.icon" class="card-icon">
                         <img
                             :src="docStore.resourceUrl(item.icon.replace(/^\/src\/contents\//, ''))"
                             :alt="item.title"
@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, onMounted} from "vue";
+    import {computed, ref, watchEffect} from "vue";
     import {useDocStore} from "../../stores/doc";
 
     import ContextDocsLink from "./ContextDocsLink.vue";
@@ -57,9 +57,9 @@
 
 
     const resourcesWithMetadata = ref<Record<string, any>>({});
-    onMounted(async () => {
+    watchEffect(async () => {
         resourcesWithMetadata.value = await docStore.children(currentPage.value);
-    })
+    });
 
     const navigation = computed(() => {
         let parentMetadata: Record<string, any> = {};

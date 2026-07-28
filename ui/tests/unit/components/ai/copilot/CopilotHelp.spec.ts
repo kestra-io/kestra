@@ -34,7 +34,7 @@ describe("CopilotHelp", () => {
         const link = w.find(".router-link-stub")
         expect(link.exists()).toBe(true)
         const to = JSON.parse(link.attributes("data-to") ?? "{}")
-        expect(to).toEqual({name: "blueprints", params: {kind: "community", tab: "flow"}})
+        expect(to).toEqual({name: "blueprints", params: {kind: "flow", tab: "community"}})
     })
 
     it("links the Slack card to the external community URL, opened safely in a new tab", () => {

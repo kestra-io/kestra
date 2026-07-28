@@ -6,6 +6,8 @@ import {createPinia, setActivePinia} from "pinia"
 // `vi.fn(() => …)` infers zero-length call tuples and trips TS2493 under vue-tsc.
 const updateFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
 const createFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
+// GET /flows/{namespace}/{id} - used by loadFlow() to fetch a flow's source
+const getFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: true, revision: 1, source: ""}))
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({get: vi.fn(() => Promise.resolve({status: 200, data: {}}))}),
@@ -17,6 +19,7 @@ vi.mock("@kestra-io/kestra-sdk/flows", () => ({
     validateFlows: vi.fn(() => Promise.resolve([{}])),
     updateFlow,
     createFlow,
+    flow: getFlow,
 }))
 
 // Avoid mounting the notification service when notifySaved fires.
@@ -50,17 +53,23 @@ function lastDraftParam() {
     return call?.[0]?.draft
 }
 
+function lastUpdateFlowCall() {
+    return updateFlow.mock.calls.at(-1)?.[0]
+}
+
 describe("flow draft save — draft resolution per entry point", () => {
-    // First import of the flow store pulls in heavy deps (monaco, ...); warm it so no single test
-    // pays that cost and trips the default 5s timeout.
+    // First import of the flow store pulls in heavy deps (monaco, element-plus — the latter is
+    // inlined for the test transform, see vitest.config.unit.js); warm it so no single test pays
+    // that cost and trips the default 5s timeout.
     beforeAll(async () => {
         await import("../../../src/stores/flow")
-    }, 30000)
+    }, 90000)
 
     beforeEach(() => {
         localStorage.clear()
         updateFlow.mockClear()
         createFlow.mockClear()
+        getFlow.mockClear()
         setActivePinia(createPinia())
     })
 
@@ -98,6 +107,58 @@ describe("flow draft save — draft resolution per entry point", () => {
         const store = await freshStore()
         store.flow = {id: "f", namespace: "ns", draft: false} as any
         await store.saveAll()
+        expect(lastDraftParam())
+            .toBe(false)
+    })
+
+    // FlowRun's executionsStore.flow (the run-panel's flow) has no `source` field: publishDraft(target)
+    // must load the flow's source itself instead of silently no-op'ing on the missing source.
+    it("publishDraft(target) fetches the target's source via loadFlow(store:false) and publishes it", async () => {
+        const store = await freshStore()
+        store.flowYaml = ""
+        const target = {id: "f", namespace: "ns", draft: true} as any
+
+        getFlow.mockResolvedValueOnce({id: "f", namespace: "ns", draft: true, revision: 1, source: VALID_FLOW})
+
+        const outcome = await store.publishDraft(target)
+
+        expect(getFlow).toHaveBeenCalledWith(expect.objectContaining({namespace: "ns", id: "f", source: true}))
+        expect(lastUpdateFlowCall())
+            .toMatchObject({body: VALID_FLOW, draft: false})
+        expect(outcome)
+            .toBe("saved")
+    })
+
+    // TriggerFlow/FlowRun is embedded in the flow editor's own top bar, so useFlowStore() (a Pinia
+    // singleton) is shared with Monaco: publishDraft(target) must publish the last-saved draft
+    // source without touching flowYaml/flowYamlOrigin, or it silently wipes unsaved keystrokes.
+    it("publishDraft(target) does not clobber unsaved editor buffer content", async () => {
+        const store = await freshStore()
+        const unsavedEdits = `${VALID_FLOW}  # unsaved local edit\n`
+        store.flowYaml = unsavedEdits
+        store.flowYamlOrigin = VALID_FLOW
+        const target = {id: "f", namespace: "ns", draft: true} as any
+
+        const savedDraftSource = VALID_FLOW.replace("hi", "saved draft revision")
+        getFlow.mockResolvedValueOnce({id: "f", namespace: "ns", draft: true, revision: 1, source: savedDraftSource})
+
+        expect(store.haveChange).toBe(true)
+
+        const outcome = await store.publishDraft(target)
+
+        expect(store.flowYaml).toBe(unsavedEdits)
+        expect(store.flowYamlOrigin).toBe(VALID_FLOW)
+        expect(store.haveChange).toBe(true)
+        expect(lastUpdateFlowCall())
+            .toMatchObject({body: savedDraftSource, draft: false})
+        expect(outcome)
+            .toBe("saved")
+    })
+
+    it("publishDraft() with no target publishes the store's own in-progress source", async () => {
+        const store = await freshStore()
+        await store.publishDraft()
+        expect(getFlow).not.toHaveBeenCalled()
         expect(lastDraftParam())
             .toBe(false)
     })

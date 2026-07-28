@@ -1,5 +1,7 @@
 package io.kestra.jdbc;
 
+import io.kestra.core.ai.agent.models.AgentMessage;
+import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.lock.Lock;
 import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.mcp.models.McpSession;
@@ -166,6 +168,18 @@ public class JdbcTableConfigsFactory {
     @Named("mcpsession")
     public InstantiableJdbcTableConfig mcpSession() {
         return new InstantiableJdbcTableConfig("mcpsession", McpSession.class, "mcp_session");
+    }
+
+    @Bean
+    @Named("agentthread")
+    public InstantiableJdbcTableConfig agentThread() {
+        return new InstantiableJdbcTableConfig("agentthread", AgentThread.class, "ai_agent_thread");
+    }
+
+    @Bean
+    @Named("agentmessage")
+    public InstantiableJdbcTableConfig agentMessage() {
+        return new InstantiableJdbcTableConfig("agentmessage", AgentMessage.class, "ai_agent_message");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

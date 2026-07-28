@@ -1,10 +1,6 @@
 package io.kestra.cli.commands.migrations;
 
-import java.util.Map;
-
-import io.kestra.cli.AbstractCommand;
 import io.kestra.core.migration.MigrationLockedException;
-import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationRunnerInterface;
 
 import jakarta.inject.Inject;
@@ -32,16 +28,10 @@ import picocli.CommandLine;
     description = "Apply all pending database migration scripts",
     mixinStandardHelpOptions = true
 )
-public class RunMigrationCommand extends AbstractCommand {
+public class RunMigrationCommand extends AbstractMigrationCommand {
 
     @Inject
     private MigrationRunnerInterface migrationRunner;
-
-    @SuppressWarnings("unused")
-    public static Map<String, Object> propertiesOverrides() {
-        MigrationRunner.setSkipAutoRun(true);
-        return Map.of();
-    }
 
     @Override
     public Integer call() throws Exception {

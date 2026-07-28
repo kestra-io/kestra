@@ -61,6 +61,8 @@
     "success": "Success",
     "save": "Salva",
     "save_as_draft": "Salva come bozza",
+    "publish": "Pubblica",
+    "publish_draft": "Pubblica bozza",
     "draft": "Bozza",
     "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
     "save task": "Salva Task",
@@ -182,6 +184,7 @@
     "last execution status": "Ultimo stato di esecuzione",
     "jump to...": "Vai a...",
     "contextBar": {
+      "ai": "AI",
       "news": "Notizie",
       "docs": "Documenti",
       "help": "Aiuto",
@@ -834,6 +837,17 @@
       "tooltip": "Riavvia il trigger"
     },
     "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
+    "trigger enable dialog": {
+      "title": "Abilita trigger",
+      "bulk title": "Abilita {count} triggers",
+      "description": "Questo trigger potrebbe aver saltato delle pianificazioni mentre era disabilitato.",
+      "bulk description": "I trigger selezionati potrebbero aver perso delle pianificazioni mentre erano disabilitati.",
+      "strategy": "Seleziona la strategia da utilizzare:",
+      "options": {
+        "skip": "Non recuperare le pianificazioni mancate",
+        "follow": "Segui la configurazione {property} del trigger"
+      }
+    },
     "flow source not found": "Sorgente del flow non trovata",
     "date format": "Formato data",
     "timezone": "Fuso orario",
@@ -1934,6 +1948,10 @@
       "viewAll": "Vedi tutti",
       "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
       "export": "Esporta in CSV",
+      "exportTo": {
+        "csv": "Esporta in CSV",
+        "ion": "Esporta in ION"
+      },
       "quick_filters": {
         "all": "Tutti",
         "running": "In esecuzione",
@@ -2038,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Fai una domanda sui tuoi dati. Esempio di prompt: Mostrami il tasso di successo dei miei flow negli ultimi 7 giorni."
+      },
+      "copilot": {
+        "title": "Copilota AI",
+        "placeholder": "Dimmi cosa costruire…",
+        "send": "Invia",
+        "mode": {
+          "ask": "Chiedi",
+          "edit": "Modifica",
+          "plan": "Piano"
+        },
+        "empty": {
+          "title": "Trasforma la tua idea in un flusso di lavoro"
+        },
+        "toolCall": "{{tool}} in esecuzione",
+        "context": {
+          "execution": "Esecuzione: {id}",
+          "flow": "Flow: {{flow}}",
+          "namespace": "Namespace: {namespace}"
+        },
+        "toolResult": {
+          "detail": "Dettagli",
+          "error": "{{tool}} fallito",
+          "ok": "{tool} completato",
+          "rejected": "{tool} rifiutato"
+        },
+        "confirm": {
+          "planTitle": "Piano proposto",
+          "actionTitle": "Azione proposta",
+          "approve": "Approva",
+          "approveExecute": "Approva ed esegui",
+          "reject": "Rifiuta",
+          "reasonPlaceholder": "Rispondi per revisionare…",
+          "pending": "In attesa di approvazione",
+          "revise": "Rispondi per revisionare"
+        },
+        "notice": {
+          "emptyTurn": "L'assistente non ha restituito una risposta. Per favore, riprova.",
+          "retry": "Riprova"
+        },
+        "cancelled": "Giro annullato",
+        "error": {
+          "turnCap": "Questa conversazione ha raggiunto il limite — inizia una nuova chat.",
+          "turnInProgress": "Un turno è già in corso.",
+          "request": "La richiesta è fallita. Riprova.",
+          "generic": "Qualcosa è andato storto. Riprova."
+        },
+        "emptyHelper": "Posso modificare questo flow, generare test, generare file correlati o spiegare come funziona.",
+        "suggestions": {
+          "errorHandling": "Aggiungi gestione degli errori",
+          "unitTest": "Genera un test di unità",
+          "explain": "Spiega questo flow",
+          "dbt": "Esegui una pipeline dbt"
+        },
+        "voice": {
+          "start": "Avvia input vocale",
+          "stop": "Arresta e inserisci",
+          "cancel": "Annulla input vocale"
+        },
+        "unavailable": {
+          "title": "AI Copilot non è disponibile",
+          "detail": "Nessun provider AI è configurato. Chiedi a un amministratore di configurarne uno, quindi riprova.",
+          "retry": "Riprova"
+        },
+        "thinking": "Elaborazione",
+        "thinkingWords": [
+          "Orchestrazione",
+          "Pianificazione",
+          "Sequenziamento",
+          "Routing",
+          "Invio",
+          "In coda",
+          "Attivazione",
+          "In esecuzione",
+          "Coordinamento",
+          "Provisionamento",
+          "Risolvendo",
+          "Composizione",
+          "Assemblaggio",
+          "Pianificazione",
+          "Mappatura",
+          "Collegamenti",
+          "Ramificazione",
+          "Sincronizzazione",
+          "Riconciliazione",
+          "Materializzando",
+          "Compilazione",
+          "Validazione",
+          "In propagazione",
+          "Convergendo"
+        ],
+        "newChat": "Nuova chat",
+        "recents": "Recenti",
+        "recentsEmpty": "Nessuna conversazione recente.",
+        "draft": {
+          "openInEditor": "Apri nell'editor",
+          "apply": "Applica",
+          "applyTitle": "Applica flow",
+          "applyConfirm": "Applica il flow {{namespace}}.{{id}}? Verrà creato, o sovrascritto se esiste già.",
+          "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
+          "applyError": "Impossibile applicare il flow. Riprova.",
+          "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",
+          "applyNoTarget": "Questa bozza non ha namespace o id da applicare.",
+          "applyTitleDashboard": "Applica dashboard",
+          "title": {
+            "flow": "flow Proposto",
+            "dashboard": "Dashboard Proposta",
+            "app": "App proposta"
+          },
+          "valid": "Valido",
+          "invalid": "Richiede modifiche",
+          "copy": "Copia YAML",
+          "copied": "Copiato"
+        }
       }
     },
     "playground": {
@@ -2284,8 +2415,7 @@
         "open_world": "Open world",
         "destructive": "Distruttivo",
         "idempotent": "Idempotente",
-        "return_direct": "Ritorno diretto",
-        "view_flow": "Apri flow"
+        "return_direct": "Ritorno diretto"
       },
       "connect_tab": {
         "server_url": "URL del server",

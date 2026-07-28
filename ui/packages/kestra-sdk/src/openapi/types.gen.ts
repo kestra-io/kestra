@@ -477,6 +477,25 @@ export type ConcurrencyLimit = {
     running?: number;
 };
 
+/**
+ * Paged response for stores that may not know their exact row count (e.g. an external log store): `total` is only present when the backing store can compute it. Kept as a separate type from PagedResults rather than a shared `total` field: only this path can legitimately omit `total`, so the OpenAPI schema (and generated SDK types) can still mark `total` as required on every other, always-countable, endpoint. When `total` is absent, pagination falls back to an opaque cursor (`type`/`nextCursor`) since there is no page count to offset from.
+ */
+export type CursorOrOffsetPagedResultsLogEntry = {
+    results: Array<LogEntry>;
+    /**
+     * Exact total row count --- present when the store can compute it (offset mode), omitted when it can't (cursor mode).
+     */
+    total?: number;
+    /**
+     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`).
+     */
+    type: PaginationType;
+    /**
+     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
+     */
+    nextCursor?: string;
+};
+
 export type DailyExecutionStatistics = {
     startDate: string;
     duration: DailyExecutionStatisticsDuration;
@@ -635,7 +654,6 @@ export type ExecutionControllerApiValidateExecutionInputsResponseApiInputError =
 export type ExecutionControllerEvalResult = {
     result?: string;
     error?: string;
-    stackTrace?: string;
 };
 
 export type ExecutionControllerExecutionResponse = Execution & {
@@ -696,6 +714,8 @@ export type ExecutionTrigger = {
 export type ExecutionUsage = {
     dailyExecutionsCount?: Array<DailyExecutionStatistics>;
 };
+
+export type ExportFormat = 'CSV' | 'ION';
 
 export type ExpressionContext = {
     categories?: {
@@ -1361,264 +1381,128 @@ export type OutputControllerTaskOutputInformation = {
     inline?: boolean;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsApiLightExecution = {
     results: Array<ApiLightExecution>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsApiMcpServer = {
     results: Array<ApiMcpServer>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsApiTriggerAndState = {
     results: Array<ApiTriggerAndState>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsApiTriggerState = {
     results: Array<ApiTriggerState>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsBlueprintControllerApiBlueprintItem = {
     results: Array<BlueprintControllerApiBlueprintItem>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsConcurrencyLimit = {
     results: Array<ConcurrencyLimit>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsDashboardControllerDashboardResponse = {
     results: Array<DashboardControllerDashboardResponse>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsFlow = {
     results: Array<Flow>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsKvEntry = {
     results: Array<KvEntry>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
-export type PagedResultsLogEntry = {
-    results: Array<LogEntry>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
-};
-
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsMapStringObject = {
     results: Array<{
         [key: string]: {
             [key: string]: unknown;
         };
     }>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsMetricEntry = {
     results: Array<MetricEntry>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsNamespace = {
     results: Array<NamespaceLight>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsPluginControllerApiTriggerPlugin = {
     results: Array<PluginControllerApiTriggerPlugin>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsPlugin = {
     results: Array<Plugin>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsSearchResultFlow = {
     results: Array<SearchResultFlow>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
 export type PaginationType = 'OFFSET' | 'CURSOR';
@@ -2067,6 +1951,7 @@ export type TriggerControllerApiDisableTriggerRequest = {
     flowId?: string;
     triggerId?: string;
     disabled?: boolean;
+    recoverMissedSchedules?: boolean | null;
 };
 
 export type TriggerControllerApiTriggerId = {
@@ -2078,6 +1963,7 @@ export type TriggerControllerApiTriggerId = {
 export type TriggerControllerSetDisabledRequest = {
     triggers: Array<TriggerControllerApiTriggerId>;
     disabled: boolean;
+    recoverMissedSchedules?: boolean | null;
 };
 
 /**
@@ -2300,36 +2186,20 @@ export type LoopRunWritable = {
     parents?: Array<LoopRunParent>;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsApiLightExecutionWritable = {
     results: Array<ApiLightExecutionWritable>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
+/**
+ * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
+ */
 export type PagedResultsApiMcpServerWritable = {
     results: Array<ApiMcpServerWritable>;
-    /**
-     * Exact total row count --- present in offset mode (and for the ArrayListTotal path used by other endpoints), omitted in cursor mode (a cursor store has no total).
-     */
-    total?: number;
-    /**
-     * Pagination mode of this response: PaginationType#OFFSET (with an exact `total`) or PaginationType#CURSOR (forward-only, no `total`). Only set by #of(Page) --- the ArrayListTotal path leaves it null (omitted) so existing endpoints keep their `{results, total}` shape.
-     */
-    type?: PaginationType;
-    /**
-     * Opaque token to fetch the page that continues after this one; only present in cursor mode. Cursor pagination is forward-only (there is no "previous" --- external log stores don't offer one). A non-empty page always carries a `nextCursor`, so the client keeps paging until it gets back an empty page (not until `nextCursor` is null).
-     */
-    nextCursor?: string;
+    total: number;
 };
 
 export type StateWritable = {
@@ -3202,6 +3072,13 @@ export type CreateDashboardData = {
     url: '/api/v1/{tenant}/dashboards';
 };
 
+export type CreateDashboardErrors = {
+    /**
+     * If the dashboard id is reserved ('_default')
+     */
+    422: unknown;
+};
+
 export type CreateDashboardResponses = {
     /**
      * createDashboard 200 response
@@ -3211,23 +3088,28 @@ export type CreateDashboardResponses = {
 
 export type CreateDashboardResponse = CreateDashboardResponses[keyof CreateDashboardResponses];
 
-export type ExportChartToCsvData = {
+export type ExportChartData = {
     body: DashboardControllerPreviewRequest;
     path: {
         tenant: string;
     };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/charts/export/to-csv';
+    query?: {
+        /**
+         * The export format
+         */
+        format?: ExportFormat;
+    };
+    url: '/api/v1/{tenant}/dashboards/charts/export';
 };
 
-export type ExportChartToCsvResponses = {
+export type ExportChartResponses = {
     /**
-     * exportChartToCsv 200 response
+     * exportChart 200 response
      */
     200: string;
 };
 
-export type ExportChartToCsvResponse = ExportChartToCsvResponses[keyof ExportChartToCsvResponses];
+export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
 
 export type PreviewChartData = {
     body: DashboardControllerPreviewRequest;
@@ -3246,6 +3128,26 @@ export type PreviewChartResponses = {
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];
+
+export type GetDefaultDashboardDefinitionsData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/dashboards/defaults/definitions';
+};
+
+export type GetDefaultDashboardDefinitionsResponses = {
+    /**
+     * getDefaultDashboardDefinitions 200 response
+     */
+    200: {
+        [key: string]: string;
+    };
+};
+
+export type GetDefaultDashboardDefinitionsResponse = GetDefaultDashboardDefinitionsResponses[keyof GetDefaultDashboardDefinitionsResponses];
 
 export type GetDefaultDashboardsData = {
     body?: never;
@@ -3365,6 +3267,13 @@ export type UpdateDashboardData = {
     url: '/api/v1/{tenant}/dashboards/{id}';
 };
 
+export type UpdateDashboardErrors = {
+    /**
+     * If the dashboard id is reserved ('_default')
+     */
+    422: unknown;
+};
+
 export type UpdateDashboardResponses = {
     /**
      * updateDashboard 200 response
@@ -3403,7 +3312,7 @@ export type GetDashboardChartDataResponses = {
 
 export type GetDashboardChartDataResponse = GetDashboardChartDataResponses[keyof GetDashboardChartDataResponses];
 
-export type ExportDashboardChartDataToCsvData = {
+export type ExportDashboardChartData = {
     /**
      * The filters to apply, some can override chart definition like labels & namespace
      */
@@ -3419,18 +3328,23 @@ export type ExportDashboardChartDataToCsvData = {
         chartId: string;
         tenant: string;
     };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}/export/to-csv';
+    query?: {
+        /**
+         * The export format
+         */
+        format?: ExportFormat;
+    };
+    url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}/export';
 };
 
-export type ExportDashboardChartDataToCsvResponses = {
+export type ExportDashboardChartResponses = {
     /**
-     * exportDashboardChartDataToCSV 200 response
+     * exportDashboardChart 200 response
      */
     200: string;
 };
 
-export type ExportDashboardChartDataToCsvResponse = ExportDashboardChartDataToCsvResponses[keyof ExportDashboardChartDataToCsvResponses];
+export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
 
 export type SearchExecutionsByFlowIdData = {
     body?: never;
@@ -6325,7 +6239,7 @@ export type SearchLogsResponses = {
     /**
      * searchLogs 200 response
      */
-    200: PagedResultsLogEntry;
+    200: CursorOrOffsetPagedResultsLogEntry;
 };
 
 export type SearchLogsResponse = SearchLogsResponses[keyof SearchLogsResponses];
@@ -7894,6 +7808,10 @@ export type DisabledTriggersByQueryData = {
          * The disabled state
          */
         disabled?: boolean;
+        /**
+         * When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped
+         */
+        recoverMissedSchedules?: boolean | null;
     };
     url: '/api/v1/{tenant}/triggers/set-disabled/by-query';
 };

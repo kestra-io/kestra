@@ -4,11 +4,24 @@ package io.kestra.core.migration;
  * Common interface for migration runners, shared by the JDBC and Elasticsearch implementations.
  *
  * <p>
- * Implementations are Micronaut {@code @Context} beans that run eagerly on
- * {@code ApplicationContext.start()} via {@code @PostConstruct}, before any repository or
- * service bean is initialized.
+ * Implementations are ordinary {@code @Singleton} beans. Automatic migration on startup is
+ * triggered by the {@code @Context} {@link MigrationStartupRunner}, which calls {@link #autoRun()}
+ * before any repository or service bean is initialized. The {@code kestra migrate} CLI commands
+ * resolve the runner in a minimal context (which does not register the startup trigger) and invoke
+ * the relevant method directly.
  */
 public interface MigrationRunnerInterface {
+
+    /**
+     * Runs migrations at startup. OSS applies all pending scripts unconditionally; EE respects the
+     * {@code kestra.migration.auto} configuration and handles fresh-instance detection.
+     *
+     * <p>
+     * Invoked by {@link MigrationStartupRunner} during {@code ApplicationContext.start()}.
+     *
+     * @throws Exception if a migration fails
+     */
+    void autoRun() throws Exception;
 
     /**
      * Unconditionally runs all pending migration scripts, bypassing any auto-run configuration.

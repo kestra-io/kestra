@@ -37,7 +37,6 @@ export interface Log{
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
     const total = ref(0)
-    const level = ref<LevelKey>("INFO")
 
     function findLogs(options: Record<string, any>) {
         return LogsAPI.searchLogs(toSearchParams(options)).then(response => {
@@ -52,7 +51,7 @@ export const useLogsStore = defineStore("logs", () => {
     }
 
     function downloadLogs(options: Record<string, any>) {
-        const params = toSearchParams({...options, page: 1, size: options.size ?? 10000})
+        const params = toSearchParams({...options, page: 1, size: options.size ?? 1000})
         return LogsAPI.searchLogs(params)
             .then(response => {
                 const results = (response.results ?? []) as unknown as Log[]
@@ -87,7 +86,6 @@ export const useLogsStore = defineStore("logs", () => {
     return {
         logs,
         total,
-        level,
         findLogs,
         deleteLogs,
         downloadLogs,

@@ -10,6 +10,16 @@
 // and tree-shakes the whole thing away. It is also best-effort: any failure (spec unreachable, no
 // Web Crypto, non-secure context) is swallowed so it can never break dev or an API call.
 
+// Name of the window CustomEvent dispatched when drift is detected — exported so the app layer
+// can listen for the exact same string without duplicating it.
+export const SDK_DRIFT_EVENT = "kestra:sdk-drift"
+
+export interface SdkDriftEventDetail {
+    label: string
+    committedHash: string
+    liveHash: string
+}
+
 let alreadyChecked = false
 
 async function sha256First16(bytes: ArrayBuffer): Promise<string> {
@@ -25,7 +35,7 @@ async function sha256First16(bytes: ArrayBuffer): Promise<string> {
  * SDK was generated from. Runs at most once per session; never throws.
  *
  * @param committedHash the OPENAPI_SPEC_HASH stamped into the committed SDK
- * @param specUrl       URL of the backend's served spec (default: `${KESTRA_BASE_PATH}/swagger/kestra.yml`)
+ * @param specUrl       URL of the backend's served spec (default: `${KESTRA_BASE_PATH}swagger/kestra.yml`)
  * @param label        package name used in the warning (default: "@kestra-io/kestra-sdk")
  */
 export async function warnIfSdkStale(
@@ -40,7 +50,7 @@ export async function warnIfSdkStale(
         if (typeof fetch !== "function" || typeof crypto?.subtle?.digest !== "function") return
 
         const basePath = (typeof window !== "undefined" && window.KESTRA_BASE_PATH) || ""
-        const url = specUrl ?? `${basePath}/swagger/kestra.yml`
+        const url = specUrl ?? `${basePath}swagger/kestra.yml`
 
         const response = await fetch(url, {credentials: "include"})
         if (!response.ok) return
@@ -52,6 +62,9 @@ export async function warnIfSdkStale(
                 `(SDK ${committedHash} ≠ backend ${liveHash}). ` +
                 "Run `npm run generate:sdk` from ui/ and commit the regenerated src/openapi.",
             )
+            // Plain DOM event (no Vue dependency here) so the app layer can also surface this as a
+            // visible banner instead of relying on a console.warn that's easy to miss.
+            window.dispatchEvent(new CustomEvent(SDK_DRIFT_EVENT, {detail: {label, committedHash, liveHash}}))
         }
     } catch {
         // best-effort only — never break dev or an API call over a freshness check

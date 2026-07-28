@@ -811,6 +811,26 @@ export default {
                 "description": "Nach Worker-ID filtern",
                 "label": "Worker-ID",
             },
+            "mobile_filters": "Filter",
+            "filters_title": "Filter",
+            "all_filters": "Alle Filter",
+            "my_filters_saved": "Meine Filter gespeichert",
+            "member": {
+                "label": "Mitglied",
+                "description": "Filtern nach Mitglied",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Nach Task-Bezeichner filtern",
+            },
+            "taskRunId": {
+                "label": "Task Ausführungs-ID",
+                "description": "Filtern nach Task-Ausführungs-ID",
+            },
+            "attemptNumber": {
+                "label": "Versuchsnummer",
+                "description": "Filtern nach Task-Ausführungsversuchsnummer",
+            },
         },
     },
     es: {
@@ -1207,6 +1227,26 @@ export default {
             "workerId": {
                 "description": "Filtrar por ID de worker",
                 "label": "ID del Worker",
+            },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos los Filtros",
+            "my_filters_saved": "Mis filtros guardados",
+            "member": {
+                "label": "Miembro",
+                "description": "Filtrar por miembro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrar por identificador de task",
+            },
+            "taskRunId": {
+                "label": "ID de Ejecución de Task",
+                "description": "Filtrar por identificador de ejecución de task",
+            },
+            "attemptNumber": {
+                "label": "Número de intento",
+                "description": "Filtrar por número de intento de ejecución de task",
             },
         },
     },
@@ -1605,6 +1645,26 @@ export default {
                 "description": "Filtrer par ID de worker",
                 "label": "ID du worker",
             },
+            "mobile_filters": "Filtres",
+            "filters_title": "Filtres",
+            "all_filters": "Tous les filtres",
+            "my_filters_saved": "Mes Filtres enregistrés",
+            "member": {
+                "label": "Membre",
+                "description": "Filtrer par membre",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrer par identifiant de task",
+            },
+            "taskRunId": {
+                "label": "ID d'exécution de Task",
+                "description": "Filtrer par id d'exécution de task",
+            },
+            "attemptNumber": {
+                "label": "Numéro de tentative",
+                "description": "Filtrer par numéro de tentative d'exécution de task",
+            },
         },
     },
     hi: {
@@ -2001,6 +2061,26 @@ export default {
             "workerId": {
                 "description": "वर्कर ID द्वारा फ़िल्टर करें",
                 "label": "वर्कर ID",
+            },
+            "mobile_filters": "फ़िल्टर",
+            "filters_title": "फ़िल्टर",
+            "all_filters": "सभी फ़िल्टर",
+            "my_filters_saved": "मेरे फ़िल्टर सहेजे गए",
+            "member": {
+                "label": "सदस्य",
+                "description": "सदस्य द्वारा फ़िल्टर करें",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task identifier द्वारा फ़िल्टर करें",
+            },
+            "taskRunId": {
+                "label": "Task रन ID",
+                "description": "task run पहचानकर्ता द्वारा फ़िल्टर करें",
+            },
+            "attemptNumber": {
+                "label": "प्रयास संख्या",
+                "description": "task run प्रयास संख्या द्वारा फ़िल्टर करें",
             },
         },
     },
@@ -2399,6 +2479,26 @@ export default {
                 "description": "Filtra per ID worker",
                 "label": "ID del worker",
             },
+            "mobile_filters": "Filtri",
+            "filters_title": "Filtri",
+            "all_filters": "Tutti i Filtri",
+            "my_filters_saved": "I miei Filtri salvati",
+            "member": {
+                "label": "Membro",
+                "description": "Filtra per membro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtra per identificatore task",
+            },
+            "taskRunId": {
+                "label": "ID Esecuzione Task",
+                "description": "Filtra per identificatore di esecuzione del task",
+            },
+            "attemptNumber": {
+                "label": "Numero tentativo",
+                "description": "Filtra per numero di tentativo di esecuzione del task",
+            },
         },
     },
     ja: {
@@ -2795,6 +2895,26 @@ export default {
             "workerId": {
                 "description": "ワーカーIDでフィルター",
                 "label": "ワーカーID",
+            },
+            "mobile_filters": "フィルター",
+            "filters_title": "フィルター",
+            "all_filters": "すべてのフィルター",
+            "my_filters_saved": "マイフィルター保存済み",
+            "member": {
+                "label": "メンバー",
+                "description": "メンバーでフィルタ",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task 識別子でフィルター",
+            },
+            "taskRunId": {
+                "label": "Task 実行 ID",
+                "description": "task実行IDで絞り込む",
+            },
+            "attemptNumber": {
+                "label": "試行番号",
+                "description": "task実行の試行回数でフィルター",
             },
         },
     },
@@ -3193,6 +3313,26 @@ export default {
                 "description": "작업자 ID로 필터링",
                 "label": "작업자 ID",
             },
+            "mobile_filters": "필터",
+            "filters_title": "필터",
+            "all_filters": "모든 필터",
+            "my_filters_saved": "내 필터 저장됨",
+            "member": {
+                "label": "회원",
+                "description": "멤버별 필터링",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task 식별자로 필터링",
+            },
+            "taskRunId": {
+                "label": "Task 실행 ID",
+                "description": "`task` 실행 `id`로 필터링",
+            },
+            "attemptNumber": {
+                "label": "시도 횟수",
+                "description": "task 실행 시도 번호로 필터링",
+            },
         },
     },
     pl: {
@@ -3589,6 +3729,26 @@ export default {
             "workerId": {
                 "description": "Filtruj według worker ID",
                 "label": "Identyfikator Worker",
+            },
+            "mobile_filters": "Filtry",
+            "filters_title": "Filtry",
+            "all_filters": "Wszystkie Filtry",
+            "my_filters_saved": "Moje Filtry zapisane",
+            "member": {
+                "label": "Członek",
+                "description": "Filtruj według członka",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtruj według identyfikatora taska",
+            },
+            "taskRunId": {
+                "label": "ID Uruchomienia Taska",
+                "description": "Filtruj według identyfikatora wykonania taska",
+            },
+            "attemptNumber": {
+                "label": "Numer próby",
+                "description": "Filtruj według numeru próby wykonania taska",
             },
         },
     },
@@ -3987,6 +4147,26 @@ export default {
                 "description": "Filtrar por ID do worker",
                 "label": "ID do Worker",
             },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos os Filtros",
+            "my_filters_saved": "Meus Filtros salvos",
+            "member": {
+                "label": "Membro",
+                "description": "Filtrar por membro",
+            },
+            "taskId": {
+                "label": "ID da Task",
+                "description": "Filtrar por identificador de task",
+            },
+            "taskRunId": {
+                "label": "ID da Execução da Task",
+                "description": "Filtrar por identificador de execução de task",
+            },
+            "attemptNumber": {
+                "label": "Número da Tentativa",
+                "description": "Filtrar por número de tentativa de execução de task",
+            },
         },
     },
     pt_BR: {
@@ -4383,6 +4563,26 @@ export default {
             "workerId": {
                 "description": "Filtrar por ID do worker",
                 "label": "ID do Worker",
+            },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos os Filtros",
+            "my_filters_saved": "Meus Filtros salvos",
+            "member": {
+                "label": "Membro",
+                "description": "Filtrar por membro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrar por identificador da task",
+            },
+            "taskRunId": {
+                "label": "ID da Execução da Task",
+                "description": "Filtrar por identificador de execução de task",
+            },
+            "attemptNumber": {
+                "label": "Número da Tentativa",
+                "description": "Filtrar por número da tentativa de execução da task",
             },
         },
     },
@@ -4781,6 +4981,26 @@ export default {
                 "description": "Фильтр по worker ID",
                 "label": "ID worker",
             },
+            "mobile_filters": "Фильтры",
+            "filters_title": "Фильтры",
+            "all_filters": "Все фильтры",
+            "my_filters_saved": "Мои фильтры сохранены",
+            "member": {
+                "label": "Член",
+                "description": "Фильтровать по участнику",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Фильтровать по task идентификатору",
+            },
+            "taskRunId": {
+                "label": "ID запуска Task",
+                "description": "Фильтровать по идентификатору запуска task",
+            },
+            "attemptNumber": {
+                "label": "Номер попытки",
+                "description": "Фильтровать по номеру попытки выполнения task",
+            },
         },
     },
     zh_CN: {
@@ -5177,6 +5397,26 @@ export default {
             "workerId": {
                 "description": "按worker ID筛选",
                 "label": "工作者 ID",
+            },
+            "mobile_filters": "筛选器",
+            "filters_title": "筛选器",
+            "all_filters": "所有筛选器",
+            "my_filters_saved": "我的筛选器已保存",
+            "member": {
+                "label": "成员",
+                "description": "按成员筛选",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "按 task 标识符筛选",
+            },
+            "taskRunId": {
+                "label": "Task 运行 ID",
+                "description": "按 task 运行标识符筛选",
+            },
+            "attemptNumber": {
+                "label": "尝试次数",
+                "description": "按 task 运行尝试编号筛选",
             },
         },
     },

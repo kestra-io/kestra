@@ -4,10 +4,12 @@ import {mount} from "@vue/test-utils"
 const StubIcon = {template: "<span />"}
 
 const mockButtons = {
+    // Route-hidden like the AI dock on its own /ai page: excluded from the strip, no panelOnly.
+    ai: {title: "AI", icon: StubIcon, hidden: true},
     news: {title: "News", icon: StubIcon, hasUnreadMarker: false},
-    // Mirrors the EE notifications button: resolvable for panel content, but excluded
-    // from the visible tab strip because it has its own dedicated bell entry point.
-    notifications: {title: "Notifications", icon: StubIcon, hasUnreadMarker: true, unread: {value: false}, hidden: true},
+    // Mirrors the EE notifications button: resolvable for panel content, but excluded from the
+    // visible tab strip (its own bell entry point) and opened as a stripless panel (panelOnly).
+    notifications: {title: "Notifications", icon: StubIcon, hasUnreadMarker: true, unread: {value: false}, hidden: true, panelOnly: true},
 }
 vi.mock("override/composables/contextButtons", () => ({
     useContextButtons: () => ({buttons: mockButtons}),
@@ -51,5 +53,15 @@ describe("ContextDrawer", () => {
         const wrapper = mountComponent()
 
         expect(wrapper.find(".tabBar").exists()).toBe(false)
+    })
+
+    it("falls back to the first visible tab when the stored tab is route-hidden (AI on /ai)", () => {
+        mockOpenTab = "ai"
+        const wrapper = mountComponent()
+
+        // A route-hidden, non-panelOnly tab must not leave the drawer stuck: the strip stays and
+        // the first visible tab becomes active.
+        expect(wrapper.find(".tabBar").exists()).toBe(true)
+        expect(wrapper.html()).toContain("name=\"news\"")
     })
 })

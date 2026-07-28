@@ -154,6 +154,43 @@ class MultiselectInputTest {
     }
 
     @Test
+    void shouldDefaultSelectAllToFalse() {
+        // Given / When
+        MultiselectInput input = MultiselectInput
+            .builder()
+            .id("id")
+            .values(List.of(new ValueOption("V1", "V1"), new ValueOption("V2", "V2")))
+            .build();
+
+        // Then
+        Assertions.assertFalse(input.getSelectAll());
+    }
+
+    @Test
+    void shouldPreserveSelectAllThroughRender() {
+        // Given
+        RunContext runContext = runContextFactory.of(Map.of("values", List.of("V1", "V2")));
+        MultiselectInput input = MultiselectInput
+            .builder()
+            .id("id")
+            .expression("{{ values }}")
+            .selectAll(true)
+            .build();
+
+        // When
+        Input<?> rendered = RenderableInput.mayRenderInput(input, s -> {
+            try {
+                return runContext.renderTyped(s);
+            } catch (IllegalVariableEvaluationException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        // Then
+        Assertions.assertTrue(((MultiselectInput) rendered).getSelectAll());
+    }
+
+    @Test
     void validateAcceptsValuesButNotLabels() {
         MultiselectInput input = MultiselectInput
             .builder()

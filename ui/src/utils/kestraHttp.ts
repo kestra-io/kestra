@@ -116,8 +116,12 @@ export function setupKestraHttp(
 
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
         const status = error.status
-        if (status === 404 && error.config?.showMessageOnError !== false) {
-            onError("error", error)
+        if (status === 404) {
+            // Let callers handle an expected 404 locally (e.g. rehydrating a Copilot thread that no
+            // longer exists) by passing `showMessageOnError: false`, instead of the global not-found page.
+            if (error.config?.showMessageOnError !== false) {
+                onError("error", error)
+            }
         } else if (status !== 401 && status !== 400 && error.response?.data && error.config?.showMessageOnError !== false) {
             onError("message", error)
         }

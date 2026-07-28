@@ -1,6 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
+const {get} = vi.hoisted(() => ({get: vi.fn()}))
+
 vi.mock("@kestra-io/design-system", () => ({
     stringUtils: {afterLastDot: (value: string) => value?.split(".").pop() ?? value},
     durationUtils: {humanDuration: () => "", duration: () => 0},
@@ -22,15 +24,13 @@ vi.mock("vue-i18n", () => ({
 
 vi.mock("@kestra-io/kestra-sdk", () => ({
     useClient: () => ({
-        get: vi.fn(),
+        get,
         post: vi.fn(),
     }),
 }))
 
-const defaultDashboards = vi.fn()
-
-vi.mock("@kestra-io/kestra-sdk/dashboards-admin", () => ({
-    defaultDashboards: (...args: any[]) => defaultDashboards(...args),
+vi.mock("override/utils/route", () => ({
+    apiUrl: () => "/api/v1",
 }))
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({}))
@@ -39,13 +39,13 @@ vi.mock("@kestra-io/kestra-sdk/tenants", () => ({}))
 describe("dashboard defaults", () => {
     beforeEach(() => {
         vi.resetModules()
-        defaultDashboards.mockReset()
+        get.mockReset()
         setActivePinia(createPinia())
         localStorage.clear()
     })
 
     it("falls back to the bundled flow dashboard when defaults are unavailable", async () => {
-        defaultDashboards.mockRejectedValueOnce(Object.assign(new Error("Not Found"), {status: 404}))
+        get.mockRejectedValueOnce(Object.assign(new Error("Not Found"), {status: 404}))
 
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
         const dashboardStore = useDashboardStore()
@@ -56,12 +56,15 @@ describe("dashboard defaults", () => {
         }
 
         await expect(dashboardStore.getDashboardId(route as any)).resolves.toBe("default")
-        expect(defaultDashboards).toHaveBeenCalledWith(undefined, {showMessageOnError: false})
+        expect(get).toHaveBeenCalledWith(
+            "/api/v1/dashboards/settings/default-dashboards",
+            {showMessageOnError: false},
+        )
     })
 
     it("does not hide unexpected errors while loading defaults", async () => {
         const error = Object.assign(new Error("Server Error"), {status: 500})
-        defaultDashboards.mockRejectedValueOnce(error)
+        get.mockRejectedValueOnce(error)
 
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
         const dashboardStore = useDashboardStore()

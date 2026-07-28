@@ -12,7 +12,6 @@
             @on-edit="onEdit"
             @loading="loadingState"
             @expand-subflow="onExpandSubflow"
-            @swapped-task="onSwappedTask"
         />
         <div v-else-if="invalidGraph">
             <KsAlert
@@ -29,7 +28,6 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import {stringUtils} from "@kestra-io/design-system"
     import LowCodeEditor from "./LowCodeEditor.vue"
     import {useFlowStore} from "../../stores/flow"
 
@@ -52,34 +50,6 @@
 
     const onExpandSubflow = (subflows: string[]) => {
         flowStore.expandedSubflows = subflows
-    }
-
-    const onSwappedTask = (swappedTasks: [string, string]) => {
-        onExpandSubflow(expandedSubflows.value.map((expandedSubflow) => {
-            let swappedTaskSplit
-            if (expandedSubflow === swappedTasks[0]) {
-                swappedTaskSplit = swappedTasks[1].split(".")
-                swappedTaskSplit.pop()
-
-                return (
-                    swappedTaskSplit.join(".") +
-                    "." +
-                    stringUtils.afterLastDot(expandedSubflow)
-                )
-            }
-            if (expandedSubflow === swappedTasks[1]) {
-                swappedTaskSplit = swappedTasks[0].split(".")
-                swappedTaskSplit.pop()
-
-                return (
-                    swappedTaskSplit.join(".") +
-                    "." +
-                    stringUtils.afterLastDot(expandedSubflow)
-                )
-            }
-
-            return expandedSubflow
-        }))
     }
 
     const onEdit = async (source: string, currentIsFlow = false) => {

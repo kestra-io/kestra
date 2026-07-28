@@ -61,6 +61,8 @@
     "success": "Succès",
     "save": "Enregistrer",
     "save_as_draft": "Enregistrer comme brouillon",
+    "publish": "Publier",
+    "publish_draft": "Publier le brouillon",
     "draft": "Brouillon",
     "draft_flow_warning": "La dernière révision de ce flow est un brouillon. L'exécution utilisera la dernière révision publiée ; publiez le brouillon (ou exécutez-le depuis le Playground) pour exécuter vos derniers changements.",
     "save task": "Enregistrer la tâche",
@@ -127,6 +129,8 @@
       "last24hours": "24 dernières heures",
       "last48hours": "48 dernières heures",
       "last7days": "7 derniers jours",
+      "last14days": "Les 14 derniers jours",
+      "last28days": "Les 28 derniers jours",
       "last30days": "30 derniers jours",
       "last365days": "365 derniers jours",
       "next5minutes": "Les 5 prochaines minutes",
@@ -145,6 +149,8 @@
       "24hours": "24 heures",
       "48hours": "48 heures",
       "7days": "7 jours",
+      "14days": "14 jours",
+      "28days": "28 jours",
       "30days": "30 jours",
       "365days": "365 jours",
       "never": "Jamais",
@@ -178,6 +184,7 @@
     "last execution status": "Statut de la dernière exécution",
     "jump to...": "Aller à...",
     "contextBar": {
+      "ai": "IA",
       "news": "Nouvelles",
       "docs": "Docs",
       "help": "Aide",
@@ -830,6 +837,17 @@
       "tooltip": "Redémarrer le trigger"
     },
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
+    "trigger enable dialog": {
+      "title": "Activer le trigger",
+      "bulk title": "Activer {count} triggers",
+      "description": "Ce trigger a pu manquer des planifications pendant qu'il était désactivé.",
+      "bulk description": "Les triggers sélectionnés ont pu manquer des planifications pendant qu'ils étaient désactivés.",
+      "strategy": "Sélectionnez la stratégie à utiliser :",
+      "options": {
+        "skip": "Ne pas récupérer les planifications manquées",
+        "follow": "Suivre la configuration {property} du trigger"
+      }
+    },
     "flow source not found": "Source du flow introuvable",
     "date format": "Format de date",
     "timezone": "Fuseau horaire",
@@ -1929,7 +1947,11 @@
       "others": "Autres",
       "viewAll": "Tout voir",
       "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
-      "export": "Exporter vers CSV",
+      "export": "Exporter",
+      "exportTo": {
+        "csv": "Exporter vers CSV",
+        "ion": "Exporter vers ION"
+      },
       "quick_filters": {
         "all": "Tout",
         "running": "En cours",
@@ -2034,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Posez une question sur vos données. Exemple de demande : Montrez-moi le taux de réussite de mes flows au cours des 7 derniers jours."
+      },
+      "copilot": {
+        "title": "Copilot IA",
+        "placeholder": "Dites-moi quoi construire…",
+        "send": "Envoyer",
+        "mode": {
+          "ask": "Demander",
+          "edit": "Modifier",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Transformez votre idée en un flux de travail"
+        },
+        "toolCall": "Exécution de {tool}",
+        "context": {
+          "execution": "Exécution : {{id}}",
+          "flow": "Flux : {flow}",
+          "namespace": "Namespace : {namespace}"
+        },
+        "toolResult": {
+          "detail": "Détails",
+          "error": "{{tool}} a échoué",
+          "ok": "{tool} terminé",
+          "rejected": "{tool} rejeté"
+        },
+        "confirm": {
+          "planTitle": "Plan proposé",
+          "actionTitle": "Action proposée",
+          "approve": "Approuver",
+          "approveExecute": "Approuver et exécuter",
+          "reject": "Rejeter",
+          "reasonPlaceholder": "Répondre pour réviser…",
+          "pending": "En attente d'approbation",
+          "revise": "Répondre pour réviser"
+        },
+        "notice": {
+          "emptyTurn": "L'assistant n'a pas renvoyé de réponse. Veuillez réessayer.",
+          "retry": "Réessayer"
+        },
+        "cancelled": "Tour annulé",
+        "error": {
+          "turnCap": "Cette conversation a atteint sa limite — démarrez une nouvelle discussion.",
+          "turnInProgress": "Un tour est déjà en cours.",
+          "request": "La requête a échoué. Veuillez réessayer.",
+          "generic": "Une erreur est survenue. Veuillez réessayer."
+        },
+        "emptyHelper": "Je peux modifier ce flow, générer des tests, échafauder les fichiers associés, ou expliquer comment il fonctionne.",
+        "suggestions": {
+          "errorHandling": "Ajouter la gestion des erreurs",
+          "unitTest": "Générer un test unitaire",
+          "explain": "Expliquer ce flow",
+          "dbt": "Exécuter un pipeline dbt"
+        },
+        "voice": {
+          "start": "Démarrer la saisie vocale",
+          "stop": "Arrêter et insérer",
+          "cancel": "Annuler la saisie vocale"
+        },
+        "unavailable": {
+          "title": "AI Copilot n'est pas disponible",
+          "detail": "Aucun fournisseur d'IA n'est configuré. Demandez à un administrateur d'en configurer un, puis réessayez.",
+          "retry": "Réessayer"
+        },
+        "thinking": "Réflexion",
+        "thinkingWords": [
+          "Orchestration",
+          "Planification",
+          "Séquençage",
+          "Routage",
+          "Envoi",
+          "En attente",
+          "Déclenchement",
+          "Exécution",
+          "Coordination",
+          "Provisionnement",
+          "Résolution",
+          "Composition",
+          "Assemblage",
+          "Planification",
+          "Mappage",
+          "Connexions",
+          "Branchement",
+          "Synchronisation",
+          "En cours de réconciliation",
+          "Matérialisation",
+          "Compilation",
+          "Validation en cours",
+          "En cours de propagation",
+          "Convergence"
+        ],
+        "newChat": "Nouvelle discussion",
+        "recents": "Récents",
+        "recentsEmpty": "Aucune conversation récente pour l'instant",
+        "draft": {
+          "openInEditor": "Ouvrir dans l'éditeur",
+          "apply": "Appliquer",
+          "applyTitle": "Appliquer le flow",
+          "applyConfirm": "Appliquer le flow {namespace}.{id} ? Il sera créé, ou écrasé s'il existe déjà.",
+          "applyConfirmDashboard": "Appliquer le tableau de bord {id} ? Il sera créé, ou écrasé s'il existe déjà.",
+          "applyError": "Impossible d'appliquer le flow. Veuillez réessayer.",
+          "applyErrorDashboard": "Impossible d'appliquer le tableau de bord. Veuillez réessayer.",
+          "applyNoTarget": "Ce brouillon n'a pas de namespace ou d'id à appliquer.",
+          "applyTitleDashboard": "Appliquer le tableau de bord",
+          "title": {
+            "flow": "flow proposé",
+            "dashboard": "Tableau de bord proposé",
+            "app": "Application proposée"
+          },
+          "valid": "Valide",
+          "invalid": "Nécessite des modifications",
+          "copy": "Copier YAML",
+          "copied": "Copié"
+        }
       }
     },
     "playground": {
@@ -2280,8 +2415,7 @@
         "open_world": "Open world",
         "destructive": "Destructif",
         "idempotent": "Idempotent",
-        "return_direct": "Retour direct",
-        "view_flow": "Ouvrir le flow"
+        "return_direct": "Retour direct"
       },
       "connect_tab": {
         "server_url": "URL du serveur",

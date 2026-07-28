@@ -14,7 +14,7 @@
             />
             <div class="pie-center-label">
                 <div class="pie-center-label__total">{{ totalValue }}</div>
-                <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ t("success") }}</div>
+                <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ $t("success") }}</div>
             </div>
         </div>
         <KsNoData v-else class="empty" />
@@ -32,7 +32,6 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
-    import {useI18n} from "vue-i18n"
 
     import moment from "moment"
     import {KsPie, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
@@ -57,7 +56,6 @@
     })
 
     const route = useRoute()
-    const {t} = useI18n()
 
     const {drillDown} = useChartDrillDown(props.chart)
 

@@ -61,6 +61,8 @@
     "success": "Success",
     "save": "保存",
     "save_as_draft": "下書きとして保存",
+    "publish": "公開",
+    "publish_draft": "下書きを公開",
     "draft": "下書き",
     "draft_flow_warning": "この flow の最新リビジョンは下書きです。実行は代わりに最新の公開済みリビジョンに対して行われます。最新の変更を実行するには、下書きを公開するか Playground から実行してください。",
     "save task": "Taskを保存",
@@ -127,6 +129,8 @@
       "last24hours": "過去24時間",
       "last48hours": "過去48時間",
       "last7days": "過去7日間",
+      "last14days": "直近14日間",
+      "last28days": "過去28日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
       "next5minutes": "次の5分",
@@ -145,6 +149,8 @@
       "24hours": "24時間",
       "48hours": "48時間",
       "7days": "7日間",
+      "14days": "14日間",
+      "28days": "28日間",
       "30days": "30日間",
       "365days": "365日間",
       "never": "無期限",
@@ -178,6 +184,7 @@
     "last execution status": "最後の実行ステータス",
     "jump to...": "ジャンプ先...",
     "contextBar": {
+      "ai": "エーアイ",
       "news": "ニュース",
       "docs": "ドキュメント",
       "help": "ヘルプ",
@@ -830,6 +837,17 @@
       "tooltip": "トリガーを再起動する"
     },
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
+    "trigger enable dialog": {
+      "title": "trigger を有効化",
+      "bulk title": "{{count}} triggers を有効にする",
+      "description": "この trigger は、無効化されている間にスケジュールが実行されなかった可能性があります。",
+      "bulk description": "選択されたトリガーは、無効化されている間にスケジュールを見逃した可能性があります。",
+      "strategy": "使用する戦略を選択してください:",
+      "options": {
+        "skip": "見逃されたスケジュールを回復しない",
+        "follow": "triggerのプロパティ設定に従う"
+      }
+    },
     "flow source not found": "フローソースが見つかりません",
     "date format": "日付形式",
     "timezone": "タイムゾーン",
@@ -1930,6 +1948,10 @@
       "viewAll": "すべて表示",
       "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
       "export": "CSVにエクスポート",
+      "exportTo": {
+        "csv": "CSVにエクスポート",
+        "ion": "ION にエクスポート"
+      },
       "quick_filters": {
         "all": "すべて",
         "running": "実行中",
@@ -2034,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "データについて質問してください。例: 過去7日間のflowの成功率を教えてください。"
+      },
+      "copilot": {
+        "title": "AI Copilot",
+        "placeholder": "何を作成するか教えてください…",
+        "send": "送信",
+        "mode": {
+          "ask": "質問",
+          "edit": "編集",
+          "plan": "計画"
+        },
+        "empty": {
+          "title": "あなたのアイデアをワークフローに変えましょう"
+        },
+        "toolCall": "{{tool}} 実行中",
+        "context": {
+          "execution": "実行: {id}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {{namespace}}"
+        },
+        "toolResult": {
+          "detail": "詳細",
+          "error": "{{tool}} が失敗しました",
+          "ok": "{{tool}} が完了しました",
+          "rejected": "{tool} 拒否されました"
+        },
+        "confirm": {
+          "planTitle": "計画案",
+          "actionTitle": "提案アクション",
+          "approve": "承認",
+          "approveExecute": "承認して実行",
+          "reject": "拒否",
+          "reasonPlaceholder": "返信して修正…",
+          "pending": "承認待ち",
+          "revise": "修正に返信"
+        },
+        "notice": {
+          "emptyTurn": "アシスタントが応答を返しませんでした。もう一度お試しください。",
+          "retry": "再試行"
+        },
+        "cancelled": "ターンがキャンセルされました",
+        "error": {
+          "turnCap": "この会話は上限に達しました — 新しいチャットを開始してください。",
+          "turnInProgress": "ターンはすでに進行中です。",
+          "request": "リクエストが失敗しました。もう一度お試しください。",
+          "generic": "問題が発生しました。もう一度お試しください。"
+        },
+        "emptyHelper": "この flow の編集、テストの生成、関連ファイルのスキャフォールド、またはその仕組みの説明ができます。",
+        "suggestions": {
+          "errorHandling": "エラー処理を追加",
+          "unitTest": "ユニットテストを作成",
+          "explain": "この flow を説明する",
+          "dbt": "dbtパイプラインを実行する"
+        },
+        "voice": {
+          "start": "音声入力を開始",
+          "stop": "停止して挿入",
+          "cancel": "音声入力のキャンセル"
+        },
+        "unavailable": {
+          "title": "AI Copilot は利用できません",
+          "detail": "AIプロバイダーが設定されていません。管理者に設定を依頼し、その後再試行してください。",
+          "retry": "再試行"
+        },
+        "thinking": "思考中",
+        "thinkingWords": [
+          "オーケストレーション",
+          "スケジューリング",
+          "シーケンス",
+          "ルーティング",
+          "ディスパッチ中",
+          "キュー中",
+          "トリガー中",
+          "実行中",
+          "調整中",
+          "プロビジョニング",
+          "解決中",
+          "構成",
+          "構築中",
+          "計画",
+          "マッピング",
+          "接続",
+          "分岐",
+          "同期中",
+          "調整中",
+          "具現化中",
+          "コンパイル中",
+          "検証中",
+          "伝播中",
+          "収束中"
+        ],
+        "newChat": "新規チャット",
+        "recents": "最近",
+        "recentsEmpty": "最近の会話はまだありません",
+        "draft": {
+          "openInEditor": "エディターで開く",
+          "apply": "適用",
+          "applyTitle": "flow を適用",
+          "applyConfirm": "flow {{namespace}}.{{id}} を適用しますか？作成されるか、既に存在する場合は上書きされます。",
+          "applyConfirmDashboard": "ダッシュボード {id} を適用しますか？作成されます。既に存在する場合は上書きされます。",
+          "applyError": "flowの適用に失敗しました。もう一度お試しください。",
+          "applyErrorDashboard": "ダッシュボードを適用できませんでした。もう一度お試しください。",
+          "applyNoTarget": "このドラフトには、適用する namespace または id がありません。",
+          "applyTitleDashboard": "ダッシュボードを適用",
+          "title": {
+            "flow": "提案された flow",
+            "dashboard": "提案ダッシュボード",
+            "app": "提案アプリ"
+          },
+          "valid": "有効",
+          "invalid": "変更が必要です",
+          "copy": "YAMLをコピー",
+          "copied": "コピーしました"
+        }
       }
     },
     "playground": {
@@ -2280,8 +2415,7 @@
         "open_world": "Open world",
         "destructive": "破壊的",
         "idempotent": "冪等",
-        "return_direct": "直接返却",
-        "view_flow": "flowを開く"
+        "return_direct": "直接返却"
       },
       "connect_tab": {
         "server_url": "サーバーURL",

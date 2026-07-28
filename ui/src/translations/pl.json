@@ -61,6 +61,8 @@
     "success": "Sukces",
     "save": "Zapisz",
     "save_as_draft": "Zapisz jako wersję roboczą",
+    "publish": "Opublikuj",
+    "publish_draft": "Opublikuj wersję roboczą",
     "draft": "Wersja robocza",
     "draft_flow_warning": "Najnowsza rewizja tego flow jest wersją roboczą. Wykonanie zostanie uruchomione na najnowszej opublikowanej rewizji – opublikuj wersję roboczą (lub uruchom ją z Playground), aby wykonać najnowsze zmiany.",
     "save task": "Zapisz Task",
@@ -127,6 +129,8 @@
       "last24hours": "Ostatnie 24 godziny",
       "last48hours": "Ostatnie 48 godzin",
       "last7days": "Ostatnie 7 dni",
+      "last14days": "Ostatnie 14 dni",
+      "last28days": "Ostatnie 28 dni",
       "last30days": "Ostatnie 30 dni",
       "last365days": "Ostatnie 365 dni",
       "next5minutes": "Następne 5 minut",
@@ -145,6 +149,8 @@
       "24hours": "24 godziny",
       "48hours": "48 godzin",
       "7days": "7 dni",
+      "14days": "14 dni",
+      "28days": "28 dni",
       "30days": "30 dni",
       "365days": "365 dni",
       "never": "Nigdy",
@@ -178,6 +184,7 @@
     "last execution status": "Ostatni status wykonania",
     "jump to...": "Przejdź do...",
     "contextBar": {
+      "ai": "SI",
       "news": "Wiadomości",
       "docs": "Dokumentacja",
       "help": "Pomoc",
@@ -830,6 +837,17 @@
       "tooltip": "Uruchom ponownie trigger"
     },
     "trigger disabled": "Trigger jest wyłączony w źródle Flow",
+    "trigger enable dialog": {
+      "title": "Włącz trigger",
+      "bulk title": "Włącz {count} triggers",
+      "description": "Ten trigger mógł przegapić harmonogramy, gdy był wyłączony.",
+      "bulk description": "Wybrane triggery mogły pominąć harmonogramy, gdy były wyłączone.",
+      "strategy": "Wybierz strategię do użycia:",
+      "options": {
+        "skip": "Nie odzyskuj pominiętych harmonogramów",
+        "follow": "Postępuj zgodnie z konfiguracją {property} triggera"
+      }
+    },
     "flow source not found": "Źródło flow nie znalezione",
     "date format": "Format daty",
     "timezone": "Strefa czasowa",
@@ -1930,6 +1948,10 @@
       "viewAll": "Pokaż wszystko",
       "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
       "export": "Eksportuj do CSV",
+      "exportTo": {
+        "csv": "Eksportuj do CSV",
+        "ion": "Eksportuj do ION"
+      },
       "quick_filters": {
         "all": "Wszystkie",
         "running": "Uruchomione",
@@ -2034,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Zadaj pytanie dotyczące swoich danych. Przykładowa podpowiedź: Pokaż mi wskaźnik sukcesu moich flows z ostatnich 7 dni."
+      },
+      "copilot": {
+        "title": "Asystent SI",
+        "placeholder": "Powiedz mi, co zbudować…",
+        "send": "Wyślij",
+        "mode": {
+          "ask": "Pytaj",
+          "edit": "Edytuj",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Przekształć swój pomysł w przepływ pracy"
+        },
+        "toolCall": "Uruchamianie {tool}",
+        "context": {
+          "execution": "Wykonanie: {id}",
+          "flow": "Flow: {{flow}}",
+          "namespace": "Namespace: {{namespace}}"
+        },
+        "toolResult": {
+          "detail": "Szczegóły",
+          "error": "{{tool}} nie powiodło się",
+          "ok": "{tool} zakończono",
+          "rejected": "{{tool}} odrzucony"
+        },
+        "confirm": {
+          "planTitle": "Proponowany plan",
+          "actionTitle": "Proponowana akcja",
+          "approve": "Zatwierdź",
+          "approveExecute": "Zatwierdź i wykonaj",
+          "reject": "Odrzuć",
+          "reasonPlaceholder": "Odpowiedz, aby poprawić…",
+          "pending": "Oczekuje na zatwierdzenie",
+          "revise": "Odpowiedz, aby poprawić"
+        },
+        "notice": {
+          "emptyTurn": "Asystent nie zwrócił odpowiedzi. Spróbuj ponownie.",
+          "retry": "Ponów próbę"
+        },
+        "cancelled": "Tura anulowana",
+        "error": {
+          "turnCap": "Ta rozmowa osiągnęła swój limit — rozpocznij nowy czat.",
+          "turnInProgress": "Runda jest już w toku.",
+          "request": "Żądanie nie powiodło się. Spróbuj ponownie.",
+          "generic": "Coś poszło nie tak. Proszę spróbować ponownie."
+        },
+        "emptyHelper": "Mogę edytować ten flow, generować testy, tworzyć szkielet powiązanych plików lub wyjaśnić, jak to działa.",
+        "suggestions": {
+          "errorHandling": "Dodaj obsługę błędów",
+          "unitTest": "Wygeneruj test jednostkowy",
+          "explain": "Wyjaśnij ten flow",
+          "dbt": "Uruchom potok dbt"
+        },
+        "voice": {
+          "start": "Rozpocznij wprowadzanie głosowe",
+          "stop": "Zatrzymaj i wstaw",
+          "cancel": "Anuluj wprowadzanie głosowe"
+        },
+        "unavailable": {
+          "title": "AI Copilot nie jest dostępny",
+          "detail": "Żaden dostawca AI nie jest skonfigurowany. Poproś administratora o jego konfigurację, a następnie spróbuj ponownie.",
+          "retry": "Spróbuj ponownie"
+        },
+        "thinking": "Przetwarzanie",
+        "thinkingWords": [
+          "Orchestrowanie",
+          "Harmonogramowanie",
+          "Sekwencjonowanie",
+          "Routing",
+          "Wysyłanie",
+          "Kolejkowanie",
+          "Wyzwalanie",
+          "Wykonywanie",
+          "Koordynowanie",
+          "Udostępnianie",
+          "Rozwiązywanie",
+          "Komponowanie",
+          "Montowanie",
+          "Planowanie",
+          "Mapowanie",
+          "Połączenia",
+          "Rozgałęzienie",
+          "Synchronizowanie",
+          "Uzgadnianie",
+          "Materializowanie",
+          "Kompilowanie",
+          "Walidacja",
+          "Propagowanie",
+          "Konwergowanie"
+        ],
+        "newChat": "Nowy czat",
+        "recents": "Ostatnie",
+        "recentsEmpty": "Brak ostatnich rozmów jeszcze",
+        "draft": {
+          "openInEditor": "Otwórz w edytorze",
+          "apply": "Zastosuj",
+          "applyTitle": "Zastosuj flow",
+          "applyConfirm": "Zastosować flow {namespace}.{id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
+          "applyConfirmDashboard": "Zastosować pulpit {id}? Zostanie utworzony lub nadpisany, jeśli już istnieje.",
+          "applyError": "Nie udało się zastosować flow. Proszę spróbować ponownie.",
+          "applyErrorDashboard": "Nie udało się zastosować pulpitu. Spróbuj ponownie.",
+          "applyNoTarget": "Ten szkic nie ma namespace ani id do zastosowania.",
+          "applyTitleDashboard": "Zastosuj pulpit",
+          "title": {
+            "flow": "Proponowany flow",
+            "dashboard": "Proponowany panel",
+            "app": "Proponowana aplikacja"
+          },
+          "valid": "Prawidłowy",
+          "invalid": "Wymaga zmian",
+          "copy": "Kopiuj YAML",
+          "copied": "Skopiowano"
+        }
       }
     },
     "playground": {
@@ -2280,8 +2415,7 @@
         "open_world": "Open world",
         "destructive": "Destrukcyjny",
         "idempotent": "Idempotentny",
-        "return_direct": "Zwrot bezpośredni",
-        "view_flow": "Otwórz flow"
+        "return_direct": "Zwrot bezpośredni"
       },
       "connect_tab": {
         "server_url": "URL serwera",

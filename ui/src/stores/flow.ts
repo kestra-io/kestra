@@ -19,7 +19,6 @@ import {useClient, type FlowWithSource, type AbstractTrigger, type Task as SdkTa
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
-import {TUTORIAL_NAMESPACE} from "../utils/constants"
 
 const textYamlHeader = {
     headers: {
@@ -89,10 +88,8 @@ export function isSuccessfulFlowSaveOutcome(
 export const useFlowStore = defineStore("flow", () => {
     const flows = ref<Flow[]>()
     const flow = ref<Flow>()
-    const task = ref<Task>()
     const search = ref<any[]>()
     const total = ref<number>(0)
-    const overallTotal = ref<number>()
     const flowGraph = ref<FlowGraph>()
     const invalidGraph = ref<boolean>(false)
     const revisions = ref<any[]>()
@@ -103,17 +100,14 @@ export const useFlowStore = defineStore("flow", () => {
     const flowValidation = ref<FlowValidations>()
     const taskError = ref<string>()
     const metrics = ref<any[]>()
-    const aggregatedMetrics = ref<any>()
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
-    const openAiCopilot = ref<boolean>(false)
-    const lastSaveFlow = ref<string>()
     const isCreating = ref<boolean>(false)
+    const readonlyToastShown = ref(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
     const previewSource = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
-    const metadata = ref<Record<string, any>>()
     const creationId = ref<string>()
 
     const axios = useClient()
@@ -126,11 +120,6 @@ export const useFlowStore = defineStore("flow", () => {
             return key
         }
         return (values ? globalI18n.value?.t(key, values) : globalI18n.value?.t(key)) ?? key
-    }
-
-    function onSaveMetadata() {
-        flowYaml.value = YAML_UTILS.updateMetadata(flowYaml.value ?? "", metadata.value ?? {})
-        metadata.value = undefined
     }
 
     const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value)
@@ -211,6 +200,20 @@ export const useFlowStore = defineStore("flow", () => {
         return "no_op"
     }
 
+    async function publishDraft(target?: Flow): Promise<FlowSaveOutcome> {
+        if (target) {
+            const data = await loadFlow({namespace: target.namespace, id: target.id, store: false})
+            if (!data?.source) return "blocked"
+            await saveFlow({flow: data.source, draft: false})
+            notifySaved(data.id, false)
+            return "saved"
+        }
+        if (!flowYaml.value && flow.value?.source) {
+            flowYaml.value = flow.value.source
+        }
+        return save(false)
+    }
+
     async function onEdit({source, topologyVisible}: {
         source: string,
         editorViewType?: string,
@@ -231,10 +234,13 @@ export const useFlowStore = defineStore("flow", () => {
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
-                    coreStore.message = {
-                        variant: "error",
-                        title: t("readonly property"),
-                        message: t("namespace and id readonly"),
+                    if (!readonlyToastShown.value) {
+                        readonlyToastShown.value = true
+                        coreStore.message = {
+                            variant: "warning",
+                            title: t("readonly property"),
+                            message: t("namespace and id readonly"),
+                        }
                     }
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
                         source,
@@ -416,7 +422,6 @@ export const useFlowStore = defineStore("flow", () => {
                 if (options.commit !== false) {
                     flows.value = response.results as unknown as Flow[]
                     total.value = response.total ?? 0
-                    overallTotal.value = response.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
                 }
 
                 return response
@@ -484,7 +489,7 @@ export const useFlowStore = defineStore("flow", () => {
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
         previewSource.value = undefined
-        overallTotal.value = 1
+        readonlyToastShown.value = false
 
         return data
     }
@@ -496,7 +501,6 @@ export const useFlowStore = defineStore("flow", () => {
             revision: options.revision ? Number(options.revision) : undefined,
         })
             .then(data => {
-                task.value = data as unknown as Task
                 return data
             })
             .catch((e: any) => {
@@ -798,7 +802,7 @@ function deleteFlowAndDependencies() {
                 const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
 
                 if (constraintsArray.length) {
-                    validResults.constraints = constraintsArray.join(", ")
+                    validResults.constraints = constraintsArray.join("\n")
                 } else {
                     delete validResults.constraints
                 }
@@ -841,14 +845,12 @@ function deleteFlowAndDependencies() {
     function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
         return MetricsAPI.aggregateMetricsFromFlow({namespace: options.namespace, flowId: options.id, metric: options.metric, aggregation: options.aggregation, startDate: options.startDate, endDate: options.endDate})
             .then(data => {
-                aggregatedMetrics.value = data
                 return data
             })
     }
     function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
         return MetricsAPI.aggregateMetricsFromTask({namespace: options.namespace, flowId: options.id, taskId: options.taskId, metric: options.metric, aggregation: options.aggregation, startDate: options.startDate, endDate: options.endDate})
             .then(data => {
-                aggregatedMetrics.value = data
                 return data
             })
     }
@@ -874,10 +876,6 @@ function deleteFlowAndDependencies() {
 
     function setExecuteFlow(value: boolean) {
         executeFlow.value = value
-    }
-
-    function setOpenAiCopilot(value: boolean) {
-        openAiCopilot.value = value
     }
 
     function addTrigger(trigger: Trigger) {
@@ -944,7 +942,7 @@ function deleteFlowAndDependencies() {
                 : []
 
         const constraintsError =
-            flowValidation.value?.constraints?.split(/, ?/) ?? []
+            flowValidation.value?.constraints ? [flowValidation.value.constraints] : []
 
         const errors = [...flowExistsError, ...constraintsError]
 
@@ -997,10 +995,8 @@ function deleteFlowAndDependencies() {
         flowYamlMetadata,
         flows,
         flow,
-        task,
         search,
         total,
-        overallTotal,
         flowGraph,
         invalidGraph,
         revisions,
@@ -1011,27 +1007,22 @@ function deleteFlowAndDependencies() {
         flowValidation,
         taskError,
         metrics,
-        aggregatedMetrics,
         tasksWithMetrics,
         executeFlow,
-        openAiCopilot,
-        lastSaveFlow,
         isCreating,
         flowYaml,
         flowYamlOrigin,
         previewSource,
         haveChange,
         expandedSubflows,
-        metadata,
         addTrigger,
         setTrigger,
         removeTrigger,
         setExecuteFlow,
-        setOpenAiCopilot,
-        onSaveMetadata,
         saveAll,
         saveAsDraft,
         save,
+        publishDraft,
         onEdit,
         initYamlSource,
         findFlows,

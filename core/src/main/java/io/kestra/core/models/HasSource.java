@@ -10,6 +10,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import io.kestra.core.security.ProtectedZipInputStream;
+import io.kestra.core.security.SecurityConfiguration.ZipBombProtectionConfiguration;
 import io.micronaut.http.multipart.CompletedFileUpload;
 
 /**
@@ -56,11 +58,13 @@ public interface HasSource {
     /**
      * Static helper method for reading an uploaded source or archive file.
      *
+     * @param zipBombProtection the ZIP-bomb protection configuration applied when the upload is a
+     *        ZIP archive, may be {@code null} to disable protection.
      * @param fileUpload the upload file.
      * @param reader the source reader.
      * @throws IOException if the file cannot be read.
      */
-    static void readSourceFile(final CompletedFileUpload fileUpload, final BiConsumer<String, String> reader) throws IOException {
+    static void readSourceFile(final ZipBombProtectionConfiguration zipBombProtection, final CompletedFileUpload fileUpload, final BiConsumer<String, String> reader) throws IOException {
         String fileName = fileUpload.getFilename().toLowerCase();
         try (InputStream inputStream = fileUpload.getInputStream()) {
 
@@ -73,7 +77,7 @@ public interface HasSource {
                 }
             } else if (fileName.endsWith(".zip")) {
 
-                try (ZipInputStream archive = new ZipInputStream(inputStream)) {
+                try (ZipInputStream archive = ProtectedZipInputStream.of(inputStream, zipBombProtection)) {
                     ZipEntry entry;
                     while ((entry = archive.getNextEntry()) != null) {
                         if (entry.isDirectory() || !isYAML(entry.getName())) {

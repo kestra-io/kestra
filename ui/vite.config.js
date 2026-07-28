@@ -69,6 +69,13 @@ export default defineConfig(({mode}) => {
                     ws: true,
                     changeOrigin: true,
                 },
+                // Lets @kestra-io/kestra-sdk's dev-only staleness check reach the backend's served
+                // OpenAPI spec (${context-path}/swagger/kestra.yml) to compare its hash. Dev-only;
+                // the check itself is tree-shaken from production builds.
+                "^/swagger": {
+                    target: process.env.VITE_APP_LOGIN_URL || "http://localhost:8080",
+                    changeOrigin: true,
+                },
             },
         },
         resolve: {
@@ -197,6 +204,11 @@ export default defineConfig(({mode}) => {
                 "path-browserify",
                 "mailchecker",
                 "rapidoc",
+                // The AI Copilot stories/components import the SDK's `ai` subpath. Pre-bundle it so
+                // Vite doesn't discover it mid-run and reload the dev server — that reload kills
+                // whichever storybook test is loading at that instant (the addon-vitest setup import
+                // then fails), which is what intermittently red-flags unrelated stories in CI.
+                "@kestra-io/kestra-sdk/ai",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

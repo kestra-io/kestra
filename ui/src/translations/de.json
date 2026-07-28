@@ -61,6 +61,8 @@
     "success": "Erfolg",
     "save": "Speichern",
     "save_as_draft": "Als Entwurf speichern",
+    "publish": "Veröffentlichen",
+    "publish_draft": "Entwurf veröffentlichen",
     "draft": "Entwurf",
     "draft_flow_warning": "Die neueste Revision dieses flow ist ein Entwurf. Die Ausführung verwendet stattdessen die neueste veröffentlichte Revision – veröffentlichen Sie den Entwurf (oder führen Sie ihn im Playground aus), um Ihre letzten Änderungen auszuführen.",
     "save task": "Task speichern",
@@ -127,6 +129,8 @@
       "last24hours": "Letzte 24 Stunden",
       "last48hours": "Letzte 48 Stunden",
       "last7days": "Letzte 7 Tage",
+      "last14days": "Letzte 14 Tage",
+      "last28days": "Letzte 28 Tage",
       "last30days": "Letzte 30 Tage",
       "last365days": "Letzte 365 Tage",
       "next5minutes": "Nächste 5 Minuten",
@@ -145,6 +149,8 @@
       "24hours": "24 Stunden",
       "48hours": "48 Stunden",
       "7days": "7 Tage",
+      "14days": "14 Tage",
+      "28days": "28 Tage",
       "30days": "30 Tage",
       "365days": "365 Tage",
       "never": "Nie",
@@ -178,6 +184,7 @@
     "last execution status": "Letzter Ausführungsstatus",
     "jump to...": "Springe zu...",
     "contextBar": {
+      "ai": "KI",
       "news": "Nachrichten",
       "docs": "Dokumentation",
       "help": "Hilfe",
@@ -830,6 +837,17 @@
       "tooltip": "Den Trigger neu starten"
     },
     "trigger disabled": "Trigger ist in der Flow-Quelle deaktiviert",
+    "trigger enable dialog": {
+      "title": "Trigger aktivieren",
+      "bulk title": "Aktivieren Sie {count} Trigger",
+      "description": "Dieser Trigger könnte Zeitpläne verpasst haben, während er deaktiviert war.",
+      "bulk description": "Die ausgewählten Trigger könnten Zeitpläne verpasst haben, während sie deaktiviert waren.",
+      "strategy": "Wählen Sie die zu verwendende Strategie:",
+      "options": {
+        "skip": "Verpasste Zeitpläne nicht nachholen",
+        "follow": "Der Konfiguration des Triggers {property} folgen"
+      }
+    },
     "flow source not found": "Flow-Quelle nicht gefunden",
     "date format": "Datumsformat",
     "timezone": "Zeitzone",
@@ -1930,6 +1948,10 @@
       "viewAll": "Alle anzeigen",
       "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
       "export": "Exportieren nach CSV",
+      "exportTo": {
+        "csv": "Exportieren als CSV",
+        "ion": "Nach ION exportieren"
+      },
       "quick_filters": {
         "all": "Alle",
         "running": "Läuft",
@@ -2034,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Stellen Sie eine Frage zu Ihren Daten. Beispielaufforderung: Zeigen Sie mir die Erfolgsrate meiner flows in den letzten 7 Tagen."
+      },
+      "copilot": {
+        "title": "KI Copilot",
+        "placeholder": "Was soll ich erstellen?",
+        "send": "Senden",
+        "mode": {
+          "ask": "Anfragen",
+          "edit": "Bearbeiten",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Verwandeln Sie Ihre Idee in einen Workflow"
+        },
+        "toolCall": "Wird ausgeführt {tool}",
+        "context": {
+          "execution": "Ausführung: {{id}}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {{namespace}}"
+        },
+        "toolResult": {
+          "detail": "Details",
+          "error": "{{tool}} fehlgeschlagen",
+          "ok": "{tool} abgeschlossen",
+          "rejected": "{{tool}} abgelehnt"
+        },
+        "confirm": {
+          "planTitle": "Planentwurf",
+          "actionTitle": "Vorgeschlagene Aktion",
+          "approve": "Genehmigen",
+          "approveExecute": "Genehmigen & ausführen",
+          "reject": "Ablehnen",
+          "reasonPlaceholder": "Antworten, um zu überarbeiten…",
+          "pending": "Wartet auf Genehmigung",
+          "revise": "Zur Überarbeitung antworten"
+        },
+        "notice": {
+          "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuchen Sie es erneut.",
+          "retry": "Wiederholen"
+        },
+        "cancelled": "Durchlauf abgebrochen",
+        "error": {
+          "turnCap": "Diese Unterhaltung hat ihr Limit erreicht — starte einen neuen Chat.",
+          "turnInProgress": "Ein Durchlauf ist bereits im Gange.",
+          "request": "Die Anfrage ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+          "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+        },
+        "emptyHelper": "Ich kann diesen flow bearbeiten, Tests generieren, zugehörige Dateien anlegen oder erklären, wie er funktioniert.",
+        "suggestions": {
+          "errorHandling": "Fehlerbehandlung hinzufügen",
+          "unitTest": "Unit-Test generieren",
+          "explain": "Diesen flow erklären",
+          "dbt": "Eine dbt-Pipeline ausführen"
+        },
+        "voice": {
+          "start": "Spracheingabe starten",
+          "stop": "Stoppen und Einfügen",
+          "cancel": "Spracheingabe abbrechen"
+        },
+        "unavailable": {
+          "title": "AI Copilot ist nicht verfügbar",
+          "detail": "Kein KI-Anbieter ist konfiguriert. Bitten Sie einen Administrator, einen einzurichten, und versuchen Sie es dann erneut.",
+          "retry": "Erneut versuchen"
+        },
+        "thinking": "Verarbeite",
+        "thinkingWords": [
+          "Orchestrieren",
+          "Terminierung",
+          "Sequenzierung",
+          "Routing",
+          "Versand",
+          "Wartend",
+          "Triggerung",
+          "Wird ausgeführt",
+          "Koordinierung",
+          "Bereitstellung",
+          "Wird aufgelöst",
+          "Zusammenstellen",
+          "Zusammenstellen",
+          "Planung",
+          "Zuordnung",
+          "Verbindung",
+          "Verzweigung",
+          "Wird synchronisiert",
+          "Abgleichen",
+          "Materialisierung",
+          "Kompilieren",
+          "Validierung läuft",
+          "Wird verbreitet",
+          "Konvergierend"
+        ],
+        "newChat": "Neuer Chat",
+        "recents": "Zuletzt verwendet",
+        "recentsEmpty": "Noch keine aktuellen Konversationen",
+        "draft": {
+          "openInEditor": "Im Editor öffnen",
+          "apply": "Anwenden",
+          "applyTitle": "flow anwenden",
+          "applyConfirm": "Den flow {{namespace}}.{{id}} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
+          "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",
+          "applyError": "Der flow konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",
+          "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",
+          "applyNoTarget": "Dieser Entwurf hat keinen namespace oder keine id zum Anwenden.",
+          "applyTitleDashboard": "Dashboard anwenden",
+          "title": {
+            "flow": "Vorgeschlagener flow",
+            "dashboard": "Vorgeschlagenes Dashboard",
+            "app": "Vorgeschlagene App"
+          },
+          "valid": "Gültig",
+          "invalid": "Änderungen erforderlich",
+          "copy": "YAML kopieren",
+          "copied": "Kopiert"
+        }
       }
     },
     "playground": {
@@ -2280,8 +2415,7 @@
         "open_world": "Open world",
         "destructive": "Destruktiv",
         "idempotent": "Idempotent",
-        "return_direct": "Direktrückgabe",
-        "view_flow": "flow öffnen"
+        "return_direct": "Direktrückgabe"
       },
       "connect_tab": {
         "server_url": "Server-URL",

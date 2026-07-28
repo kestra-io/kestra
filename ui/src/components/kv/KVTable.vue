@@ -10,7 +10,7 @@
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="$t('no_results.kv_pairs')"
-        class="fill-height"
+        :fitHeight="!paneView"
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
     >
@@ -47,7 +47,16 @@
                 sortable="custom"
                 :sortOrders="['ascending', 'descending']"
                 :label="$t('namespace')"
-            />
+            >
+                <template #default="scope">
+                    <KsEntityLink
+                        v-if="scope.row.namespace"
+                        entity="namespace"
+                        :value="scope.row.namespace"
+                        :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                    />
+                </template>
+            </KsTableColumn>
             <KsTableColumn
                 v-else-if="colProp === 'key'"
                 prop="key"
@@ -311,7 +320,7 @@
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import {useKvStore} from "../../stores/kvs.ts"
+    import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 
     import _merge from "lodash/merge"
     const dataTable = useTemplateRef("dataTable")
@@ -333,7 +342,6 @@
 
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
-    const kvStore = useKvStore()
 
     const editorBindings = useEditorBindings()
 
@@ -343,7 +351,7 @@
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
         const activeFilters = routeQueryToQueryFilters(route.query)
-        const kvsResponse = await kvStore.find(loadQuery({
+        const kvsResponse = await KvAPI.listAllKeys(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "name:asc"),
@@ -359,7 +367,7 @@
             const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1)
 
             for (const parentNs of parentNamespaces) {
-                const parentKvsResponse = await kvStore.find(loadQuery({
+                const parentKvsResponse = await KvAPI.listAllKeys(loadQuery({
                     filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 

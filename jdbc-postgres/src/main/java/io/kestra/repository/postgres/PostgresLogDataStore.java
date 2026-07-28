@@ -52,6 +52,11 @@ public class PostgresLogDataStore extends AbstractJdbcLogDataStore implements Ap
     }
 
     @Override
+    protected Condition notLevelsCondition(List<Level> levels) {
+        return PostgresLogRepositoryService.notLevelsCondition(levels);
+    }
+
+    @Override
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
         return PostgresRepositoryUtils.formatDateField(dateField, groupType);
     }

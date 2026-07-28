@@ -12,7 +12,8 @@ export class NamespaceIterator extends EntityIterator<Namespace>{
 
     async fetchCall() {
         const namespacesStore = useNamespacesStore()
-        return namespacesStore.search(this.fetchOptions())
+        const result = await namespacesStore.search(this.fetchOptions())
+        return {...result, total: result.total ?? 0}
     }
 }
 

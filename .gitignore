@@ -71,3 +71,7 @@ charts/kestra/charts/
 charts/kestra-starter/charts/
 .claude/settings.local.json
 .gstack/
+
+# Generated OpenAPI spec (produced by :webserver:generateOpenapiSpec; the committed SDK under
+# ui/packages/kestra-sdk/src/openapi is the source of truth, not this transient spec file).
+/openapi.yml

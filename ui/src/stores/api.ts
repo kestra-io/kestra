@@ -6,6 +6,7 @@ import {useMiscStore} from "override/stores/misc"
 import {capturePosthogEvent, disablePosthog} from "../utils/posthog"
 import {ensureUid} from "../utils/uid"
 import {PendingEventsBuffer} from "../utils/analytics/pendingEvents"
+import {resolvePosthogEventName} from "../utils/analytics/eventNaming"
 
 export const API_URL = "https://api.kestra.io"
 
@@ -80,8 +81,6 @@ function buildEventPayload(data: EventData, configs: Configs, uid: string) {
 
 export const useApiStore = defineStore("api", () => {
     const feeds = ref<Feed[]>([])
-    const version = ref<string | undefined>(undefined)
-    const apiConfig = ref<any>(undefined)
 
     async function loadFeeds(options: { iid: string; uid: string; version: string }) {
         const response = await axios.get<FeedResponse>(`${API_URL}/v1/feeds`, {
@@ -94,7 +93,6 @@ export const useApiStore = defineStore("api", () => {
         })
 
         feeds.value = response.data.feeds
-        version.value = response.data.version
 
         return response.data
     }
@@ -104,7 +102,6 @@ export const useApiStore = defineStore("api", () => {
             withCredentials: true,
         })
 
-        apiConfig.value = response.data
         return response.data
     }
 
@@ -186,7 +183,7 @@ export const useApiStore = defineStore("api", () => {
         delete finalData.date
         delete finalData.counter
 
-        const eventName = type === "PAGE" ? "$pageview" : data.type.toLowerCase()
+        const eventName = type === "PAGE" ? "$pageview" : resolvePosthogEventName(data.type, finalData as Record<string, any>)
 
         if (type === "PAGE") {
             const origin = data.page?.origin ?? window.location.origin
@@ -219,8 +216,6 @@ export const useApiStore = defineStore("api", () => {
 
     return {
         feeds,
-        version,
-        apiConfig,
         loadFeeds,
         loadConfig,
         flushQueuedEvents,

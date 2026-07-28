@@ -23,7 +23,6 @@ interface SearchResult {
 export const useDocStore = defineStore("doc", () => {
     const pageMetadata = ref<DocMetadata | undefined>(undefined)
     const resourceUrlTemplate = ref<string | undefined>(undefined)
-    const appResourceUrlTemplate = ref<string | undefined>(undefined)
     const docPath = ref<string | undefined>(undefined)
     const docId = ref<string | undefined>(undefined)
 
@@ -113,7 +112,6 @@ export const useDocStore = defineStore("doc", () => {
     return {
         pageMetadata,
         resourceUrlTemplate,
-        appResourceUrlTemplate,
         docPath,
         docId,
         resourceUrl,

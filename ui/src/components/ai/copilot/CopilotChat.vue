@@ -73,7 +73,7 @@
                     :isPending="message.id === pendingProposalMessageId"
                 />
 
-                <CopilotThinking v-if="thinking" />
+                <CopilotThinking v-if="working" :phase="workPhase" />
 
                 <ProposedActionCard
                     v-if="pendingConfirmation"
@@ -223,17 +223,45 @@
             : null,
     )
 
-    // "Thinking…" placeholder while the model is working but hasn't produced its next output
-    // yet — i.e. right after the user's turn or after a tool result. Hidden while tokens are
-    // actively streaming into an assistant bubble or a tool is running (both have their own UI).
+    // The working indicator (animated Kestra mark) persists across the whole turn, switching
+    // movement by phase: "thinking" before any output (right after the user's turn or a tool
+    // result), "answering" while tokens stream into the assistant bubble, and a brief "end"
+    // gather when the turn closes. It stays hidden while a tool is running — the tool strip owns
+    // that UI.
+    const lastMessage = computed(() => messages.value[messages.value.length - 1])
+
+    const answering = computed(
+        () => streaming.value && lastMessage.value?.role === "ASSISTANT" && lastMessage.value?.type === "TEXT",
+    )
     const thinking = computed(() => {
         if (!streaming.value) return false
-        const last = messages.value[messages.value.length - 1]
+        const last = lastMessage.value
         if (!last) return true
         if (last.role === "ASSISTANT" && last.type === "TEXT") return false
         if (last.type === "TOOL_CALL") return false
         return true
     })
+
+    // A short window after streaming stops so the "end" gather animation can play before the
+    // indicator unmounts. Re-armed to false the moment a new turn starts streaming.
+    const ending = ref(false)
+    let endTimer: ReturnType<typeof setTimeout> | undefined
+    watch(streaming, (now, was) => {
+        clearTimeout(endTimer)
+        if (was && !now) {
+            ending.value = true
+            // Covers the full end sequence: dots gather + mark bloom (~0.7s), a 3s hold, then the fade.
+            endTimer = setTimeout(() => (ending.value = false), 4300)
+        } else if (now) {
+            ending.value = false
+        }
+    })
+    onBeforeUnmount(() => clearTimeout(endTimer))
+
+    const working = computed(() => ending.value || thinking.value || answering.value)
+    const workPhase = computed<"thinking" | "answering" | "end">(() =>
+        ending.value ? "end" : answering.value ? "answering" : "thinking",
+    )
 
     function onSubmit(prompt: string): void {
         sendChat({prompt, mode: mode.value, additionalContext: scopeToContext(activeScope.value), providerId: selectedProvider.value})
@@ -246,7 +274,7 @@
     // A primitive that changes on any of those, so the watcher fires without a deep watch.
     const scrollSignal = computed(() => {
         const last = messages.value[messages.value.length - 1]
-        return `${messages.value.length}|${last?.content?.length ?? 0}|${pendingConfirmation.value ? 1 : 0}|${thinking.value ? 1 : 0}`
+        return `${messages.value.length}|${last?.content?.length ?? 0}|${pendingConfirmation.value ? 1 : 0}|${working.value ? 1 : 0}`
     })
 
     watch(scrollSignal, () => nextTick(() => bottomAnchor.value?.scrollIntoView?.({block: "end"})))

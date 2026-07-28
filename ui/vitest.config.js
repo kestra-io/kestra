@@ -82,6 +82,18 @@ export default defineConfig({
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.js"],
+                    // Only takes effect during the `--merge-reports` replay (see
+                    // run-storybook-tests.sh): the sharded runs pass their own
+                    // `--reporter` flags on the CLI, which take precedence over this
+                    // config. The merge step doesn't, so this is what produces the
+                    // single, whole-suite JUnit report CI reads to list failing tests.
+                    reporters: [
+                        ["default"],
+                        ["junit"],
+                    ],
+                    outputFile: {
+                        junit: "./test-report.storybook.junit.xml",
+                    },
                     // Each worker drives its own headless Chromium instance; letting
                     // this scale with CPU count (the default) spins up enough
                     // concurrent browsers to exhaust CI memory, which kills a

@@ -42,7 +42,7 @@ import reactor.core.publisher.Mono;
     description = """
         Exposes a signed endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow. Secured by the required `key`; keep it secret.
 
-        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. A binary body is base64-encoded on `trigger.body`, and a `multipart/form-data` body is available as `trigger.parts` (files, content base64-encoded) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
+        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. A binary body is base64-encoded on `trigger.body`, and a `multipart/form-data` body is available as `trigger.parts` (files, stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
 
         Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
@@ -119,7 +119,7 @@ import reactor.core.publisher.Mono;
         @Example(
             title = """
                 Receive a file uploaded as `multipart/form-data`. Each file part is available under `trigger.parts`,
-                with its content base64-encoded so that binary content reaches the flow intact, and the parts that are
+                its content stored in Kestra's internal storage and reachable through its `uri`, and the parts that are
                 not files under `trigger.formFields`.
                 """,
             code = """
@@ -130,6 +130,10 @@ import reactor.core.publisher.Mono;
                   - id: log_upload
                     type: io.kestra.plugin.core.log.Log
                     message: "Received {{ trigger.parts[0].filename }} ({{ trigger.parts[0].size }} bytes, {{ trigger.parts[0].contentType }}), note: {{ trigger.formFields.note[0] }}"
+
+                  - id: measure_upload
+                    type: io.kestra.plugin.core.storage.Size
+                    uri: "{{ trigger.parts[0].uri }}"
 
                 triggers:
                   - id: webhook
@@ -302,16 +306,16 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
 
         multipart.getContent().forEach(part ->
         {
-            if (part.isFile()) {
-                parts.add(Output.Part.builder()
-                    .name(part.name())
-                    .filename(part.filename())
-                    .contentType(part.contentType())
-                    .size(part.content().length)
-                    .content(BASE64_ENCODER.encodeToString(part.content()))
+            switch (part) {
+                case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(Output.Part.builder()
+                    .name(file.name())
+                    .filename(file.filename())
+                    .contentType(file.contentType())
+                    .size(file.size())
+                    .uri(file.uri().toString())
                     .build());
-            } else {
-                formFields.computeIfAbsent(part.name(), name -> new ArrayList<>()).add(new String(part.content(), charset));
+                case HttpRequest.MultipartFormDataRequestBody.FormFieldPart formField ->
+                    formFields.computeIfAbsent(formField.name(), name -> new ArrayList<>()).add(new String(formField.content(), charset));
             }
         });
 
@@ -357,8 +361,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
 
         @Schema(
             title = "The file parts of a `multipart/form-data` webhook request",
-            description = "Only set for a `multipart/form-data` request. Each part carries its content base64-encoded, " +
-                "so that binary content such as an image reaches the flow intact."
+            description = "Only set for a `multipart/form-data` request. The content of each part is stored in " +
+                "Kestra's internal storage, and the part carries its URI."
         )
         private List<Part> parts;
 
@@ -401,20 +405,18 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             )
             private String contentType;
 
-            @Schema(
-                title = "The size of the part content in bytes",
-                description = "The size of the content as received, before base64 encoding."
-            )
+            @Schema(title = "The size of the part content in bytes")
             @NotNull
-            private Integer size;
+            private Long size;
 
             @Schema(
-                title = "The content of the part, base64-encoded",
-                description = "Base64 is how bytes travel through the text-based trigger variables, so that binary " +
-                    "content such as an image reaches the flow intact."
+                title = "The URI of the part content in Kestra's internal storage",
+                description = "The content of the part is streamed to the internal storage as it is received, so " +
+                    "that a file of any size reaches the flow intact and without travelling through the execution. " +
+                    "It is stored under the execution the webhook call creates, and purged with it."
             )
             @NotNull
-            private String content;
+            private String uri;
         }
     }
 }

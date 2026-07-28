@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import KsJsonTree from "../../../src/components/Data/KsJsonTree.vue"
+import {KsCard} from "@kestra-io/design-system"
 
 const NESTED_OBJECT = {
     event: "deploy.completed",
@@ -22,39 +23,50 @@ const meta: Meta<typeof KsJsonTree> = {
     tags: ["autodocs"],
     argTypes: {
         defaultExpanded: {control: "boolean"},
-        depth: {control: "number"},
     },
 }
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Object_: Story = {
+export const Object_Story: Story = {
     name: "Object",
     args: {value: NESTED_OBJECT, defaultExpanded: true},
     render: (args) => ({
-        components: {KsJsonTree},
-        setup() { return {args} },
-        template: "<ks-card style=\"font-size:13px;padding:1rem\"><KsJsonTree v-bind=\"args\" /></ks-card>",
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
     }),
 }
 
-export const Array_: Story = {
+export const Array_Story: Story = {
     name: "Array",
     args: {value: ["production", "scheduled", "data-team", "priority-high"], defaultExpanded: true},
     render: (args) => ({
-        components: {KsJsonTree},
-        setup() { return {args} },
-        template: "<ks-card style=\"font-size:13px;padding:1rem\"><KsJsonTree v-bind=\"args\" /></ks-card>",
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
     }),
 }
 
 export const Collapsed: Story = {
     args: {value: NESTED_OBJECT, defaultExpanded: false},
     render: (args) => ({
-        components: {KsJsonTree},
-        setup() { return {args} },
-        template: "<ks-card style=\"font-size:13px;padding:1rem\"><KsJsonTree v-bind=\"args\" /></ks-card>",
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
     }),
 }
 
@@ -73,9 +85,13 @@ export const DeeplyNested: Story = {
         defaultExpanded: true,
     },
     render: (args) => ({
-        components: {KsJsonTree},
-        setup() { return {args} },
-        template: "<ks-card style=\"font-size:13px;padding:1rem\"><KsJsonTree v-bind=\"args\" /></ks-card>",
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
     }),
 }
 
@@ -92,17 +108,30 @@ export const MixedTypes: Story = {
         defaultExpanded: true,
     },
     render: (args) => ({
-        components: {KsJsonTree},
-        setup() { return {args} },
-        template: "<ks-card style=\"font-size:13px;padding:1rem\"><KsJsonTree v-bind=\"args\" /></ks-card>",
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
     }),
 }
 
-export const Leaf: Story = {
-    args: {value: "a plain string value", nodeKey: "message"},
+export const RowsWithGutter: Story = {
+    args: {
+        value: NESTED_OBJECT,
+        selectedPath: "execution.meta.executionId",
+        basePath: "execution",
+        defaultExpanded: true
+    },
     render: (args) => ({
-        components: {KsJsonTree},
-        setup() { return {args} },
-        template: "<ks-card style=\"font-size:13px;padding:1rem\"><KsJsonTree v-bind=\"args\" /></ks-card>",
+        setup() {
+            return () => (
+                <KsCard style="font-size:13px;padding:1rem">
+                    <KsJsonTree {...args} />
+                </KsCard>
+            )
+        },
     }),
 }

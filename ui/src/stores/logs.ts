@@ -37,7 +37,6 @@ export interface Log{
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
     const total = ref(0)
-    const level = ref<LevelKey>("INFO")
 
     function findLogs(options: Record<string, any>) {
         return LogsAPI.searchLogs(toSearchParams(options)).then(response => {
@@ -87,7 +86,6 @@ export const useLogsStore = defineStore("logs", () => {
     return {
         logs,
         total,
-        level,
         findLogs,
         deleteLogs,
         downloadLogs,

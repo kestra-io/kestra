@@ -1,19 +1,17 @@
 package io.kestra.cli.commands.migrations;
 
-import io.kestra.cli.AbstractCommand;
 import io.kestra.core.migration.MigrationLockedException;
-import io.kestra.core.migration.MigrationRunner;
 import io.kestra.core.migration.MigrationRunnerInterface;
+
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import java.util.Map;
-
 /**
  * CLI command that repairs the stored checksum for an already-applied migration script.
  *
- * <p>Usage: {@code kestra migrate repair 2.0.01-upgrade}
+ * <p>
+ * Usage: {@code kestra migrate repair 2.0.01-upgrade}
  */
 @Slf4j
 @CommandLine.Command(
@@ -21,7 +19,7 @@ import java.util.Map;
     description = "Repair the stored checksum for an already-applied migration script",
     mixinStandardHelpOptions = true
 )
-public class RepairMigrationCommand extends AbstractCommand {
+public class RepairMigrationCommand extends AbstractMigrationCommand {
 
     @CommandLine.Parameters(
         index = "0",
@@ -32,12 +30,6 @@ public class RepairMigrationCommand extends AbstractCommand {
 
     @Inject
     private MigrationRunnerInterface migrationRunner;
-
-    @SuppressWarnings("unused")
-    public static Map<String, Object> propertiesOverrides() {
-        MigrationRunner.setSkipAutoRun(true);
-        return Map.of();
-    }
 
     @Override
     public Integer call() throws Exception {

@@ -61,6 +61,8 @@
     "success": "성공",
     "save": "저장",
     "save_as_draft": "초안으로 저장",
+    "publish": "게시",
+    "publish_draft": "초안 게시",
     "draft": "초안",
     "draft_flow_warning": "이 flow의 최신 리비전은 초안입니다. 실행은 대신 최신 게시된 리비전을 기준으로 수행됩니다. 최신 변경 사항을 실행하려면 초안을 게시하거나 Playground에서 실행하세요.",
     "save task": "Task 저장",
@@ -182,6 +184,7 @@
     "last execution status": "마지막 실행 상태",
     "jump to...": "이동...",
     "contextBar": {
+      "ai": "AI",
       "news": "뉴스",
       "docs": "문서",
       "help": "도움말",
@@ -834,6 +837,17 @@
       "tooltip": "트리거 재시작"
     },
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
+    "trigger enable dialog": {
+      "title": "trigger 활성화",
+      "bulk title": "{{count}}개의 triggers 활성화",
+      "description": "이 trigger는 비활성화된 동안 스케줄이 누락되었을 수 있습니다.",
+      "bulk description": "선택된 trigger는 비활성화된 동안 스케줄을 놓쳤을 수 있습니다.",
+      "strategy": "사용할 전략을 선택하세요:",
+      "options": {
+        "skip": "누락된 스케줄을 복구하지 마십시오",
+        "follow": "trigger의 {property} 구성에 따름"
+      }
+    },
     "flow source not found": "Flow source를 찾을 수 없음",
     "date format": "날짜 형식",
     "timezone": "시간대",
@@ -1934,6 +1948,10 @@
       "viewAll": "전체 보기",
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
       "export": "CSV로 내보내기",
+      "exportTo": {
+        "csv": "CSV로 내보내기",
+        "ion": "ION으로 내보내기"
+      },
       "quick_filters": {
         "all": "전체",
         "running": "실행 중",
@@ -2038,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "데이터에 대해 질문하세요. 예시 프롬프트: 지난 7일 동안 내 flows의 성공률을 보여줘."
+      },
+      "copilot": {
+        "title": "AI 코파일럿",
+        "placeholder": "무엇을 만들까요?",
+        "send": "보내기",
+        "mode": {
+          "ask": "질문하기",
+          "edit": "편집",
+          "plan": "계획"
+        },
+        "empty": {
+          "title": "아이디어를 워크플로우로 만드세요."
+        },
+        "toolCall": "실행 중 {tool}",
+        "context": {
+          "execution": "실행: {{id}}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {{namespace}}"
+        },
+        "toolResult": {
+          "detail": "세부 정보",
+          "error": "{tool} 실패했습니다",
+          "ok": "{tool} 완료됨",
+          "rejected": "{tool} 거부됨"
+        },
+        "confirm": {
+          "planTitle": "제안된 계획",
+          "actionTitle": "제안된 조치",
+          "approve": "승인",
+          "approveExecute": "승인 및 실행",
+          "reject": "거부",
+          "reasonPlaceholder": "수정하려면 회신하세요…",
+          "pending": "승인 대기 중",
+          "revise": "수정하려면 답장"
+        },
+        "notice": {
+          "emptyTurn": "어시스턴트가 응답을 반환하지 않았습니다. 다시 시도해 주세요.",
+          "retry": "재시도"
+        },
+        "cancelled": "회차 취소됨",
+        "error": {
+          "turnCap": "이 대화는 한도에 도달했습니다 — 새 채팅을 시작하세요.",
+          "turnInProgress": "회차가 이미 진행 중입니다.",
+          "request": "요청이 실패했습니다. 다시 시도해 주세요.",
+          "generic": "문제가 발생했습니다. 다시 시도해주세요."
+        },
+        "emptyHelper": "이 flow를 편집하거나, 테스트를 생성하거나, 관련 파일을 스캐폴드하거나, 작동 방식을 설명할 수 있습니다.",
+        "suggestions": {
+          "errorHandling": "오류 처리 추가",
+          "unitTest": "단위 테스트 생성",
+          "explain": "이 flow 설명",
+          "dbt": "dbt 파이프라인 실행"
+        },
+        "voice": {
+          "start": "음성 입력 시작",
+          "stop": "중지 및 삽입",
+          "cancel": "음성 입력 취소"
+        },
+        "unavailable": {
+          "title": "AI Copilot을(를) 사용할 수 없습니다",
+          "detail": "AI 공급자가 구성되어 있지 않습니다. 관리자에게 설정해 달라고 요청한 다음 다시 시도하세요.",
+          "retry": "다시 시도"
+        },
+        "thinking": "처리 중...",
+        "thinkingWords": [
+          "오케스트레이션",
+          "스케줄링",
+          "순서 지정",
+          "라우팅",
+          "전송 중",
+          "대기 중",
+          "트리거 중",
+          "실행 중",
+          "조정 중",
+          "프로비저닝",
+          "해결 중",
+          "구성 중",
+          "구성 중",
+          "계획",
+          "매핑",
+          "연결",
+          "분기",
+          "동기화 중",
+          "조정 중",
+          "구체화 중",
+          "컴파일 중",
+          "유효성 검사 중",
+          "전파 중",
+          "수렴 중"
+        ],
+        "newChat": "새 채팅",
+        "recents": "최근",
+        "recentsEmpty": "아직 최근 대화가 없습니다.",
+        "draft": {
+          "openInEditor": "에디터에서 열기",
+          "apply": "적용",
+          "applyTitle": "flow 적용",
+          "applyConfirm": "flow {namespace}.{id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
+          "applyConfirmDashboard": "대시보드 {id}를 적용하시겠습니까? 생성되거나, 이미 존재하는 경우 덮어쓰여집니다.",
+          "applyError": "flow를 적용할 수 없습니다. 다시 시도해주세요.",
+          "applyErrorDashboard": "대시보드를 적용할 수 없었습니다. 다시 시도해 주세요.",
+          "applyNoTarget": "이 초안은 적용할 namespace 또는 id가 없습니다.",
+          "applyTitleDashboard": "대시보드 적용",
+          "title": {
+            "flow": "제안된 flow",
+            "dashboard": "제안된 대시보드",
+            "app": "제안된 앱"
+          },
+          "valid": "유효",
+          "invalid": "수정 필요",
+          "copy": "YAML 복사",
+          "copied": "복사됨"
+        }
       }
     },
     "playground": {
@@ -2284,8 +2415,7 @@
         "open_world": "Open world",
         "destructive": "파괴적",
         "idempotent": "멱등",
-        "return_direct": "직접 반환",
-        "view_flow": "flow 열기"
+        "return_direct": "직접 반환"
       },
       "connect_tab": {
         "server_url": "서버 URL",

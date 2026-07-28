@@ -53,6 +53,8 @@ import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vu
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
 import KsEmpty from "./components/Data/KsEmpty.vue"
 import KsEmptyState from "./components/Data/KsEmptyState.vue"
+import KsEntityLink from "./components/Data/KsEntityLink/KsEntityLink.vue"
+export type {KsEntityLinkEntity} from "./components/Data/KsEntityLink/KsEntityLink.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
 import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
@@ -142,6 +144,8 @@ export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOptio
 export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
+export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
+export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export {applyDefaultFilters} from "./components/Data/KsDataTable/filter/composables/useDefaultFilter"
 export {useRouteFilterPolicy} from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
 export {
@@ -251,6 +255,7 @@ const components: Record<string, Component> = {
     KsEditor,
     KsEmpty,
     KsEmptyState,
+    KsEntityLink,
     KsExecutionStatus,
     KsFilter,
     KsForm,
@@ -359,6 +364,7 @@ export {
     KsEditor,
     KsEmpty,
     KsEmptyState,
+    KsEntityLink,
     KsExecutionStatus,
     KsFilter,
     KsForm,
@@ -487,6 +493,7 @@ declare module "vue" {
         KsDropdownMenu: typeof KsDropdownMenu
         KsEmpty: typeof KsEmpty
         KsEmptyState: typeof KsEmptyState
+        KsEntityLink: typeof KsEntityLink
         KsExecutionStatus: typeof KsExecutionStatus
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm

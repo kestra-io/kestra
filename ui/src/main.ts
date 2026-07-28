@@ -2,6 +2,9 @@ import {createApp} from "vue"
 import type {Router} from "vue-router"
 
 import "./utils/monacoEnvironment"
+import {setupPreloadErrorReloadHandler} from "./utils/preloadErrorReload"
+
+setupPreloadErrorReloadHandler()
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -30,13 +33,11 @@ const app = createApp(App)
 // the design system depending on the app's plugin-icon API
 app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)
 
-const handleAuthError = (error: Error, to: {fullPath: string}) => {
-    if (error.message?.includes("401")) {
-        BasicAuth.logout()
-        const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
-        return {name: "login", query: fromPath ? {from: fromPath} : {}}
-    }
-    return {name: "setup"}
+// Fail closed: an error probing the pre-auth endpoints is no evidence that setup is needed.
+const handleAuthError = (to: {fullPath: string}) => {
+    BasicAuth.logout()
+    const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
+    return {name: "login", query: fromPath ? {from: fromPath} : {}}
 }
 
 let httpClient: ReturnType<typeof setupKestraHttp> | undefined
@@ -134,7 +135,7 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
         await miscStore.loadConfigs()
     } catch (error) {
         console.error("Error during authentication check:", error)
-        return handleAuthError(error as Error, to)
+        return handleAuthError(to)
     }
 }
 

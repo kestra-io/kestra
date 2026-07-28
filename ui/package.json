@@ -14,7 +14,7 @@
         "build": "vite build --emptyOutDir",
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",
-        "build:sdk": "npm run build --workspace=@kestra-io/hey-api-plugin && npm run build --workspace=@kestra-io/kestra-sdk",
+        "build:sdk": "node scripts/ensure-sdk.mjs",
         "generate:openapi-spec": "cd .. && ./gradlew :webserver:generateOpenapiSpec",
         "generate:sdk": "node scripts/ensure-sdk.mjs --check-spec",
         "preview": "vite preview",

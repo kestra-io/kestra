@@ -343,7 +343,8 @@
     import {useAuthStore} from "override/stores/auth"
     import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
-    import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger"
+    import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
+    import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations"
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
@@ -377,7 +378,6 @@
 
     const authStore = useAuthStore()
     const flowStore = useFlowStore()
-    const triggerStore = useTriggerStore()
     const executionsStore = useExecutionsStore()
 
     const {loadInit} = useRestoreUrl()
@@ -555,7 +555,7 @@
             filters: routeQueryToQueryFilters(route.query),
         })
 
-        const triggersData = await triggerStore.search(query)
+        const triggersData = await searchTriggers(query)
         triggers.value = triggersData?.results ?? []
         total.value = triggersData?.total ?? 0
 
@@ -605,11 +605,11 @@
 
     const postBackfill = () => {
         const trigger = selectedTrigger.value as any
-        triggerStore.createBackfill({
+        TriggersAPI.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: cleanBackfill.value,
+            backfill: cleanBackfill.value as any,
         })
             .then(() => {
                 toast.saved(trigger?.triggerId)
@@ -647,7 +647,7 @@
     }
 
     const unlock = (row: any) => {
-        triggerStore.unlock({
+        TriggersAPI.unlockTrigger({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -661,7 +661,7 @@
     }
 
     const restart = (row: any) => {
-        triggerStore.restart({
+        TriggersAPI.restartTrigger({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -677,7 +677,7 @@
     }
 
     const pauseBackfill = (row: any) => {
-        triggerStore.pauseBackfill({
+        TriggersAPI.pauseBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -688,7 +688,7 @@
     }
 
     const unpauseBackfill = (row: any) => {
-        triggerStore.unpauseBackfill({
+        TriggersAPI.unpauseBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -699,7 +699,7 @@
     }
 
     const deleteBackfill = (row: any) => {
-        triggerStore.deleteBackfill({
+        TriggersAPI.deleteBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -734,7 +734,7 @@
     }
 
     const doSetDisabled = (trigger: any, disabled: boolean, recoverMissedSchedules?: boolean) => {
-        triggerStore.setDisabled({...trigger, disabled, recoverMissedSchedules})
+        TriggersAPI.disableTriggerById({...trigger, disabled, recoverMissedSchedules})
             .then((updatedTrigger: any) => {
                 toast.saved(updatedTrigger.triggerId)
                 triggers.value = triggers.value?.map((tr: any) => {
@@ -764,7 +764,7 @@
     const confirmDeleteTrigger = (trigger: TriggerDeleteOptions) => {
         toast.confirm(
             t("delete trigger confirmation", {id: trigger.id}),
-            () => triggerStore.delete({
+            () => TriggersAPI.deleteTrigger({
                 namespace: trigger.namespace,
                 flowId: trigger.flowId,
                 triggerId: trigger.triggerId,
@@ -805,18 +805,18 @@
 
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, data?: any) => {
         const actionMap: Record<string, () => any> = {
-            "unpauseBackfillByQuery": () => triggerStore.unpauseBackfillByQuery,
-            "unpauseBackfillByTriggers": () => triggerStore.unpauseBackfillByTriggers,
-            "pauseBackfillByQuery": () => triggerStore.pauseBackfillByQuery,
-            "pauseBackfillByTriggers": () => triggerStore.pauseBackfillByTriggers,
-            "deleteBackfillByQuery": () => triggerStore.deleteBackfillByQuery,
-            "deleteBackfillByTriggers": () => triggerStore.deleteBackfillByTriggers,
-            "unlockByQuery": () => triggerStore.unlockByQuery,
-            "unlockByTriggers": () => triggerStore.unlockByTriggers,
-            "setDisabledByQuery": () => triggerStore.setDisabledByQuery,
-            "setDisabledByTriggers": () => triggerStore.setDisabledByTriggers,
-            "deleteByQuery": () => triggerStore.deleteByQuery,
-            "deleteByTriggers": () => triggerStore.deleteByTriggers,
+            "unpauseBackfillByQuery": () => (options: any) => TriggersAPI.unpauseBackfillByQuery(options),
+            "unpauseBackfillByTriggers": () => (triggers: any) => TriggersAPI.unpauseBackfillByIds({body: triggers}),
+            "pauseBackfillByQuery": () => (options: any) => TriggersAPI.pauseBackfillByQuery(options),
+            "pauseBackfillByTriggers": () => (triggers: any) => TriggersAPI.pauseBackfillByIds({body: triggers}),
+            "deleteBackfillByQuery": () => (options: any) => TriggersAPI.deleteBackfillByQuery(options),
+            "deleteBackfillByTriggers": () => (triggers: any) => TriggersAPI.deleteBackfillByIds({body: triggers}),
+            "unlockByQuery": () => (options: any) => TriggersAPI.unlockTriggersByQuery(options),
+            "unlockByTriggers": () => (triggers: any) => TriggersAPI.unlockTriggersByIds({body: triggers}),
+            "setDisabledByQuery": () => (options: any) => TriggersAPI.disabledTriggersByQuery(options),
+            "setDisabledByTriggers": () => (options: any) => TriggersAPI.disabledTriggersByIds(options),
+            "deleteByQuery": () => (options: any) => TriggersAPI.deleteTriggersByQuery(options),
+            "deleteByTriggers": () => (triggers: any) => TriggersAPI.deleteTriggersByIds({body: triggers}),
         }
 
         if (queryBulkAction.value) {

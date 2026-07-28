@@ -25,7 +25,7 @@
     import TriggersManage from "./TriggersManage.vue"
 
     import useRouteContext from "../../../composables/useRouteContext"
-    import {useTriggerStore} from "../../../stores/trigger"
+    import {exportTriggersAsCSV} from "../../../utils/triggers"
 
     const VALID_TABS = ["add", "manage"] as const
 
@@ -37,7 +37,6 @@
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
     const router = useRouter()
-    const triggerStore = useTriggerStore()
 
     useRouteContext(computed(() => ({title: t("triggers")})))
 
@@ -55,5 +54,5 @@
         }
     }, {immediate: true})
 
-    const exportTriggers = () => triggerStore.exportTriggersAsCSV(route.query)
+    const exportTriggers = () => exportTriggersAsCSV(route.query)
 </script>

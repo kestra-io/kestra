@@ -130,7 +130,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public ArrayListTotal<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
-        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        var condition = this.filter(filters, Resource.LOG);
         if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
@@ -138,11 +138,12 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     /**
-     * Two log table columns don't line up with the default {@link QueryFilter.Field#name()}
+     * Three log table columns don't line up with the default {@link QueryFilter.Field#name()}
      * lower-cased derivation:
      * <ul>
      * <li>{@code TASK_RUN_ID} maps to {@code taskrun_id} (one word), not {@code task_run_id}</li>
      * <li>{@code KIND} maps to {@code execution_kind}, not {@code kind}</li>
+     * <li>{@code DATE} — the instant the log line was emitted — maps to {@code timestamp}</li>
      * </ul>
      * Override the mapping for those; the rest of the column names match.
      */
@@ -154,13 +155,16 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         if (field == QueryFilter.Field.KIND) {
             return DSL.quotedName("execution_kind");
         }
+        if (field == QueryFilter.Field.DATE) {
+            return DSL.quotedName(DATE_COLUMN);
+        }
         return super.getColumnName(field);
     }
 
     @Override
     public Flux<LogEntry> findAsync(@Nullable String tenantId, List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
-        var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
+        var condition = this.filter(filters, Resource.LOG);
         if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
@@ -377,7 +381,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
             DSLContext context = DSL.using(configuration);
 
             var delete = context.delete(this.jdbcRepository.getTable()).where(this.defaultFilter(tenantId));
-            delete = delete.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+            delete = delete.and(this.filter(filters, Resource.LOG));
 
             return delete.execute();
         });

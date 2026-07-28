@@ -10,14 +10,17 @@ interface DefaultFilterOptions {
      * Falls back to chartDefaultDuration from config endpoint -> then "PT24H".
     **/
     defaultDuration?: string;
-    /** Wire date field the default window targets (defaults to startDate / GREATER_THAN_OR_EQUAL_TO). */
-    timeRangeField?: string;
+    /**
+     * The resource's date fields, taken from its `time-range` filter keys. A query already carrying any
+     * of them counts as having a time window, so no default is injected; the first is where the default
+     * window is written (defaults to startDate / GREATER_THAN_OR_EQUAL_TO).
+     */
+    timeRangeFields?: string[];
     timeRangeOperation?: string;
 }
 
 const NAMESPACE_FILTER_PREFIX = "filters[namespace]"
 const SCOPE_FILTER_PREFIX = "filters[scope]"
-const TIME_FILTER_KEYS = /startDate|endDate|timeRange|nextExecutionDate|lastTriggeredDate/
 
 const hasFilterKey = (query: LocationQuery, prefix: string): boolean =>
     Object.keys(query).some(key => key.startsWith(prefix))
@@ -44,7 +47,7 @@ export function applyDefaultFilters(
         includeTimeRange,
         includeScope,
         defaultDuration,
-        timeRangeField,
+        timeRangeFields,
         timeRangeOperation,
     }: DefaultFilterOptions = {}): { query: LocationQuery, change: boolean } {
 
@@ -71,13 +74,14 @@ export function applyDefaultFilters(
     }
 
     if (includeTimeRange) {
-        const hasExisting = Object.keys(query).some(key => TIME_FILTER_KEYS.test(key))
-        if (!hasExisting) {
+        // Only the resource's own date fields count: a `startDate` left over from another page must not
+        // suppress the default window on a resource that filters on `date`, and vice versa.
+        const dateFields = timeRangeFields?.length ? timeRangeFields : ["startDate"]
+        if (!dateFields.some(field => hasFilterKey(query, `filters[${field}]`))) {
             const duration = defaultDuration ?? "PT24H"
             // Default time window: a relative duration on the config's date field, resolved server-side.
-            const field = timeRangeField ?? "startDate"
             const operation = timeRangeOperation ?? "GREATER_THAN_OR_EQUAL_TO"
-            query[`filters[${field}][${operation}]`] = duration
+            query[`filters[${dateFields[0]}][${operation}]`] = duration
             change = true
         }
     }

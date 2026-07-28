@@ -275,10 +275,21 @@ class LogControllerTest {
         logRepository.save(log3);
 
         PagedResults<LogEntry> logs = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenant + "/logs/search?filters[startDate][GREATER_THAN_OR_EQUAL_TO]=PT25H"),
+            GET("/api/v1/" + tenant + "/logs/search?filters[date][GREATER_THAN_OR_EQUAL_TO]=PT25H"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
+
+        // A window is two bounds on the same `date` field — here everything older than an hour ago,
+        // which excludes log3 (emitted now) and keeps the two older entries.
+        PagedResults<LogEntry> windowed = client.toBlocking().retrieve(
+            GET(
+                "/api/v1/" + tenant
+                    + "/logs/search?filters[date][GREATER_THAN_OR_EQUAL_TO]=P3D&filters[date][LESS_THAN_OR_EQUAL_TO]=PT1H"
+            ),
+            Argument.of(PagedResults.class, LogEntry.class)
+        );
+        assertThat(windowed.getTotal()).isEqualTo(2L);
     }
 
     private static LogEntry logEntry(String tenant, Level level) {
@@ -603,7 +614,7 @@ class LogControllerTest {
             )
             .build(),
 
-        // Relative duration on a date field — resolved to "now - 25h" (startDate is past-oriented).
+        // Relative duration on a date field — resolved to "now - 25h" (date is past-oriented).
         FiltersTestCase.builder()
             .executionId(TEST_EXECUTION_ID)
             .logs(dateLogs)
@@ -611,7 +622,7 @@ class LogControllerTest {
             .filters(
                 List.of(
                     QueryFilter.builder()
-                        .field(QueryFilter.Field.START_DATE)
+                        .field(QueryFilter.Field.DATE)
                         .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
                         .value("PT25H")
                         .build()
@@ -627,7 +638,7 @@ class LogControllerTest {
             .filters(
                 List.of(
                     QueryFilter.builder()
-                        .field(QueryFilter.Field.START_DATE)
+                        .field(QueryFilter.Field.DATE)
                         .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
                         .value(NOW_MINUS_25H)
                         .build()

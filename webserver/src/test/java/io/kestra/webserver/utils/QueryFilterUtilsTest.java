@@ -7,7 +7,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -110,12 +109,12 @@ public class QueryFilterUtilsTest {
     }
 
     @Test
-    void resolveWithDefaultWindow_startDateMode_noDateFilter_appendsDefaultStartDate() {
+    void resolveWithDefaultWindow_noDateFilter_appendsDefaultStartDate() {
         // Given — no date filter at all
         var filters = List.of(leaf(QueryFilter.Field.LABELS, QueryFilter.Op.EQUALS, "foo:bar"));
 
         // When
-        var result = QueryFilterUtils.applyDefaultWindow(filters, DateFilter.START_DATE);
+        var result = QueryFilterUtils.applyDefaultWindow(filters);
 
         // Then — a default START_DATE lower bound is appended
         assertThat(result).hasSize(2);
@@ -126,16 +125,31 @@ public class QueryFilterUtilsTest {
     }
 
     @Test
-    void resolveWithDefaultWindow_endDateMode_noDateFilter_appendsDefaultEndDate() {
-        // Given
+    void resolveWithDefaultWindow_boundedOnDate_appendsDefaultDateBound() {
+        // Given — an event-like resource (logs) windowed on its single timestamp
         var filters = List.of(leaf(QueryFilter.Field.LABELS, QueryFilter.Op.EQUALS, "foo:bar"));
 
         // When
-        var result = QueryFilterUtils.applyDefaultWindow(filters, DateFilter.END_DATE);
+        var result = QueryFilterUtils.applyDefaultWindow(filters, QueryFilter.Field.DATE);
 
         // Then
         assertThat(result).hasSize(2);
-        assertThat(result.get(1).field()).isEqualTo(QueryFilter.Field.END_DATE);
+        assertThat(result.get(1).field()).isEqualTo(QueryFilter.Field.DATE);
+        assertThat(result.get(1).operation()).isEqualTo(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO);
+    }
+
+    @Test
+    void resolveWithDefaultWindow_upperBoundOnlyOnDate_isNotSupplementedWithAWindow() {
+        // Given — only an upper bound on the log timestamp
+        String absolute = "2024-05-27T15:00:00+02:00";
+        var filters = List.of(leaf(QueryFilter.Field.DATE, QueryFilter.Op.LESS_THAN_OR_EQUAL_TO, absolute));
+
+        // When
+        var result = QueryFilterUtils.applyDefaultWindow(filters, QueryFilter.Field.DATE);
+
+        // Then — the caller's bound is left alone rather than being ANDed with an unrelated -8d window
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).value()).isEqualTo(absolute);
     }
 
     @Test
@@ -145,7 +159,7 @@ public class QueryFilterUtilsTest {
         var filters = List.of(leaf(QueryFilter.Field.START_DATE, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO, absolute));
 
         // When
-        var result = QueryFilterUtils.applyDefaultWindow(filters, DateFilter.START_DATE);
+        var result = QueryFilterUtils.applyDefaultWindow(filters);
 
         // Then — no default appended, the existing filter is kept as-is
         assertThat(result).hasSize(1);

@@ -211,6 +211,10 @@ export default {
                 "label": "Interval",
                 "description": "Filter by dashboard window",
             },
+            "date": {
+                "label": "Date",
+                "description": "Filter by date",
+            },
             "timeRange_log": {
                 "label": "Interval",
                 "description": "Filter by log timestamp",
@@ -733,6 +737,10 @@ export default {
                 "description": "Nach Dashboard-Fenster filtern",
                 "label": "Intervall",
             },
+            "date": {
+                "label": "Datum",
+                "description": "Nach Datum filtern",
+            },
             "timeRange_log": {
                 "description": "Nach Log-Zeitstempel filtern",
                 "label": "Intervall",
@@ -1129,6 +1137,10 @@ export default {
             "timeRange_dashboard": {
                 "description": "Filtrar por ventana del dashboard",
                 "label": "Intervalo",
+            },
+            "date": {
+                "label": "Fecha",
+                "description": "Filtrar por fecha",
             },
             "timeRange_log": {
                 "description": "Filtrar por timestamp de log",
@@ -1527,6 +1539,10 @@ export default {
                 "description": "Filtrer par fenêtre de tableau de bord",
                 "label": "Intervalle",
             },
+            "date": {
+                "label": "Date",
+                "description": "Filtrer par date",
+            },
             "timeRange_log": {
                 "description": "Filtrer par horodatage de log",
                 "label": "Intervalle",
@@ -1923,6 +1939,10 @@ export default {
             "timeRange_dashboard": {
                 "description": "डैशबोर्ड विंडो द्वारा फ़िल्टर करें",
                 "label": "अंतराल",
+            },
+            "date": {
+                "label": "दिनांक",
+                "description": "दिनांक के अनुसार फ़िल्टर करें",
             },
             "timeRange_log": {
                 "description": "लॉग टाइमस्टैम्प द्वारा फ़िल्टर करें",
@@ -2321,6 +2341,10 @@ export default {
                 "description": "Filtra per finestra dashboard",
                 "label": "Intervallo",
             },
+            "date": {
+                "label": "Data",
+                "description": "Filtra per data",
+            },
             "timeRange_log": {
                 "description": "Filtra per timestamp del log",
                 "label": "Intervallo",
@@ -2717,6 +2741,10 @@ export default {
             "timeRange_dashboard": {
                 "description": "ダッシュボードウィンドウでフィルター",
                 "label": "インターバル",
+            },
+            "date": {
+                "label": "日付",
+                "description": "日付でフィルタリング",
             },
             "timeRange_log": {
                 "description": "ログタイムスタンプでフィルター",
@@ -3115,6 +3143,10 @@ export default {
                 "description": "대시보드 창별 필터",
                 "label": "간격",
             },
+            "date": {
+                "label": "날짜",
+                "description": "날짜로 필터링",
+            },
             "timeRange_log": {
                 "description": "로그 타임스탬프로 필터링",
                 "label": "간격",
@@ -3511,6 +3543,10 @@ export default {
             "timeRange_dashboard": {
                 "description": "Filtruj według okna dashboardu",
                 "label": "Interwał",
+            },
+            "date": {
+                "label": "Data",
+                "description": "Filtruj według daty",
             },
             "timeRange_log": {
                 "description": "Filtruj według znacznika czasu loga",
@@ -3909,6 +3945,10 @@ export default {
                 "description": "Filtrar por janela do dashboard",
                 "label": "Intervalo",
             },
+            "date": {
+                "label": "Data",
+                "description": "Filtrar por data",
+            },
             "timeRange_log": {
                 "description": "Filtrar por timestamp do log",
                 "label": "Intervalo",
@@ -4305,6 +4345,10 @@ export default {
             "timeRange_dashboard": {
                 "description": "Filtrar por janela do dashboard",
                 "label": "Intervalo",
+            },
+            "date": {
+                "label": "Data",
+                "description": "Filtrar por data",
             },
             "timeRange_log": {
                 "description": "Filtrar por timestamp do log",
@@ -4703,6 +4747,10 @@ export default {
                 "description": "Фильтр по окну дашборда",
                 "label": "Интервал",
             },
+            "date": {
+                "label": "Дата",
+                "description": "Фильтровать по дате",
+            },
             "timeRange_log": {
                 "description": "Фильтр по временной метке log",
                 "label": "Интервал",
@@ -5099,6 +5147,10 @@ export default {
             "timeRange_dashboard": {
                 "description": "按仪表板窗口筛选",
                 "label": "间隔",
+            },
+            "date": {
+                "label": "日期",
+                "description": "按日期筛选",
             },
             "timeRange_log": {
                 "description": "按log时间戳筛选",

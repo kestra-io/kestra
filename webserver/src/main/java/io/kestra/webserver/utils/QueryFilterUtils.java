@@ -8,7 +8,6 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 import io.kestra.core.models.QueryFilter;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.utils.DateUtils;
 
 import lombok.Builder;
@@ -136,34 +135,35 @@ public class QueryFilterUtils {
             .toList();
     }
 
+    /** Applies the default window on {@link QueryFilter.Field#START_DATE} — the bound for execution-like resources. */
     public static List<QueryFilter> applyDefaultWindow(List<QueryFilter> filters) {
-        return applyDefaultWindow(filters, DateFilter.START_DATE);
+        return applyDefaultWindow(filters, QueryFilter.Field.START_DATE);
     }
 
     /**
-     * When the query carries no lower time bound, injects a default {@code -8 days} boundary to protect the
-     * database from an unbounded scan. The boundary targets {@link QueryFilter.Field#END_DATE} when
-     * {@code dateFilter} is {@link DateFilter#END_DATE}, otherwise {@link QueryFilter.Field#START_DATE}.
+     * When the query carries no lower bound on {@code boundedField}, injects a default {@code -8 days} boundary
+     * to protect the database from an unbounded scan. Callers pass the date field their resource is actually
+     * windowed on: {@link QueryFilter.Field#START_DATE} for executions, {@link QueryFilter.Field#DATE} for
+     * event-like resources such as logs.
+     * <p>
+     * A filter already present on that field counts as a bound whatever its operation, so an upper-bound-only
+     * query ({@code date <= X}) is left untouched rather than being silently ANDed with an unrelated window.
      * <p>
      * Relative durations are already resolved to absolute instants upstream by
      * {@code QueryFilterFormatBinder}, so this method only deals with absolute dates.
      */
-    public static List<QueryFilter> applyDefaultWindow(List<QueryFilter> filters, DateFilter dateFilter) {
-        if (dateFilter == null) {
-            dateFilter = DateFilter.START_DATE;
+    public static List<QueryFilter> applyDefaultWindow(List<QueryFilter> filters, QueryFilter.Field boundedField) {
+        QueryFilter.Field target = boundedField == null ? QueryFilter.Field.START_DATE : boundedField;
+        if (!target.isDateField()) {
+            throw new IllegalArgumentException("The default window must target a date field but was " + target);
         }
         List<QueryFilter> resolved = filters == null
             ? new java.util.ArrayList<>()
             : new java.util.ArrayList<>(filters);
 
-        boolean targetsEndDate = dateFilter == DateFilter.END_DATE;
-        boolean hasLowerBound = targetsEndDate
-            ? anyLeafMatches(resolved, f -> isStartDateFilter(f) || isEndDateFilter(f))
-            : anyLeafMatches(resolved, QueryFilterUtils::isStartDateFilter);
-
-        if (!hasLowerBound) {
+        if (!anyLeafMatches(resolved, f -> f.field() == target)) {
             resolved.add(QueryFilter.builder()
-                .field(targetsEndDate ? QueryFilter.Field.END_DATE : QueryFilter.Field.START_DATE)
+                .field(target)
                 .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
                 .value(ZonedDateTime.now().minusDays(DEFAULT_LOOKBACK_DAYS).toString())
                 .build());

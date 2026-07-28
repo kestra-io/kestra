@@ -62,13 +62,14 @@ export function useFilters(
         hasValue: routeSync.hasValue,
     })
 
-    const timeRangeChip = configuration.keys?.find((k) => k.valueType === "time-range")
+    const timeRangeChips = configuration.keys?.filter((k) => k.valueType === "time-range") ?? []
+    const timeRangeChip = timeRangeChips[0]
     const defaultFilterOptions = {
         namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
         includeTimeRange: defaultTimeRange ?? !!timeRangeChip,
         defaultDuration,
-        timeRangeField: timeRangeChip?.key,
+        timeRangeFields: timeRangeChips.map((k) => k.key),
         timeRangeOperation: timeRangeChip ? keyOfComparator(timeRangeChip.comparators[0]) : undefined,
     }
     useDefaultFilter(defaultFilterOptions)
@@ -79,7 +80,7 @@ export function useFilters(
         const resetFilters: AppliedFilter[] = []
 
         if (defaultFilterOptions.includeTimeRange && timeRangeChip) {
-            const defaultKey = `filters[${defaultFilterOptions.timeRangeField}][${defaultFilterOptions.timeRangeOperation}]`
+            const defaultKey = `filters[${timeRangeChip.key}][${defaultFilterOptions.timeRangeOperation}]`
             const defaultTimeRangeRaw = defaultQuery[defaultKey]
             const timeRangeValue = Array.isArray(defaultTimeRangeRaw) ? defaultTimeRangeRaw[0] : defaultTimeRangeRaw
 

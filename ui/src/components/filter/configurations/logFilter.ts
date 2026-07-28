@@ -72,8 +72,8 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     visibleByDefault: true,
                 },
                 {
-                    key: "startDate",
-                    label: t("filter.timeRange.dateFilter.startDate"),
+                    key: "date",
+                    label: t("filter.date.label"),
                     description: t("filter.timeRange_log.description"),
                     comparators: [
                         Comparators.GREATER_THAN_OR_EQUAL_TO,

@@ -123,16 +123,11 @@ public abstract class AbstractLogDataStoreTest {
             QueryFilter.builder().field(Field.FLOW_ID).value(".lowI.").operation(Op.REGEX).build(),
             QueryFilter.builder().field(Field.FLOW_ID).value(List.of("flowId", "other")).operation(Op.IN).build(),
             QueryFilter.builder().field(Field.FLOW_ID).value(List.of("anotherFlowId")).operation(Op.NOT_IN).build(),
-            QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(),
-            QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(),
-            QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN_OR_EQUAL_TO).build(),
-            QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(),
-            QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.NOT_EQUALS).build(),
-            QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(),
-            QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(),
-            QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN_OR_EQUAL_TO).build(),
-            QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(),
-            QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN_OR_EQUAL_TO).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.NOT_EQUALS).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value("triggerId").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value("anotherId").operation(Op.NOT_EQUALS).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value("igger").operation(Op.CONTAINS).build(),
@@ -200,7 +195,7 @@ public abstract class AbstractLogDataStoreTest {
                 .value(Level.WARN)
                 .build(),
             QueryFilter.builder()
-                .field(Field.START_DATE)
+                .field(Field.DATE)
                 .operation(QueryFilter.Op.GREATER_THAN)
                 .value(Instant.now().minus(1, ChronoUnit.HOURS))
                 .build()
@@ -743,41 +738,22 @@ public abstract class AbstractLogDataStoreTest {
 
         FiltersTestCase.builder()
             .logs(timeLogs).expectedLogs(List.of(nowLog, futureLog))
-            .queryFilter(QueryFilter.builder().field(Field.START_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.GREATER_THAN_OR_EQUAL_TO).build()).build(),
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.GREATER_THAN_OR_EQUAL_TO).build()).build(),
         FiltersTestCase.builder()
             .logs(timeLogs).expectedLogs(List.of(futureLog))
-            .queryFilter(QueryFilter.builder().field(Field.START_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.GREATER_THAN).build()).build(),
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.GREATER_THAN).build()).build(),
         FiltersTestCase.builder()
             .logs(timeLogs).expectedLogs(List.of(pastLog, nowLog))
-            .queryFilter(QueryFilter.builder().field(Field.START_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.LESS_THAN_OR_EQUAL_TO).build()).build(),
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.LESS_THAN_OR_EQUAL_TO).build()).build(),
         FiltersTestCase.builder()
             .logs(timeLogs).expectedLogs(List.of(pastLog))
-            .queryFilter(QueryFilter.builder().field(Field.START_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.LESS_THAN).build()).build(),
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.LESS_THAN).build()).build(),
         FiltersTestCase.builder()
             .logs(timeLogs).expectedLogs(List.of(nowLog))
-            .queryFilter(QueryFilter.builder().field(Field.START_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.EQUALS).build()).build(),
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.EQUALS).build()).build(),
         FiltersTestCase.builder()
             .logs(timeLogs).expectedLogs(List.of(pastLog, futureLog))
-            .queryFilter(QueryFilter.builder().field(Field.START_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.NOT_EQUALS).build()).build(),
-
-        FiltersTestCase.builder()
-            .logs(timeLogs).expectedLogs(List.of(nowLog, futureLog))
-            .queryFilter(QueryFilter.builder().field(Field.END_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.GREATER_THAN_OR_EQUAL_TO).build()).build(),
-        FiltersTestCase.builder()
-            .logs(timeLogs).expectedLogs(List.of(futureLog))
-            .queryFilter(QueryFilter.builder().field(Field.END_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.GREATER_THAN).build()).build(),
-        FiltersTestCase.builder()
-            .logs(timeLogs).expectedLogs(List.of(pastLog, nowLog))
-            .queryFilter(QueryFilter.builder().field(Field.END_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.LESS_THAN_OR_EQUAL_TO).build()).build(),
-        FiltersTestCase.builder()
-            .logs(timeLogs).expectedLogs(List.of(pastLog))
-            .queryFilter(QueryFilter.builder().field(Field.END_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.LESS_THAN).build()).build(),
-        FiltersTestCase.builder()
-            .logs(timeLogs).expectedLogs(List.of(nowLog))
-            .queryFilter(QueryFilter.builder().field(Field.END_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.EQUALS).build()).build(),
-        FiltersTestCase.builder()
-            .logs(timeLogs).expectedLogs(List.of(pastLog, futureLog))
-            .queryFilter(QueryFilter.builder().field(Field.END_DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.NOT_EQUALS).build()).build(),
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.NOT_EQUALS).build()).build(),
 
         FiltersTestCase.builder()
             .logs(distinctLogs).expectedLogs(List.of(alphaLog))

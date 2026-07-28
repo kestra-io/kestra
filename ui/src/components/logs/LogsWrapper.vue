@@ -238,7 +238,7 @@
         }
 
         const decodedParams = decodeSearchParams(route.query)
-        // A relative time range is now carried as an ISO-8601 duration on a date field (e.g. startDate=PT24H).
+        // A relative time range is now carried as an ISO-8601 duration on a date field (e.g. date=PT24H).
         const timeRangeFilter = decodedParams.find(item => isRelativeDuration(item?.value))
         const rawValue = timeRangeFilter?.value
 
@@ -299,8 +299,7 @@
 
     const downloadLogs = () => {
         const {
-            page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls,
-            level: _l, startDate: _sd, endDate: _ed, ...routeFilters
+            page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, level: _l, ...routeFilters
         } = route.query
         const params: Record<string, any> = props.filters ? {...props.filters} : {...routeFilters}
 
@@ -319,13 +318,13 @@
         }
 
         if (downloadTimeRange.value) {
-            params.startDate = moment()
+            Object.keys(params)
+                .filter((k) => k.startsWith("filters[date]"))
+                .forEach((k) => delete params[k])
+            params["filters[date][GREATER_THAN_OR_EQUAL_TO]"] = moment()
                 .subtract(moment.duration(downloadTimeRange.value).as("milliseconds"))
                 .toISOString(true)
-            params.endDate = moment().toISOString(true)
-        } else {
-            if (_sd) params.startDate = _sd
-            if (_ed) params.endDate = _ed
+            params["filters[date][LESS_THAN_OR_EQUAL_TO]"] = moment().toISOString(true)
         }
         params.sort = "timestamp:desc"
 

@@ -120,52 +120,27 @@ public class SearchableFactory {
             )
 
             .searchableQueryFilterExtractor(
-                QueryFilter.Field.START_DATE, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO,
+                QueryFilter.Field.DATE, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO,
                 (event, v) -> compareTimestamps(event, v) >= 0
             )
             .searchableQueryFilterExtractor(
-                QueryFilter.Field.START_DATE, QueryFilter.Op.GREATER_THAN,
+                QueryFilter.Field.DATE, QueryFilter.Op.GREATER_THAN,
                 (event, v) -> compareTimestamps(event, v) > 0
             )
             .searchableQueryFilterExtractor(
-                QueryFilter.Field.START_DATE, QueryFilter.Op.LESS_THAN_OR_EQUAL_TO,
+                QueryFilter.Field.DATE, QueryFilter.Op.LESS_THAN_OR_EQUAL_TO,
                 (event, v) -> compareTimestamps(event, v) <= 0
             )
             .searchableQueryFilterExtractor(
-                QueryFilter.Field.START_DATE, QueryFilter.Op.LESS_THAN,
+                QueryFilter.Field.DATE, QueryFilter.Op.LESS_THAN,
                 (event, v) -> compareTimestamps(event, v) < 0
             )
             .searchableQueryFilterExtractor(
-                QueryFilter.Field.START_DATE, QueryFilter.Op.EQUALS,
+                QueryFilter.Field.DATE, QueryFilter.Op.EQUALS,
                 (event, v) -> compareTimestamps(event, v) == 0
             )
             .searchableQueryFilterExtractor(
-                QueryFilter.Field.START_DATE, QueryFilter.Op.NOT_EQUALS,
-                (event, v) -> compareTimestamps(event, v) != 0
-            )
-
-            .searchableQueryFilterExtractor(
-                QueryFilter.Field.END_DATE, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO,
-                (event, v) -> compareTimestamps(event, v) >= 0
-            )
-            .searchableQueryFilterExtractor(
-                QueryFilter.Field.END_DATE, QueryFilter.Op.GREATER_THAN,
-                (event, v) -> compareTimestamps(event, v) > 0
-            )
-            .searchableQueryFilterExtractor(
-                QueryFilter.Field.END_DATE, QueryFilter.Op.LESS_THAN_OR_EQUAL_TO,
-                (event, v) -> compareTimestamps(event, v) <= 0
-            )
-            .searchableQueryFilterExtractor(
-                QueryFilter.Field.END_DATE, QueryFilter.Op.LESS_THAN,
-                (event, v) -> compareTimestamps(event, v) < 0
-            )
-            .searchableQueryFilterExtractor(
-                QueryFilter.Field.END_DATE, QueryFilter.Op.EQUALS,
-                (event, v) -> compareTimestamps(event, v) == 0
-            )
-            .searchableQueryFilterExtractor(
-                QueryFilter.Field.END_DATE, QueryFilter.Op.NOT_EQUALS,
+                QueryFilter.Field.DATE, QueryFilter.Op.NOT_EQUALS,
                 (event, v) -> compareTimestamps(event, v) != 0
             )
 

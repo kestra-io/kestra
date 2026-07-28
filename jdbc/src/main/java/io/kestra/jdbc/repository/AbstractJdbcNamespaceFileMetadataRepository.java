@@ -93,7 +93,7 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
             .select(VALUE_FIELD)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, allowDeleted))
-            .and(this.filter(filters, "updated", QueryFilter.Resource.NAMESPACE_FILE_METADATA));
+            .and(this.filter(filters, QueryFilter.Resource.NAMESPACE_FILE_METADATA));
 
         switch (fetchBehavior) {
             case LATEST -> condition = condition.and(lastCondition());

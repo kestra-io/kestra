@@ -249,46 +249,40 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition filter(
         List<QueryFilter> filters,
-        String dateColumn,
         Resource resource) {
         if (filters == null || filters.isEmpty()) {
             return DSL.noCondition();
         }
         QueryFilter.validateQueryFilters(filters, resource);
-        return andOf(filters, dateColumn);
+        return andOf(filters);
     }
 
-    private Condition andOf(List<QueryFilter> items, String dateColumn) {
+    private Condition andOf(List<QueryFilter> items) {
         return items.stream()
-            .map(f -> toCondition(f, dateColumn))
+            .map(this::toCondition)
             .reduce(DSL.noCondition(), Condition::and);
     }
 
-    private Condition orOf(List<QueryFilter> items, String dateColumn) {
+    private Condition orOf(List<QueryFilter> items) {
         return items.stream()
-            .map(f -> toCondition(f, dateColumn))
+            .map(this::toCondition)
             .reduce(DSL.noCondition(), Condition::or);
     }
 
-    private Condition toCondition(QueryFilter filter, String dateColumn) {
+    private Condition toCondition(QueryFilter filter) {
         if (filter.isLeaf()) {
-            return getConditionOnField(filter.field(), filter.value(), filter.operation(), dateColumn);
+            return getConditionOnField(filter.field(), filter.value(), filter.operation());
         }
         return switch (filter.logical()) {
-            case AND -> andOf(filter.children(), dateColumn);
-            case OR -> orOf(filter.children(), dateColumn);
+            case AND -> andOf(filter.children());
+            case OR -> orOf(filter.children());
         };
     }
 
-    /**
-     *
-     * @param dateColumn the JDBC column name of the logical date to filter on with {@link io.kestra.core.models.QueryFilter.Field#START_DATE} and/or {@link QueryFilter.Field#END_DATE}
-     */
     protected final Condition getConditionOnField(
         QueryFilter.Field field,
         Object value,
-        QueryFilter.Op operation,
-        @Nullable String dateColumn) {
+        QueryFilter.Op operation) {
         if (field.equals(QueryFilter.Field.QUERY)) {
             return handleQuery(value, operation);
         }
@@ -309,18 +303,6 @@ public abstract class AbstractJdbcRepository {
         // and Postgres won't auto-coerce '1' to integer. Parse before binding.
         if (field.equals(QueryFilter.Field.ATTEMPT_NUMBER)) {
             return handleAttemptNumberField(value, operation);
-        }
-
-        // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED) {
-            if (dateColumn == null) {
-                throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
-            }
-            return getDateCondition(value, operation, dateColumn);
-        }
-
-        if (field == QueryFilter.Field.CREATED) {
-            return createdCondition(value, operation, dateColumn);
         }
 
         if (field == QueryFilter.Field.ENABLED) {
@@ -344,10 +326,6 @@ public abstract class AbstractJdbcRepository {
 
         if (field == QueryFilter.Field.TAGS) {
             return tagsCondition(value, operation);
-        }
-
-        if (field == QueryFilter.Field.EXPIRATION_DATE) {
-            return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
 
         if (field == QueryFilter.Field.SCOPE) {
@@ -376,20 +354,12 @@ public abstract class AbstractJdbcRepository {
             return typeCondition(value, operation);
         }
 
-        if (field == QueryFilter.Field.TAGS) {
-            return tagsCondition(value, operation);
-        }
-
         if (field == QueryFilter.Field.RESOURCES) {
             return resourceTypesCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.DETAILS) {
             return detailsCondition(value, operation);
-        }
-
-        if (field == QueryFilter.Field.TAGS) {
-            return tagsCondition(value, operation);
         }
 
         if (field == QueryFilter.Field.LOCKED) {
@@ -402,6 +372,16 @@ public abstract class AbstractJdbcRepository {
 
         if (field == QueryFilter.Field.NEXT_EXECUTION_DATE) {
             return nextExecutionDateCondition(value, operation);
+        }
+
+        if (field.isDateField()) {
+            ZonedDateTime dateTime = TypeConverter.toZonedDateTime(value);
+            if (dateTime == null) {
+                throw new InvalidQueryFiltersException(
+                    operation + " operation on " + field.value() + " requires a non-null value"
+                );
+            }
+            return applyDateCondition(dateTime.toOffsetDateTime(), operation, getColumnName(field));
         }
 
         return defaultHandlers(field, value, operation);
@@ -483,11 +463,6 @@ public abstract class AbstractJdbcRepository {
         return primitiveOrToString(value).toString();
     }
 
-    private Condition getDateCondition(Object value, Op operation, String dateColumn) {
-        OffsetDateTime dateTime = TypeConverter.toZonedDateTime(value).toOffsetDateTime();
-        return applyDateCondition(dateTime, operation, dateColumn);
-    }
-
     protected static Object primitiveOrToString(Object o) {
         if (o == null)
             return null;
@@ -561,13 +536,6 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition nextExecutionDateCondition(Object value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported field: NEXT_EXECUTION_DATE");
-    }
-
-    protected Condition createdCondition(Object value, QueryFilter.Op operation, @Nullable String dateColumn) {
-        if (dateColumn == null) {
-            throw new InvalidQueryFiltersException("When filtering on CREATED, dateColumn is required but was null");
-        }
-        return getDateCondition(value, operation, dateColumn);
     }
 
     protected Condition statusCondition(Object value, QueryFilter.Op operation) {
@@ -657,13 +625,18 @@ public abstract class AbstractJdbcRepository {
     }
 
     Condition applyDateCondition(OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName) {
+        return applyDateCondition(dateTime, operation, DSL.quotedName(fieldName));
+    }
+
+    Condition applyDateCondition(OffsetDateTime dateTime, QueryFilter.Op operation, Name columnName) {
+        Field<Object> column = DSL.field(columnName);
         return switch (operation) {
-            case LESS_THAN -> field(fieldName).lessThan(dateTime);
-            case LESS_THAN_OR_EQUAL_TO -> field(fieldName).lessOrEqual(dateTime);
-            case GREATER_THAN -> field(fieldName).greaterThan(dateTime);
-            case GREATER_THAN_OR_EQUAL_TO -> field(fieldName).greaterOrEqual(dateTime);
-            case EQUALS -> field(fieldName).eq(dateTime);
-            case NOT_EQUALS -> field(fieldName).ne(dateTime);
+            case LESS_THAN -> column.lessThan(dateTime);
+            case LESS_THAN_OR_EQUAL_TO -> column.lessOrEqual(dateTime);
+            case GREATER_THAN -> column.greaterThan(dateTime);
+            case GREATER_THAN_OR_EQUAL_TO -> column.greaterOrEqual(dateTime);
+            case EQUALS -> column.eq(dateTime);
+            case NOT_EQUALS -> column.ne(dateTime);
             default ->
                 throw new InvalidQueryFiltersException("Unsupported operation for date condition: " + operation);
         };

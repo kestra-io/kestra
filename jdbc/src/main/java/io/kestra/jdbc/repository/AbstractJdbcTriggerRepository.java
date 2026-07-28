@@ -142,7 +142,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public ArrayListTotal<TriggerState> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, null, Resource.TRIGGER);
+        var condition = filter(filters, Resource.TRIGGER);
         return findPage(pageable, tenantId, condition);
     }
 
@@ -167,7 +167,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Flux<TriggerState> find(String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, null, Resource.TRIGGER);
+        var condition = filter(filters, Resource.TRIGGER);
         return findAsync(tenantId, condition);
     }
 

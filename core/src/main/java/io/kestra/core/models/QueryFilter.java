@@ -225,6 +225,17 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN);
             }
         },
+        DATE("date") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
+        },
         CREATED("created") {
             @Override
             public List<Op> supportedOp() {
@@ -567,8 +578,8 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(
-                    Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.START_DATE,
-                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.LEVEL, Field.EXECUTION_ID,
+                    Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.DATE,
+                    Field.FLOW_ID, Field.TRIGGER_ID, Field.LEVEL, Field.EXECUTION_ID,
                     Field.TASK_ID, Field.TASK_RUN_ID, Field.ATTEMPT_NUMBER, Field.KIND
                 );
             }
@@ -750,8 +761,7 @@ public record QueryFilter(
                     Field.ACTION,
                     Field.RESOURCES,
                     Field.DETAILS,
-                    Field.START_DATE,
-                    Field.END_DATE
+                    Field.DATE
                 );
             }
         },

@@ -78,7 +78,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
                 field("expiration_date").isNull()
             );
 
-        condition = condition.and(this.filter(filters, "updated", QueryFilter.Resource.KV_METADATA));
+        condition = condition.and(this.filter(filters, QueryFilter.Resource.KV_METADATA));
 
         switch (fetchBehavior) {
             case LATEST -> condition = condition.and(lastCondition());

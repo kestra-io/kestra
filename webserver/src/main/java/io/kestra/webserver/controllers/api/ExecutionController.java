@@ -63,7 +63,6 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
@@ -294,15 +293,12 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
-        @Parameter(description = "Which execution date field the time interval is applied to") @Nullable @QueryValue DateFilter dateFilter
-
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters
     ) {
         var executions = executionRepository.find(
             PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
             tenantService.resolveTenant(),
-            QueryFilterUtils.applyDefaultWindow(filters, dateFilter),
-            dateFilter
+            QueryFilterUtils.applyDefaultWindow(filters)
         );
         var apiExecution = executions.stream()
             .map(execution -> ApiLightExecution.of(execution))

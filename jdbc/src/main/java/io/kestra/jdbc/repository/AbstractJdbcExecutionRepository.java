@@ -34,7 +34,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
@@ -175,16 +174,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<QueryFilter> filters
 
     ) {
-        return findPage(pageable, tenantId, this.computeFindCondition(filters, null));
-    }
-
-    @Override
-    public ArrayListTotal<Execution> find(
-        Pageable pageable,
-        @Nullable String tenantId,
-        @Nullable List<QueryFilter> filters,
-        @Nullable DateFilter dateFilter) {
-        return findPage(pageable, tenantId, this.computeFindCondition(filters, dateFilter));
+        return findPage(pageable, tenantId, this.computeFindCondition(filters));
     }
 
     @Override
@@ -236,10 +226,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         );
     }
 
-    private Condition computeFindCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
+    private Condition computeFindCondition(@Nullable List<QueryFilter> filters) {
         boolean hasKindFilter = filters != null && filters.stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
-        Condition dateFilterCondition = buildDateFilterCondition(filters, dateFilter);
-        return hasKindFilter ? dateFilterCondition : dateFilterCondition.and(NORMAL_KIND_CONDITION);
+        Condition condition = this.filter(filters, Resource.EXECUTION);
+        return hasKindFilter ? condition : condition.and(NORMAL_KIND_CONDITION);
     }
 
     private static boolean containsLeafForKind(QueryFilter filter) {
@@ -247,27 +237,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             return filter.field() == QueryFilter.Field.KIND;
         }
         return filter.children().stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
-    }
-
-    private Condition buildDateFilterCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
-        if (dateFilter == DateFilter.START_OR_END_DATE && filters != null) {
-            List<QueryFilter> dateBoundaryFilters = filters.stream()
-                .filter(f -> f.field() == QueryFilter.Field.START_DATE || f.field() == QueryFilter.Field.END_DATE)
-                .toList();
-            List<QueryFilter> otherFilters = filters.stream()
-                .filter(f -> f.field() != QueryFilter.Field.START_DATE && f.field() != QueryFilter.Field.END_DATE)
-                .toList();
-
-            Condition onStartDate = this.filter(dateBoundaryFilters, fieldsMapping.get(Executions.Fields.START_DATE), Resource.EXECUTION);
-            Condition onEndDate = this.filter(dateBoundaryFilters, fieldsMapping.get(Executions.Fields.END_DATE), Resource.EXECUTION);
-            Condition dateOrCondition = dateBoundaryFilters.isEmpty() ? DSL.noCondition() : onStartDate.or(onEndDate);
-            return dateOrCondition.and(this.filter(otherFilters, fieldsMapping.get(Executions.Fields.START_DATE), Resource.EXECUTION));
-        }
-
-        String dateColumn = dateFilter == DateFilter.END_DATE
-            ? fieldsMapping.get(Executions.Fields.END_DATE)
-            : fieldsMapping.get(dateFilterField());
-        return this.filter(filters, dateColumn, Resource.EXECUTION);
     }
 
     private SelectConditionStep<Record1<Object>> findSelect(
@@ -319,7 +288,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         if (filters == null || filters.isEmpty()) {
             return findAllAsync(tenantId);
         }
-        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION);
+        Condition condition = this.filter(filters, Resource.EXECUTION);
         return findAsync(defaultFilter(tenantId), condition);
     }
 

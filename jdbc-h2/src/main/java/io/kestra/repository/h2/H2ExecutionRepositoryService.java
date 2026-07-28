@@ -63,6 +63,8 @@ public abstract class H2ExecutionRepositoryService {
                 );
                 switch (operation) {
                     case EQUALS -> conditions.add(value == null ? valueField.isNull() : valueField.eq((String) value));
+                    case CONTAINS -> conditions.add(DSL.coalesce(valueField, "").contains((String) value));
+                    case NOT_CONTAINS -> conditions.add(DSL.coalesce(valueField, "").contains((String) value).not());
                     case NOT_EQUALS, NOT_IN ->
                         conditions.add(value == null ? valueField.isNotNull() : valueField.isNull().or(valueField.ne((String) value)));
                     case IN -> inConditions.add(value == null ? valueField.isNull() : valueField.eq((String) value));

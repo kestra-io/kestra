@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.dashboard.data;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +13,9 @@ import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.dashboards.filters.IsNotNull;
 import io.kestra.core.models.dashboards.filters.IsNull;
+import io.kestra.core.models.dashboards.filters.NotContains;
 import io.kestra.core.models.dashboards.filters.NotIn;
+import io.kestra.core.models.dashboards.filters.Or;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,6 +24,10 @@ class DashboardDataGlobalFiltersTest {
     @Test
     void shouldMapLabelFiltersForExecutions() {
         // Given
+        Map<String, String> labelsInFilter = new LinkedHashMap<>();
+        labelsInFilter.put("environment", "prod");
+        labelsInFilter.put("team", "data");
+
         List<QueryFilter> filters = List.of(
             QueryFilter.builder()
                 .field(QueryFilter.Field.LABELS)
@@ -30,7 +37,7 @@ class DashboardDataGlobalFiltersTest {
             QueryFilter.builder()
                 .field(QueryFilter.Field.LABELS)
                 .operation(QueryFilter.Op.IN)
-                .value(Map.of("environment", "prod,dev"))
+                .value(labelsInFilter)
                 .build(),
             QueryFilter.builder()
                 .field(QueryFilter.Field.LABELS)
@@ -41,6 +48,11 @@ class DashboardDataGlobalFiltersTest {
                 .field(QueryFilter.Field.LABELS)
                 .operation(QueryFilter.Op.CONTAINS)
                 .value(Map.of("region", "eu"))
+                .build(),
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_CONTAINS)
+                .value(Map.of("region", "us"))
                 .build(),
             QueryFilter.builder()
                 .field(QueryFilter.Field.LABELS)
@@ -61,16 +73,21 @@ class DashboardDataGlobalFiltersTest {
         var where = iExecutions.whereWithGlobalFilters(filters, null, null, null);
 
         // Then
-        assertThat(where).hasSize(6);
+        assertThat(where).hasSize(7);
 
         EqualTo<?> equalTo = (EqualTo<?>) where.get(0);
         assertThat(((Enum<?>) equalTo.getField()).name()).isEqualTo(IExecutions.Fields.LABELS.name());
         assertThat(equalTo.getKey()).isEqualTo("environment");
         assertThat(equalTo.getValue()).isEqualTo("prod");
 
-        In<?> in = (In<?>) where.get(1);
-        assertThat(in.getKey()).isEqualTo("environment");
-        assertThat(in.getValues()).containsExactly("prod", "dev");
+        Or<?> inOr = (Or<?>) where.get(1);
+        assertThat(inOr.getValues()).hasSize(2);
+        In<?> firstIn = (In<?>) inOr.getValues().get(0);
+        assertThat(firstIn.getKey()).isEqualTo("environment");
+        assertThat(firstIn.getValues()).containsExactly("prod");
+        In<?> secondIn = (In<?>) inOr.getValues().get(1);
+        assertThat(secondIn.getKey()).isEqualTo("team");
+        assertThat(secondIn.getValues()).containsExactly("data");
 
         NotIn<?> notIn = (NotIn<?>) where.get(2);
         assertThat(notIn.getKey()).isEqualTo("team");
@@ -80,10 +97,14 @@ class DashboardDataGlobalFiltersTest {
         assertThat(contains.getKey()).isEqualTo("region");
         assertThat(contains.getValue()).isEqualTo("eu");
 
-        IsNull<?> isNull = (IsNull<?>) where.get(4);
+        NotContains<?> notContains = (NotContains<?>) where.get(4);
+        assertThat(notContains.getKey()).isEqualTo("region");
+        assertThat(notContains.getValue()).isEqualTo("us");
+
+        IsNull<?> isNull = (IsNull<?>) where.get(5);
         assertThat(isNull.getKey()).isEqualTo("deprecated");
 
-        IsNotNull<?> isNotNull = (IsNotNull<?>) where.get(5);
+        IsNotNull<?> isNotNull = (IsNotNull<?>) where.get(6);
         assertThat(isNotNull.getKey()).isEqualTo("owner");
     }
 

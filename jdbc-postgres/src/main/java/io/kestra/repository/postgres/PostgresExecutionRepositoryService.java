@@ -57,6 +57,8 @@ public abstract class PostgresExecutionRepositoryService {
                 );
                 switch (operation) {
                     case EQUALS -> conditions.add(labelMatches.isTrue());
+                    case CONTAINS -> conditions.add(labelValueContainsCondition((String) key, (String) value));
+                    case NOT_CONTAINS -> conditions.add(labelValueContainsCondition((String) key, (String) value).not());
                     case NOT_EQUALS, NOT_IN -> conditions.add(labelMatches.isFalse());
                     case IN -> inConditions.add(labelMatches.isTrue());
                     case IS_NULL -> conditions.add(labelKeyCondition((String) key).not());
@@ -79,6 +81,15 @@ public abstract class PostgresExecutionRepositoryService {
             "    OR lower(lbl ->> 'key') LIKE lower('%' || ? || '%')" +
             ")";
         return DSL.condition(sql, query, query);
+    }
+
+    private static Condition labelValueContainsCondition(String key, String value) {
+        String sql = "EXISTS (" +
+            " SELECT 1 FROM jsonb_array_elements(COALESCE(value -> 'labels', '[]'::jsonb)) AS lbl" +
+            " WHERE lbl ->> 'key' = ?" +
+            "   AND lower(lbl ->> 'value') LIKE lower('%' || ? || '%')" +
+            ")";
+        return DSL.condition(sql, key, value);
     }
 
     private static Condition labelKeyCondition(String key) {

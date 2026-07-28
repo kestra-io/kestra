@@ -60,6 +60,10 @@ public abstract class MysqlExecutionRepositoryService {
                 switch (operation) {
                     case EQUALS ->
                         conditions.add(labelCondition);
+                    case CONTAINS ->
+                        conditions.add(labelValueContainsCondition((String) key, (String) value));
+                    case NOT_CONTAINS ->
+                        conditions.add(labelValueContainsCondition((String) key, (String) value).not());
                     case NOT_EQUALS, NOT_IN ->
                         conditions.add(labelNotCondition);
                     case IN ->
@@ -88,6 +92,24 @@ public abstract class MysqlExecutionRepositoryService {
                     "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].value') IS NOT NULL", query
                 )
             );
+    }
+
+    private static Condition labelValueContainsCondition(String key, String value) {
+        return DSL.condition(
+            """
+            EXISTS (
+                SELECT 1
+                FROM JSON_TABLE(value, '$.labels[*]' COLUMNS (
+                    label_key VARCHAR(255) PATH '$.key',
+                    label_value VARCHAR(255) PATH '$.value'
+                )) AS labels
+                WHERE labels.label_key = ?
+                  AND LOWER(labels.label_value) LIKE LOWER(CONCAT('%', ?, '%'))
+            )
+            """,
+            key,
+            value
+        );
     }
 
     private static Condition labelKeyCondition(String key) {

@@ -138,11 +138,12 @@ public record QueryFilter(
             case STARTS_WITH -> StartsWith.<T> builder().field(field).value(value.toString()).build();
             case ENDS_WITH -> EndsWith.<T> builder().field(field).value(value.toString()).build();
             case CONTAINS -> Contains.<T> builder().field(field).value(value.toString()).build();
+            case NOT_CONTAINS -> NotContains.<T> builder().field(field).value(value.toString()).build();
             case IS_NULL -> IsNull.<T> builder().field(field).build();
             case IS_NOT_NULL -> IsNotNull.<T> builder().field(field).build();
             case REGEX -> Regex.<T> builder().field(field).value(value.toString()).build();
             case PREFIX -> Prefix.<T> builder().field(field).value(value.toString()).build();
-            default -> throw new UnsupportedOperationException("Unsupported dashboard filter operation: " + this.operation);
+            default -> throw new UnsupportedOperationException("Unsupported dashboard filter operation: %s.".formatted(this.operation));
         };
     }
 

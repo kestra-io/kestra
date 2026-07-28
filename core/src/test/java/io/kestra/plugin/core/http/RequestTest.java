@@ -119,23 +119,28 @@ class RequestTest {
 
     @Test
     void head404() throws Exception {
-        final String url = "https://bdnb-data.s3.fr-par.scw.cloud/bnb_export_metropole_sql_dump.tar.gz";
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            String url = server.getURL().toString() + "/not-found";
 
-        Request task = Request.builder()
-            .id(RequestTest.class.getSimpleName())
-            .type(RequestTest.class.getName())
-            .uri(Property.ofValue(url))
-            .method(Property.ofValue("HEAD"))
-            .build();
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(url))
+                .method(Property.ofValue("HEAD"))
+                .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
-        HttpClientResponseException exception = assertThrows(
-            HttpClientResponseException.class,
-            () -> task.run(runContext)
-        );
+            HttpClientResponseException exception = assertThrows(
+                HttpClientResponseException.class,
+                () -> task.run(runContext)
+            );
 
-        assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(404);
+            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(404);
+        }
     }
 
     @Test

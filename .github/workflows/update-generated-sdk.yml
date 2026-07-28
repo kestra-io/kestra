@@ -100,11 +100,15 @@ jobs:
       - name: Commit and push
         if: steps.compare.outputs.changed == 'true'
         shell: bash
+        # the subject comes from a contributor's commit, so keep it out of the script
+        # itself: interpolated directly, a `$(...)` subject would run on the runner
+        env:
+          SOURCE_MESSAGE: ${{ steps.source-commit.outputs.message }}
         run: |
           git config user.name "kestra-io"
           git config user.email "hello@kestra.io"
           git add ui/packages/kestra-sdk/src/openapi ui/packages/kestra-sdk/package.json
-          git commit -m "ci: auto-update generated kestra-sdk from ${{ steps.source-commit.outputs.message }}"
+          git commit -m "ci: auto-update generated kestra-sdk from ${SOURCE_MESSAGE}"
           git push --set-upstream origin HEAD
 
       - name: Get the body of a potential PR

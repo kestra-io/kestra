@@ -23,8 +23,13 @@ export type {EnterpriseFeatureConfig, EnterpriseFeatureMatch} from "./errors"
 
 /** Response header set by a Kestra server on every 404, naming its edition ("OSS" or "EE"). */
 const EDITION_HEADER = "X-Kestra-Edition"
-/** Response header set by a Kestra server on a 404 caused by a genuine, specific not-found lookup. */
-const ENTITY_HEADER = "X-Kestra-Entity"
+/**
+ * Response header set by a Kestra server on every 404, telling whether the request matched a route
+ * that exists on this server ("true") or matched no route at all ("false"). A matched route means the
+ * 404 came from application code running a genuine lookup, never from a route/feature that is simply
+ * absent — so it can never be an EE-only-route mismatch, regardless of {@link EnterpriseFeatureConfig.matchRoute}.
+ */
+const ROUTE_MATCHED_HEADER = "X-Kestra-Route-Matched"
 
 /** Minimal structural shape of a @hey-api/client-fetch interceptor slot. */
 interface FetchInterceptor {
@@ -212,9 +217,12 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
 
             const status = response.status
 
-            // matchRoute alone can't tell a real not-found apart from an EE-only route; the entity/edition
+            // matchRoute alone can't tell a real not-found apart from an EE-only route; the route-matched/edition
             // headers do — see EnterpriseFeatureError / SdkVersionMismatchError docs for the full rationale.
-            if (status === 404 && enterpriseFeature && request && opts?.url && !response.headers.get(ENTITY_HEADER)) {
+            // A server that reports the route as matched ran application code to produce this 404, so it's
+            // always a genuine not-found — never treat it as an EE-only-route mismatch. Absent header (older
+            // server) falls back to the pre-existing matchRoute + edition heuristic below.
+            if (status === 404 && enterpriseFeature && request && opts?.url && response.headers.get(ROUTE_MATCHED_HEADER) !== "true") {
                 const match = enterpriseFeature.matchRoute(request.method, opts.url)
                 if (match) {
                     if (response.headers.get(EDITION_HEADER) === "EE") {

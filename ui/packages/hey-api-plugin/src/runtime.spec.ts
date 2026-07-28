@@ -44,13 +44,13 @@ function fakeResponse(status: number, headers: Record<string, string> = {}): Res
 }
 
 describe("createConfigureClient 404 disambiguation", () => {
-    it("never returns EnterpriseFeatureError when X-Kestra-Entity is present, regardless of edition", () => {
+    it("never returns EnterpriseFeatureError when X-Kestra-Route-Matched is true, regardless of edition", () => {
         const {client, getErrorInterceptor} = buildFakeClient()
         createConfigureClient(client, formDataBodySerializer, enterpriseFeature)()
 
         const result = getErrorInterceptor()(
             {message: "Not Found"},
-            fakeResponse(404, {"X-Kestra-Edition": "EE", "X-Kestra-Entity": "AUDITLOG"}),
+            fakeResponse(404, {"X-Kestra-Edition": "EE", "X-Kestra-Route-Matched": "true"}),
             fakeRequest(),
             {url: "/api/v1/{tenant}/audit-logs/search"},
         )
@@ -59,13 +59,13 @@ describe("createConfigureClient 404 disambiguation", () => {
         expect(result).not.toBeInstanceOf(SdkVersionMismatchError)
     })
 
-    it("returns SdkVersionMismatchError when the route matches, entity is absent, and edition is EE", () => {
+    it("returns SdkVersionMismatchError when the route matches, X-Kestra-Route-Matched is false, and edition is EE", () => {
         const {client, getErrorInterceptor} = buildFakeClient()
         createConfigureClient(client, formDataBodySerializer, enterpriseFeature)()
 
         const result = getErrorInterceptor()(
             {message: "Not Found"},
-            fakeResponse(404, {"X-Kestra-Edition": "EE"}),
+            fakeResponse(404, {"X-Kestra-Edition": "EE", "X-Kestra-Route-Matched": "false"}),
             fakeRequest(),
             {url: "/api/v1/{tenant}/audit-logs/search"},
         )
@@ -74,13 +74,13 @@ describe("createConfigureClient 404 disambiguation", () => {
         expect((result as SdkVersionMismatchError).feature).toBe("audit-logs")
     })
 
-    it("returns EnterpriseFeatureError when the route matches and edition is OSS", () => {
+    it("returns EnterpriseFeatureError when the route matches, X-Kestra-Route-Matched is false, and edition is OSS", () => {
         const {client, getErrorInterceptor} = buildFakeClient()
         createConfigureClient(client, formDataBodySerializer, enterpriseFeature)()
 
         const result = getErrorInterceptor()(
             {message: "Not Found"},
-            fakeResponse(404, {"X-Kestra-Edition": "OSS"}),
+            fakeResponse(404, {"X-Kestra-Edition": "OSS", "X-Kestra-Route-Matched": "false"}),
             fakeRequest(),
             {url: "/api/v1/{tenant}/audit-logs/search"},
         )
@@ -88,7 +88,7 @@ describe("createConfigureClient 404 disambiguation", () => {
         expect(result).toBeInstanceOf(EnterpriseFeatureError)
     })
 
-    it("returns EnterpriseFeatureError when the route matches and the edition header is absent (older server)", () => {
+    it("returns EnterpriseFeatureError when the route matches and both headers are absent (older server)", () => {
         const {client, getErrorInterceptor} = buildFakeClient()
         createConfigureClient(client, formDataBodySerializer, enterpriseFeature)()
 
@@ -102,13 +102,13 @@ describe("createConfigureClient 404 disambiguation", () => {
         expect(result).toBeInstanceOf(EnterpriseFeatureError)
     })
 
-    it("does not throw an EE error for a non-matching route even with entity absent", () => {
+    it("does not throw an EE error for a non-matching route even with X-Kestra-Route-Matched false", () => {
         const {client, getErrorInterceptor} = buildFakeClient()
         createConfigureClient(client, formDataBodySerializer, enterpriseFeature)()
 
         const result = getErrorInterceptor()(
             {message: "Not Found"},
-            fakeResponse(404, {"X-Kestra-Edition": "OSS"}),
+            fakeResponse(404, {"X-Kestra-Edition": "OSS", "X-Kestra-Route-Matched": "false"}),
             fakeRequest(),
             {url: "/api/v1/{tenant}/flows/{namespace}/{id}"},
         )

@@ -84,3 +84,21 @@ micronaut:
 ```
 
 If you're doing frontend development, you can run `npm run dev` from the `ui` folder after having the above running (which will provide a backend) to access your application from `localhost:5173`. This has the benefit to watch your changes and hot-reload upon doing frontend changes.
+
+### CORS and the 404 disambiguation headers
+
+Kestra tags every 404 response with `X-Kestra-Edition` and `X-Kestra-Route-Matched` (see `EditionHeaderFilter`) so a browser-based client (e.g. `client-sdk`) can tell a genuine not-found apart from a route that simply doesn't exist on this server/edition. Browsers only expose response headers to cross-origin JavaScript that the server explicitly lists in `Access-Control-Expose-Headers`. If your CORS-enabled configuration is consumed by such a client, add both headers to its `exposed-headers`:
+
+```yaml
+micronaut:
+  server:
+    cors:
+      enabled: true
+      configurations:
+        all:
+          allowedOrigins:
+            - http://localhost:5173
+          exposed-headers:
+            - X-Kestra-Edition
+            - X-Kestra-Route-Matched
+```

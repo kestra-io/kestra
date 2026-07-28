@@ -54,16 +54,14 @@ micronaut:
           - /metrics/.+
           - /prometheus(\?.*)?
     http-version: HTTP_1_1
-    # Not enabled here (each deployment/reverse-proxy override decides whether CORS is on and for
-    # which origins) - only pre-declares the headers a browser client needs exposed once CORS is
-    # enabled under this configuration name, so client-sdk's 404 disambiguation (X-Kestra-Entity /
-    # X-Kestra-Edition response headers) isn't silently invisible to cross-origin JS callers.
-    cors:
-      configurations:
-        web:
-          exposed-headers:
-            - X-Kestra-Entity
-            - X-Kestra-Edition
+    # CORS is off by default; each deployment decides whether to enable it and for which named
+    # configuration(s)/origins (micronaut.server.cors.configurations.<name>). A configuration
+    # declared here with no `allowedOrigins` would default to matching ANY origin with credentials
+    # allowed (Micronaut's CorsOriginConfiguration default), and CorsFilter takes the first matching
+    # configuration — so a config shipped as an OSS default risks silently bypassing a deployment's
+    # own hardened, origin-restricted configuration. Deployments that enable CORS and want browser
+    # clients to read the X-Kestra-Edition / X-Kestra-Route-Matched 404-disambiguation headers (see
+    # EditionHeaderFilter) must add `exposed-headers` for both to their own named configuration.
   security:
     filter:
       enabled: false

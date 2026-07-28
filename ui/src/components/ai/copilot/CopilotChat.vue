@@ -250,7 +250,8 @@
         clearTimeout(endTimer)
         if (was && !now) {
             ending.value = true
-            endTimer = setTimeout(() => (ending.value = false), 650)
+            // Covers the full end sequence: dots gather + mark bloom (~0.7s), a 3s hold, then the fade.
+            endTimer = setTimeout(() => (ending.value = false), 4300)
         } else if (now) {
             ending.value = false
         }

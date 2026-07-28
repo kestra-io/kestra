@@ -1,5 +1,7 @@
 package io.kestra.webserver.services.ai;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +25,10 @@ import io.kestra.libs.copilot.models.in.FlowGenerationPrompt;
 import io.kestra.libs.copilot.models.in.PluginMetadata;
 import io.kestra.libs.copilot.services.ai.*;
 import io.kestra.webserver.services.posthog.PosthogService;
+import io.kestra.webserver.utils.HttpClientUtils;
 
+import dev.langchain4j.http.client.HttpClientBuilderLoader;
+import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.service.AiServices;
@@ -58,6 +63,33 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     protected String baseUrl() {
         return null;
+    }
+
+    /**
+     * Builds an HTTP client configured with the given client PEM certificate (and optional CA), for
+     * providers that support mutual-TLS. Returns empty when no client certificate is configured, so a
+     * caller applies it conditionally: {@code pemHttpClientBuilder(cfg.clientPem(), cfg.caPem()).ifPresent(builder::httpClientBuilder)}.
+     * Extracted here so the identical setup is not repeated in each provider's chat and streaming builders.
+     *
+     * @param clientPem the client certificate PEM, or {@code null} when mutual-TLS is not configured.
+     * @param caPem the CA certificate PEM, or {@code null}.
+     * @return the configured HTTP client builder, or empty when {@code clientPem} is {@code null}.
+     */
+    protected static Optional<JdkHttpClientBuilder> pemHttpClientBuilder(@Nullable String clientPem, @Nullable String caPem) {
+        if (clientPem == null) {
+            return Optional.empty();
+        }
+        try (
+            ByteArrayInputStream is = new ByteArrayInputStream(clientPem.getBytes(StandardCharsets.UTF_8));
+            ByteArrayInputStream caPemIs = caPem == null ? null : new ByteArrayInputStream(caPem.getBytes(StandardCharsets.UTF_8))
+        ) {
+            return Optional.of(
+                ((JdkHttpClientBuilder) HttpClientBuilderLoader.loadHttpClientBuilder())
+                    .httpClientBuilder(HttpClientUtils.withPemCertificate(is, caPemIs))
+            );
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Exception while trying to setup AI Service certificates", e);
+        }
     }
 
     protected List<ChatModelListener> listeners(String spanName, String conversationId) {

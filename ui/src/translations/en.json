@@ -184,6 +184,7 @@
     "last execution status": "Last execution status",
     "jump to...": "Jump to...",
     "contextBar": {
+      "ai": "AI",
       "news": "News",
       "docs": "Docs",
       "help": "Help",
@@ -2059,6 +2060,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Ask a question about your data. Example prompt: Show me the success rate of my flows in the last 7 days."
+      },
+      "copilot": {
+        "title": "AI Copilot",
+        "placeholder": "Tell me what to build…",
+        "send": "Send",
+        "mode": {
+          "ask": "Ask",
+          "edit": "Edit",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Turn your idea into a workflow"
+        },
+        "toolCall": "Running {tool}",
+        "context": {
+          "execution": "Execution: {id}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {namespace}"
+        },
+        "toolResult": {
+          "detail": "Details",
+          "error": "{tool} failed",
+          "ok": "{tool} completed",
+          "rejected": "{tool} rejected"
+        },
+        "confirm": {
+          "planTitle": "Proposed plan",
+          "actionTitle": "Proposed action",
+          "approve": "Approve",
+          "approveExecute": "Approve & execute",
+          "reject": "Reject",
+          "reasonPlaceholder": "Reply to revise…",
+          "pending": "Pending approval",
+          "revise": "Reply to revise"
+        },
+        "notice": {
+          "emptyTurn": "The assistant didn't return a response. Please try again.",
+          "retry": "Retry"
+        },
+        "cancelled": "Turn cancelled",
+        "error": {
+          "turnCap": "This conversation reached its limit — start a new chat.",
+          "turnInProgress": "A turn is already in progress.",
+          "request": "The request failed. Please try again.",
+          "generic": "Something went wrong. Please try again."
+        },
+        "emptyHelper": "I can edit this flow, generate tests, scaffold related files, or explain how it works.",
+        "suggestions": {
+          "errorHandling": "Add error handling",
+          "unitTest": "Generate a unit test",
+          "explain": "Explain this flow",
+          "dbt": "Run a dbt pipeline"
+        },
+        "voice": {
+          "start": "Start voice input",
+          "stop": "Stop and insert",
+          "cancel": "Cancel voice input"
+        },
+        "unavailable": {
+          "title": "AI Copilot isn't available",
+          "detail": "No AI provider is configured. Ask an administrator to set one up, then try again.",
+          "retry": "Try again"
+        },
+        "thinking": "Thinking",
+        "thinkingWords": [
+          "Orchestrating",
+          "Scheduling",
+          "Sequencing",
+          "Routing",
+          "Dispatching",
+          "Queuing",
+          "Triggering",
+          "Executing",
+          "Coordinating",
+          "Provisioning",
+          "Resolving",
+          "Composing",
+          "Assembling",
+          "Planning",
+          "Mapping",
+          "Wiring",
+          "Branching",
+          "Synchronizing",
+          "Reconciling",
+          "Materializing",
+          "Compiling",
+          "Validating",
+          "Propagating",
+          "Converging"
+        ],
+        "newChat": "New chat",
+        "recents": "Recents",
+        "recentsEmpty": "No recent conversations yet",
+        "draft": {
+          "openInEditor": "Open in editor",
+          "apply": "Apply",
+          "applyTitle": "Apply flow",
+          "applyConfirm": "Apply the flow {namespace}.{id}? It will be created, or overwritten if it already exists.",
+          "applyConfirmDashboard": "Apply the dashboard {id}? It will be created, or overwritten if it already exists.",
+          "applyError": "Couldn't apply the flow. Please try again.",
+          "applyErrorDashboard": "Couldn't apply the dashboard. Please try again.",
+          "applyNoTarget": "This draft has no namespace or id to apply.",
+          "applyTitleDashboard": "Apply dashboard",
+          "title": {
+            "flow": "Proposed flow",
+            "dashboard": "Proposed dashboard",
+            "app": "Proposed app"
+          },
+          "valid": "Valid",
+          "invalid": "Needs changes",
+          "copy": "Copy YAML",
+          "copied": "Copied"
+        }
       }
     },
     "playground": {

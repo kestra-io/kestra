@@ -107,14 +107,12 @@ export const useExecutionsStore = defineStore("executions", () => {
     // State
     const executions = ref<Execution[] | undefined>(undefined)
     const execution = ref<Execution | undefined>(undefined)
-    const taskRun = ref<any | undefined>(undefined)
     const total = ref<number>(0)
     const logs = ref<LogsState>({
         total: 0,
         results: [],
     })
     const metrics = ref<any[]>([])
-    const metricsTotal = ref<number>(0)
     const subflowsExecutions = ref<Record<string, any>>({})
     // live lifecycle-step progress reported by plugins mid-run (see RunContext#emitProgress),
     // read off the follow-logs SSE stream; taskRunId is globally unique so this is safe to
@@ -846,11 +844,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         // State
         executions,
         execution,
-        taskRun,
         total,
         logs,
         metrics,
-        metricsTotal,
         subflowsExecutions,
         progressEvents,
         flow,

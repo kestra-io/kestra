@@ -22,7 +22,7 @@
     import {ref, computed, onMounted, watch} from "vue"
     import {useRoute} from "vue-router"
     import AiIcon from "vue-material-design-icons/Creation.vue"
-    import {useFlowStore} from "../stores/flow"
+    import {useMiscStore} from "override/stores/misc"
 
     interface ErrorItem {
         path?: string;
@@ -51,7 +51,7 @@
     })
 
     const route = useRoute()
-    const flowStore = useFlowStore()
+    const miscStore = useMiscStore()
     const markdownRenderer = ref<string | undefined>(undefined)
 
     const isFlowContext = computed(() => {
@@ -77,18 +77,12 @@
         const fullErrorMessage = [errorMessage, errorItems].filter(Boolean).join("\n\n")
         const prompt = `Fix the following error in the flow:\n${fullErrorMessage}`
 
-        try {
-            window.sessionStorage.setItem("kestra-ai-prompt", prompt)
-        } catch (err) {
-            console.warn("AI prompt not persisted to sessionStorage:", err)
-        }
-
         // Close the notification
         if (props.onClose) {
             props.onClose()
         }
 
-        flowStore.setOpenAiCopilot(true)
+        miscStore.promptCopilot(prompt)
     }
 
     // Watch for changes in message

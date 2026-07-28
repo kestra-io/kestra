@@ -4,7 +4,7 @@
     <div class="copilot-help" data-test="copilot-help">
         <KsText size="small" class="copilot-help-title">{{ $t("welcome_copilot.need_help") }}</KsText>
 
-        <RouterLink class="copilot-help-card" :to="{name: 'blueprints', params: {kind: 'community', tab: 'flow'}}">
+        <RouterLink class="copilot-help-card" :to="{name: 'blueprints', params: {kind: 'flow', tab: 'community'}}">
             <KsIcon class="copilot-help-icon"><FileTreeOutline /></KsIcon>
             <span class="copilot-help-text">
                 <KsText class="copilot-help-card-title">{{ $t("welcome_copilot.success_page.items.blueprints.title") }}</KsText>

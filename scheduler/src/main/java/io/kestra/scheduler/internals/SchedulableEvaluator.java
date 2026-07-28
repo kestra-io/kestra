@@ -2,7 +2,6 @@ package io.kestra.scheduler.internals;
 
 import java.util.Optional;
 
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -14,6 +13,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.utils.Logs;

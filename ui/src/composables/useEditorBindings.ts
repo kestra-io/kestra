@@ -20,7 +20,7 @@ export function useEditorBindings() {
             void miscStore.theme
             return getTheme()
         }),
-        pluginIcons: computed((): Record<string, {icon: string; flowable: boolean}> => pluginsStore.icons),
+        loadTaskIcon: pluginsStore.loadIcon,
         configureLanguage: (editor: monacoEditor.ICodeEditor | undefined, language: string, schemaType?: string) =>
             configureLanguageFn(flowStore, pluginsStore, t, editor, language, schemaType, router),
     })

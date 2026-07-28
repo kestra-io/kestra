@@ -1,7 +1,10 @@
 <template>
-    <RouterLink :to="{name: 'namespaces/update', params: {id: props.field}}">
-        <code class="link">{{ props.field }}</code>
-    </RouterLink>
+    <KsEntityLink
+        v-if="props.field"
+        entity="namespace"
+        :value="props.field"
+        :to="{name: 'namespaces/update', params: {id: props.field}}"
+    />
 </template>
 
 <script setup lang="ts">
@@ -12,9 +15,3 @@
         },
     })
 </script>
-
-<style scoped>
-.link {
-    color: var(--ks-text-link);
-}
-</style>

@@ -21,7 +21,7 @@
                     >
                         <span class="result-group-namespace">{{ item.model.namespace }}.</span>
                         <span class="result-group-id">{{ item.model.id }}</span>
-                        <span class="result-group-count">{{ t("source_search.match_count", {count: item.fragments.length}) }}</span>
+                        <span class="result-group-count">{{ $t("source_search.match_count", {count: item.fragments.length}) }}</span>
                     </span>
                 </template>
 
@@ -47,7 +47,7 @@
                             class="open-flow-link"
                             data-test="source-search-open-link"
                         >
-                            {{ t("source_search.open_flow") }}
+                            {{ $t("source_search.open_flow") }}
                             <KsIcon size="xs"><ArrowRight /></KsIcon>
                         </router-link>
                     </div>
@@ -59,7 +59,6 @@
 
 <script setup lang="ts">
     import {ref, watch} from "vue"
-    import {useI18n} from "vue-i18n"
     import _escape from "lodash/escape"
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
@@ -72,7 +71,6 @@
         (e: "select", value: {namespace: string; id: string; matchIndex: number}): void
     }>()
 
-    const {t} = useI18n()
 
     const expanded = ref<string[]>([])
 

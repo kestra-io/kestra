@@ -1,5 +1,20 @@
 import {vi} from "vitest"
 import {AppContext, ref} from "vue"
+import {config} from "@vue/test-utils"
+
+// Most unit tests mount a component in isolation, without installing vue-router,
+// so a literal <router-link> in its template (or a dynamic :is="'router-link'")
+// can never resolve and spams "[Vue warn]: Failed to resolve component:
+// router-link" on every mount. Register a minimal fake globally so it resolves
+// like the real component would.
+config.global.stubs = {
+    ...config.global.stubs,
+    RouterLink: {
+        name: "RouterLink",
+        props: ["to"],
+        template: "<a><slot /></a>",
+    },
+}
 
 // monaco-editor probes browser APIs jsdom doesn't ship with.
 if (typeof document !== "undefined" && typeof document.queryCommandSupported !== "function") {

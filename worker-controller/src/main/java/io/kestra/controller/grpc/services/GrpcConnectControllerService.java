@@ -31,7 +31,7 @@ public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.C
 
     @Override
     public void connect(ConnectRequest request, StreamObserver<ConnectResponse> responseObserver) {
-        String workerGroupId = resolveWorkerGroupId();
+        String workerGroupId = resolveWorkerGroupId(request);
         log.info("Worker connect request received with workerGroup: {}", workerGroupId);
 
         ConnectResponse response = ConnectResponse.newBuilder()
@@ -45,10 +45,11 @@ public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.C
     }
 
     /**
-     * Resolves the Worker Group id. OSS always returns {@link WorkerGroups#DEFAULT_ID};
-     * the EE override resolves it from the authenticated worker context.
+     * Resolves the Worker Group id for the connecting worker. OSS always returns
+     * {@link WorkerGroups#DEFAULT_ID}; the EE override resolves it from the authenticated
+     * worker context and may reject the connection.
      */
-    protected String resolveWorkerGroupId() {
+    protected String resolveWorkerGroupId(ConnectRequest request) {
         return WorkerGroups.DEFAULT_ID;
     }
 }

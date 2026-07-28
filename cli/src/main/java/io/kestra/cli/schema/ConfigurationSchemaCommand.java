@@ -38,8 +38,10 @@ public class ConfigurationSchemaCommand extends AbstractCommand {
         var generator = new ConfigurationSchemaGenerator();
         var schema = generator.generate(registry);
 
-        if (output.getParentFile() != null && !output.getParentFile().mkdirs()
-            && !output.getParentFile().isDirectory()) {
+        if (
+            output.getParentFile() != null && !output.getParentFile().mkdirs()
+                && !output.getParentFile().isDirectory()
+        ) {
             throw new IOException("Failed to create output directory: " + output.getParentFile());
         }
         ConfigurationSchemaGenerator.write(schema, output);

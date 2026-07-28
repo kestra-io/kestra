@@ -7,15 +7,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.runners.TransactionContext;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStateStore;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
+import io.kestra.core.runners.TransactionContext;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 
 public abstract class AbstractJdbcMultipleConditionStateStore extends AbstractJdbcRepository implements MultipleConditionStateStore {
@@ -29,7 +29,8 @@ public abstract class AbstractJdbcMultipleConditionStateStore extends AbstractJd
     public Execution process(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs, BiFunction<TransactionContext, MultipleConditionWindow, Execution> consumer) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext dslContext = DSL.using(configuration);
 
                 var multipleConditionWindow = this.jdbcRepository.getOrInsert(
@@ -57,7 +58,8 @@ public abstract class AbstractJdbcMultipleConditionStateStore extends AbstractJd
     public Optional<MultipleConditionWindow> get(FlowId flow, String conditionId) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext dslContext = DSL.using(configuration);
                 return this.get(dslContext, flow, conditionId);
             });
@@ -109,7 +111,8 @@ public abstract class AbstractJdbcMultipleConditionStateStore extends AbstractJd
 
     @Override
     public void save(MultipleConditionWindow multipleConditionWindow) {
-        this.jdbcRepository.getDslContextWrapper().transaction( configuration -> {
+        this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
+        {
             DSLContext dslContext = DSL.using(configuration);
             save(new JdbcTransactionContext(dslContext), multipleConditionWindow);
         });

@@ -1,0 +1,47 @@
+{
+  "name": "@kestra-io/kestra-sdk",
+  "version": "2.0.0",
+  "private": true,
+  "description": "JS/TS client generated from the OSS OpenAPI spec (io.kestra:webserver), in-repo, on the same commit as the backend it describes. The generated code under src/openapi is committed to git. Keeps the name of the module-federation-shared client so plugins and the app use one client (auth + routing). See README.md.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./ai": "./dist/ai.js",
+    "./blueprint-tags": "./dist/blueprint-tags.js",
+    "./blueprints": "./dist/blueprints.js",
+    "./client": "./dist/client.js",
+    "./dashboards": "./dist/dashboards.js",
+    "./default": "./dist/default.js",
+    "./executions": "./dist/executions.js",
+    "./expressions": "./dist/expressions.js",
+    "./files": "./dist/files.js",
+    "./flows": "./dist/flows.js",
+    "./kv": "./dist/kv.js",
+    "./logs": "./dist/logs.js",
+    "./mcp": "./dist/mcp.js",
+    "./metrics": "./dist/metrics.js",
+    "./misc": "./dist/misc.js",
+    "./namespaces": "./dist/namespaces.js",
+    "./outputs": "./dist/outputs.js",
+    "./plugins": "./dist/plugins.js",
+    "./secrets": "./dist/secrets.js",
+    "./services": "./dist/services.js",
+    "./shared": "./dist/shared.js",
+    "./tenants": "./dist/tenants.js",
+    "./triggers": "./dist/triggers.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "generate:openapi": "openapi-ts",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
+    "@kestra-io/hey-api-plugin": "*",
+    "@types/node": "^26.1.1",
+    "tsdown": "^0.22.0",
+    "typescript": "^6.0.3"
+  }
+}

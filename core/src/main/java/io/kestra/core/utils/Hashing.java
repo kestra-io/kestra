@@ -4,8 +4,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import com.google.common.hash.HashCode;
 import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.hash.HashCode;
 
 /**
  * Utilities for hashing.

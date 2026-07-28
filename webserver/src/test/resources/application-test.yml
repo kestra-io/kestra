@@ -41,7 +41,7 @@ kestra:
     maxRetryAttempts: 1
     shutdownTimeout: 3s
   controller:
-    port: ${random.port}
+    port: ${random.int[20000,32000]} # keep out of the ephemeral port range (32768-60999): an outbound socket could steal a random.port between config resolution and the controller bind
     maxConnectionAgeGrace: 0s
   worker:
     controllers:
@@ -205,7 +205,7 @@ kestra:
 
 datasources:
   h2:
-    url: jdbc:h2:mem:public_webserver;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:public_webserver;LOCK_TIMEOUT=30000;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
     password: ""
     driverClassName: org.h2.Driver

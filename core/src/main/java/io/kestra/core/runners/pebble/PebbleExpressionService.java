@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.kestra.core.runners.pebble.functions.KestraFunction;
+
 import io.micronaut.context.annotation.Context;
 import io.pebbletemplates.pebble.extension.Extension;
 import io.pebbletemplates.pebble.extension.Filter;
@@ -45,7 +46,8 @@ public class PebbleExpressionService {
 
         this.functions = allFunctions.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
-            .map(entry -> {
+            .map(entry ->
+            {
                 Function fn = entry.getValue();
                 List<String> argNames = fn.getArgumentNames();
                 if (argNames == null) {

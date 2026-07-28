@@ -11,6 +11,17 @@
         >
             {{ $t('download') }}
         </KsButton>
+        <KsButton
+            v-if="Utils.isIon(value)"
+            type="primary"
+            tag="a"
+            :href="jsonlUrl(value.toString())"
+            target="_blank"
+            size="small"
+            rel="noopener noreferrer"
+        >
+            {{ $t('jsonl') }}
+        </KsButton>
         <FilePreviewDrawer v-if="Utils.isFile(value)" :value="value.toString()" :executionId="execution.id" />
         <KsButton disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
@@ -152,6 +163,10 @@
 
     const itemUrl = (value: string): string => {
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`
+    }
+
+    const jsonlUrl = (value: string): string => {
+        return `${itemUrl(value)}&format=JSONL`
     }
 
     const getFileSize = async (): Promise<void> => {

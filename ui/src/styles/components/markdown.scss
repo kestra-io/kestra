@@ -7,7 +7,7 @@
         padding-top: 3.125rem;
 
         > a {
-            font-size: 1.87rem;
+            font-size: var(--ks-font-size-lg);
             padding-left: .6rem;
         }
     }
@@ -131,10 +131,6 @@
         &:has(+ h2) {
             display: none;
         }
-    }
-
-    p {
-        line-height: 1.75rem;
     }
 
     .material-design-icon {

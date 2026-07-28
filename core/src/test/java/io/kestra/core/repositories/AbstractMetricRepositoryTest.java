@@ -38,6 +38,7 @@ public abstract class AbstractMetricRepositoryTest {
     void all() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String executionId = FriendlyId.createFriendlyId();
+        ZonedDateTime now = ZonedDateTime.now();
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
@@ -64,12 +65,17 @@ public abstract class AbstractMetricRepositoryTest {
             "flow",
             null,
             counter.getName(),
-            ZonedDateTime.now().minusDays(30),
-            ZonedDateTime.now(),
+            now.minusDays(30),
+            now,
             "sum"
         );
 
-        assertThat(aggregationResults.getAggregations().size()).isEqualTo(31);
+        // The exact bucket count at the range boundary is backend-dependent: JDBC fills
+        // the half-open range [start, end) in fixed 1-unit steps (30 buckets), whereas
+        // Elasticsearch uses a calendar_interval date_histogram with inclusive extended
+        // bounds [floor(start), floor(end)] (31 buckets). Both are valid groupings, so we
+        // accept either; the meaningful assertion is that grouping is by day.
+        assertThat(aggregationResults.getAggregations().size()).isBetween(30, 31);
         assertThat(aggregationResults.getGroupBy()).isEqualTo("day");
 
         aggregationResults = metricRepository.aggregateByFlowId(
@@ -78,12 +84,14 @@ public abstract class AbstractMetricRepositoryTest {
             "flow",
             null,
             counter.getName(),
-            ZonedDateTime.now().minusWeeks(26),
-            ZonedDateTime.now(),
+            now.minusWeeks(26),
+            now,
             "sum"
         );
 
-        assertThat(aggregationResults.getAggregations().size()).isEqualTo(27);
+        // Same backend-dependent boundary as above: JDBC yields 26 weekly buckets,
+        // Elasticsearch's calendar-aligned histogram yields 27.
+        assertThat(aggregationResults.getAggregations().size()).isBetween(26, 27);
         assertThat(aggregationResults.getGroupBy()).isEqualTo("week");
 
     }
@@ -190,6 +198,22 @@ public abstract class AbstractMetricRepositoryTest {
         assertThat(results).isEqualTo(1.0);
     }
 
+    @Test
+    void shouldPersistTaskIdLongerThan150Chars() {
+        // A plugin-generated taskId (e.g. Ansible "<host> | <play> : <task>") can exceed the legacy
+        // VARCHAR(150) task_id column and crash-loop the indexer; the column now allows up to 256.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        String longTaskId = "a".repeat(200);
+        MetricEntry counter = MetricEntry.of(taskRun(tenant, executionId, longTaskId), counter("counter"), null);
+
+        metricRepository.save(counter);
+
+        List<MetricEntry> results = metricRepository.findByExecutionIdAndTaskId(tenant, executionId, longTaskId, Pageable.from(1, 10));
+        assertThat(results.size()).isEqualTo(1);
+        assertThat(results.getFirst().getTaskId()).isEqualTo(longTaskId);
+    }
+
     private Counter counter(String metricName) {
         return Counter.of(metricName, 1);
     }
@@ -208,4 +232,84 @@ public abstract class AbstractMetricRepositoryTest {
             .id(FriendlyId.createFriendlyId())
             .build();
     }
+
+    @Test
+    void shouldAggregateByFlowIdWithTaskIdFilter() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+
+        TaskRun taskRunA = taskRun(tenant, executionId, "taskA");
+        TaskRun taskRunB = taskRun(tenant, executionId, "taskB");
+
+        metricRepository.save(MetricEntry.of(taskRunA, counter("shared-metric"), null));
+        metricRepository.save(MetricEntry.of(taskRunB, counter("shared-metric"), null));
+
+        MetricAggregations allTasks = metricRepository.aggregateByFlowId(
+            tenant, "namespace", "flow", null, "shared-metric",
+            ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), "sum"
+        );
+
+        MetricAggregations taskAOnly = metricRepository.aggregateByFlowId(
+            tenant, "namespace", "flow", "taskA", "shared-metric",
+            ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), "sum"
+        );
+
+        assertThat(allTasks.getAggregations()).isNotEmpty();
+        assertThat(taskAOnly.getAggregations()).isNotEmpty();
+    }
+
+    @Test
+    void shouldAggregateByFlowIdWithDifferentAggregationTypes() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+
+        metricRepository.save(MetricEntry.of(taskRun1, counter("agg-metric"), null));
+
+        for (String aggType : List.of("sum", "avg", "min", "max")) {
+            MetricAggregations result = metricRepository.aggregateByFlowId(
+                tenant, "namespace", "flow", null, "agg-metric",
+                ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), aggType
+            );
+
+            assertThat(result.getAggregations()).as("aggregation type: " + aggType).isNotEmpty();
+        }
+    }
+
+    @Test
+    void shouldPaginateFindByExecutionId() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+
+        for (int i = 0; i < 5; i++) {
+            metricRepository.save(MetricEntry.of(taskRun1, counter("metric" + i), null));
+        }
+
+        ArrayListTotal<MetricEntry> page1 = metricRepository.findByExecutionId(tenant, executionId, Pageable.from(1, 2));
+        assertThat(page1).hasSize(2);
+        assertThat(page1.getTotal()).isEqualTo(5);
+
+        ArrayListTotal<MetricEntry> page3 = metricRepository.findByExecutionId(tenant, executionId, Pageable.from(3, 2));
+        assertThat(page3).hasSize(1);
+        assertThat(page3.getTotal()).isEqualTo(5);
+    }
+
+    @Test
+    void shouldReturnDistinctTasksWithMetrics() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+
+        TaskRun taskRunA = taskRun(tenant, executionId, "taskA");
+        TaskRun taskRunB = taskRun(tenant, executionId, "taskB");
+
+        metricRepository.save(MetricEntry.of(taskRunA, counter("m1"), null));
+        metricRepository.save(MetricEntry.of(taskRunA, counter("m2"), null));
+        metricRepository.save(MetricEntry.of(taskRunB, counter("m3"), null));
+
+        List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(tenant, "namespace", "flow");
+
+        assertThat(tasksWithMetrics).containsExactlyInAnyOrder("taskA", "taskB");
+    }
+
 }

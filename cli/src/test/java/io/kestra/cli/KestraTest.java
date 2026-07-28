@@ -11,10 +11,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.kestra.core.models.ServerType;
-import picocli.CommandLine;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import picocli.CommandLine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;

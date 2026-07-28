@@ -3,13 +3,16 @@
         When the namespace has no files yet, show a dedicated empty state without
         the file browser. The splitter is kept mounted (v-show) so the explorer can
         load the tree and own the create-file dialog reused by the empty state.
+        While the root of the tree loads, show a loading state instead of the
+        splitter so the sidebar doesn't flash before the empty state appears.
     -->
+    <div v-if="!filesStore.rootLoaded" v-ks-loading="true" class="namespace-files-loading" />
     <NamespaceFilesEmpty
-        v-if="filesStore.isEmpty"
+        v-else-if="filesStore.isEmpty"
         @new-file="fileExplorer?.openCreationDialog('file')"
     />
     <KsSplitter
-        v-show="!filesStore.isEmpty"
+        v-show="filesStore.rootLoaded && !filesStore.isEmpty"
         class="default-theme file-splitter"
         v-bind="$attrs"
         @resize-end="onResize"
@@ -108,6 +111,11 @@
 </script>
 
 <style lang="scss" scoped>
+    .namespace-files-loading {
+        height: 100%;
+        position: relative;
+    }
+
     .file-splitter {
         margin: 2rem;
         border: 1px solid var(--ks-border-default);
@@ -115,6 +123,7 @@
         width: auto;
         height: calc(100% - 4rem);
         overflow: auto;
+        margin-right: 1rem;
     }
     .namespace-files-no-selection {
         width: 100%;

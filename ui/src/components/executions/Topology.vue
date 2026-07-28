@@ -25,9 +25,8 @@
 </template>
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, onUnmounted} from "vue"
-    import {useI18n} from "vue-i18n"
     import throttle from "lodash/throttle"
-    import {stringUtils, State} from "@kestra-io/design-system"
+    import {stringUtils, State, levelToRequestParams} from "@kestra-io/design-system"
     import LowCodeEditor from "../inputs/LowCodeEditor.vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {useFlowStore} from "../../stores/flow"
@@ -42,7 +41,6 @@
         follow: [event: unknown]
     }>()
 
-    const {t} = useI18n()
     const executionsStore = useExecutionsStore()
     const flowStore = useFlowStore()
 
@@ -57,11 +55,68 @@
     // FIXME: any - SSE objects don't have a consistent type in this codebase
     const sseBySubflow = ref<Record<string, any>>({}) // FIXME: any
 
-    const throttledExecutionUpdate = throttle(function(subflow: string, executionEvent: MessageEvent) {
+    // Live lifecycle-step progress (see RunContext#emitProgress) rides the existing follow-logs
+    // SSE as a typed field, so plugin topology-details slots can track per-step progress in real
+    // time — metrics/outputs only materialise once the task run completes.
+    let progressSSE: EventSource | undefined
+    // followLogs() resolves asynchronously; if the component unmounts in that window, the
+    // EventSource would land in a ref no one closes again. Guard against it explicitly instead
+    // of relying on onUnmounted alone.
+    let unmounted = false
+
+    function closeProgressSSE() {
+        progressSSE?.close()
+        progressSSE = undefined
+    }
+
+    function followProgress() {
+        closeProgressSSE()
+        const id = execution.value?.id
+        if (!id) return
+        executionsStore.followLogs({id, params: levelToRequestParams({value: "INFO", direction: "min"})}).then((sse: EventSource) => {
+            if (unmounted) {
+                sse.close()
+                return
+            }
+            progressSSE = sse
+            sse.onmessage = (event: MessageEvent) => {
+                if (event.lastEventId === "start") return
+                const data = JSON.parse(event.data)
+                if (!data.progress) return
+                executionsStore.addProgressEvent({
+                    taskId: data.taskId,
+                    taskRunId: data.taskRunId,
+                    step: data.progress,
+                    timestamp: data.timestamp,
+                })
+            }
+            // No onerror handler: closing here on a transient drop is what previously froze the
+            // stepper (kestra-io/kestra#16982's leak fear doesn't apply — closeProgressSSE()
+            // below still runs once the execution terminates). Let EventSource auto-reconnect;
+            // the historical replay it gets on reconnect is idempotent thanks to the dedup in
+            // addProgressEvent, so a reconnect can only ever catch up, never regress.
+        })
+    }
+
+    const isExecutionRunning = computed(() => {
+        const current = execution.value?.state?.current
+        return !!current && State.isRunning(current)
+    })
+
+    watch(
+        [() => execution.value?.id, isExecutionRunning],
+        ([id, running]) => {
+            if (id && running) followProgress()
+            else closeProgressSSE()
+        },
+        {immediate: true},
+    )
+
+    const throttledExecutionUpdate = throttle(function(subflow: string, subflowExecution: any) { // FIXME: any
         const previousExecution = executionsStore.subflowsExecutions[subflow]
         executionsStore.addSubflowExecution({
             subflow,
-            execution: JSON.parse(executionEvent.data),
+            execution: subflowExecution,
         })
 
         // add subflow execution id to graph
@@ -79,7 +134,9 @@
     })
 
     onUnmounted(() => {
+        unmounted = true
         Object.keys(sseBySubflow.value).forEach(closeSSE)
+        closeProgressSSE()
     })
 
     function closeSSE(subflow: string) {
@@ -90,6 +147,13 @@
 
     function loadData() {
         loadGraph()
+        loadFlowSource()
+    }
+
+    function loadFlowSource() {
+        const exec = execution.value
+        if (!exec || flowStore.flow?.id === exec.flowId && flowStore.flow?.namespace === exec.namespace) return
+        flowStore.loadFlow({namespace: exec.namespace, id: exec.flowId})
     }
 
     function loadGraph(force?: boolean) {
@@ -171,23 +235,23 @@
             return
         }
 
-        executionsStore.followExecution({id: executionId}, t)
-            .then((sse: {onmessage: ((event: MessageEvent) => void) | null; close: () => void}) => {
-                sseBySubflow.value[subflow] = sse
-                sse.onmessage = (executionEvent: MessageEvent) => {
-                    const isEnd = executionEvent && executionEvent.lastEventId === "end"
-                    if (isEnd) {
-                        closeSubExecutionSSE(subflow)
-                    }
-                    // we are receiving a first "fake" event to force initializing the connection: ignoring it
-                    if (executionEvent.lastEventId !== "start") {
-                        throttledExecutionUpdate(subflow, executionEvent)
-                    }
-                    if (isEnd) {
-                        throttledExecutionUpdate.flush()
-                    }
-                }
-            })
+        if (unmounted) {
+            return
+        }
+
+        // subscribeToExecution (not followExecution) is required here — followExecution treats
+        // its target as *the* displayed execution: it nulls executionsStore.execution, closes,
+        // and overwrites the shared subscription handle. Expanding a subflow would silently kill
+        // the parent execution's own live stream (see useExecutionRoot.ts) and, with several
+        // subflows expanded, each new one would kill the previous one's tracking too. A dedicated
+        // subscription keeps each subflow's stream independent.
+        sseBySubflow.value[subflow] = executionsStore.subscribeToExecution(executionId, {
+            onExecution: (subflowExecution) => throttledExecutionUpdate(subflow, subflowExecution),
+            onEnd: () => {
+                throttledExecutionUpdate.flush()
+                closeSubExecutionSSE(subflow)
+            },
+        })
     }
 
     function closeSubExecutionSSE(subflow: string) {

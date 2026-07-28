@@ -3,6 +3,10 @@ package io.kestra.controller.grpc.services;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.core.metrics.MetricConfig;
 import io.kestra.core.metrics.MetricRegistry;
@@ -10,9 +14,6 @@ import io.kestra.core.worker.QueueSubscription;
 
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -41,8 +42,10 @@ class WorkerCapacityMetricsPublisherTest {
 
     @Test
     void shouldRegisterGaugesWhenFirstWorkerForPairConnects() {
-        WorkerStreamContext<WorkerJobResponse> w = context("w1", "group-a", 10,
-            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION));
+        WorkerStreamContext<WorkerJobResponse> w = context(
+            "w1", "group-a", 10,
+            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION)
+        );
         when(dispatcher.activeStreams()).thenReturn(List.of(w));
 
         publisher.onWorkerRegistered(w);
@@ -59,10 +62,14 @@ class WorkerCapacityMetricsPublisherTest {
 
     @Test
     void shouldKeepGaugesWhenAdditionalWorkerForSamePairConnects() {
-        WorkerStreamContext<WorkerJobResponse> w1 = context("w1", "group-a", 10,
-            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION));
-        WorkerStreamContext<WorkerJobResponse> w2 = context("w2", "group-a", 20,
-            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION));
+        WorkerStreamContext<WorkerJobResponse> w1 = context(
+            "w1", "group-a", 10,
+            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION)
+        );
+        WorkerStreamContext<WorkerJobResponse> w2 = context(
+            "w2", "group-a", 20,
+            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION)
+        );
         when(dispatcher.activeStreams()).thenReturn(List.of(w1, w2));
 
         publisher.onWorkerRegistered(w1);
@@ -80,8 +87,10 @@ class WorkerCapacityMetricsPublisherTest {
 
     @Test
     void shouldRemoveGaugesWhenLastWorkerForPairDisconnects() {
-        WorkerStreamContext<WorkerJobResponse> w = context("w1", "group-a", 10,
-            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION));
+        WorkerStreamContext<WorkerJobResponse> w = context(
+            "w1", "group-a", 10,
+            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION)
+        );
         when(dispatcher.activeStreams()).thenReturn(List.of(w));
         publisher.onWorkerRegistered(w);
         assertThat(findSubGauge(MetricRegistry.METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_ALLOCATED, "group-a", "gpu"))
@@ -104,8 +113,10 @@ class WorkerCapacityMetricsPublisherTest {
 
     @Test
     void shouldAddAndRemoveGaugesWhenSubscriptionsChange() {
-        WorkerStreamContext<WorkerJobResponse> w = context("w1", "group-a", 10,
-            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION));
+        WorkerStreamContext<WorkerJobResponse> w = context(
+            "w1", "group-a", 10,
+            new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION)
+        );
         when(dispatcher.activeStreams()).thenReturn(List.of(w));
         publisher.onWorkerRegistered(w);
         assertThat(findSubGauge(MetricRegistry.METRIC_CONTROLLER_CAPACITY_SUBSCRIPTION_ALLOCATED, "group-a", "gpu"))
@@ -123,9 +134,11 @@ class WorkerCapacityMetricsPublisherTest {
 
     @Test
     void shouldKeepGroupGaugesAliveWhenOnlyOneQueueIsDropped() {
-        WorkerStreamContext<WorkerJobResponse> w = context("w1", "group-a", 10,
+        WorkerStreamContext<WorkerJobResponse> w = context(
+            "w1", "group-a", 10,
             new QueueSubscription("gpu", QueueSubscription.NO_RESERVATION),
-            new QueueSubscription("cpu", QueueSubscription.NO_RESERVATION));
+            new QueueSubscription("cpu", QueueSubscription.NO_RESERVATION)
+        );
         when(dispatcher.activeStreams()).thenReturn(List.of(w));
         publisher.onWorkerRegistered(w);
 

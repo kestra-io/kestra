@@ -61,6 +61,10 @@
             line-height: 1;
         }
 
+        .kel-alert__description {
+            line-height: var(--ks-line-height-base);
+        }
+
         .kel-alert__icon {
             .material-design-icon,
             .material-design-icon > .material-design-icon__svg {

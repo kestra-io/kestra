@@ -5,7 +5,11 @@
                 {{ $t("blueprints.title") }}
             </KsButton>
             <div v-if="$slots.actions" class="actions">
-                <slot name="actions" />
+                <slot
+                    name="actions"
+                    :hasMissingPlugins="hasMissingPlugins"
+                    :missingPlugins="missingPlugins"
+                />
             </div>
         </div>
         <h2 class="title">{{ blueprint.title }}</h2>
@@ -15,19 +19,6 @@
     </header>
 
     <section class="content" v-ks-loading="!blueprint">
-        <KsCard v-if="blueprint && kind === 'flow' && flowGraph">
-            <div class="topology">
-                <LowCodeEditor
-                    viewType="source-blueprints"
-                    isReadOnly
-                    :flowId="parsedFlow.id"
-                    :namespace="parsedFlow.namespace"
-                    :flowGraph="flowGraph"
-                    :source="blueprint.source"
-                />
-            </div>
-        </KsCard>
-
         <template v-if="blueprint">
             <KsCard>
                 <KsEditor
@@ -41,42 +32,45 @@
                     :modelValue="blueprint.source"
                 >
                     <template #absolute>
-                        <CopyToClipboard :text="blueprint.source" />
+                        <CopyToClipboard v-if="blueprint.source" :text="blueprint.source" />
                     </template>
                 </KsEditor>
             </KsCard>
 
             <KsMarkdown v-if="blueprint.description" class="markdown" :content="blueprint.description" />
 
-            <BlueprintOverview :blueprint :tags :icons :columns="2" />
+            <BlueprintOverview :blueprint :tags :icons :loadIcon :columns="2">
+                <template #missing-plugins-action="slotProps">
+                    <slot name="missing-plugins-action" v-bind="slotProps" />
+                </template>
+            </BlueprintOverview>
         </template>
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, onMounted} from "vue"
 
     import {KsEditor} from "@kestra-io/design-system"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
-    import LowCodeEditor from "../../inputs/LowCodeEditor.vue"
     import CopyToClipboard from "../../layout/CopyToClipboard.vue"
     import BlueprintOverview from "./BlueprintOverview.vue"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint & {shortDescription?: string};
-        flowGraph?: any;
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;
+        loadIcon?: (cls: string) => Promise<any>;
         kind?: string;
     }>(), {
         blueprint: undefined,
-        flowGraph: undefined,
         tags: undefined,
         icons: () => ({}),
+        loadIcon: undefined,
         kind: "flow",
     })
 
@@ -84,11 +78,17 @@
 
     const editorBindings = useEditorBindings()
 
-    const parsedFlow = computed(() =>
-        props.blueprint?.source
-            ? {...YAML_UTILS.parse(props.blueprint.source), source: props.blueprint.source}
-            : {},
+    const {ensureInstalledPluginsLoaded, missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+
+    const hasMissingPlugins = computed(() =>
+        missingTaskTypes(props.blueprint?.includedTasks).length > 0,
     )
+
+    const missingPlugins = computed(() =>
+        missingPluginNames(props.blueprint?.includedTasks),
+    )
+
+    onMounted(ensureInstalledPluginsLoaded)
 </script>
 
 <style scoped lang="scss">
@@ -135,11 +135,6 @@
 
         :deep(.kel-card__body) {
             padding: 0;
-        }
-
-        .topology {
-            width: 100%;
-            height: 30vh;
         }
 
         .markdown {

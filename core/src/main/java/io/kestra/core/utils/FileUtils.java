@@ -1,14 +1,14 @@
 package io.kestra.core.utils;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Utility methods for manipulating files.
@@ -40,7 +40,7 @@ public final class FileUtils {
      * for non-positive attempts or a {@code null} delay.
      *
      * @param maxAttempts the number of deletion attempts before giving up.
-     * @param retryDelay  the delay between two attempts.
+     * @param retryDelay the delay between two attempts.
      */
     public static void configureDeletionRetry(final int maxAttempts, final Duration retryDelay) {
         deleteMaxAttempts = maxAttempts > 0 ? maxAttempts : DEFAULT_DELETE_MAX_ATTEMPTS;

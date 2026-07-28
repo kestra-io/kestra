@@ -42,11 +42,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Parameterized tests that exercise the {@code /search} trigger endpoint against the full surface
  * of supported filter fields (including the controller-level
- * {@code dateFilter}/{@code startDate}/{@code endDate} rewrite). The scheduler is deliberately
- * disabled so trigger state fixtures (especially {@code nextEvaluationDate} and
- * {@code lastTriggeredDate}) are not mutated under the test.
+ * {@code dateFilter}/{@code startDate}/{@code endDate} rewrite). Neither the runner nor the
+ * scheduler is started: the test only persists fixtures (flows synchronously via
+ * {@code FlowService}, trigger states directly via the repository) and reads them back through
+ * {@code /search}, so no background component is required. Keeping them off also avoids a concurrent
+ * {@code QUEUES} poller racing the per-test {@code drop()} (which caused intermittent
+ * {@code Timeout trying to lock table "QUEUES"} failures), and guarantees trigger state fixtures
+ * (especially {@code nextEvaluationDate} and {@code lastTriggeredDate}) are not mutated under the
+ * test.
  */
-@KestraTest(startRunner = true, startScheduler = false)
+@KestraTest(startRunner = false, startScheduler = false)
 class TriggerControllerFilterTest {
 
     public static final String TENANT_ID = "main";
@@ -98,19 +103,23 @@ class TriggerControllerFilterTest {
             .tenantId(TENANT_ID)
             .namespace(namespace)
             .id(flowId)
-            .tasks(Collections.singletonList(
-                Return.builder()
-                    .id("task")
-                    .type(Return.class.getName())
-                    .format(Property.ofValue("return data"))
-                    .build()
-            ))
-            .triggers(triggerIds.stream().map(id ->
-                (AbstractTrigger) PollingTrigger.builder()
-                    .id(id)
-                    .type(PollingTrigger.class.getName())
-                    .build()
-            ).toList())
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                triggerIds.stream().map(
+                    id -> (AbstractTrigger) PollingTrigger.builder()
+                        .id(id)
+                        .type(PollingTrigger.class.getName())
+                        .build()
+                ).toList()
+            )
             .build();
     }
 
@@ -151,66 +160,115 @@ class TriggerControllerFilterTest {
         jdbcTriggerRepository.save(fixture("state-enabled", NS_FILTER, FLOW_FILTER, "worker").disabled(false).build());
     }
 
-    public record FilterTestCase(String urlQuery, List<String> expectedTriggerIds) {}
+    public record FilterTestCase(String urlQuery, List<String> expectedTriggerIds) {
+    }
 
     public static final List<Named<FilterTestCase>> filterTestCases = List.of(
         // --- TRIGGER_ID ---
-        Named.of("triggerId EQUALS alpha-trigger",
-            new FilterTestCase("filters[triggerId][EQUALS]=alpha-trigger", List.of("alpha-trigger"))),
-        Named.of("triggerId STARTS_WITH alpha",
-            new FilterTestCase("filters[triggerId][STARTS_WITH]=alpha", List.of("alpha-trigger"))),
+        Named.of(
+            "triggerId EQUALS alpha-trigger",
+            new FilterTestCase("filters[triggerId][EQUALS]=alpha-trigger", List.of("alpha-trigger"))
+        ),
+        Named.of(
+            "triggerId STARTS_WITH alpha",
+            new FilterTestCase("filters[triggerId][STARTS_WITH]=alpha", List.of("alpha-trigger"))
+        ),
 
         // --- NAMESPACE ---
-        Named.of("namespace EQUALS io.kestra.filter",
-            new FilterTestCase("filters[namespace][EQUALS]=" + NS_FILTER + "&size=50",
-                List.of("alpha-trigger", "nextexec-old", "nextexec-new", "ldt-old", "ldt-new",
+        Named.of(
+            "namespace EQUALS io.kestra.filter",
+            new FilterTestCase(
+                "filters[namespace][EQUALS]=" + NS_FILTER + "&size=50",
+                List.of(
+                    "alpha-trigger", "nextexec-old", "nextexec-new", "ldt-old", "ldt-new",
                     "source-schedule", "source-polling", "locked-true", "locked-false",
-                    "state-disabled", "state-enabled"))),
+                    "state-disabled", "state-enabled"
+                )
+            )
+        ),
 
         // --- FLOW_ID ---
-        Named.of("flowId EQUALS other-flow",
-            new FilterTestCase("filters[flowId][EQUALS]=" + FLOW_OTHER, List.of("beta-trig"))),
+        Named.of(
+            "flowId EQUALS other-flow",
+            new FilterTestCase("filters[flowId][EQUALS]=" + FLOW_OTHER, List.of("beta-trig"))
+        ),
 
         // --- WORKER_ID ---
-        Named.of("workerId EQUALS alpha-worker",
-            new FilterTestCase("filters[workerId][EQUALS]=alpha-worker", List.of("alpha-trigger"))),
+        Named.of(
+            "workerId EQUALS alpha-worker",
+            new FilterTestCase("filters[workerId][EQUALS]=alpha-worker", List.of("alpha-trigger"))
+        ),
 
         // --- SOURCE ---
-        Named.of("source EQUALS SCHEDULE",
-            new FilterTestCase("filters[source][EQUALS]=SCHEDULE", List.of("source-schedule"))),
-        Named.of("source EQUALS POLLING",
-            new FilterTestCase("filters[source][EQUALS]=POLLING", List.of("source-polling"))),
+        Named.of(
+            "source EQUALS SCHEDULE",
+            new FilterTestCase("filters[source][EQUALS]=SCHEDULE", List.of("source-schedule"))
+        ),
+        Named.of(
+            "source EQUALS POLLING",
+            new FilterTestCase("filters[source][EQUALS]=POLLING", List.of("source-polling"))
+        ),
 
         // --- LOCKED ---
-        Named.of("locked EQUALS true",
-            new FilterTestCase("filters[locked][EQUALS]=true", List.of("locked-true"))),
+        Named.of(
+            "locked EQUALS true",
+            new FilterTestCase("filters[locked][EQUALS]=true", List.of("locked-true"))
+        ),
 
         // --- NEXT_EXECUTION_DATE ---
-        Named.of("nextExecutionDate GREATER_THAN DATE_BETWEEN",
-            new FilterTestCase("filters[nextExecutionDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("nextexec-new"))),
-        Named.of("nextExecutionDate LESS_THAN DATE_BETWEEN",
-            new FilterTestCase("filters[nextExecutionDate][LESS_THAN]=" + DATE_BETWEEN,
-                List.of("nextexec-old"))),
+        Named.of(
+            "nextExecutionDate GREATER_THAN DATE_BETWEEN",
+            new FilterTestCase(
+                "filters[nextExecutionDate][GREATER_THAN]=" + DATE_BETWEEN,
+                List.of("nextexec-new")
+            )
+        ),
+        Named.of(
+            "nextExecutionDate LESS_THAN DATE_BETWEEN",
+            new FilterTestCase(
+                "filters[nextExecutionDate][LESS_THAN]=" + DATE_BETWEEN,
+                List.of("nextexec-old")
+            )
+        ),
 
         // --- LAST_TRIGGERED_DATE ---
-        Named.of("lastTriggeredDate GREATER_THAN DATE_BETWEEN",
-            new FilterTestCase("filters[lastTriggeredDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("ldt-new"))),
-        Named.of("lastTriggeredDate LESS_THAN DATE_BETWEEN",
-            new FilterTestCase("filters[lastTriggeredDate][LESS_THAN]=" + DATE_BETWEEN,
-                List.of("ldt-old"))),
+        Named.of(
+            "lastTriggeredDate GREATER_THAN DATE_BETWEEN",
+            new FilterTestCase(
+                "filters[lastTriggeredDate][GREATER_THAN]=" + DATE_BETWEEN,
+                List.of("ldt-new")
+            )
+        ),
+        Named.of(
+            "lastTriggeredDate LESS_THAN DATE_BETWEEN",
+            new FilterTestCase(
+                "filters[lastTriggeredDate][LESS_THAN]=" + DATE_BETWEEN,
+                List.of("ldt-old")
+            )
+        ),
 
         // --- UI-style URL: startDate/endDate are rewritten by the controller to the chosen target field ---
-        Named.of("startDate (no dateFilter) rewrites to nextExecutionDate",
-            new FilterTestCase("filters[startDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("nextexec-new"))),
-        Named.of("startDate with dateFilter=NEXT_EXECUTION_DATE rewrites to nextExecutionDate",
-            new FilterTestCase("filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=NEXT_EXECUTION_DATE",
-                List.of("nextexec-new"))),
-        Named.of("startDate with dateFilter=LAST_TRIGGERED_DATE rewrites to lastTriggeredDate",
-            new FilterTestCase("filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=LAST_TRIGGERED_DATE",
-                List.of("ldt-new")))
+        Named.of(
+            "startDate (no dateFilter) rewrites to nextExecutionDate",
+            new FilterTestCase(
+                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN,
+                List.of("nextexec-new")
+            )
+        ),
+        Named.of(
+            "startDate with dateFilter=NEXT_EXECUTION_DATE rewrites to nextExecutionDate",
+            new FilterTestCase(
+                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=NEXT_EXECUTION_DATE",
+                List.of("nextexec-new")
+            )
+        ),
+        Named.of(
+            "startDate with dateFilter=LAST_TRIGGERED_DATE rewrites to lastTriggeredDate",
+            new FilterTestCase(
+                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=LAST_TRIGGERED_DATE",
+                List.of("ldt-new")
+            )
+        )
     );
 
     @SuppressWarnings("unchecked")

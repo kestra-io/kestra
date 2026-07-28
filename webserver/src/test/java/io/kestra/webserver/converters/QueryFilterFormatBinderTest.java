@@ -233,11 +233,13 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — parser throws on the 4th descent; no SQL is generated
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-            QueryFilterFormatBinder.getQueryFilters(queryParams, 3, Integer.MAX_VALUE)
+        IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, 3, Integer.MAX_VALUE)
         );
-        assertTrue(ex.getMessage().contains("depth"),
-            "Expected depth error, got: " + ex.getMessage());
+        assertTrue(
+            ex.getMessage().contains("depth"),
+            "Expected depth error, got: " + ex.getMessage()
+        );
     }
 
     @Test
@@ -250,11 +252,13 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — width check throws; the OR node would have 21 children
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-            QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
+        IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
         );
-        assertTrue(ex.getMessage().contains("width"),
-            "Expected width error, got: " + ex.getMessage());
+        assertTrue(
+            ex.getMessage().contains("width"),
+            "Expected width error, got: " + ex.getMessage()
+        );
     }
 
     @Test
@@ -270,11 +274,13 @@ class QueryFilterFormatBinderTest {
 
         // WHEN / THEN — root produces 21 sibling leaves, exceeding the width cap
         // Equivalent SQL: <none — request is rejected at the binder>
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-            QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
+        IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class, () -> QueryFilterFormatBinder.getQueryFilters(queryParams, Integer.MAX_VALUE, 20)
         );
-        assertTrue(ex.getMessage().contains("width"),
-            "Expected width error, got: " + ex.getMessage());
+        assertTrue(
+            ex.getMessage().contains("width"),
+            "Expected width error, got: " + ex.getMessage()
+        );
     }
 
     @Test

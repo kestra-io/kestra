@@ -4,13 +4,15 @@ package io.kestra.core.migration;
  * Stores and queries the migration history, tracking which {@link MigrationScript}s have
  * been applied and their checksums.
  *
- * <p>Implementations are backend-specific:
+ * <p>
+ * Implementations are backend-specific:
  * <ul>
- *   <li>JDBC: {@code kestra_migration_history} SQL table</li>
- *   <li>Elasticsearch: {@code .kestra-migration-history} index</li>
+ * <li>JDBC: {@code kestra_migration_history} SQL table</li>
+ * <li>Elasticsearch: {@code .kestra-migration-history} index</li>
  * </ul>
  *
- * <p>The history store must live in the repository backend so that the migration state
+ * <p>
+ * The history store must live in the repository backend so that the migration state
  * is co-located with the data it governs. This also guarantees a single ordered history
  * when multiple script types (SQL, ELS, Java) run in the same migration sequence.
  */
@@ -46,19 +48,35 @@ public interface MigrationHistoryStore {
      * current script's checksum. Throws if they differ — migration scripts must not
      * be modified after they have been applied.
      *
-     * <p>Implementations must skip validation when {@link MigrationScript#checksum()}
+     * <p>
+     * Implementations must skip validation when {@link MigrationScript#checksum()}
      * returns {@code null} (Java-only migrations with no stable checksum source).
      *
      * @param script the script whose checksum should be validated
      * @throws IllegalStateException if the checksum does not match
-     * @throws Exception             on backend error
+     * @throws Exception on backend error
      */
     void validateChecksum(MigrationScript script) throws Exception;
 
     /**
+     * Updates the stored checksum for an already-applied migration script.
+     *
+     * <p>This is intended for explicit operator repair after a migration resource was
+     * intentionally changed and existing environments have already recorded the previous
+     * checksum. It must not execute migration logic.
+     *
+     * @param script the script whose current checksum should be stored
+     * @throws UnsupportedOperationException if checksum repair is not supported by the backend
+     * @throws Exception on backend error
+     */
+    default void updateChecksum(MigrationScript script) throws Exception {
+        throw new UnsupportedOperationException("Migration checksum repair is not supported by " + getClass().getName());
+    }
+
+    /**
      * Records a successfully applied migration script in the history.
      *
-     * @param script      the applied script
+     * @param script the applied script
      * @param executionMs elapsed time in milliseconds
      * @throws Exception on backend error
      */
@@ -67,7 +85,8 @@ public interface MigrationHistoryStore {
     /**
      * Detects whether this is an upgrade from a pre-migration-system deployment.
      *
-     * <p>For JDBC backends, checks for the presence of {@code flyway_schema_history}.
+     * <p>
+     * For JDBC backends, checks for the presence of {@code flyway_schema_history}.
      * For Elasticsearch, checks whether a core index (e.g. {@code {prefix}flows}) already has documents.
      *
      * @return {@code true} if upgrading from a pre-migration-system deployment

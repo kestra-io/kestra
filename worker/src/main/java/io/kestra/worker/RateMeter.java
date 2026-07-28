@@ -2,6 +2,7 @@ package io.kestra.worker;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.worker.WorkerGroups;
+
 import io.micrometer.core.instrument.Counter;
 
 /**
@@ -13,7 +14,8 @@ import io.micrometer.core.instrument.Counter;
  * exponential moving average so the value the UI shows doesn't jump between
  * samples. One instance per Worker.
  *
- * <p>Expected to be sampled from a single thread (the liveness heartbeat, which is
+ * <p>
+ * Expected to be sampled from a single thread (the liveness heartbeat, which is
  * serialized under its state lock), so the book-keeping fields need no synchronization.
  */
 public final class RateMeter {

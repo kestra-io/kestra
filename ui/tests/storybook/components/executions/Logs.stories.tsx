@@ -130,11 +130,9 @@ export const LevelFilterUpdatesRoute: Story = {
         );
 
         // 2. Open the filter chip popup and grab the value combobox.
-        //    The popup now renders two comboboxes — the comparator select
-        //    (.comp-container, "At or Above" / "At or Below", added when the
-        //    level filter gained min/max directions) and the value select
-        //    (.select-panel). Scope to .select-panel so we drive the level
-        //    value, not the comparator, and avoid a multiple-match error.
+        //    The comparator (≥/≤) now renders as a segmented control in the
+        //    popup header (not a combobox), so the value select (.select-panel)
+        //    is the only combobox; scope to it to drive the level value.
         const combobox = await waitFor(
             async () => {
                 const chip = canvasElement.querySelector<HTMLElement>(".chip");
@@ -164,14 +162,8 @@ export const LevelFilterUpdatesRoute: Story = {
         );
         await userEvent.click(warnOption);
 
-        // 4. Click "Apply" to commit.
-        const applyBtn = await waitFor(
-            () => within(iframeBody).getByRole("button", {name: /^apply$/i}),
-            {timeout: 3000}
-        );
-        await userEvent.click(applyBtn);
-
-        // 5. Chip label must update to WARN.
+        // 4. Selecting the value applies live (the Apply button was removed) —
+        //    the chip label updates to WARN on its own.
         await waitFor(
             () => {
                 const valueEl = canvasElement.querySelector(".chip .value");

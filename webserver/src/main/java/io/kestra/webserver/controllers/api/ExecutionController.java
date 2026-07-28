@@ -1,13 +1,15 @@
 package io.kestra.webserver.controllers.api;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -17,24 +19,29 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.CheckReturnValue;
+
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SequenceWriter;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationsConfiguration;
+import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.*;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
@@ -47,32 +54,34 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.preview.FilePreview;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.contexts.configuration.KestraConfiguration;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
-import io.kestra.core.services.ExecutionStreamingService;
-import io.kestra.core.storages.*;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.Logs;
-import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.*;
+import io.kestra.plugin.core.preview.TextFileRenderer;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
-import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 import io.kestra.webserver.models.api.ApiExecution;
@@ -80,16 +89,15 @@ import io.kestra.webserver.models.api.ApiLightExecution;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.core.services.AsyncOperationWaiter;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.MicronautHttpService;
+import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
-import io.kestra.webserver.utils.filepreview.FileRender;
-import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 
+import io.micrometer.core.instrument.Counter;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
@@ -118,7 +126,9 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -130,8 +140,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import javax.annotation.CheckReturnValue;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -164,6 +172,9 @@ public class ExecutionController {
     private FlowInputOutput flowInputOutput;
 
     @Inject
+    private io.kestra.core.runners.ReusableInputsExpander reusableInputsExpander;
+
+    @Inject
     private StorageInterface storageInterface;
 
     @Inject
@@ -177,6 +188,9 @@ public class ExecutionController {
 
     @Inject
     private ExecutionDependenciesStreamingService executionDependenciesStreamingService;
+
+    @Inject
+    private SseConnectionMetrics sseConnectionMetrics;
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -226,6 +240,44 @@ public class ExecutionController {
     @Inject
     private AsyncOperationsConfiguration asyncOperationsConfiguration;
 
+    @Inject
+    private PluginRegistry pluginRegistry;
+
+    @Inject
+    private MetricRegistry metricRegistry;
+
+    private Counter restartCounter;
+    private Counter replayCounter;
+    private Counter pauseCounter;
+    private Counter resumeCounter;
+    private Counter resumeFromBreakpointCounter;
+    private Counter forceRunCounter;
+    private Counter changeStatusCounter;
+    private Counter changeTaskRunStateCounter;
+    private Counter killCounter;
+    private Counter updateLabelsCounter;
+    private Counter unqueueCounter;
+
+    @PostConstruct
+    void initMetrics() {
+        restartCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESTART_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESTART_TOTAL_DESCRIPTION);
+        replayCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_REPLAY_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_REPLAY_TOTAL_DESCRIPTION);
+        pauseCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_PAUSE_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_PAUSE_TOTAL_DESCRIPTION);
+        resumeCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL_DESCRIPTION);
+        resumeFromBreakpointCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_FROM_BREAKPOINT_TOTAL_DESCRIPTION);
+        forceRunCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_FORCE_RUN_TOTAL_DESCRIPTION);
+        changeStatusCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_CHANGE_STATUS_TOTAL_DESCRIPTION);
+        changeTaskRunStateCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_TASKRUN_CHANGE_STATE_TOTAL, MetricRegistry.METRIC_WEBSERVER_TASKRUN_CHANGE_STATE_TOTAL_DESCRIPTION);
+        killCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_KILL_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_KILL_TOTAL_DESCRIPTION);
+        updateLabelsCounter = this.metricRegistry
+            .counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_UPDATE_LABELS_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_UPDATE_LABELS_TOTAL_DESCRIPTION);
+        resumeCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_RESUME_TOTAL_DESCRIPTION);
+        unqueueCounter = this.metricRegistry.counter(MetricRegistry.METRIC_WEBSERVER_EXECUTION_UNQUEUE_TOTAL, MetricRegistry.METRIC_WEBSERVER_EXECUTION_UNQUEUE_TOTAL_DESCRIPTION);
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = { "Executions" }, summary = "Search for executions")
@@ -262,8 +314,11 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "List distinct values for one of the executions filter fields, optionally narrowed by additional query filters")
     public List<String> findDistinctFieldValues(
         @Parameter(description = "The field whose distinct values to return. Must be a field supported by the EXECUTION resource.") @QueryValue QueryFilter.Field field,
-        @Parameter(description = "Additional filters to narrow the distinct values. PHP-style nested query is used - examples: `filters[flowId][CONTAINS]=test`, `filters[state][IN]=FAILED,WARNING`", in = ParameterIn.QUERY)
-            @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+        @Parameter(
+            description = "Additional filters to narrow the distinct values. PHP-style nested query is used - examples: `filters[flowId][CONTAINS]=test`, `filters[state][IN]=FAILED,WARNING`",
+            in = ParameterIn.QUERY
+        )
+        @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
         @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) int size) {
         if (!QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
             throw new HttpStatusException(
@@ -327,7 +382,6 @@ public class ExecutionController {
         } catch (IllegalVariableEvaluationException e) {
             return EvalResult.builder()
                 .error(e.getMessage())
-                .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
     }
@@ -358,7 +412,6 @@ public class ExecutionController {
         } catch (IllegalVariableEvaluationException e) {
             return EvalResult.builder()
                 .error(e.getMessage())
-                .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
     }
@@ -388,7 +441,6 @@ public class ExecutionController {
     public static class EvalResult {
         String result;
         String error;
-        String stackTrace;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -550,7 +602,7 @@ public class ExecutionController {
         String key,
         String path,
         HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        Optional<Flow> find = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
+        Optional<Flow> find = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
         return webhook(find, key, path, request);
     }
 
@@ -582,7 +634,8 @@ public class ExecutionController {
                 RunContext runContext = runContextFactory.of(flow, w);
                 try {
                     String webhookKey = runContext.render(w.getKey()).trim();
-                    return webhookKey.equals(key);
+                    // compare via MessageDigest.isEqual to prevent timing attacks
+                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
                 } catch (IllegalVariableEvaluationException e) {
                     // be conservative, don't crash but filter the webhook
                     log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
@@ -596,6 +649,7 @@ public class ExecutionController {
         }
 
         final AbstractWebhookTrigger webhook = maybeWebhook.get();
+        this.onWebhookMatched(flow, webhook);
 
         // Webhook context
         var webhookContext = new WebhookContext(
@@ -626,6 +680,15 @@ public class ExecutionController {
 
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
+    }
+
+    /**
+     * Hook invoked once a webhook trigger has been matched against its key, before it is evaluated.
+     * No-op by default; editions may throw to veto the execution creation. Running after key matching
+     * keeps veto details from callers that failed the key check.
+     */
+    protected void onWebhookMatched(Flow flow, AbstractWebhookTrigger webhook) {
+        // no-op
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -679,11 +742,46 @@ public class ExecutionController {
         @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate,
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
         @Parameter(description = "Specific execution kind") @QueryValue Optional<ExecutionKind> kind) {
-        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
+        final String tenantId = tenantService.resolveTenant();
         List<Label> parsedLabels = parseLabels(labels);
+        final Flow flow;
+        try {
+            flow = flowService.getFlowIfExecutableOrThrow(tenantId, namespace, id, revision);
+        } catch (NoSuchElementException e) {
+            // No non-draft revision was found. If the flow exists but only has draft revisions,
+            // reject the request as unprocessable with an explanation instead of a bare 404, so the
+            // user knows to save a published revision before executing without a revision.
+            if (revision.isEmpty()) {
+                Optional<Flow> latestAny = flowRepository.findByIdWithoutAcl(tenantId, namespace, id, Optional.empty());
+                if (latestAny.isPresent() && latestAny.get().isDraft()) {
+                    Flow draftFlow = latestAny.get();
+                    throw new IllegalArgumentException(
+                        "Flow execution blocked: flow " + draftFlow.uid() + " only has draft revisions. Save it as a published revision before executing it without a revision."
+                    );
+                }
+            }
+            throw e;
+        }
 
+        if (flow.isDraft()) {
+            controlDraftExecutableAs(flow, kind.orElse(null));
+
+            // Only drafts need re-validation here: published revisions are already validated at save
+            // time, so re-validating every execution would just add cost to the hot path. A draft can be
+            // saved with constraint violations, so when the user explicitly executes one (by passing its
+            // revision) the request is rejected as unprocessable with the validation error, rather than
+            // starting an execution that cannot run.
+            Optional<ConstraintViolationException> violations = flowService.validateForExecution(flow);
+            if (violations.isPresent()) {
+                throw new IllegalArgumentException("Flow execution blocked: flow definition is invalid. " + violations.get().getMessage());
+            }
+        }
 
         var executionId = IdUtils.create();
+        // Capture the OTel context on the current thread before entering the reactive chain.
+        // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
+        // would return an empty root context since OTel Context is thread-local.
+        final Context otelContext = Context.current();
         return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
             .flatMap(executionInputs ->
             {
@@ -707,62 +805,63 @@ public class ExecutionController {
                     .withKind(kind.orElse(null))
                     .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
 
-                    if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
-                        Logs.logExecutionId(createCommand.executionFullId(), log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
-                        createCommand = createCommand.withStateType(State.Type.FAILED);
-                    }
+                if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
+                    Logs.logExecutionId(createCommand.executionFullId(), log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
+                    createCommand = createCommand.withStateType(State.Type.FAILED);
+                }
 
-                    // inject the traceparent from the current OTel context into the command so it's propagated to the execution
-                    // TODO see if we can replicate ExecutionTextMapSetter logic
-                    Map<String, String> traceCarrier = new HashMap<>();
-                    openTelemetry
-                        .map(OpenTelemetry::getPropagators)
-                        .map(ContextPropagators::getTextMapPropagator)
-                        .ifPresent(propagator -> propagator.inject(Context.current(), traceCarrier, Map::put));
-                    if (traceCarrier.containsKey("traceparent")) {
-                        createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
-                    }
+                // inject the traceparent from the captured OTel context into the command so it's propagated to the execution
+                // TODO see if we can replicate ExecutionTextMapSetter logic
+                Map<String, String> traceCarrier = new HashMap<>();
+                openTelemetry
+                    .map(OpenTelemetry::getPropagators)
+                    .map(ContextPropagators::getTextMapPropagator)
+                    .ifPresent(propagator -> propagator.inject(otelContext, traceCarrier, Map::put));
+                if (traceCarrier.containsKey("traceparent")) {
+                    createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
+                }
 
-                    Create finalCreateCommand = createCommand;
-                    return awaitBlockingAction(
-                        executionId, "Create",
-                        operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
-                    ).flatMap(res -> {
-                        var executionUrl = executionUrl(finalCreateCommand.executionFullId());
-                        if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
-                            return Mono.just(
-                                ExecutionResponse.fromExecution(
-                                    res.body(),
-                                    executionUrl
-                                )
-                            );
-                        }
-
-                        // SSE subscribe
-                        String subscriberId = UUID.randomUUID().toString();
-                        // Use Flux to wait for completion using the streaming service
-                        return Flux.<Event<Execution>> create(emitter ->
-                            {
-                                streamingService.registerSubscriber(
-                                    executionId,
-                                    subscriberId,
-                                    emitter,
-                                    flow
-                                );
-                            })
-                            .last()
-                            .map(Event::getData)
-                            .map(
-                                execution -> ExecutionResponse.fromExecution(
-                                    execution,
-                                    executionUrl
-                                )
+                Create finalCreateCommand = createCommand;
+                return awaitBlockingAction(
+                    executionId, "Create",
+                    operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
+                ).flatMap(res ->
+                {
+                    var executionUrl = executionUrl(finalCreateCommand.executionFullId());
+                    if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
+                        return Mono.just(
+                            ExecutionResponse.fromExecution(
+                                res.body(),
+                                executionUrl
                             )
-                            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-                            .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
-                    });
+                        );
+                    }
 
-//                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
+                    // SSE subscribe
+                    String subscriberId = UUID.randomUUID().toString();
+                    // Use Flux to wait for completion using the streaming service
+                    return Flux.<Event<Execution>> create(emitter ->
+                    {
+                        streamingService.registerSubscriber(
+                            executionId,
+                            subscriberId,
+                            emitter,
+                            flow
+                        );
+                    })
+                        .last()
+                        .map(Event::getData)
+                        .map(
+                            execution -> ExecutionResponse.fromExecution(
+                                execution,
+                                executionUrl
+                            )
+                        )
+                        .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
+                        .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
+                });
+
+                //                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
 
             });
     }
@@ -906,11 +1005,13 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Get(uri = "/{executionId}/file", produces = { MediaType.APPLICATION_OCTET_STREAM, "application/x-ndjson" })
     @Operation(tags = { "Executions" }, summary = "Download file for an execution")
     public HttpResponse<StreamedFile> downloadFileFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
-        @Parameter(description = "The internal storage uri") @QueryValue URI path) throws IOException, URISyntaxException {
+        @Parameter(description = "The internal storage uri") @QueryValue URI path,
+        @Parameter(description = "The requested file format; RAW returns the raw bytes (default), JSONL converts Ion records to JSON Lines")
+        @QueryValue(defaultValue = "RAW") FileFormat format) throws IOException, URISyntaxException {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
@@ -931,6 +1032,32 @@ public class ExecutionController {
             }
             default -> throw new IllegalArgumentException("Scheme not supported: " + path.getScheme());
         };
+
+        if (format == FileFormat.JSONL) {
+            if (!"ion".equalsIgnoreCase(FilenameUtils.getExtension(path.toString()))) {
+                throw new HttpStatusException(HttpStatus.BAD_REQUEST, "JSONL format is only supported for Ion files");
+            }
+            String downloadFilename = FilenameUtils.getBaseName(path.toString()) + ".jsonl";
+            List<Object> records = new ArrayList<>();
+            try (InputStream is = new BufferedInputStream(fileHandler)) {
+                FileSerde.read(is, records::add);
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (
+                Writer writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8);
+                SequenceWriter seq = FileSerde.createJsonSequenceWriter(writer, new TypeReference<>() {
+                })
+            ) {
+                for (Object record : records) {
+                    seq.write(record);
+                }
+            }
+            return HttpResponse.ok(
+                new StreamedFile(new ByteArrayInputStream(baos.toByteArray()), new MediaType("application/x-ndjson"))
+                    .attach(downloadFilename)
+            );
+        }
+
         return HttpResponse.ok(
             new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
                 .attach(FilenameUtils.getName(path.toString()))
@@ -993,6 +1120,8 @@ public class ExecutionController {
             );
         }
 
+        this.restartCounter.increment();
+
         return awaitBlockingAction(
             executionId, "Restart",
             operationId -> executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(operationId))
@@ -1047,6 +1176,8 @@ public class ExecutionController {
             );
         }
 
+        this.restartCounter.increment(executions.size());
+
         return submitBatchAction(
             executions,
             (execution, opId) -> executionCommandQueue.emit(Restart.from(execution, null).withOperationId(opId))
@@ -1082,6 +1213,7 @@ public class ExecutionController {
         this.controlRevision(execution, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(revision));
+        controlDraftExecutableAs(flow, execution.getKind());
 
         return blockingReplay(execution, taskRunId, revision, breakpoints);
     }
@@ -1125,6 +1257,7 @@ public class ExecutionController {
         this.controlRevision(current, revision);
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
+        controlDraftExecutableAs(flow, current.getKind());
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(newInputs -> Mono.fromCallable(() -> blockingReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
@@ -1139,6 +1272,8 @@ public class ExecutionController {
         }
 
         var newExecutionId = IdUtils.create();
+
+        this.replayCounter.increment();
 
         AsyncOperationProcessedEvent processed;
         try {
@@ -1173,8 +1308,10 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.CONFLICT, "Replay failed: " + processed.error());
         }
 
-        return HttpResponse.ok(executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
-            .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation")));
+        return HttpResponse.ok(
+            executionRepository.findById(tenantService.resolveTenant(), newExecutionId)
+                .orElseThrow(() -> new HttpStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Replayed execution not found after creation"))
+        );
     }
 
     private void innerReplayBatch(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, String operationId) throws Exception {
@@ -1194,6 +1331,19 @@ public class ExecutionController {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
         executionCommandQueue.emit(UpdateLabels.from(execution, newLabels).withOperationId(operationId));
+    }
+
+    /**
+     * Rejects executing a draft revision as anything but a {@link ExecutionKind#PLAYGROUND} execution,
+     * whether the revision is passed explicitly (create) or inherited from a replayed execution.
+     */
+    private static void controlDraftExecutableAs(Flow flow, @Nullable ExecutionKind kind) {
+        if (flow.isDraft() && ExecutionKind.PLAYGROUND != kind) {
+            throw new IllegalArgumentException(
+                "Flow execution blocked: revision " + flow.getRevision() + " of flow " + flow.uid() +
+                    " is a draft. Draft revisions can only be executed as playground executions."
+            );
+        }
     }
 
     private void controlRevision(Execution execution, Integer revision) {
@@ -1228,6 +1378,8 @@ public class ExecutionController {
             throw new ConflictException("Cannot change task run state: execution must be terminated and not killed.");
         }
 
+        this.changeTaskRunStateCounter.increment();
+
         return awaitBlockingAction(
             executionId, "Change task run state",
             operationId -> executionCommandQueue.emit(ChangeTaskRunState.from(execution, stateRequest.taskRunId(), stateRequest.state()).withOperationId(operationId))
@@ -1256,6 +1408,8 @@ public class ExecutionController {
         if (!execution.getState().canChangeStatus()) {
             throw new ConflictException("Cannot change execution state: execution must be terminated and not killed.");
         }
+
+        this.changeStatusCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Change status",
@@ -1315,6 +1469,8 @@ public class ExecutionController {
             );
         }
 
+        this.changeStatusCounter.increment(executions.size());
+
         return submitBatchAction(
             executions,
             (execution, opId) -> executionCommandQueue.emit(UpdateStatus.from(execution, newStatus).withOperationId(opId))
@@ -1353,6 +1509,8 @@ public class ExecutionController {
         if (maybeExecution.isEmpty()) {
             return Mono.just(HttpResponse.notFound());
         }
+
+        this.killCounter.increment();
 
         var execution = maybeExecution.get();
 
@@ -1439,6 +1597,8 @@ public class ExecutionController {
             );
         }
 
+        this.killCounter.increment(executions.size());
+
         return submitBatchAction(executions, (execution, opId) ->
         {
             eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
@@ -1498,6 +1658,8 @@ public class ExecutionController {
     protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution, Flow flow) {
         io.kestra.plugin.core.flow.Pause.Resumed resumed = createResumed();
 
+        this.resumeCounter.increment();
+
         return this.executionService.readInputs(execution, flow, inputs)
             .flatMap(
                 resumeInputs -> awaitBlockingAction(
@@ -1527,6 +1689,8 @@ public class ExecutionController {
         if (ListUtils.isEmpty(execution.getBreakpoints())) {
             throw new ConflictException("Cannot resume execution: no breakpoint defined.");
         }
+
+        this.resumeFromBreakpointCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Resume from breakpoint",
@@ -1591,6 +1755,8 @@ public class ExecutionController {
             );
         }
 
+        this.resumeCounter.increment(executions.size());
+
         return submitBatchAction(
             executions,
             (execution, opId) -> executionCommandQueue.emit(Resume.from(execution, createResumed()).withOperationId(opId))
@@ -1623,6 +1789,8 @@ public class ExecutionController {
         if (!execution.getState().isRunning()) {
             throw new ConflictException("Cannot pause execution: execution is not running.");
         }
+
+        this.pauseCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Pause",
@@ -1676,6 +1844,8 @@ public class ExecutionController {
                     .build()
             );
         }
+
+        this.pauseCounter.increment(executions.size());
 
         return submitBatchAction(
             executions,
@@ -1768,9 +1938,16 @@ public class ExecutionController {
             );
         }
 
+        this.replayCounter.increment(executions.size());
+
         return submitBatchAction(executions, (execution, opId) ->
         {
-            Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+            // When latestRevision is true the replay starts as a new execution against the
+            // latest non-draft revision; otherwise it stays bound to the execution's original
+            // revision (which may itself be a draft - the user explicitly ran it).
+            Flow flow = (latestRevision
+                ? flowRepository.findByIdForExecution(execution.getTenantId(), execution.getNamespace(), execution.getFlowId())
+                : flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))).orElseThrow();
             try {
                 innerReplayBatch(execution, null, latestRevision ? flow.getRevision() : null, Optional.empty(), opId);
             } catch (QueueException e) {
@@ -1797,7 +1974,7 @@ public class ExecutionController {
     public Flux<Event<Execution>> followExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId) {
         String subscriberId = UUID.randomUUID().toString();
-        return Flux.<Event<Execution>> create(emitter ->
+        Flux<Event<Execution>> flux = Flux.<Event<Execution>> create(emitter ->
         {
             // Send initial event
             emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
@@ -1861,8 +2038,12 @@ public class ExecutionController {
                 );
             }
         }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-            .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
+            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+
+        return sseConnectionMetrics.track(
+            flux, "execution",
+            () -> streamingService.unregisterSubscriber(executionId, subscriberId)
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1886,14 +2067,20 @@ public class ExecutionController {
             return validateResponse;
         }
 
-        String extension = FilenameUtils.getExtension(path.toString());
         Optional<Charset> charset;
-
         try {
             charset = Optional.ofNullable(encoding).map(Charset::forName);
         } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
             throw new IllegalArgumentException("Unable to preview using encoding '" + encoding + "'");
         }
+
+        String extension = FilenameUtils.getExtension(path.toString());
+        FileRenderer renderer = pluginRegistry.plugins().stream()
+            .flatMap(registeredPlugin -> registeredPlugin.getFileRenderers().stream())
+            .map(this::instantiate)
+            .filter(fileRenderer -> fileRenderer.supports(extension))
+            .findFirst()
+            .orElseGet(TextFileRenderer::new);
 
         InputStream fileStream = switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME ->
@@ -1907,14 +2094,22 @@ public class ExecutionController {
         };
 
         try (fileStream) {
-            FileRender fileRender = FileRenderBuilder.of(
+            FilePreview preview = renderer.render(
                 extension,
                 fileStream,
                 charset,
                 maxRows == null ? getPreviewInitialRows() : (maxRows > getPreviewMaxRows() ? getPreviewMaxRows() : maxRows)
             );
 
-            return HttpResponse.ok(fileRender);
+            return HttpResponse.ok(preview);
+        }
+    }
+
+    private FileRenderer instantiate(Class<? extends FileRenderer> fileRenderer) {
+        try {
+            return fileRenderer.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -1939,6 +2134,8 @@ public class ExecutionController {
         }
 
         List<Label> mergedLabels = mergeSystemLabels(execution, labels);
+
+        this.updateLabelsCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Set labels",
@@ -2017,6 +2214,8 @@ public class ExecutionController {
             );
         }
 
+        this.updateLabelsCounter.increment(executions.size());
+
         return submitBatchAction(executions, (execution, opId) ->
         {
             List<Label> deduplicated = Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels()));
@@ -2058,6 +2257,8 @@ public class ExecutionController {
         if (execution.getState().getCurrent() != State.Type.QUEUED) {
             throw new ConflictException("Cannot unqueue execution: only QUEUED executions can be unqueued.");
         }
+
+        this.unqueueCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Unqueue",
@@ -2113,6 +2314,8 @@ public class ExecutionController {
             );
         }
 
+        this.unqueueCounter.increment(executions.size());
+
         return submitBatchAction(
             executions,
             (execution, opId) -> executionCommandQueue.emit(Unqueue.from(execution, state).withOperationId(opId))
@@ -2148,6 +2351,8 @@ public class ExecutionController {
         if (execution.getState().isTerminated()) {
             throw new ConflictException("Cannot force run execution: only non-terminated executions can be force run.");
         }
+
+        this.forceRunCounter.increment();
 
         return awaitBlockingAction(
             executionId, "Force run",
@@ -2212,6 +2417,8 @@ public class ExecutionController {
             );
         }
 
+        this.forceRunCounter.increment(executions.size());
+
         return submitBatchAction(
             executions,
             (execution, opId) -> executionCommandQueue.emit(ForceRun.from(execution).withOperationId(opId))
@@ -2250,7 +2457,8 @@ public class ExecutionController {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
             .orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
-        return FlowForExecution.of(flowRepository.findByExecutionWithoutAcl(execution));
+        Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        return FlowForExecution.of(flow, reusableInputsExpander);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2261,7 +2469,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String flowId,
         @Parameter(description = "The flow revision") @Nullable Integer revision) {
 
-        return FlowForExecution.of(flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow());
+        Flow flow = flowRepository.findByIdWithoutAcl(tenantService.resolveTenant(), namespace, flowId, Optional.ofNullable(revision)).orElseThrow();
+        return FlowForExecution.of(flow, reusableInputsExpander);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2316,7 +2525,7 @@ public class ExecutionController {
 
         String correlationId = current.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value()).orElseThrow();
 
-        return Flux.<Event<ExecutionStatusEvent>> create(emitter ->
+        Flux<Event<ExecutionStatusEvent>> flux = Flux.<Event<ExecutionStatusEvent>> create(emitter ->
         {
             // Send initial event
             emitter.next(Event.of(ExecutionStatusEvent.of(Execution.builder().id(executionId).build())).id("start"));
@@ -2386,8 +2595,12 @@ public class ExecutionController {
                 );
             }
         }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
-            .doFinally(ignored -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId));
+            .timeout(Duration.ofHours(1)); // avoid idle SSE sockets by setting a between-item timeout
+
+        return sseConnectionMetrics.track(
+            flux, "dependencies",
+            () -> executionDependenciesStreamingService.unregisterSubscriber(correlationId, subscriberId)
+        );
     }
 
     public String getTenant() {
@@ -2559,7 +2772,7 @@ public class ExecutionController {
 
     /**
      * Returns an HTTP 400 response typed as {@code MutableHttpResponse<T>} so callers with a
-     * specific return type do not need to declare a wildcard.  The cast is safe at runtime.
+     * specific return type do not need to declare a wildcard. The cast is safe at runtime.
      */
     @SuppressWarnings("unchecked")
     private static <T> MutableHttpResponse<T> bulkValidationError(BulkErrorResponse errorResponse) {

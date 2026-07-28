@@ -5,8 +5,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
-import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.VersionProvider;

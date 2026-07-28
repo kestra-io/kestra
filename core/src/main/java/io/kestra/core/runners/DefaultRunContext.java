@@ -19,6 +19,7 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.assets.AssetManagerFactory;
+import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Plugin;
@@ -31,7 +32,6 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -65,9 +65,9 @@ public class DefaultRunContext extends RunContext {
     private SDK sdk;
 
     private Map<String, Object> variables;
-    private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
+    private List<AbstractMetricEntry<?>> metrics = new ArrayList<>(4); // init to 4 to save memory as tasks usually produce few metrics if any
     private RunContextLogger logger;
-    private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>();
+    private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>(0); // init to 0 to save memory: this is used by only one task
     private String triggerExecutionId;
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
@@ -133,7 +133,7 @@ public class DefaultRunContext extends RunContext {
 
         // add it inside variables if not already present to be available in expressions
         if (traceParent != null && !this.variables.containsKey("trace")) {
-            this.variables = ImmutableMap.<String, Object>builder()
+            this.variables = ImmutableMap.<String, Object> builder()
                 .putAll(this.variables)
                 .put("trace", Map.of("parent", traceParent))
                 .build();
@@ -233,7 +233,6 @@ public class DefaultRunContext extends RunContext {
         runContext.variables = new HashMap<>(this.variables);
         runContext.workingDir = this.workingDir;
         runContext.logger = this.logger;
-        runContext.metrics = new ArrayList<>();
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretInputs = this.secretInputs;
@@ -506,6 +505,15 @@ public class DefaultRunContext extends RunContext {
         return dynamicWorkerTaskResult;
     }
 
+    @Override
+    public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
+        this.dynamicWorkerTaskResult.add(workerTaskResult);
+
+        if (logs != null && !logs.isEmpty() && workerTaskResult.getTaskRun() != null) {
+            this.logger.emitDynamicTaskRunLogs(workerTaskResult.getTaskRun(), logs);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -656,6 +664,19 @@ public class DefaultRunContext extends RunContext {
      */
     public Services services() {
         return new Services(this.applicationContext);
+    }
+
+    /**
+     * Get a task configuration property from the underlying application context.
+     * A task property is a property under the 'kestra.tasks' configuration root.
+     *
+     * @throws IllegalArgumentException if a property is not inside the 'kestra.tasks' configuration root.
+     */
+    public <T> Optional<T> getTaskProperty(String name, Class<T> clazz) {
+        if (!name.startsWith("kestra.tasks.")) {
+            throw new IllegalArgumentException("A plugin can only access configuration properties from the 'kestra.tasks' root property");
+        }
+        return this.applicationContext.getProperty(name, clazz);
     }
 
     /**

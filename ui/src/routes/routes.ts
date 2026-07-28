@@ -10,13 +10,20 @@ import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
 import DemoAssets from "../components/demo/Assets.vue"
+import DemoQuotas from "../components/demo/Quotas.vue"
+import DemoPolicies from "../components/demo/Policies.vue"
 
-const routes: RouteRecordRaw[] = [
+/** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
+export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
+
+const routes: KestraRouteRecord[] = [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
     // New onboarding pages, initial one and the success one after the user has completed the onboarding flow.
-    {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
+    // The AI Copilot full-page home (#7909). Replaces the old `welcome` route — login, setup, the
+    // sidebar logo, and the tutorial-success "restart" all navigate here directly now.
+    {name: "ai", path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
     {name: "welcome/success", path: "/:tenant?/welcome/success", component: () => import("../components/onboarding/Success.vue")},
 
     //Dashboards
@@ -87,7 +94,8 @@ const routes: RouteRecordRaw[] = [
     {name: "admin/mcp-servers/create", path: "/:tenant?/admin/mcp-servers/new/:tab?",                 component: () => import("../components/admin/McpServer.vue")},
 
     //Setup
-    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
+    // ossOnly: posts to /api/v1/{tenant}/basicAuth, which EE does not implement.
+    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}, ossOnly: true},
     //Login
     {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
 
@@ -101,6 +109,8 @@ const routes: RouteRecordRaw[] = [
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
     {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: DemoTenants},
     {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
+    {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: DemoQuotas},
+    {name: "admin/policies", path: "/:tenant?/admin/policies", component: DemoPolicies},
     {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
 ]
 

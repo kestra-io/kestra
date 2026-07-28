@@ -177,6 +177,13 @@ export default {
                 "label": "State",
                 "description": "Filter by execution state",
             },
+            "state_group": {
+                "running": "Running",
+                "paused": "Paused",
+                "completed": "Completed",
+                "failed": "Failed",
+                "other": "Other",
+            },
             "childFilter": {
                 "label": "Hierarchy",
                 "description": "Filter by execution hierarchy",
@@ -303,6 +310,14 @@ export default {
                 "description": "Filter by aggregation method",
             },
             "table_column": {
+                "mcpTools": {
+                    "title": "Display title shown to AI agents",
+                    "annotations": "Behavioural hints declared on the tool (read-only, destructive, etc.)",
+                    "flow": "The flow that defines this tool",
+                    "namespace": "Namespace of the flow that defines this tool",
+                    "triggerId": "Trigger id within the flow, distinct from the tool name",
+                    "description": "What the tool does and when an agent should call it",
+                },
                 "flows": {
                     "id": "Unique flow identifier",
                     "labels": "Flow labels (key:value format)",
@@ -386,6 +401,7 @@ export default {
                 "plugin_filters": "Plugin Search",
             },
             "search_placeholders": {
+                "search_mcp_tools": "Search MCP tools",
                 "search_executions": "Search executions",
                 "search_dashboards": "Search dashboards...",
                 "search_flows": "Search flows",
@@ -587,6 +603,7 @@ export default {
             },
             "search options": "Suche...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP-Tools durchsuchen",
                 "search_blueprints": "Blueprints durchsuchen",
                 "search_dashboards": "Dashboards durchsuchen...",
                 "search_executions": "Ausführungen suchen",
@@ -612,7 +629,22 @@ export default {
                 "description": "Nach Zustand der Ausführung filtern",
                 "label": "Zustand",
             },
+            "state_group": {
+                "running": "Laufend",
+                "paused": "Pausiert",
+                "completed": "Abgeschlossen",
+                "failed": "Fehlgeschlagen",
+                "other": "Sonstige",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Anzeigetitel, der KI-Agenten angezeigt wird",
+                    "annotations": "Verhaltenshinweise, die für das Tool deklariert sind (read-only, destructive usw.)",
+                    "flow": "Der flow, der dieses Tool definiert",
+                    "namespace": "Namespace des flow, der dieses Tool definiert",
+                    "triggerId": "Trigger-id innerhalb des flow, unterscheidet sich vom Tool-Namen",
+                    "description": "Was das Tool tut und wann ein Agent es aufrufen sollte",
+                },
                 "blueprints": {
                     "tags": "Tags, die mit dem Blueprint verknüpft sind",
                 },
@@ -778,6 +810,26 @@ export default {
             "workerId": {
                 "description": "Nach Worker-ID filtern",
                 "label": "Worker-ID",
+            },
+            "mobile_filters": "Filter",
+            "filters_title": "Filter",
+            "all_filters": "Alle Filter",
+            "my_filters_saved": "Meine Filter gespeichert",
+            "member": {
+                "label": "Mitglied",
+                "description": "Filtern nach Mitglied",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Nach Task-Bezeichner filtern",
+            },
+            "taskRunId": {
+                "label": "Task Ausführungs-ID",
+                "description": "Filtern nach Task-Ausführungs-ID",
+            },
+            "attemptNumber": {
+                "label": "Versuchsnummer",
+                "description": "Filtern nach Task-Ausführungsversuchsnummer",
             },
         },
     },
@@ -968,6 +1020,7 @@ export default {
             },
             "search options": "Buscar...",
             "search_placeholders": {
+                "search_mcp_tools": "Buscar herramientas MCP",
                 "search_blueprints": "Buscar blueprints",
                 "search_dashboards": "Buscar dashboards...",
                 "search_executions": "Buscar ejecuciones",
@@ -993,7 +1046,22 @@ export default {
                 "description": "Filtrar por estado de ejecución",
                 "label": "Estado",
             },
+            "state_group": {
+                "running": "En ejecución",
+                "paused": "Pausado",
+                "completed": "Completado",
+                "failed": "Fallido",
+                "other": "Otro",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título mostrado a los agentes de IA",
+                    "annotations": "Indicadores de comportamiento declarados en la herramienta (read-only, destructive, etc.)",
+                    "flow": "El flow que define esta herramienta",
+                    "namespace": "Namespace del flow que define esta herramienta",
+                    "triggerId": "Id del trigger dentro del flow, distinto del nombre de la herramienta",
+                    "description": "Qué hace la herramienta y cuándo debe llamarla un agente",
+                },
                 "blueprints": {
                     "tags": "Etiquetas asociadas con el blueprint",
                 },
@@ -1159,6 +1227,26 @@ export default {
             "workerId": {
                 "description": "Filtrar por ID de worker",
                 "label": "ID del Worker",
+            },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos los Filtros",
+            "my_filters_saved": "Mis filtros guardados",
+            "member": {
+                "label": "Miembro",
+                "description": "Filtrar por miembro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrar por identificador de task",
+            },
+            "taskRunId": {
+                "label": "ID de Ejecución de Task",
+                "description": "Filtrar por identificador de ejecución de task",
+            },
+            "attemptNumber": {
+                "label": "Número de intento",
+                "description": "Filtrar por número de intento de ejecución de task",
             },
         },
     },
@@ -1349,6 +1437,7 @@ export default {
             },
             "search options": "Rechercher...",
             "search_placeholders": {
+                "search_mcp_tools": "Rechercher des outils MCP",
                 "search_blueprints": "Rechercher des blueprints",
                 "search_dashboards": "Rechercher des tableaux de bord...",
                 "search_executions": "Rechercher des exécutions",
@@ -1374,7 +1463,22 @@ export default {
                 "description": "Filtrer par état d'exécution",
                 "label": "État",
             },
+            "state_group": {
+                "running": "En cours",
+                "paused": "En pause",
+                "completed": "Terminé",
+                "failed": "Échoué",
+                "other": "Autre",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Titre affiché aux agents IA",
+                    "annotations": "Indications de comportement déclarées sur l'outil (read-only, destructive, etc.)",
+                    "flow": "Le flow qui définit cet outil",
+                    "namespace": "Namespace du flow qui définit cet outil",
+                    "triggerId": "Id du trigger dans le flow, distinct du nom de l'outil",
+                    "description": "Ce que fait l'outil et quand un agent doit l'appeler",
+                },
                 "blueprints": {
                     "tags": "Étiquettes associées au blueprint",
                 },
@@ -1540,6 +1644,26 @@ export default {
             "workerId": {
                 "description": "Filtrer par ID de worker",
                 "label": "ID du worker",
+            },
+            "mobile_filters": "Filtres",
+            "filters_title": "Filtres",
+            "all_filters": "Tous les filtres",
+            "my_filters_saved": "Mes Filtres enregistrés",
+            "member": {
+                "label": "Membre",
+                "description": "Filtrer par membre",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrer par identifiant de task",
+            },
+            "taskRunId": {
+                "label": "ID d'exécution de Task",
+                "description": "Filtrer par id d'exécution de task",
+            },
+            "attemptNumber": {
+                "label": "Numéro de tentative",
+                "description": "Filtrer par numéro de tentative d'exécution de task",
             },
         },
     },
@@ -1730,6 +1854,7 @@ export default {
             },
             "search options": "खोजें...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP टूल खोजें",
                 "search_blueprints": "ब्लूप्रिंट्स खोजें",
                 "search_dashboards": "डैशबोर्ड खोजें...",
                 "search_executions": "निष्पादन खोजें",
@@ -1755,7 +1880,22 @@ export default {
                 "description": "कार्य स्थिति द्वारा फ़िल्टर करें",
                 "label": "स्थिति",
             },
+            "state_group": {
+                "running": "चल रहा है",
+                "paused": "रुका हुआ",
+                "completed": "पूर्ण",
+                "failed": "विफल",
+                "other": "अन्य",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "AI एजेंट्स को दिखाया जाने वाला शीर्षक",
+                    "annotations": "टूल पर घोषित व्यवहार संकेत (read-only, destructive, आदि)",
+                    "flow": "वह flow जो इस टूल को परिभाषित करता है",
+                    "namespace": "उस flow का namespace जो इस टूल को परिभाषित करता है",
+                    "triggerId": "flow के भीतर trigger id, टूल नाम से अलग",
+                    "description": "टूल क्या करता है और एजेंट को इसे कब कॉल करना चाहिए",
+                },
                 "blueprints": {
                     "tags": "ब्लूप्रिंट से जुड़े टैग्स",
                 },
@@ -1921,6 +2061,26 @@ export default {
             "workerId": {
                 "description": "वर्कर ID द्वारा फ़िल्टर करें",
                 "label": "वर्कर ID",
+            },
+            "mobile_filters": "फ़िल्टर",
+            "filters_title": "फ़िल्टर",
+            "all_filters": "सभी फ़िल्टर",
+            "my_filters_saved": "मेरे फ़िल्टर सहेजे गए",
+            "member": {
+                "label": "सदस्य",
+                "description": "सदस्य द्वारा फ़िल्टर करें",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task identifier द्वारा फ़िल्टर करें",
+            },
+            "taskRunId": {
+                "label": "Task रन ID",
+                "description": "task run पहचानकर्ता द्वारा फ़िल्टर करें",
+            },
+            "attemptNumber": {
+                "label": "प्रयास संख्या",
+                "description": "task run प्रयास संख्या द्वारा फ़िल्टर करें",
             },
         },
     },
@@ -2111,6 +2271,7 @@ export default {
             },
             "search options": "Cerca...",
             "search_placeholders": {
+                "search_mcp_tools": "Cerca strumenti MCP",
                 "search_blueprints": "Cerca blueprint",
                 "search_dashboards": "Cerca dashboard...",
                 "search_executions": "Cerca esecuzioni",
@@ -2136,7 +2297,22 @@ export default {
                 "description": "Filtra per stato di esecuzione",
                 "label": "Zustato",
             },
+            "state_group": {
+                "running": "In esecuzione",
+                "paused": "In pausa",
+                "completed": "Completato",
+                "failed": "Non riuscito",
+                "other": "Altro",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Titolo visualizzato agli agenti IA",
+                    "annotations": "Indicazioni di comportamento dichiarate sullo strumento (read-only, destructive, ecc.)",
+                    "flow": "Il flow che definisce questo strumento",
+                    "namespace": "Namespace del flow che definisce questo strumento",
+                    "triggerId": "Id del trigger all'interno del flow, distinto dal nome dello strumento",
+                    "description": "Cosa fa lo strumento e quando un agente dovrebbe chiamarlo",
+                },
                 "blueprints": {
                     "tags": "Tag associati al blueprint",
                 },
@@ -2302,6 +2478,26 @@ export default {
             "workerId": {
                 "description": "Filtra per ID worker",
                 "label": "ID del worker",
+            },
+            "mobile_filters": "Filtri",
+            "filters_title": "Filtri",
+            "all_filters": "Tutti i Filtri",
+            "my_filters_saved": "I miei Filtri salvati",
+            "member": {
+                "label": "Membro",
+                "description": "Filtra per membro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtra per identificatore task",
+            },
+            "taskRunId": {
+                "label": "ID Esecuzione Task",
+                "description": "Filtra per identificatore di esecuzione del task",
+            },
+            "attemptNumber": {
+                "label": "Numero tentativo",
+                "description": "Filtra per numero di tentativo di esecuzione del task",
             },
         },
     },
@@ -2492,6 +2688,7 @@ export default {
             },
             "search options": "検索...",
             "search_placeholders": {
+                "search_mcp_tools": "MCPツールを検索",
                 "search_blueprints": "ブループリントを検索",
                 "search_dashboards": "ダッシュボードを検索...",
                 "search_executions": "実行を検索",
@@ -2517,7 +2714,22 @@ export default {
                 "description": "実行状態でフィルター",
                 "label": "状態",
             },
+            "state_group": {
+                "running": "実行中",
+                "paused": "一時停止",
+                "completed": "完了",
+                "failed": "失敗",
+                "other": "その他",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "AIエージェントに表示されるタイトル",
+                    "annotations": "ツールに宣言された動作のヒント（read-only、destructive など）",
+                    "flow": "このツールを定義する flow",
+                    "namespace": "このツールを定義する flow の namespace",
+                    "triggerId": "flow 内の trigger id（ツール名とは異なる）",
+                    "description": "ツールの機能と、エージェントが呼び出すべきタイミング",
+                },
                 "blueprints": {
                     "tags": "ブループリントに関連付けられたタグ",
                 },
@@ -2683,6 +2895,26 @@ export default {
             "workerId": {
                 "description": "ワーカーIDでフィルター",
                 "label": "ワーカーID",
+            },
+            "mobile_filters": "フィルター",
+            "filters_title": "フィルター",
+            "all_filters": "すべてのフィルター",
+            "my_filters_saved": "マイフィルター保存済み",
+            "member": {
+                "label": "メンバー",
+                "description": "メンバーでフィルタ",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task 識別子でフィルター",
+            },
+            "taskRunId": {
+                "label": "Task 実行 ID",
+                "description": "task実行IDで絞り込む",
+            },
+            "attemptNumber": {
+                "label": "試行番号",
+                "description": "task実行の試行回数でフィルター",
             },
         },
     },
@@ -2873,6 +3105,7 @@ export default {
             },
             "search options": "검색...",
             "search_placeholders": {
+                "search_mcp_tools": "MCP 도구 검색",
                 "search_blueprints": "블루프린트 검색",
                 "search_dashboards": "대시보드 검색...",
                 "search_executions": "실행 검색",
@@ -2898,7 +3131,22 @@ export default {
                 "description": "실행 상태별 필터링",
                 "label": "상태",
             },
+            "state_group": {
+                "running": "실행 중",
+                "paused": "일시 중지",
+                "completed": "완료",
+                "failed": "실패",
+                "other": "기타",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "AI 에이전트에게 표시되는 제목",
+                    "annotations": "도구에 선언된 동작 힌트 (read-only, destructive 등)",
+                    "flow": "이 도구를 정의하는 flow",
+                    "namespace": "이 도구를 정의하는 flow의 namespace",
+                    "triggerId": "flow 내의 trigger id (도구 이름과 다름)",
+                    "description": "도구의 기능과 에이전트가 호출해야 하는 시점",
+                },
                 "blueprints": {
                     "tags": "블루프린트와 연결된 태그",
                 },
@@ -3064,6 +3312,26 @@ export default {
             "workerId": {
                 "description": "작업자 ID로 필터링",
                 "label": "작업자 ID",
+            },
+            "mobile_filters": "필터",
+            "filters_title": "필터",
+            "all_filters": "모든 필터",
+            "my_filters_saved": "내 필터 저장됨",
+            "member": {
+                "label": "회원",
+                "description": "멤버별 필터링",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task 식별자로 필터링",
+            },
+            "taskRunId": {
+                "label": "Task 실행 ID",
+                "description": "`task` 실행 `id`로 필터링",
+            },
+            "attemptNumber": {
+                "label": "시도 횟수",
+                "description": "task 실행 시도 번호로 필터링",
             },
         },
     },
@@ -3254,6 +3522,7 @@ export default {
             },
             "search options": "Szukaj...",
             "search_placeholders": {
+                "search_mcp_tools": "Wyszukaj narzędzia MCP",
                 "search_blueprints": "Wyszukaj blueprinty",
                 "search_dashboards": "Szukaj pulpitów...",
                 "search_executions": "Wyszukaj wykonania",
@@ -3279,7 +3548,22 @@ export default {
                 "description": "Filtruj według stanu wykonania",
                 "label": "Zmienny",
             },
+            "state_group": {
+                "running": "W toku",
+                "paused": "Wstrzymano",
+                "completed": "Zakończono",
+                "failed": "Nie powiodło się",
+                "other": "Inne",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Tytuł wyświetlany agentom AI",
+                    "annotations": "Wskazówki dotyczące zachowania zadeklarowane dla narzędzia (read-only, destructive itp.)",
+                    "flow": "flow, który definiuje to narzędzie",
+                    "namespace": "Namespace flow, który definiuje to narzędzie",
+                    "triggerId": "Id trigger w obrębie flow, inne niż nazwa narzędzia",
+                    "description": "Co robi narzędzie i kiedy agent powinien je wywołać",
+                },
                 "blueprints": {
                     "tags": "Tagi powiązane z blueprintem",
                 },
@@ -3445,6 +3729,26 @@ export default {
             "workerId": {
                 "description": "Filtruj według worker ID",
                 "label": "Identyfikator Worker",
+            },
+            "mobile_filters": "Filtry",
+            "filters_title": "Filtry",
+            "all_filters": "Wszystkie Filtry",
+            "my_filters_saved": "Moje Filtry zapisane",
+            "member": {
+                "label": "Członek",
+                "description": "Filtruj według członka",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtruj według identyfikatora taska",
+            },
+            "taskRunId": {
+                "label": "ID Uruchomienia Taska",
+                "description": "Filtruj według identyfikatora wykonania taska",
+            },
+            "attemptNumber": {
+                "label": "Numer próby",
+                "description": "Filtruj według numeru próby wykonania taska",
             },
         },
     },
@@ -3635,6 +3939,7 @@ export default {
             },
             "search options": "Pesquisar...",
             "search_placeholders": {
+                "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_blueprints": "Pesquisar blueprints",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_executions": "Pesquisar execuções",
@@ -3660,7 +3965,22 @@ export default {
                 "description": "Filtrar por estado de execução",
                 "label": "Zestado",
             },
+            "state_group": {
+                "running": "A executar",
+                "paused": "Pausado",
+                "completed": "Concluído",
+                "failed": "Falhado",
+                "other": "Outro",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título exibido aos agentes de IA",
+                    "annotations": "Dicas de comportamento declaradas na ferramenta (read-only, destructive, etc.)",
+                    "flow": "O flow que define esta ferramenta",
+                    "namespace": "Namespace do flow que define esta ferramenta",
+                    "triggerId": "Id do trigger dentro do flow, distinto do nome da ferramenta",
+                    "description": "O que a ferramenta faz e quando um agente deve chamá-la",
+                },
                 "blueprints": {
                     "tags": "Tags associados ao blueprint",
                 },
@@ -3826,6 +4146,26 @@ export default {
             "workerId": {
                 "description": "Filtrar por ID do worker",
                 "label": "ID do Worker",
+            },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos os Filtros",
+            "my_filters_saved": "Meus Filtros salvos",
+            "member": {
+                "label": "Membro",
+                "description": "Filtrar por membro",
+            },
+            "taskId": {
+                "label": "ID da Task",
+                "description": "Filtrar por identificador de task",
+            },
+            "taskRunId": {
+                "label": "ID da Execução da Task",
+                "description": "Filtrar por identificador de execução de task",
+            },
+            "attemptNumber": {
+                "label": "Número da Tentativa",
+                "description": "Filtrar por número de tentativa de execução de task",
             },
         },
     },
@@ -4016,6 +4356,7 @@ export default {
             },
             "search options": "Pesquisar...",
             "search_placeholders": {
+                "search_mcp_tools": "Pesquisar ferramentas MCP",
                 "search_blueprints": "Pesquisar blueprints",
                 "search_dashboards": "Pesquisar dashboards...",
                 "search_executions": "Pesquisar execuções",
@@ -4041,7 +4382,22 @@ export default {
                 "description": "Filtrar por estado de execução",
                 "label": "Zestado",
             },
+            "state_group": {
+                "running": "Em execução",
+                "paused": "Pausado",
+                "completed": "Concluído",
+                "failed": "Falhou",
+                "other": "Outro",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Título exibido aos agentes de IA",
+                    "annotations": "Dicas de comportamento declaradas na ferramenta (read-only, destructive, etc.)",
+                    "flow": "O flow que define esta ferramenta",
+                    "namespace": "Namespace do flow que define esta ferramenta",
+                    "triggerId": "Id do trigger dentro do flow, distinto do nome da ferramenta",
+                    "description": "O que a ferramenta faz e quando um agente deve chamá-la",
+                },
                 "blueprints": {
                     "tags": "Tags associados ao blueprint",
                 },
@@ -4207,6 +4563,26 @@ export default {
             "workerId": {
                 "description": "Filtrar por ID do worker",
                 "label": "ID do Worker",
+            },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos os Filtros",
+            "my_filters_saved": "Meus Filtros salvos",
+            "member": {
+                "label": "Membro",
+                "description": "Filtrar por membro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrar por identificador da task",
+            },
+            "taskRunId": {
+                "label": "ID da Execução da Task",
+                "description": "Filtrar por identificador de execução de task",
+            },
+            "attemptNumber": {
+                "label": "Número da Tentativa",
+                "description": "Filtrar por número da tentativa de execução da task",
             },
         },
     },
@@ -4397,6 +4773,7 @@ export default {
             },
             "search options": "Поиск...",
             "search_placeholders": {
+                "search_mcp_tools": "Поиск инструментов MCP",
                 "search_blueprints": "Поиск blueprints",
                 "search_dashboards": "Искать панели...",
                 "search_executions": "Поиск выполнений",
@@ -4422,7 +4799,22 @@ export default {
                 "description": "Фильтр по состоянию выполнения",
                 "label": "Состояние",
             },
+            "state_group": {
+                "running": "Выполняется",
+                "paused": "Приостановлено",
+                "completed": "Завершено",
+                "failed": "Ошибка",
+                "other": "Другое",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "Заголовок, отображаемый ИИ-агентам",
+                    "annotations": "Подсказки о поведении, объявленные для инструмента (read-only, destructive и т. д.)",
+                    "flow": "flow, который определяет этот инструмент",
+                    "namespace": "Namespace flow, который определяет этот инструмент",
+                    "triggerId": "Id trigger в пределах flow, отличается от имени инструмента",
+                    "description": "Что делает инструмент и когда агент должен его вызвать",
+                },
                 "blueprints": {
                     "tags": "Теги, связанные с blueprint",
                 },
@@ -4588,6 +4980,26 @@ export default {
             "workerId": {
                 "description": "Фильтр по worker ID",
                 "label": "ID worker",
+            },
+            "mobile_filters": "Фильтры",
+            "filters_title": "Фильтры",
+            "all_filters": "Все фильтры",
+            "my_filters_saved": "Мои фильтры сохранены",
+            "member": {
+                "label": "Член",
+                "description": "Фильтровать по участнику",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Фильтровать по task идентификатору",
+            },
+            "taskRunId": {
+                "label": "ID запуска Task",
+                "description": "Фильтровать по идентификатору запуска task",
+            },
+            "attemptNumber": {
+                "label": "Номер попытки",
+                "description": "Фильтровать по номеру попытки выполнения task",
             },
         },
     },
@@ -4778,6 +5190,7 @@ export default {
             },
             "search options": "搜索...",
             "search_placeholders": {
+                "search_mcp_tools": "搜索 MCP 工具",
                 "search_blueprints": "搜索blueprint",
                 "search_dashboards": "搜索仪表板...",
                 "search_executions": "搜索执行",
@@ -4803,7 +5216,22 @@ export default {
                 "description": "按执行状态筛选",
                 "label": "状态",
             },
+            "state_group": {
+                "running": "运行中",
+                "paused": "已暂停",
+                "completed": "已完成",
+                "failed": "失败",
+                "other": "其他",
+            },
             "table_column": {
+                "mcpTools": {
+                    "title": "向 AI 智能体显示的标题",
+                    "annotations": "在工具上声明的行为提示（read-only、destructive 等）",
+                    "flow": "定义此工具的 flow",
+                    "namespace": "定义此工具的 flow 的 namespace",
+                    "triggerId": "flow 内的 trigger id（与工具名称不同）",
+                    "description": "工具的功能以及智能体何时应调用它",
+                },
                 "blueprints": {
                     "tags": "与blueprint关联的标签",
                 },
@@ -4969,6 +5397,26 @@ export default {
             "workerId": {
                 "description": "按worker ID筛选",
                 "label": "工作者 ID",
+            },
+            "mobile_filters": "筛选器",
+            "filters_title": "筛选器",
+            "all_filters": "所有筛选器",
+            "my_filters_saved": "我的筛选器已保存",
+            "member": {
+                "label": "成员",
+                "description": "按成员筛选",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "按 task 标识符筛选",
+            },
+            "taskRunId": {
+                "label": "Task 运行 ID",
+                "description": "按 task 运行标识符筛选",
+            },
+            "attemptNumber": {
+                "label": "尝试次数",
+                "description": "按 task 运行尝试编号筛选",
             },
         },
     },

@@ -1,15 +1,21 @@
 package io.kestra.core.validations;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.models.ServerType;
+
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.BeanInstantiationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ServerCommandValidatorTest {
 
@@ -19,9 +25,11 @@ class ServerCommandValidatorTest {
         // (and its application-test.yml which sets kestra.server-type), so we
         // can verify the validator is genuinely absent when no server command
         // is issued.
-        try (ApplicationContext context = ApplicationContext.builder()
-            .deduceEnvironment(false)
-            .start()) {
+        try (
+            ApplicationContext context = ApplicationContext.builder()
+                .deduceEnvironment(false)
+                .start()
+        ) {
             Assertions.assertThrows(NoSuchBeanException.class, () -> context.getBean(ServerCommandValidator.class));
         }
     }
@@ -69,5 +77,47 @@ class ServerCommandValidatorTest {
             exception = exception.getCause();
         }
         return exception;
+    }
+
+    @Test
+    void shouldReturnValidResultsWhenAllRequiredPropertiesPresent() {
+        Environment environment = mock(Environment.class);
+        when(environment.containsProperty("kestra.queue.type")).thenReturn(true);
+        when(environment.containsProperty("kestra.repository.type")).thenReturn(true);
+        when(environment.containsProperty("kestra.storage.type")).thenReturn(true);
+
+        List<ConfigValidationResult> results = ServerCommandValidator.validateServerConfiguration(environment, ServerType.WEBSERVER);
+
+        assertThat(results)
+            .as("All required webserver properties present is valid")
+            .isNotEmpty()
+            .allMatch(ConfigValidationResult::valid);
+    }
+
+    @Test
+    void shouldReturnInvalidResultWhenRequiredPropertyMissing() {
+        Environment environment = mock(Environment.class);
+        when(environment.containsProperty("kestra.queue.type")).thenReturn(true);
+        when(environment.containsProperty("kestra.repository.type")).thenReturn(true);
+        when(environment.containsProperty("kestra.storage.type")).thenReturn(false);
+
+        List<ConfigValidationResult> results = ServerCommandValidator.validateServerConfiguration(environment, ServerType.WEBSERVER);
+
+        assertThat(results)
+            .as("A missing kestra.storage.type is reported as invalid with a message")
+            .anyMatch(result -> !result.valid() && result.key().equals("kestra.storage.type") && result.message() != null);
+    }
+
+    @Test
+    void shouldOnlyRequireStorageForWorker() {
+        Environment environment = mock(Environment.class);
+        when(environment.containsProperty("kestra.storage.type")).thenReturn(true);
+
+        List<ConfigValidationResult> results = ServerCommandValidator.validateServerConfiguration(environment, ServerType.WORKER);
+
+        assertThat(results)
+            .as("A worker only requires kestra.storage.type")
+            .hasSize(1)
+            .allMatch(ConfigValidationResult::valid);
     }
 }

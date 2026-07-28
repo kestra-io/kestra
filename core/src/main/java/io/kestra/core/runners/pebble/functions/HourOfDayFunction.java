@@ -1,9 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
@@ -11,16 +7,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 /**
  * Pebble function that returns the hour of day (0–23) of the given datetime string.
  *
- * <p>Accepts ISO 8601 datetime strings with or without a timezone offset
+ * <p>
+ * Accepts ISO 8601 datetime strings with or without a timezone offset
  * (e.g. {@code "2025-01-06T14:30:00Z"} or {@code "2025-01-06T14:30:00+02:00"} or
  * {@code "2025-01-06T14:30:00"}). The hour is taken from the local time component as written
  * in the string; no UTC normalization is performed. Plain date strings without a time
  * component are not supported.
  *
- * <p>Usage: {@code {{ hourOfDay(date) }}}
+ * <p>
+ * Usage: {@code {{ hourOfDay(date) }}}
  *
  * @param date ISO 8601 datetime string (with or without timezone offset)
  */

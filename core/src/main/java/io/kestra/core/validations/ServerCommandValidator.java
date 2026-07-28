@@ -40,20 +40,44 @@ public class ServerCommandValidator {
 
     @PostConstruct
     void validate() {
-        Map<String, String> required = ServerType.WORKER.equals(serverType) ? WORKER_REQUIRED_PROPERTIES : ALL_REQUIRED_PROPERTIES;
-        final List<Map.Entry<String, String>> missingProperties = required.entrySet().stream()
-            .filter((property) -> !environment.containsProperty(property.getKey()))
-            .toList();
+        final List<ConfigValidationResult> results = validateServerConfiguration(environment, serverType);
 
-        missingProperties.forEach(
-            property -> log.error("""
-                Server configuration requires the '{}' property to be defined.
-                For more details, please follow the official setup guide at: {}""", property.getKey(), property.getValue())
-        );
+        results.stream()
+            .filter(result -> !result.valid())
+            .forEach(result -> log.error(result.message()));
 
-        if (!missingProperties.isEmpty()) {
+        if (results.stream().anyMatch(result -> !result.valid())) {
             throw new ServerCommandException("Incomplete server configuration - missing required properties");
         }
+    }
+
+    /**
+     * Validates that the properties required to start the given {@link ServerType} are defined.
+     *
+     * <p>
+     * This method is side-effect free (it neither logs nor throws) so the same checks can be
+     * reused for on-demand validation.
+     *
+     * @param environment the configuration environment to validate
+     * @param serverType the server type whose required properties must be present
+     * @return the outcome of each required-property check, never {@code null}
+     */
+    public static List<ConfigValidationResult> validateServerConfiguration(final Environment environment, final ServerType serverType) {
+        final Map<String, String> required = ServerType.WORKER.equals(serverType) ? WORKER_REQUIRED_PROPERTIES : ALL_REQUIRED_PROPERTIES;
+
+        return required.entrySet().stream()
+            .map(
+                property -> environment.containsProperty(property.getKey())
+                    ? ConfigValidationResult.valid(property.getKey())
+                    : ConfigValidationResult.invalid(property.getKey(), missingPropertyMessage(property.getKey(), property.getValue()))
+            )
+            .toList();
+    }
+
+    private static String missingPropertyMessage(final String key, final String documentationUrl) {
+        return """
+            Server configuration requires the '%s' property to be defined.
+            For more details, please follow the official setup guide at: %s""".formatted(key, documentationUrl);
     }
 
     public static class ServerCommandException extends RuntimeException {

@@ -6,7 +6,6 @@
         :state="state"
         :class="classes"
         :icons="icons"
-        :iconComponent="iconComponent"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
@@ -119,6 +118,7 @@
     interface TaskRun {
         id: string
         taskId: string;
+        parentTaskRunId?: string;
         state: {
             current: [string, string];
             duration?: string;
@@ -142,7 +142,6 @@
         targetPosition?: Position;
         id: string;
         icons?: Record<string, unknown>;
-        iconComponent?: object;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -154,7 +153,6 @@
         targetPosition: Position.Left,
         enableSubflowInteraction: true,
         icons: undefined,
-        iconComponent: undefined,
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
@@ -225,6 +223,16 @@
         return taskRunList.value.filter(
             (t: TaskRun) => t.taskId === Utils.afterLastDot(props.data.node.uid),
         )
+    })
+
+    // The task's own taskruns plus any dynamically-generated child taskruns (e.g. Ansible
+    // plays/tasks) so "show task logs" surfaces their logs too, not just the task's root logs.
+    const taskRunsWithDynamicChildren = computed(() => {
+        const ids = new Set(taskRuns.value.map((t: TaskRun) => t.id))
+        const children = taskRunList.value.filter(
+            (t: TaskRun) => t.parentTaskRunId && ids.has(t.parentTaskRunId),
+        )
+        return [...taskRuns.value, ...children]
     })
 
     const state = computed(() => {
@@ -341,7 +349,7 @@
                 key: "logs",
                 label: t("show task logs"),
                 icon: TextBoxSearch,
-                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRuns.value}),
+                onClick: () => emit(EVENTS.SHOW_LOGS, {id: taskId.value, execution: taskExecution.value, taskRuns: taskRunsWithDynamicChildren.value}),
             })
         }
         if (taskExecution.value) {
@@ -439,7 +447,7 @@
     width: 1rem;
     padding: .1rem;
     margin: 6px;
-    font-size: .8rem;
+    font-size: var(--ks-font-size-sm);
 }
 
 button.playground-button {

@@ -26,17 +26,18 @@
             </KsSelect>
             <KsButtonGroup class="d-flex">
                 <KsTooltip
-                    :content="$t('namespace files.create.file')"
+                    :content="canManageFiles ? $t('namespace files.create.file') : $t('namespace files.read_only')"
                 >
-                    <KsButton class="px-2" @click="toggleDialog(true, 'file')">
+                    <KsButton class="px-2" :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
                         <FilePlus />
                     </KsButton>
                 </KsTooltip>
                 <KsTooltip
-                    :content="$t('namespace files.create.folder')"
+                    :content="canManageFiles ? $t('namespace files.create.folder') : $t('namespace files.read_only')"
                 >
                     <KsButton
                         class="px-2"
+                        :disabled="!canManageFiles"
                         @click="toggleDialog(true, 'folder')"
                     >
                         <FolderPlus />
@@ -60,23 +61,27 @@
                     class="hidden"
                     @change="importFiles"
                 >
-                <KsDropdown>
-                    <KsButton :aria-label="$t('import')">
-                        <PlusBox />
-                    </KsButton>
-                    <template #dropdown>
-                        <KsDropdownMenu>
-                            <KsDropdownItem @click="filePicker?.click()">
-                                {{ $t("namespace files.import.files") }}
-                            </KsDropdownItem>
-                            <KsDropdownItem
-                                @click="folderPicker?.click()"
-                            >
-                                {{ $t("namespace files.import.folder") }}
-                            </KsDropdownItem>
-                        </KsDropdownMenu>
-                    </template>
-                </KsDropdown>
+                <KsTooltip
+                    :content="canManageFiles ? $t('import') : $t('namespace files.read_only')"
+                >
+                    <KsDropdown :disabled="!canManageFiles">
+                        <KsButton :aria-label="$t('import')" :disabled="!canManageFiles">
+                            <PlusBox />
+                        </KsButton>
+                        <template #dropdown>
+                            <KsDropdownMenu>
+                                <KsDropdownItem @click="filePicker?.click()">
+                                    {{ $t("namespace files.import.files") }}
+                                </KsDropdownItem>
+                                <KsDropdownItem
+                                    @click="folderPicker?.click()"
+                                >
+                                    {{ $t("namespace files.import.folder") }}
+                                </KsDropdownItem>
+                            </KsDropdownMenu>
+                        </template>
+                    </KsDropdown>
+                </KsTooltip>
                 <KsTooltip
                     :content="$t('namespace files.export')"
                 >
@@ -95,7 +100,7 @@
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
-            draggable
+            :draggable="canManageFiles"
             nodeKey="id"
             v-ks-loading="filesStore.fileTree === undefined"
             :props="({class: nodeClass, isLeaf: 'leaf'} as any)"
@@ -149,12 +154,14 @@
                         <KsDropdownMenu>
                             <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
                             </KsDropdownItem>
                             <KsDropdownItem
                                 v-if="!data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
@@ -170,6 +177,7 @@
                             </KsDropdownItem>
                             <KsDropdownItem
                                 v-if="data.leaf && !multiSelected"
+                                :disabled="!canManageFiles"
                                 @click="
                                     toggleRenameDialog(
                                         true,
@@ -187,7 +195,7 @@
                                     )
                                 }}
                             </KsDropdownItem>
-                            <KsDropdownItem @click="removeSelectedFiles(data, node)">
+                            <KsDropdownItem :disabled="!canManageFiles" @click="removeSelectedFiles(data, node)">
                                 {{
                                     selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
@@ -321,6 +329,8 @@
             v-model="revisionsHistory.visible"
             :title="$t('namespace files.revisions.history')"
             top="10vh"
+            width="min(1200px, 90vw)"
+            appendToBody
         >
             <Revisions
                 v-if="revisionsHistory.visible"
@@ -345,10 +355,10 @@
             }"
             class="tabs-context"
         >
-            <KsMenuItem @click="toggleDialog(true, 'file')">
+            <KsMenuItem :disabled="!canManageFiles" @click="toggleDialog(true, 'file')">
                 {{ $t("namespace files.create.file") }}
             </KsMenuItem>
-            <KsMenuItem @click="toggleDialog(true, 'folder')">
+            <KsMenuItem :disabled="!canManageFiles" @click="toggleDialog(true, 'folder')">
                 {{ $t("namespace files.create.folder") }}
             </KsMenuItem>
         </KsMenu>
@@ -386,8 +396,12 @@
         useFileExplorerStore,
     } from "../../stores/fileExplorer"
     import Revisions, {Revision} from "../layout/Revisions.vue"
+    import {FILES_REFRESH_CONTENT_INJECTION_KEY} from "./FlowFileEditorTab.vue"
     import Crud from "override/components/auth/Crud.vue"
     import Checkbox from "../layout/Checkbox.vue"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -409,6 +423,7 @@
     }>()
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY)
+    const refreshTabContent = inject(FILES_REFRESH_CONTENT_INJECTION_KEY, undefined)
 
     // exposed so parents (e.g. the dedicated empty state) can reuse the
     // create dialog instead of duplicating file-creation logic
@@ -419,6 +434,7 @@
     const route = useRoute()
     const namespacesStore = useNamespacesStore()
     const filesStore = useFileExplorerStore()
+    const authStore = useAuthStore()
 
     watch(
         () => props.currentNS,
@@ -474,6 +490,13 @@
     const toast = useToast()
 
     const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string)
+
+    // Namespace files write operations (create / import / rename / delete) all hit
+    // endpoints guarded by NAMESPACE:MANAGE_FILES; gate the matching UI actions so a
+    // read-only user sees them disabled instead of triggering a rejected request.
+    const canManageFiles = computed<boolean>(() =>
+        authStore.user?.isAllowed(resource.NAMESPACE, action.MANAGE_FILES, namespaceId.value) ?? false,
+    )
 
     const multiSelected = computed(() => selectedNodes.value.length > 1)
 
@@ -654,19 +677,24 @@
     }
 
     async function restore(source: string) {
+        const path = revisionsHistory.value.path
+
         await namespacesStore.saveOrCreateFile({
             namespace: namespaceId.value,
-            path: revisionsHistory.value.path,
+            path,
             content: source,
         })
 
         toast.success(t("namespace files.revisions.restore.success"))
 
-        closeTab?.({path: revisionsHistory.value.path})
+        if (refreshTabContent) {
+            refreshTabContent.value[path] = {content: source}
+        }
+
         openTab?.({
-            name: revisionsHistory.value.path.split("/").pop()!,
-            path: revisionsHistory.value.path,
-            extension: revisionsHistory.value.path.split(".").pop()!,
+            name: path.split("/").pop()!,
+            path,
+            extension: path.split(".").pop()!,
             flow: false,
             dirty: false,
         })
@@ -679,6 +707,8 @@
     }
 
     async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
+        // Guards the keyboard-delete path, which bypasses the disabled context-menu item
+        if (!canManageFiles.value) return
         if (selectedFiles.value.length <= 1 && node) {
             selectedNodes.value = [node.data.id]
         }
@@ -714,10 +744,13 @@
                 dropdowns.value[dd]?.handleClose()
             }
         }
-        dropdowns.value[id]?.handleOpen()
+        if(typeof dropdowns.value[id]?.handleOpen === "function") {
+            dropdowns.value[id].handleOpen()
+        }
     }
 
     async function dialogHandler() {
+        if (!canManageFiles.value) return
         if (dialog.value.type === "file") {
             await addFile({creation: true})
         } else {
@@ -763,6 +796,7 @@
     }
 
     function renameItem() {
+        if (!canManageFiles.value) return
         const path = renameDialog.value.node?.data.id ? filesStore.getPath(renameDialog.value.node.data.id) ?? "" : ""
         const start = path.substring(0, path.lastIndexOf("/") + 1)
         namespacesStore.renameFileDirectory({
@@ -775,6 +809,12 @@
     }
 
     async function nodeMoved(draggedNode: any) {
+        // Guards the drag-and-drop move path, which bypasses the disabled toolbar actions
+        if (!canManageFiles.value) {
+            tree.value.remove(draggedNode.data.id)
+            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent)
+            return
+        }
         try {
             await namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
@@ -800,9 +840,11 @@
 
     async function importFiles(event: Event) {
         const importedFiles = (event.target as HTMLInputElement).files
-        if (!importedFiles) return
+        if (!importedFiles || !canManageFiles.value) return
         try {
-            filesStore.importFiles(importedFiles)
+            // Awaited so the success toast only fires once the upload actually
+            // succeeds; a rejected upload (e.g. missing permission) surfaces the error instead
+            await filesStore.importFiles(importedFiles)
             toast.success(t("namespace files.import.success"))
         } catch {
             toast.error(t("namespace files.import.error"))
@@ -935,6 +977,11 @@
 
 <style scoped lang="scss">
 
+.revision-history-dialog-body {
+    // We subtract the dialog margins and title height (78px)
+    height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
+}
+
 .sidebar {
     background: var(--ks-bg-surface);
     border-right: 1px solid var(--ks-border-default);
@@ -942,13 +989,10 @@
     min-width: calc(20% - 11px);
     width: 20%;
 
-    :deep(.revision-history-dialog-body) {
-        // We subtract the dialog margins and title height (78px)
-        height: calc(100vh - (var(--kel-dialog-margin-top) * 2) - 78px);
-    }
-
     .filter{
-        .kel-input__wrapper {
+        :deep(.kel-select__wrapper) {
+            min-height: 32px;
+            height: 32px;
             padding-right: 0px;
         }
     }

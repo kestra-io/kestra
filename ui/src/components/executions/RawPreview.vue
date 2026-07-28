@@ -10,7 +10,11 @@
         :lang="!forceEditor ? extensionToMonacoLang : 'json'"
         readOnly
         inline
-        :options="{wordWrap, fullHeight: false}"
+        :options="{
+            wordWrap,
+            fullHeight: false,
+            customHeight: 14,
+        }"
         :navbar="false"
         class="position-relative"
     >
@@ -83,3 +87,9 @@
         return `data:image/${props.extension};base64,${props.content}`
     })
 </script>
+
+<style scoped lang="scss">
+    :deep( .editor-absolute-container) {
+        top: 4px;
+    }
+</style>

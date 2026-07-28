@@ -90,7 +90,7 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     .ks-execution-status__icon {
         display: inline-flex;
         align-items: center;
-        font-size: 1.10rem;
+        font-size: var(--ks-font-size-xl);
     }
 
     .ks-execution-status__text {

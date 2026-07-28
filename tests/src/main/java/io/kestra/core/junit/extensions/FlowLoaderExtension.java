@@ -11,6 +11,7 @@ public class FlowLoaderExtension extends AbstractLoaderExtension implements Befo
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
         LoadFlows loadFlows = getLoadFlows(extensionContext);
+        createTenant(extensionContext, loadFlows.tenantId());
         loadFlows(extensionContext, loadFlows.tenantId(), loadFlows.value());
     }
 
@@ -18,6 +19,7 @@ public class FlowLoaderExtension extends AbstractLoaderExtension implements Befo
     public void afterEach(ExtensionContext extensionContext) throws Exception {
         LoadFlows loadFlows = getLoadFlows(extensionContext);
         deleteFlows(loadFlows.tenantId(), loadFlows.value());
+        deleteTenant(loadFlows.tenantId());
     }
 
     private static LoadFlows getLoadFlows(ExtensionContext extensionContext) {

@@ -57,9 +57,6 @@ public abstract class AbstractRunnerTest {
     protected MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
 
     @Inject
-    private PluginDefaultsCaseTest pluginDefaultsCaseTest;
-
-    @Inject
     protected FlowCaseTest flowCaseTest;
 
     @Inject
@@ -225,11 +222,12 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
-        { "flows/valids/trigger-flow-listener-with-pause.yaml",
-            "flows/valids/trigger-flow-with-pause.yaml" }
+        value = { "flows/valids/trigger-flow-listener-with-pause.yaml",
+            "flows/valids/trigger-flow-with-pause.yaml" },
+        tenantId = "pause-tenant"
     )
     void flowTriggerWithPause() throws Exception {
-        flowTriggerCaseTest.triggerWithPause();
+        flowTriggerCaseTest.triggerWithPause("pause-tenant");
     }
 
     @Test
@@ -335,12 +333,6 @@ public abstract class AbstractRunnerTest {
     )
     void flowTriggerWithInvalidInputs() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerWithInvalidInputs();
-    }
-
-    @Test
-    @LoadFlows({ "flows/tests/plugin-defaults.yaml" })
-    void taskDefaults() throws Exception {
-        pluginDefaultsCaseTest.pluginDefaults();
     }
 
     @Test

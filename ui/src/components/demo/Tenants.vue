@@ -4,8 +4,6 @@
         type="tenants"
         demoCta
         :title="$t('demos.tenants.title')"
-        video="https://www.youtube.com/embed/z4uzAyjKeoc"
-        learnMore="https://kestra.io/docs/enterprise/governance/tenants"
     >
         <template #description>
             {{ $t('demos.tenants.message') }}

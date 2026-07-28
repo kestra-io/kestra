@@ -262,7 +262,7 @@ public final class ScriptService {
             )
         );
         String normalized = normalizeValue(name, true, true);
-        if (normalized.length() > 55) {
+        if (normalized.length() > 54) {
             normalized = normalized.substring(0, 54);
         }
 

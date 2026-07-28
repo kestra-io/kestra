@@ -1,7 +1,7 @@
 <template>
     <div class="source-search-preview" data-test="source-search-preview">
         <div v-if="!props.selected" class="source-search-preview__empty">
-            <KsNoData :title="t('source_search.preview_empty')" />
+            <KsNoData :title="$t('source_search.preview_empty')" />
         </div>
 
         <div v-else-if="isLoading" class="source-search-preview__loading" v-ks-loading="true" />
@@ -9,7 +9,7 @@
         <KsAlert
             v-else-if="error"
             type="error"
-            :title="t('source_search.preview_error')"
+            :title="$t('source_search.preview_error')"
             class="source-search-preview__error"
         />
 
@@ -29,7 +29,6 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useI18n} from "vue-i18n"
     import {KsEditor} from "@kestra-io/design-system"
     import {useFlowStore} from "../../stores/flow"
     import type {KsEditorExposes} from "@kestra-io/design-system"
@@ -39,7 +38,6 @@
         query: string
     }>()
 
-    const {t} = useI18n()
     const flowStore = useFlowStore()
 
     const isLoading = ref(false)

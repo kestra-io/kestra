@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.utils.Await;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -13,8 +11,10 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.utils.Await;
 
 import jakarta.inject.Inject;
 
@@ -188,7 +188,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/finally-loop.yaml"}, tenantId = "loopwithouterrors")
+    @LoadFlows(value = { "flows/valids/finally-loop.yaml" }, tenantId = "loopwithouterrors")
     void loopWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             "loopwithouterrors",
@@ -200,7 +200,7 @@ class FinallyTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -208,7 +208,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/finally-loop.yaml"}, tenantId = "loopwitherrors")
+    @LoadFlows(value = { "flows/valids/finally-loop.yaml" }, tenantId = "loopwitherrors")
     void loopWithErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             "loopwitherrors",
@@ -224,11 +224,11 @@ class FinallyTest {
         // but other sub-executions continue running their errors/finally tasks in parallel.
         // Wait for all sub-executions to reach terminal state before asserting.
         Await.until(
-            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream().allMatch(e -> e.getState().isTerminated()),
+            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()),
             Duration.ofMillis(100),
             Duration.ofSeconds(30)
         );
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -238,7 +238,7 @@ class FinallyTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/finally-loop-parallel.yaml"}, tenantId = "loopparallelwithouterrors")
+    @LoadFlows(value = { "flows/valids/finally-loop-parallel.yaml" }, tenantId = "loopparallelwithouterrors")
     void loopParallelWithoutErrors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
             "loopparallelwithouterrors",
@@ -250,7 +250,7 @@ class FinallyTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -274,11 +274,11 @@ class FinallyTest {
         // but other sub-executions continue running their errors/finally tasks in parallel.
         // Wait for all sub-executions to reach terminal state before asserting.
         Await.until(
-            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId()).stream().allMatch(e -> e.getState().isTerminated()),
+            () -> executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null).stream().allMatch(e -> e.getState().isTerminated()),
             Duration.ofMillis(100),
             Duration.ofSeconds(30)
         );
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
 
         assertThat(subExecutions.getFirst().findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);

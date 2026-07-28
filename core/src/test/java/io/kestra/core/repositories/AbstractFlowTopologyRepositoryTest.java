@@ -111,4 +111,36 @@ public abstract class AbstractFlowTopologyRepositoryTest {
 
         assertThat(list.size()).isEqualTo(3);
     }
+
+    @Test
+    void findByFlowDestinationOnly() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-a", "flow-b", "io.kestra.tests")
+        );
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-c", "flow-a", "io.kestra.tests")
+        );
+
+        List<FlowTopology> list = flowTopologyRepository.findByFlow(tenant, "io.kestra.tests", "flow-a", true);
+
+        assertThat(list).hasSize(1);
+        assertThat(list.getFirst().getDestination().getId()).isEqualTo("flow-a");
+        assertThat(list.getFirst().getSource().getId()).isEqualTo("flow-c");
+    }
+
+    @Test
+    void findByFlowNoMatch() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-a", "flow-b", "io.kestra.tests")
+        );
+
+        List<FlowTopology> list = flowTopologyRepository.findByFlow(tenant, "io.kestra.tests", "flow-c", false);
+
+        assertThat(list).isEmpty();
+    }
+
 }

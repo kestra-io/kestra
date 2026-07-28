@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -21,7 +21,7 @@ class DefaultExecutionLogMetaStoreTest {
     private DefaultExecutionLogMetaStore executionLogMetaStore;
 
     @Inject
-    private LogRepositoryInterface logRepository;
+    private LogDataStoreInterface logRepository;
 
     @Test
     void errorLogs() {

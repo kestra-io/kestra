@@ -38,6 +38,21 @@ class TaskWithRunIfTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/task-runif-taskswithstate.yml")
+    void runIfWithTasksWithStateFunction(Execution execution) {
+        // Pylon #1984: tasksWithState() must work in runIf (rendered executor-side, enum state).
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("will_fail").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // runIf {{ tasksWithState('FAILED') is not empty }} -> a failure exists -> must RUN
+        assertThat(execution.findTaskRunsByTaskId("write_execution_context").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getVariables()).containsEntry("hadFailure", List.of("yes"));
+
+        // runIf {{ tasksWithState('FAILED') is empty }} -> a failure exists -> must be SKIPPED
+        assertThat(execution.findTaskRunsByTaskId("skipped_when_failures_exist").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+    }
+
+    @Test
     @ExecuteFlow("flows/valids/task-runif-executionupdating.yml")
     void executionUpdatingTask(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

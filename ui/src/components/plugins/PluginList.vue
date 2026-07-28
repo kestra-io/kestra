@@ -24,7 +24,7 @@
             @click.prevent="openGroup(plugin)"
         >
             <div class="content">
-                <KsTaskIcon
+                <TaskIcon
                     class="icon"
                     :onlyIcon="true"
                     :cls="hasIcon(plugin.subGroup) ? plugin.subGroup : plugin.group"
@@ -55,8 +55,9 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import {KsTaskIcon, type KsBreadcrumbItem} from "@kestra-io/design-system"
-    import {isEntryAPluginElementPredicate, isPluginMatched} from "../../utils/pluginUtils"
+    import {type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import TaskIcon from "./TaskIcon.vue"
+    import {isEntryAPluginElementPredicate, isPluginMatched, type PluginIconMap} from "../../utils/pluginUtils"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import PluginUnified from "./PluginUnified.vue"
@@ -85,7 +86,7 @@
     const currentGroup = ref<string>("")
     const currentSubgroup = ref<string>()
     const searchQuery = ref<string>("")
-    const icons = ref<Record<string, {icon: string; flowable: boolean}>>({})
+    const icons = ref<PluginIconMap>({})
     const navigationStack = ref<NavigationItem[]>([])
     const currentDocumentationPlugin = ref<any>(null)
     const currentView = ref<"list" | "group" | "documentation">("documentation")
@@ -383,7 +384,7 @@
 
             .name {
                 color: var(--ks-text-primary);
-                font-size: var(--ks-font-size-base);
+                font-size: var(--ks-font-size-sm);
                 line-height: 1.5;
             }
         }

@@ -172,16 +172,18 @@ class SplitTest {
     @Test
     void regexPatternIon() throws Exception {
         RunContext runContext = runContextFactory.of();
-        URI put = storageUploadIon(List.of(
-            Map.of("id", 1, "level", "ERROR"),
-            Map.of("id", 2, "level", "WARN"),
-            Map.of("id", 3, "level", "INFO"),
-            Map.of("id", 4, "level", "ERROR"),
-            Map.of("id", 5, "level", "WARN"),
-            Map.of("id", 6, "level", "INFO"),
-            Map.of("id", 7),
-            Map.of("id", 8, "level", "ERROR")
-        ));
+        URI put = storageUploadIon(
+            List.of(
+                Map.of("id", 1, "level", "ERROR"),
+                Map.of("id", 2, "level", "WARN"),
+                Map.of("id", 3, "level", "INFO"),
+                Map.of("id", 4, "level", "ERROR"),
+                Map.of("id", 5, "level", "WARN"),
+                Map.of("id", 6, "level", "INFO"),
+                Map.of("id", 7),
+                Map.of("id", 8, "level", "ERROR")
+            )
+        );
 
         Split result = Split.builder()
             .from(Property.ofValue(put.toString()))
@@ -252,15 +254,18 @@ class SplitTest {
     private List<Map<String, Object>> ionContent(int count) {
         return IntStream
             .range(0, count)
-            .mapToObj(value -> Map.<String, Object>of("id", value))
+            .mapToObj(value -> Map.<String, Object> of("id", value))
             .toList();
     }
 
     URI storageUploadIon(List<Map<String, Object>> records) throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("unit", ".ion");
 
-        try (OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
-             SequenceWriter writer = FileSerde.createBinarySequenceWriter(outputStream, new TypeReference<Object>() {})) {
+        try (
+            OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(tempFile));
+            SequenceWriter writer = FileSerde.createBinarySequenceWriter(outputStream, new TypeReference<Object>() {
+            })
+        ) {
             for (Map<String, Object> record : records) {
                 writer.write(record);
             }

@@ -87,7 +87,8 @@ public abstract class AbstractJdbcRepository<T> {
         // So to avoid the case where no record exists and two threads insert concurrently, in H2, we select/insert and if the insert fails, select again.
         // Anyway, this would only occur once in a record lifecycle, so even if it's not elegant, it should work.
         // But as this pattern didn't work with Postgres, we emit INSERT IGNORE in Postgres and MySQL, so we're sure it works there also, and it's better than relying on exception.
-        return fetcher.get().orElseGet(() -> {
+        return fetcher.get().orElseGet(() ->
+        {
             try {
                 T entity = defaultEntity.get();
                 Map<Field<Object>, Object> fields = this.persistFields(entity);
@@ -134,7 +135,6 @@ public abstract class AbstractJdbcRepository<T> {
     public void persist(T entity) {
         this.persist(entity, null);
     }
-
 
     /**
      * Do an insert or update on the table (upsert).
@@ -313,8 +313,12 @@ public abstract class AbstractJdbcRepository<T> {
                 return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
             }
             case "week" -> {
-                LocalDate weekDate = LocalDate.ofYearDay(year, week * 7);
-                return weekDate.atStartOfDay().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant(ZonedDateTime.now().getOffset());
+                // week * 7 can fall outside the 1..365/366 day-of-year range (e.g. week 53 -> 371, or
+                // week 0 returned by some SQL WEEK() modes), which would make ofYearDay throw, so clamp it.
+                int maxDayOfYear = LocalDate.of(year, 12, 31).getDayOfYear();
+                int dayOfYear = Math.min(Math.max(week * 7, 1), maxDayOfYear);
+                LocalDate weekDate = LocalDate.ofYearDay(year, dayOfYear).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                return weekDate.atStartOfDay(TimeZone.getDefault().toZoneId()).toInstant();
             }
             case "month" -> {
                 return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
@@ -398,7 +402,11 @@ public abstract class AbstractJdbcRepository<T> {
                 .getOrderBy()
                 .forEach(order ->
                 {
-                    String column = camelToSnake(order.getProperty());
+                    String property = order.getProperty();
+                    if (property == null || property.isBlank()) {
+                        throw new IllegalArgumentException("Invalid sort field");
+                    }
+                    String column = camelToSnake(property);
                     Field<Object> field = DSL.field(DSL.name(column));
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());

@@ -22,6 +22,8 @@ import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -45,7 +47,6 @@ import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -250,9 +251,11 @@ class TriggerEventHandlerTest {
     @Test
     void shouldResetTriggerAndRecomputeNextEvaluationDateWhenFlowExists() {
         // GIVEN
-        triggerStateStore.save(triggerState
-            .locked(Clock.systemDefaultZone(), true)
-            .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(15)));
+        triggerStateStore.save(
+            triggerState
+                .locked(Clock.systemDefaultZone(), true)
+                .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(15))
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
         ResetTrigger event = new ResetTrigger(triggerId);
 
@@ -305,6 +308,191 @@ class TriggerEventHandlerTest {
         assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
         assertThat(updated.get().getNextEvaluationDate()).isAfter(initialNextEvaluationDate.toInstant());
         assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldSkipMissedSchedulesWhenReEnablingTriggerPreviouslyEvaluated() {
+        // GIVEN: a trigger evaluated 45 minutes before being disabled, re-enabled without any recovery behavior
+        ZonedDateTime evaluatedAt = SchedulerClock.now().minusMinutes(45);
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, evaluatedAt)
+                .updateForNextEvaluationDate(CLOCK, evaluatedAt.plusMinutes(15))
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        Instant beforeHandler = Instant.now();
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: the next evaluation date is in the future, no missed schedule is replayed
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(beforeHandler);
+    }
+
+    @Test
+    void shouldAdvanceEvaluatedAtWhenReEnablingTriggerWithoutRecovery() {
+        // GIVEN: a trigger evaluated 45 minutes before being disabled
+        ZonedDateTime evaluatedAt = SchedulerClock.now().minusMinutes(45);
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, evaluatedAt)
+                .updateForNextEvaluationDate(CLOCK, evaluatedAt.plusMinutes(15))
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: evaluatedAt is advanced so the startup recovery cannot resurrect the skipped schedules
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getEvaluatedAt()).isAfter(evaluatedAt.toInstant());
+        assertThat(updated.get().getEvaluatedAt()).isBeforeOrEqualTo(Instant.now());
+    }
+
+    @Test
+    void shouldKeepPastNextEvaluationDateWhenReEnablingTriggerWithRecoverTrueAndNoConfiguration() {
+        // GIVEN: a trigger without any recoverMissedSchedules configuration (plugin default is ALL)
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusMinutes(30);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate).disabled(CLOCK, true));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: the frozen past next evaluation date is kept so every missed schedule replays
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
+    }
+
+    @Test
+    void shouldSetNextEvaluationDateToLastMissedScheduleWhenReEnablingTriggerWithRecoverTrueAndConfiguredLast() {
+        // GIVEN: a trigger configured with recoverMissedSchedules: LAST, evaluated 45 minutes before being disabled
+        ZonedDateTime evaluatedAt = SchedulerClock.now().minusMinutes(45);
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, evaluatedAt)
+                .updateForNextEvaluationDate(CLOCK, evaluatedAt.plusMinutes(15))
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.LAST).build())));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false, true);
+
+        // WHEN
+        Instant beforeHandler = Instant.now();
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: the next evaluation date is the last missed cron tick, in the past but within the last period
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isBefore(Instant.now());
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(beforeHandler.minusSeconds(15 * 60 + 1));
+    }
+
+    @Test
+    void shouldSkipMissedSchedulesWhenReEnablingTriggerWithRecoverTrueAndConfiguredNone() {
+        // GIVEN: a trigger configured with recoverMissedSchedules: NONE, evaluated 45 minutes before being disabled
+        ZonedDateTime evaluatedAt = SchedulerClock.now().minusMinutes(45);
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, evaluatedAt)
+                .updateForNextEvaluationDate(CLOCK, evaluatedAt.plusMinutes(15))
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.NONE).build())));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false, true);
+
+        // WHEN
+        Instant beforeHandler = Instant.now();
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: the configured NONE applies, missed schedules are skipped
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(beforeHandler);
+    }
+
+    @Test
+    void shouldKeepBackfillWhenReEnablingTriggerWithRecoverTrueAndConfiguredLast() {
+        // GIVEN: a trigger disabled in the middle of a backfill, configured with recoverMissedSchedules: LAST
+        ZonedDateTime evaluatedAt = SchedulerClock.now().minusDays(2);
+        Backfill backfill = Backfill.builder()
+            .start(SchedulerClock.now().minusDays(3))
+            .end(SchedulerClock.now().minusDays(1))
+            .currentDate(evaluatedAt)
+            .paused(false)
+            .build();
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(CLOCK, evaluatedAt)
+                .backfill(CLOCK, backfill)
+                .updateForNextEvaluationDate(CLOCK, evaluatedAt.plusMinutes(15))
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.LAST).build())));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: the backfill resumes untouched
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getBackfill()).isNotNull();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(evaluatedAt.plusMinutes(15).toInstant());
+    }
+
+    @Test
+    void shouldSkipMissedSchedulesWhenReEnablingNeverEvaluatedTriggerWithRecoverTrueAndConfiguredLast() {
+        // GIVEN: a trigger never evaluated (e.g. created disabled), configured with recoverMissedSchedules: LAST
+        triggerStateStore.save(
+            triggerState
+                .updateForNextEvaluationDate(CLOCK, SchedulerClock.now().minusMinutes(30))
+                .disabled(CLOCK, true)
+        );
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow(builder -> builder.recoverMissedSchedules(RecoverMissedSchedules.LAST).build())));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false, true);
+
+        // WHEN
+        Instant beforeHandler = Instant.now();
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN: there is no missed schedule to recover, the next evaluation date is in the future
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(beforeHandler);
+    }
+
+    @Test
+    void shouldIgnoreRecoverMissedSchedulesWhenDisablingTrigger() {
+        // GIVEN
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().plusMinutes(5);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate));
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, true, true);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isTrue();
+        assertThat(updated.get().getNextEvaluationDate()).isEqualTo(initialNextEvaluationDate.toInstant());
     }
 
     @Test
@@ -568,7 +756,7 @@ class TriggerEventHandlerTest {
             .workerId(CLOCK, "worker-1");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1");
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", realtimeState.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -578,7 +766,6 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
-        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
     }
 
     @Test
@@ -590,7 +777,7 @@ class TriggerEventHandlerTest {
             .workerId(CLOCK, "worker-2");
         triggerStateStore.save(realtimeState);
         handler = newTriggerEventHandler(List.of());
-        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1");
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", realtimeState.getDispatchEpoch());
 
         // WHEN
         handler.handle(CLOCK, TEST_VNODE, event);
@@ -672,7 +859,54 @@ class TriggerEventHandlerTest {
         assertThat(updated).isPresent();
         assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getWorkerId()).isNull();
-        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
+    void shouldIgnoreStaleRealtimeTerminationWhenDispatchEpochSuperseded() {
+        // GIVEN — a realtime trigger on its second dispatch (epoch 2), running on worker-2
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-2");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        // a FAILED termination left over from the first dispatch (epoch 1)
+        TriggerExecutionTerminated event = new TriggerExecutionTerminated(triggerId, null, State.Type.FAILED, 1L);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the current instance keeps its lock
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getWorkerId()).isEqualTo("worker-2");
+    }
+
+    @Test
+    void shouldIgnoreStaleWorkerLostWhenDispatchEpochSuperseded() {
+        // GIVEN — a realtime trigger re-dispatched to the same worker (epoch 2)
+        TriggerState realtimeState = TriggerState
+            .of(triggerId, TriggerType.REALTIME, null, false, 0)
+            .nextDispatchEpoch(CLOCK)
+            .nextDispatchEpoch(CLOCK)
+            .locked(CLOCK, true)
+            .workerId(CLOCK, "worker-1");
+        triggerStateStore.save(realtimeState);
+        handler = newTriggerEventHandler(List.of());
+        // a worker-loss notice from the first dispatch (epoch 1) on the same worker
+        TriggerWorkerLost event = new TriggerWorkerLost(triggerId, "worker-1", 1L);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN — the current instance keeps its lock
+        Optional<TriggerState> updated = triggerStateStore.findById(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isLocked()).isTrue();
+        assertThat(updated.get().getWorkerId()).isEqualTo("worker-1");
     }
 
     @Test
@@ -937,9 +1171,11 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerUpdated() {
         // GIVEN a trigger evaluated once before the update event fires
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+        );
         FlowWithSource flow = Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY);
         handler = newTriggerEventHandler(List.of(flow));
         TriggerUpdated event = new TriggerUpdated(triggerId, flow.getRevision());
@@ -957,9 +1193,11 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReset() {
         // GIVEN
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1)));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
         ResetTrigger event = new ResetTrigger(triggerId);
 
@@ -976,10 +1214,12 @@ class TriggerEventHandlerTest {
     void shouldRecomputeNextEvaluationDateRespectingConditionsWhenTriggerReEnabled() {
         // GIVEN a trigger evaluated once before being disabled and re-enabled
         Clock clock = fixWedClock();
-        triggerStateStore.save(triggerState
-            .evaluatedAt(clock, FIXED_WEDNESDAY)
-            .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
-            .disabled(clock, true));
+        triggerStateStore.save(
+            triggerState
+                .evaluatedAt(clock, FIXED_WEDNESDAY)
+                .updateForNextEvaluationDate(clock, FIXED_WEDNESDAY.plusMinutes(1))
+                .disabled(clock, true)
+        );
         handler = newTriggerEventHandler(List.of(Fixtures.flowWithEveryMinuteScheduleOnDayWeek(ZoneId.systemDefault().getId(), DayOfWeek.SUNDAY)));
         SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
 

@@ -23,8 +23,10 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class KillSwitchActionServiceTest {
 
-    @Mock ExecutionStateStore executionStateStore;
-    @Mock BroadcastQueueInterface<ExecutionKilled> killQueue;
+    @Mock
+    ExecutionStateStore executionStateStore;
+    @Mock
+    BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     KillSwitchActionService service;
 
@@ -124,7 +126,8 @@ class KillSwitchActionServiceTest {
     /** Stubs executionStateStore.lock() to synchronously invoke the callback with the given execution. */
     @SuppressWarnings("unchecked")
     private void invokeLockCallback(String executionId, Execution execution) {
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             Function<Execution, ExecutorContext> callback = inv.getArgument(1);
             callback.apply(execution);
             return null;

@@ -2,7 +2,7 @@ import {describe, test, expect, vi, beforeEach, afterEach} from "vitest"
 import {createApp} from "vue"
 import {createRouter, createMemoryHistory} from "vue-router"
 import type {App} from "vue"
-import type {AppliedFilter} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
+import type {AppliedFilter, FilterGroup} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
 import {Comparators} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
 
 vi.mock("vue-router", async (importOriginal) => {
@@ -156,5 +156,78 @@ describe("useSavedFilters", () => {
         const value = saved.filters[0].value
         expect(value).toBeInstanceOf(Date)
         expect((value as Date).toISOString()).toBe(isoDate.toISOString())
+    })
+
+    test("saveFilter persists the nested group tree and topLogical alongside the flat list", () => {
+        // Given: (namespace = io.kestra) OR (flowId = myFlow AND labels = env:prod)
+        const namespaceFilter = makeFilter({id: "f1", key: "namespace", value: "io.kestra"})
+        const flowFilter = makeFilter({id: "f2", key: "flowId", value: "myFlow", keyLabel: "Flow ID", valueLabel: "myFlow"})
+        const labelFilter = makeFilter({id: "f3", key: "labels", value: "env:prod", keyLabel: "Labels", valueLabel: "env:prod"})
+        const groups: FilterGroup[] = [
+            {id: "leaf1", kind: "leaf", filters: [namespaceFilter]},
+            {
+                id: "wrapper1",
+                kind: "wrapper",
+                logical: "AND",
+                children: [
+                    {id: "leaf2", kind: "leaf", filters: [flowFilter]},
+                    {id: "leaf3", kind: "leaf", filters: [labelFilter]},
+                ],
+            },
+        ]
+        const {saveFilter, savedFilters} = useSavedFilters("test")
+
+        // When
+        saveFilter("Grouped filter", "", [namespaceFilter, flowFilter, labelFilter], groups, "OR")
+
+        // Then
+        const saved = savedFilters.value[0]
+        expect(saved.topLogical).toBe("OR")
+        expect(saved.groups).toHaveLength(2)
+        expect(saved.groups?.[0]).toMatchObject({kind: "leaf", filters: [{key: "namespace"}]})
+        expect(saved.groups?.[1]).toMatchObject({
+            kind: "wrapper",
+            logical: "AND",
+            children: [
+                {filters: [{key: "flowId"}]},
+                {filters: [{key: "labels"}]},
+            ],
+        })
+    })
+
+    test("updateSavedFilter overwrites the stored group tree and topLogical", () => {
+        // Given: a saved filter with no groups (legacy flat save)
+        const {saveFilter, updateSavedFilter, savedFilters} = useSavedFilters("test")
+        saveFilter("Original", "desc", [makeFilter()])
+        const savedId = savedFilters.value[0].id
+
+        const updatedFilter = makeFilter({id: "f2", key: "flowId", value: "myFlow", keyLabel: "Flow ID", valueLabel: "myFlow"})
+        const groups: FilterGroup[] = [{id: "leaf1", kind: "leaf", filters: [updatedFilter]}]
+
+        // When
+        updateSavedFilter(savedId, "Updated", "new desc", [updatedFilter], groups, "AND")
+
+        // Then
+        const updated = savedFilters.value[0]
+        expect(updated.topLogical).toBe("AND")
+        expect(updated.groups).toHaveLength(1)
+        expect(updated.groups?.[0]).toMatchObject({kind: "leaf", filters: [{key: "flowId"}]})
+    })
+
+    test("dates inside grouped conditions round-trip through storage serialization", () => {
+        // Given
+        const {saveFilter, savedFilters} = useSavedFilters("test")
+        const isoDate = new Date("2024-06-15T12:00:00.000Z")
+        const dateFilter = makeFilter({value: isoDate, valueLabel: "2024-06-15"})
+        const groups: FilterGroup[] = [{id: "leaf1", kind: "leaf", filters: [dateFilter]}]
+
+        // When
+        saveFilter("Grouped date filter", "", [dateFilter], groups, "OR")
+
+        // Then: the value inside groups[].filters is deserialized back into a Date, same as the flat list
+        const saved = savedFilters.value[0]
+        const groupValue = (saved.groups![0] as {filters: AppliedFilter[]}).filters[0].value
+        expect(groupValue).toBeInstanceOf(Date)
+        expect((groupValue as Date).toISOString()).toBe(isoDate.toISOString())
     })
 })

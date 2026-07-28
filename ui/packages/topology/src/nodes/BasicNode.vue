@@ -8,7 +8,7 @@
     >
         <div class="main-content">
             <div class="icon" :class="{'icon--dimmed': statusStyle?.dimIcon}">
-                <component :is="iconComponent || TaskIcon" :cls="cls" :class="taskIconBg" theme="light" variable="--ks-topology-icon-color" :icons="icons" />
+                <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" />
             </div>
             <div class="node-content">
                 <slot name="badge" />
@@ -30,8 +30,7 @@
 
 <script lang="ts" setup>
     import {computed, inject} from "vue"
-    import TaskIcon from "../components/TaskIcon.vue"
-    import {KsTooltip} from "@kestra-io/design-system"
+    import {KsTooltip, useTaskIcon} from "@kestra-io/design-system"
     import {EVENTS} from "../utils/constants"
     import {getStatusStyle} from "../utils/status"
     import {EXECUTION_INJECTION_KEY} from "../injectionKeys"
@@ -64,9 +63,10 @@
         state?: string;
         data: any;
         icons: any;
-        iconComponent: any;
         class?: string | string[] | Record<string, boolean>;
     }>()
+
+    const taskIconComponent = useTaskIcon()
 
     function mouseover() {
         emit(EVENTS.MOUSE_OVER, props.data.node)
@@ -202,7 +202,7 @@
     }
 
     .button-icon {
-        font-size: 0.75rem;
+        font-size: var(--ks-font-size-sm);
         transform: rotate(45deg);
     }
 

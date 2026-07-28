@@ -22,7 +22,8 @@ public class TenantAliasingRooter extends DefaultRouter {
 
     protected static final List<Pattern> EXCLUDED_ROUTES = List.of(
         Pattern.compile("/api/v1/main/.*"),
-        Pattern.compile("/api/v1/configs")
+        Pattern.compile("/api/v1/configs"),
+        Pattern.compile("/api/v1/configs/login")
     );
 
     @Inject

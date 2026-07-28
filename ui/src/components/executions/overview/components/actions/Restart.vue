@@ -56,7 +56,7 @@
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="t('restart confirm', {id: execution.id})" />
+            <p class="mb-0" v-html="t('restart confirm', {id: escape(execution.id)})" />
         </div>
 
         <template #footer>
@@ -162,8 +162,8 @@
         <template #header>
             <span
                 v-html="t('replay the execution', {
-                    executionId: execution.id,
-                    flowId: execution.flowId
+                    executionId: escape(execution.id),
+                    flowId: escape(execution.flowId)
                 })"
             />
         </template>
@@ -179,6 +179,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, inject} from "vue"
+    import escape from "lodash/escape"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"

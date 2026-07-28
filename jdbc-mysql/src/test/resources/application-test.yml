@@ -44,7 +44,7 @@ kestra:
     shutdownTimeout: 3s
 
   controller:
-    port: ${random.port}
+    port: ${random.int[20000,32000]} # keep out of the ephemeral port range (32768-60999): an outbound socket could steal a random.port between config resolution and the controller bind
   worker:
     controllers:
       type: STATIC

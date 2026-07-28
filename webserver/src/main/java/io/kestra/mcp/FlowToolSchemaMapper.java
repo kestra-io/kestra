@@ -1,23 +1,24 @@
 package io.kestra.mcp;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.*;
-import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
+
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.inject.Singleton;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Singleton
 public class FlowToolSchemaMapper {
@@ -31,15 +32,18 @@ public class FlowToolSchemaMapper {
             .name(toolTrigger.getToolName())
             .description(toolTrigger.getToolDescription())
             .title(toolTrigger.getTitle())
-            .annotations(new McpSchema.ToolAnnotations(
-                null,
-                a.readOnly(),
-                a.destructive(),
-                a.idempotent(),
-                a.openWorld(),
-                a.returnDirect()
-            ))
-            .inputSchema(buildToolInputSchema(
+            .annotations(
+                new McpSchema.ToolAnnotations(
+                    null,
+                    a.readOnly(),
+                    a.destructive(),
+                    a.idempotent(),
+                    a.openWorld(),
+                    a.returnDirect()
+                )
+            )
+            .inputSchema(
+                buildToolInputSchema(
                     // FORM inputs are expanded to dotted leaf paths; FORM never reaches convert().
                     flow.resolvableInputs()
                 )
@@ -97,9 +101,11 @@ public class FlowToolSchemaMapper {
     }
 
     public Map<String, Object> convert(Output output) {
-        Map<String, Object> outputSchema = new HashMap<>(Map.of(
-            "type", getJsonSchemaType(output.getType())
-        ));
+        Map<String, Object> outputSchema = new HashMap<>(
+            Map.of(
+                "type", getJsonSchemaType(output.getType())
+            )
+        );
 
         if (output.getDescription() != null) {
             outputSchema.put("description", output.getDescription());
@@ -109,9 +115,11 @@ public class FlowToolSchemaMapper {
     }
 
     public Map<String, Object> convert(Input<?> input) {
-        Map<String, Object> baseSchema = new HashMap<>(Map.of(
-            "type", getJsonSchemaType(input.getType())
-        ));
+        Map<String, Object> baseSchema = new HashMap<>(
+            Map.of(
+                "type", getJsonSchemaType(input.getType())
+            )
+        );
 
         if (input.getDescription() != null) {
             baseSchema.put("description", input.getDescription());
@@ -163,11 +171,11 @@ public class FlowToolSchemaMapper {
         );
 
         if (input.getAfter() != null) {
-            baseSchema.put("minimum", input.getAfter().toString());
+            appendConstraint(baseSchema, "Must be on or after " + input.getAfter() + ".");
         }
 
         if (input.getBefore() != null) {
-            baseSchema.put("maximum", input.getBefore().toString());
+            appendConstraint(baseSchema, "Must be on or before " + input.getBefore() + ".");
         }
 
         return baseSchema;
@@ -179,11 +187,11 @@ public class FlowToolSchemaMapper {
         );
 
         if (input.getAfter() != null) {
-            baseSchema.put("minimum", input.getAfter().toString());
+            appendConstraint(baseSchema, "Must be on or after " + input.getAfter() + ".");
         }
 
         if (input.getBefore() != null) {
-            baseSchema.put("maximum", input.getBefore().toString());
+            appendConstraint(baseSchema, "Must be on or before " + input.getBefore() + ".");
         }
 
         return baseSchema;
@@ -195,21 +203,23 @@ public class FlowToolSchemaMapper {
         );
 
         if (input.getMin() != null) {
-            baseSchema.put("minimum", input.getMin().toString());
+            appendConstraint(baseSchema, "Must be at least " + input.getMin() + ".");
         }
 
         if (input.getMax() != null) {
-            baseSchema.put("maximum", input.getMax().toString());
+            appendConstraint(baseSchema, "Must be at most " + input.getMax() + ".");
         }
 
         return baseSchema;
     }
 
     private static Map<String, Object> toEmailType(EmailInput input, Map<String, Object> baseSchema) {
-        baseSchema.putAll(Map.of(
-            "format", "email",
-            "pattern", EmailInput.EMAIL_PATTERN
-        ));
+        baseSchema.putAll(
+            Map.of(
+                "format", "email",
+                "pattern", EmailInput.EMAIL_PATTERN
+            )
+        );
 
         return baseSchema;
     }
@@ -244,7 +254,6 @@ public class FlowToolSchemaMapper {
         return baseSchema;
     }
 
-
     private Map<String, Object> toObjectType(Input<?> input, Map<String, Object> baseSchema) {
         if (input instanceof JsonInput jsonInput && jsonInput.getJsonSchema() != null && !jsonInput.getJsonSchema().isBlank()) {
             try {
@@ -260,10 +269,12 @@ public class FlowToolSchemaMapper {
     }
 
     private static Map<String, Object> toMultiselectType(MultiselectInput input, Map<String, Object> baseSchema) {
-        baseSchema.putAll(Map.of(
-            "items", buildItemsForMultiselectInput(input, input.getValues().stream().map(ValueOption::value).toList()),
-            "uniqueItems", true
-        ));
+        baseSchema.putAll(
+            Map.of(
+                "items", buildItemsForMultiselectInput(input, input.getValues().stream().map(ValueOption::value).toList()),
+                "uniqueItems", true
+            )
+        );
 
         return baseSchema;
     }
@@ -301,14 +312,22 @@ public class FlowToolSchemaMapper {
         );
 
         if (input.getAfter() != null) {
-            baseSchema.put("minimum", input.getAfter().toString());
+            appendConstraint(baseSchema, "Must be on or after " + input.getAfter() + ".");
         }
 
         if (input.getBefore() != null) {
-            baseSchema.put("maximum", input.getBefore().toString());
+            appendConstraint(baseSchema, "Must be on or before " + input.getBefore() + ".");
         }
 
         return baseSchema;
+    }
+
+    private static void appendConstraint(Map<String, Object> baseSchema, String constraint) {
+        String existing = (String) baseSchema.get("description");
+        baseSchema.put(
+            "description",
+            existing == null || existing.isBlank() ? constraint : existing + " " + constraint
+        );
     }
 
     private static Map<String, Object> toURIType(URIInput input, Map<String, Object> baseSchema) {
@@ -327,7 +346,7 @@ public class FlowToolSchemaMapper {
             case FLOAT -> "number";
             case BOOL -> "boolean";
             case ARRAY, MULTISELECT -> "array";
-            case FORM -> throw new IllegalStateException("FORM inputs must be expanded before resolution");
+            case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
         };
     }
 }

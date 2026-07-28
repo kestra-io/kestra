@@ -16,7 +16,7 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "9.4.2"
+    id "com.gradleup.shadow" version "9.6.1"
     id "application"
 
     // test
@@ -31,13 +31,13 @@ plugins {
     id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.36.0"
+    id "com.vanniktech.maven.publish" version "0.37.0"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.2" apply false
 
     // Formatting
-    id "io.kestra.gradle.spotless-conventions" version "1.1.0"
+    id "io.kestra.gradle.spotless-conventions" version "1.2.6"
 }
 
 idea {
@@ -137,34 +137,34 @@ allprojects {
             implementation "org.slf4j:slf4j-api"
             implementation "ch.qos.logback:logback-classic"
             implementation "org.codehaus.janino:janino"
-            implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j'
-            implementation group: 'org.slf4j', name: 'jul-to-slf4j'
-            implementation group: 'org.slf4j', name: 'jcl-over-slf4j'
-            implementation group: 'org.fusesource.jansi', name: 'jansi'
+            implementation "org.apache.logging.log4j:log4j-to-slf4j"
+            implementation "org.slf4j:jul-to-slf4j"
+            implementation "org.slf4j:jcl-over-slf4j"
+            implementation "org.fusesource.jansi:jansi"
 
             // OTEL
             implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
             // jackson
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core'
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations'
-            implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
-            implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
-            implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
-            implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
-            implementation group: 'com.fasterxml.uuid', name: 'java-uuid-generator'
+            implementation "com.fasterxml.jackson.core:jackson-core"
+            implementation "com.fasterxml.jackson.core:jackson-databind"
+            implementation "com.fasterxml.jackson.core:jackson-annotations"
+            implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"
+            implementation "com.fasterxml.jackson.module:jackson-module-parameter-names"
+            implementation "com.fasterxml.jackson.datatype:jackson-datatype-guava"
+            implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+            implementation "com.fasterxml.uuid:java-uuid-generator"
 
             // kestra
-            implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
-            implementation (group: 'net.thisptr', name: 'jackson-jq') {
+            implementation "com.devskiller.friendly-id:friendly-id"
+            implementation ("net.thisptr:jackson-jq") {
                 exclude group: 'com.fasterxml.jackson.core'
             }
 
             // exposed utils
-            api group: 'com.google.guava', name: 'guava'
-            api group: 'commons-io', name: 'commons-io'
-            api group: 'org.apache.commons', name: 'commons-lang3'
+            api "com.google.guava:guava"
+            api "commons-io:commons-io"
+            api "org.apache.commons:commons-lang3"
             api "io.swagger.core.v3:swagger-annotations"
             api "com.google.code.findbugs:jsr305" // brings @CheckReturnValue and already in path in core
         }
@@ -189,6 +189,18 @@ subprojects {subProj ->
 
         configurations {
             mockitoAgent
+            // Exposes this project's compiled test classes/resources to other projects, replacing the
+            // Gradle 9.5-incompatible `project(':x').sourceSets.test.output` cross-project script access.
+            testArtifacts {
+                canBeConsumed = true
+                canBeResolved = false
+            }
+        }
+
+        artifacts {
+            sourceSets.test.output.files.each { dir ->
+                testArtifacts(dir) { builtBy tasks.named('testClasses') }
+            }
         }
 
         dependencies {
@@ -252,16 +264,6 @@ subprojects {subProj ->
             t.environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
             t.environment 'ENV_TEST1', "true"
             t.environment 'ENV_TEST2', "Pass by env"
-
-
-            // these modules tests were battle tested by @nkwiatkowski so we can allow to try to enable parallel testing on them
-            if (subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
-                // JUnit 5 parallel settings
-                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
-                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
-            }
         }
 
         tasks.register('integrationTest', Test) { Test t ->
@@ -435,6 +437,17 @@ tasks.register('generateTestMetadata') {
         outputFile.get().asFile.parentFile.mkdirs()
         outputFile.get().asFile.text = json
         logger.lifecycle("Test metadata written to ${outputFile.get().asFile.path}")
+    }
+}
+
+// Finalize every Test task (not just `check`) with generateTestMetadata. When a module's
+// test task exceeds its timeout, Gradle aborts the build before `check` runs, so a finalizer
+// of `check` is skipped and the metadata file is never written — leaving kestra-devtools to
+// silently report success for the timed-out module. A finalizer of the Test task itself still
+// runs on timeout (same as jacocoTestReport above), guaranteeing test-metadata.json is written.
+subprojects {
+    tasks.withType(Test).configureEach {
+        finalizedBy rootProject.tasks.named('generateTestMetadata')
     }
 }
 

@@ -3,7 +3,6 @@ package io.kestra.core.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.kestra.core.models.executions.ExecutionId;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +10,7 @@ import org.slf4j.MDC;
 import org.slf4j.event.Level;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.TriggerId;
@@ -32,11 +32,13 @@ public final class Logs {
         String finalMsg = FLOW_PREFIX_WITH_TENANT + message;
         Object[] executionArgs = new Object[] { flow.getTenantId(), flow.getNamespace(), flow.getId() };
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
-        try (var _ = mdcScope(
-            "tenantId", flow.getTenantId(),
-            "namespace", flow.getNamespace(),
-            "flowId", flow.getId()
-        )) {
+        try (
+            var _ = mdcScope(
+                "tenantId", flow.getTenantId(),
+                "namespace", flow.getNamespace(),
+                "flowId", flow.getId()
+            )
+        ) {
             logger.atLevel(level).log(finalMsg, finalArgs);
         }
     }
@@ -52,12 +54,14 @@ public final class Logs {
     public static void logExecution(Execution execution, Logger logger, Level level, String message, Object... args) {
         Object[] executionArgs = new Object[] { execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId() };
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
-        try (var _ = mdcScope(
-            "tenantId", execution.getTenantId(),
-            "namespace", execution.getNamespace(),
-            "flowId", execution.getFlowId(),
-            "executionId", execution.getId()
-        )) {
+        try (
+            var _ = mdcScope(
+                "tenantId", execution.getTenantId(),
+                "namespace", execution.getNamespace(),
+                "flowId", execution.getFlowId(),
+                "executionId", execution.getId()
+            )
+        ) {
             logger.atLevel(level).log(EXECUTION_PREFIX_WITH_TENANT + message, finalArgs);
         }
     }
@@ -79,12 +83,14 @@ public final class Logs {
     public static void logTrigger(TriggerId trigger, Logger logger, Level level, String message, Object... args) {
         Object[] executionArgs = new Object[] { trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId() };
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
-        try (var _ = mdcScope(
-            "tenantId", trigger.getTenantId(),
-            "namespace", trigger.getNamespace(),
-            "flowId", trigger.getFlowId(),
-            "triggerId", trigger.getTriggerId()
-        )) {
+        try (
+            var _ = mdcScope(
+                "tenantId", trigger.getTenantId(),
+                "namespace", trigger.getNamespace(),
+                "flowId", trigger.getFlowId(),
+                "triggerId", trigger.getTriggerId()
+            )
+        ) {
             logger.atLevel(level).log(TRIGGER_PREFIX_WITH_TENANT + message, finalArgs);
         }
     }
@@ -101,14 +107,16 @@ public final class Logs {
         }
         Object[] finalArgs = ArrayUtils.addAll(executionArgs, args);
         Logger logger = logger(taskRun);
-        try (var _ = mdcScope(
-            "tenantId", taskRun.getTenantId(),
-            "namespace", taskRun.getNamespace(),
-            "flowId", taskRun.getFlowId(),
-            "taskId", taskRun.getTaskId(),
-            "executionId", taskRun.getExecutionId(),
-            "taskRunId", taskRun.getId()
-        )) {
+        try (
+            var _ = mdcScope(
+                "tenantId", taskRun.getTenantId(),
+                "namespace", taskRun.getNamespace(),
+                "flowId", taskRun.getFlowId(),
+                "taskId", taskRun.getTaskId(),
+                "executionId", taskRun.getExecutionId(),
+                "taskRunId", taskRun.getId()
+            )
+        ) {
             logger.atLevel(level).log(finalMsg, finalArgs);
         }
     }

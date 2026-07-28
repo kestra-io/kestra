@@ -1,6 +1,5 @@
 package io.kestra.scheduler.pubsub;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -11,18 +10,18 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.NoMatchingWorkerQueueException;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.worker.WorkerQueues;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.WorkerQueueRouting;
 import io.kestra.core.runners.WorkerJobEvent;
+import io.kestra.core.runners.WorkerQueueRouting;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.runners.WorkerTriggerData;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.worker.WorkerQueues;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -65,6 +64,7 @@ public class TriggerWorkerJobPublisher {
             .builder()
             .trigger(trigger)
             .data(WorkerTriggerData.from(conditionContext, triggerState.context()))
+            .dispatchEpoch(triggerState.getDispatchEpoch())
             .build();
         Optional<WorkerQueueRouting> routing;
         try {

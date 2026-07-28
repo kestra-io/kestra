@@ -148,6 +148,18 @@ kestra:
     # Automatically loads all tutorial flows at startup.
     enabled: true
 
+  webserver:
+    # Browser security response headers, added to every HTTP response (UI and API).
+    # Set a value to "" to disable that single header, or security-headers.enabled to false to disable the whole filter.
+    security-headers:
+      enabled: true
+      frame-options: SAMEORIGIN
+      content-type-options: nosniff
+      referrer-policy: strict-origin-when-cross-origin
+      # content-security-policy: "default-src 'self'; ..." # tune for the UI before enforcing
+      # content-security-policy-report-only: true # report-only intermediate step
+      # strict-transport-security: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
+
   retries:
     attempts: 5
     multiplier: 2.0
@@ -206,16 +218,6 @@ kestra:
       min-poll-interval: 25ms
       max-poll-interval: 500ms
       poll-switch-interval: 60s
-
-    cleaner:
-      initial-delay: 1h
-      fixed-delay: 1h
-      retention: 7d
-      types:
-        - type: io.kestra.core.models.executions.LogEntry
-          retention: 1h
-        - type: io.kestra.core.models.executions.MetricEntry
-          retention: 1h
 
   plugins:
     repositories:
@@ -276,7 +278,7 @@ kestra:
     sdk:
       authentication:
         username: ${kestra.server.basic-auth.username:}
-        password: ${kestra.server.basic-auth.password:}  
+        password: ${kestra.server.basic-auth.password:}
 
 otel:
   exclusions:

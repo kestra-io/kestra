@@ -40,7 +40,7 @@ class FollowLogEventSearchableTest {
     private static final Instant T_FUTURE = Instant.parse("2020-12-31T00:00:00Z");
 
     private static final FollowLogEvent baseEvent = new FollowLogEvent(
-        null,                  // tenantId
+        null, // tenantId
         "io.kestra.demo",
         "demo-flow",
         "load-data",
@@ -52,22 +52,23 @@ class FollowLogEventSearchableTest {
         Level.INFO,
         "main",
         "hello world",
+        null,
         null
     );
 
     private static final FollowLogEvent systemEvent = new FollowLogEvent(
         null, "system", "demo-flow", "load-data", "exec-sys",
-        "tr-sys", 0, "demo-trigger", T_NOW, Level.INFO, "main", "system message", null
+        "tr-sys", 0, "demo-trigger", T_NOW, Level.INFO, "main", "system message", null, null
     );
 
     private static final FollowLogEvent pastEvent = new FollowLogEvent(
         null, "io.kestra.demo", "demo-flow", "load-data", "exec-past",
-        "tr-past", 0, "demo-trigger", T_PAST, Level.INFO, "main", "past", null
+        "tr-past", 0, "demo-trigger", T_PAST, Level.INFO, "main", "past", null, null
     );
 
     private static final FollowLogEvent futureEvent = new FollowLogEvent(
         null, "io.kestra.demo", "demo-flow", "load-data", "exec-future",
-        "tr-future", 0, "demo-trigger", T_FUTURE, Level.INFO, "main", "future", null
+        "tr-future", 0, "demo-trigger", T_FUTURE, Level.INFO, "main", "future", null, null
     );
 
     private static QueryFilter filter(Field field, Op op, Object value) {
@@ -177,6 +178,10 @@ class FollowLogEventSearchableTest {
         new PredicateCase(baseEvent, filter(Field.LEVEL, Op.GREATER_THAN_OR_EQUAL_TO, Level.ERROR), false),
         new PredicateCase(baseEvent, filter(Field.LEVEL, Op.LESS_THAN_OR_EQUAL_TO, Level.INFO), true),
         new PredicateCase(baseEvent, filter(Field.LEVEL, Op.LESS_THAN_OR_EQUAL_TO, Level.TRACE), false),
+        new PredicateCase(baseEvent, filter(Field.LEVEL, Op.IN, List.of(Level.INFO, Level.ERROR)), true),
+        new PredicateCase(baseEvent, filter(Field.LEVEL, Op.IN, List.of(Level.WARN, Level.ERROR)), false),
+        new PredicateCase(baseEvent, filter(Field.LEVEL, Op.NOT_IN, List.of(Level.WARN, Level.ERROR)), true),
+        new PredicateCase(baseEvent, filter(Field.LEVEL, Op.NOT_IN, List.of(Level.INFO, Level.ERROR)), false),
 
         new PredicateCase(baseEvent, filter(Field.EXECUTION_ID, Op.EQUALS, "exec-123"), true),
         new PredicateCase(baseEvent, filter(Field.EXECUTION_ID, Op.EQUALS, "other"), false),

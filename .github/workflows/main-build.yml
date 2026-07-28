@@ -22,11 +22,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # When an OSS ci start, we trigger an EE one
+  # On develop push: fire the full EE CI cross-check async (oss-updated) AND run a
+  # synchronous EE compile gate via the Kestra webhook.
   trigger-ee:
     runs-on: ubuntu-latest
     steps:
-      # Targeting develop branch from develop
+      # Targeting develop branch from develop — async, fire-and-forget full EE CI
       - name: Trigger EE Workflow (develop push, no payload)
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
         uses: kestra-io/actions/composite/repository-dispatch@main
@@ -36,6 +37,21 @@ jobs:
           repository: kestra-io/kestra-ee
           event-type: "oss-updated"
           client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}"}'
+
+      - name: Checkout  # required to resolve the local composite action below
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: actions/checkout@v7
+
+      # Synchronous EE compileJava gate: fails this job (and the run) on compile
+      # failure and posts a compile status on the develop commit.
+      - name: EE compile check (via Kestra webhook)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: ./.github/actions/ee-compile-check
+        with:
+          webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
+          ref: ${{ github.ref_name }}
+          commit-sha: ${{ github.sha }}
+          pr-repo: ${{ github.repository }}
 
   backend-tests:
     name: Backend tests
@@ -140,3 +156,22 @@ jobs:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: 'C09FF36GKE1'
           users-map: ${{ vars.GH_TO_SLACK_MAP }}
+
+  otel-export-trace:
+    name: OpenTelemetry - Export Trace
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [ trigger-ee, backend-tests, frontend-tests, design-system-frontend-tests, publish-develop-docker, publish-develop-maven, generate-configuration-schema, end ]
+    env:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+    steps:
+      - name: OpenTelemetry - Export trace
+        uses: kestra-io/actions/actions/otel-collect@main
+        if: ${{ env.OTLP_ENDPOINT != '' }}
+        with:
+          mode: export-all
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          otlp-endpoint: ${{ secrets.OTLP_ENDPOINT }}
+          otlp-headers: "${{ secrets.OTLP_HEADERS }}"
+          logs-enabled: 'true'
+          service-name: "Github Actions - ${{ github.repository }} - ${{ github.workflow }}"

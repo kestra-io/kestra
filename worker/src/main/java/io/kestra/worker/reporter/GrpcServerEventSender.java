@@ -5,15 +5,15 @@ import java.time.Instant;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 
+import io.kestra.controller.grpc.WorkerReportRequest;
+import io.kestra.controller.grpc.WorkerReportResponse;
+import io.kestra.controller.grpc.WorkerReportingServiceGrpc;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.core.reporter.ServerEvent;
 import io.kestra.core.reporter.ServerEventSender;
 import io.kestra.core.reporter.Type;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.worker.models.WorkerInfo;
-import io.kestra.controller.grpc.WorkerReportRequest;
-import io.kestra.controller.grpc.WorkerReportResponse;
-import io.kestra.controller.grpc.WorkerReportingServiceGrpc;
 
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;

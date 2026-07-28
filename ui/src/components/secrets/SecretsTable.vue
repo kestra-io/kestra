@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex flex-column fill-height">
+    <div class="secrets-table">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
@@ -12,10 +12,10 @@
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
             @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
             :no-data-text="$t('no_results.secrets')"
-            class="fill-height"
+            :fitHeight="!paneView && !keyOnly"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
         >
-            <template #top>
+            <template #top v-if="!paneView">
                 <KSFilter
                     :configuration="secretsFilter"
                     :tableOptions="{
@@ -55,19 +55,18 @@
             >
                 <template #default="scope">
                     <template v-if="col.prop === 'namespace'">
-                        <KsTag
-                            type="info"
-                            class="namespace-tag"
-                        >
-                            <FolderOpenOutline />
-                            {{ scope.row?.namespace }}
-                        </KsTag>
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'description'">
                         {{ scope.row?.description }}
                     </template>
                     <template v-else-if="col.prop === 'tags'">
-                        <Labels v-if="scope.row?.tags !== undefined" :labels="scope.row.tags" readOnly />
+                        <Labels v-if="scope.row?.tags !== undefined" :labels="scope.row.tags" readOnly class="no-pointer-events" />
                     </template>
                 </template>
             </KsTableColumn>
@@ -134,18 +133,21 @@
             </KsTableColumn>
         </KsDataTable>
 
-        <KsDrawer
+        <KsDialog
             v-if="addSecretDrawerVisible"
             v-model="addSecretDrawerVisible"
             :title="secretModalTitle"
             :beforeClose="beforeSecretClose"
+            formLayout
         >
-            <KsForm class="ks-horizontal" :model="secret" :rules="rules" ref="form">
+            <KsForm labelPosition="left" :model="secret" :rules="rules" ref="form">
                 <KsFormItem
                     v-if="namespace === undefined"
                     :label="$t('namespace')"
                     prop="namespace"
                     required
+                    inline
+                    class="field-item"
                 >
                     <NamespaceSelect
                         v-model="secret.namespace"
@@ -154,64 +156,60 @@
                         all
                     />
                 </KsFormItem>
-                <KsFormItem :label="$t('secret.key')" prop="key">
-                    <KsInput v-model="secret.key" :disabled="secret.update" required />
+                <KsFormItem :label="$t('secret.key')" prop="key" required inline class="field-item">
+                    <KsInput v-model="secret.key" :disabled="secret.update" :placeholder="$t('secret.keyPlaceholder')" required />
                 </KsFormItem>
-                <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
+                <KsFormItem v-if="!secret.update" :label="$t('secret.name')" prop="value" required inline class="field-item">
                     <KsPassword v-model="secret.value" :placeholder="secretModalTitle" />
                 </KsFormItem>
-                <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value">
-                    <KsCol :span="20">
+                <KsFormItem v-if="secret.update" :label="$t('secret.name')" prop="value" inline class="field-item">
+                    <div class="secret-value-control">
                         <KsPassword
                             v-model="secret.value"
                             :placeholder="secretModalTitle"
                             :disabled="!secret.updateValue"
                         />
-                    </KsCol>
-                    <KsCol class="px-2" :span="4">
                         <KsSwitch
-                            size="large"
                             inlinePrompt
                             v-model="secret.updateValue"
-                            :activeIcon="PencilOutline"
-                            :inactiveIcon="PencilOff"
                         />
-                    </KsCol>
+                    </div>
                 </KsFormItem>
-                <KsFormItem :label="$t('secret.description')" prop="description">
+                <KsFormItem :label="$t('secret.description')" prop="description" labelPosition="top">
                     <KsInput
                         v-model="secret.description"
                         :placeholder="$t('secret.descriptionPlaceholder')"
-                        required
+                        type="textarea"
+                        :rows="2"
+                        resize="vertical"
                     />
                 </KsFormItem>
-                <KsFormItem :label="$t('secret.tags')" prop="tags">
-                    <KsRow class="secret-tag-row" :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
-                        <KsCol :span="8">
-                            <KsInput required v-model="tag.key" :placeholder="$t('key')" />
-                        </KsCol>
-                        <KsCol :span="12">
-                            <KsInput required v-model="tag.value" :placeholder="$t('value')" />
-                        </KsCol>
-                        <KsButtonGroup class="d-flex flex-nowrap">
-                            <KsButton
-                                :icon="Delete"
-                                @click="removeSecretTag(index)"
-                            />
-                        </KsButtonGroup>
-                    </KsRow>
-                    <KsButton :icon="Plus" @click="addSecretTag" type="default">
-                        {{ $t('secret.addTag') }}
-                    </KsButton>
+                <KsFormItem prop="tags" labelPosition="top" class="secret-tags-item">
+                    <template #label>
+                        <div class="secret-tags-label">
+                            <span>{{ $t('secret.tags') }}</span>
+                            <KsButton :icon="Plus" @click="addSecretTag" type="default" size="small">
+                                {{ $t('secret.addTag') }}
+                            </KsButton>
+                        </div>
+                    </template>
+                    <div class="secret-tag-row" v-for="(tag, index) in secret.tags" :key="index">
+                        <KsInput class="tag-key" required v-model="tag.key" :placeholder="$t('key')" />
+                        <KsInput class="tag-value" required v-model="tag.value" :placeholder="$t('value')" />
+                        <KsButton :icon="Delete" @click="removeSecretTag(index)" />
+                    </div>
                 </KsFormItem>
             </KsForm>
 
             <template #footer>
+                <KsButton @click="addSecretDrawerVisible = false">
+                    {{ $t('cancel') }}
+                </KsButton>
                 <KsButton :icon="ContentSave" @click="saveSecret(form)" type="primary">
                     {{ $t('save') }}
                 </KsButton>
             </template>
-        </KsDrawer>
+        </KsDialog>
     </div>
 </template>
 
@@ -225,16 +223,13 @@
     import Lock from "vue-material-design-icons/Lock.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import PencilOff from "vue-material-design-icons/PencilOff.vue"
-    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import PencilOutline from "vue-material-design-icons/PencilOutline.vue"
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
 
     import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
 
     import action from "../../models/action"
@@ -242,7 +237,7 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {useSecretsStore} from "../../stores/secrets"
+    import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useSecretsFilter} from "../filter/configurations"
@@ -297,7 +292,6 @@
     const route = useRoute()
     const router = useRouter()
     const authStore = useAuthStore()
-    const secretsStore = useSecretsStore()
     const namespacesStore = useNamespacesStore()
 
     const form = ref<FormInstance>()
@@ -447,22 +441,26 @@
     const dataTable = useTemplateRef("dataTable")
 
     const loadQuery = (base: any) => {
-        const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return _merge(base, filters)
+        const {page: _p, size: _s, sort: _so, ...rest} = route.query
+        const nonFilterRest = Object.fromEntries(
+            Object.entries(rest).filter(([key]) => !key.startsWith("filters[")),
+        )
+        return _merge(base, nonFilterRest)
     }
 
+    const namespaceFilter = (namespace: string) =>
+        [{field: "namespace" as const, operation: "EQUALS" as const, value: namespace}]
+
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
-        const secretsResponse = await secretsStore.find(loadQuery({
+        const activeFilters = routeQueryToQueryFilters(route.query)
+        const secretsResponse = await SecretsAPI.listSecrets(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "key:asc"),
-            ...(props.namespace === undefined ? {} : {
-                filters: {
-                    namespace: {
-                        EQUALS: props.namespace,
-                    },
-                },
-            }),
+            filters: [
+                ...activeFilters,
+                ...(props.namespace === undefined ? [] : namespaceFilter(props.namespace)),
+            ],
         }))
 
         emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false)
@@ -473,12 +471,8 @@
             const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1)
 
             for (const parentNs of parentNamespaces) {
-                const parentSecretsResponse = await secretsStore.find(loadQuery({
-                    filters: {
-                        namespace: {
-                            EQUALS: parentNs,
-                        },
-                    },
+                const parentSecretsResponse = await SecretsAPI.listSecrets(loadQuery({
+                    filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 
                 const parentSecrets = parentSecretsResponse?.results ?? []
@@ -614,20 +608,59 @@
     })
 </script>
 <style scoped lang="scss">
-    .namespace-tag {
-        background-color: var(--ks-log-background-debug) !important;
-        color: var(--ks-status-info);
-        border: 1px solid var(--ks-log-border-debug);
-        padding: 0 6px;
-
-        :deep(.kel-tag__content) {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+    .secrets-table {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
     }
 
     .secret-tag-row {
-        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        margin-bottom: var(--ks-spacing-2);
+
+        .tag-key {
+            flex: 2;
+        }
+
+        .tag-value {
+            flex: 3;
+        }
+    }
+
+    .no-pointer-events {
+        pointer-events: none;
+    }
+
+    .field-item :deep(.kel-form-item__content) {
+        flex: 0 0 260px;
+        max-width: 260px;
+    }
+
+    .field-item :deep(.kel-form-item__content) > * {
+        width: 100%;
+    }
+
+    .secret-value-control {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ks-spacing-2);
+    }
+
+    .secret-value-control > :first-child {
+        width: 100%;
+    }
+
+    .secret-tags-item :deep(.kel-form-item__label) {
+        width: 100%;
+    }
+
+    .secret-tags-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
     }
 </style>

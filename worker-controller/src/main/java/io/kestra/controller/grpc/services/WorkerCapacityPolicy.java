@@ -2,25 +2,28 @@ package io.kestra.controller.grpc.services;
 
 import java.util.List;
 
-import io.kestra.core.worker.QueueSubscription;
-
 import javax.annotation.concurrent.ThreadSafe;
+
+import io.kestra.core.worker.QueueSubscription;
 
 /**
  * Per-worker capacity policy: decides whether a slot is available for a job
  * heading to a given Worker Queue, and reserves/releases that slot.
  *
- * <p>Each {@link WorkerStreamContext} owns exactly one policy instance for its
+ * <p>
+ * Each {@link WorkerStreamContext} owns exactly one policy instance for its
  * lifetime. The policy is selected by a {@link WorkerCapacityPolicyFactory} at
  * stream connection time and never swapped.
  *
- * <p>The default implementation is {@link SinglePoolCapacityPolicy}:
+ * <p>
+ * The default implementation is {@link SinglePoolCapacityPolicy}:
  * {@code maxConcurrency} interchangeable slots, no per-queue accounting.
  * Deployments that need per-queue reservations or capacity borrowing replace
  * the {@link WorkerCapacityPolicyFactory} bean with one that returns a richer
  * policy.
  *
- * <p>All methods must be safe for concurrent invocation from multiple dispatch
+ * <p>
+ * All methods must be safe for concurrent invocation from multiple dispatch
  * threads on the same worker.
  */
 @ThreadSafe

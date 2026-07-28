@@ -1,8 +1,16 @@
 package io.kestra.core.validations;
 
+import java.io.File;
+import java.net.URL;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
@@ -16,15 +24,10 @@ import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.log.Log;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
-import java.io.File;
-import java.net.URL;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -180,6 +183,24 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isFalse();
+    }
+
+    @Test
+    void multiselectInputWithExpressionAndNoValues_succeeds() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: zones
+                type: MULTISELECT
+                expression: "{{ ['a', 'b'] }}"
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
     }
 
     @Test
@@ -355,6 +376,28 @@ class FlowValidationTest {
             """, Flow.class);
 
         assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void eeOnlyInputFailsValidationOnOpenSource() {
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            inputs:
+              - id: cfg
+                type: REUSABLE_INPUTS
+                ref: my_block
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            """, Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage())
+            .contains("Input 'cfg' of type REUSABLE_INPUTS is only available in Enterprise Edition.");
     }
 
     @Test
@@ -613,6 +656,49 @@ class FlowValidationTest {
                 inputs:
                   environment.region: EU
             """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow)).isEmpty();
+    }
+
+    @Test
+    void triggerIdExceedingMaxSize_failValidation() {
+        // A trigger id longer than 256 chars must fail validation early, before it can overflow the
+        // VARCHAR(256) trigger_id DB columns and crash-loop the indexer (see kestra-ee #9268).
+        String longId = "a".repeat(257);
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: %s
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "*/1 * * * *"
+            """.formatted(longId), Flow.class);
+
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getMessage()).contains("Trigger id must be at most 256 characters");
+    }
+
+    @Test
+    void triggerIdAtMaxSize_succeeds() {
+        // A 256-char trigger id is the maximum the trigger_id columns can hold, so it must pass validation.
+        String maxId = "a".repeat(256);
+        Flow flow = YamlParser.parse("""
+            id: test
+            namespace: unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: hi
+            triggers:
+              - id: %s
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "*/1 * * * *"
+            """.formatted(maxId), Flow.class);
 
         assertThat(modelValidator.isValid(flow)).isEmpty();
     }

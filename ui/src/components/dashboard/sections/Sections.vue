@@ -25,17 +25,32 @@
                             </p>
                         </div>
                         <div id="charts_buttons">
-                            <KsIcon
-                                v-if="isTableChart(chart.type)"
-                                :tooltip="$t('dashboards.export')"
+                            <KsTooltip
+                                v-if="isExportableChart(chart.type)"
+                                :content="$t('dashboards.export')"
                             >
-                                <KsButton
-                                    @click="dashboardStore.export(dashboard, chart, {filters})"
-                                    :icon="Download"
-                                    link
-                                    class="ms-2"
-                                />
-                            </KsIcon>
+                                <KsDropdown
+                                    placement="bottom-end"
+                                    trigger="click"
+                                >
+                                    <KsButton
+                                        :icon="Download"
+                                        :aria-label="$t('dashboards.export')"
+                                        link
+                                        class="ms-2"
+                                    />
+                                    <template #dropdown>
+                                        <KsDropdownMenu>
+                                            <KsDropdownItem @click="exportChart(chart, 'CSV')">
+                                                {{ $t('dashboards.exportTo.csv') }}
+                                            </KsDropdownItem>
+                                            <KsDropdownItem @click="exportChart(chart, 'ION')">
+                                                {{ $t('dashboards.exportTo.ion') }}
+                                            </KsDropdownItem>
+                                        </KsDropdownMenu>
+                                    </template>
+                                </KsDropdown>
+                            </KsTooltip>
 
                             <KsIcon
                                 v-if="props.dashboard?.id !== 'default'"
@@ -75,17 +90,20 @@
     import {ref, computed} from "vue"
 
     import type {Dashboard, Chart} from "../composables/useDashboards"
-    import {isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards"
+    import {isKPIChart, isExportableChart, getChartTitle} from "../composables/useDashboards"
     import {TYPES} from "../dashboard-types"
 
     import {useRoute} from "vue-router"
     const route = useRoute()
+
+    import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsTooltip} from "@kestra-io/design-system"
 
     import {useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
 
     import Download from "vue-material-design-icons/Download.vue"
     import Pencil from "vue-material-design-icons/Pencil.vue"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const chartsComponents = ref<{refresh(): void}[]>()
 
@@ -110,11 +128,13 @@
     })
 
     // Make the overview of flows/dashboard/namespace specific
-    const filters = computed(() => {
-        const baseFilters: { field: string; operation: string; value: string | string[] }[] = []
+    const filters = computed<QueryFilter[]>(() => {
+        const baseFilters: QueryFilter[] = []
 
         if (route.name === "flows/update") {
-            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.namespace as string})
+            baseFilters.push({
+                field: "namespace", operation: "EQUALS", value: route.params.namespace as string,
+            })
             baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string})
         }
 
@@ -124,6 +144,12 @@
 
         return baseFilters
     })
+
+    function exportChart(chart: Chart, format: "CSV" | "ION") {
+        dashboardStore.export(props.dashboard, chart, {
+            filters: filters.value.concat(decodeSearchParams(route.query) as QueryFilter[] ?? []),
+        }, format)
+    }
 </script>
 
 <style scoped lang="scss">
@@ -167,6 +193,7 @@ section#charts {
                     right: 1.25rem;
                 }
             }
+
         }
 
         #charts_buttons {

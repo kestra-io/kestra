@@ -11,6 +11,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -33,11 +34,12 @@ import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
 
@@ -92,6 +94,13 @@ public class HttpClient implements Closeable {
             .disableDefaultUserAgent()
             .setUserAgent("Kestra");
 
+        // Advertise only gzip/deflate so the client never negotiates Brotli (Accept-Encoding: br).
+        // HttpClient5 auto-detects brotli4j on the classpath (e.g. brought in by a plugin) and would
+        // otherwise offer `br`, then fail with UnsatisfiedLinkError when the matching native artifact
+        // is missing. Setting the header explicitly wins: ContentCompressionExec only adds its own
+        // Accept-Encoding when the request has none, so gzip/deflate responses are still auto-decoded.
+        builder.addRequestInterceptorFirst((request, entity, context) -> request.setHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate"));
+
         if (observationRegistry != null) {
             // micrometer, must be placed before the retry strategy (see https://docs.micrometer.io/micrometer/reference/reference/httpcomponents.html#_retry_strategy_considerations)
             builder.addExecInterceptorAfter(
@@ -136,7 +145,8 @@ public class HttpClient implements Closeable {
             String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
 
             if (StringUtils.isNotEmpty(proxyAddress)) {
-                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class).orElseThrow();
+                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class)
+                    .orElseThrow(() -> new IllegalArgumentException("A proxy port is required when a proxy address is set (options.proxy.port)."));
                 SocketAddress proxyAddr = new InetSocketAddress(
                     proxyAddress,
                     port
@@ -517,6 +527,8 @@ public class HttpClient implements Closeable {
         HttpRequest request,
         HttpClientContext httpClientContext,
         HttpClientResponseHandler<HttpResponse<T>> responseHandler) throws HttpClientException {
+        validateUri(request.getUri());
+
         try {
             return this.client.execute(request.to(runContext), httpClientContext, responseHandler);
         } catch (SocketException e) {
@@ -531,6 +543,25 @@ public class HttpClient implements Closeable {
             }
 
             throw new RuntimeException(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void validateUri(URI uri) {
+        String requestUri = uri.toString();
+        List<String> allowedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.allowed-list", List.class).orElse(Collections.emptyList());
+        List<String> deniedList = (List<String>) ((DefaultRunContext) runContext).getTaskProperty("kestra.tasks.http.denied-list", List.class).orElse(Collections.emptyList());
+
+        // first check that if there is an allow list, it matches one
+        if (!allowedList.isEmpty()) {
+            if (allowedList.stream().noneMatch(requestUri::startsWith)) {
+                throw new IllegalArgumentException("The URI " +  requestUri + " is not in the configured allowed list (kestra.tasks.http.allowed-list).");
+            }
+        }
+
+        // then check that there are no exclusion for it
+        if (deniedList.stream().anyMatch(requestUri::startsWith)) {
+            throw new IllegalArgumentException("The URI " +  requestUri + " is in the configured denied list (kestra.tasks.http.denied-list).");
         }
     }
 

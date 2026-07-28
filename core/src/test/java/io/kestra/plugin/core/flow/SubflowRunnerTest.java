@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -136,12 +137,43 @@ class SubflowRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/subflow-nullable-input-parent.yaml", "flows/valids/subflow-nullable-input-child.yaml" })
+    void shouldPassNullableInputFromParentToSubflow() throws QueueException, TimeoutException, io.kestra.core.exceptions.InternalException {
+        // Given — the parent flow has an optional INT input provided as an empty string, reproducing
+        // the case where a user leaves an optional input blank in the UI (or the API sends "").
+        // The Subflow task forwards it via "{{ inputs.integerValue }}", which Pebble renders to "".
+        // Without the fix this fails with "Invalid input for integerValue, For input string: \"\"";
+        // with the fix both parent and child should reach SUCCESS.
+
+        // When
+        Execution parentExecution = runnerUtils.runOne(
+            MAIN_TENANT, "io.kestra.tests", "subflow-nullable-input-parent",
+            null, (f, e) -> Map.of("integerValue", "")
+        );
+
+        // Then — parent reaches SUCCESS
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        String childExecutionId = (String) taskOutputService.getOutputs(
+            parentExecution.findTaskRunsByTaskId("subflow").getFirst()
+        ).get("executionId");
+        assertThat(childExecutionId).isNotBlank();
+
+        Execution childExecution = executionRepository.findById(MAIN_TENANT, childExecutionId).orElseThrow();
+
+        // Then — child also reaches SUCCESS with null input
+        assertThat(childExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml" })
     void subflowShouldTransmitKind() throws QueueException, io.kestra.core.exceptions.InternalException {
         Flow parent = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "subflow-parent").orElseThrow();
         String executionId = IdUtils.create();
-        executionCommandQueue.emit(Create.of(new ExecutionId(parent.getTenantId(), parent.getNamespace(), parent.getId(), executionId, parent.getRevision()))
-            .withKind(ExecutionKind.TEST));
+        executionCommandQueue.emit(
+            Create.of(new ExecutionId(parent.getTenantId(), parent.getNamespace(), parent.getId(), executionId, parent.getRevision()))
+                .withKind(ExecutionKind.TEST)
+        );
 
         Execution parentExecution = runnerUtils.awaitFlowExecution(
             e -> executionId.equals(e.getId()) && e.getState().isTerminated(),

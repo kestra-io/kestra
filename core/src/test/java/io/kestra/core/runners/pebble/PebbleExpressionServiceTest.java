@@ -2,10 +2,11 @@ package io.kestra.core.runners.pebble;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -111,6 +112,6 @@ class PebbleExpressionServiceTest {
         assertThat(findFunction("render").arguments()).extracting(PebbleFunction.Argument::name)
             .containsExactly("toRender", "recursive");
         assertThat(findFunction("read").arguments()).extracting(PebbleFunction.Argument::name)
-            .containsExactly("path", "namespace", "version");
+            .containsExactly("path", "namespace", "revision");
     }
 }

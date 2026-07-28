@@ -6,9 +6,9 @@
             @click="() => executionsStore.execution = execution"
             :class="{active: executionsStore.execution?.id === execution.id}"
         >
-            <p>{{ date(execution.state.startDate) }}</p>
+            <p>{{ date(execution.state.startDate ?? "") }}</p>
             <p class="playground-duration">
-                {{ humanizeDuration(execution.state.duration) }}
+                {{ humanizeDuration(execution.state.duration ?? "") }}
             </p>
             <div class="playground-status">
                 <KsExecutionStatus :status="execution.state.current" size="small" />

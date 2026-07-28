@@ -42,4 +42,8 @@
 <style lang="scss">
     @use '../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/link';
+
+    .kel-link {
+        font-size: var(--ks-font-size-base);
+    }
 </style>

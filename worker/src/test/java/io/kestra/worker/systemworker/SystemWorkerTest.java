@@ -2,16 +2,16 @@ package io.kestra.worker.systemworker;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.worker.WorkerJobExecutor;
-import io.kestra.worker.senders.WorkerIOSender;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -48,10 +48,11 @@ class SystemWorkerTest {
             List<DirectQueueWorkerIOSender<?>> workerIOSenders,
             MaintenanceService maintenanceService,
             MetricRegistry metricRegistry,
-            ServerConfig serverConfig
-        ) {
-            super(eventPublisher, workerJobExecutor, directQueueJobFetcher,
-                workerIOSenders, maintenanceService, metricRegistry, serverConfig);
+            ServerConfig serverConfig) {
+            super(
+                eventPublisher, workerJobExecutor, directQueueJobFetcher,
+                workerIOSenders, maintenanceService, metricRegistry, serverConfig
+            );
         }
 
         String resolveWorkerGroupIdForTest() {

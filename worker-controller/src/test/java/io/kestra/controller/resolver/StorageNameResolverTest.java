@@ -23,8 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StorageNameResolverTest {
 
-    private final SynchronizationContext syncContext =
-        new SynchronizationContext((t, e) -> { /* no-op */ });
+    private final SynchronizationContext syncContext = new SynchronizationContext((t, e) ->
+    {
+        /* no-op */ });
 
     @Test
     void shouldPublishInitialAddressesOnStart() {
@@ -69,19 +70,23 @@ class StorageNameResolverTest {
     @Test
     void shouldNotifyListenerWhenAddressesChange() {
         // Given
-        AtomicReference<List<EquivalentAddressGroup>> supplied = new AtomicReference<>(List.of(
-            new EquivalentAddressGroup(new InetSocketAddress("controller-1", 9096))
-        ));
+        AtomicReference<List<EquivalentAddressGroup>> supplied = new AtomicReference<>(
+            List.of(
+                new EquivalentAddressGroup(new InetSocketAddress("controller-1", 9096))
+            )
+        );
         StorageNameResolver resolver = new StorageNameResolver(supplied::get, Duration.ofMinutes(1), syncContext);
         AtomicInteger callCount = new AtomicInteger();
         AtomicReference<NameResolver.ResolutionResult> result = new AtomicReference<>();
         resolver.start(new TestListener(result, callCount));
 
         // When
-        supplied.set(List.of(
-            new EquivalentAddressGroup(new InetSocketAddress("controller-1", 9096)),
-            new EquivalentAddressGroup(new InetSocketAddress("controller-2", 9097))
-        ));
+        supplied.set(
+            List.of(
+                new EquivalentAddressGroup(new InetSocketAddress("controller-1", 9096)),
+                new EquivalentAddressGroup(new InetSocketAddress("controller-2", 9097))
+            )
+        );
         resolver.refresh();
 
         // Then
@@ -95,7 +100,8 @@ class StorageNameResolverTest {
     void shouldPollSupplierOnSchedule() {
         // Given — sub-second refresh interval so the scheduled tick fires during the test
         AtomicInteger supplierCalls = new AtomicInteger();
-        StorageNameResolver resolver = new StorageNameResolver(() -> {
+        StorageNameResolver resolver = new StorageNameResolver(() ->
+        {
             supplierCalls.incrementAndGet();
             return List.of(new EquivalentAddressGroup(new InetSocketAddress("controller", 9096)));
         }, Duration.ofMillis(100), syncContext);
@@ -138,19 +144,23 @@ class StorageNameResolverTest {
     @Test
     void shouldDeliverScheduledResolutionOnSynchronizationContext() {
         // Given — a sub-second interval so the scheduled tick (off the sync context thread) fires
-        AtomicReference<List<EquivalentAddressGroup>> supplied = new AtomicReference<>(List.of(
-            new EquivalentAddressGroup(new InetSocketAddress("controller-1", 9096))
-        ));
+        AtomicReference<List<EquivalentAddressGroup>> supplied = new AtomicReference<>(
+            List.of(
+                new EquivalentAddressGroup(new InetSocketAddress("controller-1", 9096))
+            )
+        );
         StorageNameResolver resolver = new StorageNameResolver(supplied::get, Duration.ofMillis(100), syncContext);
         AtomicBoolean offContext = new AtomicBoolean(false);
         AtomicInteger notifications = new AtomicInteger();
         resolver.start(new ContextCheckingListener(offContext, notifications));
 
         // When — change the addresses so the scheduled refresh (not start()) notifies the listener
-        supplied.set(List.of(
-            new EquivalentAddressGroup(new InetSocketAddress("controller-1", 9096)),
-            new EquivalentAddressGroup(new InetSocketAddress("controller-2", 9097))
-        ));
+        supplied.set(
+            List.of(
+                new EquivalentAddressGroup(new InetSocketAddress("controller-1", 9096)),
+                new EquivalentAddressGroup(new InetSocketAddress("controller-2", 9097))
+            )
+        );
         Awaitility.await()
             .atMost(Duration.ofSeconds(2))
             .pollInterval(50, TimeUnit.MILLISECONDS)

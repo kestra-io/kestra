@@ -49,6 +49,7 @@
     "playwright-report/**",
     "test-results/**",
     "coverage/**",
-    "**/dist/**"
+    "**/dist/**",
+    "packages/kestra-sdk/src/openapi/**"
   ]
 }

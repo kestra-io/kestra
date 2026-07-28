@@ -1,5 +1,7 @@
 package io.kestra.worker.systemworker;
 
+import java.util.List;
+
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.server.ServerConfig;
@@ -9,13 +11,12 @@ import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.worker.WorkerQueues;
 import io.kestra.worker.AbstractWorker;
 import io.kestra.worker.WorkerJobExecutor;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 
 /**
  * Worker variant hosted inside the executor / standalone process. Reuses
@@ -41,8 +42,7 @@ public class SystemWorker extends AbstractWorker {
         List<DirectQueueWorkerIOSender<?>> workerIOSenders,
         MaintenanceService maintenanceService,
         MetricRegistry metricRegistry,
-        ServerConfig serverConfig
-    ) {
+        ServerConfig serverConfig) {
         super(
             ServiceType.WORKER,
             eventPublisher,

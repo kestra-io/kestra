@@ -1,9 +1,10 @@
 package io.kestra.repository.mysql.migration;
 
+import java.util.List;
+
 import javax.sql.DataSource;
 
 import io.kestra.core.migration.AbstractV2_0_01UpgradeMigration;
-import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 import io.kestra.repository.mysql.MysqlRepositoryEnabled;
 
@@ -42,12 +43,14 @@ public class V2_0_01UpgradeMigration extends AbstractV2_0_01UpgradeMigration {
     }
 
     @Override
-    public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/2.0.01-upgrade-mysql.sql");
+    public List<String> sqlResources() {
+        return List.of("/migrations/2.0.01-upgrade-mysql.sql");
     }
 
     @Override
     protected void doSchemaUpgrade() throws Exception {
-        AbstractSQLMigrationScript.executeSqlScript(dataSource, "/migrations/2.0.01-upgrade-mysql.sql");
+        for (String resource : sqlResources()) {
+            AbstractSQLMigrationScript.executeSqlScript(dataSource, resource);
+        }
     }
 }

@@ -1,5 +1,9 @@
 package io.kestra.webserver.filter;
 
+import java.util.Base64;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.webserver.services.BasicAuthService;
 
 import io.micronaut.http.HttpRequest;
@@ -13,9 +17,6 @@ import io.micronaut.security.csrf.CsrfConfiguration;
 import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -59,8 +60,10 @@ class CsrfTokenFilterTest {
     void shouldAcceptGetWithAuthorizationHeaderOnly() {
         // Given - SDK/API client path: Authorization header, no cookie, no CSRF
         var response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/configs")
-                .basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+            .exchange(
+                HttpRequest.GET("/api/v1/configs")
+                    .basicAuth(basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())
+            );
 
         // Then
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
@@ -70,8 +73,10 @@ class CsrfTokenFilterTest {
     void shouldAcceptGetWithCookieAndNoCsrfToken() {
         // Given - GET is a safe method, no CSRF needed even with cookie
         var response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/configs")
-                .cookie(Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, basicAuthCookieValue())));
+            .exchange(
+                HttpRequest.GET("/api/v1/configs")
+                    .cookie(Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, basicAuthCookieValue()))
+            );
 
         // Then
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());

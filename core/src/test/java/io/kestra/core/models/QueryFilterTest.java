@@ -9,6 +9,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Logical;
@@ -18,6 +20,7 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.Prefix;
 import io.kestra.core.models.dashboards.filters.StartsWith;
+import io.kestra.core.serializers.JacksonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -225,7 +228,9 @@ public class QueryFilterTest {
                 Field.LEVEL, Resource.LOG,
                 Set.of(
                     Op.GREATER_THAN_OR_EQUAL_TO,
-                    Op.LESS_THAN_OR_EQUAL_TO
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN
                 )
             ),
 
@@ -733,24 +738,24 @@ public class QueryFilterTest {
 
     @Test
     void shouldBuildLeafWhenFieldAndOperationProvided() {
-        assertDoesNotThrow(() ->
-            QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build()
+        assertDoesNotThrow(
+            () -> QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build()
         );
     }
 
     @Test
     void shouldBuildNodeWhenLogicalAndChildrenProvided() {
         QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
-        assertDoesNotThrow(() ->
-            QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build()
+        assertDoesNotThrow(
+            () -> QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build()
         );
     }
 
     @Test
     void shouldThrowExceptionWhenMixingLeafAndNodeShape() {
         QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("X").build();
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder()
                 .field(Field.STATE)
                 .operation(Op.EQUALS)
                 .logical(Logical.OR)
@@ -761,15 +766,15 @@ public class QueryFilterTest {
 
     @Test
     void shouldThrowExceptionWhenNodeHasEmptyChildren() {
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder().logical(Logical.OR).children(List.of()).build()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder().logical(Logical.OR).children(List.of()).build()
         );
     }
 
     @Test
     void shouldThrowExceptionWhenLeafMissingOperation() {
-        assertThrows(IllegalArgumentException.class, () ->
-            QueryFilter.builder().field(Field.STATE).build()
+        assertThrows(
+            IllegalArgumentException.class, () -> QueryFilter.builder().field(Field.STATE).build()
         );
     }
 
@@ -783,9 +788,39 @@ public class QueryFilterTest {
             .logical(Logical.OR)
             .children(List.of(invalidLeaf))
             .build();
-        assertThrows(InvalidQueryFiltersException.class, () ->
-            QueryFilter.validateQueryFilters(List.of(node), Resource.EXECUTION)
+        assertThrows(
+            InvalidQueryFiltersException.class, () -> QueryFilter.validateQueryFilters(List.of(node), Resource.EXECUTION)
         );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRegexIsCatastrophic() {
+        // Given a REGEX filter prone to catastrophic backtracking
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value("(a+)+")
+            .build();
+
+        // When / Then — it must be rejected before reaching any repository backend
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION)
+        );
+        assertThat(e.getMessage()).contains("catastrophic backtracking");
+    }
+
+    @Test
+    void shouldNotThrowExceptionWhenRegexIsSafe() {
+        // Given a safe REGEX filter
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.NAMESPACE)
+            .operation(Op.REGEX)
+            .value("io\\.kestra\\..*")
+            .build();
+
+        // When / Then
+        assertDoesNotThrow(() -> QueryFilter.validateQueryFilters(List.of(filter), Resource.EXECUTION));
     }
 
     @Test
@@ -1045,8 +1080,6 @@ public class QueryFilterTest {
                     Op.NOT_EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
-                    Op.IN,
-                    Op.NOT_IN,
                     Op.STARTS_WITH,
                     Op.ENDS_WITH,
                     Op.CONTAINS,
@@ -1626,6 +1659,59 @@ public class QueryFilterTest {
                 )
             )
         ).flatMap(s -> s);
+    }
+
+    // The @JsonProperty added on each Field/Logical constant aligns the generated OpenAPI schema
+    // with the @JsonValue wire form; these guard that the actual Jackson wire form is still driven
+    // by @JsonValue/@JsonCreator (i.e. the enum wire values), not the constant names.
+    @Test
+    void shouldSerializeFieldUsingItsWireValue() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+        QueryFilter filter = QueryFilter.builder()
+            .field(Field.TIME_RANGE)
+            .operation(Op.EQUALS)
+            .value("PT24H")
+            .build();
+
+        // When
+        String json = mapper.writeValueAsString(filter);
+
+        // Then
+        assertThat(json).contains("\"field\":\"timeRange\"");
+        assertThat(json).doesNotContain("TIME_RANGE");
+    }
+
+    @Test
+    void shouldDeserializeFieldFromItsWireValue() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+
+        // When
+        QueryFilter filter = mapper.readValue(
+            "{\"field\":\"flowId\",\"operation\":\"EQUALS\",\"value\":\"my-flow\"}",
+            QueryFilter.class
+        );
+
+        // Then
+        assertThat(filter.field()).isEqualTo(Field.FLOW_ID);
+    }
+
+    @Test
+    void shouldRoundTripLogicalNodeUsingWireValues() throws Exception {
+        // Given
+        ObjectMapper mapper = JacksonMapper.ofJson();
+        QueryFilter leaf = QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value("RUNNING").build();
+        QueryFilter node = QueryFilter.builder().logical(Logical.OR).children(List.of(leaf)).build();
+
+        // When
+        String json = mapper.writeValueAsString(node);
+        QueryFilter roundTripped = mapper.readValue(json, QueryFilter.class);
+
+        // Then
+        assertThat(json).contains("\"logical\":\"or\"");
+        assertThat(roundTripped.logical()).isEqualTo(Logical.OR);
+        assertThat(roundTripped.children().getFirst().field()).isEqualTo(Field.STATE);
     }
 
     private static Stream<Arguments> buildQueryFiltersForOperations(Field field, Resource resource, Set<Op> operations) {

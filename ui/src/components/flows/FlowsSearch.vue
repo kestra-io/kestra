@@ -143,6 +143,10 @@
 </script>
 
 <style scoped lang="scss">
+section {
+    --ks-data-table-navbar-padding-block-start: var(--ks-spacing-5);
+}
+
 .search-splitter {
     flex: 1;
     min-height: 0;

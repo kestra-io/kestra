@@ -144,7 +144,6 @@ export function useExecutionRoot() {
         })
 
         watch(route, () => {
-            executionsStore.taskRun = undefined
             if (previousExecutionId.value !== route.params.id) {
                 executionsStore.logs = {total: 0, results: []}
                 flowStore.flow = undefined

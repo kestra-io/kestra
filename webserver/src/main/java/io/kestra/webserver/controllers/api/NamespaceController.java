@@ -32,7 +32,6 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
@@ -142,9 +141,9 @@ public class NamespaceController<N extends Namespace> {
         @Parameter(description = "Return only existing namespace") @QueryValue(value = "existing", defaultValue = "false") Boolean existingOnly,
         @Parameter(description = "A list of query filters") @Nullable @QueryFilterFormat(QueryFilter.Resource.NAMESPACE) List<QueryFilter> filters) throws HttpStatusException {
         List<Namespace> allNamespaces = Stream.concat(
-                flowRepository.findDistinctNamespace(tenantService.resolveTenant()).stream(),
-                Stream.of(systemFlowsConfiguration.namespace())
-            )
+            flowRepository.findDistinctNamespace(tenantService.resolveTenant()).stream(),
+            Stream.of(systemFlowsConfiguration.namespace())
+        )
             .flatMap(n -> NamespaceInterface.asTree(n).stream())
             .distinct()
             .map(id -> (Namespace) Namespace.builder().id(id).build())

@@ -11,6 +11,7 @@
                 :currentPage="urlPage"
                 :pageSize="urlSize"
                 :noGutter="!embed && !system"
+                :fitHeight="!embed && !system"
                 @ready="ready = true"
                 @page-changed="onPageChanged"
             >
@@ -53,9 +54,9 @@
                     />
                     <div v-else-if="embed && !system" class="blueprint-list">
                         <BlueprintListRow
-                            v-for="blueprint in blueprints"
+                            v-for="blueprint in blueprints?.filter((b): b is FlowBlueprint & {id: string} => typeof b.id === 'string')"
                             :key="blueprint.id"
-                            :blueprint
+                            :blueprint="blueprint"
                             :tags
                             @click="goToDetail(blueprint.id)"
                             @copy="copy(blueprint.id)"
@@ -63,7 +64,7 @@
                     </div>
                     <div v-else class="card-grid" :class="{system}">
                         <BlueprintCard
-                            v-for="blueprint in blueprints"
+                            v-for="blueprint in blueprints?.filter((b): b is FlowBlueprint & {id: string} => typeof b.id === 'string')"
                             :key="blueprint.id"
                             :blueprint
                             :embed
@@ -72,6 +73,7 @@
                             :blueprintKind
                             :blueprintType
                             :icons="pluginsStore.icons"
+                            :loadIcon="pluginsStore.loadIcon"
                             @click="goToDetail(blueprint.id)"
                             @use="blueprintToEditor(blueprint.id)"
                         >
@@ -104,6 +106,7 @@
     import {usePluginsStore} from "../../../stores/plugins"
 
     import useRestoreUrl from "../../../composables/useRestoreUrl"
+    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import {editorViewTypes} from "../../../utils/constants"
     import * as Utils from "../../../utils/utils"
 
@@ -142,6 +145,7 @@
     const pluginsStore = usePluginsStore()
 
     const {loadInit} = useRestoreUrl()
+    const {ensureInstalledPluginsLoaded} = useBlueprintPlugins()
     const dataTable = useTemplateRef("dataTable")
 
     const initSelectedTags = (): string[] => {
@@ -302,6 +306,8 @@
     onMounted(() => {
         syncFromRoute()
         docStore.docId = `blueprints.${props.blueprintType}`
+        ensureInstalledPluginsLoaded()
+        pluginsStore.fetchIcons()
     })
 
     onActivated(() => {

@@ -59,7 +59,9 @@ public class BlueprintController {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) Integer page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") @Min(1) Integer size,
         @Parameter(description = "The blueprint kind") Kind kind,
-        @Parameter(description = "A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected.") @Nullable @QueryFilterFormat(QueryFilter.Resource.BLUEPRINT) List<QueryFilter> filters,
+        @Parameter(
+            description = "A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected."
+        ) @Nullable @QueryFilterFormat(QueryFilter.Resource.BLUEPRINT) List<QueryFilter> filters,
         HttpRequest<?> httpRequest) throws URISyntaxException {
 
         Map<String, Object> extraParams = new LinkedHashMap<>(blueprintFilterQueryParams(filters));
@@ -109,7 +111,9 @@ public class BlueprintController {
     )
     public List<ApiBlueprintTagItem> listBlueprintTags(
         @Parameter(description = "The blueprint kind") Kind kind,
-        @Parameter(description = "A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected.") @Nullable @QueryFilterFormat(QueryFilter.Resource.BLUEPRINT) List<QueryFilter> filters,
+        @Parameter(
+            description = "A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected."
+        ) @Nullable @QueryFilterFormat(QueryFilter.Resource.BLUEPRINT) List<QueryFilter> filters,
         HttpRequest<?> httpRequest) throws URISyntaxException {
 
         return fastForwardToKestraApi(httpRequest, getApiBasePath(kind) + "/tags", blueprintFilterQueryParams(filters), Argument.of(List.class, ApiBlueprintTagItem.class));
@@ -160,7 +164,8 @@ public class BlueprintController {
 
         List<QueryFilter> queryFieldFilters = queryFilters.stream()
             .filter(f -> f.field() == QueryFilter.Field.QUERY)
-            .toList();;
+            .toList();
+        ;
 
         if (queryFieldFilters.size() > 1) {
             throw new InvalidQueryFiltersException("Resource: BLUEPRINT does not support multiple conditions on QUERY Field");
@@ -177,7 +182,8 @@ public class BlueprintController {
         return queryFilters.stream()
             .filter(f -> f.field() == QueryFilter.Field.TAGS)
             .findFirst()
-            .map(f -> {
+            .map(f ->
+            {
                 Object value = f.value();
                 if (value instanceof List<?> list) {
                     return list.stream().map(Object::toString).toList();
@@ -204,7 +210,8 @@ public class BlueprintController {
             .replacePath(originalRequest.getUri().getPath().toString().replaceAll("^[^?]*", newPath));
 
         if (additionalQueryParams != null) {
-            additionalQueryParams.forEach((name, value) -> {
+            additionalQueryParams.forEach((name, value) ->
+            {
                 if (value instanceof List<?> list) {
                     uriBuilder.queryParam(name, list.toArray());
                 } else {

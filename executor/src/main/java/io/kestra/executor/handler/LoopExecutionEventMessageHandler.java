@@ -1,11 +1,14 @@
 package io.kestra.executor.handler;
 
+import java.io.IOException;
+import java.util.*;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
-import java.io.IOException;
-
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -20,12 +23,10 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.Loop;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.*;
 
 /**
  * Handles {@link LoopExecutionEvent} messages, propagating loop sub-execution state changes
@@ -34,32 +35,40 @@ import java.util.*;
 @Singleton
 @Slf4j
 public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<LoopExecutionEvent> {
-    @Inject
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
+    private final ExecutionService executionService;
+    private final TaskOutputService taskOutputService;
+    private final ExecutionStateStore executionStateStore;
+    private final RunContextFactory runContextFactory;
+    private final FlowMetaStoreInterface flowMetaStore;
+    private final DispatchQueueInterface<Execution> executionQueue;
+    private final BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
+    private final KillSwitchService killSwitchService;
+    private final RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
-    private ExecutionService executionService;
-
-    @Inject
-    private TaskOutputService taskOutputService;
-
-    @Inject
-    private ExecutionStateStore executionStateStore;
-
-    @Inject
-    private RunContextFactory runContextFactory;
-
-    @Inject
-    private FlowMetaStoreInterface flowMetaStore;
-
-    @Inject
-    private DispatchQueueInterface<Execution> executionQueue;
-
-    @Inject
-    private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
-
-    @Inject
-    private KillSwitchService killSwitchService;
+    public LoopExecutionEventMessageHandler(
+        ExecutorService executorService,
+        ExecutionService executionService,
+        TaskOutputService taskOutputService,
+        ExecutionStateStore executionStateStore,
+        RunContextFactory runContextFactory,
+        FlowMetaStoreInterface flowMetaStore,
+        DispatchQueueInterface<Execution> executionQueue,
+        BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue,
+        KillSwitchService killSwitchService,
+        RunContextLoggerFactory runContextLoggerFactory) {
+        this.executorService = executorService;
+        this.executionService = executionService;
+        this.taskOutputService = taskOutputService;
+        this.executionStateStore = executionStateStore;
+        this.runContextFactory = runContextFactory;
+        this.flowMetaStore = flowMetaStore;
+        this.executionQueue = executionQueue;
+        this.followExecutionEventQueue = followExecutionEventQueue;
+        this.killSwitchService = killSwitchService;
+        this.runContextLoggerFactory = runContextLoggerFactory;
+    }
 
     @Override
     public Optional<ExecutorContext> handle(LoopExecutionEvent message) {
@@ -92,6 +101,8 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                 Loop loop = (Loop) executor.getFlow().findTaskByTaskId(message.loopRun().taskId());
 
                 if (loop.getTransmitFailed() && message.state().isTerminatedInError()) {
+                    // the failure happened inside an isolated loop sub-execution: log inside the parent exec
+                    logLoopIterationFailure(parentTaskRun, loop, executor, message);
                     // immediately terminate the loop
                     return terminateLoop(parentTaskRun, loop, executor, message.state());
                 } else {
@@ -99,7 +110,12 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                     Map<String, Object> outputs = taskOutputService.getOutputs(parentTaskRun);
                     int iterationCount = (Integer) outputs.get(Loop.ITERATION_COUNT_OUTPUT);
                     int runningIteration = (Integer) outputs.get(Loop.RUNNING_ITERATIONS_OUTPUT) - 1;
-                    int terminatedIteration = (Integer) outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT) + 1;
+                    @SuppressWarnings("unchecked")
+                    Map<String, Integer> terminatedByState = outputs.containsKey(Loop.TERMINATED_ITERATIONS_OUTPUT)
+                        ? (Map<String, Integer>) outputs.get(Loop.TERMINATED_ITERATIONS_OUTPUT)
+                        : HashMap.newHashMap(6);
+                    terminatedByState.merge(message.state().name(), 1, Integer::sum);
+                    int terminatedIteration = terminatedByState.values().stream().mapToInt(Integer::intValue).sum();
                     @SuppressWarnings("unchecked")
                     List<Map<String, Object>> taskOutputs = outputs.containsKey(Loop.OUTPUTS_OUTPUT) ? (List<Map<String, Object>>) outputs.get(Loop.OUTPUTS_OUTPUT) : new ArrayList<>();
                     if (!MapUtils.isEmpty(message.outputs())) {
@@ -117,12 +133,12 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                                 .orElseThrow(() -> new IllegalStateException("Loop has a nextOffset output but values did not resolve to a URI"));
                             var valuesAndOffset = FlowableUtils.readLoopValuesFromUri(runContext, valuesUri, nextOffset, 1);
                             String value = valuesAndOffset.getLeft().getFirst();
-                            computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedIteration, valuesAndOffset.getRight());
+                            computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedByState, valuesAndOffset.getRight());
                             var loopExecution = executor.getExecution().loopExecution(parentTaskRun, nextIndex, null, value);
                             executionQueue.emit(loopExecution);
                         } else {
                             // Non-URI mode: resolve all values in memory and pick by index
-                            computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedIteration, null);
+                            computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration + 1, terminatedByState, null);
                             var either = FlowableUtils.resolveValues(runContext, loop.getValues());
                             if (either.isLeft()) {
                                 String value = either.getLeft().get(nextIndex);
@@ -136,19 +152,19 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
                         }
 
                         // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
-                        followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                        followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
                         return null;
                     } else {
                         // All iterations have been started — save the decremented counts and either
                         // terminate (if all are done) or wait for the remaining in-flight ones.
-                        computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedIteration, null);
+                        computeOutputs(parentTaskRun, taskOutputs, iterationCount, runningIteration, terminatedByState, null);
                         if (terminatedIteration == iterationCount) {
                             // All iterations have completed — end the loop with success.
                             return terminateLoop(parentTaskRun, loop, executor, State.Type.SUCCESS);
                         } else {
                             // Some iterations are still running — wait for them.
                             // we don't update the execution itself as the loop is still running, but we send a follow execution event to update the UI
-                            followExecutionEventQueue.emitAsync(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
+                            followExecutionEventQueue.emit(new FollowExecutionEvent(execution, ExecutionEventType.UPDATED));
                             return null;
                         }
                     }
@@ -183,6 +199,18 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         });
     }
 
+    private void logLoopIterationFailure(TaskRun parentTaskRun, Loop loop, ExecutorContext executor, LoopExecutionEvent message) {
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(parentTaskRun, loop, executor.getExecution().getKind());
+        runContextLogger.logger().error(
+            "Loop iteration {} ended in {} in sub-execution [[link execution=\"{}\" flowId=\"{}\" namespace=\"{}\"]], check that execution's logs for details",
+            message.loopRun().index(),
+            message.state(),
+            message.executionId(),
+            executor.getExecution().getFlowId(),
+            executor.getExecution().getNamespace()
+        );
+    }
+
     private Map<String, Object> buildIterationOutput(LoopExecutionEvent message) {
         Map<String, Object> item = HashMap.newHashMap(3);
         item.put("value", message.loopRun().value());
@@ -196,11 +224,13 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
         );
     }
 
-    private void computeOutputs(TaskRun parentTaskRun, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration, Integer terminatedIteration, Long offset) throws InternalException {
+    private void computeOutputs(TaskRun parentTaskRun, List<Map<String, Object>> taskOutputs, Integer iterationCount, Integer runningIteration, Map<String, Integer> terminatedByState,
+        Long offset)
+        throws InternalException {
         Map<String, Object> outputs = taskOutputService.getOutputs(parentTaskRun);
         outputs.put(Loop.ITERATION_COUNT_OUTPUT, iterationCount);
         outputs.put(Loop.RUNNING_ITERATIONS_OUTPUT, runningIteration);
-        outputs.put(Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedIteration);
+        outputs.put(Loop.TERMINATED_ITERATIONS_OUTPUT, terminatedByState);
         if (offset != null) {
             outputs.put(Loop.NEXT_OFFSET_OUTPUT, offset);
         }

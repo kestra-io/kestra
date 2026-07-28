@@ -91,7 +91,7 @@
                                 class="multiselect-header-btn"
                                 @click.stop="selectAllOptions(input)"
                             >
-                                {{ t('select all') }}
+                                {{ t('filter.select all') }}
                             </button>
                             <button
                                 v-if="multiSelectInputs[input.id]?.length"
@@ -99,7 +99,7 @@
                                 class="multiselect-header-btn"
                                 @click.stop="clearAllOptions(input)"
                             >
-                                {{ t('deselect all') }}
+                                {{ t('filter.deselect all') }}
                             </button>
                         </div>
                     </template>

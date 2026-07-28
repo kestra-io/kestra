@@ -86,7 +86,8 @@ Reject (or ask to fix) anything that:
 
 ### Internationalization
 
-- No hardcoded user-facing strings. Always go through `t()` from `useI18n()`.
+- No hardcoded user-facing strings. Always go through i18n.
+- **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
 - Use `<i18n-t>` for plurals and interpolation — never string-concatenate.
 - Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
 - Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.

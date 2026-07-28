@@ -116,7 +116,7 @@
     useRouteContext(routeInfo)
     const {onboardingResources} = useOnboardingResources()
     const restartRoute = computed(() => ({
-        name: "welcome",
+        name: "ai",
         params: {tenant: route.params.tenant},
     }))
 </script>

@@ -23,6 +23,9 @@ jobs:
           gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           repository: kestra-io/kestra
           ref: develop
+          # full history: a shallow clone has no merge base with the chore branch,
+          # so the merge below fails with "refusing to merge unrelated histories"
+          fetch-depth: 0
 
       # github.event.head_commit is only populated for push events; resolve the commit
       # subject from history so it's correct regardless of what triggered this run.
@@ -59,13 +62,14 @@ jobs:
       - name: Checkout the chore/update-kestra-sdk branch
         shell: bash
         run: |
-          # the checkout above is a shallow, single-branch clone of develop, so the
-          # remote chore branch is not present locally. Fetch it explicitly first.
-          git fetch --depth=1 origin chore/update-kestra-sdk || true
+          # the checkout above is a single-branch clone of develop, so the remote chore
+          # branch is not present locally. Fetch it, with its history, explicitly first.
+          git fetch origin chore/update-kestra-sdk || true
           if git rev-parse --verify --quiet origin/chore/update-kestra-sdk; then
             # reuse it, bringing in anything new from develop since it was created
             git switch -c chore/update-kestra-sdk origin/chore/update-kestra-sdk
-            git merge origin/develop --no-edit
+            # the SDK is regenerated right below, so let develop win any conflict
+            git merge origin/develop --no-edit -X theirs
           else
             # otherwise, create it from develop
             git switch -c chore/update-kestra-sdk origin/develop

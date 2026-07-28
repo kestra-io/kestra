@@ -106,25 +106,30 @@
             : t("variable_explorer.n_keys", {count})
     }
 
-    // Paths the user has manually collapsed; everything else defaults to open.
-    const collapsed = ref<Set<string>>(new Set())
+    // Paths the user has manually toggled away from the default expansion state.
+    const expanded = ref<Set<string>>(new Set())
 
-    // Reset the collapse state whenever a brand new value is explored.
+    // Reset the toggle state whenever a brand new value is explored.
     watch(
         () => props.value,
         () => {
-            collapsed.value = new Set()
+            expanded.value = new Set()
         },
     )
 
     function toggle(path: string) {
-        const next = new Set(collapsed.value)
+        const next = new Set(expanded.value)
         if (next.has(path)) {
             next.delete(path)
         } else {
             next.add(path)
         }
-        collapsed.value = next
+        expanded.value = next
+    }
+
+    function isExpanded(path: string): boolean {
+        const defaultExpanded = props.defaultExpanded ?? true
+        return expanded.value.has(path) ? !defaultExpanded : defaultExpanded
     }
 
     function buildRows(value: unknown, path: string, depth: number, rows: TreeRow[]) {
@@ -135,7 +140,7 @@
         for (const [key, child] of entries) {
             const childPath = `${path}${formatStep(key)}`
             const expandable = isExpandable(child)
-            const expanded = expandable && !collapsed.value.has(childPath)
+            const rowExpanded = expandable && isExpanded(childPath)
 
             rows.push({
                 path: childPath,
@@ -145,10 +150,10 @@
                 value: child,
                 display: expandable ? collapsedPreview(child) : leafDisplay(child),
                 isExpandable: expandable,
-                isExpanded: expanded,
+                isExpanded: rowExpanded,
             })
 
-            if (expanded) {
+            if (rowExpanded) {
                 buildRows(child, childPath, depth + 1, rows)
             }
         }

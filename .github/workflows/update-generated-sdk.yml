@@ -142,19 +142,23 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
           SOURCE_MESSAGE: ${{ steps.source-commit.outputs.message }}
+          # carries earlier commit subjects, so keep it out of the script itself:
+          # interpolated there, a backtick or ${ would break out and run as JS
+          PREVIOUS_BODY: ${{ steps.pr-body.outputs.body }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const prNumber = '${{ steps.pr-body.outputs.pr_number }}';
             const sha = process.env.SOURCE_SHA;
             const message = process.env.SOURCE_MESSAGE;
+            const previousBody = process.env.PREVIOUS_BODY;
             const linkToCurrentCommit = `[${sha.slice(0, 7)}](https://github.com/kestra-io/kestra/commit/${sha})`;
             const body = `
               This PR is auto-generated whenever \`ui/packages/kestra-sdk/src/openapi\` drifts from the OpenAPI spec on \`develop\` (see [ui/packages/kestra-sdk/README.md](https://github.com/kestra-io/kestra/blob/develop/ui/packages/kestra-sdk/README.md)).
 
               List of commits that triggered a regeneration:
               <marker>
-              ${{ steps.pr-body.outputs.body }}
+              ${previousBody}
               - ${message} ${linkToCurrentCommit}
               </marker>
 

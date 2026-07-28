@@ -219,6 +219,8 @@
     "task logs": "Task logs",
     "display flow {id} executions": "Display flow {id} executions",
     "actions": "Actions",
+    "select all": "Select All",
+    "deselect all": "Deselect All",
     "select datetime": "Select a date",
     "select view": "Select view",
     "invalid field": "Invalid field: {name}",

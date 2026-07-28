@@ -58,6 +58,13 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
     @Builder.Default
     Boolean autoSelectFirst = false;
 
+    @Schema(
+        title = "Whether to show a 'Select All' button in the multi-select dropdown."
+    )
+    @NotNull
+    @Builder.Default
+    Boolean selectAll = false;
+
     @Override
     public Property<List<String>> getDefaults() {
         Property<List<String>> baseDefaults = super.getDefaults();
@@ -110,6 +117,7 @@ public class MultiselectInput extends Input<List<String>> implements ItemTypeInt
                 .itemType(getItemType())
                 .displayName(getDisplayName())
                 .autoSelectFirst(getAutoSelectFirst())
+                .selectAll(getSelectAll())
                 .build();
         }
         return this;

@@ -84,6 +84,25 @@
                     :placeholder="isComputingInput(input.id) ? t('loading') : undefined"
                     :loading="isLoadingInput(input.id)"
                 >
+                    <template v-if="input.selectAll" #header>
+                        <div class="multiselect-header">
+                            <button
+                                type="button"
+                                class="multiselect-header-btn"
+                                @click.stop="selectAllOptions(input)"
+                            >
+                                {{ t('select all') }}
+                            </button>
+                            <button
+                                v-if="multiSelectInputs[input.id]?.length"
+                                type="button"
+                                class="multiselect-header-btn"
+                                @click.stop="clearAllOptions(input)"
+                            >
+                                {{ t('deselect all') }}
+                            </button>
+                        </div>
+                    </template>
                     <KsOption
                         v-for="item in ((input.values ?? input.options) ?? []).map(toOption)"
                         :key="item.value"
@@ -576,6 +595,17 @@
     function onMultiSelectChange(input: InputMetaData, e: unknown[]): void {
         inputsValues[input.id] = JSON.stringify(e)
         onChange(input)
+    }
+
+    function selectAllOptions(input: InputMetaData): void {
+        const allValues = ((input.values ?? input.options) ?? []).map(toOption).map(o => o.value)
+        multiSelectInputs[input.id] = allValues
+        onMultiSelectChange(input, allValues)
+    }
+
+    function clearAllOptions(input: InputMetaData): void {
+        multiSelectInputs[input.id] = []
+        onMultiSelectChange(input, [])
     }
 
     function onFileChange(input: InputMetaData, e: Event): void {
@@ -1085,6 +1115,29 @@
 
     .wizard-nav-spacer {
         flex: 1;
+    }
+}
+
+.multiselect-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ks-spacing-2) var(--ks-spacing-3);
+    border-bottom: 1px solid var(--ks-border-default);
+
+    .multiselect-header-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        color: var(--ks-text-link);
+
+        &:hover {
+            opacity: 0.8;
+        }
     }
 }
 

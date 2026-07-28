@@ -120,4 +120,9 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=fs86GLg-OGM",
         learnMore: "https://kestra.io/docs/how-to-guides/namespace-variables-vs-kvstore",
     },
+    /** @todo Replace the placeholder video and learnMore links with the real promotion docs/video once published. */
+    promotionTargets: {
+        video: "https://www.youtube.com/watch?v=XhICXP_GXic",
+        learnMore: "https://kestra.io/docs/enterprise",
+    },
 }

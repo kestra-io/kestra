@@ -6,7 +6,7 @@ import {createConfigureClient} from "@kestra-io/hey-api-plugin/runtime"
 import {createClientFacade} from "./client-facade"
 
 export * from "./openapi/index"
-export type {AxiosLikeConfig, AxiosLikeResponse, AxiosLikeClient} from "./client-facade"
+export type {AxiosLikeConfig, AxiosLikeResponse, AxiosLikeClient, StreamConfig} from "./client-facade"
 
 // The OSS spec models a namespace as `NamespaceLight` ({ id }); the UI consumes a slightly richer
 // shape (an optional `description`, populated on EE). Exposed here as the compatibility name the

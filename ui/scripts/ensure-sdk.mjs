@@ -59,7 +59,27 @@ function recordHash(inputs, hashFile) {
 }
 
 
-/** 
+/**
+ * Runs `npm install` in uiRoot when its node_modules is out of sync with package-lock.json —
+ * not just missing, but stale: node_modules can exist yet no longer match a lockfile that changed
+ * since the last install (e.g. a devDependency bump in hey-api-plugin's package.json), which is
+ * exactly the case a plain existsSync(node_modules) check would miss. Content-hashed, not mtime
+ * based, for the same reason as hashInputs above.
+ * @param {string} uiRoot 
+ */
+function ensureDepsInstalled(uiRoot) {
+    const lockFile = path.join(uiRoot, "package-lock.json")
+    if (!existsSync(lockFile)) return
+    const marker = path.join(uiRoot, "node_modules/.ensure-sdk-lock-hash")
+    if (existsSync(path.join(uiRoot, "node_modules")) && !isStale([lockFile], marker)) return
+
+    console.log(`[ensure-sdk] Dependencies in ${uiRoot} are missing or out of sync with package-lock.json — running npm install.`)
+    run("npm install", uiRoot)
+    recordHash([lockFile], marker)
+}
+
+
+/**
  * Bundles the committed src/openapi into dist/ when missing, or when either package's tracked
  * sources changed since the last build; never touches Gradle or regenerates code.
 
@@ -80,6 +100,7 @@ export function ensureSdkBundled(uiRoot) {
     )
     if (!sdkStale) return
 
+    ensureDepsInstalled(uiRoot)
     console.log(existsSync(sdkDist)
         ? "[kestra-sdk] Source changed since the last build (kestra-sdk and/or hey-api-plugin) — rebuilding."
         : "[kestra-sdk] No build found — bundling the committed SDK source once (subsequent runs are instant).")
@@ -124,6 +145,7 @@ export function checkSpecAndGenerate(uiRoot) {
         ? `[generate:sdk] Spec changed (${committedHash} -> ${specHash}) — regenerating.`
         : "[generate:sdk] No committed hash found — regenerating.")
 
+    ensureDepsInstalled(uiRoot)
     run("npm run build --workspace=@kestra-io/hey-api-plugin", uiRoot)
     run("npm run generate:openapi --workspace=@kestra-io/kestra-sdk", uiRoot)
     run("npm run build:sdk", uiRoot)

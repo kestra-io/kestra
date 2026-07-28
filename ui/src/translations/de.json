@@ -184,6 +184,7 @@
     "last execution status": "Letzter Ausführungsstatus",
     "jump to...": "Springe zu...",
     "contextBar": {
+      "ai": "KI",
       "news": "Nachrichten",
       "docs": "Dokumentation",
       "help": "Hilfe",
@@ -2055,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Stellen Sie eine Frage zu Ihren Daten. Beispielaufforderung: Zeigen Sie mir die Erfolgsrate meiner flows in den letzten 7 Tagen."
+      },
+      "copilot": {
+        "title": "KI Copilot",
+        "placeholder": "Was soll ich erstellen?",
+        "send": "Senden",
+        "mode": {
+          "ask": "Anfragen",
+          "edit": "Bearbeiten",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Verwandeln Sie Ihre Idee in einen Workflow"
+        },
+        "toolCall": "Wird ausgeführt {tool}",
+        "context": {
+          "execution": "Ausführung: {{id}}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {{namespace}}"
+        },
+        "toolResult": {
+          "detail": "Details",
+          "error": "{{tool}} fehlgeschlagen",
+          "ok": "{tool} abgeschlossen",
+          "rejected": "{{tool}} abgelehnt"
+        },
+        "confirm": {
+          "planTitle": "Planentwurf",
+          "actionTitle": "Vorgeschlagene Aktion",
+          "approve": "Genehmigen",
+          "approveExecute": "Genehmigen & ausführen",
+          "reject": "Ablehnen",
+          "reasonPlaceholder": "Antworten, um zu überarbeiten…",
+          "pending": "Wartet auf Genehmigung",
+          "revise": "Zur Überarbeitung antworten"
+        },
+        "notice": {
+          "emptyTurn": "Der Assistent hat keine Antwort zurückgegeben. Bitte versuchen Sie es erneut.",
+          "retry": "Wiederholen"
+        },
+        "cancelled": "Durchlauf abgebrochen",
+        "error": {
+          "turnCap": "Diese Unterhaltung hat ihr Limit erreicht — starte einen neuen Chat.",
+          "turnInProgress": "Ein Durchlauf ist bereits im Gange.",
+          "request": "Die Anfrage ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+          "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+        },
+        "emptyHelper": "Ich kann diesen flow bearbeiten, Tests generieren, zugehörige Dateien anlegen oder erklären, wie er funktioniert.",
+        "suggestions": {
+          "errorHandling": "Fehlerbehandlung hinzufügen",
+          "unitTest": "Unit-Test generieren",
+          "explain": "Diesen flow erklären",
+          "dbt": "Eine dbt-Pipeline ausführen"
+        },
+        "voice": {
+          "start": "Spracheingabe starten",
+          "stop": "Stoppen und Einfügen",
+          "cancel": "Spracheingabe abbrechen"
+        },
+        "unavailable": {
+          "title": "AI Copilot ist nicht verfügbar",
+          "detail": "Kein KI-Anbieter ist konfiguriert. Bitten Sie einen Administrator, einen einzurichten, und versuchen Sie es dann erneut.",
+          "retry": "Erneut versuchen"
+        },
+        "thinking": "Verarbeite",
+        "thinkingWords": [
+          "Orchestrieren",
+          "Terminierung",
+          "Sequenzierung",
+          "Routing",
+          "Versand",
+          "Wartend",
+          "Triggerung",
+          "Wird ausgeführt",
+          "Koordinierung",
+          "Bereitstellung",
+          "Wird aufgelöst",
+          "Zusammenstellen",
+          "Zusammenstellen",
+          "Planung",
+          "Zuordnung",
+          "Verbindung",
+          "Verzweigung",
+          "Wird synchronisiert",
+          "Abgleichen",
+          "Materialisierung",
+          "Kompilieren",
+          "Validierung läuft",
+          "Wird verbreitet",
+          "Konvergierend"
+        ],
+        "newChat": "Neuer Chat",
+        "recents": "Zuletzt verwendet",
+        "recentsEmpty": "Noch keine aktuellen Konversationen",
+        "draft": {
+          "openInEditor": "Im Editor öffnen",
+          "apply": "Anwenden",
+          "applyTitle": "flow anwenden",
+          "applyConfirm": "Den flow {{namespace}}.{{id}} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
+          "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",
+          "applyError": "Der flow konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",
+          "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",
+          "applyNoTarget": "Dieser Entwurf hat keinen namespace oder keine id zum Anwenden.",
+          "applyTitleDashboard": "Dashboard anwenden",
+          "title": {
+            "flow": "Vorgeschlagener flow",
+            "dashboard": "Vorgeschlagenes Dashboard",
+            "app": "Vorgeschlagene App"
+          },
+          "valid": "Gültig",
+          "invalid": "Änderungen erforderlich",
+          "copy": "YAML kopieren",
+          "copied": "Kopiert"
+        }
       }
     },
     "playground": {

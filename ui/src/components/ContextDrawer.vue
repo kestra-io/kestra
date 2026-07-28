@@ -67,7 +67,6 @@
     const {buttons} = useContextButtons()
     const miscStore = useMiscStore()
 
-    const activeTab = computed(() => miscStore.contextInfoBarOpenTab)
     const contextButtons = computed(() => ({...buttons, ...props.additionalButtons}))
     const hasButtons = computed(() => Object.keys(contextButtons.value).length > 0)
 
@@ -76,8 +75,18 @@
         Object.entries(contextButtons.value).filter(([, button]) => !button.hidden),
     ))
 
-    // Hide the strip entirely while a hidden button's panel is active.
-    const showTabBar = computed(() => contextButtons.value[activeTab.value]?.hidden !== true)
+    // A tab hidden by the current route (e.g. the AI dock on the full-page /ai) falls back to the first
+    // visible tab, so reopening the dock there never gets stuck on a stripless hidden pane. Panel-only
+    // surfaces (the notifications bell) are exempt — they are meant to open as a stripless panel.
+    const activeTab = computed(() => {
+        const stored = miscStore.contextInfoBarOpenTab
+        const button = stored ? contextButtons.value[stored] : undefined
+        if (button?.hidden && !button.panelOnly) return Object.keys(visibleTabButtons.value)[0] ?? ""
+        return stored
+    })
+
+    // Hide the strip entirely only while a panel-only surface (e.g. notifications) is active.
+    const showTabBar = computed(() => contextButtons.value[activeTab.value]?.panelOnly !== true)
 
     // Each button supplies its own unread source; the drawer just renders the dot.
     function isUnread(button: {hasUnreadMarker?: boolean; unread?: {readonly value: boolean}}) {

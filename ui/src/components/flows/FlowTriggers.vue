@@ -330,7 +330,8 @@
 
     import {useFlowStore} from "../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
-    import {useTriggerStore} from "../../stores/trigger"
+    import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
+    import {searchTriggersForFlow} from "../../utils/triggers"
 
     import {type ColumnConfig, useTableColumns} from "../../composables/useTableColumns"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
@@ -432,7 +433,6 @@
     const toast = useToast()
     const authStore = useAuthStore()
     const flowStore = useFlowStore()
-    const triggerStore = useTriggerStore()
 
     const query = computed(() => {
         return Array.isArray(route.query?.["filters[q][EQUALS]"]) ? route.query["filters[q][EQUALS]"][0] : route.query?.["filters[q][EQUALS]"]
@@ -518,8 +518,7 @@
     const loadData = () => {
         if(!triggersWithType.value.length || !flowStore.flow) return
 
-        triggerStore
-            .find({namespace: flowStore.flow?.namespace, flowId: flowStore.flow?.id, size: triggersWithType.value.length, q: query.value})
+        searchTriggersForFlow({namespace: flowStore.flow?.namespace, flowId: flowStore.flow?.id, size: triggersWithType.value.length, q: query.value})
             .then((trigs: any) => triggers.value = trigs.results)
             .then(() => reloadLogs.value = Math.random())
     }
@@ -537,11 +536,11 @@
 
     const postBackfill = () => {
         const trigger = selectedTrigger.value as any
-        triggerStore.createBackfill({
+        TriggersAPI.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: cleanBackfill.value,
+            backfill: cleanBackfill.value as any,
         })
             .then(() => {
                 toast.saved(selectedTrigger.value?.triggerId)
@@ -557,7 +556,7 @@
     }
 
     const pauseBackfill = (trigger: any) => {
-        triggerStore.pauseBackfill(trigger)
+        TriggersAPI.pauseBackfill(trigger)
             .then(() => {
                 toast.saved(trigger.triggerId)
                 loadDataAfterAction()
@@ -565,7 +564,7 @@
     }
 
     const unpauseBackfill = (trigger: any) => {
-        triggerStore.unpauseBackfill(trigger)
+        TriggersAPI.unpauseBackfill(trigger)
             .then(() => {
                 toast.saved(trigger.triggerId)
                 loadDataAfterAction()
@@ -573,7 +572,7 @@
     }
 
     const deleteBackfill = (trigger: any) => {
-        triggerStore.deleteBackfill(trigger)
+        TriggersAPI.deleteBackfill(trigger)
             .then(() => {
                 toast.saved(trigger.triggerId)
                 loadDataAfterAction()
@@ -596,7 +595,7 @@
     }
 
     const doSetDisabled = (trigger: any, disabled: boolean, recoverMissedSchedules?: boolean) => {
-        triggerStore.setDisabled({...trigger, disabled, recoverMissedSchedules})
+        TriggersAPI.disableTriggerById({...trigger, disabled, recoverMissedSchedules})
             .then(() => {
                 toast.saved(trigger.triggerId)
                 loadDataAfterAction()
@@ -608,7 +607,7 @@
             doSetDisabled(enableDialogTrigger.value, false, recoverMissedSchedules)
         } else {
             runBulk(
-                () => triggerStore.setDisabledByTriggers({triggers: selection.value, disabled: false, recoverMissedSchedules}),
+                () => TriggersAPI.disabledTriggersByIds({triggers: selection.value, disabled: false, recoverMissedSchedules} as Parameters<typeof TriggersAPI.disabledTriggersByIds>[0]),
                 "bulk success disabled status.false",
                 t("enable"),
             )
@@ -616,7 +615,7 @@
     }
 
     const unlock = (trigger: any) => {
-        triggerStore.unlock({
+        TriggersAPI.unlockTrigger({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
@@ -627,7 +626,7 @@
     }
 
     const restart = (trigger: any) => {
-        triggerStore.restart({
+        TriggersAPI.restartTrigger({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
@@ -676,7 +675,7 @@
         toast.confirm(
             t(confirmKey, {count: selection.value.length}),
             () => runBulk(
-                () => triggerStore.setDisabledByTriggers({triggers: selection.value, disabled}),
+                () => TriggersAPI.disabledTriggersByIds({triggers: selection.value, disabled}),
                 successKey,
                 actionLabel,
             ),
@@ -690,7 +689,7 @@
         toast.confirm(
             t("bulk unlock", {count: selection.value.length}),
             () => runBulk(
-                () => triggerStore.unlockByTriggers(selection.value),
+                () => TriggersAPI.unlockTriggersByIds({body: selection.value}),
                 "bulk success unlock",
                 t("unlock"),
             ),
@@ -701,7 +700,7 @@
         toast.confirm(
             t("bulk delete triggers", {count: selection.value.length}),
             () => runBulk(
-                () => triggerStore.deleteByTriggers(selection.value),
+                () => TriggersAPI.deleteTriggersByIds({body: selection.value}),
                 "bulk success delete triggers",
                 t("delete triggers"),
             ),
@@ -712,7 +711,7 @@
     const confirmDeleteTrigger = (row: any) => {
         toast.confirm(
             t("delete trigger confirmation", {id: row.id}),
-            () => triggerStore.delete({
+            () => TriggersAPI.deleteTrigger({
                 namespace: row.namespace,
                 flowId: row.flowId,
                 triggerId: row.triggerId ?? row.id,

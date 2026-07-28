@@ -1,63 +1,44 @@
 <template>
-    <AiCopilotWrapper
-        ref="copilotWrapper"
-        class="h-100 d-flex flex-column"
-        :flow="editorContent"
-        :generationType="aiGenerationTypes.FLOW"
-        :namespace="namespace"
-        @generated-yaml="(yaml: string) => { draftSource = yaml }"
-    >
-        <template #default="{aiCopilotOpened, openAiCopilot}">
-            <img
-                v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
-                :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
-                class="image-preview"
-            >
-            <KsEditor
-                v-else
-                v-bind="editorBindings"
-                id="flowFileEditorTab"
-                ref="editorRefElement"
-                class="flex-1"
-                :modelValue="hasDraft ? draftSource : (hasPreview ? flowStore.previewSource : source)"
-                :schemaType="flow ? 'flow': undefined"
-                :lang="lang"
-                :navbar="false"
-                :readOnly="(flow && flowStore.isReadOnly) || hasPreview"
-                :path="path"
-                :options="{
-                    creating: isCreating,
-                    diffOverviewBar: false,
-                    scrollKey: editorScrollKey,
-                    diffSideBySide: false,
-                    editor: {padding: {top: 16}},
-                }"
-                @update:model-value="editorUpdate"
-                @cursor="updatePluginDocumentation"
-                @save="flow ? saveFlowYaml(): saveFileContent()"
-                @execute="execute"
-                @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
-                @mouse-leave="() => highlightHoveredTask(-1)"
-                :original="hasDraft || hasPreview ? source : undefined"
-            >
-                <template #absolute>
-                    <AITriggerButton
-                        v-if="aiCopilotAllowed"
-                        :show="flow"
-                        :opened="aiCopilotOpened"
-                        @click="() => { draftSource = undefined; openAiCopilot(); }"
-                    />
-                    <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
-                </template>
-                <template v-if="playgroundStore.enabled" #widget-content>
-                    <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
-                </template>
-                <template #buttons>
-                    <AcceptDecline :visible="hasDraft" @accept="acceptDraft" @reject="declineDraft" />
-                </template>
-            </KsEditor>
-        </template>
-    </AiCopilotWrapper>
+    <div class="h-100 d-flex flex-column">
+        <img
+            v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)"
+            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+            class="image-preview"
+        >
+        <KsEditor
+            v-else
+            v-bind="editorBindings"
+            id="flowFileEditorTab"
+            ref="editorRefElement"
+            class="flex-1"
+            :modelValue="source"
+            :schemaType="flow ? 'flow': undefined"
+            :lang="lang"
+            :navbar="false"
+            :readOnly="flow && flowStore.isReadOnly"
+            :path="path"
+            :options="{
+                creating: isCreating,
+                diffOverviewBar: false,
+                scrollKey: editorScrollKey,
+                diffSideBySide: false,
+                editor: {padding: {top: 16}},
+            }"
+            @update:model-value="editorUpdate"
+            @cursor="updatePluginDocumentation"
+            @save="flow ? saveFlowYaml(): saveFileContent()"
+            @execute="execute"
+            @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
+            @mouse-leave="() => highlightHoveredTask(-1)"
+        >
+            <template #absolute>
+                <ContentSave v-if="!flow" :class="{'save-disabled': !isDirty}" @click="isDirty && saveFileContent()" />
+            </template>
+            <template v-if="playgroundStore.enabled" #widget-content>
+                <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
+            </template>
+        </KsEditor>
+    </div>
 </template>
 
 <script lang="ts">
@@ -87,39 +68,30 @@
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"
     import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow"
-    import {useApiStore} from "../../stores/api"
     import {useDocStore} from "../../stores/doc"
-    import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
     import {useOnboardingV2Store} from "../../stores/onboardingV2"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
-    import {aiGenerationTypes} from "../../utils/constants"
 
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
-    import AiCopilotWrapper from "../ai/AiCopilotWrapper.vue"
-    import AITriggerButton from "../ai/AITriggerButton.vue"
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue"
     import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue"
-    import resource from "../../models/resource"
-    import action from "../../models/action"
-    import AcceptDecline from "./AcceptDecline.vue"
 
     const route = useRoute()
     const router = useRouter()
 
     const flowStore = useFlowStore()
-    const authStore = useAuthStore()
     const editorBindings = useEditorBindings()
 
     const cursor = ref()
 
-    const copilotWrapper = ref<InstanceType<typeof AiCopilotWrapper>>()
-
+    // Ctrl/⌘+Alt+Shift+K opens the AI Copilot (the v2 context-dock tab). Suppressed during the
+    // guided onboarding tour.
     const toggleAiShortcut = (event: KeyboardEvent) => {
         if (onboardingStore.isGuidedActive) {
             return
@@ -128,15 +100,9 @@
             event.preventDefault()
             event.stopPropagation()
             event.stopImmediatePropagation()
-            draftSource.value = undefined
-            if (copilotWrapper.value?.aiCopilotOpened) {
-                copilotWrapper.value.closeAiCopilot()
-            } else {
-                copilotWrapper.value?.openAiCopilot()
-            }
+            miscStore.openCopilot()
         }
     }
-    const draftSource = ref<string | undefined>(undefined)
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor)
 
@@ -149,12 +115,6 @@
 
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value)
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value)
-
-    // Overrides the wrapper's broader hasAnyActionOnAnyNamespace check with a
-    // namespace-scoped permission check and onboarding guard.
-    const aiCopilotAllowed = computed(() => {
-        return !onboardingStore.isGuidedActive && authStore.user?.isAllowed(resource.COPILOT, action.USE, namespace.value)
-    })
 
     async function loadFile() {
         if (props.dirty || props.flow) return
@@ -212,10 +172,6 @@
         loadFile()
         window.addEventListener("keydown", handleGlobalSave)
         window.addEventListener("keydown", toggleAiShortcut)
-        if(route.query.ai === "open" && !onboardingStore.isGuidedActive) {
-            draftSource.value = undefined
-            copilotWrapper.value?.openAiCopilot()
-        }
     })
 
     const LANGS_WITH_WORKERS_MAP = {
@@ -235,17 +191,6 @@
         return undefined
     })
 
-    watch(() => flowStore.openAiCopilot, (newVal) => {
-        if (onboardingStore.isGuidedActive) {
-            return
-        }
-        if (newVal) {
-            draftSource.value = undefined
-            copilotWrapper.value?.openAiCopilot()
-            flowStore.setOpenAiCopilot(false)
-        }
-    })
-
     onActivated(() => {
         loadFile()
     })
@@ -263,14 +208,11 @@
 
     const timeout = ref<any>(null)
 
-    const editorContent = computed(() => {
-        return draftSource.value ?? source.value
-    })
+    const editorContent = computed(() => source.value)
 
     const pluginsStore = usePluginsStore()
     const namespacesStore = useNamespacesStore()
     const miscStore = useMiscStore()
-    const apiStore = useApiStore()
     const onboardingStore = useOnboardingV2Store()
     const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0)
 
@@ -309,11 +251,7 @@
             return
         }
         if (props.flow) {
-            if (hasDraft.value) {
-                draftSource.value = newValue
-            } else {
-                flowStore.flowYaml = newValue
-            }
+            flowStore.flowYaml = newValue
         }
         sourceNS.value = newValue
         if(props.path){
@@ -392,32 +330,6 @@
     const execute = () => {
         flowStore.executeFlow = true
     }
-
-    function trackAiCopilotAction(actionName: string) {
-        apiStore.posthogEvents({
-            type: "AI_COPILOT",
-            action: actionName,
-            ai_copilot_configured: miscStore.configs?.isAiEnabled === true,
-        })
-    }
-
-    function acceptDraft() {
-        trackAiCopilotAction("changes_apply")
-        const accepted = draftSource.value
-        draftSource.value = undefined
-        editorUpdate(accepted!)
-        copilotWrapper.value?.resetConversation()
-    }
-
-    function declineDraft() {
-        trackAiCopilotAction("changes_reject")
-        draftSource.value = undefined
-        copilotWrapper.value?.openAiCopilot()
-    }
-
-    const hasDraft = computed(() => draftSource.value !== undefined)
-
-    const hasPreview = computed(() => props.flow && !hasDraft.value && flowStore.previewSource !== undefined)
 
     const {
         playgroundStore,

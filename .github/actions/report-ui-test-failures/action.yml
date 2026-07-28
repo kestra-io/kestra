@@ -14,10 +14,21 @@ inputs:
     required: true
   base-path:
     description: >-
-      Repo-relative directory the test projects run from, used to build
-      source links (e.g. 'ui', 'ui/packages/design-system').
+      Directory the test projects run from, relative to the job's working
+      directory — used to find source files on disk (e.g. 'ui', or
+      'kestra-ee/ui-ee' when this repo is checked out into a subdirectory
+      alongside another one).
     required: false
     default: "ui"
+  repo-path:
+    description: >-
+      Same directory, but relative to THIS repo's own root — used to build
+      GitHub source links. Only differs from base-path when the checkout
+      path isn't the repo root (e.g. base-path 'kestra-ee/ui-ee' but
+      repo-path 'ui-ee', since ui-ee is at the root of the kestra-ee repo).
+      Defaults to base-path.
+    required: false
+    default: ""
   unit-report-path:
     description: "Repo-relative path to the unit tests JUnit XML report."
     required: false
@@ -39,6 +50,7 @@ runs:
       env:
         ACTION_PATH: ${{ github.action_path }}
         BASE_PATH: ${{ inputs.base-path }}
+        REPO_PATH: ${{ inputs.repo-path }}
         UNIT_REPORT_PATH: ${{ inputs.unit-report-path }}
         STORYBOOK_REPORT_PATH: ${{ inputs.storybook-report-path }}
         MAX_LISTED_FAILURES: ${{ inputs.max-listed-failures }}
@@ -53,6 +65,7 @@ runs:
             context,
             core,
             basePath: process.env.BASE_PATH,
+            repoPath: process.env.REPO_PATH,
             maxListedFailures: Number(process.env.MAX_LISTED_FAILURES),
             reports: [
               {path: process.env.UNIT_REPORT_PATH, category: "Unit test"},

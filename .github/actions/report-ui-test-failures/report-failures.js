@@ -59,7 +59,7 @@ function findLineNumber(repoRelativePath, testName) {
     return index === -1 ? undefined : index + 1
 }
 
-function buildCommentBody({failures, repository, sha, basePath, runUrl, maxListedFailures}) {
+function buildCommentBody({failures, repository, sha, basePath, repoPath, runUrl, maxListedFailures}) {
     if (failures.length === 0) return null
 
     const listed = failures.slice(0, maxListedFailures)
@@ -76,8 +76,14 @@ function buildCommentBody({failures, repository, sha, basePath, runUrl, maxListe
     }
 
     for (const failure of listed) {
-        const repoRelativePath = `${basePath}/${failure.file}`
-        const line = findLineNumber(repoRelativePath, failure.name)
+        // These two differ when the job checks out this repo into a
+        // subdirectory alongside another one (e.g. the EE frontend job
+        // checks kestra-ee out under "kestra-ee/"): `basePath` is where to
+        // find the file on disk, `repoPath` is where it lives in the repo
+        // itself, which is what a GitHub blob URL must be relative to.
+        const diskPath = `${basePath}/${failure.file}`
+        const repoRelativePath = `${repoPath}/${failure.file}`
+        const line = findLineNumber(diskPath, failure.name)
         const url = `https://github.com/${repository}/blob/${sha}/${repoRelativePath}${line ? `#L${line}` : ""}`
 
         lines.push(
@@ -138,7 +144,7 @@ async function upsertComment({github, context, core, body}) {
     }
 }
 
-async function run({github, context, core, basePath, reports, maxListedFailures}) {
+async function run({github, context, core, basePath, repoPath, reports, maxListedFailures}) {
     if (!context.payload.pull_request) {
         core.info("Not running on a pull request — skipping UI test failure report.")
         return
@@ -153,7 +159,7 @@ async function run({github, context, core, basePath, reports, maxListedFailures}
     const sha = context.payload.pull_request.head.sha
     const runUrl = `${context.serverUrl}/${repository}/actions/runs/${context.runId}`
 
-    const body = buildCommentBody({failures, repository, sha, basePath, runUrl, maxListedFailures})
+    const body = buildCommentBody({failures, repository, sha, basePath, repoPath: repoPath || basePath, runUrl, maxListedFailures})
     await upsertComment({github, context, core, body})
 }
 

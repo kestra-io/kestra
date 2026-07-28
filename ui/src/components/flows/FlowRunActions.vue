@@ -1,5 +1,6 @@
 <template>
     <div class="flow-run-actions">
+        <ValidationMessages :messages="flowRun?.validationMessages ?? []" />
         <KsButton
             v-if="flowRun?.canPrefill"
             class="prefill-button"
@@ -20,7 +21,6 @@
                 {{ $t(flowRun?.buttonText ?? "launch execution") }}
             </KsButton>
         </span>
-        <ValidationMessages :messages="flowRun?.validationMessages ?? []" />
     </div>
 </template>
 
@@ -50,8 +50,8 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: var(--ks-spacing-2);
+    flex-wrap: nowrap;
+    gap: var(--ks-spacing-4);
 }
 
 .prefill-button {

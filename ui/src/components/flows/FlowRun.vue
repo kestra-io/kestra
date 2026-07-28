@@ -91,6 +91,7 @@
                     </KsFormItem>
                 </div>
                 <div class="right-align execute-row" v-if="!hasFormInputs || inputsOnRecap">
+                    <ValidationMessages :messages="validationMessages" />
                     <span data-onboarding-target="flow-execute-confirm-button">
                         <KsButton
                             :icon="buttonIcon"
@@ -104,7 +105,6 @@
                             {{ $t(buttonText) }}
                         </KsButton>
                     </span>
-                    <ValidationMessages :messages="validationMessages" />
                 </div>
             </div>
         </KsForm>

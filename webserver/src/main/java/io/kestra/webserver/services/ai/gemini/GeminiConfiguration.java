@@ -3,6 +3,7 @@ package io.kestra.webserver.services.ai.gemini;
 import java.time.Duration;
 
 import io.kestra.webserver.services.ai.AiConfiguration;
+import io.kestra.webserver.services.ai.ThinkingEffort;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.bind.annotation.Bindable;
@@ -21,6 +22,9 @@ public record GeminiConfiguration(
     @Bindable(defaultValue = "8000") int maxOutputTokens,
     @Bindable(defaultValue = "false") boolean logRequests,
     @Bindable(defaultValue = "false") boolean logResponses,
+    @Bindable(defaultValue = "false") boolean thinkingEnabled,
+    @Nullable Integer thinkingBudgetTokens,
+    @Nullable ThinkingEffort thinkingEffort,
     Duration timeout) implements AiConfiguration {
     public GeminiConfiguration {
         if (modelName == null)

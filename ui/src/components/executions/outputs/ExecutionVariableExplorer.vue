@@ -61,9 +61,6 @@
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
                                 :previewFormatter="treePreviewFormatter"
-                                displayMode="rows"
-                                showGutter
-                                selectable
                                 defaultExpanded
                                 @select="onSelectPath"
                             />

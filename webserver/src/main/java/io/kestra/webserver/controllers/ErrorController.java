@@ -36,9 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller
 public class ErrorController {
-    /** Header naming the entity that was looked up and not found; see {@link NotFoundException#entity()}. */
-    public static final String ENTITY_HEADER = "X-Kestra-Entity";
-
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, JsonParseException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
@@ -159,9 +156,7 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, NotFoundException e) {
-        MutableHttpResponse<JsonError> response = jsonError(request, e, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReason());
-        e.entity().ifPresent(entity -> response.getHeaders().add(ENTITY_HEADER, entity));
-        return response;
+        return jsonError(request, e, HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReason());
     }
 
     @Error(global = true)

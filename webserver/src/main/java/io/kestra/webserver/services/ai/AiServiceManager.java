@@ -12,16 +12,14 @@ import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
-import io.kestra.webserver.services.ai.api.ApiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiConfiguration;
 import io.kestra.webserver.services.posthog.PosthogService;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.value.PropertyResolver;
-import io.micronaut.http.client.HttpClient;
-import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,9 +37,8 @@ public class AiServiceManager {
     protected final KestraDocsContextTool kestraDocsContextTool;
 
     public AiServiceManager(
-        @Client("api") HttpClient apiHttpClient,
         AiProvidersConfiguration providersConfiguration,
-        PropertyResolver propertyResolver,
+        Environment environment,
         // inject dependencies needed for AiService
         io.kestra.core.plugins.PluginRegistry pluginRegistry,
         io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
@@ -63,9 +60,9 @@ public class AiServiceManager {
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
         );
 
-        String legacyType = propertyResolver.get("kestra.ai.type", String.class).orElse(null);
+        String legacyType = environment.get("kestra.ai.type", String.class).orElse(null);
         if (legacyType != null) {
-            Map<String, Object> rawConfig = propertyResolver.get("kestra.ai." + legacyType, Map.class).orElse(null);
+            Map<String, Object> rawConfig = environment.get("kestra.ai." + legacyType, Map.class).orElse(null);
 
             Map<String, Object> legacyConfig = rawConfig.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(e -> io.micronaut.core.naming.NameUtils.camelCase(e.getKey()), Map.Entry::getValue));
@@ -81,36 +78,31 @@ public class AiServiceManager {
             );
         }
 
-        if (!configs.isEmpty()) {
-            for (AiProviderConfiguration provider : configs) {
-                AiServiceInterface aiService = createAiService(
-                    provider,
-                    pluginRegistry,
-                    jsonSchemaGenerator,
-                    versionProvider,
-                    instanceService,
-                    posthogService,
-                    listeners,
-                    expressionContextService,
-                    flowParsingService
-                );
-                if (aiService == null) {
-                    log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
-                    continue;
-                }
-                if (provider.isDefault()) {
-                    defaultProviderId = provider.id();
-                }
-                aiServices.put(provider.id(), aiService);
-                hasConfiguredProvider = true;
+        // AI Copilot requires an explicitly configured provider. When none is configured no service is
+        // registered, and the Copilot surfaces as unavailable until the user adds a provider.
+        PropertyPlaceholderResolver placeholderResolver = environment.getPlaceholderResolver();
+        for (AiProviderConfiguration rawProvider : configs) {
+            AiProviderConfiguration provider = resolveConfigurationPlaceholders(rawProvider, placeholderResolver);
+            AiServiceInterface aiService = createAiService(
+                provider,
+                pluginRegistry,
+                jsonSchemaGenerator,
+                versionProvider,
+                instanceService,
+                posthogService,
+                listeners,
+                expressionContextService,
+                flowParsingService
+            );
+            if (aiService == null) {
+                log.warn("AI service for provider '{}' could not be created, skipping.", provider.id());
+                continue;
             }
-        } else {
-            try {
-                defaultProviderId = "api";
-                aiServices.put(defaultProviderId, new ApiAiService(apiHttpClient.toBlocking(), instanceService));
-            } catch (Exception e) {
-                log.warn("Failed to initialize API AI service (api.kestra.io may be unreachable), AI Copilot will be disabled.", e);
+            if (provider.isDefault()) {
+                defaultProviderId = provider.id();
             }
+            aiServices.put(provider.id(), aiService);
+            hasConfiguredProvider = true;
         }
     }
 
@@ -185,5 +177,52 @@ public class AiServiceManager {
 
     public boolean hasConfiguredProvider() {
         return hasConfiguredProvider;
+    }
+
+    /**
+     * Returns a copy of the given provider whose configuration values have had their {@code ${...}} placeholders
+     * resolved. Needed because Micronaut does not resolve placeholders for values nested inside an untyped
+     * {@code Map<String, Object>} within a {@code List} element when bound from a YAML property source.
+     */
+    private static AiProviderConfiguration resolveConfigurationPlaceholders(AiProviderConfiguration provider, PropertyPlaceholderResolver resolver) {
+        if (provider.configuration() == null) {
+            return provider;
+        }
+
+        Map<String, Object> resolved = new HashMap<>(provider.configuration().size());
+        provider.configuration().forEach((key, value) -> resolved.put(key, resolvePlaceholders(value, resolver)));
+
+        return new AiProviderConfiguration(
+            provider.id(),
+            provider.displayName(),
+            provider.type(),
+            provider.isDefault(),
+            resolved
+        );
+    }
+
+    /**
+     * Recursively resolves {@code ${...}} placeholders in {@code String} values found within maps and lists.
+     * When a placeholder cannot be resolved, the original value is kept and a warning is logged so the AI service
+     * initialization is not aborted by a single misconfigured value.
+     */
+    private static Object resolvePlaceholders(Object value, PropertyPlaceholderResolver resolver) {
+        return switch (value) {
+            case String string -> {
+                try {
+                    yield resolver.resolveRequiredPlaceholders(string);
+                } catch (Exception e) {
+                    log.warn("Could not resolve placeholder(s) in AI provider configuration value '{}': {}", string, e.getMessage());
+                    yield string;
+                }
+            }
+            case Map<?, ?> map -> {
+                Map<Object, Object> resolved = new HashMap<>(map.size());
+                map.forEach((k, v) -> resolved.put(k, resolvePlaceholders(v, resolver)));
+                yield resolved;
+            }
+            case List<?> list -> list.stream().map(item -> resolvePlaceholders(item, resolver)).toList();
+            case null, default -> value;
+        };
     }
 }

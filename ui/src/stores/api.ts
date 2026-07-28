@@ -81,8 +81,6 @@ function buildEventPayload(data: EventData, configs: Configs, uid: string) {
 
 export const useApiStore = defineStore("api", () => {
     const feeds = ref<Feed[]>([])
-    const version = ref<string | undefined>(undefined)
-    const apiConfig = ref<any>(undefined)
 
     async function loadFeeds(options: { iid: string; uid: string; version: string }) {
         const response = await axios.get<FeedResponse>(`${API_URL}/v1/feeds`, {
@@ -95,7 +93,6 @@ export const useApiStore = defineStore("api", () => {
         })
 
         feeds.value = response.data.feeds
-        version.value = response.data.version
 
         return response.data
     }
@@ -105,7 +102,6 @@ export const useApiStore = defineStore("api", () => {
             withCredentials: true,
         })
 
-        apiConfig.value = response.data
         return response.data
     }
 
@@ -220,8 +216,6 @@ export const useApiStore = defineStore("api", () => {
 
     return {
         feeds,
-        version,
-        apiConfig,
         loadFeeds,
         loadConfig,
         flushQueuedEvents,

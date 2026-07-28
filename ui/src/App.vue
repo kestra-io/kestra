@@ -1,6 +1,7 @@
 <template>
     <DocIdDisplay />
     <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
+    <component :is="SdkDriftBanner" v-if="SdkDriftBanner" />
     <div id="app-shell">
         <AppTopNavBar  v-if="loaded && route?.name && !route.meta?.anonymous"  />
         <div id="app-body">
@@ -19,7 +20,7 @@
     import "./styles/vendor.scss"
     import "./styles/app.scss"
 
-    import {ref, computed, watch, onMounted} from "vue"
+    import {ref, computed, watch, onMounted, provide, defineAsyncComponent} from "vue"
     import {useRoute} from "vue-router"
     import {useApiStore} from "./stores/api"
     import {useLayoutStore} from "./stores/layout"
@@ -30,6 +31,7 @@
     import * as BasicAuth from "./utils/basicAuth"
     import {applyFontScale, getAppFontSizeMode} from "./utils/appFontSize"
     import {initPosthogIfEnabled} from "./utils/posthog"
+    import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter} from "./utils/savedFilterTracking"
     import ErrorToast from "./components/ErrorToast.vue"
     import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
@@ -41,6 +43,13 @@
     import {useThemeCycle} from "./composables/useThemeCycle"
     import {revealApp} from "./utils/loaderReveal"
 
+    // Dev-only, dynamically imported so the component is entirely absent from production bundles:
+    // `import.meta.env.DEV` is statically replaced with `false` by Vite in prod builds, so this
+    // branch (and the import() it guards) is dead-code eliminated rather than merely hidden by v-if.
+    const SdkDriftBanner = import.meta.env.DEV
+        ? defineAsyncComponent(() => import("./components/SdkDriftBanner.vue"))
+        : null
+
     const loaded = ref(false)
 
     const apiStore = useApiStore()
@@ -50,6 +59,8 @@
 
     const miscStore = useMiscStore()
     useThemeCycle(miscStore)
+
+    provide(SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter)
 
     const route = useRoute()
 

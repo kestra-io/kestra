@@ -137,10 +137,16 @@
                     sortable="custom"
                     :sortOrders="['ascending', 'descending']"
                     :label="$t('namespace')"
-                    :formatter="(_: any, __: any, cellValue: string) =>
-                        h(BreakableText, {value: cellValue})
-                    "
-                />
+                >
+                    <template #default="scope">
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
+                    </template>
+                </KsTableColumn>
 
                 <KsTableColumn
                     v-else-if="colProp === 'state.startDate' && user?.hasAny(resource.EXECUTION)"
@@ -260,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useTemplateRef, watch, h} from "vue"
+    import {ref, computed, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
@@ -293,6 +299,7 @@
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import TimeSeries from "../dashboard/sections/TimeSeries.vue"
+    import type {Chart} from "../dashboard/types"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
 
     import action from "../../models/action"
@@ -464,46 +471,8 @@
 
     const selectionIds = computed(() => selection.value.map((flow: any) => ({id: flow.id, namespace: flow.namespace})))
 
-    interface ChartDefinition {
-        id: string;
-        type: string;
-        chartOptions: {
-            displayName: string;
-            description: string;
-            legend: {enabled: boolean};
-            column: string;
-            colorByColumn: string;
-            width: number;
-        };
-        data: {
-            type: string;
-            columns: {
-                date: {
-                    field: string;
-                    displayName: string;
-                };
-                state: {
-                    field: string;
-                };
-                total: {
-                    displayName: string;
-                    agg: string;
-                    graphStyle: string;
-                };
-                duration: {
-                    field: string;
-                    displayName: string;
-                    agg: string;
-                    graphStyle: string;
-                };
-            };
-            where: {field: string; type: string; value: string}[];
-        };
-        content?: string;
-    }
-
     // Chart definition for mappedChart
-    const CHART_DEFINITION: ChartDefinition = {
+    const CHART_DEFINITION: Chart = {
         id: "total_executions_timeseries",
         type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
         chartOptions: {
@@ -725,13 +694,13 @@
         return MAPPED_CHARTS
     }
 
-    function chartFilters() {
+    function chartFilters(): QueryFilter[] {
         const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,
             operation: "EQUALS",
-        } satisfies QueryFilter]
+        }]
     }
 
     async function exportFlowsAsStream() {

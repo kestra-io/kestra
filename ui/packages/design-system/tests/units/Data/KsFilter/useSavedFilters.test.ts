@@ -226,7 +226,7 @@ describe("useSavedFilters", () => {
 
         // Then: the value inside groups[].filters is deserialized back into a Date, same as the flat list
         const saved = savedFilters.value[0]
-        const groupValue = (saved.groups?.[0] as {filters: AppliedFilter[]}).filters[0].value
+        const groupValue = (saved.groups![0] as {filters: AppliedFilter[]}).filters[0].value
         expect(groupValue).toBeInstanceOf(Date)
         expect((groupValue as Date).toISOString()).toBe(isoDate.toISOString())
     })

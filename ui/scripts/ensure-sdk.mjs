@@ -82,7 +82,7 @@ function ensureDepsInstalled(uiRoot) {
 /**
  * Bundles the committed src/openapi into dist/ when missing, or when either package's tracked
  * sources changed since the last build; never touches Gradle or regenerates code.
-
+ *
  * kestra-sdk bundles @kestra-io/hey-api-plugin into its own dist at build time (tsdown noExternal),
  * so kestra-sdk's own staleness check tracks hey-api-plugin's built dist (its actual build input,
  * not its src) alongside kestra-sdk's own src + package.json (a dependency bump also needs a rebuild).
@@ -94,6 +94,10 @@ export function ensureSdkBundled(uiRoot) {
     const sdkHashFile = path.join(sdkDir, "dist/.src-hash")
 
     const pluginStale = isStale([path.join(heyApiPluginDir, "src")], pluginHashFile)
+    if(pluginStale){
+        console.log("[kestra-sdk] Source changed since the last build (hey-api-plugin) — rebuilding.")
+        run("npm run build --workspace=@kestra-io/hey-api-plugin", uiRoot)
+    }
     const sdkStale = !existsSync(sdkDist) || pluginStale || isStale(
         [path.join(sdkDir, "src"), path.join(sdkDir, "package.json"), path.join(heyApiPluginDir, "dist")],
         sdkHashFile,
@@ -102,10 +106,10 @@ export function ensureSdkBundled(uiRoot) {
 
     ensureDepsInstalled(uiRoot)
     console.log(existsSync(sdkDist)
-        ? "[kestra-sdk] Source changed since the last build (kestra-sdk and/or hey-api-plugin) — rebuilding."
+        ? "[kestra-sdk] Source changed since the last build (kestra-sdk) — rebuilding."
         : "[kestra-sdk] No build found — bundling the committed SDK source once (subsequent runs are instant).")
     try {
-        run("npm run build:sdk", uiRoot)
+        run("npm run build --workspace=@kestra-io/kestra-sdk", uiRoot)
     } catch {
         console.error("[kestra-sdk] Building the committed SDK source failed (see above).")
         process.exit(1)
@@ -148,7 +152,7 @@ export function checkSpecAndGenerate(uiRoot) {
     ensureDepsInstalled(uiRoot)
     run("npm run build --workspace=@kestra-io/hey-api-plugin", uiRoot)
     run("npm run generate:openapi --workspace=@kestra-io/kestra-sdk", uiRoot)
-    run("npm run build:sdk", uiRoot)
+    run("npm run build --workspace=@kestra-io/kestra-sdk", uiRoot)
 
     const sdkDir = path.join(uiRoot, "packages/kestra-sdk")
     recordHash([path.join(heyApiPluginDir, "src")], path.join(heyApiPluginDir, "dist/.src-hash"))

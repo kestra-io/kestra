@@ -23,6 +23,10 @@ esac
 # Opens java.lang due to https://github.com/kestra-io/kestra/issues/1755, see https://github.com/micronaut-projects/micronaut-core/issues/9573
 JAVA_ADD_OPENS="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED"
 
+# Allow sun.misc.Unsafe memory-access (JEP 498) to silence the startup warning triggered by
+# com.google.protobuf.UnsafeUtil (pulled in by gRPC), see https://github.com/kestra-io/kestra/issues/16513
+JAVA_UNSAFE_MEMORY_ACCESS="--sun-misc-unsafe-memory-access=allow"
+
 # Fix required to use new DucksDB versions along side RocksDB
 # https://github.com/kestra-io/plugin-jdbc/issues/165
 LIBSTDC="/lib/x86_64-linux-gnu/libstdc++.so.6"
@@ -35,5 +39,5 @@ fi
 KESTRA_JAVA_OPTS="-XX:MaxRAMPercentage=50.0"
 
 # Exec
-exec java ${KESTRA_JAVA_OPTS} ${JAVA_OPTS} ${JAVA_ADD_OPENS} --enable-native-access=ALL-UNNAMED -jar "$0" "$@"
+exec java ${KESTRA_JAVA_OPTS} ${JAVA_OPTS} ${JAVA_ADD_OPENS} ${JAVA_UNSAFE_MEMORY_ACCESS} --enable-native-access=ALL-UNNAMED -jar "$0" "$@"
 exit 127

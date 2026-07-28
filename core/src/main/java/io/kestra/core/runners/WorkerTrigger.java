@@ -27,6 +27,9 @@ public class WorkerTrigger extends WorkerJob {
     @NotNull
     private WorkerTriggerData data;
 
+    /** Dispatch generation, set by the scheduler, echoed back to fence lock-releasing events. */
+    private long dispatchEpoch;
+
     /**
      * {@inheritDoc}
      */

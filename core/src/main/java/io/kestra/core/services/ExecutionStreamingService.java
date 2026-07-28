@@ -108,14 +108,31 @@ public class ExecutionStreamingService {
     public void registerSubscriber(String executionId, String subscriberId, FluxSink<Event<Execution>> sink, Flow flow) {
         // it needs to be synchronized as we get and remove if empty, so we must be sure that nobody else is adding a new one in-between
         synchronized (subscriberLock) {
-            // resume the subscription if paused
-            if (MapUtils.isEmpty(subscribers) && this.queueSubscriber.isPaused()) {
-                this.queueSubscriber.resume();
-            }
-
+            // Register the subscriber BEFORE resuming the queue. If the queue is resumed first,
+            // the polling thread can deliver a terminal FollowExecutionEvent between resume() and put(),
+            // missing the event and leaving Flux.last() hanging forever.
             subscribers.computeIfAbsent(executionId, k -> new ConcurrentHashMap<>())
                 .put(subscriberId, Pair.of(sink, flow));
+
+            if (this.queueSubscriber.isPaused()) {
+                this.queueSubscriber.resume();
+            }
         }
+
+        // Guard against the race where the queue was already running (other subscribers
+        // exist) and the terminal FollowExecutionEvent arrived and was consumed before
+        // this subscriber was registered. In that case the event is lost and Flux.last()
+        // would hang forever. Recover by checking the current execution state: if it is
+        // already in a terminal state, deliver the "end" event directly.
+        // FluxSink is thread-safe: duplicate complete() calls are no-ops, and next()
+        // after complete() is silently dropped, so double-delivery is harmless.
+        executionRepository.findById(flow.getTenantId(), executionId).ifPresent(execution ->
+        {
+            if (isStopFollow(flow, execution)) {
+                sink.next(Event.of(execution).id("end"));
+                sink.complete();
+            }
+        });
     }
 
     /**

@@ -5,8 +5,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
-import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.services.FlowAutoLoader;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.VersionProvider;
@@ -101,11 +101,15 @@ public class FlowAutoLoaderService implements FlowAutoLoader {
                 .reduce(Integer::sum)
                 .blockOptional()
                 .orElse(0);
-            log.info(
-                "Loaded {} \"Getting Started\" flows from community blueprints. " +
-                    "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.",
-                count
-            );
+            if (count > 0) {
+                log.info(
+                    "Loaded {} \"Getting Started\" flows from community blueprints. " +
+                        "You can disable this feature by setting 'kestra.tutorialFlows.enabled=false'.",
+                    count
+                );
+            } else {
+                log.debug("No \"Getting Started\" flows found in community blueprints to load.");
+            }
         } catch (Exception e) {
             // Kestra's API is likely to be unavailable.
             log.warn(

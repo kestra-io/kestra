@@ -16,9 +16,9 @@ export function useAdminTabs() {
             header: true,
         },
         {
-            name: "settings",
-            title: t("settings.label"),
-            route: {name: "settings"},
+            name: "preferences",
+            title: t("admin_preferences"),
+            route: {name: "preferences"},
         },
         {
             name: "product-tour",

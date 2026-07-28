@@ -1,6 +1,8 @@
 package io.kestra.jdbc.repository;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +22,7 @@ import org.jooq.SelectConditionStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
+import io.kestra.core.exceptions.TypeConversionException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
@@ -29,6 +32,7 @@ import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.server.ServiceType;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.jdbc.runner.JdbcTransactionContext;
 
 import io.micronaut.data.model.Pageable;
@@ -267,6 +271,22 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             return quotedName("service_type");
         }
         return super.getColumnName(field);
+    }
+
+    /** {@inheritDoc} **/
+    @Override
+    protected Condition createdCondition(Object value, QueryFilter.Op operation, @Nullable String dateColumn) {
+        String column = dateColumn != null ? dateColumn : CREATED_AT.getName();
+        // Accept ISO-8601 durations (e.g. PT5M) as a "now minus duration" threshold;
+        // the supplied operation is applied against that threshold.
+        try {
+            Duration duration = TypeConverter.toDuration(value);
+            ZonedDateTime threshold = ZonedDateTime.now().minus(duration);
+            return applyDateCondition(threshold.toOffsetDateTime(), operation, column);
+        } catch (TypeConversionException ignored) {
+            // Not a duration — fall through to absolute date parsing
+        }
+        return super.createdCondition(value, operation, column);
     }
 
     @Override

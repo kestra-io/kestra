@@ -24,8 +24,14 @@ public class RunContextSDKFactory {
                 .map(it -> new SDK.Auth(Optional.of(it), Optional.empty(), Optional.empty()))
                 .orElseGet(() ->
                 {
-                    Optional<String> maybeUserName = applicationContext.getProperty(USERNAME_PROP, String.class);
-                    Optional<String> maybePassword = applicationContext.getProperty(PASSWORD_PROP, String.class);
+                    Optional<String> maybeUserName = applicationContext
+                        .getProperty(USERNAME_PROP, String.class)
+                        .filter(username -> !username.isBlank()); // to avoid Optional.of("")
+
+                    Optional<String> maybePassword = applicationContext
+                        .getProperty(PASSWORD_PROP, String.class)
+                        .filter(password -> !password.isBlank()); // to avoid Optional.of("")
+
                     if (maybePassword.isPresent() && maybeUserName.isPresent()) {
                         return new SDK.Auth(Optional.empty(), maybeUserName, maybePassword);
                     }

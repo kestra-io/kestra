@@ -16,6 +16,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.getVariables;
@@ -66,8 +67,8 @@ class FileURIFunctionTest {
         );
 
         var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileURI(fileA) }}", variables));
-        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
-        assertThat(exception.getCause().getMessage()).isEqualTo("Path must not contain '../'");
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).contains("Path must not contain '../'");
     }
 
     @Test
@@ -97,10 +98,10 @@ class FileURIFunctionTest {
 
         Map<String, Object> variables = getVariables(namespace);
 
-        String render = variableRenderer.render("{{ fileURI('" + filePath + "', version=1) }}", variables);
+        String render = variableRenderer.render("{{ fileURI('" + filePath + "', revision=1) }}", variables);
         assertThat(render).isEqualTo("kestra:///" + namespace.replace(".", "/") + "/_files/" + filePath);
 
-        String readContent = variableRenderer.render("{{ read('" + filePath + "', version=1) }}", variables);
+        String readContent = variableRenderer.render("{{ read('" + filePath + "', revision=1) }}", variables);
         assertThat(readContent).isEqualTo("Version 1");
     }
 

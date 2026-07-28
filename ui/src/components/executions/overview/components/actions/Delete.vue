@@ -1,11 +1,11 @@
 <template>
-    <KsButton
+    <NavBarAction
         v-if="isAllowedDelete"
         :icon="TrashCanOutline"
         @click="deleteExecution"
     >
         {{ $t("delete") }}
-    </KsButton>
+    </NavBarAction>
 </template>
 
 <script setup lang="ts">
@@ -36,6 +36,7 @@
     const {t} = useI18n({useScope: "global"})
 
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
 
     const props = defineProps<{ execution: Execution }>()
 

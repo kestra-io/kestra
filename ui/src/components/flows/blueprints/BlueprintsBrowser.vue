@@ -1,5 +1,5 @@
 <template>
-    <Errors code="404" v-if="error && embed" />
+    <Errors v-if="error && embed" code="404" />
     <div v-else>
         <slot name="nav" />
         <slot name="content">
@@ -8,123 +8,112 @@
                 class="blueprints"
                 :loadData="loadData"
                 :total="total"
-                divider
+                :currentPage="urlPage"
+                :pageSize="urlSize"
+                :noGutter="!embed && !system"
+                :fitHeight="!embed && !system"
                 @ready="ready = true"
                 @page-changed="onPageChanged"
             >
                 <template #navbar>
-                    <div v-if="ready && !system && !embed">
-                        <div class="tags-selection">
-                            <KsCheckboxGroup v-model="selectedTags" class="tags-checkbox-group">
-                                <KsCheckboxButton
-                                    v-for="tag in Object.values(tags || {})"
-                                    :key="tag.id"
-                                    :value="tag.id"
-                                    class="hoverable"
-                                >
-                                    {{ tag.name }}
-                                </KsCheckboxButton>
-                            </KsCheckboxGroup>
-                        </div>
-                    </div>
-                    <nav v-else-if="system" class="header pb-3">
-                        <p class="mb-0 fw-lighter">
-                            {{ $t("system_namespace") }}
-                        </p>
-                        <p class="fs-5 fw-semibold">
-                            {{ $t("system_namespace_description") }}
-                        </p>
+                    <nav v-if="system" class="system-header">
+                        <p>{{ $t("system_namespace") }}</p>
+                        <p>{{ $t("system_namespace_description") }}</p>
                     </nav>
                 </template>
+
                 <template #top>
-                    <KsRow class="mb-3" justify="center">
-                        <KSFilter
-                            :configuration="blueprintFilter"
-                            :buttons="{
-                                savedFilters: {shown: false},
-                                tableOptions: {shown: false}
-                            }"
-                            :searchInputFullWidth="true"
+                    <div class="toolbar" :class="{plain: embed || system}">
+                        <BlueprintsFilterBar
+                            v-model="selectedTags"
+                            :class="{search: !embed && !system}"
+                            :embed
+                            :system
+                            :tags
+                            :inline="!embed && !system"
                             @search="handleSearch"
                         />
-                    </KsRow>
+                        <div v-if="ready && !system && !embed" class="tags">
+                            <KsCheckTag
+                                v-for="tag in tagList"
+                                :key="tag.id"
+                                pill
+                                :checked="selectedTags.includes(tag.id)"
+                                @change="toggleTag(tag.id)"
+                            >
+                                {{ tag.name }}
+                            </KsCheckTag>
+                        </div>
+                    </div>
                 </template>
-                <template #table>
-                    <KsAlert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
-                        {{ $t('blueprints.empty') }}
-                    </KsAlert>
-                    <div class="card-grid">
-                        <KsCard
-                            class="blueprint-card"
-                            v-for="blueprint in blueprints"
-                            :key="blueprint.id"
-                            @click="goToDetail(blueprint.id)"
-                        >
-                            <div class="card-content-wrapper">
-                                <div v-if="!system && blueprint.tags?.length > 0" class="tags-section">
-                                    <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
-                                </div>
-                                <div v-if="blueprint.template" class="tags-section">
-                                    <span class="tag-item">{{ $t('template') }}</span>
-                                </div>
-                                <div class="text-section">
-                                    <h3 class="title">
-                                        {{ blueprint.title ?? blueprint.id }}
-                                    </h3>
-                                </div>
-                                <div class="bottom-section">
-                                    <div class="task-icons">
-                                        <KsTaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
-                                    </div>
 
-                                    <div class="d-flex align-items-center gap-2">
-                                        <KsTooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000">
-                                            <KsButton
-                                                type="primary"
-                                                size="default"
-                                                :icon="icon.ContentCopy"
-                                                @click.prevent.stop="copy(blueprint.id)"
-                                                class="p-2"
-                                            />
-                                        </KsTooltip>
-                                        <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
-                                            <KsButton v-if="(!embed || system) && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
-                                                {{ $t('use') }}
-                                            </KsButton>
-                                        </slot>
-                                    </div>
-                                </div>
-                            </div>
-                        </KsCard>
+                <template #table>
+                    <KsNoData
+                        v-if="isEmpty"
+                        :title="$t('blueprints.empty')"
+                    />
+                    <div v-else-if="embed && !system" class="blueprint-list">
+                        <BlueprintListRow
+                            v-for="blueprint in blueprints?.filter((b): b is FlowBlueprint & {id: string} => typeof b.id === 'string')"
+                            :key="blueprint.id"
+                            :blueprint="blueprint"
+                            :tags
+                            @click="goToDetail(blueprint.id)"
+                            @copy="copy(blueprint.id)"
+                        />
+                    </div>
+                    <div v-else class="card-grid" :class="{system}">
+                        <BlueprintCard
+                            v-for="blueprint in blueprints?.filter((b): b is FlowBlueprint & {id: string} => typeof b.id === 'string')"
+                            :key="blueprint.id"
+                            :blueprint
+                            :embed
+                            :system
+                            :tags
+                            :blueprintKind
+                            :blueprintType
+                            :icons="pluginsStore.icons"
+                            :loadIcon="pluginsStore.loadIcon"
+                            @click="goToDetail(blueprint.id)"
+                            @use="blueprintToEditor(blueprint.id)"
+                        >
+                            <template v-if="$slots.buttons" #buttons="slotProps">
+                                <slot name="buttons" :blueprint="slotProps.blueprint" />
+                            </template>
+                        </BlueprintCard>
                     </div>
                 </template>
             </KsDataTable>
+
             <slot name="bottom-bar" />
         </slot>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onActivated, useTemplateRef, watch} from "vue"
+    import {computed, onActivated, onMounted, ref, useTemplateRef, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import {KsTaskIcon} from "@kestra-io/design-system"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+
     import Errors from "../../../components/errors/Errors.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
-    import {editorViewTypes} from "../../../utils/constants"
-    import * as Utils from "../../../utils/utils"
-    import {usePluginsStore} from "../../../stores/plugins"
-    import {useBlueprintsStore} from "../../../stores/blueprints"
+    import BlueprintCard from "./BlueprintCard.vue"
+    import BlueprintListRow from "./BlueprintListRow.vue"
+    import BlueprintsFilterBar from "./BlueprintsFilterBar.vue"
+
     import {useApiStore} from "../../../stores/api"
+    import {useBlueprintsStore} from "../../../stores/blueprints"
     import {useCoreStore} from "../../../stores/core"
     import {useDocStore} from "../../../stores/doc"
-    import {canCreate} from "override/composables/blueprintsPermissions"
-    import {useBlueprintFilter} from "../../filter/configurations"
+    import {usePluginsStore} from "../../../stores/plugins"
+
     import useRestoreUrl from "../../../composables/useRestoreUrl"
+    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
+    import {editorViewTypes} from "../../../utils/constants"
+    import * as Utils from "../../../utils/utils"
 
-    const {loadInit} = useRestoreUrl()
+    import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
-    const blueprintFilter = useBlueprintFilter()
+    const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]"
+    const SEARCH_QUERY_KEY = "filters[q][EQUALS]"
 
     const props = withDefaults(defineProps<{
         blueprintType?: "community" | "custom";
@@ -137,59 +126,58 @@
         blueprintKind: "flow",
         embed: false,
         system: false,
-        tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag])),
+        tagsResponseMapper: (tagsResponse: any[]) =>
+            Object.fromEntries(tagsResponse.map((tag: any) => [tag.id, tag])),
     })
 
-    const emit = defineEmits(["goToDetail", "loaded"])
+    const emit = defineEmits<{
+        goToDetail: [blueprintId: string];
+        loaded: [];
+    }>()
 
     const route = useRoute()
     const router = useRouter()
 
-    const dataTable = useTemplateRef("dataTable")
-    const ready = ref(false)
+    const apiStore = useApiStore()
+    const blueprintsStore = useBlueprintsStore()
+    const coreStore = useCoreStore()
+    const docStore = useDocStore()
+    const pluginsStore = usePluginsStore()
 
-    const SELECTED_TAG_QUERY_KEY = "filters[tags][IN]"
+    const {loadInit} = useRestoreUrl()
+    const {ensureInstalledPluginsLoaded} = useBlueprintPlugins()
+    const dataTable = useTemplateRef("dataTable")
 
     const initSelectedTags = (): string[] => {
         const raw = route.query[SELECTED_TAG_QUERY_KEY]
         return ([raw].flat().filter(Boolean) as string[]).flatMap(t => t.split(","))
     }
 
-    const searchText = ref(route.query["filters[q][EQUALS]"] ?? "")
-    const selectedTags = ref<string[]>(initSelectedTags())
-    const tags = ref<Record<string, any> | undefined>(undefined)
+    const ready = ref(false)
     const total = ref(0)
-    const blueprints = ref<{
-        includedTasks: string[];
-        id: string;
-        tags: string[];
-        title?: string;
-        template?: Record<string, any>;
-    }[] | undefined>(undefined)
     const error = ref(false)
-    const icon = {ContentCopy}
+    const blueprints = ref<FlowBlueprint[]>()
+    const tags = ref<Record<string, BlueprintTag>>()
+    const searchText = ref(route.query[SEARCH_QUERY_KEY] ?? "")
+    const selectedTags = ref<string[]>(initSelectedTags())
+
+    const urlPage = computed(() => Number(route.query.page) || 1)
+    const urlSize = computed(() => Number(route.query.size) || 25)
+    const tagList = computed(() => Object.values(tags.value ?? {}))
+    const isEmpty = computed(() => ready.value && !blueprints.value?.length)
 
     const handleSearch = (query: string) => {
         searchText.value = query
     }
 
-    const onPageChanged = ({page}: {page: number; size: number}) => {
-        router.push({query: {...route.query, page}})
+    const toggleTag = (tagId: string) => {
+        selectedTags.value = selectedTags.value.includes(tagId)
+            ? selectedTags.value.filter(id => id !== tagId)
+            : [...selectedTags.value, tagId]
     }
 
-    const pluginsStore = usePluginsStore()
-    const blueprintsStore = useBlueprintsStore()
-    const apiStore = useApiStore()
-    const coreStore = useCoreStore()
-    const docStore = useDocStore()
-
-    const userCanCreate = computed(() => canCreate(props.blueprintKind))
-
-    const processedTags = (blueprintTags: string[]) => {
-        return blueprintTags.map(tag => ({
-            original: tag,
-            display: tags.value?.[tag]?.name ?? tag,
-        }))
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        router.push({query: {...route.query, page: String(page), size: String(size)}})
     }
 
     async function copy(id: string) {
@@ -200,9 +188,21 @@
                 id,
             }),
         )
-    };
+    }
 
-    async function blueprintToEditor (blueprintId: string) {
+    function editorRoute(blueprintId: string) {
+        const additionalQuery: Record<string, any> = {}
+        if (props.blueprintKind === "flow") {
+            additionalQuery.blueprintSource = props.blueprintType
+        }
+        return {
+            name: `${props.blueprintKind}s/create`,
+            params: {tenant: route.params.tenant},
+            query: {blueprintId, ...additionalQuery},
+        }
+    }
+
+    function blueprintToEditor(blueprintId: string) {
         apiStore.posthogEvents({
             type: "BLUEPRINT",
             action: "use_click",
@@ -215,7 +215,7 @@
         })
         localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY)
         router.push(editorRoute(blueprintId))
-    };
+    }
 
     function goToDetail(blueprintId: string) {
         if (props.embed) {
@@ -227,32 +227,34 @@
                     tenant: route.params.tenant,
                     kind: props.blueprintKind,
                     tab: props.blueprintType,
-                    blueprintId: blueprintId,
+                    blueprintId,
                 },
             })
         }
-    };
+    }
 
     async function loadTags(beforeLoadBlueprintType: string) {
         const query: Record<string, any> = {}
-        if (route.query["filters[q][EQUALS]"] ?? searchText.value) {
-            query.q = route.query["filters[q][EQUALS]"] ?? searchText.value
+        if (route.query[SEARCH_QUERY_KEY] ?? searchText.value) {
+            query.q = route.query[SEARCH_QUERY_KEY] ?? searchText.value
         }
         const data = await blueprintsStore.getBlueprintTags({
             type: props.blueprintType,
             kind: props.blueprintKind,
             ...query,
         })
-        if(props.blueprintType === beforeLoadBlueprintType){
+        if (props.blueprintType === beforeLoadBlueprintType) {
             tags.value = props.tagsResponseMapper(data)
         }
-    };
+    }
 
-    async function loadBlueprints (beforeLoadBlueprintType: string, page: number, size: number) {
+    async function loadBlueprints(beforeLoadBlueprintType: string, page: number, size: number) {
         const query: Record<string, any> = {}
         if (page) query.page = page
         if (size) query.size = size
-        if (route.query["filters[q][EQUALS]"] || searchText.value) query.q = route.query["filters[q][EQUALS]"] || searchText.value
+        if (route.query[SEARCH_QUERY_KEY] || searchText.value) {
+            query.q = route.query[SEARCH_QUERY_KEY] || searchText.value
+        }
         if (props.system) {
             query.tags = "system"
         } else {
@@ -268,11 +270,11 @@
             kind: props.blueprintKind,
             params: query,
         })
-        if(props.blueprintType === beforeLoadBlueprintType){
+        if (props.blueprintType === beforeLoadBlueprintType) {
             total.value = data.total
             blueprints.value = data.results
         }
-    };
+    }
 
     async function loadData({page, size}: {page: number; size: number; sort?: string}) {
         // Skip while useRestoreUrl is restoring the URL — the route.query
@@ -289,22 +291,10 @@
             if (props.embed) error.value = true
             else coreStore.error = 404
         }
-    };
-
-    function editorRoute(blueprintId: string) {
-        const additionalQuery: Record<string, any> = {}
-        if (props.blueprintKind === "flow") {
-            additionalQuery.blueprintSource = props.blueprintType
-        }
-        return {
-            name: `${props.blueprintKind}s/create`,
-            params: {tenant: route.params.tenant},
-            query: {blueprintId, ...additionalQuery},
-        }
-    };
+    }
 
     const syncFromRoute = () => {
-        searchText.value = route.query?.["filters[q][EQUALS]"] ?? ""
+        searchText.value = route.query?.[SEARCH_QUERY_KEY] ?? ""
         const newTags = initSelectedTags()
         const same = newTags.length === selectedTags.value.length
             && newTags.every((t, i) => t === selectedTags.value[i])
@@ -316,6 +306,8 @@
     onMounted(() => {
         syncFromRoute()
         docStore.docId = `blueprints.${props.blueprintType}`
+        ensureInstalledPluginsLoaded()
+        pluginsStore.fetchIcons()
     })
 
     onActivated(() => {
@@ -324,7 +316,7 @@
     })
 
     watch(
-        () => [route.query[SELECTED_TAG_QUERY_KEY], route.query["filters[q][EQUALS]"]],
+        () => [route.query[SELECTED_TAG_QUERY_KEY], route.query[SEARCH_QUERY_KEY]],
         () => {
             syncFromRoute()
             dataTable.value?.resetAndReload()
@@ -335,21 +327,21 @@
         dataTable.value?.resetAndReload()
     })
 
-    watch(selectedTags, (newTags) => {
-        if (!props.embed) {
-            const query = {...route.query}
-            if (newTags.length > 0) {
-                query[SELECTED_TAG_QUERY_KEY] = newTags.join(",")
-            } else {
-                delete query[SELECTED_TAG_QUERY_KEY]
-            }
-            router.push({query})
-        } else {
+    watch(selectedTags, newTags => {
+        if (props.embed) {
             dataTable.value?.resetAndReload()
+            return
         }
+        const query = {...route.query}
+        if (newTags.length > 0) {
+            query[SELECTED_TAG_QUERY_KEY] = newTags.join(",")
+        } else {
+            delete query[SELECTED_TAG_QUERY_KEY]
+        }
+        router.push({query})
     })
 
-    watch(tags, (val) => {
+    watch(tags, val => {
         const validTags = selectedTags.value.filter(tagId =>
             Object.prototype.hasOwnProperty.call(val, tagId),
         )
@@ -368,135 +360,61 @@
 </script>
 
 <style scoped lang="scss">
-
     .blueprints {
         width: 100%;
     }
-    .tags-selection {
-        display: flex;
-        width: 100%;
-        margin-bottom: 1rem;
-        gap: .3rem;
-        flex-wrap: wrap;
 
-        .tags-checkbox-group {
-            display: flex;
-            width: 100%;
-            gap: .5rem;
-            flex-wrap: wrap;
-            --kel-button-bg-color: var(--ks-bg-surface);
+    .system-header {
+        padding-bottom: var(--ks-spacing-4);
 
-            & > * {
-                max-width: 50%;
+        p:first-child {
+            margin-bottom: 0;
+            font-weight: lighter;
+        }
 
-                :deep(span) {
-                    border-radius: 0.25rem !important;
-                    border: 1px solid var(--ks-border-default);
-                    width: 100%;
-                    font-size: var(--ks-font-size-xs);
-                    box-shadow: none;
-                    text-overflow: ellipsis;
-                    overflow: hidden;
-                }
-
-                &:hover :deep(span) {
-                    color: var(--ks-text-link);
-                    background-color: var(--ks-btn-secondary-bg-hover);
-                }
-            }
+        p:last-child {
+            font-size: var(--ks-font-size-xl);
+            font-weight: var(--ks-font-weight-semibold);
         }
     }
 
-    .search-bar-row {
-        max-width: 800px;
-        margin: 0 auto 1.5rem auto;
+    .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        margin-bottom: var(--ks-spacing-4);
+
+        &.plain {
+            display: contents;
+        }
+
+        .search {
+            flex: 1 1 17rem;
+            max-width: 17rem;
+            margin-bottom: calc(-1 * var(--ks-spacing-4));
+        }
+
+        .tags {
+            display: flex;
+            flex: 1 1 auto;
+            flex-wrap: wrap;
+            gap: var(--ks-spacing-2);
+        }
     }
 
     .card-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(297px, 1fr));
-        gap: 1rem;
-    }
+        gap: var(--ks-spacing-4);
 
-    .blueprint-card {
-        cursor: pointer;
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-base);
-        background-color: var(--ks-bg-surface);
-        transition: all 0.2s ease;
-        display: flex;
-        box-shadow: 0px 2px 4px 0px var(--ks-shadow-element);
-        min-height: 200px;
-
-        &:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0.5rem 1rem 0 var(--ks-shadow-element);
-        }
-
-        :deep(.icon) {
-            width: 24px;
-            height: 24px;
-        }
-
-        :deep(.kel-card__body) {
-            height: 100%;
-            width: 100%;
+        &.system {
+            padding-inline: var(--ks-data-table-gutter);
         }
     }
 
-    .card-content-wrapper {
+    .blueprint-list {
         display: flex;
         flex-direction: column;
-        height: 100%;
-        width: 100%;
-    }
-
-    .tags-section {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem;
-
-        .tag-item {
-            border: 1px solid var(--ks-border-default);
-            color: var(--ks-text-primary);
-            border-radius: var(--ks-radius-base);
-            padding: 0.25rem 0.5rem;
-            font-size: var(--ks-font-size-xs);
-            background: var(--ks-bg-tag-active);
-        }
-    }
-
-    .text-section {
-        flex-grow: 1;
-        margin-top: 0.75rem;
-
-        .title {
-            font-size: var(--ks-font-size-base);
-            font-weight: 600;
-            color: var(--ks-text-primary);
-            line-height: 22px;
-            overflow-wrap: break-word;
-        }
-    }
-
-    .bottom-section {
-        margin-top: 1.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-
-        .task-icons {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            flex: 1;
-            flex-wrap: wrap;
-
-            :deep(.ks-task-icon) {
-                height: 1.5rem;
-                width: 1.5rem;
-            }
-        }
     }
 </style>

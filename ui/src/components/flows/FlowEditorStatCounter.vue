@@ -58,7 +58,7 @@
         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 
         &:hover {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-bg-hover);
             color: var(--ks-text-primary);
         }
 
@@ -69,7 +69,7 @@
     }
 
     .stat-icon {
-        font-size: 1.1em;
+        font-size: var(--ks-font-size-lg);
         line-height: 0;
         flex-shrink: 0;
         color: var(--ks-icon-muted);

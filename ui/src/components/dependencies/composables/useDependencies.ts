@@ -20,8 +20,6 @@ import type {KsGraphNode, KsGraphEdge} from "@kestra-io/design-system"
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, ASSET} from "../utils/types"
 import type {Types, Node, Edge, Element} from "../utils/types"
 
-import {getRandomNumber, getDependencies} from "../../../../tests/fixtures/dependencies/getDependencies"
-
 // ─── CSS variable maps ────────────────────────────────────────────────────────
 
 const NODE_BG = {
@@ -46,6 +44,31 @@ const EDGE_COLOR = {
     selected: "--ks-dependencies-edge-selected",
     hovered:  "--ks-dependencies-edge-hovered",
 } as const
+
+// ─── Asset node icon ──────────────────────────────────────────────────────────
+
+// Material Design "package-variant-closed" glyph (viewBox 0 0 24 24), used to
+// mark asset nodes in the dependency graph. ECharts graph symbols are drawn on a
+// canvas and cannot mount a Vue <KsIcon>, so the icon is embedded as an SVG
+// `image://` symbol instead — the only way to render a glyph inside a graph node.
+const ASSET_ICON_PATH =
+    "M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L10.11,5.22L16,8.61L17.96,7.5L12,4.15M6.04,7.5L12,10.85L13.96,9.75L8.08,6.35L6.04,7.5M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"
+
+/**
+ * Builds an ECharts `image://` symbol for an asset node: a filled circle matching
+ * the node's current background/border colours with the packageVariantClosed glyph
+ * centred inside. Colours are baked into the SVG because ECharts ignores itemStyle
+ * for image symbols; the symbol is rebuilt whenever graphNodes recomputes
+ * (selection / filter / theme change), so state and theme stay in sync.
+ */
+function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string): string {
+    const svg =
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+        `<circle cx="12" cy="12" r="11" fill="${bgColor}" stroke="${borderColor}" stroke-width="1.5"/>` +
+        `<path transform="translate(12 12) scale(0.55) translate(-12 -12)" fill="${iconColor}" d="${ASSET_ICON_PATH}"/>` +
+        "</svg>"
+    return `image://data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
 
 // ─── KsGraph instance contract ────────────────────────────────────────────────
 
@@ -125,7 +148,6 @@ export function useDependencies(
     subtype: Types = FLOW,
     initialNodeID: string,
     params: RouteParams,
-    isTesting = false,
     fetchAssetDependencies?: () => Promise<{data: Element[]; count: number}>,
 ) {
     const coreStore = useCoreStore()
@@ -200,6 +222,9 @@ export function useDependencies(
         const edgeCounts   = buildEdgeCounts(elements.value.data)
         const hasSelection = selectedNodeID.value !== undefined
         const hasFilter    = shownNodeIDs.value !== null
+        // Icon colour for asset nodes — theme-adaptive so it stays legible on the
+        // asset background in both light and dark themes.
+        const assetIconColor = cssVar("--ks-text-primary")
 
         return elements.value.data
             .filter((el): el is {data: Node} => el.data.type === NODE)
@@ -246,6 +271,9 @@ export function useDependencies(
                     id:         node.id,
                     name:       node.id,
                     symbolSize: nodeSize(node.id, edgeCounts),
+                    // Asset nodes carry the packageVariantClosed glyph inside the node;
+                    // other nodes keep the default ECharts circle symbol.
+                    ...(isAsset ? {symbol: assetNodeSymbol(bgColor, borderColor, assetIconColor)} : {}),
                     itemStyle:  baseItemStyle,
                     // Hover colour – applied by ECharts emphasis.focus:"adjacency"
                     emphasis: {
@@ -423,9 +451,19 @@ export function useDependencies(
     // ─── Data loading ─────────────────────────────────────────────────────────
 
     /**
-     * Polls until KsEchart's deferred `canRender` flag has triggered and ECharts
-     * has initialised, then registers a one-shot `finished` handler so positions
-     * are captured only after the force simulation has fully settled.
+     * Polls until ECharts has completed the initial force layout and node positions
+     * are available, then centres the view on the selected node (or fits all nodes
+     * for NAMESPACE graphs where no node is pre-selected).
+     *
+     * Why polling instead of listening for the `finished` event:
+     * `chartNodes` is set synchronously, which schedules a Vue microtask flush.
+     * That flush updates KsGraph's props, VChart calls setOption, and ECharts
+     * queues its own RAF for rendering.  `captureAndFocusWhenReady` is called
+     * right afterwards and queues *our* RAF.  Because both RAFs are in the same
+     * browser frame, ECharts renders (and fires `finished`) before our first poll
+     * fires — so the event is missed and positions are never captured.
+     * Polling `capturePositions()` every frame avoids that race: positions become
+     * non-empty one frame after ECharts renders, and we capture them reliably.
      */
     const captureAndFocusWhenReady = (): void => {
         let attempts = 0
@@ -437,75 +475,61 @@ export function useDependencies(
                 requestAnimationFrame(poll)
                 return
             }
-            // ECharts 'finished' fires once all animations (incl. force layout) complete.
-            const onFinished = () => {
-                chart.off("finished", onFinished)
-                capturePositions()
-                // Defer focusNode — calling setOption inside a 'finished' handler
-                // causes ECharts "setOption during main process" error.
-                if (selectedNodeID.value) {
-                    const id = selectedNodeID.value
-                    requestAnimationFrame(() => focusNode(id))
-                }
+            capturePositions()
+            if (storedPositions.value.size > 0) {
+                const id = selectedNodeID.value
+                requestAnimationFrame(() => {
+                    if (id) focusNode(id)
+                    else fitGraph()
+                })
+                return
             }
-            chart.on("finished", onFinished)
+            if (++attempts >= MAX_ATTEMPTS) return
+            requestAnimationFrame(poll)
         }
         requestAnimationFrame(poll)
     }
 
     onMounted(async () => {
-        if (isTesting) {
-            elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)}
-            isLoading.value   = false
-            isRendering.value = false
-            if (subtype !== NAMESPACE) selectNode(elements.value.data.find(
-                (el): el is {data: Node} => el.data.type === NODE,
-            )?.data.id ?? initialNodeID)
-            await nextTick()
-            chartNodes.value = graphNodes.value
-            chartEdges.value = graphEdges.value
-            captureAndFocusWhenReady()
-        } else {
-            try {
-                if (fetchAssetDependencies) {
-                    const result = await fetchAssetDependencies()
-                    elements.value = {data: result.data, count: result.count}
-                } else if (subtype === NAMESPACE) {
-                    const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
-                    const nodes = data.nodes ?? []
-                    elements.value = {
-                        data:  transformResponse(data, NAMESPACE),
-                        count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
-                    }
-                } else {
-                    const result = await flowStore.loadDependencies(
-                        {
-                            id:       (subtype === FLOW ? params.id : params.flowId) as string,
-                            namespace: params.namespace as string,
-                            subtype:  subtype === FLOW ? FLOW : EXECUTION,
-                        },
-                        false,
-                    )
-                    elements.value = {data: result.data ?? [], count: result.count}
+        try {
+            if (fetchAssetDependencies) {
+                const result = await fetchAssetDependencies()
+                elements.value = {data: result.data, count: result.count}
+            } else if (subtype === NAMESPACE) {
+                const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
+                const nodes = data.nodes ?? []
+                elements.value = {
+                    data:  transformResponse(data as any, NAMESPACE),
+                    count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
                 }
-            } catch (error) {
-                console.error(`Failed to load ${subtype} dependencies:`, error)
-                elements.value = {data: [], count: 0}
+            } else {
+                const result = await flowStore.loadDependencies(
+                    {
+                        id:       (subtype === FLOW ? params.id : params.flowId) as string,
+                        namespace: params.namespace as string,
+                        subtype:  subtype === FLOW ? FLOW : EXECUTION,
+                    },
+                    false,
+                )
+                elements.value = {data: result.data ?? [], count: result.count}
             }
-
-            isLoading.value   = false
-            isRendering.value = false
-
-            if (subtype !== NAMESPACE && elements.value.data.length > 0) {
-                // Wait for KsGraph to receive the new nodes prop and render.
-                await nextTick()
-                selectNode(initialNodeID)
-            }
-            await nextTick()
-            chartNodes.value = graphNodes.value
-            chartEdges.value = graphEdges.value
-            captureAndFocusWhenReady()
+        } catch (error) {
+            console.error(`Failed to load ${subtype} dependencies:`, error)
+            elements.value = {data: [], count: 0}
         }
+
+        isLoading.value   = false
+        isRendering.value = false
+
+        if (subtype !== NAMESPACE && elements.value.data.length > 0) {
+            // Wait for KsGraph to receive the new nodes prop and render.
+            await nextTick()
+            selectNode(initialNodeID)
+        }
+        await nextTick()
+        chartNodes.value = graphNodes.value
+        chartEdges.value = graphEdges.value
+        captureAndFocusWhenReady()
 
         if (subtype === EXECUTION) nextTick(() => openSSE())
     })
@@ -562,6 +586,11 @@ export function useDependencies(
                 title:   t("error"),
                 message: t("something_went_wrong.loading_execution"),
             }
+
+            // Close on error: EventSource auto-reconnects unless explicitly closed,
+            // and each reconnect leaks a server-side SSE connection (Netty direct
+            // buffers) over time. See kestra-io/kestra#16982.
+            closeSSE()
         }
     }
 

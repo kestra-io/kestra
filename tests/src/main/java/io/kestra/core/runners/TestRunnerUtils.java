@@ -18,7 +18,9 @@ import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.*;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -270,14 +272,12 @@ public class TestRunnerUtils {
         }
     }
 
+    public Execution awaitFlowExecution(String tenantId, String namespace, String flowId, Duration duration) {
+        return awaitFlowExecution((_) -> true, tenantId, namespace, flowId, duration);
+    }
+
     /**
      * This method will return the last created execution
-     * 
-     * @param predicate
-     * @param tenantId
-     * @param namespace
-     * @param flowId
-     * @return
      */
     public Execution awaitFlowExecution(Predicate<Execution> predicate, String tenantId, String namespace, String flowId) {
         return awaitFlowExecution(predicate, tenantId, namespace, flowId, null);

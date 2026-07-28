@@ -17,6 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "preserveSymlinks": true,
+    "rootDir": ".",
     "paths": {
       "override/*": ["./src/override/*"]
     }

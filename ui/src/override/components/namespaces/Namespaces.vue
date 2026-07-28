@@ -9,7 +9,7 @@
         </template>
     </Navbar>
 
-    <KsRow class="p-5">
+    <KsRow class="row-padding">
         <KSFilter
             :configuration="namespacesFilter"
             :prefix="'namespaces-list'"
@@ -18,7 +18,6 @@
                 columns: {shown: false},
                 refresh: {shown: false}
             }"
-            :searchInputFullWidth="true"
             :buttons="{
                 savedFilters: {shown: false},
                 tableOptions: {shown: false}
@@ -84,7 +83,7 @@
 
     import Navbar from "../../../components/layout/TopNavBar.vue"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
-    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
     import {useNamespacesFilter} from "../../../components/filter/configurations"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
@@ -119,16 +118,13 @@
 
     const namespaces = ref([]) as Ref<Namespace[]>
     const loadData = async () => {
-        namespaces.value = await useNamespaces(
-            1000,
-            route.query?.["filters[q][EQUALS]"] === undefined ? undefined : {q: route.query["filters[q][EQUALS]"]},
-        ).all()
+        namespaces.value = await useNamespaces(1000, {filters: routeQueryToQueryFilters(route.query)}).all()
     }
 
     watch(
-        () => route.query["filters[q][EQUALS]"],
+        () => route.query,
         () => loadData(),
-        {immediate: true},
+        {immediate: true, deep: true},
     )
 
     const miscStore = useMiscStore()
@@ -198,6 +194,10 @@
 
 <style scoped lang="scss">
 
+.row-padding {
+    padding: var(--ks-spacing-6);
+}
+
 .namespaces {
     margin: 0.25rem 0;
     border-radius: var(--kel-border-radius-round);
@@ -226,7 +226,7 @@
         border-radius: var(--kel-border-radius-round);
 
         &:hover {
-            background: var(--ks-bg-body);
+            background: var(--ks-bg-base);
         }
 
         .icon {

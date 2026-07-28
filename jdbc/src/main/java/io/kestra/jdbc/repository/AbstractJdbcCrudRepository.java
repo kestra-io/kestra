@@ -159,7 +159,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
     /**
      * Hard-delete all items matching the given condition for the given tenant.
      *
-     * @param tenantId  the tenant ID used to build the default filter.
+     * @param tenantId the tenant ID used to build the default filter.
      * @param condition the condition to match items for deletion.
      * @return the number of deleted rows.
      */
@@ -171,14 +171,14 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * Hard-delete all items matching the given conditions.
      *
      * @param defaultFilter the base filter condition (e.g. tenant isolation).
-     * @param condition     the condition to match items for deletion.
+     * @param condition the condition to match items for deletion.
      * @return the number of deleted rows.
      */
     protected Integer purge(Condition defaultFilter, Condition condition) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration ->
-                DSL.using(configuration)
+            .transactionResult(
+                configuration -> DSL.using(configuration)
                     .delete(this.jdbcRepository.getTable())
                     .where(defaultFilter)
                     .and(condition)
@@ -512,21 +512,22 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
         QueryFilter.Field field,
         List<QueryFilter> filters,
         Pageable pageable,
-        QueryFilter.Resource resource
-    ) {
+        QueryFilter.Resource resource) {
         Field<String> column = DSL.field(getColumnName(field), String.class);
         Condition where = defaultFilter(tenantId).and(filter(filters, null, resource));
 
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .selectDistinct(column)
-                .from(this.jdbcRepository.getTable())
-                .where(where)
-                .orderBy(column.asc())
-                .limit(pageable.getSize())
-                .fetch(column));
+            .transactionResult(
+                configuration -> DSL
+                    .using(configuration)
+                    .selectDistinct(column)
+                    .from(this.jdbcRepository.getTable())
+                    .where(where)
+                    .orderBy(column.asc())
+                    .limit(pageable.getSize())
+                    .fetch(column)
+            );
     }
 
     /**

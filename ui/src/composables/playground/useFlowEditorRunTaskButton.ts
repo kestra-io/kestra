@@ -1,10 +1,10 @@
 import {computed, ref, Ref, watch} from "vue"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+import {KsEditor} from "@kestra-io/design-system"
 
 import {usePlaygroundStore} from "../../stores/playground"
-import Editor from "../../components/inputs/Editor.vue"
 
-export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean>, editorRefElement: Ref<InstanceType<typeof Editor> | undefined>, source: Ref<string>) {
+export default function useFlowEditorRunTaskButton(isCurrentTabFlow: Ref<boolean>, editorRefElement: Ref<InstanceType<typeof KsEditor> | undefined>, source: Ref<string>) {
     const taskLineMap = computed(() => {
         return isCurrentTabFlow.value ? YAML_UTILS.getTasksLines(source.value) : {}
     })

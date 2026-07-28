@@ -54,8 +54,17 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                    ],
+                    comparatorLabels: {
+                        [Comparators.GREATER_THAN_OR_EQUAL_TO]: "At or Above",
+                        [Comparators.LESS_THAN_OR_EQUAL_TO]: "At or Below",
+                    },
+                    valueType: "multi-select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs")
                         return VALUES.LEVELS
@@ -66,6 +75,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                             : "INFO"
                     ),
                     visibleByDefault: true,
+                    colored: true,
                 },
                 {
                     key: "timeRange",
@@ -73,6 +83,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange_log.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs")
                         return VALUES.RELATIVE_DATE
@@ -89,6 +100,17 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.SCOPES
                     },
                     showComparatorSelection: false,
+                },
+                {
+                    key: "kind",
+                    label: t("filter.kind.label"),
+                    description: t("filter.kind.description"),
+                    comparators: [Comparators.IN],
+                    valueType: "multi-select",
+                    valueProvider: async () => {
+                        const {VALUES} = useValues("logs")
+                        return VALUES.KINDS
+                    },
                 },
                 {
                     key: "triggerId",
@@ -118,6 +140,42 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     ],
                     valueType: "text",
                 }] : []) as any,
+                {
+                    key: "taskId",
+                    label: t("filter.taskId.label"),
+                    description: t("filter.taskId.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.STARTS_WITH,
+                        Comparators.ENDS_WITH,
+                        Comparators.IN,
+                    ],
+                    valueType: "text",
+                },
+                {
+                    key: "taskRunId",
+                    label: t("filter.taskRunId.label"),
+                    description: t("filter.taskRunId.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.IN,
+                    ],
+                    valueType: "text",
+                },
+                {
+                    key: "attemptNumber",
+                    label: t("filter.attemptNumber.label"),
+                    description: t("filter.attemptNumber.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS,
+                        Comparators.IN,
+                    ],
+                    valueType: "text",
+                },
             ],
         }
     })

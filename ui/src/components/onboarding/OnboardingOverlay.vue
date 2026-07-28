@@ -299,8 +299,8 @@
                 return
             }
             highlightRetryCount.value = 0
-            const isEditorWrapperTarget = target.id === "editorWrapper"
-            if (!isEditorWrapperTarget) {
+            const isFlowFileEditorTabTarget = target.id === "flowFileEditorTab"
+            if (!isFlowFileEditorTabTarget) {
                 if (highlightedElement.value !== target) {
                     highlightedElement.value?.classList.remove("onboarding-v2-highlight")
                     highlightedElement.value?.classList.remove("onboarding-v2-highlight-static")
@@ -725,7 +725,7 @@
         align-items: center;
         gap: 0.25rem;
         color: var(--ks-status-success);
-        font-size: 0.78rem;
+        font-size: var(--ks-font-size-sm);
         font-weight: 600;
     }
 

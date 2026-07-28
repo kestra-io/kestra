@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
@@ -11,23 +12,29 @@ import org.reactivestreams.Publisher;
 
 import io.kestra.webserver.configuration.WebserverConfiguration;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
-import jakarta.inject.Inject;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Filter;
+import io.micronaut.http.cookie.Cookie;
+import io.micronaut.http.cookie.SameSite;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
+import io.micronaut.security.csrf.CsrfConfiguration;
+import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Filter("/ui/**")
+@Requires(property = "kestra.webserver.ui.enabled", notEquals = "false", defaultValue = "true")
 public class StaticFilter implements HttpServerFilter {
     @Nullable
     @Value("${micronaut.server.context-path}")
@@ -35,6 +42,14 @@ public class StaticFilter implements HttpServerFilter {
 
     @Inject
     protected WebserverConfiguration webserverConfiguration;
+
+    @Inject
+    protected Optional<CsrfConfiguration> csrfConfiguration;
+
+    @Inject
+    protected Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator;
+
+    private static final Pattern HTML_PATTERN = Pattern.compile("<html.*?>", Pattern.CASE_INSENSITIVE);
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
@@ -74,11 +89,46 @@ public class StaticFilter implements HttpServerFilter {
                         })
                         .findFirst();
 
-                    return alteredResponse.isPresent() ? alteredResponse.get() : response;
+                    MutableHttpResponse<?> finalResponse = alteredResponse.isPresent() ? alteredResponse.get() : response;
+                    return addCsrfToken(request, finalResponse);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
+    }
+
+    protected MutableHttpResponse<?> addCsrfToken(HttpRequest<?> request, MutableHttpResponse<?> response) {
+        if (csrfTokenGenerator.isEmpty() || csrfConfiguration.isEmpty()) {
+            return response;
+        }
+
+        String html = response.getBody(String.class).orElse("");
+        if (html.isEmpty() || (!HTML_PATTERN.matcher(html).find() && !html.startsWith("<!DOCTYPE html>"))) {
+            return response;
+        }
+
+        // Reuse the existing cookie token so multiple tabs and BFCache-restored pages
+        // all share one stable token. Generate only when the cookie is absent.
+        String csrfToken = request.getCookies()
+            .findCookie(csrfConfiguration.get().getCookieName())
+            .map(Cookie::getValue)
+            .orElseGet(() -> csrfTokenGenerator.get().generateCsrfToken(request));
+        if (csrfToken == null) {
+            return response;
+        }
+
+        String escaped = csrfToken.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
+        String metaTag = "<meta name=\"csrf-token\" content=\"" + escaped + "\">";
+        html = html.replaceFirst("<head>", "<head>\n" + metaTag);
+        response = response.body(html);
+        response.cookie(
+            Cookie.of(csrfConfiguration.get().getCookieName(), csrfToken)
+                .httpOnly(true)
+                .secure(request.isSecure())
+                .sameSite(SameSite.Strict)
+                .path("/")
+        );
+        return response;
     }
 
     private String replace(String line) {

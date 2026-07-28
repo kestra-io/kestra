@@ -1,169 +1,202 @@
 <template>
     <div class="mcp-edit">
-        <el-form
+        <KsForm
             ref="formRef"
             :model="form"
             labelPosition="top"
-            @submit.prevent="save"
+            @submit.prevent="onSubmit"
         >
-            <el-form-item
-                :label="t('id')"
+            <KsFormItem
+                :label="t('mcp.server_id')"
                 prop="id"
-                :rules="[
-                    {required: true, message: t('id') + ' ' + t('required'), trigger: 'blur'},
-                    {pattern: /^[a-z0-9][a-z0-9_-]*$/, message: t('mcp.id_invalid'), trigger: 'blur'},
-                ]"
+                required
+                labelPosition="left"
+                labelWidth="auto"
+                class="id-row"
+                :rules="idRules"
             >
-                <el-input
+                <KsInput
                     v-model="form.id"
                     :placeholder="t('mcp.id_placeholder')"
-                    :disabled="isUpdate || readOnly"
-                    class="mcp-edit__name-input"
-                />
-            </el-form-item>
+                    :disabled="idDisabled"
+                    class="mono id-input"
+                    @change="autoSubmit"
+                >
+                    <template
+                        v-if="idDisabled"
+                        #suffix
+                    >
+                        <Lock :size="16" />
+                    </template>
+                </KsInput>
+            </KsFormItem>
 
-            <el-form-item :label="t('description')">
-                <el-input
+            <KsFormItem :label="t('description')">
+                <KsInput
                     v-model="form.description"
                     type="textarea"
                     :rows="2"
                     :placeholder="t('description')"
                     :disabled="readOnly"
+                    @change="autoSubmit"
                 />
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item :label="t('mcp.instructions')">
-                <el-input
+            <KsFormItem :label="t('mcp.instructions')">
+                <KsInput
                     v-model="form.instructions"
                     type="textarea"
                     :rows="3"
                     :placeholder="t('mcp.instructions')"
-                    class="mcp-edit__instructions-input"
+                    class="mono"
                     :disabled="readOnly"
+                    @change="autoSubmit"
                 />
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item :label="t('mcp.server_type')">
-                <div class="mcp-edit__type-buttons">
-                    <button
-                        type="button"
-                        class="mcp-edit__type-btn"
-                        :class="{'mcp-edit__type-btn--active': form.serverType === 'PRIVATE'}"
-                        :disabled="readOnly"
-                        @click="form.serverType = 'PRIVATE'"
-                    >
-                        <Lock class="me-1" />
-                        {{ t("mcp.private") }}
-                    </button>
-                    <button
-                        type="button"
-                        class="mcp-edit__type-btn"
-                        :class="{'mcp-edit__type-btn--active': form.serverType === 'PUBLIC'}"
-                        :disabled="readOnly"
-                        @click="form.serverType = 'PUBLIC'"
-                    >
-                        <Web class="me-1" />
-                        {{ t("mcp.public") }}
-                    </button>
-                </div>
-            </el-form-item>
+            <KsFormItem
+                :label="t('mcp.private_server')"
+                labelPosition="left"
+                class="spread-row"
+            >
+                <KsSwitch
+                    v-model="privateServer"
+                    :disabled="readOnly"
+                    @change="autoSubmit"
+                />
+            </KsFormItem>
 
-            <el-form-item v-if="form.serverType === 'PRIVATE'" :label="t('mcp.auth_type')">
-                <div class="mcp-edit__auth-list">
+            <KsAlert
+                v-if="!isPrivate"
+                type="warning"
+                :closable="false"
+                class="type-hint"
+            >
+                {{ t("mcp.public_hint") }}
+            </KsAlert>
+
+            <KsFormItem v-if="isPrivate">
+                <div class="auth-list">
                     <label
                         v-for="opt in AUTH_OPTIONS"
                         :key="opt.value"
-                        class="mcp-edit__auth-option"
+                        class="auth-option"
                         :class="{
-                            'mcp-edit__auth-option--selected': form.authType === opt.value,
-                            'mcp-edit__auth-option--disabled': readOnly || (opt.ee && isOss),
+                            'is-selected': form.authType === opt.value,
+                            'is-disabled': isOptionDisabled(opt),
                         }"
                     >
                         <input
+                            v-model="form.authType"
                             type="radio"
                             :value="opt.value"
-                            v-model="form.authType"
-                            class="me-2"
-                            :disabled="readOnly || (opt.ee && isOss)"
+                            :disabled="isOptionDisabled(opt)"
+                            @change="autoSubmit"
                         >
-                        <span class="mcp-edit__auth-name">{{ t(opt.labelKey) }}</span>
-                        <LockOutline v-if="opt.ee && isOss" class="ms-2" :size="14" />
-                        <span class="mcp-edit__auth-hint ms-auto">{{ t(opt.hintKey) }}</span>
+                        <span class="auth-name">{{ t(opt.labelKey) }}</span>
+                        <LockOutline
+                            v-if="opt.ee && isOss"
+                            :size="14"
+                        />
+                        <span class="auth-hint">{{ authHint(opt) }}</span>
                     </label>
                 </div>
-            </el-form-item>
+            </KsFormItem>
 
-            <el-form-item :label="t('enabled')">
-                <el-switch
-                    :modelValue="!form.disabled"
+            <KsFormItem
+                v-if="isOAuth"
+                :label="t('mcp.oauth_provider')"
+                prop="oauthProvider"
+                :rules="oauthProviderRules"
+            >
+                <KsSelect
+                    v-model="form.oauthProvider"
+                    :placeholder="t('mcp.oauth_provider_placeholder')"
                     :disabled="readOnly"
-                    @update:model-value="(val: boolean) => (form.disabled = !val)"
-                    class="mcp-edit__toggle"
-                />
-            </el-form-item>
-
-            <div class="mcp-edit__actions">
-                <el-button v-if="canSave" type="primary" :loading="saving" @click="save">
-                    {{ isUpdate ? t("mcp.save") : t("mcp.create") }}
-                </el-button>
-                <el-button
-                    v-if="isUpdate && !mcpStore.server?.isDefault && canDelete"
-                    type="danger"
-                    plain
-                    :loading="deleting"
-                    @click="confirmDelete"
+                    class="full-width"
+                    @change="autoSubmit"
                 >
-                    {{ t("delete") }}
-                </el-button>
-            </div>
-        </el-form>
+                    <KsOption
+                        v-for="provider in oauthProviders"
+                        :key="provider"
+                        :label="provider"
+                        :value="provider"
+                    />
+                </KsSelect>
+            </KsFormItem>
+
+            <KsFormItem
+                v-if="isOAuth"
+                :label="t('mcp.scopes_supported')"
+            >
+                <KsSelect
+                    v-model="form.oauthScopesSupported"
+                    multiple
+                    filterable
+                    allowCreate
+                    defaultFirstOption
+                    :placeholder="t('mcp.scopes_supported_placeholder')"
+                    :disabled="readOnly"
+                    class="full-width"
+                    @change="autoSubmit"
+                />
+                <div class="field-hint">
+                    {{ t("mcp.scopes_supported_hint") }}
+                </div>
+            </KsFormItem>
+
+            <KsFormItem
+                :label="t('enabled')"
+                labelPosition="left"
+                class="spread-row"
+            >
+                <KsSwitch
+                    v-model="enabled"
+                    :disabled="readOnly"
+                    @change="autoSubmit"
+                />
+            </KsFormItem>
+        </KsForm>
     </div>
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch} from "vue"
+    import {computed, onMounted, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-    import type {FormInstance} from "element-plus"
-    import {useMcpStore} from "../../../../stores/mcp"
+
+    import {useMcpStore, type McpServerPayload} from "../../../../stores/mcp"
     import {useMiscStore} from "override/stores/misc"
     import {useAuthStore} from "override/stores/auth"
+
+    import {useToast} from "../../../../utils/toast"
+
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import LockOutline from "vue-material-design-icons/LockOutline.vue"
+
     import resource from "../../../../models/resource"
     import action from "../../../../models/action"
-    import LockOutline from "vue-material-design-icons/LockOutline.vue"
-    import Lock from "vue-material-design-icons/Lock.vue"
-    import Web from "vue-material-design-icons/Web.vue"
+    import type {FormInstance} from "@kestra-io/design-system"
 
     const {t} = useI18n({useScope: "global"})
     const route = useRoute()
     const router = useRouter()
+    const toast = useToast()
     const mcpStore = useMcpStore()
-    const isOss = computed(() => useMiscStore().configs?.edition === "OSS")
-
-    const isUpdate = computed(() => !!route.params.id)
-
     const authStore = useAuthStore()
-    const canSave = computed(() =>
-        isUpdate.value
-            ? authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.UPDATE) ?? true
-            : authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.CREATE) ?? true,
-    )
-    const canDelete = computed(() => authStore.user?.hasAnyAction?.(resource.MCP_SERVER, action.DELETE) ?? true)
-    const readOnly = computed(() => !canSave.value)
+    const miscStore = useMiscStore()
 
-    interface McpForm {
-        id: string;
-        description: string;
-        instructions: string;
-        serverType: "PRIVATE" | "PUBLIC";
-        authType: "BASIC" | "API_TOKEN";
-        disabled: boolean;
-    }
+    const DEFAULT_OAUTH_SCOPES = ["openid", "profile", "email"]
 
     const AUTH_OPTIONS = [
-        {value: "BASIC" as const, labelKey: "mcp.basic_auth", hintKey: "mcp.username_password", ee: false},
-        {value: "API_TOKEN" as const, labelKey: "mcp.api_token", hintKey: "mcp.bearer_token", ee: true},
-    ]
+        {value: "BASIC", labelKey: "mcp.basic_auth", hintKey: "mcp.username_password", ee: false},
+        {value: "API_TOKEN", labelKey: "mcp.api_token", hintKey: "mcp.bearer_token", ee: true},
+        {value: "OAUTH", labelKey: "mcp.oauth", hintKey: "mcp.oauth_hint", ee: true},
+    ] as const
+
+    type AuthOption = (typeof AUTH_OPTIONS)[number]
+
+    type McpForm = Required<McpServerPayload>
 
     const defaultForm = (): McpForm => ({
         id: "",
@@ -171,170 +204,357 @@
         instructions: "",
         serverType: "PRIVATE",
         authType: "BASIC",
+        oauthProvider: "",
+        oauthScopesSupported: [...DEFAULT_OAUTH_SCOPES],
         disabled: false,
     })
 
     const formRef = ref<FormInstance>()
     const form = ref<McpForm>(defaultForm())
-    const saving = ref(false)
-    const deleting = ref(false)
+    const submitting = ref(false)
 
-    watch(() => mcpStore.server, (server) => {
-        if (server) {
-            form.value = {
-                id: server.id,
-                description: server.description ?? "",
-                instructions: server.instructions ?? "",
-                serverType: server.serverType,
-                authType: server.authType,
-                disabled: server.disabled,
-            }
-        } else if (!isUpdate.value) {
-            form.value = defaultForm()
+    const isOss = computed(() => miscStore.configs?.edition === "OSS")
+    const oauthProviders = computed<string[]>(() => authStore.auths?.oauths ?? [])
+    const noOauthProviders = computed(() => oauthProviders.value.length === 0)
+
+    const isUpdate = computed(() => !!route.params.id)
+    const isPrivate = computed(() => form.value.serverType === "PRIVATE")
+    const isOAuth = computed(() => isPrivate.value && form.value.authType === "OAUTH")
+
+    const privateServer = computed({
+        get: () => form.value.serverType === "PRIVATE",
+        set: (value: boolean) => {
+            form.value.serverType = value ? "PRIVATE" : "PUBLIC"
+        },
+    })
+
+    const canSave = computed(() => {
+        if (isUpdate.value) {
+            return authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.UPDATE) ?? true
         }
-    }, {immediate: true})
+        return authStore.user?.isAllowedGlobal?.(resource.MCP_SERVER, action.CREATE) ?? true
+    })
+    const readOnly = computed(() => !canSave.value)
+    const idDisabled = computed(() => isUpdate.value || readOnly.value)
 
-    const save = async (): Promise<void> => {
-        if (!formRef.value) return
+    const idRules = computed(() => [
+        {required: true, message: `${t("id")} ${t("required")}`, trigger: "blur"},
+        {pattern: /^[a-z0-9][a-z0-9_-]*$/, message: t("mcp.id_invalid"), trigger: "blur"},
+    ])
+
+    const oauthProviderRules = computed(() => [
+        {required: true, message: t("mcp.oauth_provider_required"), trigger: "change"},
+    ])
+
+    const enabled = computed({
+        get: () => !form.value.disabled,
+        set: (value: boolean) => {
+            form.value.disabled = !value
+        },
+    })
+
+    const isOptionDisabled = (opt: AuthOption): boolean => {
+        if (readOnly.value) {
+            return true
+        }
+        if (opt.ee && isOss.value) {
+            return true
+        }
+        if (opt.value === "OAUTH" && noOauthProviders.value) {
+            return true
+        }
+        return false
+    }
+
+    const authHint = (opt: AuthOption): string => {
+        if (opt.value === "OAUTH" && noOauthProviders.value) {
+            return t("mcp.no_oauth_providers")
+        }
+        return t(opt.hintKey)
+    }
+
+    const buildPayload = (): McpServerPayload => {
+        const isOauth = form.value.authType === "OAUTH"
+
+        let oauthProvider: string | undefined
+        let oauthScopesSupported: string[] | undefined
+        if (isOauth) {
+            oauthProvider = form.value.oauthProvider || undefined
+            oauthScopesSupported = form.value.oauthScopesSupported.length > 0
+                ? form.value.oauthScopesSupported
+                : undefined
+        }
+
+        return {
+            id: form.value.id,
+            description: form.value.description || undefined,
+            instructions: form.value.instructions || undefined,
+            serverType: form.value.serverType,
+            authType: form.value.authType,
+            oauthProvider,
+            oauthScopesSupported,
+            disabled: form.value.disabled,
+        }
+    }
+
+    const create = async (): Promise<void> => {
+        if (!formRef.value || submitting.value) {
+            return
+        }
+
         await formRef.value.validate(async (valid) => {
-            if (!valid) return
-            saving.value = true
-            try {
-                const payload = {
-                    id: form.value.id,
-                    description: form.value.description || undefined,
-                    instructions: form.value.instructions || undefined,
-                    serverType: form.value.serverType,
-                    authType: form.value.authType,
-                    disabled: form.value.disabled,
-                }
-                if (isUpdate.value) {
-                    await mcpStore.update(form.value.id, payload)
-                    router.push({name: "admin/mcp-servers"})
-                } else {
-                    const created = await mcpStore.create(payload)
-                    router.push({
-                        name: "admin/mcp-servers/update",
-                        params: {id: created.id, tab: "edit"},
-                    })
-                }
-            } finally {
-                saving.value = false
+            if (!valid) {
+                return
             }
-        })
+
+            submitting.value = true
+            try {
+                const created = await mcpStore.create(buildPayload())
+                toast.saved(created.id)
+                router.push({
+                    name: "admin/mcp-servers/update",
+                    params: {id: created.id, tab: "edit"},
+                })
+            } catch (e) {
+                submitting.value = false
+                console.error("Failed to create MCP server", e)
+            }
+        }).catch(() => {})
     }
 
-    const confirmDelete = async (): Promise<void> => {
-        if (!confirm(t("mcp.delete_confirm"))) return
-        deleting.value = true
-        try {
-            await mcpStore.remove(mcpStore.server!.id)
-            router.push({name: "admin/mcp-servers"})
-        } finally {
-            deleting.value = false
+    const autoSubmit = (): void => {
+        if (isUpdate.value) {
+            autoSave()
+            return
+        }
+
+        if (readOnly.value || !form.value.id) {
+            return
+        }
+
+        create()
+    }
+
+    const autoSave = (): void => {
+        if (!isUpdate.value || readOnly.value || !formRef.value) {
+            return
+        }
+
+        formRef.value.validate(async (valid) => {
+            if (!valid) {
+                return
+            }
+
+            try {
+                await mcpStore.update(form.value.id, buildPayload())
+                toast.saved(form.value.id)
+            } catch (e) {
+                console.error("Failed to save MCP server", e)
+            }
+        }).catch(() => {})
+    }
+
+    const onSubmit = (): void => {
+        if (isUpdate.value) {
+            autoSave()
+        } else {
+            create()
         }
     }
+
+    onMounted(() => {
+        if (!authStore.auths) {
+            authStore.loadAuths({})
+        }
+    })
+
+    watch(
+        () => mcpStore.server,
+        (server) => {
+            if (server) {
+                form.value = {
+                    id: server.id,
+                    description: server.description ?? "",
+                    instructions: server.instructions ?? "",
+                    serverType: server.serverType,
+                    authType: server.authType,
+                    oauthProvider: server.oauthProvider ?? "",
+                    oauthScopesSupported: server.oauthScopesSupported ?? [],
+                    disabled: server.disabled,
+                }
+            } else if (!isUpdate.value) {
+                form.value = defaultForm()
+            }
+        },
+        {immediate: true},
+    )
 </script>
 
 <style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-
     .mcp-edit {
-        &__name-input {
-            :deep(input) {
-                font-family: monospace;
-            }
-        }
+        max-width: 653px;
+        border: 1px solid var(--ks-border-default);
+        border-radius: 8px;
+        box-shadow: 0px 2px 8px 0px var(--ks-shadow-surface);
+        background: var(--ks-bg-surface);
+        padding: var(--ks-spacing-4);
+        margin-block-start: var(--ks-spacing-7);
+        margin-inline: auto;
+    }
 
-        &__instructions-input {
-            :deep(textarea) {
-                font-family: monospace;
-            }
-        }
+    .mono :deep(input),
+    .mono :deep(textarea) {
+        font-family: var(--ks-font-family-mono);
+    }
 
-        &__type-buttons {
-            display: flex;
-            width: 100%;
-            gap: 0.5rem;
-        }
+    .mcp-edit :deep(textarea) {
+        resize: none;
+    }
 
-        &__type-btn {
-            display: inline-flex;
-            flex: 1;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--ks-border-primary);
-            border-radius: 6px;
-            background: var(--ks-background-card);
-            color: var(--ks-content-primary);
-            cursor: pointer;
-            transition: all 0.15s;
+    .mcp-edit :deep(textarea)::-webkit-scrollbar {
+        width: 0.5rem;
+    }
 
-            &--active {
-                border-color: $base-purple-400;
-                background: rgba($base-purple-400, 0.08);
-                color: $base-purple-400;
-            }
+    .mcp-edit :deep(textarea)::-webkit-scrollbar-thumb {
+        background-color: var(--ks-scrollbar-content);
+        background-clip: padding-box;
+        border: 2px solid transparent;
+        border-radius: 999px;
+    }
 
-            &:hover:not(.mcp-edit__type-btn--active) {
-                border-color: var(--ks-border-secondary);
-            }
+    :deep(.kel-form-item__label) {
+        font-weight: var(--ks-font-weight-semibold);
+    }
 
-            &:disabled {
-                opacity: 0.45;
-                cursor: not-allowed;
-            }
-        }
+    .mcp-edit :deep(.kel-form-item:not(:first-child)) {
+        border-top: 1px solid var(--ks-border-subtle);
+        padding-top: var(--ks-spacing-4);
+    }
 
-        &__auth-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            width: 100%;
-        }
+    .id-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
 
-        &__auth-option {
-            display: flex;
-            align-items: center;
-            padding: 0.625rem 0.75rem;
-            border: 1px solid var(--ks-border-primary);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: border-color 0.15s;
+    .id-row :deep(.kel-form-item__content) {
+        flex: 0 0 auto;
+    }
 
-            &--selected {
-                border-color: $base-purple-400;
-                background: rgba($base-purple-400, 0.04);
-            }
+    .spread-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
 
-            &--disabled {
-                opacity: 0.45;
-                cursor: not-allowed;
-            }
+    .spread-row :deep(.kel-form-item__content) {
+        flex: 0 0 auto;
+    }
 
-            &:hover:not(.mcp-edit__auth-option--selected):not(.mcp-edit__auth-option--disabled) {
-                border-color: var(--ks-border-secondary);
-            }
-        }
+    .spread-row:last-child {
+        margin-bottom: 0;
+    }
 
-        &__auth-name {
-            font-weight: 500;
-        }
+    .id-input {
+        width: 170px;
+        min-height: 30px;
+    }
 
-        &__auth-hint {
-            font-size: 0.8125rem;
-            color: var(--ks-content-secondary);
-        }
+    .auth-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+        width: 100%;
+    }
 
-        &__toggle {
-            --el-switch-on-color: #{$base-purple-400};
-        }
+    .auth-option {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-4);
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-lg);
+        background: var(--ks-bg-inactive);
+        color: var(--ks-text-primary);
+        cursor: pointer;
+        transition: all 0.15s;
+    }
 
-        &__actions {
-            display: flex;
-            gap: 0.75rem;
-            padding-top: 0.5rem;
-        }
+    .auth-option input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        flex-shrink: 0;
+        display: grid;
+        place-content: center;
+        width: 1.25rem;
+        height: 1.25rem;
+        margin: 0;
+        border: 2px solid var(--ks-border-strong);
+        border-radius: 50%;
+        background: transparent;
+        cursor: pointer;
+        transition: border-color 0.15s ease;
+    }
+
+    .auth-option input[type="radio"]::after {
+        content: "";
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: 50%;
+        background: var(--ks-toggle-active);
+        transform: scale(0);
+        transition: transform 0.15s ease;
+    }
+
+    .auth-option input[type="radio"]:checked {
+        border-color: var(--ks-toggle-active);
+    }
+
+    .auth-option input[type="radio"]:checked::after {
+        transform: scale(1);
+    }
+
+    .auth-option input[type="radio"]:disabled {
+        cursor: not-allowed;
+    }
+
+    .auth-option.is-selected {
+        border-color: var(--ks-border-strong);
+        background: var(--ks-bg-active);
+    }
+
+    .auth-option.is-disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .auth-option:hover:not(.is-selected):not(.is-disabled) {
+        border-color: var(--ks-border-strong);
+    }
+
+    .auth-name {
+        font-size: var(--ks-font-size-sm);
+        font-weight: var(--ks-font-weight-regular);
+        color: var(--ks-text-primary);
+    }
+
+    .auth-hint {
+        margin-left: auto;
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-secondary);
+    }
+
+    .field-hint {
+        margin-top: var(--ks-spacing-1);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-secondary);
+    }
+
+    .type-hint {
+        margin-bottom: var(--ks-spacing-4);
+    }
+
+    .full-width {
+        width: 100%;
     }
 </style>

@@ -2,10 +2,8 @@ import pluginVue from "eslint-plugin-vue"
 import tsParser from "@typescript-eslint/parser"
 import {defineConfig, globalIgnores} from "eslint/config"
 
-const components = (folder) => `src/components/${folder}/**/*.vue`
-
 export default defineConfig([
-    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
+    globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "packages/kestra-sdk/src/openapi/*"]),
     ...pluginVue.configs["flat/base"],
     // Formatting rules for JS/TS files (not .vue — handled below by vue/* variants)
     {
@@ -38,7 +36,8 @@ export default defineConfig([
             "array-bracket-spacing": ["warn", "never"],
             "vue/object-curly-spacing": ["warn", "never"],
             // Semantic rules
-            "vue/block-lang": ["warn", {"script": {"lang": "ts"}}],
+            "vue/block-lang": ["error", {"script": {"lang": "ts"}}],
+            "vue/component-api-style": ["error", ["script-setup"]],
             "vue/this-in-template": "error",
             "vue/block-order": ["error", {order: ["template", "script", "style"]}],
             "vue/enforce-style-attribute": ["warn", {"allow": ["scoped"]}],
@@ -56,9 +55,5 @@ export default defineConfig([
             "vue/enforce-style-attribute": "off",
         },
     },
-    {
-        files: [components("filter"), components("code")],
-        ignores: [components("code/components/tasks")],
-        rules: {"vue/component-api-style": ["error", ["script-setup"]]},
-    },
+
 ])

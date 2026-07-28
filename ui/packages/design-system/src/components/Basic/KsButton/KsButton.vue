@@ -1,6 +1,31 @@
 <template>
+    <KsTooltip
+        v-if="tooltip"
+        :content="tooltip"
+        v-bind="tooltipPlacement ? {placement: tooltipPlacement} : {}"
+    >
+        <ElButton
+            :aria-label="tooltip"
+            v-bind="({...filteredProps(), ...$attrs} as any)"
+            :class="{'is-square': square}"
+            @click="emit('click', $event)"
+            plain
+        >
+            <template v-if="$slots.default" #default>
+                <slot />
+            </template>
+            <template v-if="$slots.loading" #loading>
+                <slot name="loading" />
+            </template>
+            <template v-if="$slots.icon" #icon>
+                <slot name="icon" />
+            </template>
+        </ElButton>
+    </KsTooltip>
     <ElButton
+        v-else
         v-bind="({...filteredProps(), ...$attrs} as any)"
+        :class="{'is-square': square}"
         @click="emit('click', $event)"
         plain
     >
@@ -22,6 +47,7 @@
     import {ElButton} from "element-plus"
 
     import {useFilteredProps} from "../../../utils/filteredProps"
+    import KsTooltip from "../../Feedback/KsTooltip.vue"
 
     defineOptions({inheritAttrs: false})
 
@@ -29,7 +55,7 @@
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
         size?: "small" | "default" | "large" | ""
         disabled?: boolean
-        icon?: string | Component
+        icon?: string | object
         nativeType?: "button" | "submit" | "reset"
         loading?: boolean
         text?: boolean
@@ -38,8 +64,11 @@
         autofocus?: boolean
         round?: boolean
         circle?: boolean
+        square?: boolean
         color?: string
         tag?: string | Component
+        tooltip?: string
+        tooltipPlacement?: string
     }>()
 
     const emit = defineEmits<{
@@ -52,7 +81,7 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props)
+    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square"])
 </script>
 
 <style lang="scss">
@@ -93,8 +122,18 @@
         --kel-button-border-color: var(--ks-btn-secondary-border-default);
         --kel-button-disabled-text-color: var(--ks-text-inactive);
 
+        [class*="kel-icon"] + span {
+            margin-left: var(--ks-spacing-2);
+        }
+
         &.kel-button--small {
             border-radius: var(--kel-border-radius-small);
+        }
+
+        &.is-square {
+            aspect-ratio: 1;
+            padding-left: 0;
+            padding-right: 0;
         }
 
         &.is-plain:not(.is-text) {
@@ -124,7 +163,7 @@
 
             &.is-disabled {
                 background-color: var(--ks-btn-secondary-bg-inactive);
-                border: var(--ks-btn-secondary-border-inactive);
+                border-color: var(--ks-btn-secondary-border-inactive);
                 color: var(--ks-text-inactive);
             }
 
@@ -143,16 +182,30 @@
             }
         }
 
+        &.is-link {
+            --kel-button-text-color: var(--ks-text-secondary);
+            --kel-button-hover-link-text-color: var(--ks-text-primary);
+            --kel-button-active-color: var(--ks-text-primary);
+        }
+
         &.is-text {
             &:hover {
                 background-color: var(--ks-bg-hover);
-                border: 1px solid var(--ks-btn-secondary-border-hover);
+                /* Draw the hover ring with an inset shadow rather than a border: a border adds
+                   1px on each side and shifts surrounding layout, a shadow doesn't affect the box. */
+                box-shadow: inset 0 0 0 1px var(--ks-btn-secondary-border-hover);
             }
 
             &:active {
                 background-color: var(--ks-btn-secondary-bg-active);
-                border: 0;
+                box-shadow: none;
             }
+        }
+
+        &.kel-button--primary:not(.is-text):not(.is-link).is-disabled {
+            background-color: var(--ks-btn-primary-bg-inactive);
+            border-color: var(--ks-btn-primary-bg-inactive);
+            color: var(--ks-text-inactive);
         }
     }
 </style>

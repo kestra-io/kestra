@@ -22,6 +22,7 @@
         description?: string;
         breadcrumb?: KsBreadcrumbItem[];
         beta?: boolean;
+        hideMainIcon?: boolean;
     }>()
 
     const slots = useSlots()
@@ -35,6 +36,7 @@
         store.beta = !!props.beta
         store.hasTitleSlot = !!slots.title
         store.hasDescriptionSlot = !!slots.description
+        store.hideMainIcon = !!props.hideMainIcon
     })
 
     onMounted(() => {

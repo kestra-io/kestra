@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import io.kestra.core.metrics.MetricRegistry;
 
 import io.micrometer.core.instrument.Counter;
@@ -24,9 +26,13 @@ public final class MonitoredWorkerQueue<T> extends AbstractDelegateWorkerQueue<T
     private final Counter dequeuedCounter;
 
     public MonitoredWorkerQueue(MetricRegistry metricRegistry, String queueName, WorkerQueue<T> queue) {
+        this(metricRegistry, queueName, queue, ArrayUtils.EMPTY_STRING_ARRAY);
+    }
+
+    public MonitoredWorkerQueue(MetricRegistry metricRegistry, String queueName, WorkerQueue<T> queue, String... extraTags) {
         super(queue);
 
-        String[] tags = new String[] { "name", queueName };
+        String[] tags = ArrayUtils.addAll(new String[] { "name", queueName }, extraTags);
         metricRegistry.gauge(QUEUE_SIZE, "Current number of items in the queue", (Supplier<Integer>) this::size, tags);
         metricRegistry.gauge(QUEUE_REMAINING_CAPACITY, "Remaining capacity in the queue", (Supplier<Integer>) this::remainingCapacity, tags);
         this.enqueuedCounter = metricRegistry.counter(QUEUE_ENQUEUED, "Number of items enqueued", tags);

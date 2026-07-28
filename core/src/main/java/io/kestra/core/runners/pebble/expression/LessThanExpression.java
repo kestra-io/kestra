@@ -21,8 +21,10 @@ public class LessThanExpression extends BinaryExpression<Boolean> {
         try {
             return OperatorUtils.lt(left, right);
         } catch (Exception ex) {
-            throw new PebbleException(ex, "Could not perform less than comparisonPebb", this.getLineNumber(), self
-                .getName());
+            throw new PebbleException(
+                ex, "Could not perform less than comparisonPebb", this.getLineNumber(), self
+                    .getName()
+            );
         }
     }
 }

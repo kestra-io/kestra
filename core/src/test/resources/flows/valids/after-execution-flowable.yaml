@@ -1,0 +1,20 @@
+id: after-execution-flowable
+namespace: io.kestra.tests
+
+tasks:
+  - id: mytask
+    type: io.kestra.plugin.core.debug.Return
+    format: done
+
+afterExecution:
+  - id: after_if
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: after_if_log
+        type: io.kestra.plugin.core.log.Log
+        message: after execution if child ran
+
+  - id: after_end
+    type: io.kestra.plugin.core.log.Log
+    message: after execution following task ran

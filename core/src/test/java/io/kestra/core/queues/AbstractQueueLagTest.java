@@ -115,10 +115,10 @@ public abstract class AbstractQueueLagTest {
     }
 
     @MockBean
-    @Replaces(WorkerGroupMetaStore.class)
-    WorkerGroupMetaStore workerGroupExecutorInterface() {
-        WorkerGroupMetaStore workerGroupExecutorInterface = Mockito.mock(WorkerGroupMetaStore.class);
-        Mockito.when(workerGroupExecutorInterface.listAllWorkerGroupKeys()).thenReturn(
+    @Replaces(WorkerQueueMetaStore.class)
+    WorkerQueueMetaStore workerGroupExecutorInterface() {
+        WorkerQueueMetaStore workerGroupExecutorInterface = Mockito.mock(WorkerQueueMetaStore.class);
+        Mockito.when(workerGroupExecutorInterface.listAllWorkerQueueIds()).thenReturn(
             Set.of(TEST_CONSUMER_GROUP_NAME, NO_LAG_TEST_WORKER_GROUP_NAME)
         );
 

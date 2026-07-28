@@ -6,7 +6,7 @@
     </main>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import LeftMenu from "override/components/LeftMenu.vue"
     import Errors from "../errors/Errors.vue"
     import {useCoreStore} from "../../stores/core"
@@ -18,7 +18,7 @@
     const miscStore = useMiscStore()
     const error = computed(() => coreStore.error)
 
-    function onMenuCollapse(collapse) {
+    function onMenuCollapse(collapse: boolean) {
         document.getElementsByTagName("html")[0].classList.add(!collapse ? "menu-not-collapsed" : "menu-collapsed")
         document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed")
     }

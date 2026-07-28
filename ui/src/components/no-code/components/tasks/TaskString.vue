@@ -45,17 +45,16 @@
             disabled
             class="w-100 disabled-field"
         />
-        <Editor
+        <KsEditor
             v-else-if="pebble || !schema?.format"
+            v-bind="editorBindings"
             :modelValue="editorValue"
             :navbar="false"
-            :fullHeight="false"
-            :shouldFocus="false"
+            :options="{fullHeight: false, largeSuggestions: false}"
             schemaType="flow"
             :lang="`${editorLanguage}-pebble`"
-            input
+            inline
             @update:model-value="onInput"
-            :largeSuggestions="false"
             style="z-index: 1;"
         />
     </div>
@@ -64,11 +63,14 @@
     import {ref, computed, onMounted} from "vue"
     import $moment from "moment"
     import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue"
-    import Editor from "../../../../components/inputs/Editor.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../../../composables/useEditorBindings"
     import InputText from "../inputs/InputText.vue"
     import {Schema} from "./getTaskComponent"
 
     defineOptions({inheritAttrs: false})
+
+    const editorBindings = useEditorBindings()
 
     const props = defineProps<{
         disabled?: boolean;

@@ -84,6 +84,10 @@
         return Array.isArray(messages) ? messages : [messages]
     })
 
+    const isLargeNotification = computed(() => {
+        return items.value.length > 0 || (props.message.content?.message?.length ?? 0) > 100
+    })
+
     watch(route, () => {
         close()
     })
@@ -127,7 +131,7 @@
             type: props.message.variant || "error",
             duration: 0,
             dangerouslyUseHTMLString: true,
-            customClass: "error-notification kel-notification__large",
+            customClass: isLargeNotification.value ? "error-notification kel-notification__large" : "error-notification",
         })
     })
 </script>

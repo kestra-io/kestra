@@ -1,0 +1,4 @@
+id: invalid-draft-flow
+namespace: io.kestra.tests
+draft: true
+tasks: []

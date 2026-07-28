@@ -1,13 +1,15 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.VariableRenderer;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.util.Collections;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.VariableRenderer;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -70,22 +72,28 @@ class HourOfDayFunctionTest {
     @Test
     void plainDateThrows() {
         // Plain date strings have no time component
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ hourOfDay('2025-01-06') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ hourOfDay('2025-01-06') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void missingDateThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ hourOfDay() }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ hourOfDay() }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 
     @Test
     void invalidDateFormatThrows() {
-        assertThatThrownBy(() -> variableRenderer.render(
-            "{{ hourOfDay('not-a-date') }}", Collections.emptyMap()
-        )).isInstanceOf(IllegalVariableEvaluationException.class);
+        assertThatThrownBy(
+            () -> variableRenderer.render(
+                "{{ hourOfDay('not-a-date') }}", Collections.emptyMap()
+            )
+        ).isInstanceOf(IllegalVariableEvaluationException.class);
     }
 }

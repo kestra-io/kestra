@@ -5,6 +5,7 @@ import java.util.Map;
 import org.jooq.*;
 import org.jooq.Record;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.filters.*;
@@ -142,7 +143,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> regex(SelectConditionStep<Record> query, String field, Regex<F> filter) {
-        return query.and(field(field).likeRegex(filter.getValue()));
+        return query.and(regexCondition(field, filter));
     }
 
     @Override
@@ -156,8 +157,8 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition containsCondition(String field, Contains<F> filter) {
-        if (filter.getLabelKey() != null) {
-            return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getLabelKey(), filter.getValue())), QueryFilter.Op.EQUALS);
+        if (filter.getKey() != null) {
+            return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getKey(), filter.getValue())), QueryFilter.Op.EQUALS);
         }
 
         return field(field).contains(filter.getValue().toString());
@@ -224,6 +225,9 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition regexCondition(String field, Regex<F> filter) {
+        if (filter.getValue() == null) {
+            throw new InvalidQueryFiltersException("REGEX operation requires a non-null value");
+        }
         return field(field).likeRegex(filter.getValue());
     }
 

@@ -3,33 +3,57 @@
         :modelValue="val"
         @update:model-value="onInput"
         :state="isValid"
-        :min="schema.minimum"
-        :max="schema.maximum"
-        :step="schema.step"
+        :min="schema?.minimum as number | undefined"
+        :max="schema?.maximum as number | undefined"
+        :step="schema?.step as number | undefined"
         type="number"
         class="w-100"
     />
 </template>
 
-<script>
-    import Task from "./MixinTask"
-    export default {
-        mixins: [Task],
-        computed: {
-            isValid() {
-                if (this.required && this.modelValue === undefined) {
-                    return false
-                }
+<script setup lang="ts">
+    import {computed} from "vue"
+    import {collapseEmptyValues} from "../utils/collapseEmptyValues"
 
-                if (this.modelValue !== undefined) {
-                    return !isNaN(this.modelValue)
-                }
+    const props = withDefaults(defineProps<{
+        modelValue?: object | string | number | boolean | unknown[]
+        schema?: Record<string, unknown>
+        required?: boolean
+        task?: Record<string, unknown>
+        root?: string
+        definitions?: Record<string, unknown>
+    }>(), {
+        modelValue: undefined,
+        schema: undefined,
+        required: false,
+        task: undefined,
+        root: undefined,
+        definitions: undefined,
+    })
 
-                return true
-            },
-            val(){
-                return this.values ? parseInt(this.values.toString(), 10) : undefined
-            },
-        },
+    const emit = defineEmits<{
+        "update:modelValue": [value: unknown]
+    }>()
+
+    const values = computed(() => props.modelValue ?? (props.schema as Record<string, unknown> | undefined)?.default)
+
+    const isValid = computed(() => {
+        if (props.required && props.modelValue === undefined) {
+            return false
+        }
+
+        if (props.modelValue !== undefined) {
+            return !isNaN(props.modelValue as number)
+        }
+
+        return true
+    })
+
+    const val = computed(() => {
+        return values.value ? parseInt(values.value.toString(), 10) : undefined
+    })
+
+    function onInput(value: unknown) {
+        emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>

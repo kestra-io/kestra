@@ -30,7 +30,7 @@
         "@kestra-io/kestra-sdk": "*"
     },
     "devDependencies": {
-        "tsdown": "^0.22.0",
+        "tsdown": "^0.22.1",
         "ts-morph": "^28.0.0"
     },
     "dependencies": {

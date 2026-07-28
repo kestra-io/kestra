@@ -42,9 +42,23 @@ class AuthenticationFilterTest {
     private SettingRepositoryInterface settingRepository;
 
     @Test
-    void testConfigEndpointAlwaysOpen() {
+    void testConfigEndpointRequiresAuthentication() {
+        // GHSA fix follow-up: /api/v1/configs discloses sensitive instance metadata
+        // (version, commit id, queue type, plugin hash, ...) so it must no longer be
+        // reachable without valid credentials.
+        HttpClientResponseException httpClientResponseException = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"))
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void testLoginConfigEndpointAlwaysOpen() {
+        // Only the minimal login-config endpoint is public; the login/setup UI only needs
+        // isBasicAuthInitialized before the user is authenticated.
         var response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
+            .exchange(HttpRequest.GET("/api/v1/configs/login").basicAuth("anonymous", "hacker"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
 
@@ -53,7 +67,18 @@ class AuthenticationFilterTest {
         // GHSA-5vc5-wxxq-3fjx: prevent unauthorized access to APIs ending with /configs which are not the config endpoint
         HttpClientResponseException httpClientResponseException = assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/main/flows/namespace/configs").basicAuth("anonymous", "hacker"))
+                .exchange(HttpRequest.GET("/api/v1/main/flows/namespace/configs").basicAuth("anonymous", "hacker"))
+        );
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+    }
+
+    @Test
+    void loginConfigEndpointShouldBeCheckedExactly() {
+        // Same GHSA-5vc5-wxxq-3fjx class of bypass, applied to the new public /configs/login route:
+        // a deeper path merely ending with /configs/login must not be treated as the public endpoint.
+        HttpClientResponseException httpClientResponseException = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking()
+                .exchange(HttpRequest.GET("/api/v1/main/flows/namespace/configs/login").basicAuth("anonymous", "hacker"))
         );
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
     }
@@ -66,8 +91,10 @@ class AuthenticationFilterTest {
         try {
             HttpClientResponseException httpClientResponseException = assertThrows(
                 HttpClientResponseException.class, () -> client.toBlocking()
-                    .exchange(HttpRequest.POST("/api/v1/main/namespace/basicAuth", new BasicAuthCredentials(IdUtils.create(), "anonymous", "hacker"))
-                        .basicAuth("anonymous", "hacker"))
+                    .exchange(
+                        HttpRequest.POST("/api/v1/main/namespace/basicAuth", new BasicAuthCredentials(IdUtils.create(), "anonymous", "hacker"))
+                            .basicAuth("anonymous", "hacker")
+                    )
             );
             assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
         } finally {
@@ -166,7 +193,7 @@ class AuthenticationFilterTest {
     void shouldWorkWithoutPersistedConfiguration() {
         settingRepository.delete(Setting.builder().key(BASIC_AUTH_SETTINGS_KEY).build());
         var response = client.toBlocking()
-            .exchange(HttpRequest.GET("/api/v1/configs").basicAuth("anonymous", "hacker"));
+            .exchange(HttpRequest.GET("/api/v1/configs/login"));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
 

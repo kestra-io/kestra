@@ -1,4 +1,4 @@
-import {computed, onMounted, ref} from "vue"
+import {computed} from "vue"
 
 import {useRoute, useRouter} from "vue-router"
 import type {
@@ -11,7 +11,6 @@ import {useI18n} from "vue-i18n"
 
 import {useMiscStore} from "override/stores/misc"
 
-import {shouldShowWelcome} from "../../utils/welcomeGuard"
 
 // Main icons
 import AiMenuIcon from "../../components/ai/AiMenuIcon.vue"
@@ -32,7 +31,9 @@ import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue"
 import LockOutline from "vue-material-design-icons/LockOutline.vue"
 import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
 import Battery40 from "vue-material-design-icons/Battery40.vue"
+import Gauge from "vue-material-design-icons/Gauge.vue"
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue"
+import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue"
 import McpIcon from "../../components/McpIcon.vue"
 
 export type MenuItem = {
@@ -61,19 +62,6 @@ export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"})
 
     const configs = useMiscStore().configs
-    const showWelcomeLink = ref(false)
-
-    const loadWelcomeLink = async () => {
-        try {
-            showWelcomeLink.value = await shouldShowWelcome()
-        } catch {
-            showWelcomeLink.value = false
-        }
-    }
-
-    onMounted(() => {
-        void loadWelcomeLink()
-    })
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -108,9 +96,11 @@ export function useLeftMenu() {
     const menu = computed<MenuItem[]>(() => {
         const generated = [
             {
+                id: "workspace",
                 title: "Workspace",
                 child: [
                     {
+                        id: "dashboards",
                         title: t("dashboards.labels.plural"),
                         routes: routeStartWith("home"),
                         href: {
@@ -121,16 +111,18 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "ai-flow",
                         title: t("ai.flow.title"),
-                        routes: routeStartWith("welcome"),
+                        routes: routeStartWith("ai"),
                         href: {
-                            name: "welcome",
+                            name: "ai",
                         },
                         icon: {
                             element: AiMenuIcon,
                         },
                     },
                     {
+                        id: "flows",
                         title: t("flows"),
                         routes: routeStartWith("flows"),
                         href: {
@@ -141,6 +133,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "executions",
                         title: t("executions"),
                         routes: routeStartWith("executions"),
                         href: {
@@ -151,6 +144,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "logs",
                         title: t("logs"),
                         routes: routeStartWith("logs"),
                         href: {
@@ -161,6 +155,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "apps",
                         title: t("apps"),
                         routes: routeStartWith("apps"),
                         href: {
@@ -174,6 +169,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "tests",
                         title: t("demos.tests.label"),
                         routes: routeStartWith("tests"),
                         href: {
@@ -189,9 +185,11 @@ export function useLeftMenu() {
                 ],
             },
             {
+                id: "resources",
                 title: "Resources",
                 child: [
                     {
+                        id: "namespaces",
                         title: t("namespaces"),
                         routes: routeStartWith("namespaces"),
                         href: {
@@ -202,6 +200,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "assets",
                         title: t("demos.assets.label"),
                         routes: routeStartWith("assets"),
                         href: {
@@ -215,6 +214,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "plugins",
                         title: t("plugins.names"),
                         routes: routeStartWith("plugins"),
                         href: {
@@ -225,6 +225,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "blueprints",
                         title: t("blueprints.title"),
                         routes: routeStartWith("blueprints"),
                         href: {
@@ -241,9 +242,11 @@ export function useLeftMenu() {
                 ],
             },
             {
+                id: "tenant",
                 title: t("tenant.name"),
                 child: [
                     {
+                        id: "system-overview",
                         title: t("system overview"),
                         routes: routeStartWith("admin/stats"),
                         href: {
@@ -254,6 +257,21 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "policies",
+                        title: t("demos.policies.label"),
+                        routes: routeStartWith("admin/policies"),
+                        href: {
+                            name: "admin/policies",
+                        },
+                        icon: {
+                            element: ShieldCheckOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "kv",
                         title: t("kv.name"),
                         routes: routeStartWith("kv"),
                         href: {
@@ -264,6 +282,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "secrets",
                         title: t("secret.names"),
                         routes: routeStartWith("secrets"),
                         href: {
@@ -277,6 +296,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "triggers",
                         title: t("triggers"),
                         routes: routeStartWith("admin/triggers"),
                         href: {
@@ -287,6 +307,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "mcp-servers",
                         title: t("mcp.servers"),
                         routes: routeStartWith("admin/mcp-servers"),
                         href: {
@@ -297,6 +318,7 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "audit-logs",
                         title: t("auditlogs"),
                         routes: routeStartWith("admin/auditlogs"),
                         href: {
@@ -310,6 +332,21 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "quotas",
+                        title: t("quotas"),
+                        routes: routeStartWith("admin/quotas"),
+                        href: {
+                            name: "admin/quotas/list",
+                        },
+                        icon: {
+                            element: Gauge,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "concurrency-limits",
                         title: t("concurrency limits"),
                         routes: routeStartWith("admin/concurrency-limits"),
                         href: {
@@ -321,6 +358,7 @@ export function useLeftMenu() {
                         hidden: !configs?.isConcurrencyViewEnabled,
                     },
                     {
+                        id: "iam",
                         title: t("iam"),
                         routes: routeStartWith("admin/iam"),
                         href: {
@@ -338,7 +376,9 @@ export function useLeftMenu() {
         ]
 
         flatten(generated).forEach((item: MenuItem) => {
-            item.id = item.title.toLowerCase().replaceAll(" ", "-")
+            if (!item.id) {
+                item.id = item.title.toLowerCase().replaceAll(" ", "-")
+            }
 
             if (item.icon?.element) item.icon.class = "menu-icon"
 

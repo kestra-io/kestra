@@ -12,6 +12,7 @@ micronaut:
       ui:
         paths: classpath:ui
         mapping: /ui/**
+        enabled: ${kestra.webserver.ui.enabled:true}
       static:
         paths: classpath:static
         mapping: /static/**
@@ -53,6 +54,15 @@ micronaut:
           - /metrics/.+
           - /prometheus(\?.*)?
     http-version: HTTP_1_1
+  security:
+    filter:
+      enabled: false
+    csrf:
+      enabled: true
+      signature-key: ${kestra.encryption.secret-key:}
+      cookie-name: csrfToken
+      filter:
+        enabled: false
   caches:
     default:
       maximum-weight: 10485760
@@ -138,6 +148,18 @@ kestra:
     # Automatically loads all tutorial flows at startup.
     enabled: true
 
+  webserver:
+    # Browser security response headers, added to every HTTP response (UI and API).
+    # Set a value to "" to disable that single header, or security-headers.enabled to false to disable the whole filter.
+    security-headers:
+      enabled: true
+      frame-options: SAMEORIGIN
+      content-type-options: nosniff
+      referrer-policy: strict-origin-when-cross-origin
+      # content-security-policy: "default-src 'self'; ..." # tune for the UI before enforcing
+      # content-security-policy-report-only: true # report-only intermediate step
+      # strict-transport-security: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
+
   retries:
     attempts: 5
     multiplier: 2.0
@@ -197,16 +219,6 @@ kestra:
       max-poll-interval: 500ms
       poll-switch-interval: 60s
 
-    cleaner:
-      initial-delay: 1h
-      fixed-delay: 1h
-      retention: 7d
-      types:
-        - type: io.kestra.core.models.executions.LogEntry
-          retention: 1h
-        - type: io.kestra.core.models.executions.MetricEntry
-          retention: 1h
-
   plugins:
     repositories:
       central:
@@ -261,6 +273,12 @@ kestra:
 
   async-operations:
     wait-timeout: PT30S
+
+  tasks:
+    sdk:
+      authentication:
+        username: ${kestra.server.basic-auth.username:}
+        password: ${kestra.server.basic-auth.password:}
 
 otel:
   exclusions:

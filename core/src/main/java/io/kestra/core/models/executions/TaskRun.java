@@ -142,7 +142,9 @@ public class TaskRun implements TenantInterface {
 
     public TaskRun fail() {
         var attempt = TaskRunAttempt.builder().state(new State(State.Type.FAILED)).build();
-        List<TaskRunAttempt> newAttempts = this.attempts == null ? new ArrayList<>(1) : this.attempts;
+        // Copy defensively: this.attempts may be immutable (e.g. after deserialization), and fail()
+        // must return a new TaskRun without mutating the caller's list in place.
+        List<TaskRunAttempt> newAttempts = this.attempts == null ? new ArrayList<>(1) : new ArrayList<>(this.attempts);
         newAttempts.add(attempt);
 
         return new TaskRun(

@@ -1,15 +1,5 @@
 package io.kestra.jdbc.migration;
 
-import io.kestra.core.migration.MigrationHistoryStore;
-import io.kestra.core.migration.MigrationScript;
-import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.jdbc.DataSourceResolver;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -19,10 +9,23 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
 
+import javax.sql.DataSource;
+
+import io.kestra.core.migration.MigrationHistoryStore;
+import io.kestra.core.migration.MigrationScript;
+import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
+
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.jdbc.DataSourceResolver;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * JDBC implementation of {@link MigrationHistoryStore}.
  *
- * <p>Tracks applied migration scripts in the {@code kestra_migration_history} SQL table.
+ * <p>
+ * Tracks applied migration scripts in the {@code kestra_migration_history} SQL table.
  * Only active when the repository backend is JDBC-based (H2, MySQL, PostgreSQL).
  * Uses {@code @JdbcRepositoryEnabled} rather than {@code @Requires(beans = DataSource.class)}
  * to avoid activating when only a queue DataSource exists (e.g. ELS repository + H2 queue).
@@ -38,7 +41,7 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
 
     @Inject
     public JdbcMigrationHistoryStore(final DataSource dataSource,
-                                     @Nullable final DataSourceResolver dataSourceResolver) {
+        @Nullable final DataSourceResolver dataSourceResolver) {
         // Unwrap any Micronaut Data AOP proxy (ContextualConnectionInterceptor) so that
         // direct getConnection() calls work without requiring a @Connectable context.
         this.dataSource = dataSourceResolver != null ? dataSourceResolver.resolve(dataSource) : dataSource;
@@ -53,8 +56,10 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
 
     @Override
     public void bootstrapIfNeeded() throws SQLException {
-        try (Connection connection = dataSource.getConnection();
-             Statement stmt = connection.createStatement()) {
+        try (
+            Connection connection = dataSource.getConnection();
+            Statement stmt = connection.createStatement()
+        ) {
             prepareDatabase(connection, stmt);
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS %s (
@@ -80,9 +85,11 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
 
     @Override
     public boolean hasAnyApplied() throws SQLException {
-        try (Connection connection = dataSource.getConnection();
-             Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + HISTORY_TABLE)) {
+        try (
+            Connection connection = dataSource.getConnection();
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + HISTORY_TABLE)
+        ) {
             rs.next();
             return rs.getLong(1) > 0;
         }
@@ -90,9 +97,12 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
 
     @Override
     public boolean isApplied(final String scriptId) throws SQLException {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(
-                 "SELECT 1 FROM " + HISTORY_TABLE + " WHERE script_id = ? AND success = TRUE")) {
+        try (
+            Connection connection = dataSource.getConnection();
+            PreparedStatement ps = connection.prepareStatement(
+                "SELECT 1 FROM " + HISTORY_TABLE + " WHERE script_id = ? AND success = TRUE"
+            )
+        ) {
             ps.setString(1, scriptId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -105,9 +115,12 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
         if (script.checksum() == null) {
             return;
         }
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(
-                 "SELECT checksum FROM " + HISTORY_TABLE + " WHERE script_id = ?")) {
+        try (
+            Connection connection = dataSource.getConnection();
+            PreparedStatement ps = connection.prepareStatement(
+                "SELECT checksum FROM " + HISTORY_TABLE + " WHERE script_id = ?"
+            )
+        ) {
             ps.setString(1, script.scriptId());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -115,7 +128,7 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
                     if (!script.checksum().equals(stored)) {
                         throw new IllegalStateException(
                             ("Checksum mismatch for migration [%s]: stored=%s, current=%s. "
-                            + "Do not modify migration scripts after they have been applied.")
+                                + "Do not modify migration scripts after they have been applied.")
                                 .formatted(script.scriptId(), stored, script.checksum())
                         );
                     }
@@ -126,17 +139,34 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
 
     @Override
     public void markApplied(final MigrationScript script, final long executionMs) throws SQLException {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(
-                 "INSERT INTO " + HISTORY_TABLE
-                 + " (script_id, description, checksum, installed_on, execution_ms, success)"
-                 + " VALUES (?, ?, ?, ?, ?, TRUE)")) {
+        try (
+            Connection connection = dataSource.getConnection();
+            PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO " + HISTORY_TABLE
+                    + " (script_id, description, checksum, installed_on, execution_ms, success)"
+                    + " VALUES (?, ?, ?, ?, ?, TRUE)"
+            )
+        ) {
             ps.setString(1, script.scriptId());
             ps.setString(2, script.description());
             ps.setString(3, script.checksum());
             ps.setTimestamp(4, Timestamp.from(Instant.now()));
             ps.setLong(5, executionMs);
             ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public void updateChecksum(final MigrationScript script) throws SQLException {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(
+                 "UPDATE " + HISTORY_TABLE + " SET checksum = ? WHERE script_id = ? AND success = TRUE")) {
+            ps.setString(1, script.checksum());
+            ps.setString(2, script.scriptId());
+            int updated = ps.executeUpdate();
+            if (updated != 1) {
+                throw new IllegalStateException("Cannot repair checksum for unapplied migration [" + script.scriptId() + "].");
+            }
         }
     }
 
@@ -150,7 +180,7 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
         try (Connection connection = dataSource.getConnection()) {
             String historyTable = null;
             DatabaseMetaData meta = connection.getMetaData();
-            try (ResultSet rs = meta.getTables(null, null, null, new String[]{"TABLE"})) {
+            try (ResultSet rs = meta.getTables(null, null, null, new String[] { "TABLE" })) {
                 while (rs.next()) {
                     String name = rs.getString("TABLE_NAME");
                     if ("flyway_schema_history".equalsIgnoreCase(name)) {
@@ -171,8 +201,10 @@ public class JdbcMigrationHistoryStore implements MigrationHistoryStore {
             }
             // Micronaut-Flyway auto-creates an empty flyway_schema_history even when no migrations
             // are applied; treat it as a Flyway upgrade only if it actually has prior entries.
-            try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM " + quote + historyTable + quote);
-                 ResultSet rs = ps.executeQuery()) {
+            try (
+                PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM " + quote + historyTable + quote);
+                ResultSet rs = ps.executeQuery()
+            ) {
                 return rs.next() && rs.getInt(1) > 0;
             }
         }

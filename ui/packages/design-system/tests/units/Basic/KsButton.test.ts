@@ -71,6 +71,29 @@ describe("KsButton", () => {
         expect(wrapper.find(".kel-button.is-circle").exists()).toBe(true)
     })
 
+    test("square applies is-square class", () => {
+        const wrapper = mount(KsButton, {
+            props: {square: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button.is-square").exists()).toBe(true)
+    })
+
+    test("square is not forwarded as a DOM attribute", () => {
+        const wrapper = mount(KsButton, {
+            props: {square: true},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button").attributes("square")).toBeUndefined()
+    })
+
+    test("no is-square class without the square prop", () => {
+        const wrapper = mount(KsButton, {
+            global: globalConfig,
+        })
+        expect(wrapper.find(".is-square").exists()).toBe(false)
+    })
+
     test("emits click event when clicked", async () => {
         const wrapper = mount(KsButton, {
             slots: {default: "Click"},
@@ -104,5 +127,34 @@ describe("KsButton", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".kel-button.is-text").exists()).toBe(true)
+    })
+
+    test("tooltip prop renders the button and derives aria-label from it", () => {
+        const wrapper = mount(KsButton, {
+            props: {tooltip: "Delete"},
+            slots: {default: "x"},
+            global: globalConfig,
+        })
+        const button = wrapper.find(".kel-button")
+        expect(button.exists()).toBe(true)
+        expect(button.attributes("aria-label")).toBe("Delete")
+    })
+
+    test("without tooltip no aria-label is derived", () => {
+        const wrapper = mount(KsButton, {
+            slots: {default: "x"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button").attributes("aria-label")).toBeUndefined()
+    })
+
+    test("explicit aria-label overrides the tooltip-derived one", () => {
+        const wrapper = mount(KsButton, {
+            props: {tooltip: "Delete"},
+            attrs: {"aria-label": "Custom label"},
+            slots: {default: "x"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-button").attributes("aria-label")).toBe("Custom label")
     })
 })

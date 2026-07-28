@@ -8,7 +8,7 @@ export const usePluginFilter = (): ComputedRef<FilterConfiguration> => {
     return computed(() => {
         return {
             title: t("filter.titles.plugin_filters"),
-            searchPlaceholder: t("filter.search_placeholders.search_plugins", {count: 900}),
+            searchPlaceholder: t("filter.search_placeholders.search_plugins", {count: 1400}),
             keys: [],
         }
     })

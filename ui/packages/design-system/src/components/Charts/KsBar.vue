@@ -11,6 +11,7 @@
         :data="data"
         @echarts-mouseover="emit('echarts-mouseover', $event)"
         @echarts-mouseout="emit('echarts-mouseout', $event)"
+        @echarts-click="emit('echarts-click', $event)"
     />
 </template>
 
@@ -31,6 +32,7 @@
     const emit = defineEmits<{
         "echarts-mouseover": [params: unknown]
         "echarts-mouseout": [params: unknown]
+        "echarts-click": [params: unknown]
     }>()
 
     const props = withDefaults(
@@ -76,7 +78,7 @@
             grid: {left: "3%", right: "4%", bottom: "3%", containLabel: true},
             xAxis: {type: "category", data: props.categories},
             yAxis: {type: "value"},
-            tooltip: {trigger: "axis", axisPointer: {type: "shadow"}},
+            tooltip: {trigger: "axis", confine: true, axisPointer: {type: "shadow"}},
             legend: {},
             series: (props.data ?? []).map((s) => ({
                 type: "bar",

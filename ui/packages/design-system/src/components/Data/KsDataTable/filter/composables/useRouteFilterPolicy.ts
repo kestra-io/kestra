@@ -21,6 +21,18 @@ interface UseRouteFilterPolicyOptions<T> {
     readFromAppliedFilters?: (filters: AppliedFilter[]) => T | undefined;
     shouldSyncFromAppliedFilters?: (filters: AppliedFilter[], routeQuery: Record<string, any>) => boolean;
 }
+/**
+ * Compare two policy values by content, not identity. Policy values may be objects
+ * (e.g. the log level's {value, direction}); a reference check would never match two
+ * freshly-built objects and would fire a redundant `router.replace` on every sync.
+ */
+const isSameValue = <T>(a: T | undefined, b: T | undefined): boolean => {
+    if (a === b) return true
+    if (a == null || b == null) return false
+    if (typeof a !== "object" || typeof b !== "object") return false
+    return JSON.stringify(a) === JSON.stringify(b)
+}
+
 export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>) {
     const route = useRoute()
     const router = useRouter()
@@ -85,7 +97,7 @@ export function useRouteFilterPolicy<T>(options: UseRouteFilterPolicyOptions<T>)
             return
         }
 
-        if (value === routeValue.value && !hasUnsupportedRouteValue.value) {
+        if (isSameValue(value, routeValue.value) && !hasUnsupportedRouteValue.value) {
             return
         }
 

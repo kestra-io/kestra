@@ -1,0 +1,18 @@
+id: loopuntil-failed-flowable
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.LoopUntil
+    condition: "{{ outputs.loop.iterationCount < \"5\" }}"
+    checkFrequency:
+      interval: PT1S
+    tasks:
+      - id: loop_dag
+        type: io.kestra.plugin.core.flow.Dag
+        tasks:
+          - task:
+              id: log
+              type: io.kestra.plugin.core.log.Log
+              message: |
+                Iteration: {{ outputs.loop.iterationCount }}

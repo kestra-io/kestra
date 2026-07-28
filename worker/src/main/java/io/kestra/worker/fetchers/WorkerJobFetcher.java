@@ -1,16 +1,20 @@
 package io.kestra.worker.fetchers;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.protobuf.ByteString;
 
+import io.kestra.controller.GrpcChannelManager;
+import io.kestra.controller.config.GrpcConfiguration;
 import io.kestra.controller.grpc.WorkerConnectionInfo;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.controller.grpc.WorkerJobPayload;
@@ -18,7 +22,6 @@ import io.kestra.controller.grpc.WorkerJobRequest;
 import io.kestra.controller.grpc.WorkerJobResponse;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
-import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerJob;
@@ -31,6 +34,7 @@ import io.kestra.worker.queues.WorkerQueue;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.services.ExecutionKilledManager;
 
+import io.grpc.ConnectivityState;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.micronaut.core.annotation.Nullable;
@@ -40,21 +44,22 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Component responsible for fetching worker jobs using the pull/ack bidirectional streaming pattern.
+ * Component responsible for fetching worker jobs using a bidirectional streaming pattern
+ * with permit-based flow control.
  * <p>
  * This client:
  * <ul>
  * <li>Opens a bidirectional stream to the controller on startup</li>
- * <li>Sends initial connection info (workerId, workerGroup, maxConcurrency) + initial permits</li>
+ * <li>Sends initial connection info (workerId, workerGroupId, maxConcurrency) + initial permits</li>
  * <li>Receives jobs from the controller and puts them in the local queue</li>
- * <li>Sends ACKs for received jobs along with new permit requests</li>
+ * <li>Sends updated permit values back to the controller as local capacity changes</li>
+ * <li>Piggy-backs job completion signals (job UIDs that reached a terminal state) on
+ * the same stream so the controller can release the per-queue bucket reserved
+ * for the job — see {@link #onJobCompleted(String)}</li>
  * </ul>
  * <p>
  * The controller only sends jobs when the worker has permits (capacity), providing flow control
  * and preventing worker overload.
- * <p>
- * ACKs are "receipt ACKs" (not completion ACKs) - they signal that the job was received and
- * is queued locally, allowing the controller to clean up its in-memory tracking.
  */
 @Singleton
 @Slf4j
@@ -85,8 +90,10 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private static final long MAX_RECONNECT_DELAY_MS = Duration.ofSeconds(30).toMillis();
 
     private final WorkerControllerServiceStub workerControllerServiceStub;
+    private final GrpcChannelManager channelManager;
     private final WorkerQueueRegistry workerQueueRegistry;
     private final ExecutionKilledManager executionKilledManager;
+    private final GrpcConfiguration grpcConfiguration;
     private final BroadcastQueueInterface<ClusterEvent> clusterEventQueue;
     private final List<WorkerMetadataChangeHandler> metadataChangeHandlers;
 
@@ -94,7 +101,8 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private WorkerContext workerContext;
 
     /**
-     * Reference to the current stream's request observer for sending permits/acks.
+     * Reference to the current stream's request observer for sending permits and
+     * completion signals back to the controller.
      */
     private final AtomicReference<ClientCallStreamObserver<WorkerJobRequest>> requestObserverRef = new AtomicReference<>();
 
@@ -110,6 +118,22 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private final AtomicInteger lastSentPermits = new AtomicInteger(-1);
 
     /**
+     * Whether job intake is paused (maintenance mode or cordon). When {@code true},
+     * {@link #calculatePermits()} reports zero so the controller stops dispatching, while the
+     * stream and fetch loop stay alive. Toggled by {@link #pause()} / {@link #resume()}.
+     */
+    private final AtomicBoolean fetchingPaused = new AtomicBoolean(false);
+
+    /**
+     * UIDs of jobs that reached a terminal state on this worker and need to be
+     * signaled back to the owning controller on the next outgoing
+     * {@link WorkerJobRequest}. Drained into the {@code completedJobIds} field;
+     * a non-empty queue also triggers a permit-update flush so completions don't
+     * sit when permits aren't changing.
+     */
+    private final Queue<String> pendingCompletions = new ConcurrentLinkedQueue<>();
+
+    /**
      * Latch to detect when stream completes.
      */
     private volatile CountDownLatch streamCompleted;
@@ -121,6 +145,14 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private final AtomicLong currentReconnectDelayMs = new AtomicLong(MIN_RECONNECT_DELAY_MS);
 
     /**
+     * Whether the current stream's transport has been confirmed {@code READY}. Until then the
+     * reconnect backoff must NOT be reset: a buffered initial request does not prove a live
+     * connection, so resetting on send would flatten the backoff to the minimum on every
+     * failed attempt. Set back to {@code false} whenever a new stream is started.
+     */
+    private volatile boolean connectionConfirmed = false;
+
+    /**
      * Epoch-millisecond timestamp before which no reconnection attempt should be made.
      * Set in {@code onError()} and cleared on successful connection.
      */
@@ -130,27 +162,33 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      * Creates a new {@code WorkerJobFetcher} instance.
      *
      * @param workerControllerServiceStub the gRPC worker controller service stub.
+     * @param channelManager the shared gRPC channel manager, used to confirm a reconnection
+     *        only once the transport reaches {@code READY}.
      * @param workerQueueRegistry the worker queue registry.
      * @param executionKilledManager the execution killed manager.
      * @param clusterEventQueue the worker-local cluster-event broadcast queue used to relay events
-     *                          received from the controller to in-process subscribers. May be {@code null}
-     *                          when the process has direct access to the shared broadcast queue (see
-     *                          {@link #WORKER_LOCAL_CLUSTER_EVENTS}).
+     *        received from the controller to in-process subscribers. May be {@code null}
+     *        when the process has direct access to the shared broadcast queue (see
+     *        {@link #WORKER_LOCAL_CLUSTER_EVENTS}).
      * @param metadataChangeHandlers worker-side handlers invoked for each
-     *                               {@link WorkerBroadcastEvent.MetadataChangeEvent} received from the controller
-     *                               and on stream (re-)connection. Typically one handler per cached metastore;
-     *                               may be empty on workers that do not participate in metastore caching.
+     *        {@link WorkerBroadcastEvent.MetadataChangeEvent} received from the controller
+     *        and on stream (re-)connection. Typically one handler per cached metastore;
+     *        may be empty on workers that do not participate in metastore caching.
      */
     @Inject
     public WorkerJobFetcher(final WorkerControllerServiceStub workerControllerServiceStub,
+        final GrpcChannelManager channelManager,
         final WorkerQueueRegistry workerQueueRegistry,
         final ExecutionKilledManager executionKilledManager,
         @Nullable @Named(WORKER_LOCAL_CLUSTER_EVENTS) final BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
-        final List<WorkerMetadataChangeHandler> metadataChangeHandlers) {
+        final List<WorkerMetadataChangeHandler> metadataChangeHandlers,
+        final GrpcConfiguration grpcConfiguration) {
         super(WorkerJobFetcher.class.getSimpleName());
         this.workerQueueRegistry = workerQueueRegistry;
         this.workerControllerServiceStub = workerControllerServiceStub;
+        this.channelManager = channelManager;
         this.executionKilledManager = executionKilledManager;
+        this.grpcConfiguration = grpcConfiguration;
         this.clusterEventQueue = clusterEventQueue;
         this.metadataChangeHandlers = metadataChangeHandlers;
     }
@@ -163,6 +201,53 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     public synchronized void init(final WorkerContext workerContext) {
         this.workerJobQueue = workerQueueRegistry.getOrCreate(workerContext, WorkerJob.class);
         this.workerContext = workerContext;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Pauses job intake <em>without</em> parking the fetch loop or tearing down the stream: the
+     * worker advertises zero permits so the controller stops dispatching, while the long-lived
+     * stream keeps delivering kill commands, metadata changes, the cluster-event relay (including
+     * the uncordon that lifts this pause on a dedicated worker) and completion signals. In-flight
+     * jobs continue running. Unlike {@link WorkerLoop#pause()} the loop thread is never blocked, so
+     * reconnect/backoff stays active while paused.
+     */
+    @Override
+    public void pause() {
+        if (fetchingPaused.compareAndSet(false, true)) {
+            // Tell the controller we have no capacity now; otherwise it keeps dispatching up to the
+            // last advertised permit level. If the stream isn't connected yet, calculatePermits()
+            // reports zero on the next outgoing request (the initial request on connect).
+            ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+            if (observer != null && lastSentPermits.get() >= 0) {
+                sendPermits(observer, calculatePermits());
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Resumes job intake by re-advertising the worker's current remaining capacity. No-op when the
+     * fetcher is already stopping.
+     */
+    @Override
+    public void resume() {
+        if (fetchingPaused.compareAndSet(true, false) && isRunning()) {
+            ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+            if (observer != null && lastSentPermits.get() >= 0) {
+                sendPermits(observer, calculatePermits());
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isPaused() {
+        return fetchingPaused.get();
     }
 
     /**
@@ -190,6 +275,13 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             return;
         }
 
+        // Confirm the connection only once the transport actually reaches READY — not when the
+        // initial request was merely enqueued. onNext() buffers without proving a live connection,
+        // so resetting the backoff on send would flatten it to the minimum on every failed attempt.
+        if (!connectionConfirmed && channelManager.getState(false) == ConnectivityState.READY) {
+            confirmConnection();
+        }
+
         // Check if capacity has changed and send permit update if needed
         sendPermitUpdateIfNeeded();
     }
@@ -200,6 +292,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private void startStream() {
         // Reset state for new connection
         lastSentPermits.set(-1);
+        connectionConfirmed = false;
         streamCompleted = new CountDownLatch(1);
 
         ClientResponseObserver<WorkerJobRequest, WorkerJobResponse> responseObserver = new ClientResponseObserver<>() {
@@ -258,8 +351,12 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     private void sendInitialRequest(ClientCallStreamObserver<WorkerJobRequest> requestStream) {
         int initialPermits = calculatePermits();
 
-        // workerGroup is optional - use empty string for default group
-        final String workerGroup = workerContext.workerGroup();
+        String workerGroupId = workerContext.workerGroupId();
+
+        // Advertise the worker's true maximum in-flight capacity: threads currently
+        // executing plus jobs pending in the buffer. Controller bases its reservation
+        // math (guaranteedCapacity / sharedCapacity) on this value.
+        int maxConcurrency = workerContext.workerThreads() + workerJobQueue.capacity();
 
         WorkerJobRequest.Builder requestBuilder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
@@ -267,31 +364,52 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             .setConnectionInfo(
                 WorkerConnectionInfo.newBuilder()
                     .setWorkerId(workerContext.workerId())
-                    .setWorkerGroup(workerGroup == null ? "" : workerGroup)
-                    .setMaxConcurrency(workerContext.workerThreads())
+                    .setWorkerGroupId(workerGroupId)
+                    .setMaxConcurrency(maxConcurrency)
+                    .setMaxInboundMessageSize(grpcConfiguration.maxInboundMessageSize())
                     .build()
             );
+        addPendingCompletions(requestBuilder);
 
         doSend(requestStream, requestBuilder.build());
-        lastSentPermits.set(initialPermits);
-        // Connection established - reset backoff so the next disconnection starts from the minimum delay
-        currentReconnectDelayMs.set(MIN_RECONNECT_DELAY_MS);
-        reconnectNotBefore.set(0L);
+        // NOTE: the backoff is NOT reset here. Enqueuing the initial request does not prove the
+        // transport is live, so the reset is deferred to confirmConnection(), invoked once the
+        // channel reaches READY (see doOnLoop()).
+    }
+
+    /**
+     * Marks the current stream as connected once the channel transport has reached
+     * {@code READY}. Resets the reconnect backoff so the next disconnection starts from the
+     * minimum delay, and notifies metadata-change handlers of the (re-)connection.
+     */
+    void confirmConnection() {
+        connectionConfirmed = true;
+        resetBackoff();
         log.info(
             "Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
             workerContext.workerId(),
-            WorkerGroup.forLog(workerGroup),
-            workerContext.workerThreads(),
-            initialPermits
+            workerContext.workerGroupId(),
+            workerContext.workerThreads() + workerJobQueue.capacity(),
+            calculatePermits()
         );
         for (WorkerMetadataChangeHandler handler : metadataChangeHandlers) {
             try {
                 handler.onReconnect();
             } catch (Exception e) {
-                log.warn("Metadata-change handler {} failed onReconnect: {}",
-                    handler.getClass().getSimpleName(), e.getMessage());
+                log.warn(
+                    "Metadata-change handler {} failed onReconnect: {}",
+                    handler.getClass().getSimpleName(), e.getMessage()
+                );
             }
         }
+    }
+
+    /**
+     * Resets the reconnect backoff to the minimum delay. Package-private for testing.
+     */
+    void resetBackoff() {
+        currentReconnectDelayMs.set(MIN_RECONNECT_DELAY_MS);
+        reconnectNotBefore.set(0L);
     }
 
     /**
@@ -313,7 +431,7 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             }
         }
 
-        List<String> acks = new ArrayList<>();
+        int receivedJobs = 0;
         for (WorkerJobPayload payload : response.getJobsList()) {
             try {
                 String jobId = payload.getJobId();
@@ -323,19 +441,17 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
 
                 // Put job in local queue (blocking if full - provides local backpressure)
                 workerJobQueue.put(job);
-
-                // Collect ACK for this job (receipt acknowledgment)
-                acks.add(jobId);
+                receivedJobs++;
 
             } catch (Exception e) {
                 log.error("Error processing job payload: {}", e.getMessage(), e);
             }
         }
 
-        // Send ACKs and request more permits based on remaining capacity
-        // Only send if there were jobs (event-only responses don't need permit updates)
-        if (!acks.isEmpty()) {
-            sendPermitsAndAcks(observer, calculatePermits(), acks);
+        // After buffering jobs, push an updated permit value back. Event-only
+        // responses don't need this update.
+        if (receivedJobs > 0) {
+            sendPermitsForReceivedJobs(observer, calculatePermits(), receivedJobs);
         }
     }
 
@@ -359,16 +475,20 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
             }
             case WorkerBroadcastEvent.MetadataChangeEvent metadataChange -> {
                 if (!metadataChangeHandlers.isEmpty()) {
-                    log.debug("Received metadata change via gRPC: type={}, tenantId={}, namespace={}",
+                    log.debug(
+                        "Received metadata change via gRPC: type={}, tenantId={}, namespace={}",
                         metadataChange.payload().type(),
                         metadataChange.payload().tenantId(),
-                        metadataChange.payload().namespace());
+                        metadataChange.payload().namespace()
+                    );
                     for (WorkerMetadataChangeHandler handler : metadataChangeHandlers) {
                         try {
                             handler.onMetadataChange(metadataChange.payload());
                         } catch (Exception e) {
-                            log.warn("Metadata-change handler {} failed: {}",
-                                handler.getClass().getSimpleName(), e.getMessage());
+                            log.warn(
+                                "Metadata-change handler {} failed: {}",
+                                handler.getClass().getSimpleName(), e.getMessage()
+                            );
                         }
                     }
                 }
@@ -377,34 +497,39 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
     }
 
     /**
-     * Sends permits and ACKs to the controller.
+     * Sends an updated permit value after buffering jobs received from the controller,
+     * piggy-backing any pending completion signals.
      */
-    private void sendPermitsAndAcks(ClientCallStreamObserver<WorkerJobRequest> observer, int permits, List<String> acks) {
-        WorkerJobRequest request = WorkerJobRequest.newBuilder()
+    private void sendPermitsForReceivedJobs(ClientCallStreamObserver<WorkerJobRequest> observer, int permits, int receivedJobs) {
+        WorkerJobRequest.Builder builder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
-            .setPermits(permits)
-            .addAllAcknowledgedJobIds(acks)
-            .build();
+            .setPermits(permits);
+        int completions = addPendingCompletions(builder);
 
         try {
-            doSend(observer, request);
-            lastSentPermits.set(permits);
-            log.trace("Sent permits={}, acks={}", permits, acks.size());
+            doSend(observer, builder.build());
+            log.trace("Sent permits={}, receivedJobs={}, completions={}", permits, receivedJobs, completions);
         } catch (Exception e) {
-            log.error("Error sending permits/acks: {}", e.getMessage());
+            log.error("Error sending permits: {}", e.getMessage());
         }
     }
 
     /**
      * Calculates the number of permits to request based on local queue remaining capacity.
+     * <p>
+     * Reports zero while intake is paused (maintenance / cordon) so every outgoing request — the
+     * initial request on (re)connect, periodic updates and completion piggy-backs — advertises no
+     * capacity and the controller stops dispatching. In-flight jobs still drain normally.
      */
     private int calculatePermits() {
-        return workerJobQueue.remainingCapacity();
+        return fetchingPaused.get() ? 0 : workerJobQueue.remainingCapacity();
     }
 
     /**
-     * Sends a permit update to the controller if capacity has changed since last send.
-     * This ensures the controller is notified when jobs complete and capacity becomes available.
+     * Sends a permit update to the controller if capacity has changed since last
+     * send or if there are pending completion notifications to flush. The completion
+     * piggy-back ensures terminal-state signals don't sit indefinitely when permits
+     * happen to be stable.
      */
     private void sendPermitUpdateIfNeeded() {
         ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
@@ -415,25 +540,64 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
         int currentPermits = calculatePermits();
         int lastPermits = lastSentPermits.get();
 
-        // Only send if permits have changed
-        if (currentPermits != lastPermits) {
+        if (currentPermits != lastPermits || !pendingCompletions.isEmpty()) {
             sendPermits(observer, currentPermits);
         }
+    }
+
+    /**
+     * Records a terminal-state signal for {@code jobId} and flushes it to the owning
+     * controller immediately when the stream is connected. The controller uses this to
+     * release the per-queue bucket slot reserved for the job, so reservations hold across
+     * the whole job lifetime instead of only until receipt.
+     * <p>
+     * Flushing on completion — rather than waiting for the next {@link #PERMIT_CHECK_INTERVAL}
+     * loop tick — removes up to that interval of dead time before the controller can dispatch
+     * the next task gated by the same per-queue bucket. If the stream is not currently
+     * connected, or its initial connection-info request has not been sent yet (the controller
+     * rejects any other first message), the signal stays queued and is flushed by the next
+     * outgoing request (the initial request on reconnect, or the permit tick).
+     */
+    public void onJobCompleted(String jobId) {
+        if (jobId == null || jobId.isEmpty()) {
+            return;
+        }
+        pendingCompletions.offer(jobId);
+
+        // lastSentPermits is reset to -1 before a new stream's observer is published and only
+        // becomes >= 0 once its initial request was sent, so this gate cannot race a reconnect.
+        ClientCallStreamObserver<WorkerJobRequest> observer = requestObserverRef.get();
+        if (observer != null && lastSentPermits.get() >= 0) {
+            sendPermits(observer, calculatePermits());
+        }
+    }
+
+    /**
+     * Drains {@link #pendingCompletions} into the request builder and returns the
+     * number of completions appended. Safe to call when the queue is empty (no-op).
+     */
+    private int addPendingCompletions(WorkerJobRequest.Builder builder) {
+        int added = 0;
+        String jobId;
+        while ((jobId = pendingCompletions.poll()) != null) {
+            builder.addCompletedJobIds(jobId);
+            added++;
+        }
+        return added;
     }
 
     /**
      * Sends permits to the controller and updates the last sent value.
      */
     private void sendPermits(ClientCallStreamObserver<WorkerJobRequest> observer, int permits) {
-        WorkerJobRequest request = WorkerJobRequest.newBuilder()
+        WorkerJobRequest.Builder builder = WorkerJobRequest.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
-            .setPermits(permits)
-            .build();
+            .setPermits(permits);
+        int completions = addPendingCompletions(builder);
 
         try {
-            doSend(observer, request);
-            lastSentPermits.set(permits);
-            log.debug("Sent permit update: permits={}", permits);
+            doSend(observer, builder.build());
+            log.debug("Sent permit update: permits={}, completions={}", permits, completions);
         } catch (Exception e) {
             log.error("Error sending permit update: {}", e.getMessage());
         }
@@ -443,20 +607,25 @@ public class WorkerJobFetcher extends WorkerLoop implements JobFetcher {
      * Records the current backoff delay as the reconnection deadline, then doubles the delay
      * for the next failure, capped at {@link #MAX_RECONNECT_DELAY_MS}.
      */
-    private void scheduleReconnectBackoff() {
+    long scheduleReconnectBackoff() {
         long backoffMs = currentReconnectDelayMs.get();
         currentReconnectDelayMs.set(Math.min(currentReconnectDelayMs.get() * 2, MAX_RECONNECT_DELAY_MS));
         reconnectNotBefore.set(System.currentTimeMillis() + backoffMs);
         log.debug("Stream error, will reconnect in {}ms", backoffMs);
+        return backoffMs;
     }
 
     private void doSend(ClientCallStreamObserver<WorkerJobRequest> observer, WorkerJobRequest request) {
         synchronized (streamLock) {
             try {
                 observer.onNext(request);
+                // Recorded under the lock so the last value sent on the wire and the last value
+                // recorded cannot diverge when multiple threads send concurrently.
+                lastSentPermits.set(request.getPermits());
             } catch (IllegalStateException e) {
                 log.warn("Stream cancelled, will reconnect: {}", e.getMessage());
-                requestObserverRef.set(null);
+                // CAS so a sender holding a stale observer cannot clobber a newer stream's observer.
+                requestObserverRef.compareAndSet(observer, null);
             }
         }
     }

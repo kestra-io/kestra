@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "esnext",
-        "lib": ["es2023", "DOM"],
+        "lib": ["es2023", "DOM", "DOM.Iterable"],
         "moduleDetection": "force",
         "module": "preserve",
         "moduleResolution": "bundler",
@@ -12,6 +12,7 @@
         "declaration": true,
         "emitDeclarationOnly": true,
         "outDir": "./node_modules/.tmp/types",
+        "tsBuildInfoFile": "./node_modules/.tmp/types/tsconfig.app.tsbuildinfo",
         "esModuleInterop": true,
         "isolatedModules": true,
         "verbatimModuleSyntax": true,

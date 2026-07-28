@@ -18,6 +18,8 @@ export interface Tab {
     component: Component;
     props?: Record<string, any>;
     count?: number;
+    blueprintDetail?: boolean;
+    fullContainer?: boolean;
 }
 
 export interface Breadcrumb {
@@ -48,8 +50,9 @@ export const ORDER = [
     "credentials",
     "assets",
     "variables",
-    "plugin-defaults",
+    "policies",
     "kv",
+    "reusable-inputs",
     "files",
     "history",
     "audit-logs",
@@ -86,7 +89,8 @@ export function useHelpers() {
                 name: "blueprints",
                 title: t("blueprints.title"),
                 component: BlueprintsBrowser,
-                props: {tab: "community", system: true},
+                props: {tab: "community", system: true, embed: true},
+                blueprintDetail: true,
             },
         ]
             : []),
@@ -103,8 +107,11 @@ export function useHelpers() {
             props: {
                 namespace: namespace.value,
                 topbar: false,
+                fitHeight: true,
                 defaultScopeFilter: false,
+                embed: true,
             },
+            fullContainer: true,
         },
         {
             name: "executions",
@@ -113,10 +120,12 @@ export function useHelpers() {
             props: {
                 namespace: namespace.value,
                 topbar: false,
+                fitHeight: true,
                 visibleCharts: true,
-                embed: false,
+                embed: true,
                 defaultScopeFilter: false,
             },
+            fullContainer: true,
         },
         {
             name: "dependencies",

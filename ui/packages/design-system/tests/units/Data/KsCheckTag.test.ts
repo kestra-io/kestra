@@ -51,4 +51,34 @@ describe("KsCheckTag", () => {
         await wrapper.find(".kel-check-tag").trigger("click")
         expect(wrapper.emitted("change")).toBeTruthy()
     })
+
+    test("pill prop applies kel-check-tag--pill class", () => {
+        const wrapper = mount(KsCheckTag, {
+            props: {pill: true},
+            slots: {default: "Pill"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-check-tag--pill").exists()).toBe(true)
+    })
+
+    test("renders icon slot content", () => {
+        const wrapper = mount(KsCheckTag, {
+            slots: {
+                default: "With icon",
+                icon: "<svg data-test=\"icon\"></svg>",
+            },
+            global: globalConfig,
+        })
+        const iconWrapper = wrapper.find(".kel-check-tag__icon")
+        expect(iconWrapper.exists()).toBe(true)
+        expect(iconWrapper.find("[data-test=\"icon\"]").exists()).toBe(true)
+    })
+
+    test("does not render icon wrapper when no icon slot is provided", () => {
+        const wrapper = mount(KsCheckTag, {
+            slots: {default: "No icon"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-check-tag__icon").exists()).toBe(false)
+    })
 })

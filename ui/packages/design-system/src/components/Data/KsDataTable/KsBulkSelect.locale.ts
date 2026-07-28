@@ -1,4 +1,4 @@
-export default  {
+export default {
     en: {
         selected: "<strong>{count}</strong> selected",
         all: "Select all ({count})",

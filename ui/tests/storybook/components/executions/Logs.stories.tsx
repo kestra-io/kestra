@@ -72,8 +72,15 @@ function makeDecorators() {
                 executionsStore.execution = FAKE_EXECUTION as any;
 
                 (executionsStore as any).loadLogs = async ({params}: {executionId: string; params?: Record<string, any>}) => {
-                    const minLevel = params?.minLevel ?? "TRACE";
-                    const filtered = filteredByMinLevel(FAKE_LOGS, minLevel);
+                    const gte = params?.["filters[level][GREATER_THAN_OR_EQUAL_TO]"];
+                    const lte = params?.["filters[level][LESS_THAN_OR_EQUAL_TO]"];
+                    let filtered: typeof FAKE_LOGS;
+                    if (lte) {
+                        const maxIdx = LEVEL_ORDER.indexOf(lte as Level);
+                        filtered = FAKE_LOGS.filter(log => LEVEL_ORDER.indexOf(log.level as Level) >= maxIdx);
+                    } else {
+                        filtered = filteredByMinLevel(FAKE_LOGS, (gte as string) ?? "TRACE");
+                    }
                     executionsStore.logs = filtered as any;
                     return filtered;
                 };
@@ -122,19 +129,25 @@ export const LevelFilterUpdatesRoute: Story = {
             {timeout: 5000}
         );
 
-        // 2. Open the filter chip popup.
+        // 2. Open the filter chip popup and grab the value combobox.
+        //    The comparator (≥/≤) now renders as a segmented control in the
+        //    popup header (not a combobox), so the value select (.select-panel)
+        //    is the only combobox; scope to it to drive the level value.
         const combobox = await waitFor(
             async () => {
                 const chip = canvasElement.querySelector<HTMLElement>(".chip");
                 if (!chip) throw new Error("filter chip not found");
 
-                const popup = iframeBody.querySelector(".edit-popup");
+                const popup = iframeBody.querySelector<HTMLElement>(".edit-popup");
                 if (!popup) {
                     await userEvent.click(chip);
                     throw new Error("popup not yet open, retrying");
                 }
 
-                const cb = within(iframeBody).queryByRole("combobox");
+                const valuePanel = popup.querySelector<HTMLElement>(".select-panel");
+                if (!valuePanel) throw new Error("value select panel not yet rendered in popup");
+
+                const cb = within(valuePanel).queryByRole("combobox");
                 if (!cb) throw new Error("combobox not yet rendered in popup");
                 return cb;
             },
@@ -149,14 +162,8 @@ export const LevelFilterUpdatesRoute: Story = {
         );
         await userEvent.click(warnOption);
 
-        // 4. Click "Apply" to commit.
-        const applyBtn = await waitFor(
-            () => within(iframeBody).getByRole("button", {name: /^apply$/i}),
-            {timeout: 3000}
-        );
-        await userEvent.click(applyBtn);
-
-        // 5. Chip label must update to WARN.
+        // 4. Selecting the value applies live (the Apply button was removed) —
+        //    the chip label updates to WARN on its own.
         await waitFor(
             () => {
                 const valueEl = canvasElement.querySelector(".chip .value");

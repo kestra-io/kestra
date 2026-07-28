@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, h, defineComponent, type Component} from "vue"
+    import {ref, computed, useAttrs, onMounted, onBeforeUnmount, watch, h, defineComponent, toHandlers, type Component} from "vue"
     import {useRoute} from "vue-router"
     import EnterpriseBadge from "./EnterpriseBadge.vue"
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
@@ -47,7 +47,14 @@
 
     export interface Tab extends RouterTab {
         locked?: boolean;
+        /**
+         * When true, the tab's content section gets the full-container layout
+         * (bounded flex height) instead of the default scrolling container —
+         * for tabs hosting a full-page listing (e.g. KsDataTable with fitHeight).
+         */
+        fullContainer?: boolean;
         props?: any;
+        blueprintDetail?: boolean;
     }
 
     const props = withDefaults(defineProps<{
@@ -119,7 +126,7 @@
     }
 
     const containerClass = computed(() => {
-        if (activeTab.value?.locked) return {"px-0": true, "full-container": true}
+        if (activeTab.value?.locked || activeTab.value?.fullContainer) return {"px-0": true, "full-container": true}
         return {"container": true, "tabs-flush-top": true}
     })
 
@@ -142,6 +149,10 @@
         {deep: true},
     )
 
+    watch(activeTab, () => {
+        selectedBlueprintId.value = undefined
+    })
+
     onMounted(syncStore)
     onBeforeUnmount(() => routeTabsStore.clearTabsIfOwner(tabsOwnerId))
 
@@ -159,16 +170,16 @@
                         combinedView: true,
                         kind: tab?.props?.blueprintKind,
                         embed: tab?.props?.embed ?? true,
+                        system: tab?.props?.system ?? false,
                     })
                 }
                 if (!tab || !(isEditorActiveTab(tab) || tab.component)) return null
                 return h(tab.component as Component, {
                     ...tab.props,
                     ...attrsWithoutClass.value,
-                    ...tab["v-on"],
+                    ...toHandlers(tab["v-on"] ?? {}),
                     namespace: getNamespaceToForward(tab),
-                    embed: tab.props?.embed ?? true,
-                    onGoToDetail: (id: string) => (selectedBlueprintId.value = id),
+                    ...(tab.blueprintDetail ? {onGoToDetail: (id: string) => (selectedBlueprintId.value = id)} : {}),
                 })
             }
         },
@@ -180,6 +191,8 @@
         margin: 0 !important;
         padding: 0;
         flex-grow: 1;
+        min-height: 0;
+        overflow: hidden;
     }
 
     section.no-overflow {
@@ -204,6 +217,7 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        font-weight: var(--ks-font-weight-regular);
     }
 
     .inline-badge {

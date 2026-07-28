@@ -1,6 +1,6 @@
 <template>
     <component :is="component" :icon="Server" @click="visible = !visible">
-        <span v-if="component !== 'el-button'">
+        <span v-if="component !== 'KsButton'">
             {{ $t("worker information") }}
         </span>
 

@@ -16,15 +16,18 @@ import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.UnsupportedMessageException;
 import io.kestra.core.runners.*;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
+import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
+import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 
 import io.grpc.stub.ServerCallStreamObserver;
@@ -57,6 +60,12 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     @Inject
     private WorkerJobDispatcher workerJobDispatcher;
+
+    @Inject
+    private WorkerQueueResolver workerQueueResolver;
+
+    @Inject
+    private WorkerCapacityPolicyFactory workerCapacityPolicyFactory;
 
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
@@ -107,14 +116,23 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
                     WorkerConnectionInfo connInfo = request.getConnectionInfo();
                     String workerId = connInfo.getWorkerId();
-                    // WorkerGroup is optional - use null/empty for default group
-                    String workerGroup = connInfo.getWorkerGroup();
+                    String workerGroupId = connInfo.getWorkerGroupId();
                     int maxConcurrency = connInfo.getMaxConcurrency();
 
-                    log.info("Worker [{}] connected for, group='{}', maxConcurrency={}", workerId, WorkerGroup.forLog(workerGroup), maxConcurrency);
+                    // Resolve group subscriptions from the worker group
+                    List<QueueSubscription> subscriptions = workerQueueResolver.resolve(workerGroupId);
+                    log.info(
+                        "Worker [{}] connected, workerGroup='{}', subscriptions={}, maxConcurrency={}",
+                        workerId, workerGroupId, subscriptions, maxConcurrency
+                    );
 
-                    // Create context for this worker stream
-                    WorkerStreamContext<WorkerJobResponse> context = new WorkerStreamContext<>(workerId, workerGroup, maxConcurrency, responseObserver);
+                    // Create context for this worker stream with the deployment-specific
+                    // capacity policy supplied by the factory bean.
+                    WorkerCapacityPolicy capacityPolicy = workerCapacityPolicyFactory.create(maxConcurrency, subscriptions);
+                    WorkerStreamContext<WorkerJobResponse> context = new WorkerStreamContext<>(
+                        workerId, workerGroupId, subscriptions, maxConcurrency, responseObserver, capacityPolicy
+                    );
+                    context.setMaxInboundMessageSize(connInfo.getMaxInboundMessageSize());
                     contextRef.set(context);
 
                     // Register with dispatcher
@@ -130,17 +148,23 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     return;
                 }
 
-                // Process permits
-                int permits = request.getPermits();
-                if (permits > 0) {
-                    workerJobDispatcher.onPermitsReceived(context, permits);
+                // Process completion notifications BEFORE permits so freed bucket
+                // slots are visible before pause/resume is evaluated against the
+                // new permit count. Otherwise a fully-utilized worker that
+                // completes jobs in the same message risks being paused even
+                // though capacity is now available.
+                List<String> completions = request.getCompletedJobIdsList();
+                if (!completions.isEmpty()) {
+                    workerJobDispatcher.onCompletionsReceived(context, completions);
                 }
 
-                // Process ACKs
-                List<String> acks = request.getAcknowledgedJobIdsList();
-                if (!acks.isEmpty()) {
-                    workerJobDispatcher.onAcksReceived(context, acks);
-                }
+                // Process permits. The worker advertises its total remaining capacity as a level,
+                // so zero is meaningful: it means "stop dispatching to me" — queue full, or intake
+                // paused for maintenance / cordon. onPermitsReceived pauses the worker's
+                // subscriptions when capacity reaches zero (and ignores negatives), so it must not
+                // be gated out here.
+                int permits = request.getPermits();
+                workerJobDispatcher.onPermitsReceived(context, permits);
             }
 
             @Override
@@ -219,18 +243,38 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             var evaluation = workerTriggerResult.evaluation();
 
             switch (workerTriggerResult.type()) {
-                case POLLING -> triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
+                case POLLING -> {
+                    triggerEventQueue.send(new TriggerEvaluated(workerTriggerResult.id(), evaluation));
+                    workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
+                }
                 case REALTIME -> {
                     if (evaluation != null) {
                         triggerExecutionPublisher.send(evaluation.toExecution(workerTriggerResult.id()));
+                    } else {
+                        // The realtime trigger stream ended without producing an execution — clean
+                        // completion (stop, kill, stream end) or an error with failOnTriggerError=false:
+                        // notify the scheduler directly so the trigger is unlocked and can be resubmitted.
+                        triggerEventQueue.send(new TriggerExecutionTerminated(workerTriggerResult.id(), null, State.Type.FAILED, workerTriggerResult.dispatchEpoch()));
+                    }
+                    if (isTerminalRealtimeResult(evaluation)) {
+                        workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
                     }
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + workerTriggerResult.type());
             }
-            workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
         });
         responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
         responseObserver.onCompleted();
+    }
+
+    /**
+     * A realtime trigger sends one result per emitted execution while it keeps running on the worker;
+     * those results must not release its WorkerJobRunning entry, which the liveness coordinator relies
+     * on to notify the scheduler when the worker dies. Only a terminal result does — a FAILED
+     * evaluation, or a stream end reported without an evaluation.
+     */
+    static boolean isTerminalRealtimeResult(TriggerEvaluationResult evaluation) {
+        return evaluation == null || State.Type.FAILED.equals(evaluation.stateType());
     }
 
     @Override

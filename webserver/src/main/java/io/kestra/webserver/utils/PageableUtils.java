@@ -48,7 +48,11 @@ public class PageableUtils {
                         String col = split[0];
 
                         if (sortMapper != null) {
-                            col = sortMapper.apply(col);
+                            String mapped = sortMapper.apply(col);
+                            if (mapped == null) {
+                                throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid sort field: " + col);
+                            }
+                            col = mapped;
                         }
 
                         return split[1].equals("asc") ? Sort.Order.asc(col) : Sort.Order.desc(col);

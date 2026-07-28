@@ -2,8 +2,8 @@
     <TopNavBar :title="routeInfo.title" />
 
     <Empty v-if="data?.results === undefined || data?.results.length === 0" type="concurrency_limits" />
-    <section v-else class="container">
-        <KsDataTable :total="data?.total ?? 0">
+    <section v-else class="full-container">
+        <KsDataTable :total="data?.total ?? 0" fitHeight>
             <template #table>
                 <KsTable
                     :data="data?.results"
@@ -28,7 +28,7 @@
                 </KsTable>
             </template>
         </KsDataTable>
-        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
+        <KsDialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" :beforeClose="beforeEditClose">
             <KsAlert type="warning" :closable="false">
                 {{ $t("concurrency_limit.warning") }}
             </KsAlert>
@@ -55,6 +55,7 @@
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
     import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
+    import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     const {t} = useI18n()
 
@@ -74,15 +75,15 @@
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"]
 
     const axios = useClient()
-    const data = ref<{ 
-        total: number; 
-        results: ConcurrencyLimit[] 
+    const data = ref<{
+        total: number;
+        results: ConcurrencyLimit[]
     }>()
 
     async function loadData(){
         const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
         if(response?.status !== 200){
-            throw new Error(`Failed to load concurrency limits: ${response?.statusText}`)
+            throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
         }
         data.value = response.data
     }
@@ -90,6 +91,11 @@
     const editRunning = ref(false)
     const newRunningCount = ref(0)
     const editingRow = ref<ConcurrencyLimit|null>(null)
+
+    const {guardedClose} = useDiscardGuard(
+        () => editingRow.value != null && newRunningCount.value !== editingRow.value.running,
+    )
+    const beforeEditClose = (done: () => void) => guardedClose(() => done())
 
     function openDialog(row: ConcurrencyLimit){
         editRunning.value = true

@@ -30,4 +30,17 @@ describe("KsEmpty", () => {
         })
         expect(wrapper.find("button").exists()).toBe(true)
     })
+
+    test("keeps the surface background by default", () => {
+        const wrapper = mount(KsEmpty, {global: globalConfig})
+        expect(wrapper.find(".kel-empty").classes()).not.toContain("kel-empty--no-background")
+    })
+
+    test("drops the background when background is false", () => {
+        const wrapper = mount(KsEmpty, {
+            props: {background: false},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-empty").classes()).toContain("kel-empty--no-background")
+    })
 })

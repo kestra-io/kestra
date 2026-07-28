@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.secret.SecretService;
 import io.kestra.core.tenant.TenantService;
@@ -46,7 +47,7 @@ public class SecretController<META extends ApiSecretMeta> {
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters) throws IllegalArgumentException, IOException {
+        @Parameter(description = "Filters") @QueryFilterFormat(Resource.SECRET_METADATA) List<QueryFilter> filters) throws IllegalArgumentException, IOException {
         final String tenantId = this.tenantService.resolveTenant();
 
         Pageable pageable = PageableUtils.from(page, size, sort, this::sortMapper);

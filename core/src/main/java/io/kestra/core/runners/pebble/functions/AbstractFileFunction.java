@@ -98,7 +98,7 @@ abstract class AbstractFileFunction implements KestraFunction {
                 throw new PebbleException(null, "Unable to read the file " + path, lineNumber, self.getName());
             }
             return fileFunction(context, fileUri, namespace, tenantId, args);
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) { // IllegalArgumentException may be thrown for path traversal, catch it to have proper error handling
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
     }

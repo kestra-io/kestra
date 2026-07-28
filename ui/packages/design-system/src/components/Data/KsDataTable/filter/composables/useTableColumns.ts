@@ -93,12 +93,8 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
         localStorage.setItem(visibilityStorageKey, visibleColumns.value.join(","))
     }
 
-    const reorderColumns = (fromIndex: number, toIndex: number) => {
-        if (fromIndex === toIndex) return
-        const newOrder = [...columnOrder.value]
-        const [dragged] = newOrder.splice(fromIndex, 1)
-        newOrder.splice(toIndex, 0, dragged)
-        columnOrder.value = newOrder
+    const setColumnOrder = (order: string[]) => {
+        columnOrder.value = order
         visibleColumns.value = orderedVisibleColumns.value
         localStorage.setItem(visibilityStorageKey, visibleColumns.value.join(","))
     }
@@ -118,7 +114,7 @@ export function useTableColumns({columns, storageKey, initialVisibleColumns = []
         totalCount,
         isVisible,
         toggleColumn,
-        reorderColumns,
+        setColumnOrder,
         updateVisibleColumns,
         initializeVisibleColumns,
     }

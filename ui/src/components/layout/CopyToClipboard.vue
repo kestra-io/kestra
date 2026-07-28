@@ -6,8 +6,8 @@
             placement="left"
             :autoClose="2000"
         >
-            <KsButton :icon="ContentCopy" type="default" :link @click="copyText">
-                <span v-if="label">{{ label }}</span>
+            <KsButton :icon="ContentCopy" type="default" :link @click="copyText" :aria-label="$t('copy_to_clipboard')" :class="{'copy-icon-button': !label}">
+                <template v-if="label" #default>{{ label }}</template>
             </KsButton>
         </KsTooltip>
 
@@ -29,8 +29,15 @@
 .clipboard {
     z-index: 1;
     position: absolute;
-    top: 1rem;
-    right: 1rem;
+    top: 0.5rem;
+    right: 0.5rem;
     display: inline-flex;
+}
+
+.copy-icon-button {
+    width: 2rem;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0;
 }
 </style>

@@ -1,6 +1,7 @@
 package io.kestra.core.models.tasks;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.event.Level;
@@ -63,7 +64,14 @@ abstract public class Task implements TaskInterface {
 
     @Valid
     @PluginProperty(hidden = true, group = "execution")
-    private WorkerGroup workerGroup;
+    @Schema(description = "Routing requirements (tags + fallback) for this task.")
+    private WorkerSelector workerSelector;
+
+    @PluginProperty(hidden = true, group = "advanced")
+    @Schema(
+        description = "Identifiers of `enforcement: REFERENCE` governance policies to attach to this task and everything nested under it (Enterprise Edition; ignored in the open-source edition)."
+    )
+    private List<String> policyRefs;
 
     @PluginProperty(hidden = true, group = "logging")
     private Level logLevel;

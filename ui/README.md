@@ -87,7 +87,7 @@ If you're doing frontend development, you can run `npm run dev` from the `ui` fo
 
 ### CORS and the 404 disambiguation headers
 
-Kestra tags every 404 response with `X-Kestra-Edition` and `X-Kestra-Route-Matched` (see `EditionHeaderFilter`) so a browser-based client (e.g. `client-sdk`) can tell a genuine not-found apart from a route that simply doesn't exist on this server/edition. Browsers only expose response headers to cross-origin JavaScript that the server explicitly lists in `Access-Control-Expose-Headers`. If your CORS-enabled configuration is consumed by such a client, add both headers to its `exposed-headers`:
+Kestra tags every 404 response with `X-Kestra-Edition` and `X-Kestra-Route-Matched` (see `EditionHeaderFilter`) so a browser-based client (e.g. `client-sdk`) can tell a genuine not-found apart from a route that simply doesn't exist on this server/edition. Browsers only expose response headers to cross-origin JavaScript that the server explicitly lists in `Access-Control-Expose-Headers`. If your CORS-enabled configuration is consumed by such a client, add both headers to its `exposedHeaders`:
 
 ```yaml
 micronaut:
@@ -98,7 +98,7 @@ micronaut:
         all:
           allowedOrigins:
             - http://localhost:5173
-          exposed-headers:
+          exposedHeaders:
             - X-Kestra-Edition
             - X-Kestra-Route-Matched
 ```

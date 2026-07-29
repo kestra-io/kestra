@@ -37,14 +37,18 @@ public class EditionHeaderFilter implements Ordered {
 
     @ResponseFilter
     public void addEditionHeader(@NonNull HttpRequest<?> request, @NonNull MutableHttpResponse<?> response) {
-        if (response.getStatus() == HttpStatus.NOT_FOUND) {
-            if (!response.getHeaders().contains(EDITION_HEADER)) {
-                response.getHeaders().set(EDITION_HEADER, editionProvider.get().name());
-            }
-            if (!response.getHeaders().contains(ROUTE_MATCHED_HEADER)) {
-                boolean routeMatched = BasicHttpAttributes.getRouteMatchInfo(request).isPresent();
-                response.getHeaders().set(ROUTE_MATCHED_HEADER, String.valueOf(routeMatched));
-            }
+        if (HttpStatus.NOT_FOUND != response.getStatus()) {
+            return;
+        }
+
+        setIfAbsent(response, EDITION_HEADER, editionProvider.get().name());
+        setIfAbsent(response, ROUTE_MATCHED_HEADER, String.valueOf(BasicHttpAttributes.getRouteMatchInfo(request).isPresent()));
+    }
+
+    /** Leaves an already-set header untouched, so a controller or another filter can still override it. */
+    private static void setIfAbsent(MutableHttpResponse<?> response, String name, String value) {
+        if (!response.getHeaders().contains(name)) {
+            response.getHeaders().set(name, value);
         }
     }
 

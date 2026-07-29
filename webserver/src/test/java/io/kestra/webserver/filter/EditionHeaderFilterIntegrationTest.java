@@ -13,8 +13,12 @@ import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** End-to-end wiring checks: {@link EditionHeaderFilter} sets {@code X-Kestra-Edition} and {@code X-Kestra-Route-Matched} only on 404 responses. */
-@MicronautTest(rebuildContext = true)
+/**
+ * End-to-end wiring checks: {@link EditionHeaderFilter} sets {@code X-Kestra-Edition} and
+ * {@code X-Kestra-Route-Matched} only on 404 responses. Header-value logic itself is covered by the plain unit
+ * tests in {@link EditionHeaderFilterTest}.
+ */
+@MicronautTest
 class EditionHeaderFilterIntegrationTest {
     @Inject
     @io.micronaut.http.client.annotation.Client("/")

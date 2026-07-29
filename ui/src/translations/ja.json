@@ -107,6 +107,11 @@
     "total_duration": "合計時間",
     "running duration": "実行期間",
     "queued duration": "キュー待ち期間",
+    "executionProgress": {
+        "title": "実行の進行状況",
+        "estimatedRemaining": "残り時間の目安: {duration}",
+        "noBaseline": "履歴データがないため、残り時間を推定できません"
+    },
     "choose file": "ファイルを選択するか、ここにドロップしてください...",
     "launch execution": "実行",
     "warning flow with triggers": "このflowにはtriggersが含まれており、trigger expressionsに依存する場合、手動実行は失敗します。",

@@ -107,6 +107,11 @@
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
     "queued duration": "Duração na fila",
+    "executionProgress": {
+        "title": "Progresso da execução",
+        "estimatedRemaining": "Tempo restante estimado: {duration}",
+        "noBaseline": "Sem dados históricos — não é possível estimar o tempo restante"
+    },
     "choose file": "Escolha um arquivo ou solte-o aqui...",
     "launch execution": "Executar",
     "warning flow with triggers": "Este flow contém triggers e uma execução manual falhará se este flow depender de expressões de trigger.",

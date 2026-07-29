@@ -4,6 +4,11 @@
         :execution="execution!"
     />
     <template v-else-if="execution && executionsStore.flow">
+        <ExecutionProgress
+            v-if="isRunning"
+            :execution="execution"
+            class="gantt-progress"
+        />
         <!-- No task runs to plot: hide the filter bar + card and show only the execution
              status (mirrors the versioned-plugins empty screen). -->
         <KsEmptyState v-if="series.length === 0" :image="emptyIllustration">
@@ -222,6 +227,7 @@
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
+    import ExecutionProgress from "./ExecutionProgress.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
@@ -407,6 +413,8 @@
     })
 
     const isQueued = computed<boolean>(() => execution.value?.state?.current === "QUEUED")
+
+    const isRunning = computed<boolean>(() => Boolean(execution.value && State.isRunning(execution.value.state.current)))
 
     // Supporting line shown under the status badge when the Gantt has no task runs to plot.
     const emptyStateHint = computed<string>(() => {
@@ -658,6 +666,10 @@
 </script>
 
 <style scoped lang="scss">
+    .gantt-progress {
+        margin-bottom: var(--ks-spacing-4);
+    }
+
     .kel-card {
         padding: 0;
 

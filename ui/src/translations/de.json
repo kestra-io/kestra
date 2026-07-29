@@ -107,6 +107,11 @@
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeitdauer",
     "queued duration": "Warteschlangendauer",
+    "executionProgress": {
+        "title": "Ausführungsfortschritt",
+        "estimatedRemaining": "Geschätzte Restzeit: {duration}",
+        "noBaseline": "Keine historischen Daten — Restzeit kann nicht geschätzt werden"
+    },
     "choose file": "Wählen Sie eine Datei oder ziehen Sie sie hierher...",
     "launch execution": "Ausführen",
     "warning flow with triggers": "Dieser Flow enthält Trigger und eine manuelle Ausführung wird fehlschlagen, wenn dieser Flow von Trigger-Ausdrücken abhängt.",

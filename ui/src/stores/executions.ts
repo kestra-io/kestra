@@ -22,6 +22,14 @@ export interface Check {
     behavior: string
 }
 
+/** Average duration of a flow's recent executions, used as the progress-bar baseline. */
+export interface FlowAverageDuration {
+    // the backend serializes with non_null inclusion, so a flow with
+    // no terminated execution in the lookback window answers `{"count": 0}` with the field absent.
+    avgDurationMs?: number | null
+    count: number
+}
+
 export interface InputError {
     message: string;
     // true when the error is a render/resolution failure (broken field: e.g. a SELECT `expression` or an
@@ -768,6 +776,12 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.latestExecutions({body: options.flowFilters})
     }
 
+    // Stays on raw axios: no matching endpoint exposed by the generated SDK.
+    const loadFlowAverageDuration = (options: { namespace: string; flowId: string }): Promise<FlowAverageDuration> => {
+        return axios.get(`${apiUrl()}/executions/namespaces/${options.namespace}/flows/${options.flowId}/average-duration`)
+            .then(response => response.data)
+    }
+
     // mutations
     const addSubflowExecution = (params: { subflow: string; execution: any }) => {
         subflowsExecutions.value[params.subflow] = params.execution
@@ -903,6 +917,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         loadNamespaces,
         loadFlowsExecutable,
         loadLatestExecutions,
+        loadFlowAverageDuration,
         addSubflowExecution,
         removeSubflowExecution,
         addProgressEvent,

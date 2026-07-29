@@ -107,6 +107,11 @@
     "total_duration": "Durée totale",
     "running duration": "Durée de traitement",
     "queued duration": "Durée d'attente",
+    "executionProgress": {
+        "title": "Progression de l'exécution",
+        "estimatedRemaining": "Temps restant estimé : {duration}",
+        "noBaseline": "Aucune donnée historique — impossible d'estimer le temps restant"
+    },
     "choose file": "Choisir un fichier ou le glisser le ici...",
     "launch execution": "Déclencher",
     "warning flow with triggers": "Ce flow contient des déclencheurs, une exécution manuelle peut ne pas fonctionner si celui-ci dépend de variables de déclencheurs !",

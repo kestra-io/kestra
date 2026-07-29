@@ -107,6 +107,11 @@
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",
     "queued duration": "कतारबद्ध अवधि",
+    "executionProgress": {
+        "title": "निष्पादन प्रगति",
+        "estimatedRemaining": "अनुमानित शेष समय: {duration}",
+        "noBaseline": "कोई ऐतिहासिक डेटा नहीं — शेष समय का अनुमान नहीं लगाया जा सकता"
+    },
     "choose file": "एक फ़ाइल चुनें या इसे यहां छोड़ें...",
     "launch execution": "निष्पादित करें",
     "warning flow with triggers": "इस flow में triggers शामिल हैं और यदि यह flow trigger अभिव्यक्तियों पर निर्भर करता है तो मैन्युअल निष्पादन विफल हो जाएगा।",

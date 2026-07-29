@@ -2,17 +2,20 @@ import {useI18n} from "vue-i18n"
 import {useToast} from "../../utils/toast"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as Utils from "../../utils/utils"
-import {computed, Ref} from "vue"
+import {computed, type Ref} from "vue"
 import {useFlowStore} from "../../stores/flow"
 import {routeQueryToQueryFilters} from "@kestra-io/design-system"
-import {IdWithNamespace} from "@kestra-io/kestra-sdk"
-import {LocationQuery} from "vue-router"
+import type {IdWithNamespace} from "@kestra-io/kestra-sdk"
+import type {LocationQuery} from "vue-router"
 
+
+/** A row of the flows table: the identity the bulk endpoints take, plus the enabled flag the toolbar reads. */
+type SelectedFlow = IdWithNamespace & {enabled: boolean}
 
 export default function useFlowsBulkActions(options: {
     loadQuery: () => LocationQuery,
     dataTable: Ref<{
-        selection: (IdWithNamespace & {enabled: boolean})[],
+        selection: SelectedFlow[],
         queryBulkAction: boolean,
         toggleAllUnselected: () => void,
         reload: () => void,
@@ -21,14 +24,14 @@ export default function useFlowsBulkActions(options: {
 
 }) {
     const {loadQuery, dataTable, file} = options
-    const selection = computed<(IdWithNamespace & {enabled: boolean})[]>(() => dataTable.value?.selection ?? [])
+    const selection = computed<SelectedFlow[]>(() => dataTable.value?.selection ?? [])
     const toast = useToast()
     const flowStore = useFlowStore()
 
     const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
     const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
 
-    const selectionIds = computed(() => selection.value.map((flow: any) => ({id: flow.id, namespace: flow.namespace})))
+    const selectionIds = computed<IdWithNamespace[]>(() => selection.value.map(({id, namespace}) => ({id, namespace})))
 
     const {t} = useI18n()
 
@@ -47,7 +50,7 @@ export default function useFlowsBulkActions(options: {
                         toggleAllUnselected()
                     })
                 } else {
-                    return FlowsAPI.exportFlowsByIds({body: selection.value}, {responseType: "blob"}).then(data => {
+                    return FlowsAPI.exportFlowsByIds({body: selectionIds.value}, {responseType: "blob"}).then(data => {
                         const blob = new Blob([data], {type: "application/octet-stream"})
                         const url = window.URL.createObjectURL(blob)
                         Utils.downloadUrl(url, "flows.zip")
@@ -132,21 +135,20 @@ export default function useFlowsBulkActions(options: {
     }
 
     function importFlows() {
-        const formData = new FormData()
-        if (file.value && file.value.files && file.value.files[0]) {
-            formData.append("fileUpload", file.value.files[0])
-            FlowsAPI.importFlows({fileUpload: file.value.files[0]}).then((data) => {
-                if (data.length > 0) {
-                    toast.warning(t("flows not imported") + ": " + data.join(", "))
-                } else {
-                    toast.success(t("flows imported"))
-                }
-                if (file.value) file.value.value = ""
-                dataTable.value?.reload()
-            })
-        }
+        const fileUpload = file.value?.files?.[0]
+        if (!fileUpload) return
+
+        FlowsAPI.importFlows({fileUpload, failOnError: true}).then((data) => {
+            if (data.length > 0) {
+                toast.warning(t("flows not imported") + ": " + data.join(", "))
+            } else {
+                toast.success(t("flows imported"))
+            }
+            if (file.value) file.value.value = ""
+            dataTable.value?.reload()
+        })
     }
-    
+
     async function exportFlowsAsStream(query: LocationQuery) {
         const data = await FlowsAPI.exportFlowsByQuery(
             {filters: routeQueryToQueryFilters(query)},

@@ -316,7 +316,7 @@
     import {useTableColumns} from "../../composables/useTableColumns"
     import useRouteContext from "../../composables/useRouteContext"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
-    import useFlowsBulkActions from "./useFlowsBulkActions.ts"
+    import useFlowsBulkActions from "./useFlowsBulkActions"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -546,8 +546,6 @@
         toast.success(t("execution_started"))
     }
 
-    
-
     function getLastExecution(row: any) {
         if (!latestExecutions.value || !row) return null
         return latestExecutions.value.find(
@@ -595,19 +593,19 @@
     }
 
     const {
-        anyFlowDisabled, 
-        anyFlowEnabled, 
+        anyFlowDisabled,
+        anyFlowEnabled,
         deleteFlows,
         enableFlows,
-        disableFlows, 
-        exportFlows, 
+        disableFlows,
+        exportFlows,
         exportFlowsAsStream,
         importFlows,
     } = useFlowsBulkActions({
         loadQuery,
         dataTable,
         file,
-    })  
+    })
 </script>
 
 <style scoped lang="scss">

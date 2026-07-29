@@ -1340,9 +1340,14 @@ export const _038Dcaf51 = <ThrowOnError extends boolean = true>(parameters: {
  */
 export const _2D63137 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
+    latestRevision?: boolean | null;
     body: Array<string>;
 }, options?: Options<never, ThrowOnError>): RequestResult<RestartExecutionsByIdsResponses, RestartExecutionsByIdsErrors, ThrowOnError> => {
-    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { key: 'body', map: 'body' }] }]);
+    const params = buildClientParams([parameters], [{ args: [
+                { in: 'path', key: 'tenant' },
+                { in: 'query', key: 'latestRevision' },
+                { key: 'body', map: 'body' }
+            ] }]);
     return (options?.client ?? client).post<RestartExecutionsByIdsResponses, RestartExecutionsByIdsErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/restart/by-ids',
         ...options,
@@ -1361,8 +1366,13 @@ export const _2D63137 = <ThrowOnError extends boolean = true>(parameters: {
 export const _05978F079 = <ThrowOnError extends boolean = true>(parameters: {
     tenant: string;
     filters?: Array<QueryFilter> | null;
+    latestRevision?: boolean | null;
 }, options?: Options<never, ThrowOnError>): RequestResult<RestartExecutionsByQueryResponses, RestartExecutionsByQueryErrors, ThrowOnError> => {
-    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'tenant' }, { in: 'query', key: 'filters' }] }]);
+    const params = buildClientParams([parameters], [{ args: [
+                { in: 'path', key: 'tenant' },
+                { in: 'query', key: 'filters' },
+                { in: 'query', key: 'latestRevision' }
+            ] }]);
     return (options?.client ?? client).post<RestartExecutionsByQueryResponses, RestartExecutionsByQueryErrors, ThrowOnError>({
         url: '/api/v1/{tenant}/executions/restart/by-query',
         ...options,

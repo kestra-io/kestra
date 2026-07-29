@@ -1,5 +1,7 @@
 package io.kestra.jdbc.repository;
 
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
@@ -20,6 +22,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.STATE,
         QueryFilter.Field.CHILD_FILTER,
         QueryFilter.Field.LEVEL,
+        QueryFilter.Field.DATE,
         QueryFilter.Field.START_DATE,
         QueryFilter.Field.END_DATE,
         QueryFilter.Field.UPDATED,
@@ -36,8 +39,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.SUPER_ADMIN,
         QueryFilter.Field.LOCKED,
         QueryFilter.Field.LAST_TRIGGERED_DATE,
-        QueryFilter.Field.NEXT_EXECUTION_DATE,
-        QueryFilter.Field.TIME_RANGE
+        QueryFilter.Field.NEXT_EXECUTION_DATE
     );
 
     @Test
@@ -46,37 +48,37 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         {
             String assertValue = "anyValue";
             Name columnName = DSL.quotedName(field.name().toLowerCase());
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.EQUALS, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.EQUALS)).isEqualTo(
                 DSL.field(columnName).eq(assertValue)
             );
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.NOT_EQUALS, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.NOT_EQUALS)).isEqualTo(
                 DSL.field(columnName).ne(assertValue)
             );
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.GREATER_THAN, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.GREATER_THAN)).isEqualTo(
                 DSL.field(columnName).greaterThan(assertValue)
             );
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.LESS_THAN, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.LESS_THAN)).isEqualTo(
                 DSL.field(columnName).lessThan(assertValue)
             );
-            assertThat(this.getConditionOnField(field, List.of(assertValue), QueryFilter.Op.IN, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, List.of(assertValue), QueryFilter.Op.IN)).isEqualTo(
                 DSL.field(columnName).in(List.of(assertValue))
             );
-            assertThat(this.getConditionOnField(field, List.of(assertValue), QueryFilter.Op.NOT_IN, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, List.of(assertValue), QueryFilter.Op.NOT_IN)).isEqualTo(
                 DSL.field(columnName).notIn(List.of(assertValue))
             );
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.STARTS_WITH, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.STARTS_WITH)).isEqualTo(
                 DSL.field(columnName).startsWith(assertValue)
             );
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.ENDS_WITH, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.ENDS_WITH)).isEqualTo(
                 DSL.field(columnName).endsWith(assertValue)
             );
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.CONTAINS, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.CONTAINS)).isEqualTo(
                 DSL.field(columnName).contains(assertValue)
             );
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.REGEX, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.REGEX)).isEqualTo(
                 DSL.field(columnName).likeRegex(assertValue)
             );
-            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.PREFIX, null)).isEqualTo(
+            assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.PREFIX)).isEqualTo(
                 DSL.field(columnName).eq(assertValue)
                     .or(DSL.field(columnName).startsWith(assertValue + "."))
             );
@@ -89,22 +91,22 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         Name columnName = DSL.quotedName(QueryFilter.Field.NAMESPACE.name().toLowerCase());
 
         // When / Then — EQUALS null must generate IS NULL, not col = NULL
-        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.EQUALS, null))
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.EQUALS))
             .isEqualTo(DSL.field(columnName).isNull());
 
         // When / Then — NOT_EQUALS null must generate IS NOT NULL
-        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.NOT_EQUALS, null))
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.NOT_EQUALS))
             .isEqualTo(DSL.field(columnName).isNotNull());
     }
 
     @Test
     void shouldThrowWhenNullValueIsUsedWithGreaterThanOrLessThan() {
         // Given / When / Then
-        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.GREATER_THAN, null))
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.GREATER_THAN))
             .isInstanceOf(InvalidQueryFiltersException.class)
             .hasMessageContaining("GREATER_THAN operation requires a non-null value");
 
-        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.LESS_THAN, null))
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.LESS_THAN))
             .isInstanceOf(InvalidQueryFiltersException.class)
             .hasMessageContaining("LESS_THAN operation requires a non-null value");
     }
@@ -112,11 +114,11 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
     @Test
     void shouldThrowWhenNullValueIsUsedWithInOrNotIn() {
         // Given / When / Then
-        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.IN, null))
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.IN))
             .isInstanceOf(InvalidQueryFiltersException.class)
             .hasMessageContaining("IN operation requires a non-null value");
 
-        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.NOT_IN, null))
+        assertThatThrownBy(() -> this.getConditionOnField(QueryFilter.Field.NAMESPACE, null, QueryFilter.Op.NOT_IN))
             .isInstanceOf(InvalidQueryFiltersException.class)
             .hasMessageContaining("NOT_IN operation requires a non-null value");
     }
@@ -129,8 +131,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
             () -> this.getConditionOnField(
                 QueryFilter.Field.NAMESPACE,
                 invalidValue,
-                QueryFilter.Op.STARTS_WITH,
-                null
+                QueryFilter.Op.STARTS_WITH
             )
         )
             .isInstanceOf(InvalidQueryFiltersException.class)
@@ -145,16 +146,53 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         Name columnName = DSL.quotedName(QueryFilter.Field.NAMESPACE.name().toLowerCase());
 
         // When / Then — CONTAINS: metacharacter must be escaped, not treated as a wildcard
-        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.CONTAINS, null))
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.CONTAINS))
             .isEqualTo(DSL.field(columnName).contains(wildcardValue));
 
         // When / Then — STARTS_WITH: % in value must not produce an open-ended match
-        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.STARTS_WITH, null))
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, wildcardValue, QueryFilter.Op.STARTS_WITH))
             .isEqualTo(DSL.field(columnName).startsWith(wildcardValue));
 
         // When / Then — ENDS_WITH: _ in value must not act as a single-char wildcard
-        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, underscoreValue, QueryFilter.Op.ENDS_WITH, null))
+        assertThat(this.getConditionOnField(QueryFilter.Field.NAMESPACE, underscoreValue, QueryFilter.Op.ENDS_WITH))
             .isEqualTo(DSL.field(columnName).endsWith(underscoreValue));
+    }
+
+    @Test
+    void shouldFilterEachDateFieldOnItsOwnColumn() {
+        // Given — one instant, applied to every date field
+        OffsetDateTime instant = ZonedDateTime.parse("2026-07-01T00:00:00Z").toOffsetDateTime();
+        String value = instant.toString();
+
+        // When / Then — each field constrains the column named after it, never a shared one
+        assertThat(this.getConditionOnField(QueryFilter.Field.START_DATE, value, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO))
+            .isEqualTo(field("start_date").greaterOrEqual(instant));
+
+        assertThat(this.getConditionOnField(QueryFilter.Field.END_DATE, value, QueryFilter.Op.LESS_THAN_OR_EQUAL_TO))
+            .isEqualTo(field("end_date").lessOrEqual(instant));
+
+        assertThat(this.getConditionOnField(QueryFilter.Field.DATE, value, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO))
+            .isEqualTo(field("date").greaterOrEqual(instant));
+
+        assertThat(this.getConditionOnField(QueryFilter.Field.UPDATED, value, QueryFilter.Op.LESS_THAN))
+            .isEqualTo(field("updated").lessThan(instant));
+
+        assertThat(this.getConditionOnField(QueryFilter.Field.EXPIRATION_DATE, value, QueryFilter.Op.GREATER_THAN))
+            .isEqualTo(field("expiration_date").greaterThan(instant));
+
+        assertThat(this.getConditionOnField(QueryFilter.Field.CREATED, value, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO))
+            .isEqualTo(field("created").greaterOrEqual(instant));
+    }
+
+    @Test
+    void shouldRejectNullDateValueAsInvalidInput() {
+        // Given / When / Then — a missing date value is bad input (422), not a NullPointerException (500),
+        // matching how defaultHandlers rejects a null value on a comparison operation.
+        assertThatThrownBy(
+            () -> this.getConditionOnField(QueryFilter.Field.START_DATE, null, QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+        )
+            .isInstanceOf(InvalidQueryFiltersException.class)
+            .hasMessageContaining("requires a non-null value");
     }
 
     @Test
@@ -166,8 +204,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
             this.getConditionOnField(
                 QueryFilter.Field.TAGS,
                 List.of(assertValue),
-                QueryFilter.Op.IN,
-                null
+                QueryFilter.Op.IN
             )
         ).isEqualTo(
             DSL.field(columnName).in(List.of(assertValue))

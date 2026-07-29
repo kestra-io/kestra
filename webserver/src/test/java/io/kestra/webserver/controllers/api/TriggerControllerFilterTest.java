@@ -3,11 +3,13 @@ package io.kestra.webserver.controllers.api;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 
@@ -33,16 +35,18 @@ import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Parameterized tests that exercise the {@code /search} trigger endpoint against the full surface
- * of supported filter fields (including the controller-level
- * {@code dateFilter}/{@code startDate}/{@code endDate} rewrite). Neither the runner nor the
+ * of supported filter fields, each of which targets its own document field. Neither the runner nor the
  * scheduler is started: the test only persists fixtures (flows synchronously via
  * {@code FlowService}, trigger states directly via the repository) and reads them back through
  * {@code /search}, so no background component is required. Keeping them off also avoids a concurrent
@@ -60,6 +64,11 @@ class TriggerControllerFilterTest {
     private static final Instant DATE_OLD = Instant.parse("2024-01-01T00:00:00Z");
     private static final Instant DATE_NEW = Instant.parse("2024-06-01T00:00:00Z");
     private static final ZonedDateTime DATE_BETWEEN = ZonedDateTime.of(2024, 3, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+
+    // Absolute bounds equivalent to the PT3H / PT4H relative windows below, resolved once at class load.
+    // A generous margin (hours) makes them robust to the gap between class load and fixture creation.
+    private static final String NOW_MINUS_3H = Instant.now().minus(3, ChronoUnit.HOURS).toString();
+    private static final String NOW_PLUS_4H = Instant.now().plus(4, ChronoUnit.HOURS).toString();
 
     private static final String NS_FILTER = "io.kestra.filter";
     private static final String NS_OTHER = "com.other.ns";
@@ -126,8 +135,8 @@ class TriggerControllerFilterTest {
     private void seedFilterFixtures() throws FlowProcessingException, QueueException {
         List<String> filterTriggers = List.of(
             "alpha-trigger",
-            "nextexec-old", "nextexec-new",
-            "ldt-old", "ldt-new",
+            "nextexec-old", "nextexec-new", "nextexec-soon", "nextexec-far",
+            "ldt-old", "ldt-new", "ldt-recent",
             "source-schedule", "source-polling",
             "locked-true", "locked-false",
             "state-disabled", "state-enabled"
@@ -146,6 +155,12 @@ class TriggerControllerFilterTest {
         // LAST_TRIGGERED_DATE
         jdbcTriggerRepository.save(fixture("ldt-old", NS_FILTER, FLOW_FILTER, "worker").lastTriggeredDate(DATE_OLD).build());
         jdbcTriggerRepository.save(fixture("ldt-new", NS_FILTER, FLOW_FILTER, "worker").lastTriggeredDate(DATE_NEW).build());
+
+        // Now-relative fixtures for the relative-duration cases: nextExecutionDate is future-oriented
+        // (resolves now + duration), lastTriggeredDate is past-oriented (resolves now - duration).
+        jdbcTriggerRepository.save(fixture("nextexec-soon", NS_FILTER, FLOW_FILTER, "worker").nextEvaluationDate(Instant.now().plus(2, ChronoUnit.HOURS)).build());
+        jdbcTriggerRepository.save(fixture("nextexec-far", NS_FILTER, FLOW_FILTER, "worker").nextEvaluationDate(Instant.now().plus(10, ChronoUnit.DAYS)).build());
+        jdbcTriggerRepository.save(fixture("ldt-recent", NS_FILTER, FLOW_FILTER, "worker").lastTriggeredDate(Instant.now().minus(2, ChronoUnit.HOURS)).build());
 
         // SOURCE
         jdbcTriggerRepository.save(fixture("source-schedule", NS_FILTER, FLOW_FILTER, "worker").type(TriggerType.SCHEDULE).build());
@@ -180,7 +195,8 @@ class TriggerControllerFilterTest {
             new FilterTestCase(
                 "filters[namespace][EQUALS]=" + NS_FILTER + "&size=50",
                 List.of(
-                    "alpha-trigger", "nextexec-old", "nextexec-new", "ldt-old", "ldt-new",
+                    "alpha-trigger", "nextexec-old", "nextexec-new", "nextexec-soon", "nextexec-far",
+                    "ldt-old", "ldt-new", "ldt-recent",
                     "source-schedule", "source-polling", "locked-true", "locked-false",
                     "state-disabled", "state-enabled"
                 )
@@ -220,7 +236,7 @@ class TriggerControllerFilterTest {
             "nextExecutionDate GREATER_THAN DATE_BETWEEN",
             new FilterTestCase(
                 "filters[nextExecutionDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("nextexec-new")
+                List.of("nextexec-new", "nextexec-soon", "nextexec-far")
             )
         ),
         Named.of(
@@ -236,7 +252,7 @@ class TriggerControllerFilterTest {
             "lastTriggeredDate GREATER_THAN DATE_BETWEEN",
             new FilterTestCase(
                 "filters[lastTriggeredDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("ldt-new")
+                List.of("ldt-new", "ldt-recent")
             )
         ),
         Named.of(
@@ -247,26 +263,37 @@ class TriggerControllerFilterTest {
             )
         ),
 
-        // --- UI-style URL: startDate/endDate are rewritten by the controller to the chosen target field ---
+        // --- Relative durations vs. absolute instants on date fields (resolved server-side) ---
+        // Past-oriented field: a relative duration resolves to `now - duration`. `>= PT3H` keeps only
+        // the now-relative fixture; the 2024 fixtures fall outside the window.
         Named.of(
-            "startDate (no dateFilter) rewrites to nextExecutionDate",
+            "lastTriggeredDate GREATER_THAN_OR_EQUAL_TO relative PT3H",
             new FilterTestCase(
-                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("nextexec-new")
+                "filters[lastTriggeredDate][GREATER_THAN_OR_EQUAL_TO]=PT3H",
+                List.of("ldt-recent")
             )
         ),
         Named.of(
-            "startDate with dateFilter=NEXT_EXECUTION_DATE rewrites to nextExecutionDate",
+            "lastTriggeredDate GREATER_THAN_OR_EQUAL_TO absolute (now - 3h) — same result as PT3H",
             new FilterTestCase(
-                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=NEXT_EXECUTION_DATE",
-                List.of("nextexec-new")
+                "filters[lastTriggeredDate][GREATER_THAN_OR_EQUAL_TO]=" + NOW_MINUS_3H,
+                List.of("ldt-recent")
+            )
+        ),
+        // Future-oriented field: a relative duration resolves to `now + duration`. `<= PT4H` keeps the
+        // near-future and past fixtures but excludes the far-future one — proving the forward resolution.
+        Named.of(
+            "nextExecutionDate LESS_THAN_OR_EQUAL_TO relative PT4H",
+            new FilterTestCase(
+                "filters[nextExecutionDate][LESS_THAN_OR_EQUAL_TO]=PT4H",
+                List.of("nextexec-old", "nextexec-new", "nextexec-soon")
             )
         ),
         Named.of(
-            "startDate with dateFilter=LAST_TRIGGERED_DATE rewrites to lastTriggeredDate",
+            "nextExecutionDate LESS_THAN_OR_EQUAL_TO absolute (now + 4h) — same result as PT4H",
             new FilterTestCase(
-                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=LAST_TRIGGERED_DATE",
-                List.of("ldt-new")
+                "filters[nextExecutionDate][LESS_THAN_OR_EQUAL_TO]=" + NOW_PLUS_4H,
+                List.of("nextexec-old", "nextexec-new", "nextexec-soon")
             )
         )
     );
@@ -287,5 +314,25 @@ class TriggerControllerFilterTest {
         // Then only the expected trigger IDs are returned
         assertThat(triggers.getResults().stream().map(t -> t.state().triggerId()).toList())
             .containsExactlyInAnyOrderElementsOf(testCase.expectedTriggerIds());
+    }
+
+    @Test
+    void shouldRejectGenericStartDateFilter() throws FlowProcessingException, QueueException {
+        // Given — fixtures exist, so an accepted filter would return results rather than an empty page
+        seedFilterFixtures();
+
+        // When — a caller sends the generic startDate a trigger does not have. It used to be silently
+        // renamed onto nextExecutionDate; a trigger's two date fields must now be named explicitly.
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET(TRIGGER_PATH + "/search?filters[startDate][GREATER_THAN]=" + DATE_BETWEEN),
+                Argument.of(PagedResults.class, ApiTriggerAndState.class)
+            )
+        );
+
+        // Then — rejected as an unsupported field for the resource
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(exception.getMessage()).contains("Field START_DATE is not supported for resource TRIGGER");
     }
 }

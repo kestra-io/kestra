@@ -11,6 +11,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Logical;
 import io.kestra.webserver.configuration.QueryFilterConfiguration;
+import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
 
 import io.micronaut.core.convert.ArgumentConversionContext;
@@ -115,7 +116,9 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         Map<String, List<String>> queryParams = source.getParameters().asMap();
         List<QueryFilter> filters = getQueryFilters(queryParams, maxDepth, maxWidth);
 
-        return () -> Optional.of(filters);
+        List<QueryFilter> resolved = QueryFilterUtils.resolveRelativeDateFilters(filters);
+
+        return () -> Optional.of(resolved);
     }
 
     private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {

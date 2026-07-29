@@ -47,11 +47,17 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     searchable: true,
                 },
                 {
-                    key: "timeRange",
-                    label: t("filter.timeRange_dashboard.label"),
+                    key: "startDate",
+                    label: t("filter.timeRange.dateFilter.startDate"),
                     description: t("filter.timeRange_dashboard.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.GREATER_THAN,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN,
+                    ],
+                    showComparatorSelection: true,
+                    valueType: "time-range",
                     groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")
@@ -126,11 +132,17 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     searchable: true,
                 },
                 {
-                    key: "timeRange",
-                    label: t("filter.timeRange_dashboard.label"),
+                    key: "startDate",
+                    label: t("filter.timeRange.dateFilter.startDate"),
                     description: t("filter.timeRange_dashboard.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.GREATER_THAN,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN,
+                    ],
+                    showComparatorSelection: true,
+                    valueType: "time-range",
                     groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")
@@ -159,11 +171,17 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
             searchPlaceholder: t("filter.search_placeholders.search_dashboards"),
             keys: [
                 {
-                    key: "timeRange",
-                    label: t("filter.timeRange_dashboard.label"),
+                    key: "startDate",
+                    label: t("filter.timeRange.dateFilter.startDate"),
                     description: t("filter.timeRange_dashboard.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.GREATER_THAN,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN,
+                    ],
+                    showComparatorSelection: true,
+                    valueType: "time-range",
                     groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")

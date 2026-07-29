@@ -7,6 +7,9 @@
  *   1. `bucketParams`      — sort decoded params by (topIdx, wrapperChildIdx) into Slot maps.
  *   2. `buildLeafFromSlot` — turn one Slot into a LeafFilterGroup.
  *   3. `assembleUnits`     — fold the bucket map into top-level units (leaves or wrappers).
+ *
+ * Date fields (startDate/endDate/nextExecutionDate/…) are ordinary fields here: a relative duration
+ * decodes as a single `time-range` chip, and an absolute lower+upper pair merges into a range chip.
  */
 import type {LocationQuery} from "vue-router"
 import {
@@ -19,19 +22,12 @@ import {
     Comparators,
 } from "./filterTypes"
 import {type DecodedParam, decodeSearchParams} from "./helpers"
-import {
-    DATE_FILTER_KEY,
-    START_DATE_FIELD,
-    END_DATE_FIELD,
-    TIME_RANGE_KEY,
-} from "./constants"
 import {newGroupId} from "../composables/useFilterGroups"
-import {createAppliedFilter, createCustomRangeFilter, createTimeRangeFilter, processFieldValue} from "./filterChipFactory"
+import {createAppliedFilter, createCustomRangeFilter, processFieldValue} from "./filterChipFactory"
 
 /** A bag of params bucketed into one logical position in the tree. */
 type Slot = {
     fieldParams: Map<string, DecodedParam[]>;
-    dateFilters: Record<string, {comparatorKey: string; value: string}>;
 }
 
 type BucketedParams = {
@@ -40,7 +36,7 @@ type BucketedParams = {
     wrapperLogicalByTopIdx: Map<number, LogicalOperator>;
 }
 
-const emptySlot = (): Slot => ({fieldParams: new Map(), dateFilters: {}})
+const emptySlot = (): Slot => ({fieldParams: new Map()})
 
 /**
  * Sort decoded URL params into buckets keyed by (topIdx, wrapperChildIdx). Tracks the
@@ -72,17 +68,10 @@ const bucketParams = (params: DecodedParam[]): BucketedParams => {
             wrapperLogicalByTopIdx.set(topIdx, param.wrapperLogical)
         }
         const slot = getSlot(topIdx, param.wrapperChildIndex)
-        if (param.field === START_DATE_FIELD || param.field === END_DATE_FIELD) {
-            slot.dateFilters[param.field] = {
-                comparatorKey: param.operation ?? "",
-                value: param.value as string,
-            }
-        } else {
-            // Bucket by (field, operation) so same-field/different-comparator pairs survive.
-            const bucketKey = `${param.field}|${param.operation ?? ""}`
-            if (!slot.fieldParams.has(bucketKey)) slot.fieldParams.set(bucketKey, [])
-            slot.fieldParams.get(bucketKey)!.push(param)
-        }
+        // Bucket by (field, operation) so same-field/different-comparator pairs survive.
+        const bucketKey = `${param.field}|${param.operation ?? ""}`
+        if (!slot.fieldParams.has(bucketKey)) slot.fieldParams.set(bucketKey, [])
+        slot.fieldParams.get(bucketKey)!.push(param)
     })
 
     return {perTop, observedTopLogical, wrapperLogicalByTopIdx}
@@ -92,7 +81,6 @@ const bucketParams = (params: DecodedParam[]): BucketedParams => {
 const buildLeafFromSlot = (
     slot: Slot,
     configuration: FilterConfiguration,
-    routeDateFilter: string | undefined,
 ): LeafFilterGroup => {
     const filtersMap = new Map<string, AppliedFilter>()
 
@@ -108,7 +96,7 @@ const buildLeafFromSlot = (
     })
     paramsByField.forEach((params, field) => {
         const config = configuration.keys?.find(k => k?.key === field)
-        if (config?.valueType !== "time-range" || config.customDateMode !== "range") return
+        if (config?.valueType !== "time-range") return
         const gte = params.find(p => p.operation === "GREATER_THAN_OR_EQUAL_TO")
         const lte = params.find(p => p.operation === "LESS_THAN_OR_EQUAL_TO")
         if (!gte || !lte) return
@@ -131,36 +119,11 @@ const buildLeafFromSlot = (
         if (!comparator) return
 
         const {value, valueLabel} = processFieldValue(config, params, comparator)
-        const meta = field === TIME_RANGE_KEY && routeDateFilter && config.dateFilterOptions
-            ? {dateFilter: routeDateFilter}
-            : undefined
         filtersMap.set(
             `${field}|${params[0]?.operation ?? ""}`,
-            createAppliedFilter(field, config, comparator, value, valueLabel, params[0]?.operation, meta),
+            createAppliedFilter(field, config, comparator, value, valueLabel, params[0]?.operation),
         )
     })
-
-    const startSlot = slot.dateFilters[START_DATE_FIELD]
-    const endSlot = slot.dateFilters[END_DATE_FIELD]
-    if (startSlot && endSlot) {
-        const timeRangeConfig = configuration.keys?.find(k => k?.key === TIME_RANGE_KEY)
-        if (timeRangeConfig) {
-            const comparator = Comparators[startSlot.comparatorKey as keyof typeof Comparators]
-            const meta = routeDateFilter && timeRangeConfig.dateFilterOptions
-                ? {dateFilter: routeDateFilter}
-                : undefined
-            filtersMap.set(
-                TIME_RANGE_KEY,
-                createTimeRangeFilter(
-                    timeRangeConfig,
-                    new Date(startSlot.value),
-                    new Date(endSlot.value),
-                    comparator,
-                    meta,
-                ),
-            )
-        }
-    }
 
     return {id: newGroupId(), kind: "leaf", filters: Array.from(filtersMap.values())}
 }
@@ -169,20 +132,19 @@ const buildLeafFromSlot = (
 const assembleUnits = (
     bucketed: BucketedParams,
     configuration: FilterConfiguration,
-    routeDateFilter: string | undefined,
 ): FilterGroup[] => {
     const orderedTop = Array.from(bucketed.perTop.entries()).sort(([a], [b]) => a - b)
     return orderedTop.flatMap(([topIdx, top]): FilterGroup[] => {
         if (!top.isWrapper) {
             const slot = top.children.get(-1) ?? emptySlot()
-            const leaf = buildLeafFromSlot(slot, configuration, routeDateFilter)
+            const leaf = buildLeafFromSlot(slot, configuration)
             return leaf.filters.length > 0 ? [leaf] : []
         }
         const orderedChildren = Array.from(top.children.entries())
             .filter(([k]) => k >= 0)
             .sort(([a], [b]) => a - b)
         const childLeaves = orderedChildren
-            .map(([, slot]) => buildLeafFromSlot(slot, configuration, routeDateFilter))
+            .map(([, slot]) => buildLeafFromSlot(slot, configuration))
             .filter(c => c.filters.length > 0)
         if (childLeaves.length === 0) return []
         if (childLeaves.length === 1) return [childLeaves[0]]
@@ -205,7 +167,6 @@ export const parseEncodedGroups = (
     configuration: FilterConfiguration,
 ): {groups: FilterGroup[]; topLogical: LogicalOperator} => {
     const bucketed = bucketParams(decodeSearchParams(routeQuery))
-    const routeDateFilter = routeQuery[DATE_FILTER_KEY] as string | undefined
-    const groups = assembleUnits(bucketed, configuration, routeDateFilter)
+    const groups = assembleUnits(bucketed, configuration)
     return {groups, topLogical: bucketed.observedTopLogical ?? "OR"}
 }

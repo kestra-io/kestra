@@ -110,6 +110,15 @@ public record QueryFilter(
         PREFIX
     }
 
+    /**
+     * Whether a relative duration on a date field resolves backward or forward from {@code now()}.
+     * {@code PAST} → {@code now().minus(duration)}; {@code FUTURE} → {@code now().plus(duration)}.
+     */
+    public enum DateOrientation {
+        PAST,
+        FUTURE
+    }
+
     @SuppressWarnings("unchecked")
     private List<Object> asValues(Object value) {
         if (value instanceof String valueStr) {
@@ -246,11 +255,28 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN);
             }
         },
+        @JsonProperty("date")
+        DATE("date") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
+        },
         @JsonProperty("created")
         CREATED("created") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
             }
         },
         @JsonProperty("updated")
@@ -259,12 +285,22 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
         },
         @JsonProperty("startDate")
         START_DATE("startDate") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
             }
         },
         @JsonProperty("endDate")
@@ -273,12 +309,27 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
         },
         @JsonProperty("expirationDate")
         EXPIRATION_DATE("expirationDate") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
+
+            @Override
+            public DateOrientation dateOrientation() {
+                return DateOrientation.FUTURE;
             }
         },
         @JsonProperty("state")
@@ -504,12 +555,27 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
         },
         @JsonProperty("nextExecutionDate")
         NEXT_EXECUTION_DATE("nextExecutionDate") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+
+            @Override
+            public boolean isDateField() {
+                return true;
+            }
+
+            @Override
+            public DateOrientation dateOrientation() {
+                return DateOrientation.FUTURE;
             }
         },
         @JsonProperty("artifactId")
@@ -524,6 +590,25 @@ public record QueryFilter(
             .collect(Collectors.toMap(Field::value, Function.identity()));
 
         public abstract List<Op> supportedOp();
+
+        /**
+         * Whether this field holds a date/time value — an absolute instant (ISO-8601 date-time) or a
+         * relative ISO-8601 duration (e.g. {@code PT5M}, {@code P7D}) resolved against {@code now()}
+         * before reaching a repository. Non-date fields keep the {@code false} default; date fields
+         * override it.
+         */
+        public boolean isDateField() {
+            return false;
+        }
+
+        /**
+         * The direction a relative duration on this field resolves. Defaults to {@link DateOrientation#PAST}
+         * ({@code now - duration}); inherently-future fields override it to {@link DateOrientation#FUTURE}
+         * ({@code now + duration}). Only meaningful when {@link #isDateField()} is {@code true}.
+         */
+        public DateOrientation dateOrientation() {
+            return DateOrientation.PAST;
+        }
 
         private final String value;
 
@@ -569,8 +654,8 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(
-                    Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.START_DATE,
-                    Field.END_DATE, Field.FLOW_ID, Field.TRIGGER_ID, Field.LEVEL, Field.EXECUTION_ID,
+                    Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.DATE,
+                    Field.FLOW_ID, Field.TRIGGER_ID, Field.LEVEL, Field.EXECUTION_ID,
                     Field.TASK_ID, Field.TASK_RUN_ID, Field.ATTEMPT_NUMBER, Field.KIND
                 );
             }
@@ -752,8 +837,7 @@ public record QueryFilter(
                     Field.ACTION,
                     Field.RESOURCES,
                     Field.DETAILS,
-                    Field.START_DATE,
-                    Field.END_DATE
+                    Field.DATE
                 );
             }
         },

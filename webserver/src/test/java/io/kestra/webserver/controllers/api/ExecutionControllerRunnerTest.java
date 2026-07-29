@@ -1891,24 +1891,17 @@ class ExecutionControllerRunnerTest {
 
         assertThat(executions.getTotal()).isEqualTo(1L);
 
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(GET("/api/v1/" + tenantId + "/executions/search?filters[startDate][EQUALS]=2024-01-07T18:43:11.248%2B01:00&filters[timeRange][EQUALS]=PT12H"))
-        );
-
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("are mutually exclusive");
-
+        // A relative duration on the startDate field resolves to now - duration
         executions = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenantId + "/executions/search?filters[timeRange][EQUALS]=PT12H"), PagedResults.class
+            GET("/api/v1/" + tenantId + "/executions/search?filters[startDate][GREATER_THAN_OR_EQUAL_TO]=PT12H"), PagedResults.class
         );
 
         assertThat(executions.getTotal()).isEqualTo(1L);
 
-        e = assertThrows(
+        // P1Y is not a valid ISO-8601 Duration (years are unsupported) nor a valid absolute instant
+        HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(GET("/api/v1/" + tenantId + "/executions/search?filters[timeRange][EQUALS]=P1Y"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/" + tenantId + "/executions/search?filters[startDate][GREATER_THAN_OR_EQUAL_TO]=P1Y"))
         );
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
 

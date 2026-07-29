@@ -861,7 +861,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @SuppressWarnings("unchecked")
     private <R extends Record> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect) {
         var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of());
-        select = select.and(this.filter(filters, null, Resource.FLOW));
+        select = select.and(this.filter(filters, Resource.FLOW));
         return (SelectConditionStep<R>) select;
     }
 
@@ -1124,7 +1124,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         if (filters == null || filters.isEmpty()) {
             return findAsync(defaultFilter(tenantId), null);
         }
-        Condition condition = this.filter(filters, null, resource);
+        Condition condition = this.filter(filters, resource);
         return findAsync(defaultFilter(tenantId), condition);
     }
 

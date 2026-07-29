@@ -162,7 +162,7 @@ describe("Filter Helpers", () => {
     })
 
     describe("encodeFiltersToQuery", () => {
-        it("should encode standard, timeRange and label filters", () => {
+        it("should encode standard, date and label filters", () => {
             const filters = [
                 {key: "namespace", comparator: Comparators.IN, value: ["test-namespace"]},
                 {key: "state", comparator: Comparators.IN, value: ["SUCCESS", "FAILED"]},
@@ -172,12 +172,10 @@ describe("Filter Helpers", () => {
                 "filters[state][IN]": "SUCCESS,FAILED",
             })
 
-            const startDate = new Date("2023-01-01T00:00:00Z")
-            const endDate = new Date("2023-01-31T23:59:59Z")
-            const timeRangeFilters = [{key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}}]
-            expect(encodeFiltersToQuery(timeRangeFilters, keyOfComparator)).toEqual({
-                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": startDate.toISOString(),
-                "filters[endDate][LESS_THAN_OR_EQUAL_TO]": endDate.toISOString(),
+            // A relative duration on a date field is emitted verbatim; the backend resolves it against now().
+            const dateFilters = [{key: "startDate", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: "P7D"}]
+            expect(encodeFiltersToQuery(dateFilters, keyOfComparator)).toEqual({
+                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "P7D",
             })
 
             const labelFilters = [{key: "labels", comparator: Comparators.EQUALS, value: ["env:prod", "team:backend"]}]
@@ -229,39 +227,6 @@ describe("Filter Helpers", () => {
             expect(encodeFilterGroupsToQuery(groups, keyOfComparator, "AND")).toEqual({
                 "filters[and][0][state][EQUALS]": "RUNNING",
                 "filters[and][1][namespace][EQUALS]": "io.kestra",
-            })
-        })
-
-        it("keeps timeRange global (no group prefix) across multiple OR groups", () => {
-            const groups: FilterGroup[] = [
-                leaf("g1", [
-                    {key: "timeRange", comparator: Comparators.EQUALS, value: "PT24H"},
-                    {key: "state", comparator: Comparators.EQUALS, value: "RUNNING"},
-                ]),
-                leaf("g2", [{key: "state", comparator: Comparators.EQUALS, value: "FAILED"}]),
-            ]
-            expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
-                "filters[timeRange][EQUALS]": "PT24H",
-                "filters[or][0][state][EQUALS]": "RUNNING",
-                "filters[or][1][state][EQUALS]": "FAILED",
-            })
-        })
-
-        it("keeps a custom timeRange range global (startDate/endDate) across multiple OR groups", () => {
-            const startDate = new Date("2024-01-01T00:00:00Z")
-            const endDate = new Date("2024-01-31T23:59:59Z")
-            const groups: FilterGroup[] = [
-                leaf("g1", [
-                    {key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}},
-                    {key: "state", comparator: Comparators.EQUALS, value: "RUNNING"},
-                ]),
-                leaf("g2", [{key: "state", comparator: Comparators.EQUALS, value: "FAILED"}]),
-            ]
-            expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
-                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": startDate.toISOString(),
-                "filters[endDate][LESS_THAN_OR_EQUAL_TO]": endDate.toISOString(),
-                "filters[or][0][state][EQUALS]": "RUNNING",
-                "filters[or][1][state][EQUALS]": "FAILED",
             })
         })
 

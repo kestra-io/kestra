@@ -711,7 +711,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.START_DATE, Resource.AUDIT_LOG,
+                Field.DATE, Resource.AUDIT_LOG,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -723,7 +723,7 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
-                Field.END_DATE, Resource.AUDIT_LOG,
+                Field.DATE, Resource.LOG,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,

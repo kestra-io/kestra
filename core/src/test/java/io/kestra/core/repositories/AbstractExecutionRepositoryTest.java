@@ -39,7 +39,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
-import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
@@ -259,7 +258,7 @@ public abstract class AbstractExecutionRepositoryTest {
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.PREFIX).build(), 16),
 
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 29),
-            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 24),
             Arguments.of(QueryFilter.builder().field(Field.STATE).value(Type.RUNNING).operation(Op.EQUALS).build(), 5),
             Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 29),
 
@@ -405,7 +404,6 @@ public abstract class AbstractExecutionRepositoryTest {
 
     static Stream<QueryFilter> errorFilterCombinations() {
         return Stream.of(
-            QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.EXECUTION_ID).value("test").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
@@ -1670,7 +1668,7 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
-    protected void findWithDateFilter() {
+    protected void findAppliesEachDateFilterToItsOwnField() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
         ZonedDateTime windowStart = ZonedDateTime.now().minusHours(3);
@@ -1714,25 +1712,52 @@ public abstract class AbstractExecutionRepositoryTest {
             .build();
         executionRepository.save(execB);
 
-        List<QueryFilter> windowFilters = List.of(
-            QueryFilter.builder().field(Field.START_DATE).operation(Op.GREATER_THAN_OR_EQUAL_TO).value(windowStart).build(),
-            QueryFilter.builder().field(Field.END_DATE).operation(Op.LESS_THAN_OR_EQUAL_TO).value(windowEnd).build()
+        // startDate constrains start_date only: A started inside the window, B started before it.
+        var startedInWindow = executionRepository.find(
+            Pageable.UNPAGED, tenant, List.of(
+                QueryFilter.builder().field(Field.START_DATE).operation(Op.GREATER_THAN_OR_EQUAL_TO).value(windowStart).build(),
+                QueryFilter.builder().field(Field.START_DATE).operation(Op.LESS_THAN_OR_EQUAL_TO).value(windowEnd).build()
+            )
         );
+        assertThat(startedInWindow).hasSize(1);
+        assertThat(startedInWindow.getFirst().getId()).isEqualTo(execA.getId());
 
-        // START_DATE mode: only A (A.start in window; B.start before window)
-        var resultStart = executionRepository.find(Pageable.UNPAGED, tenant, windowFilters, DateFilter.START_DATE);
-        assertThat(resultStart).hasSize(1);
-        assertThat(resultStart.getFirst().getId()).isEqualTo(execA.getId());
+        // endDate constrains end_date only: B ended inside the window, A ended after it.
+        var endedInWindow = executionRepository.find(
+            Pageable.UNPAGED, tenant, List.of(
+                QueryFilter.builder().field(Field.END_DATE).operation(Op.GREATER_THAN_OR_EQUAL_TO).value(windowStart).build(),
+                QueryFilter.builder().field(Field.END_DATE).operation(Op.LESS_THAN_OR_EQUAL_TO).value(windowEnd).build()
+            )
+        );
+        assertThat(endedInWindow).hasSize(1);
+        assertThat(endedInWindow.getFirst().getId()).isEqualTo(execB.getId());
 
-        // END_DATE mode: only B (B.end in window; A.end after window)
-        var resultEnd = executionRepository.find(Pageable.UNPAGED, tenant, windowFilters, DateFilter.END_DATE);
-        assertThat(resultEnd).hasSize(1);
-        assertThat(resultEnd.getFirst().getId()).isEqualTo(execB.getId());
-
-        // START_OR_END_DATE mode: both A and B
-        var resultBoth = executionRepository.find(Pageable.UNPAGED, tenant, windowFilters, DateFilter.START_OR_END_DATE);
-        assertThat(resultBoth).hasSize(2);
-        assertThat(resultBoth).extracting(Execution::getId)
+        // "Active during the window" — the replacement for the removed START_OR_END_DATE mode — is an OR group.
+        var activeInWindow = executionRepository.find(
+            Pageable.UNPAGED, tenant, List.of(
+                QueryFilter.builder()
+                    .logical(QueryFilter.Logical.OR)
+                    .children(
+                        List.of(
+                            QueryFilter.builder().field(Field.START_DATE).operation(Op.GREATER_THAN_OR_EQUAL_TO).value(windowStart).build(),
+                            QueryFilter.builder().field(Field.END_DATE).operation(Op.LESS_THAN_OR_EQUAL_TO).value(windowEnd).build()
+                        )
+                    )
+                    .build()
+            )
+        );
+        assertThat(activeInWindow).hasSize(2);
+        assertThat(activeInWindow).extracting(Execution::getId)
             .containsExactlyInAnyOrder(execA.getId(), execB.getId());
+
+        // The two fields are genuinely independent: this pair is no longer collapsed onto one column, so
+        // it asks for "started after windowStart AND ended before windowEnd", which neither execution does.
+        var startedAndEnded = executionRepository.find(
+            Pageable.UNPAGED, tenant, List.of(
+                QueryFilter.builder().field(Field.START_DATE).operation(Op.GREATER_THAN_OR_EQUAL_TO).value(windowStart).build(),
+                QueryFilter.builder().field(Field.END_DATE).operation(Op.LESS_THAN_OR_EQUAL_TO).value(windowEnd).build()
+            )
+        );
+        assertThat(startedAndEnded).isEmpty();
     }
 }

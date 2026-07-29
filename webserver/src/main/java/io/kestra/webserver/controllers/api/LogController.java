@@ -78,7 +78,7 @@ public class LogController {
         @Parameter(description = "An opaque cursor token (from a previous response's nextCursor) for cursor-paginated log stores")
         @Nullable @QueryValue String cursor,
         @Parameter(
-            description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
+            description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[date][GREATER_THAN_OR_EQUAL_TO]=P7D`, `filters[level][EQUALS]=DEBUG`",
             in = ParameterIn.QUERY
         ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters)
         throws HttpStatusException {
@@ -93,7 +93,7 @@ public class LogController {
             logRepository.find(
                 pageable,
                 tenantService.resolveTenant(),
-                QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
+                QueryFilterUtils.applyDefaultWindow(filters, QueryFilter.Field.DATE)
             )
         );
     }

@@ -249,7 +249,7 @@
                 const dateTimeKeys = ["startDate", "endDate", "timeRange"]
                 if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
                     const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H"
-                    const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION}
+                    const newQuery = {...route.query, "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": DEFAULT_DURATION}
                     router.replace({name: route.name, params: route.params, query: newQuery})
                 }
             }

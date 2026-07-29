@@ -185,7 +185,7 @@ export function buildFullQuery(target: DrillDownTarget, pagination?: {size: numb
         scope: "USER",
         ...(pagination ? {size: pagination.size, page: pagination.page} : {}),
         ...(target.timeFiltered
-            ? {"filters[timeRange][EQUALS]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
+            ? {"filters[startDate][GREATER_THAN_OR_EQUAL_TO]": useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"}
             : {}),
     }
 }

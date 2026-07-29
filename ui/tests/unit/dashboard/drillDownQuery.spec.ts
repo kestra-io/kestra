@@ -25,7 +25,7 @@ describe("buildFullQuery", () => {
             scope: "USER",
             size: 100,
             page: 1,
-            "filters[timeRange][EQUALS]": "PT24H",
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "PT24H",
         })
     })
 
@@ -34,7 +34,7 @@ describe("buildFullQuery", () => {
 
         const result = buildFullQuery({name: "executions/list", query: {}, timeFiltered: true}, {size: 25, page: 2})
 
-        expect(result["filters[timeRange][EQUALS]"]).toBe("PT1H")
+        expect(result["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"]).toBe("PT1H")
     })
 
     test("omits the time filter when the target is not time-filtered (Flows has no time dimension)", () => {
@@ -52,7 +52,7 @@ describe("buildFullQuery", () => {
         expect(result).toEqual({
             "filters[taskId][EQUALS]": "t",
             scope: "USER",
-            "filters[timeRange][EQUALS]": "PT24H",
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "PT24H",
         })
         expect(result.size).toBeUndefined()
         expect(result.page).toBeUndefined()

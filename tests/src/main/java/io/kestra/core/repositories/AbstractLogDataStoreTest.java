@@ -227,6 +227,52 @@ public abstract class AbstractLogDataStoreTest {
         awaitIndexing(() -> !logDataStore.findByExecutionId(pageTenant, PAGE_EXEC, null).isEmpty());
     }
 
+    static Stream<QueryFilter> filterCombinations() {
+        return Stream.of(
+            QueryFilter.builder().field(Field.QUERY).value("flowId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.QUERY).value("anotherId").operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value("another.namespace").operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value("kestra").operation(Op.CONTAINS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra").operation(Op.STARTS_WITH).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value("unittest").operation(Op.ENDS_WITH).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value(".*kestra.*").operation(Op.REGEX).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value(List.of("io.kestra.unittest")).operation(Op.IN).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value(List.of("another.namespace")).operation(Op.NOT_IN).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value("io").operation(Op.PREFIX).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value("flowId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value("anotherFlowId").operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value("lowI").operation(Op.CONTAINS).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value("flow").operation(Op.STARTS_WITH).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value("Id").operation(Op.ENDS_WITH).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value(".lowI.").operation(Op.REGEX).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value(List.of("flowId", "other")).operation(Op.IN).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value(List.of("anotherFlowId")).operation(Op.NOT_IN).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN_OR_EQUAL_TO).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(),
+            QueryFilter.builder().field(Field.DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("triggerId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("anotherId").operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("igger").operation(Op.CONTAINS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("trigger").operation(Op.STARTS_WITH).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("Id").operation(Op.ENDS_WITH).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value(List.of("triggerId")).operation(Op.IN).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value(List.of("anotherId")).operation(Op.NOT_IN).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("executionId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("anotherId").operation(Op.NOT_EQUALS).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("xecution").operation(Op.CONTAINS).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("execution").operation(Op.STARTS_WITH).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value("Id").operation(Op.ENDS_WITH).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("executionId")).operation(Op.IN).build(),
+            QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("anotherId")).operation(Op.NOT_IN).build(),
+            QueryFilter.builder().field(Field.LEVEL).value(Level.DEBUG).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(),
+            QueryFilter.builder().field(Field.LEVEL).value(Level.INFO).operation(Op.LESS_THAN_OR_EQUAL_TO).build()
+        );
+    }
     private static List<LogEntry> withTenant(String tenantId, List<LogEntry> logs) {
         return logs.stream().map(l -> l.toBuilder().tenantId(tenantId).build()).toList();
     }
@@ -235,6 +281,44 @@ public abstract class AbstractLogDataStoreTest {
         return TestsUtils.randomTenant();
     }
 
+    static Stream<QueryFilter> errorFilterCombinations() {
+        return Stream.of(
+            QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.STATE).value(State.Type.RUNNING).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.LEVEL).value(Level.INFO).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.LEVEL).value(Level.INFO).operation(Op.NOT_EQUALS).build()
+        );
+    }
+
+    @Test
+    void all() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        LogEntry.LogEntryBuilder builder = logEntry(tenant, Level.INFO);
+
+        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, tenant, null);
+        assertThat(find.size()).isZero();
+
+        LogEntry save = logRepository.save(builder.build());
+        logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // non-NORMAL: excluded from the default NORMAL-only listing
+
+        find = logRepository.find(Pageable.UNPAGED, tenant, null);
+        assertThat(find.size()).isEqualTo(1);
+        assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
+        var filters = List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LEVEL)
+                .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                .value(Level.WARN)
+                .build(),
+            QueryFilter.builder()
+                .field(Field.DATE)
+                .operation(QueryFilter.Op.GREATER_THAN)
+                .value(Instant.now().minus(1, ChronoUnit.HOURS))
+                .build()
     // ------------------------------------------------------------------ writes
 
     @Test
@@ -649,6 +733,402 @@ public abstract class AbstractLogDataStoreTest {
         assertThat(result).isEqualTo(logDataStore.canAggregate() ? 3.0 : 0.0);
     }
 
+    @Test
+    void purge() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        logRepository.save(logEntry(tenant, Level.INFO, "execution1").build());
+        logRepository.save(logEntry(tenant, Level.INFO, "execution1").build());
+        logRepository.save(logEntry(tenant, Level.INFO, "execution2").build());
+        logRepository.save(logEntry(tenant, Level.INFO, "execution2").build());
+
+        var result = logRepository.purge(List.of(Execution.builder().id("execution1").build(), Execution.builder().id("execution2").build()));
+        assertThat(result).isEqualTo(4);
+    }
+
+    private static final LogEntry traceLog = logEntry(null, Level.TRACE, "exec-trace").build();
+    private static final LogEntry debugLog = logEntry(null, Level.DEBUG, "exec-debug").build();
+    private static final LogEntry infoLog = logEntry(null, Level.INFO, "exec-info").build();
+    private static final LogEntry warnLog = logEntry(null, Level.WARN, "exec-warn").build();
+    private static final LogEntry errorLog = logEntry(null, Level.ERROR, "exec-error").build();
+    private static final List<LogEntry> allLevels = List.of(traceLog, debugLog, infoLog, warnLog, errorLog);
+
+    private static final LogEntry loadDataLog = logEntry(null, Level.INFO, "exec-load-data")
+        .taskId("load-data").taskRunId("tr-load-data").attemptNumber(0).build();
+    private static final LogEntry transformLog = logEntry(null, Level.INFO, "exec-transform")
+        .taskId("transform").taskRunId("tr-transform").attemptNumber(1).build();
+    private static final LogEntry sinkLog = logEntry(null, Level.INFO, "exec-sink")
+        .taskId("sink").taskRunId("tr-sink").attemptNumber(2).build();
+    private static final List<LogEntry> taskVariedLogs = List.of(loadDataLog, transformLog, sinkLog);
+
+    private static final LogEntry alphaLog = logEntry(null, Level.INFO, "exec-alpha")
+        .namespace("io.kestra.alpha")
+        .flowId("alpha-flow").triggerId("alpha-trigger")
+        .taskId("alpha-task").taskRunId("alpha-tr")
+        .message("alpha message").build();
+    private static final LogEntry betaLog = logEntry(null, Level.INFO, "exec-beta")
+        .namespace("io.kestra.beta")
+        .flowId("beta-flow").triggerId("beta-trigger")
+        .taskId("beta-task").taskRunId("beta-tr")
+        .message("beta message").build();
+    private static final LogEntry gammaLog = logEntry(null, Level.INFO, "exec-gamma")
+        .namespace("com.example.gamma")
+        .flowId("gamma-flow").triggerId("gamma-trigger")
+        .taskId("gamma-task").taskRunId("gamma-tr")
+        .message("gamma message").build();
+    private static final List<LogEntry> distinctLogs = List.of(alphaLog, betaLog, gammaLog);
+
+    private static final LogEntry userScopeLog = logEntry(null, Level.INFO, "exec-user-scope")
+        .namespace("io.kestra.user").build();
+    private static final LogEntry systemScopeLog = logEntry(null, Level.INFO, "exec-system-scope")
+        .namespace("system").build();
+    private static final List<LogEntry> scopeLogs = List.of(userScopeLog, systemScopeLog);
+
+    private static final Instant T_PAST = Instant.parse("2020-01-01T00:00:00Z");
+    private static final Instant T_NOW = Instant.parse("2020-06-01T00:00:00Z");
+    private static final Instant T_FUTURE = Instant.parse("2020-12-31T00:00:00Z");
+    private static final LogEntry pastLog = logEntry(null, Level.INFO, "exec-past").timestamp(T_PAST).build();
+    private static final LogEntry nowLog = logEntry(null, Level.INFO, "exec-now").timestamp(T_NOW).build();
+    private static final LogEntry futureLog = logEntry(null, Level.INFO, "exec-future").timestamp(T_FUTURE).build();
+    private static final List<LogEntry> timeLogs = List.of(pastLog, nowLog, futureLog);
+
+    private static final LogEntry normalKindLog = logEntry(null, Level.INFO, "exec-normal-kind")
+        .executionKind(ExecutionKind.NORMAL).build();
+    private static final LogEntry playgroundKindLog = logEntry(null, Level.INFO, "exec-playground-kind")
+        .executionKind(ExecutionKind.PLAYGROUND).build();
+    private static final LogEntry loopKindLog = logEntry(null, Level.INFO, "exec-loop-kind")
+        .executionKind(ExecutionKind.LOOP).build();
+    private static final List<LogEntry> kindLogs = List.of(normalKindLog, playgroundKindLog, loopKindLog);
+
+    public static final List<FiltersTestCase> filtersTestCases = List.of(
+        FiltersTestCase.builder()
+            .logs(allLevels)
+            .expectedLogs(List.of(infoLog, warnLog, errorLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.INFO).operation(Op.GREATER_THAN_OR_EQUAL_TO)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(allLevels)
+            .expectedLogs(List.of(traceLog, debugLog, infoLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.INFO).operation(Op.LESS_THAN_OR_EQUAL_TO)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(allLevels)
+            .expectedLogs(allLevels)
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.TRACE).operation(Op.GREATER_THAN_OR_EQUAL_TO)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(allLevels)
+            .expectedLogs(allLevels)
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.ERROR).operation(Op.LESS_THAN_OR_EQUAL_TO)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(allLevels)
+            .expectedLogs(List.of(errorLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.ERROR).operation(Op.GREATER_THAN_OR_EQUAL_TO)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(allLevels)
+            .expectedLogs(List.of(traceLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.LEVEL).value(Level.TRACE).operation(Op.LESS_THAN_OR_EQUAL_TO)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(loadDataLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_ID).value("load-data").operation(Op.EQUALS)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(transformLog, sinkLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_ID).value("load-data").operation(Op.NOT_EQUALS)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(loadDataLog, transformLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_ID).value(List.of("load-data", "transform")).operation(Op.IN)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(transformLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_RUN_ID).value("tr-transform").operation(Op.EQUALS)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(loadDataLog, sinkLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.TASK_RUN_ID).value(List.of("tr-load-data", "tr-sink")).operation(Op.IN)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(transformLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.ATTEMPT_NUMBER).value(1).operation(Op.EQUALS)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(loadDataLog, sinkLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.ATTEMPT_NUMBER).value(1).operation(Op.NOT_EQUALS)
+                    .build()
+            )
+            .build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(loadDataLog, transformLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.ATTEMPT_NUMBER).value(List.of(0, 1)).operation(Op.IN)
+                    .build()
+            ).build(),
+
+        FiltersTestCase.builder()
+            .logs(taskVariedLogs)
+            .expectedLogs(List.of(transformLog))
+            .queryFilter(
+                QueryFilter.builder()
+                    .field(Field.ATTEMPT_NUMBER).value(List.of(0, 2)).operation(Op.NOT_IN)
+                    .build()
+            ).build(),
+
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_ID).value("alpha").operation(Op.CONTAINS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_ID).value("alpha").operation(Op.STARTS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_ID).value("alpha-task").operation(Op.ENDS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_ID).value(List.of("alpha-task", "beta-task")).operation(Op.NOT_IN).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(betaLog, gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_RUN_ID).value("alpha-tr").operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_RUN_ID).value("beta").operation(Op.CONTAINS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_RUN_ID).value("alpha").operation(Op.STARTS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_RUN_ID).value("gamma-tr").operation(Op.ENDS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TASK_RUN_ID).value(List.of("alpha-tr", "beta-tr")).operation(Op.NOT_IN).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.QUERY).value("alpha message").operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(betaLog, gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.QUERY).value("alpha message").operation(Op.NOT_EQUALS).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(scopeLogs).expectedLogs(List.of(userScopeLog))
+            .queryFilter(QueryFilter.builder().field(Field.SCOPE).value(List.of(io.kestra.core.models.flows.FlowScope.USER)).operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(scopeLogs).expectedLogs(List.of(systemScopeLog))
+            .queryFilter(QueryFilter.builder().field(Field.SCOPE).value(List.of(io.kestra.core.models.flows.FlowScope.USER)).operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(scopeLogs).expectedLogs(List.of(userScopeLog))
+            .queryFilter(QueryFilter.builder().field(Field.SCOPE).value(List.of(io.kestra.core.models.flows.FlowScope.USER)).operation(Op.IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(scopeLogs).expectedLogs(List.of(systemScopeLog))
+            .queryFilter(QueryFilter.builder().field(Field.SCOPE).value(List.of(io.kestra.core.models.flows.FlowScope.USER)).operation(Op.NOT_IN).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.alpha").operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(betaLog, gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.alpha").operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog, betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value("kestra").operation(Op.CONTAINS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog, betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra").operation(Op.STARTS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value("gamma").operation(Op.ENDS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog, betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value("io\\.kestra.*").operation(Op.REGEX).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog, betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value(List.of("io.kestra.alpha", "io.kestra.beta")).operation(Op.IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value(List.of("io.kestra.alpha", "io.kestra.beta")).operation(Op.NOT_IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog, betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra").operation(Op.PREFIX).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(timeLogs).expectedLogs(List.of(nowLog, futureLog))
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.GREATER_THAN_OR_EQUAL_TO).build()).build(),
+        FiltersTestCase.builder()
+            .logs(timeLogs).expectedLogs(List.of(futureLog))
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.GREATER_THAN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(timeLogs).expectedLogs(List.of(pastLog, nowLog))
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.LESS_THAN_OR_EQUAL_TO).build()).build(),
+        FiltersTestCase.builder()
+            .logs(timeLogs).expectedLogs(List.of(pastLog))
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.LESS_THAN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(timeLogs).expectedLogs(List.of(nowLog))
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(timeLogs).expectedLogs(List.of(pastLog, futureLog))
+            .queryFilter(QueryFilter.builder().field(Field.DATE).value(T_NOW.atZone(java.time.ZoneOffset.UTC)).operation(Op.NOT_EQUALS).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value("alpha-flow").operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(betaLog, gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value("alpha-flow").operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value("alpha").operation(Op.CONTAINS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value("alpha").operation(Op.STARTS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(distinctLogs)
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value("-flow").operation(Op.ENDS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value("alpha-.*").operation(Op.REGEX).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog, betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value(List.of("alpha-flow", "beta-flow")).operation(Op.IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value(List.of("alpha-flow", "beta-flow")).operation(Op.NOT_IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.FLOW_ID).value("alpha-flow").operation(Op.PREFIX).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TRIGGER_ID).value("alpha-trigger").operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(betaLog, gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TRIGGER_ID).value("alpha-trigger").operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TRIGGER_ID).value("alpha").operation(Op.CONTAINS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TRIGGER_ID).value("alpha").operation(Op.STARTS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(distinctLogs)
+            .queryFilter(QueryFilter.builder().field(Field.TRIGGER_ID).value("-trigger").operation(Op.ENDS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog, betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TRIGGER_ID).value(List.of("alpha-trigger", "beta-trigger")).operation(Op.IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.TRIGGER_ID).value(List.of("alpha-trigger", "beta-trigger")).operation(Op.NOT_IN).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value("exec-alpha").operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(betaLog, gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value("exec-alpha").operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value("alpha").operation(Op.CONTAINS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(distinctLogs)
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value("exec-").operation(Op.STARTS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog))
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value("alpha").operation(Op.ENDS_WITH).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(alphaLog, betaLog))
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("exec-alpha", "exec-beta")).operation(Op.IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(distinctLogs).expectedLogs(List.of(gammaLog))
+            .queryFilter(QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("exec-alpha", "exec-beta")).operation(Op.NOT_IN).build()).build(),
+
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(playgroundKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.PLAYGROUND.name()).operation(Op.EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(normalKindLog, loopKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.PLAYGROUND.name()).operation(Op.NOT_EQUALS).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(playgroundKindLog, loopKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name())).operation(Op.IN).build()).build(),
+        FiltersTestCase.builder()
+            .logs(kindLogs).expectedLogs(List.of(normalKindLog))
+            .queryFilter(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name())).operation(Op.NOT_IN).build()).build()
+    );
     // ------------------------------------------------------------------ purge / delete (self-provisioned; canPurge branch)
 
     @Test

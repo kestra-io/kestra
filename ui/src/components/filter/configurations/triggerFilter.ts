@@ -1,5 +1,5 @@
 import {computed, ComputedRef} from "vue"
-import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
 import resource from "../../../models/resource"
 import action from "../../../models/action"
 import {useNamespacesStore} from "override/stores/namespaces"
@@ -66,26 +66,34 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     valueType: "text",
                 }] : []) as any,
                 {
-                    key: "timeRange",
-                    label: t("filter.timeRange_trigger.label"),
+                    key: "nextExecutionDate",
+                    label: t("filter.timeRange_trigger.dateFilter.nextExecutionDate"),
                     description: t("filter.timeRange_trigger.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
-                    groupable: false,
-                    valueProvider: async (meta?: FilterMeta) => {
-                        return meta?.dateFilter === "LAST_TRIGGERED_DATE"
-                            ? VALUES.RELATIVE_DATE
-                            : VALUES.RELATIVE_DATE_NEXT
-                    },
-                    dateFilterOptions: [
-                        {value: "NEXT_EXECUTION_DATE", label: t("filter.timeRange_trigger.dateFilter.nextExecutionDate")},
-                        {value: "LAST_TRIGGERED_DATE", label: t("filter.timeRange_trigger.dateFilter.lastTriggeredDate")},
+                    comparators: [
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN,
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.GREATER_THAN,
                     ],
-                    keyLabelProvider: (meta?: FilterMeta) => {
-                        return meta?.dateFilter === "LAST_TRIGGERED_DATE"
-                            ? t("filter.timeRange_trigger.chip.lastTriggered")
-                            : t("filter.timeRange_trigger.chip.nextExecution")
-                    },
+                    showComparatorSelection: true,
+                    valueType: "time-range",
+                    groupable: false,
+                    valueProvider: async () => VALUES.RELATIVE_DATE_NEXT,
+                },
+                {
+                    key: "lastTriggeredDate",
+                    label: t("filter.timeRange_trigger.dateFilter.lastTriggeredDate"),
+                    description: t("filter.timeRange_trigger.description"),
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.GREATER_THAN,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN,
+                    ],
+                    showComparatorSelection: true,
+                    valueType: "time-range",
+                    groupable: false,
+                    valueProvider: async () => VALUES.RELATIVE_DATE,
                 },
                 {
                     key: "scope",

@@ -189,8 +189,8 @@ export type {
     LevelFilterDirection,
 } from "./components/Data/KsDataTable/filter/utils/logLevelQuery"
 export {
-    normalizeRouteTimeRangeFilter,
-} from "./components/Data/KsDataTable/filter/utils/timeRangeQuery"
+    isRelativeDuration,
+} from "./components/Data/KsDataTable/filter/utils/constants"
 export type {
     FilterConfiguration,
     AppliedFilter,

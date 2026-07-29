@@ -22,6 +22,8 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.webserver.utils.QueryFilterUtils;
+import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
@@ -281,10 +283,21 @@ class LogControllerTest {
         logRepository.save(log3);
 
         CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenant + "/logs/search?filters[timeRange][EQUALS]=PT25H"),
+            GET("/api/v1/" + tenant + "/logs/search?filters[date][GREATER_THAN_OR_EQUAL_TO]=PT25H"),
             Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
+
+        // A window is two bounds on the same `date` field — here everything older than an hour ago,
+        // which excludes log3 (emitted now) and keeps the two older entries.
+        PagedResults<LogEntry> windowed = client.toBlocking().retrieve(
+            GET(
+                "/api/v1/" + tenant
+                    + "/logs/search?filters[date][GREATER_THAN_OR_EQUAL_TO]=P3D&filters[date][LESS_THAN_OR_EQUAL_TO]=PT1H"
+            ),
+            Argument.of(PagedResults.class, LogEntry.class)
+        );
+        assertThat(windowed.getTotal()).isEqualTo(2L);
     }
 
     private static LogEntry logEntry(String tenant, Level level) {
@@ -361,8 +374,10 @@ class LogControllerTest {
         when(tenantService.resolveTenant()).thenReturn(tenant);
         seedLogs(tenant, testCase);
 
+        // This calls the controller method directly, bypassing the binder that resolves relative
+        // durations on the real HTTP endpoint — so resolve here to mirror production behavior.
         List<Event<FollowLogEvent>> received = logController
-            .followLogsFromExecution(testCase.executionId(), testCase.filters())
+            .followLogsFromExecution(testCase.executionId(), QueryFilterUtils.resolveRelativeDateFilters(testCase.filters()))
             .take(testCase.expectedLogs().size() + 1L) // +1 for the initial "start" event
             .collectList()
             .block(Duration.ofSeconds(5));
@@ -434,6 +449,15 @@ class LogControllerTest {
     private static final LogEntry loopKindLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "loop kind line")
         .toBuilder().executionKind(ExecutionKind.LOOP).build();
     private static final List<LogEntry> kindLogs = List.of(normalKindLog, playgroundKindLog, loopKindLog);
+
+    // Date fixtures at 2 days ago and now, used by the relative/absolute date filter cases.
+    private static final LogEntry dateOldLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "date old line")
+        .toBuilder().timestamp(Instant.now().minus(2, ChronoUnit.DAYS)).build();
+    private static final LogEntry dateRecentLog = baseLog(Level.INFO, "load-data", "task-run-1", 0, "date recent line")
+        .toBuilder().timestamp(Instant.now()).build();
+    private static final List<LogEntry> dateLogs = List.of(dateOldLog, dateRecentLog);
+    // Absolute instant equivalent to the PT25H window, resolved once at class load (generous margin).
+    private static final String NOW_MINUS_25H = Instant.now().minus(25, ChronoUnit.HOURS).toString();
 
     private static final List<FiltersTestCase> filtersTestCases = List.of(
         FiltersTestCase.builder()
@@ -593,6 +617,38 @@ class LogControllerTest {
                         .field(QueryFilter.Field.KIND)
                         .operation(QueryFilter.Op.NOT_IN)
                         .value(List.of(ExecutionKind.PLAYGROUND.name(), ExecutionKind.LOOP.name()))
+                        .build()
+                )
+            )
+            .build(),
+
+        // Relative duration on a date field — resolved to "now - 25h" (date is past-oriented).
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(dateLogs)
+            .expectedLogs(List.of(dateRecentLog))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.DATE)
+                        .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                        .value("PT25H")
+                        .build()
+                )
+            )
+            .build(),
+
+        // Absolute instant over the same window — same result, proving both value shapes work.
+        FiltersTestCase.builder()
+            .executionId(TEST_EXECUTION_ID)
+            .logs(dateLogs)
+            .expectedLogs(List.of(dateRecentLog))
+            .filters(
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.DATE)
+                        .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
+                        .value(NOW_MINUS_25H)
                         .build()
                 )
             )

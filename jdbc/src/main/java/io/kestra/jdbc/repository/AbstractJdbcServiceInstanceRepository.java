@@ -1,8 +1,6 @@
 package io.kestra.jdbc.repository;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,7 +20,6 @@ import org.jooq.SelectConditionStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
-import io.kestra.core.exceptions.TypeConversionException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
@@ -32,7 +29,6 @@ import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.server.ServiceType;
-import io.kestra.core.utils.TypeConverter;
 import io.kestra.jdbc.runner.JdbcTransactionContext;
 
 import io.micronaut.data.model.Pageable;
@@ -250,7 +246,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                 SelectConditionStep<Record1<Object>> select = context.select(VALUE_FIELD).from(table()).where("1=1");
                 if (filters != null && !filters.isEmpty()) {
                     select = select.and(
-                        this.filter(filters, CREATED_AT.getName(), QueryFilter.Resource.SERVICE_INSTANCE)
+                        this.filter(filters, QueryFilter.Resource.SERVICE_INSTANCE)
                     );
                 }
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -259,8 +255,8 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
 
     /** {@inheritDoc} **/
     @Override
-    protected Condition filter(List<QueryFilter> filters, String dateColumn, QueryFilter.Resource resource) {
-        return super.filter(ServiceInstanceRepositoryInterface.expandStateNamesForFilterQueryBackwardCompat(filters), dateColumn, resource);
+    protected Condition filter(List<QueryFilter> filters, QueryFilter.Resource resource) {
+        return super.filter(ServiceInstanceRepositoryInterface.expandStateNamesForFilterQueryBackwardCompat(filters), resource);
     }
 
     /** {@inheritDoc} **/
@@ -270,23 +266,11 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             // The service type column is named "service_type", not "type"
             return quotedName("service_type");
         }
-        return super.getColumnName(field);
-    }
-
-    /** {@inheritDoc} **/
-    @Override
-    protected Condition createdCondition(Object value, QueryFilter.Op operation, @Nullable String dateColumn) {
-        String column = dateColumn != null ? dateColumn : CREATED_AT.getName();
-        // Accept ISO-8601 durations (e.g. PT5M) as a "now minus duration" threshold;
-        // the supplied operation is applied against that threshold.
-        try {
-            Duration duration = TypeConverter.toDuration(value);
-            ZonedDateTime threshold = ZonedDateTime.now().minus(duration);
-            return applyDateCondition(threshold.toOffsetDateTime(), operation, column);
-        } catch (TypeConversionException ignored) {
-            // Not a duration — fall through to absolute date parsing
+        if (field == QueryFilter.Field.CREATED) {
+            // The creation instant column is named "created_at", not "created"
+            return quotedName(CREATED_AT.getName());
         }
-        return super.createdCondition(value, operation, column);
+        return super.getColumnName(field);
     }
 
     @Override

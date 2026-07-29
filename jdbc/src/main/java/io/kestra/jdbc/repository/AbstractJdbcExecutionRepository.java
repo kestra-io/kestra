@@ -166,16 +166,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<QueryFilter> filters
 
     ) {
-        return findPage(pageable, tenantId, this.computeFindCondition(filters, null));
-    }
-
-    @Override
-    public ArrayListTotal<Execution> find(
-        Pageable pageable,
-        @Nullable String tenantId,
-        @Nullable List<QueryFilter> filters,
-        @Nullable DateFilter dateFilter) {
-        return findPage(pageable, tenantId, this.computeFindCondition(filters, dateFilter));
+        return findPage(pageable, tenantId, this.computeFindCondition(filters));
     }
 
     @Override
@@ -227,10 +218,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         );
     }
 
-    private Condition computeFindCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
+    private Condition computeFindCondition(@Nullable List<QueryFilter> filters) {
         boolean hasKindFilter = filters != null && filters.stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
-        Condition dateFilterCondition = buildDateFilterCondition(filters, dateFilter);
-        return hasKindFilter ? dateFilterCondition : dateFilterCondition.and(NORMAL_KIND_CONDITION);
+        Condition condition = this.filter(filters, Resource.EXECUTION);
+        return hasKindFilter ? condition : condition.and(NORMAL_KIND_CONDITION);
     }
 
     private static boolean containsLeafForKind(QueryFilter filter) {
@@ -318,7 +309,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         if (filters == null || filters.isEmpty()) {
             return findAllAsync(tenantId);
         }
-        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION);
+        Condition condition = this.filter(filters, Resource.EXECUTION);
         return findAsync(defaultFilter(tenantId), condition);
     }
 

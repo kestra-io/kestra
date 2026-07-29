@@ -162,7 +162,7 @@ describe("DrillDownDrawer", () => {
                 scope: "USER",
                 size: 100,
                 page: 1,
-                "filters[timeRange][EQUALS]": "PT24H",
+                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "PT24H",
             },
         })
         expect(store.isOpen).toBe(false)

@@ -238,41 +238,24 @@ const writeFilter = (
     const {key, comparator, value} = filter
     const comparatorKey = getComparatorKey(comparator)
 
-    switch (key) {
-        case "timeRange": {
-            if (typeof value === "object" && "startDate" in value) {
-                query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = value.startDate.toISOString()
-                query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = value.endDate.toISOString()
-            } else {
-                query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? ""
-            }
-            const dateFilter = (filter as any).meta?.dateFilter
-            if (dateFilter) {
-                query["dateFilter"] = dateFilter
-            }
-            return
-        }
-        default: {
-            // A `time-range` field in custom range mode: encode {startDate,endDate} as a GTE/LTE pair
-            // on the field's own key (works inside [and|or][N] group prefixes too). The dedicated
-            // `timeRange` key keeps its own startDate/endDate encoding via the case above.
-            if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
-                const {startDate, endDate} = value as {startDate: Date; endDate: Date}
-                query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
-                query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = endDate.toISOString()
-            } else if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
-                value.forEach((item: string) => {
-                    const [k, v] = item.split(":", 2)
-                    if (k && v) query[`${prefix}[${key}][${comparatorKey}][${k}]`] = v
-                })
-            } else {
-                query[`${prefix}[${key}][${comparatorKey}]`] = Array.isArray(value)
-                    ? value.join(",")
-                    : value instanceof Date
-                        ? value.toISOString()
-                        : value?.toString() ?? ""
-            }
-        }
+    // A `time-range` date field in custom range mode: encode {startDate,endDate} as a GTE/LTE pair on
+    // the field's own key. A relative duration (PT24H, P7D…) or a single value goes through the plain
+    // branch below and is resolved server-side against now().
+    if (value && typeof value === "object" && "startDate" in value && "endDate" in value) {
+        const {startDate, endDate} = value as {startDate: Date; endDate: Date}
+        query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
+        query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = endDate.toISOString()
+    } else if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
+        value.forEach((item: string) => {
+            const [k, v] = item.split(":", 2)
+            if (k && v) query[`${prefix}[${key}][${comparatorKey}][${k}]`] = v
+        })
+    } else {
+        query[`${prefix}[${key}][${comparatorKey}]`] = Array.isArray(value)
+            ? value.join(",")
+            : value instanceof Date
+                ? value.toISOString()
+                : value?.toString() ?? ""
     }
 }
 

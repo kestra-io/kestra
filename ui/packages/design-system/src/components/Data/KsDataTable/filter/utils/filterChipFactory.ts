@@ -7,7 +7,6 @@ import {
     TEXT_COMPARATORS,
 } from "./filterTypes"
 import {type DecodedParam, keyOfComparator} from "./helpers"
-import {TIME_RANGE_KEY} from "./constants"
 
 export const buildNewFilter = (key: FilterKeyConfig): AppliedFilter | null => {
     const comparator = key.comparators?.[0]
@@ -52,23 +51,6 @@ export const isDateRangeValue = (
     value: AppliedFilter["value"],
 ): value is {startDate: Date; endDate: Date} =>
     !!value && typeof value === "object" && "startDate" in value && "endDate" in value
-
-export const createTimeRangeFilter = (
-    config: FilterKeyConfig,
-    startDate: Date,
-    endDate: Date,
-    comparator = Comparators.EQUALS,
-    meta?: Record<string, string>,
-): AppliedFilter =>
-    createAppliedFilter(
-        TIME_RANGE_KEY,
-        config,
-        comparator,
-        {startDate, endDate},
-        `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
-        keyOfComparator(comparator),
-        meta,
-    )
 
 export const createCustomRangeFilter = (
     key: string,

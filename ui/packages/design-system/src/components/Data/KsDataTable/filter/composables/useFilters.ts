@@ -15,8 +15,7 @@
  */
 import {ref} from "vue"
 import {useRoute, useRouter} from "vue-router"
-import {clearFilterQueryParams} from "../utils/helpers"
-import {TIME_RANGE_KEY} from "../utils/constants"
+import {clearFilterQueryParams, keyOfComparator} from "../utils/helpers"
 import {
     type AppliedFilter,
     type FilterConfiguration,
@@ -65,11 +64,15 @@ export function useFilters(
         hasValue: routeSync.hasValue,
     })
 
+    const timeRangeChips = configuration.keys?.filter((k) => k.valueType === "time-range") ?? []
+    const timeRangeChip = timeRangeChips[0]
     const defaultFilterOptions = {
         namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
-        includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
+        includeTimeRange: defaultTimeRange ?? !!timeRangeChip,
         defaultDuration,
+        timeRangeFields: timeRangeChips.map((k) => k.key),
+        timeRangeOperation: timeRangeChip ? keyOfComparator(timeRangeChip.comparators[0]) : undefined,
     }
     useDefaultFilter(defaultFilterOptions)
 
@@ -78,15 +81,15 @@ export function useFilters(
         const {query: defaultQuery} = applyDefaultFilters({}, defaultFilterOptions)
         const resetFilters: AppliedFilter[] = []
 
-        if (defaultFilterOptions.includeTimeRange) {
-            const timeRangeConfig = configuration.keys?.find((k) => k.key === TIME_RANGE_KEY)
-            const defaultTimeRangeRaw = defaultQuery[`filters[${TIME_RANGE_KEY}][EQUALS]`]
+        if (defaultFilterOptions.includeTimeRange && timeRangeChip) {
+            const defaultKey = `filters[${timeRangeChip.key}][${defaultFilterOptions.timeRangeOperation}]`
+            const defaultTimeRangeRaw = defaultQuery[defaultKey]
             const timeRangeValue = Array.isArray(defaultTimeRangeRaw) ? defaultTimeRangeRaw[0] : defaultTimeRangeRaw
 
-            if (timeRangeConfig && typeof timeRangeValue === "string" && timeRangeValue.length > 0) {
-                const comparator = timeRangeConfig.comparators[0] ?? Comparators.EQUALS
+            if (typeof timeRangeValue === "string" && timeRangeValue.length > 0) {
+                const comparator = timeRangeChip.comparators[0] ?? Comparators.EQUALS
                 resetFilters.push(
-                    createAppliedFilter(TIME_RANGE_KEY, timeRangeConfig, comparator, timeRangeValue, timeRangeValue, "default"),
+                    createAppliedFilter(timeRangeChip.key, timeRangeChip, comparator, timeRangeValue, timeRangeValue, "default"),
                 )
             }
         }

@@ -96,25 +96,29 @@ public class DateUtils {
         }
         ZonedDateTime startDate = null;
         ZonedDateTime endDate = null;
+        ZonedDateTime lowerDate = null;
+        ZonedDateTime upperDate = null;
+        // Extract the start/end bounds regardless of the comparison operation so a contradictory pair
+        // (e.g. startDate == 2024 with endDate == 2023) is still rejected, not just GTE/LTE ranges.
+        // A resource with a single timestamp expresses its window as two bounds on DATE, so there the
+        // operation is what tells the two bounds apart.
         for (QueryFilter filter : filters) {
-            if (isStartDateFilter(filter)) {
+            if (QueryFilter.Field.START_DATE.equals(filter.field())) {
                 startDate = TypeConverter.toZonedDateTime(filter.value());
-            } else if (isEndDateFilter(filter)) {
+            } else if (QueryFilter.Field.END_DATE.equals(filter.field())) {
                 endDate = TypeConverter.toZonedDateTime(filter.value());
+            } else if (QueryFilter.Field.DATE.equals(filter.field())) {
+                switch (filter.operation()) {
+                    case GREATER_THAN, GREATER_THAN_OR_EQUAL_TO -> lowerDate = TypeConverter.toZonedDateTime(filter.value());
+                    case LESS_THAN, LESS_THAN_OR_EQUAL_TO -> upperDate = TypeConverter.toZonedDateTime(filter.value());
+                    default -> {
+                        // EQUALS/NOT_EQUALS carry no range to contradict.
+                    }
+                }
             }
         }
         validateTimeline(startDate, endDate);
+        validateTimeline(lowerDate, upperDate);
     }
 
-    private static boolean isEndDateFilter(QueryFilter filter) {
-        return QueryFilter.Field.END_DATE.equals(filter.field())
-            && (QueryFilter.Op.LESS_THAN.equals(filter.operation())
-                || QueryFilter.Op.LESS_THAN_OR_EQUAL_TO.equals(filter.operation()));
-    }
-
-    private static boolean isStartDateFilter(QueryFilter filter) {
-        return QueryFilter.Field.START_DATE.equals(filter.field())
-            && (QueryFilter.Op.GREATER_THAN.equals(filter.operation())
-                || QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO.equals(filter.operation()));
-    }
 }

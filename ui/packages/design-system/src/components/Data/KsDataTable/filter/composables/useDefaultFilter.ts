@@ -10,12 +10,17 @@ interface DefaultFilterOptions {
      * Falls back to chartDefaultDuration from config endpoint -> then "PT24H".
     **/
     defaultDuration?: string;
+    /**
+     * The resource's date fields, taken from its `time-range` filter keys. A query already carrying any
+     * of them counts as having a time window, so no default is injected; the first is where the default
+     * window is written (defaults to startDate / GREATER_THAN_OR_EQUAL_TO).
+     */
+    timeRangeFields?: string[];
+    timeRangeOperation?: string;
 }
 
 const NAMESPACE_FILTER_PREFIX = "filters[namespace]"
 const SCOPE_FILTER_PREFIX = "filters[scope]"
-const TIME_RANGE_FILTER_PREFIX = "filters[timeRange]"
-const TIME_FILTER_KEYS = /startDate|endDate|timeRange/
 
 const hasFilterKey = (query: LocationQuery, prefix: string): boolean =>
     Object.keys(query).some(key => key.startsWith(prefix))
@@ -42,10 +47,21 @@ export function applyDefaultFilters(
         includeTimeRange,
         includeScope,
         defaultDuration,
+        timeRangeFields,
+        timeRangeOperation,
     }: DefaultFilterOptions = {}): { query: LocationQuery, change: boolean } {
 
     const query = {...currentQuery}
     let change = false
+
+    // Migrate away any legacy timeRange keys (removed from the backend) so stale URLs / restore state
+    // don't get written back and rejected. Relative ranges now live on real date fields.
+    Object.keys(query).forEach(key => {
+        if (key.startsWith("filters[timeRange]") || key === "timeRange") {
+            delete query[key]
+            change = true
+        }
+    })
 
     if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
         query[`${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace()
@@ -58,10 +74,14 @@ export function applyDefaultFilters(
     }
 
     if (includeTimeRange) {
-        const hasExisting = Object.keys(query).some(key => TIME_FILTER_KEYS.test(key))
-        if (!hasExisting) {
+        // Only the resource's own date fields count: a `startDate` left over from another page must not
+        // suppress the default window on a resource that filters on `date`, and vice versa.
+        const dateFields = timeRangeFields?.length ? timeRangeFields : ["startDate"]
+        if (!dateFields.some(field => hasFilterKey(query, `filters[${field}]`))) {
             const duration = defaultDuration ?? "PT24H"
-            query[`${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = duration
+            // Default time window: a relative duration on the config's date field, resolved server-side.
+            const operation = timeRangeOperation ?? "GREATER_THAN_OR_EQUAL_TO"
+            query[`filters[${dateFields[0]}][${operation}]`] = duration
             change = true
         }
     }

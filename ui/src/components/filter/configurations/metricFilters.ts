@@ -75,11 +75,17 @@ export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => {
                     searchable: true,
                 },
                 {
-                    key: "timeRange",
-                    label: t("filter.timeRange_metric.label"),
+                    key: "startDate",
+                    label: t("filter.timeRange.dateFilter.startDate"),
                     description: t("filter.timeRange_metric.description"),
-                    comparators: [Comparators.EQUALS],
-                    valueType: "select",
+                    comparators: [
+                        Comparators.GREATER_THAN_OR_EQUAL_TO,
+                        Comparators.GREATER_THAN,
+                        Comparators.LESS_THAN_OR_EQUAL_TO,
+                        Comparators.LESS_THAN,
+                    ],
+                    showComparatorSelection: true,
+                    valueType: "time-range",
                     groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("metrics")

@@ -779,9 +779,7 @@
         const configuration = (props.namespace === undefined || props.flowId === undefined)
             ? executionFilter.value
             : flowExecutionFilter.value
-        const fields = (configuration.keys ?? []).flatMap((entry: {key: string}) =>
-            entry.key === "timeRange" ? ["startDate", "endDate"] : [entry.key],
-        )
+        const fields = (configuration.keys ?? []).map((entry: {key: string}) => entry.key)
         if (configuration.searchPlaceholder) {
             fields.push("q")
         }

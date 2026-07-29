@@ -137,7 +137,7 @@ public abstract class AbstractSQLMigrationScript implements MigrationScript {
      * placeholders in the SQL with the given replacements before executing. Used e.g. to inject a
      * configurable table name into a log-store migration script.
      *
-     * @param dataSource   the data source to obtain a connection from
+     * @param dataSource the data source to obtain a connection from
      * @param resourcePath classpath resource path to the SQL file
      * @param replacements placeholder key → value substitutions (key {@code x} replaces {@code ${x}})
      * @throws IOException if the resource cannot be read

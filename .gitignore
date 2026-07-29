@@ -38,6 +38,7 @@ ui/.vitest-reports
 ui/stats.html
 ui/.frontend-gradle-plugin
 ui/test-report.junit.xml
+ui/test-report.storybook.junit.xml
 ui/frontend.*
 *storybook.log
 storybook-static
@@ -71,3 +72,7 @@ charts/kestra/charts/
 charts/kestra-starter/charts/
 .claude/settings.local.json
 .gstack/
+
+# Generated OpenAPI spec (produced by :webserver:generateOpenapiSpec; the committed SDK under
+# ui/packages/kestra-sdk/src/openapi is the source of truth, not this transient spec file).
+/openapi.yml

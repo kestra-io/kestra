@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.log;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.event.Level;

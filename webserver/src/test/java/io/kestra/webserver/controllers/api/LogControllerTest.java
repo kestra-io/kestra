@@ -24,6 +24,7 @@ import io.kestra.core.utils.QueryFilterTestUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.core.type.Argument;
@@ -83,15 +84,15 @@ class LogControllerTest {
         logRepository.save(log2);
         logRepository.save(log3);
 
-        PagedResults<LogEntry> logs = client.toBlocking().retrieve(
+        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(3L);
 
         logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search?filters[level][GREATER_THAN_OR_EQUAL_TO]=INFO"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
 
@@ -105,6 +106,13 @@ class LogControllerTest {
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(GET("/api/v1/" + tenant + "/logs/search?page=0"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/" + tenant + "/logs/search?page=1&size=1001"))
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
@@ -157,16 +165,16 @@ class LogControllerTest {
         assertThat(logs.getFirst().getExecutionKind()).isEqualTo(ExecutionKind.PLAYGROUND);
 
         // Global search defaults to NORMAL kind only too...
-        PagedResults<LogEntry> search = client.toBlocking().retrieve(
+        CursorOrOffsetPagedResults<LogEntry> search = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(search.getTotal()).isEqualTo(0L);
 
         // ...and can be narrowed with an explicit KIND filter.
         search = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search?filters[kind][EQUALS]=PLAYGROUND"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(search.getTotal()).isEqualTo(1L);
     }
@@ -274,9 +282,9 @@ class LogControllerTest {
         logRepository.save(log2);
         logRepository.save(log3);
 
-        PagedResults<LogEntry> logs = client.toBlocking().retrieve(
+        CursorOrOffsetPagedResults<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/" + tenant + "/logs/search?filters[date][GREATER_THAN_OR_EQUAL_TO]=PT25H"),
-            Argument.of(PagedResults.class, LogEntry.class)
+            Argument.of(CursorOrOffsetPagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
 

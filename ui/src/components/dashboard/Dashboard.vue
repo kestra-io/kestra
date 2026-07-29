@@ -56,12 +56,8 @@
         return dashboardFilter.value
     })
 
-    import YAML_MAIN from "./assets/default_main_definition.yaml?raw"
-    import YAML_FLOW from "./assets/default_flow_definition.yaml?raw"
-    import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw"
-
     import {useRoute, useRouter} from "vue-router"
-    import {useDashboardStore} from "../../stores/dashboard"
+    import {DEFAULT_DASHBOARD, useDashboardStore} from "../../stores/dashboard"
     import {useCoreStore} from "../../stores/core.ts"
     import {useI18n} from "vue-i18n"
 
@@ -89,7 +85,7 @@
         }
     })
 
-    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? {id: "default", charts: []})
+    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? DEFAULT_DASHBOARD)
     const isDashboardBundledWithUI = ref<boolean>(false)
     const charts = ref<Chart[]>([])
 
@@ -106,17 +102,18 @@
     const refreshCharts = () => {
         dashboardComponent.value?.refreshCharts?.()
     }
-    const getDefaultDashboardBundledInUI = () => {
+    const getDefaultDashboardBundledInUI = async () => {
+        const definitions = await dashboardStore.loadDefaultDefinitions()
         if(props.isFlow){
-            return processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string)
+            return processFlowYaml(definitions.flow, route.params.namespace as string, route.params.id as string)
         } else if(props.isNamespace){
-            return YAML_NAMESPACE
+            return definitions.namespace
         } else {
-            return YAML_MAIN
+            return definitions.main
         }
     }
-    const useDefaultDashboardBundledInUI = () => {
-        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(getDefaultDashboardBundledInUI()), title: t("dashboards.default")}
+    const useDefaultDashboardBundledInUI = async () => {
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(await getDefaultDashboardBundledInUI()), title: t("dashboards.default"), deleted: false}
         isDashboardBundledWithUI.value = true
     }
 
@@ -156,7 +153,7 @@
         }
         if (id === "default") {
             // we are in the case we will load the defaults bundled in the UI
-            useDefaultDashboardBundledInUI()
+            await useDefaultDashboardBundledInUI()
         } else {
 
             // case a default dashboard exists in the DB, try to load it
@@ -191,7 +188,7 @@
 <style scoped lang="scss">
 
 .filterPadding {
-    margin-top: 2rem;
+    margin-top: 1rem;
     padding: 0 2rem;
 }
 

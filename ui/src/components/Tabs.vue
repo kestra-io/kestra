@@ -47,6 +47,12 @@
 
     export interface Tab extends RouterTab {
         locked?: boolean;
+        /**
+         * When true, the tab's content section gets the full-container layout
+         * (bounded flex height) instead of the default scrolling container —
+         * for tabs hosting a full-page listing (e.g. KsDataTable with fitHeight).
+         */
+        fullContainer?: boolean;
         props?: any;
         blueprintDetail?: boolean;
     }
@@ -120,7 +126,7 @@
     }
 
     const containerClass = computed(() => {
-        if (activeTab.value?.locked) return {"px-0": true, "full-container": true}
+        if (activeTab.value?.locked || activeTab.value?.fullContainer) return {"px-0": true, "full-container": true}
         return {"container": true, "tabs-flush-top": true}
     })
 

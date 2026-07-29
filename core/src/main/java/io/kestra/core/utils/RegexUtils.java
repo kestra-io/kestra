@@ -22,6 +22,12 @@ public final class RegexUtils {
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
     private static final AtomicBoolean initialized = new AtomicBoolean(false);
 
+    /**
+     * Maximum length allowed for a user-supplied regex pattern that is executed by the database engine.
+     * Longer patterns are rejected without evaluation.
+     */
+    public static final int MAX_USER_REGEX_LENGTH = 250;
+
     private static volatile Duration timeout = DEFAULT_TIMEOUT;
 
     private RegexUtils() {
@@ -156,6 +162,59 @@ public final class RegexUtils {
     public static String replaceAll(String input, String regex, String replacement, Duration timeout) {
         Pattern pattern = Pattern.compile(regex);
         return matcher(pattern, input, timeout).replaceAll(replacement);
+    }
+
+    /**
+     * A repetition quantifier: {@code +}, {@code *}, {@code ?} (unescaped — a backslash-escaped
+     * {@code \+}/{@code \*}/{@code \?} is a literal character, not a quantifier), or a curly-brace
+     * count ({@code {n}}, {@code {n,}}, {@code {n,m}}).
+     */
+    private static final String QUANTIFIER = "(?:(?<!\\\\)[+*?]|\\{\\d+(?:,\\d*)?})";
+
+    /**
+     * A group containing a quantifier (including {@code ?}, e.g. {@code (a?)}) that is itself
+     * followed by another quantifier, e.g. {@code (a+)+}, {@code (a*)*}, {@code (a?){25}}. Nesting an
+     * optional/unbounded quantifier inside a repeated group is the classic signature of catastrophic
+     * backtracking (ReDoS), whether the outer repetition is unbounded ({@code +}/{@code *}) or a large
+     * bounded count ({@code {25}}).
+     */
+    private static final Pattern NESTED_QUANTIFIER = Pattern.compile(
+        "\\([^()]*" + QUANTIFIER + "[^()]*\\)\\s*" + QUANTIFIER
+    );
+
+    /**
+     * A group containing a top-level alternation ({@code |}) that is itself followed by a
+     * quantifier, e.g. {@code (a|a)+}, {@code (a|ab)*}. Ambiguous alternation combined with
+     * repetition is another classic catastrophic-backtracking shape, distinct from a nested
+     * quantifier.
+     */
+    private static final Pattern ALTERNATION_WITH_REPETITION = Pattern.compile(
+        "\\([^()|]*\\|[^()]*\\)\\s*" + QUANTIFIER
+    );
+
+    /**
+     * Checks whether a user-supplied regex pattern is safe to execute against a database engine
+     * (e.g. via Postgres {@code ~} or MySQL {@code REGEXP}), which offer no backtracking timeout of
+     * their own.
+     *
+     * <p>
+     * This is a heuristic, not a full ReDoS analysis: it rejects patterns that are too long, and
+     * patterns containing a group with a nested quantifier (e.g. {@code (a+)+}, {@code (a?){25}}) or a
+     * repeated ambiguous alternation (e.g. {@code (a|a)+}) — the two most common causes of
+     * catastrophic backtracking. Other shapes (e.g. backreference-based ambiguity, or blowup spread
+     * across multiple sibling groups) are not covered.
+     * </p>
+     *
+     * @param pattern the user-supplied regex pattern.
+     * @return {@code true} if the pattern is within the length limit and contains neither a nested
+     *         quantifier nor a repeated alternation.
+     */
+    public static boolean isSafeUserRegex(String pattern) {
+        if (pattern == null || pattern.length() > MAX_USER_REGEX_LENGTH) {
+            return false;
+        }
+        return !NESTED_QUANTIFIER.matcher(pattern).find()
+            && !ALTERNATION_WITH_REPETITION.matcher(pattern).find();
     }
 
     /**

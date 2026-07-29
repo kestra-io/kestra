@@ -10,12 +10,12 @@ import java.util.List;
  * can be reused by any namespace-scoped resource (logs, audit logs, secrets, KV, …).
  *
  * <ul>
- *     <li>{@link Kind#GLOBAL} — no restriction (the caller may read every namespace);</li>
- *     <li>{@link Kind#NAMESPACES} — restrict to the given namespaces (and their children);</li>
- *     <li>{@link Kind#DENY_ALL} — no access, the query must return nothing.</li>
+ * <li>{@link Kind#GLOBAL} — no restriction (the caller may read every namespace);</li>
+ * <li>{@link Kind#NAMESPACES} — restrict to the given namespaces (and their children);</li>
+ * <li>{@link Kind#DENY_ALL} — no access, the query must return nothing.</li>
  * </ul>
  *
- * @param kind       the kind of restriction.
+ * @param kind the kind of restriction.
  * @param namespaces the allowed namespaces (only meaningful for {@link Kind#NAMESPACES}).
  */
 public record AccessScope(Kind kind, List<String> namespaces) {

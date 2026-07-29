@@ -13,6 +13,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
+import io.kestra.core.runners.ConcurrencyLimit;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
@@ -67,10 +70,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FlowService {
     @Inject
-    private FlowRepositoryInterface flowRepository;
+    protected FlowRepositoryInterface flowRepository; // Used in EE
 
     @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowParsingService flowParsingService;
 
     @Inject
     private ModelValidator modelValidator;
@@ -92,6 +95,9 @@ public class FlowService {
 
     @Inject
     private PluginRegistry pluginRegistry;
+
+    @Inject
+    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     private final ExecutorService executorService;
 
@@ -124,19 +130,18 @@ public class FlowService {
             throw new IllegalArgumentException("Cannot create flow with null or blank source");
         }
 
-        // Validate Flow with defaults values.
         // Strict parsing (unknown / duplicate properties) and constraint validation are both skipped
         // for drafts: they are allowed to be saved invalid and will fail at execution time instead.
         // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
-            FlowWithSource parsed = pluginDefaultService.parseFlowWithVersionDefaults(flow.getTenantId(), flow.getSource(), true);
-            modelValidator.validate(pluginDefaultService.injectAllDefaults(parsed, false));
+            FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
+            modelValidator.validate(flowParsingService.parse(parsed, false));
         }
 
         FlowWithSource created = flowRepository.create(flow);
 
-        // impact downstream consumers: topology, scheduler and flow metastore
+        // impact downstream consumers: topology, scheduler, flow metastore, concurrency limit
         impactDownstreamConsumers(created);
 
         return created;
@@ -158,14 +163,13 @@ public class FlowService {
         }
         Objects.requireNonNull(previous, "Cannot update a flow with null previous");
 
-        // Validate Flow with defaults values.
         // Strict parsing (unknown / duplicate properties) and constraint validation are both skipped
         // for drafts: they are allowed to be saved invalid and will fail at execution time instead.
         // Use flow.isDraft() (set from the API draft flag) rather than the parsed value,
         // since the draft flag is not part of the YAML source.
         if (!flow.isDraft()) {
-            FlowWithSource parsed = pluginDefaultService.parseFlowWithVersionDefaults(flow.getTenantId(), flow.getSource(), true);
-            modelValidator.validate(pluginDefaultService.injectAllDefaults(parsed, false));
+            FlowWithSource parsed = flowParsingService.parse(flow.getTenantId(), flow.getSource(), true);
+            modelValidator.validate(flowParsingService.parse(parsed, false));
         }
 
         FlowWithSource updated = flowRepository.update(flow, previous);
@@ -193,7 +197,8 @@ public class FlowService {
         return deleted;
     }
 
-    private void impactDownstreamConsumers(FlowWithSource flow) throws QueueException {
+    // overridden in EE
+    protected void impactDownstreamConsumers(FlowWithSource flow) throws QueueException {
         // update the topology asynchronously
         executorService.submit(() -> updateTopology(flow));
 
@@ -202,6 +207,9 @@ public class FlowService {
 
         // send it to the flow queue for the flow metastore
         flowQueue.emit(flow);
+
+        // update concurrency limit if any
+        updateConcurrencyLimit(flow);
     }
 
     private void updateTopology(FlowWithSource flow) {
@@ -295,6 +303,48 @@ public class FlowService {
         }
     }
 
+    private void updateConcurrencyLimit(FlowWithSource flow) {
+        var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
+
+        // If the previous revision was soft-deleted, its concurrency limit was already removed:
+        // treat this as if there was no previous so a new concurrency limit is re-initialized.
+        if (previous != null && previous.isDeleted()) {
+            previous = null;
+        }
+
+        if (flow.isDeleted()) {
+            removeConcurrencyLimit(flow);
+            return;
+        }
+
+        // A draft revision is never picked up by the executor, so it must not get a live concurrency limit.
+        if (flow.isDraft()) {
+            return;
+        }
+
+        if (previous != null) {
+            if (previous.getConcurrency() == null && flow.getConcurrency() != null) {
+                initConcurrencyLimit(flow);
+            }
+
+            if (previous.getConcurrency() != null && flow.getConcurrency() == null) {
+                removeConcurrencyLimit(flow);
+            }
+        } else if (flow.getConcurrency() != null) {
+            initConcurrencyLimit(flow);
+        }
+    }
+
+    private void removeConcurrencyLimit(FlowWithSource flow) {
+        var concurrencyLimit = new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 0);
+        concurrencyLimitRepository.delete(concurrencyLimit);
+    }
+
+    private void initConcurrencyLimit(FlowWithSource flow) {
+        var concurrencyLimit = new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 0);
+        concurrencyLimitRepository.update(concurrencyLimit);
+    }
+
     private void sendTriggerEvent(TriggerEvent event) {
         this.triggerEventQueue.send(event);
     }
@@ -374,7 +424,7 @@ public class FlowService {
 
             try {
                 String source = flowSource.content();
-                FlowWithSource flow = pluginDefaultService.parseFlowWithVersionDefaults(tenantId, source, true);
+                FlowWithSource flow = flowParsingService.parse(tenantId, source, true);
 
                 Integer sentRevision = flow.getRevision();
                 if (sentRevision != null) {
@@ -382,16 +432,14 @@ public class FlowService {
                     constraintsBuilder.outdated(!sentRevision.equals(lastRevision + 1));
                 }
 
-                // Do not perform a strict parsing validation to ignore unknown
-                // properties that might be injecting through default values.
-                FlowWithSource flowWithDefaults = pluginDefaultService.injectAllDefaults(flow, false);
-                constraintsBuilder.deprecationPaths(deprecationPaths(flowWithDefaults));
-                constraintsBuilder.warnings(warnings(flowWithDefaults, tenantId));
+                FlowWithSource parsedFlow = flowParsingService.parse(flow, false);
+                constraintsBuilder.deprecationPaths(deprecationPaths(parsedFlow));
+                constraintsBuilder.warnings(warnings(parsedFlow, tenantId));
                 constraintsBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
                 constraintsBuilder.flow(flow.getId());
                 constraintsBuilder.namespace(flow.getNamespace());
 
-                modelValidator.validate(flowWithDefaults);
+                modelValidator.validate(parsedFlow);
             } catch (ConstraintViolationException e) {
                 String friendlyMessage = formatValidationError(e.getMessage());
                 constraintsBuilder.constraints(friendlyMessage);
@@ -432,9 +480,7 @@ public class FlowService {
             true
         );
 
-        // Inject default plugin 'version' props before converting
-        // to flow to correctly resolve all plugin type.
-        FlowWithSource flowToImport = pluginDefaultService.injectVersionDefaults(flow, false, true);
+        FlowWithSource flowToImport = flowParsingService.parse(flow, true);
 
         if (dryRun) {
             return maybeExisting
@@ -444,9 +490,15 @@ public class FlowService {
                 )
                 .orElseGet(() -> FlowWithSource.of(flowToImport, source).toBuilder().tenantId(tenantId).revision(1).build());
         } else {
-            return maybeExisting
+            FlowWithSource saved = maybeExisting
                 .map(previous -> flowRepository.update(flow, previous))
                 .orElseGet(() -> flowRepository.create(flow));
+            try {
+                impactDownstreamConsumers(saved);
+            } catch (QueueException e) {
+                throw new FlowProcessingException(e.getMessage(), e);
+            }
+            return saved;
         }
     }
 
@@ -712,7 +764,7 @@ public class FlowService {
         return !f.uidWithoutRevision().equals(FlowId.uidWithoutRevision(execution));
     }
 
-    public static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
+    private static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(previous.getTriggers())
             .stream()
             .filter(
@@ -723,7 +775,7 @@ public class FlowService {
             .toList();
     }
 
-    public static List<AbstractTrigger> findUpdatedTrigger(Flow flow, Flow previous) {
+    private static List<AbstractTrigger> findUpdatedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
             .filter(
@@ -734,7 +786,7 @@ public class FlowService {
             .toList();
     }
 
-    public static List<AbstractTrigger> findNewTrigger(Flow flow, Flow previous) {
+    private static List<AbstractTrigger> findNewTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
             .filter(
@@ -745,7 +797,8 @@ public class FlowService {
             .toList();
     }
 
-    public static List<AbstractTrigger> findUnchangedTrigger(Flow flow, Flow previous) {
+    @VisibleForTesting
+    static List<AbstractTrigger> findUnchangedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
             .filter(
@@ -820,7 +873,7 @@ public class FlowService {
      */
     public Optional<ConstraintViolationException> validateForExecution(Flow flow) {
         try {
-            return modelValidator.isValid(pluginDefaultService.injectAllDefaults(flow, false));
+            return modelValidator.isValid(flowParsingService.parse(flow, false));
         } catch (FlowProcessingException e) {
             // The flow could not be processed (e.g., unknown plugin). Surface this as a violation
             // so the execution fails with the same error path as other invalid flows.

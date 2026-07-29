@@ -160,7 +160,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {trackSetupEvent} from "../../composables/usePosthog"
-    import {identifyPosthogUser, initPosthogIfEnabled} from "../../utils/posthog"
+    import {identifyPosthogUser} from "../../utils/posthog"
 
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
@@ -211,20 +211,19 @@
 
     const initializeSetup = async () => {
         try {
-            const config = await miscStore.loadConfigs()
+            // Public, unauthenticated endpoint: only isBasicAuthInitialized is available at this stage.
+            const loginConfig = await miscStore.loadLoginConfig()
 
-            if (config?.isBasicAuthInitialized) {
+            if (loginConfig?.isBasicAuthInitialized) {
                 localStorage.removeItem("basicAuthSetupInProgress")
                 localStorage.removeItem("setupStartTime")
                 router.push({name: "login"})
                 return
             }
 
-            await initPosthogIfEnabled(config)
-
-            trackSetupEvent("setup_flow:started", {
-                setup_step: "account_creation",
-            }, userFormData.value)
+            // The full configuration (needed for posthog init and setup-flow tracking) requires
+            // authentication and is not available until the account below has been created;
+            // trackSetupEvent/initPosthogIfEnabled no-op gracefully without it.
 
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
@@ -313,11 +312,13 @@
                 password: userFormData.value.password,
             })
 
-            BasicAuth.signIn(normalizedEmail, userFormData.value.password)
+            BasicAuth.signIn({
+                username: normalizedEmail,
+                password: userFormData.value.password,
+            })
 
-            const configs = await miscStore.loadConfigs()
-
-            await identifyPosthogUser(configs, {email: normalizedEmail})
+            // addBasicAuth() above already loaded the full (now-authenticated) configuration.
+            await identifyPosthogUser(miscStore.configs, {email: normalizedEmail})
 
             trackSetupEvent("setup_flow:account_created", {
                 user_email: normalizedEmail,
@@ -403,7 +404,7 @@
         localStorage.removeItem("basicAuthUserCreated")
         localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
 
-        router.push({name: "welcome"})
+        router.push({name: "ai"})
     }
 </script>
 

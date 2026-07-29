@@ -1,0 +1,194 @@
+name: Update Generated SDK
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: update-generated-sdk-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  update-generated-sdk:
+    name: Update Generated SDK
+    runs-on: ubuntu-latest
+    if: github.repository == 'kestra-io/kestra'
+    steps:
+      - uses: kestra-io/actions/composite/checkout-and-auth@main
+        name: Checkout
+        with:
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          repository: kestra-io/kestra
+          ref: develop
+          # full history: a shallow clone has no merge base with the chore branch,
+          # so the merge below fails with "refusing to merge unrelated histories"
+          fetch-depth: 0
+
+      # github.event.head_commit is only populated for push events; resolve the commit
+      # subject from history so it's correct regardless of what triggered this run.
+      - name: Resolve develop commit message
+        id: source-commit
+        shell: bash
+        run: echo "message=$(git log -1 --format=%s)" >> "$GITHUB_OUTPUT"
+
+      - uses: kestra-io/actions/composite/setup-build@main
+        name: Setup - Build
+        with:
+          java-enabled: true
+          java-version: 25
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22.x"
+
+      - name: Install Node dependencies
+        shell: bash
+        working-directory: ui
+        run: npm ci
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: kestra-io
+          repositories: kestra
+
+      - name: Checkout the chore/update-kestra-sdk branch
+        shell: bash
+        run: |
+          # the checkout above is a single-branch clone of develop, so the remote chore
+          # branch is not present locally. Fetch it, with its history, explicitly first.
+          git fetch origin chore/update-kestra-sdk || true
+          if git rev-parse --verify --quiet origin/chore/update-kestra-sdk; then
+            # reuse it, bringing in anything new from develop since it was created
+            git switch -c chore/update-kestra-sdk origin/chore/update-kestra-sdk
+            # the SDK is regenerated right below, so let develop win any conflict
+            git merge origin/develop --no-edit -X theirs
+          else
+            # otherwise, create it from develop
+            git switch -c chore/update-kestra-sdk origin/develop
+          fi
+
+      - name: Generate SDK
+        shell: bash
+        working-directory: ui
+        env:
+          GCP_CREDENTIALS: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$GCP_CREDENTIALS" | base64 -d > "$GITHUB_WORKSPACE/.gcp-service-account.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$GITHUB_WORKSPACE/.gcp-service-account.json"
+          npm run generate:sdk
+
+      - name: Check if the generated SDK changed
+        id: compare
+        shell: bash
+        run: |
+          if git diff --quiet -- ui/packages/kestra-sdk/src/openapi ui/packages/kestra-sdk/package.json; then
+            echo "Generated SDK unchanged, skipping"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Generated SDK has changed"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push
+        if: steps.compare.outputs.changed == 'true'
+        shell: bash
+        # the subject comes from a contributor's commit, so keep it out of the script
+        # itself: interpolated directly, a `$(...)` subject would run on the runner
+        env:
+          SOURCE_MESSAGE: ${{ steps.source-commit.outputs.message }}
+        run: |
+          git config user.name "kestra-io"
+          git config user.email "hello@kestra.io"
+          git add ui/packages/kestra-sdk/src/openapi ui/packages/kestra-sdk/package.json
+          git commit -m "ci: auto-update generated kestra-sdk from ${SOURCE_MESSAGE}"
+          git push --set-upstream origin HEAD
+
+      - name: Get the body of a potential PR
+        id: pr-body
+        if: steps.compare.outputs.changed == 'true'
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const { data: pullRequests } = await github.rest.pulls.list({
+              owner: 'kestra-io',
+              repo: 'kestra',
+              head: 'kestra-io:chore/update-kestra-sdk',
+              base: 'develop',
+              state: 'open'
+            });
+            if (pullRequests.length > 0) {
+              const marker = pullRequests[0].body.match(/<marker>([\s\S]*)<\/marker>/);
+              const id = pullRequests[0].number;
+              console.log(`PR #${id} already exists for this branch`);
+              core.setOutput('pr_number', id);
+              core.setOutput('body', marker ? marker[1].trim() : '');
+            } else {
+              core.setOutput('body', '');
+              core.setOutput('pr_number', '');
+            }
+
+      - name: Create or update PR
+        if: steps.compare.outputs.changed == 'true'
+        uses: actions/github-script@v9
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_MESSAGE: ${{ steps.source-commit.outputs.message }}
+          # carries earlier commit subjects, so keep it out of the script itself:
+          # interpolated there, a backtick or ${ would break out and run as JS
+          PREVIOUS_BODY: ${{ steps.pr-body.outputs.body }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const prNumber = '${{ steps.pr-body.outputs.pr_number }}';
+            const sha = process.env.SOURCE_SHA;
+            const message = process.env.SOURCE_MESSAGE;
+            const previousBody = process.env.PREVIOUS_BODY;
+            const linkToCurrentCommit = `[${sha.slice(0, 7)}](https://github.com/kestra-io/kestra/commit/${sha})`;
+            const body = `
+              This PR is auto-generated whenever \`ui/packages/kestra-sdk/src/openapi\` drifts from the OpenAPI spec on \`develop\` (see [ui/packages/kestra-sdk/README.md](https://github.com/kestra-io/kestra/blob/develop/ui/packages/kestra-sdk/README.md)).
+
+              List of commits that triggered a regeneration:
+              <marker>
+              ${previousBody}
+              - ${message} ${linkToCurrentCommit}
+              </marker>
+
+              This PR was automatically generated by [.github/workflows/update-generated-sdk.yml](https://github.com/kestra-io/kestra/blob/develop/.github/workflows/update-generated-sdk.yml)
+            `
+            try {
+              if (prNumber) {
+                await github.rest.pulls.update({
+                  owner: 'kestra-io',
+                  repo: 'kestra',
+                  pull_number: prNumber,
+                  body
+                });
+              } else {
+                await github.rest.pulls.create({
+                  owner: 'kestra-io',
+                  repo: 'kestra',
+                  head: 'chore/update-kestra-sdk',
+                  base: 'develop',
+                  title: 'ci: auto-update generated kestra-sdk',
+                  body
+                });
+              }
+            } catch (err) {
+              const data = err.response?.data;
+              const errors = data?.errors ? JSON.stringify(data.errors, null, 2) : null;
+              const msg = [
+                `GitHub API error (HTTP ${err.status ?? 'unknown'}): ${data?.message ?? err.message}`,
+                errors ? `Validation errors:\n${errors}` : null,
+                data?.documentation_url ? `Docs: ${data.documentation_url}` : null,
+              ].filter(Boolean).join('\n');
+              core.setFailed(msg);
+            }

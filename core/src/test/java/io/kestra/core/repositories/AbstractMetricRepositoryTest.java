@@ -198,6 +198,22 @@ public abstract class AbstractMetricRepositoryTest {
         assertThat(results).isEqualTo(1.0);
     }
 
+    @Test
+    void shouldPersistTaskIdLongerThan150Chars() {
+        // A plugin-generated taskId (e.g. Ansible "<host> | <play> : <task>") can exceed the legacy
+        // VARCHAR(150) task_id column and crash-loop the indexer; the column now allows up to 256.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        String longTaskId = "a".repeat(200);
+        MetricEntry counter = MetricEntry.of(taskRun(tenant, executionId, longTaskId), counter("counter"), null);
+
+        metricRepository.save(counter);
+
+        List<MetricEntry> results = metricRepository.findByExecutionIdAndTaskId(tenant, executionId, longTaskId, Pageable.from(1, 10));
+        assertThat(results.size()).isEqualTo(1);
+        assertThat(results.getFirst().getTaskId()).isEqualTo(longTaskId);
+    }
+
     private Counter counter(String metricName) {
         return Counter.of(metricName, 1);
     }

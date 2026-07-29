@@ -22,8 +22,10 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
@@ -59,6 +61,8 @@ class FlowServiceTest {
     private BroadcastQueueInterface<FlowInterface> flowQueue;
     @Inject
     private TriggerEventQueue triggerEventQueue;
+    @Inject
+    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     private static FlowWithSource create(String flowId, String taskId, Integer revision) {
         return create(null, TEST_NAMESPACE, flowId, taskId, revision);
@@ -85,22 +89,15 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenValidatingFlowGivenDefaults() {
+    void shouldReturnTrueWhenValidatingFlow() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
               - id: log
                 type: io.kestra.plugin.core.log.Log
                 message: This is a message
-            pluginDefaults:
-              - type: io.kestra.plugin.core
-                values:
-                  level: WARN
-                  uri: https://kestra.io
             """;
         // When
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
@@ -111,22 +108,15 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnTrueWhenValidatingFlowWithFilenameGivenDefaults() {
+    void shouldReturnTrueWhenValidatingFlowWithFilename() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
               - id: log
                 type: io.kestra.plugin.core.log.Log
                 message: This is a message
-            pluginDefaults:
-              - type: io.kestra.plugin.core
-                values:
-                  level: WARN
-                  uri: https://kestra.io
             """;
         // When
         List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource("flow.yaml", source)));
@@ -137,18 +127,19 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldReturnNoWarningsWhenPropertiesProvidedByPluginDefaults() {
+    void shouldReturnConstraintWhenFlowUsesRemovedPluginDefaults() {
         // Given
         String source = """
             id: test
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: This is a message
             pluginDefaults:
-              - type: io.kestra.plugin.core.http.Download
+              - type: io.kestra.plugin.core.log.Log
                 values:
-                  uri: https://kestra.io
+                  level: WARN
             """;
 
         // When
@@ -156,8 +147,7 @@ class FlowServiceTest {
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getConstraints()).isNull();
-        assertThat(results.getFirst().getWarnings()).isEmpty();
+        assertThat(results.getFirst().getConstraints()).contains("pluginDefaults");
     }
 
     @Test
@@ -226,6 +216,27 @@ class FlowServiceTest {
         assertThat(fromDb.isPresent()).isTrue();
         assertThat(fromDb.get().getRevision()).isEqualTo(1);
         assertThat(fromDb.get().getSource()).isEqualTo(oldSource);
+    }
+
+    @Test
+    void importFlow_ShouldEmitTriggerCreatedEventForNewTriggerInSyncedFlow() throws FlowProcessingException, QueueException {
+        reset(triggerEventQueue);
+
+    String source = """
+        id: import_with_trigger
+        namespace: some.namespace
+        triggers:
+          - id: daily
+            type: io.kestra.plugin.core.trigger.Schedule
+            cron: "0 6 * * *"
+        tasks:
+          - id: task
+            type: io.kestra.plugin.core.log.Log
+            message: Hello""";
+
+    flowService.importFlow("my-tenant", source);
+    verify(triggerEventQueue).send(any());
+    
     }
 
     @Test
@@ -601,6 +612,195 @@ class FlowServiceTest {
 
         // check that the flow has been sent to the queue 2x
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void shouldInitConcurrencyLimitWhenCreatingFlowWithConcurrency() throws FlowProcessingException, QueueException {
+        // Given a flow created with a concurrency limit
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .concurrency(Concurrency.builder().limit(1).build())
+            .build();
+
+        // When
+        flowService.create(GenericFlow.of(flow));
+
+        // Then a concurrency limit is initialized at 0
+        Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+        assertThat(limit).isPresent();
+        assertThat(limit.get().getRunning()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldNotInitConcurrencyLimitWhenCreatingFlowWithoutConcurrency() throws FlowProcessingException, QueueException {
+        // Given a flow created without a concurrency limit
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+
+        // When
+        flowService.create(GenericFlow.of(flow));
+
+        // Then no concurrency limit is created
+        Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+        assertThat(limit).isEmpty();
+    }
+
+    @Test
+    void shouldInitConcurrencyLimitWhenAddingConcurrencyOnUpdate() throws FlowProcessingException, QueueException {
+        // Given a flow created without a concurrency limit
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+
+        // When the flow is updated to add a concurrency limit
+        Flow updated = flow.toBuilder()
+            .concurrency(Concurrency.builder().limit(1).build())
+            .build();
+        flowService.update(GenericFlow.of(updated), created);
+
+        // Then a concurrency limit is initialized at 0
+        Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+        assertThat(limit).isPresent();
+        assertThat(limit.get().getRunning()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldRemoveConcurrencyLimitWhenRemovingConcurrencyOnUpdate() throws FlowProcessingException, QueueException {
+        // Given a flow created with a concurrency limit
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .concurrency(Concurrency.builder().limit(1).build())
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        assertThat(concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId())).isPresent();
+
+        // When the flow is updated to remove the concurrency limit
+        Flow updated = flow.toBuilder().concurrency(null).build();
+        flowService.update(GenericFlow.of(updated), created);
+
+        // Then the concurrency limit is removed
+        Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+        assertThat(limit).isEmpty();
+    }
+
+    @Test
+    void shouldNotResetConcurrencyLimitWhenUpdatingFlowWithConcurrencyUnchanged() throws FlowProcessingException, QueueException {
+        // Given a flow created with a concurrency limit and some running executions tracked
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("original")).build()))
+            .concurrency(Concurrency.builder().limit(5).build())
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        ConcurrencyLimit running = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId())
+            .orElseThrow()
+            .withRunning(3);
+        concurrencyLimitRepository.update(running);
+
+        // When the flow is updated but keeps a (non-null) concurrency limit
+        Flow updated = flow.toBuilder()
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("updated")).build()))
+            .concurrency(Concurrency.builder().limit(10).build())
+            .build();
+        flowService.update(GenericFlow.of(updated), created);
+
+        // Then the running counter is untouched (not reset to 0)
+        Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+        assertThat(limit).isPresent();
+        assertThat(limit.get().getRunning()).isEqualTo(3);
+    }
+
+    @Test
+    void shouldRemoveConcurrencyLimitWhenDeletingFlow() throws FlowProcessingException, QueueException {
+        // Given a flow created with a concurrency limit
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .concurrency(Concurrency.builder().limit(1).build())
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        assertThat(concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId())).isPresent();
+
+        // When the flow is deleted
+        flowService.delete(created);
+
+        // Then the concurrency limit is removed
+        Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+        assertThat(limit).isEmpty();
+    }
+
+    @Test
+    void shouldInitConcurrencyLimitWhenRecreatingPreviouslyDeletedFlowWithConcurrency() throws FlowProcessingException, QueueException {
+        // Given a flow created with a concurrency limit, then deleted (which removes the limit)
+        String flowId = IdUtils.create();
+        Flow flow = Flow.builder()
+            .id(flowId)
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .concurrency(Concurrency.builder().limit(1).build())
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        flowService.delete(created);
+        assertThat(concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flowId)).isEmpty();
+
+        // When the flow is recreated with the same id and a concurrency limit
+        Flow recreated = flow.toBuilder()
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("revived")).build()))
+            .build();
+        flowService.create(GenericFlow.of(recreated));
+
+        // Then the concurrency limit is re-initialized, since the previous (soft-deleted) revision
+        // must not be treated as a live "previous" for the concurrency-limit sync.
+        Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flowId);
+        assertThat(limit).isPresent();
+        assertThat(limit.get().getRunning()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldNotInitConcurrencyLimitWhenCreatingDraftFlowWithConcurrency() throws FlowProcessingException, QueueException {
+        // A draft flow is never picked up by the executor, so it must not get a live concurrency limit.
+        String flowId = IdUtils.create();
+        String source = """
+            id: %s
+            namespace: %s
+            draft: true
+            concurrency:
+              limit: 1
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource saved = flowService.create(GenericFlow.fromYaml(TenantService.MAIN_TENANT, source));
+
+        try {
+            assertThat(saved.isDraft()).isTrue();
+            Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(saved.getTenantId(), saved.getNamespace(), flowId);
+            assertThat(limit).isEmpty();
+        } finally {
+            flowRepository.findByIdWithSource(saved.getTenantId(), saved.getNamespace(), saved.getId())
+                .ifPresent(f -> flowRepository.delete(f));
+        }
     }
 
     @Test

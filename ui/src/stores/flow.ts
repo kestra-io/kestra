@@ -1,5 +1,5 @@
 import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+import {KsMarkdown, KsMessageBox, routeQueryToQueryFilters} from "@kestra-io/design-system"
 import resource from "../models/resource"
 import action from "../models/action"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -15,9 +15,10 @@ import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/composables/useDependencies"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import {useClient} from "@kestra-io/kestra-sdk"
+import {useClient, type FlowWithSource, type AbstractTrigger, type Task as SdkTask} from "@kestra-io/kestra-sdk"
+import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
-import {TUTORIAL_NAMESPACE} from "../utils/constants"
 
 const textYamlHeader = {
     headers: {
@@ -25,19 +26,18 @@ const textYamlHeader = {
     },
 }
 
-const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401}
-
-export interface Trigger {
-    id: string;
-    type: string;
+// backfill (Schedule) and key (Webhook) are trigger-type-specific runtime config, not part of
+// the SDK's generic AbstractTrigger schema (which models fields common to every trigger type).
+export type Trigger = AbstractTrigger & {
     backfill?: {
         start?: string;
     };
+    key?: string;
 }
 
-export interface Task {
-    id: string,
-    type: string
+// tasks nest recursively (Sequential, Parallel, EachSequential, ...), which the SDK's flat,
+// generic Task schema doesn't model - re-added here for this app's tree-walking usage.
+export type Task = SdkTask & {
     tasks?: Task[]
 }
 
@@ -56,23 +56,20 @@ export interface FlowValidations {
     deprecationPaths?: string[];
 }
 
-export interface Flow {
-    id: string;
-    namespace: string;
+// tasks/errors/triggers/inputs are overridden below: the SDK's generic Task/AbstractTrigger/
+// InputObject types don't model the recursive subtasks or OSS-specific fields (backfill) this
+// app relies on for tree-walking and trigger editing. source is narrowed to required since this
+// store only ever loads flows with the `source: true` request param, which always returns it.
+// disabled/draft/deleted/tasks are widened back to optional: flowStore.flow is also used to hold
+// locally-constructed in-progress flows (new flow/file creation) that don't set them yet.
+export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "tasks"> & {
     source: string;
-    revision?: number;
-    deleted?: boolean;
     disabled?: boolean;
-    /** A draft revision is never picked up by webhooks, schedules, subflows or revision-less executions. */
     draft?: boolean;
-    labels?: Record<string, string | boolean>;
+    deleted?: boolean;
     triggers?: Trigger[];
     inputs?: Input[];
-    errors?: { message: string; code?: string, id?: string }[];
-    concurrency?: {
-        limit: number;
-        behavior: string;
-    };
+    errors?: Task[];
     tasks?: Task[];
 }
 
@@ -91,10 +88,8 @@ export function isSuccessfulFlowSaveOutcome(
 export const useFlowStore = defineStore("flow", () => {
     const flows = ref<Flow[]>()
     const flow = ref<Flow>()
-    const task = ref<Task>()
     const search = ref<any[]>()
     const total = ref<number>(0)
-    const overallTotal = ref<number>()
     const flowGraph = ref<FlowGraph>()
     const invalidGraph = ref<boolean>(false)
     const revisions = ref<any[]>()
@@ -105,16 +100,14 @@ export const useFlowStore = defineStore("flow", () => {
     const flowValidation = ref<FlowValidations>()
     const taskError = ref<string>()
     const metrics = ref<any[]>()
-    const aggregatedMetrics = ref<any>()
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
-    const openAiCopilot = ref<boolean>(false)
-    const lastSaveFlow = ref<string>()
     const isCreating = ref<boolean>(false)
+    const readonlyToastShown = ref(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
+    const previewSource = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
-    const metadata = ref<Record<string, any>>()
     const creationId = ref<string>()
 
     const axios = useClient()
@@ -127,11 +120,6 @@ export const useFlowStore = defineStore("flow", () => {
             return key
         }
         return (values ? globalI18n.value?.t(key, values) : globalI18n.value?.t(key)) ?? key
-    }
-
-    function onSaveMetadata() {
-        flowYaml.value = YAML_UTILS.updateMetadata(flowYaml.value ?? "", metadata.value ?? {})
-        metadata.value = undefined
     }
 
     const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value)
@@ -212,6 +200,20 @@ export const useFlowStore = defineStore("flow", () => {
         return "no_op"
     }
 
+    async function publishDraft(target?: Flow): Promise<FlowSaveOutcome> {
+        if (target) {
+            const data = await loadFlow({namespace: target.namespace, id: target.id, store: false})
+            if (!data?.source) return "blocked"
+            await saveFlow({flow: data.source, draft: false})
+            notifySaved(data.id, false)
+            return "saved"
+        }
+        if (!flowYaml.value && flow.value?.source) {
+            flowYaml.value = flow.value.source
+        }
+        return save(false)
+    }
+
     async function onEdit({source, topologyVisible}: {
         source: string,
         editorViewType?: string,
@@ -232,10 +234,13 @@ export const useFlowStore = defineStore("flow", () => {
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
-                    coreStore.message = {
-                        variant: "error",
-                        title: t("readonly property"),
-                        message: t("namespace and id readonly"),
+                    if (!readonlyToastShown.value) {
+                        readonlyToastShown.value = true
+                        coreStore.message = {
+                            variant: "warning",
+                            title: t("readonly property"),
+                            message: t("namespace and id readonly"),
+                        }
                     }
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
                         source,
@@ -397,108 +402,110 @@ export const useFlowStore = defineStore("flow", () => {
         return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
     }
 
-    function findFlows(options: { [key: string]: any }) {
-        const sortString = options.sort ? `?sort=${options.sort}` : ""
-        delete options.sort
-        return axios.get(`${apiUrl()}/flows/search${sortString}`, {
-            params: options,
-        }).then(response => {
+    function toFlowSearchParams(options: {[key: string]: any}) {
+        const {sort, onlyTotal: _onlyTotal, commit: _commit, page, size, ...filterKeys} = options
+        return {
+            page,
+            size,
+            sort: sort ? [sort] : undefined,
+            filters: routeQueryToQueryFilters(filterKeys),
+        } as Parameters<typeof FlowsAPI.searchFlows>[0]
+    }
+
+    function findFlows(options: { [key: string]: any }): Promise<any> {
+        return FlowsAPI.searchFlows(toFlowSearchParams(options)).then(response => {
             if (options.onlyTotal) {
-                return response.data.total
+                return response.total
             }
 
             else {
                 if (options.commit !== false) {
-                    flows.value = response.data.results
-                    total.value = response.data.total
-                    overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
+                    flows.value = response.results as unknown as Flow[]
+                    total.value = response.total ?? 0
                 }
 
-                return response.data
+                return response
             }
         })
     }
     function searchFlows(options: { [key: string]: any }) {
-        const sortString = options.sort ? `?sort=${options.sort}` : ""
-        delete options.sort
-        return axios.get(`${apiUrl()}/flows/source${sortString}`, {
-            params: options,
-        }).then(response => {
-            search.value = response.data.results
-            total.value = response.data.total
+        const {sort, ...rest} = options
+        return FlowsAPI.searchFlowsBySourceCode({...rest, sort: sort ? [sort] : undefined}).then(response => {
+            search.value = response.results as unknown as any[]
+            total.value = response.total ?? 0
 
-            return response.data
+            return response
         })
     }
 
     function flowsByNamespace(namespace: string) {
-        return axios.get(`${apiUrl()}/flows/${namespace}`).then(response => {
-            return response.data
+        return FlowsAPI.listFlowsByNamespace({namespace}).then(response => {
+            return response
         })
     }
 
-    async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
-        const httpClient = options.httpClient ?? axios
-        const response: {data:Flow & {exception?: string}} = await httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
-            {
-                params: {
-                    revision: options.revision,
-                    allowDeleted: options.allowDeleted,
-                    source: options.source === undefined ? true : undefined,
-                },
-                validateStatus: (status: number) => {
-                    return options.deleted ? status === 200 || status === 404 : status === 200
-                },
-            })
-
-        if (options.store === false) {
-            return response.data
+    async function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean }) {
+        let data: Flow & {exception?: string}
+        try {
+            data = await FlowsAPI.flow({
+                namespace: options.namespace,
+                id: options.id,
+                revision: options.revision ? Number(options.revision) : undefined,
+                allowDeleted: options.allowDeleted,
+                source: true,
+            }) as Flow & {exception?: string}
+        } catch (e: any) {
+            if (options.deleted && e.status === 404) {
+                return e.body ?? {}
+            }
+            throw e
         }
 
-        if (response.data.exception) {
+        if (options.store === false) {
+            return data
+        }
+
+        if (data.exception) {
             coreStore.message = {
                 title: "Invalid source code",
-                message: response.data.exception,
+                message: data.exception,
                 variant: "error",
             }
 
             // add this error to the list of errors
             flowValidation.value = {
-                constraints: response.data.exception,
+                constraints: data.exception,
                 outdated: false,
                 infos: [],
             }
-            delete response.data.exception
+            delete data.exception
         }
 
         validateFlow({
-            flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`,
+            flow: `revision: ${(data.revision ?? 0) + 1}\n${data.source}`,
         })
 
-        flow.value = response.data
-        flowYaml.value = response.data.source
-        flowYamlOrigin.value = response.data.source
-        overallTotal.value = 1
+        flow.value = data
+        flowYaml.value = data.source
+        flowYamlOrigin.value = data.source
+        previewSource.value = undefined
+        readonlyToastShown.value = false
 
-        return response.data
+        return data
     }
     function loadTask(options: { namespace: string, id: string, taskId: string, revision?: string }) {
-        return axios.get(
-            `${apiUrl()}/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
-            {
-                validateStatus: (status: number) => {
-                    return status === 200 || status === 404
-                },
-            },
-        )
-            .then(response => {
-                if (response.status === 200) {
-                    task.value = response.data
-
-                    return response.data
-                } else {
-                    return null
-                }
+        return FlowsAPI.taskFromFlow({
+            namespace: options.namespace,
+            id: options.id,
+            taskId: options.taskId,
+            revision: options.revision ? Number(options.revision) : undefined,
+        })
+            .then(data => {
+                return data
+            })
+            .catch((e: any) => {
+                if (e.status === 404) return null
+                throw e
             })
     }
     function saveFlow(options: { flow: string, draft?: boolean }) {
@@ -512,20 +519,16 @@ export const useFlowStore = defineStore("flow", () => {
             namespace = flow.value?.namespace ?? ""
             id = flow.value?.id ?? ""
         }
-        return axios.put(`${apiUrl()}/flows/${namespace}/${id}`, options.flow, {
-            ...textYamlHeader,
-            ...VALIDATE,
-            params: {draft: options.draft ?? false},
-        })
-            .then(response => {
-                if (response.status >= 300) {
-                    return Promise.reject(response)
-                } else {
-                    flow.value = response.data
+        return FlowsAPI.updateFlow({
+            namespace,
+            id,
+            body: options.flow,
+            draft: options.draft ?? false,
+        }).then(data => {
+            flow.value = data as Flow
 
-                    return response.data
-                }
-            })
+            return flow.value
+        })
     }
     function updateFlowTask(options: { flow: Flow, task: Task }) {
         return axios
@@ -542,36 +545,31 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function createFlow(options: { flow: string, draft?: boolean }) {
-        return axios.post(`${apiUrl()}/flows`, options.flow, {
-            ...textYamlHeader,
-            ...VALIDATE,
+        return FlowsAPI.createFlow({
+            body: options.flow,
+            draft: options.draft ?? false,
             showMessageOnError: false,
-            params: {draft: options.draft ?? false},
-        }).then(response => {
-            if (response.status >= 300) {
-                return Promise.reject(response)
-            }
-
+        } as Parameters<typeof FlowsAPI.createFlow>[0]).then(data => {
             const creationPanels = localStorage.getItem(`el-fl-creation-${creationId.value}`) ?? YAML_UTILS.stringify([])
             localStorage.setItem(`el-fl-${flow.value!.namespace}-${flow.value!.id}`, creationPanels)
 
-            flow.value = response.data
+            flow.value = data as Flow
 
             // clean-up
             localStorage.removeItem(`el-fl-creation-${creationId.value}`)
             creationId.value = undefined
 
-            return response.data
+            return flow.value
         })
     }
 
     function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
-        return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/dependencies?expandAll=${!onlyCount}`).then(response => {
-            const totalNodes = response.data.nodes ? new Set(response.data.nodes.map((r:{uid:string}) => r.uid)).size : 0
+        return FlowsAPI.flowDependencies({namespace: options.namespace, id: options.id, expandAll: !onlyCount}).then(data => {
+            const totalNodes = data.nodes ? new Set(data.nodes.map((r:{uid:string}) => r.uid)).size : 0
             const count = Math.max(0, totalNodes - 1)
             dependenciesCount.value = count
             return {
-                ...(!onlyCount ? {data: transformResponse(response.data, options.subtype)} : {}),
+                ...(!onlyCount ? {data: transformResponse(data as any, options.subtype)} : {}),
                 count,
             }
         })
@@ -580,15 +578,11 @@ export const useFlowStore = defineStore("flow", () => {
 function deleteFlowAndDependencies() {
     const metadataForDelete = flowYamlMetadata.value
 
-    return axios
-        .get(
-            `${apiUrl()}/flows/${metadataForDelete.namespace}/${metadataForDelete.id}/dependencies`,
-            {params: {destinationOnly: true}},
-        )
-        .then((response) => {
+    return FlowsAPI.flowDependencies({namespace: metadataForDelete.namespace, id: metadataForDelete.id, destinationOnly: true})
+        .then((data) => {
             let warning = ""
-            if (response.data && response.data.nodes) {
-                const deps = response.data.nodes
+            if (data && data.nodes) {
+                const deps = data.nodes
                     .filter(
                         (n: any) =>
                             !(
@@ -633,35 +627,38 @@ function deleteFlowAndDependencies() {
 }
 
     function deleteFlow(options: { namespace: string, id: string }) {
-        return axios.delete(`${apiUrl()}/flows/${options.namespace}/${options.id}`).then(() => {
+        return FlowsAPI.deleteFlow(options).then(() => {
             flow.value = undefined
         })
     }
 
-    function loadGraph(options: { flow: Flow, params?: any }) {
+    function loadGraph(options: { flow: Flow, params?: any }): Promise<any> {
         const flowVar = options.flow
-        const params = options.params ? options.params : {}
-        if (flowVar.revision) {
-            params["revision"] = flowVar.revision
-        }
-        return axios.get(`${apiUrl()}/flows/${flowVar.namespace}/${flowVar.id}/graph`, {params}).then(response => {
+        return FlowsAPI.generateFlowGraph({
+            namespace: flowVar.namespace,
+            id: flowVar.id,
+            revision: flowVar.revision,
+            subflows: options.params?.subflows,
+        }).then(data => {
             invalidGraph.value = false
-            flowGraph.value = response.data
-            return response.data
+            flowGraph.value = data as unknown as FlowGraph
+            return data
         }).catch(() => {
             invalidGraph.value = true
         })
     }
     function loadGraphFromSource(options: { flow: string, config?: any }) {
-        const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader
+        const subflows: string[] | undefined = options.config?.params?.subflows
+            ? String(options.config.params.subflows).split(",").filter(Boolean)
+            : undefined
         const flowParsed = YAML_UTILS.parse(options.flow)
         let flowSource = options.flow
         if (!flowParsed.id || !flowParsed.namespace) {
             flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
         }
-        return axios.post(`${apiUrl()}/flows/graph`, flowSource, {...config, withCredentials: true})
-            .then(response => {
-                flowGraph.value = response.data
+        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
+            .then(data => {
+                flowGraph.value = data as unknown as FlowGraph
 
                 const flowVar = YAML_UTILS.parse(options.flow)
                 flowVar.id = flow.value?.id ?? flowVar.id
@@ -672,16 +669,16 @@ function deleteFlowAndDependencies() {
                 flowVar.draft = flow.value?.draft
                 flow.value = flowVar
 
-                return response
+                return data
             }).catch(error => {
-                if (error.response?.status === 422 && (!config?.params?.subflows || config?.params?.subflows?.length === 0)) {
+                if (error.status === 422 && (!subflows || subflows.length === 0)) {
                     return Promise.resolve(error.response)
                 }
 
-                if ([404, 422].includes(error.response?.status) && config?.params?.subflows?.length > 0) {
+                if ([404, 422].includes(error.status) && subflows && subflows.length > 0) {
                     coreStore.message = {
                         title: "Couldn't expand subflow",
-                        message: error.response.data.message,
+                        message: error.response?.data?.message,
                         variant: "error",
                     }
                 }
@@ -691,23 +688,24 @@ function deleteFlowAndDependencies() {
     }
 
     function getGraphFromSourceResponse(options: { flow: string, config?: any }) {
-        const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader
+        const subflows: string[] | undefined = options.config?.params?.subflows
+            ? String(options.config.params.subflows).split(",").filter(Boolean)
+            : undefined
         const flowParsed = YAML_UTILS.parse(options.flow)
         let flowSource = options.flow
         if (!flowParsed.id || !flowParsed.namespace) {
             flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
         }
-        return axios.post(`${apiUrl()}/flows/graph`, flowSource, {...config})
-            .then(response => response.data)
+        return FlowsAPI.generateFlowGraphFromSource({subflows, body: flowSource})
     }
 
-    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }) {
-        return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
+    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }): Promise<any[]> {
+        return FlowsAPI.listFlowRevisions({namespace: options.namespace, id: options.id}).then(data => {
             if (options.store !== false) {
-                revisions.value = response.data
+                revisions.value = data
             }
-            revisionsCount.value = Array.isArray(response.data) ? response.data.length : 0
-            return response.data
+            revisionsCount.value = Array.isArray(data) ? data.length : 0
+            return data
         })
     }
 
@@ -735,7 +733,7 @@ function deleteFlowAndDependencies() {
     function exportFlowByQuery(options: { namespace: string, id: string }) {
         return axios.get(`${apiUrl()}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
             .then(response => {
-                Utils.downloadUrl(response.request.responseURL, "flows.zip")
+                Utils.downloadUrl(response.request?.responseURL ?? "", "flows.zip")
             })
     }
 
@@ -756,32 +754,32 @@ function deleteFlowAndDependencies() {
 
     function importFlows(options: { file: FormData,  failOnError: boolean }) {
          const {file, failOnError} = options
+        // Don't set Content-Type - the browser must generate the multipart boundary itself.
         return axios.post(`${apiUrl()}/flows/import`, file, {
-            headers: {"Content-Type": "multipart/form-data"},
             params: {failOnError},
         }).then(response => {
             return response
         })
     }
     function disableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return axios.post(`${apiUrl()}/flows/disable/by-ids`, options.ids)
+        return FlowsAPI.disableFlowsByIds({body: options.ids})
     }
-    function disableFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.post(`${apiUrl()}/flows/disable/by-query`, options, {params: options})
+    function disableFlowByQuery(options: Record<string, any>) {
+        return FlowsAPI.disableFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.disableFlowsByQuery>[0])
     }
     function enableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return axios.post(`${apiUrl()}/flows/enable/by-ids`, options.ids)
+        return FlowsAPI.enableFlowsByIds({body: options.ids})
     }
-    function enableFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.post(`${apiUrl()}/flows/enable/by-query`, options, {params: options})
+    function enableFlowByQuery(options: Record<string, any>) {
+        return FlowsAPI.enableFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.enableFlowsByQuery>[0])
     }
 
     function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return axios.delete(`${apiUrl()}/flows/delete/by-ids`, {data: options.ids})
+        return FlowsAPI.deleteFlowsByIds({body: options.ids})
     }
 
-    function deleteFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.delete(`${apiUrl()}/flows/delete/by-query`, {params: options})
+    function deleteFlowByQuery(options: Record<string, any>) {
+        return FlowsAPI.deleteFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.deleteFlowsByQuery>[0])
     }
 
     function validateFlow(options: { flow: string }) {
@@ -797,14 +795,14 @@ function deleteFlowAndDependencies() {
             }
         }
 
-        return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
-            .then(response => {
-                const validResults = response.data[0] ?? {}
+        return FlowsAPI.validateFlows({body: options.flow}, {withCredentials: true})
+            .then(results => {
+                const validResults: any = results[0] ?? {}
 
                 const constraintsArray = [validResults.constraints, flowValidationIssues.constraints].filter(Boolean)
 
                 if (constraintsArray.length) {
-                    validResults.constraints = constraintsArray.join(", ")
+                    validResults.constraints = constraintsArray.join("\n")
                 } else {
                     delete validResults.constraints
                 }
@@ -815,45 +813,45 @@ function deleteFlowAndDependencies() {
     }
 
     function validateTask(options: { task: string, section: string }) {
-        return axios.post(`${apiUrl()}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
-            .then(response => {
-                taskError.value = response.data.constraints
-                return response.data
-            })
+        return FlowsAPI.validateTask(
+            {section: options.section as Parameters<typeof FlowsAPI.validateTask>[0]["section"], body: options.task as any},
+            {withCredentials: true, headers: textYamlHeader.headers},
+        ).then(result => {
+            taskError.value = (result as any).constraints
+            return result
+        })
     }
     function loadFlowMetrics(options: { namespace: string, id: string }) {
-        return axios.get(`${apiUrl()}/metrics/names/${options.namespace}/${options.id}`)
-            .then(response => {
-                metrics.value = response.data
-                return response.data
+        return MetricsAPI.listFlowMetrics({namespace: options.namespace, flowId: options.id})
+            .then(data => {
+                metrics.value = data
+                return data
             })
     }
     function loadTaskMetrics(options: { namespace: string, id: string, taskId: string }) {
-        return axios.get(`${apiUrl()}/metrics/names/${options.namespace}/${options.id}/${options.taskId}`)
-            .then(response => {
-                metrics.value = response.data
-                return response.data
+        return MetricsAPI.listTaskMetrics({namespace: options.namespace, flowId: options.id, taskId: options.taskId})
+            .then(data => {
+                metrics.value = data
+                return data
             })
     }
     function loadTasksWithMetrics(options: { namespace: string, id: string }) {
-        return axios.get(`${apiUrl()}/metrics/tasks/${options.namespace}/${options.id}`)
-            .then(response => {
-                tasksWithMetrics.value = response.data
-                return response.data
+        return MetricsAPI.listTasksWithMetrics({namespace: options.namespace, flowId: options.id})
+            .then(data => {
+                tasksWithMetrics.value = data
+                return data
             })
     }
     function loadFlowAggregatedMetrics(options: { namespace: string, id: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
-        return axios.get(`${apiUrl()}/metrics/aggregates/${options.namespace}/${options.id}/${options.metric}`, {params: options})
-            .then(response => {
-                aggregatedMetrics.value = response.data
-                return response.data
+        return MetricsAPI.aggregateMetricsFromFlow({namespace: options.namespace, flowId: options.id, metric: options.metric, aggregation: options.aggregation, startDate: options.startDate, endDate: options.endDate})
+            .then(data => {
+                return data
             })
     }
     function loadTaskAggregatedMetrics(options: { namespace: string, id: string, taskId: string, metric: string, aggregation?: string, startDate?: string, endDate?: string }) {
-        return axios.get(`${apiUrl()}/metrics/aggregates/${options.namespace}/${options.id}/${options.taskId}/${options.metric}`, {params: options})
-            .then(response => {
-                aggregatedMetrics.value = response.data
-                return response.data
+        return MetricsAPI.aggregateMetricsFromTask({namespace: options.namespace, flowId: options.id, taskId: options.taskId, metric: options.metric, aggregation: options.aggregation, startDate: options.startDate, endDate: options.endDate})
+            .then(data => {
+                return data
             })
     }
 
@@ -880,10 +878,6 @@ function deleteFlowAndDependencies() {
         executeFlow.value = value
     }
 
-    function setOpenAiCopilot(value: boolean) {
-        openAiCopilot.value = value
-    }
-
     function addTrigger(trigger: Trigger) {
         const flowVar = flow.value ?? {} as Flow
 
@@ -903,7 +897,7 @@ function deleteFlowAndDependencies() {
     }
 
     function deleteRevision(options: { namespace: string, id: string, revision: string }) {
-        return axios.delete(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions?revisions=${options.revision}`)
+        return FlowsAPI.deleteRevisions({namespace: options.namespace, id: options.id, revisions: [Number(options.revision)]})
     }
 
     const authStore = useAuthStore()
@@ -922,11 +916,13 @@ function deleteFlowAndDependencies() {
     })
 
     const readOnlySystemLabel = computed(() => {
-        if (!flow.value || !flow.value.labels) {
+        if (!flow.value?.labels) {
             return false
         }
 
-        return (flow.value.labels?.["system.readOnly"] === "true") || (flow.value.labels?.["system.readOnly"] === true)
+        const labelsArray = Array.isArray(flow.value.labels) ? flow.value.labels : Object.entries(flow.value.labels).map(([key, value]) => ({key, value}))
+
+        return labelsArray.some(label => label.key === "system.readOnly" && label.value === "true")
     })
 
     const isReadOnly = computed(() => {
@@ -946,7 +942,7 @@ function deleteFlowAndDependencies() {
                 : []
 
         const constraintsError =
-            flowValidation.value?.constraints?.split(/, ?/) ?? []
+            flowValidation.value?.constraints ? [flowValidation.value.constraints] : []
 
         const errors = [...flowExistsError, ...constraintsError]
 
@@ -999,10 +995,8 @@ function deleteFlowAndDependencies() {
         flowYamlMetadata,
         flows,
         flow,
-        task,
         search,
         total,
-        overallTotal,
         flowGraph,
         invalidGraph,
         revisions,
@@ -1013,26 +1007,22 @@ function deleteFlowAndDependencies() {
         flowValidation,
         taskError,
         metrics,
-        aggregatedMetrics,
         tasksWithMetrics,
         executeFlow,
-        openAiCopilot,
-        lastSaveFlow,
         isCreating,
         flowYaml,
         flowYamlOrigin,
+        previewSource,
         haveChange,
         expandedSubflows,
-        metadata,
         addTrigger,
         setTrigger,
         removeTrigger,
         setExecuteFlow,
-        setOpenAiCopilot,
-        onSaveMetadata,
         saveAll,
         saveAsDraft,
         save,
+        publishDraft,
         onEdit,
         initYamlSource,
         findFlows,

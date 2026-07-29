@@ -229,6 +229,23 @@ class HttpClientTest {
         }
     }
 
+    @Test
+    void shouldDenyUrlFromConfig() throws IllegalVariableEvaluationException, IOException {
+        try (HttpClient client = client()) {
+            var exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://dangerous-url.com")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com is in the configured denied list (kestra.tasks.http.denied-list).");
+
+            exception = assertThrows(IllegalArgumentException.class, () -> client.request(
+                HttpRequest.of(URI.create("http://dangerous-url.com/path")),
+                String.class
+            ));
+            assertThat(exception.getMessage()).isEqualTo("The URI http://dangerous-url.com/path is in the configured denied list (kestra.tasks.http.denied-list).");
+        }
+    }
+
     private static final String UUID = IdUtils.create();
 
     static Stream<Arguments> postJsonSource() throws JsonProcessingException {
@@ -457,6 +474,28 @@ class HttpClientTest {
             assertThat(response.getStatus().getCode()).isEqualTo(200);
             assertThat(response.getBody()).contains("<html");
         }
+    }
+
+    @Test
+    void shouldFailWithClearMessageWhenProxyAddressSetWithoutPort() {
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> client(
+                b -> b
+                    .configuration(
+                        HttpConfiguration.builder()
+                            .proxy(
+                                ProxyConfiguration.builder()
+                                    .type(Property.ofValue(Proxy.Type.HTTP))
+                                    .address(Property.ofValue("10.242.3.60"))
+                                    .build()
+                            )
+                            .build()
+                    )
+            )
+        );
+
+        assertThat(exception.getMessage()).contains("proxy port is required");
     }
 
     @Test

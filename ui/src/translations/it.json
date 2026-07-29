@@ -28,6 +28,7 @@
     "flows": "Flows",
     "flow": "Flow",
     "invalid source": "Codice sorgente non valido",
+    "invalid duration": "Formato durata non valido. Utilizzare ISO 8601 (ad es., PT30M, P1D).",
     "missingSource": "Sorgente mancante",
     "update": "Aggiorna",
     "update ok": "è aggiornato",
@@ -35,7 +36,8 @@
     "Default page": "Pagina predefinita",
     "confirmation": "Conferma",
     "common": {
-      "back": "Indietro"
+      "back": "Indietro",
+      "openInNewTab": "Apri in una nuova scheda"
     },
     "delete confirm": "Sei sicuro di voler eliminare <code>{name}</code>?",
     "outdated revision save confirmation": {
@@ -59,6 +61,8 @@
     "success": "Success",
     "save": "Salva",
     "save_as_draft": "Salva come bozza",
+    "publish": "Pubblica",
+    "publish_draft": "Pubblica bozza",
     "draft": "Bozza",
     "draft_flow_warning": "L'ultima revisione di questo flow è una bozza. L'esecuzione verrà eseguita sull'ultima revisione pubblicata; pubblica la bozza (o eseguila dal Playground) per eseguire le tue ultime modifiche.",
     "save task": "Salva Task",
@@ -113,6 +117,7 @@
     "prev_execution": "Esecuzione precedente",
     "next_execution": "Prossima esecuzione",
     "datepicker": {
+      "invalid duration": "Formato durata non valido. Utilizzare il formato ISO 8601 (es. PT30M, P1D).",
       "leave empty for infinite": "Lascia vuoto per durata infinita o digita una durata ISO 8601 (esempio: 'P1DT1H1M1S)'",
       "duration example": "Esempio: 'P1DT1H1M1S'",
       "error": "Formato durata non valido, deve essere una durata ISO 8601 (ad es. P1DT1H1M1S)",
@@ -124,6 +129,8 @@
       "last24hours": "Ultime 24 ore",
       "last48hours": "Ultime 48 ore",
       "last7days": "Ultimi 7 giorni",
+      "last14days": "Ultimi 14 giorni",
+      "last28days": "Ultimi 28 giorni",
       "last30days": "Ultimi 30 giorni",
       "last365days": "Ultimi 365 giorni",
       "next5minutes": "Prossimi 5 minuti",
@@ -142,6 +149,8 @@
       "24hours": "24 ore",
       "48hours": "48 ore",
       "7days": "7 giorni",
+      "14days": "14 giorni",
+      "28days": "28 giorni",
       "30days": "30 giorni",
       "365days": "365 giorni",
       "never": "Mai",
@@ -175,6 +184,7 @@
     "last execution status": "Ultimo stato di esecuzione",
     "jump to...": "Vai a...",
     "contextBar": {
+      "ai": "AI",
       "news": "Notizie",
       "docs": "Documenti",
       "help": "Aiuto",
@@ -325,9 +335,9 @@
     "no metrics available": "Nessuna metrica registrata per questa esecuzione del task.",
     "no outputs available": "Nessun output disponibile per questa esecuzione del task.",
     "outputs": "Outputs",
-    "flow_outputs": "Output del Flow",
-    "no_flow_outputs": "Nessun output disponibile.",
+    "flow_inputs": "Input del Flow",
     "output": "Output",
+    "flow_outputs": "Output del Flow",
     "eval": {
       "title": "Espressione di Debug",
       "render": "Espressione di Render",
@@ -456,10 +466,53 @@
     },
     "use": "Usa",
     "plugins": {
+      "beta": "Beta",
+      "copy_type": "Copia tipo",
+      "deprecated": "Deprecato",
+      "dynamic": "dinamico",
+      "filter_all": "Tutti",
+      "filter_properties": "Filtra proprietà…",
+      "filter_required": "Obbligatorio",
+      "intro_callout_prefix": "Fai clic sul ",
+      "intro_callout_suffix": " di un task nell'editor per aprire qui la documentazione del plugin.",
+      "intro_clear_search": "Cancella ricerca",
+      "intro_learn_more": "Scopri di più",
+      "intro_no_matches_sub": "Nessuna funzione, filtro o proprietà corrisponde alla tua ricerca.",
+      "intro_no_matches_title": "Nessun risultato per \"{q}\"",
+      "intro_result_count": "{count} risultati",
+      "intro_search_placeholder": "Cerca nella documentazione…",
+      "intro_start_here": "Inizia da qui",
+      "intro_step1_cta": "Vedi il riferimento flow",
+      "intro_step1_desc_mid": " all'interno di un ",
+      "intro_step1_desc_prefix": "Ogni flow ha bisogno di un ",
+      "intro_step1_desc_suffix": " univoco.",
+      "intro_step1_title": "Definisci id e namespace",
+      "intro_step2_cta": "Vedi il riferimento task",
+      "intro_step2_desc": "Azioni atomiche eseguite in ordine. Clicca su un task per vedere la sua documentazione.",
+      "intro_step2_title": "Aggiungi tasks",
+      "intro_step3_cta": "Vedi il riferimento inputs",
+      "intro_step3_desc_mid": ", ",
+      "intro_step3_desc_prefix": "Usa ",
+      "intro_step3_desc_suffix": " e le espressioni Pebble.",
+      "intro_step3_title": "Rendilo dinamico",
+      "intro_sub": "Tutto ciò che ti serve per creare un flow in YAML: proprietà, inputs e Pebble templating, tutto in un posto.",
+      "intro_tab_examples": "Examples",
+      "intro_tab_flow": "Flow",
+      "intro_tab_inputs": "Inputs",
+      "intro_tab_overview": "Overview",
+      "intro_tab_pebble": "Pebble",
+      "intro_tab_tasks": "Tasks",
+      "intro_title": "Documentazione del flow",
       "name": "Plugin",
       "names": "Plugins",
+      "nav_examples": "Examples",
+      "nav_outputs": "Outputs",
+      "nav_overview": "Panoramica",
+      "nav_properties": "Properties",
+      "non_dynamic": "non dinamico",
       "please": "Per favore scegli un task a destra per vedere la sua documentazione",
-      "release": "Note di rilascio"
+      "release": "Note di rilascio",
+      "required": "Obbligatorio"
     },
     "last execution date": "Data ultima esecuzione",
     "last execution state": "Ultimo stato",
@@ -690,7 +743,6 @@
     "taskid column details": "Ultimo task in esecuzione e il numero di tentativi.",
     "flow already exists": "Flow già esistente",
     "flow already exists message": "Il flow <code>{id}</code> esiste già nel namespace <code>{namespace}</code>. Vuoi creare una nuova revisione?",
-    "plugin_default_already_exists": "Il plugin predefinito per <code>{type}</code> esiste già.",
     "namespace not allowed": "Namespace non consentito",
     "switch-view": "Cambia vista",
     "source and topology": "Sorgente e topologia",
@@ -726,7 +778,6 @@
     },
     "title": "Titolo",
     "api": "API",
-    "more_actions": "Altre azioni",
     "expand error": "Espandi solo i tasks FAILED",
     "expand all": "Espandi tutto",
     "collapse all": "Comprimi tutto",
@@ -786,6 +837,17 @@
       "tooltip": "Riavvia il trigger"
     },
     "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
+    "trigger enable dialog": {
+      "title": "Abilita trigger",
+      "bulk title": "Abilita {count} triggers",
+      "description": "Questo trigger potrebbe aver saltato delle pianificazioni mentre era disabilitato.",
+      "bulk description": "I trigger selezionati potrebbero aver perso delle pianificazioni mentre erano disabilitati.",
+      "strategy": "Seleziona la strategia da utilizzare:",
+      "options": {
+        "skip": "Non recuperare le pianificazioni mancate",
+        "follow": "Segui la configurazione {property} del trigger"
+      }
+    },
     "flow source not found": "Sorgente del flow non trovata",
     "date format": "Formato data",
     "timezone": "Fuso orario",
@@ -1190,6 +1252,12 @@
         "title": "Aggiungi Blueprint Personalizzati",
         "message": "Nella Kestra Enterprise Edition, puoi creare blueprint personalizzati disponibili solo per la tua organizzazione. Puoi usarli come modelli di best-practice per condividere, centralizzare e documentare i flussi di lavoro comunemente utilizzati nel tuo team."
       },
+      "policies": {
+        "header": "Politiche di Governance",
+        "label": "Politiche",
+        "message": "Le policy consentono ai team della piattaforma di gestire e applicare centralmente le regole a tutti i flow — iniettare valori predefiniti condivisi, bloccare i plugin, limitare i valori delle proprietà e richiedere label di conformità. Le regole si applicano a livello di tenant o di namespace con rollout graduale, e ogni valore iniettato o sostituito rimane visibile agli autori dei flow.",
+        "title": "Gestisci ogni flow con Politiche"
+      },
       "namespace": {
         "edit": {
           "title": "Aggiorna la Gestione del tuo Namespace",
@@ -1207,9 +1275,9 @@
           "title": "Governa Centralmente le Tue Variabili",
           "message": "Nella Kestra Enterprise Edition, puoi definire e gestire variabili a livello di namespace per eliminare configurazioni ripetitive tra i flow. Queste variabili assicurano coerenza, semplificano gli aggiornamenti di configurazione e possono essere facilmente riferite da qualsiasi task o trigger per flussi di lavoro più puliti e manutenibili."
         },
-        "plugin-defaults": {
-          "title": "Standardizza la Configurazione con i Valori Predefiniti del Plugin",
-          "message": "Nella Kestra Enterprise Edition, puoi impostare i plugin predefiniti specifici per namespace, riducendo la necessità di configurazioni duplicate in ogni flow. Questa governance centrale dei plugin impone configurazioni coerenti, consente il riferimento sicuro a segreti o variabili e semplifica la manutenzione dei tuoi workflow."
+        "policies": {
+          "title": "Applicare le Regole di Governance in questo Namespace",
+          "message": "In Kestra Enterprise Edition, le politiche ti consentono di definire regole che si applicano a ogni flow in questo namespace e ai suoi figli — iniettare impostazioni predefinite condivise, limitare i values delle proprietà, bloccare i plugin e richiedere labels di conformità, con ogni modifica completamente visibile agli autori dei flow."
         },
         "history": {
           "title": "Gestisci la Cronologia delle Revisioni in un Unico Luogo",
@@ -1303,7 +1371,7 @@
         "complete": "Completa",
         "save_to_continue": "Premi Salva nella barra in alto (a destra).",
         "execute_to_continue": "1. Premi Esegui nella barra in alto (a destra).\n2. Fornisci un valore per <strong>name</strong>.\n3. Premi di nuovo Esegui nella finestra modale.",
-        "edit_flow_to_continue": "Premi Modifica flow nella barra in alto (a destra).",
+        "edit_flow_to_continue": "Apri il menu Azioni (barra in alto, a destra) e seleziona Modifica flow.",
         "cancel_tutorial": "Annulla tutorial",
         "finish_tutorial": "Termina tutorial"
       },
@@ -1341,7 +1409,7 @@
         "save_flow": "Fai clic su Salva per continuare.",
         "execute_flow": "Esegui il flow una volta per continuare.",
         "view_logs_status": "Apri i dettagli di esecuzione e controlla i log di `greet`.",
-        "edit_flow_from_execution": "Fai clic su `Modifica flow` nella barra in alto per continuare.",
+        "edit_flow_from_execution": "Apri il menu Azioni e fai clic su `Modifica flow` per continuare.",
         "add_cron_trigger_section": "Crea una sezione `triggers` con un trigger di pianificazione.",
         "add_cron_trigger_type": "Imposta il tipo di trigger su `io.kestra.plugin.core.trigger.Schedule`.",
         "add_cron_trigger_cron": "Aggiungi un’espressione cron, ad esempio: `\"*/5 * * * *\"`.",
@@ -1385,32 +1453,19 @@
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
     "system_namespace": "Mantieni la tua piattaforma sotto controllo con i system flows.",
     "system_namespace_description": "Automatizza le attività di manutenzione, dagli avvisi di errore alle pulizie automatiche.",
-    "pluginDefaults": {
-      "title": "Predefiniti del Plugin",
-      "add": "Aggiungi Plugin Predefinito",
-      "edit": "Modifica Plugin Predefinito",
-      "add_subtitle": "Configura un nuovo plugin predefinito con le sue proprietà",
-      "edit_subtitle": "Modifica la configurazione predefinita del plugin esistente",
-      "predefined": "Plugin Predefinito",
-      "custom": "Plugin Personalizzato",
-      "form": "Modulo",
-      "yaml": "YAML",
-      "select_predefined": "Seleziona Plugin Predefinito",
-      "cancel": "Annulla",
-      "update": "Aggiorna Plugin Default",
-      "custom_type": "Tipo di plugin personalizzato",
-      "custom_placeholder": "Inserisci il tipo di plugin",
-      "use_custom": "Usa Personalizzato",
-      "custom_configure": "Tipo di plugin personalizzato - configurare utilizzando YAML",
-      "yaml_configuration": "Configurazione YAML",
-      "show_yaml": "Mostra YAML"
-    },
     "secret": {
       "add": "Crea",
       "update": "Aggiorna secret '{name}'",
       "isReadOnly": "Il segreto è in sola lettura",
       "names": "Secrets",
-      "inherited": "Secrets ereditati"
+      "inherited": "Secrets ereditati",
+      "key": "Nome",
+      "keyPlaceholder": "Nome usato per fare riferimento a questo segreto, ad es. MY_API_TOKEN",
+      "name": "Valore segreto",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "Descrivi questo segreto",
+      "tags": "Etichette",
+      "addTag": "Aggiungi etichetta"
     },
     "workerId": "Worker Id",
     "kv": {
@@ -1524,6 +1579,7 @@
     "documentationMenu": "Menu documentazione",
     "item": "elemento",
     "items": "elementi",
+    "iterations": "Iterazioni",
     "cron": "Cron",
     "execution_started": "L'esecuzione è iniziata!",
     "execution_failed": "Esecuzione fallita!",
@@ -1626,8 +1682,7 @@
         "triggers": "Trigger",
         "errors": "Gestori degli Errori",
         "afterExecution": "Dopo l'Esecuzione",
-        "finally": "Infine",
-        "pluginDefaults": "Predefiniti del Plugin"
+        "finally": "Infine"
       },
       "fields": {
         "main": {
@@ -1659,7 +1714,6 @@
         "triggers": "Seleziona un trigger",
         "errors": "Seleziona un task",
         "finally": "Seleziona un task",
-        "pluginDefaults": "Seleziona un plugin",
         "afterExecution": "Seleziona un task",
         "conditions": "Seleziona una condizione",
         "inputs": "Seleziona un tipo di input field",
@@ -1673,7 +1727,6 @@
         "triggers": "Aggiungi un trigger",
         "errors": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
-        "pluginDefaults": "Aggiungi un plugin predefinito",
         "afterExecution": "Aggiungi un blocco after execution",
         "conditions": "Aggiungi una condizione",
         "inputs": "Aggiungi un campo di input",
@@ -1791,10 +1844,6 @@
         "title": "Nessun limite di concorrenza è impostato.",
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency?utm_source=app&utm_medium=referral&utm_campaign=concurrency-inlinedoc\" target=\"_blank\">Limiti di Concurrency</a></strong> nella nostra documentazione."
       },
-      "pluginDefaults": {
-        "title": "Non hai ancora impostazioni predefinite per i plugin!",
-        "content": "I valori predefiniti del plugin ti permettono di gestire centralmente la configurazione del tuo plugin e condividerla con tutti i flow nel tuo namespace."
-      },
       "variables": {
         "title": "Ancora nessuna variabile",
         "content": "Aggiungi coppie chiave-valore per condividere la configurazione tra i flow. I namespace figli le ereditano automaticamente e puoi fare riferimento a qualsiasi valore con"
@@ -1899,6 +1948,10 @@
       "viewAll": "Vedi tutti",
       "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
       "export": "Esporta in CSV",
+      "exportTo": {
+        "csv": "Esporta in CSV",
+        "ion": "Esporta in ION"
+      },
       "quick_filters": {
         "all": "Tutti",
         "running": "In esecuzione",
@@ -2003,6 +2056,119 @@
       },
       "dashboard": {
         "prompt_placeholder": "Fai una domanda sui tuoi dati. Esempio di prompt: Mostrami il tasso di successo dei miei flow negli ultimi 7 giorni."
+      },
+      "copilot": {
+        "title": "Copilota AI",
+        "placeholder": "Dimmi cosa costruire…",
+        "send": "Invia",
+        "mode": {
+          "ask": "Chiedi",
+          "edit": "Modifica",
+          "plan": "Piano"
+        },
+        "empty": {
+          "title": "Trasforma la tua idea in un flusso di lavoro"
+        },
+        "toolCall": "{{tool}} in esecuzione",
+        "context": {
+          "execution": "Esecuzione: {id}",
+          "flow": "Flow: {{flow}}",
+          "namespace": "Namespace: {namespace}"
+        },
+        "toolResult": {
+          "detail": "Dettagli",
+          "error": "{{tool}} fallito",
+          "ok": "{tool} completato",
+          "rejected": "{tool} rifiutato"
+        },
+        "confirm": {
+          "planTitle": "Piano proposto",
+          "actionTitle": "Azione proposta",
+          "approve": "Approva",
+          "approveExecute": "Approva ed esegui",
+          "reject": "Rifiuta",
+          "reasonPlaceholder": "Rispondi per revisionare…",
+          "pending": "In attesa di approvazione",
+          "revise": "Rispondi per revisionare"
+        },
+        "notice": {
+          "emptyTurn": "L'assistente non ha restituito una risposta. Per favore, riprova.",
+          "retry": "Riprova"
+        },
+        "cancelled": "Giro annullato",
+        "error": {
+          "turnCap": "Questa conversazione ha raggiunto il limite — inizia una nuova chat.",
+          "turnInProgress": "Un turno è già in corso.",
+          "request": "La richiesta è fallita. Riprova.",
+          "generic": "Qualcosa è andato storto. Riprova."
+        },
+        "emptyHelper": "Posso modificare questo flow, generare test, generare file correlati o spiegare come funziona.",
+        "suggestions": {
+          "errorHandling": "Aggiungi gestione degli errori",
+          "unitTest": "Genera un test di unità",
+          "explain": "Spiega questo flow",
+          "dbt": "Esegui una pipeline dbt"
+        },
+        "voice": {
+          "start": "Avvia input vocale",
+          "stop": "Arresta e inserisci",
+          "cancel": "Annulla input vocale"
+        },
+        "unavailable": {
+          "title": "AI Copilot non è disponibile",
+          "detail": "Nessun provider AI è configurato. Chiedi a un amministratore di configurarne uno, quindi riprova.",
+          "retry": "Riprova"
+        },
+        "thinking": "Elaborazione",
+        "thinkingWords": [
+          "Orchestrazione",
+          "Pianificazione",
+          "Sequenziamento",
+          "Routing",
+          "Invio",
+          "In coda",
+          "Attivazione",
+          "In esecuzione",
+          "Coordinamento",
+          "Provisionamento",
+          "Risolvendo",
+          "Composizione",
+          "Assemblaggio",
+          "Pianificazione",
+          "Mappatura",
+          "Collegamenti",
+          "Ramificazione",
+          "Sincronizzazione",
+          "Riconciliazione",
+          "Materializzando",
+          "Compilazione",
+          "Validazione",
+          "In propagazione",
+          "Convergendo"
+        ],
+        "newChat": "Nuova chat",
+        "recents": "Recenti",
+        "recentsEmpty": "Nessuna conversazione recente.",
+        "draft": {
+          "openInEditor": "Apri nell'editor",
+          "apply": "Applica",
+          "applyTitle": "Applica flow",
+          "applyConfirm": "Applica il flow {{namespace}}.{{id}}? Verrà creato, o sovrascritto se esiste già.",
+          "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
+          "applyError": "Impossibile applicare il flow. Riprova.",
+          "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",
+          "applyNoTarget": "Questa bozza non ha namespace o id da applicare.",
+          "applyTitleDashboard": "Applica dashboard",
+          "title": {
+            "flow": "flow Proposto",
+            "dashboard": "Dashboard Proposta",
+            "app": "App proposta"
+          },
+          "valid": "Valido",
+          "invalid": "Richiede modifiche",
+          "copy": "Copia YAML",
+          "copied": "Copiato"
+        }
       }
     },
     "playground": {
@@ -2249,8 +2415,7 @@
         "open_world": "Open world",
         "destructive": "Distruttivo",
         "idempotent": "Idempotente",
-        "return_direct": "Ritorno diretto",
-        "view_flow": "Apri flow"
+        "return_direct": "Ritorno diretto"
       },
       "connect_tab": {
         "server_url": "URL del server",
@@ -2300,6 +2465,12 @@
     },
     "open source": "Open Source",
     "pricing": "Prezzi",
-    "license": "Licenza"
+    "license": "Licenza",
+    "pwa": {
+      "install_title": "Installa Kestra",
+      "install_description": "Installa Kestra come app per un accesso più rapido e un'esperienza a schermo intero.",
+      "install": "Installa",
+      "dismiss": "Non ora"
+    }
   }
 }

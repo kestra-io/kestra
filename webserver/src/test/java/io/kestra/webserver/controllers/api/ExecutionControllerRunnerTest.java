@@ -409,7 +409,7 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(result.getTaskRunList().size()).isEqualTo(13);
 
-        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(result.getTenantId(), result.getId());
+        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(result.getTenantId(), result.getId(), null);
         assertThat(subExecutions).hasSize(3);
     }
 
@@ -505,7 +505,31 @@ class ExecutionControllerRunnerTest {
         result = this.evalTaskRunExpression(execution, "{{ missing }}", 0);
         assertThat(result.getResult()).isNull();
         assertThat(result.getError()).contains("Unable to find `missing` used in the expression `{{ missing }}` at line 1");
-        assertThat(result.getStackTrace()).contains("Unable to find `missing` used in the expression `{{ missing }}` at line 1");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    @LoadFlows({ "flows/valids/loop-multiple.yaml" })
+    void searchExecutionsShouldFilterLoopByTaskId() throws TimeoutException, QueueException {
+        // Given a flow with two Loop tasks (loop1 + loop2), each producing 3 iterations
+        Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "loop-multiple");
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // When searching LOOP-kind executions scoped to a single loop task's taskId
+        PagedResults<Execution> loop1Results = client.toBlocking().retrieve(
+            GET("/api/v1/%s/executions/search?filters[parentId][EQUALS]=%s&filters[kind][EQUALS]=LOOP&filters[taskId][EQUALS]=loop1".formatted(TENANT_ID, execution.getId())),
+            Argument.of(PagedResults.class, Execution.class)
+        );
+        PagedResults<Execution> loop2Results = client.toBlocking().retrieve(
+            GET("/api/v1/%s/executions/search?filters[parentId][EQUALS]=%s&filters[kind][EQUALS]=LOOP&filters[taskId][EQUALS]=loop2".formatted(TENANT_ID, execution.getId())),
+            Argument.of(PagedResults.class, Execution.class)
+        );
+
+        // Then each loop task's iterations are returned in isolation from the other loop's
+        assertThat(loop1Results.getTotal()).isEqualTo(3L);
+        assertThat(loop1Results.getResults()).allMatch(e -> "loop1".equals(e.getLoopRun().taskId()));
+        assertThat(loop2Results.getTotal()).isEqualTo(3L);
+        assertThat(loop2Results.getResults()).allMatch(e -> "loop2".equals(e.getLoopRun().taskId()));
     }
 
     @Test
@@ -832,7 +856,7 @@ class ExecutionControllerRunnerTest {
         assertThat(restarted.getId()).isNotEqualTo(parentExecution.getId());
 
         // 1_each (Loop) is kept as SUCCESS and not re-run, so no new sub-executions are created for the restarted execution
-        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(restarted.getTenantId(), restarted.getId());
+        var subExecutions = executionRepositoryInterface.findLoopSubExecutions(restarted.getTenantId(), restarted.getId(), null);
         assertThat(subExecutions).hasSize(0);
     }
 
@@ -2484,7 +2508,6 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isNull();
-        assertThat(evalResult.getStackTrace()).isNull();
         assertThat(evalResult.getResult()).isEqualTo("******");
 
         evalResult = client.toBlocking().retrieve(
@@ -2494,9 +2517,6 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)");
-        assertThat(evalResult.getStackTrace()).startsWith(
-            "io.kestra.core.exceptions.IllegalVariableEvaluationException: io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)"
-        );
         assertThat(evalResult.getResult()).isNull();
 
         evalResult = client.toBlocking().retrieve(
@@ -2506,7 +2526,6 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isNull();
-        assertThat(evalResult.getStackTrace()).isNull();
         assertThat(evalResult.getResult()).startsWith("{\"todos\":[{");
 
         evalResult = client.toBlocking().retrieve(
@@ -2516,7 +2535,6 @@ class ExecutionControllerRunnerTest {
             ExecutionController.EvalResult.class
         );
         assertThat(evalResult.getError()).isNull();
-        assertThat(evalResult.getStackTrace()).isNull();
         assertThat(evalResult.getResult()).isEqualTo("******");
     }
 
@@ -2544,7 +2562,6 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(evalResult.getResult(), org.hamcrest.Matchers.nullValue());
         assertThat(evalResult.getError(), org.hamcrest.Matchers.notNullValue());
-        assertThat(evalResult.getStackTrace(), org.hamcrest.Matchers.notNullValue());
     }
 
     @Test
@@ -2878,6 +2895,58 @@ class ExecutionControllerRunnerTest {
             POST(
                 "/api/v1/main/executions/restart/by-ids",
                 List.of(execution.getId())
+            ),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/failed-first.yaml" })
+    void shouldReturn202WhenRestartExecutionsByIdsCalledWithLatestRevision() {
+        Execution execution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/failed-first",
+                null
+            ),
+            Execution.class
+        );
+
+        awaitExecution(execution.getId());
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/main/executions/restart/by-ids?latestRevision=true",
+                List.of(execution.getId())
+            ),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/failed-first.yaml" })
+    void shouldReturn202WhenRestartExecutionsByQueryCalledWithLatestRevision() {
+        Execution execution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/failed-first",
+                null
+            ),
+            Execution.class
+        );
+
+        awaitExecution(execution.getId());
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/main/executions/restart/by-query?filters[q][EQUALS]=%s&latestRevision=true".formatted(execution.getId()),
+                List.of()
             ),
             ApiAsyncOperationResponse.class
         );

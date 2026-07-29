@@ -13,50 +13,48 @@
                 <slot name="top" />
             </div>
 
-            <template v-if="hasTableSlot">
+            <div v-if="hasTableSlot" class="ks-data-table-content ks-data-table-content--slot">
                 <slot name="table" />
-            </template>
+            </div>
 
-            <template v-else>
-                <div ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
-                    <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
-                        <KsBulkSelect
-                            :selectAll="queryBulkAction"
-                            :selectionCount="mappedSelection.length"
-                            :total
-                            @toggle-all="toggleAllSelection"
-                            @unselect="toggleAllUnselected"
-                        >
-                            <slot name="bulk-actions" />
-                        </KsBulkSelect>
-                    </div>
-                    <div v-else-if="hasSelection && data && data.length" class="bulk-select-header">
-                        <slot name="select-actions" />
-                    </div>
-
-                    <KsTable
-                        ref="tableRef"
-                        v-bind="$attrs"
-                        :tableLayout="tableLayout"
-                        fixed
-                        :data
-                        :rowKey
-                        :expandRowKeys="composedExpandRowKeys"
-                        :rowClassName="composedRowClassName"
-                        :emptyText="noDataText"
-                        @selection-change="selectionChanged"
-                        @select="onSelect"
-                        @sort-change="onSortChange"
-                        @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
+            <div v-else ref="container" class="ks-data-table-content" :class="{'no-selection-gutter': !hasSelectionColumn && !noFirstColumnGutter}" @click.capture="(e: MouseEvent) => isShiftPressed = e.shiftKey">
+                <div v-if="hasSelection && data && data.length && hasBulkActions" class="bulk-select-header">
+                    <KsBulkSelect
+                        :selectAll="queryBulkAction"
+                        :selectionCount="mappedSelection.length"
+                        :total="selectableTotal"
+                        @toggle-all="toggleAllSelection"
+                        @unselect="toggleAllUnselected"
                     >
-                        <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection />
-                        <slot />
-                        <template #empty>
-                            <KsNoData :title="noDataText" />
-                        </template>
-                    </KsTable>
+                        <slot name="bulk-actions" />
+                    </KsBulkSelect>
                 </div>
-            </template>
+                <div v-else-if="hasSelection && data && data.length" class="bulk-select-header">
+                    <slot name="select-actions" />
+                </div>
+
+                <KsTable
+                    ref="tableRef"
+                    v-bind="$attrs"
+                    :tableLayout="tableLayout"
+                    fixed
+                    :data
+                    :rowKey
+                    :expandRowKeys="composedExpandRowKeys"
+                    :rowClassName="composedRowClassName"
+                    :emptyText="noDataText"
+                    @selection-change="selectionChanged"
+                    @select="onSelect"
+                    @sort-change="onSortChange"
+                    @row-dblclick="(row, column, event) => emit('row-dblclick', row, column, event)"
+                >
+                    <KsTableColumn v-if="selectable && showSelection" type="selection" reserveSelection :selectable="rowSelectable" />
+                    <slot />
+                    <template #empty>
+                        <KsNoData :title="noDataText" />
+                    </template>
+                </KsTable>
+            </div>
 
             <KsPagination
                 v-if="showPagination"
@@ -97,6 +95,7 @@
         pageSize?: number
         loading?: boolean
         selectable?: boolean
+        rowSelectable?: (row: any, index: number) => boolean
         showSelection?: boolean
         rowKey?: string | ((row: any) => string)
         noDataText?: string
@@ -116,6 +115,7 @@
         pageSize: 25,
         loading: false,
         selectable: false,
+        rowSelectable: undefined,
         showSelection: true,
         rowKey: "id",
         noDataText: undefined,
@@ -214,13 +214,27 @@
     const queryBulkAction = ref(false)
     const mappedSelection = ref<any[]>([])
 
+    const pageSelectableCount = computed(() => {
+        if (!props.rowSelectable) {
+            return props.data?.length ?? 0
+        }
+        return (props.data ?? []).filter((row, index) => props.rowSelectable!(row, index)).length
+    })
+
+    /** With a rowSelectable filter, "select all" only reaches the selectable rows of the current page. */
+    const selectableTotal = computed(
+        () => props.rowSelectable
+            ? pageSelectableCount.value
+            : props.total,
+    )
+
     const selectionChanged = (rawSelection: any[]) => {
         hasSelection.value = rawSelection.length > 0
 
         const mapper = props.selectionMapper ?? ((e: any) => e)
         mappedSelection.value = rawSelection.map(mapper)
 
-        if (queryBulkAction.value && props.data && rawSelection.length < props.data.length) {
+        if (queryBulkAction.value && props.data && rawSelection.length < pageSelectableCount.value) {
             queryBulkAction.value = false
         }
 
@@ -287,7 +301,7 @@
 
     const toggleAllSelection = () => {
         const current = getSelectionRows()
-        if (current.length < props.data.length) {
+        if (current.length < pageSelectableCount.value) {
             tableRef.value?.toggleAllSelection()
         }
         queryBulkAction.value = true
@@ -476,6 +490,19 @@
         &--fit {
             min-height: 0;
             overflow: hidden;
+
+            .ks-data-table-content {
+                flex: 1 1 0;
+                min-height: 0;
+
+                &--slot {
+                    overflow: auto;
+                }
+            }
+
+            .kel-pagination {
+                margin-top: auto;
+            }
         }
     }
 
@@ -510,6 +537,13 @@
                 text-overflow: ellipsis;
                 white-space: nowrap;
             }
+        }
+
+        // element-plus sizes the empty-block to 100% of its scroll view, on top of the header row's own
+        // height, overflowing the view by the header's height whenever an ancestor constrains it (e.g. any
+        // empty-state layout). Subtract the header height we already track for the bulk-select overlay above.
+        .kel-table__empty-block {
+            height: calc(100% - var(--table-header-height, 0px)) !important;
         }
 
         .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {

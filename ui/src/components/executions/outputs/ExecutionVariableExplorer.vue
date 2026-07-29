@@ -15,7 +15,7 @@
 
                     <!-- Center: tree / raw JSON of the selected value -->
                     <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--viewer">
-                        <div class="viewer">
+                        <div class="viewer" :class="{'viewer--fill': isRawEditor}">
                             <div class="viewer__header">
                                 <KsSegmented
                                     v-if="isExpandableValue && !fileSelectedOutput"
@@ -38,12 +38,11 @@
                             </template>
 
                             <KsEditor
-                                v-else-if="viewMode === 'raw' && isExpandableValue"
+                                v-else-if="isRawEditor"
                                 v-bind="editorBindings"
                                 :readOnly="true"
                                 :inline="true"
                                 :navbar="false"
-                                :options="{fullHeight: true}"
                                 :modelValue="rawValue"
                                 lang="json"
                             />
@@ -56,11 +55,13 @@
                                 />
                             </div>
 
-                            <VariableTreeView
+                            <KsJsonTree
                                 v-else-if="isExpandableValue"
                                 :value="selectedValue"
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
+                                :previewFormatter="treePreviewFormatter"
+                                defaultExpanded
                                 @select="onSelectPath"
                             />
 
@@ -96,6 +97,7 @@
         KsSegmented,
         KsIconButton,
         KsEditor,
+        KsJsonTree,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
@@ -105,7 +107,6 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
-    import VariableTreeView from "./VariableTreeView.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
@@ -145,6 +146,18 @@
             return `{ ${keys.join(", ")} }`
         }
         return String(value)
+    }
+
+    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
+        if (context.kind === "array") {
+            return context.count === 1
+                ? t("variable_explorer.one_item")
+                : t("variable_explorer.n_items", {count: context.count})
+        }
+
+        return context.count === 1
+            ? t("variable_explorer.one_key")
+            : t("variable_explorer.n_keys", {count: context.count})
     }
 
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
@@ -233,9 +246,9 @@
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
-            {key: "inputs", label: t("inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
+            {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
+            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
         ]
     })
 
@@ -244,6 +257,7 @@
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const expressionPath = ref<string>("")
+    const previewedValue = ref<unknown>(undefined)
     // Suggested expression handed to the debugger; follows the current selection.
     const expression = ref<string>("")
 
@@ -252,13 +266,15 @@
     )
 
     const fileSelectedOutput = computed(() => {
+        const value = previewedValue.value
+
         // if an input file is selected, show the contents of the file
-        if(typeof selectedValue.value === "string" && Utils.isFile(selectedValue.value)){
-            return selectedValue.value
+        if(typeof value === "string" && Utils.isFile(value)){
+            return value
         }
-        if (!isExpandableValue.value) return undefined
+        if (value === null || typeof value !== "object") return undefined
         try {
-            const fileMetadata = selectedValue.value as {uri?: string}
+            const fileMetadata = value as {uri?: string}
             if (Utils.isFile(fileMetadata.uri)) {
                 return fileMetadata.uri
             }
@@ -283,6 +299,7 @@
         }
         selectedBase.value = item.expression
         expressionPath.value = item.expression
+        previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
         // it needs the `execution.` prefix to be debuggable.
         const baseExpressionPath = sections.value.find((section) =>
@@ -294,16 +311,20 @@
         // specially useful for files
         if(selectedValue.value && typeof selectedValue.value === "object" && Object.keys(selectedValue.value).length === 1) {
             const onlyKey = Object.keys(selectedValue.value)[0]
-            const fullExpressionPath = `${baseExpressionPath}${formatStep(onlyKey)}`
-            expression.value = `{{ ${fullExpressionPath} }}`
+            const treePath = `${item.expression}${formatStep(onlyKey)}`
+            const debugPath = `${baseExpressionPath}${formatStep(onlyKey)}`
+            expressionPath.value = treePath
+            previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
+            expression.value = `{{ ${debugPath} }}`
         }else {
             expression.value = `{{ ${baseExpressionPath} }}`
         }
     }
 
-    function onSelectPath(path: string) {
+    function onSelectPath(path: string, value: unknown) {
         expressionPath.value = path
         expression.value = `{{ ${path} }}`
+        previewedValue.value = value
     }
 
     /* --------------------------------- Viewer -------------------------------- */
@@ -313,6 +334,8 @@
         {label: t("variable_explorer.tree"), value: "tree"},
         {label: t("variable_explorer.raw_json"), value: "raw"},
     ])
+
+    const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
     function copyValue() {
         navigator.clipboard?.writeText(rawValue.value)
@@ -368,8 +391,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
-    min-height: 0;
+    min-height: 100%;
     background-color: var(--ks-bg-surface);
 
     &__header {
@@ -379,12 +401,6 @@
         gap: var(--ks-spacing-2);
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
-    }
-
-    &__body {
-        flex: 1 1 0;
-        min-height: 0;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
     }
 
     &__scalar {
@@ -397,6 +413,11 @@
     .file-preview {
         padding: var(--ks-spacing-4);
     }
+}
+
+.viewer--fill {
+    height: 100%;
+    min-height: 0;
 }
 
 .debug {

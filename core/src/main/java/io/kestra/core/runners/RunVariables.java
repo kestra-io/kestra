@@ -316,6 +316,14 @@ public final class RunVariables {
          * @return The immutable map of variables.
          */
         Map<String, Object> build(RunContextLogger logger, PropertyContext propertyContext);
+
+        /**
+         * Returns the plaintext values of any SECRET-typed flow output decrypted while building the
+         * variables map, so callers can carry them across the executor/worker boundary for log masking.
+         */
+        default List<String> secretOutputs() {
+            return List.of();
+        }
     }
 
     public record KestraConfiguration(String environment, String url) {
@@ -342,6 +350,7 @@ public final class RunVariables {
         private final Optional<String> secretKey;
         private List<String> secretInputs;
         private KestraConfiguration kestraConfiguration;
+        private final List<String> secretOutputs;
 
         public DefaultBuilder() {
             this(Optional.empty());
@@ -349,6 +358,15 @@ public final class RunVariables {
 
         public DefaultBuilder(final Optional<String> secretKey) {
             this.secretKey = secretKey;
+            this.secretOutputs = new ArrayList<>();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public List<String> secretOutputs() {
+            return secretOutputs;
         }
 
         // Note: for performance reason, cloning maps should be avoided as much as possible.
@@ -398,7 +416,12 @@ public final class RunVariables {
 
                 if (!MapUtils.isEmpty(outputs)) {
                     if (decryptVariables) {
-                        final Secret secret = new Secret(secretKey, logger);
+                        // mask SECRET-typed flow output and trigger output
+                        final Secret secret = new Secret(secretKey, logger, decrypted ->
+                        {
+                            secretOutputs.add(decrypted);
+                            logger.usedSecret(decrypted);
+                        });
                         builder.put("outputs", secret.decrypt(outputs));
                     } else {
                         builder.put("outputs", outputs);
@@ -642,7 +665,9 @@ public final class RunVariables {
             {
                 if (taskRun.getState() != null) {
                     if (taskRun.getValue() == null) {
-                        tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
+                        Map<String, Object> stateMap = HashMap.newHashMap(2);
+                        stateMap.put("state", taskRun.getState().getCurrent());
+                        tasksMap.put(taskRun.getTaskId(), stateMap);
                     } else {
                         if (tasksMap.containsKey(taskRun.getTaskId())) {
                             @SuppressWarnings("unchecked")

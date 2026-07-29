@@ -23,6 +23,7 @@ export function useFlowEditorActions() {
     const hasErrors = computed(() => (flowStore.flowErrors?.length ?? 0) > 0)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
+    const isDraft = computed(() => flowStore.flow?.draft ?? false)
     const tenant = computed(() => route.params.tenant)
 
     async function flushDirtyFiles() {
@@ -75,6 +76,20 @@ export function useFlowEditorActions() {
         }
     }
 
+    async function publishDraft() {
+        try {
+            const outcome = await flowStore.publishDraft()
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                onboardingStore.recordSave()
+            }
+            await flushDirtyFiles()
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000})
+            }
+        }
+    }
+
     async function saveAndExecute() {
         try {
             const isCreating = flowStore.isCreating
@@ -102,15 +117,15 @@ export function useFlowEditorActions() {
                     labels: ["system.from:ui"],
                 })
 
-                executionsStore.execution = response.data
+                executionsStore.execution = response
                 onboardingStore.recordExecution()
 
                 await router.push({
                     name: "executions/update",
                     params: {
-                        namespace: response.data.namespace,
-                        flowId: response.data.flowId,
-                        id: response.data.id,
+                        namespace: response.namespace,
+                        flowId: response.flowId,
+                        id: response.id,
                         tab: "gantt",
                         tenant: tenant.value,
                     },
@@ -199,11 +214,13 @@ export function useFlowEditorActions() {
         hasErrors,
         isReadOnly,
         isAllowedEdit,
+        isDraft,
         isPlaygroundEnabled,
         isPlaygroundAllowed,
         // actions
         save,
         saveAsDraft,
+        publishDraft,
         saveAndExecute,
         exportYaml,
         copyFlow,

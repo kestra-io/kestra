@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -53,54 +54,69 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 @Slf4j
 public class ExecutorService {
-    @Inject
-    private RunContextFactory runContextFactory;
+    private final RunContextFactory runContextFactory;
+    private final MetricRegistry metricRegistry;
+    protected final FlowMetaStoreInterface flowExecutorInterface;
+    private final ExecutionService executionService;
+    private final WorkerQueueService workerQueueService;
+    private final SLAService slaService;
+    private final Optional<OpenTelemetry> openTelemetry;
+    protected final BroadcastQueueInterface<ExecutionKilled> killQueue;
+    private final DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
+    private final RunContextLoggerFactory runContextLoggerFactory;
+    private final AssetService assetService;
+    private final RunContextInitializer runContextInitializer;
+    private final TaskOutputService taskOutputService;
 
     @Inject
-    private MetricRegistry metricRegistry;
+    public ExecutorService(
+        RunContextFactory runContextFactory,
+        MetricRegistry metricRegistry,
+        FlowMetaStoreInterface flowExecutorInterface,
+        ExecutionService executionService,
+        WorkerQueueService workerQueueService,
+        SLAService slaService,
+        Optional<OpenTelemetry> openTelemetry,
+        BroadcastQueueInterface<ExecutionKilled> killQueue,
+        DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue,
+        RunContextLoggerFactory runContextLoggerFactory,
+        AssetService assetService,
+        RunContextInitializer runContextInitializer,
+        TaskOutputService taskOutputService) {
+        this.runContextFactory = runContextFactory;
+        this.metricRegistry = metricRegistry;
+        this.flowExecutorInterface = flowExecutorInterface;
+        this.executionService = executionService;
+        this.workerQueueService = workerQueueService;
+        this.slaService = slaService;
+        this.openTelemetry = openTelemetry;
+        this.killQueue = killQueue;
+        this.loopExecutionEventQueue = loopExecutionEventQueue;
+        this.runContextLoggerFactory = runContextLoggerFactory;
+        this.assetService = assetService;
+        this.runContextInitializer = runContextInitializer;
+        this.taskOutputService = taskOutputService;
+    }
 
-    @Inject
-    protected FlowMetaStoreInterface flowExecutorInterface;
+    /**
+     * Evaluate the scoped concurrency limits in order against their running counts: the first
+     * limit reached defines the behavior applied to the execution; when none is reached the
+     * execution runs.
+     */
+    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, ExecutionRunning executionRunning) {
+        for (int i = 0; i < limits.size(); i++) {
+            ScopedConcurrencyLimit limit = limits.get(i);
+            int runningCount = runningCounts.get(i);
+            if (runningCount < limit.concurrency().getLimit()) {
+                continue;
+            }
 
-    @Inject
-    private ExecutionService executionService;
-
-    @Inject
-    private WorkerQueueService workerQueueService;
-
-    @Inject
-    private SLAService slaService;
-
-    @Inject
-    private Optional<OpenTelemetry> openTelemetry;
-
-    @Inject
-    protected BroadcastQueueInterface<ExecutionKilled> killQueue;
-
-    @Inject
-    private DispatchQueueInterface<LoopExecutionEvent> loopExecutionEventQueue;
-
-    @Inject
-    private RunContextLoggerFactory runContextLoggerFactory;
-
-    @Inject
-    private AssetService assetService;
-
-    @Inject
-    private RunContextInitializer runContextInitializer;
-
-    @Inject
-    private TaskOutputService taskOutputService;
-
-    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, ExecutionRunning executionRunning) {
-        // if concurrency was removed, it can be null as we always get the latest flow definition
-        if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
-            return switch (flow.getConcurrency().getBehavior()) {
+            return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {
                     Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
-                        "Execution is queued due to concurrency limit exceeded, {} running(s)",
+                        "Execution is queued due to " + scopeDescription(limit) + "concurrency limit exceeded, {} running(s)",
                         runningCount
                     );
                     var newExecution = executionRunning.getExecution().withState(State.Type.QUEUED);
@@ -115,7 +131,8 @@ public class ExecutorService {
                     .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
                     .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
                 case FAIL -> {
-                    var failedExecution = executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded"));
+                    var failedExecution = executionRunning.getExecution()
+                        .failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to " + scopeDescription(limit) + "concurrency limit exceeded"));
                     var logger = runContextLoggerFactory.create(executionRunning.getExecution());
                     logger.emitLogs(failedExecution.logs());
                     yield executionRunning
@@ -126,10 +143,22 @@ public class ExecutorService {
             };
         }
 
-        // if under the limit, run it!
+        // if under every limit, run it!
+        return runExecutionRunning(executionRunning);
+    }
+
+    private static ExecutionRunning runExecutionRunning(ExecutionRunning executionRunning) {
         return executionRunning
             .withExecution(executionRunning.getExecution().withState(State.Type.RUNNING))
             .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+    }
+
+    private static String scopeDescription(ScopedConcurrencyLimit limit) {
+        return switch (limit.scope()) {
+            case FLOW -> "";
+            case NAMESPACE -> "namespace '" + limit.namespace() + "' ";
+            case TENANT -> "tenant ";
+        };
     }
 
     public ExecutorContext process(ExecutorContext executor) {
@@ -536,10 +565,14 @@ public class ExecutorService {
                     nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
                 } else {
                     // Case parent task has a retry
-                    AbstractRetry retry = searchForParentRetry(taskRun, executor);
+                    Task parentTaskWithRetry = searchForParentTaskWithRetry(taskRun, executor);
+                    AbstractRetry retry = parentTaskWithRetry != null ? parentTaskWithRetry.getRetry() : null;
                     if (retry != null) {
-                        behavior = retry.getBehavior();
-                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                        // The parent's errors/finally tasks (e.g. AllowFailure.errors) must complete before the retry timer is allowed to fire.
+                        if (!isErrorOrFinallyHandlingPending(taskRun, parentTaskWithRetry, executor, nextTaskRuns)) {
+                            behavior = retry.getBehavior();
+                            nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ? taskRun.nextRetryDate(retry, executor.getExecution()) : taskRun.nextRetryDate(retry);
+                        }
                     }
                     // Case flow has a retry
                     else if (executor.getFlow().getRetry() != null) {
@@ -628,7 +661,7 @@ public class ExecutorService {
                                             taskRun, Map.of(
                                                 Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
                                                 Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0,
+                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
                                                 Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
                                             )
                                         );
@@ -643,7 +676,7 @@ public class ExecutorService {
                                             taskRun, Map.of(
                                                 Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
                                                 Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, 0
+                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
                                             )
                                         );
 
@@ -789,7 +822,7 @@ public class ExecutorService {
         return executor;
     }
 
-    private AbstractRetry searchForParentRetry(TaskRun taskRun, ExecutorContext executor) {
+    private Task searchForParentTaskWithRetry(TaskRun taskRun, ExecutorContext executor) {
         // search in all parents, recursively
         if (taskRun.getParentTaskRunId() != null) {
             String taskId = taskRun.getTaskId();
@@ -801,12 +834,59 @@ public class ExecutorService {
                 }
             } while (parentTask != null && parentTask.getRetry() == null);
 
-            if (parentTask != null) {
-                return parentTask.getRetry();
-            }
+            return parentTask;
         }
 
         return null;
+    }
+
+    /**
+     * Whether the errors/finally branch of the flowable task owning the retry still has non-terminal task runs
+     * for the current failure. Used to prevent a retry timer from firing before those tasks terminate.
+     * <p>
+     * Known scope limitation: only gates the case where the failing task's <b>direct</b> parent is the flowable
+     * owning the retry (mirroring the same direct-parent-only assumption already made by
+     * {@link ExecutionService#retryTask}, which purges errors/finally task runs the same way). If the retry is
+     * owned by a grandparent flowable further up the tree, this check does not apply.
+     */
+    private boolean isErrorOrFinallyHandlingPending(TaskRun taskRun, Task parentTaskWithRetry, ExecutorContext executor, List<TaskRun> nextTaskRuns) {
+        if (!(parentTaskWithRetry instanceof FlowableTask<?> flowableTask) || taskRun.getParentTaskRunId() == null) {
+            return false;
+        }
+
+        Optional<TaskRun> directParentTaskRun = ListUtils.emptyOnNull(executor.getExecution().getTaskRunList()).stream()
+            .filter(t -> t.getId().equals(taskRun.getParentTaskRunId()))
+            .findFirst();
+
+        if (directParentTaskRun.isEmpty() || !directParentTaskRun.get().getTaskId().equals(parentTaskWithRetry.getId())) {
+            return false;
+        }
+
+        Set<String> errorAndFinallyTaskIds = Stream.concat(
+            ListUtils.emptyOnNull(flowableTask.getErrors()).stream(),
+            ListUtils.emptyOnNull(flowableTask.getFinally()).stream()
+        )
+            .map(Task::getId)
+            .collect(Collectors.toSet());
+
+        if (errorAndFinallyTaskIds.isEmpty()) {
+            return false;
+        }
+
+        String parentTaskRunId = directParentTaskRun.get().getId();
+
+        // The errors/finally children may have just been resolved earlier in this same handleFlowableTasks pass, but not merged into the execution yet.
+        // Check the pending list too, otherwise the very first failure would see no sibling task run at all and wrongly conclude "not pending".
+        boolean justResolvedThisPass = nextTaskRuns.stream()
+            .anyMatch(t -> parentTaskRunId.equals(t.getParentTaskRunId()) && errorAndFinallyTaskIds.contains(t.getTaskId()));
+        if (justResolvedThisPass) {
+            return true;
+        }
+
+        return executor.getExecution().getTaskRunList().stream()
+            .filter(t -> parentTaskRunId.equals(t.getParentTaskRunId()))
+            .filter(t -> errorAndFinallyTaskIds.contains(t.getTaskId()))
+            .anyMatch(t -> !t.getState().isTerminated());
     }
 
     private ExecutorContext handlePausedDelay(ExecutorContext executor, List<WorkerTaskResult> workerTaskResults) throws InternalException, QueueException {
@@ -1407,16 +1487,16 @@ public class ExecutorService {
                     log.warn("Unable to submit asset lineage event for {} -> {}", inputAssets, outputIdentifiers, e);
                 }
 
-                // don't update output asserts if task fail
+                // don't update output assets if task fail
                 if (!taskRun.getState().isFailed()) {
-                    taskRun.getAssets().getOutputs().forEach(asset ->
-                    {
+                    // Plain for-loop so a locked-asset InternalException from asyncUpsert propagates and fails the execution (fail-fast, ordering-dependent).
+                    for (var asset : taskRun.getAssets().getOutputs()) {
                         try {
                             assetService.asyncUpsert(assetUser, asset);
                         } catch (QueueException e) {
                             log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
                         }
-                    });
+                    }
                 }
             }
         }

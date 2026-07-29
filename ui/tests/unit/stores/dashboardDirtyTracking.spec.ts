@@ -1,7 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 import {nextTick} from "vue"
-import {setMockClient} from "@kestra-io/kestra-sdk"
 
 // Avoid pulling in the full design-system (monaco-editor) on cold import.
 // Provide minimal stubs for the symbols `@kestra-io/topology` reads at module
@@ -33,9 +32,13 @@ vi.mock("vue-i18n", () => ({
     useI18n: () => ({t: (key: string) => key}),
 }))
 
-const axiosGet = vi.fn()
-const axiosPost = vi.fn().mockResolvedValue({data: {}})
-const axiosPut = vi.fn().mockResolvedValue({data: {}})
+const dashboardFn = vi.fn()
+const updateDashboardFn = vi.fn().mockResolvedValue({})
+
+vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
+    dashboard: (...args: any[]) => dashboardFn(...args),
+    updateDashboard: (...args: any[]) => updateDashboardFn(...args),
+}))
 
 // Each `it` re-imports the dashboard store after `vi.resetModules()` (see
 // beforeEach). The first cold import under full-suite contention can exceed
@@ -45,15 +48,8 @@ const TEST_TIMEOUT_MS = 20_000
 describe("dashboard store dirty tracking", () => {
     beforeEach(() => {
         vi.resetModules()
-        setMockClient({
-            get: axiosGet,
-            post: axiosPost,
-            put: axiosPut,
-            delete: vi.fn(),
-        })
-        axiosGet.mockReset()
-        axiosPost.mockReset().mockResolvedValue({data: {}})
-        axiosPut.mockReset().mockResolvedValue({data: {}})
+        dashboardFn.mockReset()
+        updateDashboardFn.mockReset().mockResolvedValue({})
         setActivePinia(createPinia())
     })
 
@@ -97,7 +93,7 @@ describe("dashboard store dirty tracking", () => {
     })
 
     it("load seeds sourceCodeOrigin so haveChange stays false after fetch", {timeout: TEST_TIMEOUT_MS}, async () => {
-        axiosGet.mockResolvedValueOnce({status: 200, data: {id: "d1", sourceCode: "id: d1"}})
+        dashboardFn.mockResolvedValueOnce({id: "d1", sourceCode: "id: d1"})
 
         const {useDashboardStore} = await import("../../../src/stores/dashboard")
         const dashboardStore = useDashboardStore()

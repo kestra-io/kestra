@@ -26,7 +26,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.SchedulableTriggerFetcher;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
@@ -46,16 +46,16 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
     // Stores
     private final TriggerStateStore triggerStateStore;
     private final FlowMetaStore flowMetaStore;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
 
     public DefaultSchedulableTriggerFetcher(RunContextFactory runContextFactory,
         @Named("cached") TriggerStateStore triggerStateStore,
         FlowMetaStore flowMetaStore,
-        PluginDefaultService pluginDefaultService) {
+        FlowParsingService flowParsingService) {
         this.runContextFactory = runContextFactory;
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
     }
 
     /**
@@ -84,7 +84,11 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                     return null;
                 }
 
-                final FlowWithSource flow = pluginDefaultService.injectAllDefaults(maybeFlowTrigger.get(), LOG);
+                final FlowWithSource flow = TriggerFlowParser.parseOrSkip(flowParsingService, maybeFlowTrigger.get(), LOG);
+                if (flow == null) {
+                    // Skip the flow: it is blocked by governance and must not run.
+                    return null;
+                }
 
                 // Validate that the trigger still exists and is enabled before processing. This check covers several cases:
                 // 1. The overall Flow might be disabled 

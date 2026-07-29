@@ -87,6 +87,37 @@ class DockerTest extends AbstractTaskRunnerTest {
     }
 
     @Test
+    void shouldRunWithMountStrategyAndWorkingDirectoryInputFile() throws Exception {
+        // Given — reproduces #17526: MOUNT must still see worker-created script/input files
+        var runContext = runContext(this.runContextFactory);
+        Path inputFile = runContext.workingDir().createFile("hello.txt", "hello from mount\n".getBytes());
+        String inputPath = inputFile.toAbsolutePath().toString();
+
+        var docker = Docker.builder()
+            .image("rockylinux:9.3-minimal")
+            .fileHandlingStrategy(Property.ofValue(Docker.FileHandlingStrategy.MOUNT))
+            .pullPolicy(Property.ofValue(PullPolicy.IF_NOT_PRESENT))
+            .build();
+
+        var taskCommands = new CommandsWrapper(runContext).withCommands(
+            Property.ofValue(
+                List.of(
+                    "/bin/sh", "-c",
+                    "cat " + inputPath
+                )
+            )
+        );
+
+        // When
+        var result = docker.run(runContext, taskCommands, Collections.emptyList());
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+        Assertions.assertThat(result.getLogConsumer().getStdOutCount()).isGreaterThanOrEqualTo(1);
+    }
+
+    @Test
     void shouldSetCorrectCPULimitsInContainer() throws Exception {
         var runContext = runContext(this.runContextFactory);
 

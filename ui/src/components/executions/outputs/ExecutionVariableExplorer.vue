@@ -55,11 +55,13 @@
                                 />
                             </div>
 
-                            <VariableTreeView
+                            <KsJsonTree
                                 v-else-if="isExpandableValue"
                                 :value="selectedValue"
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
+                                :previewFormatter="treePreviewFormatter"
+                                defaultExpanded
                                 @select="onSelectPath"
                             />
 
@@ -95,6 +97,7 @@
         KsSegmented,
         KsIconButton,
         KsEditor,
+        KsJsonTree,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
@@ -104,7 +107,6 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
-    import VariableTreeView from "./VariableTreeView.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
@@ -144,6 +146,18 @@
             return `{ ${keys.join(", ")} }`
         }
         return String(value)
+    }
+
+    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
+        if (context.kind === "array") {
+            return context.count === 1
+                ? t("variable_explorer.one_item")
+                : t("variable_explorer.n_items", {count: context.count})
+        }
+
+        return context.count === 1
+            ? t("variable_explorer.one_key")
+            : t("variable_explorer.n_keys", {count: context.count})
     }
 
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {

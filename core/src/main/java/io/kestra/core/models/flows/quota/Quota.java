@@ -2,6 +2,7 @@ package io.kestra.core.models.flows.quota;
 
 import java.time.Duration;
 
+import lombok.EqualsAndHashCode;
 import org.hibernate.validator.constraints.time.DurationMin;
 
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@EqualsAndHashCode
 public class Quota {
     @NotNull
     @DurationMin(minutes = 1)

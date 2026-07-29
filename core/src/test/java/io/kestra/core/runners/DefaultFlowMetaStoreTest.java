@@ -1,6 +1,6 @@
 package io.kestra.core.runners;
 
-import java.util.Collection;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +29,7 @@ import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -104,10 +105,14 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
-    void findByIdShouldReturnEmptyForDeletedFlow() throws InterruptedException, FlowProcessingException, QueueException {
+    void findByIdShouldReturnEmptyForDeletedFlow() throws FlowProcessingException, QueueException {
         FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
         flowService.delete(test);
-        Thread.sleep(100); // make sure the metastore receive the deletion
+
+        // the metastore cache is fed asynchronously by a polling flow-queue subscriber
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .until(() -> flowMetaStore.findById(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty()).isEmpty());
 
         Optional<FlowInterface> maybeFlow = flowMetaStore.findById(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty());
 
@@ -163,17 +168,19 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
-    void allLastVersion() throws InterruptedException, FlowProcessingException, QueueException {
-        FlowWithSource test1 = createFlow();
-        flowService.create(GenericFlow.of(test1));
-        FlowWithSource test2 = createFlow();
-        flowService.create(GenericFlow.of(test2));
-        Thread.sleep(100); // make sure the metastore receive the items
+    void allLastVersion() throws FlowProcessingException, QueueException {
+        FlowWithSource test1 = flowService.create(GenericFlow.of(createFlow()));
+        FlowWithSource test2 = flowService.create(GenericFlow.of(createFlow()));
 
-        Collection<FlowWithSource> flows = flowMetaStore.allLastVersion();
+        // the metastore cache is fed asynchronously by a polling flow-queue subscriber
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .untilAsserted(() -> assertThat(flowMetaStore.allLastVersion())
+                .extracting(flow -> flow.getId())
+                .contains(test1.getId(), test2.getId()));
 
-        assertThat(flows).hasSize(2);
-        assertThat(flows).extracting(flow -> flow.getId()).contains(test1.getId(), test2.getId());
+        flowService.delete(test1);
+        flowService.delete(test2);
     }
 
     @Test

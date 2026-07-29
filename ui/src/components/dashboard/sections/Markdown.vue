@@ -32,7 +32,7 @@
 
     const getData = async (ID: string) => {
         if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(ID), "description") ?? EMPTY_TEXT;
-        else data.value = props.chart.content ?? props.chart.source?.content;
+        else data.value = props.chart.source?.content;
     };
 
     const dashboardID = (route: RouteLocation) => getDashboard(route, "id")!;

@@ -50,7 +50,7 @@ test.describe("AI Copilot", () => {
             await page.getByRole("button", {name: "Login"}).click()
             // Reload so the auth cookie applies on a clean load. Let the post-login redirect
             // settle first, and retry (the redirect can interrupt an eager goto).
-            await page.waitForTimeout(2000)
+            await page.waitForURL(url => !url.pathname.includes("/login"))
             for (let i = 0; i < 3; i++) {
                 try { await page.goto("/ui", {waitUntil: "domcontentloaded"}); break } catch { await page.waitForTimeout(1000) }
             }

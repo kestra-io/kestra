@@ -495,6 +495,32 @@ class RunContextLoggerTest {
             .contains(org.assertj.core.groups.Tuple.tuple(RunContextLogger.PROGRESS_KEY, "pod.created"));
     }
 
+    @Test
+    void shouldFilterDirectlyEmittedLogEntriesWhenLevelIsBelowConfiguredLogLevel() {
+        // Given: a logger whose configured level filter is WARN
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(log -> logs.add(log));
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.WARN,
+            false
+        );
+
+        // When: directly emitting one entry below and one entry at the configured level
+        runContextLogger.emitLogIfEnabled(LogEntry.of(execution).toBuilder().level(Level.INFO).message("suppressed info message").build());
+        runContextLogger.emitLogIfEnabled(LogEntry.of(execution).toBuilder().level(Level.WARN).message("emitted warn message").build());
+
+        // Then: only the entry at the configured level reaches the queue
+        await().atMost(Duration.ofSeconds(5)).until(() -> logs.stream()
+            .anyMatch(logEntry -> "emitted warn message".equals(logEntry.getMessage())));
+        assertThat(logs).noneMatch(logEntry -> "suppressed info message".equals(logEntry.getMessage()));
+    }
+
     /**
      * Exposes the protected {@link RunContextLogger.BaseAppender#transform} for the test.
      */

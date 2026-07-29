@@ -97,6 +97,40 @@ class DashboardDataGlobalFiltersTest {
     }
 
     @Test
+    void shouldSupportInForLogs() {
+        QueryFilter levelFilter = QueryFilter.builder()
+            .field(QueryFilter.Field.LEVEL)
+            .operation(QueryFilter.Op.IN)
+            .value(Level.INFO)
+            .build();
+
+        ILogs iLogs = new ILogs() {
+        };
+
+        var where = iLogs.whereWithGlobalFilters(List.of(levelFilter), null, null, null);
+
+        assertThat(where).hasSize(1);
+        assertThat(where.get(0)).isInstanceOf(In.class);
+        In<?> inFilter = (In<?>) where.get(0);
+        assertThat(((Enum<?>) inFilter.getField()).name()).isEqualTo(ILogs.Fields.LEVEL.name());
+        assertThat(inFilter.getValues()).containsExactlyInAnyOrder("INFO");
+
+        levelFilter = QueryFilter.builder()
+            .field(QueryFilter.Field.LEVEL)
+            .operation(QueryFilter.Op.IN)
+            .value("INFO,DEBUG")
+            .build();
+
+        where = iLogs.whereWithGlobalFilters(List.of(levelFilter), null, null, null);
+
+        assertThat(where).hasSize(1);
+        assertThat(where.get(0)).isInstanceOf(In.class);
+        inFilter = (In<?>) where.get(0);
+        assertThat(((Enum<?>) inFilter.getField()).name()).isEqualTo(ILogs.Fields.LEVEL.name());
+        assertThat(inFilter.getValues()).containsExactlyInAnyOrder("INFO", "DEBUG");
+    }
+
+    @Test
     void shouldAcceptStringLevelValueForLogs() {
         QueryFilter levelFilter = QueryFilter.builder()
             .field(QueryFilter.Field.LEVEL)

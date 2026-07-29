@@ -136,6 +136,16 @@
             padding-right: 0;
         }
 
+        /* Icon-only buttons centre the glyph. vue-material-design-icons nudges its SVG down by
+           0.125em (baseline alignment meant for inline-with-text use), which reads as off-centre
+           in a round/square button — neutralise it so the icon sits dead centre. */
+        &.is-circle,
+        &.is-square {
+            .material-design-icon > .material-design-icon__svg {
+                bottom: 0;
+            }
+        }
+
         &.is-plain:not(.is-text) {
             --kel-button-border-color: var(--ks-btn-secondary-border-default);
             --kel-button-bg-color: var(--ks-btn-secondary-bg-default);

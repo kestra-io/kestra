@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import java.security.GeneralSecurityException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -13,10 +14,21 @@ final class Secret {
 
     private final Optional<String> secretKey;
     private final Supplier<Logger> logger;
+    private final Consumer<String> onSecretDecrypted;
 
     Secret(final Optional<String> secretKey, final Supplier<Logger> logger) {
+        this(secretKey, logger, value -> {});
+    }
+
+    /**
+     * Creates a new {@link Secret} that also notifies {@code onSecretDecrypted} with each value
+     * successfully decrypted out of a {@code Map} (see {@link #decrypt(Map)}) — used to re-register
+     * a SECRET flow output's plaintext for log masking once it has been decrypted.
+     */
+    Secret(final Optional<String> secretKey, final Supplier<Logger> logger, final Consumer<String> onSecretDecrypted) {
         this.secretKey = Objects.requireNonNull(secretKey, "secretKey cannot be null");
         this.logger = Objects.requireNonNull(logger, "logger cannot be null");
+        this.onSecretDecrypted = Objects.requireNonNull(onSecretDecrypted, "onSecretDecrypted cannot be null");
     }
 
     String decrypt(final String encrypted) throws GeneralSecurityException {
@@ -46,6 +58,7 @@ final class Secret {
                 if (map.get("type") instanceof String typeStr && EncryptedString.TYPE.equalsIgnoreCase(typeStr)) {
                     try {
                         String decoded = decrypt((String) map.get("value"));
+                        onSecretDecrypted.accept(decoded);
                         decryptedMap.put(entry.getKey(), decoded);
                     } catch (GeneralSecurityException | IllegalArgumentException e) {
                         // NOTE: in rare cases, if for ex a Worker didn't have the encryption but an Executor has it,

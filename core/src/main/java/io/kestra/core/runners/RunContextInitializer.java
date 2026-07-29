@@ -151,7 +151,7 @@ public class RunContextInitializer {
 
         variables = variablesModifier.apply(variables);
 
-        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent(), workingDir);
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.secretOutputs(), data.traceParent(), workingDir);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
         runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
         runContext.setLogger(runContextLogger);
@@ -225,8 +225,8 @@ public class RunContextInitializer {
         }
 
         outputs.put(workerTaskResult.getTaskRun().getTaskId(), result);
-        variables.put("outputs", new Secret(encryptionConfig.asOptional(), runContext::logger).decrypt(outputs));
-        variables.put("trigger", new Secret(encryptionConfig.asOptional(), runContext::logger).decrypt(triggerOutputs));
+        variables.put("outputs", new Secret(encryptionConfig.asOptional(), runContext::logger, runContext::usedSecretOutput).decrypt(outputs));
+        variables.put("trigger", new Secret(encryptionConfig.asOptional(), runContext::logger, runContext::usedSecretOutput).decrypt(triggerOutputs));
 
         runContext.setVariables(variables);
         return runContext;
@@ -278,7 +278,7 @@ public class RunContextInitializer {
         final RunContextLogger runContextLogger = contextLoggerFactory.create(workerTrigger.triggerId(), trigger);
         addSecretConsumer(variables, runContextLogger);
 
-        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), data.traceParent(), null);
+        DefaultRunContext runContext = buildAndInitRunContext(variables, data.secretInputs(), List.of(), data.traceParent(), null);
         configureTrigger(runContext, runContextLogger, workerTrigger.triggerId(), trigger);
 
         return ConditionContext.builder()
@@ -314,11 +314,13 @@ public class RunContextInitializer {
      */
     private DefaultRunContext buildAndInitRunContext(Map<String, Object> variables,
         List<String> secretInputs,
+        List<String> secretOutputs,
         String traceParent,
         WorkingDir workingDir) {
         var builder = new DefaultRunContext.Builder()
             .withVariables(variables)
-            .withSecretInputs(secretInputs);
+            .withSecretInputs(secretInputs)
+            .withSecretOutputs(secretOutputs);
         if (workingDir != null) {
             builder = builder.withWorkingDir(workingDir);
         }

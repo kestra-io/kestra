@@ -41,7 +41,7 @@ dependencies {
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
 
     constraints {
-        api("io.opentelemetry.proto:opentelemetry-proto:1.5.0-alpha")
+        api("io.opentelemetry.proto:opentelemetry-proto:1.11.0-alpha")
         // align protobuf across mysql-connector, Google Cloud libs, micrometer-otlp and grpc
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.google.protobuf:protobuf-java-util:$protobufVersion")

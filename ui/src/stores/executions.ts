@@ -140,8 +140,8 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.restartExecution({executionId: options.executionId, revision: options.revision}) as unknown as Promise<Execution>
     }
 
-    const bulkRestartExecution = (options: { executionsId: string[] }) => {
-        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId})
+ const bulkRestartExecution = (options: { executionsId: string[] } & Record<string, any>) => {
+        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId, latestRevision: options.latestRevision})
     }
 
     const queryRestartExecution = (options: Record<string, any>) => {

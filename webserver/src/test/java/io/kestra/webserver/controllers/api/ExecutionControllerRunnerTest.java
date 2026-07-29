@@ -2912,6 +2912,58 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({ "flows/valids/failed-first.yaml" })
+    void shouldReturn202WhenRestartExecutionsByIdsCalledWithLatestRevision() {
+        Execution execution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/failed-first",
+                null
+            ),
+            Execution.class
+        );
+
+        awaitExecution(execution.getId());
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/main/executions/restart/by-ids?latestRevision=true",
+                List.of(execution.getId())
+            ),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/failed-first.yaml" })
+    void shouldReturn202WhenRestartExecutionsByQueryCalledWithLatestRevision() {
+        Execution execution = client.toBlocking().retrieve(
+            POST(
+                "/api/v1/main/executions/" + TESTS_FLOW_NS + "/failed-first",
+                null
+            ),
+            Execution.class
+        );
+
+        awaitExecution(execution.getId());
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/main/executions/restart/by-query?filters[q][EQUALS]=%s&latestRevision=true".formatted(execution.getId()),
+                List.of()
+            ),
+            ApiAsyncOperationResponse.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(1);
+    }
+
+    @Test
     @LoadFlowsWithTenant({ "flows/valids/pause-test.yaml" })
     void shouldReturnConflictWhenRestartExecutionCalledOnKilledExecution(String tenantId) throws QueueException {
         when(tenantService.resolveTenant()).thenReturn(tenantId);

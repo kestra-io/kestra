@@ -165,21 +165,4 @@ public class QueryFilterUtilsTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).value()).isEqualTo(absolute);
     }
-
-    @Test
-    void rewriteTriggerDateFilters_remapsStartDateToTriggerFieldPreservingValue() {
-        // Given — a legacy generic startDate filter targeting the next-execution column. Relative durations
-        // are resolved upstream by the binder, so this remap only renames the field and preserves the value.
-        String absolute = "2024-05-27T15:00:00+02:00";
-        var filters = List.of(leaf(QueryFilter.Field.START_DATE, QueryFilter.Op.LESS_THAN_OR_EQUAL_TO, absolute));
-
-        // When
-        var result = QueryFilterUtils.rewriteTriggerDateFilters(filters, QueryFilter.Field.NEXT_EXECUTION_DATE);
-
-        // Then — remapped to NEXT_EXECUTION_DATE, operation and value untouched
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).field()).isEqualTo(QueryFilter.Field.NEXT_EXECUTION_DATE);
-        assertThat(result.get(0).operation()).isEqualTo(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO);
-        assertThat(result.get(0).value()).isEqualTo(absolute);
-    }
 }

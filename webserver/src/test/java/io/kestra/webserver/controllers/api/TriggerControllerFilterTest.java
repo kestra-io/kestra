@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 
@@ -34,16 +35,18 @@ import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Parameterized tests that exercise the {@code /search} trigger endpoint against the full surface
- * of supported filter fields (including the controller-level
- * {@code dateFilter}/{@code startDate}/{@code endDate} rewrite). Neither the runner nor the
+ * of supported filter fields, each of which targets its own document field. Neither the runner nor the
  * scheduler is started: the test only persists fixtures (flows synchronously via
  * {@code FlowService}, trigger states directly via the repository) and reads them back through
  * {@code /search}, so no background component is required. Keeping them off also avoids a concurrent
@@ -292,29 +295,6 @@ class TriggerControllerFilterTest {
                 "filters[nextExecutionDate][LESS_THAN_OR_EQUAL_TO]=" + NOW_PLUS_4H,
                 List.of("nextexec-old", "nextexec-new", "nextexec-soon")
             )
-        ),
-
-        // --- UI-style URL: startDate/endDate are rewritten by the controller to the chosen target field ---
-        Named.of(
-            "startDate (no dateFilter) rewrites to nextExecutionDate",
-            new FilterTestCase(
-                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN,
-                List.of("nextexec-new", "nextexec-soon", "nextexec-far")
-            )
-        ),
-        Named.of(
-            "startDate with dateFilter=NEXT_EXECUTION_DATE rewrites to nextExecutionDate",
-            new FilterTestCase(
-                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=NEXT_EXECUTION_DATE",
-                List.of("nextexec-new", "nextexec-soon", "nextexec-far")
-            )
-        ),
-        Named.of(
-            "startDate with dateFilter=LAST_TRIGGERED_DATE rewrites to lastTriggeredDate",
-            new FilterTestCase(
-                "filters[startDate][GREATER_THAN]=" + DATE_BETWEEN + "&dateFilter=LAST_TRIGGERED_DATE",
-                List.of("ldt-new", "ldt-recent")
-            )
         )
     );
 
@@ -334,5 +314,25 @@ class TriggerControllerFilterTest {
         // Then only the expected trigger IDs are returned
         assertThat(triggers.getResults().stream().map(t -> t.state().triggerId()).toList())
             .containsExactlyInAnyOrderElementsOf(testCase.expectedTriggerIds());
+    }
+
+    @Test
+    void shouldRejectGenericStartDateFilter() throws FlowProcessingException, QueueException {
+        // Given — fixtures exist, so an accepted filter would return results rather than an empty page
+        seedFilterFixtures();
+
+        // When — a caller sends the generic startDate a trigger does not have. It used to be silently
+        // renamed onto nextExecutionDate; a trigger's two date fields must now be named explicitly.
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                HttpRequest.GET(TRIGGER_PATH + "/search?filters[startDate][GREATER_THAN]=" + DATE_BETWEEN),
+                Argument.of(PagedResults.class, ApiTriggerAndState.class)
+            )
+        );
+
+        // Then — rejected as an unsupported field for the resource
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(exception.getMessage()).contains("Field START_DATE is not supported for resource TRIGGER");
     }
 }

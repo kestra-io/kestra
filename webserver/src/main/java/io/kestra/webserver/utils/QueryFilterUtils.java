@@ -27,14 +27,6 @@ public class QueryFilterUtils {
         DateUtils.validateTimeline(filters);
     }
 
-    private static boolean isStartDateFilter(QueryFilter filter) {
-        return filter.field() == QueryFilter.Field.START_DATE;
-    }
-
-    private static boolean isEndDateFilter(QueryFilter filter) {
-        return filter.field() == QueryFilter.Field.END_DATE;
-    }
-
     /**
      * Resolves a relative ISO-8601 duration value (e.g. {@code PT5M}, {@code P7D}) on a date-typed leaf
      * into an absolute instant. Past-oriented fields resolve to {@code now().minus(duration)}, future-oriented
@@ -171,42 +163,5 @@ public class QueryFilterUtils {
 
         validateTimeline(resolved);
         return resolved;
-    }
-
-    public static final List<QueryFilter.Field> TRIGGER_DATE_FIELDS = List.of(
-        QueryFilter.Field.NEXT_EXECUTION_DATE,
-        QueryFilter.Field.LAST_TRIGGERED_DATE
-    );
-
-    /**
-     * Backward-compat remap for trigger endpoints: generic {@link QueryFilter.Field#START_DATE} /
-     * {@link QueryFilter.Field#END_DATE} leaves are renamed onto the trigger-specific date column selected by
-     * {@code dateField} (defaulting to {@link QueryFilter.Field#NEXT_EXECUTION_DATE}). Relative durations are
-     * already resolved to absolute instants upstream by {@code QueryFilterFormatBinder}; the new UI sends the
-     * real {@code nextExecutionDate}/{@code lastTriggeredDate} fields directly, in which case this is a no-op.
-     */
-    public static List<QueryFilter> rewriteTriggerDateFilters(List<QueryFilter> filters, QueryFilter.Field dateField) {
-        if (filters == null) {
-            return List.of();
-        }
-        if (dateField != null && !TRIGGER_DATE_FIELDS.contains(dateField)) {
-            throw new IllegalArgumentException(
-                "dateFilter must be one of " + TRIGGER_DATE_FIELDS + " but was " + dateField
-            );
-        }
-        QueryFilter.Field target = dateField == null ? QueryFilter.Field.NEXT_EXECUTION_DATE : dateField;
-
-        return filters.stream()
-            .map(f -> mapLeavesRecursively(f, leaf -> {
-                if (isStartDateFilter(leaf) || isEndDateFilter(leaf)) {
-                    return QueryFilter.builder()
-                        .field(target)
-                        .operation(leaf.operation())
-                        .value(leaf.value())
-                        .build();
-                }
-                return leaf;
-            }))
-            .toList();
     }
 }

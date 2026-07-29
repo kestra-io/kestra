@@ -1,7 +1,9 @@
 import type {LocationQuery} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
 import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
-import type { QueryFilter, QueryFilterField, QueryFilterOp } from "@kestra-io/kestra-sdk"
+import type {QueryFilter, QueryFilterField, QueryFilterLogical, QueryFilterOp} from "@kestra-io/kestra-sdk"
+
+export type {QueryFilter}
 
 const decodeURIComponentSafely = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)
@@ -58,6 +60,16 @@ export interface DecodedParam {
 }
 
 
+const QUERY_FILTER_LOGICAL: Record<LogicalOperator, QueryFilterLogical> = {AND: "and", OR: "or"}
+
+/**
+ * Builds a `QueryFilter` group node. The backend rejects a node that also carries a
+ * `field`/`operation`/`value` (see `QueryFilter`'s canonical constructor), so a group is only ever
+ * `logical` + `children`, with `logical` serialized in the lowercase form its enum accepts.
+ */
+const queryFilterNode = (logical: LogicalOperator, children: QueryFilter[]): QueryFilter =>
+    ({logical: QUERY_FILTER_LOGICAL[logical], children})
+
 /**
  * Builds one logical position in the filter tree, mirroring the backend's
  * `QueryFilterFormatBinder.NodeBuilder`: direct leaves land here directly, LABELS leaves sharing an
@@ -106,12 +118,12 @@ class FilterNodeBuilder {
                 if (slotItems.length === 0) return
                 branches.push(slotItems.length === 1
                     ? slotItems[0]
-                    : {field: "", operation: "", logical: "AND", children: slotItems} as any)
+                    : queryFilterNode("AND", slotItems))
             })
             if (branches.length === 0) return
             items.push(branches.length === 1 && logical === "AND"
                 ? branches[0]
-                : {field: "", operation: "", logical, children: branches} as any)
+                : queryFilterNode(logical, branches))
         })
 
         return items

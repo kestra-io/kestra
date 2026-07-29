@@ -109,7 +109,7 @@ describe("Filter Helpers", () => {
                 "filters[or][1][state][EQUALS]": "FAILED",
             })).toEqual([
                 {
-                    field: "", operation: "", logical: "OR",
+                    logical: "or",
                     children: [
                         {field: "state", operation: "EQUALS", value: "RUNNING"},
                         {field: "state", operation: "EQUALS", value: "FAILED"},
@@ -131,10 +131,10 @@ describe("Filter Helpers", () => {
                 "filters[or][1][state][EQUALS]": "FAILED",
             })).toEqual([
                 {
-                    field: "", operation: "", logical: "OR",
+                    logical: "or",
                     children: [
                         {
-                            field: "", operation: "", logical: "AND",
+                            logical: "and",
                             children: [
                                 {field: "namespace", operation: "EQUALS", value: "io.kestra"},
                                 {field: "state", operation: "EQUALS", value: "RUNNING"},

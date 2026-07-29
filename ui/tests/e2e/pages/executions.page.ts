@@ -99,10 +99,18 @@ export class ExecutionsPage extends BasePage {
     async setLabelOnSelectedExecutions() {
         await this.page.getByRole("textbox", {name: "Key"}).fill("foo")
         await this.page.getByRole("textbox", {name: "Value"}).fill("baz")
+        const labelsAccepted = this.page.waitForResponse(
+            (response) => response.url().includes("/executions/labels/by-query") && response.request().method() === "POST",
+        )
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
         // Confirm
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
-        await this.page.reload()
+
+        await labelsAccepted
+        await expect(async () => {
+            await this.page.reload()
+            await expect(this.page.getByRole("row")).toHaveCount(1)
+        }).toPass({timeout: 30000})
         await this.page.waitForLoadState("networkidle")
     }
 

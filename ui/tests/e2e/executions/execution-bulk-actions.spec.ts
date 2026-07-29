@@ -3,8 +3,6 @@ import {ExecutionState, Pagination} from "../pages/base.page"
 
 test.describe("Executions' view Bulk Actions", () => {
 
-    test.beforeEach(async ({page}) => await page.goto("/executions"))
-
     // Use specific flow to create executions
     test.use({flow: {fileName: "hello.yaml", flowId: "my-hello-flow-1"}})
 

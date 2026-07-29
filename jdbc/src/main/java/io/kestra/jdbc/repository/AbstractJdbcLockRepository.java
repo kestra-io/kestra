@@ -78,12 +78,16 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
         return this.jdbcRepository.getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                var select = DSL.using(configuration)
+                var dslContext = DSL.using(configuration);
+                var select = dslContext
                     .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(field("owner").eq(owner));
-                var locks = this.jdbcRepository.fetch(select.forUpdate());
-                locks.forEach(lock -> this.jdbcRepository.delete(lock));
+                var locks = this.jdbcRepository.fetch(select);
+                dslContext
+                    .delete(this.jdbcRepository.getTable())
+                    .where(field("owner").eq(owner))
+                    .execute();
                 return locks;
             }
             );

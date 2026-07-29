@@ -6,6 +6,7 @@ import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 import {useAppDraftActions} from "override/components/ai/copilot/appDraftActions"
+import {useFlowStore} from "../../../stores/flow"
 import type {ArtefactDraftEvent} from "./types"
 
 /**
@@ -29,6 +30,12 @@ export function useApplyDraft() {
     const appSupported = appActions.supported
 
     const tenantParam = (): Record<string, string | string[]> => (route.params.tenant ? {tenant: route.params.tenant} : {})
+
+    // Per-request client option (the SDK endpoints' SECOND arg, spread into the request options and
+    // read by the global error interceptor). `showMessageOnError: false` opts this call out of the
+    // global error toast — we handle failures locally: a create that hits "already exists" is an
+    // expected step of the create→update fallback, and any real failure gets our own alert.
+    const silent = {showMessageOnError: false} as Parameters<typeof FlowsAPI.createFlow>[1]
 
     /** (A) Open the drafted YAML in the matching creation editor to review + save there. */
     function openInEditor(draft: ArtefactDraftEvent): void {
@@ -74,16 +81,32 @@ export function useApplyDraft() {
             // probe with a GET first — a 404 on a not-yet-existing flow trips the global error page.
             try {
                 await FlowsAPI.createFlow(
-                    {body: draft.yaml, draft: false, showMessageOnError: false} as Parameters<typeof FlowsAPI.createFlow>[0],
+                    {body: draft.yaml, draft: false} as Parameters<typeof FlowsAPI.createFlow>[0],
+                    silent,
                 )
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
                 await FlowsAPI.updateFlow(
-                    {namespace, id, body: draft.yaml, showMessageOnError: false} as Parameters<typeof FlowsAPI.updateFlow>[0],
+                    {namespace, id, body: draft.yaml} as Parameters<typeof FlowsAPI.updateFlow>[0],
+                    silent,
                 )
             }
-            // Land on the applied flow so the result is visible.
-            router.push({name: "flows/update", params: {namespace, id, ...tenantParam()}})
+            // When the user is already viewing this flow, apply transparently — like a save: refresh
+            // the store (source buffer + graph) in place and stay on the current tab, instead of
+            // bouncing to the flow overview and forcing a hard refresh to see the change. Otherwise
+            // open the flow so the result is visible.
+            const onThisFlow = route.name === "flows/update"
+                && String(route.params.namespace) === namespace
+                && String(route.params.id) === id
+            if (onThisFlow) {
+                // Resolve the store lazily (only when we actually refresh an open flow) so merely
+                // rendering a draft card doesn't require Pinia to be set up.
+                const flowStore = useFlowStore()
+                const data = await flowStore.loadFlow({namespace, id})
+                if (data?.source) await flowStore.loadGraph({flow: data})
+            } else {
+                router.push({name: "flows/update", params: {namespace, id, ...tenantParam()}})
+            }
         } catch (e) {
             await alertError(e, t("ai.copilot.draft.applyError"), t("ai.copilot.draft.applyTitle"))
         } finally {
@@ -107,12 +130,14 @@ export function useApplyDraft() {
             // Create, falling back to update if the id already exists — same no-probe rationale as flows.
             try {
                 await DashboardsAPI.createDashboard(
-                    {body: draft.yaml, showMessageOnError: false} as Parameters<typeof DashboardsAPI.createDashboard>[0],
+                    {body: draft.yaml} as Parameters<typeof DashboardsAPI.createDashboard>[0],
+                    silent,
                 )
             } catch (e) {
                 if (!isAlreadyExists(e)) throw e
                 await DashboardsAPI.updateDashboard(
-                    {id, body: draft.yaml, showMessageOnError: false} as Parameters<typeof DashboardsAPI.updateDashboard>[0],
+                    {id, body: draft.yaml} as Parameters<typeof DashboardsAPI.updateDashboard>[0],
+                    silent,
                 )
             }
             router.push({name: "dashboards/update", params: {dashboard: id, ...tenantParam()}})
@@ -146,10 +171,18 @@ export function useApplyDraft() {
         }
     }
 
-    /** A create failed because the artefact already exists (→ update instead). */
+    /**
+     * A create failed because the artefact already exists (→ update instead). The SDK throws the
+     * parsed error body with a `.response = {status, data}` attached; the "already exists" text can
+     * sit at `data.message` or nested in the validation errors (`_embedded.errors[].message`), so
+     * match against the whole serialized body rather than a single field.
+     */
     function isAlreadyExists(e: unknown): boolean {
-        const err = e as {response?: {status?: number; data?: {message?: string}}}
-        return err?.response?.status === 422 && /already exists/i.test(err?.response?.data?.message ?? "")
+        const err = e as {status?: number; response?: {status?: number; data?: unknown}}
+        const status = err?.response?.status ?? err?.status
+        if (status !== 422) return false
+        const body = err?.response?.data ?? err
+        return /already exists/i.test(typeof body === "string" ? body : JSON.stringify(body ?? ""))
     }
 
     return {applying, appSupported, openInEditor, apply}

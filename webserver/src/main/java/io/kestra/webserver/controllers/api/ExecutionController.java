@@ -1135,7 +1135,8 @@ public class ExecutionController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
-        @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
+        @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -1181,7 +1182,14 @@ public class ExecutionController {
 
         return submitBatchAction(
             executions,
-            (execution, opId) -> executionCommandQueue.emit(Restart.from(execution, null).withOperationId(opId))
+            (execution, opId) -> {
+                Integer revision = null;
+                if (Boolean.TRUE.equals(latestRevision)) {
+                    Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+                    revision = flow.getRevision();
+                }
+                executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(opId));
+            }
         );
     }
 
@@ -1194,9 +1202,11 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-        return restartExecutionsByIds(ids);
+        return restartExecutionsByIds(ids, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)

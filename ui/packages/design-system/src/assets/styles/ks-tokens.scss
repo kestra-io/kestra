@@ -6,6 +6,9 @@
     #{--ks-black}: #{v.$black};
     #{--ks-white}: #{v.$white};
 
+    // plugin icon backdrop, light in every theme
+    #{--ks-bg-plugin-icon}: #{v.$white};
+
     // typography
     --ks-font-family-sans: #{v.$font-family-sans-serif};
     --ks-font-family-mono: #{v.$font-family-monospace};

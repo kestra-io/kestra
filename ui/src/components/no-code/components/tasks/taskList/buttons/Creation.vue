@@ -1,5 +1,5 @@
 <template>
-    <KsButton @click.prevent.stop="handleClick()" type="default" :icon="Plus">
+    <KsButton @click.prevent.stop="handleClick($event)" type="default" :icon="Plus">
         {{ $t("add") }}
     </KsButton>
 </template>
@@ -19,7 +19,7 @@
 
     const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {})
 
-    const handleClick = () => {
-        createTask(props.parentPathComplete, props.blockSchemaPath, props.refPath)
+    const handleClick = (event: MouseEvent) => {
+        createTask(props.parentPathComplete, props.blockSchemaPath, props.refPath, event.currentTarget as HTMLElement)
     }
 </script>

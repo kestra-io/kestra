@@ -17,27 +17,29 @@
                     />
                 </template>
 
-                <Element
-                    v-for="(element, elementIndex) in filteredElements"
-                    :key="elementIndex"
-                    :section
-                    :parentPathComplete
-                    :element
-                    :elementIndex
-                    :moved="elementIndex == movedIndex"
-                    :blockSchemaPath
-                    :typeFieldSchema
-                    @remove-element="removeElement(elementIndex)"
-                    @move-element="
-                        (direction: 'up' | 'down') =>
-                            moveElement(
-                                elements,
-                                element.id,
-                                elementIndex,
-                                direction,
-                            )
-                    "
-                />
+                <div class="block-section-list" @dragend="handleDragEnd">
+                    <LeafBlockCard
+                        v-for="(element, elementIndex) in filteredElements"
+                        :key="elementIndex"
+                        :block="element"
+                        :path="`${parentPathComplete}[${elementIndex}]`"
+                        :label="cardLabel(element)"
+                        :draggable="filteredElements.length > 1"
+                        :dragOver="dragOverIndex === elementIndex"
+                        :runnable="playgroundStore.enabled && hasId(element)"
+                        :showDuplicate="hasId(element)"
+                        :icons="pluginsStore.icons"
+                        @select="onSelect(elementIndex)"
+                        @open-split="onSelect(elementIndex, true)"
+                        @delete="onDelete(elementIndex)"
+                        @duplicate="onDuplicate(elementIndex)"
+                        @run="onRun(element)"
+                        @drag-start="handleDragStart($event, elementIndex)"
+                        @drag-over="handleDragOver($event, elementIndex)"
+                        @drop="onDrop($event, elementIndex)"
+                        @drag-end="handleDragEnd"
+                    />
+                </div>
             </KsCollapseItem>
         </KsCollapse>
     </div>
@@ -45,19 +47,31 @@
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue"
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys"
     import Creation from "./taskList/buttons/Creation.vue"
-    import Element from "./taskList/Element.vue"
-    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import LeafBlockCard from "../../blocks/LeafBlockCard.vue"
 
     import {CollapseItem} from "../../utils/types"
 
     import {
-        CREATING_TASK_INJECTION_KEY, FULL_SCHEMA_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY, UPDATE_YAML_FUNCTION_INJECTION_KEY,
+        BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY,
+        EDIT_TASK_FUNCTION_INJECTION_KEY,
+        FULL_SCHEMA_INJECTION_KEY,
+        FULL_SOURCE_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY,
+        REF_PATH_INJECTION_KEY,
+        UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "../../injectionKeys"
-    import {SECTIONS_MAP} from "../../../../utils/constants"
     import {getValueAtJsonPath} from "../../../../utils/utils"
+    import {usePluginsStore} from "../../../../stores/plugins"
+    import {useDragAndDrop} from "../../../../composables/useDragAndDrop"
+    import {usePlaygroundRun} from "../../../../composables/playground/usePlaygroundRun"
+    import {
+        deleteBlockAtPath,
+        displayTaskOf,
+        duplicateBlockAtPath,
+        reorderAtPath,
+    } from "../../../../utils/flowableBlockOps"
     import {useI18n} from "vue-i18n"
 
 
@@ -85,11 +99,12 @@
     })
 
     interface Task {
-        id:string,
-        type:string
+        id: string;
+        type: string;
+        [key: string]: unknown;
     }
 
-    const emits = defineEmits(["update:modelValue"])
+    defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
         modelValue?: Task[],
         root?: string;
@@ -105,17 +120,6 @@
     const elements = computed(() =>
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     )
-
-    function removeElement(index: number){
-        if(elements.value.length <= 1){
-            emits("update:modelValue", undefined)
-            return
-        }
-        let localItems = [...elements.value]
-        localItems.splice(index, 1)
-
-        emits("update:modelValue", localItems)
-    };
 
     const {t} = useI18n()
 
@@ -149,40 +153,43 @@
         ].filter(p => p.length).join(".")}`
     })
 
-    const movedIndex = ref(-1)
-
     const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
+    const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {})
 
-    const moveElement = (
-        items: Record<string, any>[] | undefined,
-        elementID: string,
-        index: number,
-        direction: "up" | "down",
-    ) => {
-        const keyName = section.value === "Plugin Defaults" ? "type" : "id"
-        if (!items || !flow) return
-        if (
-            (direction === "up" && index === 0) ||
-            (direction === "down" && index === items.length - 1)
-        )
-            return
+    const pluginsStore = usePluginsStore()
+    const {runTask, playgroundStore} = usePlaygroundRun()
+    const {dragOverIndex, handleDragStart, handleDragOver, handleDrop, handleDragEnd} = useDragAndDrop()
 
-        const newIndex = direction === "up" ? index - 1 : index + 1
+    const hasId = (element: Record<string, any>) => displayTaskOf(element).id != null
 
-        movedIndex.value = newIndex
-        setTimeout(() => {
-            movedIndex.value = -1
-        }, 200)
+    const cardLabel = (element: Record<string, any>) => {
+        const task = displayTaskOf(element)
+        if (task.id != null) return String(task.id)
+        const typeValue = task[typeFieldSchema.value]
+        return typeof typeValue === "string" ? typeValue.split(".").pop() : undefined
+    }
 
-        const newYaml = YAML_UTILS.swapBlocks({
-            source: flow.value,
-            section: (SECTIONS_MAP[section.value.toLowerCase() as keyof typeof SECTIONS_MAP] ?? section.value) as string,
-            key1: elementID,
-            key2: items[newIndex][keyName],
-            keyName,
+    const onSelect = (index: number, split = false) => {
+        editTask(parentPathComplete.value, blockSchemaPath.value, index, split)
+    }
+
+    const onDelete = (index: number) => {
+        updateYaml(deleteBlockAtPath(flow.value, `${parentPathComplete.value}[${index}]`))
+    }
+
+    const onDuplicate = (index: number) => {
+        updateYaml(duplicateBlockAtPath(flow.value, `${parentPathComplete.value}[${index}]`))
+    }
+
+    const onRun = (element: Record<string, any>) => {
+        const id = displayTaskOf(element).id
+        if (id != null) runTask(String(id))
+    }
+
+    const onDrop = (event: DragEvent, targetIndex: number) => {
+        handleDrop(event, targetIndex, (from, to) => {
+            updateYaml(reorderAtPath(flow.value, parentPathComplete.value, from, to))
         })
-
-        updateYaml(newYaml)
     }
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
@@ -194,29 +201,20 @@
 </script>
 
 <style scoped lang="scss">
-@import "../../styles/code.scss";
-
-.list-header{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    gap: 1rem;
-}
 .tasks-wrapper {
     width: 100%;
+}
+
+.block-section-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
 }
 
 .required::after {
     content: "*";
     color: var(--ks-text-error);
     margin-left: var(--ks-spacing-1);
-}
-
-.disabled {
-    opacity: 0.5;
-    pointer-events: none;
-    cursor: not-allowed;
 }
 
 .merge :deep(.kel-collapse-item__header){

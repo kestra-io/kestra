@@ -17,7 +17,20 @@
                 :inlineMessage="true"
             >
                 <template #label>
-                    <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
+                    <span
+                        class="input-label-row"
+                        draggable="true"
+                        @dragstart="onInputDragStart($event, input.id)"
+                    >
+                        <KsMarkdown :content="inputLabel(input)" class="d-inline-flex md-label" />
+                        <KsButton
+                            type="text"
+                            :icon="ContentCopyIcon"
+                            :tooltip="t('copy_to_clipboard')"
+                            class="input-copy-btn"
+                            @click.prevent="copyInputRef(input.id)"
+                        />
+                    </span>
                 </template>
                 <KsEditor
                     v-bind="editorBindings"
@@ -319,10 +332,12 @@
     import {useInputsWizard} from "../../composables/useInputsWizard"
     import {normalize, flattenInputs, type InputType} from "../../utils/inputs"
     import {inputsToFormData} from "../../utils/submitTask"
+    import * as Utils from "../../utils/utils"
     import DeleteOutlineIcon from "vue-material-design-icons/DeleteOutline.vue"
     import PencilIcon from "vue-material-design-icons/Pencil.vue"
     import PlusIcon from "vue-material-design-icons/Plus.vue"
     import ContentSaveIcon from "vue-material-design-icons/ContentSave.vue"
+    import ContentCopyIcon from "vue-material-design-icons/ContentCopy.vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
     import ChevronLeftIcon from "vue-material-design-icons/ChevronLeft.vue"
@@ -889,6 +904,21 @@
         return t("no_file_choosen")
     }
 
+    function inputRefExpression(id: string): string {
+        return `{{ inputs.${id} }}`
+    }
+
+    function copyInputRef(id: string): void {
+        Utils.copy(inputRefExpression(id))
+        KsMessage.success(t("copied"))
+    }
+
+    function onInputDragStart(event: DragEvent, id: string): void {
+        if (!event.dataTransfer) return
+        event.dataTransfer.effectAllowed = "move"
+        event.dataTransfer.setData("text/plain", inputRefExpression(id))
+    }
+
     function getAcceptedFileTypes(input: Pick<InputMetaData, "allowedFileExtensions" | "accept">): string {
         if (input.allowedFileExtensions && input.allowedFileExtensions.length > 0) {
             return input.allowedFileExtensions.join(",")
@@ -1010,12 +1040,30 @@
         isLoadingInput,
         inputError,
         onChange,
+        copyInputRef,
+        onInputDragStart,
     })
 </script>
 
 <style scoped lang="scss">
 .md-label {
     height: var(--ks-font-size-lg);
+}
+
+.input-label-row {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+
+    .input-copy-btn {
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+    }
+
+    &:hover .input-copy-btn,
+    &[draggable="true"]:focus-within .input-copy-btn {
+        opacity: 1;
+    }
 }
 
 .wizard-progress {

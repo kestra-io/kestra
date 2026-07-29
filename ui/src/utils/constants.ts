@@ -33,6 +33,9 @@ export const storageKeys = {
     PAGINATION_SIZE: "paginationSize",
     IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
+    NOCODE_ENGINE: "nocodeEngine",
+    TASK_EDIT_DEFAULT_MODE: "taskEditDefaultMode",
+    TASK_EDIT_MODE_HINT_DISMISSED: "taskEditModeHintDismissed",
     AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
     AUTO_REFRESH_ENABLED: "autoRefreshEnabled",
     DATE_FORMAT_STORAGE_KEY: "dateFormat",
@@ -48,6 +51,11 @@ export const storageKeys = {
 export const executeFlowBehaviours = {
     SAME_TAB: "same tab",
     NEW_TAB: "new tab",
+} as const
+
+export const taskEditDefaultModes = {
+    MODAL: "MODAL",
+    TAB: "TAB",
 } as const
 
 export const stateDisplayValues = {

@@ -6,7 +6,7 @@
         :options="{fullHeight: false, largeSuggestions: false}"
         :inline="true"
         lang="yaml"
-        :placeholder="`Your ${root || 'value'} here...`"
+        :placeholder="$t('no_code.expression_placeholder', {field: root || 'value'})"
         @update:model-value="editorInput"
     />
 </template>

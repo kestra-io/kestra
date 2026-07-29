@@ -697,16 +697,17 @@ public class FlowController {
     @Operation(tags = { "Flows" }, summary = "Validate a task")
     public ValidateConstraintViolation validateTask(
         @RequestBody(description = "A task definition that can be from tasks or triggers") @Schema(implementation = Object.class) @Body String task,
-        @Parameter(description = "The type of task") @QueryValue TaskValidationType section) {
+        @Parameter(description = "The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)") @QueryValue String section) {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
 
         try {
-            if (section == TaskValidationType.TASKS) {
-                Task taskParse = YamlParser.parse(task, Task.class);
-                modelValidator.validate(taskParse);
-            } else if (section == TaskValidationType.TRIGGERS) {
+            if ("triggers".equalsIgnoreCase(section)) {
                 AbstractTrigger triggerParse = YamlParser.parse(task, AbstractTrigger.class);
                 modelValidator.validate(triggerParse);
+            } else {
+                // Every other section (tasks, errors, finally, afterExecution) holds tasks.
+                Task taskParse = YamlParser.parse(task, Task.class);
+                modelValidator.validate(taskParse);
             }
         } catch (ConstraintViolationException e) {
             validateConstraintViolationBuilder.constraints(e.getMessage());
@@ -720,10 +721,6 @@ public class FlowController {
         return validateConstraintViolationBuilder.build();
     }
 
-    public enum TaskValidationType {
-        TASKS,
-        TRIGGERS
-    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)

@@ -5,6 +5,7 @@ import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
 import {useFlowStore} from "../../stores/flow"
 import {NoCodeProps} from "./noCodeTypes"
+import {displayTaskOf} from "../../utils/flowableBlockOps"
 
 
 import {trackTabOpen, trackTabClose} from "../../utils/tabTracking"
@@ -31,6 +32,7 @@ interface Handlers {
         parentPath: string,
         blockSchemaPath: string,
         refPath?: number,
+        split?: boolean,
     ) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
@@ -94,10 +96,13 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
                 ? `${tab.parentPath}[${tab.refPath}]`
                 : tab.parentPath ?? ""
 
-            const currentBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
+            const rawBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
                 source: flow,
                 path,
             })) : {}
+            // A DAG lane item is a {task, dependsOn} wrapper with no id of its own —
+            // the tab label needs the wrapped task's id, not the wrapper's.
+            const currentBlock = rawBlock ? displayTaskOf(rawBlock) : rawBlock
 
             return {
                 uid: getEditTabKey(tab, keepAliveCacheBuster++),
@@ -203,10 +208,11 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
             // if the tab is already open, focus it
             // and don't open a new one)
             const [
-                ,
+                opener,
                 parentPath,
                 blockSchemaPath,
                 refPath,
+                split,
             ] = args
             const editKey = getEditTabKey({
                 parentPath,
@@ -220,7 +226,7 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
                 focusTab(tEdit)
                 return false
             }
-            actions.openEditTaskTab(...args)
+            actions.openEditTaskTab(opener, parentPath, blockSchemaPath, refPath, split ? opener.panelIndex + 1 : undefined)
             return false
         },
         onCloseTask(...args){
@@ -321,7 +327,10 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             return
         }
         const tab = openerPanel.tabs[opener.tabIndex]
-        if (tab?.uid.startsWith(NOCODE_PREFIX)) {
+        // Only close task-edit tabs ("nocode-<key>"), never the root canvas tab
+        // (uid === NOCODE_PREFIX): deleting a task while the canvas is focused used
+        // to close the canvas itself, dumping the user out of the no-code editor.
+        if (tab?.uid.startsWith(`${NOCODE_PREFIX}-`)) {
             trackTabClose(tab)
             openerPanel.tabs.splice(opener.tabIndex, 1)
             if (openerPanel.activeTab === tab) {

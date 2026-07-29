@@ -9,15 +9,41 @@
         </div>
         <template v-else>
             <KsSplitterPanel
-                v-for="(panel, panelIndex) in panels"
+                v-for="{panel, panelIndex} in renderedPanels"
                 min="10%"
-                :key="panelIndex"
+                :key="`${panelIndex}:${maximizedPanelIndex === panelIndex}`"
                 :size="panelSizes[panelIndex] ?? panel.size"
                 @dragover.prevent="(e:DragEvent) => panelDragOver(e, panelIndex)"
                 @dragleave.prevent="panelDragLeave"
                 @drop.prevent="(e:DragEvent) => panelDrop(e, panelIndex)"
-                :class="{'panel-dragover': panel.dragover}"
+                :class="{'panel-dragover': panel.dragover, 'panel-maximized': maximizedPanelIndex === panelIndex}"
             >
+                <template v-if="maximizedPanelIndex === panelIndex">
+                    <button
+                        v-if="leftNeighbor?.activeTab"
+                        type="button"
+                        class="maximized-sliver maximized-sliver--left"
+                        :title="$t('multi_panel_editor.exit_fullscreen')"
+                        :aria-label="$t('multi_panel_editor.exit_fullscreen')"
+                        data-test="maximized-sliver-left"
+                        @click="toggleMaximize(panelIndex)"
+                    >
+                        <component :is="leftNeighbor.activeTab.button.icon" class="maximized-sliver-icon" />
+                        <span class="maximized-sliver-label">{{ leftNeighbor.activeTab.button.label }}</span>
+                    </button>
+                    <button
+                        v-if="rightNeighbor?.activeTab"
+                        type="button"
+                        class="maximized-sliver maximized-sliver--right"
+                        :title="$t('multi_panel_editor.exit_fullscreen')"
+                        :aria-label="$t('multi_panel_editor.exit_fullscreen')"
+                        data-test="maximized-sliver-right"
+                        @click="toggleMaximize(panelIndex)"
+                    >
+                        <component :is="rightNeighbor.activeTab.button.icon" class="maximized-sliver-icon" />
+                        <span class="maximized-sliver-label">{{ rightNeighbor.activeTab.button.label }}</span>
+                    </button>
+                </template>
                 <div class="editor-tabs-container">
                     <KsButton
                         :icon="DotsGrid"
@@ -73,6 +99,18 @@
                         </template>
                     </div>
                     <div class="buttons-container">
+                        <button
+                            type="button"
+                            class="maximize_panel"
+                            :title="maximizedPanelIndex === panelIndex ? $t('multi_panel_editor.exit_fullscreen') : $t('multi_panel_editor.fullscreen')"
+                            :aria-label="maximizedPanelIndex === panelIndex ? $t('multi_panel_editor.exit_fullscreen') : $t('multi_panel_editor.fullscreen')"
+                            :aria-pressed="maximizedPanelIndex === panelIndex"
+                            data-test="panel-maximize"
+                            @click="toggleMaximize(panelIndex)"
+                        >
+                            <FullscreenExit v-if="maximizedPanelIndex === panelIndex" />
+                            <Fullscreen v-else />
+                        </button>
                         <button
                             v-if="panel.tabs.filter(t => !t.potential).length > 1"
                             @click="splitPanel(panelIndex)"
@@ -184,9 +222,9 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw} from "vue"
+    import {nextTick, ref, watch, provide, computed, defineComponent, h, markRaw, onMounted, onBeforeUnmount} from "vue"
 
-    import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys"
+    import {VISIBLE_PANELS_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "./no-code/injectionKeys"
     import {useKeyShortcuts} from "../utils/useKeyShortcuts"
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
@@ -198,6 +236,8 @@
     import Close from "vue-material-design-icons/Close.vue"
     import Keyboard from "vue-material-design-icons/Keyboard.vue"
     import ViewArrayOutline from "vue-material-design-icons/ViewArrayOutline.vue"
+    import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
+    import FullscreenExit from "vue-material-design-icons/FullscreenExit.vue"
 
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking"
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes"
@@ -260,6 +300,48 @@
     const emit = defineEmits<{
         removeTab: [tab: string]
     }>()
+
+    const maximizedPanelIndex = ref<number | null>(null)
+
+    provide(PANEL_MAXIMIZED_INJECTION_KEY, computed(() => maximizedPanelIndex.value !== null))
+
+    const renderedPanels = computed(() => {
+        const index = maximizedPanelIndex.value
+        if (index != null && panels.value[index]) {
+            return [{panel: panels.value[index], panelIndex: index}]
+        }
+        return panels.value.map((panel, panelIndex) => ({panel, panelIndex}))
+    })
+
+    const leftNeighbor = computed(() => {
+        const index = maximizedPanelIndex.value
+        return index != null && index > 0 ? panels.value[index - 1] : null
+    })
+
+    const rightNeighbor = computed(() => {
+        const index = maximizedPanelIndex.value
+        return index != null && index < panels.value.length - 1 ? panels.value[index + 1] : null
+    })
+
+    function toggleMaximize(panelIndex: number) {
+        maximizedPanelIndex.value = maximizedPanelIndex.value === panelIndex ? null : panelIndex
+    }
+
+    watch(() => panels.value.length, (length) => {
+        if (maximizedPanelIndex.value != null && maximizedPanelIndex.value >= length) {
+            maximizedPanelIndex.value = null
+        }
+    })
+
+    function onFullscreenKeydown(event: KeyboardEvent) {
+        if (event.key !== "Escape" || maximizedPanelIndex.value == null) return
+        const target = event.target as HTMLElement | null
+        if (target && (target.closest(".monaco-editor") || ["INPUT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable)) return
+        maximizedPanelIndex.value = null
+    }
+
+    onMounted(() => window.addEventListener("keydown", onFullscreenKeydown))
+    onBeforeUnmount(() => window.removeEventListener("keydown", onFullscreenKeydown))
 
     const mouseXRef = ref(-1)
     const movedTabInfo = ref<TabInfo | null>(null)
@@ -549,12 +631,15 @@
     }
 
     watch(panels, () => {
-        let index = 0
-        for (const panel of panels.value) {
-            if (panel.tabs.length === 0) {
+        for (let index = panels.value.length - 1; index >= 0; index--) {
+            if (panels.value[index].tabs.length === 0) {
                 panels.value.splice(index, 1)
+                if (maximizedPanelIndex.value === index) {
+                    maximizedPanelIndex.value = null
+                } else if (maximizedPanelIndex.value != null && index < maximizedPanelIndex.value) {
+                    maximizedPanelIndex.value--
+                }
             }
-            index++
         }
     }, {deep: true})
 
@@ -688,6 +773,92 @@
 </script>
 
 <style scoped lang="scss">
+    .panel-maximized {
+        position: relative;
+        background: var(--ks-bg-base);
+    }
+
+    .maximized-sliver {
+        position: absolute;
+        top: var(--ks-spacing-5);
+        bottom: var(--ks-spacing-5);
+        z-index: 2;
+        width: 2vw;
+        min-width: 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-3) 0;
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        color: var(--ks-icon-muted);
+        cursor: pointer;
+        overflow: hidden;
+        transition: background 0.15s ease, color 0.15s ease, width 0.15s ease;
+    }
+
+    .maximized-sliver--left {
+        left: 0;
+        border-left: none;
+        border-top-right-radius: var(--ks-radius-base);
+        border-bottom-right-radius: var(--ks-radius-base);
+    }
+
+    .maximized-sliver--right {
+        right: 0;
+        border-right: none;
+        border-top-left-radius: var(--ks-radius-base);
+        border-bottom-left-radius: var(--ks-radius-base);
+    }
+
+    .maximized-sliver:hover {
+        width: calc(2vw + var(--ks-spacing-3));
+        background: var(--ks-bg-hover-elevated);
+        color: var(--ks-text-primary);
+    }
+
+    .maximized-sliver-icon {
+        flex-shrink: 0;
+        font-size: var(--ks-font-size-md);
+        line-height: 1;
+    }
+
+    .maximized-sliver-label {
+        writing-mode: vertical-rl;
+        font-size: var(--ks-font-size-xs);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 70%;
+    }
+
+    .panel-maximized .editor-tabs-container,
+    .panel-maximized .content-panel {
+        position: relative;
+        z-index: 1;
+        height: calc(100% - var(--ks-spacing-5));
+        margin-left: calc(2vw + var(--ks-spacing-4));
+        margin-right: calc(2vw + var(--ks-spacing-4));
+        background: var(--ks-bg-surface);
+        border-left: 1px solid var(--ks-border-default);
+        border-right: 1px solid var(--ks-border-default);
+        box-shadow: var(--ks-shadow-md);
+    }
+
+    .panel-maximized .editor-tabs-container {
+        margin-top: var(--ks-spacing-5);
+        border-top: 1px solid var(--ks-border-default);
+        border-top-left-radius: var(--ks-radius-base);
+        border-top-right-radius: var(--ks-radius-base);
+    }
+
+    .panel-maximized .content-panel {
+        border-bottom: 1px solid var(--ks-border-default);
+        border-bottom-left-radius: var(--ks-radius-base);
+        border-bottom-right-radius: var(--ks-radius-base);
+    }
+
     .editor-tabs-container{
         display: grid;
         grid-template-columns: auto 1fr auto;
@@ -697,15 +868,20 @@
         padding-top: var(--ks-spacing-2);
         gap: var(--ks-spacing-1);
 
-        button.split_right{
+        button.split_right,
+        button.maximize_panel{
             border: none;
             color: var(--ks-text-dim);
             background-color: transparent;
             padding: 0 var(--ks-spacing-2);
             line-height: 16px;
+            cursor: pointer;
             svg {
                 height: 16px;
                 width: 16px;
+            }
+            &:hover {
+                color: var(--ks-text-primary);
             }
         }
         .buttons-container{

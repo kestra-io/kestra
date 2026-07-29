@@ -4,7 +4,7 @@
         @update:model-value="onInput"
         filterable
         clearable
-        :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root?.split('.').pop() || 'value'}`"
+        :placeholder="$t('no_code.choose_placeholder', {field: root?.split('.').pop() || 'value'})"
     >
         <KsOption
             v-for="item in (schema?.enum as string[])"

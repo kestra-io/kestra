@@ -281,7 +281,31 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
+    // A single Cmd/Ctrl+S can be caught by more than one global handler: the Flow Code
+    // panel (FlowFileEditorTab) and the no-code Blocks editor each own a window keydown
+    // save. Without coalescing, both fire a PUT for the same next revision; the second
+    // collides on the revision primary key (500) and suppresses the success toast.
+    // Sharing one in-flight promise makes any burst of concurrent saves a single request.
+    let inFlightSave: Promise<FlowSaveOutcome> | null = null
+
     async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
+        if (inFlightSave) return inFlightSave
+        // A single Cmd/Ctrl+S is caught by more than one global handler (the Flow Code
+        // pane and the no-code editor each own one). The first persists the change and
+        // advances flowYamlOrigin; a second, non-overlapping request would re-PUT the
+        // now-unchanged content, collide with the first on the same next revision (500)
+        // and suppress the success toast. Skip a save that has nothing to persist —
+        // the same guard saveAll already applies, now shared by every save path.
+        if (!isCreating.value && !haveChange.value) return "no_op"
+        inFlightSave = performSave(draft)
+        try {
+            return await inFlightSave
+        } finally {
+            inFlightSave = null
+        }
+    }
+
+    async function performSave(draft: boolean = false): Promise<FlowSaveOutcome> {
         const flowSource = flowYaml.value ?? ""
 
         if (flowParsed.value === undefined && !draft) {

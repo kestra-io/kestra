@@ -332,8 +332,8 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const data = (options.version
-            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all})
-            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all})) as PluginComponent
+            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, {ignoreNotFound: true})
+            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, {ignoreNotFound: true})) as PluginComponent
 
         if (options.commit !== false && options.all !== true) {
             plugin.value = data

@@ -214,15 +214,7 @@ export function getPathFromSectionAndId({
     }
 
     const pathArray = getPathFromId({node: sectionNode, id}) ?? []
-    const path = pathArray.map((e) => {
-        if (typeof e === "string") {
-            return `.${e}`
-        } else {
-            return `[${e}]`
-        }
-    }).join("")
-
-    return `${section}${path}`
+    return joinPath([section, ...pathArray])
 }
 
 
@@ -423,24 +415,131 @@ function getNodeIndexInParent(
     return patentNode.items.indexOf(indexNode)
 }
 
-export function parsePath(path: string) {
-    const pathParts = path.split(".")
-    return pathParts.reduce((acc: (string|number)[], part) => {
-        // if the path has a number, it will look like this
-        // path[0]
-
-        const numberPath = part.match(/\[(\d+)\]$/)
-        if (numberPath?.[0]) {
-            acc.push(part.slice(0, numberPath.index))
-            acc.push(parseInt(numberPath[1], 10))
+// A path is a sequence of segments over the flow document:
+//   .key          an object key (no . [ ] or quote in it)
+//   [0]           a numeric array index
+//   ["some.key"]  an object key that itself contains a path delimiter
+// The first segment may omit the leading dot ("tasks", "tasks[0].then"). The
+// bracket-quoted form exists so arbitrary keys — a Switch case value such as
+// "1.0" or "eu.prod" — round-trip through the path system without their dots
+// being mistaken for separators.
+export function parsePath(path: string): (string | number)[] {
+    const segments: (string | number)[] = []
+    let i = 0
+    while (i < path.length) {
+        const ch = path[i]
+        if (ch === ".") {
+            i++
+        } else if (ch === "[") {
+            const quote = path[i + 1]
+            if (quote === "\"" || quote === "'") {
+                let key = ""
+                let j = i + 2
+                while (j < path.length && path[j] !== quote) {
+                    if (path[j] === "\\" && j + 1 < path.length) {
+                        key += path[j + 1]
+                        j += 2
+                    } else {
+                        key += path[j]
+                        j++
+                    }
+                }
+                i = path[j + 1] === "]" ? j + 2 : j + 1
+                segments.push(key)
+            } else {
+                const close = path.indexOf("]", i)
+                const inner = path.slice(i + 1, close)
+                segments.push(/^\d+$/.test(inner) ? parseInt(inner, 10) : inner)
+                i = close + 1
+            }
         } else {
-            acc.push(part)
+            let j = i
+            while (j < path.length && path[j] !== "." && path[j] !== "[") j++
+            segments.push(path.slice(i, j))
+            i = j
         }
-        return acc
-    }, [])
+    }
+    return segments
+}
+
+// True when a key can't be written as a bare `.key` segment and must use the
+// bracket-quoted form instead.
+function keyNeedsQuoting(key: string): boolean {
+    return key === "" || /[.[\]"'\\]/.test(key)
+}
+
+function quoteKey(key: string): string {
+    return `["${key.replace(/\\/g, "\\\\").replace(/"/g, "\\\"")}"]`
+}
+
+// Append an object key to a path, bracket-quoting it only when it contains a
+// path delimiter. Simple keys stay readable (`base.key`); exotic keys (a Switch
+// case value like "eu.prod") become `base["eu.prod"]`.
+export function appendKeyToPath(basePath: string, key: string): string {
+    if (keyNeedsQuoting(key)) return `${basePath}${quoteKey(key)}`
+    return basePath ? `${basePath}.${key}` : key
+}
+
+// Reassemble a path string from parsed segments, re-quoting keys that need it.
+export function joinPath(segments: (string | number)[]): string {
+    let out = ""
+    for (const seg of segments) {
+        if (typeof seg === "number") out += `[${seg}]`
+        else if (keyNeedsQuoting(seg)) out += quoteKey(seg)
+        else out += out ? `.${seg}` : seg
+    }
+    return out
+}
+
+// Drop map entries whose value is an empty sequence — e.g. an `errors: []` or
+// `then: []` left behind once its last task was deleted. Operates on the parsed
+// Document so comments anywhere else in the flow survive; a
+// parse()->plain-object->stringify round-trip would discard them.
+export function pruneEmptySequences(source: string): string {
+    const doc = parseDocumentTyped(source)
+    visit(doc, {
+        Pair(_key, pair) {
+            if (isSeq(pair.value) && pair.value.items.length === 0) {
+                return visit.REMOVE
+            }
+            return undefined
+        },
+    })
+    return doc.toString(TOSTRING_OPTIONS)
+}
+
+// Whether a path carries a bracket-quoted key (e.g. cases["eu.prod"]). Such
+// keys can't be located by naive "." splitting and take the tokenizer path;
+// every other path keeps the original, battle-tested fast path untouched.
+function hasQuotedSegment(path: string): boolean {
+    return path.includes("[\"") || path.includes("['")
+}
+
+function lastSegmentKey(path: string): string {
+    return hasQuotedSegment(path)
+        ? String(parsePath(path).at(-1))
+        : (path.split(".").pop() as string)
 }
 
 function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPath: string) {
+    if (hasQuotedSegment(parentPath)) {
+        const segments = parsePath(parentPath)
+        if (segments.length <= 1) {
+            if (!yamlDoc.contents) {
+                throw new Error(`Document is empty, cannot insert block with path ${parentPath}`)
+            }
+            return yamlDoc.contents
+        }
+        const parentPathWithoutKey = joinPath(segments.slice(0, -1))
+        const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<{ value: string }, Node>
+        if (!parentNode) {
+            const newParentNode = createParentNode(parentPath)
+            const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
+            parentParentNode?.items.push(newParentNode)
+            return newParentNode.value
+        }
+        return parentNode
+    }
     if(!parentPath.includes(".")){
         if(!yamlDoc.contents){
             throw new Error(`Document is empty, cannot insert block with path ${parentPath}`)
@@ -464,7 +563,7 @@ function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPat
 
 function createParentNode(parentPath: string) {
     const newParentNode = new YAMLSeq()
-    const parentKey = parentPath.split(".").pop() as string
+    const parentKey = lastSegmentKey(parentPath)
     const parentKeyNode = new Pair(new Scalar(parentKey), newParentNode)
     return parentKeyNode
 }
@@ -499,7 +598,7 @@ export function insertBlockWithPath({
     const parentNode = yamlDoc.getIn(parsedPath) as YAMLMap<{ value: string }, Node>
 
     if (!parentNode) {
-        const newPairNode = createPairNode(parentPath.split(".").pop() as string, newPropNode)
+        const newPairNode = createPairNode(lastSegmentKey(parentPath), newPropNode)
         const newParentNode = getParentNode(yamlDoc, parentPath)
         newParentNode?.items.push(newPairNode)
         return yamlDoc.toString(TOSTRING_OPTIONS)

@@ -30,7 +30,13 @@
         <div class="editor-container" ref="container" :class="[containerClass, {'mb-2': label}]">
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <div>
-                    <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
+                    <div
+                        data-testid="monaco-editor"
+                        class="ks-monaco-editor"
+                        ref="editorRef"
+                        @dragover.prevent
+                        @drop.prevent="onDrop"
+                    />
                     <div ref="datePickerWrapper" v-show="datePickerShown">
                         <KsDatePicker
                             ref="datePicker"
@@ -301,8 +307,8 @@
     }>()
 
     const icon = {
-        UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
-        UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
+        UnfoldLessHorizontal,
+        UnfoldMoreHorizontal,
     } as const
 
     const storedEditorFontSizeOverride = useStorage<number | null>("editorFontSize", null, localStorage, {
@@ -435,6 +441,11 @@
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,
+            // Monaco's own dropIntoEditor feature races our custom onDrop handler (below):
+            // both react to the same native drop event, so dropped text with braces (e.g.
+            // a Pebble {{ }} expression) gets inserted twice, the second time mangled by
+            // Monaco's snippet-escaping. We fully own drop handling instead.
+            dropIntoEditor: {enabled: false},
             // Kestra's YAML editors put their meaningful completions inside YAML string
             // tokens: plugin `type:` values and Pebble `{{ }}` expressions both tokenize as
             // strings. Monaco's default quickSuggestions ({strings:false}) never auto-triggers
@@ -1245,6 +1256,23 @@
 
     function focus() {
         editorResolved.value?.focus()
+    }
+
+    // Monaco has no native support for dropping plain text (e.g. a dragged
+    // {{ inputs.x }} chip) into the editor at the cursor, so map the drop's
+    // client coordinates to a model position ourselves and insert there.
+    function onDrop(event: DragEvent) {
+        const text = event.dataTransfer?.getData("text/plain")
+        if (!text || !isCodeEditor(localEditor.value)) return
+        const ed = localEditor.value
+        const target = ed.getTargetAtClientPoint(event.clientX, event.clientY)
+        const position = target?.position ?? ed.getPosition()
+        if (!position) return
+        ed.executeEdits("drop-insert", [{
+            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+            text,
+        }])
+        ed.focus()
     }
 
     function destroy() {

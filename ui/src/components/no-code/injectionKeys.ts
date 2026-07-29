@@ -1,12 +1,18 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
 import {NoCodeElement, TopologyClickParams} from "./utils/types"
 import {Panel} from "../../utils/multiPanelTypes"
+import type {FieldNavigation} from "./utils/useFieldNavigation"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 /**
  * Complete flow YAML string for the no-code
  */
 export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
+/**
+ * Flow-level pluginDefaults merged for the current task type: field name -> default value.
+ * Applied as a display hint in the form, never written into the task YAML.
+ */
+export const PLUGIN_DEFAULTS_INJECTION_KEY = Symbol("plugin-defaults-injection-key") as InjectionKey<ComputedRef<Record<string, unknown>>>
 /**
  * When creating a subtask, this is the parent task path
  */
@@ -41,12 +47,12 @@ export const EDITING_TASK_INJECTION_KEY = Symbol("editing-injection-key") as Inj
  * Call this when starting to create a new task, when the user clicks on the add button
  * to start the addition process
  */
-export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined) => void>
+export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined, anchorEl?: HTMLElement) => void>
 /**
  * Call this when starting to edit a task, when the user clicks on the task line
  * to start the edition process
  */
-export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean) => void>
 /**
  * Call this when closing a task, when the user clicks on the close button
  */
@@ -69,6 +75,11 @@ export const TOPOLOGY_CLICK_INJECTION_KEY = Symbol("topology-click-injection-key
 * Array of visible panels in the multi-panel view
 */
 export const VISIBLE_PANELS_INJECTION_KEY = Symbol("visible-panels-injection-key") as InjectionKey<Ref<Panel[]>>
+/**
+* True when a dock panel is maximized (fullscreen). Cards use it to hide the
+* "open in split" affordance, which is meaningless while one panel fills the dock.
+*/
+export const PANEL_MAXIMIZED_INJECTION_KEY = Symbol("panel-maximized-injection-key") as InjectionKey<ComputedRef<boolean>>
 /**
 * The position of the cursor in the code editor
 */
@@ -98,3 +109,17 @@ export const ON_TASK_EDITOR_CLICK_INJECTION_KEY = Symbol("on-task-editor-click-i
 export const DEFAULT_NAMESPACE_INJECTION_KEY = Symbol("default-namespace-injection-key") as InjectionKey<ComputedRef<string>>
 
 export const TENANTS_INJECTION_KEY = Symbol("tenants-injection-key") as InjectionKey<ComputedRef<{id: string; name?: string}[]>>
+
+/**
+ * Push-in-place field navigation stack, provided per task-form pane. Present
+ * only inside the task editor; absent on the flow-root form and plugin
+ * defaults, where fields never drill.
+ */
+export const FIELD_NAV_INJECTION_KEY = Symbol("field-nav-injection-key") as InjectionKey<FieldNavigation>
+
+/**
+ * Reactive map of task id -> validation issue messages for the current flow.
+ * Lets block cards flag tasks with missing/invalid required fields without
+ * threading the flow's validation result through every lane.
+ */
+export const BLOCK_VALIDATION_ISSUES_INJECTION_KEY = Symbol("block-validation-issues-injection-key") as InjectionKey<ComputedRef<Map<string, string[]>>>

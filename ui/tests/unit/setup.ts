@@ -40,6 +40,30 @@ if (typeof document !== "undefined" && typeof document.queryCommandSupported !==
 if (typeof document !== "undefined" && typeof document.execCommand !== "function") {
     (document as any).execCommand = () => false
 }
+if (typeof Element !== "undefined" && typeof Element.prototype.scrollIntoView !== "function") {
+    Element.prototype.scrollIntoView = () => {}
+}
+// jsdom implements neither navigator.clipboard nor ClipboardItem; Monaco's WebKit
+// clipboard workaround binds click/keydown handlers on document.body that call
+// `navigator.clipboard.write([new ClipboardItem(...)])`, so any event bubbling to
+// body in an attached mount otherwise throws "ClipboardItem is not defined".
+if (typeof globalThis.ClipboardItem === "undefined") {
+    (globalThis as any).ClipboardItem = class ClipboardItem {
+        items: Record<string, unknown>
+        constructor(items: Record<string, unknown>) { this.items = items }
+    }
+}
+if (typeof navigator !== "undefined" && !navigator.clipboard) {
+    Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: {
+            write: () => Promise.resolve(),
+            writeText: () => Promise.resolve(),
+            read: () => Promise.resolve([]),
+            readText: () => Promise.resolve(""),
+        },
+    })
+}
 // pdfjs-dist (pulled in transitively via PdfPreview.vue) constructs a DOMMatrix
 // at module load time, which jsdom doesn't provide.
 if (typeof globalThis.DOMMatrix === "undefined") {
@@ -56,4 +80,19 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
         removeEventListener: () => {},
         dispatchEvent: () => false,
     })
+}
+// jsdom doesn't implement ResizeObserver (used by TaskEdit's stacked-layout detection)
+if (typeof globalThis.ResizeObserver === "undefined") {
+    (globalThis as any).ResizeObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    }
+}
+// jsdom doesn't implement CSS.escape (used by BlockEditor's data-dock-pane-id lookups)
+if (typeof globalThis.CSS === "undefined" || typeof globalThis.CSS.escape !== "function") {
+    (globalThis as any).CSS = {
+        ...(globalThis as any).CSS,
+        escape: (value: string) => String(value).replace(/([!"#$%&'()*+,./:;<=>?@[\]^`{|}~])/g, "\\$1"),
+    }
 }

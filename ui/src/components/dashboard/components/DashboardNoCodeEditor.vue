@@ -83,7 +83,7 @@
 
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
-        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath?: number): boolean | void;
+        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath?: number, split?: boolean): boolean | void;
         (e: "closeTask"): boolean | void;
     }>()
 

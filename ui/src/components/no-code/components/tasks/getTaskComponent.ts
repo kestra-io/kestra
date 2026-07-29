@@ -23,7 +23,7 @@ export interface Schema{
 
 export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
 
-function getType(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): string {
+export function getType(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): string {
 
     if (property.enum !== undefined) {
         return "enum"

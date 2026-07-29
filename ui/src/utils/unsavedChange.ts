@@ -12,27 +12,21 @@ export default (app: any, router: Router) => {
         }
     })
 
-    const routeEqualsExceptHash = (route1: RouteLocation, route2: RouteLocation) => {
-        const deleteTenantIfEmpty = (route: RouteLocation) => {
-            if (route.params.tenant === "") {
-                delete route.params.tenant
-            }
-        }
-
-        const filteredRouteForEquals = (route: RouteLocation) => ({
-            path: route.path,
-            query: route.query,
-            params: route.params,
-        })
-
-        deleteTenantIfEmpty(route1)
-        deleteTenantIfEmpty(route2)
-
-        return JSON.stringify(filteredRouteForEquals(route1)) === JSON.stringify(filteredRouteForEquals(route2))
-    }
+    // Same page = same resolved path, ignoring query string (which the block
+    // editor uses for transient UI state: open tabs, doc panel, collapsed
+    // panels). Comparing path strings is order-independent, unlike a
+    // JSON.stringify of the params object whose key order can vary between
+    // from/to and spuriously trip the guard.
+    //
+    // Contract: any feature that sets `unsavedChangesStore.unsavedChange = true`
+    // must encode what is being edited in the PATH, never in the query — a
+    // query-only change is treated as staying on the same page and will not
+    // prompt to save.
+    const isSamePage = (route1: RouteLocation, route2: RouteLocation) =>
+        route1.path === route2.path
 
     router.beforeEach(async (to, from) => {
-        if (unsavedChangesStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
+        if (unsavedChangesStore.unsavedChange && !isSamePage(from, to)) {
             const shouldLeave = await unsavedChangesStore.showDialog()
             if (shouldLeave) {
                 unsavedChangesStore.unsavedChange = false

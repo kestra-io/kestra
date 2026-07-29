@@ -180,7 +180,7 @@
 
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
-        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined): boolean | void;
+        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean): boolean | void;
         (e: "closeTask"): boolean | void;
     }>()
 
@@ -196,8 +196,8 @@
         emit("createTask", parentPath, blockSchemaPath, refPath, "after")
     })
 
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath) => {
-        emit("editTask", parentPath, blockSchemaPath, refPath)
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
+        emit("editTask", parentPath, blockSchemaPath, refPath, split)
     })
 
     // Scroll position persistence for No-code editor

@@ -170,6 +170,13 @@
             }
         }
 
+        // Element Plus pulls the tag row left with a negative margin (is-near),
+        // which glues the first tag to the input border. Once there are tags,
+        // drop it so the first tag keeps the wrapper's normal edge padding.
+        .kel-select__selection.is-near:has(.kel-select__selected-item) {
+            margin-left: 0;
+        }
+
         .kel-select__caret {
             color: var(--kel-input-icon-color, var(--kel-text-color-placeholder));
         }

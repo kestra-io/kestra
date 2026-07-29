@@ -129,8 +129,6 @@
       "last24hours": "過去24時間",
       "last48hours": "過去48時間",
       "last7days": "過去7日間",
-      "last14days": "直近14日間",
-      "last28days": "過去28日間",
       "last30days": "過去30日間",
       "last365days": "過去365日間",
       "next5minutes": "次の5分",
@@ -149,8 +147,6 @@
       "24hours": "24時間",
       "48hours": "48時間",
       "7days": "7日間",
-      "14days": "14日間",
-      "28days": "28日間",
       "30days": "30日間",
       "365days": "365日間",
       "never": "無期限",
@@ -172,7 +168,11 @@
         "12h": "12時間",
         "1d": "1日",
         "7d": "7日"
-      }
+      },
+      "last14days": "直近14日間",
+      "last28days": "過去28日間",
+      "14days": "14日間",
+      "28days": "28日間"
     },
     "created date": "作成日",
     "latest_update": "最新の更新",
@@ -466,6 +466,10 @@
     },
     "use": "使用",
     "plugins": {
+      "name": "プラグイン",
+      "names": "プラグイン",
+      "please": "ドキュメントを見るには右側のTaskを選択してください",
+      "release": "リリースノート",
       "beta": "Beta",
       "copy_type": "タイプをコピー",
       "deprecated": "非推奨",
@@ -503,15 +507,11 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flowドキュメント",
-      "name": "プラグイン",
-      "names": "プラグイン",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
       "nav_overview": "概要",
       "nav_properties": "Properties",
       "non_dynamic": "非動的",
-      "please": "ドキュメントを見るには右側のTaskを選択してください",
-      "release": "リリースノート",
       "required": "必須"
     },
     "last execution date": "最後の実行日",
@@ -1094,7 +1094,8 @@
             "flow_default_tab": "デフォルト Flow タブ",
             "triggers_default_tab": "デフォルトトリガーのタブ",
             "playground": "プレイグラウンド",
-            "auto_refresh_interval": "自動更新間隔"
+            "auto_refresh_interval": "自動更新間隔",
+            "task_edit_default_mode": "デフォルトのタスク編集モード"
           },
           "descriptions": {
             "default_namespace": "namespaceなしで新しいflowを作成する際に使用されます。",
@@ -1106,7 +1107,12 @@
             "flow_default_tab": "フローに移動するときに選択されたタブ。",
             "triggers_default_tab": "トリガーページに移動するときに選択されたタブ。",
             "auto_refresh_interval": "リストページでの自動データ更新の間隔（秒）。",
-            "playground": "エディタープレイグラウンドでタスクを個別に実行します。"
+            "playground": "エディタープレイグラウンドでタスクを個別に実行します。",
+            "task_edit_default_mode": "コードエディタなしでタスクがデフォルトでどのように開くか。"
+          },
+          "task_edit_default_mode_options": {
+            "modal": "モーダル",
+            "tab": "タブ"
           }
         },
         "theme": {
@@ -1286,7 +1292,8 @@
         "audit-logs": {
           "title": "すべての変更を一箇所で追跡",
           "message": "Kestra Enterprise Editionでは、namespaceレベルの監査Logを詳細な差分とともに表示でき、すべてのリソースにわたって誰が何をいつ変更したかの履歴を明確に確認できます。"
-        }
+        },
+        "plugin-defaults": {}
       }
     },
     "assets": {
@@ -1555,7 +1562,8 @@
         "triggers": "トリガー",
         "errors": "エラーハンドラー",
         "afterExecution": "実行後",
-        "finally": "最後に"
+        "finally": "最後に",
+        "flow": "Flow"
       },
       "fields": {
         "main": {
@@ -1577,7 +1585,8 @@
           "workerGroup": "ワーカーグループ",
           "workerSelector": "ワーカーセレクター",
           "checks": "チェック",
-          "updated": "更新済み"
+          "updated": "更新済み",
+          "quotas": "クォータ"
         }
       },
       "select": {
@@ -1610,6 +1619,25 @@
       "remove": {
         "default": "このエントリを削除",
         "cases": "このケースを削除"
+      },
+      "adding_to": "+ {what} に追加",
+      "choose_placeholder": "{field} を選択",
+      "duration": {
+        "add_unit": "単位を追加",
+        "units": {
+          "day": "日",
+          "hour": "時間",
+          "minute": "分",
+          "second": "秒",
+          "week": "週"
+        }
+      },
+      "expression_placeholder": "ここに {field} を入力...",
+      "nav": {
+        "back": "戻る",
+        "breadcrumb_aria": "フィールドパス",
+        "items": "{count} 件",
+        "not_set": "未設定"
       }
     },
     "properties": {
@@ -1766,7 +1794,8 @@
       "panels": {
         "title": "パネルが開いていません",
         "content": "すべてのパネルを閉じました。  \n続行するには上のタブを選択してください。"
-      }
+      },
+      "pluginDefaults": {}
     },
     "toggle_word_wrap": "ワードラップを切り替え",
     "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
@@ -1774,7 +1803,9 @@
       "move_right": "右に移動",
       "move_left": "左に移動",
       "close_all_tabs": "すべてのタブを閉じる",
-      "close_all_panels": "すべてのパネルを閉じる"
+      "close_all_panels": "すべてのパネルを閉じる",
+      "exit_fullscreen": "全画面表示を終了",
+      "fullscreen": "全画面表示"
     },
     "search_docs": "検索",
     "no_results_found": "結果が見つかりません",
@@ -2343,6 +2374,153 @@
     "open source": "オープンソース",
     "pricing": "料金",
     "license": "ライセンス",
+    "block_editor": {
+      "add_error_task": "エラーtaskを追加",
+      "add_switch_case": "ケースを追加",
+      "add_task": "taskを追加",
+      "add_to_lane": "{lane}に追加",
+      "add_trigger": "triggerを追加",
+      "all_apps": "すべてのアプリ",
+      "app_actions": "{count}個のアクション",
+      "block_deleted": "{name} を削除しました",
+      "card_aria_label": "タイプ{type}のブロック{id}",
+      "canvas_aria": "Flow ブロックキャンバス",
+      "close_all": "すべてのタブを閉じる",
+      "cluster_collapse_aria": "{id}を折りたたむ",
+      "cluster_expand_aria": "{id}を展開 ({count} tasks)",
+      "collapsed_summary": "{count} tasks",
+      "command_menu": {
+        "context_flow": "コンテキスト: flow",
+        "context_selected": "コンテキスト: {name}",
+        "delete": "{name}を削除",
+        "duplicate": "{name}を複製",
+        "goto": "{section}に移動",
+        "group_block": "このブロック",
+        "group_flow": "Flow",
+        "group_goto": "移動",
+        "group_insert": "挿入",
+        "insert_after": "{name}の後にtaskを挿入",
+        "insert_at_end": "Tasksの末尾にtaskを挿入",
+        "insert_before": "{name}の前にtaskを挿入",
+        "insert_in_section": "{section}にtaskを挿入",
+        "insert_kind": "{kind}を挿入",
+        "no_match": "一致なし",
+        "open": "{name}を開く",
+        "save": "flowを保存",
+        "search_placeholder": "コマンドを入力するかtaskを検索…",
+        "title": "コマンドメニュー"
+      },
+      "configure": "設定",
+      "confirm_delete": {
+        "message": "{name}をflowから削除します。直後であれば元に戻せます。",
+        "message_group": "グループ{name}とその中身をすべて削除します。直後であれば元に戻せます。",
+        "title": "{name}を削除しますか？"
+      },
+      "declared_outputs": "宣言されたOutputs",
+      "delete": "削除",
+      "depends_on_label": "依存先",
+      "depends_on_placeholder": "taskを選択…",
+      "depth_pill": "深さ {depth}",
+      "drag_reorder": "ドラッグして並び替え",
+      "duplicate": "複製",
+      "empty": "まだtaskもtriggerもありません。最初のtaskを追加して始めましょう。",
+      "empty_add_hint": "または / を押してtaskを検索",
+      "empty_add_lead": "{label}を追加するにはクリック",
+      "error_task_noun": "エラーtask",
+      "execution_context": "実行コンテキスト",
+      "filter_data": "利用可能なデータを絞り込み…",
+      "flow_inputs": "Flow inputs",
+      "flowable_todo": "ネストされたtask（編集は近日公開）",
+      "footer": {
+        "canvas": "キャンバス",
+        "close_panel": "パネルを閉じる",
+        "command_menu": "コマンドメニュー",
+        "editing": "ブロックを編集中",
+        "inserting": "挿入中",
+        "selected": "選択中 · {name}"
+      },
+      "inline_add": "{label}を追加",
+      "inputs": "Inputs",
+      "inputs_sub": "ここで使えるデータ",
+      "inserting_into": "{section}に挿入",
+      "kbd_add": "追加",
+      "kbd_close": "閉じる",
+      "kbd_navigate": "移動",
+      "lane_case": "ケース: {key}",
+      "lane_defaults": "デフォルト",
+      "lane_else": "それ以外",
+      "lane_empty": "{lane}にtasksがありません",
+      "lane_errors": "エラー",
+      "lane_finally": "最終的に",
+      "lane_tasks": "Tasks",
+      "lane_then": "その後",
+      "loading_plugins": "プラグインを読み込み中...",
+      "move_down": "下に移動",
+      "move_up": "上に移動",
+      "nav_rail_empty": "まだtaskもtriggerもありません。",
+      "nav_rail_title": "アウトライン",
+      "nested_count": "{count}個のネストされたtask",
+      "no_data_matches": "フィルターに一致するものがありません",
+      "no_documentation": "このtaskのドキュメントはありません",
+      "no_recent": "最近使用したtaskはありません",
+      "no_task_results": "一致するtaskタイプが見つかりません。",
+      "open_details": "開いている詳細",
+      "open_in_split": "分割ビューで開く",
+      "output": "Output",
+      "output_sub": "このtaskが生成するもの",
+      "pick_task_type": "taskタイプを選択",
+      "picker_more_results": "他{count}件、検索を絞り込んでください",
+      "plugin_default": "デフォルト: {value}",
+      "plugin_default_tooltip": "フローの pluginDefaults のデフォルト値",
+      "required_missing": "必須項目が未設定です",
+      "save_blocked": {
+        "message": "保存する前にエラーを修正してください。",
+        "title": "フローを保存できません"
+      },
+      "search_task_placeholder": "taskタイプを検索...",
+      "shortcuts": {
+        "add_after": "選択の後にブロックを挿入",
+        "add_before": "選択の前にブロックを挿入",
+        "add_task": "カーソル位置にクイック挿入",
+        "clear": "閉じる / 選択解除",
+        "collapse_expand": "折りたたみ / 展開",
+        "command_palette": "コマンドメニュー（コンテキスト対応）",
+        "group_edit": "編集",
+        "group_global": "グローバル",
+        "group_insert": "挿入",
+        "group_navigate": "移動",
+        "move_between": "選択を移動",
+        "open": "選択したブロックを開く",
+        "open_split": "選択したブロックを分割ビューで開く",
+        "or": "または",
+        "reorder": "上下に並べ替え",
+        "save": "flowを保存",
+        "step_into": "展開してグループに入る",
+        "step_out": "折りたたんで親に戻る",
+        "title": "キーボードショートカット",
+        "toggle": "このヘルプ",
+        "undo": "元に戻す"
+      },
+      "split_into": "{count}列表示",
+      "split_view": "分割表示",
+      "switch_case_key_placeholder": "新しいケースキー",
+      "tab_apps": "アプリ別",
+      "tab_recent": "最近",
+      "tab_suggested": "おすすめ",
+      "task_noun": "task",
+      "then_required_warning": "Thenブランチは必須です",
+      "trigger_noun": "trigger",
+      "undo": "元に戻す",
+      "upstream_outputs": "上流のOutputs",
+      "open_in_tabs": "タブで開く",
+      "open_mode_hint": "Tasksはデフォルトでモーダルで開きます。{settings}でタブをデフォルトに設定できます。"
+    },
+    "blocks": "ブロック",
+    "flow_description": "Flowの説明",
+    "flow_no_description": "説明なし。flow YAMLに説明を追加してドキュメント化してください。",
+    "pluginDefaults": {},
+    "split_horizontal": "水平分割",
+    "split_vertical": "垂直分割",
     "pwa": {
       "install_title": "Kestra をインストール",
       "install_description": "より高速なアクセスとフルスクリーン体験のために、Kestra をアプリとしてインストールします。",

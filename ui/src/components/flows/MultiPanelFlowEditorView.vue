@@ -34,11 +34,13 @@
     import FlowEditorStats from "override/components/flows/FlowEditorStats.vue"
     import KeyShortcuts from "../inputs/KeyShortcuts.vue"
     import NoCode from "../no-code/NoCode.vue"
+    import BlockEditor from "../no-code/blocks/BlockEditor.vue"
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
     import {useTopologyPanels} from "./useTopologyPanels"
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts"
+    import {storageKeys} from "../../utils/constants"
 
     import {useNoCodePanelsFull} from "./useNoCodePanels"
     import {useFlowStore} from "../../stores/flow"
@@ -53,7 +55,10 @@
             || element.uid.startsWith("nocode-")
     }
 
-    const RawNoCode = markRaw(NoCode)
+    // Flag-gated rollout lever: "legacy" keeps the schema-driven NoCode.vue
+    // form; any other value (default) uses the Blocks canvas as the nocode
+    // tab's engine.
+    const RawNoCode = markRaw(localStorage.getItem(storageKeys.NOCODE_ENGINE) === "legacy" ? NoCode : BlockEditor)
 
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()

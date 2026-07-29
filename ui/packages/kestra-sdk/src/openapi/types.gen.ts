@@ -4213,7 +4213,12 @@ export type RestartExecutionsByIdsData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * If latest revision should be used
+         */
+        latestRevision?: boolean | null;
+    };
     url: '/api/v1/{tenant}/executions/restart/by-ids';
 };
 
@@ -4245,6 +4250,10 @@ export type RestartExecutionsByQueryData = {
          * Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`
          */
         filters?: Array<QueryFilter> | null;
+        /**
+         * If latest revision should be used
+         */
+        latestRevision?: boolean | null;
     };
     url: '/api/v1/{tenant}/executions/restart/by-query';
 };

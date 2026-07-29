@@ -7,6 +7,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
+import io.kestra.core.models.SearchResult;
+import io.micronaut.data.model.Sort;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -1314,6 +1316,525 @@ public abstract class AbstractFlowRepositoryTest {
             assertEquals(1.0, value);
         } finally {
             deleteFlow(revision3);
+        }
+    }
+
+    @Test
+    protected void shouldFindWithCombinedNamespaceAndQueryFilter(){
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource match = FlowWithSource.builder()
+            .id("combined-match")
+            .namespace(TEST_NAMESPACE)
+            .tenantId(tenant)
+            .build();
+
+        FlowWithSource noMatch = FlowWithSource.builder()
+            .id("combined-nomatch")
+            .namespace("io.kestra.other")
+            .tenantId(tenant)
+            .build();
+
+        match = flowRepository.create(GenericFlow.of(match));
+        noMatch = flowRepository.create(GenericFlow.of(noMatch));
+
+        try{
+            List<QueryFilter> filters = List.of(
+                QueryFilter.builder().field(Field.NAMESPACE).value(TEST_NAMESPACE).operation(Op.EQUALS).build(),
+                QueryFilter.builder().field(Field.QUERY).value("combined-match").operation(Op.EQUALS).build()
+            );
+
+            ArrayListTotal<Flow> results = flowRepository.find(Pageable.UNPAGED, tenant, filters);
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo("combined-match");
+        }
+        finally {
+            deleteFlow(match);
+            deleteFlow(noMatch);
+        }
+    }
+
+    @Test
+    protected void shouldFindWithNamespacePrefixFilter(){
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource inPrefix = FlowWithSource.builder()
+            .id("prefix-match")
+            .namespace(TEST_NAMESPACE + ".child")
+            .tenantId(tenant)
+            .build();
+
+        FlowWithSource outPrefix = FlowWithSource.builder()
+            .id("prefix-nomatch")
+            .namespace("io.kestra.other")
+            .tenantId(tenant)
+            .build();
+
+        inPrefix = flowRepository.create(GenericFlow.of(inPrefix));
+        outPrefix = flowRepository.create(GenericFlow.of(outPrefix));
+
+        try {
+
+            List<Flow> results = flowRepository.findByNamespacePrefix(tenant, TEST_NAMESPACE);
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo("prefix-match");
+        }
+        finally {
+            deleteFlow(inPrefix);
+            deleteFlow(outPrefix);
+        }
+    }
+
+    @Test
+    protected void shouldFindByNamespacePrefixWithSource() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource inPrefix = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: prefix-match
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE + ".child"))
+        );
+
+        FlowWithSource outPrefix = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: prefix-nomatch
+            namespace: io.kestra.other
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
+        );
+
+        try {
+            List<FlowWithSource> results = flowRepository.findByNamespacePrefixWithSource(tenant, TEST_NAMESPACE);
+
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo("prefix-match");
+            assertThat(results.getFirst().getSource()).isNotNull();
+        } finally {
+            deleteFlow(inPrefix);
+            deleteFlow(outPrefix);
+        }
+    }
+
+    @Test
+    void shouldFindSourceCode() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flow = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: sourcecode-test
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: unique-searchable-string
+            """.formatted(TEST_NAMESPACE))
+        );
+
+        try {
+            ArrayListTotal<SearchResult<Flow>> results = flowRepository.findSourceCode(
+                Pageable.UNPAGED, "unique-searchable-string", tenant, TEST_NAMESPACE
+            );
+
+            assertThat(results.getTotal()).isGreaterThanOrEqualTo(1);
+            assertThat(results.stream()
+                .map(r -> r.getModel().getId())
+                .toList()
+            ).contains("sourcecode-test");
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    protected void shouldFindDistinctNamespace() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flow1 = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: distinct-ns-flow1
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
+        );
+
+        FlowWithSource flow2 = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: distinct-ns-flow2
+            namespace: io.kestra.other
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
+        );
+
+        FlowWithSource flow3 = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: distinct-ns-flow3
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
+        );
+
+        try {
+            List<String> results = flowRepository.findDistinctNamespace(tenant);
+            assertThat(results).contains(TEST_NAMESPACE, "io.kestra.other");
+            assertThat(results).doesNotHaveDuplicates();
+        } finally {
+            deleteFlow(flow1);
+            deleteFlow(flow2);
+            deleteFlow(flow3);
+        }
+    }
+
+    @Test
+    protected void shouldFindByNamespace() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flow1 = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: find-by-namespace-match
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
+        );
+
+        FlowWithSource flow2 = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: find-by-namespace-nomatch
+            namespace: io.kestra.other
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
+        );
+
+        try {
+            List<Flow> results = flowRepository.findByNamespace(tenant, TEST_NAMESPACE);
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getNamespace()).isEqualTo(TEST_NAMESPACE);
+        } finally {
+            deleteFlow(flow1);
+            deleteFlow(flow2);
+        }
+    }
+
+    @Test
+    protected void shouldFindByNamespaceExecutable() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource activeFlow = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: executable-active
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
+        );
+
+        FlowWithSource disabledFlow = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: executable-disabled
+            namespace: %s
+            disabled: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
+        );
+
+        FlowWithSource deletedFlow = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: executable-deleted
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
+        );
+        flowRepository.delete(deletedFlow);
+
+        try {
+            List<FlowForExecution> results = flowRepository.findByNamespaceExecutable(tenant, TEST_NAMESPACE);
+
+            // only active flow should be returned
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getId()).isEqualTo(activeFlow.getId());
+
+            // disabled flow should not be executable
+            assertThat(results.stream().map(FlowForExecution::getId).toList())
+                .doesNotContain(disabledFlow.getId());
+
+            // deleted flow should not be returned
+            assertThat(results.stream().map(FlowForExecution::getId).toList())
+                .doesNotContain(deletedFlow.getId());
+        } finally {
+            deleteFlow(activeFlow);
+            deleteFlow(disabledFlow);
+            deleteFlow(deletedFlow);
+        }
+    }
+
+    @Test
+    protected void shouldFindDistinctNamespaceExecutable() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource activeFlow = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: distinct-executable-active
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
+        );
+
+        FlowWithSource disabledFlow = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: distinct-executable-disabled
+            namespace: io.kestra.disabled
+            disabled: true
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
+        );
+
+        FlowWithSource deletedFlow = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: distinct-executable-deleted
+            namespace: io.kestra.deleted
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """)
+        );
+        flowRepository.delete(deletedFlow);
+
+        try {
+            List<String> results = flowRepository.findDistinctNamespaceExecutable(tenant);
+
+            // only namespace with active flow should appear
+            assertThat(results).contains(TEST_NAMESPACE);
+
+            // namespace with only disabled flow should not appear
+            assertThat(results).doesNotContain("io.kestra.disabled");
+
+            // namespace with only deleted flow should not appear
+            assertThat(results).doesNotContain("io.kestra.deleted");
+        } finally {
+            deleteFlow(activeFlow);
+            deleteFlow(disabledFlow);
+            deleteFlow(deletedFlow);
+        }
+    }
+
+    @Test
+    protected void shouldFindWithNullFilters() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flow = flowRepository.create(createTestingLogFlow(tenant, IdUtils.create(), "test"));
+
+        try {
+            // filters = null
+            ArrayListTotal<Flow> results = flowRepository.find(Pageable.UNPAGED, tenant, (List<QueryFilter>) null);
+            assertThat(results).hasSize(1);
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    protected void shouldFindWithPagination() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flow1 = flowRepository.create(createTestingLogFlow(tenant, "aaa-flow", "first"));
+        FlowWithSource flow2 = flowRepository.create(createTestingLogFlow(tenant, "bbb-flow", "second"));
+        FlowWithSource flow3 = flowRepository.create(createTestingLogFlow(tenant, "ccc-flow", "third"));
+
+        try {
+            // page = 1, size = 2
+            ArrayListTotal<Flow> page1 = flowRepository.find(Pageable.from(1, 2), tenant, (List<QueryFilter>) null);
+            assertThat(page1.getTotal()).isEqualTo(3);
+            assertThat(page1).hasSize(2);
+
+            // page = 2, size = 2
+            ArrayListTotal<Flow> page2 = flowRepository.find(Pageable.from(2, 2), tenant, (List<QueryFilter>) null);
+            assertThat(page2.getTotal()).isEqualTo(3);
+            assertThat(page2).hasSize(1);
+        } finally {
+            deleteFlow(flow1);
+            deleteFlow(flow2);
+            deleteFlow(flow3);
+        }
+    }
+
+    @Test
+    protected void shouldFindWithSort() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flow1 = flowRepository.create(createTestingLogFlow(tenant, "aaa-flow", "first"));
+        FlowWithSource flow2 = flowRepository.create(createTestingLogFlow(tenant, "bbb-flow", "second"));
+        FlowWithSource flow3 = flowRepository.create(createTestingLogFlow(tenant, "ccc-flow", "third"));
+
+        try {
+            // sort by id ascending
+            ArrayListTotal<Flow> asc = flowRepository.find(
+                Pageable.from(1, 10, Sort.of(Sort.Order.asc("id"))), tenant, (List<QueryFilter>) null
+            );
+            assertThat(asc).extracting(Flow::getId)
+                .containsExactly("aaa-flow", "bbb-flow", "ccc-flow");
+
+            // sort by id descending
+            ArrayListTotal<Flow> desc = flowRepository.find(
+                Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))), tenant, (List<QueryFilter>) null
+            );
+            assertThat(desc).extracting(Flow::getId)
+                .containsExactly("ccc-flow", "bbb-flow", "aaa-flow");
+        } finally {
+            deleteFlow(flow1);
+            deleteFlow(flow2);
+            deleteFlow(flow3);
+        }
+    }
+
+    @Test
+    protected void shouldFindWithNullTriggerClass() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flow = flowRepository.create(createTestingLogFlow(tenant, IdUtils.create(), "test"));
+
+        try {
+            // triggerClass is set to null and should return all flows
+            ArrayListTotal<Flow> results = flowRepository.find(Pageable.UNPAGED, tenant, (Class<? extends AbstractTrigger>) null);
+            assertThat(results).isNotEmpty();
+            assertThat(results.stream().map(Flow::getId).toList()).contains(flow.getId());
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    protected void shouldFindWithSourceNullFilters() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flow = flowRepository.create(createTestingLogFlow(tenant, IdUtils.create(), "test"));
+
+        try {
+            // filters is set to null
+            ArrayListTotal<FlowWithSource> results = flowRepository.findWithSource(Pageable.UNPAGED, tenant, null);
+            assertThat(results).isNotEmpty();
+            assertThat(results.stream().map(FlowWithSource::getId).toList()).contains(flow.getId());
+            assertThat(results).allMatch(f -> f.getSource() != null);
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    protected void shouldFindWithSourcePagination() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flow1 = flowRepository.create(createTestingLogFlow(tenant, "aaa-flow", "first"));
+        FlowWithSource flow2 = flowRepository.create(createTestingLogFlow(tenant, "bbb-flow", "second"));
+        FlowWithSource flow3 = flowRepository.create(createTestingLogFlow(tenant, "ccc-flow", "third"));
+
+        try {
+            ArrayListTotal<FlowWithSource> page1 = flowRepository.findWithSource(Pageable.from(1, 2), tenant, null);
+            assertThat(page1.getTotal()).isEqualTo(3);
+            assertThat(page1).hasSize(2);
+
+            ArrayListTotal<FlowWithSource> page2 = flowRepository.findWithSource(Pageable.from(2, 2), tenant, null);
+            assertThat(page2.getTotal()).isEqualTo(3);
+            assertThat(page2).hasSize(1);
+        } finally {
+            deleteFlow(flow1);
+            deleteFlow(flow2);
+            deleteFlow(flow3);
+        }
+    }
+
+    @Test
+    protected void shouldFindSourceCodeWithNullQuery() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        FlowWithSource flow = flowRepository.create(
+            GenericFlow.fromYaml(tenant, """
+            id: sourcecode-null-query
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(TEST_NAMESPACE))
+        );
+
+        try {
+            ArrayListTotal<SearchResult<Flow>> results = flowRepository.findSourceCode(
+                Pageable.UNPAGED, null, tenant, null
+            );
+            assertThat(results).isNotEmpty();
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @Test
+    protected void shouldFindAllForAllTenants() {
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flow1 = flowRepository.create(createTestingLogFlow(tenant1, IdUtils.create(), "first"));
+        FlowWithSource flow2 = flowRepository.create(createTestingLogFlow(tenant2, IdUtils.create(), "second"));
+
+        try {
+            List<Flow> results = flowRepository.findAllForAllTenants();
+            assertThat(results.stream().map(Flow::getId).toList())
+                .contains(flow1.getId(), flow2.getId());
+        } finally {
+            deleteFlow(flow1);
+            deleteFlow(flow2);
+        }
+    }
+
+    @Test
+    protected void shouldFindAllWithSourceForAllTenants() {
+        String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flow1 = flowRepository.create(createTestingLogFlow(tenant1, IdUtils.create(), "first"));
+        FlowWithSource flow2 = flowRepository.create(createTestingLogFlow(tenant2, IdUtils.create(), "second"));
+
+        try {
+            List<FlowWithSource> results = flowRepository.findAllWithSourceForAllTenants();
+            assertThat(results.stream().map(FlowWithSource::getId).toList())
+                .contains(flow1.getId(), flow2.getId());
+            // verify source is populated
+            assertThat(results.stream()
+                .filter(f -> f.getId().equals(flow1.getId()) || f.getId().equals(flow2.getId()))
+                .toList()
+            ).allMatch(f -> f.getSource() != null);
+        } finally {
+            deleteFlow(flow1);
+            deleteFlow(flow2);
         }
     }
 

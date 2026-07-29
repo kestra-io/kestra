@@ -135,3 +135,39 @@ message ErrorLogsRequest {
     string tenant_id = 2;
     string execution_id = 3;
 }
+
+// Service for task output operations - provides lazy output resolution to workers.
+// Workers use this to resolve task outputs on-demand during Pebble template rendering.
+service TaskOutputProviderService {
+  // Compute all outputs for an execution (fallback for full load)
+  rpc computeOutputs(TaskOutputRequest) returns (OpaqueData);
+
+  // Compute outputs for a specific task within an execution
+  rpc computeOutputsForTask(TaskOutputForTaskRequest) returns (OpaqueData);
+
+  // Find task IDs that have outputs for an execution
+  rpc findTaskIdsWithOutput(TaskOutputRequest) returns (OpaqueData);
+
+  // Get the valueToTaskIds map for iteration support
+  rpc getValueToTaskIds(TaskOutputRequest) returns (OpaqueData);
+}
+
+// Request identifying an execution for task output operations
+message TaskOutputRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+  // The execution ID
+  string execution_id = 3;
+}
+
+// Request to get outputs for a specific task within an execution
+message TaskOutputForTaskRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+  // The execution ID
+  string execution_id = 3;
+  // The task ID
+  string task_id = 4;
+}

@@ -396,7 +396,9 @@ public final class RunVariables {
 
                 builder.put("execution", RunVariables.of(realExecution));
 
-                if (!MapUtils.isEmpty(outputs)) {
+                if (outputs instanceof LazyOutputsMap) {
+                    builder.put("outputs", outputs);
+                } else if (!MapUtils.isEmpty(outputs)) {
                     if (decryptVariables) {
                         final Secret secret = new Secret(secretKey, logger);
                         builder.put("outputs", secret.decrypt(outputs));

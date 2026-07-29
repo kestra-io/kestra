@@ -41,7 +41,9 @@ final class Secret {
     Map<String, Object> decrypt(final Map<String, Object> data) {
         Map<String, Object> decryptedMap = new LinkedHashMap<>(data);
         for (var entry : data.entrySet()) {
-            if (entry.getValue() instanceof Map map) {
+            if (entry.getValue() instanceof LazyOutputsMap) {
+                decryptedMap.put(entry.getKey(), entry.getValue());
+            } else if (entry.getValue() instanceof Map map) {
                 // if some value are of type EncryptedString we decode them and replace the object
                 if (map.get("type") instanceof String typeStr && EncryptedString.TYPE.equalsIgnoreCase(typeStr)) {
                     try {

@@ -62,6 +62,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -94,7 +95,7 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Search for triggers")
     public PagedResults<ApiTriggerAndState> searchTriggers(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
             description = "The sort of current page", examples = {
                 @ExampleObject(name = "Sort by next evaluation date in ascending order", value = "nextEvaluationDate:asc"),
@@ -133,7 +134,7 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Get all triggers for a flow")
     public PagedResults<ApiTriggerState> searchTriggersForFlow(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The namespace") @PathVariable String namespace,

@@ -224,6 +224,27 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     }
 
     /**
+     * Emit the given log entry only when its level is enabled for this context's configured
+     * log level. Prefer this over {@link #emitLog(LogEntry)} for manually built entries:
+     * direct emission bypasses the regular logging pipeline, so the configured level filter
+     * (e.g. a task's {@code logLevel} property) must be applied explicitly.
+     *
+     * @see #emitLog(LogEntry)
+     */
+    public void emitLogIfEnabled(LogEntry logEntry) {
+        if (logEntry.getLevel() == null || isLogLevelEnabled(logEntry.getLevel())) {
+            this.emitLog(logEntry);
+        }
+    }
+
+    /**
+     * Returns true when the given level is enabled for this context's configured log level.
+     */
+    public boolean isLogLevelEnabled(org.slf4j.event.Level level) {
+        return this.loglevel == null || Level.toLevel(level.toString()).isGreaterOrEqual(this.loglevel);
+    }
+
+    /**
      * Emit the log lines attached to a dynamically-generated taskrun through the regular logging
      * pipeline, so the standard appender behaviour (secret masking, long-message splitting, level
      * filtering, forwarding to the server log, file vs queue routing) applies natively — the only

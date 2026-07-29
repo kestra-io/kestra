@@ -136,6 +136,16 @@
             padding-right: 0;
         }
 
+        /* Icon-only buttons centre the glyph. vue-material-design-icons nudges its SVG down by
+           0.125em (baseline alignment meant for inline-with-text use), which reads as off-centre
+           in a round/square button — neutralise it so the icon sits dead centre. */
+        &.is-circle,
+        &.is-square {
+            .material-design-icon > .material-design-icon__svg {
+                bottom: 0;
+            }
+        }
+
         &.is-plain:not(.is-text) {
             --kel-button-border-color: var(--ks-btn-secondary-border-default);
             --kel-button-bg-color: var(--ks-btn-secondary-bg-default);
@@ -191,12 +201,14 @@
         &.is-text {
             &:hover {
                 background-color: var(--ks-bg-hover);
-                border: 1px solid var(--ks-btn-secondary-border-hover);
+                /* Draw the hover ring with an inset shadow rather than a border: a border adds
+                   1px on each side and shifts surrounding layout, a shadow doesn't affect the box. */
+                box-shadow: inset 0 0 0 1px var(--ks-btn-secondary-border-hover);
             }
 
             &:active {
                 background-color: var(--ks-btn-secondary-bg-active);
-                border: 0;
+                box-shadow: none;
             }
         }
 

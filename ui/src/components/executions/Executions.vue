@@ -40,9 +40,9 @@
             :loadData="loadData"
             :data="executionsStore.executions"
             :total="executionsStore.total"
-            :currentPage="urlPage"
-            :pageSize="urlSize"
-            @page-changed="({page, size}: {page: number; size: number}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
+            :currentPage="currentPage"
+            :pageSize="currentSize"
+            @page-changed="onPageChanged"
             @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
@@ -409,7 +409,7 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels, keepSupportedFilters} from "./utils"
+    import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
     import * as Utils from "../../utils/utils"
@@ -628,16 +628,30 @@
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return JSON.stringify(filters)
+        const relevant = props.embed
+            ? Object.fromEntries(Object.entries(filters).filter(([key]) => key === "q" || FILTER_FIELD_PATTERN.test(key)))
+            : filters
+        return JSON.stringify(relevant)
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
     const urlSize = computed(() => Number(route.query.size) || 25)
+    const localPage = ref(1)
+    const localSize = ref(25)
+    const currentPage = computed(() => props.embed ? localPage.value : urlPage.value)
+    const currentSize = computed(() => props.embed ? localSize.value : urlSize.value)
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        if (props.embed) {
+            localPage.value = page
+            localSize.value = size
+        } else {
+            router.push({query: {...route.query, page: String(page), size: String(size)}})
+        }
+    }
 
     watch(filterQueryKey, () => {
-        if (!props.embed) {
-            dataTable.value?.resetAndReload()
-        }
+        dataTable.value?.resetAndReload()
     })
 
     const routeInfo = computed(() => ({title: t("executions")}))
@@ -680,10 +694,7 @@
         return authStore.user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.EXECUTE)
     })
 
-    const isDisplayedTop = computed(() => {
-        if (props.visibleCharts) return true
-        else return props.embed === false && props.filter
-    })
+    const isDisplayedTop = computed(() => props.filter || props.visibleCharts)
 
     const states = computed(() => {
         return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({

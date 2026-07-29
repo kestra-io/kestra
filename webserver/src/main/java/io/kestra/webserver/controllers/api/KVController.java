@@ -34,6 +34,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Max;
 
 @Controller("/api/v1/{tenant}")
 public class KVController {
@@ -56,7 +57,7 @@ public class KVController {
     @Operation(tags = { "KV" }, summary = "List all keys")
     public PagedResults<KVEntry> listAllKeys(
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
             description = "The sort of current page", examples = {
                 @ExampleObject(name = "Sort by key in ascending order", value = "key:asc"),

@@ -167,7 +167,7 @@
             if (shouldShowHelloDialog()) localStorage.setItem("showSurveyDialogAfterLogin", "true")
 
             if (await shouldShowWelcome()) {
-                router.push({name: "welcome"})
+                router.push({name: "ai"})
             } else if (redirectPath.value) {
                 router.push(redirectPath.value)
             } else {

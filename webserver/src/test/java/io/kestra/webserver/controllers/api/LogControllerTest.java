@@ -107,6 +107,13 @@ class LogControllerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/" + tenant + "/logs/search?page=1&size=1001"))
+        );
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     @SuppressWarnings("unchecked")

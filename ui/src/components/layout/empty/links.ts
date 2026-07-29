@@ -100,7 +100,7 @@ export const links: Record<string, EmptyLinks> = {
         learnMore: "https://kestra.io/docs/enterprise/governance/audit-logs",
     },
     quotas: {
-        learnMore: "https://kestra.io/docs/enterprise/governance/quotas",
+        learnMore: "https://kestra.io/docs/workflow-components/quotas",
     },
     instance: {
         video: "https://www.youtube.com/watch?v=pcC3OAJPQao",

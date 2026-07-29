@@ -128,7 +128,7 @@ dependencies {
         api "jakarta.annotation:jakarta.annotation-api:3.0.0"
         api "org.eclipse.angus:jakarta.mail:2.0.5"
         api "com.github.ben-manes.caffeine:caffeine:3.2.4"
-        api "de.siegmar:fastcsv:4.3.1"
+        api "de.siegmar:fastcsv:4.4.0"
         // Json Diff
         api "com.github.java-json-tools:json-patch:1.13"
         api 'com.rabbitmq:amqp-client:5.34.0'

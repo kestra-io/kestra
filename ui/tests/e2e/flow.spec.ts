@@ -37,7 +37,7 @@ test.describe("Flow Page", () => {
         await test.step("create the example Flow", async () => {
             await page.waitForURL("**/flows")
 
-            await page.getByRole("button", {name: "Create", exact: true}).click()
+            await page.getByRole("link", {name: "Create", exact: true}).click()
 
             await page.waitForURL("**/flows/new")
 
@@ -67,8 +67,8 @@ test.describe("Flow Page", () => {
         await page.goto("/ui/flows")
 
         await test.step("create a the flow by pasting the YAML", async () => {
-            await expect(page.getByRole("button", {name: "Create", exact: true})).toBeVisible()
-            await page.getByRole("button", {name: "Create", exact: true}).click()
+            await expect(page.getByRole("link", {name: "Create", exact: true})).toBeVisible()
+            await page.getByRole("link", {name: "Create", exact: true}).click()
             await page.waitForURL("**/flows/new")
             await page.getByTestId("monaco-editor").getByText("Hello World").isVisible()
 

@@ -37,3 +37,41 @@ describe("FlowRunActions Execute gating", () => {
         expect(wrapper.find("[data-onboarding-target='flow-execute-confirm-button']").exists()).toBe(false)
     })
 })
+
+describe("FlowRunActions validation message", () => {
+    const stubs = {
+        KsButton: {template: "<button class=\"ks-button-stub\"><slot/></button>"},
+        KsText: {template: "<span class=\"ks-text-stub\"><slot/></span>"},
+    }
+
+    test("renders the validation message alongside the Execute button in the footer row", () => {
+        const wrapper = mount(FlowRunActions, {
+            props: {flowRun: makeFlowRun({validationMessages: ["Empty key or value is not allowed in labels"]})},
+            global: {plugins: [i18n], stubs},
+        })
+        const message = wrapper.find(".ks-text-stub")
+        expect(message.exists()).toBe(true)
+        expect(message.text()).toBe("Empty key or value is not allowed in labels")
+    })
+
+    test("renders every validation message together when several apply", () => {
+        const wrapper = mount(FlowRunActions, {
+            props: {flowRun: makeFlowRun({validationMessages: ["Empty key or value is not allowed in labels", "System labels are not allowed"]})},
+            global: {plugins: [i18n], stubs},
+        })
+        const messages = wrapper.findAll(".ks-text-stub")
+        expect(messages).toHaveLength(2)
+        expect(messages.map(m => m.text())).toEqual([
+            "Empty key or value is not allowed in labels",
+            "System labels are not allowed",
+        ])
+    })
+
+    test("omits the validation message when there is nothing to report", () => {
+        const wrapper = mount(FlowRunActions, {
+            props: {flowRun: makeFlowRun({validationMessages: []})},
+            global: {plugins: [i18n], stubs},
+        })
+        expect(wrapper.find(".ks-text-stub").exists()).toBe(false)
+    })
+})

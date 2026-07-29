@@ -11,7 +11,7 @@ import "../src/styles/vendor.scss";
 import "../src/styles/app.scss";
 import en from "../src/translations/en.json";
 
-window.KESTRA_BASE_PATH = "/ui";
+window.KESTRA_BASE_PATH = "/ui/";
 window.KESTRA_UI_PATH = "./";
 
 // No backend is running during storybook tests, so short-circuit every axios

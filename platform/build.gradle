@@ -100,7 +100,7 @@ dependencies {
         api "org.apache.maven.resolver:maven-resolver-connector-basic:$mavenResolverVersion"
         api "org.apache.maven.resolver:maven-resolver-transport-file:$mavenResolverVersion"
         api "org.apache.maven.resolver:maven-resolver-transport-apache:$mavenResolverVersion"
-        api 'com.github.oshi:oshi-core:7.4.1'
+        api 'com.github.oshi:oshi-core:7.4.2'
         api 'io.pebbletemplates:pebble:4.1.2'
         api "co.elastic.logging:logback-ecs-encoder:1.8.0"
         api "de.focus-shift:jollyday-core:$jollydayVersion"

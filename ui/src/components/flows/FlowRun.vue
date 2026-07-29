@@ -42,6 +42,9 @@
                         <KsDatePicker
                             v-model="scheduleDate"
                             type="datetime"
+                            :disabledDate="isScheduleCalendarDateDisabled"
+                            :disabled-hours="() => disabledScheduleHours(scheduleDate)"
+                            :disabled-minutes="(hour: number) => disabledScheduleMinutes(scheduleDate, hour)"
                         />
                     </KsFormItem>
                 </KsTabPane>
@@ -100,6 +103,12 @@
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {executeTask} from "../../utils/submitTask"
+    import {
+        disabledScheduleHours,
+        disabledScheduleMinutes,
+        isScheduleCalendarDateDisabled,
+        isScheduleDateInPast,
+    } from "../../utils/scheduleDate"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
     import {normalize} from "../../utils/inputs"
@@ -280,6 +289,11 @@
                     return
                 }
 
+                if (isScheduleDateInPast(scheduleDate.value)) {
+                    toast.error(t("schedule date must be in the future"))
+                    return
+                }
+
                 const mergedInputs = props.selectedTrigger?.inputs
                     ? {...props.selectedTrigger.inputs, ...inputsNoDefaults.value}
                     : inputsNoDefaults.value
@@ -290,6 +304,12 @@
                         .map(label => `${label.key}:${label.value}`),
                 ), "system.from:ui"]
 
+                const resolvedScheduleDate = scheduleDate.value
+                    ? moment(scheduleDate.value)
+                        .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
+                        .toISOString(true)
+                    : undefined
+
                 if (props.replaySubmit) {
                     props.replaySubmit({
                         formRef: form.value!,
@@ -297,7 +317,7 @@
                         namespace: flow.value!.namespace,
                         inputs: mergedInputs,
                         labels: labelStrings,
-                        scheduleDate: scheduleDate.value,
+                        scheduleDate: resolvedScheduleDate,
                     })
                 } else {
                     const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
@@ -308,9 +328,7 @@
                             id: flow.value!.id,
                             namespace: flow.value!.namespace,
                             labels: labelStrings,
-                            scheduleDate: moment(scheduleDate.value)
-                                .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-                                .toISOString(true),
+                            scheduleDate: resolvedScheduleDate,
                             nextStep: true,
                             query: shouldShowOnboardingSuccessAnimation ? {
                                 autoExpandGantt: "true",

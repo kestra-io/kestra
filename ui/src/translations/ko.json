@@ -2192,5 +2192,6 @@
     "workers": "Workers",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
     "yes": "네"
-  }
+  },
+  "schedule date must be in the future": "예약 날짜는 미래여야 합니다"
 }

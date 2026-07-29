@@ -1,4 +1,5 @@
 {
+  "schedule date must be in the future": "计划日期必须是未来时间",
   "zh_CN": {
     "Add flow": "添加流程",
     "Default log level": "默认日志级别",

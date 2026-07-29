@@ -2192,5 +2192,6 @@
     "workers": "Workers",
     "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",
     "yes": "Sì"
-  }
+  },
+  "schedule date must be in the future": "La data di pianificazione deve essere nel futuro"
 }

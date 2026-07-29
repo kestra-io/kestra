@@ -2192,5 +2192,6 @@
     "workers": "Workers",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
     "yes": "हाँ"
-  }
+  },
+  "schedule date must be in the future": "शेड्यूल तिथि भविष्य में होनी चाहिए"
 }

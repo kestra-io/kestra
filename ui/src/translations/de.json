@@ -2192,5 +2192,6 @@
     "workers": "Workers",
     "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",
     "yes": "Ja"
-  }
+  },
+  "schedule date must be in the future": "Das geplante Datum muss in der Zukunft liegen"
 }

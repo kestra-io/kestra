@@ -389,8 +389,8 @@
       "n_items": "[ {count} items ]"
     },
     "file_preview": {
-        "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
-        "load_anyway": "Load anyway"
+      "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
+      "load_anyway": "Load anyway"
     },
     "no_variables": "No variables available.",
     "download": "Download",
@@ -513,7 +513,7 @@
     "Editor fontsize": "Editor font size",
     "Editor fontfamily": "Editor font family",
     "errors": {
-       "404": {
+      "404": {
         "title": "Page not found",
         "content": "The requested URL was not found on this server.<br />That’s all we know.",
         "flow or execution": "The flow or execution you are looking for does not exist."
@@ -2192,5 +2192,6 @@
         "label": "{count} Error(s)"
       }
     }
-  }
+  },
+  "schedule date must be in the future": "Schedule date must be in the future"
 }

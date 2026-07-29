@@ -2192,5 +2192,6 @@
     "workers": "Workers",
     "wrong labels": "Пустой key или value не допускается в метках",
     "yes": "Да"
-  }
+  },
+  "schedule date must be in the future": "Дата планирования должна быть в будущем"
 }

@@ -2192,5 +2192,6 @@
     "workers": "Workers",
     "wrong labels": "No se permite una key o value vacía en las etiquetas",
     "yes": "Sí"
-  }
+  },
+  "schedule date must be in the future": "La fecha programada debe ser en el futuro"
 }

@@ -2192,5 +2192,6 @@
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
     "yes": "はい"
-  }
+  },
+  "schedule date must be in the future": "スケジュール日時は未来である必要があります"
 }

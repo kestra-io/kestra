@@ -254,9 +254,9 @@
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
-    import {computeSelectionSummary, type ReplaceContext} from "../../utils/sourceSearchDiff"
+    import {computeSelectionSummary, type ReplaceContext, type SourceSearchResult} from "../../utils/sourceSearchDiff"
 
-    import {useFlowStore} from "../../stores/flow"
+    import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
     import type {SourceSearchReplacePreviewResponse, SourceSearchReplaceApplyResponse, SourceSearchScope} from "@kestra-io/kestra-sdk"
 
     const {loadInit} = useRestoreUrl()
@@ -264,7 +264,6 @@
     const {t} = useI18n()
     const route = useRoute()
     const router = useRouter()
-    const flowStore = useFlowStore()
     const toast = useToast()
 
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
@@ -352,7 +351,7 @@
         })
     }
 
-    const results = computed(() => flowStore.search ?? [])
+    const results = ref<SourceSearchResult[]>([])
     const hasResults = computed(() => results.value.length > 0)
     const totalMatchCount = computed(() => results.value.reduce((sum, group) => sum + group.matches.length, 0))
     const readOnlyExcludedCount = computed(() => results.value.filter((group) => !group.editable).length)
@@ -452,7 +451,7 @@
         if (!query.value) return
         previewLoading.value = true
         try {
-            previewResponse.value = await flowStore.previewSourceSearchReplace({
+            previewResponse.value = await FlowsAPI.previewReplaceBySourceCode({
                 ...searchFilters.value,
                 query: query.value,
                 namespace: namespaceFilter.value,
@@ -479,7 +478,7 @@
     async function applyReplace(flows: {namespace: string; id: string}[]) {
         if (flows.length === 0 || !query.value) return
         try {
-            await reportReplaceResult(await flowStore.applySourceSearchReplace({
+            await reportReplaceResult(await FlowsAPI.applyReplaceBySourceCode({
                 ...searchFilters.value,
                 query: query.value,
                 replacement: replacement.value,
@@ -493,7 +492,7 @@
     async function onReplaceMatch(value: {namespace: string; id: string; line: number; column: number}) {
         if (!query.value) return
         try {
-            await reportReplaceResult(await flowStore.replaceLineSourceSearch({
+            await reportReplaceResult(await FlowsAPI.replaceLineBySourceCode({
                 query: query.value,
                 caseSensitive: caseSensitive.value,
                 wholeWord: wholeWord.value,
@@ -519,8 +518,7 @@
     async function fetchResults() {
         if (!loadInit.value || !query.value) {
             if (!query.value) {
-                flowStore.search = undefined
-                flowStore.total = 0
+                results.value = []
             }
             return
         }
@@ -530,16 +528,17 @@
         previewResponse.value = null
 
         try {
-            await flowStore.searchFlows({
+            const response = await FlowsAPI.searchFlowsBySourceCode({
                 ...searchFilters.value,
                 page: 1,
                 size: 200,
                 q: query.value,
                 namespace: namespaceFilter.value,
             })
+            results.value = response.results as SourceSearchResult[]
         } catch (e: any) {
             errorMessage.value = e?.response?.data?.message ?? t("source_search.search_failed")
-            flowStore.search = undefined
+            results.value = []
         } finally {
             loading.value = false
         }

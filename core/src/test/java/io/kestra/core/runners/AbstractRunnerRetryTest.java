@@ -110,9 +110,9 @@ public abstract class AbstractRunnerRetryTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/retry-subflow.yaml")
-    void retrySubflow(Execution execution) {
-        retryCaseTest.retrySubflow(execution);
+    @LoadFlows(value = { "flows/valids/retry-subflow.yaml", "flows/valids/failed-first.yaml" }, tenantId = "retrysubflowtenant")
+    void retrySubflow() throws TimeoutException, QueueException {
+        retryCaseTest.retrySubflow("retrysubflowtenant");
     }
 
     @Test

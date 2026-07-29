@@ -2,7 +2,9 @@ package io.kestra.plugin.core.dashboard.data;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.event.Level;
 
@@ -43,12 +45,21 @@ public interface ILogs extends IData<ILogs.Fields> {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LEVEL));
                 levelFilters.forEach(f ->
                 {
-                    Level level = f.value() instanceof Level l ? l : Level.valueOf((String) f.value());
-                    List<Level> levels = switch (f.operation()) {
-                        case GREATER_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMin(level);
-                        case LESS_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMax(level);
-                        default -> throw new IllegalArgumentException("Unsupported operation for LEVEL: " + f.operation());
-                    };
+                    List<Level> levels;
+                    if (f.value() instanceof List<?> list) {
+                        levels = list.stream().map(l -> Level.valueOf(l.toString())).toList();
+                    } else if(f.value() instanceof String str && str.indexOf(',') > 0) {
+                        levels = Arrays.stream(str.split(",")).map(Level::valueOf).toList();
+                    } else {
+                        Level level = f.value() instanceof Level l ? l : Level.valueOf((String) f.value());
+                        levels = switch (f.operation()) {
+                            case GREATER_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMin(level);
+                            case LESS_THAN_OR_EQUAL_TO -> LogEntry.findLevelsByMax(level);
+                            case IN, NOT_IN -> List.of(level);
+                            default -> throw new IllegalArgumentException("Unsupported operation for LEVEL: " + f.operation());
+                        };
+                    }
+
                     updatedWhere.add(
                         In.<Fields> builder()
                             .field(Fields.LEVEL)

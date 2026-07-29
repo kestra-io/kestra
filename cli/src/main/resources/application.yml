@@ -54,14 +54,8 @@ micronaut:
           - /metrics/.+
           - /prometheus(\?.*)?
     http-version: HTTP_1_1
-    # CORS is off by default; each deployment decides whether to enable it and for which named
-    # configuration(s)/origins (micronaut.server.cors.configurations.<name>). A configuration
-    # declared here with no `allowedOrigins` would default to matching ANY origin with credentials
-    # allowed (Micronaut's CorsOriginConfiguration default), and CorsFilter takes the first matching
-    # configuration — so a config shipped as an OSS default risks silently bypassing a deployment's
-    # own hardened, origin-restricted configuration. Deployments that enable CORS and want browser
-    # clients to read the X-Kestra-Edition / X-Kestra-Route-Matched 404-disambiguation headers (see
-    # EditionHeaderFilter) must add `exposed-headers` for both to their own named configuration.
+    # No CORS defaults are shipped on purpose: see NotFoundHeadersCorsCustomizer, which adds the
+    # 404-disambiguation headers to whatever CORS configurations a deployment defines itself.
   security:
     filter:
       enabled: false

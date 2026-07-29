@@ -87,18 +87,6 @@ If you're doing frontend development, you can run `npm run dev` from the `ui` fo
 
 ### CORS and the 404 disambiguation headers
 
-Kestra tags every 404 response with `X-Kestra-Edition` and `X-Kestra-Route-Matched` (see `EditionHeaderFilter`) so a browser-based client (e.g. `client-sdk`) can tell a genuine not-found apart from a route that simply doesn't exist on this server/edition. Browsers only expose response headers to cross-origin JavaScript that the server explicitly lists in `Access-Control-Expose-Headers`. If your CORS-enabled configuration is consumed by such a client, add both headers to its `exposedHeaders`:
+Kestra tags every 404 response with `X-Kestra-Edition` and `X-Kestra-Route-Matched` (see `NotFoundHeadersFilter`) so a browser-based client (e.g. `client-sdk`) can tell a genuine not-found apart from a route that simply doesn't exist on this server/edition.
 
-```yaml
-micronaut:
-  server:
-    cors:
-      enabled: true
-      configurations:
-        all:
-          allowedOrigins:
-            - http://localhost:5173
-          exposedHeaders:
-            - X-Kestra-Edition
-            - X-Kestra-Route-Matched
-```
+Browsers hide any response header the server doesn't list in `Access-Control-Expose-Headers`, so cross-origin JavaScript would otherwise never see these two. You don't need to configure that: `NotFoundHeadersCorsCustomizer` appends both header names to the `exposed-headers` of every CORS configuration you define — the `all` configuration in the snippet above included. Kestra ships no CORS configuration of its own, because a named configuration declared without `allowedOrigins` matches *any* origin with credentials allowed, and `CorsFilter` uses the first configuration matching the request origin — an OSS default could therefore shadow your own origin-restricted one.

@@ -83,7 +83,10 @@ test.describe("Flow Page", () => {
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
             await page.locator(".tab-select").click()
             await page.getByRole("option", {name: "Overview"}).click()
-            await expect(page.locator("#app").getByText(flowId)).toBeVisible()
+            // Scoped to the topnav title, not #app: the Monaco editor (still disposing during
+            // the tab switch) also contains the flowId, so a broader match is a strict-mode
+            // violation, not a sign the navigation failed.
+            await expect(page.locator("#topnav-title-slot").getByText(flowId)).toBeVisible()
         })
 
         const inputValue = "my-input_" + testUUID

@@ -44,4 +44,11 @@ class DockerErrorHandlingTest {
 
         assertThat(Docker.isDockerSocketAccessError(exception)).isFalse();
     }
+
+    @Test
+    void shouldUploadWorkingDirectoryFilesForVolumeAndMount() {
+        // Given / When / Then — both strategies must upload inputs so scripts exist in-container
+        assertThat(Docker.shouldUploadWorkingDirectoryFiles(Docker.FileHandlingStrategy.VOLUME)).isTrue();
+        assertThat(Docker.shouldUploadWorkingDirectoryFiles(Docker.FileHandlingStrategy.MOUNT)).isTrue();
+    }
 }

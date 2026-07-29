@@ -291,7 +291,15 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         description = """
             How to handle local files (input files, output files, namespace files, ...).
             By default, we create a volume and copy the file into the volume bind path.
-            Configuring it to `MOUNT` will mount the working directory instead."""
+            Configuring it to `MOUNT` will bind-mount the working directory instead, which
+            avoids copying output files back after the task finishes (useful for large files).
+
+            With `MOUNT`, input files are still uploaded into the container before start so
+            scripts keep working when the Docker daemon cannot see the worker filesystem
+            (for example Kestra running in Docker with only the Docker socket mounted).
+            For `MOUNT` outputs to appear on the worker without a download round-trip, the
+            task `tmp-dir` must also be visible to the Docker daemon (as in the standard
+            Compose setup that binds `/tmp/kestra-wd`)."""
     )
     @NotNull
     @Builder.Default
@@ -437,7 +445,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     logger.trace("Container created: {}", containerId);
                 }
 
-                // create a volume if we need to handle files
+                // VOLUME tracks a named volume for cleanup/download; files themselves are always
+                // copied into the container via the Docker API (see uploadWorkingDirectoryFiles).
                 if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
                     CreateVolumeCmd files = dockerClient.createVolumeCmd()
                         .withLabels(labels);
@@ -445,56 +454,20 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     if (logger.isTraceEnabled()) {
                         logger.trace("Volume created: {}", filesVolumeName);
                     }
+                }
 
-                    String remotePath = windowsToUnixPath(taskCommands.getWorkingDirectory().toString());
-
-                    // first, create an archive
-                    Path fileArchive = runContext.workingDir().createFile("inputFiles.tar");
-                    try (
-                        FileOutputStream fos = new FileOutputStream(fileArchive.toString());
-                        TarArchiveOutputStream out = new TarArchiveOutputStream(fos)
-                    ) {
-                        out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
-                        out.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX); // allow large archive name
-
-                        for (Path file : relativeWorkingDirectoryFilesPaths) {
-                            Path resolvedFile = runContext.workingDir().resolve(file);
-                            TarArchiveEntry entry = out.createArchiveEntry(resolvedFile.toFile(), file.toString());
-                            // Preserve POSIX permissions if supported
-                            try {
-                                Set<PosixFilePermission> perms = Files.getPosixFilePermissions(resolvedFile);
-                                entry.setMode(UnixModeToPosixFilePermissions.fromPosixFilePermissions(perms));
-                            } catch (UnsupportedOperationException | IOException ignore) {
-                                // Skipping unix file permission
-                            }
-                            out.putArchiveEntry(entry);
-                            if (!Files.isDirectory(resolvedFile)) {
-                                try (InputStream fis = Files.newInputStream(resolvedFile)) {
-                                    IOUtils.copy(fis, out);
-                                }
-                            }
-                            out.closeArchiveEntry();
-                        }
-                        out.finish();
-                    }
-
-                    // then send it to the container
-                    try (InputStream is = new FileInputStream(fileArchive.toString())) {
-                        CopyArchiveToContainerCmd copyArchiveToContainerCmd = dockerClient.copyArchiveToContainerCmd(containerId)
-                            .withTarInputStream(is)
-                            .withRemotePath(remotePath);
-                        copyArchiveToContainerCmd.exec();
-                    }
-
-                    Files.delete(fileArchive);
-
-                    // create the outputDir if needed
-                    if (taskCommands.outputDirectoryEnabled()) {
-                        CopyArchiveToContainerCmd copyArchiveToContainerCmd = dockerClient.copyArchiveToContainerCmd(containerId)
-                            .withHostResource(taskCommands.getOutputDirectory().toString())
-                            .withRemotePath(remotePath);
-                        copyArchiveToContainerCmd.exec();
-                    }
+                // Upload working-directory files for both VOLUME and MOUNT.
+                // MOUNT still needs this upload: a bind mount alone is empty when the Docker
+                // daemon does not share the worker filesystem (common with docker.sock-only
+                // setups), which otherwise fails scripts with FileNotFoundException.
+                if (needVolume && shouldUploadWorkingDirectoryFiles(strategy)) {
+                    uploadWorkingDirectoryFiles(
+                        dockerClient,
+                        containerId,
+                        runContext,
+                        taskCommands,
+                        relativeWorkingDirectoryFilesPaths
+                    );
                 }
 
                 // we check, if killed before container start
@@ -693,6 +666,73 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return false;
     }
 
+    /**
+     * Whether working-directory files should be uploaded into the container before start.
+     * Both {@link FileHandlingStrategy#VOLUME} and {@link FileHandlingStrategy#MOUNT} need
+     * this so input/script files exist even when a bind mount does not expose the worker FS.
+     */
+    static boolean shouldUploadWorkingDirectoryFiles(FileHandlingStrategy strategy) {
+        return FileHandlingStrategy.VOLUME.equals(strategy) || FileHandlingStrategy.MOUNT.equals(strategy);
+    }
+
+    private void uploadWorkingDirectoryFiles(
+        DockerClient dockerClient,
+        String containerId,
+        RunContext runContext,
+        TaskCommands taskCommands,
+        List<Path> relativeWorkingDirectoryFilesPaths
+    ) throws IOException {
+        String remotePath = windowsToUnixPath(taskCommands.getWorkingDirectory().toAbsolutePath().normalize().toString());
+
+        // first, create an archive
+        Path fileArchive = runContext.workingDir().createFile("inputFiles.tar");
+        try (
+            FileOutputStream fos = new FileOutputStream(fileArchive.toString());
+            TarArchiveOutputStream out = new TarArchiveOutputStream(fos)
+        ) {
+            out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
+            out.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX); // allow large archive name
+
+            for (Path file : relativeWorkingDirectoryFilesPaths) {
+                Path resolvedFile = runContext.workingDir().resolve(file);
+                TarArchiveEntry entry = out.createArchiveEntry(resolvedFile.toFile(), file.toString());
+                // Preserve POSIX permissions if supported
+                try {
+                    Set<PosixFilePermission> perms = Files.getPosixFilePermissions(resolvedFile);
+                    entry.setMode(UnixModeToPosixFilePermissions.fromPosixFilePermissions(perms));
+                } catch (UnsupportedOperationException | IOException ignore) {
+                    // Skipping unix file permission
+                }
+                out.putArchiveEntry(entry);
+                if (!Files.isDirectory(resolvedFile)) {
+                    try (InputStream fis = Files.newInputStream(resolvedFile)) {
+                        IOUtils.copy(fis, out);
+                    }
+                }
+                out.closeArchiveEntry();
+            }
+            out.finish();
+        }
+
+        // then send it to the container
+        try (InputStream is = new FileInputStream(fileArchive.toString())) {
+            CopyArchiveToContainerCmd copyArchiveToContainerCmd = dockerClient.copyArchiveToContainerCmd(containerId)
+                .withTarInputStream(is)
+                .withRemotePath(remotePath);
+            copyArchiveToContainerCmd.exec();
+        }
+
+        Files.delete(fileArchive);
+
+        // create the outputDir if needed
+        if (taskCommands.outputDirectoryEnabled()) {
+            CopyArchiveToContainerCmd copyArchiveToContainerCmd = dockerClient.copyArchiveToContainerCmd(containerId)
+                .withHostResource(taskCommands.getOutputDirectory().toString())
+                .withRemotePath(remotePath);
+            copyArchiveToContainerCmd.exec();
+        }
+    }
+
     private static String dockerSocketNotAccessibleMessage(final String resolvedHost) {
         return "Docker execution failed because Docker socket is not accessible.\n\n" +
             "Fix:\n" +
@@ -832,7 +872,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         List<Bind> binds = new ArrayList<>();
         if (FileHandlingStrategy.MOUNT.equals(runContext.render(this.fileHandlingStrategy).as(FileHandlingStrategy.class).orElse(null)) && workingDirectory != null) {
-            String bindPath = windowsToUnixPath(workingDirectory.toString());
+            // Use an absolute, normalized path so the bind source matches the path used for
+            // workingDir / commands (toString() alone can stay relative on some setups).
+            String bindPath = windowsToUnixPath(workingDirectory.toAbsolutePath().normalize().toString());
             binds.add(
                 new Bind(
                     bindPath,

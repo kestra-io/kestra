@@ -401,8 +401,9 @@
     }
 
     .copilot-artwork-img {
-        width: var(--ks-spacing-16);
-        height: var(--ks-spacing-16);
+        /* 128px per the design spec; no spacing token maps to 8rem, so a raw rem is the fallback. */
+        width: 8rem;
+        height: 8rem;
     }
 
     .copilot-empty-title {

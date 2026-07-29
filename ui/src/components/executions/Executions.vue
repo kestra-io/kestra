@@ -14,7 +14,7 @@
                         </template>
                     </li>
                 </template>
-                <template v-if="$route.name === 'flows/update'">
+                <template v-if="routeFamily($route.name) === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
                             <KsButton :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
@@ -188,7 +188,7 @@
                     <template v-else-if="col.prop === 'state.duration'">
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
-                    <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
+                    <template v-else-if="col.prop === 'namespace' && routeFamily($route.name) !== 'flows/update'">
                         <KsEntityLink
                             v-if="scope.row?.namespace"
                             entity="namespace"
@@ -196,7 +196,7 @@
                             :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
                         />
                     </template>
-                    <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
+                    <template v-else-if="col.prop === 'flowId' && routeFamily($route.name) !== 'flows/update'">
                         <KsEntityLink
                             v-if="scope.row?.flowId"
                             entity="flow"
@@ -398,6 +398,7 @@
     import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system"
@@ -595,7 +596,7 @@
     ])
 
     const storageKey = computed(() =>
-        route.name === "flows/update"
+        routeFamily(route.name) === "flows/update"
             ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS
             : storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
     )
@@ -689,7 +690,7 @@
 
 
     const displayButtons = computed(() => {
-        return (route.name === "flows/update") || (route.name === "executions/list")
+        return (routeFamily(route.name) === "flows/update") || (route.name === "executions/list")
     })
 
     const canCheck = computed(() => {
@@ -1080,11 +1081,10 @@
 
     const editFlow = () => {
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
-                tab: "edit",
                 tenant: route.params?.tenant,
             },
         })

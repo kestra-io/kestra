@@ -22,6 +22,15 @@ describe("scopeFromRoute", () => {
         expect(scopeFromRoute({name: "home", params: {}})).toBeNull()
     })
 
+    it("maps a detail page's actual (child) route name, not just its redirecting parent", () => {
+        expect(scopeFromRoute({name: "executions/update/overview", params: {namespace: "company.team", flowId: "my-flow", id: "exec-1"}}))
+            .toEqual({kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"})
+        expect(scopeFromRoute({name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}))
+            .toEqual({kind: "FLOW", namespace: "company.team", flowId: "my-flow"})
+        expect(scopeFromRoute({name: "namespaces/update/overview", params: {id: "company.team"}}))
+            .toEqual({kind: "NAMESPACE", namespace: "company.team"})
+    })
+
     it("is defensive about missing/oddly-typed route input", () => {
         expect(scopeFromRoute(undefined)).toBeNull()
         expect(scopeFromRoute(null)).toBeNull()

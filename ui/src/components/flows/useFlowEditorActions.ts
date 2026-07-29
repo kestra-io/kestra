@@ -42,11 +42,10 @@ export function useFlowEditorActions() {
 
         if (isCreating && outcome === "redirect_to_update") {
             await router.push({
-                name: "flows/update",
+                name: "flows/update/edit",
                 params: {
                     id: flowStore.flow?.id,
                     namespace: flowStore.flow?.namespace,
-                    tab: "edit",
                     tenant: tenant.value,
                 },
                 query: route.query,
@@ -121,12 +120,11 @@ export function useFlowEditorActions() {
                 onboardingStore.recordExecution()
 
                 await router.push({
-                    name: "executions/update",
+                    name: "executions/update/gantt",
                     params: {
                         namespace: response.namespace,
                         flowId: response.flowId,
                         id: response.id,
-                        tab: "gantt",
                         tenant: tenant.value,
                     },
                     query: {
@@ -141,11 +139,10 @@ export function useFlowEditorActions() {
 
             if (isCreating && outcome === "redirect_to_update") {
                 await router.push({
-                    name: "flows/update",
+                    name: "flows/update/edit",
                     params: {
                         id: flowStore.flow?.id,
                         namespace: flowStore.flow?.namespace,
-                        tab: "edit",
                         tenant: tenant.value,
                     },
                     query: route.query,

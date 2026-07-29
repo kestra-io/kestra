@@ -354,7 +354,7 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsTabs` / `KsTabPane` / `KsRouterTab` | Tabbed interface |
+| `KsTabs` / `KsTabPane` | Tabbed interface |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu |
 | `KsTopNavBar` | Top navigation bar |

@@ -7,6 +7,7 @@ import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -17,7 +18,7 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.flow_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_flows"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),

@@ -71,6 +71,7 @@
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import {ALLOWED_CREATION_ROUTES} from "../composables/useDashboards"
+    import {routeFamily} from "../../../utils/routeFamily"
 
     const props = defineProps({
         dashboard: {type: Object, default: undefined},
@@ -82,7 +83,7 @@
     const isAllowedDashboard = computed(() => authStore.user?.isAllowed(resource.DASHBOARD, action.CREATE, "*"))
 
     const showSelector = computed(() =>
-        ALLOWED_CREATION_ROUTES.includes(String(route.name)) && isAllowedDashboard.value,
+        ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)) && isAllowedDashboard.value,
     )
 
     const routeInfo = computed(() => ({title: props.dashboard?.title || t("overview")}))

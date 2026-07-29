@@ -1,6 +1,7 @@
 import type {RouteRecordRaw} from "vue-router"
 import resource from "../../models/resource"
 import action from "../../models/action"
+import {resolveDefaultTab} from "../../utils/routeTabs"
 
 /** Parent route name for the Flows detail page. */
 export const FLOW_PARENT_ROUTE = "flows/update"
@@ -124,7 +125,8 @@ export const FLOW_ROUTE: RouteRecordRaw = {
     // Resolve legacy deep-links `{name: "flows/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {
-        const tab = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY) || "edit"
+        const requested = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY)
+        const tab = resolveDefaultTab(FLOW_TAB_ROUTES, requested, "edit")
         return {name: `${FLOW_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
     },
     children: FLOW_TAB_ROUTES,

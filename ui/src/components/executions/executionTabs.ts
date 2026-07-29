@@ -1,4 +1,5 @@
 import type {RouteRecordRaw} from "vue-router"
+import {resolveDefaultTab} from "../../utils/routeTabs"
 
 /** Parent route name for the Executions detail page. */
 export const EXECUTION_PARENT_ROUTE = "executions/update"
@@ -84,7 +85,8 @@ export const EXECUTION_ROUTE: RouteRecordRaw = {
     // Resolve legacy deep-links `{name: "executions/update", params: {tab}}` and bare
     // `/:id` URLs to the matching child route, preserving params and query.
     redirect: (to) => {
-        const tab = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY) || "overview"
+        const requested = (to.params.tab as string) || localStorage.getItem(DEFAULT_TAB_STORAGE_KEY)
+        const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, requested, "overview")
         return {name: `${EXECUTION_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
     },
     children: EXECUTION_TAB_ROUTES,

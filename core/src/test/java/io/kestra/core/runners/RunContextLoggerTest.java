@@ -2,11 +2,13 @@ package io.kestra.core.runners;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.jupiter.api.Test;
@@ -15,17 +17,21 @@ import org.slf4j.Logger;
 import org.slf4j.event.KeyValuePair;
 import org.slf4j.event.Level;
 
+import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.PropertyContext;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.utils.TestsUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
@@ -43,6 +49,12 @@ class RunContextLoggerTest {
 
     @Inject
     private LogEntryEmitter logEntryEmitter;
+
+    @Inject
+    private VariableRenderer renderer;
+
+    @Value("${kestra.encryption.secret-key}")
+    private String secretKey;
 
     @Test
     void logs() {
@@ -132,6 +144,43 @@ class RunContextLoggerTest {
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElseThrow().getMessage())
             .isEqualTo("test ****** ************ ****** ************");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.WARN)).findFirst().orElseThrow().getMessage()).isEqualTo("test ******");
+    }
+
+    @Test
+    void shouldMaskSecretFlowOutputWhenDecrypted() throws GeneralSecurityException {
+        // Given a SECRET-typed flow output already encrypted, as it would be after being produced by a subflow.
+        // Persisted/wire-format shape is a plain Map{type, value} (as produced by JacksonMapper.toMap), not an
+        // EncryptedString instance.
+        String encrypted = EncryptionService.encrypt(secretKey, "my-super-secret-value");
+        Map<String, Object> outputs = Map.of(
+            "subflow", Map.of("outputs", Map.of("secret", Map.of("type", EncryptedString.TYPE, "value", encrypted)))
+        );
+
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(log -> logs.add(log));
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            false
+        );
+
+        // When the outputs are decrypted while building the run variables
+        new RunVariables.DefaultBuilder(Optional.of(secretKey))
+            .withExecution(execution)
+            .withOutputs(outputs)
+            .withDecryptVariables(true)
+            .build(runContextLogger, PropertyContext.create(renderer));
+
+        // Then the decrypted plaintext is registered for log masking, exactly like a SECRET input
+        runContextLogger.logger().info("the secret is {}", "my-super-secret-value");
+
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 1);
+        assertThat(matchingLog.getFirst().getMessage()).isEqualTo("the secret is ******");
     }
 
     @Test

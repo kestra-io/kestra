@@ -1,9 +1,9 @@
 package io.kestra.mcp;
 
+import java.util.UUID;
+
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Singleton;
-
-import java.util.UUID;
 
 @Singleton
 public class McpSessionFactory {

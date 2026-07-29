@@ -69,7 +69,7 @@
     }
 
     .stat-icon {
-        font-size: 1.1em;
+        font-size: var(--ks-font-size-lg);
         line-height: 0;
         flex-shrink: 0;
         color: var(--ks-icon-muted);

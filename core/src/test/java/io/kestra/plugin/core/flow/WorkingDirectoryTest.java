@@ -10,13 +10,11 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.executions.ExecutionKind;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -29,6 +27,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -37,7 +36,9 @@ import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -85,7 +86,7 @@ public class WorkingDirectoryTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/working-directory-loop.yaml"})
+    @LoadFlows({ "flows/valids/working-directory-loop.yaml" })
     void each() throws TimeoutException, QueueException, InternalException {
         suite.loop(runnerUtils);
     }
@@ -145,6 +146,12 @@ public class WorkingDirectoryTest {
         suite.invalidRunIf(runnerUtils);
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/working-directory-secret-output.yml" })
+    void secretOutputMasking() throws Exception {
+        suite.secretOutputMasking(runnerUtils);
+    }
+
     @Singleton
     public static class Suite {
         @Inject
@@ -155,6 +162,8 @@ public class WorkingDirectoryTest {
         TaskOutputService taskOutputService;
         @Inject
         ExecutionRepositoryInterface executionRepository;
+        @Inject
+        DispatchQueueInterface<LogEntry> logQueue;
 
         public void success(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException, io.kestra.core.exceptions.InternalException {
             Execution execution = runnerUtils.runOne(
@@ -184,14 +193,13 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(2);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+            List<Execution> subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
             assertThat(subExecutions).hasSize(1);
 
-            List<Execution> subSubExecutions = executionRepository.findLoopSubExecutions(subExecutions.getFirst().getTenantId(), subExecutions.getFirst().getId());
+            List<Execution> subSubExecutions = executionRepository.findLoopSubExecutions(subExecutions.getFirst().getTenantId(), subExecutions.getFirst().getId(), null);
             assertThat(subExecutions).hasSize(1);
 
-
-            List<Execution> subSubSubExecutions = executionRepository.findLoopSubExecutions(subSubExecutions.getFirst().getTenantId(), subSubExecutions.getFirst().getId());
+            List<Execution> subSubSubExecutions = executionRepository.findLoopSubExecutions(subSubExecutions.getFirst().getTenantId(), subSubExecutions.getFirst().getId(), null);
             assertThat(subSubSubExecutions).hasSize(1);
 
             assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("2_end").getFirst()).get("value")).startsWith("kestra://");
@@ -311,7 +319,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
             assertThat(subExecutions.size()).isEqualTo(1);
             assertThat(((String) taskOutputService.getOutputs(subExecutions.getFirst().findTaskRunsByTaskId("log-taskrun").getFirst()).get("value"))).contains("1");
         }
@@ -322,7 +330,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+            var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
             assertThat(subExecutions.size()).isEqualTo(1);
             assertThat(((String) taskOutputService.getOutputs(subExecutions.getFirst().findTaskRunsByTaskId("log-workerparent").getFirst()).get("value")))
                 .contains("{\"task\":{\"id\":\"seq\"}}");
@@ -381,6 +389,29 @@ public class WorkingDirectoryTest {
             assertThat(encryptedValue).isNotEqualTo("Hello World");
             assertThat(runContextFactory.of().decrypt(encryptedValue)).isEqualTo("Hello World");
             assertThat(taskOutputService.getOutputs(execution.findTaskRunsByTaskId("decrypted").getFirst()).get("value")).isEqualTo("Hello World");
+        }
+
+        public void secretOutputMasking(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException, InterruptedException, io.kestra.core.exceptions.InternalException {
+            // Given — a listener on the log queue for the WorkingDirectory's `log` subtask
+            AtomicReference<LogEntry> logEntry = new AtomicReference<>();
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            logQueue.addListener(left ->
+            {
+                if (left.getFlowId().equals("working-directory-secret-output") && left.getTaskId().equals("log")) {
+                    logEntry.set(left);
+                    countDownLatch.countDown();
+                }
+            });
+
+            // When — a WorkingDirectory subtask (`encrypted`) produces a SECRET-typed output and the
+            // next subtask (`log`) logs it, reproducing the original repro across the subtask boundary
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory-secret-output");
+
+            // Then — the `log` subtask masks the decrypted secret instead of printing it in plaintext
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+            assertThat(logEntry.get()).isNotNull();
+            assertThat(logEntry.get().getMessage()).isEqualTo("secret is ******");
         }
 
         public void invalidRunIf(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {

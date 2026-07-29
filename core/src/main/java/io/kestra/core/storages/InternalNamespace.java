@@ -298,7 +298,9 @@ public class InternalNamespace implements Namespace {
     }
 
     private FileNotFoundException fileNotFound(Path path, @Nullable Integer revision) {
-        return new FileNotFoundException(Optional.ofNullable(revision).map(v -> "Revision " + v + " of file").orElse("File") + " '" + path + "' was not found in namespace '" + namespace + "'.");
+        return new FileNotFoundException(
+            Optional.ofNullable(revision).map(v -> "Revision " + v + " of file").orElse("File") + " '" + path + "' was not found in namespace '" + namespace + "'."
+        );
     }
 
     private Optional<NamespaceFileMetadata> findByPath(Path path, boolean allowDeleted, @Nullable Integer revision) throws IOException {

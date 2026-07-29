@@ -11,9 +11,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.cookie.Cookie;
-
 import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.exceptions.ValidationErrorException;
@@ -28,6 +25,8 @@ import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.cookie.Cookie;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -206,10 +205,31 @@ public class BasicAuthService {
     }
 
     /**
+     * Returns {@code true} if {@code username}/{@code password} match the configured credentials.
+     * Used by the login endpoint, which never needs to see the {@value BASIC_AUTH_COOKIE_NAME} token itself.
+     */
+    public boolean validateCredentials(String username, String password) {
+        SaltedBasicAuthCredentials credentials = credentials();
+        if (credentials == null || username == null || password == null) {
+            return false;
+        }
+        return username.equals(credentials.getUsername()) && AuthUtils.matches(credentials.getSalt(), password, credentials.getPassword());
+    }
+
+    /**
+     * Builds the {@value BASIC_AUTH_COOKIE_NAME} cookie token for a set of credentials, i.e. the same
+     * base64(username:password) value historically computed client-side, now issued only by the server.
+     */
+    public static String encodeToken(String username, String password) {
+        return Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
      * Returns {@code true} if the request carries valid basic-auth credentials
      * (either via the {@value BASIC_AUTH_COOKIE_NAME} cookie or an {@code Authorization: Basic} header).
      *
-     * <p>bcrypt verification is only performed on a cache miss. Subsequent requests
+     * <p>
+     * bcrypt verification is only performed on a cache miss. Subsequent requests
      * with the same token hit the in-memory cache and pay only a SHA-256 hash cost,
      * keeping per-request latency negligible while the at-rest hash remains bcrypt-strength.
      */
@@ -227,7 +247,14 @@ public class BasicAuthService {
             String tokenSha256 = sha256Hex(token);
 
             // Fast path: same token as last verified — skip bcrypt entirely.
-            if (tokenSha256.equals(lastVerifiedTokenSha256.get())) {
+            // compare via MessageDigest.isEqual to prevent timing attacks
+            String cachedTokenSha256 = lastVerifiedTokenSha256.get();
+            if (
+                cachedTokenSha256 != null && MessageDigest.isEqual(
+                    tokenSha256.getBytes(StandardCharsets.UTF_8),
+                    cachedTokenSha256.getBytes(StandardCharsets.UTF_8)
+                )
+            ) {
                 return true;
             }
 
@@ -259,7 +286,8 @@ public class BasicAuthService {
             if (cookie != null) {
                 return Optional.of(cookie.getValue());
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         // Fallback: parse the raw Cookie request header directly. This handles contexts where
         // getCookies() does not parse the Cookie header (e.g. Micronaut's SimpleHttpRequest in unit tests).
         String raw = request.getHeaders().get("Cookie");

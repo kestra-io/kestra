@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.services.FlowService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -24,13 +22,15 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Pause;
@@ -65,7 +65,7 @@ class ExecutionServiceTest {
     ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    LogRepositoryInterface logRepository;
+    LogDataStoreInterface logRepository;
 
     @Inject
     TestRunnerUtils runnerUtils;
@@ -133,7 +133,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/replay-loop.yaml"})
+    @LoadFlows({ "flows/valids/replay-loop.yaml" })
     void restartLoop() throws Exception {
         // Given: with the Loop task, parent has only 1_each; loop sub-executions have the child task runs
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "replay-loop", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
@@ -150,7 +150,7 @@ class ExecutionServiceTest {
         assertThat(restart.getTaskRunList()).hasSize(1);
         assertThat(restart.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
-        var subExecutions = executionRepository.findLoopSubExecutions(restart.getTenantId(), restart.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(restart.getTenantId(), restart.getId(), null);
         assertThat(subExecutions).hasSize(3);
     }
 
@@ -219,7 +219,7 @@ class ExecutionServiceTest {
         // Given: with the Loop task, parent has only 2 task runs (1_each + 2_end); loop iterations are sub-executions
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions).hasSize(3);
 
         // When: replay from the task that comes after the Loop (still in the parent execution)
@@ -297,9 +297,9 @@ class ExecutionServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // Navigate to a level-3 sub-execution to find the item task run
-        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_2, execution.getId());
-        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop1Subs.getFirst().getId());
-        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop2Subs.getFirst().getId());
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_2, execution.getId(), null);
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop1Subs.getFirst().getId(), null);
+        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_2, loop2Subs.getFirst().getId(), null);
         TaskRun itemTaskRun = loop3Subs.getFirst().findTaskRunsByTaskId("item").getFirst();
 
         // When: replay from item in the deepest sub-execution
@@ -322,9 +322,9 @@ class ExecutionServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // Navigate to a level-3 sub-execution to find the parents task run
-        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId());
-        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop1Subs.getFirst().getId());
-        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop2Subs.getFirst().getId());
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId(), null);
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop1Subs.getFirst().getId(), null);
+        List<Execution> loop3Subs = executionRepository.findLoopSubExecutions(TENANT_1, loop2Subs.getFirst().getId(), null);
         TaskRun parentsTaskRun = loop3Subs.getFirst().findTaskRunsByTaskId("parents").getFirst();
 
         // When: replay from parents — item and parent are predecessors and should be kept
@@ -370,7 +370,7 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(MAIN_TENANT, execution.getId());
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(MAIN_TENANT, execution.getId(), null);
         assertThat(subExecutions).hasSize(3);
         TaskRun itemTaskRun = subExecutions.getFirst().findTaskRunsByTaskId("item").getFirst();
 
@@ -426,7 +426,7 @@ class ExecutionServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // child task runs live in loop sub-executions, not in the parent
-        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId());
+        List<Execution> subExecutions = executionRepository.findLoopSubExecutions(TENANT_1, execution.getId(), null);
         assertThat(subExecutions).hasSize(3);
         TaskRun itemTaskRun = subExecutions.getFirst().findTaskRunsByTaskId("item").getFirst();
 
@@ -594,7 +594,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/loop-pause.yaml"})
+    @LoadFlows({ "flows/valids/loop-pause.yaml" })
     void parentExecutionIsPausedWhenLoopIterationIsPaused() throws Exception {
         Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "loop-pause");
 

@@ -3,7 +3,7 @@ plugins {
 }
 
 ext {
-    grpcVersion = '1.81.0'
+    grpcVersion = '1.83.0'
     protobufVersion = '4.35.1'
 }
 
@@ -17,20 +17,20 @@ dependencies {
     annotationProcessor project(':processor')
     implementation project(":core")
 
-    implementation group: 'dev.failsafe', name: 'failsafe'
-    implementation 'com.github.ben-manes.caffeine:caffeine'
-    
+    implementation "dev.failsafe:failsafe"
+    implementation "com.github.ben-manes.caffeine:caffeine"
+
     // test
     testAnnotationProcessor project(':processor')
-    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
     testImplementation project(':storage-local')
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')
-    testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(path: ':jdbc', configuration: 'testArtifacts')
     testImplementation project(':jdbc-h2')
     testImplementation("io.micronaut.sql:micronaut-jooq")
-    
+
     // gRPC
     implementation("io.micronaut.grpc:micronaut-grpc-server-runtime")
     implementation("io.micronaut.grpc:micronaut-grpc-client-runtime")

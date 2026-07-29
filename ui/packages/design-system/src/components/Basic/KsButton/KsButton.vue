@@ -7,6 +7,7 @@
         <ElButton
             :aria-label="tooltip"
             v-bind="({...filteredProps(), ...$attrs} as any)"
+            :class="{'is-square': square}"
             @click="emit('click', $event)"
             plain
         >
@@ -24,6 +25,7 @@
     <ElButton
         v-else
         v-bind="({...filteredProps(), ...$attrs} as any)"
+        :class="{'is-square': square}"
         @click="emit('click', $event)"
         plain
     >
@@ -62,6 +64,7 @@
         autofocus?: boolean
         round?: boolean
         circle?: boolean
+        square?: boolean
         color?: string
         tag?: string | Component
         tooltip?: string
@@ -78,7 +81,7 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement"])
+    const filteredProps = useFilteredProps(props, ["tooltip", "tooltipPlacement", "square"])
 </script>
 
 <style lang="scss">
@@ -127,6 +130,22 @@
             border-radius: var(--kel-border-radius-small);
         }
 
+        &.is-square {
+            aspect-ratio: 1;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        /* Icon-only buttons centre the glyph. vue-material-design-icons nudges its SVG down by
+           0.125em (baseline alignment meant for inline-with-text use), which reads as off-centre
+           in a round/square button — neutralise it so the icon sits dead centre. */
+        &.is-circle,
+        &.is-square {
+            .material-design-icon > .material-design-icon__svg {
+                bottom: 0;
+            }
+        }
+
         &.is-plain:not(.is-text) {
             --kel-button-border-color: var(--ks-btn-secondary-border-default);
             --kel-button-bg-color: var(--ks-btn-secondary-bg-default);
@@ -173,15 +192,23 @@
             }
         }
 
+        &.is-link {
+            --kel-button-text-color: var(--ks-text-secondary);
+            --kel-button-hover-link-text-color: var(--ks-text-primary);
+            --kel-button-active-color: var(--ks-text-primary);
+        }
+
         &.is-text {
             &:hover {
                 background-color: var(--ks-bg-hover);
-                border: 1px solid var(--ks-btn-secondary-border-hover);
+                /* Draw the hover ring with an inset shadow rather than a border: a border adds
+                   1px on each side and shifts surrounding layout, a shadow doesn't affect the box. */
+                box-shadow: inset 0 0 0 1px var(--ks-btn-secondary-border-hover);
             }
 
             &:active {
                 background-color: var(--ks-btn-secondary-bg-active);
-                border: 0;
+                box-shadow: none;
             }
         }
 

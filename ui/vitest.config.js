@@ -13,10 +13,16 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
+// `--merge-reports` only recombines existing report blobs; it runs no tests.
+// But loading the config still boots a Vite dev server whose dependency scan
+// segfaults (CI and locally). We can't swap in a lighter project to dodge it:
+// the merge recreates each spec using the pool recorded in its blob ("browser"),
+// so the project's pool shape must match the sharded runs exactly.
+// Instead, disable the scan during merge only — nothing is served here anyway.
+const isMergeReports = process.argv.includes("--merge-reports")
+
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
-// No backend is available during tests — clear the API proxy so Vite doesn't
-// emit "[vite] http proxy error" for every story that fires an /api request.
 if (resolvedViteConfig.server) {
     resolvedViteConfig.server.proxy = {}
 }
@@ -59,9 +65,6 @@ export default defineConfig({
             ...resolvedViteConfig.resolve.alias,
         ],
     },
-    coverage: {
-        exclude: ["**/*.json"],
-    },
     test: {
         projects: [
             "./vitest.config.unit.js",
@@ -73,9 +76,30 @@ export default defineConfig({
                         configDir: path.join(dirname, ".storybook"),
                     }),
                 ],
+                // Merge-only: skip Vite's automatic dependency scan — see the
+                // comment above `isMergeReports` for why.
+                ...(isMergeReports ? {optimizeDeps: {noDiscovery: true, entries: []}} : {}),
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.js"],
+                    // Only takes effect during the `--merge-reports` replay (see
+                    // run-storybook-tests.sh): the sharded runs pass their own
+                    // `--reporter` flags on the CLI, which take precedence over this
+                    // config. The merge step doesn't, so this is what produces the
+                    // single, whole-suite JUnit report CI reads to list failing tests.
+                    reporters: [
+                        ["default"],
+                        ["junit"],
+                    ],
+                    outputFile: {
+                        junit: "./test-report.storybook.junit.xml",
+                    },
+                    // Each worker drives its own headless Chromium instance; letting
+                    // this scale with CPU count (the default) spins up enough
+                    // concurrent browsers to exhaust CI memory, which kills a
+                    // worker mid-run and surfaces as "[birpc] rpc is closed,
+                    // cannot call 'createTesters'" rather than a real test failure.
+                    maxWorkers: 2,
                     browser: {
                         enabled: true,
                         headless: true,
@@ -86,18 +110,24 @@ export default defineConfig({
                             },
                         ],
                     },
-                    coverage: {
-                        reporter: ["text", "html"],
-                        exclude: [
-                            "**/*.stories.{ts,tsx}",
-                            "**/*.spec.{ts,tsx}",
-                            "**/node_modules/**",
-                            "**/*.json",
-                        ],
-                    },
                 },
             }),
         ],
+        coverage: {
+            reporter: ["text", "html"],
+            include: [
+                "src/**/*.{ts,vue}",
+            ],
+            exclude: [
+                "**/node_modules/**",
+                "**/*.stories.*",
+                "**/*.spec.{ts,tsx}",
+                "**/*.d.ts",
+                "**/.storybook/**",
+                "storybook-static/**",
+                "stylelint.config.mjs",
+            ],
+        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

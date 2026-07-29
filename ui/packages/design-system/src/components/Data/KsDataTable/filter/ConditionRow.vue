@@ -126,6 +126,7 @@
     import {
         Comparators,
         COMPARATOR_LABELS,
+        RANGE_COMPARATORS,
         TEXT_COMPARATORS,
         type AppliedFilter,
         type FilterKeyConfig,
@@ -171,7 +172,10 @@
         return "text"
     })
 
-    const isMulti = computed(() => keyConfig.value?.valueType === "multi-select")
+    const isMulti = computed(
+        () => keyConfig.value?.valueType === "multi-select"
+            && !RANGE_COMPARATORS.includes(props.filter.comparator),
+    )
 
     const isStatusColored = computed(() => keyConfig.value?.colored === true)
 
@@ -228,12 +232,17 @@
         })
     }
 
-    const changeComparator = (op: Comparators) =>
+    const changeComparator = (op: Comparators) => {
+        const wasMulti = isMulti.value
+        const willBeMulti = keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op)
+
         emit("update", {
             ...props.filter,
             comparator: op,
             comparatorLabel: labelForComparator(op),
+            ...(wasMulti !== willBeMulti ? {value: willBeMulti ? [] : "", valueLabel: ""} : {}),
         })
+    }
 
     const onText = (value: string | number | undefined) => {
         const text = value == null ? "" : String(value)
@@ -387,7 +396,7 @@
     .chevron {
         flex-shrink: 0;
         color: var(--ks-icon-muted);
-        font-size: 14px;
+        font-size: var(--ks-font-size-base);
     }
 }
 

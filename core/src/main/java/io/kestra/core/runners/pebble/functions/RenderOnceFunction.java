@@ -14,6 +14,7 @@ import jakarta.inject.Singleton;
 @Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
 public class RenderOnceFunction extends RenderFunction {
     public static final String NAME = "renderOnce";
+
     public List<String> getArgumentNames() {
         return List.of("toRender");
     }

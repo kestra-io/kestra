@@ -10,7 +10,7 @@ export type PluginAuthor = {
     avatarUrl?: string;
 };
 
-export type PluginIconMap = Record<string, {icon: string; flowable: boolean}>;
+export type PluginIconMap = Record<string, {flowable: boolean; monochrome: boolean; hasIcon: boolean; iconUrl?: string; hash?: string}>;
 
 export type Plugin = {
     name: string;

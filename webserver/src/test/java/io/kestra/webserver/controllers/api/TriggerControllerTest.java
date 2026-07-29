@@ -24,8 +24,6 @@ import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
-import io.kestra.webserver.models.api.ApiTriggerAndState;
-import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
@@ -37,6 +35,8 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.webserver.responses.PagedResults;
 
 import io.micronaut.core.type.Argument;
@@ -175,10 +175,9 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldUnlockTriggerWhenLocked() {
+    void shouldUnlockTriggerWhenLocked() throws FlowProcessingException, QueueException {
         // GIVEN
-        TriggerState trigger = createTriggerWith(IdUtils.create(), IdUtils.create(), TENANT_ID).locked(Clock.systemDefaultZone(), true);
-        jdbcTriggerRepository.save(trigger);
+        TriggerState trigger = newLockedFlowBackedTrigger();
 
         // WHEN
         HttpResponse<ApiTriggerState> exchange = client.toBlocking().exchange(
@@ -273,27 +272,40 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldReturnNotFoundWhenUnlockingOrphanedTrigger() {
+        // GIVEN — a locked trigger row whose flow doesn't exist (e.g. deleted after the trigger was
+        // locked, before orphan-GC caught up). Unlocking it must fail fast instead of racing that GC.
+        TriggerState trigger = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                        trigger.getNamespace(),
+                        trigger.getFlowId(),
+                        trigger.getTriggerId()
+                    ), null
+                )
+            )
+        );
+
+        // THEN
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
     void shouldRestartTriggerWhenExists() throws FlowProcessingException, QueueException {
-        // GIVEN
-        Flow flow = generateFlow();
-        flowService.create(GenericFlow.of(flow));
-
-        TriggerState trigger = TriggerState.builder()
-            .flowId(flow.getId())
-            .namespace(flow.getNamespace())
-            .tenantId(TENANT_ID)
-            .triggerId("trigger-to-restart")
-            .locked(true)
-            .disabled(true)
-            .build();
-
-        jdbcTriggerRepository.create(trigger);
+        // GIVEN — a real, flow-backed trigger: restarting a flow-less trigger would race the
+        // scheduler's orphan-GC the same way unlocking one does (see newLockedFlowBackedTrigger javadoc).
+        TriggerState trigger = newLockedFlowBackedTrigger();
 
         // WHEN
         HttpResponse<ApiTriggerState> restarted = client.toBlocking().exchange(
             HttpRequest.POST(
                 (TRIGGER_PATH
-                    + "/%s/%s/%s/restart".formatted(flow.getNamespace(), flow.getId(), trigger.getTriggerId())),
+                    + "/%s/%s/%s/restart".formatted(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())),
                 null
             ),
             ApiTriggerState.class
@@ -312,6 +324,30 @@ class TriggerControllerTest {
         );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenRestartingOrphanedTrigger() {
+        // GIVEN — a locked trigger row whose flow doesn't exist (e.g. deleted after the trigger was
+        // locked, before orphan-GC caught up). Restarting it must fail fast instead of racing that GC.
+        TriggerState trigger = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/restart").formatted(
+                        trigger.getNamespace(),
+                        trigger.getFlowId(),
+                        trigger.getTriggerId()
+                    ), null
+                )
+            )
+        );
+
+        // THEN
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test
@@ -360,11 +396,9 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldAcceptUnlockByIdsWhenLocked() {
+    void shouldAcceptUnlockByIdsWhenLocked() throws FlowProcessingException, QueueException {
         // GIVEN
-        TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
-
-        jdbcTriggerRepository.save(state);
+        TriggerState state = newLockedFlowBackedTrigger();
 
         // WHEN
         List<TriggerController.ApiTriggerId> triggers = List.of(new TriggerController.ApiTriggerId(state.getNamespace(), state.getFlowId(), state.getTriggerId()));
@@ -417,11 +451,9 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldAcceptUnlockByQueryWhenLocked() {
+    void shouldAcceptUnlockByQueryWhenLocked() throws FlowProcessingException, QueueException {
         // GIVEN
-        TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
-
-        jdbcTriggerRepository.save(state);
+        TriggerState state = newLockedFlowBackedTrigger();
 
         // WHEN
         HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
@@ -489,8 +521,8 @@ class TriggerControllerTest {
 
         List<TriggerController.ApiTriggerId> triggers = Stream.of(
             jdbcTriggerRepository.save(triggerDisabled),
-                jdbcTriggerRepository.save(triggerNotDisabled)
-            )
+            jdbcTriggerRepository.save(triggerNotDisabled)
+        )
             .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
@@ -531,8 +563,8 @@ class TriggerControllerTest {
         // WHEN
         List<TriggerController.ApiTriggerId> triggers = Stream.of(
             jdbcTriggerRepository.save(triggerDisabled),
-                jdbcTriggerRepository.save(triggerToDisable)
-            ).map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
+            jdbcTriggerRepository.save(triggerToDisable)
+        ).map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
             .toList();
 
         HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
@@ -584,6 +616,95 @@ class TriggerControllerTest {
             Await.until(() -> jdbcTriggerRepository.findById(toDisable).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
         } catch (TimeoutException e) {
             Assertions.fail("Timeout waiting for trigger to be disabled");
+        }
+    }
+
+    @Test
+    void shouldAcceptSetDisabledWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpResponse<ApiTriggerState> response = client.toBlocking().exchange(
+            HttpRequest.PUT(
+                TRIGGER_PATH + "/set-disabled",
+                new TriggerController.ApiDisableTriggerRequest(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), false, true)
+            ),
+            ApiTriggerState.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.body().disabled()).isFalse();
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByIdsWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        List<TriggerController.ApiTriggerId> triggers = List.of(
+            new TriggerController.ApiTriggerId(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
+        );
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false, true)),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        try {
+            Await.until(() -> !jdbcTriggerRepository.findById(trigger).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be enabled");
+        }
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByQueryWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-query?filters[namespace][EQUALS]=%s&disabled=false&recoverMissedSchedules=true".formatted(namespace), null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        try {
+            Await.until(() -> !jdbcTriggerRepository.findById(trigger).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be enabled");
         }
     }
 
@@ -650,6 +771,21 @@ class TriggerControllerTest {
             .build();
     }
 
+    private TriggerState newLockedFlowBackedTrigger() throws FlowProcessingException, QueueException {
+        Flow flow = generateFlowWithTrigger(IdUtils.create().toLowerCase());
+        TriggerState fixture = createTriggerFromFlow(flow, false);
+        flowService.create(GenericFlow.of(flow));
+
+        // The flow's own trigger creation asynchronously seeds a TriggerState row; wait for it
+        // instead of racing it with our own save(), then lock that row.
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(fixture).isPresent());
+        TriggerState trigger = jdbcTriggerRepository.findById(fixture).orElseThrow()
+            .locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(trigger);
+        return trigger;
+    }
+
     private Flow generateFlowWithTrigger(String namespace) {
         return Flow.builder()
             .id(IdUtils.create())
@@ -673,17 +809,6 @@ class TriggerControllerTest {
                         .build()
                 )
             )
-            .build();
-    }
-
-    private TriggerState createTriggerWith(String flow, String namespace, String triggerId) {
-        return TriggerState.builder()
-            .tenantId(TENANT_ID)
-            .flowId(flow)
-            .namespace(namespace)
-            .triggerId(triggerId)
-            .evaluatedAt(Instant.now())
-            .vnode(VNodes.computeVNodeFromFlow(FlowId.of(TENANT_ID, namespace, flow, null), schedulerConfiguration.vnodes()))
             .build();
     }
 

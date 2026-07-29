@@ -23,14 +23,14 @@ import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
-import io.kestra.webserver.models.api.ApiTriggerAndState;
-import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.validations.NoSystemLabelValidation;
 import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.TriggerStateService;
 import io.kestra.webserver.utils.CSVUtils;
@@ -62,6 +62,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -94,10 +95,10 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Search for triggers")
     public PagedResults<ApiTriggerAndState> searchTriggers(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
             description = "The sort of current page", examples = {
-                @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc"),
+                @ExampleObject(name = "Sort by next evaluation date in ascending order", value = "nextEvaluationDate:asc"),
                 @ExampleObject(name = "Sort by trigger ID in descending order", value = "triggerId:desc")
             }
         ) @Nullable @QueryValue List<String> sort,
@@ -107,10 +108,9 @@ public class TriggerController {
             description = "Which trigger date field the time interval is applied to",
             schema = @Schema(
                 type = "string",
-                allowableValues = {"NEXT_EXECUTION_DATE", "LAST_TRIGGERED_DATE"}
+                allowableValues = { "NEXT_EXECUTION_DATE", "LAST_TRIGGERED_DATE" }
             )
-        ) @Nullable @QueryValue QueryFilter.Field dateFilter
-    ) throws HttpStatusException {
+        ) @Nullable @QueryValue QueryFilter.Field dateFilter) throws HttpStatusException {
         ArrayListTotal<TriggerState> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             tenantService.resolveTenant(),
@@ -134,7 +134,7 @@ public class TriggerController {
     @Operation(tags = { "Triggers" }, summary = "Get all triggers for a flow")
     public PagedResults<ApiTriggerState> searchTriggersForFlow(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The namespace") @PathVariable String namespace,
@@ -382,7 +382,7 @@ public class TriggerController {
     public HttpResponse<ApiTriggerState> disableTriggerById(
         @Parameter(description = "The trigger") @Body final ApiDisableTriggerRequest request) throws HttpStatusException {
         TriggerId triggerId = TriggerId.of(tenantService.resolveTenant(), request.namespace(), request.flowId(), request.triggerId());
-        TriggerState state = triggerStateService.toggleTriggerById(triggerId, request.disabled());
+        TriggerState state = triggerStateService.toggleTriggerById(triggerId, request.disabled(), request.recoverMissedSchedules());
         return HttpResponse.ok(ApiTriggerState.from(state));
     }
 
@@ -393,7 +393,7 @@ public class TriggerController {
     public MutableHttpResponse<ApiAsyncOperationResponse> disabledTriggersByIds(
         @Parameter(description = "The triggers you want to set the disabled state") @Body @Valid SetDisabledRequest request) {
         return HttpResponse.accepted().body(
-            triggerStateService.toggleAllByIds(toTriggerIds(request.triggers(), tenantService.resolveTenant()), request.disabled())
+            triggerStateService.toggleAllByIds(toTriggerIds(request.triggers(), tenantService.resolveTenant()), request.disabled(), request.recoverMissedSchedules())
         );
     }
 
@@ -404,9 +404,10 @@ public class TriggerController {
     public MutableHttpResponse<ApiAsyncOperationResponse> disabledTriggersByQuery(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
         @QueryFilterFormat(Resource.TRIGGER) List<QueryFilter> filters,
-        @Parameter(description = "The disabled state") @QueryValue(defaultValue = "true") Boolean disabled) {
+        @Parameter(description = "The disabled state") @QueryValue(defaultValue = "true") Boolean disabled,
+        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped") @QueryValue @Nullable Boolean recoverMissedSchedules) {
         return HttpResponse.accepted().body(
-            triggerStateService.toggleAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null), disabled)
+            triggerStateService.toggleAllMatching(tenantService.resolveTenant(), QueryFilterUtils.rewriteTriggerDateFilters(filters, null), disabled, recoverMissedSchedules)
         );
     }
     // endregion
@@ -414,6 +415,7 @@ public class TriggerController {
     @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Triggers" }, summary = "Export all triggers as a streamed CSV file")
+    @ApiResponse(responseCode = "200", content = { @Content(mediaType = MediaType.TEXT_CSV, schema = @Schema(type = "string")) })
     @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux<String>> exportTriggers(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)
@@ -460,7 +462,13 @@ public class TriggerController {
 
     public record SetDisabledRequest(
         @NotNull @NotEmpty List<ApiTriggerId> triggers,
-        @NotNull Boolean disabled) {
+        @NotNull Boolean disabled,
+        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped")
+        @Nullable Boolean recoverMissedSchedules) {
+
+        public SetDisabledRequest(List<ApiTriggerId> triggers, Boolean disabled) {
+            this(triggers, disabled, null);
+        }
     }
 
     public record ApiCreateBackfillRequest(
@@ -482,7 +490,13 @@ public class TriggerController {
         @Parameter(description = "The namespace.") String namespace,
         @Parameter(description = "The ID of the flow.") String flowId,
         @Parameter(description = "The ID of the trigger.") String triggerId,
-        @Parameter(description = "Specifies whether trigger should be disabled") boolean disabled) {
+        @Parameter(description = "Specifies whether trigger should be disabled") boolean disabled,
+        @Parameter(description = "When true, missed schedules are recovered on enable according to the trigger's recoverMissedSchedules configuration; omitted or false, missed schedules are skipped")
+        @Nullable Boolean recoverMissedSchedules) {
+
+        public ApiDisableTriggerRequest(String namespace, String flowId, String triggerId, boolean disabled) {
+            this(namespace, flowId, triggerId, disabled, null);
+        }
     }
 
     public record ApiTriggerId(

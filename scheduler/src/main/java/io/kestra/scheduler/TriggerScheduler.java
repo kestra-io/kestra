@@ -13,8 +13,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.kestra.core.models.triggers.TriggerEvaluationResult;
-import io.kestra.core.utils.TruthUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +34,7 @@ import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerEvaluationResult;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.runners.RunContext;
@@ -46,13 +45,16 @@ import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.LabelService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.utils.TypeConverter;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
+import io.kestra.scheduler.internals.TriggerFlowParser;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -80,7 +82,7 @@ public class TriggerScheduler {
     private final TriggerWorkerJobPublisher triggerWorkerJobPublisher;
     private final SchedulableEvaluator schedulableEvaluator;
     private final TriggerExecutionPublisher triggerExecutionSender;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
     private final DefaultSchedulableTriggerFetcher schedulableTriggerFetcher;
 
     // Stores
@@ -99,7 +101,7 @@ public class TriggerScheduler {
         MetricRegistry metricRegistry,
         RunContextFactory runContextFactory,
         ConditionService conditionService,
-        PluginDefaultService pluginDefaultService,
+        FlowParsingService flowParsingService,
         SchedulableEvaluator schedulableEvaluator,
         DefaultSchedulableTriggerFetcher schedulableTriggerFetcher,
         TriggerWorkerJobPublisher triggerWorkerJobPublisher,
@@ -108,7 +110,7 @@ public class TriggerScheduler {
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
         this.runContextFactory = runContextFactory;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.metricRegistry = metricRegistry;
         this.conditionService = conditionService;
         this.triggerWorkerJobPublisher = triggerWorkerJobPublisher;
@@ -152,7 +154,7 @@ public class TriggerScheduler {
 
         flowMetaStore.findAllForVNodes(vNodesAssignments)
             .stream()
-            .map(flow -> pluginDefaultService.injectAllDefaults(flow, log))
+            .map(flow -> TriggerFlowParser.parseOrSkip(flowParsingService, flow, log))
             .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(
@@ -377,14 +379,18 @@ public class TriggerScheduler {
         updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, triggerEvaluationContext).ifPresent(state ->
         {
             try {
-                if (this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext())) {
-                    state = state
-                        .lastTriggeredDate(clock)
-                        .locked(clock, mustBeLocked);
+                TriggerState dispatched = state.nextDispatchEpoch(clock);
+                if (this.triggerWorkerJobPublisher.send(dispatched, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext())) {
+                    triggerStateStore.save(
+                        dispatched
+                            .lastTriggeredDate(clock)
+                            .locked(clock, mustBeLocked)
+                    );
+                } else {
+                    // When the job was not dispatched, save without taking the lock so the
+                    // trigger is retried at its next evaluation date.
+                    triggerStateStore.save(state);
                 }
-                // When the job was not dispatched, save without taking the lock so the
-                // trigger is retried at its next evaluation date.
-                triggerStateStore.save(state);
             } catch (Exception e) {
                 Logs.logTrigger(
                     triggerState,
@@ -441,13 +447,16 @@ public class TriggerScheduler {
         ) {
             Object nextVariable = evaluationResult.trigger().getVariables().get("next");
 
-            ZonedDateTime next = (nextVariable != null) ? ZonedDateTime.parse((CharSequence) nextVariable) : null;
+            ZonedDateTime next = TypeConverter.toZonedDateTime(nextVariable);
 
             // Exclude backfills
             // FIXME : "late" are not excluded and can increase delay value (false positive)
             if (next != null && now.isBefore(next)) {
                 metricRegistry
-                    .timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION, metricRegistry.tags(evaluationResult, triggerContext))
+                    .timer(
+                        MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION,
+                        metricRegistry.tags(evaluationResult, triggerContext)
+                    )
                     .record(Duration.between(triggerContext.getDate(), now));
             }
         }
@@ -476,4 +485,5 @@ public class TriggerScheduler {
             e
         );
     }
+
 }

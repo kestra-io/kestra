@@ -10,14 +10,6 @@
             @search="filter = $event"
             @filter="syncFromAppliedFilters"
         />
-        <QuickFilters
-            v-if="!hasComplexFilters"
-            :levels="logLevels"
-            :level="effectiveLevelValue?.value"
-            :showInterval="false"
-            :levelLabel="t('filter.level_log_executions.label')"
-            @update:level="(value) => setLevelRouteValue({value, direction: 'min'})"
-        />
         <div class="logs-toolbar">
             <div class="logs-toolbar__left">
                 <template v-for="logLevel in currentLevelOrLower" :key="logLevel">
@@ -43,9 +35,8 @@
             <div class="logs-toolbar__actions">
                 <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="emit('follow', $event)" />
                 <LogDisplaySettings />
-                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
-                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
-                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Refresh" :aria-label="t('refresh')" :tooltip="t('refresh')" @click="loadLogs()" />
+                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
+                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
             </div>
         </div>
 
@@ -128,7 +119,6 @@
     import LogLine from "../logs/LogLine.vue"
     import Restart from "./overview/components/actions/Restart.vue"
     import * as LogUtils from "../../utils/logs"
-    import Refresh from "vue-material-design-icons/Refresh.vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {storageKeys} from "../../utils/constants"
@@ -142,10 +132,6 @@
         type LevelFilterValue,
     } from "@kestra-io/design-system"
     import {useRouteFilterPolicy} from "@kestra-io/design-system"
-    import {useValues} from "../filter/composables/useValues"
-    import {useComplexFilters} from "../filter/composables/useComplexFilters"
-    import QuickFilters from "../filter/QuickFilters.vue"
-
     function distinctFilter(value: string, index: number, array: string[]) {
         return array.indexOf(value) === index
     }
@@ -168,7 +154,6 @@
 
     const {t} = useI18n()
     const toast = useToast()
-    const {hasComplexFilters} = useComplexFilters()
 
     const emit = defineEmits<{
         follow: [event: unknown]
@@ -209,7 +194,6 @@
         routeValue: routeLevel,
         effectiveValue: effectiveLevel,
         syncFromAppliedFilters,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy({
         defaultValue: () => ({value: defaultLogLevel.value, direction: "min" as const}),
         applyDefaultIfMissing: () => true,
@@ -223,9 +207,6 @@
     // Narrow the type from the composable's union return type
     const effectiveLevelValue = computed(() => effectiveLevel.value as LevelFilterValue | undefined)
     const routeLevelValue = computed(() => routeLevel.value as LevelFilterValue | undefined)
-
-    const {VALUES} = useValues("logs")
-    const logLevels = VALUES.LEVELS
 
     const filter = ref<string | undefined>(undefined)
     const openedTaskrunsCount = ref(0)
@@ -563,15 +544,12 @@
       margin-left: auto;
     }
 
-    &__btn {
-      margin: 0;
-      padding: var(--ks-spacing-2);
-      border-radius: var(--ks-radius-base);
+    &__text-btn {
+      font-size: var(--ks-font-size-xs);
     }
 
-    &__text-btn {
-      margin: 0;
-      font-size: var(--ks-font-size-xs);
+    :deep(.kel-button) {
+        margin: 0;
     }
   }
 </style>

@@ -22,18 +22,19 @@ import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.RegexUtils;
-import io.kestra.core.storages.StorageSplitInterface;
-
 import com.amazon.ion.util.IonStreamUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageSplitInterface;
+import io.kestra.core.utils.RegexUtils;
+
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -42,7 +43,8 @@ public abstract class StorageService {
 
     private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
     private static final ObjectMapper ION_BINARY_MAPPER = JacksonMapper.ofIonBinary();
-    private static final TypeReference<Object> OBJECT_TYPE = new TypeReference<>() {};
+    private static final TypeReference<Object> OBJECT_TYPE = new TypeReference<>() {
+    };
 
     public static List<URI> split(RunContext runContext, StorageSplitInterface storageSplitInterface, URI from) throws IOException, IllegalVariableEvaluationException {
         String extension = extensionOf(from);
@@ -53,9 +55,11 @@ public abstract class StorageService {
             inputStream.reset();
 
             List<Path> splited;
-            try (SplitStrategy strategy = IonStreamUtils.isIonBinary(header)
-                ? new IonSplitStrategy(inputStream)
-                : new TextSplitStrategy(inputStream, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow())) {
+            try (
+                SplitStrategy strategy = IonStreamUtils.isIonBinary(header)
+                    ? new IonSplitStrategy(inputStream)
+                    : new TextSplitStrategy(inputStream, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow())
+            ) {
 
                 if (storageSplitInterface.getRegexPattern() != null) {
                     String renderedPattern = runContext.render(storageSplitInterface.getRegexPattern()).as(String.class).orElseThrow();

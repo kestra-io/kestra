@@ -1,8 +1,11 @@
 package io.kestra.runner.h2;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
+import com.github.benmanes.caffeine.cache.Cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,5 +56,80 @@ class H2FunctionsTest {
     public void jqStringArray() {
         String[] jqString = H2Functions.jqStringArray("{\"a\": [\"1\", \"2\", \"3\"]}", ".a");
         assertThat(List.of(jqString)).containsExactlyInAnyOrder("1", "2", "3");
+    }
+
+    @Test
+    void shouldEscapeJqStringNullValue() {
+        // Given / When / Then
+        assertThat(H2Functions.escapeJqString(null)).isNull();
+    }
+
+    @Test
+    void shouldEscapeJqStringMetacharacters() {
+        // Given
+        String input = "key\\with\"quotes";
+
+        // When
+        String escaped = H2Functions.escapeJqString(input);
+
+        // Then — backslash must be escaped before double-quote to avoid double-escaping
+        assertThat(escaped).isEqualTo("key\\\\with\\\"quotes");
+    }
+
+    @Test
+    void shouldEscapeJqStringNamedControlCharacters() {
+        // Given — named control characters: LF, CR, TAB, BS, FF
+        assertThat(H2Functions.escapeJqString("\n")).isEqualTo("\\n");
+        assertThat(H2Functions.escapeJqString("\r")).isEqualTo("\\r");
+        assertThat(H2Functions.escapeJqString("\t")).isEqualTo("\\t");
+        assertThat(H2Functions.escapeJqString("\b")).isEqualTo("\\b");
+        assertThat(H2Functions.escapeJqString("\f")).isEqualTo("\\f");
+    }
+
+    @Test
+    void shouldEscapeJqStringRawControlCharacters() {
+        // Given — U+0001 (SOH) and U+001F (US), which have no named JSON escape
+        assertThat(H2Functions.escapeJqString("")).isEqualTo("\\u0001");
+        assertThat(H2Functions.escapeJqString("")).isEqualTo("\\u001f");
+    }
+
+    @Test
+    void shouldEscapeJqStringAndProduceValidJqProgram() {
+        // Given — a key crafted to break out of a jq string literal if unescaped
+        String maliciousKey = "x\") | .password | (\"";
+        String escaped = H2Functions.escapeJqString(maliciousKey);
+
+        // When — embed in a real jq expression and evaluate
+        String json = "{\"labels\":[{\"key\":\"safe\",\"value\":\"v\"}]}";
+        String expression = ".labels[]? | select(.key == \"" + escaped + "\") | .value";
+        String result = H2Functions.jqString(json, expression);
+
+        // Then — no match (injection neutralised), no exception
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void shouldBoundCacheSizeWhenManyDistinctExpressionsAreEvaluated() throws Exception {
+        // Given a payload and many distinct jq expressions, mimicking a user filtering by an
+        // unbounded number of distinct label keys (each distinct key yields a distinct expression).
+        String json = "{\"labels\":[{\"key\":\"safe\",\"value\":\"v\"}]}";
+        long maximumSize = 1000L;
+        int distinctExpressions = (int) (maximumSize * 5);
+
+        // When each distinct expression is compiled and cached
+        for (int i = 0; i < distinctExpressions; i++) {
+            H2Functions.jqString(json, ".labels[]? | select(.key == \"k" + i + "\") | .value");
+        }
+
+        // Then the compiled-query cache stays bounded instead of growing without limit
+        Cache<?, ?> queryCache = queryCache();
+        queryCache.cleanUp();
+        assertThat(queryCache.estimatedSize()).isLessThanOrEqualTo(maximumSize);
+    }
+
+    private static Cache<?, ?> queryCache() throws Exception {
+        Field field = H2Functions.class.getDeclaredField("QUERY_CACHE");
+        field.setAccessible(true);
+        return (Cache<?, ?>) field.get(null);
     }
 }

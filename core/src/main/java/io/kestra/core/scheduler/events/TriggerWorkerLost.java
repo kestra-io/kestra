@@ -14,10 +14,11 @@ import io.kestra.core.models.triggers.TriggerId;
 public record TriggerWorkerLost(
     TriggerId id,
     String workerUid,
+    long dispatchEpoch,
     Instant timestamp,
     EventId eventId) implements TriggerEvent {
 
-    public TriggerWorkerLost(TriggerId id, String workerUid) {
-        this(id, workerUid, Instant.now(), EventId.create());
+    public TriggerWorkerLost(TriggerId id, String workerUid, long dispatchEpoch) {
+        this(id, workerUid, dispatchEpoch, Instant.now(), EventId.create());
     }
 }

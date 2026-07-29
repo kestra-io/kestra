@@ -12,7 +12,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.trace.TraceUtils;
 import io.kestra.webserver.tenants.TenantValidationFilter;
-import io.opentelemetry.api.trace.StatusCode;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -21,6 +20,7 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.test.annotation.MockBean;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.testing.junit5.OpenTelemetryExtension;
 import io.opentelemetry.sdk.trace.data.SpanData;

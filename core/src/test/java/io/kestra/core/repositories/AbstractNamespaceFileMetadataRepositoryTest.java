@@ -60,6 +60,45 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
     }
 
     @Test
+    void findByPathIsCaseSensitive() throws IOException {
+        // Given: two namespace files whose paths differ only by case.
+        // Paths map 1:1 to case-sensitive storage URIs, so they are two distinct files.
+        String tenantId = TestsUtils.randomTenant();
+        String namespace = TestsUtils.randomNamespace();
+
+        NamespaceFileMetadata upperCase = NamespaceFileMetadata.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .path("/MyFile.sql")
+            .size(1L)
+            .build();
+        NamespaceFileMetadata lowerCase = NamespaceFileMetadata.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .path("/myfile.sql")
+            .size(1L)
+            .build();
+
+        // When: both are saved
+        namespaceFileMetadataRepositoryInterface.save(upperCase);
+        namespaceFileMetadataRepositoryInterface.save(lowerCase);
+
+        // Then: each is stored as its own revision-1 file and lookups are case-sensitive.
+        // On MySQL with a case-insensitive collation this fails: saving the second one is treated
+        // as a new revision of the first, and findByPath returns the wrong row (see Pylon #2018).
+        Optional<NamespaceFileMetadata> foundUpper = namespaceFileMetadataRepositoryInterface.findByPath(tenantId, namespace, "/MyFile.sql");
+        Optional<NamespaceFileMetadata> foundLower = namespaceFileMetadataRepositoryInterface.findByPath(tenantId, namespace, "/myfile.sql");
+
+        assertThat(foundUpper).isPresent();
+        assertThat(foundUpper.get().getPath()).isEqualTo("/MyFile.sql");
+        assertThat(foundUpper.get().getRevision()).isEqualTo(1);
+
+        assertThat(foundLower).isPresent();
+        assertThat(foundLower.get().getPath()).isEqualTo("/myfile.sql");
+        assertThat(foundLower.get().getRevision()).isEqualTo(1);
+    }
+
+    @Test
     void deleteMetadata() throws IOException {
         String tenantId = TestsUtils.randomTenant();
         String namespace = TestsUtils.randomNamespace();
@@ -324,12 +363,18 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
         String namespace2 = TestsUtils.randomNamespace();
         String deletedNamespace = TestsUtils.randomNamespace();
 
-        namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace1).path("file1.txt").size(1L).build());
-        namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(namespace2).path("file2.txt").size(1L).build());
-        NamespaceFileMetadata deletedEntry = namespaceFileMetadataRepositoryInterface.save(NamespaceFileMetadata.builder()
-            .tenantId(tenantId).namespace(deletedNamespace).path("file3.txt").size(1L).build());
+        namespaceFileMetadataRepositoryInterface.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace1).path("file1.txt").size(1L).build()
+        );
+        namespaceFileMetadataRepositoryInterface.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(namespace2).path("file2.txt").size(1L).build()
+        );
+        NamespaceFileMetadata deletedEntry = namespaceFileMetadataRepositoryInterface.save(
+            NamespaceFileMetadata.builder()
+                .tenantId(tenantId).namespace(deletedNamespace).path("file3.txt").size(1L).build()
+        );
         namespaceFileMetadataRepositoryInterface.delete(deletedEntry);
 
         Set<String> namespaces = namespaceFileMetadataRepositoryInterface.findDistinctNamespace(tenantId);

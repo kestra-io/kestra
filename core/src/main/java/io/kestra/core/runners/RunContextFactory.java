@@ -16,6 +16,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
@@ -89,6 +90,9 @@ public class RunContextFactory {
     @Inject
     private Provider<RunContextInitializer> runContextInitializerProvider;
 
+    @Inject
+    private Provider<ReusableInputsExpander> reusableInputsExpanderProvider;
+
     // hacky
     public RunContextInitializer initializer() {
         return runContextInitializerProvider.get();
@@ -111,6 +115,16 @@ public class RunContextFactory {
 
         VariableRenderer variableRenderer = decryptVariables ? this.variableRenderer : secureVariableRendererFactory.createOrGet();
 
+        RunVariables.Builder runVariablesBuilder = runVariableModifier.apply(
+            newRunVariablesBuilder()
+                .withFlow(flow)
+                .withExecution(execution)
+                .withOutputs(taskOutputService.computeOutputs(execution))
+                .withDecryptVariables(decryptVariables)
+                .withSecretInputs(secretInputsFromFlow(flow))
+        );
+        Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
+
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)
@@ -118,18 +132,9 @@ public class RunContextFactory {
             .withPluginConfiguration(Map.of())
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory))
             .withVariableRenderer(variableRenderer)
-            .withVariables(
-                runVariableModifier.apply(
-                    newRunVariablesBuilder()
-                        .withFlow(flow)
-                        .withExecution(execution)
-                        .withOutputs(taskOutputService.computeOutputs(execution))
-                        .withDecryptVariables(decryptVariables)
-                        .withSecretInputs(secretInputsFromFlow(flow))
-                )
-                    .build(runContextLogger, PropertyContext.create(variableRenderer))
-            )
+            .withVariables(variables)
             .withSecretInputs(secretInputsFromFlow(flow))
+            .withSecretOutputs(runVariablesBuilder.secretOutputs())
             .build();
     }
 
@@ -144,24 +149,25 @@ public class RunContextFactory {
     public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables, VariableRenderer variableRenderer) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task, execution.getKind());
 
+        RunVariables.Builder runVariablesBuilder = newRunVariablesBuilder()
+            .withFlow(flow)
+            .withTask(task)
+            .withExecution(execution)
+            .withOutputs(taskOutputService.computeOutputs(execution))
+            .withTaskRun(taskRun)
+            .withDecryptVariables(decryptVariables)
+            .withSecretInputs(secretInputsFromFlow(flow));
+        Map<String, Object> variables = runVariablesBuilder.build(runContextLogger, PropertyContext.create(variableRenderer));
+
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)
             // Task
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()))
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory))
-            .withVariables(
-                newRunVariablesBuilder()
-                    .withFlow(flow)
-                    .withTask(task)
-                    .withExecution(execution)
-                    .withOutputs(taskOutputService.computeOutputs(execution))
-                    .withTaskRun(taskRun)
-                    .withDecryptVariables(decryptVariables)
-                    .withSecretInputs(secretInputsFromFlow(flow))
-                    .build(runContextLogger, PropertyContext.create(variableRenderer))
-            )
+            .withVariables(variables)
             .withSecretInputs(secretInputsFromFlow(flow))
+            .withSecretOutputs(runVariablesBuilder.secretOutputs())
             .withTask(task)
             .withVariableRenderer(variableRenderer)
             .build();
@@ -254,10 +260,11 @@ public class RunContextFactory {
             return Collections.emptyList();
         }
 
-        // FORM inputs are expanded to dotted leaves so a SECRET grouped under a form is masked by its dotted path.
-        return flow.resolvableInputs().stream()
+        // Use the expander so that REUSABLE_INPUTS-referenced SECRETs are inlined alongside FORM-nested ones.
+        // On OSS the expander is a no-op when no REUSABLE_INPUTS are present, so FORM-nested SECRETs still work.
+        return flow.resolvableInputs(reusableInputsExpanderProvider.get()).stream()
             .filter(input -> input.getType() == Type.SECRET)
-            .map(input -> input.getId()).toList();
+            .map(Input::getId).toList();
     }
 
     private DefaultRunContext.Builder newBuilder() {

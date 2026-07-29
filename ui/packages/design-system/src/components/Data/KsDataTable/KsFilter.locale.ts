@@ -177,6 +177,13 @@ export default {
                 "label": "State",
                 "description": "Filter by execution state",
             },
+            "state_group": {
+                "running": "Running",
+                "paused": "Paused",
+                "completed": "Completed",
+                "failed": "Failed",
+                "other": "Other",
+            },
             "childFilter": {
                 "label": "Hierarchy",
                 "description": "Filter by execution hierarchy",
@@ -622,6 +629,13 @@ export default {
                 "description": "Nach Zustand der Ausführung filtern",
                 "label": "Zustand",
             },
+            "state_group": {
+                "running": "Laufend",
+                "paused": "Pausiert",
+                "completed": "Abgeschlossen",
+                "failed": "Fehlgeschlagen",
+                "other": "Sonstige",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Anzeigetitel, der KI-Agenten angezeigt wird",
@@ -796,6 +810,26 @@ export default {
             "workerId": {
                 "description": "Nach Worker-ID filtern",
                 "label": "Worker-ID",
+            },
+            "mobile_filters": "Filter",
+            "filters_title": "Filter",
+            "all_filters": "Alle Filter",
+            "my_filters_saved": "Meine Filter gespeichert",
+            "member": {
+                "label": "Mitglied",
+                "description": "Filtern nach Mitglied",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Nach Task-Bezeichner filtern",
+            },
+            "taskRunId": {
+                "label": "Task Ausführungs-ID",
+                "description": "Filtern nach Task-Ausführungs-ID",
+            },
+            "attemptNumber": {
+                "label": "Versuchsnummer",
+                "description": "Filtern nach Task-Ausführungsversuchsnummer",
             },
         },
     },
@@ -1012,6 +1046,13 @@ export default {
                 "description": "Filtrar por estado de ejecución",
                 "label": "Estado",
             },
+            "state_group": {
+                "running": "En ejecución",
+                "paused": "Pausado",
+                "completed": "Completado",
+                "failed": "Fallido",
+                "other": "Otro",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Título mostrado a los agentes de IA",
@@ -1186,6 +1227,26 @@ export default {
             "workerId": {
                 "description": "Filtrar por ID de worker",
                 "label": "ID del Worker",
+            },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos los Filtros",
+            "my_filters_saved": "Mis filtros guardados",
+            "member": {
+                "label": "Miembro",
+                "description": "Filtrar por miembro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrar por identificador de task",
+            },
+            "taskRunId": {
+                "label": "ID de Ejecución de Task",
+                "description": "Filtrar por identificador de ejecución de task",
+            },
+            "attemptNumber": {
+                "label": "Número de intento",
+                "description": "Filtrar por número de intento de ejecución de task",
             },
         },
     },
@@ -1402,6 +1463,13 @@ export default {
                 "description": "Filtrer par état d'exécution",
                 "label": "État",
             },
+            "state_group": {
+                "running": "En cours",
+                "paused": "En pause",
+                "completed": "Terminé",
+                "failed": "Échoué",
+                "other": "Autre",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Titre affiché aux agents IA",
@@ -1576,6 +1644,26 @@ export default {
             "workerId": {
                 "description": "Filtrer par ID de worker",
                 "label": "ID du worker",
+            },
+            "mobile_filters": "Filtres",
+            "filters_title": "Filtres",
+            "all_filters": "Tous les filtres",
+            "my_filters_saved": "Mes Filtres enregistrés",
+            "member": {
+                "label": "Membre",
+                "description": "Filtrer par membre",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrer par identifiant de task",
+            },
+            "taskRunId": {
+                "label": "ID d'exécution de Task",
+                "description": "Filtrer par id d'exécution de task",
+            },
+            "attemptNumber": {
+                "label": "Numéro de tentative",
+                "description": "Filtrer par numéro de tentative d'exécution de task",
             },
         },
     },
@@ -1792,6 +1880,13 @@ export default {
                 "description": "कार्य स्थिति द्वारा फ़िल्टर करें",
                 "label": "स्थिति",
             },
+            "state_group": {
+                "running": "चल रहा है",
+                "paused": "रुका हुआ",
+                "completed": "पूर्ण",
+                "failed": "विफल",
+                "other": "अन्य",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "AI एजेंट्स को दिखाया जाने वाला शीर्षक",
@@ -1966,6 +2061,26 @@ export default {
             "workerId": {
                 "description": "वर्कर ID द्वारा फ़िल्टर करें",
                 "label": "वर्कर ID",
+            },
+            "mobile_filters": "फ़िल्टर",
+            "filters_title": "फ़िल्टर",
+            "all_filters": "सभी फ़िल्टर",
+            "my_filters_saved": "मेरे फ़िल्टर सहेजे गए",
+            "member": {
+                "label": "सदस्य",
+                "description": "सदस्य द्वारा फ़िल्टर करें",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task identifier द्वारा फ़िल्टर करें",
+            },
+            "taskRunId": {
+                "label": "Task रन ID",
+                "description": "task run पहचानकर्ता द्वारा फ़िल्टर करें",
+            },
+            "attemptNumber": {
+                "label": "प्रयास संख्या",
+                "description": "task run प्रयास संख्या द्वारा फ़िल्टर करें",
             },
         },
     },
@@ -2182,6 +2297,13 @@ export default {
                 "description": "Filtra per stato di esecuzione",
                 "label": "Zustato",
             },
+            "state_group": {
+                "running": "In esecuzione",
+                "paused": "In pausa",
+                "completed": "Completato",
+                "failed": "Non riuscito",
+                "other": "Altro",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Titolo visualizzato agli agenti IA",
@@ -2356,6 +2478,26 @@ export default {
             "workerId": {
                 "description": "Filtra per ID worker",
                 "label": "ID del worker",
+            },
+            "mobile_filters": "Filtri",
+            "filters_title": "Filtri",
+            "all_filters": "Tutti i Filtri",
+            "my_filters_saved": "I miei Filtri salvati",
+            "member": {
+                "label": "Membro",
+                "description": "Filtra per membro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtra per identificatore task",
+            },
+            "taskRunId": {
+                "label": "ID Esecuzione Task",
+                "description": "Filtra per identificatore di esecuzione del task",
+            },
+            "attemptNumber": {
+                "label": "Numero tentativo",
+                "description": "Filtra per numero di tentativo di esecuzione del task",
             },
         },
     },
@@ -2572,6 +2714,13 @@ export default {
                 "description": "実行状態でフィルター",
                 "label": "状態",
             },
+            "state_group": {
+                "running": "実行中",
+                "paused": "一時停止",
+                "completed": "完了",
+                "failed": "失敗",
+                "other": "その他",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "AIエージェントに表示されるタイトル",
@@ -2746,6 +2895,26 @@ export default {
             "workerId": {
                 "description": "ワーカーIDでフィルター",
                 "label": "ワーカーID",
+            },
+            "mobile_filters": "フィルター",
+            "filters_title": "フィルター",
+            "all_filters": "すべてのフィルター",
+            "my_filters_saved": "マイフィルター保存済み",
+            "member": {
+                "label": "メンバー",
+                "description": "メンバーでフィルタ",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task 識別子でフィルター",
+            },
+            "taskRunId": {
+                "label": "Task 実行 ID",
+                "description": "task実行IDで絞り込む",
+            },
+            "attemptNumber": {
+                "label": "試行番号",
+                "description": "task実行の試行回数でフィルター",
             },
         },
     },
@@ -2962,6 +3131,13 @@ export default {
                 "description": "실행 상태별 필터링",
                 "label": "상태",
             },
+            "state_group": {
+                "running": "실행 중",
+                "paused": "일시 중지",
+                "completed": "완료",
+                "failed": "실패",
+                "other": "기타",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "AI 에이전트에게 표시되는 제목",
@@ -3136,6 +3312,26 @@ export default {
             "workerId": {
                 "description": "작업자 ID로 필터링",
                 "label": "작업자 ID",
+            },
+            "mobile_filters": "필터",
+            "filters_title": "필터",
+            "all_filters": "모든 필터",
+            "my_filters_saved": "내 필터 저장됨",
+            "member": {
+                "label": "회원",
+                "description": "멤버별 필터링",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "task 식별자로 필터링",
+            },
+            "taskRunId": {
+                "label": "Task 실행 ID",
+                "description": "`task` 실행 `id`로 필터링",
+            },
+            "attemptNumber": {
+                "label": "시도 횟수",
+                "description": "task 실행 시도 번호로 필터링",
             },
         },
     },
@@ -3352,6 +3548,13 @@ export default {
                 "description": "Filtruj według stanu wykonania",
                 "label": "Zmienny",
             },
+            "state_group": {
+                "running": "W toku",
+                "paused": "Wstrzymano",
+                "completed": "Zakończono",
+                "failed": "Nie powiodło się",
+                "other": "Inne",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Tytuł wyświetlany agentom AI",
@@ -3526,6 +3729,26 @@ export default {
             "workerId": {
                 "description": "Filtruj według worker ID",
                 "label": "Identyfikator Worker",
+            },
+            "mobile_filters": "Filtry",
+            "filters_title": "Filtry",
+            "all_filters": "Wszystkie Filtry",
+            "my_filters_saved": "Moje Filtry zapisane",
+            "member": {
+                "label": "Członek",
+                "description": "Filtruj według członka",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtruj według identyfikatora taska",
+            },
+            "taskRunId": {
+                "label": "ID Uruchomienia Taska",
+                "description": "Filtruj według identyfikatora wykonania taska",
+            },
+            "attemptNumber": {
+                "label": "Numer próby",
+                "description": "Filtruj według numeru próby wykonania taska",
             },
         },
     },
@@ -3742,6 +3965,13 @@ export default {
                 "description": "Filtrar por estado de execução",
                 "label": "Zestado",
             },
+            "state_group": {
+                "running": "A executar",
+                "paused": "Pausado",
+                "completed": "Concluído",
+                "failed": "Falhado",
+                "other": "Outro",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Título exibido aos agentes de IA",
@@ -3916,6 +4146,26 @@ export default {
             "workerId": {
                 "description": "Filtrar por ID do worker",
                 "label": "ID do Worker",
+            },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos os Filtros",
+            "my_filters_saved": "Meus Filtros salvos",
+            "member": {
+                "label": "Membro",
+                "description": "Filtrar por membro",
+            },
+            "taskId": {
+                "label": "ID da Task",
+                "description": "Filtrar por identificador de task",
+            },
+            "taskRunId": {
+                "label": "ID da Execução da Task",
+                "description": "Filtrar por identificador de execução de task",
+            },
+            "attemptNumber": {
+                "label": "Número da Tentativa",
+                "description": "Filtrar por número de tentativa de execução de task",
             },
         },
     },
@@ -4132,6 +4382,13 @@ export default {
                 "description": "Filtrar por estado de execução",
                 "label": "Zestado",
             },
+            "state_group": {
+                "running": "Em execução",
+                "paused": "Pausado",
+                "completed": "Concluído",
+                "failed": "Falhou",
+                "other": "Outro",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Título exibido aos agentes de IA",
@@ -4306,6 +4563,26 @@ export default {
             "workerId": {
                 "description": "Filtrar por ID do worker",
                 "label": "ID do Worker",
+            },
+            "mobile_filters": "Filtros",
+            "filters_title": "Filtros",
+            "all_filters": "Todos os Filtros",
+            "my_filters_saved": "Meus Filtros salvos",
+            "member": {
+                "label": "Membro",
+                "description": "Filtrar por membro",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Filtrar por identificador da task",
+            },
+            "taskRunId": {
+                "label": "ID da Execução da Task",
+                "description": "Filtrar por identificador de execução de task",
+            },
+            "attemptNumber": {
+                "label": "Número da Tentativa",
+                "description": "Filtrar por número da tentativa de execução da task",
             },
         },
     },
@@ -4522,6 +4799,13 @@ export default {
                 "description": "Фильтр по состоянию выполнения",
                 "label": "Состояние",
             },
+            "state_group": {
+                "running": "Выполняется",
+                "paused": "Приостановлено",
+                "completed": "Завершено",
+                "failed": "Ошибка",
+                "other": "Другое",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "Заголовок, отображаемый ИИ-агентам",
@@ -4696,6 +4980,26 @@ export default {
             "workerId": {
                 "description": "Фильтр по worker ID",
                 "label": "ID worker",
+            },
+            "mobile_filters": "Фильтры",
+            "filters_title": "Фильтры",
+            "all_filters": "Все фильтры",
+            "my_filters_saved": "Мои фильтры сохранены",
+            "member": {
+                "label": "Член",
+                "description": "Фильтровать по участнику",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "Фильтровать по task идентификатору",
+            },
+            "taskRunId": {
+                "label": "ID запуска Task",
+                "description": "Фильтровать по идентификатору запуска task",
+            },
+            "attemptNumber": {
+                "label": "Номер попытки",
+                "description": "Фильтровать по номеру попытки выполнения task",
             },
         },
     },
@@ -4912,6 +5216,13 @@ export default {
                 "description": "按执行状态筛选",
                 "label": "状态",
             },
+            "state_group": {
+                "running": "运行中",
+                "paused": "已暂停",
+                "completed": "已完成",
+                "failed": "失败",
+                "other": "其他",
+            },
             "table_column": {
                 "mcpTools": {
                     "title": "向 AI 智能体显示的标题",
@@ -5086,6 +5397,26 @@ export default {
             "workerId": {
                 "description": "按worker ID筛选",
                 "label": "工作者 ID",
+            },
+            "mobile_filters": "筛选器",
+            "filters_title": "筛选器",
+            "all_filters": "所有筛选器",
+            "my_filters_saved": "我的筛选器已保存",
+            "member": {
+                "label": "成员",
+                "description": "按成员筛选",
+            },
+            "taskId": {
+                "label": "Task ID",
+                "description": "按 task 标识符筛选",
+            },
+            "taskRunId": {
+                "label": "Task 运行 ID",
+                "description": "按 task 运行标识符筛选",
+            },
+            "attemptNumber": {
+                "label": "尝试次数",
+                "description": "按 task 运行尝试编号筛选",
             },
         },
     },

@@ -3,14 +3,14 @@ package io.kestra.core.plugins;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -23,7 +23,6 @@ import io.kestra.core.utils.Version;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.HttpClient;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,6 @@ public class PluginCatalogService {
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
 
     private final HttpClient httpClient;
-    private final ExecutorService iconLoaderExecutor;
 
     private CompletableFuture<List<PluginManifest>> plugins;
 
@@ -45,6 +43,8 @@ public class PluginCatalogService {
 
     private Instant cacheLastLoaded = Instant.now();
     private final AtomicBoolean isLoaded = new AtomicBoolean(false);
+
+    private final Map<String, Optional<byte[]>> iconBytesByGroup = new ConcurrentHashMap<>();
 
     private final boolean icons;
     private final boolean oss;
@@ -66,12 +66,6 @@ public class PluginCatalogService {
         this.httpClient = httpClient;
         this.icons = icons;
         this.oss = communityOnly;
-        if (icons) {
-            int maxAsyncThreads = Math.max(4, executorsUtils.getAllocatedCpuCores());
-            this.iconLoaderExecutor = executorsUtils.maxCachedThreadPool(maxAsyncThreads, "api-plugin-catalog");
-        } else {
-            this.iconLoaderExecutor = null;
-        }
 
         Version version = Version.of(KestraContext.getContext().getVersion());
         this.currentStableVersion = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
@@ -167,49 +161,14 @@ public class PluginCatalogService {
                 .filter(plugin -> !oss || !"EE".equals(plugin.get("license")))
                 .toList();
 
-            // Load icons in parallel using a dedicated executor to avoid saturating the ForkJoinPool.
-            Map<String, String> iconsByGroup = Map.of();
-            if (icons && iconLoaderExecutor != null) {
-                List<String> groups = filteredPlugins.stream()
-                    .map(plugin -> (String) plugin.get("group"))
-                    .distinct()
-                    .toList();
-
-                List<CompletableFuture<Map.Entry<String, String>>> iconFutures = groups.stream()
-                    .map(group -> CompletableFuture.supplyAsync(() -> {
-                        try {
-                            HttpResponse<String> response = httpClient
-                                .toBlocking()
-                                .exchange(
-                                    HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + group),
-                                    String.class
-                                );
-                            String icon = response.getBody()
-                                .map(svg -> Base64.getEncoder().encodeToString(svg.getBytes(StandardCharsets.UTF_8)))
-                                .orElse(null);
-                            return Map.entry(group, icon != null ? icon : "");
-                        } catch (Exception e) {
-                            log.debug("Failed to load icon for plugin group '{}': {}", group, e.getMessage());
-                            return Map.entry(group, "");
-                        }
-                    }, iconLoaderExecutor))
-                    .toList();
-
-                iconsByGroup = iconFutures.stream()
-                    .map(CompletableFuture::join)
-                    .filter(entry -> !entry.getValue().isEmpty())
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            }
-
-            Map<String, String> finalIconsByGroup = iconsByGroup;
             List<PluginManifest> artifacts = filteredPlugins.stream()
-                .map(plugin -> {
+                .map(plugin ->
+                {
                     String groupId = "EE".equals(plugin.get("license")) ? "io.kestra.plugin.ee" : "io.kestra.plugin";
                     String artifactId = (String) plugin.get("name");
-                    String icon = finalIconsByGroup.getOrDefault((String) plugin.get("group"), null);
                     return new PluginManifest(
                         (String) plugin.get("title"),
-                        icon,
+                        (String) plugin.get("group"),
                         groupId,
                         artifactId
                     );
@@ -226,6 +185,51 @@ public class PluginCatalogService {
             return artifacts;
         } finally {
             isLoaded.set(false);
+        }
+    }
+
+    public Optional<byte[]> icon(final String groupId, final String artifactId) {
+        if (!icons) {
+            return Optional.empty();
+        }
+
+        String group = get().stream()
+            .filter(manifest -> groupId.equals(manifest.groupId()) && artifactId.equals(manifest.artifactId()))
+            .map(PluginManifest::group)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+
+        return icon(group);
+    }
+
+    public Optional<byte[]> icon(final String group) {
+        if (!icons || group == null) {
+            return Optional.empty();
+        }
+
+        Optional<byte[]> cached = iconBytesByGroup.get(group);
+        if (cached != null) {
+            return cached;
+        }
+        Optional<byte[]> fetched = fetchGroupIcon(group);
+        if (fetched.isPresent()) {
+            iconBytesByGroup.put(group, fetched);
+        }
+        return fetched;
+    }
+
+    private Optional<byte[]> fetchGroupIcon(final String group) {
+        try {
+            return httpClient
+                .toBlocking()
+                .exchange(HttpRequest.create(HttpMethod.GET, "/v1/plugins/icons/" + group), String.class)
+                .getBody()
+                .filter(svg -> !svg.isBlank())
+                .map(svg -> svg.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            log.debug("Failed to load icon for plugin group '{}': {}", group, e.getMessage());
+            return Optional.empty();
         }
     }
 
@@ -251,7 +255,7 @@ public class PluginCatalogService {
 
     public record PluginManifest(
         String title,
-        String icon,
+        String group,
         String groupId,
         String artifactId) {
 

@@ -3,9 +3,9 @@ package io.kestra.webserver.services.ai;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
-
 import org.junit.jupiter.api.Test;
+
+import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;

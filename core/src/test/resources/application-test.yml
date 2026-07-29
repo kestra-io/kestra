@@ -30,10 +30,11 @@ kestra:
     type: local
     local:
       base-path: /tmp/unittest
-  queues:
-    min-poll-interval: 10ms
-    max-poll-interval: 100ms
-    poll-switch-interval: 5s
+  jdbc:
+    queues:
+      min-poll-interval: 10ms
+      max-poll-interval: 100ms
+      poll-switch-interval: 5s
 
   variables:
     globals:
@@ -77,25 +78,16 @@ kestra:
         values:
           prop0: value0
 
-    defaults:
-      - type: io.kestra.plugin.core.log
-        values:
-          message: This is a default message
-      - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
-        values:
-          doubleValue: 19
-          arrays:
-            - 2
-          property:
-            here: me
-            lists:
-              - val:
-                  key: test
+  tasks:
+    http:
+      denied-list:
+        - http://dangerous-url.com
+
   grpc:
     maxRetryAttempts: 1
     shutdownTimeout: 3s
   controller:
-    port: ${random.port}
+    port: ${random.int[20000,32000]} # keep out of the ephemeral port range (32768-60999): an outbound socket could steal a random.port between config resolution and the controller bind
     maxConnectionAgeGrace: 0s
   worker:
     controllers:

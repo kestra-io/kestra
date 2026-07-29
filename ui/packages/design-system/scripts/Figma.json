@@ -1940,9 +1940,9 @@
           },
           {
             "name": "ks/bg-error",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
+            "value": "#ff6a6c1a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-hover",
@@ -1964,9 +1964,9 @@
           },
           {
             "name": "ks/bg-info",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
+            "value": "#718bfe1a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-input",
@@ -1994,9 +1994,9 @@
           },
           {
             "name": "ks/bg-success",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
+            "value": "#06f0b11a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-surface",
@@ -2036,9 +2036,9 @@
           },
           {
             "name": "ks/bg-warning",
-            "value": "#14181f",
-            "var": "gray-cool/950",
-            "rootAlias": "gray-cool/950"
+            "value": "#ff8b611a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/border-default",
@@ -3510,9 +3510,9 @@
           },
           {
             "name": "ks/bg-error",
-            "value": "#111115",
-            "var": "gray-neutral/950",
-            "rootAlias": "gray-neutral/950"
+            "value": "#ff6a6c1a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-hover",
@@ -3534,9 +3534,9 @@
           },
           {
             "name": "ks/bg-info",
-            "value": "#111115",
-            "var": "gray-neutral/950",
-            "rootAlias": "gray-neutral/950"
+            "value": "#718bfe1a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-input",
@@ -3564,9 +3564,9 @@
           },
           {
             "name": "ks/bg-success",
-            "value": "#111115",
-            "var": "gray-neutral/950",
-            "rootAlias": "gray-neutral/950"
+            "value": "#06f0b11a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/bg-surface",
@@ -3606,9 +3606,9 @@
           },
           {
             "name": "ks/bg-warning",
-            "value": "#111115",
-            "var": "gray-neutral/950",
-            "rootAlias": "gray-neutral/950"
+            "value": "#ff8b611a",
+            "var": "",
+            "rootAlias": ""
           },
           {
             "name": "ks/border-default",
@@ -3912,9 +3912,9 @@
           },
           {
             "name": "ks/dependencies-node-background-assets",
-            "value": "#718bfe",
-            "var": "blue/300",
-            "rootAlias": "blue/300"
+            "value": "#022670",
+            "var": "blue/800",
+            "rootAlias": "blue/800"
           },
           {
             "name": "ks/dependencies-node-background-default",
@@ -3942,9 +3942,9 @@
           },
           {
             "name": "ks/dependencies-node-border-assets",
-            "value": "#a9b5fe",
-            "var": "blue/200",
-            "rootAlias": "blue/200"
+            "value": "#1761fd",
+            "var": "blue/500",
+            "rootAlias": "blue/500"
           },
           {
             "name": "ks/dependencies-node-border-default",

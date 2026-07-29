@@ -1,5 +1,6 @@
 package io.kestra.core.models.dashboards.filters;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -41,7 +42,9 @@ public abstract class AbstractFilter<F extends Enum<F>> {
     @JsonProperty(value = "field", required = true)
     @Valid
     private F field;
-    private String labelKey;
+    // `labelKey` is the legacy name (Executions LABELS); kept as a read alias for backward compatibility.
+    @JsonAlias("labelKey")
+    private String key;
 
     abstract public FilterType getType();
 

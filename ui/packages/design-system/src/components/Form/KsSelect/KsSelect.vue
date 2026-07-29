@@ -165,7 +165,7 @@
                 box-shadow: 0 0 0 2px var(--ks-border-focus) inset;
             }
 
-            &.is-hovering:not(.is-focused) {
+            &.is-hovering:not(.is-focused):not(.is-disabled) {
                 box-shadow: 0 0 0 1px var(--ks-border-focus) inset;
             }
         }
@@ -181,22 +181,19 @@
         .kel-select__wrapper {
             background-color: var(--ks-bg-input);
             min-height: 30px;
-            padding: 4px 8px 4px 10px;
             font-size: var(--ks-font-size-xs);
             box-shadow: inset 0 0 0 1px var(--ks-border-strong), 0 1px 2px var(--ks-shadow-element);
 
-            &:hover {
+            &:not(.is-disabled):hover {
                 background-color: var(--ks-bg-hover);
             }
 
             &.is-disabled {
-                html.dark & {
-                    background-color: var(--ks-border-default);
-                }
+                background-color: var(--ks-bg-inactive);
 
                 .kel-select__suffix {
                     .kel-select__caret {
-                        color: var(--ks-text-inactive);
+                        color: var(--ks-icon-inactive);
                     }
                 }
             }

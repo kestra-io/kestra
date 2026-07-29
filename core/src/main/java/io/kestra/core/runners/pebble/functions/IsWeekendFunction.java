@@ -1,21 +1,23 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.utils.DateUtils;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.utils.DateUtils;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
 /**
  * Pebble function that returns {@code true} if the given date falls on Saturday or Sunday.
  *
- * <p>Usage: {@code {{ isWeekend(date) }}}
+ * <p>
+ * Usage: {@code {{ isWeekend(date) }}}
  *
  * @param date any valid ISO 8601 date or datetime string
  */

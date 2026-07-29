@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +46,14 @@ public abstract class RunContext implements PropertyContext {
      */
     @JsonInclude
     public abstract List<String> getSecretInputs();
+
+    /**
+     * Returns the plaintext values of SECRET-typed flow outputs decrypted while building this context's
+     * variables (e.g. a subflow's SECRET output consumed by this task), so they can be re-registered for
+     * log masking once this context is re-hydrated (e.g. on the worker).
+     */
+    @JsonInclude
+    public abstract List<String> getSecretOutputs();
 
     /**
      * OpenTelemetry trace parent
@@ -99,6 +108,31 @@ public abstract class RunContext implements PropertyContext {
     public abstract Logger logger();
 
     /**
+     * Reports a lifecycle step of a multi-step task (e.g. a batch job or a runner that launches
+     * an external resource) so UIs following the execution live can track progress. Emitted as a
+     * regular INFO log line carrying a typed {@code step} token, so it rides the existing log
+     * queue and follow-logs SSE — no separate channel or endpoint needed. {@code step} is an
+     * opaque, plugin-defined identifier (e.g. {@code "pod.created"}); {@code message} is the
+     * human-readable text shown in the log console.
+     */
+    public void emitProgress(String step, String message) {
+        logger().atInfo().addKeyValue(RunContextLogger.PROGRESS_KEY, step).log(message);
+    }
+
+    /**
+     * Same as {@link #emitProgress(String, String)}, but backdates the log entry to a real
+     * event time known only after the fact (e.g. a Kubernetes condition's {@code lastTransitionTime})
+     * instead of the moment this method is called, using the same override {@code RunContextLogger}
+     * already applies for {@link io.kestra.core.models.tasks.runners.TaskLogLineMatcher}.
+     */
+    public void emitProgress(String step, String message, Instant timestamp) {
+        logger().atInfo()
+            .addKeyValue(RunContextLogger.PROGRESS_KEY, step)
+            .addKeyValue(RunContextLogger.ORIGINAL_TIMESTAMP_KEY, timestamp)
+            .log(message);
+    }
+
+    /**
      * Gets the log file URI inside the internal storage.
      * Only populated if the task or trigger is configured to log o a file.<br>
      *
@@ -120,6 +154,22 @@ public abstract class RunContext implements PropertyContext {
     public abstract void dynamicWorkerResult(List<WorkerTaskResult> workerTaskResults);
 
     public abstract List<WorkerTaskResult> dynamicWorkerResults();
+
+    /**
+     * Registers a dynamically-generated taskrun together with the log lines to attach to it, in a
+     * single call — the way plugins surface logs under the sub-taskruns they create at runtime
+     * (these taskruns are synthesized after their underlying work has finished, so their logs are
+     * already available at registration time).
+     * <p>
+     * The logs ride with the taskrun being registered, so they can only ever target that taskrun;
+     * their execution, tenant, namespace, flow and attempt are taken from this context (a plugin
+     * cannot target another execution or tenant) and secrets are masked. The default registers the
+     * taskrun and drops the logs, so runtimes that don't support per-taskrun logs (and older ones)
+     * still show the taskrun rather than failing the task.
+     */
+    public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
+        this.dynamicWorkerResult(List.of(workerTaskResult));
+    }
 
     /**
      * Gets access to the working directory.

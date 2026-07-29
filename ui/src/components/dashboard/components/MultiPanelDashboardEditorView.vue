@@ -13,13 +13,18 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, markRaw, useTemplateRef, watch} from "vue"
+    import {computed, markRaw, nextTick, ref, useTemplateRef, watch} from "vue"
+    import _throttle from "lodash/throttle"
     import {DASHBOARD_EDITOR_ELEMENTS, DEFAULT_ACTIVE_TABS} from "../composables/useDashboardPanels"
     import {useDashboardStore} from "../../../stores/dashboard"
     import MultiPanelGenericEditorView from "../../MultiPanelGenericEditorView.vue"
     import DashboardNoCodeEditor from "./DashboardNoCodeEditor.vue"
     import DashboardEditorButtons from "./DashboardEditorButtons.vue"
     import {useNoCodePanelsFull} from "../../flows/useNoCodePanels"
+    import {useI18n} from "vue-i18n"
+    import {useCoreStore} from "../../../stores/core.ts"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 
     const showEditor = computed(() => dashboardStore.isCreating || dashboardStore.parsedSource?.id)
 
@@ -53,4 +58,40 @@
         editorElements: DASHBOARD_EDITOR_ELEMENTS,
         source: computed(() => dashboardStore.sourceCode),
     })
+
+    const coreStore = useCoreStore()
+    const readonlyToastShown = ref(false)
+
+    const {t} = useI18n()
+
+    watch(() => dashboardStore.sourceCode, _throttle(async () => {
+        const errorsResult = await DashboardsAPI.validateDashboard({body: dashboardStore.sourceCode})
+
+        const dbId = dashboardStore.activeDashboard?.id
+        if (errorsResult.constraints) {
+            dashboardStore.errors = [errorsResult.constraints]
+        } else {
+            dashboardStore.errors = undefined
+        }
+
+        if (!dashboardStore.isCreating && dbId !== undefined && YAML_UTILS.parse(dashboardStore.sourceCode).id !== dbId) {
+            if (!readonlyToastShown.value) {
+                readonlyToastShown.value = true
+                coreStore.message = {
+                    variant: "warning",
+                    title: t("readonly property"),
+                    message: t("dashboards.edition.id readonly"),
+                }
+            }
+
+            await nextTick()
+            if(dashboardStore.sourceCode && dbId){
+                dashboardStore.sourceCode = YAML_UTILS.replaceBlockWithPath({
+                    source: dashboardStore.sourceCode,
+                    path: "id",
+                    newContent: dbId,
+                })
+            }
+        }
+    }, 300, {trailing: true, leading: false}))
 </script>

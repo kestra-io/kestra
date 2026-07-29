@@ -1,5 +1,7 @@
 package io.kestra.jdbc;
 
+import org.jooq.impl.DSL;
+
 import io.kestra.core.services.BackendVersionProvider;
 
 import io.micronaut.context.annotation.Factory;
@@ -8,7 +10,6 @@ import io.micronaut.context.env.Environment;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.impl.DSL;
 
 /**
  * Factory that produces {@link BackendVersionProvider} beans for JDBC-based backends.
@@ -25,8 +26,7 @@ public class JdbcVersionProviderFactory {
     @Requires(property = "kestra.repository.type", pattern = "mysql|postgres|h2|memory")
     public BackendVersionProvider jdbcRepositoryVersionProvider(
         JooqDSLContextWrapper dslContextWrapper,
-        Environment environment
-    ) {
+        Environment environment) {
         String type = environment.getProperty("kestra.repository.type", String.class).orElse("jdbc");
         return new JdbcVersionProvider(dslContextWrapper, type, BackendVersionProvider.Category.REPOSITORY);
     }
@@ -36,8 +36,7 @@ public class JdbcVersionProviderFactory {
     @Requires(property = "kestra.queue.type", pattern = "mysql|postgres|h2|memory")
     public BackendVersionProvider jdbcQueueVersionProvider(
         JooqDSLContextWrapper dslContextWrapper,
-        Environment environment
-    ) {
+        Environment environment) {
         String type = environment.getProperty("kestra.queue.type", String.class).orElse("jdbc");
         return new JdbcVersionProvider(dslContextWrapper, type, BackendVersionProvider.Category.QUEUE);
     }
@@ -77,11 +76,11 @@ public class JdbcVersionProviderFactory {
             }
 
             try {
-                cachedVersion = dslContextWrapper.transactionResult(configuration ->
-                    DSL.using(configuration).connectionResult(conn -> {
-                        var meta = conn.getMetaData();
-                        return meta.getDatabaseProductName() + " " + meta.getDatabaseProductVersion();
-                    })
+                cachedVersion = dslContextWrapper.transactionResult(configuration -> DSL.using(configuration).connectionResult(conn ->
+                {
+                    var meta = conn.getMetaData();
+                    return meta.getDatabaseProductName() + " " + meta.getDatabaseProductVersion();
+                })
                 );
             } catch (Exception e) {
                 log.debug("Failed to retrieve database version", e);

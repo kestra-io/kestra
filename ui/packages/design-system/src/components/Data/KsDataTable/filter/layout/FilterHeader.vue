@@ -4,12 +4,15 @@
             <label class="filter-label">{{ label }}</label>
             <small v-if="description" class="filter-description">{{ description }}</small>
         </div>
-        <KsButton
-            link
-            size="small"
-            :icon="Close"
-            @click="emits('close')"
-        />
+        <div class="filter-header-trailing">
+            <slot name="trailing" />
+            <KsButton
+                link
+                size="small"
+                :icon="Close"
+                @click="emits('close')"
+            />
+        </div>
     </div>
 </template>
 
@@ -30,7 +33,7 @@
     align-items: flex-start;
     justify-content: space-between;
     padding: 1rem 1rem 0 1rem;
-    gap: 0.5rem;
+    gap: var(--ks-spacing-2);
 
     .filter-title {
         min-width: 0;
@@ -50,6 +53,13 @@
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
         line-height: 1.2;
+    }
+
+    .filter-header-trailing {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        flex-shrink: 0;
     }
 
     :deep(.close-icon) {

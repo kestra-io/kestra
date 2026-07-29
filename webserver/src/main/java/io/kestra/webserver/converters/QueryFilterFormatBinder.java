@@ -68,7 +68,8 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         List<QueryFilter> filters = root.build(maxWidth);
         if (filters.size() > maxWidth) {
             throw new IllegalArgumentException(
-                "QueryFilter root width (" + filters.size() + ") exceeds maximum of " + maxWidth);
+                "QueryFilter root width (" + filters.size() + ") exceeds maximum of " + maxWidth
+            );
         }
         return filters;
     }
@@ -83,7 +84,8 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         while (pm.find()) {
             if (++depth > maxDepth) {
                 throw new IllegalArgumentException(
-                    "QueryFilter nesting depth exceeds maximum of " + maxDepth);
+                    "QueryFilter nesting depth exceeds maximum of " + maxDepth
+                );
             }
             Logical lg = Logical.valueOf(pm.group(1).toUpperCase(Locale.ROOT));
             int idx = Integer.parseInt(pm.group(2));
@@ -101,8 +103,11 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
     public BindingResult<List<QueryFilter>> bind(ArgumentConversionContext<List<QueryFilter>> context, HttpRequest<?> source) {
         QueryFilter.Resource resource = context.getAnnotationMetadata()
             .enumValue(QueryFilterFormat.class, QueryFilter.Resource.class)
-            .orElseThrow(() -> new IllegalStateException(
-                "@QueryFilterFormat requires a QueryFilter.Resource value"));
+            .orElseThrow(
+                () -> new IllegalStateException(
+                    "@QueryFilterFormat requires a QueryFilter.Resource value"
+                )
+            );
 
         int maxDepth = configuration.maxDepthFor(resource);
         int maxWidth = configuration.maxWidthFor(resource);
@@ -125,7 +130,8 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
     private static void checkWidth(int count, int maxWidth) {
         if (count > maxWidth) {
             throw new IllegalArgumentException(
-                "QueryFilter node width (" + count + ") exceeds maximum of " + maxWidth);
+                "QueryFilter node width (" + count + ") exceeds maximum of " + maxWidth
+            );
         }
     }
 
@@ -160,26 +166,32 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
                 : parseValues(values, field, op);
 
             for (Object v : parsedValues) {
-                directLeaves.add(QueryFilter.builder()
-                    .field(field)
-                    .operation(op)
-                    .value(v)
-                    .build());
+                directLeaves.add(
+                    QueryFilter.builder()
+                        .field(field)
+                        .operation(op)
+                        .value(v)
+                        .build()
+                );
             }
         }
 
         List<QueryFilter> build(int maxWidth) {
             List<QueryFilter> items = new ArrayList<>(directLeaves);
-            labelsByOp.forEach((op, kvMap) -> {
+            labelsByOp.forEach((op, kvMap) ->
+            {
                 if (!kvMap.isEmpty()) {
-                    items.add(QueryFilter.builder()
-                        .field(QueryFilter.Field.LABELS)
-                        .operation(op)
-                        .value(kvMap)
-                        .build());
+                    items.add(
+                        QueryFilter.builder()
+                            .field(QueryFilter.Field.LABELS)
+                            .operation(op)
+                            .value(kvMap)
+                            .build()
+                    );
                 }
             });
-            subNodes.forEach((lg, slots) -> {
+            subNodes.forEach((lg, slots) ->
+            {
                 List<QueryFilter> branches = new ArrayList<>();
                 for (NodeBuilder slot : slots.values()) {
                     List<QueryFilter> slotItems = slot.build(maxWidth);
@@ -190,10 +202,12 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
                         branches.add(slotItems.getFirst());
                     } else {
                         checkWidth(slotItems.size(), maxWidth);
-                        branches.add(QueryFilter.builder()
-                            .logical(Logical.AND)
-                            .children(slotItems)
-                            .build());
+                        branches.add(
+                            QueryFilter.builder()
+                                .logical(Logical.AND)
+                                .children(slotItems)
+                                .build()
+                        );
                     }
                 }
                 if (branches.isEmpty()) {
@@ -203,10 +217,12 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
                     items.add(branches.getFirst());
                 } else {
                     checkWidth(branches.size(), maxWidth);
-                    items.add(QueryFilter.builder()
-                        .logical(lg)
-                        .children(branches)
-                        .build());
+                    items.add(
+                        QueryFilter.builder()
+                            .logical(lg)
+                            .children(branches)
+                            .build()
+                    );
                 }
             });
             return items;

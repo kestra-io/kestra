@@ -104,7 +104,8 @@ public class RetryCaseTest {
         );
         Await.until(
             () -> "flow should have ended in Failed state",
-            () -> {
+            () ->
+            {
                 try {
                     return executionRepository.findLatestForStates(flow.getTenantId(), flow.getNamespace(), flow.getId(), List.of(State.Type.FAILED)).isPresent();
                 } catch (Exception e) {
@@ -146,7 +147,8 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().get(1).attemptNumber()).isEqualTo(3);
     }
 
-    public void retrySubflow(Execution execution) {
+    public void retrySubflow(String tenant) throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(tenant, "io.kestra.tests", "retry-subflow");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().get(0).getAttempts().size()).isEqualTo(3);
     }
@@ -168,7 +170,7 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isEqualTo(1);
 
         // At least one sub-execution must have retried its child task
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions).hasSize(2);
         boolean anyChildRetried = subExecutions.stream()
             .flatMap(sub -> sub.getTaskRunList().stream())

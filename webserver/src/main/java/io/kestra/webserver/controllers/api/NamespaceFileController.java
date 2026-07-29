@@ -3,8 +3,6 @@ package io.kestra.webserver.controllers.api;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +21,8 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileService;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.security.ProtectedZipInputStream;
+import io.kestra.core.security.SecurityConfiguration;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
@@ -62,6 +62,8 @@ public class NamespaceFileController {
     private NamespaceFactory namespaceFactory;
     @Inject
     private NamespaceFileService namespaceFileService;
+    @Inject
+    private SecurityConfiguration securityConfiguration;
 
     private final List<Pattern> forbiddenPathPatterns = List.of(
         Pattern.compile("/" + FLOWS_FOLDER + "(/.*)?$")
@@ -85,7 +87,7 @@ public class NamespaceFileController {
         @Nullable @Parameter(description = "The revision, if not provided, the latest revision will be returned") @QueryValue Integer revision) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
-            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+            encodedPath = toFileUri(path);
         }
         forbiddenPathsGuard(encodedPath);
 
@@ -103,7 +105,7 @@ public class NamespaceFileController {
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
-            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+            encodedPath = toFileUri(path);
         }
         forbiddenPathsGuard(encodedPath);
 
@@ -128,7 +130,7 @@ public class NamespaceFileController {
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
-            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+            encodedPath = toFileUri(path);
         }
         forbiddenPathsGuard(encodedPath);
 
@@ -156,7 +158,7 @@ public class NamespaceFileController {
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
-            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+            encodedPath = toFileUri(path);
         }
         forbiddenPathsGuard(encodedPath);
 
@@ -182,7 +184,7 @@ public class NamespaceFileController {
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path) throws IOException, URISyntaxException {
         URI encodedPath = null;
         if (path != null) {
-            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+            encodedPath = toFileUri(path);
         }
         forbiddenPathsGuard(encodedPath);
 
@@ -204,7 +206,7 @@ public class NamespaceFileController {
         String tenantId = tenantService.resolveTenant();
         List<NamespaceFile> createdFiles = new ArrayList<>();
         if (fileContent.getFilename().toLowerCase().endsWith(".zip")) {
-            try (ZipInputStream archive = new ZipInputStream(fileContent.getInputStream())) {
+            try (ZipInputStream archive = ProtectedZipInputStream.of(fileContent.getInputStream(), securityConfiguration.zipBombProtection())) {
                 ZipEntry entry;
                 while ((entry = archive.getNextEntry()) != null) {
                     if (entry.isDirectory()) {
@@ -212,7 +214,7 @@ public class NamespaceFileController {
                     }
 
                     try (BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(archive.readAllBytes()))) {
-                        createdFiles.addAll(putNamespaceFile(tenantId, namespace, URI.create("/" + entry.getName()), inputStream));
+                        createdFiles.addAll(putNamespaceFile(tenantId, namespace, toFileUri("/" + entry.getName()), inputStream));
                     }
                 }
             }
@@ -224,7 +226,7 @@ public class NamespaceFileController {
                     return (int) fileContent.getSize();
                 }
             }) {
-                createdFiles.addAll(putNamespaceFile(tenantId, namespace, new URI(URLEncoder.encode(path, StandardCharsets.UTF_8)), inputStream));
+                createdFiles.addAll(putNamespaceFile(tenantId, namespace, toFileUri(path), inputStream));
             }
         }
 
@@ -340,7 +342,7 @@ public class NamespaceFileController {
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
-        encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+        encodedPath = toFileUri(path);
         ensureWritableNamespaceFile(encodedPath);
 
         String pathWithoutScheme = encodedPath.getPath();
@@ -362,6 +364,16 @@ public class NamespaceFileController {
 
         Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
         return namespaceStorage.delete(Path.of(zombieAwarePathToDelete));
+    }
+
+    /**
+     * Builds a URI from an already-decoded namespace file path.
+     * Uses the multi-argument URI constructor so that only URI-illegal characters are percent-encoded
+     * (e.g. space → %20) while legal characters such as '+' are preserved,
+     * keeping "a b.txt" and "a+b.txt" as two distinct paths.
+     */
+    private static URI toFileUri(String path) throws URISyntaxException {
+        return new URI(null, null, path, null);
     }
 
     private void forbiddenPathsGuard(URI path) {

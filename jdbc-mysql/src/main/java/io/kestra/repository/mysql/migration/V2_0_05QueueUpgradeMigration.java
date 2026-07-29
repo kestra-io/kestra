@@ -1,8 +1,9 @@
 package io.kestra.repository.mysql.migration;
 
+import java.util.List;
+
 import javax.sql.DataSource;
 
-import io.kestra.core.migration.MigrationScript;
 import io.kestra.jdbc.migration.AbstractSQLMigrationScript;
 
 import io.micronaut.context.annotation.Requires;
@@ -46,12 +47,12 @@ public class V2_0_05QueueUpgradeMigration extends AbstractSQLMigrationScript {
     }
 
     @Override
-    public String checksum() {
-        return MigrationScript.checksumOfResources("/migrations/2.0.05-queue-mysql.sql");
+    public List<String> sqlResources() {
+        return List.of("/migrations/2.0.05-queue-mysql.sql");
     }
 
     @Override
-    public void migrate() throws Exception {
-        executeSqlResource(dataSource, "/migrations/2.0.05-queue-mysql.sql");
+    protected DataSource dataSource() {
+        return dataSource;
     }
 }

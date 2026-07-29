@@ -108,7 +108,9 @@ tasks:
             })
         } else if (blueprintId) {
             const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId)
-            flowYaml = flowBlueprint.source
+            if(flowBlueprint.source){
+                flowYaml = flowBlueprint.source
+            }
         } else if (isGuidedOnboarding) {
             flowYaml = `# ${t("onboarding.editor_hints.build_intro")}\n`
         } else {

@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableMap;
@@ -32,6 +31,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.TaskOutputService;
 import io.kestra.core.storages.Namespace;
@@ -228,7 +228,7 @@ public class InputsTest {
 
         assertThat(execution.getTaskRunList()).hasSize(13);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions).hasSize(3);
 
         assertThat((String) taskOutputService.getOutputs(execution.findTaskRunsByTaskId("file").getFirst()).get("value"))
@@ -396,7 +396,7 @@ public class InputsTest {
 
         assertThat(execution.getTaskRunList()).hasSize(13);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions).hasSize(3);
 
         assertThat(execution.getInputs().get("json1")).isInstanceOf(Map.class);

@@ -20,10 +20,14 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.WorkerSelector;
 import io.kestra.core.queues.event.BroadcastEvent;
+import io.kestra.core.runners.ReusableInputsExpander;
 import io.kestra.core.serializers.JacksonMapper;
+
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * The base interface for FLow.
@@ -38,6 +42,8 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
     boolean isDisabled();
 
     boolean isDeleted();
+
+    boolean isDraft();
 
     List<Label> getLabels();
 
@@ -63,8 +69,33 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
      */
     @JsonIgnore
     default List<Input<?>> resolvableInputs() {
+        return resolvableInputs(null);
+    }
+
+    /**
+     * Same as {@link #resolvableInputs()} but also inlines every {@code REUSABLE_INPUTS} reference (via the given
+     * {@link ReusableInputsExpander}) before flattening — use this overload on resolution paths that may encounter a
+     * reference. A {@code null} expander means "no reusable inputs to resolve" (FORM flattening only), so open-source
+     * call sites and flows without references can pass {@code null}.
+     */
+    default List<Input<?>> resolvableInputs(@Nullable ReusableInputsExpander reusableInputsExpander) {
+        return Input.expandToLeaves(inlinedInputs(reusableInputsExpander));
+    }
+
+    /**
+     * The authored inputs with every {@code REUSABLE_INPUTS} reference inlined (the block's inputs spliced in, ids
+     * prefixed by the reference id) but {@code FORM} grouping left intact — the structure the execute form renders.
+     * {@link #resolvableInputs(ReusableInputsExpander)} layers FORM flattening on top of this. A {@code null} expander
+     * returns the authored inputs unchanged.
+     */
+    default List<Input<?>> inlinedInputs(@Nullable ReusableInputsExpander reusableInputsExpander) {
         List<Input<?>> inputs = getInputs();
-        return inputs == null ? List.of() : Input.expandToLeaves(inputs);
+        if (inputs == null) {
+            return List.of();
+        }
+        return reusableInputsExpander == null
+            ? inputs
+            : reusableInputsExpander.expand(getTenantId(), getNamespace(), inputs);
     }
 
     List<Output> getOutputs();
@@ -77,6 +108,10 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
     default Concurrency getConcurrency() {
         return null;
+    }
+
+    default List<Quota> getQuotas() {
+        return List.of();
     }
 
     default List<SLA> getSla() {
@@ -120,6 +155,7 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
         return Objects.equals(this.uidWithoutRevision(), flow.uidWithoutRevision()) &&
             Objects.equals(this.isDeleted(), flow.isDeleted()) &&
             Objects.equals(this.isDisabled(), flow.isDisabled()) &&
+            Objects.equals(this.isDraft(), flow.isDraft()) &&
             Objects.equals(sourceWithoutRevision(this.getSource()), sourceWithoutRevision(flow.getSource()));
     }
 
@@ -187,13 +223,13 @@ public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, Ten
 
         /**
          * Dirty hack but only concern previous flow with no source code in org.yaml.snakeyaml.emitter.Emitter:
-         * 
+         *
          * <pre>
          * if (previousSpace) {
          *     spaceBreak = true;
          * }
          * </pre>
-         * 
+         *
          * This control will detect ` \n` as a no valid entry on a string and will break the multiline to transform in single line
          *
          * @param object the object to fix

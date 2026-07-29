@@ -1,20 +1,15 @@
 package io.kestra.plugin.core.storage;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;

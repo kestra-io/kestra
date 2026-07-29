@@ -14,7 +14,7 @@
             />
             <div class="pie-center-label">
                 <div class="pie-center-label__total">{{ totalValue }}</div>
-                <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ t("success") }}</div>
+                <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ $t("success") }}</div>
             </div>
         </div>
         <KsNoData v-else class="empty" />
@@ -32,7 +32,6 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
-    import {useI18n} from "vue-i18n"
 
     import moment from "moment"
     import {KsPie, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
@@ -41,14 +40,14 @@
     import {getConsistentHEXColor} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
-    import {FilterObject} from "../../../utils/filters"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
     }>(), {
         dashboardId: undefined,
@@ -57,7 +56,6 @@
     })
 
     const route = useRoute()
-    const {t} = useI18n()
 
     const {drillDown} = useChartDrillDown(props.chart)
 
@@ -132,7 +130,7 @@
 
     const dimensionColumn = computed(() => {
         const dimensionKey = aggregator.field?.key
-        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; labelKey?: string} | undefined
+        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; key?: string} | undefined
     })
 
     function onSegmentClick(params: any) {
@@ -192,7 +190,7 @@
         }
 
         &__success {
-            font-size: clamp(0.5rem, 4cqw, var(--ks-font-size-2xs));
+            font-size: var(--ks-font-size-2xs);
             color: var(--ks-text-success);
         }
     }

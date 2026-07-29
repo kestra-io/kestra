@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
 import {ref} from "vue"
+import {within, userEvent, expect, waitFor} from "storybook/test"
 import KsDataTable from "../../../src/components/Data/KsDataTable/KsDataTable.vue"
 import KsTableColumn from "../../../src/components/Data/KsTable/KsTableColumn.vue"
 import KsTag from "../../../src/components/Data/KsTag/KsTag.vue"
@@ -290,6 +291,48 @@ export const CustomContent: Story = {
     }),
 }
 
+export const PaginationRoundtrip: Story = {
+    name: "Pagination — page-changed roundtrip",
+    render: () => ({
+        components: {KsDataTable, KsTableColumn},
+        setup() {
+            const page = ref(1)
+            const size = ref(10)
+            const pagedData = ref(SAMPLE_DATA.slice(0, 10))
+            const onPageChanged = ({page: p, size: s}: {page: number; size: number}) => {
+                page.value = p
+                size.value = s
+                pagedData.value = SAMPLE_DATA.slice((p - 1) * s, p * s)
+            }
+            return {pagedData, page, size, total: SAMPLE_DATA.length, onPageChanged}
+        },
+        template: `
+            <div style="padding: 24px">
+                <ks-data-table
+                    :data="pagedData"
+                    :total="total"
+                    :current-page="page"
+                    :page-size="size"
+                    @page-changed="onPageChanged"
+                >
+                    <ks-table-column prop="id" label="Flow ID" />
+                    <ks-table-column prop="namespace" label="Namespace" />
+                </ks-data-table>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await canvas.findByText("flow-001")
+
+        const pager = canvasElement.querySelector(".kel-pager") as HTMLElement
+        await userEvent.click(within(pager).getByText("2"))
+
+        await canvas.findByText("flow-011")
+        await waitFor(() => expect(canvas.queryByText("flow-001")).toBeNull())
+    },
+}
+
 export const FitHeight: Story = {
     name: "fitHeight — bounded container with tall slot content",
     parameters: {
@@ -315,4 +358,75 @@ export const FitHeight: Story = {
             </div>
         `,
     }),
+}
+
+export const FitHeightSlotScroll: Story = {
+    name: "fitHeight — #table slot scrolls via the wrapper, pagination pinned",
+    parameters: {
+        docs: {
+            description: {
+                story: "With `fitHeight`, the `#table` slot is wrapped in `.ks-data-table-content--slot` with `overflow: auto`, so tall slot content scrolls by itself — no scroll wrapper needed in the slot — and the pagination stays pinned at the bottom of the bounded container.",
+            },
+        },
+    },
+    render: () => ({
+        components: {KsDataTable},
+        template: `
+            <div data-testid="bounded" style="height: 320px; display: flex; flex-direction: column; overflow: hidden">
+                <ks-data-table :total="30" :current-page="1" :page-size="10" fit-height>
+                    <template #table>
+                        <div>
+                            <div v-for="i in 60" :key="i" style="padding: 8px; border-bottom: 1px solid var(--ks-border-subtle)">
+                                Row {{ i }}
+                            </div>
+                        </div>
+                    </template>
+                </ks-data-table>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const bounded = canvasElement.querySelector("[data-testid=bounded]") as HTMLElement
+        const wrapper = canvasElement.querySelector(".ks-data-table-content--slot") as HTMLElement
+        await expect(wrapper).toBeTruthy()
+
+        // tall slot content scrolls inside the wrapper instead of expanding the container
+        await waitFor(() => expect(wrapper.scrollHeight).toBeGreaterThan(wrapper.clientHeight))
+        await expect(bounded.scrollHeight).toBeLessThanOrEqual(bounded.clientHeight + 1)
+
+        // pagination stays pinned within the bounded container
+        const pagination = canvasElement.querySelector(".kel-pagination") as HTMLElement
+        await expect(pagination).toBeTruthy()
+        await expect(pagination.getBoundingClientRect().bottom).toBeLessThanOrEqual(bounded.getBoundingClientRect().bottom + 1)
+    },
+}
+
+export const FitHeightEmptyBounded: Story = {
+    name: "fitHeight — empty state fits the bounded container",
+    parameters: {
+        docs: {
+            description: {
+                story: "element-plus sizes the empty-block to 100% of the scroll view on top of the header row, overflowing bounded containers by the header height; the height is corrected via `--table-header-height` so the empty state fits.",
+            },
+        },
+    },
+    render: () => ({
+        components: {KsDataTable, KsTableColumn},
+        template: `
+            <div data-testid="bounded" style="height: 300px; display: flex; flex-direction: column; overflow: hidden">
+                <ks-data-table :data="[]" :total="0" no-data-text="No flows found" fit-height>
+                    <ks-table-column prop="id" label="Flow ID" />
+                    <ks-table-column prop="namespace" label="Namespace" />
+                </ks-data-table>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await canvas.findByText("No flows found")
+
+        const body = canvasElement.querySelector(".ks-data-table-body--fit") as HTMLElement
+        await expect(body).toBeTruthy()
+        await waitFor(() => expect(body.scrollHeight).toBeLessThanOrEqual(body.clientHeight + 1))
+    },
 }

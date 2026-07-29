@@ -23,6 +23,7 @@
             :getNodeDimensions="getNodeDimensions"
             :customActions="customActions"
             :showDetailsToggle="hasExtraDetails"
+            :taskDetailsVersion="taskDetailsVersion"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -35,8 +36,6 @@
             @show-custom-action="showCustomAction"
             @on-add-flowable-error="onAddFlowableError"
             @add-task="onCreateNewTask"
-            @swapped-task="onSwappedTask"
-            @message="message"
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         >
@@ -45,10 +44,12 @@
                     <TopologyDetailsRemote
                         :taskType="taskProps.data.node?.task?.taskRunner?.type ?? taskProps.data.node?.task?.type"
                         :task="taskProps.data.node?.task"
-                        :execution="execution"
+                        :execution="exec"
                         :namespace="props.namespace"
                         :flowId="props.flowId"
+                        :source="flowStore.flowYaml || props.source"
                         :metrics="taskMetrics(taskProps.data.node?.task?.id)"
+                        :progress="taskProgress(taskProps.data.node?.task?.id)"
                     />
                 </slot>
             </template>
@@ -105,16 +106,24 @@
                 </KsTabPane>
                 <KsTabPane :label="$t('outputs')" name="outputs">
                     <div class="tab-body outputs-view">
-                        <section v-for="taskRun in selectedTask.taskRuns" :key="taskRun.id" class="taskrun-card">
+                        <section
+                            v-for="taskRun in selectedTask.taskRuns"
+                            :key="taskRun.id"
+                            class="taskrun-card"
+                            v-ks-loading="isLoadingTaskRunOutputs(taskRun.id)"
+                        >
                             <div v-if="selectedTask.taskRuns.length > 1" class="taskrun-card__header">
                                 <KsExecutionStatus size="small" :status="taskRun.state.current" />
                                 <code class="taskrun-card__value">{{ taskRun.value ?? taskRun.id }}</code>
                             </div>
                             <Vars
-                                v-if="taskRun.outputs && Object.keys(taskRun.outputs).length > 0"
-                                :data="taskRun.outputs"
+                                v-if="taskRunOutputsById[taskRun.id] && Object.keys(taskRunOutputsById[taskRun.id]).length > 0"
+                                :data="taskRunOutputsById[taskRun.id]"
                             />
-                            <span v-else class="taskrun-card__empty">{{ $t("no outputs available") }}</span>
+                            <span
+                                v-else-if="!isLoadingTaskRunOutputs(taskRun.id)"
+                                class="taskrun-card__empty"
+                            >{{ $t("no outputs available") }}</span>
                         </section>
                     </div>
                 </KsTabPane>
@@ -174,10 +183,11 @@
                 <TaskDrawerRemote
                     :taskType="selectedTask.type"
                     :task="selectedTask"
-                    :execution="execution"
+                    :execution="exec"
                     :namespace="props.namespace"
                     :flowId="props.flowId"
                     :metrics="taskMetrics(selectedTask?.id)"
+                    :progress="taskProgress(selectedTask?.id)"
                     displayMode="full"
                     class="mt-3"
                 />
@@ -214,10 +224,11 @@
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
     import {Topology} from "@kestra-io/topology"
-    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog} from "@kestra-io/design-system"
+    import {SECTIONS, State, KsMarkdown, KsEditor, KsDialog, vKsLoading} from "@kestra-io/design-system"
     import {Execution} from "@kestra-io/kestra-sdk"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {useEditorBindings} from "../../composables/useEditorBindings"
+    import {loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
 
     import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys"
     import {useAuthStore} from "override/stores/auth"
@@ -226,12 +237,12 @@
     import {useCoreStore} from "../../stores/core"
     import {usePluginsStore} from "../../stores/plugins"
     import {useExecutionsStore} from "../../stores/executions"
-    import {usePlaygroundStore} from "../../stores/playground"    
+    import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
     import {useToast} from "../../utils/toast"
     import {useFederatedModule} from "../../remoteComponents/useFederatedModule"
     import {openFlowInNewTab} from "../../utils/openFlow"
-    
+
     const router = useRouter()
 
     const vueflowId = ref(Math.random().toString())
@@ -243,7 +254,7 @@
     const playgroundStore = usePlaygroundStore()
     const flowStore = useFlowStore()
 
-    const execution = computed(() => executionsStore.execution as any as Execution)
+    const exec = computed(() => executionsStore.execution as any as Execution)
 
     const effectiveFlowGraph = computed(() =>
         playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph,
@@ -254,7 +265,11 @@
     // burger-menu "Show Details" item work correctly in execution view too.
     const runnerTypeByTaskId = computed((): Record<string, string> => {
         const result: Record<string, string> = {}
-        const parsed = flowStore.flowParsed
+        const flowParsed = flowStore.flowParsed
+        const flowParsedHasRunners = (flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+        // When flowParsed has no runner types, fall back to props.source (has taskRunner intact;
+        // execution view may have stale flowYaml without taskRunner, or forExecution() strips it)
+        const parsed = flowParsedHasRunners ? flowParsed : (props.source ? YAML_UTILS.parse(props.source) : flowParsed)
         for (const task of [...(parsed?.tasks ?? []), ...(parsed?.errors ?? []), ...(parsed?.finally ?? [])]) {
             if (task?.id && task?.taskRunner?.type) {
                 result[task.id] = task.taskRunner.type
@@ -278,9 +293,9 @@
         }
     })
 
-    const {RemoteComponent:TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
-    const {RemoteComponent:TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
-    const {RemoteComponent:TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
+    const {RemoteComponent: TopologyDetailsRemote, taskAdditionalInfoRemote, manifestReady, resolveRemoteComponent} = useFederatedModule("topology-details")
+    const {RemoteComponent: TaskDrawerRemote, resolveRemoteComponent: resolveDrawerComponent} = useFederatedModule("topology-task-drawer")
+    const {RemoteComponent: TopologyTaskModalRemote, resolveRemoteComponent: resolveTaskModalComponent} = useFederatedModule("topology-task-modal")
 
 
     const customActions = computed(() => {
@@ -302,8 +317,36 @@
         )
     })
 
-    const taskMetrics = (taskId: string | undefined) =>
-        executionsStore.metrics.filter((m) => m.taskId === taskId)
+    // metrics/progressEvents are never reset across execution navigations (taskRunId is globally
+    // unique so old entries are harmless in isolation) — but filtering on taskId alone lets a
+    // PREVIOUS taskRun's entries leak into a fresh run of the same task, or into a pre-execution
+    // view with no run at all. Resolve this task's CURRENT taskRun from the execution and filter
+    // on that instead: no current taskRun means nothing to show.
+    const currentTaskRunId = (taskId: string | undefined): string | undefined => {
+        const list = exec.value?.taskRunList as any[] | undefined
+        const filtered = list?.filter((r: any) => r.taskId === taskId) ?? []
+        return filtered[filtered.length - 1]?.id
+    }
+
+    const taskMetrics = (taskId: string | undefined) => {
+        const taskRunId = currentTaskRunId(taskId)
+        if (!taskRunId) return []
+        return executionsStore.metrics.filter((m) => m.taskRunId === taskRunId)
+    }
+
+    const taskProgress = (taskId: string | undefined) => {
+        const taskRunId = currentTaskRunId(taskId)
+        if (!taskRunId) return []
+        return executionsStore.progressEvents.filter((p) => p.taskRunId === taskRunId)
+    }
+
+    // Topology nodes only re-evaluate their taskDetails slot (where taskMetrics/taskProgress are
+    // read) when the graph is regenerated — bump this so a live metrics/progress update (which
+    // isn't part of `execution` or `flowGraph`) still reaches an already-rendered node.
+    const taskDetailsVersion = ref(0)
+    watch([() => executionsStore.metrics, () => executionsStore.progressEvents], () => {
+        taskDetailsVersion.value++
+    })
 
     const isTaskModalOpen = ref(false)
     const taskModalCtx = ref<Record<string, any> | null>(null)
@@ -402,10 +445,30 @@
         () => props.flowGraph,
         async (flowGraph) => {
             if (flowStore.flowParsed?.tasks?.length) return
-            const tasks = (flowGraph?.nodes ?? [])
-                .filter((n: any) => n.task?.type)
-                .map((n: any) => ({type: n.task.type, version: n.task.version, taskRunner: n.task.taskRunner}))
+            // props.source has taskRunner intact; graph nodes may have it stripped (forExecution)
+            const sourceParsed = props.source ? YAML_UTILS.parse(props.source) : null
+            const tasks = sourceParsed?.tasks?.length
+                ? sourceParsed.tasks
+                : (flowGraph?.nodes ?? [])
+                    .filter((n: any) => n.task?.type)
+                    .map((n: any) => ({type: n.task.type, version: n.task.version, taskRunner: n.task.taskRunner}))
             await resolveTaskTopologyDetails(tasks)
+        },
+        {immediate: true},
+    )
+
+    // When props.source has runner types that flowParsed lacks (e.g. stale/absent flowYaml
+    // in execution view), re-resolve so the pluginUiManifest call includes runner types.
+    watch(
+        () => props.source,
+        async (source) => {
+            if (!source) return
+            const parsed = YAML_UTILS.parse(source)
+            const sourceHasRunners = (parsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+            const flowParsedHasRunners = (flowStore.flowParsed?.tasks ?? []).some((t: any) => t?.taskRunner?.type)
+            if (sourceHasRunners && !flowParsedHasRunners) {
+                await resolveTaskTopologyDetails(parsed.tasks)
+            }
         },
         {immediate: true},
     )
@@ -415,7 +478,6 @@
         "on-edit",
         "loading",
         "expand-subflow",
-        "swapped-task",
     ])
 
     const coreStore = useCoreStore()
@@ -446,6 +508,8 @@
     const inspectTab = ref<"logs" | "outputs" | "metrics">("logs")
     const isReplayPickerOpen = ref(false)
     const selectedTask = ref()
+    const taskRunOutputsById = ref<Record<string, Record<string, unknown>>>({})
+    const loadingOutputsTaskRunIds = ref<Set<string>>(new Set())
     const replayExecution = ref()
     const replayTaskRun = ref()
     const replayRef = ref<InstanceType<typeof Restart>>()
@@ -457,7 +521,7 @@
         if (!currentExecution?.state || State.isRunning(currentExecution.state.current)) {
             return false
         }
-        return authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, currentExecution.namespace) === true
+        return authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, currentExecution.namespace) === true
     })
 
     const replayAttemptIndex = computed(() =>
@@ -617,6 +681,42 @@
 
     const showOutputs = (event: unknown) => openInspect(event, "outputs")
 
+    function isLoadingTaskRunOutputs(taskRunId: string): boolean {
+        return loadingOutputsTaskRunIds.value.has(taskRunId)
+    }
+
+    async function fetchTaskRunOutputs(executionId: string, taskRunId: string) {
+        if (taskRunOutputsById.value[taskRunId] || loadingOutputsTaskRunIds.value.has(taskRunId)) {
+            return
+        }
+        loadingOutputsTaskRunIds.value.add(taskRunId)
+        try {
+            taskRunOutputsById.value = {
+                ...taskRunOutputsById.value,
+                [taskRunId]: await loadTaskRunOutputs(executionId, taskRunId),
+            }
+        } finally {
+            loadingOutputsTaskRunIds.value.delete(taskRunId)
+        }
+    }
+
+    // Task run outputs live behind a dedicated endpoint since Kestra 2.0 (they are no
+    // longer embedded on the taskRun objects in selectedTask.taskRuns) — fetch them
+    // lazily once the outputs tab is actually shown.
+    watch(
+        [selectedTask, inspectTab, isInspectOpen],
+        ([task, tab, open]) => {
+            const executionId = task?.execution?.id
+            if (!open || tab !== "outputs" || !executionId) {
+                return
+            }
+            for (const taskRun of task.taskRuns ?? []) {
+                fetchTaskRunOutputs(executionId, taskRun.id)
+            }
+        },
+        {immediate: true},
+    )
+
     const openReplayDialog = (taskExecution: unknown, taskRun: unknown) => {
         replayExecution.value = taskExecution
         replayTaskRun.value = taskRun
@@ -674,9 +774,10 @@
                 taskType: runnerType ?? fullTask?.type,
                 title: event.customAction.label,
                 task: fullTask,
-                execution: execution.value,
+                execution: exec.value,
                 namespace: props.namespace,
                 flowId: props.flowId,
+                source: flowStore.flowYaml || props.source,
                 metrics: taskMetrics(fullTask?.id),
             }
             isTaskModalOpen.value = true
@@ -687,19 +788,6 @@
         customActionMeta.value = event.customAction
         isShowCustomActionOpen.value = true
         isDrawerOpen.value = true
-    }
-
-    const onSwappedTask = (event: any) => {
-        emit("swapped-task", event.swappedTasks)
-        emit("on-edit", event.newSource, true)
-    }
-
-    const message = (event: any) => {
-        coreStore.message = {
-            variant: event.variant,
-            title: t(event.title),
-            message: t(event.message),
-        }
     }
 
     const expandSubflow = (event: any) => {

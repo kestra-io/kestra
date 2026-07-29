@@ -70,13 +70,15 @@ class MultiselectInputTest {
     @Test
     void shouldRenderInputGivenExpressionReturningLabelValueObjects() {
         // Given
-        RunContext runContext = runContextFactory.of(Map.of(
-            "options",
-            List.of(
-                Map.of("label", "Prod", "value", "123"),
-                Map.of("label", "Staging", "value", "456")
+        RunContext runContext = runContextFactory.of(
+            Map.of(
+                "options",
+                List.of(
+                    Map.of("label", "Prod", "value", "123"),
+                    Map.of("label", "Staging", "value", "456")
+                )
             )
-        ));
+        );
         MultiselectInput input = MultiselectInput
             .builder()
             .id("id")

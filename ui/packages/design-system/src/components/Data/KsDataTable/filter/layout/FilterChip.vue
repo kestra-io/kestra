@@ -192,7 +192,7 @@
         .comparator,
         .value,
         .in {
-            font-size: var(--ks-font-size-xs);
+            font-size: var(--ks-font-size-sm);
             color: var(--ks-text-primary);
             white-space: nowrap;
             display: flex;
@@ -236,7 +236,7 @@
     :deep(.kel-tag) {
         background-color: var(--ks-bg-tag);
         color: var(--ks-text-secondary);
-        font-size: 10px;
+        font-size: var(--ks-font-size-2xs);
         margin-left: 0.25rem;
     }
 }

@@ -204,6 +204,11 @@ export default defineConfig(({mode}) => {
                 "path-browserify",
                 "mailchecker",
                 "rapidoc",
+                // The AI Copilot stories/components import the SDK's `ai` subpath. Pre-bundle it so
+                // Vite doesn't discover it mid-run and reload the dev server — that reload kills
+                // whichever storybook test is loading at that instant (the addon-vitest setup import
+                // then fails), which is what intermittently red-flags unrelated stories in CI.
+                "@kestra-io/kestra-sdk/ai",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

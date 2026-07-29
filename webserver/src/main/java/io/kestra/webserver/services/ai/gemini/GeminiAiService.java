@@ -18,9 +18,11 @@ import io.kestra.webserver.utils.HttpClientUtils;
 import dev.langchain4j.http.client.HttpClientBuilderLoader;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +47,26 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
         return getAiConfiguration().baseUrl() != null ? getAiConfiguration().baseUrl() : DEFAULT_BASE_URL;
     }
 
+    /**
+     * Builds the thinking configuration for the model. {@code includeThoughts(false)} always applies — we
+     * never need the human-readable thought summaries, only the signatures. When thinking is enabled we tune
+     * the depth: a {@code thinkingLevel} for Gemini 3.x (effort) or a {@code thinkingBudget} for Gemini 2.5
+     * (a null budget lets the model pick its default). When disabled we leave the budget unset: Gemini 2.5
+     * thinks by default, so we cannot reliably force it off, which is precisely why the signature round-trip
+     * below stays on regardless.
+     */
+    private GeminiThinkingConfig thinkingConfig() {
+        GeminiThinkingConfig.Builder builder = GeminiThinkingConfig.builder().includeThoughts(false);
+        if (getAiConfiguration().thinkingEnabled()) {
+            if (getAiConfiguration().thinkingEffort() != null) {
+                builder.thinkingLevel(getAiConfiguration().thinkingEffort().value());
+            } else if (getAiConfiguration().thinkingBudgetTokens() != null) {
+                builder.thinkingBudget(getAiConfiguration().thinkingBudgetTokens());
+            }
+        }
+        return builder.build();
+    }
+
     public ChatModel chatModel(List<ChatModelListener> listeners) {
         GoogleAiGeminiChatModel.GoogleAiGeminiChatModelBuilder builder = GoogleAiGeminiChatModel.builder()
             .baseUrl(getAiConfiguration().baseUrl())
@@ -57,8 +79,9 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .maxOutputTokens(getAiConfiguration().maxOutputTokens())
             .logRequests(getAiConfiguration().logRequests())
             .logResponses(getAiConfiguration().logResponses())
-            .thinkingConfig(GeminiThinkingConfig.builder().includeThoughts(false).build())
-            .returnThinking(false)
+            .thinkingConfig(thinkingConfig())
+            .returnThinking(true)
+            .sendThinking(true)
             .timeout(getAiConfiguration().timeout());
 
         if (getAiConfiguration().clientPem() != null) {
@@ -77,5 +100,25 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
         }
 
         return builder.build();
+    }
+
+    @Override
+    public StreamingChatModel streamingChatModel(List<ChatModelListener> listeners) {
+        return GoogleAiGeminiStreamingChatModel.builder()
+            .baseUrl(getAiConfiguration().baseUrl())
+            .listeners(listeners)
+            .modelName(getAiConfiguration().modelName())
+            .apiKey(getAiConfiguration().apiKey())
+            .temperature(getAiConfiguration().temperature())
+            .topP(getAiConfiguration().topP())
+            .topK(getAiConfiguration().topK())
+            .maxOutputTokens(getAiConfiguration().maxOutputTokens())
+            .logRequests(getAiConfiguration().logRequests())
+            .logResponses(getAiConfiguration().logResponses())
+            .thinkingConfig(thinkingConfig())
+            .returnThinking(true)
+            .sendThinking(true)
+            .timeout(getAiConfiguration().timeout())
+            .build();
     }
 }

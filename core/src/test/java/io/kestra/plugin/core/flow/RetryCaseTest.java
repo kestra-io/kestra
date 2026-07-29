@@ -147,7 +147,8 @@ public class RetryCaseTest {
         assertThat(execution.getTaskRunList().get(1).attemptNumber()).isEqualTo(3);
     }
 
-    public void retrySubflow(Execution execution) {
+    public void retrySubflow(String tenant) throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(tenant, "io.kestra.tests", "retry-subflow");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().get(0).getAttempts().size()).isEqualTo(3);
     }

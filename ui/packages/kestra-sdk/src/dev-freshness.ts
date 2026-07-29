@@ -35,7 +35,7 @@ async function sha256First16(bytes: ArrayBuffer): Promise<string> {
  * SDK was generated from. Runs at most once per session; never throws.
  *
  * @param committedHash the OPENAPI_SPEC_HASH stamped into the committed SDK
- * @param specUrl       URL of the backend's served spec (default: `${KESTRA_BASE_PATH}/swagger/kestra.yml`)
+ * @param specUrl       URL of the backend's served spec (default: `${KESTRA_BASE_PATH}swagger/kestra.yml`)
  * @param label        package name used in the warning (default: "@kestra-io/kestra-sdk")
  */
 export async function warnIfSdkStale(
@@ -50,7 +50,7 @@ export async function warnIfSdkStale(
         if (typeof fetch !== "function" || typeof crypto?.subtle?.digest !== "function") return
 
         const basePath = (typeof window !== "undefined" && window.KESTRA_BASE_PATH) || ""
-        const url = specUrl ?? `${basePath}/swagger/kestra.yml`
+        const url = specUrl ?? `${basePath}swagger/kestra.yml`
 
         const response = await fetch(url, {credentials: "include"})
         if (!response.ok) return

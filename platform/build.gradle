@@ -15,7 +15,7 @@ dependencies {
     def protobufVersion = "4.35.1" // aligned with Google Cloud libraries-bom (grpc 1.81 + protobuf 4.33.2)
     def bouncycastleVersion = "1.85"
     def mavenResolverVersion = "2.0.10"
-    def jollydayVersion = "2.17.0"
+    def jollydayVersion = "2.19.0"
     def jsonschemaVersion = "4.38.0"
     def kafkaVersion = "4.3.1"
     def opensearchVersion = "3.9.0"

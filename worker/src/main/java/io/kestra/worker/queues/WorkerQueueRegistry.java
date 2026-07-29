@@ -89,7 +89,7 @@ public class WorkerQueueRegistry {
      * Retrieves the first {@code WorkerQueue} associated with the given type.
      *
      * @param type the class type of the queue elements
-     * @param <T>  the type of elements in the queue
+     * @param <T> the type of elements in the queue
      * @return the {@code WorkerQueue} for the given type
      * @throws IllegalStateException if no queue is registered for {@code type}
      */

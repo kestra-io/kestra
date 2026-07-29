@@ -2,7 +2,7 @@
     <div class="trigger-card">
         <div class="trigger-body">
             <div class="icon">
-                <KsTaskIcon class="glyph" :cls="trigger.type" :icons="pluginsStore.icons" onlyIcon />
+                <TaskIcon class="glyph" :cls="trigger.type" :loadIcon="pluginsStore.loadIcon" onlyIcon />
             </div>
             <div class="content">
                 <div class="header">
@@ -60,7 +60,8 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {KsMarkdown, KsTaskIcon} from "@kestra-io/design-system"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
     import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {usePluginsStore, type TriggerPluginDto} from "../../../stores/plugins"
@@ -170,7 +171,7 @@
 
                     code {
                         font-family: var(--ks-font-family-mono);
-                        font-size: 0.92em;
+                        font-size: var(--ks-font-size-sm);
                         padding: var(--ks-spacing-px) var(--ks-spacing-1);
                         border-radius: var(--ks-radius-xs);
                         background: var(--ks-tag-background);

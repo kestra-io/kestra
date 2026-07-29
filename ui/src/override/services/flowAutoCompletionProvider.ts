@@ -8,6 +8,8 @@ import {State} from "@kestra-io/design-system"
 import {usePluginsStore} from "../../stores/plugins"
 import {useFlowStore} from "../../stores/flow"
 import {useMcpStore} from "../../stores/mcp"
+import {useDashboardStore} from "../../stores/dashboard"
+import {isExportableChart} from "../../components/dashboard/composables/useDashboards"
 import {useNamespacesStore} from "override/stores/namespaces"
 
 function distinct<T>(val: T[] | undefined): T[] {
@@ -24,6 +26,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     flowStore: ReturnType<typeof useFlowStore>
     namespacesStore: ReturnType<typeof useNamespacesStore>
     mcpStore: ReturnType<typeof useMcpStore>
+    dashboardStore: ReturnType<typeof useDashboardStore>
     private mcpServerIdsCache: string[] | undefined
     private readonly completionSource: ComputedRef<string | undefined> | undefined
 
@@ -32,6 +35,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         pluginsStore: ReturnType<typeof usePluginsStore>,
         namespacesStore: ReturnType<typeof useNamespacesStore>,
         mcpStore: ReturnType<typeof useMcpStore>,
+        dashboardStore: ReturnType<typeof useDashboardStore>,
         completionSource?: ComputedRef<string | undefined>,
     ) {
         super()
@@ -39,6 +43,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         this.pluginsStore = pluginsStore
         this.namespacesStore = namespacesStore
         this.mcpStore = mcpStore
+        this.dashboardStore = dashboardStore
         this.completionSource = completionSource
     }
 
@@ -312,6 +317,17 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 }
                 return this.mcpServerIdsCache
             }
+            case "dashboardId": {
+                // "_default" is a backend/task-only sentinel, never a real saved dashboard: excluded here.
+                const dashboards = await this.dashboardStore.searchIds()
+                return dashboards.map(dashboard => dashboard.id)
+            }
+            case "chartId": {
+                // stays live even when dashboardId is empty: falls back to the "_default" sentinel dashboard.
+                const dashboardId = parentTask?.dashboardId ?? "_default"
+                const charts = await this.dashboardStore.chartsById(dashboardId)
+                return charts.filter(chart => isExportableChart(chart.type)).map(chart => chart.id)
+            }
         }
 
         return Promise.resolve([])
@@ -348,7 +364,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([])
                 }
-                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key: string}) => QUOTE + kv.key + QUOTE)
+                return (await this.namespacesStore.kvsList({id: namespace})).map((kv: {key?: string}) => QUOTE + kv.key + QUOTE)
             }
             case "tasksWithState": {
                 return State.arrayAllStates().map(({name}) => QUOTE + name + QUOTE)

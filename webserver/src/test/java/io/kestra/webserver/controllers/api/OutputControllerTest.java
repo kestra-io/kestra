@@ -3,18 +3,18 @@ package io.kestra.webserver.controllers.api;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.micronaut.core.type.Argument;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskOutput;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 
+import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -49,7 +49,7 @@ class OutputControllerTest {
             .state(new State())
             .build();
         String value = """
-        {"some":"output"}""";
+            {"some":"output"}""";
         executionRepository.save(execution);
 
         TaskOutput taskOutput = new TaskOutput(taskRunId, tenantId, "executionId", value.getBytes(StandardCharsets.UTF_8), null);
@@ -89,7 +89,7 @@ class OutputControllerTest {
             .state(new State())
             .build();
         String value = """
-        {"some":"output"}""";
+            {"some":"output"}""";
         executionRepository.save(execution);
 
         TaskOutput taskOutput = new TaskOutput(taskRunId, tenantId, "executionId", value.getBytes(StandardCharsets.UTF_8), null);

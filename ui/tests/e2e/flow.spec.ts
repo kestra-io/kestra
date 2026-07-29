@@ -27,7 +27,7 @@ test.describe("Flow Page", () => {
             await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
             await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
             await page.getByRole("button", {name: "Login"}).click()
-            await page.waitForURL("**/ui/**")
+            await page.waitForURL(url => !url.pathname.includes("/login"))
         })
     })
 
@@ -79,7 +79,7 @@ test.describe("Flow Page", () => {
             await monacoEditor.blur()
             await expect(page.getByTestId("monaco-editor").getByText(flowId)).toBeVisible()
 
-            await page.getByRole("button", {name: "Save"}).click()
+            await page.getByRole("button", {name: "Save", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
             await page.locator(".tab-select").click()
             await page.getByRole("option", {name: "Overview"}).click()

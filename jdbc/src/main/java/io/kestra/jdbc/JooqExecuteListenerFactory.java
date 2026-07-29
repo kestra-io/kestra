@@ -3,8 +3,6 @@ package io.kestra.jdbc;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sql.DataSource;
@@ -65,7 +63,7 @@ public class JooqExecuteListenerFactory {
                     }
 
                     private String[] tags(ExecuteContext ctx) {
-                        var tags = new String[] {"batch", ctx.batchMode().name()};
+                        var tags = new String[] { "batch", ctx.batchMode().name() };
 
                         // in batch query, the query will be expanded without parameters, and will lead to overflow of metrics
                         if (ctx.batchMode() != ExecuteContext.BatchMode.MULTIPLE) {

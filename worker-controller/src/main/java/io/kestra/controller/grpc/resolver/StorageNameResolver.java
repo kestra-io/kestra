@@ -10,11 +10,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import io.kestra.core.utils.ExecutorsUtils;
+
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
 import io.grpc.StatusOr;
 import io.grpc.SynchronizationContext;
-import io.kestra.core.utils.ExecutorsUtils;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -44,8 +45,8 @@ public class StorageNameResolver extends NameResolver {
      *
      * @param addressSupplier supplies the current list of controller endpoints.
      * @param refreshInterval how often to poll the supplier.
-     * @param syncContext     the channel's synchronization context; all listener notifications
-     *                        must be delivered on it (see {@link #resolve()}).
+     * @param syncContext the channel's synchronization context; all listener notifications
+     *        must be delivered on it (see {@link #resolve()}).
      */
     public StorageNameResolver(
         final Supplier<List<EquivalentAddressGroup>> addressSupplier,
@@ -126,8 +127,12 @@ public class StorageNameResolver extends NameResolver {
         }
         lastAddresses = next;
         // onResult2 must run on the channel's SynchronizationContext, not our scheduler thread.
-        syncContext.execute(() -> listener.onResult2(ResolutionResult.newBuilder()
-            .setAddressesOrError(StatusOr.fromValue(addresses))
-            .build()));
+        syncContext.execute(
+            () -> listener.onResult2(
+                ResolutionResult.newBuilder()
+                    .setAddressesOrError(StatusOr.fromValue(addresses))
+                    .build()
+            )
+        );
     }
 }

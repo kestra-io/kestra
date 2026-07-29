@@ -86,7 +86,8 @@ Reject (or ask to fix) anything that:
 
 ### Internationalization
 
-- No hardcoded user-facing strings. Always go through `t()` from `useI18n()`.
+- No hardcoded user-facing strings. Always go through i18n.
+- **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
 - Use `<i18n-t>` for plurals and interpolation — never string-concatenate.
 - Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
 - Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.
@@ -322,6 +323,7 @@ If your `<style>` block needs to exist:
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
 | `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". |
+| `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover |
 | `KsBadge` | Small indicator badge |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
 | `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag |
@@ -360,12 +362,6 @@ If your `<style>` block needs to exist:
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
 
-### Kestra-specific
-
-| Component | Purpose |
-|-----------|---------|
-| `KsTaskIcon` | Plugin task icon resolver |
-
 ## Utilities (import from the design system)
 
 - `State`, `STATES`, `LOG_LEVELS` — execution state constants, icons, and colors
@@ -385,6 +381,7 @@ If your `<style>` block needs to exist:
 - `useTheme()` — detects and tracks dark / light mode via MutationObserver. Use this instead of reading `document.documentElement` yourself.
 - `useFilters`, `useSavedFilters`, `useDefaultFilter`, `usePreAppliedFilters`, `useRouteFilterPolicy`, `useTableColumns`, `useDataOptions`, `useDragAndDrop`, `usePeriodicRefresh` — data-table filter composables
 - `useDiscardGuard(isDirty, {message?})` — confirm-before-discard for data-entry modals; see "Unsaved input in modals (discard guard)"
+- `useTaskIcon()` — resolves the app-provided task-icon component via `TASK_ICON_INJECTION_KEY` (falling back to a generic placeholder icon). The app provides its own `TaskIcon` component once, at bootstrap (`app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)`) — the design system cannot own that component since it depends on the app's plugin-icon backend API. Used internally by `KsEditor` (Monaco suggestion icons) and the `@kestra-io/topology` package (graph node icons) so both share the same app-provided instance.
 
 ## Design tokens
 

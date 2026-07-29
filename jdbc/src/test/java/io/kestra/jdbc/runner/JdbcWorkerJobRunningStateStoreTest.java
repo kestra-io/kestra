@@ -79,23 +79,23 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
 
         // When
         dslContextWrapper.transaction(configuration ->
-            {
-                workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning);
+        {
+            workerJobRunningStateStore.save(NoTransactionContext.INSTANCE, workerTaskRunning);
 
-                // Then the entry must already be committed and visible from another
-                // connection — otherwise the job's terminal result (processed
-                // concurrently) issues a delete that misses the row and the entry
-                // leaks forever. The check MUST run on another thread: on this one it
-                // would join the open transaction and see the uncommitted row.
-                visibleFromOtherConnection.set(
-                    CompletableFuture
-                        .supplyAsync(
-                            () -> existsByKey(workerTaskRunning.uid()),
-                            runnable -> new Thread(runnable, "other-connection").start()
-                        )
-                        .get(10, TimeUnit.SECONDS)
-                );
-            }
+            // Then the entry must already be committed and visible from another
+            // connection — otherwise the job's terminal result (processed
+            // concurrently) issues a delete that misses the row and the entry
+            // leaks forever. The check MUST run on another thread: on this one it
+            // would join the open transaction and see the uncommitted row.
+            visibleFromOtherConnection.set(
+                CompletableFuture
+                    .supplyAsync(
+                        () -> existsByKey(workerTaskRunning.uid()),
+                        runnable -> new Thread(runnable, "other-connection").start()
+                    )
+                    .get(10, TimeUnit.SECONDS)
+            );
+        }
         );
 
         assertThat(visibleFromOtherConnection.get()).isTrue();
@@ -108,16 +108,18 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
     private static WorkerTaskRunning workerTaskRunning() {
         return WorkerTaskRunning.builder()
             .workerInstance(new WorkerInstance(IdUtils.create(), null))
-            .taskRun(TaskRun.builder()
-                .id(IdUtils.create())
-                .executionId(IdUtils.create())
-                .namespace("io.kestra.unittest")
-                .flowId("worker-job-running-state-store")
-                .taskId("log")
-                .state(new State().withState(State.Type.SUBMITTED))
-                .build())
+            .taskRun(
+                TaskRun.builder()
+                    .id(IdUtils.create())
+                    .executionId(IdUtils.create())
+                    .namespace("io.kestra.unittest")
+                    .flowId("worker-job-running-state-store")
+                    .taskId("log")
+                    .state(new State().withState(State.Type.SUBMITTED))
+                    .build()
+            )
             .task(Log.builder().id("log").type(Log.class.getName()).message("test").build())
-            .data(new WorkerTaskData(Map.of(), List.of(), null))
+            .data(new WorkerTaskData(Map.of(), List.of(), List.of(), null))
             .build();
     }
 }

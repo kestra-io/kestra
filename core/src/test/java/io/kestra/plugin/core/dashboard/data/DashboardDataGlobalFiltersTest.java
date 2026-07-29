@@ -1,11 +1,12 @@
 package io.kestra.plugin.core.dashboard.data;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.dashboards.filters.In;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
-import java.util.List;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.filters.In;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -96,6 +97,40 @@ class DashboardDataGlobalFiltersTest {
     }
 
     @Test
+    void shouldSupportInForLogs() {
+        QueryFilter levelFilter = QueryFilter.builder()
+            .field(QueryFilter.Field.LEVEL)
+            .operation(QueryFilter.Op.IN)
+            .value(Level.INFO)
+            .build();
+
+        ILogs iLogs = new ILogs() {
+        };
+
+        var where = iLogs.whereWithGlobalFilters(List.of(levelFilter), null, null, null);
+
+        assertThat(where).hasSize(1);
+        assertThat(where.get(0)).isInstanceOf(In.class);
+        In<?> inFilter = (In<?>) where.get(0);
+        assertThat(((Enum<?>) inFilter.getField()).name()).isEqualTo(ILogs.Fields.LEVEL.name());
+        assertThat(inFilter.getValues()).containsExactlyInAnyOrder("INFO");
+
+        levelFilter = QueryFilter.builder()
+            .field(QueryFilter.Field.LEVEL)
+            .operation(QueryFilter.Op.IN)
+            .value("INFO,DEBUG")
+            .build();
+
+        where = iLogs.whereWithGlobalFilters(List.of(levelFilter), null, null, null);
+
+        assertThat(where).hasSize(1);
+        assertThat(where.get(0)).isInstanceOf(In.class);
+        inFilter = (In<?>) where.get(0);
+        assertThat(((Enum<?>) inFilter.getField()).name()).isEqualTo(ILogs.Fields.LEVEL.name());
+        assertThat(inFilter.getValues()).containsExactlyInAnyOrder("INFO", "DEBUG");
+    }
+
+    @Test
     void shouldAcceptStringLevelValueForLogs() {
         QueryFilter levelFilter = QueryFilter.builder()
             .field(QueryFilter.Field.LEVEL)
@@ -172,7 +207,7 @@ class DashboardDataGlobalFiltersTest {
             .value(Level.ERROR)
             .build();
 
-        var existingLevelFilter = In.<ILogs.Fields>builder()
+        var existingLevelFilter = In.<ILogs.Fields> builder()
             .field(ILogs.Fields.LEVEL)
             .values(List.of("TRACE", "DEBUG"))
             .build();

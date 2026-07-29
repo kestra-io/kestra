@@ -14,23 +14,23 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.posthog.PosthogService;
 
-import io.micronaut.core.value.PropertyResolver;
-import io.micronaut.http.client.HttpClient;
+import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.PropertyPlaceholderResolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AiServiceManagerTest {
 
     @Mock
-    HttpClient apiHttpClient;
-    @Mock
-    io.micronaut.http.client.BlockingHttpClient blockingHttpClient;
-    @Mock
     AiProvidersConfiguration providersConfiguration;
     @Mock
-    PropertyResolver propertyResolver;
+    Environment environment;
     @Mock
     PluginRegistry pluginRegistry;
     @Mock
@@ -48,15 +48,19 @@ class AiServiceManagerTest {
     @Mock
     ExpressionContextService expressionContextService;
     @Mock
-    io.kestra.core.services.PluginDefaultService pluginDefaultService;
+    io.kestra.core.services.FlowParsingService flowParsingService;
+
+    private final PropertyPlaceholderResolver placeholderResolver = mock(PropertyPlaceholderResolver.class);
 
     private AiServiceManager buildManager(List<AiProviderConfiguration> providers) {
         when(providersConfiguration.providers()).thenReturn(providers);
+        // Only exercised when at least one provider is configured, hence lenient.
+        lenient().when(environment.getPlaceholderResolver()).thenReturn(placeholderResolver);
+        lenient().when(placeholderResolver.resolveRequiredPlaceholders(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
 
         return new AiServiceManager(
-            apiHttpClient,
             providersConfiguration,
-            propertyResolver,
+            environment,
             pluginRegistry,
             jsonSchemaGenerator,
             versionProvider,
@@ -66,14 +70,12 @@ class AiServiceManagerTest {
             namespaceContextTool,
             kestraDocsContextTool,
             expressionContextService,
-            pluginDefaultService
+            flowParsingService
         );
     }
 
     @Test
     void hasConfiguredProviderShouldBeFalseWhenNoProvidersConfigured() {
-        when(apiHttpClient.toBlocking()).thenReturn(blockingHttpClient);
-
         AiServiceManager manager = buildManager(null);
 
         assertThat(manager.hasConfiguredProvider()).isFalse();
@@ -81,8 +83,6 @@ class AiServiceManagerTest {
 
     @Test
     void hasConfiguredProviderShouldBeFalseWhenProviderListEmpty() {
-        when(apiHttpClient.toBlocking()).thenReturn(blockingHttpClient);
-
         AiServiceManager manager = buildManager(List.of());
 
         assertThat(manager.hasConfiguredProvider()).isFalse();
@@ -101,5 +101,21 @@ class AiServiceManagerTest {
         AiServiceManager manager = buildManager(List.of(geminiProvider));
 
         assertThat(manager.hasConfiguredProvider()).isTrue();
+    }
+
+    @Test
+    void shouldResolvePlaceholdersInProviderConfiguration() {
+        AiProviderConfiguration geminiProvider = new AiProviderConfiguration(
+            "gemini-test",
+            "Gemini",
+            "gemini",
+            true,
+            java.util.Map.of("modelName", "gemini-2.5-flash", "apiKey", "${GEMINI_API_KEY}")
+        );
+
+        buildManager(List.of(geminiProvider));
+
+        // The ${...} value must be sent through the placeholder resolver rather than passed verbatim.
+        verify(placeholderResolver).resolveRequiredPlaceholders("${GEMINI_API_KEY}");
     }
 }

@@ -2,7 +2,8 @@
     <ElTag
         disableTransitions
         v-bind="({...filteredProps(), ...$attrs} as any)"
-        :class="{'kel-tag--default': type === undefined}"
+        :type="elType"
+        :class="{'kel-tag--default': type === undefined, 'kel-tag--error': type === 'error'}"
         @close="emit('close')"
     >
         <template #default>
@@ -18,15 +19,19 @@
     </ElTag>
 </template>
 
+<script lang="ts">
+    export type KsTagType = "" | "success" | "info" | "warning" | "danger" | "error" | "primary"
+</script>
+
 <script setup lang="ts">
     import {ElTag} from "element-plus"
     import {useFilteredProps} from "../../../utils/filteredProps"
-    import {type Component} from "vue"
+    import {computed, type Component} from "vue"
 
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
-        type?: "" | "success" | "info" | "warning" | "danger" | "primary"
+        type?: KsTagType
         size?: "large" | "default" | "small"
         closable?: boolean
         effect?: "dark" | "light" | "plain"
@@ -47,7 +52,10 @@
         icon?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["icon", "label", "plain"])
+    // ElTag only accepts its five built-in types; "error" is applied via the kel-tag--error class instead
+    const elType = computed(() => (props.type === "error" ? undefined : props.type))
+
+    const filteredProps = useFilteredProps(props, ["icon", "label", "plain", "type"])
 </script>
 
 <style lang="scss">
@@ -64,27 +72,27 @@
             text: var(--ks-status-paused),
         ),
         success: (
-            bg: var(--ks-status-background-success),
-            border: var(--ks-status-border-success),
+            bg: var(--ks-bg-success),
+            border: transparent,
             text: var(--ks-status-success),
         ),
         warning: (
-            bg: var(--ks-log-background-warn),
-            border: var(--ks-log-border-warn),
-            text: var(--ks-status-warn),
+            bg: var(--ks-bg-warning),
+            border: transparent,
+            text: var(--ks-status-warning),
         ),
         danger: (
-            bg: #FF6A6C1A,
-            border: var(--ks-log-border-error),
+            bg: var(--ks-bg-error),
+            border: transparent,
             text: var(--ks-status-error),
         ),
         error: (
-            bg: var(--ks-log-background-error),
-            border: var(--ks-log-border-error),
-            text: var(--ks-status-error),
+            bg: var(--ks-bg-error),
+            border: transparent,
+            text: var(--ks-text-error),
         ),
         info: (
-            bg: #718BFE1A,
+            bg: var(--ks-bg-info),
             border: transparent,
             text: var(--ks-status-info),
         ),
@@ -96,6 +104,7 @@
             align-items: center;
             gap: 4px;
             line-height: 1;
+            font-weight: var(--ks-font-weight-semibold);
         }
 
         [class*="kel-icon"] {
@@ -112,6 +121,10 @@
             .material-design-icon__svg {
                 position: static;
             }
+        }
+
+        &.kel-tag--default.kel-tag--plain [class*="kel-icon"] .material-design-icon {
+            color: var(--ks-icon-muted);
         }
 
         &.kel-tag--plain {
@@ -135,14 +148,7 @@
         }
 
         &.kel-tag--default {
-            //--kel-tag-bg-color: var(--ks-bg-tag);
-            //--kel-tag-text-color: var(--ks-text-primary);
-            //--kel-tag-border-color: var(--ks-border-default);
-            //--kel-tag-hover-color: var(--ks-text-primary);
-            //
-            //a {
-            //    color: var(--ks-text-primary);
-            //}
+            color: var(--ks-text-secondary);
 
             &.kel-tag--dark {
                 --kel-tag-bg-color: var(--ks-gray-cool-500);
@@ -158,7 +164,7 @@
             &.kel-tag--plain {
                 --kel-tag-bg-color: var(--ks-bg-tag);
                 --kel-tag-text-color: var(--ks-text-primary);
-                --kel-tag-border-color: var(--ks-border-strong);
+                --kel-tag-border-color: transparent;
                 --kel-tag-hover-color: var(--ks-text-primary);
 
                 a {

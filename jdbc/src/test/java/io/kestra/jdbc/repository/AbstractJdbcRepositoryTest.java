@@ -1,14 +1,15 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.models.QueryFilter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
+
 import org.jooq.Name;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Predicate;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.QueryFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +42,8 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
 
     @Test
     void defaultConditions() {
-        Arrays.stream(QueryFilter.Field.values()).filter(Predicate.not(fieldsWithSpecificConditions::contains)).forEach(field -> {
+        Arrays.stream(QueryFilter.Field.values()).filter(Predicate.not(fieldsWithSpecificConditions::contains)).forEach(field ->
+        {
             String assertValue = "anyValue";
             Name columnName = DSL.quotedName(field.name().toLowerCase());
             assertThat(this.getConditionOnField(field, assertValue, QueryFilter.Op.EQUALS, null)).isEqualTo(
@@ -123,16 +125,18 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
     void shouldThrowWhenListValueIsUsedWithStartsWith() {
         List<String> invalidValue = List.of("val1", "val2");
 
-        assertThatThrownBy(() -> this.getConditionOnField(
-            QueryFilter.Field.NAMESPACE,
-            invalidValue,
-            QueryFilter.Op.STARTS_WITH,
-            null
-        ))
+        assertThatThrownBy(
+            () -> this.getConditionOnField(
+                QueryFilter.Field.NAMESPACE,
+                invalidValue,
+                QueryFilter.Op.STARTS_WITH,
+                null
+            )
+        )
             .isInstanceOf(InvalidQueryFiltersException.class)
             .hasMessageContaining("STARTS_WITH operation requires a string value, got a List");
     }
-    
+
     @Test
     void shouldEscapeWildcardCharactersInLikeOperations() {
         // Given — a value containing SQL LIKE metacharacters
@@ -157,7 +161,7 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
     void tagsConditionShouldDelegateToDefaultHandlers() {
         String assertValue = "my-tag";
         Name columnName = DSL.quotedName(QueryFilter.Field.TAGS.name().toLowerCase());
-    
+
         assertThat(
             this.getConditionOnField(
                 QueryFilter.Field.TAGS,

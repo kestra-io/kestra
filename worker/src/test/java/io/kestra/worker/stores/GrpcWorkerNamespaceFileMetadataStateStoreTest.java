@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc.NamespaceFileMetadataServiceBlockingStub;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.micronaut.context.annotation.Property;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.utils.TestsUtils;
 
+import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;

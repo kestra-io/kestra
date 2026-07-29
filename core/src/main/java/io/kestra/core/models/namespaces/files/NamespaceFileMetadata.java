@@ -62,7 +62,8 @@ public class NamespaceFileMetadata implements SoftDeletable<NamespaceFileMetadat
     private boolean deleted;
 
     @JsonCreator
-    public NamespaceFileMetadata(String tenantId, String namespace, String path, String parentPath, @JsonProperty("version") Integer revision, boolean last, Long size, Instant created, @Nullable Instant updated,
+    public NamespaceFileMetadata(String tenantId, String namespace, String path, String parentPath, @JsonProperty("version") Integer revision, boolean last, Long size, Instant created,
+        @Nullable Instant updated,
         boolean deleted) {
         this.tenantId = tenantId;
         this.namespace = namespace;

@@ -16,22 +16,24 @@
         </template>
 
         <div class="set-labels">
-            <div class="set-labels__header">
-                <span class="set-labels__title">{{ $t("Set labels") }}</span>
-                <KsIconButton :tooltip="$t('close')" placement="top" @click="isOpen = false">
-                    <Close />
-                </KsIconButton>
-            </div>
-
             <div class="set-labels__body">
                 <LabelInput
                     v-model:labels="executionLabels"
                     :existingLabels="executionLabels"
-                />
+                >
+                    <template #header>
+                        <span class="set-labels-title">{{ $t("Set labels") }}</span>
+                    </template>
+                    <template #header-end>
+                        <KsIconButton :tooltip="$t('close')" placement="top" @click="isOpen = false">
+                            <Close />
+                        </KsIconButton>
+                    </template>
+                </LabelInput>
             </div>
 
             <div class="set-labels__footer">
-                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: execution.id})" />
+                <p class="set-labels__description" v-html="$t('Set labels to execution', {id: escape(execution.id)})" />
                 <div class="set-labels__actions">
                     <KsButton @click="onCancel">
                         {{ $t("cancel") }}
@@ -48,6 +50,7 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
+    import escape from "lodash/escape"
     import Close from "vue-material-design-icons/Close.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import {State} from "@kestra-io/design-system"
@@ -114,8 +117,8 @@
                 executionId: props.execution.id,
             })
 
-            if (response?.data) {
-                executionsStore.execution = response.data
+            if (response) {
+                executionsStore.execution = response as any
             }
 
             toast.success(t("Set labels done"))
@@ -173,29 +176,21 @@
         }
     }
 
+    .set-labels-title {
+        font-weight: 600;
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-lg);
+    }
+
     .set-labels {
         display: flex;
         flex-direction: column;
-
-        &__header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--ks-spacing-5) var(--ks-spacing-4);
-            padding-bottom: 0;
-        }
-
-        &__title {
-            font-weight: 600;
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-lg);
-        }
 
         &__body {
             display: flex;
             flex-direction: column;
             gap: var(--ks-spacing-3);
-            padding: var(--ks-spacing-4);
+            padding: var(--ks-spacing-5) var(--ks-spacing-4) var(--ks-spacing-4);
         }
 
         &__description {

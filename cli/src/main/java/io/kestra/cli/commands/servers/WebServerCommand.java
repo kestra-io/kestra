@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.services.IgnoreExecutionService;
-import org.awaitility.Awaitility;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.worker.Controller;
 
@@ -19,7 +19,6 @@ import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "webserver",
@@ -96,8 +95,7 @@ public class WebServerCommand extends AbstractServerCommand {
         }
 
         log.info("Webserver started");
-        embeddedServer.ifPresent(server ->
-            System.out.println("\n✅ Kestra is ready! Open the UI at: " + server.getURL()));
+        embeddedServer.ifPresent(server -> System.out.println("\n✅ Kestra is ready! Open the UI at: " + server.getURL()));
         Await.await().forever().until(() -> !this.applicationContext.isRunning());
         return 0;
     }

@@ -22,7 +22,6 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
@@ -67,6 +66,12 @@ abstract public class Task implements TaskInterface {
     @PluginProperty(hidden = true, group = "execution")
     @Schema(description = "Routing requirements (tags + fallback) for this task.")
     private WorkerSelector workerSelector;
+
+    @PluginProperty(hidden = true, group = "advanced")
+    @Schema(
+        description = "Identifiers of `enforcement: REFERENCE` governance policies to attach to this task and everything nested under it (Enterprise Edition; ignored in the open-source edition)."
+    )
+    private List<String> policyRefs;
 
     @PluginProperty(hidden = true, group = "logging")
     private Level logLevel;

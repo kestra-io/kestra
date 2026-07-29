@@ -13,7 +13,7 @@
         </template>
 
         <template #default>
-            <p v-html="$t('unqueue title', {id: execution.id})" />
+            <p v-html="$t('unqueue title', {id: escape(execution.id)})" />
 
             <KsSelect
                 :required="true"
@@ -42,7 +42,8 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue"
-    import {useExecutionsStore} from "../../../../../stores/executions"
+    import escape from "lodash/escape"
+    import {useExecutionsStore, type Execution} from "../../../../../stores/executions"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
     import {State} from "@kestra-io/design-system"
@@ -52,14 +53,6 @@
     import {useToast} from "../../../../../utils/toast"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue"
     import NavBarAction from "../../../../layout/NavBarAction.vue"
-
-    interface Execution {
-        id: string;
-        namespace: string;
-        state: {
-            current: string;
-        };
-    }
 
     const props = defineProps<{
         execution: Execution;

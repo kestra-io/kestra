@@ -1,14 +1,23 @@
 package io.kestra.core.validations.validator;
 
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.input.EeOnly;
+import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.kestra.plugin.core.trigger.Schedule;
+
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -16,12 +25,6 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.models.Label.READ_ONLY;
 import static io.kestra.core.models.Label.SYSTEM_PREFIX;
@@ -97,6 +100,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
         checkFlowInputsDependencyGraph(value, violations);
 
+        // EE-only input types (e.g. REUSABLE_INPUTS) cannot run on the open-source edition, so reject a flow
+        // declaring one at save/validation time rather than letting it fail only at execution. EE allows them.
+        violations.addAll(eeOnlyInputsViolations(value.getInputs()));
+
         // output unique name
         duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getOutputs()).stream().map(Data::getId).toList());
         if (!duplicateIds.isEmpty()) {
@@ -139,7 +146,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .map(task -> task.getId())
             .collect(Collectors.toList());
 
-        violations.addAll(assetsViolations(allTasks));
+        violations.addAll(EEViolations(value));
 
         if (!invalidTasks.isEmpty()) {
             violations.add(
@@ -171,10 +178,39 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
     }
 
-    protected List<String> assetsViolations(List<Task> allTasks) {
-        return allTasks.stream().filter(task -> task.getAssets() != null)
+    protected List<String> EEViolations(Flow flow) {
+        var assetViolations = flow.allTasks().filter(task -> task.getAssets() != null)
             .map(taskWithAssets -> "Task '" + taskWithAssets.getId() + "' can't have any `assets` because assets are only available in Enterprise Edition.")
             .toList();
+        List<String> violations = new ArrayList<>(assetViolations);
+
+        if (!ListUtils.isEmpty(flow.getQuotas())) {
+            violations.add("Quotas are only available in Enterprise Edition.");
+        }
+
+        return violations;
+    }
+
+    /**
+     * Inputs whose type is annotated {@link EeOnly} (e.g. {@code REUSABLE_INPUTS}) are not available in the
+     * open-source edition, so a flow declaring one is rejected here rather than failing only at execution time.
+     * Recurses into {@code FORM} children. The Enterprise build overrides this to allow such inputs.
+     */
+    protected List<String> eeOnlyInputsViolations(List<Input<?>> inputs) {
+        List<String> violations = new ArrayList<>();
+        collectEeOnlyInputs(inputs, violations);
+        return violations;
+    }
+
+    private static void collectEeOnlyInputs(List<Input<?>> inputs, List<String> violations) {
+        for (Input<?> input : ListUtils.emptyOnNull(inputs)) {
+            if (input.getClass().isAnnotationPresent(EeOnly.class)) {
+                violations.add("Input '" + input.getId() + "' of type " + input.getType() + " is only available in Enterprise Edition.");
+            }
+            if (input instanceof FormInput form) {
+                collectEeOnlyInputs(form.getInputs(), violations);
+            }
+        }
     }
 
     private static boolean checkObjectFieldsWithPatterns(Object object, List<Pattern> patterns) {
@@ -235,7 +271,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
     }
 
-    private static List<String> getDuplicates(List<String> taskIds) {
+    protected static List<String> getDuplicates(List<String> taskIds) {
         return taskIds.stream()
             .distinct()
             .filter(entry -> Collections.frequency(taskIds, entry) > 1)
@@ -246,8 +282,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
      * @return the violation formatted message of missing inputs for each schedule trigger
      */
     private Stream<String> findMissingInputsForScheduleTriggers(Flow value) {
-        if (!ListUtils.emptyOnNull(value.getTriggers()).isEmpty()
-            && !ListUtils.emptyOnNull(value.getInputs()).isEmpty()) {
+        if (
+            !ListUtils.emptyOnNull(value.getTriggers()).isEmpty()
+                && !ListUtils.emptyOnNull(value.getInputs()).isEmpty()
+        ) {
             // Find inputs without defaults (expanded to dotted leaf paths; schedules provide values keyed by
             // the same dotted path, matching how FlowInputOutput resolves them).
             Set<String> inputsWithoutDefaults = value.resolvableInputs().stream()
@@ -258,7 +296,8 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             return value.getTriggers().stream()
                 .filter(Schedule.class::isInstance)
                 .map(Schedule.class::cast)
-                .flatMap(schedule -> {
+                .flatMap(schedule ->
+                {
                     Set<String> violations = new HashSet<>();
                     Map<String, Object> scheduleInputs = schedule.getInputs() != null ? schedule.getInputs() : new HashMap<>();
                     var missingInputs = inputsWithoutDefaults.stream()

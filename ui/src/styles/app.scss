@@ -66,10 +66,10 @@ main {
     }
 
     > section.container {
-        margin: 24px 0;
+        margin: 2rem 0;
         min-width: 100%;
         transition: padding 0.3s ease;
-        padding: 0 24px;
+        padding: 0 2rem;
 
         &.full-height {
             flex: 1;
@@ -104,6 +104,12 @@ main {
         }
     }
 
+    // fitHeight pages pin the pagination footer, so override main-container's own top/bottom padding to match plain full-container pages
+    section.main-container.full-container:has(:is(.ks-data-table-wrapper, .full-width-table)) {
+        padding-top: 1rem;
+        padding-bottom: 0;
+    }
+
     .full-width-table {
         th.kel-table__cell:first-child > .cell,
         td.kel-table__cell:first-child > .cell {
@@ -117,6 +123,7 @@ main {
         display: flex;
         flex-direction: column;
         min-height: 0;
+        padding-top: 1rem;
 
         > * {
             flex: 1;
@@ -274,7 +281,6 @@ body{
 #app main {
     flex: 1;
     overflow: auto;
-    scrollbar-gutter: stable;
 }
 
 #ks-monaco-overflow-widgets {

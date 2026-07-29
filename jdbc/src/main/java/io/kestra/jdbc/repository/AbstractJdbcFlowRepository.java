@@ -33,7 +33,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
@@ -41,7 +41,6 @@ import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Flows;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
@@ -60,10 +59,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     public static final Field<String> SOURCE_FIELD = field("source_code", String.class);
     public static final Field<Integer> REVISION_FIELD = field("revision", Integer.class);
+    private static final Field<Boolean> DISABLED_FIELD = field("disabled", Boolean.class);
 
     private final ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher;
     private final ModelValidator modelValidator;
-    private final PluginDefaultService pluginDefaultService;
+    private final FlowParsingService flowParsingService;
 
     private final JdbcFilterService filterService;
 
@@ -74,24 +74,24 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         io.kestra.jdbc.AbstractJdbcRepository<FlowInterface> jdbcRepository,
         ModelValidator modelValidator,
         ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher,
-        PluginDefaultService pluginDefaultService,
+        FlowParsingService flowParsingService,
         JdbcFilterService filterService) {
         this.jdbcRepository = jdbcRepository;
         this.modelValidator = modelValidator;
         this.eventPublisher = eventPublisher;
-        this.pluginDefaultService = pluginDefaultService;
+        this.flowParsingService = flowParsingService;
         this.jdbcRepository.setDeserializer(record ->
         {
             String source = record.get("value", String.class);
             String namespace = record.get("namespace", String.class);
-            String tenantId = record.get("tenant_id", String.class);
+            String tenantId = record.get(TENANT_ID_FIELD);
             try {
                 Map<String, Object> map = MAPPER.readValue(source, new TypeReference<>() {
                 });
 
                 // Inject default plugin 'version' props before converting
                 // to flow to correctly resolve to plugin type.
-                map = pluginDefaultService.injectVersionDefaults(tenantId, namespace, map);
+                map = flowParsingService.injectPluginVersions(tenantId, namespace, map);
 
                 Flow deserialize = MAPPER.convertValue(map, Flow.class);
 
@@ -194,12 +194,18 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return JdbcFlowRepositoryService.lastRevision(jdbcRepository, asterisk);
     }
 
+    protected Table<Record> fromLastNonDraftRevision(boolean asterisk) {
+        return JdbcFlowRepositoryService.lastNonDraftRevision(jdbcRepository, asterisk);
+    }
+
     protected Condition noAclDefaultFilter(String tenantId) {
         return buildTenantCondition(tenantId);
     }
 
+    // "executable" filtering must stay independent of read-ACL, since users with
+    // execute-but-not-read permission are exactly who these two methods serve.
     protected Condition defaultExecutionFilter(String tenantId) {
-        return buildTenantCondition(tenantId);
+        return this.defaultFilterWithNoACL(tenantId).and(DISABLED_FIELD.eq(false));
     }
 
     @Override
@@ -290,6 +296,104 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     return Optional.of(fwe.toBuilder().source(source).build());
                 }
                 return Optional.of(FlowWithSource.of(flow, source));
+            });
+    }
+
+    @Override
+    public Optional<Flow> findByIdForExecution(String tenantId, String namespace, String id) {
+        return findByIdForExecution(tenantId, namespace, id, this.defaultFilter(tenantId));
+    }
+
+    @Override
+    public Optional<Flow> findByIdForExecutionWithoutAcl(String tenantId, String namespace, String id) {
+        return findByIdForExecution(tenantId, namespace, id, this.defaultFilterWithNoACL(tenantId));
+    }
+
+    private Optional<Flow> findByIdForExecution(String tenantId, String namespace, String id, Condition tenantCondition) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                DSLContext context = DSL.using(configuration);
+
+                var select = context
+                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
+                    .from(fromLastNonDraftRevision(true))
+                    .where(tenantCondition)
+                    .and(NAMESPACE_FIELD.eq(namespace))
+                    .and(field("id", String.class).eq(id));
+
+                return this.jdbcRepository.fetchOne(select).map(it -> (Flow) it);
+            });
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByIdWithSourceForExecution(String tenantId, String namespace, String id) {
+        return findByIdWithSourceForExecution(tenantId, namespace, id, this.defaultFilter(tenantId));
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByIdWithSourceForExecutionWithoutAcl(String tenantId, String namespace, String id) {
+        return findByIdWithSourceForExecution(tenantId, namespace, id, this.defaultFilterWithNoACL(tenantId));
+    }
+
+    private Optional<FlowWithSource> findByIdWithSourceForExecution(String tenantId, String namespace, String id, Condition tenantCondition) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                DSLContext context = DSL.using(configuration);
+
+                var select = context
+                    .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
+                    .from(fromLastNonDraftRevision(true))
+                    .where(tenantCondition)
+                    .and(NAMESPACE_FIELD.eq(namespace))
+                    .and(field("id", String.class).eq(id));
+
+                Record4<String, Object, String, String> fetched = select.fetchAny();
+
+                if (fetched == null) {
+                    return Optional.empty();
+                }
+
+                Flow flow = (Flow) jdbcRepository.map(fetched);
+                String source = fetched.get(SOURCE_FIELD);
+                if (flow instanceof FlowWithException fwe) {
+                    return Optional.of(fwe.toBuilder().source(source).build());
+                }
+                return Optional.of(FlowWithSource.of(flow, source));
+            });
+    }
+
+    @Override
+    public List<FlowWithSource> findAllWithSourceForExecutionForAllTenants() {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
+                var select = DSL
+                    .using(configuration)
+                    .select(
+                        VALUE_FIELD,
+                        field("source_code"),
+                        field("namespace"),
+                        TENANT_ID_FIELD
+                    )
+                    .from(fromLastNonDraftRevision(true))
+                    .where(this.defaultFilter());
+
+                // Same robust deserialization as findAllWithSourceForAllTenants(): we don't want
+                // a single broken plugin in the JSON to crash scheduler bootstrap.
+                return select.fetch().stream().map(record ->
+                {
+                    try {
+                        return FlowWithSource.of((Flow) jdbcRepository.map(record), record.get("source_code", String.class));
+                    } catch (Exception e) {
+                        log.error("Unable to load the following flow:\n{}", record.get("value", String.class), e);
+                        return null;
+                    }
+                }).filter(Objects::nonNull).toList();
             });
     }
 
@@ -664,11 +768,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public ArrayListTotal<Flow> find(
-            Pageable pageable,
-            @Nullable String tenantId,
-            String namespace,
-            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
-        ) {
+        Pageable pageable,
+        @Nullable String tenantId,
+        String namespace,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -687,10 +790,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ArrayListTotal<Flow> find(
-            Pageable pageable,
-            @Nullable String tenantId,
-            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
-        ) {
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -708,13 +810,13 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ArrayListTotal<Flow> findWithNoAcl(
-            Pageable pageable,
-            @Nullable String tenantId,
-            @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass
-        ) {
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 ArrayList<Field<?>> fields = new ArrayList<>();
                 fields.add(VALUE_FIELD);
@@ -827,21 +929,35 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @SneakyThrows({ FlowProcessingException.class })
     @Override
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException {
-        // Check Flow with defaults
-        FlowWithSource flowWithDefault = pluginDefaultService.injectAllDefaults(flow, false);
-        modelValidator.validate(flowWithDefault);
+        try {
+            // For drafts the YAML may be unparsable; if parsing fails we skip all
+            // validation since draft revisions are intentionally allowed to carry invalid content.
+            FlowWithSource flowWithDefault = flowParsingService.parse(flow, false);
+            // Drafts are allowed to be saved invalid - they will fail at execution time instead.
+            // Read the draft flag from the original GenericFlow (set from the API draft flag) rather
+            // than from flowWithDefault, since `parse` re-parses the YAML source which
+            // does not carry the draft field.
+            if (!flow.isDraft()) {
+                modelValidator.validate(flowWithDefault);
+            }
 
-        Flow previousFlow;
-        if (previous instanceof Flow o) {
-            previousFlow = o;
-        } else {
-            previousFlow = pluginDefaultService.injectAllDefaults(previous, false);
-        }
+            Flow previousFlow;
+            if (previous instanceof Flow o) {
+                previousFlow = o;
+            } else {
+                previousFlow = flowParsingService.parse(previous, false);
+            }
 
-        // Check update
-        Optional<ConstraintViolationException> checkUpdate = previousFlow.validateUpdate(flowWithDefault);
-        if (checkUpdate.isPresent()) {
-            throw checkUpdate.get();
+            // Check update
+            Optional<ConstraintViolationException> checkUpdate = previousFlow.validateUpdate(flowWithDefault);
+            if (checkUpdate.isPresent()) {
+                throw checkUpdate.get();
+            }
+        } catch (FlowProcessingException e) {
+            if (!flow.isDraft()) {
+                throw e;
+            }
+            // Draft with unparsable YAML: skip validation entirely.
         }
 
         // Persist
@@ -852,9 +968,18 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @VisibleForTesting
     public FlowWithSource save(GenericFlow flow, CrudEventType crudEventType) throws ConstraintViolationException {
 
-        // Inject default plugin 'version' props before converting
-        // to flow to correctly resolve to plugin type - this is to ensure the flow is parseable before saving.
-        FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
+        // Ensure the flow is parseable before saving.
+        // For drafts with unparsable YAML, fall back to a FlowWithException so the raw source can
+        // still be persisted without throwing.
+        FlowWithSource flowWithSource;
+        try {
+            flowWithSource = flowParsingService.parse(flow, false);
+        } catch (FlowProcessingException e) {
+            if (!flow.isDraft()) {
+                throw e;
+            }
+            flowWithSource = FlowWithException.from(flow, e);
+        }
 
         // Check whether existing Flow is equal.
         FlowWithSource nullOrExisting = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId()).orElse(null);
@@ -875,7 +1000,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, nullOrExisting, crudEventType));
 
-        return flowWithSource.toBuilder().revision(revision).build();
+        // draft is not part of the YAML source so parsing loses it; restore from the original flow.
+        return flowWithSource.toBuilder()
+            .revision(revision)
+            .draft(flow.isDraft())
+            .build();
     }
 
     @SneakyThrows

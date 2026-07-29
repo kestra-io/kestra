@@ -1,14 +1,16 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.time.Duration;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.utils.RegexTestUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -187,9 +189,11 @@ class RegexFilterTest {
             RegexTestUtils.resetAndSetTimeout(Duration.ofMillis(200));
             String evilInput = "a".repeat(25) + "b";
 
-            assertThatThrownBy(() -> variableRenderer.render(
-                "{{ '" + evilInput + "' | regexMatch(regex='(.*a){25}') }}", Map.of()
-            ))
+            assertThatThrownBy(
+                () -> variableRenderer.render(
+                    "{{ '" + evilInput + "' | regexMatch(regex='(.*a){25}') }}", Map.of()
+                )
+            )
                 .isInstanceOf(IllegalVariableEvaluationException.class)
                 .hasMessageContaining("timed out");
         } finally {
@@ -203,9 +207,11 @@ class RegexFilterTest {
             RegexTestUtils.resetAndSetTimeout(Duration.ofMillis(200));
             String evilInput = "a".repeat(25) + "b";
 
-            assertThatThrownBy(() -> variableRenderer.render(
-                "{{ '" + evilInput + "' | regexReplace(regex='(.*a){25}', replacement='x') }}", Map.of()
-            ))
+            assertThatThrownBy(
+                () -> variableRenderer.render(
+                    "{{ '" + evilInput + "' | regexReplace(regex='(.*a){25}', replacement='x') }}", Map.of()
+                )
+            )
                 .isInstanceOf(IllegalVariableEvaluationException.class)
                 .hasMessageContaining("timed out");
         } finally {
@@ -219,9 +225,11 @@ class RegexFilterTest {
             RegexTestUtils.resetAndSetTimeout(Duration.ofMillis(200));
             String evilInput = "a".repeat(25) + "b";
 
-            assertThatThrownBy(() -> variableRenderer.render(
-                "{{ '" + evilInput + "' | regexExtract(regex='(.*a){25}') }}", Map.of()
-            ))
+            assertThatThrownBy(
+                () -> variableRenderer.render(
+                    "{{ '" + evilInput + "' | regexExtract(regex='(.*a){25}') }}", Map.of()
+                )
+            )
                 .isInstanceOf(IllegalVariableEvaluationException.class)
                 .hasMessageContaining("timed out");
         } finally {

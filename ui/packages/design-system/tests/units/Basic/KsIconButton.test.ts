@@ -105,9 +105,9 @@ describe("KsIconButton", () => {
             slots: {default: StarIcon},
             global: globalConfig,
         })
-        // In jsdom (no vue-router), router-link renders as a custom element
+        // The global fake RouterLink (see tests/unit/setup.ts) renders as an anchor.
         const button = wrapper.find(".ks-icon-button")
-        expect(button.element.tagName.toLowerCase()).toBe("router-link")
+        expect(button.element.tagName.toLowerCase()).toBe("a")
     })
 
     test("does not navigate when disabled and to is set", () => {

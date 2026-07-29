@@ -27,9 +27,9 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
             {
                 var select = DSL
                     .using(configuration)
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
-                    .where(field("key").eq(IdUtils.fromParts(category, id)));
+                    .where(KEY_FIELD.eq(IdUtils.fromParts(category, id)));
                 return this.jdbcRepository.fetchOne(select);
             });
     }
@@ -44,7 +44,7 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
                     var dslContext = DSL.using(configuration);
                     var insert = dslContext
                         .insertInto(this.jdbcRepository.getTable())
-                        .set(field("key"), newLock.uid())
+                        .set(KEY_FIELD, newLock.uid())
                         .set(finalFields);
                     int inserted;
                     if (dslContext.configuration().dialect().supports(SQLDialect.POSTGRES) || dslContext.configuration().dialect().supports(SQLDialect.MYSQL)) {
@@ -68,7 +68,7 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
             .transaction(
                 configuration -> DSL.using(configuration)
                     .delete(this.jdbcRepository.getTable())
-                    .where(field("key").eq(IdUtils.fromParts(category, id)))
+                    .where(KEY_FIELD.eq(IdUtils.fromParts(category, id)))
                     .execute()
             );
     }
@@ -78,12 +78,16 @@ public class AbstractJdbcLockRepository extends AbstractJdbcRepository implement
         return this.jdbcRepository.getDslContextWrapper()
             .transactionResult(configuration ->
             {
-                var select = DSL.using(configuration)
-                    .select(field("value"))
+                var dslContext = DSL.using(configuration);
+                var select = dslContext
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(field("owner").eq(owner));
-                var locks = this.jdbcRepository.fetch(select.forUpdate());
-                locks.forEach(lock -> this.jdbcRepository.delete(lock));
+                var locks = this.jdbcRepository.fetch(select);
+                dslContext
+                    .delete(this.jdbcRepository.getTable())
+                    .where(field("owner").eq(owner))
+                    .execute();
                 return locks;
             }
             );

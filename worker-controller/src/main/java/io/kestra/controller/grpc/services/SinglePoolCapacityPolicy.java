@@ -3,16 +3,17 @@ package io.kestra.controller.grpc.services;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.kestra.core.worker.QueueSubscription;
-import io.kestra.controller.grpc.services.WorkerStreamContext.PendingJob;
-
 import javax.annotation.concurrent.ThreadSafe;
+
+import io.kestra.controller.grpc.services.WorkerStreamContext.PendingJob;
+import io.kestra.core.worker.QueueSubscription;
 
 /**
  * Trivial capacity policy: a single shared pool of {@code maxConcurrency}
  * interchangeable slots, no per-queue accounting and no borrowing.
  *
- * <p>This is the default policy. Deployments that need per-queue reservations
+ * <p>
+ * This is the default policy. Deployments that need per-queue reservations
  * or capacity borrowing replace the {@link WorkerCapacityPolicyFactory} bean
  * with one that returns a richer implementation.
  */

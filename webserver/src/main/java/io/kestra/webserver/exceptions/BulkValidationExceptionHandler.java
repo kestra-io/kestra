@@ -11,7 +11,7 @@ import jakarta.inject.Singleton;
 @SuppressWarnings("rawtypes")
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton
-@Requires(classes = {BulkValidationException.class, ExceptionHandler.class})
+@Requires(classes = { BulkValidationException.class, ExceptionHandler.class })
 public class BulkValidationExceptionHandler
     implements ExceptionHandler<BulkValidationException, HttpResponse> {
 

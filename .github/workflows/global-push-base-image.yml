@@ -53,7 +53,7 @@ jobs:
             with-python: "true"
             description: "Kestra base image — JRE 21 + uv + Python + kestra pip pre-installed"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4

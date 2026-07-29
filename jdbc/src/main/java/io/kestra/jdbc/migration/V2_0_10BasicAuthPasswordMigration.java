@@ -24,8 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Migrates the stored BasicAuth password from plain SHA-512 to bcrypt-wrapped SHA-512.
  *
- * <p>The {@code settings} table stores the BasicAuth credentials under key
+ * <p>
+ * The {@code settings} table stores the BasicAuth credentials under key
  * {@code kestra.server.basic-auth} as a JSON object of the form:
+ * 
  * <pre>{@code
  * {
  *   "key":   "kestra.server.basic-auth",
@@ -33,13 +35,15 @@ import lombok.extern.slf4j.Slf4j;
  * }
  * }</pre>
  *
- * <p>Because the SHA-512 digest is one-way, the migration cannot recover the original
+ * <p>
+ * Because the SHA-512 digest is one-way, the migration cannot recover the original
  * plaintext. Instead it wraps the existing digest in bcrypt: {@code bcrypt(sha512_hex)}.
  * The auth code uniformly computes {@code bcrypt(sha512(salt|password))} for every
  * verification, so migrated and newly-set passwords follow exactly the same path with
  * no dual-format detection required.
  *
- * <p>Idempotency: if the stored password already starts with {@code $2} (a bcrypt
+ * <p>
+ * Idempotency: if the stored password already starts with {@code $2} (a bcrypt
  * modular-crypt string) the migration is skipped silently.
  */
 @Slf4j
@@ -78,7 +82,8 @@ public class V2_0_10BasicAuthPasswordMigration implements MigrationScript {
 
     @Override
     public void migrate() throws Exception {
-        dslContextWrapper.transaction(configuration -> {
+        dslContextWrapper.transaction(configuration ->
+        {
             Record1<Object> record = DSL.using(configuration)
                 .select(VALUE_FIELD)
                 .from(DSL.table("settings"))

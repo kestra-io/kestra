@@ -45,6 +45,31 @@ const EDGE_COLOR = {
     hovered:  "--ks-dependencies-edge-hovered",
 } as const
 
+// ─── Asset node icon ──────────────────────────────────────────────────────────
+
+// Material Design "package-variant-closed" glyph (viewBox 0 0 24 24), used to
+// mark asset nodes in the dependency graph. ECharts graph symbols are drawn on a
+// canvas and cannot mount a Vue <KsIcon>, so the icon is embedded as an SVG
+// `image://` symbol instead — the only way to render a glyph inside a graph node.
+const ASSET_ICON_PATH =
+    "M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L10.11,5.22L16,8.61L17.96,7.5L12,4.15M6.04,7.5L12,10.85L13.96,9.75L8.08,6.35L6.04,7.5M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z"
+
+/**
+ * Builds an ECharts `image://` symbol for an asset node: a filled circle matching
+ * the node's current background/border colours with the packageVariantClosed glyph
+ * centred inside. Colours are baked into the SVG because ECharts ignores itemStyle
+ * for image symbols; the symbol is rebuilt whenever graphNodes recomputes
+ * (selection / filter / theme change), so state and theme stay in sync.
+ */
+function assetNodeSymbol(bgColor: string, borderColor: string, iconColor: string): string {
+    const svg =
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">" +
+        `<circle cx="12" cy="12" r="11" fill="${bgColor}" stroke="${borderColor}" stroke-width="1.5"/>` +
+        `<path transform="translate(12 12) scale(0.55) translate(-12 -12)" fill="${iconColor}" d="${ASSET_ICON_PATH}"/>` +
+        "</svg>"
+    return `image://data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
 // ─── KsGraph instance contract ────────────────────────────────────────────────
 
 interface KsGraphRef {
@@ -197,6 +222,9 @@ export function useDependencies(
         const edgeCounts   = buildEdgeCounts(elements.value.data)
         const hasSelection = selectedNodeID.value !== undefined
         const hasFilter    = shownNodeIDs.value !== null
+        // Icon colour for asset nodes — theme-adaptive so it stays legible on the
+        // asset background in both light and dark themes.
+        const assetIconColor = cssVar("--ks-text-primary")
 
         return elements.value.data
             .filter((el): el is {data: Node} => el.data.type === NODE)
@@ -243,6 +271,9 @@ export function useDependencies(
                     id:         node.id,
                     name:       node.id,
                     symbolSize: nodeSize(node.id, edgeCounts),
+                    // Asset nodes carry the packageVariantClosed glyph inside the node;
+                    // other nodes keep the default ECharts circle symbol.
+                    ...(isAsset ? {symbol: assetNodeSymbol(bgColor, borderColor, assetIconColor)} : {}),
                     itemStyle:  baseItemStyle,
                     // Hover colour – applied by ECharts emphasis.focus:"adjacency"
                     emphasis: {
@@ -468,7 +499,7 @@ export function useDependencies(
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string})
                 const nodes = data.nodes ?? []
                 elements.value = {
-                    data:  transformResponse(data, NAMESPACE),
+                    data:  transformResponse(data as any, NAMESPACE),
                     count: new Set(nodes.map((r: {uid: string}) => r.uid)).size,
                 }
             } else {

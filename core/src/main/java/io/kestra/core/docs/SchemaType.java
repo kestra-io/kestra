@@ -8,10 +8,11 @@ public enum SchemaType {
     FLOW,
     TASK,
     TRIGGER,
-    PLUGINDEFAULT,
     APPS,
     TESTSUITES,
-    DASHBOARD;
+    DASHBOARD,
+    REUSABLEINPUTS,
+    POLICY;
 
     @JsonCreator
     public static SchemaType fromString(final String value) {

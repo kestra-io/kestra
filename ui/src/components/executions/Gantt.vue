@@ -26,14 +26,6 @@
                 @search="search = $event"
                 @filter="onFilterChange"
             />
-            <QuickFilters
-                v-if="!hasComplexFilters"
-                :levels="VALUES.LEVELS"
-                :level="effectiveSelectedLogLevel?.value"
-                :showInterval="false"
-                :levelLabel="t('filter.level_log_executions.label')"
-                @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
-            />
             <div class="gantt-stage">
                 <KsCard
                     id="gantt"
@@ -99,9 +91,12 @@
                                                 <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                                 <ChevronDown v-else />
                                             </div>
-                                            <div class="task-label">
+                                            <div
+                                                class="task-label"
+                                                :style="{'--depth': item.depth || 0}"
+                                            >
                                                 <div v-if="taskTypeByTaskRunId[item.id]" class="task-icon-box">
-                                                    <KsTaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :icons="pluginsStore.icons" />
+                                                    <TaskIcon :cls="taskTypeByTaskRunId[item.id]" onlyIcon :loadIcon="pluginsStore.loadIcon" />
                                                 </div>
                                                 <KsTooltip placement="top-start">
                                                     <template #content>
@@ -223,12 +218,12 @@
         normalizeRouteLevelFilter,
         readRouteLevelFilter,
         KsExecutionStatus,
-        KsTaskIcon,
         KsFilter as KSFilter,
         KsEmptyState,
         type AppliedFilter,
         type LevelFilterValue,
     } from "@kestra-io/design-system"
+    import TaskIcon from "../plugins/TaskIcon.vue"
 
     import * as FlowUtils from "../../utils/flowUtils"
     import * as Utils from "../../utils/utils"
@@ -236,15 +231,14 @@
     import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {usePluginsStore} from "../../stores/plugins"
     import {useGanttExecutionFilter} from "../filter/configurations"
-    import {useValues} from "../filter/composables/useValues"
-    import {useComplexFilters} from "../filter/composables/useComplexFilters"
-    import QuickFilters from "../filter/QuickFilters.vue"
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
+    import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
     import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
     import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
+    import {computeTaskBarPercents} from "../../utils/ganttSeries"
 
     interface TaskRun {
         id: string;
@@ -266,8 +260,7 @@
 
     interface TaskWrapper {
         task: TaskRun;
-        depth: number | undefined;
-        children?: TaskWrapper[];
+        depth: number;
     }
 
     interface SeriesItem {
@@ -306,7 +299,6 @@
     const toast = useToast()
     const executionsStore = useExecutionsStore()
     const pluginsStore = usePluginsStore()
-    pluginsStore.fetchIcons()
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
     const ganttExecutionFilter = useGanttExecutionFilter()
 
@@ -338,7 +330,6 @@
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
     const {
         effectiveValue: effectiveSelectedLogLevel,
-        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy<LevelFilterValue>({
         defaultValue: () => ({value: defaultLogLevel.value, direction: "min"}),
         applyDefaultIfMissing: () => true,
@@ -347,9 +338,6 @@
         writeToRoute: normalizeRouteLevelFilter,
         hasUnsupportedRouteValue: hasUnsupportedRouteLevelComparator,
     })
-    const {VALUES} = useValues("logs")
-    const {hasComplexFilters} = useComplexFilters()
-
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
 
     const taskRunsCount = computed<number>(() => execution.value?.taskRunList?.length ?? 0)
@@ -378,48 +366,12 @@
         return execution.value?.state?.histories?.[0] ? ts(execution.value.state.histories[0].date) : 0
     })
 
-    const tasks = computed<TaskWrapper[]>(() => {
-        const rootTasks: TaskWrapper[] = []
-        const childTasks: TaskWrapper[] = []
-        const sortedTasks: TaskWrapper[] = []
-        const tasksById: Record<string, TaskWrapper> = {}
-
-        for (const task of (execution.value?.taskRunList || []) as TaskRun[]) {
-            const taskWrapper: TaskWrapper = {task, depth: task.parentTaskRunId ? undefined : 0}
-            if (task.parentTaskRunId) {
-                childTasks.push(taskWrapper)
-            } else {
-                rootTasks.push(taskWrapper)
-            }
-            tasksById[task.id] = taskWrapper
-        }
-
-        for (let i = 0; i < childTasks.length; i++) {
-            const taskWrapper = childTasks[i]
-            const parentTask = tasksById[taskWrapper.task.parentTaskRunId!]
-            if (parentTask) {
-                taskWrapper.depth = parentTask.depth! + 1
-                tasksById[taskWrapper.task.id] = taskWrapper
-                if (!parentTask.children) {
-                    parentTask.children = []
-                }
-                parentTask.children.push(taskWrapper)
-            }
-        }
-
-        const nodeStart = (node: TaskWrapper): number => ts(node.task.state.histories[0].date)
-        const childrenSort = (nodes: TaskWrapper[]): void => {
-            nodes.sort((n1, n2) => (nodeStart(n1) > nodeStart(n2) ? 1 : -1))
-            for (const node of nodes) {
-                sortedTasks.push(node)
-                if (node.children) {
-                    childrenSort(node.children)
-                }
-            }
-        }
-        childrenSort(rootTasks)
-        return sortedTasks
-    })
+    const tasks = computed<TaskWrapper[]>(() =>
+        buildTaskRunHierarchy(
+            (execution.value?.taskRunList || []) as TaskRun[],
+            (n1, n2) => ts(n1.state.histories[0].date) - ts(n2.state.histories[0].date),
+        ),
+    )
 
     const taskTypeByTaskRun = computed<Array<[TaskRun, string | undefined]>>(() => {
         return series.value.map(serie => [serie.task, taskType(serie.task)])
@@ -535,7 +487,21 @@
 
         const newSeries: SeriesItem[] = []
         const executionDelta = delta()
-        const taskMap: Record<string, SeriesItem> = {}
+
+        const barInputs = tasks.value.map(({task}) => {
+            const stopTs = State.isRunning(task.state.current)
+                ? ts(new Date())
+                : ts(task.state.histories[task.state.histories.length - 1].date)
+            return {
+                id: task.id,
+                parentTaskRunId: task.parentTaskRunId,
+                startTs: ts(task.state.histories[0].date),
+                stopTs,
+            }
+        })
+        const barPercentsById = Object.fromEntries(
+            computeTaskBarPercents(barInputs, start.value, executionDelta).map((p) => [p.id, p]),
+        )
 
         for (const taskWrapper of tasks.value) {
             const task = taskWrapper.task
@@ -546,16 +512,12 @@
                 const lastIndex = task.state.histories.length - 1
                 stopTs = ts(task.state.histories[lastIndex].date)
             }
-
             const startTs = ts(task.state.histories[0].date)
 
             const runningState = task.state.histories.filter(r => r.state === State.RUNNING)
             const left = runningState.length > 0
                 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100)
                 : 0
-
-            const taskStart = startTs - start.value
-            const taskStop = stopTs - start.value - taskStart
 
             const taskDelta = stopTs - startTs
 
@@ -566,23 +528,17 @@
                 tooltip += `\n${t("running duration")} : ${durationUtils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`
             }
 
-            let width = (taskStop / executionDelta) * 100
+
+            const barPercents = barPercentsById[task.id]
+            let width = barPercents.width
             if (State.isRunning(task.state.current)) {
                 width = ((stop() - startTs) / executionDelta) * 100
-            }
-
-            const startPercent = (taskStart / executionDelta) * 100
-            let parentEndPercent: number | undefined = undefined
-
-            if (task.parentTaskRunId && taskMap[task.parentTaskRunId]) {
-                const parent = taskMap[task.parentTaskRunId]
-                parentEndPercent = parent.start + parent.width
             }
 
             const seriesItem: SeriesItem = {
                 id: task.id,
                 name: task.taskId,
-                start: startPercent,
+                start: barPercents.start,
                 width,
                 left,
                 tooltip,
@@ -594,10 +550,8 @@
                 executionId: task.outputs?.executionId as string | undefined,
                 attempts: task.attempts ? task.attempts.length : 1,
                 depth: taskWrapper.depth,
-                parentEndPercent,
+                parentEndPercent: barPercents.parentEndPercent,
             }
-
-            taskMap[task.id] = seriesItem
             newSeries.push(seriesItem)
         }
         series.value = newSeries
@@ -838,6 +792,7 @@
                 position: relative;
                 padding-right: var(--ks-spacing-8);
                 background: var(--ks-dropdown-bg);
+                border-top: 1px solid var(--ks-border-default);
 
                 &.is-expanded {
                     background: var(--ks-dropdown-bg-active);
@@ -858,6 +813,7 @@
                     display: flex;
                     align-items: center;
                     gap: var(--ks-spacing-4);
+                    padding-left: calc(var(--depth, 0) * var(--ks-spacing-5));
 
                     code {
                         color: var(--ks-text-primary);
@@ -969,12 +925,7 @@
     }
 
     :deep(.vue-recycle-scroller__item-view) {
-        border-bottom: 1px solid var(--ks-border-default);
         margin-bottom: 10px;
-
-        &:last-child {
-            border-bottom: none;
-        }
     }
 
     .cursor-icon {

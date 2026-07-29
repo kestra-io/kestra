@@ -200,8 +200,10 @@ public class GrpcWorkerIOSender<T> extends WorkerLoop implements WorkerIOSender 
      */
     private void onSendFailed(final BatchMessage<T> batchMessage, final Throwable t) {
         if (resendOnFailure && isRunning() && isRetryable(t)) {
-            LOG.warn("Retryable error while sending {} — re-queuing {} item(s) for redelivery",
-                eventType.getSimpleName(), batchMessage.records().size(), t);
+            LOG.warn(
+                "Retryable error while sending {} — re-queuing {} item(s) for redelivery",
+                eventType.getSimpleName(), batchMessage.records().size(), t
+            );
             batchMessage.records().forEach(queue::put);
             resendBackoffUntilNanos = System.nanoTime() + RESEND_BACKOFF.toNanos();
         } else {

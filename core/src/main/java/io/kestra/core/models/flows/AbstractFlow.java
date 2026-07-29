@@ -60,6 +60,13 @@ public abstract class AbstractFlow implements FlowInterface {
     @Builder.Default
     boolean deleted = false;
 
+    @NotNull
+    @Builder.Default
+    @Schema(
+        description = "Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly."
+    )
+    boolean draft = false;
+
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;

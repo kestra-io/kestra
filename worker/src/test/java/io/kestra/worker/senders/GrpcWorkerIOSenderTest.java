@@ -32,7 +32,6 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -129,7 +128,8 @@ class GrpcWorkerIOSenderTest {
     void shouldRetryOnceOnUnauthenticatedError() {
         // Given - first call fails with UNAUTHENTICATED, second succeeds
         AtomicInteger callCount = new AtomicInteger(0);
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             OpaqueData req = inv.getArgument(0);
             StreamObserver<OpaqueData> obs = inv.getArgument(1);
             if (callCount.getAndIncrement() == 0) {
@@ -150,7 +150,8 @@ class GrpcWorkerIOSenderTest {
         ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
         await()
             .atMost(Duration.ofSeconds(3))
-            .untilAsserted(() -> {
+            .untilAsserted(() ->
+            {
                 verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
                     .sendWorkerTaskResults(captor.capture(), any());
             });
@@ -165,7 +166,8 @@ class GrpcWorkerIOSenderTest {
     void shouldRequeueAndRedeliverWhenSendFailsWithRetryableError() throws Exception {
         // Given - first send fails with UNAVAILABLE (controller unreachable), subsequent sends succeed
         AtomicInteger callCount = new AtomicInteger(0);
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             OpaqueData req = inv.getArgument(0);
             StreamObserver<OpaqueData> obs = inv.getArgument(1);
             if (callCount.getAndIncrement() == 0) {
@@ -188,7 +190,8 @@ class GrpcWorkerIOSenderTest {
         ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
         await()
             .atMost(Duration.ofSeconds(10))
-            .untilAsserted(() -> {
+            .untilAsserted(() ->
+            {
                 taskResultSender.doOnLoop();
                 verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(2))
                     .sendWorkerTaskResults(captor.capture(), any());
@@ -205,7 +208,8 @@ class GrpcWorkerIOSenderTest {
         // mapper fires and resends a stripped failed-state result; that fallback resend then fails once with
         // UNAVAILABLE (transient partition) before finally succeeding on redelivery.
         AtomicInteger callCount = new AtomicInteger(0);
-        doAnswer(inv -> {
+        doAnswer(inv ->
+        {
             OpaqueData req = inv.getArgument(0);
             StreamObserver<OpaqueData> obs = inv.getArgument(1);
             int call = callCount.getAndIncrement();
@@ -231,7 +235,8 @@ class GrpcWorkerIOSenderTest {
         ArgumentCaptor<OpaqueData> captor = ArgumentCaptor.forClass(OpaqueData.class);
         await()
             .atMost(Duration.ofSeconds(10))
-            .untilAsserted(() -> {
+            .untilAsserted(() ->
+            {
                 taskResultSender.doOnLoop();
                 verify(grpcWorkerControllerService, org.mockito.Mockito.atLeast(3))
                     .sendWorkerTaskResults(captor.capture(), any());

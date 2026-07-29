@@ -2,14 +2,13 @@ package io.kestra.core.services;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.MaintenanceStatusResponse;
 import io.kestra.core.models.MaintenanceStatusResponse.ServiceStatus;
-import io.kestra.core.server.Service.ServiceState;
 import io.kestra.core.server.ServerInstance;
+import io.kestra.core.server.Service.ServiceState;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceType;
@@ -42,11 +41,13 @@ class MaintenanceServiceTest {
     void shouldReturnNotReadyWhenInMaintenanceButServicesStillRunning() {
         // Given
         MaintenanceService service = maintenanceService(true);
-        when(livenessStore.findAllInstancesInStates(ServiceState.allRunningStates())).thenReturn(List.of(
-            serviceInstance(ServiceType.WORKER, ServiceState.RUNNING),
-            serviceInstance(ServiceType.WORKER, ServiceState.MAINTENANCE),
-            serviceInstance(ServiceType.EXECUTOR, ServiceState.RUNNING)
-        ));
+        when(livenessStore.findAllInstancesInStates(ServiceState.allRunningStates())).thenReturn(
+            List.of(
+                serviceInstance(ServiceType.WORKER, ServiceState.RUNNING),
+                serviceInstance(ServiceType.WORKER, ServiceState.MAINTENANCE),
+                serviceInstance(ServiceType.EXECUTOR, ServiceState.RUNNING)
+            )
+        );
 
         // When
         MaintenanceStatusResponse response = service.getMaintenanceStatus(livenessStore);
@@ -70,10 +71,12 @@ class MaintenanceServiceTest {
     void shouldReturnReadyWhenAllServicesInMaintenance() {
         // Given
         MaintenanceService service = maintenanceService(true);
-        when(livenessStore.findAllInstancesInStates(ServiceState.allRunningStates())).thenReturn(List.of(
-            serviceInstance(ServiceType.WORKER, ServiceState.MAINTENANCE),
-            serviceInstance(ServiceType.EXECUTOR, ServiceState.MAINTENANCE)
-        ));
+        when(livenessStore.findAllInstancesInStates(ServiceState.allRunningStates())).thenReturn(
+            List.of(
+                serviceInstance(ServiceType.WORKER, ServiceState.MAINTENANCE),
+                serviceInstance(ServiceType.EXECUTOR, ServiceState.MAINTENANCE)
+            )
+        );
 
         // When
         MaintenanceStatusResponse response = service.getMaintenanceStatus(livenessStore);
@@ -109,7 +112,9 @@ class MaintenanceServiceTest {
 
             @Override
             public Disposable listen(MaintenanceListener listener) {
-                return Disposable.of(() -> {});
+                return Disposable.of(() ->
+                {
+                });
             }
         };
     }

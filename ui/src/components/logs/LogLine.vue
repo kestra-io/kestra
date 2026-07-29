@@ -14,14 +14,14 @@
             :style="{color: `var(--ks-log-${levelLower})`}"
             :role="clickableLevel ? 'button' : undefined"
             :tabindex="clickableLevel ? 0 : undefined"
-            :title="clickableLevel ? t('filter_for') : undefined"
+            :title="clickableLevel ? $t('filter_for') : undefined"
             @click="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.enter="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
             @keydown.space.prevent="clickableLevel && props.log.level && emit('filter-level', props.log.level)"
         >{{ levelLabel }}</span>
         <div class="log-content">
             <div class="log-header">
-                <time class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "HH:mm:ss.SSS") }}</time>
+                <time class="log-time" :title="Filters.date(log.timestamp, 'iso')">{{ Filters.date(log.timestamp, "iso") }}</time>
                 <span v-if="title" class="log-source">{{ log.taskId ?? log.flowId ?? "" }}</span>
                 <span v-for="(meta, x) in metaWithValue" :key="x" class="log-meta">
                     <span class="log-meta-key">{{ meta.key }}</span>
@@ -58,10 +58,8 @@
     import {logsFontSize, logsDensity, logsBodyClamp, logsPrettyJson, logsExpandByDefault, DENSITY_PADDING} from "../../composables/useLogDisplay"
     import {Log} from "../../stores/logs"
     import {useRouter} from "vue-router"
-    import {useI18n} from "vue-i18n"
     import * as Filters from "../../utils/filters"
 
-    const {t} = useI18n()
 
     // Props
     const props = defineProps<{

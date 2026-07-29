@@ -1,4 +1,7 @@
 import type {ScopeBinding} from "./types"
+import {EXECUTION_PARENT_ROUTE} from "../../executions/executionTabs"
+import {FLOW_PARENT_ROUTE} from "../../flows/flowTabs"
+import {NAMESPACE_PARENT_ROUTE} from "../../../utils/namespaceTabRoutes"
 
 /** The subset of the current route the scope mapping reads. */
 interface RouteLike {
@@ -18,30 +21,28 @@ function param(params: RouteLike["params"], key: string): string | undefined {
  * flow / execution / namespace detail page carries that context to the agent. Returns
  * null on routes with no meaningful scope (list pages, home, settings, …).
  *
- * Route shapes (see `routes.ts`):
- *   - executions/update → /:tenant?/executions/:namespace/:flowId/:id
- *   - flows/update      → /:tenant?/flows/edit/:namespace/:id
- *   - namespaces/update → /:tenant?/namespaces/edit/:id
+ * The parent routes below only redirect (see their `*TabRoutes.ts`); the actually-matched
+ * route is always one of their children, so match by prefix rather than exact name.
  */
 export function scopeFromRoute(route: RouteLike | undefined | null): ScopeBinding | null {
     const name = typeof route?.name === "string" ? route.name : ""
     const params = route?.params
 
-    switch (name) {
-        case "executions/update":
-            return {
-                kind: "EXECUTION",
-                namespace: param(params, "namespace"),
-                flowId: param(params, "flowId"),
-                executionId: param(params, "id"),
-            }
-        case "flows/update":
-            return {kind: "FLOW", namespace: param(params, "namespace"), flowId: param(params, "id")}
-        case "namespaces/update":
-            return {kind: "NAMESPACE", namespace: param(params, "id")}
-        default:
-            return null
+    if (name === EXECUTION_PARENT_ROUTE || name.startsWith(`${EXECUTION_PARENT_ROUTE}/`)) {
+        return {
+            kind: "EXECUTION",
+            namespace: param(params, "namespace"),
+            flowId: param(params, "flowId"),
+            executionId: param(params, "id"),
+        }
     }
+    if (name === FLOW_PARENT_ROUTE || name.startsWith(`${FLOW_PARENT_ROUTE}/`)) {
+        return {kind: "FLOW", namespace: param(params, "namespace"), flowId: param(params, "id")}
+    }
+    if (name === NAMESPACE_PARENT_ROUTE || name.startsWith(`${NAMESPACE_PARENT_ROUTE}/`)) {
+        return {kind: "NAMESPACE", namespace: param(params, "id")}
+    }
+    return null
 }
 
 /**

@@ -13,6 +13,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
+import io.kestra.core.runners.ConcurrencyLimit;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
@@ -67,7 +70,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FlowService {
     @Inject
-    private FlowRepositoryInterface flowRepository;
+    protected FlowRepositoryInterface flowRepository; // Used in EE
 
     @Inject
     private FlowParsingService flowParsingService;
@@ -92,6 +95,9 @@ public class FlowService {
 
     @Inject
     private PluginRegistry pluginRegistry;
+
+    @Inject
+    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     private final ExecutorService executorService;
 
@@ -135,7 +141,7 @@ public class FlowService {
 
         FlowWithSource created = flowRepository.create(flow);
 
-        // impact downstream consumers: topology, scheduler and flow metastore
+        // impact downstream consumers: topology, scheduler, flow metastore, concurrency limit
         impactDownstreamConsumers(created);
 
         return created;
@@ -191,7 +197,8 @@ public class FlowService {
         return deleted;
     }
 
-    private void impactDownstreamConsumers(FlowWithSource flow) throws QueueException {
+    // overridden in EE
+    protected void impactDownstreamConsumers(FlowWithSource flow) throws QueueException {
         // update the topology asynchronously
         executorService.submit(() -> updateTopology(flow));
 
@@ -200,6 +207,9 @@ public class FlowService {
 
         // send it to the flow queue for the flow metastore
         flowQueue.emit(flow);
+
+        // update concurrency limit if any
+        updateConcurrencyLimit(flow);
     }
 
     private void updateTopology(FlowWithSource flow) {
@@ -291,6 +301,48 @@ public class FlowService {
                     trigger -> sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
                 );
         }
+    }
+
+    private void updateConcurrencyLimit(FlowWithSource flow) {
+        var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
+
+        // If the previous revision was soft-deleted, its concurrency limit was already removed:
+        // treat this as if there was no previous so a new concurrency limit is re-initialized.
+        if (previous != null && previous.isDeleted()) {
+            previous = null;
+        }
+
+        if (flow.isDeleted()) {
+            removeConcurrencyLimit(flow);
+            return;
+        }
+
+        // A draft revision is never picked up by the executor, so it must not get a live concurrency limit.
+        if (flow.isDraft()) {
+            return;
+        }
+
+        if (previous != null) {
+            if (previous.getConcurrency() == null && flow.getConcurrency() != null) {
+                initConcurrencyLimit(flow);
+            }
+
+            if (previous.getConcurrency() != null && flow.getConcurrency() == null) {
+                removeConcurrencyLimit(flow);
+            }
+        } else if (flow.getConcurrency() != null) {
+            initConcurrencyLimit(flow);
+        }
+    }
+
+    private void removeConcurrencyLimit(FlowWithSource flow) {
+        var concurrencyLimit = new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 0);
+        concurrencyLimitRepository.delete(concurrencyLimit);
+    }
+
+    private void initConcurrencyLimit(FlowWithSource flow) {
+        var concurrencyLimit = new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 0);
+        concurrencyLimitRepository.update(concurrencyLimit);
     }
 
     private void sendTriggerEvent(TriggerEvent event) {
@@ -712,7 +764,7 @@ public class FlowService {
         return !f.uidWithoutRevision().equals(FlowId.uidWithoutRevision(execution));
     }
 
-    public static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
+    private static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(previous.getTriggers())
             .stream()
             .filter(
@@ -723,7 +775,7 @@ public class FlowService {
             .toList();
     }
 
-    public static List<AbstractTrigger> findUpdatedTrigger(Flow flow, Flow previous) {
+    private static List<AbstractTrigger> findUpdatedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
             .filter(
@@ -734,7 +786,7 @@ public class FlowService {
             .toList();
     }
 
-    public static List<AbstractTrigger> findNewTrigger(Flow flow, Flow previous) {
+    private static List<AbstractTrigger> findNewTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
             .filter(
@@ -745,7 +797,8 @@ public class FlowService {
             .toList();
     }
 
-    public static List<AbstractTrigger> findUnchangedTrigger(Flow flow, Flow previous) {
+    @VisibleForTesting
+    static List<AbstractTrigger> findUnchangedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(flow.getTriggers())
             .stream()
             .filter(

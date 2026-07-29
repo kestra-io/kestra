@@ -737,12 +737,11 @@
     const addNewTrigger = () => {
         if (!flowStore.flow) return
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 tenant: route.params?.tenant,
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
-                tab: "edit",
             },
             query: {
                 createTrigger: "true",

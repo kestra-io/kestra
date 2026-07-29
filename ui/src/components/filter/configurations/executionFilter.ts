@@ -9,6 +9,7 @@ import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
 import {labelComparatorLabels} from "./labelComparatorLabels"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -19,7 +20,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.execution_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_executions"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),
@@ -52,7 +53,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         searchable: true,
                     },
                 ] : []) as any,
-                ...(route.name !== "flows/update" ? [{
+                ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
                     description: t("filter.flowId.description"),

@@ -119,7 +119,7 @@ public abstract class JdbcWorkerJobRunningStateStoreTest {
                     .build()
             )
             .task(Log.builder().id("log").type(Log.class.getName()).message("test").build())
-            .data(new WorkerTaskData(Map.of(), List.of(), null))
+            .data(new WorkerTaskData(Map.of(), List.of(), List.of(), null))
             .build();
     }
 }

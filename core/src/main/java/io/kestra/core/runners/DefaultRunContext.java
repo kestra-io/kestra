@@ -72,6 +72,7 @@ public class DefaultRunContext extends RunContext {
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
     private List<String> secretInputs;
+    private List<String> secretOutputs;
     private String traceParent;
 
     // those are only used to validate dynamic properties inside the RunContextProperty
@@ -116,6 +117,15 @@ public class DefaultRunContext extends RunContext {
     @JsonInclude
     public List<String> getSecretInputs() {
         return secretInputs;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonInclude
+    public List<String> getSecretOutputs() {
+        return secretOutputs;
     }
 
     /**
@@ -193,6 +203,22 @@ public class DefaultRunContext extends RunContext {
                 }
             }
         }
+
+        // this is used when a run context is re-hydrated so we need to add again the decrypted SECRET flow outputs
+        if (!ListUtils.isEmpty(secretOutputs)) {
+            secretOutputs.forEach(logger::usedSecret);
+        }
+    }
+
+    /**
+     * Registers a value to be masked in this run context's logs, and records it in {@link #secretOutputs}.
+     * Makes a defensive copy of the list, since {@link #clone()} may share it with another run context.
+     */
+    void usedSecretOutput(final String secret) {
+        logger.usedSecret(secret);
+        List<String> updated = new ArrayList<>(ListUtils.emptyOnNull(secretOutputs));
+        updated.add(secret);
+        secretOutputs = updated;
     }
 
     @SuppressWarnings("unchecked")
@@ -236,6 +262,7 @@ public class DefaultRunContext extends RunContext {
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretInputs = this.secretInputs;
+        runContext.secretOutputs = this.secretOutputs;
         if (isInitialized.get()) {
             //Inject all services
             runContext.init(applicationContext);
@@ -701,6 +728,7 @@ public class DefaultRunContext extends RunContext {
         private KVStoreService kvStoreService;
         private AssetManagerFactory assetManagerFactory;
         private List<String> secretInputs;
+        private List<String> secretOutputs;
         private Task task;
         private AbstractTrigger trigger;
 
@@ -724,6 +752,7 @@ public class DefaultRunContext extends RunContext {
             context.kvStoreService = kvStoreService;
             context.assetManagerFactory = assetManagerFactory;
             context.secretInputs = secretInputs;
+            context.secretOutputs = secretOutputs;
             context.task = task;
             context.trigger = trigger;
             return context;

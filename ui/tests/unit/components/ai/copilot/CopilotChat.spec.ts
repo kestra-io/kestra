@@ -212,9 +212,18 @@ describe("CopilotChat", () => {
     })
 
     it("starts a new chat via the top bar", async () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}] // something to reset → enabled
         const w = mountChat()
         await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")
         expect(state.reset).toHaveBeenCalled()
+    })
+
+    it("disables New chat on a fresh, empty chat and enables it once there is something to reset", () => {
+        // beforeEach leaves the chat fresh (no messages, no thread) → nothing to reset.
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeDefined()
+
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeUndefined()
     })
 
     it("mounts the thread controls (EE-only Recents; a no-op in OSS)", () => {

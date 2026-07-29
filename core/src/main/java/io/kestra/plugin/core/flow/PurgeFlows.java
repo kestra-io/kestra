@@ -83,7 +83,7 @@ public class PurgeFlows extends Task implements RunnableTask<PurgeFlows.Output>,
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
         String renderedFlowId = runContext.render(this.flowId).as(String.class).orElse(null);
         if (renderedNamespace == null && renderedFlowId != null) {
-            throw new ValidationErrorException(List.of("Property `namespace` is required when `flowId` is set."));
+            throw new IllegalArgumentException("Property `namespace` is required when `flowId` is set.");
         }
 
         List<FlowWithSource> flows = findFlows(runContext, flowRepository, tenantId, renderedNamespace, renderedFlowId);

@@ -37,7 +37,9 @@ class AbstractJdbcRepositoryTest extends AbstractJdbcRepository {
         QueryFilter.Field.LOCKED,
         QueryFilter.Field.LAST_TRIGGERED_DATE,
         QueryFilter.Field.NEXT_EXECUTION_DATE,
-        QueryFilter.Field.TIME_RANGE
+        QueryFilter.Field.TIME_RANGE,
+        QueryFilter.Field.ASSET_STATUS,
+        QueryFilter.Field.LEASE_EXPIRY
     );
 
     @Test

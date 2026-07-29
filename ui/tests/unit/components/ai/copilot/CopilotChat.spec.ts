@@ -195,22 +195,35 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).props("disabled")).toBe(true)
     })
 
-    it("shows the thinking indicator while streaming before the next output", () => {
+    it("shows the thinking movement while streaming before the next output", () => {
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
         state.streaming.value = true
-        expect(mountChat().find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        expect(w.find(".copilot-mark").classes()).toContain("copilot-mark-thinking")
     })
 
-    it("hides the thinking indicator while assistant text is streaming", () => {
+    it("switches to the answering movement while assistant text is streaming", () => {
         state.messages.value = [{id: "2", role: "ASSISTANT", type: "TEXT", content: "partial"}]
         state.streaming.value = true
-        expect(mountChat().find("[data-test=\"copilot-thinking\"]").exists()).toBe(false)
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        expect(w.find(".copilot-mark").classes()).toContain("copilot-mark-answering")
     })
 
     it("starts a new chat via the top bar", async () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}] // something to reset → enabled
         const w = mountChat()
         await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")
         expect(state.reset).toHaveBeenCalled()
+    })
+
+    it("disables New chat on a fresh, empty chat and enables it once there is something to reset", () => {
+        // beforeEach leaves the chat fresh (no messages, no thread) → nothing to reset.
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeDefined()
+
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeUndefined()
     })
 
     it("mounts the thread controls (EE-only Recents; a no-op in OSS)", () => {

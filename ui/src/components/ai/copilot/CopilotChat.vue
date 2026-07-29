@@ -3,7 +3,7 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
+            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" :disabled="isFreshChat" @click="reset">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
@@ -73,7 +73,7 @@
                     :isPending="message.id === pendingProposalMessageId"
                 />
 
-                <CopilotThinking v-if="thinking" />
+                <CopilotThinking v-if="working" :phase="workPhase" />
 
                 <ProposedActionCard
                     v-if="pendingConfirmation"
@@ -215,6 +215,10 @@
         () => messages.value.length === 0 && !pendingConfirmation.value && !error.value && !notice.value,
     )
 
+    // "New chat" resets the conversation — so it's a no-op (and disabled) when we're already on a
+    // fresh, empty chat with no thread to clear.
+    const isFreshChat = computed(() => isEmpty.value && !thread.value)
+
     // The pending proposal is always the last PROPOSED_ACTION message; the interactive card below the
     // transcript renders it, so CopilotMessage skips it inline (past proposals still render read-only).
     const pendingProposalMessageId = computed(() =>
@@ -223,17 +227,45 @@
             : null,
     )
 
-    // "Thinking…" placeholder while the model is working but hasn't produced its next output
-    // yet — i.e. right after the user's turn or after a tool result. Hidden while tokens are
-    // actively streaming into an assistant bubble or a tool is running (both have their own UI).
+    // The working indicator (animated Kestra mark) persists across the whole turn, switching
+    // movement by phase: "thinking" before any output (right after the user's turn or a tool
+    // result), "answering" while tokens stream into the assistant bubble, and a brief "end"
+    // gather when the turn closes. It stays hidden while a tool is running — the tool strip owns
+    // that UI.
+    const lastMessage = computed(() => messages.value[messages.value.length - 1])
+
+    const answering = computed(
+        () => streaming.value && lastMessage.value?.role === "ASSISTANT" && lastMessage.value?.type === "TEXT",
+    )
     const thinking = computed(() => {
         if (!streaming.value) return false
-        const last = messages.value[messages.value.length - 1]
+        const last = lastMessage.value
         if (!last) return true
         if (last.role === "ASSISTANT" && last.type === "TEXT") return false
         if (last.type === "TOOL_CALL") return false
         return true
     })
+
+    // A short window after streaming stops so the "end" gather animation can play before the
+    // indicator unmounts. Re-armed to false the moment a new turn starts streaming.
+    const ending = ref(false)
+    let endTimer: ReturnType<typeof setTimeout> | undefined
+    watch(streaming, (now, was) => {
+        clearTimeout(endTimer)
+        if (was && !now) {
+            ending.value = true
+            // Covers the full end sequence: dots gather + mark bloom (~0.7s), a 3s hold, then the fade.
+            endTimer = setTimeout(() => (ending.value = false), 4300)
+        } else if (now) {
+            ending.value = false
+        }
+    })
+    onBeforeUnmount(() => clearTimeout(endTimer))
+
+    const working = computed(() => ending.value || thinking.value || answering.value)
+    const workPhase = computed<"thinking" | "answering" | "end">(() =>
+        ending.value ? "end" : answering.value ? "answering" : "thinking",
+    )
 
     function onSubmit(prompt: string): void {
         sendChat({prompt, mode: mode.value, additionalContext: scopeToContext(activeScope.value), providerId: selectedProvider.value})
@@ -246,7 +278,7 @@
     // A primitive that changes on any of those, so the watcher fires without a deep watch.
     const scrollSignal = computed(() => {
         const last = messages.value[messages.value.length - 1]
-        return `${messages.value.length}|${last?.content?.length ?? 0}|${pendingConfirmation.value ? 1 : 0}|${thinking.value ? 1 : 0}`
+        return `${messages.value.length}|${last?.content?.length ?? 0}|${pendingConfirmation.value ? 1 : 0}|${working.value ? 1 : 0}`
     })
 
     watch(scrollSignal, () => nextTick(() => bottomAnchor.value?.scrollIntoView?.({block: "end"})))
@@ -305,8 +337,8 @@
     .copilot-topbar-pill {
         display: inline-flex;
         align-items: center;
-        gap: var(--ks-spacing-1);
-        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
         /* Solid raised-surface grey (Figma pill ≈ #1d1d21) — reads darker and more
            defined than the translucent bg-tag, consistently across dark themes. */
         background: var(--ks-bg-elevated);
@@ -314,6 +346,23 @@
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-sm);
         font-weight: 400;
+        transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    /* Hover feedback so the pills read as interactive (the disabled New-chat pill excepted). The
+       bg interaction tokens are all near-identical dark greys, so a fill change alone is barely
+       visible — pair it with a lighter inset ring (border-strong) so the hover clearly reads. */
+    .copilot-topbar-pill:not(.is-disabled):hover {
+        background: var(--ks-bg-hover-elevated);
+        box-shadow: inset 0 0 0 1px var(--ks-border-strong);
+    }
+
+    /* Disabled New-chat — already on a fresh, empty chat with nothing to reset. Dim the whole
+       pill (opacity) so it clearly reads as non-interactive, not just muted text. */
+    .copilot-topbar-pill.is-disabled {
+        color: var(--ks-text-inactive);
+        cursor: not-allowed;
+        opacity: 0.5;
     }
 
     .copilot-empty {
@@ -373,8 +422,9 @@
     }
 
     .copilot-artwork-img {
-        width: var(--ks-spacing-16);
-        height: var(--ks-spacing-16);
+        /* 128px per the design spec; no spacing token maps to 8rem, so a raw rem is the fallback. */
+        width: 8rem;
+        height: 8rem;
     }
 
     .copilot-empty-title {

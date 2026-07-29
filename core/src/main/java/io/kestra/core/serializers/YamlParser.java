@@ -90,10 +90,9 @@ public final class YamlParser {
     private static <T> T read(String input, Class<T> objectClass, String resource) {
         try {
             Object parsedYaml = parseAnchorAndAlias(input);
-            // return STRICT_MAPPER.readValue(input, objectClass);
             return STRICT_MAPPER.convertValue(parsedYaml, objectClass);
-        } catch (Exception e) {
-            if (e instanceof JsonProcessingException je) {
+        } catch (IllegalArgumentException e) {
+            if (e.getCause() instanceof JsonProcessingException je) {
                 throw toConstraintViolationException(input, resource, je);
             }
             throw e;
@@ -104,8 +103,8 @@ public final class YamlParser {
         try {
             Object parsedYaml = parseAnchorAndAlias(input);
             return STRICT_MAPPER.convertValue(parsedYaml, objectType);
-        } catch (Exception e) {
-            if (e instanceof JsonProcessingException je) {
+        } catch (IllegalArgumentException e) {
+            if (e.getCause() instanceof JsonProcessingException je) {
                 throw toConstraintViolationException(input, resource, je);
             }
             throw e;
@@ -117,7 +116,7 @@ public final class YamlParser {
             return null;
         }
         if (input.isEmpty()) {
-            throw new IllegalStateException("The yaml flow cannot be an empty string");
+            throw new IllegalArgumentException("The yaml flow cannot be an empty string");
         }
         Yaml SNAKE_YAML = new Yaml();
         return SNAKE_YAML.load(input);

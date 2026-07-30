@@ -715,10 +715,4 @@
         margin: 0 auto;
     }
 
-    .block-section-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-2);
-    }
-
 </style>

@@ -152,3 +152,11 @@
 
     const isFlowable = (block: Record<string, unknown>) => isFlowableType(String(block.type ?? ""), props.icons)
 </script>
+
+<style scoped lang="scss">
+    .block-section-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+    }
+</style>

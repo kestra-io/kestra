@@ -16,6 +16,7 @@
         :icon="icon"
         v-bind="$attrs"
         :tag="props.to ? RouterLink : 'button'"
+        :to="props.to"
         @click="onClick"
     >
         <slot>{{ label }}</slot>

@@ -290,11 +290,10 @@
 
         if (result === "redirect_to_update") {
             await router.push({
-                name: "flows/update",
+                name: "flows/update/edit",
                 params: {
                     id: flowStore.flow?.id,
                     namespace: flowStore.flow?.namespace,
-                    tab: "edit",
                     tenant: route.params?.tenant,
                 },
             })

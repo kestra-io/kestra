@@ -257,11 +257,10 @@
 
     function flowRouteFor(tool: McpTool): RouteLocationRaw {
         return {
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: tool.namespace,
                 id: tool.flowId,
-                tab: "edit",
                 ...(route.params.tenant ? {tenant: route.params.tenant} : {}),
             },
         }

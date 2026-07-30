@@ -111,6 +111,8 @@
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
+    import {routeFamily} from "../../../utils/routeFamily"
+    import {useActiveTab} from "../../../composables/useActiveTab"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import {useAuthStore} from "override/stores/auth"
@@ -131,7 +133,7 @@
 
     const flow = computed(() => flowStore.flow)
     const deleted = computed(() => flow.value?.deleted || false)
-    const tab = computed(() => route.params?.tab as string)
+    const tab = useActiveTab()
     const isEditTab = computed(() => tab.value === "edit" || flowStore.isCreating)
 
     const authStore = useAuthStore()
@@ -163,7 +165,7 @@
     }
 
     const showDashboards = computed(() =>
-        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(String(route.name)),
+        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)),
     )
 
     const canExecute = computed(() =>
@@ -188,11 +190,10 @@
 
     const editFlow = () => {
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: flow.value?.namespace,
                 id: flow.value?.id,
-                tab: "edit",
                 tenant: route.params.tenant,
             },
         })

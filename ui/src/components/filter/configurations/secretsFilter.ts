@@ -6,6 +6,7 @@ import {useNamespacesStore} from "override/stores/namespaces"
 import {useAuthStore} from "override/stores/auth"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useSecretsFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -15,7 +16,7 @@ export const useSecretsFilter = (): ComputedRef<FilterConfiguration> => {
         return {
             title: t("filter.titles.secret_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_secrets"),
-            keys: route.name !== "namespaces/update" ? [
+            keys: routeFamily(route.name) !== "namespaces/update" ? [
                 {
                     key: "namespace",
                     label: t("filter.namespace.label"),

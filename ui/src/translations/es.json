@@ -4,8 +4,10 @@
     "more actions": "Más acciones",
     "new_flow_landing": {
       "blank": {
+        "id_invalid": "Use solo letras, dígitos, puntos, guiones y guiones bajos, comenzando por una letra o un dígito.",
         "id_label": "id del flow",
         "id_placeholder": "mi-flow",
+        "namespace_invalid": "Use solo minúsculas, dígitos, puntos, guiones y guiones bajos, comenzando por una minúscula o un dígito.",
         "namespace_placeholder": "Seleccionar namespace",
         "namespaces_error": "No se pudieron cargar los namespace. Escribe un namespace manualmente.",
         "open_editor": "Abrir editor",
@@ -49,10 +51,11 @@
         "include_sub_hint_off": "Solo los flows del namespace exacto activarán esta alerta.",
         "include_sub_hint_on": "Los flows en namespaces hijos también activarán esta alerta.",
         "namespace_placeholder": "Selecciona un namespace",
+        "namespaces_error": "No se pudieron cargar los namespaces. Escriba un namespace para vigilar o inténtelo más tarde.",
         "states": "En estos estados",
+        "states_recommended": "FAILED es el valor predeterminado recomendado para las alertas.",
         "states_required": "Selecciona al menos un estado.",
-        "watch_namespace": "Monitorizar namespace",
-        "states_recommended": "FAILED es el valor predeterminado recomendado para las alertas."
+        "watch_namespace": "Monitorizar namespace"
       },
       "notify": {
         "email_label": "Correo electrónico",
@@ -68,6 +71,7 @@
         "teams_webhook_placeholder": "URL del webhook entrante de Teams"
       },
       "other": {
+        "load_error": "No se pudieron cargar los triggers. Inténtelo más tarde.",
         "no_results": "No se encontraron triggers.",
         "search_label": "Buscar triggers",
         "search_placeholder": "Filtrar por nombre o tipo"

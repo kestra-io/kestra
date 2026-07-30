@@ -4,8 +4,10 @@
     "more actions": "その他のアクション",
     "new_flow_landing": {
       "blank": {
+        "id_invalid": "英数字、ドット、ハイフン、アンダースコアのみを使用し、英字または数字で始めてください。",
         "id_label": "flow id",
         "id_placeholder": "my-flow",
+        "namespace_invalid": "小文字、数字、ドット、ハイフン、アンダースコアのみを使用し、小文字または数字で始めてください。",
         "namespace_placeholder": "namespaceを選択",
         "namespaces_error": "namespaceを読み込めませんでした。namespaceを手動で入力してください。",
         "open_editor": "エディターを開く",
@@ -49,10 +51,11 @@
         "include_sub_hint_off": "正確なnamespaceのflowのみがこのアラートをトリガーします。",
         "include_sub_hint_on": "子namespaceのflowもこのアラートをトリガーします。",
         "namespace_placeholder": "namespaceを選択",
+        "namespaces_error": "namespace を読み込めませんでした。監視する namespace を入力するか、後でやり直してください。",
         "states": "これらの状態のとき",
+        "states_recommended": "FAILED はアラートの推奨デフォルトです。",
         "states_required": "少なくとも1つの状態を選択してください。",
-        "watch_namespace": "namespaceを監視",
-        "states_recommended": "FAILED はアラートの推奨デフォルトです。"
+        "watch_namespace": "namespaceを監視"
       },
       "notify": {
         "email_label": "メール",
@@ -68,6 +71,7 @@
         "teams_webhook_placeholder": "Teamsの受信webhookURL"
       },
       "other": {
+        "load_error": "trigger を読み込めませんでした。後でやり直してください。",
         "no_results": "triggerが見つかりません。",
         "search_label": "triggerを検索",
         "search_placeholder": "名前またはタイプでフィルター"

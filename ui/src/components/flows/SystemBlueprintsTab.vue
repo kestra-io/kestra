@@ -1,8 +1,8 @@
 <template>
     <div class="system-blueprints-tab">
         <div class="recipe-header">
-            <h2 class="section-heading">{{ $t("recipe.section_title") }}</h2>
-            <p class="section-sub">{{ $t("recipe.section_subtitle") }}</p>
+            <KsText tag="h2" class="section-heading">{{ $t("recipe.section_title") }}</KsText>
+            <KsText tag="p" class="section-sub">{{ $t("recipe.section_subtitle") }}</KsText>
         </div>
 
         <FlowRecipe :namespace="systemNamespace" @submit="handleRecipeSubmit" />
@@ -13,10 +13,14 @@
             data-test="system-blueprints-link"
         >
             <div class="blueprint-link-icon">
-                <ViewGridOutline :size="20" />
+                <KsIcon size="base">
+                    <ViewGridOutline />
+                </KsIcon>
             </div>
             <span class="blueprint-link-text">{{ $t("recipe.browse_blueprints") }}</span>
-            <ChevronRight :size="16" class="blueprint-link-arrow" />
+            <KsIcon size="sm" class="blueprint-link-arrow">
+                <ChevronRight />
+            </KsIcon>
         </router-link>
     </div>
 </template>

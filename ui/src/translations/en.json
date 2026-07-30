@@ -4,8 +4,10 @@
     "more actions": "More actions",
     "new_flow_landing": {
       "blank": {
+        "id_invalid": "Use letters, digits, dots, dashes and underscores only, starting with a letter or a digit.",
         "id_label": "Flow id",
         "id_placeholder": "my-flow",
+        "namespace_invalid": "Use lowercase letters, digits, dots, dashes and underscores only, starting with a lowercase letter or a digit.",
         "namespace_placeholder": "Select a namespace",
         "namespaces_error": "Could not load namespaces. Type a namespace manually.",
         "open_editor": "Open editor",
@@ -49,10 +51,11 @@
         "include_sub_hint_off": "Only flows in the exact namespace will trigger this alert.",
         "include_sub_hint_on": "Flows in child namespaces will also trigger this alert.",
         "namespace_placeholder": "Select a namespace",
+        "namespaces_error": "Namespaces could not be loaded. Type a namespace to watch, or retry later.",
         "states": "On these states",
+        "states_recommended": "FAILED is the recommended default for alerting.",
         "states_required": "Select at least one state.",
-        "watch_namespace": "Watch namespace",
-        "states_recommended": "FAILED is the recommended default for alerting."
+        "watch_namespace": "Watch namespace"
       },
       "notify": {
         "email_label": "Email",
@@ -68,6 +71,7 @@
         "teams_webhook_placeholder": "Teams incoming webhook URL"
       },
       "other": {
+        "load_error": "Triggers could not be loaded. Retry later.",
         "no_results": "No triggers found.",
         "search_label": "Search triggers",
         "search_placeholder": "Filter by name or type"

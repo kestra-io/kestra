@@ -124,7 +124,7 @@
         flex: none;
         width: var(--ks-spacing-4);
         height: var(--ks-spacing-4);
-        border-radius: var(--ks-radius-round, 999px);
+        border-radius: 50%;
         border: var(--ks-border-width-base) solid var(--ks-border-strong);
         display: inline-flex;
         align-items: center;
@@ -139,7 +139,7 @@
         content: "";
         width: var(--ks-spacing-2);
         height: var(--ks-spacing-2);
-        border-radius: var(--ks-radius-round, 999px);
+        border-radius: 50%;
         background-color: var(--ks-border-focus);
     }
 </style>

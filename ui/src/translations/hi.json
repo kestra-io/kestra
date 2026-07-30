@@ -4,8 +4,10 @@
     "more actions": "अधिक क्रियाएँ",
     "new_flow_landing": {
       "blank": {
+        "id_invalid": "केवल अक्षर, अंक, बिंदु, हाइफ़न और अंडरस्कोर का उपयोग करें, और अक्षर या अंक से शुरू करें।",
         "id_label": "flow id",
         "id_placeholder": "mera-flow",
+        "namespace_invalid": "केवल छोटे अक्षर, अंक, बिंदु, हाइफ़न और अंडरस्कोर का उपयोग करें, और छोटे अक्षर या अंक से शुरू करें।",
         "namespace_placeholder": "namespace चुनें",
         "namespaces_error": "namespace लोड नहीं हो सके। namespace मैन्युअल रूप से टाइप करें।",
         "open_editor": "संपादक खोलें",
@@ -49,10 +51,11 @@
         "include_sub_hint_off": "केवल सटीक namespace में flows इस अलर्ट को ट्रिगर करेंगे।",
         "include_sub_hint_on": "चाइल्ड namespaces में flows भी इस अलर्ट को ट्रिगर करेंगे।",
         "namespace_placeholder": "namespace चुनें",
+        "namespaces_error": "namespace लोड नहीं हो सके। निगरानी के लिए एक namespace लिखें या बाद में पुनः प्रयास करें।",
         "states": "इन स्थितियों पर",
+        "states_recommended": "अलर्ट के लिए FAILED अनुशंसित डिफ़ॉल्ट है।",
         "states_required": "कम से कम एक स्थिति चुनें।",
-        "watch_namespace": "namespace देखें",
-        "states_recommended": "अलर्ट के लिए FAILED अनुशंसित डिफ़ॉल्ट है।"
+        "watch_namespace": "namespace देखें"
       },
       "notify": {
         "email_label": "ईमेल",
@@ -65,9 +68,10 @@
         "slack_channel_placeholder": "#alerts",
         "slack_sub": "Slack चैनल पर संदेश पोस्ट करें",
         "teams_sub": "Teams चैनल पर कार्ड भेजें",
-        "teams_webhook_placeholder": "Teams incoming webhook URL"
+        "teams_webhook_placeholder": "Teams इनकमिंग webhook URL"
       },
       "other": {
+        "load_error": "trigger लोड नहीं हो सके। बाद में पुनः प्रयास करें।",
         "no_results": "कोई trigger नहीं मिला।",
         "search_label": "triggers खोजें",
         "search_placeholder": "नाम या प्रकार से फ़िल्टर करें"
@@ -125,7 +129,7 @@
       "webhook": {
         "endpoint_hint": "flow ट्रिगर करने के लिए इस URL पर POST अनुरोध भेजें।",
         "endpoint_url": "एंडपॉइंट URL",
-        "key_label": "Webhook key",
+        "key_label": "Webhook कुंजी",
         "key_placeholder": "इस webhook के लिए एक अद्वितीय key दर्ज करें"
       },
       "when": {

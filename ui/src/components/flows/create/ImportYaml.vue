@@ -7,7 +7,9 @@
                 data-test="import-yaml-back"
                 @click="emit('back')"
             >
-                <ArrowLeft :size="18" />
+                <KsIcon size="sm">
+                    <ArrowLeft />
+                </KsIcon>
                 {{ $t("new_flow_landing.import.back") }}
             </KsButton>
             <KsText tag="h2" class="import-title">{{ $t("new_flow_landing.import.title") }}</KsText>
@@ -50,7 +52,9 @@
                 @change="handleFileChange"
             >
                 <KsButton type="default">
-                    <TrayArrowDown :size="18" />
+                    <KsIcon size="sm">
+                        <TrayArrowDown />
+                    </KsIcon>
                     {{ $t("new_flow_landing.import.upload_button") }}
                 </KsButton>
                 <template #tip>
@@ -178,7 +182,7 @@
 
     .yaml-editor {
         min-height: 16rem;
-        border: 1px solid var(--ks-border-default);
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         overflow: hidden;
     }

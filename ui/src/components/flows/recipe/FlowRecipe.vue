@@ -34,9 +34,21 @@
                                 <KsText class="trigger-card-title">{{ card.title }}</KsText>
                                 <span class="trigger-card-sub">{{ card.sub }}</span>
                             </div>
-                            <KsTag v-if="card.disabled" size="small" class="ee-badge">EE</KsTag>
+                            <KsTooltip v-if="card.disabled" :content="$t('ee-tooltip.features-blocked')">
+                                <KsTag size="small" class="ee-badge">EE</KsTag>
+                            </KsTooltip>
                         </SelectableTile>
                     </div>
+
+                    <KsAlert
+                        v-if="namespacesError && recipe.triggerType === 'execution'"
+                        type="error"
+                        :closable="false"
+                        class="wizard-alert"
+                        data-test="recipe-namespaces-error"
+                    >
+                        {{ $t("recipe.execution.namespaces_error") }}
+                    </KsAlert>
 
                     <div class="trigger-config">
                         <ExecutionPanel
@@ -174,6 +186,7 @@
 
     const namespaceOptions = ref<string[]>([])
     const namespacesLoading = ref(false)
+    const namespacesError = ref(false)
     const hasInteracted = ref(false)
     const activeStep = ref(0)
 
@@ -199,6 +212,7 @@
             namespaceOptions.value = ns.map(n => n.id)
         } catch {
             namespaceOptions.value = []
+            namespacesError.value = true
         } finally {
             namespacesLoading.value = false
         }
@@ -347,7 +361,7 @@
         margin: var(--ks-spacing-2) 0 0;
         font-size: var(--ks-font-size-lg);
         font-weight: var(--ks-font-weight-medium);
-        line-height: 1.6;
+        line-height: var(--ks-line-height-base);
         color: var(--ks-text-primary);
     }
 

@@ -4,8 +4,10 @@
     "more actions": "Weitere Aktionen",
     "new_flow_landing": {
       "blank": {
+        "id_invalid": "Verwenden Sie nur Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche, beginnend mit einem Buchstaben oder einer Ziffer.",
         "id_label": "Flow-id",
         "id_placeholder": "mein-flow",
+        "namespace_invalid": "Verwenden Sie nur Kleinbuchstaben, Ziffern, Punkte, Bindestriche und Unterstriche, beginnend mit einem Kleinbuchstaben oder einer Ziffer.",
         "namespace_placeholder": "namespace auswählen",
         "namespaces_error": "namespace konnte nicht geladen werden. Geben Sie einen namespace manuell ein.",
         "open_editor": "Editor öffnen",
@@ -49,10 +51,11 @@
         "include_sub_hint_off": "Nur Flows im genauen namespace lösen diese Benachrichtigung aus.",
         "include_sub_hint_on": "Flows in untergeordneten namespaces lösen ebenfalls diese Benachrichtigung aus.",
         "namespace_placeholder": "namespace auswählen",
+        "namespaces_error": "Namespaces konnten nicht geladen werden. Geben Sie einen zu überwachenden namespace ein oder versuchen Sie es später erneut.",
         "states": "Bei diesen Zuständen",
+        "states_recommended": "FAILED ist die empfohlene Standardeinstellung für Benachrichtigungen.",
         "states_required": "Wählen Sie mindestens einen Zustand.",
-        "watch_namespace": "namespace überwachen",
-        "states_recommended": "FAILED ist die empfohlene Standardeinstellung für Benachrichtigungen."
+        "watch_namespace": "namespace überwachen"
       },
       "notify": {
         "email_label": "E-Mail",
@@ -68,6 +71,7 @@
         "teams_webhook_placeholder": "Teams Incoming Webhook URL"
       },
       "other": {
+        "load_error": "Trigger konnten nicht geladen werden. Versuchen Sie es später erneut.",
         "no_results": "Keine trigger gefunden.",
         "search_label": "trigger suchen",
         "search_placeholder": "Nach Name oder Typ filtern"

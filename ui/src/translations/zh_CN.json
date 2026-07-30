@@ -4,8 +4,10 @@
     "more actions": "更多操作",
     "new_flow_landing": {
       "blank": {
+        "id_invalid": "仅可使用字母、数字、点、连字符和下划线，并以字母或数字开头。",
         "id_label": "flow id",
         "id_placeholder": "我的-flow",
+        "namespace_invalid": "仅可使用小写字母、数字、点、连字符和下划线，并以小写字母或数字开头。",
         "namespace_placeholder": "选择 namespace",
         "namespaces_error": "无法加载 namespace。请手动输入 namespace。",
         "open_editor": "打开编辑器",
@@ -49,10 +51,11 @@
         "include_sub_hint_off": "只有精确namespace中的flow才会触发此警报。",
         "include_sub_hint_on": "子namespace中的flow也会触发此警报。",
         "namespace_placeholder": "选择namespace",
+        "namespaces_error": "无法加载 namespace。请输入要监视的 namespace，或稍后重试。",
         "states": "在这些状态时",
+        "states_recommended": "FAILED 是告警的推荐默认值。",
         "states_required": "请至少选择一个状态。",
-        "watch_namespace": "监控namespace",
-        "states_recommended": "FAILED 是告警的推荐默认值。"
+        "watch_namespace": "监控namespace"
       },
       "notify": {
         "email_label": "电子邮件",
@@ -65,9 +68,10 @@
         "slack_channel_placeholder": "#alerts",
         "slack_sub": "向Slack频道发布消息",
         "teams_sub": "向Teams频道发送卡片",
-        "teams_webhook_placeholder": "Teams incoming webhook URL"
+        "teams_webhook_placeholder": "Teams 传入 webhook URL"
       },
       "other": {
+        "load_error": "无法加载 trigger。请稍后重试。",
         "no_results": "未找到trigger。",
         "search_label": "搜索trigger",
         "search_placeholder": "按名称或类型过滤"
@@ -125,7 +129,7 @@
       "webhook": {
         "endpoint_hint": "向此URL发送POST请求以触发flow。",
         "endpoint_url": "端点URL",
-        "key_label": "Webhook key",
+        "key_label": "Webhook 密钥",
         "key_placeholder": "为此webhook输入唯一key"
       },
       "when": {

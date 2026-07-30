@@ -5,10 +5,10 @@
             :key="channel.key"
             role="checkbox"
             layout="column"
-            :selected="recipe.notify[channel.key as keyof typeof recipe.notify]"
-            :disabled="!channelAvailability[channel.key as keyof typeof channelAvailability]"
+            :selected="recipe.notify[channel.key]"
+            :disabled="!channelAvailability[channel.key]"
             :ariaLabel="channel.label"
-            @select="toggleNotify(channel.key as keyof typeof recipe.notify)"
+            @select="toggleNotify(channel.key)"
         >
             <div class="card-header">
                 <div class="icon-wrap">
@@ -17,12 +17,12 @@
                     </KsIcon>
                 </div>
                 <KsIcon class="check-indicator" aria-hidden="true">
-                    <component :is="recipe.notify[channel.key as keyof typeof recipe.notify] ? CheckboxMarked : CheckboxBlankOutline" />
+                    <component :is="recipe.notify[channel.key] ? CheckboxMarked : CheckboxBlankOutline" />
                 </KsIcon>
             </div>
             <span class="channel-label">{{ channel.label }}</span>
             <span class="channel-sub">{{ channel.sub }}</span>
-            <span v-if="!channelAvailability[channel.key as keyof typeof channelAvailability]" class="unavailable-note">
+            <span v-if="!channelAvailability[channel.key]" class="unavailable-note">
                 {{ $t("recipe.notify.plugin_unavailable") }}
             </span>
 
@@ -57,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+    import {computed, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import type {RecipeState} from "../../../composables/useFlowRecipe"
     import SelectableTile from "./SelectableTile.vue"
@@ -68,15 +69,17 @@
     import CheckboxMarked from "vue-material-design-icons/CheckboxMarked.vue"
     import CheckboxBlankOutline from "vue-material-design-icons/CheckboxBlankOutline.vue"
 
-    const props = defineProps<{
+    type ChannelKey = keyof RecipeState["notify"]
+
+    defineProps<{
         recipe: RecipeState
-        channelAvailability: {slack: boolean; teams: boolean; email: boolean; custom: boolean}
-        toggleNotify: (key: keyof RecipeState["notify"]) => void
+        channelAvailability: Record<ChannelKey, boolean>
+        toggleNotify: (key: ChannelKey) => void
     }>()
 
     const {t} = useI18n()
 
-    const channels = [
+    const channels = computed<{key: ChannelKey; label: string; sub: string; icon: Component}[]>(() => [
         {
             key: "slack",
             label: "Slack",
@@ -101,7 +104,7 @@
             sub: t("recipe.notify.custom_sub"),
             icon: DotsHorizontal,
         },
-    ]
+    ])
 </script>
 
 <style scoped lang="scss">

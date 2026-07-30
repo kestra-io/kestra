@@ -4,8 +4,10 @@
     "more actions": "추가 작업",
     "new_flow_landing": {
       "blank": {
+        "id_invalid": "영문자, 숫자, 점, 하이픈, 밑줄만 사용하고 영문자나 숫자로 시작하세요.",
         "id_label": "flow id",
         "id_placeholder": "내-flow",
+        "namespace_invalid": "소문자, 숫자, 점, 하이픈, 밑줄만 사용하고 소문자나 숫자로 시작하세요.",
         "namespace_placeholder": "namespace 선택",
         "namespaces_error": "namespace를 로드할 수 없습니다. namespace를 직접 입력하세요.",
         "open_editor": "편집기 열기",
@@ -49,10 +51,11 @@
         "include_sub_hint_off": "정확한 namespace의 flow만 이 알림을 트리거합니다.",
         "include_sub_hint_on": "하위 namespace의 flow도 이 알림을 트리거합니다.",
         "namespace_placeholder": "namespace 선택",
+        "namespaces_error": "namespace를 불러오지 못했습니다. 감시할 namespace를 입력하거나 나중에 다시 시도하세요.",
         "states": "이 상태에서",
+        "states_recommended": "FAILED는 알림에 권장되는 기본값입니다.",
         "states_required": "최소 하나의 상태를 선택하세요.",
-        "watch_namespace": "namespace 모니터링",
-        "states_recommended": "FAILED는 알림에 권장되는 기본값입니다."
+        "watch_namespace": "namespace 모니터링"
       },
       "notify": {
         "email_label": "이메일",
@@ -68,6 +71,7 @@
         "teams_webhook_placeholder": "Teams 수신 webhook URL"
       },
       "other": {
+        "load_error": "trigger를 불러오지 못했습니다. 나중에 다시 시도하세요.",
         "no_results": "trigger를 찾을 수 없습니다.",
         "search_label": "trigger 검색",
         "search_placeholder": "이름 또는 유형으로 필터"
@@ -125,7 +129,7 @@
       "webhook": {
         "endpoint_hint": "이 URL에 POST 요청을 보내 flow를 트리거하세요.",
         "endpoint_url": "엔드포인트 URL",
-        "key_label": "Webhook key",
+        "key_label": "Webhook 키",
         "key_placeholder": "이 webhook의 고유 key를 입력하세요"
       },
       "when": {

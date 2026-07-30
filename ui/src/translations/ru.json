@@ -4,8 +4,10 @@
     "more actions": "Дополнительные действия",
     "new_flow_landing": {
       "blank": {
+        "id_invalid": "Используйте только буквы, цифры, точки, дефисы и подчёркивания, начиная с буквы или цифры.",
         "id_label": "id flow",
         "id_placeholder": "moy-flow",
+        "namespace_invalid": "Используйте только строчные буквы, цифры, точки, дефисы и подчёркивания, начиная со строчной буквы или цифры.",
         "namespace_placeholder": "Выберите namespace",
         "namespaces_error": "Не удалось загрузить namespace. Введите namespace вручную.",
         "open_editor": "Открыть редактор",
@@ -49,10 +51,11 @@
         "include_sub_hint_off": "Только flow в точном namespace будут запускать это оповещение.",
         "include_sub_hint_on": "Flow в дочерних namespaces также будут запускать это оповещение.",
         "namespace_placeholder": "Выберите namespace",
+        "namespaces_error": "Не удалось загрузить namespace. Введите namespace для отслеживания или повторите позже.",
         "states": "При этих состояниях",
+        "states_recommended": "FAILED — рекомендуемое значение по умолчанию для оповещений.",
         "states_required": "Выберите хотя бы одно состояние.",
-        "watch_namespace": "Наблюдать за namespace",
-        "states_recommended": "FAILED — рекомендуемое значение по умолчанию для оповещений."
+        "watch_namespace": "Наблюдать за namespace"
       },
       "notify": {
         "email_label": "Электронная почта",
@@ -68,6 +71,7 @@
         "teams_webhook_placeholder": "URL входящего webhook Teams"
       },
       "other": {
+        "load_error": "Не удалось загрузить trigger. Повторите позже.",
         "no_results": "Triggers не найдены.",
         "search_label": "Поиск triggers",
         "search_placeholder": "Фильтр по имени или типу"

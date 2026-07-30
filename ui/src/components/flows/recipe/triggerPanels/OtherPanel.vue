@@ -9,7 +9,16 @@
             />
         </KsFormItem>
 
-        <div v-if="loading" class="trigger-list">
+        <KsAlert
+            v-if="loadError"
+            type="error"
+            :closable="false"
+            data-test="recipe-trigger-list-error"
+        >
+            {{ $t("recipe.other.load_error") }}
+        </KsAlert>
+
+        <div v-else-if="loading" class="trigger-list">
             <KsSkeleton v-for="i in 4" :key="i" height="3rem" />
         </div>
 
@@ -50,7 +59,7 @@
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
     import Check from "vue-material-design-icons/Check.vue"
 
-    const props = defineProps<{
+    defineProps<{
         recipe: RecipeState
         setOtherTriggerType: (type: string) => void
     }>()
@@ -59,6 +68,7 @@
     const searchQuery = ref("")
     const triggers = ref<TriggerPluginDto[]>([])
     const loading = ref(true)
+    const loadError = ref(false)
     const pluginIcons = ref<PluginIconMap>({})
 
     const filteredTriggers = computed(() => {
@@ -77,6 +87,8 @@
             ])
             triggers.value = triggerData.filter(t => !t.deprecated && !t.ee)
             pluginIcons.value = icons ?? {}
+        } catch {
+            loadError.value = true
         } finally {
             loading.value = false
         }

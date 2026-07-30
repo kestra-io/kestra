@@ -385,17 +385,17 @@ Translation files live in `ui/src/translations/`. There is one JSON file per lan
 
 ### Checking for missing translations
 
-Run the check script from the translations directory:
+Run the check script from the `ui/` directory:
 
 ```bash
-cd ui/src/translations && node check.js
+cd ui && npm run translations:check
 ```
 
 A clean run reports `No missing keys. No extra keys.` for every language. Any listed missing keys must be added.
 
 ### Adding missing translations
 
-1. Identify gaps by running `check.js` (or by diffing the flattened `en.json` keys against each language file).
+1. Identify gaps by running `npm run translations:check` (or by diffing the flattened `en.json` keys against each language file).
 2. Translate only the missing keys — do **not** re-translate keys that already have a value.
 3. Follow these translation rules (mirroring `generate_translations.ts`):
    - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
@@ -403,4 +403,4 @@ A clean run reports `No missing keys. No extra keys.` for every language. Any li
    - **Preserve `{{placeholder}}` variables** exactly — do not translate the word inside the braces.
    - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).
 4. Insert the translated keys into the correct position in the target language JSON, keeping `sort_keys=True` order (alphabetical within each object).
-5. Re-run `node check.js` to confirm everything is clean before committing.
+5. Re-run `npm run translations:check` to confirm everything is clean before committing.

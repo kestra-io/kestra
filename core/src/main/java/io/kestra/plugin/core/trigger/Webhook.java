@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.trigger;
 
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ import reactor.core.publisher.Mono;
     description = """
         Exposes a signed endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow. Secured by the required `key`; keep it secret.
 
-        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. A binary body is base64-encoded on `trigger.body`, and a `multipart/form-data` body is available as `trigger.parts` (files, stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
+        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. A binary body is base64-encoded on `trigger.body`, unless `fetchType` is set to `STORE` to stream it into Kestra's internal storage and expose it as `trigger.uri` instead. A `multipart/form-data` body is available as `trigger.parts` (files, always stored in Kestra's internal storage) and `trigger.formFields`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
 
         Responses: 404 (not found), 200 (triggered), 204 (conditions not met), 422 (inputs could not be rendered)."""
 )
@@ -141,6 +142,30 @@ import reactor.core.publisher.Mono;
                     key: 4wjtkzwVGBM9yKnjm3yv8r
                 """,
             full = true
+        ),
+        @Example(
+            title = """
+                Receive a payload that is not a form - a large JSON export, or a binary file sent as the request body -
+                without carrying it through the execution. `fetchType: STORE` streams the body into Kestra's internal
+                storage and exposes its URI as `trigger.uri` instead of its content as `trigger.body`. Note that a
+                condition on the trigger can no longer read the body.
+                """,
+            code = """
+                id: stored_body_webhook
+                namespace: company.team
+
+                tasks:
+                  - id: measure_body
+                    type: io.kestra.plugin.core.storage.Size
+                    uri: "{{ trigger.uri }}"
+
+                triggers:
+                  - id: webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    fetchType: STORE
+                """,
+            full = true
         )
     }
 )
@@ -209,7 +234,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                 context,
                 context.flow(),
                 this,
-                withBody(output, context.request().getBody()).build()
+                withBody(output, context.request().getBody(), context.storedBodyUri()).build()
             );
         } catch (WebhookInputRenderException e) {
             // The inputs could not be rendered: a real error, not a "conditions not met" outcome.
@@ -276,12 +301,21 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
      * Expose the request body on the trigger output: a text body as {@code body}, a binary body as {@code body}
      * base64-encoded, and a {@code multipart/form-data} body as {@code parts} and {@code formFields}.
      * Bytes are base64-encoded because trigger variables carry text, not binary.
+     * <p>
+     * A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
+     * under, which is exposed as {@code uri}.
      *
-     * @param output      the output being built
-     * @param requestBody the body of the webhook request, {@code null} if the request has none
+     * @param output        the output being built
+     * @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
+     *                      stored rather than read
+     * @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
      * @return the output builder, for chaining
      */
-    private static Output.OutputBuilder withBody(Output.OutputBuilder output, HttpRequest.RequestBody requestBody) {
+    private static Output.OutputBuilder withBody(Output.OutputBuilder output, HttpRequest.RequestBody requestBody, URI storedBodyUri) {
+        if (storedBodyUri != null) {
+            return output.uri(storedBodyUri.toString());
+        }
+
         return switch (requestBody) {
             case null -> output;
             case HttpRequest.MultipartFormDataRequestBody multipart -> withMultipartBody(output, multipart);
@@ -354,10 +388,20 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
                 "A binary body - one whose content type is neither text, JSON, XML, form-urlencoded, YAML nor CSV - is " +
                 "base64-encoded, as base64 is how bytes travel through the text-based trigger variables. Use the " +
                 "`content-type` request header to tell a base64-encoded body apart from a plain text one.\n" +
-                "Not set for a `multipart/form-data` request, which is available as `parts` and `formFields`."
+                "Only set for a trigger whose `fetchType` is `FETCH`, and not for a `multipart/form-data` request, " +
+                "which is available as `parts` and `formFields`."
         )
         @NotNull
         private Object body;
+
+        @Schema(
+            title = "The URI of the body of the webhook request in Kestra's internal storage",
+            description = "Only set for a trigger whose `fetchType` is `STORE`. The body is streamed to the " +
+                "internal storage as it is received, so that a payload of any size reaches the flow intact and " +
+                "without travelling through the execution. It is stored under the execution the webhook call " +
+                "creates, and purged with it."
+        )
+        private String uri;
 
         @Schema(
             title = "The file parts of a `multipart/form-data` webhook request",

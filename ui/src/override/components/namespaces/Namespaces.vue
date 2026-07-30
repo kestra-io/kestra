@@ -43,10 +43,9 @@
                 <template #default="{data}">
                     <router-link
                         :to="{
-                            name: 'namespaces/update',
+                            name: `namespaces/update/${data.system ? 'blueprints' : 'overview'}`,
                             params: {
                                 id: data.id,
-                                tab: data.system ? 'blueprints' : 'overview',
                             },
                         }"
                         tag="div"

@@ -360,7 +360,6 @@
         previewedValue.value = value
     }
 
-    // Below the selection refs on purpose: this runs while the component sets up, and reads them.
     watch(sections, applySeededSelection, {immediate: true})
 
     /* --------------------------------- Viewer -------------------------------- */

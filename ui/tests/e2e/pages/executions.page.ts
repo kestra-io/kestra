@@ -38,10 +38,12 @@ export class ExecutionsPage extends BasePage {
     }
 
     /**
-     * Same assertion, for counts that only settle once the server finishes an asynchronous bulk
-     * action: the list is fetched on navigation and never polls, so it has to be reloaded until the
-     * backend catches up. Asserts the pagination total, not the row count, which also depends on
-     * the selected page size.
+     * Same assertion, but for counts that only settle once the server finishes applying an
+     * asynchronous bulk action. The list is fetched on navigation and never polls, so the
+     * page has to be reloaded until the backend catches up.
+     *
+     * Asserts the pagination total rather than the row count: what matters is that the server
+     * finished the action, and a row count would additionally depend on the selected page size.
      */
     async expectTotalExecutionsCountToBeAfterRefresh(expectedCount: number) {
         await expect(async () => {
@@ -75,7 +77,8 @@ export class ExecutionsPage extends BasePage {
 
         await checkbox.waitFor({state: "visible"})
 
-        // A background data load can re-render the table and drop the selection, so retry.
+        // A background data load can re-render the table and drop the selection, so retry
+        // until it sticks rather than sleeping first and hoping the reload already happened.
         await expect(async () => {
             await checkbox.click()
             await expect(checkbox).toContainClass("is-checked", {timeout: 1000})
@@ -94,16 +97,19 @@ export class ExecutionsPage extends BasePage {
     async clickOnResume() {
         await this.page.locator(".ks-bulk-select").locator(".kel-button-group").locator(".kel-dropdown").click()
         await this.page.getByRole("menuitem", {name: "Resume"}).click()
+        // Confirm
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
     }
 
     async clickOnRestart() {
         await this.page.getByRole("button", {name: "Restart"}).click()
+        // Confirm
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
     }
 
     async clickOnReplay() {
         await this.page.getByRole("button", {name: "Replay"}).click()
+        // Confirm
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
     }
 
@@ -114,6 +120,7 @@ export class ExecutionsPage extends BasePage {
             (response) => response.url().includes("/executions/labels/by-query") && response.request().method() === "POST",
         )
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
+        // Confirm
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
 
         await labelsAccepted
@@ -124,9 +131,18 @@ export class ExecutionsPage extends BasePage {
     }
 
     /*
-     * Through the query param rather than the pagination dropdown, which cannot be awaited: its
-     * handler pushes `size=` onto the route without awaiting the async router guards, and Element
-     * Plus swallows a click on the size already in effect, leaving no event to wait on at all.
+     * Sets the page size through the query param the view derives it from, rather than through
+     * the pagination dropdown, for the same reason the filter helpers above do:
+     *
+     *  - The dropdown handler pushes `size=` onto the route without awaiting it, and that push
+     *    sits behind async router guards. A `reload()` or a `goto()` rebuilt from `page.url()`
+     *    right after the click navigates to the pre-click URL and silently drops the selection,
+     *    leaving the list on its previous size for the rest of the test.
+     *  - Element Plus swallows a click on the size already in effect (`sizes.vue` bails out when
+     *    the clicked value equals the current one), so there is not even an event to wait on in
+     *    that case — the wait would simply time out.
+     *
+     * `page.goto` is awaited end to end, so the size is guaranteed to be in effect on return.
      */
     async setPaginationTo(size: Pagination) {
         await this.modifyQueryParam(this.page, {size: String(size)})

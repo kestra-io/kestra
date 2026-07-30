@@ -1,6 +1,3 @@
-// Flow sources used by the product tour. Hardcoded rather than generated: every scene after the
-// first refers to known task ids, a known broken expression and a known webhook key.
-
 import {TUTORIAL_NAMESPACE} from "../../../utils/constants"
 
 export const TOUR_NAMESPACE = TUTORIAL_NAMESPACE
@@ -9,8 +6,7 @@ export const TOUR_REPORT_FLOW_ID = "daily_report"
 export const TOUR_WEBHOOK_TRIGGER_ID = "new_order"
 export const TOUR_WEBHOOK_TRIGGER_TYPE = "io.kestra.plugin.core.trigger.Webhook"
 
-// Held in a flow variable rather than inline: `url` is a secret property, so a plain value there
-// raises a validation warning in the editor.
+// A flow variable, not inline: `url` is a secret property and a plain value there warns in the editor.
 export const TOUR_SLACK_VARIABLE = "slack_webhook"
 export const TOUR_SLACK_MOCK_URL = "https://kestra.io/api/mock"
 
@@ -48,8 +44,8 @@ variables:
   # A mock endpoint for this tour. In production: {{ secret('SLACK_WEBHOOK') }}
   ${TOUR_SLACK_VARIABLE}: ${TOUR_SLACK_MOCK_URL}`
 
-// `revenu` is missing its final `e` on purpose: rendering the message fails so the notify task fails
-// while the two tasks before it stay successful. Do not "fix" it here.
+// `revenu` is missing its final `e` on purpose: the notify task must fail while the two before it
+// succeed. Do not "fix" it.
 export const TOUR_NOTIFY_TASK_BROKEN = `
 
   - id: notify
@@ -62,10 +58,8 @@ export const TOUR_NOTIFY_TASK_FIXED = TOUR_NOTIFY_TASK_BROKEN.replace(
     "vars.revenue }}",
 )
 
-// The line the revision diff scrolls to.
 export const TOUR_FIXED_EXPRESSION = "vars.revenue }}"
 
-// Keyed per instance so two users never share a webhook URL.
 export const tourWebhookTrigger = (key: string) => `
 
 triggers:

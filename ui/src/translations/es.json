@@ -2071,10 +2071,27 @@
         },
         "toolCall": "Ejecutando {tool}",
         "context": {
+          "app": "Aplicación: {app}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "Panel de control: {{dashboard}}",
           "execution": "Ejecución: {id}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
+          "namespace": "Namespace: {namespace}",
+          "plugin": "Plugin: {{plugin}}",
+          "test": "Prueba: {test}"
         },
+        "contextAdded": "Añadido {type} {id} al contexto.",
+        "contextNoun": {
+          "app": "aplicación",
+          "blueprint": "plantilla",
+          "dashboard": "Panel de control",
+          "execution": "Ejecución",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "plugin",
+          "test": "prueba"
+        },
+        "contextRemoved": "Eliminado {type} {id} del contexto.",
         "toolResult": {
           "detail": "Detalles",
           "error": "El {{tool}} falló",

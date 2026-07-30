@@ -32,6 +32,7 @@ import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.AssetFailureBehavior;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.*;
@@ -289,6 +290,34 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 state = WARNING;
             }
 
+            if (taskRunWithOutput.assetEmissionFailed()) {
+                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
+                AssetFailureBehavior assetFailureBehavior = AssetFailureBehavior.WARN;
+                if (assetsDeclaration != null) {
+                    try {
+                        assetFailureBehavior = runContext.render(assetsDeclaration.getAssetFailureBehavior()).as(AssetFailureBehavior.class).orElse(AssetFailureBehavior.WARN);
+                    } catch (IllegalVariableEvaluationException e) {
+                        runContext.logger().warn("Unable to render assetFailureBehavior, defaulting to WARN", e);
+                    }
+                }
+                State.Type newState = assetFailureBehavior.apply(state);
+                if (newState != state) {
+                    runContext.logger().warn(
+                        "Task state changed from {} to {} because an asset failed to be emitted (assetFailureBehavior: {})",
+                        state, newState, assetFailureBehavior
+                    );
+                } else {
+                    runContext.logger().warn(
+                        "An asset failed to be emitted but the task state was not changed (assetFailureBehavior: {})",
+                        assetFailureBehavior
+                    );
+                }
+                state = newState;
+            }
+
+            // allowFailure has final say over any FAILED state reaching this point, whether the task's own
+            // genuine failure or one escalated by assetFailureBehavior; gated on shouldBeRetried so a pending retry
+            // is not prematurely softened
             if (workerTask.getTask().isAllowFailure() && !taskRunWithOutput.taskRun().shouldBeRetried(workerTask.getTask().getRetry()) && state.isFailed()) {
                 state = WARNING;
             }
@@ -423,6 +452,7 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
         Map<String, Object> outputs = Optional.ofNullable(workerTaskCallable.getTaskOutput()).map(it -> it.toMap()).orElse(null);
 
+        boolean assetEmissionFailed = false;
         try {
             if (workerTask.getTask().getAssets() != null) {
                 // We need to have the task outputs injected before rendering the assets
@@ -445,10 +475,11 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
                 );
             }
         } catch (Exception e) {
-            logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
+            logger.warn("Unable to render asset declaration for taskRun '{}'", taskRun, e);
+            assetEmissionFailed = true;
         }
 
-        return new TaskRunWithOutput(taskRun, outputs);
+        return new TaskRunWithOutput(taskRun, outputs, assetEmissionFailed);
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

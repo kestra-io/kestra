@@ -4,9 +4,6 @@
         :class="{'flowable-cluster--expanded': expanded, 'flowable-cluster--error': issues.length > 0}"
         :data-test="`flowable-cluster-${String(displayBlock.id ?? '')}`"
     >
-        <!-- Roving tabindex: only the focused header is a Tab stop; the
-        editor's global keymap owns Enter/Space activation (see BlockCard.vue
-        for the full rationale). -->
         <div
             class="flowable-cluster-header"
             :class="{'block-kbd-focused': focused}"
@@ -165,10 +162,6 @@
     const props = defineProps<{
         block: Record<string, unknown>
         path: string
-        // Matches the data-block-id the parent renders for this same card — kept as
-        // its own prop (rather than reading the data- attribute) since this is what
-        // the keyboard-focus ring compares against, and it can differ from block.id
-        // when a sibling shares the same id (see resolveBlockDomId).
         domId?: string
         icons?: Record<string, PluginIconData>
         selectedId?: string
@@ -190,9 +183,6 @@
 
     const depth = computed(() => props.depth ?? 0)
 
-    // The actual task to render/expand — unwraps a DAG-style {task, dependsOn}
-    // wrapper so every other computed below (id, type, lanes...) reads the
-    // real task regardless of whether this card sits in a flat or wrapped lane.
     const displayBlock = computed(() => displayTaskOf(props.block))
 
     const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
@@ -200,8 +190,6 @@
         validationIssues?.value?.get(String(displayBlock.value.id ?? "")) ?? [],
     )
 
-    // Where that task's own branches (then/else/tasks/cases/...) actually live
-    // — one level deeper than props.path for a wrapper, the same path otherwise.
     const taskPath = computed(() => taskEditPathFor(props.path, props.block))
 
     const focused = computed(() => props.focusedId !== undefined && props.focusedId === (props.domId ?? String(displayBlock.value.id ?? "")))
@@ -308,8 +296,6 @@
         overflow: hidden;
     }
 
-    // Collapsed, a cluster reads as a single task row: match the leaf card's
-    // background and drop the expanded-only left accent so it lines up in size.
     .flowable-cluster:not(.flowable-cluster--expanded) {
         background: var(--ks-btn-secondary-bg-default);
         border-left-width: 1px;
@@ -326,8 +312,6 @@
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-2);
-        // Match the two-line height of leaf task cards so the header row lines
-        // up with the surrounding tasks whether the cluster is open or closed.
         min-height: 3.25rem;
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         cursor: pointer;
@@ -371,9 +355,6 @@
         white-space: nowrap;
     }
 
-
-    // Pushed to the right so the error badge stays next to the id (left),
-    // clear of the hover action overlay that covers the right edge.
     .flowable-cluster-kind-tag {
         flex-shrink: 0;
         margin-left: auto;

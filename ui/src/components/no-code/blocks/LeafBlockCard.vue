@@ -1,7 +1,4 @@
 <template>
-    <!-- Roving tabindex: only the focused card is a Tab stop; arrows move
-    real focus and the editor's global keymap owns Enter/Space activation
-    (see BlockCard.vue for the full rationale). -->
     <div
         class="leaf-block-card"
         :class="{'leaf-block-card--selected': selected, 'leaf-block-card--drag-over': dragOver, 'block-kbd-focused': focused, 'leaf-block-card--error': issues.length > 0}"
@@ -142,8 +139,6 @@
         (e: "drag-end"): void
     }>()
 
-    // Unwraps a DAG-style {task, dependsOn} lane item so the card always shows
-    // the real task's id/type/icon — the wrapper itself has none of its own.
     const displayBlock = computed(() => displayTaskOf(props.block))
 
     const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
@@ -257,7 +252,6 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-
 
     .leaf-block-card-type {
         font-size: var(--ks-font-size-xs);

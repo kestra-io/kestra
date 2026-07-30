@@ -116,7 +116,6 @@ export function pushRecentFqcn(fqcn: string, current: string[]): string[] {
     try {
         localStorage.setItem(RECENT_FQCNS_KEY, JSON.stringify(next))
     } catch {
-        // localStorage may be unavailable; recency is best-effort
     }
     return next
 }

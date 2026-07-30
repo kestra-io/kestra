@@ -1,8 +1,4 @@
 <template>
-    <!-- Roving tabindex: the canvas is one composite widget, so only the
-    focused card is a Tab stop — arrows move real focus between cards, Tab
-    exits to the next region. Enter/Space activation is owned by the editor's
-    global keymap (which now sees real focus), not duplicated here. -->
     <div
         class="block-card"
         :class="{'block-card--selected': selected, 'block-card--drag-over': dragOver, 'block-kbd-focused': focused, 'block-card--error': issues.length > 0}"
@@ -43,9 +39,6 @@
         </div>
 
         <div class="block-card-actions">
-            <!-- tabindex=-1: per-card actions are not their own Tab stops
-            (that would defeat the composite's single stop) — they stay
-            reachable via the d / Backspace shortcuts and the mouse. -->
             <KsIconButton
                 v-if="runnable"
                 class="block-card-action block-card-action--run"
@@ -244,7 +237,6 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-
 
     .block-card-type {
         font-size: var(--ks-font-size-xs);

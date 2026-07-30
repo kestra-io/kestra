@@ -81,9 +81,6 @@
                 class="branch-lane-warning"
             />
 
-            <!-- Roving tabindex: part of the canvas composite, so it's only a
-            Tab stop while it carries the keyboard focus ring ("a" covers
-            insertion from anywhere else). -->
             <button
                 class="branch-lane-add-btn"
                 type="button"
@@ -161,8 +158,6 @@
         return Array.isArray(value) ? value.map(String) : []
     }
 
-    // Valid dependsOn targets for the item at `index`: every other DAG sub-task
-    // in the same lane, excluding itself (a task can't depend on its own id).
     function siblingIdsFor(index: number): string[] {
         return props.tasks
             .map((item, i) => (i === index ? undefined : String(displayTaskOf(item).id ?? "")))
@@ -303,9 +298,6 @@
         }
     }
 
-    // Reactive canvas-focus ring for an empty lane's sentinel (see the
-    // __lane: prefix used for data-block-id above) — mirrors the ring every
-    // real block card already has.
     .branch-lane-add-btn.block-kbd-focused {
         border-color: var(--ks-border-focus);
         box-shadow: 0 0 0 2px var(--ks-border-focus);

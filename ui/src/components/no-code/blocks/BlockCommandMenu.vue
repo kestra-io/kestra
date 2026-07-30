@@ -118,10 +118,6 @@
 
     function onKeydown(event: KeyboardEvent) {
         if (!["Escape", "ArrowDown", "ArrowUp", "Enter"].includes(event.key)) return
-        // This dialog owns these keys outright. Without stopPropagation, closing on
-        // Escape flips `commandMenuOpen` to false *before* the event bubbles to the
-        // window-level block-editor listener, which would then see no overlay open
-        // and also clear the canvas selection from the same keypress.
         event.preventDefault()
         event.stopPropagation()
 

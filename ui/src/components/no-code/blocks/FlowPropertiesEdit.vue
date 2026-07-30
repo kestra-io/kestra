@@ -57,12 +57,6 @@
         "retry",
         "sla",
         "checks",
-        // quotas is deliberately absent: the OSS schema advertises it but the
-        // OSS executor rejects it at runtime (EE feature) in a way that
-        // crash-loops the server — don't offer it until the backend guards it.
-        // pluginDefaults is deliberately absent too: managing plugin defaults
-        // belongs to the namespace-level Plugin Defaults surface, not the
-        // no-code flow editor.
         "workerSelector",
         "disabled",
     ]

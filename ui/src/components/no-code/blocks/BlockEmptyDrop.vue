@@ -59,10 +59,6 @@
         }
     }
 
-    // Reactive canvas-focus ring for an empty section's sentinel (see
-    // sectionSentinelId in BlockEditor.vue) — mirrors the same rule every
-    // real block card already has, since :focus-visible only reacts to real
-    // DOM focus and this ring is driven by the virtual j/k selection instead.
     .block-kbd-focused {
         border-color: var(--ks-border-focus);
         box-shadow: 0 0 0 2px var(--ks-border-focus);

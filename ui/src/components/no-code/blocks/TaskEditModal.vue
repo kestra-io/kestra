@@ -140,26 +140,17 @@
         localStorage.setItem(storageKeys.TASK_EDIT_MODE_HINT_DISMISSED, "true")
     }
 
-    // Re-provide this modal's own task identity, shadowing the canvas
-    // BlockEditor instance's values (which describe the flow root, not this
-    // task) for everything rendered inside - same contract a dock-tab's
-    // dedicated BlockEditor instance provides for itself.
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath)
     provide(REF_PATH_INJECTION_KEY, props.refPath)
     provide(EDITING_TASK_INJECTION_KEY, true)
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath))
 
-    // Raw task id/type, not translated copy - mirrors the dock tab's own
-    // label convention (useNoCodePanels.ts's getTabFromNoCodeTab).
     const title = computed(() => {
         const id = (props.task?.id as string) ?? ""
         const type = (props.task?.type as string) ?? ""
         return type ? `${id} · ${type}` : id
     })
 
-    // Fetched read-only (commit: false) so it never touches pluginsStore.plugin/
-    // editorPlugin - those are shared singletons the flow-wide Docs tab and other
-    // task views also bind to; this modal's docs column must not fight them.
     const docsOpen = ref(false)
     const docsLoading = ref(false)
     const docsPlugin = ref<PluginComponent>()
@@ -180,11 +171,6 @@
 </script>
 
 <style lang="scss" scoped>
-    // The dialog's native close button is a 62x62 absolutely-positioned hit
-    // target that both steals clicks from neighboring header actions and
-    // forces a visible gap before its X icon - so it's disabled (showClose:
-    // false) and replaced by our own close KsIconButton in the action row,
-    // spaced like the other icons.
     .task-edit-modal-header {
         display: flex;
         align-items: center;
@@ -200,12 +186,6 @@
         white-space: nowrap;
     }
 
-    // KsIconButton doesn't forward the parent's scoped data-v attribute onto
-    // its root (inheritAttrs:false), so a normal scoped selector never
-    // matches the rendered element here - :global() emits these without that
-    // requirement, matching on class name alone. margin-left resets Element
-    // Plus's default adjacent-button spacing rule, which otherwise stacks with
-    // our own flex gap and doubles the visible spacing between the two icons.
     :global(.task-edit-modal-header .task-edit-modal-header-action) {
         flex-shrink: 0;
         margin-left: 0;

@@ -887,8 +887,10 @@ describe("BlockEditor", () => {
             const vm = wrapper.vm as unknown as {
                 activeSelectedPath: string | undefined
                 activeSelectedId: string | undefined
-                handleTaskDragStart: (event: DragEvent, index: number) => void
-                handleTaskDrop: (event: DragEvent, index: number) => void
+                dndFor: (section: string) => {
+                    handleDragStart: (event: DragEvent, index: number) => void
+                    handleDrop: (event: DragEvent, index: number) => void
+                }
             }
             expect(vm.activeSelectedPath).toBe("tasks[1].then[0]")
             expect(vm.activeSelectedId).toBe("nested_a")
@@ -896,8 +898,8 @@ describe("BlockEditor", () => {
             // When — prime drag from tasks[0], then drop on tasks[1]
             // This shifts the flowable from [1] to [0], making tasks[1].then[0] stale
             const mockEvent = {preventDefault: () => undefined, dataTransfer: {effectAllowed: ""}} as unknown as DragEvent
-            vm.handleTaskDragStart(mockEvent, 0)
-            vm.handleTaskDrop(mockEvent, 1)
+            vm.dndFor("tasks").handleDragStart(mockEvent, 0)
+            vm.dndFor("tasks").handleDrop(mockEvent, 1)
             await wrapper.vm.$nextTick()
 
             // Then — stale path is detected and selection cleared

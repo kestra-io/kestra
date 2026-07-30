@@ -144,3 +144,5 @@ export function useCanvasFocus(
         focusedBlockIsFlowable,
     }
 }
+
+export type CanvasFocusApi = ReturnType<typeof useCanvasFocus>

@@ -64,355 +64,28 @@
                             </button>
                         </BlockSectionCard>
 
-                        <BlockSectionCard
-                            name="triggers"
-                            :title="t('no_code.sections.triggers')"
-                            :icon="TriggerIcon"
-                            :count="parsedTriggers.length"
-                            :addLabel="t('block_editor.add_trigger')"
-                            @add="(e) => openTaskPicker('triggers', e)"
-                        >
-                            <div class="block-section-list" data-test="block-editor-trigger-list">
-                                <template v-for="(trigger, index) in parsedTriggers" :key="resolveBlockDomId(parsedTriggers, index)">
-                                    <BlockCard
-                                        :block="trigger"
-                                        :selected="activeSelectedId === String(trigger.id)"
-                                        :focused="focusedId === resolveBlockDomId(parsedTriggers, index)"
-                                        :draggable="true"
-                                        :dragOver="triggerDragOverIndex === index"
-                                        :icons="pluginsStore.icons"
-                                        :data-block-id="resolveBlockDomId(parsedTriggers, index)"
-                                        @select="selectBlock('triggers', trigger)"
-                                        @delete="onDelete('triggers', trigger.id)"
-                                        @duplicate="onDuplicate('triggers', trigger.id)"
-                                        @open-split="selectBlock('triggers', trigger, true)"
-                                        @drag-start="handleTriggerDragStart($event, index)"
-                                        @drag-over="handleTriggerDragOver($event, index)"
-                                        @drop="handleTriggerDrop($event, index)"
-                                        @drag-end="handleTriggerDragEnd"
-                                    />
-                                </template>
-                                <BlockEmptyDrop
-                                    v-if="parsedTriggers.length === 0"
-                                    variant="empty"
-                                    :label="t('block_editor.trigger_noun')"
-                                    :data-block-id="sectionSentinelId('triggers')"
-                                    :class="{'block-kbd-focused': focusedId === sectionSentinelId('triggers')}"
-                                    :tabindex="focusedId === sectionSentinelId('triggers') ? 0 : -1"
-                                    :aria-selected="focusedId === sectionSentinelId('triggers')"
-                                    @add="(e) => openTaskPicker('triggers', e)"
-                                />
-                                <BlockEmptyDrop
-                                    v-else
-                                    variant="inline"
-                                    tabindex="-1"
-                                    :label="t('block_editor.trigger_noun')"
-                                    @add="(e) => openTaskPicker('triggers', e)"
-                                />
-                            </div>
-                        </BlockSectionCard>
-
-                        <BlockSectionCard
-                            name="tasks"
-                            :title="t('no_code.sections.tasks')"
-                            :icon="TasksIcon"
-                            :count="parsedTasks.length"
-                            :addLabel="t('block_editor.add_task')"
-                            addTest="block-editor-add-task"
-                            @add="(e) => openTaskPicker('tasks', e)"
-                        >
-                            <div
-                                class="block-section-list"
-                                data-test="block-editor-task-list"
-                                @dragend="handleTaskDragEnd"
-                            >
-                                <template v-for="(task, index) in parsedTasks" :key="resolveBlockDomId(parsedTasks, index)">
-                                    <FlowableClusterCard
-                                        v-if="isFlowable(task)"
-                                        :block="task"
-                                        :path="`tasks[${index}]`"
-                                        :icons="pluginsStore.icons"
-                                        :selectedId="activeSelectedId"
-                                        :focusedId="focusedId"
-                                        :domId="resolveBlockDomId(parsedTasks, index)"
-                                        :depth="0"
-                                        :playgroundEnabled="playgroundStore.enabled"
-                                        :data-block-id="resolveBlockDomId(parsedTasks, index)"
-                                        data-test="block-card"
-                                        @select="openNestedEdit"
-                                        @open-split="(p) => openNestedEdit(p, true)"
-                                        @delete="onDeleteAtPath"
-                                        @duplicate="onDuplicateAtPath"
-                                        @run="onRunTask"
-                                        @add-at-path="openTaskPickerAtPath"
-                                        @update-depends-on="onUpdateDependsOn"
-                                        @reorder="onNestedReorder"
-                                        @dragover.prevent="handleTaskDragOver($event, index)"
-                                        @drop.prevent="handleTaskDrop($event, index)"
-                                    />
-                                    <BlockCard
-                                        v-else
-                                        :block="task"
-                                        :selected="activeSelectedId === String(task.id)"
-                                        :focused="focusedId === resolveBlockDomId(parsedTasks, index)"
-                                        :draggable="true"
-                                        :dragOver="taskDragOverIndex === index"
-                                        :runnable="playgroundStore.enabled"
-                                        :icons="pluginsStore.icons"
-                                        :data-block-id="resolveBlockDomId(parsedTasks, index)"
-                                        @select="selectBlock('tasks', task)"
-                                        @delete="onDelete('tasks', task.id)"
-                                        @duplicate="onDuplicate('tasks', task.id)"
-                                        @open-split="selectBlock('tasks', task, true)"
-                                        @run="onRunTask(String(task.id))"
-                                        @drag-start="handleTaskDragStart($event, index)"
-                                        @drag-over="handleTaskDragOver($event, index)"
-                                        @drop="handleTaskDrop($event, index)"
-                                        @drag-end="handleTaskDragEnd"
-                                    />
-                                </template>
-
-                                <BlockEmptyDrop
-                                    v-if="parsedTasks.length === 0"
-                                    variant="empty"
-                                    dataTest="block-editor-tasks-end"
-                                    :label="t('block_editor.task_noun')"
-                                    :hint="t('block_editor.empty_add_hint')"
-                                    :data-block-id="sectionSentinelId('tasks')"
-                                    :class="{'block-kbd-focused': focusedId === sectionSentinelId('tasks')}"
-                                    :tabindex="focusedId === sectionSentinelId('tasks') ? 0 : -1"
-                                    :aria-selected="focusedId === sectionSentinelId('tasks')"
-                                    @add="(e) => openTaskPicker('tasks', e)"
-                                />
-                                <BlockEmptyDrop
-                                    v-else
-                                    variant="inline"
-                                    dataTest="block-editor-tasks-end"
-                                    tabindex="-1"
-                                    :label="t('block_editor.task_noun')"
-                                    :hint="t('block_editor.empty_add_hint')"
-                                    @add="(e) => openTaskPicker('tasks', e)"
-                                />
-                            </div>
-                        </BlockSectionCard>
-
-                        <BlockSectionCard
-                            name="errors"
-                            :title="t('block_editor.lane_errors')"
-                            :icon="ErrorIcon"
-                            :count="flowLevelErrors.length"
-                            :addLabel="t('block_editor.add_task')"
-                            tone="error"
-                            @add="(e) => openTaskPicker('errors', e)"
-                        >
-                            <div class="block-section-list">
-                                <template v-for="(task, index) in flowLevelErrors" :key="resolveBlockDomId(flowLevelErrors, index)">
-                                    <FlowableClusterCard
-                                        v-if="isFlowable(task)"
-                                        :block="task"
-                                        :path="`errors[${index}]`"
-                                        :icons="pluginsStore.icons"
-                                        :selectedId="activeSelectedId"
-                                        :focusedId="focusedId"
-                                        :domId="resolveBlockDomId(flowLevelErrors, index)"
-                                        :depth="0"
-                                        :playgroundEnabled="playgroundStore.enabled"
-                                        :data-block-id="resolveBlockDomId(flowLevelErrors, index)"
-                                        data-test="block-card"
-                                        @select="openNestedEdit"
-                                        @open-split="(p) => openNestedEdit(p, true)"
-                                        @delete="onDeleteAtPath"
-                                        @duplicate="onDuplicateAtPath"
-                                        @run="onRunTask"
-                                        @add-at-path="openTaskPickerAtPath"
-                                        @update-depends-on="onUpdateDependsOn"
-                                        @reorder="onNestedReorder"
-                                    />
-                                    <BlockCard
-                                        v-else
-                                        :block="task"
-                                        :selected="activeSelectedId === String(task.id)"
-                                        :focused="focusedId === resolveBlockDomId(flowLevelErrors, index)"
-                                        :icons="pluginsStore.icons"
-                                        :data-block-id="resolveBlockDomId(flowLevelErrors, index)"
-                                        :runnable="playgroundStore.enabled"
-                                        :draggable="true"
-                                        :dragOver="errorsDragOverIndex === index"
-                                        @select="selectBlock('errors', task)"
-                                        @delete="onDelete('errors', task.id)"
-                                        @duplicate="onDuplicate('errors', task.id)"
-                                        @open-split="selectBlock('errors', task, true)"
-                                        @run="onRunTask(String(task.id))"
-                                        @drag-start="errorsDragStart($event, index)"
-                                        @drag-over="errorsDragOver($event, index)"
-                                        @drop="errorsDrop($event, index)"
-                                        @drag-end="errorsDragEnd"
-                                    />
-                                </template>
-                                <BlockEmptyDrop
-                                    v-if="flowLevelErrors.length === 0"
-                                    variant="empty"
-                                    :label="t('block_editor.task_noun')"
-                                    :data-block-id="sectionSentinelId('errors')"
-                                    :class="{'block-kbd-focused': focusedId === sectionSentinelId('errors')}"
-                                    :tabindex="focusedId === sectionSentinelId('errors') ? 0 : -1"
-                                    :aria-selected="focusedId === sectionSentinelId('errors')"
-                                    @add="(e) => openTaskPicker('errors', e)"
-                                />
-                                <BlockEmptyDrop
-                                    v-else
-                                    variant="inline"
-                                    tabindex="-1"
-                                    :label="t('block_editor.task_noun')"
-                                    @add="(e) => openTaskPicker('errors', e)"
-                                />
-                            </div>
-                        </BlockSectionCard>
-
-                        <BlockSectionCard
-                            name="finally"
-                            :title="t('block_editor.lane_finally')"
-                            :icon="FinallyIcon"
-                            :count="flowLevelFinally.length"
-                            :addLabel="t('block_editor.add_task')"
-                            tone="warning"
-                            @add="(e) => openTaskPicker('finally', e)"
-                        >
-                            <div class="block-section-list">
-                                <template v-for="(task, index) in flowLevelFinally" :key="resolveBlockDomId(flowLevelFinally, index)">
-                                    <FlowableClusterCard
-                                        v-if="isFlowable(task)"
-                                        :block="task"
-                                        :path="`finally[${index}]`"
-                                        :icons="pluginsStore.icons"
-                                        :selectedId="activeSelectedId"
-                                        :focusedId="focusedId"
-                                        :domId="resolveBlockDomId(flowLevelFinally, index)"
-                                        :depth="0"
-                                        :playgroundEnabled="playgroundStore.enabled"
-                                        :data-block-id="resolveBlockDomId(flowLevelFinally, index)"
-                                        data-test="block-card"
-                                        @select="openNestedEdit"
-                                        @open-split="(p) => openNestedEdit(p, true)"
-                                        @delete="onDeleteAtPath"
-                                        @duplicate="onDuplicateAtPath"
-                                        @run="onRunTask"
-                                        @add-at-path="openTaskPickerAtPath"
-                                        @update-depends-on="onUpdateDependsOn"
-                                        @reorder="onNestedReorder"
-                                    />
-                                    <BlockCard
-                                        v-else
-                                        :block="task"
-                                        :selected="activeSelectedId === String(task.id)"
-                                        :focused="focusedId === resolveBlockDomId(flowLevelFinally, index)"
-                                        :icons="pluginsStore.icons"
-                                        :data-block-id="resolveBlockDomId(flowLevelFinally, index)"
-                                        :runnable="playgroundStore.enabled"
-                                        :draggable="true"
-                                        :dragOver="finallyDragOverIndex === index"
-                                        @select="selectBlock('finally', task)"
-                                        @delete="onDelete('finally', task.id)"
-                                        @duplicate="onDuplicate('finally', task.id)"
-                                        @open-split="selectBlock('finally', task, true)"
-                                        @run="onRunTask(String(task.id))"
-                                        @drag-start="finallyDragStart($event, index)"
-                                        @drag-over="finallyDragOver($event, index)"
-                                        @drop="finallyDrop($event, index)"
-                                        @drag-end="finallyDragEnd"
-                                    />
-                                </template>
-                                <BlockEmptyDrop
-                                    v-if="flowLevelFinally.length === 0"
-                                    variant="empty"
-                                    :label="t('block_editor.task_noun')"
-                                    :data-block-id="sectionSentinelId('finally')"
-                                    :class="{'block-kbd-focused': focusedId === sectionSentinelId('finally')}"
-                                    :tabindex="focusedId === sectionSentinelId('finally') ? 0 : -1"
-                                    :aria-selected="focusedId === sectionSentinelId('finally')"
-                                    @add="(e) => openTaskPicker('finally', e)"
-                                />
-                                <BlockEmptyDrop
-                                    v-else
-                                    variant="inline"
-                                    tabindex="-1"
-                                    :label="t('block_editor.task_noun')"
-                                    @add="(e) => openTaskPicker('finally', e)"
-                                />
-                            </div>
-                        </BlockSectionCard>
-
-                        <BlockSectionCard
-                            name="afterExecution"
-                            :title="t('no_code.sections.afterExecution')"
-                            :icon="AfterExecutionIcon"
-                            :count="flowLevelAfterExecution.length"
-                            :addLabel="t('block_editor.add_task')"
-                            @add="(e) => openTaskPicker('afterExecution', e)"
-                        >
-                            <div class="block-section-list">
-                                <template v-for="(task, index) in flowLevelAfterExecution" :key="resolveBlockDomId(flowLevelAfterExecution, index)">
-                                    <FlowableClusterCard
-                                        v-if="isFlowable(task)"
-                                        :block="task"
-                                        :path="`afterExecution[${index}]`"
-                                        :icons="pluginsStore.icons"
-                                        :selectedId="activeSelectedId"
-                                        :focusedId="focusedId"
-                                        :domId="resolveBlockDomId(flowLevelAfterExecution, index)"
-                                        :depth="0"
-                                        :playgroundEnabled="playgroundStore.enabled"
-                                        :data-block-id="resolveBlockDomId(flowLevelAfterExecution, index)"
-                                        data-test="block-card"
-                                        @select="openNestedEdit"
-                                        @open-split="(p) => openNestedEdit(p, true)"
-                                        @delete="onDeleteAtPath"
-                                        @duplicate="onDuplicateAtPath"
-                                        @run="onRunTask"
-                                        @add-at-path="openTaskPickerAtPath"
-                                        @update-depends-on="onUpdateDependsOn"
-                                        @reorder="onNestedReorder"
-                                    />
-                                    <BlockCard
-                                        v-else
-                                        :block="task"
-                                        :selected="activeSelectedId === String(task.id)"
-                                        :focused="focusedId === resolveBlockDomId(flowLevelAfterExecution, index)"
-                                        :icons="pluginsStore.icons"
-                                        :data-block-id="resolveBlockDomId(flowLevelAfterExecution, index)"
-                                        :runnable="playgroundStore.enabled"
-                                        :draggable="true"
-                                        :dragOver="afterExecutionDragOverIndex === index"
-                                        @select="selectBlock('afterExecution', task)"
-                                        @delete="onDelete('afterExecution', task.id)"
-                                        @duplicate="onDuplicate('afterExecution', task.id)"
-                                        @open-split="selectBlock('afterExecution', task, true)"
-                                        @run="onRunTask(String(task.id))"
-                                        @drag-start="afterExecutionDragStart($event, index)"
-                                        @drag-over="afterExecutionDragOver($event, index)"
-                                        @drop="afterExecutionDrop($event, index)"
-                                        @drag-end="afterExecutionDragEnd"
-                                    />
-                                </template>
-                                <BlockEmptyDrop
-                                    v-if="flowLevelAfterExecution.length === 0"
-                                    variant="empty"
-                                    :label="t('block_editor.task_noun')"
-                                    :data-block-id="sectionSentinelId('afterExecution')"
-                                    :class="{'block-kbd-focused': focusedId === sectionSentinelId('afterExecution')}"
-                                    :tabindex="focusedId === sectionSentinelId('afterExecution') ? 0 : -1"
-                                    :aria-selected="focusedId === sectionSentinelId('afterExecution')"
-                                    @add="(e) => openTaskPicker('afterExecution', e)"
-                                />
-                                <BlockEmptyDrop
-                                    v-else
-                                    variant="inline"
-                                    tabindex="-1"
-                                    :label="t('block_editor.task_noun')"
-                                    @add="(e) => openTaskPicker('afterExecution', e)"
-                                />
-                            </div>
-                        </BlockSectionCard>
+                        <BlockSectionLane
+                            v-for="lane in lanes"
+                            :key="lane.section"
+                            v-bind="lane"
+                            :icons="pluginsStore.icons"
+                            :selectedId="activeSelectedId"
+                            :focusedId="focusedId"
+                            :dnd="dndFor(lane.section)"
+                            @add="(e) => openTaskPicker(lane.section, e)"
+                            @select="(block) => selectBlock(lane.section, block)"
+                            @open-split="(block) => selectBlock(lane.section, block, true)"
+                            @delete="(id) => onDelete(lane.section, id)"
+                            @duplicate="(id) => onDuplicate(lane.section, id)"
+                            @run="onRunTask"
+                            @select-path="openNestedEdit"
+                            @open-split-path="(path) => openNestedEdit(path, true)"
+                            @delete-path="onDeleteAtPath"
+                            @duplicate-path="onDuplicateAtPath"
+                            @add-at-path="openTaskPickerAtPath"
+                            @update-depends-on="onUpdateDependsOn"
+                            @reorder="onNestedReorder"
+                        />
                     </div>
                 </div>
             </KsSplitterPanel>
@@ -460,54 +133,43 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, nextTick, ref, watch} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import FlowIcon from "vue-material-design-icons/FileDocumentOutline.vue"
     import Cog from "vue-material-design-icons/Cog.vue"
-    import TriggerIcon from "vue-material-design-icons/LightningBoltOutline.vue"
-    import TasksIcon from "vue-material-design-icons/FormatListBulleted.vue"
-    import ErrorIcon from "vue-material-design-icons/AlertCircleOutline.vue"
-    import FinallyIcon from "vue-material-design-icons/FlagOutline.vue"
-    import AfterExecutionIcon from "vue-material-design-icons/FlagCheckered.vue"
 
-    import {KsMessageBox, KsTag} from "@kestra-io/design-system"
+    import {KsTag} from "@kestra-io/design-system"
     import {flowYamlUtils} from "@kestra-io/topology"
 
     import {useFlowStore} from "../../../stores/flow"
     import {useCoreStore} from "../../../stores/core"
     import {usePluginsStore} from "../../../stores/plugins"
     import {
-        deleteBlock,
-        deleteBlockAtPath,
-        displayTaskOf,
-        duplicateBlock,
-        duplicateBlockAtPath,
         groupValidationIssuesByTask,
         isFlowableType,
-        moveBlockAtPath,
-        reorderAtPath,
-        resolveBlockDomId,
         updateBlockAtPath,
         type BlockSection,
     } from "../../../utils/flowableBlockOps"
-    import {useDragAndDrop} from "../../../composables/useDragAndDrop"
-    import BlockCard from "./BlockCard.vue"
     import BlockSectionCard from "./BlockSectionCard.vue"
     import FlowPropertiesEdit from "./FlowPropertiesEdit.vue"
     import FlowPropertiesModal from "./FlowPropertiesModal.vue"
-    import BlockEmptyDrop from "./BlockEmptyDrop.vue"
     import BlockCommandMenu, {type BlockCommandMenuItem} from "./BlockCommandMenu.vue"
-    import FlowableClusterCard from "./FlowableClusterCard.vue"
     import TaskEdit from "../../flows/TaskEdit.vue"
     import TaskEditModal from "./TaskEditModal.vue"
     import BlockTaskPicker from "./BlockTaskPicker.vue"
     import BlockEditorStatusBar from "./BlockEditorStatusBar.vue"
     import {useBlockEditorProvides} from "./useBlockEditorProvides"
     import {useEditTarget} from "./useEditTarget"
+    import {useBlockDragAndDrop} from "./useBlockDragAndDrop"
+    import {useBlockOperations} from "./useBlockOperations"
+    import {useBlockSelection} from "./useBlockSelection"
+    import {useBlockMutations} from "./useBlockMutations"
+    import {opensInModalByDefault} from "./taskEditMode"
+    import BlockSectionLane from "./BlockSectionLane.vue"
+    import {buildSectionLanes} from "./blockSectionLanes"
     import {buildCommandMenuContextLabel, buildCommandMenuItems, type BlockCommandMenuContext} from "./blockCommandMenu"
     import {useBlockEditorKeyboard} from "./useBlockEditorKeyboard"
     import {
-        ALL_SECTIONS,
         laneDisplayLabelFromPath as laneDisplayLabelFor,
         parentPathFromLaneSentinel,
         sectionDisplayLabel as sectionDisplayLabelFor,
@@ -521,7 +183,6 @@
     import {buildFooterHints, buildShortcutGroups, type FooterHint} from "./shortcutHints"
     import {BLOCK_EDITOR_KEYMAP} from "./keymap"
     import type {NoCodeProps} from "../../flows/noCodeTypes"
-    import {storageKeys, taskEditDefaultModes} from "../../../utils/constants"
     import {usePlaygroundRun} from "../../../composables/playground/usePlaygroundRun"
 
     const {t} = useI18n()
@@ -628,8 +289,6 @@
         applyYaml(updateBlockAtPath(flowYaml.value, editingPath.value, newContent))
     }
 
-    const modalTarget = ref<{parentPath: string; blockSchemaPath: string; refPath?: number} | undefined>(undefined)
-
     const modalItemPath = computed<string>(() => {
         const target = modalTarget.value
         if (!target) return ""
@@ -713,10 +372,9 @@
             }
         }
     }
+    const focus = useCanvasFocus(editorEl, sectionList)
     const {
         focusedId,
-        navigableCards,
-        focusedCard,
         focusCanvasCard,
         onCanvasFocusIn,
         onCanvasEntryFocus,
@@ -727,133 +385,47 @@
         actionInFocused,
         focusedBlockPath,
         focusedBlockDisplayName,
-        focusedBlockIsFlowable,
-    } = useCanvasFocus(editorEl, sectionList)
+    } = focus
     const shortcutsOpen = ref(false)
     const commandMenuOpen = ref(false)
-    const confirmDialogOpen = ref(false)
-    const CONFIRM_DIALOG_ESCAPE_GRACE_MS = 100
-    let lastConfirmDialogCloseAt = 0
-    const internalSelectedId = ref<string | undefined>(props.selectedId)
-
-    const activeSelectedId = computed({
-        get: () => internalSelectedId.value,
-        set: (v: string | undefined) => {
-            internalSelectedId.value = v
-            emit("update:selectedId", v)
-        },
-    })
-
-    const activeSelectedPath = ref<string | undefined>()
-
-    watch(() => props.selectedId, async (id) => {
-        internalSelectedId.value = id
-        if (!id || !editorEl.value) return
-        await nextTick()
-        const card = editorEl.value.querySelector(`[data-block-id="${id}"]`) as HTMLElement | null
-        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        card?.scrollIntoView({block: "nearest", behavior: reduceMotion ? "auto" : "smooth"})
-    })
-
     const flowSchemaRoot = computed(() => pluginsStore.flowSchema?.$ref ?? "")
 
-    function blockSchemaPathFor(section: BlockSection): string {
-        return [flowSchemaRoot.value, "properties", section, "items"].join("/")
-    }
-
-    function opensInModalByDefault(): boolean {
-        return (localStorage.getItem(storageKeys.TASK_EDIT_DEFAULT_MODE) || taskEditDefaultModes.MODAL) !== taskEditDefaultModes.TAB
-    }
-
-    function selectBlock(section: BlockSection, block: Record<string, unknown>, split = false) {
-        const strId = block.id != null ? String(block.id) : undefined
-        if (!strId) return
-        const list = sectionList(section)
-        const index = list.findIndex(item => item === block)
-        if (index < 0) return
-        activeSelectedId.value = strId
-        activeSelectedPath.value = undefined
-        if (!split && opensInModalByDefault()) {
-            modalTarget.value = {parentPath: section, blockSchemaPath: blockSchemaPathFor(section), refPath: index}
-        } else {
-            emit("editTask", section, blockSchemaPathFor(section), index, split)
-        }
-    }
-
-    function openNestedEdit(itemPath: string, split = false) {
-        const itemYaml = flowYamlUtils.extractBlockWithPath({source: flowYaml.value, path: itemPath})
-        if (!itemYaml) return
-        const item = flowYamlUtils.parse<Record<string, unknown>>(itemYaml)
-        if (!item) return
-
-        const parsed = displayTaskOf(item)
-        if (!parsed || !parsed.id) return
-
-        const match = itemPath.match(/^(.*)\[(\d+)\]$/)
-        if (!match) return
-        const parentPath = match[1]
-        const refPath = parseInt(match[2], 10)
-        const section = sectionFromParentPath(parentPath)
-        activeSelectedId.value = String(parsed.id)
-        activeSelectedPath.value = itemPath
-        if (!split && opensInModalByDefault()) {
-            modalTarget.value = {parentPath, blockSchemaPath: blockSchemaPathFor(section), refPath}
-        } else {
-            emit("editTask", parentPath, blockSchemaPathFor(section), refPath, split)
-        }
-    }
+    const {
+        activeSelectedId,
+        activeSelectedPath,
+        modalTarget,
+        selectBlock,
+        openNestedEdit,
+        deselectIfCurrent,
+    } = useBlockSelection({
+        selectedId: computed(() => props.selectedId),
+        editorEl,
+        flowYaml,
+        flowSchemaRoot,
+        sectionList,
+        onSelectedIdChange: (id) => emit("update:selectedId", id),
+        onEditTask: (parentPath, blockSchemaPath, refPath, split) => emit("editTask", parentPath, blockSchemaPath, refPath, split),
+        onCloseTask: () => emit("closeTask"),
+    })
 
     const {undoState, applyYaml, deleteWithUndo, performUndo} = useYamlUndo(
         flowStore,
         (name: string) => t("block_editor.block_deleted", {name}),
     )
 
-    function deselectIfCurrent(id: string) {
-        if (activeSelectedId.value !== id) return
-        activeSelectedId.value = undefined
-        activeSelectedPath.value = undefined
-        emit("closeTask")
-    }
-
-    function onDelete(section: BlockSection, id: unknown) {
-        if (typeof id !== "string") return
-        deleteWithUndo(id, () => {
-            const newYaml = deleteBlock(flowYaml.value, section, id)
-            deselectIfCurrent(id)
-            applyYaml(newYaml)
-        })
-    }
-
-    function onDeleteAtPath(path: string) {
-        const blockYaml = flowYamlUtils.extractBlockWithPath({source: flowYaml.value, path})
-        const parsed = blockYaml ? flowYamlUtils.parse<Record<string, unknown>>(blockYaml) : null
-        const name = parsed?.id ? String(parsed.id) : path
-        deleteWithUndo(name, () => {
-            const newYaml = deleteBlockAtPath(flowYaml.value, path)
-            if (parsed?.id) deselectIfCurrent(String(parsed.id))
-            applyYaml(newYaml)
-        })
-    }
-
-    function onDuplicate(section: BlockSection, id: unknown) {
-        if (typeof id !== "string") return
-        applyYaml(duplicateBlock(flowYaml.value, section, id))
-    }
-
-    function onDuplicateAtPath(path: string) {
-        applyYaml(duplicateBlockAtPath(flowYaml.value, path))
-    }
-
-    function onUpdateDependsOn(itemPath: string, dependsOn: string[]) {
-        const newContent = dependsOn.length > 0 ? flowYamlUtils.stringify(dependsOn) : ""
-        applyYaml(flowYamlUtils.replaceBlockWithPath({source: flowYaml.value, path: `${itemPath}.dependsOn`, newContent}))
-    }
+    const {
+        deleteInSection: onDelete,
+        deleteAtPath: onDeleteAtPath,
+        duplicateInSection: onDuplicate,
+        duplicateAtPath: onDuplicateAtPath,
+        updateDependsOn: onUpdateDependsOn,
+    } = useBlockMutations({flowYaml, applyYaml, deleteWithUndo, deselectIfCurrent})
 
     const picker = useTaskPicker({
         pluginsStore,
         editorEl,
         focusedId,
-        focusedCard,
+        focusedCard: focus.focusedCard,
         focusedBlockPath,
         focusCanvasCard,
         sectionList,
@@ -870,14 +442,6 @@
         openTaskPickerRelativeToFocused,
     } = picker
 
-    const {
-        dragOverIndex: taskDragOverIndex,
-        handleDragStart: handleTaskDragStart,
-        handleDragOver: handleTaskDragOver,
-        handleDragEnd: handleTaskDragEnd,
-        handleDrop: handleTaskDropBase,
-    } = useDragAndDrop()
-
     function clearSelectionIfPathStale(parentPath: string, from: number, to: number) {
         const path = activeSelectedPath.value
         const id = activeSelectedId.value
@@ -891,106 +455,19 @@
         if (movedIndex >= lo && movedIndex <= hi) deselectIfCurrent(id)
     }
 
-    function handleTaskDrop(event: DragEvent, targetIndex: number) {
-        handleTaskDropBase(event, targetIndex, (from, to) => {
-            clearSelectionIfPathStale("tasks", from, to)
-            applyYaml(reorderAtPath(flowYaml.value, "tasks", from, to))
-        })
-    }
+    const {dndFor, reorder: onNestedReorder} = useBlockDragAndDrop(flowYaml, applyYaml, clearSelectionIfPathStale)
 
-    const {
-        dragOverIndex: triggerDragOverIndex,
-        handleDragStart: handleTriggerDragStart,
-        handleDragOver: handleTriggerDragOver,
-        handleDragEnd: handleTriggerDragEnd,
-        handleDrop: handleTriggerDropBase,
-    } = useDragAndDrop()
-
-    function handleTriggerDrop(event: DragEvent, targetIndex: number) {
-        handleTriggerDropBase(event, targetIndex, (from, to) => {
-            applyYaml(reorderAtPath(flowYaml.value, "triggers", from, to))
-        })
-    }
-
-    function useSectionDnd(section: string) {
-        const dnd = useDragAndDrop()
-        function handleDrop(event: DragEvent, targetIndex: number) {
-            dnd.handleDrop(event, targetIndex, (from, to) => {
-                clearSelectionIfPathStale(section, from, to)
-                applyYaml(reorderAtPath(flowYaml.value, section, from, to))
-            })
-        }
-        return {
-            dragOverIndex: dnd.dragOverIndex,
-            handleDragStart: dnd.handleDragStart,
-            handleDragOver: dnd.handleDragOver,
-            handleDragEnd: dnd.handleDragEnd,
-            handleDrop,
-        }
-    }
-
-    const {
-        dragOverIndex: errorsDragOverIndex,
-        handleDragStart: errorsDragStart,
-        handleDragOver: errorsDragOver,
-        handleDragEnd: errorsDragEnd,
-        handleDrop: errorsDrop,
-    } = useSectionDnd("errors")
-
-    const {
-        dragOverIndex: finallyDragOverIndex,
-        handleDragStart: finallyDragStart,
-        handleDragOver: finallyDragOver,
-        handleDragEnd: finallyDragEnd,
-        handleDrop: finallyDrop,
-    } = useSectionDnd("finally")
-
-    const {
-        dragOverIndex: afterExecutionDragOverIndex,
-        handleDragStart: afterExecutionDragStart,
-        handleDragOver: afterExecutionDragOver,
-        handleDragEnd: afterExecutionDragEnd,
-        handleDrop: afterExecutionDrop,
-    } = useSectionDnd("afterExecution")
-
-    function onNestedReorder(parentPath: string, from: number, to: number) {
-        clearSelectionIfPathStale(parentPath, from, to)
-        applyYaml(reorderAtPath(flowYaml.value, parentPath, from, to))
-    }
+    const lanes = computed(() => buildSectionLanes(t, {
+        triggers: parsedTriggers.value,
+        tasks: parsedTasks.value,
+        errors: flowLevelErrors.value,
+        finally: flowLevelFinally.value,
+        afterExecution: flowLevelAfterExecution.value,
+    }, playgroundStore.enabled))
 
     function openFocusedSplit() {
         const path = focusedBlockPath()
         if (path) openNestedEdit(path, true)
-    }
-
-    function confirmDelete(name: string, isFlowableBlock: boolean, onConfirm: () => void) {
-        const message = isFlowableBlock
-            ? t("block_editor.confirm_delete.message_group", {name})
-            : t("block_editor.confirm_delete.message", {name})
-        confirmDialogOpen.value = true
-        KsMessageBox.confirm(message, t("block_editor.confirm_delete.title", {name}), {
-            type: "warning",
-            confirmButtonText: t("block_editor.delete"),
-            cancelButtonText: t("cancel"),
-        }).then(onConfirm).catch(() => {}).finally(() => {
-            confirmDialogOpen.value = false
-            lastConfirmDialogCloseAt = performance.now()
-        })
-    }
-
-    function requestDeleteFocused() {
-        if (!focusedId.value) return
-        if (sectionFromSentinel(focusedId.value) || parentPathFromLaneSentinel(focusedId.value)) return
-        const name = focusedBlockDisplayName()
-        const isFlowableBlock = focusedBlockIsFlowable()
-        confirmDelete(name, isFlowableBlock, () => {
-            const cards = navigableCards()
-            const current = cards.find(el => el.getAttribute("data-block-id") === focusedId.value)
-            const index = current ? cards.indexOf(current) : -1
-            const neighbor = cards.slice(index + 1).find(el => !current?.contains(el)) ?? cards[index - 1]
-            actionInFocused("[data-test='block-card-delete']")
-            focusCanvasCard(neighbor?.getAttribute("data-block-id") ?? undefined)
-        })
     }
 
     function addAfterFocused() {
@@ -1036,7 +513,7 @@
         }
         if (id === "clear") {
             if (closeTopOverlay()) return
-            if (confirmDialogOpen.value || performance.now() - lastConfirmDialogCloseAt < CONFIRM_DIALOG_ESCAPE_GRACE_MS) return
+            if (isConfirmDialogHoldingEscape()) return
             return false
         }
         if (id === "help") {
@@ -1091,83 +568,28 @@
         isOverlayOpen: isAnyOverlayOpen,
     })
 
-    function sectionOfSelected(id: string): BlockSection | undefined {
-        return ALL_SECTIONS.find(section => sectionList(section).some(item => String(item.id) === id))
-    }
-
-    function selectedBlockData(): Record<string, unknown> | undefined {
-        const id = activeSelectedId.value
-        if (!id) return undefined
-        if (activeSelectedPath.value) {
-            const blockYaml = flowYamlUtils.extractBlockWithPath({source: flowYaml.value, path: activeSelectedPath.value})
-            const item = blockYaml ? flowYamlUtils.parse<Record<string, unknown>>(blockYaml) : undefined
-            return item ? displayTaskOf(item) : undefined
-        }
-        const section = sectionOfSelected(id)
-        return section ? sectionList(section).find(item => String(item.id) === id) : undefined
-    }
-
-    function deleteSelected() {
-        const id = activeSelectedId.value
-        if (!id) return
-        if (activeSelectedPath.value) {
-            onDeleteAtPath(activeSelectedPath.value)
-            return
-        }
-        const section = sectionOfSelected(id)
-        if (section) onDelete(section, id)
-    }
-
-    function requestDeleteSelected() {
-        const id = activeSelectedId.value
-        const data = selectedBlockData()
-        if (!id || !data) return
-        const isFlowableBlock = isFlowable(data)
-        confirmDelete(id, isFlowableBlock, () => deleteSelected())
-    }
-
-    function duplicateSelected() {
-        const id = activeSelectedId.value
-        if (!id) return
-        if (activeSelectedPath.value) {
-            onDuplicateAtPath(activeSelectedPath.value)
-            return
-        }
-        const section = sectionOfSelected(id)
-        if (section) onDuplicate(section, id)
-    }
-
-    function moveFocused(direction: "up" | "down") {
-        const path = focusedBlockPath()
-        if (!path) return
-        const newYaml = moveBlockAtPath(flowYaml.value, path, direction)
-        if (newYaml === flowYaml.value) return
-        applyYaml(newYaml)
-        nextTick(() => focusedCard()?.scrollIntoView({block: "nearest"}))
-    }
-
-    function moveSelected(direction: "up" | "down") {
-        const id = activeSelectedId.value
-        if (!id) return
-        const path = activeSelectedPath.value
-        if (!path) {
-            const section = sectionOfSelected(id)
-            if (!section) return
-            const idx = sectionList(section).findIndex(item => String(item.id) === id)
-            if (idx < 0) return
-            const syntheticPath = `${section}[${idx}]`
-            applyYaml(moveBlockAtPath(flowYaml.value, syntheticPath, direction))
-        } else {
-            const newYaml = moveBlockAtPath(flowYaml.value, path, direction)
-            if (newYaml === flowYaml.value) return
-            const match = path.match(/^(.*)\[(\d+)\]$/)
-            if (match) {
-                const newIndex = direction === "up" ? parseInt(match[2], 10) - 1 : parseInt(match[2], 10) + 1
-                activeSelectedPath.value = `${match[1]}[${newIndex}]`
-            }
-            applyYaml(newYaml)
-        }
-    }
+    const {
+        confirmDialogOpen,
+        isConfirmDialogHoldingEscape,
+        requestDeleteFocused,
+        requestDeleteSelected,
+        duplicateSelected,
+        moveFocused,
+        moveSelected,
+    } = useBlockOperations({
+        t,
+        flowYaml,
+        applyYaml,
+        focus,
+        selectedId: activeSelectedId,
+        selectedPath: activeSelectedPath,
+        sectionList,
+        isFlowable,
+        deleteInSection: onDelete,
+        deleteAtPath: onDeleteAtPath,
+        duplicateInSection: onDuplicate,
+        duplicateAtPath: onDuplicateAtPath,
+    })
 
     const shortcutGroups = computed(buildShortcutGroups)
 

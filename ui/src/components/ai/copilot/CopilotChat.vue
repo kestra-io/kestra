@@ -126,7 +126,7 @@
     import Plus from "vue-material-design-icons/Plus.vue"
     import RobotOffOutline from "vue-material-design-icons/RobotOffOutline.vue"
     import * as AiApi from "@kestra-io/kestra-sdk/ai"
-    import type {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
+    import type {AgentMode, AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
     import logo from "../../../assets/copilot-illustration.png"
     import CopilotMessage from "./CopilotMessage.vue"
     import CopilotComposer from "./CopilotComposer.vue"
@@ -137,12 +137,12 @@
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext} from "./routeScope"
-    import type {Mode, ScopeBinding} from "./types"
+    import type {ScopeBinding} from "./types"
     import {useMiscStore} from "override/stores/misc"
 
     const props = withDefaults(defineProps<{
         /** Initial mode; defaults to EDIT. */
-        initialMode?: Mode
+        initialMode?: AgentMode
         /** Scope the user is focused on; sent as `additionalContext` on each turn. */
         inFocus?: ScopeBinding | null
         /** Surface variant: the right-side "dock" (default) or the full-width "page" home. */
@@ -153,7 +153,7 @@
     const route = useRoute()
     const miscStore = useMiscStore()
 
-    const mode = ref<Mode>(props.initialMode ?? "EDIT")
+    const mode = ref<AgentMode>(props.initialMode ?? "EDIT")
 
     // Context-awareness: when the copilot opens on a flow / execution / namespace page, send that
     // page as `inFocus` so the agent knows what the user is looking at. An explicit `inFocus` prop

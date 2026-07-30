@@ -36,9 +36,6 @@ export function useFlowEditorActions() {
     async function persistAll(draft?: boolean) {
         const isCreating = flowStore.isCreating
         const outcome = await flowStore.saveAll(draft)
-        if (isSuccessfulFlowSaveOutcome(outcome)) {
-            tourStore.recordSave()
-        }
 
         if (isCreating && outcome === "redirect_to_update") {
             await router.push({
@@ -77,10 +74,7 @@ export function useFlowEditorActions() {
 
     async function publishDraft() {
         try {
-            const outcome = await flowStore.publishDraft()
-            if (isSuccessfulFlowSaveOutcome(outcome)) {
-                tourStore.recordSave()
-            }
+            await flowStore.publishDraft()
             await flushDirtyFiles()
         } catch (error: any) {
             if (error?.status === 401) {
@@ -95,9 +89,6 @@ export function useFlowEditorActions() {
             const outcome = await flowStore.saveAll()
             const hasInputs = Array.isArray(flowStore.flowParsed?.inputs)
                 && flowStore.flowParsed.inputs.length > 0
-            if (isSuccessfulFlowSaveOutcome(outcome)) {
-                tourStore.recordSave()
-            }
 
             if (
                 isSuccessfulFlowSaveOutcome(outcome)
@@ -117,7 +108,6 @@ export function useFlowEditorActions() {
                 })
 
                 executionsStore.execution = response
-                tourStore.recordExecution()
 
                 await router.push({
                     name: "executions/update/gantt",

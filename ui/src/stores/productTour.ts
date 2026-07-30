@@ -4,7 +4,7 @@ import {defineStore} from "pinia"
 import {TOUR_FLOW_ID, TOUR_NAMESPACE, TOUR_REPORT_FLOW_ID} from "../components/onboarding/tour/tourFlows"
 
 export type ProductTourStatus = "not_started" | "in_progress" | "completed" | "skipped";
-export type ProductTourMode = "guided" | "self_serve" | null;
+export type ProductTourMode = "guided" | null;
 
 /**
  * What the tour created on the instance so far. Scenes read it to navigate to the right flow or
@@ -48,8 +48,6 @@ interface ProductTourState {
     currentStepId: string | null;
     startedAt: string | null;
     completedAt: string | null;
-    saveCount: number;
-    executionCount: number;
     tour: TourProgress;
 }
 
@@ -85,8 +83,6 @@ const defaultState = (): ProductTourState => ({
     currentStepId: null,
     startedAt: null,
     completedAt: null,
-    saveCount: 0,
-    executionCount: 0,
     tour: defaultTourState(),
 })
 
@@ -172,18 +168,6 @@ export const useProductTourStore = defineStore("productTour", () => {
         }
     }
 
-    const startSelfServe = () => {
-        state.value = {
-            ...defaultState(),
-            instanceUuid: state.value.instanceUuid,
-            status: "completed",
-            mode: "self_serve",
-            completedAt: new Date().toISOString(),
-        }
-    }
-
-
-
     const skip = () => {
         state.value.status = "skipped"
         state.value.completedAt = new Date().toISOString()
@@ -203,20 +187,6 @@ export const useProductTourStore = defineStore("productTour", () => {
         state.value.tour = {...state.value.tour, ...patch}
     }
 
-    const recordSave = () => {
-        if (!isGuidedActive.value) {
-            return
-        }
-        state.value.saveCount += 1
-    }
-
-    const recordExecution = () => {
-        if (!isGuidedActive.value) {
-            return
-        }
-        state.value.executionCount += 1
-    }
-
     load()
     watch(state, persist, {deep: true})
 
@@ -226,7 +196,6 @@ export const useProductTourStore = defineStore("productTour", () => {
         isDismissed,
         reset,
         startGuided,
-        startSelfServe,
         skip,
         complete,
         setStep,
@@ -234,7 +203,5 @@ export const useProductTourStore = defineStore("productTour", () => {
         syncInstance,
         dismissMenuEntry,
         dismissBlueprintsNudge,
-        recordSave,
-        recordExecution,
     }
 })

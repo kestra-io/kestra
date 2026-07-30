@@ -1,5 +1,6 @@
 import {useRoute, useRouter} from "vue-router"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
+import {State} from "@kestra-io/design-system"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useExecutionsStore} from "../../../stores/executions"
@@ -26,7 +27,7 @@ const FLOW_TAB = {
     revisions: `${FLOW_PARENT_ROUTE}/revisions`,
     triggers: `${FLOW_PARENT_ROUTE}/triggers`,
 } as const
-const TERMINAL_STATES = ["SUCCESS", "WARNING", "FAILED", "KILLED", "CANCELLED"]
+const TERMINAL_STATES: readonly string[] = [State.SUCCESS, State.WARNING, State.FAILED, State.KILLED, State.CANCELLED]
 
 /** Kestra webhook keys are opaque strings; a random one keeps two instances from sharing a URL. */
 const randomWebhookKey = () => {
@@ -366,7 +367,6 @@ export function useTourActions() {
             labels: [TOUR_MANUAL_LABEL],
         })
         tourStore.setTourState({lastExecutionId: execution.id})
-        tourStore.recordExecution()
         await openExecution(execution.id, flowId)
         return waitForExecution(execution.id)
     }

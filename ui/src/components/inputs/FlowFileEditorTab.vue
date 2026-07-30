@@ -67,7 +67,7 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"
-    import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow"
+    import {useFlowStore} from "../../stores/flow"
     import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
@@ -297,10 +297,6 @@
                     tenant: route.params?.tenant,
                 },
             })
-        }
-
-        if (isSuccessfulFlowSaveOutcome(result)) {
-            tourStore.recordSave()
         }
     }
 

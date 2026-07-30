@@ -36,22 +36,6 @@ describe("product tour store", () => {
         expect(store.state.tour.introSeen).toBe(false)
     })
 
-    it("increments save count only while the tour is active", async () => {
-        const {useProductTourStore} = await import("../../../src/stores/productTour")
-        const store = useProductTourStore()
-
-        store.recordSave()
-        expect(store.state.saveCount).toBe(0)
-
-        store.startGuided()
-        store.recordSave()
-        expect(store.state.saveCount).toBe(1)
-
-        store.complete()
-        store.recordSave()
-        expect(store.state.saveCount).toBe(1)
-    })
-
     it("keeps track of what the tour created", async () => {
         const {useProductTourStore} = await import("../../../src/stores/productTour")
         const store = useProductTourStore()

@@ -6,7 +6,9 @@
  * than generated. They are only ever written to the `tutorial` namespace while the tour is running.
  */
 
-export const TOUR_NAMESPACE = "tutorial"
+import {TUTORIAL_NAMESPACE} from "../../../utils/constants"
+
+export const TOUR_NAMESPACE = TUTORIAL_NAMESPACE
 export const TOUR_FLOW_ID = "order_summary"
 export const TOUR_REPORT_FLOW_ID = "daily_report"
 export const TOUR_WEBHOOK_TRIGGER_ID = "new_order"

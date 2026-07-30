@@ -1,6 +1,5 @@
 import _cloneDeep from "lodash/cloneDeep"
 import {useExecutionsStore, type Execution} from "../stores/executions"
-import {useProductTourStore} from "../stores/productTour"
 import {Router, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
 import {flattenInputs} from "./inputs"
@@ -81,7 +80,6 @@ export const executeTask = (
 ): Promise<Execution> => {
     const formData = normalizeInputValues(submitor, flattenInputs(flow.inputs), values)
     const executionsStore = useExecutionsStore()
-    const productTourStore = useProductTourStore()
 
     return executionsStore
         .triggerExecution({
@@ -91,7 +89,6 @@ export const executeTask = (
         })
         .then(response => {
             executionsStore.execution = response
-            productTourStore.recordExecution()
             if (options.redirect) {
                 const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, localStorage.getItem("executeDefaultTab"), "gantt")
                 if (options.newTab) {

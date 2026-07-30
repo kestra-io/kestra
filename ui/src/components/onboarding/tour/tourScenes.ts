@@ -305,7 +305,7 @@ export const TOUR_SCENES: TourScene[] = [
         },
         // One click sends the event. The dialog with an editable payload stays available from the
         // trigger row for anyone who wants to change it, and sending from there counts just as much.
-        action: async ({actions, store}) => {
+        action: async ({actions}) => {
             const result = await actions.sendTestEvent(TOUR_TEST_EVENT_PAYLOAD)
             if (!result.ok) {
                 throw new TourSceneError("onboarding.tour.errors.test_event", {status: result.status})
@@ -313,7 +313,6 @@ export const TOUR_SCENES: TourScene[] = [
             if (result.executionId) {
                 await actions.waitForExecution(result.executionId)
             }
-            store.recordExecution()
         },
         completedByUser: ({store}) => Boolean(store.state.tour.eventExecutionId),
     },

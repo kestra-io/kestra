@@ -27,7 +27,7 @@ interface TrackOnboardingOptions {
     event: OnboardingTourEvent;
     /** The step it happened on, reported as the `action` property. */
     action?: string | null;
-    mode?: "guided" | "self_serve" | null;
+    mode?: "guided" | null;
     additional?: Record<string, unknown>;
 }
 

@@ -8,17 +8,11 @@
                 {{ t("onboarding.tour.menu") }}
             </span>
         </RouterLink>
-        <!-- Without this, the entry would only go away by taking the tour to the end. -->
-        <KsTooltip :content="t('onboarding.tour.actions.dismiss')">
-            <KsButton
-                link
-                size="small"
-                class="product-tour-dismiss"
-                :icon="Close"
-                :aria-label="t('onboarding.tour.actions.dismiss')"
-                @click="dismiss"
-            />
-        </KsTooltip>
+        <span class="product-tour-dismiss">
+            <KsIconButton :tooltip="t('onboarding.tour.actions.dismiss')" placement="top" @click="dismiss">
+                <Close />
+            </KsIconButton>
+        </span>
     </div>
 </template>
 

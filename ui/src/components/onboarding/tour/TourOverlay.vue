@@ -76,10 +76,13 @@
                     </span>
                 </div>
 
-                <div v-if="scene.milestone && isReady" class="milestone">
-                    <CheckCircle :size="16" />
-                    <span>{{ t(sceneKey("milestone")) }}</span>
-                </div>
+                <KsTag
+                    v-if="scene.milestone && isReady"
+                    class="milestone"
+                    type="success"
+                    :icon="CheckCircle"
+                    :label="t(sceneKey('milestone'))"
+                />
 
                 <h3 class="guide-title">
                     {{ t(sceneKey("title")) }}
@@ -705,16 +708,7 @@
     }
 
     .milestone {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
         margin-top: var(--ks-spacing-3);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        border-radius: var(--ks-radius-sm);
-        color: var(--ks-status-success);
-        background: color-mix(in srgb, var(--ks-status-success) 12%, transparent);
-        font-size: var(--ks-font-size-sm);
-        font-weight: var(--ks-font-weight-semibold);
     }
 
     .guide-title {

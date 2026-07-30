@@ -12,13 +12,8 @@
             {{ url }}
         </p>
 
-        <!-- Plain labels rather than KsFormItem: form items put the label beside the control, and
-             an editor reads better underneath its label. -->
-        <div class="test-event-field">
-            <label class="test-event-label" for="test-event-payload">
-                {{ t("test_event.payload") }}
-            </label>
-            <div id="test-event-payload" class="test-event-editor">
+        <KsForm labelPosition="top">
+            <KsFormItem :label="t('test_event.payload')">
                 <KsEditor
                     v-bind="editorBindings"
                     v-model="payload"
@@ -27,21 +22,17 @@
                     :navbar="false"
                     lang="json"
                 />
-            </div>
-        </div>
+            </KsFormItem>
 
-        <div class="test-event-field">
-            <label class="test-event-label" for="test-event-headers">
-                {{ t("test_event.headers") }}
-            </label>
-            <KsInput
-                id="test-event-headers"
-                v-model="headers"
-                type="textarea"
-                :rows="2"
-                placeholder="X-Source: my-shop"
-            />
-        </div>
+            <KsFormItem :label="t('test_event.headers')">
+                <KsInput
+                    v-model="headers"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="X-Source: my-shop"
+                />
+            </KsFormItem>
+        </KsForm>
 
         <KsAlert v-if="result && result.ok" type="success" :closable="false">
             <template #title>
@@ -186,23 +177,6 @@
         word-break: break-all;
     }
 
-    .test-event-field {
-        margin-bottom: var(--ks-spacing-4);
-    }
-
-    .test-event-label {
-        display: block;
-        margin-bottom: var(--ks-spacing-1);
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-xs);
-        font-weight: var(--ks-font-weight-semibold);
-    }
-
-    .test-event-editor {
-        border: var(--ks-border-width-thin) solid var(--ks-border-default);
-        border-radius: var(--ks-radius-sm);
-        overflow: hidden;
-    }
 
     .test-event-link {
         margin-left: var(--ks-spacing-2);

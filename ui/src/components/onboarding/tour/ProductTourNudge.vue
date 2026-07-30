@@ -4,16 +4,11 @@
         spare, so the tour is offered here as well. It stays until it is closed here.
     -->
     <div v-if="visible && isBlueprints" class="product-tour-nudge">
-        <KsTooltip :content="t('onboarding.tour.actions.dismiss')">
-            <KsButton
-                link
-                size="small"
-                class="product-tour-nudge__dismiss"
-                :icon="Close"
-                :aria-label="t('onboarding.tour.actions.dismiss')"
-                @click="dismiss"
-            />
-        </KsTooltip>
+        <span class="product-tour-nudge__dismiss">
+            <KsIconButton :tooltip="t('onboarding.tour.actions.dismiss')" placement="top" @click="dismiss">
+                <Close />
+            </KsIconButton>
+        </span>
         <p class="product-tour-nudge__title">
             {{ t("onboarding.tour.nudge.title") }}
         </p>

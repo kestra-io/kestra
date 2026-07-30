@@ -266,6 +266,71 @@ const messages = {
             search_task_placeholder: "Search task types...",
             switch_case_key_placeholder: "New case key",
             then_required_warning: "Then branch is required",
+            all_apps: "All apps",
+            app_actions: "{count} actions",
+            block_deleted: "{name} deleted",
+            inserting_into: "Inserting into {section}",
+            kbd_add: "add",
+            kbd_close: "close",
+            kbd_navigate: "navigate",
+            no_recent: "No recent task types yet",
+            picker_more_results: "{count} more, refine your search",
+            tab_apps: "By app",
+            tab_recent: "Recent",
+            tab_suggested: "Suggested",
+            undo: "Undo",
+            command_menu: {
+                context_flow: "context: flow",
+                context_selected: "context: {name}",
+                delete: "Delete {name}",
+                duplicate: "Duplicate {name}",
+                goto: "Go to {section}",
+                group_block: "This block",
+                group_flow: "Flow",
+                group_goto: "Go to",
+                group_insert: "Insert",
+                insert_after: "Insert task after {name}",
+                insert_at_end: "Insert task at end of Tasks",
+                insert_before: "Insert task before {name}",
+                insert_in_section: "Insert task in {section}",
+                insert_kind: "Insert {kind}",
+                no_match: "No match",
+                open: "Open {name}",
+                save: "Save flow",
+                search_placeholder: "Type a command or search a task…",
+                title: "Command menu",
+            },
+            footer: {
+                canvas: "Canvas",
+                close_panel: "Close panel",
+                command_menu: "Command menu",
+                editing: "Editing block",
+                inserting: "Inserting",
+                selected: "Selected · {name}",
+            },
+            shortcuts: {
+                add_after: "Insert a block after selection",
+                add_before: "Insert a block before selection",
+                add_task: "Quick insert at cursor",
+                clear: "Close / clear selection",
+                collapse_expand: "Collapse / expand",
+                command_palette: "Command menu (contextual)",
+                group_edit: "Edit",
+                group_global: "Global",
+                group_insert: "Insert",
+                group_navigate: "Navigate",
+                move_between: "Move selection",
+                open: "Open selected block",
+                open_split: "Open selected block in split view",
+                or: "or",
+                reorder: "Reorder up / down",
+                save: "Save flow",
+                step_into: "Expand / step into a group",
+                step_out: "Collapse / step out to parent",
+                title: "Keyboard shortcuts",
+                toggle: "This help",
+                undo: "Undo",
+            },
         },
         no_code: {
             sections: {tasks: "Tasks", triggers: "Triggers"},
@@ -730,8 +795,8 @@ describe("BlockEditor", () => {
             await wrapper.vm.$nextTick()
 
             // Then — insertTask uses the primed parentPath
-            const vm = wrapper.vm as unknown as {insertTask: (fqcn: string) => void}
-            vm.insertTask("io.kestra.plugin.core.log.Log")
+            const vm = wrapper.vm as unknown as {picker: {insertTask: (fqcn: string) => void}}
+            vm.picker.insertTask("io.kestra.plugin.core.log.Log")
             await wrapper.vm.$nextTick()
 
             const {flowYamlUtils} = await import("@kestra-io/topology")
@@ -739,19 +804,30 @@ describe("BlockEditor", () => {
             expect(parsed.tasks[1].then).toHaveLength(2)
         })
 
+        function pickerNames() {
+            const picker = document.body.querySelector("[data-test='block-editor-picker']")
+            return [...(picker?.querySelectorAll(".block-editor-picker-name") ?? [])].map(n => n.textContent)
+        }
+
         it("populates the picker list from pluginsStore plugin data", async () => {
-            // Given
-            wrapper = mount(BlockEditor, makeConfig())
-            const vm = wrapper.vm as unknown as {
-                filteredCommonTypes: Array<{fqcn: string; label: string; group: string}>
+            vi.useFakeTimers()
+            try {
+                // Given
+                wrapper = mount(BlockEditor, makeConfig())
+                await wrapper.find("[data-test='block-editor-add-task']").trigger("click")
+                const vm = wrapper.vm as unknown as {picker: {taskPickerSearch: {value: string}}}
+
+                // When — a search that matches every mock entry
+                vm.picker.taskPickerSearch.value = "io.kestra"
+                await wrapper.vm.$nextTick()
+                vi.advanceTimersByTime(200)
+                await wrapper.vm.$nextTick()
+
+                // Then — picker entries come from mockPlugins
+                expect(pickerNames()).toEqual(["Log", "If"])
+            } finally {
+                vi.useRealTimers()
             }
-
-            // When (plugins are already set in mock)
-
-            // Then — picker entries come from mockPlugins
-            const fqcns = vm.filteredCommonTypes.map(e => e.fqcn)
-            expect(fqcns).toContain("io.kestra.plugin.core.log.Log")
-            expect(fqcns).toContain("io.kestra.plugin.core.flow.If")
         })
 
         it("filters picker entries by search text (after debounce)", async () => {
@@ -759,21 +835,18 @@ describe("BlockEditor", () => {
             try {
                 // Given
                 wrapper = mount(BlockEditor, makeConfig())
-                const vm = wrapper.vm as unknown as {
-                    taskPickerSearch: string
-                    filteredCommonTypes: Array<{fqcn: string; label: string; group: string}>
-                }
+                await wrapper.find("[data-test='block-editor-add-task']").trigger("click")
+                const vm = wrapper.vm as unknown as {picker: {taskPickerSearch: {value: string}}}
 
                 // When — the search input is debounced before filtering
-                vm.taskPickerSearch = "If"
+                vm.picker.taskPickerSearch.value = "If"
                 await wrapper.vm.$nextTick()
+                expect(pickerNames()).toEqual(["Log", "If"])
                 vi.advanceTimersByTime(200)
                 await wrapper.vm.$nextTick()
 
                 // Then
-                const fqcns = vm.filteredCommonTypes.map(e => e.fqcn)
-                expect(fqcns).toContain("io.kestra.plugin.core.flow.If")
-                expect(fqcns).not.toContain("io.kestra.plugin.core.log.Log")
+                expect(pickerNames()).toEqual(["If"])
             } finally {
                 vi.useRealTimers()
             }
@@ -992,7 +1065,7 @@ describe("BlockEditor", () => {
             const vm = wrapper.vm as unknown as {
                 focusedId?: string
                 taskPickerVisible: boolean
-                taskPickerParentPath?: string
+                picker: {insertTask: (fqcn: string) => void}
                 commandMenuItems: Array<{id: string; title: string}>
             }
 
@@ -1013,9 +1086,14 @@ describe("BlockEditor", () => {
             windowKeydown({key: "a"})
             await wrapper.vm.$nextTick()
 
-            // Then
+            // Then — inserting from it lands in that lane, not the flow-level Errors section
             expect(vm.taskPickerVisible).toBe(true)
-            expect(vm.taskPickerParentPath).toBe("tasks[1].errors")
+            vm.picker.insertTask("io.kestra.plugin.core.log.Log")
+            await wrapper.vm.$nextTick()
+            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {errors?: unknown[]}[]; errors?: unknown[]}
+            expect(parsed.tasks[1].errors).toHaveLength(1)
+            expect(parsed.errors).toBeUndefined()
         })
 
         it("ignores Delete on an empty-section sentinel instead of opening a confirm dialog", async () => {
@@ -1260,6 +1338,386 @@ tasks:
             expect(parsed.tasks[0].then[0].id).toBe("then_b")
             expect(parsed.tasks[0].then[1].id).toBe("then_c")
             expect(parsed.tasks[0].then[2].id).toBe("then_a")
+        })
+    })
+
+    describe("footer status bar", () => {
+        function footerText() {
+            return wrapper!.find("[data-test='block-editor-footer']").text()
+        }
+
+        it("names the canvas and offers the base hints when nothing is focused", () => {
+            // Given
+
+            // When
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // Then
+            const text = footerText()
+            expect(text).toContain("Canvas")
+            expect(text).toContain("This help")
+            expect(text).toContain("Move selection")
+            expect(text).toContain("Open selected block")
+            expect(text).toContain("Insert a block after selection")
+            expect(text).toContain("Command menu (contextual)")
+            expect(text).not.toContain("Insert a block before selection")
+            expect(text).not.toContain("Reorder up / down")
+        })
+
+        it("renders each hint's keys through their symbol, deduplicated", () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            const keys = wrapper.findAll("[data-test='block-editor-footer'] kbd").map(k => k.text())
+
+            // Then — Meta+Shift+p and Control+Shift+p collapse to a single symbol
+            expect(keys).toEqual(["?", "↑", "↓", "↵", "a", "⌘⇧P"])
+        })
+
+        it("offers insert-before and reorder once a real block is focused", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+
+            // When
+            vm.focusedId = "log_task"
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const text = footerText()
+            expect(text).toContain("Selected · log_task")
+            expect(text).toContain("Insert a block before selection")
+            expect(text).toContain("Reorder up / down")
+        })
+
+        it("withholds insert-before and reorder on an empty section's sentinel", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+
+            // When — the sentinel stands for the section itself, not a block
+            vm.focusedId = "__section:triggers"
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const text = footerText()
+            expect(text).toContain("Selected · Triggers")
+            expect(text).not.toContain("Insert a block before selection")
+            expect(text).not.toContain("Reorder up / down")
+        })
+
+        it("names the lane when an empty lane sentinel inside a flowable is focused", async () => {
+            // Given
+            mockFlowYaml.value = YAML_WITH_FLOWABLE
+            wrapper = mount(BlockEditor, makeConfig())
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+
+            // When
+            vm.focusedId = "__lane:tasks[1].errors"
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(footerText()).toContain("Selected · Errors")
+        })
+
+        it("swaps to the list hints while the picker is open", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            await wrapper.find("[data-test='block-editor-add-task']").trigger("click")
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const text = footerText()
+            expect(text).toContain("Inserting")
+            expect(text).toContain("navigate")
+            expect(text).toContain("add")
+            expect(text).toContain("close")
+            expect(text).not.toContain("This help")
+        })
+    })
+
+    describe("delete undo badge", () => {
+        it("announces the deleted block and restores it when undo is clicked", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            const before = mockFlowYaml.value
+
+            // When
+            await wrapper.find("[data-test='block-card-delete']").trigger("click")
+            await wrapper.vm.$nextTick()
+
+            // Then — the badge names the block that went away
+            const badge = wrapper.find("[data-test='block-editor-undo']")
+            expect(badge.exists()).toBe(true)
+            expect(wrapper.find(".block-editor-undo-label").text()).toBe("log_task deleted")
+            expect(mockFlowYaml.value).not.toBe(before)
+
+            // When
+            await badge.trigger("click")
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(mockFlowYaml.value).toBe(before)
+            expect(wrapper.find("[data-test='block-editor-undo']").exists()).toBe(false)
+        })
+
+        it("dismisses the badge on the next edit instead of leaving it stale", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            await wrapper.find("[data-test='block-card-delete']").trigger("click")
+            await wrapper.vm.$nextTick()
+            expect(wrapper.find("[data-test='block-editor-undo']").exists()).toBe(true)
+
+            // When — any further edit supersedes the pending undo
+            const vm = wrapper.vm as unknown as {picker: {insertTask: (fqcn: string) => void}}
+            vm.picker.insertTask("io.kestra.plugin.core.log.Log")
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(wrapper.find("[data-test='block-editor-undo']").exists()).toBe(false)
+        })
+
+        it("keeps undoing back through several edits", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            const original = mockFlowYaml.value
+            const vm = wrapper.vm as unknown as {picker: {insertTask: (fqcn: string) => void}; performUndo: () => void}
+            vm.picker.insertTask("io.kestra.plugin.core.log.Log")
+            await wrapper.vm.$nextTick()
+            const afterFirst = mockFlowYaml.value
+            vm.picker.insertTask("io.kestra.plugin.core.http.Request")
+            await wrapper.vm.$nextTick()
+
+            // When
+            vm.performUndo()
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(mockFlowYaml.value).toBe(afterFirst)
+
+            // When
+            vm.performUndo()
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(mockFlowYaml.value).toBe(original)
+        })
+    })
+
+    describe("task picker views", () => {
+        function pickerEl() {
+            return document.body.querySelector("[data-test='block-editor-picker']")
+        }
+
+        async function openPicker() {
+            await wrapper!.find("[data-test='block-editor-add-task']").trigger("click")
+            await wrapper!.vm.$nextTick()
+        }
+
+        it("lists the suggested types for the section it was opened on", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            await openPicker()
+
+            // Then — both mock plugins are suggested for the tasks section
+            const names = [...pickerEl()!.querySelectorAll(".block-editor-picker-name")].map(n => n.textContent)
+            expect(names).toEqual(["Log", "If"])
+            expect(pickerEl()!.textContent).toContain("Inserting into Tasks")
+        })
+
+        it("remembers an inserted type and lists it under the recent tab", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            await openPicker()
+
+            // When
+            const vm = wrapper.vm as unknown as {picker: {insertTask: (fqcn: string) => void}}
+            vm.picker.insertTask("io.kestra.plugin.core.flow.If")
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(JSON.parse(localStorage.getItem("blockEditor.recentTaskTypes") ?? "[]"))
+                .toEqual(["io.kestra.plugin.core.flow.If"])
+
+            // When — a later open reads recents back from storage
+            await openPicker()
+            pickerEl()!.querySelector<HTMLElement>("[data-test='block-editor-picker-tab-recent']")!.click()
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const names = [...pickerEl()!.querySelectorAll(".block-editor-picker-name")].map(n => n.textContent)
+            expect(names).toEqual(["If"])
+        })
+
+        it("drills into an app group and walks back out", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            await openPicker()
+
+            // When
+            pickerEl()!.querySelector<HTMLElement>("[data-test='block-editor-picker-tab-apps']")!.click()
+            await wrapper.vm.$nextTick()
+
+            // Then — one group, carrying its action count
+            const groups = [...pickerEl()!.querySelectorAll(".block-editor-picker-app")]
+            expect(groups).toHaveLength(1)
+            expect(groups[0].textContent).toContain("Core")
+            expect(groups[0].textContent).toContain("2 actions")
+
+            // When
+            ;(groups[0] as HTMLElement).click()
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const names = [...pickerEl()!.querySelectorAll(".block-editor-picker-name")].map(n => n.textContent)
+            expect(names).toEqual(["Log", "If"])
+            expect(pickerEl()!.textContent).toContain("All apps")
+
+            // When
+            pickerEl()!.querySelector<HTMLElement>(".block-editor-picker-back")!.click()
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(pickerEl()!.querySelectorAll(".block-editor-picker-app")).toHaveLength(1)
+        })
+
+        it("reports how many search matches are hidden beyond the cap", async () => {
+            vi.useFakeTimers()
+            const extras = Array.from({length: 60}, (_, i) => ({
+                cls: `io.kestra.plugin.core.bulk.Bulk${i}`,
+                title: `Bulk ${i}`,
+            }))
+            mockPlugins[0].tasks.push(...extras)
+            try {
+                // Given
+                wrapper = mount(BlockEditor, makeConfig())
+                await openPicker()
+                const vm = wrapper.vm as unknown as {picker: {taskPickerSearch: {value: string}; pickerHiddenCount: {value: number}}}
+
+                // When
+                vm.picker.taskPickerSearch.value = "bulk"
+                await wrapper.vm.$nextTick()
+                vi.advanceTimersByTime(200)
+                await wrapper.vm.$nextTick()
+
+                // Then — 60 matches, 50 shown
+                expect(vm.picker.pickerHiddenCount.value).toBe(10)
+                expect(pickerEl()!.querySelectorAll(".block-editor-picker-row")).toHaveLength(50)
+                expect(pickerEl()!.textContent).toContain("10 more, refine your search")
+            } finally {
+                mockPlugins[0].tasks.splice(mockPlugins[0].tasks.length - extras.length, extras.length)
+                vi.useRealTimers()
+            }
+        })
+
+        it("inserts the highlighted entry when Enter is pressed in the list", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            await openPicker()
+            const picker = pickerEl()!
+
+            // When — the first entry starts highlighted, so one step down lands on If
+            picker.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowDown", bubbles: true, cancelable: true}))
+            await wrapper.vm.$nextTick()
+            picker.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", bubbles: true, cancelable: true}))
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
+            expect(parsed.tasks).toHaveLength(3)
+            expect(parsed.tasks[2].type).toBe("io.kestra.plugin.core.flow.If")
+            expect(pickerEl()).toBeNull()
+        })
+    })
+
+    describe("shortcuts help", () => {
+        it("lists every keymap group but hides the clear binding", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            window.dispatchEvent(new KeyboardEvent("keydown", {key: "?", bubbles: true, cancelable: true}))
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const help = wrapper.find(".block-editor-shortcuts")
+            expect(help.exists()).toBe(true)
+            const headings = wrapper.findAll(".block-editor-shortcuts-heading").map(h => h.text())
+            expect(headings).toEqual(["Navigate", "Insert", "Edit", "Global"])
+            expect(help.text()).toContain("Move selection")
+            expect(help.text()).toContain("Save flow")
+            expect(help.text()).not.toContain("Close / clear selection")
+        })
+
+        it("hides the footer while the help overlay is open", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            expect(wrapper.find("[data-test='block-editor-footer']").exists()).toBe(true)
+
+            // When
+            window.dispatchEvent(new KeyboardEvent("keydown", {key: "?", bubbles: true, cancelable: true}))
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(wrapper.find("[data-test='block-editor-footer']").exists()).toBe(false)
+        })
+    })
+
+    describe("command menu context", () => {
+        async function openCommandMenu() {
+            const vm = wrapper!.vm as unknown as {commandMenuOpen: boolean}
+            vm.commandMenuOpen = true
+            await wrapper!.vm.$nextTick()
+            return wrapper!.findComponent({name: "BlockCommandMenu"})
+        }
+
+        it("describes the flow itself when no block is focused", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            const menu = await openCommandMenu()
+
+            // Then
+            expect(menu.props("contextLabel")).toBe("context: flow")
+            const titles = (menu.props("items") as {title: string}[]).map(i => i.title)
+            expect(titles).toContain("Insert task at end of Tasks")
+        })
+
+        it("describes the focused block and targets it for insertion", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+
+            // When
+            const menu = await openCommandMenu()
+
+            // Then
+            expect(menu.props("contextLabel")).toBe("context: log_task")
+            const titles = (menu.props("items") as {title: string}[]).map(i => i.title)
+            expect(titles).toContain("Insert task after log_task")
+        })
+
+        it("describes an empty section by its label when its sentinel is focused", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "__section:triggers"
+
+            // When
+            const menu = await openCommandMenu()
+
+            // Then
+            expect(menu.props("contextLabel")).toBe("context: Triggers")
+            const titles = (menu.props("items") as {title: string}[]).map(i => i.title)
+            expect(titles).toContain("Insert task in Triggers")
         })
     })
 })

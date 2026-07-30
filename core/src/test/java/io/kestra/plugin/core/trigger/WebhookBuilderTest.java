@@ -70,7 +70,7 @@ public class WebhookBuilderTest {
 
         HttpRequest request = HttpRequest.of(URI.create("/api/v1/main/executions/webhook/io.kestra.tests/test-flow/testkey"));
 
-        var webhookContext = new WebhookContext(request, null, flow, webhook, webhookService, IdUtils.create());
+        var webhookContext = new WebhookContext(request, null, flow, webhook, webhookService, IdUtils.create(), null);
         var evaluate = webhook.evaluate(webhookContext);
 
         assertThat(evaluate).isNotNull();

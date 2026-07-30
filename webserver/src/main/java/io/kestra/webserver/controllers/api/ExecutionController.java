@@ -94,7 +94,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
-import io.kestra.webserver.services.WebhookMultipartService;
+import io.kestra.webserver.services.WebhookBodyService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -246,7 +246,7 @@ public class ExecutionController {
     private WebhookService webhookService;
 
     @Inject
-    private WebhookMultipartService webhookMultipartService;
+    private WebhookBodyService webhookBodyService;
 
     @Inject
     private AsyncOperationWaiter asyncOperationWaiter;
@@ -573,9 +573,10 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by POST webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
     @RequestBody(
-        description = "The webhook payload, of any content type. A `multipart/form-data` payload is handled by a " +
-            "dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as " +
-            "`trigger.parts`, its other parts as `trigger.formFields`.",
+        description = "The webhook payload, of any content type. What the flow sees of it depends on the " +
+            "`fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A " +
+            "`multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's " +
+            "internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.",
         content = {
             @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
             @Content(
@@ -595,8 +596,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<byte[]> request) throws IllegalVariableEvaluationException {
-        return this.webhook(namespace, id, key, path, MicronautHttpService.from(request));
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
     // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
@@ -641,8 +642,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<byte[]> request) throws IllegalVariableEvaluationException {
-        return this.webhook(namespace, id, key, path, MicronautHttpService.from(request));
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -650,9 +651,10 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by PUT webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
     @RequestBody(
-        description = "The webhook payload, of any content type. A `multipart/form-data` payload is handled by a " +
-            "dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as " +
-            "`trigger.parts`, its other parts as `trigger.formFields`.",
+        description = "The webhook payload, of any content type. What the flow sees of it depends on the " +
+            "`fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A " +
+            "`multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's " +
+            "internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.",
         content = {
             @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
             @Content(
@@ -672,8 +674,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<byte[]> request) throws IllegalVariableEvaluationException {
-        return this.webhook(namespace, id, key, path, MicronautHttpService.from(request));
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        return this.webhook(namespace, id, key, path, request);
     }
 
     /**
@@ -695,26 +697,53 @@ public class ExecutionController {
         // Minted before the parts are read, so that they are stored under the execution that will carry them.
         String executionId = IdUtils.create();
 
-        return webhookMultipartService
+        return webhookBodyService
             .collect(parts, flow, executionId, request.getContentType().map(MediaType::getName).orElse(MediaType.MULTIPART_FORM_DATA))
             .flatMap(body ->
             {
                 try {
-                    return this.webhook(maybeFlow, key, path, MicronautHttpService.from(request, body), executionId);
-                } catch (IllegalVariableEvaluationException e) {
+                    return this.webhook(maybeFlow, key, path, MicronautHttpService.from(request, body), executionId, null);
+                } catch (RuntimeException | IllegalVariableEvaluationException e) {
+                    // The call was refused after its parts were stored under an execution that will not exist.
+                    webhookBodyService.deleteStored(flow, executionId);
                     return Mono.error(e);
                 }
             });
     }
 
+    /**
+     * Read the body of a webhook request as the trigger it reaches asks for it, then evaluate the webhook with it.
+     * The webhook is resolved first: a request that matches none must have neither its body stored nor its bytes
+     * carried into the server.
+     */
     private Mono<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
         String path,
-        io.kestra.core.http.HttpRequest request) throws IllegalVariableEvaluationException {
-        Optional<Flow> find = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
-        return webhook(find, key, path, request);
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+        Flow flow = executableFlow(maybeFlow);
+        AbstractWebhookTrigger webhook = findWebhook(flow, key);
+
+        // Minted before the body is read, so that a stored body lives under the execution that will carry it.
+        String executionId = IdUtils.create();
+        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook.getFetchType());
+
+        try {
+            return this.webhook(
+                maybeFlow,
+                key,
+                path,
+                MicronautHttpService.from(request, body.requestBody()),
+                executionId,
+                body.storedUri()
+            );
+        } catch (RuntimeException | IllegalVariableEvaluationException e) {
+            // The call was refused after its body was stored under an execution that will not exist.
+            webhookBodyService.deleteStored(flow, executionId);
+            throw e;
+        }
     }
 
     protected Mono<HttpResponse<?>> webhook(
@@ -722,7 +751,7 @@ public class ExecutionController {
         String key,
         String path,
         io.kestra.core.http.HttpRequest request) throws IllegalVariableEvaluationException {
-        return webhook(maybeFlow, key, path, request, IdUtils.create());
+        return webhook(maybeFlow, key, path, request, IdUtils.create(), null);
     }
 
     /**
@@ -730,13 +759,16 @@ public class ExecutionController {
      *
      * @param executionId the identifier of the execution the call creates, minted by the caller when the request
      *        had to be read before the execution could be created, e.g. to store its file parts
+     * @param storedBodyUri the URI the body of the request was stored under, {@code null} unless the trigger
+     *        fetches its body as {@link AbstractWebhookTrigger.FetchType#STORE}
      */
     protected Mono<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         String path,
         io.kestra.core.http.HttpRequest request,
-        String executionId) throws IllegalVariableEvaluationException {
+        String executionId,
+        URI storedBodyUri) throws IllegalVariableEvaluationException {
         Flow flow = executableFlow(maybeFlow);
         final AbstractWebhookTrigger webhook = findWebhook(flow, key);
         this.onWebhookMatched(flow, webhook);
@@ -748,7 +780,8 @@ public class ExecutionController {
             flow,
             webhook,
             webhookService,
-            executionId
+            executionId,
+            storedBodyUri
         );
 
         // Call evaluate and create a failed execution if exception occurs

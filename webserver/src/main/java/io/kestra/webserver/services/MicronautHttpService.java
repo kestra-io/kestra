@@ -48,7 +48,7 @@ public abstract class MicronautHttpService {
                 .content(inputStream)
                 .build();
         } else if (bodyContent instanceof byte[] bytes) {
-            return byteArrayRequestBody(request, bytes);
+            return byteArrayRequestBody(request.getContentType().orElse(null), bytes);
         } else if (bodyContent instanceof String str) {
             return HttpRequest.StringRequestBody.builder()
                 .content(str)
@@ -63,14 +63,17 @@ public abstract class MicronautHttpService {
     /**
      * Build the body of a request received as raw bytes: text is decoded to a string, anything else is kept as
      * bytes so that binary content survives.
+     *
+     * @param contentType the content type of the request, {@code null} if it declares none
+     * @param bytes       the body of the request
+     * @return the body, {@code null} if the request has none
      */
-    private static HttpRequest.RequestBody byteArrayRequestBody(io.micronaut.http.HttpRequest<?> request, byte[] bytes) {
+    public static HttpRequest.RequestBody byteArrayRequestBody(MediaType contentType, byte[] bytes) {
         if (bytes.length == 0) {
             // A request without a body is bound as an empty array: report it as no body at all.
             return null;
         }
 
-        MediaType contentType = request.getContentType().orElse(null);
         Charset charset = contentType != null ? contentType.getCharset().orElse(StandardCharsets.UTF_8) : StandardCharsets.UTF_8;
 
         if (isTextual(contentType)) {

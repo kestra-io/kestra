@@ -1331,6 +1331,66 @@ class ExecutionControllerRunnerTest {
         assertThat(variables.get("parts")).isNull();
     }
 
+    @Test
+    @LoadFlows({ "flows/valids/webhook-store-body.yaml" })
+    void shouldStoreBodyWhenWebhookFetchTypeIsStore() throws IOException {
+        // Given
+        byte[] content = binaryContent();
+
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-store-body/storeBodyKey", content)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+            Execution.class
+        );
+
+        // Then - the body is stored under the execution byte-identical, and nothing of it reaches the execution
+        Map<String, Object> variables = execution.getTrigger().getVariables();
+
+        URI uri = URI.create((String) variables.get("uri"));
+        assertThat(uri.getScheme()).isEqualTo("kestra");
+        assertThat(uri.getPath()).isEqualTo(
+            "/io/kestra/tests/webhook-store-body/executions/" + execution.getId() + "/webhook/body"
+        );
+        assertThat(storageInterface.get(TENANT_ID, TESTS_FLOW_NS, uri).readAllBytes()).isEqualTo(content);
+        assertThat(variables.get("body")).isNull();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/webhook-store-body.yaml" })
+    void shouldNotStoreAnythingWhenWebhookFetchTypeIsStoreAndCallHasNoBody() {
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-store-body/storeBodyKey"),
+            Execution.class
+        );
+
+        // Then - a call without a body has nothing to store, so it gets no URI pointing at an empty file
+        assertThat(execution.getTrigger().getVariables().get("uri")).isNull();
+        assertThat(execution.getTrigger().getVariables().get("body")).isNull();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/webhook-no-body.yaml" })
+    void shouldIgnoreBodyWhenWebhookFetchTypeIsNone() {
+        // When - a body the flow declared it does not want
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-no-body/noBodyKey",
+                ImmutableMap.of("a", 1)
+            ),
+            Execution.class
+        );
+
+        // Then - the call still succeeds, and only what surrounds the body reaches the flow
+        Map<String, Object> variables = execution.getTrigger().getVariables();
+
+        assertThat(variables.get("body")).isNull();
+        assertThat(variables.get("uri")).isNull();
+        assertThat(variables.get("headers")).isNotNull();
+    }
+
     /**
      * @return content that a UTF-8 round-trip would corrupt, so that a test asserting on it detects any decoding
      */

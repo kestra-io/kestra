@@ -82,6 +82,8 @@
 
 <script lang="ts">
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+    import {pebbleBlockKeyAtOffset} from "../../utils/pebbleBlock"
+    import {configureMonacoTypescript, registerMonacoThemes} from "../../utils/monacoSetup"
 
     function isOffsetInPebbleBlock(text: string, offset: number): boolean {
         if (offset < 2) return false
@@ -103,102 +105,10 @@
         return pebbleBlockKeyAtOffset(editor.getValue(), absoluteOffset)
     }
 
-    function uid(): string {
-        return Math.random().toString(36).slice(2, 11)
-    }
+    export type {EditorOptions, KsEditorOptions, KsEditorSchemaType, KsEditorExposes} from "../../utils/editorTypes"
 
-    const OVERFLOW_WIDGETS_ID = "ks-monaco-overflow-widgets"
-    function getOrCreateOverflowWidgetsDomNode(): HTMLDivElement {
-        let node = document.getElementById(OVERFLOW_WIDGETS_ID) as HTMLDivElement | null
-        if (!node) {
-            node = document.createElement("div")
-            node.id = OVERFLOW_WIDGETS_ID
-            node.className = "monaco-editor"
-            document.body.appendChild(node)
-        }
-        return node
-    }
-
-    export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & {
-        renderSideBySide?: boolean
-        useInlineViewWhenSpaceIsLimited?: boolean
-        renderOverviewRuler?: boolean
-    }
-
-    export type KsEditorOptions = {
-        keepFocused?: boolean
-        largeSuggestions?: boolean
-        fullHeight?: boolean
-        customHeight?: number
-        diffSideBySide?: boolean
-        wordWrap?: boolean
-        lineNumbers?: boolean
-        minimap?: boolean
-        creating?: boolean
-        shouldFocus?: boolean
-        showScroll?: boolean
-        diffOverviewBar?: boolean
-        scrollKey?: string
-        suggestionsOnFocus?: boolean
-        pebble?: boolean
-        duplicateTaskIdMarkers?: boolean
-        highlightLine?: number
-        initialHighlight?: string
-        editor?: EditorOptions
-    }
-
-    export type KsEditorSchemaType = "flow" | "dashboard" | "app" | "testsuites" | "section" | string
-
-    export interface KsEditorExposes {
-        focus: () => void
-        destroy: () => void
-        highlightLinesRange: (range: {start: number, end: number}) => void
-        clearLinesRangeHighlights: () => void
-        addContentWidget: (widget: {id: string, position: monaco.IPosition, height: number, right: string}) => Promise<void>
-        removeContentWidget: (id: string) => void
-        monaco: typeof monaco
-        getEditor: () => monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined
-    }
-
-    const themes: Record<string, monaco.editor.IStandaloneThemeData> = {
-        dark: {
-            base: "vs-dark",
-            inherit: true,
-            rules: [{token: "", background: "161822"}],
-            colors: {
-                "minimap.background": "#161822",
-                "diffEditor.insertedLineBackground": "#029E734D",
-            },
-        },
-        light: {
-            base: "vs",
-            inherit: true,
-            rules: [
-                {token: "type", foreground: "#8405FF"},
-                {token: "string.yaml", foreground: "#001233"},
-                {token: "comment", foreground: "#8d99ae", fontStyle: "italic"},
-            ],
-            colors: {
-                "editor.lineHighlightBackground": "#fbfaff",
-                "editorLineNumber.foreground": "#444444",
-                "editor.selectionBackground": "#E8E5FF",
-                "editor.wordHighlightBackground": "#E8E5FF",
-                "diffEditor.insertedLineBackground": "#029E734D",
-            },
-        },
-    }
-
-    Object.entries(themes).forEach(([themeKey, themeData]) => {
-        monaco.editor.defineTheme(themeKey, themeData)
-    })
-
-    if (monaco.languages.typescript) {
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-            target: monaco.languages.typescript.ScriptTarget.ES2020,
-            lib: ["es2020"],
-            allowNonTsExtensions: true,
-        })
-    }
+    registerMonacoThemes()
+    configureMonacoTypescript()
 </script>
 
 <script setup lang="ts">
@@ -210,8 +120,7 @@
     import "monaco-editor/esm/vs/language/typescript/monaco.contribution"
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution"
 
-    import type {VNode} from "vue"
-    import {computed, h, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
+    import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useStorage, useThrottleFn} from "@vueuse/core"
     import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../../utils/fontScale"
@@ -220,20 +129,23 @@
     // @ts-expect-error tab focus path lacks types
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus"
     import {editor as monacoEditorNs} from "monaco-editor/esm/vs/editor/editor.api"
-    import moment from "moment"
-    import type {Moment} from "moment"
     import debounce from "lodash/debounce"
-    import uniqBy from "lodash/uniqBy"
 
+    import type {EditorOptions, KsEditorOptions, KsEditorSchemaType, KsEditorExposes} from "../../utils/editorTypes"
+    import {editorModelUid as uid, getOrCreateOverflowWidgetsDomNode} from "../../utils/monacoSetup"
     import KsDatePicker from "./KsDatePicker.vue"
     import {useTaskIcon, type TaskIconProps} from "../../composables/taskIcon"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
-    import {STATES} from "../../utils/state"
     import {findDuplicateTaskIds} from "../../utils/yamlValidation"
-    import {createPebbleEntryTracker, isPebbleEnabled, pebbleBlockKeyAtOffset} from "../../utils/pebbleBlock"
+    import {createPebbleEntryTracker, isPebbleEnabled} from "../../utils/pebbleBlock"
     import PlaceholderContentWidget from "../../composables/PlaceholderContentWidget"
+    import {useEditorDecorations} from "../../composables/useEditorDecorations"
+    import {useEditorContentWidget} from "../../composables/useEditorContentWidget"
+    import {useEditorScrollMemory} from "../../composables/useEditorScrollMemory"
+    import {useEditorDatePicker} from "../../composables/useEditorDatePicker"
+    import {useSuggestWidgetIcons} from "../../composables/useSuggestWidgetIcons"
 
     type ICodeEditor = monacoEditorNs.ICodeEditor
 
@@ -330,22 +242,66 @@
     const container = ref<HTMLDivElement>()
     const isFocused = ref(false)
     const preventCursorChange = ref(false)
-    const showWidgetContent = ref(false)
     const localEditor = shallowRef<monaco.editor.IStandaloneCodeEditor | undefined>()
     const localDiffEditor = shallowRef<monaco.editor.IStandaloneDiffEditor | undefined>()
-    const suggestWidgetResizeObserver = ref<MutationObserver>()
-    const suggestWidgetObserver = ref<MutationObserver>()
-    const suggestWidget = ref<HTMLElement>()
     const resizeObserver = ref<ResizeObserver>()
 
     let lastTimeout: number | undefined
-    let decorations: monaco.editor.IEditorDecorationsCollection | undefined
     let moveCursorCmdDisposable: monaco.IDisposable | undefined
     const disposeCompletions = ref<() => void>()
+
+    const datePickerWrapper = ref<HTMLElement>()
+    const datePicker = ref()
+
+    const datePickerApi = useEditorDatePicker({
+        wrapper: datePickerWrapper,
+        picker: datePicker,
+        suggestionsOnFocus: computed(() => mergedOptions.value.suggestionsOnFocus),
+    })
+    const {selectedDate, shown: datePickerShown} = datePickerApi
+    const nowMoment = datePickerApi.startOfToday
+    const datePickerCallback = () => {
+        const editor = asCodeEditorOrUndefined()
+        if (editor) datePickerApi.insertSelectedDate(editor)
+    }
+
+    const suggestWidgetIcons = useSuggestWidgetIcons({
+        taskIcon: taskIconComponent,
+        loadTaskIcon: computed(() => props.loadTaskIcon),
+        largeSuggestions: computed(() => mergedOptions.value.largeSuggestions),
+        codeEditor: () => asCodeEditorOrUndefined(),
+        datePicker: datePickerApi,
+    })
+    const observeAndResizeSuggestWidget = suggestWidgetIcons.observeAndResize
+
+    const decorationsApi = useEditorDecorations({
+        pebbleEnabled: computed(() => pebbleEnabled.value),
+        highlightLine: computed(() => mergedOptions.value.highlightLine),
+        initialHighlight: computed(() => mergedOptions.value.initialHighlight),
+        codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
+        modifiedEditor: () => getModifiedEditor() as monaco.editor.IStandaloneCodeEditor | undefined,
+    })
+    const {highlightPebble, highlightLinesRange, clearLinesRangeHighlights, highlightInitial} = decorationsApi
+
+    const {showWidgetContent, addContentWidget, removeContentWidget} = useEditorContentWidget({
+        codeEditor: () => isCodeEditor(localEditor.value) ? localEditor.value : undefined,
+        editorRoot: editorRef,
+    })
+
+    const scrollMemory = useEditorScrollMemory(computed(() => mergedOptions.value.scrollKey))
+    const loadScrollData = scrollMemory.load
+    const saveScrollData = scrollMemory.save
 
     const isDiff = computed(() => props.original !== undefined)
 
     const editorResolved = computed(() => isDiff.value ? localDiffEditor.value : localEditor.value)
+
+    function asCodeEditorOrUndefined(): monaco.editor.ICodeEditor | undefined {
+        const resolved = editorResolved.value
+        return resolved?.getEditorType() === monaco.editor.EditorType.ICodeEditor
+            ? resolved as monaco.editor.ICodeEditor
+            : undefined
+    }
 
     const prefix = computed(() => props.schemaType ? `${props.schemaType}-` : "")
 
@@ -472,231 +428,6 @@
         return /^\s*(?:-\s*)?type\s*:\s*.+\s*$/.test(lineContent)
     }
 
-    const nowMoment: Moment = moment().startOf("day")
-    const selectedDate = ref<Date>(nowMoment.toDate())
-    const datePickerWrapper = ref<HTMLElement>()
-    const datePicker = ref<typeof KsDatePicker>()
-    const datePickerShown = ref(false)
-    let datePickerWidget: monaco.editor.IContentWidget
-
-    const datePickerCallback = () => {
-        if (editorResolved.value?.getEditorType() !== monaco.editor.EditorType.ICodeEditor) return
-
-        const asCodeEditor = editorResolved.value as ICodeEditor
-        const model = asCodeEditor.getModel()!
-        const position = asCodeEditor.getPosition()!
-        const wordAtPosition = model.getWordAtPosition(position)
-
-        asCodeEditor.focus()
-        model.pushEditOperations(
-            asCodeEditor.getSelections(),
-            [{
-                range: {
-                    startLineNumber: position.lineNumber,
-                    startColumn: position.column,
-                    endLineNumber: position.lineNumber,
-                    endColumn: wordAtPosition?.endColumn ?? position.column,
-                },
-                text: `${moment(
-                    (datePicker.value as any)!.$el.nextElementSibling.querySelector("input").value,
-                ).toISOString(true)} `,
-                forceMoveMarkers: true,
-            }],
-            () => null,
-        )
-
-        selectedDate.value = nowMoment.toDate()
-
-        if (mergedOptions.value.suggestionsOnFocus) {
-            asCodeEditor.trigger("datePickerCallback", "editor.action.triggerSuggest", {})
-        }
-    }
-
-    function removeDatePicker(codeEditor: ICodeEditor) {
-        if (!datePickerShown.value) return
-        datePickerShown.value = false
-        codeEditor.removeContentWidget(datePickerWidget)
-    }
-
-    const KESTRA_ICON_WRAPPER_CLASS = "kestra-icon-wrapper"
-    function replaceRowIcon(vsCodeIcon: HTMLElement, iconVNode: VNode) {
-        vsCodeIcon.style.display = "none"
-        const tempContainer = document.createElement("div")
-        render(h("div", {class: `${KESTRA_ICON_WRAPPER_CLASS} d-flex align-items-center me-1`}, iconVNode), tempContainer)
-        vsCodeIcon.after(tempContainer.firstElementChild!)
-        tempContainer.remove()
-    }
-
-    function replaceRowsIcons(nodes: HTMLElement[]) {
-        nodes = uniqBy(nodes, node => node.id)
-        for (const node of nodes) {
-            const completionValue = node?.getAttribute("aria-label")
-            if (!completionValue || node.getAttribute("data-index") === null) continue
-
-            const vsCodeIcon = node.querySelector(".suggest-icon") as HTMLElement
-            node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove()
-
-            if (completionValue.includes(".") && !completionValue.includes("{") && props.loadTaskIcon) {
-                replaceRowIcon(vsCodeIcon, h(taskIconComponent, {
-                    cls: completionValue,
-                    onlyIcon: true,
-                    loadIcon: props.loadTaskIcon,
-                }))
-            } else if ((STATES as any)[completionValue] !== undefined) {
-                replaceRowIcon(vsCodeIcon, h((STATES as any)[completionValue].icon))
-            } else {
-                vsCodeIcon.style.display = ""
-            }
-        }
-    }
-
-    function addedSuggestRows(mutations: MutationRecord[]) {
-        return mutations.flatMap(({addedNodes}) => {
-            const nodes = [...addedNodes]
-            const maybeRows = nodes.filter((n) => (n as HTMLElement).classList?.contains("monaco-list-row"))
-            for (const node of nodes) {
-                let maybeRow: Element | null = null
-                if (node instanceof Text) {
-                    maybeRow = node.parentElement?.closest(".monaco-list-row") ?? null
-                }
-                if (maybeRow !== null) return [...maybeRows, maybeRow]
-            }
-            return maybeRows
-        }) as HTMLElement[]
-    }
-
-    watch(suggestWidget, async (newVal) => {
-        const asCodeEditor = editorResolved.value?.getEditorType() === monaco.editor.EditorType.ICodeEditor
-            ? editorResolved.value as ICodeEditor : undefined
-
-        if (newVal === undefined) return
-
-        if (newVal.querySelector(".monaco-list-row") !== null) {
-            replaceRowsIcons([...newVal.getElementsByClassName("monaco-list-row")] as HTMLElement[])
-        }
-
-        suggestWidgetObserver.value?.disconnect()
-        suggestWidgetObserver.value = undefined
-
-        suggestWidgetObserver.value = new MutationObserver(mutations => {
-            mutations.forEach(({removedNodes}) => {
-                if ([...removedNodes.values()].some(n => n instanceof Text && n.textContent === "_DATE_PICKER_")) {
-                    if (asCodeEditor !== undefined) removeDatePicker(asCodeEditor)
-                }
-            })
-
-            const addedRows = addedSuggestRows(mutations)
-            replaceRowsIcons(addedRows.filter(row => row.ariaLabel !== "_DATE_PICKER_"))
-
-            addedRows.forEach(async row => {
-                if (asCodeEditor !== undefined && row.ariaLabel === "_DATE_PICKER_") {
-                    (asCodeEditor.getContribution("editor.contrib.suggestController") as unknown as {
-                        cancelSuggestWidget: () => void
-                    }).cancelSuggestWidget()
-
-                    if (!datePickerShown.value) {
-                        datePickerShown.value = true
-                        if (datePickerWidget === undefined) {
-                            datePickerWidget = {
-                                allowEditorOverflow: true,
-                                getId() { return "kestra_date_picker" },
-                                getDomNode() { return datePickerWrapper.value! },
-                                getPosition() {
-                                    return {
-                                        position: asCodeEditor.getPosition(),
-                                        preference: [
-                                            monaco.editor.ContentWidgetPositionPreference.BELOW,
-                                            monaco.editor.ContentWidgetPositionPreference.ABOVE,
-                                        ],
-                                    }
-                                },
-                            }
-                        }
-                        await asCodeEditor.addContentWidget(datePickerWidget)
-                        ;(datePicker.value as any)!.handleOpen()
-                        setTimeout(() => (datePicker.value as any)!.focus())
-                    }
-                }
-            })
-        })
-
-        suggestWidgetObserver.value.observe(newVal, {childList: true, subtree: true})
-
-        asCodeEditor?.onDidChangeCursorPosition(() => removeDatePicker(asCodeEditor))
-    })
-
-    function observeAndResizeSuggestWidget() {
-        if (suggestWidgetResizeObserver.value !== undefined) return
-
-        suggestWidgetResizeObserver.value = new MutationObserver(([{target, addedNodes}]) => {
-            const simulateResizeOnSashAndDisconnect = (resizer: HTMLElement) => {
-                if (!mergedOptions.value.largeSuggestions) return
-
-                suggestWidgetResizeObserver.value?.disconnect()
-                suggestWidgetResizeObserver.value = undefined
-
-                const r = {x: resizer.getBoundingClientRect().left, y: resizer.getBoundingClientRect().top}
-                const fire = (type: string, dx = 0) => resizer.dispatchEvent(new MouseEvent(type, {bubbles: true, clientX: r.x + dx, clientY: r.y}))
-                fire("mouseenter"); fire("mouseover"); fire("mousedown")
-                fire("mousemove", 80); fire("mouseup", 80); fire("mouseout", 80); fire("mouseleave", 80)
-            }
-
-            const targetHtmlElement = target as HTMLElement
-            if (targetHtmlElement.classList.contains("monaco-sash")) {
-                if (!targetHtmlElement.classList.contains("disabled")) {
-                    simulateResizeOnSashAndDisconnect(targetHtmlElement)
-                }
-                return
-            }
-
-            const maybeSuggestWidgetHtmlElement = addedNodes?.[0] as HTMLElement
-            if (maybeSuggestWidgetHtmlElement?.classList.contains("suggest-widget")) {
-                suggestWidget.value = maybeSuggestWidgetHtmlElement
-                const resizer = maybeSuggestWidgetHtmlElement.querySelector(".monaco-sash.vertical") as HTMLElement
-                if (resizer.classList.contains("disabled")) {
-                    suggestWidgetResizeObserver.value!.disconnect()
-                    suggestWidgetResizeObserver.value?.observe(resizer, {attributeFilter: ["class"]})
-                } else {
-                    simulateResizeOnSashAndDisconnect(resizer)
-                }
-            }
-        })
-
-        const overflowNode = document.getElementById(OVERFLOW_WIDGETS_ID)
-        const target = overflowNode?.querySelector(".overflowingContentWidgets")
-            ?? overflowNode
-        if (target) suggestWidgetResizeObserver.value.observe(target, {childList: true})
-    }
-
-    function highlightInitial() {
-        const initialHighlight = mergedOptions.value.initialHighlight
-        if (!initialHighlight) return
-        const ed = getModifiedEditor()
-        if (!ed) return
-
-        ed.focus()
-        const lines = ed.getModel()!.getLinesContent()
-        let lineNumber = 0
-        for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes(initialHighlight)) {
-                lineNumber = i + 1
-                break
-            }
-        }
-        const endLineCharacter = ed.getModel()!.getLineMaxColumn(lineNumber) ?? 0
-        ed.setSelection(new monaco.Range(lineNumber, 0, lineNumber, endLineCharacter))
-        ed.revealLineInCenter(lineNumber)
-    }
-
-    watch(() => mergedOptions.value.highlightLine, (line) => {
-        if (!line) return
-        const ed = getModifiedEditor()
-        if (!ed) return
-        ed.focus()
-        const end = ed.getModel()?.getLineMaxColumn(line) ?? 0
-        ed.setSelection(new monaco.Range(line, 0, line, end))
-    })
-
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
         let model
         if (props.inline || pathOrName === undefined) {
@@ -728,137 +459,6 @@
     function reload() {
         destroy()
         initMonaco()
-    }
-
-    const decorationsLists: {
-        pebble?: monaco.editor.IModelDeltaDecoration[]
-        lines?: monaco.editor.IModelDeltaDecoration[]
-    } = {}
-
-    function setDecorations() {
-        decorations?.clear()
-        if (decorationsLists.lines) decorations?.append(decorationsLists.lines)
-        if (decorationsLists.pebble) decorations?.append(decorationsLists.pebble)
-    }
-
-    function highlightPebble() {
-        if (!pebbleEnabled.value) {
-            decorationsLists.pebble = []
-            setDecorations()
-            return
-        }
-        if (!isCodeEditor(localEditor.value)) return
-        const model = localEditor.value?.getModel?.()
-        const text = model?.getValue?.()
-        const regex = new RegExp("\\{\\{(.+?)}}", "g")
-        let match
-        const decorationsToAdd: monaco.editor.IModelDeltaDecoration[] = []
-        if (text && model) while ((match = regex.exec(text)) !== null) {
-            const startPos = model.getPositionAt(match.index)
-            const endPos = model.getPositionAt(match.index + match[0].length)
-            decorationsToAdd.push({
-                range: {
-                    startLineNumber: startPos.lineNumber,
-                    startColumn: startPos.column,
-                    endLineNumber: endPos.lineNumber,
-                    endColumn: endPos.column,
-                },
-                options: {inlineClassName: "highlight-pebble"},
-            })
-        }
-        decorationsLists.pebble = decorationsToAdd
-        setDecorations()
-    }
-
-    function getHighlightDecoration(range: {start: number, end: number}) {
-        return [{
-            range: new monaco.Range(range.start, 1, range.end, 1),
-            options: {isWholeLine: true, className: "highlight-lines"},
-        }] as monaco.editor.IModelDeltaDecoration[]
-    }
-
-    function highlightLinesRange(range: {start: number, end: number}) {
-        decorationsLists.lines = getHighlightDecoration(range)
-        setDecorations()
-    }
-
-    function clearLinesRangeHighlights() {
-        decorationsLists.lines = []
-        setDecorations()
-    }
-
-    const widgetNode = (() => {
-        const node = document.createElement("div")
-        node.className = "editor-content-widget"
-        const content = document.createElement("div")
-        content.className = "editor-content-widget-content"
-        node.appendChild(content)
-        return node
-    })()
-
-    async function wait(time: number) {
-        return new Promise(resolve => setTimeout(resolve, time))
-    }
-
-    async function waitForWidgetContentNode() {
-        await wait(30)
-        if (document.querySelector(".editor-content-widget-content") === null) {
-            return waitForWidgetContentNode()
-        }
-    }
-
-    async function addContentWidget(widget: {id: string, position: monaco.IPosition, height: number, right: string}) {
-        if (!isCodeEditor(localEditor.value)) return
-        localEditor.value?.addContentWidget({
-            getId() { return widget.id },
-            getPosition() {
-                return {
-                    position: widget.position,
-                    preference: [monaco.editor.ContentWidgetPositionPreference.EXACT],
-                }
-            },
-            getDomNode: () => {
-                const content = widgetNode.querySelector(".editor-content-widget-content") as HTMLDivElement
-                if (content) content.style.height = widget.height + "rem"
-                return widgetNode
-            },
-            afterRender() {
-                const rect = editorRef.value!.querySelector(".monaco-scrollable-element")!.getBoundingClientRect()
-                widgetNode.style.left = `calc(${rect.width}px - 150px - ${widget.right})`
-            },
-        })
-
-        await waitForWidgetContentNode()
-        showWidgetContent.value = true
-    }
-
-    function removeContentWidget(id: string) {
-        showWidgetContent.value = false
-        if (!isCodeEditor(localEditor.value)) return
-        localEditor.value?.removeContentWidget({
-            getId: () => id,
-            getPosition() { return {position: {lineNumber: 0, column: 0}, preference: []} },
-            getDomNode: () => widgetNode,
-        })
-    }
-
-    function loadScrollData<T>(key: string, fallback?: T): T | undefined {
-        const scrollKey = mergedOptions.value.scrollKey
-        if (!scrollKey) return fallback
-        try {
-            const raw = localStorage.getItem(`editorScroll:${scrollKey}:${key}`)
-            return raw ? (JSON.parse(raw) as T) : fallback
-        } catch {
-            return fallback
-        }
-    }
-    function saveScrollData<T>(data: T, key: string) {
-        const scrollKey = mergedOptions.value.scrollKey
-        if (!scrollKey) return
-        try {
-            localStorage.setItem(`editorScroll:${scrollKey}:${key}`, JSON.stringify(data))
-        } catch {
-        }
     }
 
     async function initMonaco() {
@@ -1053,7 +653,7 @@
         const KeyCode = monaco.KeyCode
         const KeyMod = monaco.KeyMod
 
-        decorations = ed.createDecorationsCollection()
+        decorationsApi.attach(ed)
 
         if (!isCodeEditor(ed)) return
 
@@ -1239,9 +839,7 @@
     }
 
     function destroy() {
-        suggestWidgetResizeObserver.value?.disconnect()
-        suggestWidgetResizeObserver.value = undefined
-        suggestWidget.value = undefined
+        suggestWidgetIcons.teardown()
         disposeCompletions.value?.()
         resizeObserver.value?.disconnect()
         resizeObserver.value = undefined

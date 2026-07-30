@@ -7,11 +7,6 @@ function branchesOf(schema: any): any[] {
     return schema?.anyOf ?? schema?.oneOf ?? []
 }
 
-/**
- * Whether a resolved schema carries editable object structure once $ref and
- * anyOf/oneOf branches are followed. Used to tell an object (or an array/anyOf
- * of objects) apart from a scalar, enum, or map.
- */
 export function looksLikeObject(
     schema: any,
     definitions: Record<string, any>,
@@ -44,13 +39,6 @@ function resolvedProperties(schema: any, definitions: Record<string, any>): Reco
     )
 }
 
-/**
- * Whether an object-like item is worth opening in its own push-in-place panel
- * rather than deploying inline. Drill only when inlining would be genuinely
- * unreadable: the item is polymorphic (an anyOf/oneOf of object variants, which
- * needs a type selector) or it nests further structure (a child object or a list
- * of objects). A flat record of scalars stays inline.
- */
 export function shouldDrillItem(
     schema: any,
     definitions: Record<string, any>,
@@ -120,10 +108,6 @@ function scalarText(value: any): string {
     return String(value)
 }
 
-/**
- * Structured preview for a drill row. The caller renders `empty` and `count`
- * through i18n (e.g. "Not set", "N items"); `text` is data shown verbatim.
- */
 export function summarizeValue(value: any): ValueSummary {
     if (isEmpty(value)) return {kind: "empty"}
 

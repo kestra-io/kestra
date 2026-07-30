@@ -112,13 +112,10 @@
     function groupTitle(key: string): string {
         const i18nKey = `no_code.sections.${key}`
         if (te(i18nKey)) return t(i18nKey)
-        // Free-form group: title-case, replace _ and - with spaces
         return key.replace(/[_-]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
     }
 
-    // Recommended group ordering — not exhaustive, unknown groups are appended alphabetically
     const GROUP_ORDER = ["connection", "source", "processing", "execution", "destination", "reliability", "advanced"]
-    // Groups expanded by default
     const GROUPS_EXPANDED_BY_DEFAULT = new Set(["connection", "source", "destination"])
 
     const activeNames = ref<string[]>([...GROUPS_EXPANDED_BY_DEFAULT, "optional", "advanced"])
@@ -172,8 +169,6 @@
     }
 
     function isPartOfGroup(value: any, groups: string[]) {
-        // Check top-level $group first: for Property<T> fields the schema generator places
-        // $group at the root even when anyOf is present, so we must not short-circuit on anyOf.
         if (value?.$group) return groups.includes(value.$group)
         if (value?.allOf) {
             return value.allOf.some((item: any) => isPartOfGroup(item, groups))
@@ -257,9 +252,6 @@
 
     type GroupEntry = { key: string; properties: Entry[] };
 
-    // Dynamically build ordered group sections from whatever $group values are present.
-    // Known groups follow GROUP_ORDER; unknown groups are appended alphabetically.
-    // Ungrouped non-required properties (null group) land in an "optional" fallback section.
     const groupSections = computed<GroupEntry[]>(() => {
         if (props.merge) return []
 
@@ -295,7 +287,6 @@
     const hasGroupedProperties = computed<boolean>(() => {
         return groupSections.value.length > 0 || deprecatedProperties.value.length > 0
     })
-
 
     function onInput(value: any) {
         emit("update:modelValue", collapseEmptyValues(value))

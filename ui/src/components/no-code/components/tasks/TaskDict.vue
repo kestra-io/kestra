@@ -115,8 +115,6 @@
     const currentValue = ref<[string, any][]>([])
     const keyInputRefs: Record<number, any> = {}
 
-    // this flag will avoid updating the modelValue when the
-    // change was initiated in the component itself
     const localEdit = ref(false)
 
     watch(

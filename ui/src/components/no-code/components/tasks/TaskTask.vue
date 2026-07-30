@@ -36,7 +36,6 @@
 
     const {t} = useI18n()
 
-
     const model = defineModel({
         type: Object,
         default: () => ({}),
@@ -70,10 +69,8 @@
         const schema = localSchema.value
 
         if(schema?.anyOf && Array.isArray(schema.anyOf)){
-            // find all the title fields in the anyOf
             const titles: string[] = schema.anyOf.map((s: any) => s.allOf?.find((a: any) => a.title)?.title ?? s.title)
 
-            // if all the titles are the same, return that title
             if(titles.every((title) => title === titles[0])){
                 return titles[0]
             }

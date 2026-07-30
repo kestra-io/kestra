@@ -67,14 +67,12 @@
         (e: "update:modelValue", value: string | boolean | undefined): void;
     }>()
 
-
     const pebble = defineModel<boolean>("pebble", {default: false})
 
     const hasToggle = computed(() =>
         ["duration", "date-time"].includes(props.schema?.format ?? ""),
     )
 
-    // Computed property for editor language
     const editorLanguage = computed(() => {
         return props.schema?.$language ?? "plaintext"
     })

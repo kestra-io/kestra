@@ -62,7 +62,6 @@ export function getType(property: any, definitions: Record<string, any>, key?: s
             return "dict"
         }
 
-        // for dag tasks
         if (property.anyOf.length > 10 || key === "taskRunner") {
             return "task"
         }

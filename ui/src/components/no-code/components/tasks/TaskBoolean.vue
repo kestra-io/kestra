@@ -13,8 +13,6 @@
 
     const emit = defineEmits<{(e: "update:modelValue", value: boolean): void}>()
 
-    // The switch sits alone on the label row, outside any <label> association —
-    // without an explicit name, screen readers announce a bare "switch".
     const fieldName = computed(() => props.root?.split(".").pop()?.replace(/\[\d+\]$/, "") || undefined)
 
     const onInput = (value: string | number | boolean | undefined) => emit("update:modelValue", Boolean(value))

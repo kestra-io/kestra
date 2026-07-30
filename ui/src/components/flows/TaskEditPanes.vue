@@ -53,11 +53,6 @@
         readOnly?: boolean
         pluginMarkdown?: string | null
         hideRunButton?: boolean
-        // Gives the Source tab's Monaco model a unique URI per open task. Without
-        // it, KsEditor derives the URI from schemaType alone, so two tasks in the
-        // same section (e.g. two open dock tabs) resolve to the SAME Monaco model
-        // and silently share content — editing one's Source tab overwrites the
-        // other's, even though it's never visible.
         editorPath?: string
     }>(), {
         readOnly: false,

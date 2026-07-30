@@ -369,14 +369,11 @@
     function onResize(_index: number, sizes: number[]) {
         const sumSizes = sizes.reduce((a, b) => a + b, 0) / 100
 
-        // Element Plus resize event provides sizes array and index of the resized panel
         for (let i = 0; i < panels.value.length && i < sizes.length; i++) {
             panels.value[i].size = sizes[i] / sumSizes
         }
     }
 
-    // let the panelSizes be dealt with by the KsSplitter once set
-    // by the prop
     const panelSizes = computed<number[]>((prevValue) => {
         if(prevValue?.length === panels.value.length){
             return prevValue
@@ -417,14 +414,11 @@
     }
 
     function dragover(e: DragEvent) {
-        // Ensure we set the realDragging flag when a drag operation is in progress
         if (movedTabInfo.value) {
             realDragging.value = true
             dragging.value = true
         }
 
-        // if mouse has not moved vertically, stop the processing
-        // this will be triggered every few ms so perf and readability will be paramount
         if(mouseXRef.value === e.clientX){
             return
         }
@@ -448,19 +442,15 @@
         const mouseX = e.clientX
         for(const tab of tabsInPanel){
             const br = tab.getBoundingClientRect()
-            // get the X position of the middle of the tab
             const middle = br.left + br.width / 2
-            // if we are beyond the middle of the last tab
             if(mouseX > middle && i === tabsInPanel.length - 1){
                 insertTabAfterIndex = i
                 break
             } else
-                // if we are before the middle of the first tab
                 if(mouseX < middle && i === 0){
                     insertTabAfterIndex = i - 1
                     break
                 }else
-                    // figure out if we should insert the tab between the current and the next tab
                     if(mouseX > middle && tabsInPanel[i + 1]){
                         const nextBr = tabsInPanel[i + 1].getBoundingClientRect()
                         const middleNext = nextBr.left + nextBr.width / 2
@@ -472,14 +462,12 @@
             i++
         }
 
-        // if the potential tab is already inserted in the right place
         if(panels.value[panelIndex].tabs[insertTabAfterIndex + 1]?.potential){
             return
         }
 
         removeAllPotentialTabs()
 
-        // then insert the potential tab in the right place
         panels.value[panelIndex].tabs.splice(insertTabAfterIndex + 1, 0, {
             ...movedTabInfo.value.tab,
             uid: `potential-${movedTabInfo.value.tab.uid}`,
@@ -501,7 +489,6 @@
             return
         }
 
-        // find potential tab in panels.value tabs
         const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential))
         const potentialTabId = panels.value[potentialTabPanelIndex]?.tabs.find((tab) => tab.potential)?.uid
 
@@ -517,9 +504,6 @@
 
         const targetTabIndex = getTargetTabIndex(targetPanelIndex, targetTabId)
 
-        // In case of reordering of tabs we have to
-        // account for cases where potential tabs are present.
-        // They will take a slot in the list
         if(targetPanelIndex === originalPanelIndex){
             if (targetTabIndex === tabIndex || panels.value[targetPanelIndex].tabs.length <= 1) {
                 return
@@ -531,18 +515,12 @@
                 panels.value[originalPanelIndex].tabs.splice(tabIndex, 1)
             }
         } else {
-            // remove the tab from the original panel
             panels.value[originalPanelIndex].tabs.splice(tabIndex, 1)
 
-            // if the tab has been removed from the panel
-            // we need to select another active tab
             if(panels.value[originalPanelIndex].activeTab.uid === movedTab.uid){
-                // if the tab at the same index is available, select it
                 if(tabIndex >= 0 && panels.value[originalPanelIndex].tabs.length > tabIndex){
                     panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex]
                 } else
-                    // if it would fall out of bounds, use the previous tab
-                    // NOTE: no worries if it is null, it will select null instead
                     if(tabIndex === panels.value[originalPanelIndex].tabs.length){
                         panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex - 1]
                     }
@@ -550,11 +528,9 @@
         }
 
         if(targetPanelIndex === originalPanelIndex){
-            // if moving tabs on the same panel, add the tab to the target panel in-place of the hovered potential tab
             const insertIndex = targetTabIndex < tabIndex ? targetTabIndex + 1 : targetTabIndex
             panels.value[targetPanelIndex].tabs.splice(insertIndex, 0, movedTab)
         } else {
-            // add the tab to the target panel in-place of the hovered potential tab
             panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab)
         }
     }
@@ -566,23 +542,18 @@
 
         const {tab: movedTab} = movedTabInfo.value
 
-        // Create a new panel with the dragged tab
         const newPanel = {
             tabs: [movedTab],
             activeTab: movedTab,
             size: defaultSize.value,
         }
 
-        // Add the new panel based on the drop direction, not relative to original panel
         if (direction === "left") {
             panels.value.splice(0, 0, newPanel)
         } else {
             panels.value.push(newPanel)
         }
 
-        // Remove the tab from the original panel
-        // After adding the new panel, the original panel's index may have changed
-        // Find it again by looking for the tab in all panels
         for (let i = 0; i < panels.value.length; i++) {
             const panel = panels.value[i]
             const tabIndex = panel.tabs.findIndex(t => t.uid === movedTab.uid)
@@ -652,13 +623,10 @@
         }
         panels.value.splice(panelIndex + 1, 0, newPanel)
 
-        // get index of active tab in the original panel
         const activeTabIndex = panel.tabs.findIndex((tab) => tab.uid === panel.activeTab.uid)
 
-        // set the active tab to the previous tab in the original panel
         panel.activeTab = panel.tabs[activeTabIndex - 1] ?? panel.tabs[activeTabIndex + 1]
 
-        // remove the tab from the original panel
         panel.tabs.splice(activeTabIndex, 1)
     }
 
@@ -726,7 +694,6 @@
     }
 
     function middleMouseClose(event:MouseEvent, panelIndex:number, tab: Tab) {
-        // Middle mouse button
         if (event.button === 1) {
             event.preventDefault()
             destroyTab(panelIndex, tab)
@@ -734,7 +701,6 @@
     }
 
     function onWheelTabScroll(e: WheelEvent){
-        // Make vertical wheel scroll the tab list horizontally (VS Code behavior)
         const el = e.currentTarget as HTMLElement
         if(!el){
             return
@@ -947,7 +913,6 @@
         background-color: var(--ks-btn-secondary-bg-default);
         display: flex;
         flex-wrap: nowrap;
-        /* Prevent shrinking so tabs overflow and the container can scroll */
         flex: 0 0 auto;
         min-width: 120px;
         max-width: 240px;

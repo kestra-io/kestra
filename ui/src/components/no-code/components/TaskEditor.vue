@@ -105,8 +105,6 @@
     provide(FIELD_NAV_INJECTION_KEY, fieldNav)
     const {stack: navStack, current: navCurrent} = fieldNav
 
-    // Flow-level pluginDefaults merged for the current task type — surfaced as a
-    // "(default: …)" hint on matching fields, never written into the task YAML.
     const fullSource = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
     const pluginDefaultsForType = computed<Record<string, unknown>>(() => {
         const type = selectedTaskType.value || taskModel.value?.type
@@ -154,7 +152,6 @@
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined)
-
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
 
@@ -227,7 +224,6 @@
         selectedTaskType.value = taskModel.value?.type
     }
 
-    // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
             pluginsStore.updateDocumentation({cls: selectedTaskType.value, ...taskModel.value})
@@ -236,8 +232,6 @@
 
     const fieldDefinition = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
 
-    // useful to map inputs to their real schema
-    // NOTE: there can be more than one schema per type (ex: KPI chart could be for flow or for executions.)
     const typeMap = computed<Record<string, string[]>>(() => {
         if (fieldDefinition.value?.anyOf) {
             const f = fieldDefinition.value.anyOf.reduce((acc: Record<string, string[]>, item: any) => {
@@ -316,7 +310,6 @@
 
     const resolvedType = computed<string>(() => {
         if(resolvedTypes.value.length > 1 && selectedTaskType.value){
-            // find the resolvedType that match the current dataType
             const dataType = taskModel.value?.data?.type
             if(dataType){
                 for(const typeLocal of resolvedTypes.value){
@@ -365,26 +358,19 @@
     })
 
     const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {
-        // try to resolve the type from local schema
-        // IE: when only one schema is available take it and run with it
         if (resolvedLocalSchema.value?.properties) {
             return resolvedLocalSchema.value.properties
         }
 
-        // if there is more than one schema valid, try to find common properties
-        // to all the schemas to help user narrow down the schema they want
         if(resolvedTypes.value.length > 1){
             const schemas = resolvedSchemas.value
 
-            // find properties with the same key and list their keys
             const commonProps = Object.keys(schemas[0].properties).filter((key) => {
                 return schemas.every((s) => s.properties[key] !== undefined)
             }).reduce((acc, key) => {
-                // check if the properties are the same when they are serialized
                 if (schemas.every((s) => {
                     return isEqual(schemas[0].properties[key], s.properties[key])
                 })) {
-                    // if they are we can safely display them
                     acc[key] = schemas[0].properties[key]
                 }
                 return acc
@@ -393,9 +379,6 @@
             if(dataTypes.value.length > 1){
                 commonProps["data"] = {
                     type: "object",
-                    // this is to force the data field to be visible
-                    // and TaskComplex and therefore make the data type
-                    // appear without a border
                     $ref: "#/definitions/",
                 }
             }

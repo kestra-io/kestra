@@ -65,8 +65,6 @@
         @drop="emit('tab-drop')"
     >
         <div v-if="!hideTabstrip" class="task-edit-tabstrip">
-            <!-- Draggable so tiled panes can be swapped side-to-side by
-            dropping this label onto another pane. -->
             <div
                 class="task-edit-tab"
                 draggable="true"
@@ -221,7 +219,6 @@
     }>()
 
     function onTabDragStart(event: DragEvent) {
-        // Both are required for the browser to actually start a native drag.
         event.dataTransfer?.setData("text/plain", "dock-pane-tab")
         if (event.dataTransfer) event.dataTransfer.effectAllowed = "move"
         emit("tab-drag-start")
@@ -293,10 +290,6 @@
     })
 
     const flowStore = useFlowStore()
-    // Validation errors scoped to THIS task editor instance. flowStore.taskError
-    // is a shared global written by whichever editor last validated, so reading
-    // it directly leaks one task's errors into another's footer; keep our own
-    // copy fed only by our own validateTask calls.
     const localTaskError = ref<string | undefined>()
     const errors = computed(() => localTaskError.value?.split(/, ?/))
     const pluginMarkdown = computed(() => {
@@ -319,9 +312,6 @@
 
     const currentTaskId = computed(() => String(props.taskId ?? props.task?.id ?? ""))
 
-    // Monaco keys its model off this: it must stay stable while the id is being
-    // edited (otherwise the model is swapped mid-edit and the cursor resets), so
-    // prefer the caller's stable key (the block's path) over the mutable id.
     const editorUri = computed(() => props.editorKey || currentTaskId.value)
 
     const inputSections = computed(() => {
@@ -345,9 +335,6 @@
             sections.push({key: "outputs", label: t("block_editor.upstream_outputs"), chips: upstream.map(id => ({label: id, expr: `{{ outputs.${id} }}`}))})
         }
 
-        // Mirrors the pebble context the flow autocompletion exposes
-        // (flowAutoCompletionProvider.nestedFieldAutoCompletion) so the panel
-        // stays in sync with what actually resolves at runtime.
         const CONTEXT_FIELDS: Record<string, string[]> = {
             flow: ["id", "namespace", "revision", "tenantId"],
             execution: ["id", "startDate", "state", "originalId"],
@@ -455,8 +442,6 @@
         if (props.task?.type) {
             pluginsStore.load({cls: props.task.type}).catch(() => {})
         }
-        // Validate on open so the footer reflects THIS task's errors from the
-        // start (and never a stale value left by another task's editor).
         if (taskYaml.value) {
             lastValidatedValue.value = taskYaml.value
             flowStore.validateTask({task: taskYaml.value, section: props.section})
@@ -480,7 +465,6 @@
         if (props.presentation === "panel") {
             let parsed: unknown
             try { parsed = YAML_UTILS.parse(taskYaml.value) } catch { parsed = undefined }
-            // Don't push half-typed / unparsable YAML into the flow: it corrupts the document.
             if (!parsed || typeof parsed !== "object") return
             emit("update:task", taskYaml.value)
             taskBaseline.value = taskYaml.value
@@ -496,8 +480,6 @@
         timer.value = setTimeout(commitEdit, 500) as any
     }
 
-    // Called before a save so a pending debounced edit is never silently
-    // dropped by a Cmd/Ctrl+S pressed right after typing.
     const flushPendingEdit = () => {
         if (!timer.value) return
         clearTimeout(timer.value)
@@ -505,9 +487,6 @@
         commitEdit()
     }
 
-    // Semantic normalization so an echo that only differs in formatting
-    // (re-indentation from the round-trip through the flow) still counts as
-    // "unchanged" and doesn't clobber in-progress Source edits.
     const normalizeYaml = (yaml?: string): string | undefined => {
         if (yaml == null) return undefined
         try {
@@ -522,16 +501,7 @@
             taskYaml.value = ""
             return
         }
-        // Prefer the raw slice (comments + exact quoting preserved) over
-        // re-serializing the parsed task, which drops both.
         const incoming = raw ?? YAML_UTILS.stringify(newTask)
-        // In the block editor the Source tab shares its flow document with the
-        // Flow Code pane, so an edit in either must surface live in the other.
-        // While the panel holds focus the incoming value is only the echo of the
-        // user's own commit — adopting it would reset Monaco and their cursor —
-        // so it is kept out. Once focus is elsewhere the shared document wins and
-        // the slice is adopted verbatim, including the comment / quoting /
-        // formatting-only changes the drawer's semantic guard swallows.
         const keepLocalEdit = props.presentation === "panel"
             ? panelHasFocus.value
             : normalizeYaml(incoming) === normalizeYaml(taskBaseline.value)
@@ -550,8 +520,6 @@
         const task = YAML_UTILS.parse(taskYaml.value)
         if (task?.type && task.type !== type.value) {
             type.value = task.type
-            // Debounced: typing the type in Source changes it per keystroke, and
-            // loading each partial fqcn ("io", "io.k", …) 404s.
             clearTimeout(typeLoadTimer.value)
             typeLoadTimer.value = setTimeout(() => pluginsStore.load({cls: task.type}).catch(() => {}), 500)
         }
@@ -568,9 +536,6 @@
         if (props.presentation === "panel") onShow()
     })
 
-    // Switching tabs (or closing the pane) within the 500ms input debounce
-    // would silently drop the user's last keystrokes — commit them on the way
-    // out, exactly like a save does.
     onBeforeUnmount(flushPendingEdit)
     onDeactivated(flushPendingEdit)
 
@@ -662,17 +627,11 @@
         .task-edit-col {
             flex: none;
             width: 100%;
-            // Override the row-layout `height: 100%`: stacked columns size to
-            // their content, otherwise a collapsed rail stretches to the full
-            // height and leaves a big empty block.
             height: auto;
             border: none;
             border-bottom: 1px solid var(--ks-border-subtle);
         }
 
-        // Cap the data columns so a long inputs/outputs list scrolls inside
-        // itself instead of consuming the whole height and crushing the
-        // Form/Source editor below.
         .task-edit-col-inputs,
         .task-edit-col-output {
             max-height: 30%;

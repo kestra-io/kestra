@@ -221,8 +221,6 @@
     const isSelectingPlugins = computed(() => schemas.value.length > 4)
 
     const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {
-        // if all schemas are of type array we have to
-        // look at the type of their items to differentiate them
         if(allSchemaSameType.value){
             return schemas.value.map((schema) => {
                 const itemsType = schema.type === "array" ? schema.items?.format ?? schema.items?.type : schema.format ?? schema.type
@@ -255,8 +253,6 @@
             })
             .map((schemaRef: string) => `${schemaRef}.`)
             .join("")
-
-
 
         return schemas.value.map((schema: any) => {
             const schemaRef = schema.$ref
@@ -339,7 +335,6 @@
         })
     })
 
-    // Methods
     function onSelectType(value: string) {
         if (typeof model.value === "string" && (value === "object" || value === "array")) {
             let parsedValue: any = {}
@@ -349,7 +344,6 @@
                     parsedValue = [parsedValue]
                 }
             } catch {
-                // ignore invalid yaml
             }
         }
         if (value === "string") {
@@ -393,7 +387,6 @@
         })
     }
 
-    // Expose
     defineExpose({
         resetSelectType,
     })

@@ -73,8 +73,6 @@
     })
 
     function editorUpdate(source: string) {
-        // if no-code would not change the structure of the app,
-        // do not trigger an update as it would remove all formatting and comments
         if(deepEqual(YAML_UTILS.parse(source), parsedSource.value)) {
             return
         }

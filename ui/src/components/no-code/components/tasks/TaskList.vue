@@ -74,7 +74,6 @@
     } from "../../../../utils/flowableBlockOps"
     import {useI18n} from "vue-i18n"
 
-
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
 
     const schemaAtBlockPathInjected = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPathInjected.value))
@@ -82,8 +81,6 @@
     const blockSchemaPath = computed(() => {
         const rootParts = props.root ? props.root.split(".") : []
         if(rootParts.length > 1){
-            // if second part is a property not defined in properties,
-            // it can only be defined by additionalProperties
             const s = schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]
             if(s && s.properties?.[rootParts[1]] === undefined && s.additionalProperties){
                 rootParts[1] = "additionalProperties"
@@ -196,7 +193,6 @@
 
     const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {})
 
-    // resolve parentPathComplete field schema from pluginsStore
     const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type")
 </script>
 

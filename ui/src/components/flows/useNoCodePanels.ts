@@ -7,7 +7,6 @@ import {useFlowStore} from "../../stores/flow"
 import {NoCodeProps} from "./noCodeTypes"
 import {displayTaskOf} from "../../utils/flowableBlockOps"
 
-
 import {trackTabOpen, trackTabClose} from "../../utils/tabTracking"
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes"
 import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize"
@@ -39,7 +38,6 @@ interface Handlers {
 
 export function getEditTabKey(tab: NoCodeProps, index: number) {
     const indexWithLeftPadding = String(index).padStart(4, "0")
-    // remove irrelevant properties from the tab object
     const {
         creatingTask: _,
         position: __,
@@ -72,7 +70,6 @@ let keepAliveCacheBuster = 0
 function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string, te: (key: string) => boolean): Tab {
     function getTabValues(_innerTab: NoCodeTabWithAction) {
         // FIXME optimize by avoiding to stringify then parse again the yaml object.
-        // maybe we could have a function in the YAML_UTILS that returns the parsed value.
         const parentBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
             source: flow,
             path: tab.parentPath.replace(/\.[^.]+$/, ""),
@@ -100,8 +97,6 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
                 source: flow,
                 path,
             })) : {}
-            // A DAG lane item is a {task, dependsOn} wrapper with no id of its own —
-            // the tab label needs the wrapped task's id, not the wrapper's.
             const currentBlock = rawBlock ? displayTaskOf(rawBlock) : rawBlock
 
             return {
@@ -153,7 +148,6 @@ export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, handlers: 
         const {parentPath, refPath, action} = parseTabId(tab)
         const path = (refPath === undefined ? parentPath : `${parentPath}[${refPath}]`) ?? ""
         if(action === "edit" && !YAML_UTILS.extractBlockWithPath({source: flowYaml, path})) {
-            // if the task is not found, we don't create the tab
             return undefined
         }
     }
@@ -194,8 +188,6 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
 
             const tAdd = openTabs.value.find(t => t.endsWith(createTabId))
 
-            // if the tab is already open and has no data, to avoid conflicting data
-            // focus it and don't open a new one
             if(tAdd && tAdd.startsWith(`${NOCODE_PREFIX}-`)){
                 focusTab(tAdd)
                 return false
@@ -205,8 +197,6 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
             return false
         },
         onEditTask(...args){
-            // if the tab is already open, focus it
-            // and don't open a new one)
             const [
                 opener,
                 parentPath,
@@ -256,7 +246,6 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         fieldName?: string | undefined,
         newPanelIndex?: number,
     ) {
-        // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab(component, {
             action: "create",
             parentPath,
@@ -327,9 +316,6 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             return
         }
         const tab = openerPanel.tabs[opener.tabIndex]
-        // Only close task-edit tabs ("nocode-<key>"), never the root canvas tab
-        // (uid === NOCODE_PREFIX): deleting a task while the canvas is focused used
-        // to close the canvas itself, dumping the user out of the no-code editor.
         if (tab?.uid.startsWith(`${NOCODE_PREFIX}-`)) {
             trackTabClose(tab)
             openerPanel.tabs.splice(opener.tabIndex, 1)

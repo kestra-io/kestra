@@ -151,7 +151,6 @@
     import IconCodeTags from "vue-material-design-icons/CodeTags.vue"
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
 
-
     const modelValue = defineModel<any>()
 
     const props = withDefaults(defineProps<{
@@ -182,7 +181,6 @@
 
     const pebbleState = ref(false)
 
-
     const componentProps = computed(() => {
         return {
             modelValue: modelValue.value,
@@ -207,8 +205,6 @@
         return props.schema?.title || props.schema?.description || props.schema?.markdownDescription
     })
 
-    // The JSON-schema generator emits descriptions as markdownDescription;
-    // plain description only exists on hand-written schemas.
     const helpText = computed(() => {
         const schema = props.schema
         if (!schema) return ""
@@ -227,8 +223,6 @@
 
     const isBoolean = computed(() => {
         if (simpleType.value === "boolean") return true
-        // A boolean is usually declared as anyOf[boolean, string] so it can also
-        // hold an expression; render it as a plain switch on the label line too.
         const anyOf = props.schema?.anyOf
         if (!Array.isArray(anyOf) || anyOf.length !== 2) return false
         return anyOf.some(s => s.type === "boolean") && anyOf.some(s => s.type === "string" && !s.format)
@@ -263,10 +257,6 @@
     const inlineHelp = computed(() => Boolean(fieldNav))
     const inlineHelpText = computed(() => props.schema?.description || props.schema?.markdownDescription || props.schema?.title || "")
 
-    // An anyOf whose variants are all objects (e.g. retry's
-    // Constant/Exponential/Random) is structurally an object: contain it in
-    // the same nested card as complex/object fields. Scalar anyOf (e.g. a
-    // string/array message) keeps the plain label-row presentation.
     const isObjectAnyOf = computed(() => {
         const anyOf = props.schema?.anyOf
         if (!Array.isArray(anyOf) || anyOf.length === 0) return false

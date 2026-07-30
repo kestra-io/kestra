@@ -12,16 +12,6 @@ export default (app: any, router: Router) => {
         }
     })
 
-    // Same page = same resolved path, ignoring query string (which the block
-    // editor uses for transient UI state: open tabs, doc panel, collapsed
-    // panels). Comparing path strings is order-independent, unlike a
-    // JSON.stringify of the params object whose key order can vary between
-    // from/to and spuriously trip the guard.
-    //
-    // Contract: any feature that sets `unsavedChangesStore.unsavedChange = true`
-    // must encode what is being edited in the PATH, never in the query — a
-    // query-only change is treated as staying on the same page and will not
-    // prompt to save.
     const isSamePage = (route1: RouteLocation, route2: RouteLocation) =>
         route1.path === route2.path
 

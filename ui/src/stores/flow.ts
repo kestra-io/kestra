@@ -25,8 +25,6 @@ const textYamlHeader = {
     },
 }
 
-// backfill (Schedule) and key (Webhook) are trigger-type-specific runtime config, not part of
-// the SDK's generic AbstractTrigger schema (which models fields common to every trigger type).
 export type Trigger = AbstractTrigger & {
     backfill?: {
         start?: string;
@@ -34,8 +32,6 @@ export type Trigger = AbstractTrigger & {
     key?: string;
 }
 
-// tasks nest recursively (Sequential, Parallel, EachSequential, ...), which the SDK's flat,
-// generic Task schema doesn't model - re-added here for this app's tree-walking usage.
 export type Task = SdkTask & {
     tasks?: Task[]
 }
@@ -55,12 +51,6 @@ export interface FlowValidations {
     deprecationPaths?: string[];
 }
 
-// tasks/errors/triggers/inputs are overridden below: the SDK's generic Task/AbstractTrigger/
-// InputObject types don't model the recursive subtasks or OSS-specific fields (backfill) this
-// app relies on for tree-walking and trigger editing. source is narrowed to required since this
-// store only ever loads flows with the `source: true` request param, which always returns it.
-// disabled/draft/deleted/tasks are widened back to optional: flowStore.flow is also used to hold
-// locally-constructed in-progress flows (new flow/file creation) that don't set them yet.
 export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "tasks"> & {
     source: string;
     disabled?: boolean;
@@ -246,7 +236,6 @@ export const useFlowStore = defineStore("flow", () => {
                     )
                 }
             } catch{
-                // yaml is not always valid
             }
         }
 
@@ -257,8 +246,6 @@ export const useFlowStore = defineStore("flow", () => {
                 if (
                     topologyVisible &&
                     flowHaveTasks.value &&
-                    // avoid sending empty errors
-                    // they make the backend fail
                     flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
                 ) {
                     if (!value.constraints) fetchGraph()
@@ -281,21 +268,10 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
-    // A single Cmd/Ctrl+S can be caught by more than one global handler: the Flow Code
-    // panel (FlowFileEditorTab) and the no-code Blocks editor each own a window keydown
-    // save. Without coalescing, both fire a PUT for the same next revision; the second
-    // collides on the revision primary key (500) and suppresses the success toast.
-    // Sharing one in-flight promise makes any burst of concurrent saves a single request.
     let inFlightSave: Promise<FlowSaveOutcome> | null = null
 
     async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
         if (inFlightSave) return inFlightSave
-        // A single Cmd/Ctrl+S is caught by more than one global handler (the Flow Code
-        // pane and the no-code editor each own one). The first persists the change and
-        // advances flowYamlOrigin; a second, non-overlapping request would re-PUT the
-        // now-unchanged content, collide with the first on the same next revision (500)
-        // and suppress the success toast. Skip a save that has nothing to persist —
-        // the same guard saveAll already applies, now shared by every save path.
         if (!isCreating.value && !haveChange.value) return "no_op"
         inFlightSave = performSave(draft)
         try {
@@ -400,7 +376,6 @@ export const useFlowStore = defineStore("flow", () => {
             flow: flowYaml.value ?? "",
             config: {
                 params: {
-                    // due to usage of axios instance instead of $http which doesn't convert arrays
                     subflows: expandedSubflows.value.join(","),
                 },
                 validateStatus: (status: number) => {
@@ -419,7 +394,6 @@ export const useFlowStore = defineStore("flow", () => {
             fetchGraph()
         }
 
-        // validate flow on first load
         return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
     }
 
@@ -493,7 +467,6 @@ export const useFlowStore = defineStore("flow", () => {
                 variant: "error",
             }
 
-            // add this error to the list of errors
             flowValidation.value = {
                 constraints: data.exception,
                 outdated: false,
@@ -563,7 +536,6 @@ export const useFlowStore = defineStore("flow", () => {
 
             flow.value = data as Flow
 
-            // clean-up
             localStorage.removeItem(`el-fl-creation-${creationId.value}`)
             creationId.value = undefined
 
@@ -672,7 +644,6 @@ function deleteFlowAndDependencies() {
                 flowVar.id = flow.value?.id ?? flowVar.id
                 flowVar.namespace = flow.value?.namespace ?? flowVar.namespace
                 flowVar.source = options.flow
-                // prevent losing revision when loading graph from source
                 flowVar.revision = flow.value?.revision
                 flowVar.draft = flow.value?.draft
                 flow.value = flowVar

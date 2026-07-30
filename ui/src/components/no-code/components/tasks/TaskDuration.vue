@@ -104,9 +104,6 @@
     const localEdit = ref(false)
 
     function parse(value?: string): Segment[] {
-        // Accept fractional and negative components (e.g. PT1.5S, PT-6H) so an
-        // existing value doesn't fall back to a blank default that would clobber
-        // it on the next edit. The stepper still emits whole positive units.
         const num = "(-?\\d+(?:\\.\\d+)?)"
         const match = value?.match(new RegExp(`^-?P(?:${num}W)?(?:${num}D)?(?:T(?:${num}H)?(?:${num}M)?(?:${num}S)?)?$`, "i"))
         if (!match) return [{value: null, unit: "m"}]

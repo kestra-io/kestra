@@ -2071,10 +2071,17 @@
         },
         "toolCall": "正在运行 {tool}",
         "context": {
+          "app": "应用: {{app}}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "仪表盘：{{dashboard}}",
           "execution": "执行：{id}",
           "flow": "Flow：{{flow}}",
-          "namespace": "Namespace: {{namespace}}"
+          "namespace": "Namespace: {{namespace}}",
+          "plugin": "插件: {plugin}",
+          "test": "测试: {test}"
         },
+        "contextAdded": "已将 {{label}} 添加到上下文",
+        "contextRemoved": "已从上下文中移除 {{label}}",
         "toolResult": {
           "detail": "详情",
           "error": "{{tool}} 失败",

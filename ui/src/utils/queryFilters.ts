@@ -6,7 +6,7 @@ import type {QueryFilter, QueryFilterField, QueryFilterLogical, QueryFilterOp} f
 const QUERY_FILTER_LOGICAL: Record<LogicalOperator, QueryFilterLogical> = {AND: "and", OR: "or"}
 
 /**
- * Builds a `QueryFilter` group node. The backend rejects a node that also carries a
+ * Builds a `QueryFilter` group node. TExecutions.tshe backend rejects a node that also carries a
  * `field`/`operation`/`value` (see `QueryFilter`'s canonical constructor), so a group is only ever
  * `logical` + `children`, with `logical` in the lowercase form its enum accepts.
  */
@@ -107,3 +107,24 @@ export const routeQueryToQueryFilters = (query: LocationQuery): QueryFilter[] =>
 
     return root.build()
 }
+
+/**
+ * Keeps only the top-level `filters[...]` params of a route query that sit on one of `fields`.
+ *
+ * Use it to narrow a filter dropdown's own value lookup by the filters already applied to the list.
+ * Because top-level filter params are ANDed together, forwarding a subset of them can only loosen
+ * the lookup - so it never hides a value the list itself would show. That is also why members of a
+ * nested AND/OR group are never forwarded: dropping one disjunct of an OR would tighten the lookup
+ * instead, and could hide values the list shows.
+ *
+ * Pagination and sort params are dropped for free: they are not `filters[...]` keys.
+ */
+export const keepTopLevelFilters = (query: LocationQuery, fields: string[]): LocationQuery =>
+    Object.fromEntries(
+        Object.entries(query).filter(([key, value]) => {
+            if (!key.startsWith("filters[") || !value) return false
+
+            const parsed = parseFilterKey(key)
+            return parsed !== null && parsed.chain.length === 0 && fields.includes(parsed.field)
+        }),
+    )

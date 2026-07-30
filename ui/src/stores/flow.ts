@@ -1,5 +1,6 @@
 import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox, routeQueryToQueryFilters} from "@kestra-io/design-system"
+import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"

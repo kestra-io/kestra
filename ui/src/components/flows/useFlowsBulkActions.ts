@@ -4,7 +4,7 @@ import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as Utils from "../../utils/utils"
 import {computed, type Ref} from "vue"
 import {useFlowStore} from "../../stores/flow"
-import {routeQueryToQueryFilters} from "@kestra-io/design-system"
+import {routeQueryToQueryFilters} from "../../utils/queryFilters"
 import type {IdWithNamespace} from "@kestra-io/kestra-sdk"
 import type {LocationQuery} from "vue-router"
 

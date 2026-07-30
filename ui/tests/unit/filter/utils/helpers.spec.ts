@@ -15,7 +15,7 @@ import {
     parseFiltersFromString,
     validStructureSignature,
     pickStarterField,
-    routeQueryToQueryFilters,
+    parseFilterKey,
 } from "@kestra-io/design-system"
 import type {FilterGroup, LeafFilterGroup, WrapperGroup} from "@kestra-io/design-system"
 
@@ -72,92 +72,31 @@ describe("Filter Helpers", () => {
         })
     })
 
-    describe("routeQueryToQueryFilters", () => {
-        it("builds a simple leaf filter", () => {
-            expect(routeQueryToQueryFilters({"filters[namespace][EQUALS]": "io.kestra"})).toEqual([
-                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
-            ])
+    describe("parseFilterKey", () => {
+        it("splits a root-level key into field and operation", () => {
+            expect(parseFilterKey("filters[namespace][EQUALS]")).toEqual({
+                chain: [], field: "namespace", operation: "EQUALS", subKey: undefined,
+            })
         })
 
-        it("keeps the irregular q/groupList field values as-is (already the wire form)", () => {
-            expect(routeQueryToQueryFilters({"filters[q][EQUALS]": "hello"})).toEqual([
-                {field: "q", operation: "EQUALS", value: "hello"},
-            ])
-            expect(routeQueryToQueryFilters({"filters[groupList][EQUALS]": "team"})).toEqual([
-                {field: "groupList", operation: "EQUALS", value: "team"},
-            ])
+        it("returns the label sub-key when the key carries one", () => {
+            expect(parseFilterKey("filters[labels][EQUALS][env]")).toEqual({
+                chain: [], field: "labels", operation: "EQUALS", subKey: "env",
+            })
         })
 
-        it("keeps a comma-joined IN/NOT_IN value as a plain string", () => {
-            expect(routeQueryToQueryFilters({"filters[namespace][IN]": "a,b,c"})).toEqual([
-                {field: "namespace", operation: "IN", value: "a,b,c"},
-            ])
+        it("returns the grouping chain outermost first", () => {
+            expect(parseFilterKey("filters[or][0][and][1][state][EQUALS]")).toEqual({
+                chain: [{logical: "OR", index: 0}, {logical: "AND", index: 1}],
+                field: "state",
+                operation: "EQUALS",
+                subKey: undefined,
+            })
         })
 
-        it("merges multiple label sub-keys sharing an operation into one filter", () => {
-            expect(routeQueryToQueryFilters({
-                "filters[labels][EQUALS][env]": "prod",
-                "filters[labels][EQUALS][team]": "backend",
-            })).toEqual([
-                {field: "labels", operation: "EQUALS", value: {env: "prod", team: "backend"}},
-            ])
-        })
-
-        it("builds a top-level OR group", () => {
-            expect(routeQueryToQueryFilters({
-                "filters[or][0][state][EQUALS]": "RUNNING",
-                "filters[or][1][state][EQUALS]": "FAILED",
-            })).toEqual([
-                {
-                    logical: "or",
-                    children: [
-                        {field: "state", operation: "EQUALS", value: "RUNNING"},
-                        {field: "state", operation: "EQUALS", value: "FAILED"},
-                    ],
-                },
-            ])
-        })
-
-        it("flattens a single-branch AND group back to a plain leaf", () => {
-            expect(routeQueryToQueryFilters({"filters[and][0][state][EQUALS]": "RUNNING"})).toEqual([
-                {field: "state", operation: "EQUALS", value: "RUNNING"},
-            ])
-        })
-
-        it("builds a nested wrapper group (OR containing an AND)", () => {
-            expect(routeQueryToQueryFilters({
-                "filters[or][0][and][0][namespace][EQUALS]": "io.kestra",
-                "filters[or][0][and][1][state][EQUALS]": "RUNNING",
-                "filters[or][1][state][EQUALS]": "FAILED",
-            })).toEqual([
-                {
-                    logical: "or",
-                    children: [
-                        {
-                            logical: "and",
-                            children: [
-                                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
-                                {field: "state", operation: "EQUALS", value: "RUNNING"},
-                            ],
-                        },
-                        {field: "state", operation: "EQUALS", value: "FAILED"},
-                    ],
-                },
-            ])
-        })
-
-        it("builds the timeRange GTE/LTE pair as two independent leaves", () => {
-            expect(routeQueryToQueryFilters({
-                "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": "2023-01-01T00:00:00.000Z",
-                "filters[endDate][LESS_THAN_OR_EQUAL_TO]": "2023-01-31T23:59:59.000Z",
-            })).toEqual([
-                {field: "startDate", operation: "GREATER_THAN_OR_EQUAL_TO", value: "2023-01-01T00:00:00.000Z"},
-                {field: "endDate", operation: "LESS_THAN_OR_EQUAL_TO", value: "2023-01-31T23:59:59.000Z"},
-            ])
-        })
-
-        it("ignores non-filters keys", () => {
-            expect(routeQueryToQueryFilters({page: "1", size: "25", sort: "id:asc"})).toEqual([])
+        it("returns null for a key that is not in the filter format", () => {
+            expect(parseFilterKey("page")).toBeNull()
+            expect(parseFilterKey("filters[namespace]")).toBeNull()
         })
     })
 

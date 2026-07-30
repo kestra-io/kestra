@@ -42,7 +42,6 @@
     "generate:palette": "node scripts/generate-palette.mjs"
   },
   "peerDependencies": {
-    "@kestra-io/kestra-sdk": "*",
     "@vueuse/core": ">=11.0.0",
     "bootstrap": "^5.3.8",
     "echarts": ">=6.0.0",

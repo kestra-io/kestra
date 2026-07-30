@@ -42,9 +42,6 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     @Inject
     private JdbcTableConfigs jdbcTableConfigs;
 
-    @Inject
-    private QueueService queueService;
-
     @Test
     void workerTaskDeserializationIssue() throws Exception {
         deserializationIssuesCaseTest.workerTaskDeserializationIssue(this::sendToQueue);

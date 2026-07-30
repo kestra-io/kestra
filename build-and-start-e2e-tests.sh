@@ -22,7 +22,6 @@ echo "Building the image for this current repository"
 BASE_IMAGE="$(sed -n 's/^ARG BASE_IMAGE="\(.*\)"/\1/p' Dockerfile)"
 docker pull -q "${BASE_IMAGE:-ghcr.io/kestra-io/kestra-base:latest-no-plugins}" > /dev/null 2>&1 &
 docker pull -q postgres > /dev/null 2>&1 &
-docker pull -q docker:dind-rootless > /dev/null 2>&1 &
 
 if [ -n "$CI" ]; then
   # CI runners start from a fresh checkout (nothing to clean) and the workflow

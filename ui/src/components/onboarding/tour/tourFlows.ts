@@ -133,8 +133,4 @@ export const tourFlowSource = {
 export const TOUR_MANUAL_LABEL = "started_by:you"
 
 /** Payload prefilled in the Send test event dialog. */
-export const TOUR_TEST_EVENT_PAYLOAD = `{
-  "order_id": 1042,
-  "customer": "ACME",
-  "total": 187.5
-}`
+export {SAMPLE_TEST_EVENT_PAYLOAD as TOUR_TEST_EVENT_PAYLOAD} from "../../flows/testEvent"

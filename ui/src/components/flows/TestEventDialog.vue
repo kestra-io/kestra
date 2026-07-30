@@ -70,7 +70,7 @@
 
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {webhookUrl} from "../../utils/webhook"
-    import {parseHeaderLines, sendWebhookTestEvent, type TestEventResult} from "./testEvent"
+    import {parseHeaderLines, sendWebhookTestEvent, SAMPLE_TEST_EVENT_PAYLOAD, type TestEventResult} from "./testEvent"
 
     export interface TestEventTarget {
         namespace: string;
@@ -89,21 +89,13 @@
         sent: [result: TestEventResult];
     }>()
 
-    /** What the payload field starts with, so an event can be sent without writing JSON first. */
-    const SAMPLE_PAYLOAD = `{
-  "order_id": 1042,
-  "customer": "ACME",
-  "total": 187.5
-}`
-
     const {t} = useI18n()
     const route = useRoute()
     const editorBindings = useEditorBindings()
 
-    const isOpen = computed(() => props.modelValue)
     const target = computed(() => props.target)
 
-    const payload = ref(SAMPLE_PAYLOAD)
+    const payload = ref(SAMPLE_TEST_EVENT_PAYLOAD)
     const headers = ref("")
     const sending = ref(false)
     const result = ref<TestEventResult | null>(null)
@@ -130,9 +122,9 @@
     })
 
     // A fresh payload every time the dialog opens, so a previous edit is not carried over.
-    watch(isOpen, (value) => {
+    watch(open, (value) => {
         if (value) {
-            payload.value = SAMPLE_PAYLOAD
+            payload.value = SAMPLE_TEST_EVENT_PAYLOAD
             result.value = null
         }
     })

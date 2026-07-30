@@ -28,7 +28,14 @@
             </div>
         </div>
 
-        <p class="tour-lead" v-html="namespaceNote" />
+        <i18n-t keypath="onboarding.tour.finale.namespace_note" tag="p" class="tour-lead" scope="global">
+            <template #namespace>{{ TOUR_NAMESPACE }}</template>
+            <template #secrets>
+                <a :href="docsUrl('secret')" target="_blank" rel="noopener">
+                    {{ t("onboarding.tour.finale.docs.secret") }}
+                </a>
+            </template>
+        </i18n-t>
 
         <p class="resources-title">
             {{ t("onboarding.tour.finale.keep_going") }}
@@ -47,7 +54,6 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
 
@@ -98,13 +104,6 @@
 
     const {onboardingResources: resources} = useOnboardingResources()
 
-    const namespaceNote = computed(() => t("onboarding.tour.finale.namespace_note", {
-        namespace: TOUR_NAMESPACE,
-        secrets: `<a href="${docsUrl("secret")}" target="_blank" rel="noopener">`
-            + t("onboarding.tour.finale.docs.secret")
-            + "</a>",
-    }))
-
     const startBuilding = async () => {
         isOpen.value = false
         // The same namespace as everything else from the tour, so the story stays consistent.
@@ -135,7 +134,7 @@
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
 
-        :deep(a) {
+        a {
             color: var(--ks-text-link);
             text-decoration: none;
 

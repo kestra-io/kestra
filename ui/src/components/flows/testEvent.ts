@@ -8,6 +8,12 @@ import {webhookUrl} from "../../utils/webhook"
  */
 export const TEST_EVENT_HEADER = "X-Kestra-Test-Event"
 
+export const SAMPLE_TEST_EVENT_PAYLOAD = `{
+  "order_id": 1042,
+  "customer": "ACME",
+  "total": 187.5
+}`
+
 export interface TestEventResult {
     status: number;
     ok: boolean;

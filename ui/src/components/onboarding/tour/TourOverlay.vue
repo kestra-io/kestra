@@ -774,7 +774,7 @@
         top: -12px;
         width: 8px;
         height: 14px;
-        border-radius: var(--ks-radius-xs);
+        border-radius: 2px;
         pointer-events: none;
         z-index: 6000;
         animation-name: tourConfettiFall;

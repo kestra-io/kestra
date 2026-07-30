@@ -8,6 +8,7 @@ import {useProductTourStore} from "../../../stores/productTour"
 import {FLOW_PARENT_ROUTE} from "../../flows/flowTabs"
 import {EXECUTION_PARENT_ROUTE} from "../../executions/executionTabs"
 import {sendWebhookTestEvent} from "../../flows/testEvent"
+import {TourSceneError} from "./tourScenes"
 import {
     TOUR_FLOW_ID,
     TOUR_MANUAL_LABEL,
@@ -315,7 +316,9 @@ export function useTourActions() {
         await writeSource(source)
         const outcome = await flowStore.saveAll()
         if (outcome === "blocked") {
-            throw new Error(flowStore.flowErrors?.join(" ") ?? "The tour flow could not be saved")
+            throw new TourSceneError("onboarding.tour.errors.save_flow", {
+                reason: flowStore.flowErrors?.join(" ") ?? "",
+            })
         }
         // A creation redirects to the update route so later scenes can address the flow by id.
         await openFlowEditor()
@@ -378,7 +381,7 @@ export function useTourActions() {
     const replayFromFailedTask = async () => {
         const executionId = tour().failedExecutionId ?? tour().lastExecutionId
         if (!executionId) {
-            throw new Error("No execution to replay")
+            throw new TourSceneError("onboarding.tour.errors.no_execution_to_replay")
         }
 
         const execution = await executionsStore.loadExecution({id: executionId})

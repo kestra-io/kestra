@@ -82,24 +82,20 @@
             height: 22px;
         }
 
-        &.is-tutorial {
-            color: #8b5cf6;
-        }
-
         &.is-blueprints {
-            color: #4dabf7;
+            color: var(--ks-status-info);
         }
 
         &.is-slack {
-            color: #22c55e;
+            color: var(--ks-status-success);
         }
 
         &.is-videos {
-            color: #f87171;
+            color: var(--ks-status-error);
         }
 
         &.is-demo {
-            color: #fb923c;
+            color: var(--ks-status-warning);
         }
     }
 

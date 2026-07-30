@@ -1450,7 +1450,9 @@
         "errors": {
           "first_execution": "The first execution finished as {state} instead of succeeding. Open the logs on this page to see why, then try again.",
           "expected_failure": "This execution finished as {state}, so there is no failure to fix yet. Check that the flow still has the <code>notify</code> task, then try again.",
+          "no_execution_to_replay": "There is no execution to replay yet. Run the flow on the previous step, then try again.",
           "replay": "The replay finished as {state}. Open the logs on this page to see what <code>notify</code> reported, then try again.",
+          "save_flow": "The tour flow could not be saved. {reason}",
           "test_event": "The webhook responded with {status}. Check that the flow is saved and the trigger is enabled, then try again."
         },
         "steps": {

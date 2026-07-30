@@ -1,52 +1,54 @@
 <template>
-    <div class="tour-scrim">
-        <div class="tour-card">
+    <KsDialog
+        v-model="isOpen"
+        appendToBody
+        width="min(660px, 92vw)"
+        @close="emit('close')"
+    >
+        <template #header>
             <p class="tour-kicker">
                 {{ t("onboarding.tour.finale.kicker") }}
             </p>
-            <h1>{{ t("onboarding.tour.finale.title") }}</h1>
+            <h1 class="tour-title">{{ t("onboarding.tour.finale.title") }}</h1>
+        </template>
 
-            <div class="takeaways">
-                <div v-for="takeaway in TAKEAWAYS" :key="takeaway.key" class="takeaway">
-                    <h4>{{ t(`onboarding.tour.finale.takeaways.${takeaway.key}.title`) }}</h4>
-                    <!-- As in the guide card: the names of the controls are in <strong>. -->
-                    <p v-html="t(`onboarding.tour.finale.takeaways.${takeaway.key}.body`)" />
-                    <p class="takeaway-docs">
-                        <span>{{ t("onboarding.tour.finale.docs.title") }}</span>
-                        <a
-                            v-for="name in takeaway.docs"
-                            :key="name"
-                            :href="docsUrl(name)"
-                            target="_blank"
-                            rel="noopener"
-                        >{{ t(`onboarding.tour.finale.docs.${name}`) }}</a>
-                    </p>
-                </div>
-            </div>
-
-            <!-- Where the tour's flows live, and what it cut corners on, so nobody copies the mock
-                 endpoint into production. The link is built here: URLs are not translated. -->
-            <p class="tour-lead" v-html="namespaceNote" />
-
-            <p class="resources-title">
-                {{ t("onboarding.tour.finale.keep_going") }}
-            </p>
-            <OnboardingResourceList :items="resources" />
-
-            <div class="tour-card-actions">
-                <KsButton @click="emit('restart')">
-                    {{ t("onboarding.tour.finale.restart") }}
-                </KsButton>
-                <KsButton type="primary" @click="startBuilding">
-                    {{ t("onboarding.tour.finale.start_building") }}
-                </KsButton>
+        <div class="takeaways">
+            <div v-for="takeaway in TAKEAWAYS" :key="takeaway.key" class="takeaway">
+                <h4>{{ t(`onboarding.tour.finale.takeaways.${takeaway.key}.title`) }}</h4>
+                <p v-html="t(`onboarding.tour.finale.takeaways.${takeaway.key}.body`)" />
+                <p class="takeaway-docs">
+                    <span>{{ t("onboarding.tour.finale.docs.title") }}</span>
+                    <a
+                        v-for="name in takeaway.docs"
+                        :key="name"
+                        :href="docsUrl(name)"
+                        target="_blank"
+                        rel="noopener"
+                    >{{ t(`onboarding.tour.finale.docs.${name}`) }}</a>
+                </p>
             </div>
         </div>
-    </div>
+
+        <p class="tour-lead" v-html="namespaceNote" />
+
+        <p class="resources-title">
+            {{ t("onboarding.tour.finale.keep_going") }}
+        </p>
+        <OnboardingResourceList :items="resources" />
+
+        <template #footer>
+            <KsButton @click="emit('restart')">
+                {{ t("onboarding.tour.finale.restart") }}
+            </KsButton>
+            <KsButton type="primary" @click="startBuilding">
+                {{ t("onboarding.tour.finale.start_building") }}
+            </KsButton>
+        </template>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
 
@@ -62,6 +64,8 @@
         restart: [];
         close: [];
     }>()
+
+    const isOpen = ref(true)
 
     /**
      * Documentation for the concepts the tour went through, kept here rather than in the translations:
@@ -115,35 +119,8 @@
 </script>
 
 <style scoped lang="scss">
-    .tour-scrim {
-        position: fixed;
-        inset: 0;
-        z-index: 5200;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: var(--ks-spacing-5);
-        background: var(--ks-bg-scrim);
-        backdrop-filter: blur(6px);
-        overflow-y: auto;
-    }
-
-    .tour-card {
-        width: 100%;
-        max-width: 660px;
-        // Keeps the buttons reachable on short screens.
-        max-height: calc(100vh - var(--ks-spacing-8));
-        overflow-y: auto;
-        padding: var(--ks-spacing-6);
-        border: var(--ks-border-width-thin) solid var(--ks-border-default);
-        border-radius: var(--ks-radius-xl);
-        background: var(--ks-bg-elevated);
-        box-shadow: var(--ks-shadow-lg);
-
-        h1 {
-            margin-bottom: var(--ks-spacing-3);
-            font-size: var(--ks-font-size-2xl);
-        }
+    .tour-title {
+        font-size: var(--ks-font-size-2xl);
     }
 
     .tour-kicker {
@@ -170,18 +147,11 @@
         }
     }
 
-    .tour-card-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: var(--ks-spacing-2);
-        margin-top: var(--ks-spacing-5);
-    }
-
     .takeaways {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--ks-spacing-3);
-        margin: var(--ks-spacing-4) 0;
+        margin-bottom: var(--ks-spacing-4);
 
         @media (max-width: 640px) {
             grid-template-columns: 1fr;

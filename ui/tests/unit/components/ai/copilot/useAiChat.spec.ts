@@ -1,11 +1,18 @@
 import {describe, it, expect, vi, beforeEach} from "vitest"
 import type {AiSseFrame} from "../../../../../src/components/ai/copilot/types"
 
-// Mock the axios client (thread create/get) and the SSE reader so we can drive
-// frames deterministically without a backend.
-const post = vi.fn()
-const get = vi.fn()
-vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({post, get})}))
+// Mock the generated SDK AI endpoints (thread create/get) and the SSE reader so we can drive
+// frames deterministically without a backend. create/get resolve the response body directly
+// (the generated wrappers unwrap it via getDataOrThrow), so mocks return the object, not {data}.
+const create = vi.fn()
+const getThread = vi.fn()
+vi.mock("@kestra-io/kestra-sdk/ai", () => ({
+    create: (...a: unknown[]) => create(...a),
+    get: (...a: unknown[]) => getThread(...a),
+}))
+// streamSse.ts (loaded via importOriginal below) imports useClient from the SDK root; stub it so the
+// module resolves — streamSse itself is overridden, so this client is never actually called.
+vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({})}))
 
 let nextFrames: AiSseFrame[] = []
 let nextError: Error | null = null
@@ -29,18 +36,18 @@ import {useAiChat} from "../../../../../src/components/ai/copilot/useAiChat"
 import {SseHttpError} from "../../../../../src/components/ai/copilot/streamSse"
 
 function idleThread() {
-    return {data: {uid: "t1", mode: "ASK", status: "IDLE", createdAt: "", updatedAt: ""}}
+    return {uid: "t1", mode: "ASK", status: "IDLE", createdAt: "", updatedAt: ""}
 }
 
 describe("useAiChat", () => {
     beforeEach(() => {
-        post.mockReset()
-        get.mockReset()
+        create.mockReset()
+        getThread.mockReset()
         nextFrames = []
         nextError = null
         lastBody = null
         localStorage.clear()
-        post.mockResolvedValue(idleThread())
+        create.mockResolvedValue(idleThread())
     })
 
     it("creates the thread once and reuses its uid", async () => {
@@ -49,8 +56,7 @@ describe("useAiChat", () => {
         await chat.sendChat({prompt: "hi"})
         await chat.sendChat({prompt: "again"})
         // One create call total, despite two turns.
-        expect(post).toHaveBeenCalledTimes(1)
-        expect(post.mock.calls[0][0]).toContain("/ai/threads")
+        expect(create).toHaveBeenCalledTimes(1)
     })
 
     it("appends streamed tokens into a single assistant message", async () => {
@@ -142,12 +148,12 @@ describe("useAiChat", () => {
 
     it("rehydrates a persisted artefact draft from thread history", async () => {
         const chat = useAiChat()
-        get.mockResolvedValue({data: {
+        getThread.mockResolvedValue({
             uid: "t7", mode: "EDIT", status: "IDLE",
             messages: [
                 {uid: "a", role: "ASSISTANT", type: "ARTEFACT_DRAFT", draft: {draftId: "d9", kind: "DASHBOARD", yaml: "x: 1", valid: false, constraints: "bad"}},
             ],
-        }})
+        })
         await chat.loadThread("t7")
         const draftMsg = chat.messages.value.find((m) => m.type === "ARTEFACT_DRAFT")
         expect(draftMsg?.draft?.draftId).toBe("d9")
@@ -265,13 +271,13 @@ describe("useAiChat", () => {
 
     it("rehydrates a thread transcript sorted by uid", async () => {
         const chat = useAiChat()
-        get.mockResolvedValue({data: {
+        getThread.mockResolvedValue({
             uid: "t9", mode: "ASK", status: "IDLE",
             messages: [
                 {uid: "b", role: "ASSISTANT", type: "TEXT", content: "second"},
                 {uid: "a", role: "USER", type: "TEXT", content: "first"},
             ],
-        }})
+        })
         await chat.loadThread("t9")
         expect(chat.messages.value.map((m) => m.content)).toEqual(["first", "second"])
         expect(chat.status.value).toBe("IDLE")
@@ -279,7 +285,7 @@ describe("useAiChat", () => {
 
     it("surfaces the unavailable state when thread creation 503s (no provider)", async () => {
         const chat = useAiChat()
-        post.mockRejectedValueOnce({response: {status: 503}})
+        create.mockRejectedValueOnce({response: {status: 503}})
         await chat.sendChat({prompt: "hi"})
         expect(chat.unavailable.value).toBe(true)
         expect(chat.error.value).toBeNull()
@@ -297,7 +303,7 @@ describe("useAiChat", () => {
 
     it("retry() clears the unavailable state", async () => {
         const chat = useAiChat()
-        post.mockRejectedValueOnce({response: {status: 503}})
+        create.mockRejectedValueOnce({response: {status: 503}})
         await chat.sendChat({prompt: "hi"})
         expect(chat.unavailable.value).toBe(true)
         chat.retry()
@@ -334,32 +340,32 @@ describe("useAiChat", () => {
         expect(localStorage.getItem("kestra.copilot.activeThread")).toBe("t1")
 
         // Second session (reload): restoreThread loads the remembered thread's transcript.
-        get.mockResolvedValue({data: {
+        getThread.mockResolvedValue({
             uid: "t1", mode: "ASK", status: "IDLE",
             messages: [{uid: "a", role: "USER", type: "TEXT", content: "hi"}],
-        }})
+        })
         const reloaded = useAiChat()
         await reloaded.restoreThread()
-        expect(get).toHaveBeenCalledWith("http://localhost/api/v1/main/ai/threads/t1", expect.objectContaining({showMessageOnError: false}))
+        expect(getThread).toHaveBeenCalledWith({threadId: "t1"}, expect.objectContaining({showMessageOnError: false}))
         expect(reloaded.thread.value?.uid).toBe("t1")
         expect(reloaded.messages.value.some((m) => m.content === "hi")).toBe(true)
     })
 
     it("restoreThread() forgets a stored thread that no longer exists (404) and stays empty", async () => {
         localStorage.setItem("kestra.copilot.activeThread", "gone")
-        get.mockRejectedValue({status: 404})
+        getThread.mockRejectedValue({status: 404})
         const chat = useAiChat()
         await chat.restoreThread()
         expect(chat.thread.value).toBeNull()
         expect(localStorage.getItem("kestra.copilot.activeThread")).toBeNull()
         // The load opts out of the global "page not found" so the expected 404 is handled here,
         // not by redirecting the whole app to the 404 page.
-        expect(get).toHaveBeenCalledWith(expect.stringContaining("/gone"), expect.objectContaining({showMessageOnError: false}))
+        expect(getThread).toHaveBeenCalledWith({threadId: "gone"}, expect.objectContaining({showMessageOnError: false}))
     })
 
     it("loadThread rethrows a non-404 error (does not silently forget on e.g. a 500)", async () => {
         localStorage.setItem("kestra.copilot.activeThread", "t1")
-        get.mockRejectedValue({status: 500})
+        getThread.mockRejectedValue({status: 500})
         const chat = useAiChat()
         await expect(chat.loadThread("t1")).rejects.toBeTruthy()
         // A transient server error must not drop the remembered thread.
@@ -367,14 +373,14 @@ describe("useAiChat", () => {
     })
 
     it("loadThread reconstructs a pending proposal from pendingConfirmationId + the transcript", async () => {
-        get.mockResolvedValue({data: {
+        getThread.mockResolvedValue({
             uid: "t2", mode: "EDIT", status: "AWAITING_CONFIRMATION", pendingConfirmationId: "cf-9",
             messages: [
                 {uid: "a", role: "USER", type: "TEXT", content: "restart it"},
                 {uid: "b", role: "ASSISTANT", type: "PROPOSED_ACTION", content: "Run restart-execution on exec-1",
                  toolCall: {tool: "restart-execution", kind: "PLATFORM", family: "MUTATE", arguments: {id: "exec-1"}}},
             ],
-        }})
+        })
         const chat = useAiChat()
         await chat.loadThread("t2")
         expect(chat.status.value).toBe("AWAITING_CONFIRMATION")

@@ -1,32 +1,30 @@
 /**
- * Wire types for the AI Copilot v2 agentic loop.
+ * Wire types for the AI Copilot v2 agentic loop (`…/ai/threads`).
  *
- * These mirror the backend types on branch `feat/ai-copilot-v2-agentic-loop`:
- *   - io.kestra.webserver.services.ai.agent.data.{ApiChatTurnRequest, ApiThreadDetail, ApiThreadSummary, AgentEvents}
- *   - io.kestra.core.ai.agent.models.{AgentMode, AgentThreadStatus, AgentToolCall, …}
+ * Enum/union wire types come straight from the generated `@kestra-io/kestra-sdk` and are used
+ * directly here and at the call sites (`AgentMode`, `AgentThreadStatus`, `AgentMessageRole/Type`,
+ * `AgentToolFamily`, `AgentToolCallKind`, `ApiDecision`, `ArtefactKind`) — the SDK is regenerated from
+ * the backend OpenAPI, so a new mode/status/message type flows in automatically instead of drifting.
  *
- * (ScopeBinding is now frontend-local — used by routeScope.ts to build the free-form
- * `additionalContext`; the backend no longer has a structured in-focus type.)
+ * The object shapes below stay hand-written on purpose: the generated `Api*`/`Agent*` DTOs make every
+ * field optional and type `arguments`/`toolResult` as a doubly-nested map (a codegen artifact of the
+ * backend's `Map<String, Object>`), both looser than what the UI actually receives. We keep tighter
+ * local shapes that reference the SDK enums above, plus the SSE frame types the SDK doesn't model.
  *
- * Keep this file in sync with those records — it is the single source of truth
- * for the shapes the frontend exchanges with `…/ai/threads`.
+ * (ScopeBinding is frontend-local — used by routeScope.ts to build the free-form `additionalContext`;
+ * the backend has no structured in-focus type.)
  */
 
-/** Conversation mode. */
-export type Mode = "ASK" | "EDIT" | "PLAN"
-
-/** The resting/working state of a thread — the single source of truth for what the UI may do next. */
-export type ThreadStatus = "IDLE" | "RUNNING" | "AWAITING_CONFIRMATION"
-
-export type MessageRole = "USER" | "ASSISTANT" | "TOOL" | "SYSTEM"
-
-export type MessageType = "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT" | "CANCELLED"
-
-export type ToolFamily = "READ" | "MUTATE" | "ACT"
-
-export type ToolKind = "PLATFORM" | "AUTHORING"
-
-export type Decision = "APPROVE" | "REJECT"
+import type {
+    AgentMode,
+    AgentThreadStatus,
+    AgentMessageRole,
+    AgentMessageType,
+    AgentToolFamily,
+    AgentToolCallKind,
+    ApiDecision,
+    ArtefactKind,
+} from "@kestra-io/kestra-sdk"
 
 /** The artefact a turn is bound to / focused on. */
 export interface ScopeBinding {
@@ -38,9 +36,9 @@ export interface ScopeBinding {
 
 export interface ToolCall {
     id?: string | null
-    kind: ToolKind
+    kind: AgentToolCallKind
     tool: string
-    family?: ToolFamily | null
+    family?: AgentToolFamily | null
     arguments: Record<string, unknown>
 }
 
@@ -49,14 +47,14 @@ export interface ToolCall {
  * ------------------------------------------------------------------ */
 
 export interface CreateThreadRequest {
-    mode?: Mode | null
+    mode?: AgentMode | null
     title?: string | null
     scope?: ScopeBinding | null
 }
 
 export interface ChatTurnRequest {
     prompt: string
-    mode?: Mode | null
+    mode?: AgentMode | null
     /**
      * Free-form, per-turn context (e.g. what the user is currently viewing). The backend renders it
      * into the model input for this turn only — it is not persisted. Replaces the old `inFocus`.
@@ -67,7 +65,7 @@ export interface ChatTurnRequest {
 
 export interface ConfirmActionRequest {
     confirmationId: string
-    decision: Decision
+    decision: ApiDecision
     reason?: string | null
     providerId?: string | null
 }
@@ -79,9 +77,9 @@ export interface ConfirmActionRequest {
 export interface ThreadSummary {
     uid: string
     title?: string | null
-    mode: Mode
+    mode: AgentMode
     scope?: ScopeBinding | null
-    status: ThreadStatus
+    status: AgentThreadStatus
     createdAt: string
     updatedAt: string
     lastTurnAt?: string | null
@@ -89,8 +87,8 @@ export interface ThreadSummary {
 
 export interface MessageView {
     uid: string
-    role: MessageRole
-    type: MessageType
+    role: AgentMessageRole
+    type: AgentMessageType
     content?: string | null
     toolCall?: ToolCall | null
     toolResult?: Record<string, unknown> | null
@@ -102,9 +100,9 @@ export interface MessageView {
 export interface ThreadDetail {
     uid: string
     title?: string | null
-    mode: Mode
+    mode: AgentMode
     scope?: ScopeBinding | null
-    status: ThreadStatus
+    status: AgentThreadStatus
     /** Set only when status is AWAITING_CONFIRMATION — lets a reload resume the suspended turn. */
     pendingConfirmationId?: string | null
     messages: MessageView[]
@@ -134,13 +132,10 @@ export interface TokenEvent {
 export interface ToolCallEvent {
     tool: string
     /** "PLATFORM" (read/act tools) or "AUTHORING" (draft-producing sub-agents). */
-    kind?: ToolKind | null
-    family?: ToolFamily | null
+    kind?: AgentToolCallKind | null
+    family?: AgentToolFamily | null
     arguments: Record<string, unknown>
 }
-
-/** Kind of artefact an authoring sub-agent drafts. */
-export type ArtefactKind = "FLOW" | "DASHBOARD" | "APP"
 
 /**
  * A non-mutating artefact (flow / dashboard / app YAML) drafted by an authoring
@@ -184,7 +179,7 @@ export interface ProposedActionEvent {
     confirmationId: string
     /** null for Plan-mode plan cards. */
     tool?: string | null
-    family?: ToolFamily | null
+    family?: AgentToolFamily | null
     /** Card heading, e.g. "Add test coverage". Falls back to a generic title when absent. */
     title?: string | null
     summary: string
@@ -194,8 +189,8 @@ export interface ProposedActionEvent {
 }
 
 export interface DoneEvent {
-    /** The resting ThreadStatus the stream closed into. */
-    status: ThreadStatus
+    /** The resting thread status the stream closed into. */
+    status: AgentThreadStatus
 }
 
 /**

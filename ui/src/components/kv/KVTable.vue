@@ -296,7 +296,8 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
     import Eye from "vue-material-design-icons/Eye.vue"
 
-    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"

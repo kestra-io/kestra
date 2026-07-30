@@ -3,7 +3,7 @@ import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
-import type {QueryFilter} from "@kestra-io/design-system"
+import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
 import {useMiscStore} from "override/stores/misc"
 

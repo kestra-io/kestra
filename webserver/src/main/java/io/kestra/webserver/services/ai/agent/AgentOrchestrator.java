@@ -30,11 +30,13 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.services.ai.AiServiceManager;
 import io.kestra.webserver.services.ai.agent.ModeProfiles.ResolvedProfile;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
+import io.kestra.webserver.services.ai.agent.data.AgentToolErrorCode;
 import io.kestra.webserver.services.ai.agent.internals.ChatMessageAdaptor;
 import io.kestra.webserver.services.ai.agent.internals.TurnWindow;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog;
 import io.kestra.webserver.services.ai.agent.tool.ToolCatalog.ToolEntry;
 import io.kestra.webserver.services.ai.agent.tool.ToolPermissionDeniedException;
+import io.kestra.webserver.services.ai.agent.tool.ToolResultTooLargeException;
 
 import io.micronaut.core.annotation.Nullable;
 
@@ -239,8 +241,12 @@ public class AgentOrchestrator {
             rejectTool(ctx, held, entry.kind(), entry.family(), e.getMessage(), sink);
             runLoop(ctx, sink);
             return;
+        } catch (ToolResultTooLargeException e) {
+            failTool(ctx, held, entry.kind(), entry.family(), e.getMessage(), AgentToolErrorCode.RESULT_TOO_LARGE, sink);
+            runLoop(ctx, sink);
+            return;
         } catch (RuntimeException e) {
-            failTool(ctx, held, entry.kind(), entry.family(), toolErrorMessage(e), sink);
+            failTool(ctx, held, entry.kind(), entry.family(), toolErrorMessage(e), null, sink);
             runLoop(ctx, sink);
             return;
         }
@@ -358,8 +364,11 @@ public class AgentOrchestrator {
         } catch (ToolPermissionDeniedException e) {
             rejectTool(ctx, req, entry.kind(), entry.family(), e.getMessage(), sink);
             return;
+        } catch (ToolResultTooLargeException e) {
+            failTool(ctx, req, entry.kind(), entry.family(), e.getMessage(), AgentToolErrorCode.RESULT_TOO_LARGE, sink);
+            return;
         } catch (RuntimeException e) {
-            failTool(ctx, req, entry.kind(), entry.family(), toolErrorMessage(e), sink);
+            failTool(ctx, req, entry.kind(), entry.family(), toolErrorMessage(e), null, sink);
             return;
         }
         if (result.artefact() != null) {
@@ -383,10 +392,13 @@ public class AgentOrchestrator {
      * A {@code @Tool} threw: surface the message to the model as an error tool-result so it can react
      * (retry, apologise, pick another tool) rather than aborting the whole turn. The failure is a
      * recoverable outcome, not a turn-level error.
+     *
+     * @param code a discriminator for a known failure the client renders its own message for, or
+     *        {@code null} for an ordinary tool error carrying only its message.
      */
     private void failTool(final AgentLoopContext ctx, final ToolExecutionRequest req, final AgentToolCall.Kind kind,
-        final AgentToolFamily family, final String message, final TurnEventSink sink) {
-        log.warn("Copilot thread {}: tool '{}' failed: {}", ctx.thread().uid(), req.name(), message);
+        final AgentToolFamily family, final String message, @Nullable final AgentToolErrorCode code, final TurnEventSink sink) {
+        log.warn("Copilot thread {}: tool '{}' failed{}: {}", ctx.thread().uid(), req.name(), code == null ? "" : " (" + code + ")", message);
         // Mark the result as an error so the model (and provider APIs, e.g. Gemini's functionResponse)
         // see it as a failed tool call rather than a normal result — ToolExecutionResultMessage.from(..)
         // leaves isError null.
@@ -396,8 +408,8 @@ public class AgentOrchestrator {
             .text("Error: " + message)
             .isError(true)
             .build());
-        threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), Map.of("outcome", "error", "error", message));
-        emitToolResult(sink, req.name(), "error", message, null);
+        threadManager.appendToolResult(ctx.thread().tenant(), ctx.thread().uid(), ctx.traceId(), ChatMessageAdaptor.toToolCall(req, kind, family), errorResult(message, code));
+        emitToolResult(sink, req.name(), "error", message, null, code);
     }
 
     private void suspendForPlan(final AgentLoopContext ctx, final String planText, final TurnEventSink sink) {
@@ -525,7 +537,12 @@ public class AgentOrchestrator {
     }
 
     private void emitToolResult(final TurnEventSink sink, final String tool, final String outcome, @Nullable final String error, @Nullable final String reason) {
-        sink.emit(AgentEvents.TOOL_RESULT, new AgentEvents.ToolResultEvent(tool, outcome, error, reason));
+        emitToolResult(sink, tool, outcome, error, reason, null);
+    }
+
+    private void emitToolResult(final TurnEventSink sink, final String tool, final String outcome, @Nullable final String error,
+        @Nullable final String reason, @Nullable final AgentToolErrorCode code) {
+        sink.emit(AgentEvents.TOOL_RESULT, new AgentEvents.ToolResultEvent(tool, outcome, error, reason, code));
     }
 
     private void done(final TurnEventSink sink, final AgentThreadStatus status) {
@@ -537,6 +554,13 @@ public class AgentOrchestrator {
         return reason == null
             ? Map.of("outcome", "rejected")
             : Map.of("outcome", "rejected", "reason", reason);
+    }
+
+    /** The persisted shape of a failed tool result, mirroring what {@link AgentEvents.ToolResultEvent} streams. */
+    private static Map<String, Object> errorResult(final String message, @Nullable final AgentToolErrorCode code) {
+        return code == null
+            ? Map.of("outcome", "error", "error", message)
+            : Map.of("outcome", "error", "error", message, "code", code.name());
     }
 
     /** The tool author's message, unwrapping langchain4j's {@link ToolExecutionException} envelope. */

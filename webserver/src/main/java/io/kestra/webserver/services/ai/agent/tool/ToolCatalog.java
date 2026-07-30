@@ -17,6 +17,7 @@ import io.kestra.core.ai.agent.models.ArtefactDraft;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.services.ai.agent.AgentCallContext;
+import io.kestra.webserver.services.ai.agent.AgentConfiguration;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -59,6 +60,7 @@ public class ToolCatalog {
     private final List<AiAuthoringTool> authoringTools;
     private final DocsMcpToolProvider docsMcpToolProvider;
     private final AgentToolPermissionEvaluator permissionEvaluator;
+    private final int maxToolResultChars;
 
     private volatile Map<String, ToolEntry> registry;
 
@@ -67,11 +69,13 @@ public class ToolCatalog {
         final List<AiPlatformTool> platformTools,
         final List<AiAuthoringTool> authoringTools,
         final DocsMcpToolProvider docsMcpToolProvider,
-        final AgentToolPermissionEvaluator permissionEvaluator) {
+        final AgentToolPermissionEvaluator permissionEvaluator,
+        final AgentConfiguration configuration) {
         this.platformTools = platformTools;
         this.authoringTools = authoringTools;
         this.docsMcpToolProvider = docsMcpToolProvider;
         this.permissionEvaluator = permissionEvaluator;
+        this.maxToolResultChars = configuration.maxToolResultChars();
     }
 
     public record ToolEntry(
@@ -169,6 +173,7 @@ public class ToolCatalog {
      * @return the tool's textual result plus any artefact it produced to publish
      * @throws IllegalArgumentException if the tool name is unknown
      * @throws ToolPermissionDeniedException if the caller lacks the tool's permission
+     * @throws ToolResultTooLargeException if the result exceeds {@code maxToolResultChars}
      */
     public DispatchResult dispatch(final ToolExecutionRequest request, final AgentCallContext.Context context) {
         ToolEntry entry = registry().get(request.name());
@@ -187,10 +192,18 @@ public class ToolCatalog {
         // Carry the caller context to the @Tool method as a langchain4j managed argument — the executor
         // injects it by type into the tool's AgentCallContext.Context parameter — not a thread-local.
         ToolExecutionResult executed = entry.executor().executeWithContext(stripEmptyOptionalArgs(entry, request), AgentCallContext.into(context));
+        ensureResultWithinBudget(entry.name(), executed.resultText());
         // A tool's single output is its return value; if that value is publishable, the caller (the
         // orchestrator) persists and streams the artefact — the tool never reaches back through a side channel.
         ArtefactDraft artefact = executed.result() instanceof PublishableToolResult publishable ? publishable.artefact() : null;
         return new DispatchResult(executed.resultText(), artefact);
+    }
+
+    private void ensureResultWithinBudget(final String tool, @Nullable final String resultText) {
+        if (maxToolResultChars <= 0 || resultText == null || resultText.length() <= maxToolResultChars) {
+            return;
+        }
+        throw new ToolResultTooLargeException(tool, resultText.length(), maxToolResultChars);
     }
 
     /**

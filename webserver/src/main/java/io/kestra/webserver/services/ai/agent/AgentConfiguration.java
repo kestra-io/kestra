@@ -27,6 +27,17 @@ import lombok.Builder;
  *        turn; older turns stay persisted for history but are windowed out of the prompt. Windowing is
  *        by whole turns (grouped on {@code traceId}) so tool-call/result pairs are never split
  *        (default 10).
+ * @param maxToolResultChars the maximum size, in characters, of a single tool result handed back to the
+ *        model. An oversized result is never truncated — a silently cut tail would leave the model
+ *        reasoning on partial data and reporting it as fact — the tool call is failed instead, so the
+ *        model can narrow its request and the client can tell the user why. Sized in characters rather
+ *        than tokens because tokenization is provider-specific; roughly four characters per token
+ *        (default 50000, on the order of 12k tokens).
+ * @param maxTurnContextChars the maximum size, in characters, of the conversation context a new turn
+ *        would send to the model: the windowed history plus the incoming prompt. Once a thread is over
+ *        the cap it refuses further turns, bounding what a single turn can cost. Confirming an
+ *        already-parked action is never refused, so a suspended turn can always be resolved
+ *        (default 400000, on the order of 100k tokens).
  * @param inMemoryConversationTtl for the in-memory (non-durable) Copilot store only: how long a
  *        conversation is retained after its last activity before it is evicted; the store keeps no
  *        history, so a conversation is dropped once it has been idle this long (default 1 hour).
@@ -45,6 +56,8 @@ public record AgentConfiguration(
     @Bindable(defaultValue = "50") int maxTurnsPerThread,
     @Bindable(defaultValue = "32") int maxConcurrentTurns,
     @Bindable(defaultValue = "10") int maxContextTurns,
+    @Bindable(defaultValue = "50000") int maxToolResultChars,
+    @Bindable(defaultValue = "400000") int maxTurnContextChars,
     @Bindable(defaultValue = "PT1H") Duration inMemoryConversationTtl,
     @Bindable(defaultValue = "50") int maxInMemoryConversations) {
 }

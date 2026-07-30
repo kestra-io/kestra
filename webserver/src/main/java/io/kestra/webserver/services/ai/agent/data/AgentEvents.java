@@ -28,8 +28,11 @@ public final class AgentEvents {
      *
      * @param error  the failure detail when {@code outcome} is {@code "error"} (the tool threw); else {@code null}.
      * @param reason the rejection detail when {@code outcome} is {@code "rejected"}; else {@code null}.
+     * @param code   set for a known failure the client renders its own message for; {@code null} for an
+     *               ordinary tool error, which carries only its {@code error} message.
      */
-    public record ToolResultEvent(String tool, String outcome, @Nullable String error, @Nullable String reason) {
+    public record ToolResultEvent(String tool, String outcome, @Nullable String error, @Nullable String reason,
+        @Nullable AgentToolErrorCode code) {
     }
 
     public record ProposedActionEvent(

@@ -1,12 +1,14 @@
 package io.kestra.webserver.controllers.api;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import io.kestra.core.ai.agent.models.AgentMessage;
 import io.kestra.core.ai.agent.models.AgentThread;
 import io.kestra.core.ai.agent.models.AgentMode;
 import io.kestra.core.ai.agent.models.AgentPrincipal;
@@ -26,6 +28,8 @@ import io.kestra.webserver.services.ai.agent.AgentTurnContext;
 import io.kestra.webserver.services.ai.agent.AiThreadManager;
 import io.kestra.webserver.services.ai.agent.TurnEventSink;
 import io.kestra.webserver.services.ai.agent.data.AgentEvents;
+import io.kestra.webserver.services.ai.agent.internals.ContextSize;
+import io.kestra.webserver.services.ai.agent.internals.TurnWindow;
 import io.kestra.webserver.services.ai.agent.data.ApiChatTurnRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiConfirmActionRequest;
 import io.kestra.webserver.services.ai.agent.data.ApiCreateThreadRequest;
@@ -63,6 +67,8 @@ public class AiAgentController {
     private final AgentPrincipalResolver principalResolver;
     private final int maxTurnsPerThread;
     private final int maxConcurrentTurns;
+    private final int maxContextTurns;
+    private final int maxTurnContextChars;
     private final Semaphore turnGate;
     private final ExecutorService executor;
 
@@ -86,6 +92,8 @@ public class AiAgentController {
         this.principalResolver = principalResolver;
         this.maxTurnsPerThread = configuration.maxTurnsPerThread();
         this.maxConcurrentTurns = configuration.maxConcurrentTurns();
+        this.maxContextTurns = configuration.maxContextTurns();
+        this.maxTurnContextChars = configuration.maxTurnContextChars();
         this.turnGate = new Semaphore(maxConcurrentTurns, false);
         this.executor = executorsUtils.cachedVirtualThreadPool("ai-agent-orchestrator");
     }
@@ -134,14 +142,18 @@ public class AiAgentController {
         requireProvider(request.providerId());
         AgentThread thread = requireThread(tenant, threadId);
 
+        List<AgentMessage> log = threadManager.load(tenant, threadId);
+
         // Cost/abuse guardrail: cap the number of user turns a single thread may hold. A resume reuses
         // its turn's trace, so confirming a parked action never counts against the cap.
-        if (threadManager.turnCount(tenant, threadId) >= maxTurnsPerThread) {
+        if (AiThreadManager.turnCount(log) >= maxTurnsPerThread) {
             throw new HttpStatusException(
                 HttpStatus.TOO_MANY_REQUESTS,
                 "This thread has reached its maximum of %d turns; start a new thread.".formatted(maxTurnsPerThread)
             );
         }
+
+        ensureContextWithinBudget(log, request.prompt());
 
         AgentMode mode = request.mode() != null ? request.mode() : thread.mode();
 
@@ -193,6 +205,29 @@ public class AiAgentController {
         } catch (RuntimeException e) {
             turnGate.release();
             throw e;
+        }
+    }
+
+    /**
+     * Refuses a new turn once the conversation the model would be sent has grown past
+     * {@code maxTurnContextChars}, so a thread cannot keep growing into an ever more expensive request.
+     * Measured over the same windowed history the orchestrator builds its prompt from, plus the incoming
+     * prompt — a thread whose older turns are windowed out costs nothing extra and is not refused.
+     * <p>
+     * Only chat turns are gated: a confirmation resume finishes work the user has already been asked
+     * about, and refusing it would strand a parked action with no way to resolve it.
+     */
+    private void ensureContextWithinBudget(final List<AgentMessage> log, final String prompt) {
+        if (maxTurnContextChars <= 0) {
+            return;
+        }
+        long chars = ContextSize.charsOf(TurnWindow.lastNTurns(log, maxContextTurns))
+            + (prompt == null ? 0 : prompt.length());
+        if (chars > maxTurnContextChars) {
+            throw new HttpStatusException(
+                HttpStatus.REQUEST_ENTITY_TOO_LARGE,
+                "This conversation is too large to continue (%d of a maximum %d characters of context); start a new thread.".formatted(chars, maxTurnContextChars)
+            );
         }
     }
 

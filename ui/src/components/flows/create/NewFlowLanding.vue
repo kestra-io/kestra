@@ -9,63 +9,71 @@
             <KsCard class="primary-card" shadow="never" data-test="blank-flow-card">
                 <div class="primary-card-body">
                     <div class="primary-card-header">
-                    <div class="primary-icon">
-                        <Plus :size="22" />
+                        <div class="primary-icon">
+                            <KsIcon size="lg">
+                                <Plus />
+                            </KsIcon>
+                        </div>
+                        <div>
+                            <KsText tag="h2" class="card-title">{{ $t("new_flow_landing.blank.title") }}</KsText>
+                            <KsText class="card-sub">{{ $t("new_flow_landing.blank.subtitle") }}</KsText>
+                        </div>
                     </div>
-                    <div>
-                        <KsText tag="h2" class="card-title">{{ $t("new_flow_landing.blank.title") }}</KsText>
-                        <KsText class="card-sub">{{ $t("new_flow_landing.blank.subtitle") }}</KsText>
-                    </div>
-                </div>
 
-                <KsAlert
-                    v-if="namespacesError"
-                    type="error"
-                    :closable="false"
-                    class="namespaces-error"
-                    data-test="namespaces-error"
-                >
-                    {{ $t("new_flow_landing.blank.namespaces_error") }}
-                </KsAlert>
+                    <KsAlert
+                        v-if="namespacesError"
+                        type="error"
+                        :closable="false"
+                        class="namespaces-error"
+                        data-test="namespaces-error"
+                    >
+                        {{ $t("new_flow_landing.blank.namespaces_error") }}
+                    </KsAlert>
 
-                <KsForm class="primary-card-fields" labelPosition="top" @submit.prevent>
-                    <KsFormItem :label="$t('new_flow_landing.blank.id_label')">
-                        <KsInput
-                            v-model="flowId"
-                            :placeholder="$t('new_flow_landing.blank.id_placeholder')"
-                            data-test="blank-flow-id"
-                        />
-                    </KsFormItem>
-
-                    <KsFormItem :label="$t('namespace')">
-                        <KsSelect
-                            v-model="selectedNamespace"
-                            filterable
-                            allowCreate
-                            defaultFirstOption
-                            :loading="namespacesLoading"
-                            :placeholder="$t('new_flow_landing.blank.namespace_placeholder')"
-                            data-test="blank-flow-namespace"
-                        >
-                            <KsOption
-                                v-for="ns in namespaceOptions"
-                                :key="ns"
-                                :label="ns"
-                                :value="ns"
+                    <KsForm class="primary-card-fields" labelPosition="top" @submit.prevent>
+                        <KsFormItem :label="$t('new_flow_landing.blank.id_label')">
+                            <KsInput
+                                v-model="flowId"
+                                :placeholder="$t('new_flow_landing.blank.id_placeholder')"
+                                data-test="blank-flow-id"
                             />
-                        </KsSelect>
-                    </KsFormItem>
-                </KsForm>
+                            <span v-if="flowIdInvalid" class="field-error" data-test="blank-flow-id-error">
+                                {{ $t("new_flow_landing.blank.id_invalid") }}
+                            </span>
+                        </KsFormItem>
 
-                <KsButton
-                    type="primary"
-                    class="open-editor-btn"
-                    :disabled="!flowId || !selectedNamespace"
-                    data-test="blank-flow-open-editor"
-                    @click="openEditor"
-                >
-                    {{ $t("new_flow_landing.blank.open_editor") }}
-                </KsButton>
+                        <KsFormItem :label="$t('namespace')">
+                            <KsSelect
+                                v-model="selectedNamespace"
+                                filterable
+                                allowCreate
+                                defaultFirstOption
+                                :loading="namespacesLoading"
+                                :placeholder="$t('new_flow_landing.blank.namespace_placeholder')"
+                                data-test="blank-flow-namespace"
+                            >
+                                <KsOption
+                                    v-for="ns in namespaceOptions"
+                                    :key="ns"
+                                    :label="ns"
+                                    :value="ns"
+                                />
+                            </KsSelect>
+                            <span v-if="namespaceInvalid" class="field-error" data-test="blank-flow-namespace-error">
+                                {{ $t("new_flow_landing.blank.namespace_invalid") }}
+                            </span>
+                        </KsFormItem>
+                    </KsForm>
+
+                    <KsButton
+                        type="primary"
+                        class="open-editor-btn"
+                        :disabled="!canOpenEditor"
+                        data-test="blank-flow-open-editor"
+                        @click="openEditor"
+                    >
+                        {{ $t("new_flow_landing.blank.open_editor") }}
+                    </KsButton>
                 </div>
             </KsCard>
 
@@ -76,13 +84,17 @@
                     data-test="browse-blueprints-card"
                 >
                     <div class="secondary-card-icon">
-                        <ViewGridOutline :size="20" />
+                        <KsIcon size="base">
+                            <ViewGridOutline />
+                        </KsIcon>
                     </div>
                     <div class="secondary-card-body">
                         <KsText class="secondary-card-title">{{ $t("new_flow_landing.blueprints.title") }}</KsText>
                         <KsText class="secondary-card-sub">{{ $t("new_flow_landing.blueprints.subtitle") }}</KsText>
                     </div>
-                    <ChevronRight :size="16" class="secondary-card-arrow" />
+                    <KsIcon size="sm" class="secondary-card-arrow">
+                        <ChevronRight />
+                    </KsIcon>
                 </router-link>
 
                 <router-link
@@ -91,7 +103,9 @@
                     data-test="system-flow-card"
                 >
                     <div class="secondary-card-icon">
-                        <CogOutline :size="20" />
+                        <KsIcon size="base">
+                            <CogOutline />
+                        </KsIcon>
                     </div>
                     <div class="secondary-card-body">
                         <KsText class="secondary-card-title">
@@ -100,7 +114,9 @@
                         <KsText class="secondary-card-sub">{{ $t("new_flow_landing.system.subtitle") }}</KsText>
                     </div>
                     <KsTag size="small" class="system-badge">{{ $t("new_flow_landing.system.badge") }}</KsTag>
-                    <ChevronRight :size="16" class="secondary-card-arrow" />
+                    <KsIcon size="sm" class="secondary-card-arrow">
+                        <ChevronRight />
+                    </KsIcon>
                 </router-link>
 
                 <button
@@ -110,13 +126,17 @@
                     @click="emit('import')"
                 >
                     <div class="secondary-card-icon">
-                        <TrayArrowDown :size="20" />
+                        <KsIcon size="base">
+                            <TrayArrowDown />
+                        </KsIcon>
                     </div>
                     <div class="secondary-card-body">
                         <KsText class="secondary-card-title">{{ $t("new_flow_landing.import.title") }}</KsText>
                         <KsText class="secondary-card-sub">{{ $t("new_flow_landing.import.subtitle") }}</KsText>
                     </div>
-                    <ChevronRight :size="16" class="secondary-card-arrow" />
+                    <KsIcon size="sm" class="secondary-card-arrow">
+                        <ChevronRight />
+                    </KsIcon>
                 </button>
             </div>
         </div>
@@ -128,6 +148,7 @@
     import {useRoute} from "vue-router"
     import {useMiscStore} from "override/stores/misc"
     import useNamespaces from "../../../composables/useNamespaces"
+    import {isValidFlowId, isValidNamespace} from "../../../utils/flowIdentifiers"
     import Plus from "vue-material-design-icons/Plus.vue"
     import ViewGridOutline from "vue-material-design-icons/ViewGridOutline.vue"
     import CogOutline from "vue-material-design-icons/CogOutline.vue"
@@ -145,16 +166,22 @@
     const systemNamespace = computed(() => miscStore.configs?.systemNamespace ?? "system")
 
     const flowId = ref("")
-    const selectedNamespace = ref("")
-    const namespaceOptions = ref<string[]>([])
+    const selectedNamespace = ref((route.query.namespace as string) ?? "")
+    const fetchedNamespaces = ref<string[]>([])
     const namespacesError = ref(false)
     const namespacesLoading = ref(false)
+
+    const namespaceOptions = computed(() => {
+        const selected = selectedNamespace.value
+        if (!selected || fetchedNamespaces.value.includes(selected)) return fetchedNamespaces.value
+        return [selected, ...fetchedNamespaces.value]
+    })
 
     onMounted(async () => {
         namespacesLoading.value = true
         try {
             const ns = await useNamespaces(500).all()
-            namespaceOptions.value = ns.map(n => n.id)
+            fetchedNamespaces.value = ns.map(n => n.id)
         } catch {
             namespacesError.value = true
         } finally {
@@ -162,7 +189,15 @@
         }
     })
 
+    const flowIdInvalid = computed(() => Boolean(flowId.value) && !isValidFlowId(flowId.value))
+    const namespaceInvalid = computed(() => Boolean(selectedNamespace.value) && !isValidNamespace(selectedNamespace.value))
+
+    const canOpenEditor = computed(() =>
+        Boolean(flowId.value) && Boolean(selectedNamespace.value) && !flowIdInvalid.value && !namespaceInvalid.value,
+    )
+
     const openEditor = () => {
+        if (!canOpenEditor.value) return
         emit("proceed", {id: flowId.value, namespace: selectedNamespace.value})
     }
 </script>
@@ -252,6 +287,13 @@
         margin: 0;
     }
 
+    .field-error {
+        display: block;
+        margin-top: var(--ks-spacing-1);
+        font-size: var(--ks-font-size-sm);
+        color: var(--ks-text-error);
+    }
+
     .secondary-rows {
         display: flex;
         flex-direction: column;
@@ -263,7 +305,7 @@
         align-items: center;
         gap: var(--ks-spacing-3);
         padding: var(--ks-spacing-4);
-        border: 1px solid var(--ks-border-default);
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         background-color: var(--ks-bg-surface);
         cursor: pointer;
@@ -280,8 +322,8 @@
         }
 
         &:focus-visible {
-            outline: 2px solid var(--ks-border-focus);
-            outline-offset: 2px;
+            outline: var(--ks-border-width-base) solid var(--ks-border-focus);
+            outline-offset: var(--ks-spacing-px);
         }
     }
 

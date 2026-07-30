@@ -43,6 +43,7 @@
     import resource from "../../models/resource"
     import action from "../../models/action"
     import {ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
+    import {shouldShowLanding} from "../../utils/flowCreationLanding"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -52,23 +53,7 @@
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
 
-    const PARAM_DRIVEN_QUERY_KEYS = [
-        "blueprintId",
-        "blueprintSource",
-        "blueprintSourceYaml",
-        "copy",
-        "onboarding",
-        "onboardingPreset",
-        "recipePreset",
-        "ai",
-        "createTrigger",
-    ]
-
-    const hasMeaningfulQueryParam = PARAM_DRIVEN_QUERY_KEYS.some(
-        key => route.query[key] !== undefined,
-    )
-
-    const showLanding = ref(!hasMeaningfulQueryParam)
+    const showLanding = ref(shouldShowLanding(route.query))
     const showImport = ref(false)
 
     const defaultFlowTemplate = (id: string, namespace: string) => {

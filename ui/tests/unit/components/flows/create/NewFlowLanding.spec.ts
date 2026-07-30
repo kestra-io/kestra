@@ -1,11 +1,13 @@
-import {describe, test, expect, vi} from "vitest"
+import {describe, test, expect, vi, beforeEach} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
 import {RouterLinkStub} from "@vue/test-utils"
 
+const route = {params: {} as Record<string, string>, query: {} as Record<string, string>}
+
 vi.mock("vue-router", () => ({
-    useRoute: () => ({params: {}, query: {}}),
+    useRoute: () => route,
     RouterLink: RouterLinkStub,
 }))
 
@@ -29,6 +31,8 @@ const messages = {
         "new_flow_landing.blank.namespace_placeholder": "Select a namespace",
         "new_flow_landing.blank.open_editor": "Open editor",
         "new_flow_landing.blank.namespaces_error": "Could not load namespaces.",
+        "new_flow_landing.blank.id_invalid": "Invalid flow id.",
+        "new_flow_landing.blank.namespace_invalid": "Invalid namespace.",
         "new_flow_landing.blueprints.title": "Browse blueprints",
         "new_flow_landing.blueprints.subtitle": "Pick a ready-made flow from the community catalog.",
         "new_flow_landing.system.title": "Create a system flow",
@@ -49,6 +53,7 @@ const globalConfig = {
         stubs: {
             RouterLink: RouterLinkStub,
             KsText: {template: "<span><slot /></span>"},
+            KsIcon: {template: "<i><slot /></i>"},
             KsTag: {template: "<span><slot /></span>"},
             KsCard: {template: "<div><slot /></div>"},
             KsAlert: {template: "<div data-stub='ks-alert'><slot /></div>"},
@@ -77,6 +82,52 @@ const globalConfig = {
 import NewFlowLanding from "../../../../../src/components/flows/create/NewFlowLanding.vue"
 
 describe("NewFlowLanding", () => {
+    beforeEach(() => {
+        route.params = {}
+        route.query = {}
+    })
+
+    test("preselects the namespace carried by the create link", () => {
+        // Given — "Create flow" from a namespace page navigates with ?namespace=
+        route.query = {namespace: "company.analytics"}
+
+        // When
+        const wrapper = mount(NewFlowLanding, globalConfig)
+
+        // Then — the namespace context is kept instead of forcing the user to pick it again
+        const nsSelect = wrapper.find("[data-test='blank-flow-namespace']")
+        expect((nsSelect.element as HTMLSelectElement).value).toBe("company.analytics")
+        expect(wrapper.findAll("[data-test='blank-flow-namespace'] option").map(o => o.attributes("value")))
+            .toContain("company.analytics")
+    })
+
+    test("rejects a flow id that the backend would refuse", async () => {
+        // Given
+        const wrapper = mount(NewFlowLanding, globalConfig)
+        await wrapper.find("[data-test='blank-flow-namespace']").setValue("company.team")
+
+        // When — an id containing a YAML-breaking character
+        await wrapper.find("[data-test='blank-flow-id']").setValue("my flow: broken")
+
+        // Then
+        expect(wrapper.find("[data-test='blank-flow-id-error']").exists()).toBe(true)
+        expect((wrapper.find("[data-test='blank-flow-open-editor']").element as HTMLButtonElement).disabled).toBe(true)
+        expect(wrapper.emitted("proceed")).toBeFalsy()
+    })
+
+    test("rejects an uppercase namespace", async () => {
+        // Given — an invalid namespace arriving from the create link
+        route.query = {namespace: "Company.Team"}
+
+        // When
+        const wrapper = mount(NewFlowLanding, globalConfig)
+        await wrapper.find("[data-test='blank-flow-id']").setValue("my-flow")
+
+        // Then
+        expect(wrapper.find("[data-test='blank-flow-namespace-error']").exists()).toBe(true)
+        expect((wrapper.find("[data-test='blank-flow-open-editor']").element as HTMLButtonElement).disabled).toBe(true)
+    })
+
     test("renders primary blank-flow card and three secondary rows", () => {
         // Given / When
         const wrapper = mount(NewFlowLanding, globalConfig)

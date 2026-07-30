@@ -19,17 +19,6 @@
     </div>
 </template>
 
-<style lang="scss" scoped>
-    .no-code {
-        height: 100%;
-        overflow-y: auto;
-
-        hr {
-            margin: 0;
-        }
-    }
-</style>
-
 <script lang="ts" setup>
     import {computed, onActivated, provide} from "vue"
     import Task from "../../no-code/segments/Task.vue"
@@ -138,3 +127,14 @@
         pluginsStore.updateDocumentation()
     })
 </script>
+
+<style lang="scss" scoped>
+    .no-code {
+        height: 100%;
+        overflow-y: auto;
+
+        hr {
+            margin: 0;
+        }
+    }
+</style>

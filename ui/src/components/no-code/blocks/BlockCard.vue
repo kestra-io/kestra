@@ -88,6 +88,65 @@
     </div>
 </template>
 
+<script setup lang="ts">
+    import {computed, inject} from "vue"
+    import {useI18n} from "vue-i18n"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import DragVertical from "vue-material-design-icons/DragVertical.vue"
+    import Play from "vue-material-design-icons/Play.vue"
+    import ViewSplitVertical from "vue-material-design-icons/ViewSplitVertical.vue"
+
+    import {KsIconButton} from "@kestra-io/design-system"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
+    import BlockErrorBadge from "./BlockErrorBadge.vue"
+
+    import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
+    import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "../injectionKeys"
+
+    const {t} = useI18n()
+
+    const pluginsStore = usePluginsStore()
+
+    const props = defineProps<{
+        block: Record<string, unknown>
+        selected?: boolean
+        focused?: boolean
+        draggable?: boolean
+        dragOver?: boolean
+        runnable?: boolean
+        icons?: Record<string, PluginIconData>
+    }>()
+
+    const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
+    const panelMaximized = inject(PANEL_MAXIMIZED_INJECTION_KEY, undefined)
+    const issues = computed<string[]>(() =>
+        validationIssues?.value?.get(String(props.block.id ?? "")) ?? [],
+    )
+
+    const emit = defineEmits<{
+        (e: "select"): void
+        (e: "delete"): void
+        (e: "duplicate"): void
+        (e: "open-split"): void
+        (e: "run"): void
+        (e: "drag-start", event: DragEvent): void
+        (e: "drag-over", event: DragEvent): void
+        (e: "drop", event: DragEvent): void
+        (e: "drag-end"): void
+    }>()
+
+    const shortType = computed(() => {
+        const type = String(props.block.type ?? "")
+        const parts = type.split(".")
+        return parts[parts.length - 1] ?? type
+    })
+
+    const cardAriaLabel = computed(() =>
+        t("block_editor.card_aria_label", {id: String(props.block.id ?? ""), type: shortType.value}),
+    )
+</script>
+
 <style scoped lang="scss">
     .block-card {
         position: relative;
@@ -224,62 +283,3 @@
         box-shadow: 0 0 0 2px var(--ks-border-focus);
     }
 </style>
-
-<script setup lang="ts">
-    import {computed, inject} from "vue"
-    import {useI18n} from "vue-i18n"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
-    import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import Play from "vue-material-design-icons/Play.vue"
-    import ViewSplitVertical from "vue-material-design-icons/ViewSplitVertical.vue"
-
-    import {KsIconButton} from "@kestra-io/design-system"
-    import TaskIcon from "../../plugins/TaskIcon.vue"
-    import BlockErrorBadge from "./BlockErrorBadge.vue"
-
-    import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
-    import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "../injectionKeys"
-
-    const {t} = useI18n()
-
-    const pluginsStore = usePluginsStore()
-
-    const props = defineProps<{
-        block: Record<string, unknown>
-        selected?: boolean
-        focused?: boolean
-        draggable?: boolean
-        dragOver?: boolean
-        runnable?: boolean
-        icons?: Record<string, PluginIconData>
-    }>()
-
-    const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
-    const panelMaximized = inject(PANEL_MAXIMIZED_INJECTION_KEY, undefined)
-    const issues = computed<string[]>(() =>
-        validationIssues?.value?.get(String(props.block.id ?? "")) ?? [],
-    )
-
-    const emit = defineEmits<{
-        (e: "select"): void
-        (e: "delete"): void
-        (e: "duplicate"): void
-        (e: "open-split"): void
-        (e: "run"): void
-        (e: "drag-start", event: DragEvent): void
-        (e: "drag-over", event: DragEvent): void
-        (e: "drop", event: DragEvent): void
-        (e: "drag-end"): void
-    }>()
-
-    const shortType = computed(() => {
-        const type = String(props.block.type ?? "")
-        const parts = type.split(".")
-        return parts[parts.length - 1] ?? type
-    })
-
-    const cardAriaLabel = computed(() =>
-        t("block_editor.card_aria_label", {id: String(props.block.id ?? ""), type: shortType.value}),
-    )
-</script>

@@ -28,6 +28,17 @@
     </KsDialog>
 </template>
 
+<script setup lang="ts">
+    import {useI18n} from "vue-i18n"
+    import {KsDialog, KsIconButton} from "@kestra-io/design-system"
+    import Close from "vue-material-design-icons/Close.vue"
+    import FlowPropertiesEdit from "./FlowPropertiesEdit.vue"
+
+    const emit = defineEmits<{(e: "close"): void}>()
+
+    const {t} = useI18n()
+</script>
+
 <style lang="scss" scoped>
     .flow-properties-modal-header {
         display: flex;
@@ -56,14 +67,3 @@
         flex-direction: column;
     }
 </style>
-
-<script setup lang="ts">
-    import {useI18n} from "vue-i18n"
-    import {KsDialog, KsIconButton} from "@kestra-io/design-system"
-    import Close from "vue-material-design-icons/Close.vue"
-    import FlowPropertiesEdit from "./FlowPropertiesEdit.vue"
-
-    const emit = defineEmits<{(e: "close"): void}>()
-
-    const {t} = useI18n()
-</script>

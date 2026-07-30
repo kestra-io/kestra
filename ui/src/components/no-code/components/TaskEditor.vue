@@ -50,27 +50,6 @@
     </div>
 </template>
 
-<style scoped lang="scss">
-    .type-div {
-        display: flex;
-        text-transform: lowercase;
-        align-items: center;
-        gap: 0.25rem;
-        font-weight: 600;
-        .asterisk {
-            color: var(--ks-status-error);
-        }
-        code {
-            color: var(--ks-text-primary);
-        }
-    }
-
-    .flow-playground{
-        display: flex;
-        justify-content: end;
-    }
-</style>
-
 <script setup lang="ts">
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -468,3 +447,24 @@
         }
     })
 </script>
+
+<style scoped lang="scss">
+    .type-div {
+        display: flex;
+        text-transform: lowercase;
+        align-items: center;
+        gap: 0.25rem;
+        font-weight: 600;
+        .asterisk {
+            color: var(--ks-status-error);
+        }
+        code {
+            color: var(--ks-text-primary);
+        }
+    }
+
+    .flow-playground{
+        display: flex;
+        justify-content: end;
+    }
+</style>

@@ -314,297 +314,6 @@
     </KsAlert>
 </template>
 
-<style scoped lang="scss">
-.md-label {
-    height: var(--ks-font-size-lg);
-}
-
-.input-label-row {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-
-    .input-copy-btn {
-        opacity: 0;
-        transition: opacity 0.15s ease-in-out;
-    }
-
-    &:hover .input-copy-btn,
-    &[draggable="true"]:focus-within .input-copy-btn {
-        opacity: 1;
-    }
-}
-
-.wizard-progress {
-    position: sticky;
-    bottom: 0;
-    margin-top: 1rem;
-    padding: 0.75rem 0 0.25rem;
-    background: var(--ks-bg-surface);
-    border-top: 1px solid var(--ks-border-default);
-}
-
-.wizard-step-header {
-    margin-bottom: 1rem;
-}
-
-.wizard-step-title {
-    font-size: var(--ks-font-size-lg);
-    font-weight: 600;
-    margin: 0 0 0.25rem;
-}
-
-.wizard-recap {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.wizard-recap-section {
-    border: 1px solid var(--ks-border-default);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    background: var(--ks-bg-tag);
-
-    .wizard-recap-section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-
-        .wizard-recap-section-title {
-            font-weight: 600;
-        }
-    }
-
-    .wizard-recap-field {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.2rem 0;
-        font-size: var(--ks-font-size-sm);
-
-        .wizard-recap-field-label {
-            color: var(--ks-text-secondary);
-        }
-
-        .wizard-recap-field-value {
-            text-align: right;
-            word-break: break-word;
-        }
-    }
-}
-
-.wizard-nav {
-    display: flex;
-    align-items: center;
-    margin-top: 1rem;
-
-    .wizard-nav-spacer {
-        flex: 1;
-    }
-}
-
-.hint {
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-secondary);
-}
-
-.text-description {
-    width: 100%;
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-secondary);
-}
-
-:deep(.boolean-inputs) {
-    display: flex;
-    align-items: center;
-
-    .kel-radio-button {
-        &.is-active {
-            .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
-                color: var(--ks-text-primary);
-                background-color: var(--ks-btn-secondary-bg-active);
-                box-shadow: 0 0 0 0 var(--ks-border-focus);
-            }
-        }
-
-        .kel-radio-button__inner {
-            border: var(--ks-border-default);
-            transition: 0.3s ease-in-out;
-
-            &:hover {
-                color: var(--ks-text-secondary);
-                border-color: var(--ks-border-focus);
-                background-color: var(--ks-bg-surface);
-            }
-
-            &:first-child {
-                border-left: var(--ks-border-default);
-            }
-        }
-    }
-}
-
-.kel-input-file {
-    display: flex;
-    align-items: center;
-
-    .kel-input__inner {
-        cursor: pointer;
-    }
-
-    .kel-input__wrapper {
-        padding: 0.5rem;
-    }
-
-}
-
-.preview {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    .tags {
-        flex: 1;
-        background: var(--ks-bg-input);
-        border: 1px solid var(--ks-border-default);
-        border-radius: 4px;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        padding: 5px;
-        gap: 4px;
-
-        :deep(.kel-tag) {
-            display: inline-flex;
-            align-items: center;
-            border-radius: 4px;
-            background-color: var(--ks-bg-tag);
-            color: var(--ks-text-primary);
-        }
-    }
-}
-
-.edit_input {
-    .list-row {
-        position: relative;
-        margin-bottom: 8px;
-
-        .array-cell {
-            :deep(.kel-input__wrapper) {
-                box-shadow: none;
-                border: 1px solid var(--ks-border-default);
-                border-radius: 5px;
-            }
-
-            :deep(.kel-input__inner) {
-                color: #eeae7e !important;
-                font-size: var(--ks-font-size-sm) !important;
-
-                html.light & {
-                    color: #dd5f00 !important;
-                }
-            }
-        }
-
-        .delete-input {
-            position: absolute;
-            right: 28px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 4px;
-            border: none;
-            color: var(--ks-text-secondary);
-            background: transparent;
-
-            &:hover {
-                color: var(--ks-status-error);
-            }
-        }
-
-        .controls-input {
-            position: absolute;
-            right: 2px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 3px;
-            border-left: 1px solid var(--ks-border-default);
-            color: var(--ks-text-secondary);
-            background: transparent;
-        }
-    }
-
-    .add-new {
-        padding: 5px 8px;
-        color: var(--ks-text-dim);
-        font-size: var(--ks-font-size-sm);
-        background: none;
-
-        &:hover {
-            color: var(--ks-text-secondary);
-        }
-    }
-}
-
-.kel-form-item {
-    &:has(.edit_input) {
-        padding: 1rem;
-        border-radius: 8px;
-        border: 1px solid var(--ks-border-default);
-        background-color: var(--ks-bg-active);
-    }
-}
-
-:deep(.editor-container){
-        max-height: 200px;
-
-        & .ks-monaco-editor {
-            overflow-x: hidden;
-        }
-    }
-
-.custom-file-input {
-  color: transparent;
-  width: 120px;
-}
-
-.custom-file-input::-webkit-file-upload-text {
-  visibility: hidden;
-}
-
-.kel-input-file {
-  .kel-input__wrapper {
-    display: flex;
-    align-items: center;
-    padding: 4px 0 4px 0;
-    position: relative;
-    max-width: 100%;
-  }
-
-  .custom-file-input {
-    max-width: 110px;
-    min-width: 110px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .file-placeholder {
-    margin-left: 8px;
-    color: var(--ks-text-secondary) !important;
-    font-size: var(--ks-font-size-sm);
-    flex: 1;
-    max-width: calc(100% - 140px); /* 110px for button + 30px for margins/padding */
-    min-width: 0;
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    padding-right: 16px;
-  }
-}
-</style>
-
 <script setup lang="ts">
     import moment from "moment-timezone"
     import {KsMessage, KsEditor} from "@kestra-io/design-system"
@@ -1226,3 +935,294 @@
         onInputDragStart,
     })
 </script>
+
+<style scoped lang="scss">
+.md-label {
+    height: var(--ks-font-size-lg);
+}
+
+.input-label-row {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+
+    .input-copy-btn {
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+    }
+
+    &:hover .input-copy-btn,
+    &[draggable="true"]:focus-within .input-copy-btn {
+        opacity: 1;
+    }
+}
+
+.wizard-progress {
+    position: sticky;
+    bottom: 0;
+    margin-top: 1rem;
+    padding: 0.75rem 0 0.25rem;
+    background: var(--ks-bg-surface);
+    border-top: 1px solid var(--ks-border-default);
+}
+
+.wizard-step-header {
+    margin-bottom: 1rem;
+}
+
+.wizard-step-title {
+    font-size: var(--ks-font-size-lg);
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+}
+
+.wizard-recap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.wizard-recap-section {
+    border: 1px solid var(--ks-border-default);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    background: var(--ks-bg-tag);
+
+    .wizard-recap-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+
+        .wizard-recap-section-title {
+            font-weight: 600;
+        }
+    }
+
+    .wizard-recap-field {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.2rem 0;
+        font-size: var(--ks-font-size-sm);
+
+        .wizard-recap-field-label {
+            color: var(--ks-text-secondary);
+        }
+
+        .wizard-recap-field-value {
+            text-align: right;
+            word-break: break-word;
+        }
+    }
+}
+
+.wizard-nav {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+
+    .wizard-nav-spacer {
+        flex: 1;
+    }
+}
+
+.hint {
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-secondary);
+}
+
+.text-description {
+    width: 100%;
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-secondary);
+}
+
+:deep(.boolean-inputs) {
+    display: flex;
+    align-items: center;
+
+    .kel-radio-button {
+        &.is-active {
+            .kel-radio-button__original-radio:not(:disabled) + .kel-radio-button__inner {
+                color: var(--ks-text-primary);
+                background-color: var(--ks-btn-secondary-bg-active);
+                box-shadow: 0 0 0 0 var(--ks-border-focus);
+            }
+        }
+
+        .kel-radio-button__inner {
+            border: var(--ks-border-default);
+            transition: 0.3s ease-in-out;
+
+            &:hover {
+                color: var(--ks-text-secondary);
+                border-color: var(--ks-border-focus);
+                background-color: var(--ks-bg-surface);
+            }
+
+            &:first-child {
+                border-left: var(--ks-border-default);
+            }
+        }
+    }
+}
+
+.kel-input-file {
+    display: flex;
+    align-items: center;
+
+    .kel-input__inner {
+        cursor: pointer;
+    }
+
+    .kel-input__wrapper {
+        padding: 0.5rem;
+    }
+
+}
+
+.preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .tags {
+        flex: 1;
+        background: var(--ks-bg-input);
+        border: 1px solid var(--ks-border-default);
+        border-radius: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 5px;
+        gap: 4px;
+
+        :deep(.kel-tag) {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 4px;
+            background-color: var(--ks-bg-tag);
+            color: var(--ks-text-primary);
+        }
+    }
+}
+
+.edit_input {
+    .list-row {
+        position: relative;
+        margin-bottom: 8px;
+
+        .array-cell {
+            :deep(.kel-input__wrapper) {
+                box-shadow: none;
+                border: 1px solid var(--ks-border-default);
+                border-radius: 5px;
+            }
+
+            :deep(.kel-input__inner) {
+                color: #eeae7e !important;
+                font-size: var(--ks-font-size-sm) !important;
+
+                html.light & {
+                    color: #dd5f00 !important;
+                }
+            }
+        }
+
+        .delete-input {
+            position: absolute;
+            right: 28px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 4px;
+            border: none;
+            color: var(--ks-text-secondary);
+            background: transparent;
+
+            &:hover {
+                color: var(--ks-status-error);
+            }
+        }
+
+        .controls-input {
+            position: absolute;
+            right: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 3px;
+            border-left: 1px solid var(--ks-border-default);
+            color: var(--ks-text-secondary);
+            background: transparent;
+        }
+    }
+
+    .add-new {
+        padding: 5px 8px;
+        color: var(--ks-text-dim);
+        font-size: var(--ks-font-size-sm);
+        background: none;
+
+        &:hover {
+            color: var(--ks-text-secondary);
+        }
+    }
+}
+
+.kel-form-item {
+    &:has(.edit_input) {
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-active);
+    }
+}
+
+:deep(.editor-container){
+        max-height: 200px;
+
+        & .ks-monaco-editor {
+            overflow-x: hidden;
+        }
+    }
+
+.custom-file-input {
+  color: transparent;
+  width: 120px;
+}
+
+.custom-file-input::-webkit-file-upload-text {
+  visibility: hidden;
+}
+
+.kel-input-file {
+  .kel-input__wrapper {
+    display: flex;
+    align-items: center;
+    padding: 4px 0 4px 0;
+    position: relative;
+    max-width: 100%;
+  }
+
+  .custom-file-input {
+    max-width: 110px;
+    min-width: 110px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .file-placeholder {
+    margin-left: 8px;
+    color: var(--ks-text-secondary) !important;
+    font-size: var(--ks-font-size-sm);
+    flex: 1;
+    max-width: calc(100% - 140px); /* 110px for button + 30px for margins/padding */
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 16px;
+  }
+}
+</style>

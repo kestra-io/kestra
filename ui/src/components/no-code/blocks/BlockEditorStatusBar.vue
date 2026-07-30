@@ -57,6 +57,28 @@
     </Transition>
 </template>
 
+<script setup lang="ts">
+    import Keyboard from "vue-material-design-icons/Keyboard.vue"
+    import {useI18n} from "vue-i18n"
+    import {displayKeys, type FooterHint} from "./shortcutHints"
+    import type {BlockEditorKeyBinding, BlockEditorKeymapGroup} from "./keymap"
+
+    defineProps<{
+        shortcutsOpen: boolean
+        shortcutGroups: {group: BlockEditorKeymapGroup; bindings: BlockEditorKeyBinding[]}[]
+        footerContext: string
+        footerHints: FooterHint[]
+        undoState: {label: string} | null
+    }>()
+
+    const emit = defineEmits<{
+        "update:shortcutsOpen": [open: boolean]
+        undo: []
+    }>()
+
+    const {t} = useI18n()
+</script>
+
 <style scoped lang="scss">
     .block-editor-shortcuts {
         display: grid;
@@ -276,25 +298,3 @@
         }
     }
 </style>
-
-<script setup lang="ts">
-    import Keyboard from "vue-material-design-icons/Keyboard.vue"
-    import {useI18n} from "vue-i18n"
-    import {displayKeys, type FooterHint} from "./shortcutHints"
-    import type {BlockEditorKeyBinding, BlockEditorKeymapGroup} from "./keymap"
-
-    defineProps<{
-        shortcutsOpen: boolean
-        shortcutGroups: {group: BlockEditorKeymapGroup; bindings: BlockEditorKeyBinding[]}[]
-        footerContext: string
-        footerHints: FooterHint[]
-        undoState: {label: string} | null
-    }>()
-
-    const emit = defineEmits<{
-        "update:shortcutsOpen": [open: boolean]
-        undo: []
-    }>()
-
-    const {t} = useI18n()
-</script>

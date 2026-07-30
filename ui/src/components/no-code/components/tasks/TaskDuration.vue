@@ -66,124 +66,6 @@
     </div>
 </template>
 
-<style scoped lang="scss">
-.task-duration {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-3);
-}
-
-.task-duration-rows {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-2);
-}
-
-.task-duration-row {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-2);
-}
-
-.task-duration-value {
-    width: 5rem;
-    flex: none;
-    font-variant-numeric: tabular-nums;
-}
-
-.task-duration-unit {
-    flex: 1;
-    max-width: 14rem;
-}
-
-.task-duration-add {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ks-spacing-2);
-    align-self: flex-start;
-    min-height: 2.25rem;
-    padding: 0 var(--ks-spacing-3);
-    background: transparent;
-    border: 1px dashed var(--ks-border-strong);
-    border-radius: var(--ks-radius-base);
-    color: var(--ks-text-secondary);
-    font-family: inherit;
-    font-size: var(--ks-font-size-sm);
-    cursor: pointer;
-    transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease, scale 0.1s ease;
-}
-
-.task-duration-add:hover {
-    border-color: var(--ks-border-strong);
-    color: var(--ks-text-primary);
-    background: var(--ks-btn-secondary-bg-hover);
-}
-
-.task-duration-add:active {
-    scale: 0.98;
-}
-
-.task-duration-add:focus-visible {
-    outline: 2px solid var(--ks-border-focus);
-    outline-offset: 1px;
-}
-
-.task-duration-presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ks-spacing-1);
-}
-
-.task-duration-preset {
-    display: inline-flex;
-    align-items: center;
-    min-height: 1.875rem;
-    padding: 0 var(--ks-spacing-3);
-    background: var(--ks-bg-tag-inactive);
-    border: 1px solid var(--ks-border-subtle);
-    border-radius: var(--ks-radius-base);
-    color: var(--ks-text-secondary);
-    font-family: var(--ks-font-family-mono);
-    font-size: var(--ks-font-size-xs);
-    cursor: pointer;
-    transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease, scale 0.1s ease;
-}
-
-.task-duration-preset:hover {
-    border-color: var(--ks-border-strong);
-    color: var(--ks-text-primary);
-    background: var(--ks-btn-secondary-bg-hover);
-}
-
-.task-duration-preset:active {
-    scale: 0.96;
-}
-
-.task-duration-preset:focus-visible {
-    outline: 2px solid var(--ks-border-focus);
-    outline-offset: 1px;
-}
-
-.task-duration-preset.active {
-    border-color: var(--ks-text-link);
-    color: var(--ks-text-link);
-    background: var(--ks-bg-tag-hover);
-}
-
-.task-duration-echo {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    color: var(--ks-text-muted);
-    font-size: var(--ks-font-size-sm);
-    font-variant-numeric: tabular-nums;
-}
-
-.task-duration-echo span {
-    color: var(--ks-text-secondary);
-}
-</style>
-
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
     import Close from "vue-material-design-icons/Close.vue"
@@ -311,3 +193,121 @@
             && segments.value[0].unit === preset.unit
     }
 </script>
+
+<style scoped lang="scss">
+.task-duration {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-3);
+}
+
+.task-duration-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+}
+
+.task-duration-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+}
+
+.task-duration-value {
+    width: 5rem;
+    flex: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.task-duration-unit {
+    flex: 1;
+    max-width: 14rem;
+}
+
+.task-duration-add {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    align-self: flex-start;
+    min-height: 2.25rem;
+    padding: 0 var(--ks-spacing-3);
+    background: transparent;
+    border: 1px dashed var(--ks-border-strong);
+    border-radius: var(--ks-radius-base);
+    color: var(--ks-text-secondary);
+    font-family: inherit;
+    font-size: var(--ks-font-size-sm);
+    cursor: pointer;
+    transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease, scale 0.1s ease;
+}
+
+.task-duration-add:hover {
+    border-color: var(--ks-border-strong);
+    color: var(--ks-text-primary);
+    background: var(--ks-btn-secondary-bg-hover);
+}
+
+.task-duration-add:active {
+    scale: 0.98;
+}
+
+.task-duration-add:focus-visible {
+    outline: 2px solid var(--ks-border-focus);
+    outline-offset: 1px;
+}
+
+.task-duration-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ks-spacing-1);
+}
+
+.task-duration-preset {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.875rem;
+    padding: 0 var(--ks-spacing-3);
+    background: var(--ks-bg-tag-inactive);
+    border: 1px solid var(--ks-border-subtle);
+    border-radius: var(--ks-radius-base);
+    color: var(--ks-text-secondary);
+    font-family: var(--ks-font-family-mono);
+    font-size: var(--ks-font-size-xs);
+    cursor: pointer;
+    transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease, scale 0.1s ease;
+}
+
+.task-duration-preset:hover {
+    border-color: var(--ks-border-strong);
+    color: var(--ks-text-primary);
+    background: var(--ks-btn-secondary-bg-hover);
+}
+
+.task-duration-preset:active {
+    scale: 0.96;
+}
+
+.task-duration-preset:focus-visible {
+    outline: 2px solid var(--ks-border-focus);
+    outline-offset: 1px;
+}
+
+.task-duration-preset.active {
+    border-color: var(--ks-text-link);
+    color: var(--ks-text-link);
+    background: var(--ks-bg-tag-hover);
+}
+
+.task-duration-echo {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    color: var(--ks-text-muted);
+    font-size: var(--ks-font-size-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.task-duration-echo span {
+    color: var(--ks-text-secondary);
+}
+</style>

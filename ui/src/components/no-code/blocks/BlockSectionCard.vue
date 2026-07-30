@@ -26,6 +26,30 @@
     </section>
 </template>
 
+<script setup lang="ts">
+    import type {Component} from "vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
+
+    withDefaults(defineProps<{
+        name: string
+        title: string
+        icon: Component
+        count: number
+        addLabel: string
+        tone?: "default" | "error" | "warning"
+        addTest?: string
+        actionIcon?: Component
+        hideCount?: boolean
+    }>(), {
+        tone: "default",
+        hideCount: false,
+    })
+
+    const emit = defineEmits<{
+        (e: "add", evt: MouseEvent): void
+    }>()
+</script>
+
 <style scoped lang="scss">
     .block-section {
         container-type: inline-size;
@@ -149,27 +173,3 @@
         padding: var(--ks-spacing-3);
     }
 </style>
-
-<script setup lang="ts">
-    import type {Component} from "vue"
-    import Plus from "vue-material-design-icons/Plus.vue"
-
-    withDefaults(defineProps<{
-        name: string
-        title: string
-        icon: Component
-        count: number
-        addLabel: string
-        tone?: "default" | "error" | "warning"
-        addTest?: string
-        actionIcon?: Component
-        hideCount?: boolean
-    }>(), {
-        tone: "default",
-        hideCount: false,
-    })
-
-    const emit = defineEmits<{
-        (e: "add", evt: MouseEvent): void
-    }>()
-</script>

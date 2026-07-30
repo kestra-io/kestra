@@ -80,6 +80,90 @@
     </div>
 </template>
 
+<script setup lang="ts">
+    import {ref} from "vue"
+    import KsDatePicker from "./KsDatePicker.vue"
+    import KsButton from "../Basic/KsButton/KsButton.vue"
+    import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
+    import KsTooltip from "../Feedback/KsTooltip.vue"
+    import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+    import {useKsEditor} from "../../composables/useKsEditor"
+    import type {KsEditorExposes, KsEditorProps} from "../../utils/editorTypes"
+
+    defineOptions({name: "KsEditor"})
+
+    const props = withDefaults(defineProps<KsEditorProps>(), {
+        modelValue: "",
+        original: undefined,
+        lang: undefined,
+        path: "",
+        schemaType: undefined,
+        theme: "dark",
+        placeholder: "",
+        label: undefined,
+        readOnly: false,
+        inline: false,
+        navbar: true,
+        configureLanguage: undefined,
+        loadTaskIcon: undefined,
+        options: undefined,
+    })
+
+    const emit = defineEmits<{
+        (e: "save", value?: string): void
+        (e: "execute", value?: string): void
+        (e: "focusout", value?: string): void
+        (e: "update:modelValue", value: string): void
+        (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void
+        (e: "confirm", value?: string): void
+        (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
+        (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
+        (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
+    }>()
+
+    const editorRef = ref<HTMLDivElement | null>(null)
+    const container = ref<HTMLDivElement>()
+    const datePickerWrapper = ref<HTMLElement>()
+    const datePicker = ref()
+
+    const {
+        t,
+        icon,
+        containerClass,
+        showPlaceholder,
+        textAreaValue,
+        showWidgetContent,
+        isDiff,
+        editorResolved,
+        selectedDate,
+        datePickerShown,
+        nowMoment,
+        datePickerCallback,
+        autoFold,
+        unfoldAll,
+        onPlaceholderClick,
+        onDrop,
+        focus,
+        destroy,
+        highlightLinesRange,
+        clearLinesRangeHighlights,
+        addContentWidget,
+        removeContentWidget,
+        getEditor,
+    } = useKsEditor(props, emit, {editorRef, container, datePickerWrapper, datePicker})
+
+    defineExpose<KsEditorExposes>({
+        focus,
+        destroy,
+        highlightLinesRange,
+        clearLinesRangeHighlights,
+        addContentWidget,
+        removeContentWidget,
+        monaco,
+        getEditor,
+    })
+</script>
+
 <style lang="scss">
     .highlight-lines {
         background-color: rgba(#3991ff, .2);
@@ -306,88 +390,3 @@
         height: 1em;
     }
 </style>
-
-
-<script setup lang="ts">
-    import {ref} from "vue"
-    import KsDatePicker from "./KsDatePicker.vue"
-    import KsButton from "../Basic/KsButton/KsButton.vue"
-    import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
-    import KsTooltip from "../Feedback/KsTooltip.vue"
-    import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
-    import {useKsEditor} from "../../composables/useKsEditor"
-    import type {KsEditorExposes, KsEditorProps} from "../../utils/editorTypes"
-
-    defineOptions({name: "KsEditor"})
-
-    const props = withDefaults(defineProps<KsEditorProps>(), {
-        modelValue: "",
-        original: undefined,
-        lang: undefined,
-        path: "",
-        schemaType: undefined,
-        theme: "dark",
-        placeholder: "",
-        label: undefined,
-        readOnly: false,
-        inline: false,
-        navbar: true,
-        configureLanguage: undefined,
-        loadTaskIcon: undefined,
-        options: undefined,
-    })
-
-    const emit = defineEmits<{
-        (e: "save", value?: string): void
-        (e: "execute", value?: string): void
-        (e: "focusout", value?: string): void
-        (e: "update:modelValue", value: string): void
-        (e: "cursor", payload: {position: monaco.Position, model: monaco.editor.ITextModel}): void
-        (e: "confirm", value?: string): void
-        (e: "mouse-move", event: monaco.editor.IEditorMouseEvent): void
-        (e: "mouse-leave", event: monaco.editor.IPartialEditorMouseEvent): void
-        (e: "editorMounted", editor: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | undefined): void
-    }>()
-
-    const editorRef = ref<HTMLDivElement | null>(null)
-    const container = ref<HTMLDivElement>()
-    const datePickerWrapper = ref<HTMLElement>()
-    const datePicker = ref()
-
-    const {
-        t,
-        icon,
-        containerClass,
-        showPlaceholder,
-        textAreaValue,
-        showWidgetContent,
-        isDiff,
-        editorResolved,
-        selectedDate,
-        datePickerShown,
-        nowMoment,
-        datePickerCallback,
-        autoFold,
-        unfoldAll,
-        onPlaceholderClick,
-        onDrop,
-        focus,
-        destroy,
-        highlightLinesRange,
-        clearLinesRangeHighlights,
-        addContentWidget,
-        removeContentWidget,
-        getEditor,
-    } = useKsEditor(props, emit, {editorRef, container, datePickerWrapper, datePicker})
-
-    defineExpose<KsEditorExposes>({
-        focus,
-        destroy,
-        highlightLinesRange,
-        clearLinesRangeHighlights,
-        addContentWidget,
-        removeContentWidget,
-        monaco,
-        getEditor,
-    })
-</script>

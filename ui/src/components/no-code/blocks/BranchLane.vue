@@ -98,107 +98,6 @@
     </div>
 </template>
 
-<style scoped lang="scss">
-    .branch-lane {
-        display: flex;
-        flex-direction: column;
-        border-left: 2px solid var(--ks-border-strong);
-        padding-left: var(--ks-spacing-3);
-
-        &--error {
-            border-left-color: var(--ks-status-error);
-        }
-
-        &--warning {
-            border-left-color: var(--ks-status-warning);
-        }
-    }
-
-    .branch-lane-header {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        margin-bottom: var(--ks-spacing-2);
-    }
-
-    .branch-lane-icon {
-        font-size: var(--ks-font-size-sm);
-        display: flex;
-        flex-shrink: 0;
-        color: var(--ks-icon-muted);
-
-        .branch-lane--error & {
-            color: var(--ks-text-error);
-        }
-
-        .branch-lane--warning & {
-            color: var(--ks-text-warning);
-        }
-    }
-
-    .branch-lane-label {
-        font-size: var(--ks-font-size-xs);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--ks-text-muted);
-
-        .branch-lane--error &,
-        .branch-lane--warning & {
-            color: var(--ks-text-primary);
-        }
-    }
-
-    .branch-lane-depth-pill {
-        margin-left: auto;
-    }
-
-    .branch-lane-body {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-2);
-    }
-
-    .branch-lane-warning {
-        margin-bottom: var(--ks-spacing-1);
-    }
-
-    .branch-lane-add-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        background: transparent;
-        border: 1px dashed var(--ks-border-strong);
-        border-radius: var(--ks-radius-base);
-        color: var(--ks-text-secondary);
-        font-size: var(--ks-font-size-sm);
-        padding: var(--ks-spacing-1) var(--ks-spacing-2);
-        cursor: pointer;
-        transition: color 0.15s, border-color 0.15s;
-
-        &:hover {
-            color: var(--ks-text-primary);
-            border-color: var(--ks-border-strong);
-            background: var(--ks-btn-secondary-bg-hover);
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--ks-border-focus);
-            outline-offset: 1px;
-        }
-    }
-
-    .branch-lane-add-btn.block-kbd-focused {
-        border-color: var(--ks-border-focus);
-        box-shadow: 0 0 0 2px var(--ks-border-focus);
-    }
-
-    .branch-lane-add-icon {
-        font-size: var(--ks-font-size-sm);
-        display: flex;
-    }
-</style>
-
 <script setup lang="ts">
     import {computed, defineAsyncComponent, type Component} from "vue"
     import {useI18n} from "vue-i18n"
@@ -308,3 +207,104 @@
         return isFlowableType(String(displayTaskOf(task).type ?? ""), props.icons)
     }
 </script>
+
+<style scoped lang="scss">
+    .branch-lane {
+        display: flex;
+        flex-direction: column;
+        border-left: 2px solid var(--ks-border-strong);
+        padding-left: var(--ks-spacing-3);
+
+        &--error {
+            border-left-color: var(--ks-status-error);
+        }
+
+        &--warning {
+            border-left-color: var(--ks-status-warning);
+        }
+    }
+
+    .branch-lane-header {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        margin-bottom: var(--ks-spacing-2);
+    }
+
+    .branch-lane-icon {
+        font-size: var(--ks-font-size-sm);
+        display: flex;
+        flex-shrink: 0;
+        color: var(--ks-icon-muted);
+
+        .branch-lane--error & {
+            color: var(--ks-text-error);
+        }
+
+        .branch-lane--warning & {
+            color: var(--ks-text-warning);
+        }
+    }
+
+    .branch-lane-label {
+        font-size: var(--ks-font-size-xs);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ks-text-muted);
+
+        .branch-lane--error &,
+        .branch-lane--warning & {
+            color: var(--ks-text-primary);
+        }
+    }
+
+    .branch-lane-depth-pill {
+        margin-left: auto;
+    }
+
+    .branch-lane-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+    }
+
+    .branch-lane-warning {
+        margin-bottom: var(--ks-spacing-1);
+    }
+
+    .branch-lane-add-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        background: transparent;
+        border: 1px dashed var(--ks-border-strong);
+        border-radius: var(--ks-radius-base);
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-sm);
+        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s;
+
+        &:hover {
+            color: var(--ks-text-primary);
+            border-color: var(--ks-border-strong);
+            background: var(--ks-btn-secondary-bg-hover);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--ks-border-focus);
+            outline-offset: 1px;
+        }
+    }
+
+    .branch-lane-add-btn.block-kbd-focused {
+        border-color: var(--ks-border-focus);
+        box-shadow: 0 0 0 2px var(--ks-border-focus);
+    }
+
+    .branch-lane-add-icon {
+        font-size: var(--ks-font-size-sm);
+        display: flex;
+    }
+</style>

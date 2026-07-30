@@ -15,6 +15,31 @@
     </ElTabs>
 </template>
 
+<script setup lang="ts">
+    import {computed} from "vue"
+    import {ElTabs} from "element-plus"
+    import {useFilteredProps} from "../../../utils/filteredProps"
+
+    defineOptions({inheritAttrs: false})
+
+    const model = defineModel<string>()
+
+    const props = defineProps<{
+        type?: "" | "card" | "border-card" | "box" | "segmented"
+        paneScroll?: boolean
+    }>()
+
+    defineSlots<{
+        default?(): unknown
+    }>()
+
+    const type = computed(() =>
+        (props.type === "box" || props.type === "segmented" ? "" : props.type),
+    )
+
+    const filteredProps = useFilteredProps(props, ["type", "paneScroll"])
+</script>
+
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/tabs';
@@ -186,28 +211,3 @@
         }
     }
 </style>
-
-<script setup lang="ts">
-    import {computed} from "vue"
-    import {ElTabs} from "element-plus"
-    import {useFilteredProps} from "../../../utils/filteredProps"
-
-    defineOptions({inheritAttrs: false})
-
-    const model = defineModel<string>()
-
-    const props = defineProps<{
-        type?: "" | "card" | "border-card" | "box" | "segmented"
-        paneScroll?: boolean
-    }>()
-
-    defineSlots<{
-        default?(): unknown
-    }>()
-
-    const type = computed(() =>
-        (props.type === "box" || props.type === "segmented" ? "" : props.type),
-    )
-
-    const filteredProps = useFilteredProps(props, ["type", "paneScroll"])
-</script>

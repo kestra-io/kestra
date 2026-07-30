@@ -93,67 +93,6 @@
     </KsDialog>
 </template>
 
-<style lang="scss" scoped>
-    .task-edit-modal-header {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-3);
-        width: 100%;
-    }
-
-    .task-edit-modal-title {
-        flex: 1;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    :global(.task-edit-modal-header .task-edit-modal-header-action) {
-        flex-shrink: 0;
-        margin-left: 0;
-    }
-
-    .task-edit-modal-body {
-        display: flex;
-        height: 82vh;
-        min-height: 0;
-        gap: var(--ks-spacing-4);
-    }
-
-    .task-edit-modal-form {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-    }
-
-    .task-edit-modal-docs {
-        flex: 0 0 400px;
-        min-height: 0;
-        overflow-y: auto;
-        border-left: 1px solid var(--ks-border-default);
-        padding-left: var(--ks-spacing-4);
-    }
-
-    .task-edit-modal-hint {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: var(--ks-spacing-2);
-        text-align: left;
-
-        a {
-            color: var(--ks-text-link);
-        }
-    }
-
-    .task-edit-modal-hint-dismiss {
-        flex-shrink: 0;
-    }
-</style>
-
 <script setup lang="ts">
     import {computed, provide, ref} from "vue"
     import {useI18n} from "vue-i18n"
@@ -230,3 +169,64 @@
         }
     }
 </script>
+
+<style lang="scss" scoped>
+    .task-edit-modal-header {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-3);
+        width: 100%;
+    }
+
+    .task-edit-modal-title {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    :global(.task-edit-modal-header .task-edit-modal-header-action) {
+        flex-shrink: 0;
+        margin-left: 0;
+    }
+
+    .task-edit-modal-body {
+        display: flex;
+        height: 82vh;
+        min-height: 0;
+        gap: var(--ks-spacing-4);
+    }
+
+    .task-edit-modal-form {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .task-edit-modal-docs {
+        flex: 0 0 400px;
+        min-height: 0;
+        overflow-y: auto;
+        border-left: 1px solid var(--ks-border-default);
+        padding-left: var(--ks-spacing-4);
+    }
+
+    .task-edit-modal-hint {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: var(--ks-spacing-2);
+        text-align: left;
+
+        a {
+            color: var(--ks-text-link);
+        }
+    }
+
+    .task-edit-modal-hint-dismiss {
+        flex-shrink: 0;
+    }
+</style>

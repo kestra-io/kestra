@@ -119,6 +119,39 @@
     </Teleport>
 </template>
 
+<script setup lang="ts">
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
+    import {KsInput, vKsLoading} from "@kestra-io/design-system"
+    import {useI18n} from "vue-i18n"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
+    import {usePluginsStore} from "../../../stores/plugins"
+    import type {TaskPickerApi} from "./useTaskPicker"
+
+    const props = defineProps<{picker: TaskPickerApi}>()
+
+    const {t} = useI18n()
+    const pluginsStore = usePluginsStore()
+
+    const {
+        taskPickerVisible,
+        taskPickerSearch,
+        hasSearch,
+        pluginsLoading,
+        pickerFocusedIndex,
+        pickerTab,
+        appFilter,
+        PICKER_TABS,
+        pickerHiddenCount,
+        appGroups,
+        displayedEntries,
+        sectionLabel,
+        pickerStyle,
+        setPickerTab,
+        insertTask,
+        onPickerKeydown,
+    } = props.picker
+</script>
+
 <style scoped lang="scss">
     .block-editor-picker-overlay {
         position: fixed;
@@ -362,36 +395,3 @@
         margin: 0;
     }
 </style>
-
-<script setup lang="ts">
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
-    import {KsInput, vKsLoading} from "@kestra-io/design-system"
-    import {useI18n} from "vue-i18n"
-    import TaskIcon from "../../plugins/TaskIcon.vue"
-    import {usePluginsStore} from "../../../stores/plugins"
-    import type {TaskPickerApi} from "./useTaskPicker"
-
-    const props = defineProps<{picker: TaskPickerApi}>()
-
-    const {t} = useI18n()
-    const pluginsStore = usePluginsStore()
-
-    const {
-        taskPickerVisible,
-        taskPickerSearch,
-        hasSearch,
-        pluginsLoading,
-        pickerFocusedIndex,
-        pickerTab,
-        appFilter,
-        PICKER_TABS,
-        pickerHiddenCount,
-        appGroups,
-        displayedEntries,
-        sectionLabel,
-        pickerStyle,
-        setPickerTab,
-        insertTask,
-        onPickerKeydown,
-    } = props.picker
-</script>

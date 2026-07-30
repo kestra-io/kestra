@@ -41,17 +41,6 @@
     </KsTabs>
 </template>
 
-<style scoped lang="scss">
-    .documentation {
-        padding: var(--ks-spacing-4);
-    }
-
-    .task-editor-pane {
-        padding-left: var(--ks-spacing-5);
-        padding-right: var(--ks-spacing-5);
-    }
-</style>
-
 <script setup lang="ts">
     import {KsMarkdown, KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
@@ -80,3 +69,14 @@
 
     const editorBindings = useEditorBindings()
 </script>
+
+<style scoped lang="scss">
+    .documentation {
+        padding: var(--ks-spacing-4);
+    }
+
+    .task-editor-pane {
+        padding-left: var(--ks-spacing-5);
+        padding-right: var(--ks-spacing-5);
+    }
+</style>

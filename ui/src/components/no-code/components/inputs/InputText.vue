@@ -18,16 +18,6 @@
     </div>
 </template>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
-:deep(.kel-input__icon) {
-    .lock-icon {
-        color: var(--ks-text-inactive);
-    }
-}
-</style>
-
 <script setup lang="ts">
     import {useId, computed, useTemplateRef} from "vue"
     import Lock from "vue-material-design-icons/Lock.vue"
@@ -72,3 +62,13 @@
         },
     })
 </script>
+
+<style scoped lang="scss">
+@import "../../styles/code.scss";
+
+:deep(.kel-input__icon) {
+    .lock-icon {
+        color: var(--ks-text-inactive);
+    }
+}
+</style>

@@ -15,18 +15,6 @@
     </KsSelect>
 </template>
 
-<style scoped lang="scss">
-:deep(.kel-input__inner) {
-    &::placeholder {
-        color: var(--ks-text-dim);
-    }
-}
-
-:deep(.kel-select__suffix) {
-    display: flex !important;
-}
-</style>
-
 <script setup lang="ts">
     import {computed} from "vue"
     import {collapseEmptyValues} from "../utils/collapseEmptyValues"
@@ -57,3 +45,15 @@
         emit("update:modelValue", collapseEmptyValues(value))
     }
 </script>
+
+<style scoped lang="scss">
+:deep(.kel-input__inner) {
+    &::placeholder {
+        color: var(--ks-text-dim);
+    }
+}
+
+:deep(.kel-select__suffix) {
+    display: flex !important;
+}
+</style>

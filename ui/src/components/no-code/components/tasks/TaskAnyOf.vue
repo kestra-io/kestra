@@ -54,16 +54,6 @@
     </template>
 </template>
 
-<style scoped lang="scss">
-.kel-form {
-    width: 100%;
-}
-
-.anyof-switch {
-    margin-bottom: var(--ks-spacing-2);
-}
-</style>
-
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue"
     import {Schema} from "./getTaskComponent"
@@ -401,3 +391,13 @@
         resetSelectType,
     })
 </script>
+
+<style scoped lang="scss">
+.kel-form {
+    width: 100%;
+}
+
+.anyof-switch {
+    margin-bottom: var(--ks-spacing-2);
+}
+</style>

@@ -10,6 +10,7 @@
         @update:model-value="editorInput"
     />
 </template>
+
 <script setup lang="ts">
     import {collapseEmptyValues} from "./MixinTask"
     import {KsEditor} from "@kestra-io/design-system"
@@ -60,4 +61,3 @@
         return YAML_UTILS.parse(value)
     }
 </script>
-

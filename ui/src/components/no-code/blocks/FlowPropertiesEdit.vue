@@ -26,35 +26,6 @@
     </div>
 </template>
 
-<style scoped lang="scss">
-.flow-properties-edit {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-}
-
-.flow-properties-head {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-2);
-    padding: var(--ks-spacing-3) var(--ks-spacing-4);
-    border-bottom: 1px solid var(--ks-border-subtle);
-}
-
-.flow-properties-title {
-    font-size: var(--ks-font-size-base);
-    font-weight: 600;
-    color: var(--ks-text-primary);
-}
-
-.flow-properties-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--ks-spacing-4);
-}
-</style>
-
 <script setup lang="ts">
     import {computed, inject, ref} from "vue"
     import {useI18n} from "vue-i18n"
@@ -121,3 +92,32 @@
         }))
     }
 </script>
+
+<style scoped lang="scss">
+.flow-properties-edit {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.flow-properties-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    padding: var(--ks-spacing-3) var(--ks-spacing-4);
+    border-bottom: 1px solid var(--ks-border-subtle);
+}
+
+.flow-properties-title {
+    font-size: var(--ks-font-size-base);
+    font-weight: 600;
+    color: var(--ks-text-primary);
+}
+
+.flow-properties-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--ks-spacing-4);
+}
+</style>

@@ -89,6 +89,79 @@
     </div>
 </template>
 
+<script setup lang="ts">
+    import {computed, inject} from "vue"
+    import {useI18n} from "vue-i18n"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import DragVertical from "vue-material-design-icons/DragVertical.vue"
+    import Play from "vue-material-design-icons/Play.vue"
+    import ViewSplitVertical from "vue-material-design-icons/ViewSplitVertical.vue"
+
+    import {KsIconButton} from "@kestra-io/design-system"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
+    import BlockErrorBadge from "./BlockErrorBadge.vue"
+
+    import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
+    import {displayTaskOf} from "../../../utils/flowableBlockOps"
+    import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "../injectionKeys"
+
+    const {t} = useI18n()
+
+    const pluginsStore = usePluginsStore()
+
+    const props = withDefaults(defineProps<{
+        block: Record<string, unknown>
+        path: string
+        label?: string
+        selected?: boolean
+        focused?: boolean
+        draggable?: boolean
+        dragOver?: boolean
+        runnable?: boolean
+        showOpenSplit?: boolean
+        showDuplicate?: boolean
+        icons?: Record<string, PluginIconData>
+    }>(), {
+        showOpenSplit: true,
+        showDuplicate: true,
+    })
+
+    const emit = defineEmits<{
+        (e: "select"): void
+        (e: "open-split"): void
+        (e: "delete"): void
+        (e: "duplicate"): void
+        (e: "run"): void
+        (e: "drag-start", event: DragEvent): void
+        (e: "drag-over", event: DragEvent): void
+        (e: "drop", event: DragEvent): void
+        (e: "drag-end"): void
+    }>()
+
+    const displayBlock = computed(() => displayTaskOf(props.block))
+
+    const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
+    const panelMaximized = inject(PANEL_MAXIMIZED_INJECTION_KEY, undefined)
+    const issues = computed<string[]>(() =>
+        validationIssues?.value?.get(String(displayBlock.value.id ?? "")) ?? [],
+    )
+
+    const shortType = computed(() => {
+        const type = String(displayBlock.value.type ?? "")
+        const parts = type.split(".")
+        return parts[parts.length - 1] ?? type
+    })
+
+    const displayLabel = computed(() => props.label ?? String(displayBlock.value.id ?? ""))
+
+    const showType = computed(() => !!shortType.value && shortType.value !== displayLabel.value)
+
+    const cardAriaLabel = computed(() =>
+        t("block_editor.card_aria_label", {id: displayLabel.value, type: shortType.value}),
+    )
+</script>
+
 <style scoped lang="scss">
     .leaf-block-card {
         position: relative;
@@ -225,76 +298,3 @@
         box-shadow: 0 0 0 2px var(--ks-border-focus);
     }
 </style>
-
-<script setup lang="ts">
-    import {computed, inject} from "vue"
-    import {useI18n} from "vue-i18n"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
-    import DragVertical from "vue-material-design-icons/DragVertical.vue"
-    import Play from "vue-material-design-icons/Play.vue"
-    import ViewSplitVertical from "vue-material-design-icons/ViewSplitVertical.vue"
-
-    import {KsIconButton} from "@kestra-io/design-system"
-    import TaskIcon from "../../plugins/TaskIcon.vue"
-    import BlockErrorBadge from "./BlockErrorBadge.vue"
-
-    import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
-    import {displayTaskOf} from "../../../utils/flowableBlockOps"
-    import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY, PANEL_MAXIMIZED_INJECTION_KEY} from "../injectionKeys"
-
-    const {t} = useI18n()
-
-    const pluginsStore = usePluginsStore()
-
-    const props = withDefaults(defineProps<{
-        block: Record<string, unknown>
-        path: string
-        label?: string
-        selected?: boolean
-        focused?: boolean
-        draggable?: boolean
-        dragOver?: boolean
-        runnable?: boolean
-        showOpenSplit?: boolean
-        showDuplicate?: boolean
-        icons?: Record<string, PluginIconData>
-    }>(), {
-        showOpenSplit: true,
-        showDuplicate: true,
-    })
-
-    const emit = defineEmits<{
-        (e: "select"): void
-        (e: "open-split"): void
-        (e: "delete"): void
-        (e: "duplicate"): void
-        (e: "run"): void
-        (e: "drag-start", event: DragEvent): void
-        (e: "drag-over", event: DragEvent): void
-        (e: "drop", event: DragEvent): void
-        (e: "drag-end"): void
-    }>()
-
-    const displayBlock = computed(() => displayTaskOf(props.block))
-
-    const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
-    const panelMaximized = inject(PANEL_MAXIMIZED_INJECTION_KEY, undefined)
-    const issues = computed<string[]>(() =>
-        validationIssues?.value?.get(String(displayBlock.value.id ?? "")) ?? [],
-    )
-
-    const shortType = computed(() => {
-        const type = String(displayBlock.value.type ?? "")
-        const parts = type.split(".")
-        return parts[parts.length - 1] ?? type
-    })
-
-    const displayLabel = computed(() => props.label ?? String(displayBlock.value.id ?? ""))
-
-    const showType = computed(() => !!shortType.value && shortType.value !== displayLabel.value)
-
-    const cardAriaLabel = computed(() =>
-        t("block_editor.card_aria_label", {id: displayLabel.value, type: shortType.value}),
-    )
-</script>

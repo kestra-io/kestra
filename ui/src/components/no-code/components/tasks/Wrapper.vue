@@ -5,6 +5,12 @@
     </div>
 </template>
 
+<script setup lang="ts">
+    defineOptions({name: "Wrapper"})
+
+    defineProps<{merge?: boolean, transparent?: boolean}>()
+</script>
+
 <style scoped lang="scss">
 .schema-wrapper {
     margin-left: calc(-1 * var(--ks-spacing-5));
@@ -20,9 +26,3 @@
     border-bottom: none;
 }
 </style>
-
-<script setup lang="ts">
-    defineOptions({name: "Wrapper"})
-
-    defineProps<{merge?: boolean, transparent?: boolean}>()
-</script>

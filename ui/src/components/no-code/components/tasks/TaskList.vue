@@ -45,28 +45,6 @@
     </div>
 </template>
 
-<style scoped lang="scss">
-.tasks-wrapper {
-    width: 100%;
-}
-
-.block-section-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ks-spacing-2);
-}
-
-.required::after {
-    content: "*";
-    color: var(--ks-text-error);
-    margin-left: var(--ks-spacing-1);
-}
-
-.merge :deep(.kel-collapse-item__header){
-    cursor: default;
-}
-</style>
-
 <script setup lang="ts">
     import {computed, inject, ref} from "vue"
     import Creation from "./taskList/buttons/Creation.vue"
@@ -217,3 +195,25 @@
 
     const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type")
 </script>
+
+<style scoped lang="scss">
+.tasks-wrapper {
+    width: 100%;
+}
+
+.block-section-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+}
+
+.required::after {
+    content: "*";
+    color: var(--ks-text-error);
+    margin-left: var(--ks-spacing-1);
+}
+
+.merge :deep(.kel-collapse-item__header){
+    cursor: default;
+}
+</style>

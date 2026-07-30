@@ -21,6 +21,75 @@
     </ElSelect>
 </template>
 
+<script setup lang="ts">
+    import {type Component, computed, h, markRaw} from "vue"
+    import {ElSelect} from "element-plus"
+    import Loading from "vue-material-design-icons/Loading.vue"
+    import KsIcon from "../../Basic/KsIcon.vue"
+    import {useFilteredProps} from "../../../utils/filteredProps"
+
+    defineOptions({inheritAttrs: false})
+
+    const model = defineModel<any>()
+
+    const props = withDefaults(defineProps<{
+        placeholder?: string
+        disabled?: boolean
+        size?: "small" | "default" | "large"
+        filterable?: boolean
+        clearable?: boolean
+        allowCreate?: boolean
+        remote?: boolean
+        remoteMethod?: (query: string) => void
+        remoteShowSuffix?: boolean
+        multiple?: boolean
+        collapseTags?: boolean
+        required?: boolean
+        valueKey?: string
+        placement?: string
+        popperOffset?: number
+        popperClass?: string
+        showArrow?: boolean
+        suffixIcon?: Component | string
+        loading?: boolean
+        fit?: boolean
+    }>(), {
+        placeholder: undefined,
+        size: undefined,
+        clearable: undefined,
+        remoteMethod: undefined,
+        valueKey: undefined,
+        placement: undefined,
+        popperOffset: undefined,
+        popperClass: undefined,
+        suffixIcon: undefined,
+        loading: undefined,
+    })
+
+    const emit = defineEmits<{
+        change: [value: any]
+    }>()
+
+    defineSlots<{
+        default?(): unknown
+        prefix?(): unknown
+        header?(): unknown
+        footer?(): unknown
+        label?(props: { value: any; label: string }): any
+        tag?(): unknown
+    }>()
+
+    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading"])
+
+    const LoadingSpinner = markRaw({
+        render: () => h(KsIcon, {class: "is-loading"}, () => h(Loading)),
+    }) as Component
+
+    const resolvedSuffixIcon = computed<Component | string | undefined>(
+        () => props.loading ? LoadingSpinner : props.suffixIcon,
+    )
+</script>
+
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/select';
@@ -191,72 +260,3 @@
         font-size: var(--ks-font-size-md);
     }
 </style>
-
-<script setup lang="ts">
-    import {type Component, computed, h, markRaw} from "vue"
-    import {ElSelect} from "element-plus"
-    import Loading from "vue-material-design-icons/Loading.vue"
-    import KsIcon from "../../Basic/KsIcon.vue"
-    import {useFilteredProps} from "../../../utils/filteredProps"
-
-    defineOptions({inheritAttrs: false})
-
-    const model = defineModel<any>()
-
-    const props = withDefaults(defineProps<{
-        placeholder?: string
-        disabled?: boolean
-        size?: "small" | "default" | "large"
-        filterable?: boolean
-        clearable?: boolean
-        allowCreate?: boolean
-        remote?: boolean
-        remoteMethod?: (query: string) => void
-        remoteShowSuffix?: boolean
-        multiple?: boolean
-        collapseTags?: boolean
-        required?: boolean
-        valueKey?: string
-        placement?: string
-        popperOffset?: number
-        popperClass?: string
-        showArrow?: boolean
-        suffixIcon?: Component | string
-        loading?: boolean
-        fit?: boolean
-    }>(), {
-        placeholder: undefined,
-        size: undefined,
-        clearable: undefined,
-        remoteMethod: undefined,
-        valueKey: undefined,
-        placement: undefined,
-        popperOffset: undefined,
-        popperClass: undefined,
-        suffixIcon: undefined,
-        loading: undefined,
-    })
-
-    const emit = defineEmits<{
-        change: [value: any]
-    }>()
-
-    defineSlots<{
-        default?(): unknown
-        prefix?(): unknown
-        header?(): unknown
-        footer?(): unknown
-        label?(props: { value: any; label: string }): any
-        tag?(): unknown
-    }>()
-
-    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading"])
-
-    const LoadingSpinner = markRaw({
-        render: () => h(KsIcon, {class: "is-loading"}, () => h(Loading)),
-    }) as Component
-
-    const resolvedSuffixIcon = computed<Component | string | undefined>(
-        () => props.loading ? LoadingSpinner : props.suffixIcon,
-    )
-</script>

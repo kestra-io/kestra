@@ -22,6 +22,15 @@
     </KsTooltip>
 </template>
 
+<script setup lang="ts">
+    import {useI18n} from "vue-i18n"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+
+    defineProps<{issues: string[]}>()
+
+    const {t} = useI18n()
+</script>
+
 <style scoped lang="scss">
     .block-error-badge {
         display: inline-flex;
@@ -69,12 +78,3 @@
         font-family: var(--ks-font-family-mono);
     }
 </style>
-
-<script setup lang="ts">
-    import {useI18n} from "vue-i18n"
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
-
-    defineProps<{issues: string[]}>()
-
-    const {t} = useI18n()
-</script>

@@ -652,27 +652,16 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             // Check if descriptors contain a filter of type Executions.Fields.STATE and apply the custom filter "statesFilter" if present
             selectConditionStep = applyStateFilters(filters, selectConditionStep);
 
-            // Check if descriptors contain a filter of type EXECUTIONS.Fields.LABELS and apply the findCondition() method if present
-            List<Contains<Executions.Fields>> labelFilters = filters.stream()
-                .filter(descriptor -> descriptor.getField().equals(Executions.Fields.LABELS) && descriptor instanceof Contains<F>)
-                .map(descriptor -> (Contains<Executions.Fields>) descriptor)
+            // Check if descriptors contain a filter of type EXECUTIONS.Fields.LABELS and apply the label JSON condition if present
+            List<AbstractFilter<Executions.Fields>> labelFilters = filters.stream()
+                .filter(descriptor -> Executions.Fields.LABELS.equals(descriptor.getField()))
+                .map(descriptor -> (AbstractFilter<Executions.Fields>) descriptor)
                 .toList();
 
             if (!labelFilters.isEmpty()) {
-                Map<String, String> mergedMap = new HashMap<>();
-
-                labelFilters.forEach(labelFilter ->
-                {
-                    if (labelFilter.getKey() != null) {
-                        mergedMap.put(labelFilter.getKey(), labelFilter.getValue().toString());
-                    } else if (labelFilter.getValue() instanceof String stringLabel) {
-                        mergedMap.putAll(Label.from(stringLabel));
-                    } else {
-                        mergedMap.putAll((Map<String, String>) labelFilter.getValue());
-                    }
-                });
-
-                selectConditionStep = selectConditionStep.and(findCondition(null, mergedMap));
+                for (AbstractFilter<Executions.Fields> labelFilter : labelFilters) {
+                    selectConditionStep = selectConditionStep.and(toLabelCondition(labelFilter));
+                }
             }
 
             // Handle SCOPE filters — translate to namespace-based conditions
@@ -689,9 +678,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
             // Remove the state, label, and scope filters from descriptors
             List<AbstractFilter<F>> remainingFilters = filters.stream()
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.STATE)) // Filter state
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.LABELS) || !(descriptor instanceof Contains<F>)) // Filter labels
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.SCOPE)) // Filter scope
+                .filter(descriptor -> !Executions.Fields.STATE.equals(descriptor.getField())) // Filter state
+                .filter(descriptor -> !Executions.Fields.LABELS.equals(descriptor.getField())) // Filter labels
+                .filter(descriptor -> !Executions.Fields.SCOPE.equals(descriptor.getField())) // Filter scope
                 .toList();
 
             // Use the generic method addFilters with the remaining filters
@@ -699,6 +688,83 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         } else {
             return selectConditionStep;
         }
+    }
+
+    private Condition toLabelCondition(AbstractFilter<Executions.Fields> filter) {
+        return switch (filter.getType()) {
+            case CONTAINS -> toLabelContainsCondition((Contains<Executions.Fields>) filter, QueryFilter.Op.CONTAINS);
+            case EQUAL_TO -> findLabelCondition(toLabelInput(filter.getKey(), ((EqualTo<Executions.Fields>) filter).getValue()), QueryFilter.Op.EQUALS);
+            case IN -> toLabelInCondition((In<Executions.Fields>) filter);
+            case IS_NOT_NULL -> findLabelCondition(Either.right(filter.getKey()), QueryFilter.Op.IS_NOT_NULL);
+            case IS_NULL -> findLabelCondition(Either.right(filter.getKey()), QueryFilter.Op.IS_NULL);
+            case NOT_CONTAINS -> toLabelContainsCondition((NotContains<Executions.Fields>) filter, QueryFilter.Op.NOT_CONTAINS);
+            case NOT_EQUAL_TO -> findLabelCondition(toLabelInput(filter.getKey(), ((NotEqualTo<Executions.Fields>) filter).getValue()), QueryFilter.Op.NOT_EQUALS);
+            case NOT_IN -> toLabelNotInCondition((NotIn<Executions.Fields>) filter);
+            case OR -> toLabelOrCondition((Or<Executions.Fields>) filter);
+            default -> throw new UnsupportedOperationException("Unsupported dashboard label filter type: %s.".formatted(filter.getType()));
+        };
+    }
+
+    private Condition toLabelContainsCondition(AbstractFilter<Executions.Fields> filter, QueryFilter.Op operation) {
+        Object value = switch (filter) {
+            case Contains<Executions.Fields> contains -> contains.getValue();
+            case NotContains<Executions.Fields> notContains -> notContains.getValue();
+            default -> throw new UnsupportedOperationException("Unsupported dashboard label contains filter type: %s.".formatted(filter.getType()));
+        };
+
+        if (filter.getKey() != null) {
+            return findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), operation);
+        }
+
+        if (value instanceof String stringLabel) {
+            return findLabelCondition(Either.right(stringLabel), operation);
+        }
+
+        return findLabelCondition(Either.left((Map<?, ?>) value), operation);
+    }
+
+    private Condition toLabelInCondition(In<Executions.Fields> filter) {
+        if (filter.getKey() == null) {
+            return findLabelCondition(Either.left(labelsFromValues(filter.getValues())), QueryFilter.Op.IN);
+        }
+
+        return filter.getValues().stream()
+            .map(value -> findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), QueryFilter.Op.EQUALS))
+            .reduce(DSL.falseCondition(), Condition::or);
+    }
+
+    private Condition toLabelNotInCondition(NotIn<Executions.Fields> filter) {
+        if (filter.getKey() == null) {
+            return findLabelCondition(Either.left(labelsFromValues(filter.getValues())), QueryFilter.Op.NOT_IN);
+        }
+
+        return filter.getValues().stream()
+            .map(value -> findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), QueryFilter.Op.NOT_EQUALS))
+            .reduce(DSL.trueCondition(), Condition::and);
+    }
+
+    private Condition toLabelOrCondition(Or<Executions.Fields> filter) {
+        return filter.getValues().stream()
+            .map(this::toLabelCondition)
+            .reduce(DSL.falseCondition(), Condition::or);
+    }
+
+    private Either<Map<?, ?>, String> toLabelInput(String key, Object value) {
+        if (key != null) {
+            return Either.left(Collections.singletonMap(key, value.toString()));
+        }
+
+        if (value instanceof String stringLabel) {
+            return Either.left(Label.from(stringLabel));
+        }
+
+        return Either.left((Map<?, ?>) value);
+    }
+
+    private Map<?, ?> labelsFromValues(List<Object> values) {
+        Map<String, String> labels = new HashMap<>();
+        values.forEach(value -> labels.putAll(Label.from(value.toString())));
+        return labels;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

@@ -8,11 +8,13 @@
  *   - RUNNING               → a turn is streaming; composer disabled (a 2nd turn 409s)
  *   - AWAITING_CONFIRMATION → a proposal is suspended; call `confirm(...)` to resume
  *
- * Non-streaming calls (create/get) go through the axios client; the `chat` and
- * `confirm` turns are POST SSE streams read via `streamSse`.
+ * Non-streaming calls (create/get) go through the generated SDK (`AiApi.create`/`AiApi.get`); the
+ * `chat` and `confirm` turns are POST SSE streams read via the custom `streamSse` (the SDK's SSE
+ * result doesn't expose the pre-stream HTTP status the error handling depends on).
  */
 import {ref, computed} from "vue"
-import {useClient} from "@kestra-io/kestra-sdk"
+import * as AiApi from "@kestra-io/kestra-sdk/ai"
+import type {AgentMessageRole, AgentMessageType, AgentThreadStatus, ApiDecision} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import {uid} from "../../../utils/utils"
 import {streamSse, SseHttpError} from "./streamSse"
@@ -22,14 +24,11 @@ import {
     type ChatTurnRequest,
     type ConfirmActionRequest,
     type CreateThreadRequest,
-    type Decision,
     type DoneEvent,
     type ErrorEvent,
-    type Mode,
     type ProposedActionEvent,
     type ScopeBinding,
     type ThreadDetail,
-    type ThreadStatus,
     type ThreadSummary,
     type TokenEvent,
     type ToolCallEvent,
@@ -46,8 +45,8 @@ export type NoticeCode = "emptyTurn"
 export interface ChatMessage {
     /** Local, stable key for v-for. */
     id: string
-    role: "USER" | "ASSISTANT" | "TOOL" | "SYSTEM"
-    type: "TEXT" | "TOOL_CALL" | "TOOL_RESULT" | "PROPOSED_ACTION" | "ARTEFACT_DRAFT" | "CANCELLED"
+    role: AgentMessageRole
+    type: AgentMessageType
     /** Assistant text; appended to as `token` events arrive. */
     content?: string
     toolCall?: ToolCallEvent
@@ -58,11 +57,9 @@ export interface ChatMessage {
 }
 
 export function useAiChat() {
-    const client = useClient()
-
     const thread = ref<ThreadSummary | null>(null)
     const messages = ref<ChatMessage[]>([])
-    const status = ref<ThreadStatus>("IDLE")
+    const status = ref<AgentThreadStatus>("IDLE")
     const streaming = ref(false)
     /** A translation-key suffix under `ai.copilot.error.*`, or null. Kept locale-agnostic. */
     const error = ref<ErrorCode | null>(null)
@@ -110,7 +107,10 @@ export function useAiChat() {
         // provider is configured the agentic endpoints (`AiAgentController`, `@Requires` the
         // AiServiceManager bean) aren't registered, so this create 404s — surfaced as the copilot's
         // own "unavailable" state by sendChat, not a full-page redirect.
-        const {data} = await client.post<ThreadSummary>(base(), request, {showMessageOnError: false} as any)
+        const data = await AiApi.create(
+            request,
+            {showMessageOnError: false} as Parameters<typeof AiApi.create>[1],
+        ) as ThreadSummary
         thread.value = data
         status.value = data.status
         rememberThread(data.uid)
@@ -140,17 +140,17 @@ export function useAiChat() {
         // `showMessageOnError: false` opts out of the global "page not found" so an expected 404 —
         // the thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
         // is handled here: forget the remembered id and start a fresh session instead of erroring out.
-        const response = await client
-            .get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false} as any)
-            .catch((e: {status?: number; response?: {status?: number}}) => {
-                if (e?.status === 404 || e?.response?.status === 404) return null
-                throw e
-            })
-        if (!response) {
+        const data = await AiApi.get(
+            {threadId},
+            {showMessageOnError: false} as Parameters<typeof AiApi.get>[1],
+        ).catch((e: {status?: number; response?: {status?: number}}) => {
+            if (e?.status === 404 || e?.response?.status === 404) return null
+            throw e
+        }) as unknown as ThreadDetail | null
+        if (!data) {
             forgetThread()
             return
         }
-        const {data} = response
         thread.value = {
             uid: data.uid,
             title: data.title,
@@ -243,7 +243,7 @@ export function useAiChat() {
      * Resolves a pending proposal. APPROVE resumes & dispatches; REJECT records rejection.
      * The resumed turn runs a fresh model call, so it needs the same `providerId` the chat turn used.
      */
-    async function confirm(decision: Decision, reason?: string, providerId?: string): Promise<void> {
+    async function confirm(decision: ApiDecision, reason?: string, providerId?: string): Promise<void> {
         const active = thread.value
         const proposal = pendingConfirmation.value
         if (!active || !proposal) return
@@ -422,4 +422,4 @@ export function useAiChat() {
     }
 }
 
-export type {Mode, ScopeBinding}
+export type {ScopeBinding}

@@ -307,6 +307,66 @@ public abstract class AbstractFlowRepositoryTest {
                 .extracting(Flow::getId)
                 .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
 
+            QueryFilter containsFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.CONTAINS)
+                .value("ba")
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(containsFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label", "flow-with-different-label");
+
+            QueryFilter notContainsFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_CONTAINS)
+                .value("ba")
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(notContainsFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label");
+
+            QueryFilter isSetFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.IS_NOT_NULL)
+                .value("foo")
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(isSetFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label", "flow-with-different-label");
+
+            QueryFilter isNotSetFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.IS_NULL)
+                .value("foo")
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(isNotSetFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label");
+
+            QueryFilter inFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.IN)
+                .value(Map.of("foo", "bar", "unknown", "value"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(inFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-with-label");
+
+            QueryFilter notInFilter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_IN)
+                .value(Map.of("foo", "bar"))
+                .build();
+
+            assertThat(flowRepository.find(Pageable.UNPAGED, tenant, List.of(notInFilter)))
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
+
         } finally {
             deleteFlow(flowWithLabel);
             deleteFlow(flowWithoutLabel);

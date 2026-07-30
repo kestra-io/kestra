@@ -2080,7 +2080,7 @@
           "plugin": "Plugin: {plugin}",
           "test": "Teste: {test}"
         },
-        "contextAdded": "Adicionado {{type}} {{id}} ao contexto.",
+        "contextAdded": "Adicionado {type} {id} ao contexto.",
         "contextNoun": {
           "app": "Aplicativo",
           "blueprint": "Modelo",

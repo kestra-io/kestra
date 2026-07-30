@@ -2091,7 +2091,7 @@
           "plugin": "插件",
           "test": "测试"
         },
-        "contextRemoved": "已从上下文移除 {类型} id。",
+        "contextRemoved": "已从上下文移除 {type} {id}。",
         "toolResult": {
           "detail": "详情",
           "error": "{{tool}} 失败",

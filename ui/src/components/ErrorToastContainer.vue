@@ -55,8 +55,8 @@
     const markdownRenderer = ref<string | undefined>(undefined)
 
     const isFlowContext = computed(() => {
-        const routeName = route?.name
-        return routeName === "flows/update" || routeName === "flows/create"
+        const routeName = String(route?.name ?? "")
+        return routeName.startsWith("flows/update") || routeName === "flows/create"
     })
 
     const renderMarkdown = (): string => {

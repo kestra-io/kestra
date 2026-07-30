@@ -35,8 +35,8 @@
 
     function navigate() {
         router.push({
-            name: "flows/update",
-            params: {...route.params, tab: props.tab},
+            name: `flows/update/${props.tab}`,
+            params: {...route.params},
             query: {...route.query},
         })
     }

@@ -1624,9 +1624,11 @@ tasks:
             const picker = pickerEl()!
 
             // When — the first entry starts highlighted, so one step down lands on If
-            picker.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowDown", bubbles: true, cancelable: true}))
+            // Non-bubbling: monaco registers a body-level clipboard keydown handler whose
+            // cancelled DeferredPromise surfaces as an unhandled rejection in jsdom.
+            picker.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowDown", cancelable: true}))
             await wrapper.vm.$nextTick()
-            picker.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", bubbles: true, cancelable: true}))
+            picker.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", cancelable: true}))
             await wrapper.vm.$nextTick()
 
             // Then

@@ -30,6 +30,11 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     private final AtomicReference<WorkerJob> currentWorkerJob = new AtomicReference<>();
     private final AtomicReference<AbstractWorkerCallable> currentWorkerCallable = new AtomicReference<>();
 
+    // Bound once instead of passed as `this::kill` on every process() call: `this` never changes
+    // across the many jobs a single processor instance handles, so re-capturing it as a fresh
+    // lambda per call was pure allocation churn.
+    private final Runnable killAction = this::kill;
+
     private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final AtomicBoolean killRequested = new AtomicBoolean(false);
     private final AtomicBoolean shutdownInterrupted = new AtomicBoolean(false);
@@ -52,7 +57,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     @Override
     public void process(final T job) {
         if (currentWorkerJob.compareAndSet(null, job)) {
-            executionKilledManager.register(job.uid(), job, this::kill);
+            executionKilledManager.register(job.uid(), job, killAction);
             try {
                 doProcess(job);
             } finally {

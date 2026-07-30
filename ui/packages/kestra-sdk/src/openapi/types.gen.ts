@@ -782,6 +782,20 @@ export type ExecutionControllerEvalResult = {
     error?: string;
 };
 
+/**
+ * The average duration of the recent executions of a flow.
+ */
+export type ExecutionControllerExecutionAverageDuration = {
+    /**
+     * the average duration in milliseconds, or `null` when the flow has no terminated execution in the lookback window.
+     */
+    avgDurationMs?: number | null;
+    /**
+     * the number of executions the average was computed from.
+     */
+    count?: number;
+};
+
 export type ExecutionControllerExecutionResponse = Execution & {
     deleted: boolean;
     url?: string;
@@ -4086,6 +4100,32 @@ export type ListFlowExecutionsByNamespaceResponses = {
 };
 
 export type ListFlowExecutionsByNamespaceResponse = ListFlowExecutionsByNamespaceResponses[keyof ListFlowExecutionsByNamespaceResponses];
+
+export type GetExecutionAverageDurationData = {
+    body?: never;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        flowId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/namespaces/{namespace}/flows/{flowId}/average-duration';
+};
+
+export type GetExecutionAverageDurationResponses = {
+    /**
+     * getExecutionAverageDuration 200 response
+     */
+    200: ExecutionControllerExecutionAverageDuration;
+};
+
+export type GetExecutionAverageDurationResponse = GetExecutionAverageDurationResponses[keyof GetExecutionAverageDurationResponses];
 
 export type PauseExecutionsByIdsData = {
     /**

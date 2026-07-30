@@ -4,6 +4,8 @@ import {useOnboardingV2Store} from "../stores/onboardingV2"
 import {Router, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
 import {flattenInputs} from "./inputs"
+import {EXECUTION_TAB_ROUTES} from "../components/executions/executionTabs"
+import {resolveDefaultTab} from "./routeTabs"
 
 export const normalizeInputValues = (
     submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } },
@@ -91,14 +93,14 @@ export const executeTask = (
             executionsStore.execution = response
             onboardingV2Store.recordExecution()
             if (options.redirect) {
+                const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, localStorage.getItem("executeDefaultTab"), "gantt")
                 if (options.newTab) {
                     const resolved = submitor.$router.resolve({
-                        name: "executions/update",
+                        name: `executions/update/${tab}`,
                         params: {
                             namespace: response.namespace,
                             flowId: response.flowId,
                             id: response.id,
-                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant,
                         },
                         query: options.query,
@@ -106,12 +108,11 @@ export const executeTask = (
                     window.open(resolved.href, "_blank")
                 } else {
                     submitor.$router.push({
-                        name: "executions/update",
+                        name: `executions/update/${tab}`,
                         params: {
                             namespace: response.namespace,
                             flowId: response.flowId,
                             id: response.id,
-                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
                             tenant: submitor.$route.params.tenant,
                         },
                         query: options.query,

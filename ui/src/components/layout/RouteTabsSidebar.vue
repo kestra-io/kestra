@@ -39,20 +39,29 @@
     import {storeToRefs} from "pinia"
     import {KsSideBar, KsSideBarItem} from "@kestra-io/design-system"
     import {useRouteTabsStore, activeScopeTab, type RouteTab} from "../../stores/routeTabs"
+    import {useActiveTab} from "../../composables/useActiveTab"
 
     const {t} = useI18n()
     const route = useRoute()
     const router = useRouter()
     const routeTabsStore = useRouteTabsStore()
     const {hasTabs, visibleTabs, routeName, embedActiveTab, displayMode} = storeToRefs(routeTabsStore)
+    const routeActiveTab = useActiveTab()
 
     const hasHeader = computed(() => visibleTabs.value.some((tab) => tab.header))
 
     const activeTabName = computed<string | undefined>(() => {
         if (embedActiveTab.value !== undefined) return embedActiveTab.value
-        const fromRoute = route.params?.tab
-        return typeof fromRoute === "string" ? fromRoute : undefined
+        return routeActiveTab.value
     })
+
+    /**
+     * Mirrors Tabs.vue's `isRouterDriven`: once the active route exposes a
+     * `meta.tab`, tab identity lives in the matched child route name rather than
+     * the legacy `:tab` route param — building a link with `params: {tab}` here
+     * would be silently discarded since the parent route no longer declares it.
+     */
+    const isRouterDriven = computed(() => route?.meta?.tab !== undefined)
 
     const scopeTab = computed(() => activeScopeTab(route, visibleTabs.value, router))
 
@@ -64,8 +73,16 @@
 
     function routeFor(tab: RouteTab): RouteLocationRaw {
         if (tab.route) return tab.route
+        const base = routeName.value || (route.name as string)
+        if (isRouterDriven.value) {
+            return {
+                name: `${base}/${tab.name}`,
+                params: {...route.params},
+                query: {...tab.query} as Record<string, string>,
+            }
+        }
         return {
-            name: routeName.value || route.name,
+            name: base,
             params: {...route.params, tab: tab.name},
             query: {...tab.query} as Record<string, string>,
         }

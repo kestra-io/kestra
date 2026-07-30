@@ -102,6 +102,7 @@
     const PANEL = {size: "70%", min: "30%", max: "80%"}
 
     import {useRoute} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     const route = useRoute()
 
     import Plus from "vue-material-design-icons/Plus.vue"
@@ -119,7 +120,14 @@
         }>;
     }>()
 
-    const SUBTYPE: Types = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION
+    const SUBTYPE: Types = ((): Types => {
+        switch (routeFamily(route.name)) {
+        case "flows/update": return FLOW
+        case "namespaces/update": return NAMESPACE
+        case "assets/update": return ASSET
+        default: return EXECUTION
+        }
+    })()
 
     const graphRef = ref(null)
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId)

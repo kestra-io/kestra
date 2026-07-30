@@ -15,6 +15,7 @@ const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: st
 import {apiUrl} from "override/utils/route"
 
 import * as Utils from "../utils/utils"
+import {routeFamily} from "../utils/routeFamily"
 
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
 import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
@@ -137,11 +138,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     function getDashboardType(route: RouteLocation) {
-        return KEY_MAP[route.name as string]
+        return KEY_MAP[routeFamily(route.name)]
     }
 
     const getDashboardId = async (route: RouteLocation): Promise<string> => {
-        const routeName = route.name?.toString()
+        const routeName = route.name ? routeFamily(route.name) : undefined
         if(!routeName || !DASHBOARD_ROUTES.includes(routeName)){
             throw new Error("invalid route in getDashboard: "+routeName?.toString())
         }
@@ -170,7 +171,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     function getUserDashboardStorageKey(route: RouteLocation){
         const tenant = route.params["tenant"]
-        const routeName = route.name?.toString()
+        const routeName = route.name ? routeFamily(route.name) : undefined
         if (!tenant) {
             throw new Error("tenant is mandatory in getUserDashboardStorageKey")
         }

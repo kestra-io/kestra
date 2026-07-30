@@ -38,7 +38,6 @@ function preserveCronQuotes(yamlContent: string) {
             const isEmptyValue = value === "" || value === "\"\"" || value === "''"
 
             if (isEmptyValue) {
-                // Leave empty cron values untouched and without extra quotes.
                 return `${prefix}${suffix ?? ""}`
             }
 
@@ -161,7 +160,6 @@ function getPathFromId({node, id} : {
     node: Node,
     id: string
 }): (string | number)[] | undefined {
-    // recursively search for the id in the node
     if (isSeq<{ value: Node }>(node)) {
         let index = 0
         for (const item of node.items) {
@@ -217,8 +215,6 @@ export function getPathFromSectionAndId({
     return joinPath([section, ...pathArray])
 }
 
-
-
 export function extractBlock({source, section, key, keyName}: {
     source: string,
     section: string,
@@ -248,10 +244,6 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
     yamlDoc: Node,
     keyName: string,
     key: string,
-    /**
-     * Callback function to modify the found element
-     * @param element The found YAMLMap element
-     */
     callback?: (element: YAMLMap<{ value: string }, string | Node>) => any,
 }) {
     function find(element?: Node): Node | void {
@@ -273,7 +265,6 @@ function extractBlockFromDocument({yamlDoc, keyName, key, callback}: {
                 if (result) {
                     if (callback) {
                         if (isMap(element) && isPair<{ value: string }, Node>(item)) {
-                            // replace value in the map
                             element.set(item.key, result)
                         } else {
                             element.items[itemIndex] = result as any
@@ -338,7 +329,6 @@ export function replaceBlockWithPath({source, path, newContent}: {
 }) {
     const yamlDoc = parseDocumentTyped(source)
     const pathArray = parsePath(path)
-    // if value is empty, delete the property instead of replacing it with an empty value
     if(newContent === ""){
         yamlDoc.deleteIn(pathArray)
         return yamlDoc.toString(TOSTRING_OPTIONS)
@@ -348,7 +338,6 @@ export function replaceBlockWithPath({source, path, newContent}: {
     yamlDoc.setIn(pathArray, newItem)
 
     // When inserting a top level element
-    // try to insert the key at the right place
     if (insertBlock && pathArray.length === 1
         && yamlDoc.contents && isMap(yamlDoc.contents)) {
         yamlDoc.contents.items.sort((a, b) => sortPredicate(a.key.value ?? a.key, b.key.value ?? a.key))
@@ -398,7 +387,6 @@ export function swapBlocks({source, section, key1, key2, keyName}: {
     return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
-
 function getNodeIndexInParent(
     yamlDoc: Document<YAMLMap<{ value: string }, Node>>,
     patentNode: YAMLMap<{ value: string }, Node>,
@@ -415,14 +403,6 @@ function getNodeIndexInParent(
     return patentNode.items.indexOf(indexNode)
 }
 
-// A path is a sequence of segments over the flow document:
-//   .key          an object key (no . [ ] or quote in it)
-//   [0]           a numeric array index
-//   ["some.key"]  an object key that itself contains a path delimiter
-// The first segment may omit the leading dot ("tasks", "tasks[0].then"). The
-// bracket-quoted form exists so arbitrary keys — a Switch case value such as
-// "1.0" or "eu.prod" — round-trip through the path system without their dots
-// being mistaken for separators.
 export function parsePath(path: string): (string | number)[] {
     const segments: (string | number)[] = []
     let i = 0
@@ -462,8 +442,6 @@ export function parsePath(path: string): (string | number)[] {
     return segments
 }
 
-// True when a key can't be written as a bare `.key` segment and must use the
-// bracket-quoted form instead.
 function keyNeedsQuoting(key: string): boolean {
     return key === "" || /[.[\]"'\\]/.test(key)
 }
@@ -472,15 +450,11 @@ function quoteKey(key: string): string {
     return `["${key.replace(/\\/g, "\\\\").replace(/"/g, "\\\"")}"]`
 }
 
-// Append an object key to a path, bracket-quoting it only when it contains a
-// path delimiter. Simple keys stay readable (`base.key`); exotic keys (a Switch
-// case value like "eu.prod") become `base["eu.prod"]`.
 export function appendKeyToPath(basePath: string, key: string): string {
     if (keyNeedsQuoting(key)) return `${basePath}${quoteKey(key)}`
     return basePath ? `${basePath}.${key}` : key
 }
 
-// Reassemble a path string from parsed segments, re-quoting keys that need it.
 export function joinPath(segments: (string | number)[]): string {
     let out = ""
     for (const seg of segments) {
@@ -491,10 +465,6 @@ export function joinPath(segments: (string | number)[]): string {
     return out
 }
 
-// Drop map entries whose value is an empty sequence — e.g. an `errors: []` or
-// `then: []` left behind once its last task was deleted. Operates on the parsed
-// Document so comments anywhere else in the flow survive; a
-// parse()->plain-object->stringify round-trip would discard them.
 export function pruneEmptySequences(source: string): string {
     const doc = parseDocumentTyped(source)
     visit(doc, {
@@ -508,9 +478,6 @@ export function pruneEmptySequences(source: string): string {
     return doc.toString(TOSTRING_OPTIONS)
 }
 
-// Whether a path carries a bracket-quoted key (e.g. cases["eu.prod"]). Such
-// keys can't be located by naive "." splitting and take the tokenizer path;
-// every other path keeps the original, battle-tested fast path untouched.
 function hasQuotedSegment(path: string): boolean {
     return path.includes("[\"") || path.includes("['")
 }
@@ -546,13 +513,10 @@ function getParentNode(yamlDoc: ReturnType<typeof parseDocumentTyped>, parentPat
         }
         return yamlDoc.contents
     } else {
-        // remove everything after the last "."
         const parentPathWithoutKey = parentPath.substring(0, parentPath.lastIndexOf("."))
         const parentNode = yamlDoc.getIn(parsePath(parentPathWithoutKey)) as YAMLMap<{ value: string }, Node>
         if (!parentNode) {
-            // create the missing parent node
             const newParentNode = createParentNode(parentPathWithoutKey)
-            // attach it to the parents parent
             const parentParentNode = getParentNode(yamlDoc, parentPathWithoutKey)
             parentParentNode?.items.push(newParentNode)
             return newParentNode.value
@@ -614,7 +578,6 @@ export function insertBlockWithPath({
     return yamlDoc.toString(TOSTRING_OPTIONS)
 }
 
-
 export function deleteBlock({source, section, key, keyName}: {
     source: string,
     section: string,
@@ -639,7 +602,6 @@ export function deleteBlock({source, section, key, keyName}: {
         },
     })
 
-    // delete empty sections
     visit(yamlDoc, {
         Pair(_, pair) {
             if (isSeq(pair.value) && pair.value.items.length === 0) {
@@ -649,7 +611,6 @@ export function deleteBlock({source, section, key, keyName}: {
     })
     return yamlDoc.toString(TOSTRING_OPTIONS)
 }
-
 
 export function replaceIdAndNamespace(source: string, id: string, namespace: string) {
     const yamlDoc = parseDocumentTyped(source)
@@ -745,7 +706,6 @@ function cleanMetadataDocument(yamlDoc: Document<YAMLMap<Scalar<string>, Node | 
                 if (!item.key.commentBefore) {
                     item.key.spaceBefore = true
                 }
-                // add whitespace between items
                 item.value.items.forEach((seqItem: any, index: number) => {
                     if(index === 0) {
                         return
@@ -839,12 +799,6 @@ export function isParentChildrenRelation({source, sections, key1, key2, keyName}
     )
 }
 
-/**
- * Specify a source yaml doc, the field to extract recursively in every map of the doc and optionally
- * a predicate to define which paths should be taken into account `parentPathPredicate`
- * will take a single argument which is the path of each parent property starting from the root doc (joined with ".")
- * "my.parent.task" will mean that the field was retrieved in my -> parent -> task path.
- */
 export function extractFieldFromMaps<T extends string>(
     source: string,
     fieldName: T,
@@ -879,7 +833,6 @@ export function extractFieldFromMaps<T extends string>(
                     }
                 }
                 if (!matched && keepEmptyFields) {
-                    // add an empty entry if the field cannot be matched (i.e., optional property).
                     maps.push({
                         [fieldName]: undefined,
                         range: map.range,
@@ -939,11 +892,6 @@ function extractAllTypes(source: string, validTypes: string[] = []){
     )
 }
 
-
-/**
- * Get task type at cursor position.
- * Useful to display/update the live docs
- */
 export function getTypeAtPosition(
     source: string,
     position: { lineNumber: number; column: number },
@@ -964,10 +912,6 @@ export function getTypeAtPosition(
     return null
 }
 
-/**
- * Get task version at cursor position.
- * Useful to display/update the live docs
- */
 export function getVersionAtPosition(
     source: string,
     position: { lineNumber: number; column: number },
@@ -1058,7 +1002,6 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
     const indentAndYamlKey: any = extractIndentAndMaybeYamlKey(tillCursor)
     let {yamlKey} = indentAndYamlKey
     const {indent} = indentAndYamlKey
-    // We search in previous keys to find the parent key
     let valueStartIndex
     if (yamlKey === undefined) {
         const parentKeyExtract = getParentKeyByChildIndent(
@@ -1102,8 +1045,6 @@ export function localizeElementAtIndex(source: string, indexInSource: number): Y
     )
     return filter.sort((a: any, b: any) => b.range[0] - a.range[0])?.[0]
 }
-
-// CHARTS for dashboard
 
 export function getAllCharts(source: string) {
     const yamlDoc = parseDocument(source) as any
@@ -1159,17 +1100,9 @@ export function getChartAtPosition(source: string, position: { lineNumber: numbe
     return chart ? chart.toJSON() : null
 }
 
-/**
- * Get line start and end for all tasks
- * @param source - YAML source code
- * @returns lines infos for each taskId
- */
 export function getTasksLines(
     source: string,
 ):Record<string, {start: number, end: number}> {
-    // if a task ends on the last line of the YAML,
-    // its end range will be one line off.
-    // To avoid this specific case, we add a newline at the end of the source.
     const paddedSource = source + "\n"
     const yamlDoc = parseDocument(paddedSource) as any
     const lineCounter = new LineCounter()
@@ -1217,13 +1150,11 @@ function getTasksAndFlowableLines(lineCounter: LineCounter, task: YAMLMap) {
             tasksChilds.items.forEach(x => childTasks.add(x))
         }
         const thenChilds = task.get("then") as YAMLSeq<YAMLMap> | undefined
-        // io.kestra.plugin.core.flow special case
         if (isSeq<YAMLMap>(thenChilds)){
             thenChilds.items.forEach(x => childTasks.add(x))
         }
 
         const elseChilds = task.get("else") as YAMLSeq<YAMLMap> | undefined
-        // io.kestra.plugin.core.flow special case
         if (isSeq<YAMLMap>(elseChilds)){
             elseChilds.items.forEach(x => childTasks.add(x))
         }
@@ -1235,7 +1166,6 @@ function getTasksAndFlowableLines(lineCounter: LineCounter, task: YAMLMap) {
         })
     } else {
         if (task.get("task")) {
-            // io.kestra.plugin.core.flow.Dag special case
             const nestedDagTaskField = task.get("task") as YAMLMap
             if(isMap(nestedDagTaskField)) {
                 tasksLines = {...tasksLines, ...getTasksAndFlowableLines(lineCounter, nestedDagTaskField)}

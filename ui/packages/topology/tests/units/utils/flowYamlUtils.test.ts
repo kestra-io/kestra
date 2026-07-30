@@ -1,7 +1,6 @@
 import {test, expect, describe} from "vitest"
 import * as YamlUtils from "../../../src/utils/flowYamlUtils.ts"
 
-
 describe("extractBlock", () => {
     test("extracting a trigger", () => {
         const yamlString = `
@@ -1080,7 +1079,6 @@ describe("get lines infos", () => {
             # fourth comment
             name: Plugin 1
 
-
             # end comment
         `
 
@@ -1269,10 +1267,8 @@ describe("stringify with preserveCronQuotes", () => {
         }
         const result = YamlUtils.stringify(yaml)
         // When input already has quotes, preserveCronQuotes should skip adding quotes
-        // The regex should skip values that already start with quotes
         expect(result).toContain("cron:")
         expect(result).toContain("0 0 * * *")
-        // Should preserve the existing quotes (js-yaml may escape them)
         expect(result).toMatch(/cron:\s*"\\"0 0 \* \* \*\\""|cron:\s*"0 0 \* \* \*"/)
     })
 
@@ -1287,7 +1283,6 @@ describe("stringify with preserveCronQuotes", () => {
             ],
         }
         const result = YamlUtils.stringify(yaml)
-        // Single quotes are preserved in the output
         expect(result).toContain("cron:")
         expect(result).toContain("'0 0 * * *'")
     })
@@ -1318,10 +1313,8 @@ describe("stringify with preserveCronQuotes", () => {
             ],
         }
         const result = YamlUtils.stringify(yaml)
-        // Multiline strings with > are preserved as multiline (not quoted)
         expect(result).toContain("cron:")
         expect(result).not.toContain("cron: \">")
-        // The multiline format should be preserved
         expect(result).toMatch(/cron:\s*[|>]/)
     })
 
@@ -1331,7 +1324,6 @@ describe("stringify with preserveCronQuotes", () => {
                 {
                     id: "trigger1",
                     type: "io.kestra.plugin.core.trigger.Schedule",
-                    // include an inline comment marker in the value to ensure it is preserved
                     cron: "0 0 * * * # daily",
                 },
             ],
@@ -1371,7 +1363,6 @@ describe("stringify with preserveCronQuotes", () => {
             ],
         }
         const result = YamlUtils.stringify(yaml)
-        // Should handle indented cron lines (two spaces before dash, four before cron)
         expect(result).toMatch(/\n {2}- id: trigger1\n {4}type: .*?\n {4}cron: "0 0 \* \* \*"/)
     })
 
@@ -1386,7 +1377,6 @@ describe("stringify with preserveCronQuotes", () => {
             ],
         }
         const result = YamlUtils.stringify(yaml)
-        // Empty values should not be quoted
         expect(result).not.toContain("cron: \"\"")
         expect(result).toMatch(/cron:\s*$/m)
     })
@@ -1402,7 +1392,6 @@ describe("stringify with preserveCronQuotes", () => {
             ],
         }
         const result = YamlUtils.stringify(yaml)
-        // Whitespace-only values should be quoted
         expect(result).toContain("cron: \"   \"")
     })
 
@@ -1419,11 +1408,8 @@ describe("stringify with preserveCronQuotes", () => {
             ],
         }
         const result = YamlUtils.stringify(yaml)
-        // The message field should not have quotes added (it's not a cron field)
-        // preserveCronQuotes only affects lines matching the cron regex pattern
         expect(result).toContain("message:")
         expect(result).toContain("0 0 * * *")
-        // Verify the cron regex doesn't match message fields
         expect(result).not.toMatch(/message:\s*"0 0 \* \* \*"/)
     })
 
@@ -1640,7 +1626,6 @@ tasks:
         const parsed = YamlUtils.parse(result) as any
         expect(parsed.tasks[0].cases["1.0"]).toHaveLength(1)
         expect(parsed.tasks[0].cases["1.0"][0].id).toBe("v1_log")
-        // the dotted key must not have produced a nested `1: { 0: ... }`
         expect(parsed.tasks[0].cases["1"]).toBeUndefined()
         expect(parsed.tasks[0].cases.stable).toHaveLength(1)
     })

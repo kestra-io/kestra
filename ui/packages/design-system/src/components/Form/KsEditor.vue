@@ -441,17 +441,7 @@
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,
-            // Monaco's own dropIntoEditor feature races our custom onDrop handler (below):
-            // both react to the same native drop event, so dropped text with braces (e.g.
-            // a Pebble {{ }} expression) gets inserted twice, the second time mangled by
-            // Monaco's snippet-escaping. We fully own drop handling instead.
             dropIntoEditor: {enabled: false},
-            // Kestra's YAML editors put their meaningful completions inside YAML string
-            // tokens: plugin `type:` values and Pebble `{{ }}` expressions both tokenize as
-            // strings. Monaco's default quickSuggestions ({strings:false}) never auto-triggers
-            // there, so once the suggest widget is dismissed (backspace, space, moving the
-            // cursor away) it would not reappear while typing. Enabling string suggestions lets
-            // the editor re-show completions as the user types in those regions.
             quickSuggestions: {
                 other: true,
                 comments: false,
@@ -482,7 +472,6 @@
         return /^\s*(?:-\s*)?type\s*:\s*.+\s*$/.test(lineContent)
     }
 
-    // --- Date picker widget for date: values ---
     const nowMoment: Moment = moment().startOf("day")
     const selectedDate = ref<Date>(nowMoment.toDate())
     const datePickerWrapper = ref<HTMLElement>()
@@ -529,7 +518,6 @@
         codeEditor.removeContentWidget(datePickerWidget)
     }
 
-    // --- Suggest widget icon swap ---
     const KESTRA_ICON_WRAPPER_CLASS = "kestra-icon-wrapper"
     function replaceRowIcon(vsCodeIcon: HTMLElement, iconVNode: VNode) {
         vsCodeIcon.style.display = "none"
@@ -637,7 +625,6 @@
         asCodeEditor?.onDidChangeCursorPosition(() => removeDatePicker(asCodeEditor))
     })
 
-    // --- Suggest widget auto-resize (large suggestions) ---
     function observeAndResizeSuggestWidget() {
         if (suggestWidgetResizeObserver.value !== undefined) return
 
@@ -675,16 +662,12 @@
             }
         })
 
-        // Monaco renders overflow widgets (including suggest-widget) in the shared
-        // #ks-monaco-overflow-widgets node appended to document.body (fixedOverflowWidgets: true).
-        // Querying editorRef for .overflowingContentWidgets returns null.
         const overflowNode = document.getElementById(OVERFLOW_WIDGETS_ID)
         const target = overflowNode?.querySelector(".overflowingContentWidgets")
             ?? overflowNode
         if (target) suggestWidgetResizeObserver.value.observe(target, {childList: true})
     }
 
-    // --- initial highlight (deep-link via prop) ---
     function highlightInitial() {
         const initialHighlight = mergedOptions.value.initialHighlight
         if (!initialHighlight) return
@@ -714,7 +697,6 @@
         ed.setSelection(new monaco.Range(line, 0, line, end))
     })
 
-    // --- model lifecycle ---
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
         let model
         if (props.inline || pathOrName === undefined) {
@@ -748,7 +730,6 @@
         initMonaco()
     }
 
-    // --- Pebble highlight ---
     const decorationsLists: {
         pebble?: monaco.editor.IModelDeltaDecoration[]
         lines?: monaco.editor.IModelDeltaDecoration[]
@@ -806,7 +787,6 @@
         setDecorations()
     }
 
-    // --- Content widget API (date picker / playground button host) ---
     const widgetNode = (() => {
         const node = document.createElement("div")
         node.className = "editor-content-widget"
@@ -862,7 +842,6 @@
         })
     }
 
-    // --- Scroll memory (simple localStorage backed) ---
     function loadScrollData<T>(key: string, fallback?: T): T | undefined {
         const scrollKey = mergedOptions.value.scrollKey
         if (!scrollKey) return fallback
@@ -879,11 +858,9 @@
         try {
             localStorage.setItem(`editorScroll:${scrollKey}:${key}`, JSON.stringify(data))
         } catch {
-            // ignore
         }
     }
 
-    // --- Editor lifecycle ---
     async function initMonaco() {
         const editorOpts: EditorOptions = {
             value: props.modelValue,
@@ -1004,7 +981,6 @@
             }
 
             if (props.placeholder !== undefined && props.placeholder !== "") {
-                // oxlint-disable-next-line no-new
                 new PlaceholderContentWidget(String(props.placeholder), localEditor.value)
             }
 
@@ -1030,10 +1006,6 @@
                     localEditor.value.trigger("triggerSuggestionsInPebbleBlock", "editor.action.triggerSuggest", {})
                 }
             }, 300)
-            // Track the Pebble block on every cursor change rather than inside the debounced
-            // callback: a fast move out of and back into a block (or straight from one `{{ }}`
-            // block to another) would otherwise be swallowed by the debounce, leaving the latch
-            // stale so the re-entry is missed and suggestions never reopen.
             localEditor.value.onDidChangeCursorPosition(() => {
                 if (!localEditor.value) return
                 pebbleEntryTracker.track(cursorPebbleBlockKey(localEditor.value))
@@ -1048,7 +1020,6 @@
             }
         }
 
-        // Editor change → emit update:modelValue
         const modEditor = getModifiedEditor()
         modEditor?.onDidChangeModelContent(() => {
             const value = modEditor.getValue()
@@ -1057,13 +1028,9 @@
 
         observeAndResizeSuggestWidget()
 
-        // Remeasure once now for the already-cached font, and again once web fonts finish
-        // loading — otherwise Monaco caches fallback-font glyph widths and the caret drifts
-        // as you type. See https://github.com/microsoft/monaco-editor/issues/392
         setTimeout(() => monaco.editor.remeasureFonts(), 1)
         document.fonts.ready.then(() => monaco.editor.remeasureFonts())
 
-        // Editor-did-mount: setup keybindings + decorations
         editorDidMount(editorResolved.value)
         emit("editorMounted", editorResolved.value)
 
@@ -1230,7 +1197,6 @@
             })
         }
 
-        // e2e contract: expose imperative setValue for Playwright
         const monacoEl = editorRef.value
         if (monacoEl) {
             ;(monacoEl as any).__setValueInTests = (value: string) => {
@@ -1258,9 +1224,6 @@
         editorResolved.value?.focus()
     }
 
-    // Monaco has no native support for dropping plain text (e.g. a dragged
-    // {{ inputs.x }} chip) into the editor at the cursor, so map the drop's
-    // client coordinates to a model position ourselves and insert there.
     function onDrop(event: DragEvent) {
         const text = event.dataTransfer?.getData("text/plain")
         if (!text || !isCodeEditor(localEditor.value)) return
@@ -1297,7 +1260,6 @@
         }
     }
 
-    // --- Watchers from old Editor.vue + MonacoEditor.vue ---
     watch(() => [props.modelValue, props.lang], ([value, newLang], [, oldLang]) => {
         preventCursorChange.value = isCodeEditor(localEditor.value) && localEditor.value?.getValue?.() !== value
         if (newLang === oldLang) return
@@ -1378,7 +1340,6 @@
 
     watch(() => props.original, () => reload())
 
-    // --- Mount/unmount ---
     onMounted(async () => {
         await document.fonts.ready
         await initMonaco()
@@ -1391,7 +1352,6 @@
             )
         }
 
-        // e2e contracts (Playwright hooks)
         ;(window as any).pasteToEditor = (textToPaste: string) => {
             localEditor.value?.executeEdits("", [{
                 range: localEditor.value?.getSelection() ?? new monaco.Range(0, 0, 0, 0),

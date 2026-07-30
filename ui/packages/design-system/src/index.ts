@@ -442,7 +442,6 @@ const KestraDesignSystem = {
         app.directive("ks-loading", vKsLoading)
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
-        // oxlint-disable-next-line no-underscore-dangle
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
         if (i18n) void registerDesignSystemI18n(i18n)
     },

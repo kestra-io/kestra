@@ -81,9 +81,6 @@
 
     const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading"])
 
-    // `loading` is intentionally NOT forwarded to ElSelect: ElSelect v-shows its option
-    // list on `!loading`, so forwarding would hide still-valid options while they
-    // recompute. We only surface a spinning suffix icon, leaving the dropdown usable.
     const LoadingSpinner = markRaw({
         render: () => h(KsIcon, {class: "is-loading"}, () => h(Loading)),
     }) as Component
@@ -143,7 +140,6 @@
             }
         }
 
-
         &:not(.kel-select--small),
         &:not(.kel-select--large) {
             font-size: var(--ks-font-size-xs);
@@ -170,9 +166,6 @@
             }
         }
 
-        // Element Plus pulls the tag row left with a negative margin (is-near),
-        // which glues the first tag to the input border. Once there are tags,
-        // drop it so the first tag keeps the wrapper's normal edge padding.
         .kel-select__selection.is-near:has(.kel-select__selected-item) {
             margin-left: 0;
         }

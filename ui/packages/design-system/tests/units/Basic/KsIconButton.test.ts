@@ -105,7 +105,6 @@ describe("KsIconButton", () => {
             slots: {default: StarIcon},
             global: globalConfig,
         })
-        // The global fake RouterLink (see tests/unit/setup.ts) renders as an anchor.
         const button = wrapper.find(".ks-icon-button")
         expect(button.element.tagName.toLowerCase()).toBe("a")
     })

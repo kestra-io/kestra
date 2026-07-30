@@ -25,11 +25,10 @@ describe("openFlowInNewTab", () => {
         openFlowInNewTab({namespace: "company.team", flowId: "child_flow", tab: "edit"}, router as any)
 
         expect(router.resolve).toHaveBeenCalledWith({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: "company.team",
                 id: "child_flow",
-                tab: "edit",
                 tenant: "main",
             },
         })
@@ -45,11 +44,10 @@ describe("openFlowInNewTab", () => {
         )
 
         expect(router.resolve).toHaveBeenCalledWith({
-            name: "executions/update",
+            name: "executions/update/topology",
             params: {
                 namespace: "company.team",
                 flowId: "child_flow",
-                tab: "topology",
                 id: "exec-123",
                 tenant: "main",
             },
@@ -63,11 +61,10 @@ describe("openFlowInNewTab", () => {
         openFlowInNewTab({namespace: "company.team", flowId: "child_flow", tab: "edit"}, router as any)
 
         expect(router.resolve).toHaveBeenCalledWith({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: "company.team",
                 id: "child_flow",
-                tab: "edit",
                 tenant: undefined,
             },
         })

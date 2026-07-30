@@ -12,6 +12,9 @@ import DemoTests from "../components/demo/Tests.vue"
 import DemoAssets from "../components/demo/Assets.vue"
 import DemoQuotas from "../components/demo/Quotas.vue"
 import DemoPolicies from "../components/demo/Policies.vue"
+import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
+import {FLOW_ROUTE} from "../components/flows/flowTabs"
+import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
 
 /** A route record, plus `ossOnly`: editions layering on this table (EE) drop the flagged records. */
 export type KestraRouteRecord = RouteRecordRaw & {ossOnly?: boolean}
@@ -43,7 +46,7 @@ const routes: KestraRouteRecord[] = [
     },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
     {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
-    {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: () => import("../components/flows/FlowRoot.vue")},
+    FLOW_ROUTE,
 
     //Executions
     {
@@ -51,7 +54,7 @@ const routes: KestraRouteRecord[] = [
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
     },
-    {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
+    EXECUTION_ROUTE,
 
     //KV
     {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},
@@ -77,7 +80,18 @@ const routes: KestraRouteRecord[] = [
 
     //Namespaces
     {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},
-    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
+    {
+        name: NAMESPACE_PARENT_ROUTE,
+        path: "/:tenant?/namespaces/edit/:id",
+        component: () => import("../components/namespaces/Namespace.vue"),
+        // Resolve legacy deep-links `{name: "namespaces/update", params: {tab}}` and bare
+        // `/:id` URLs to the matching child route, preserving params and query.
+        redirect: (to) => {
+            const tab = (to.params.tab as string) || "overview"
+            return {name: `${NAMESPACE_PARENT_ROUTE}/${tab}`, params: to.params, query: to.query}
+        },
+        children: createNamespaceTabRoutes(),
+    },
 
     //Docs
     {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: () => import("../components/docs/Docs.vue"), meta: {layout: OnlyLeftMenuLayout}},

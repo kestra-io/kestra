@@ -294,8 +294,8 @@
 
         visible.value = false
         router.push({
-            name: "flows/update",
-            params: {namespace: formModel.value.namespace, id: formModel.value.flowId, tab: "edit"},
+            name: "flows/update/edit",
+            params: {namespace: formModel.value.namespace, id: formModel.value.flowId},
             query: {createTrigger: "true"},
         })
     }

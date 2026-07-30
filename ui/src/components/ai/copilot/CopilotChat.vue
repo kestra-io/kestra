@@ -3,7 +3,7 @@
         <!-- Thread controls: start a new chat; the Recents list (switch / rename / delete) is EE-only,
              rendered by the CopilotThreadControls override (a no-op in OSS). -->
         <div class="copilot-topbar">
-            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" @click="reset">
+            <KsButton size="small" class="copilot-topbar-pill" data-test="copilot-new-chat" :disabled="isFreshChat" @click="reset">
                 {{ $t("ai.copilot.newChat") }}
                 <Plus :size="16" />
             </KsButton>
@@ -126,7 +126,7 @@
     import Plus from "vue-material-design-icons/Plus.vue"
     import RobotOffOutline from "vue-material-design-icons/RobotOffOutline.vue"
     import * as AiApi from "@kestra-io/kestra-sdk/ai"
-    import type {AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
+    import type {AgentMode, AiControllerAiProviderResponse} from "@kestra-io/kestra-sdk"
     import logo from "../../../assets/copilot-illustration.png"
     import CopilotMessage from "./CopilotMessage.vue"
     import CopilotComposer from "./CopilotComposer.vue"
@@ -137,12 +137,12 @@
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
     import {scopeFromRoute, scopeToContext} from "./routeScope"
-    import type {Mode, ScopeBinding} from "./types"
+    import type {ScopeBinding} from "./types"
     import {useMiscStore} from "override/stores/misc"
 
     const props = withDefaults(defineProps<{
         /** Initial mode; defaults to EDIT. */
-        initialMode?: Mode
+        initialMode?: AgentMode
         /** Scope the user is focused on; sent as `additionalContext` on each turn. */
         inFocus?: ScopeBinding | null
         /** Surface variant: the right-side "dock" (default) or the full-width "page" home. */
@@ -153,7 +153,7 @@
     const route = useRoute()
     const miscStore = useMiscStore()
 
-    const mode = ref<Mode>(props.initialMode ?? "EDIT")
+    const mode = ref<AgentMode>(props.initialMode ?? "EDIT")
 
     // Context-awareness: when the copilot opens on a flow / execution / namespace page, send that
     // page as `inFocus` so the agent knows what the user is looking at. An explicit `inFocus` prop
@@ -214,6 +214,10 @@
     const isEmpty = computed(
         () => messages.value.length === 0 && !pendingConfirmation.value && !error.value && !notice.value,
     )
+
+    // "New chat" resets the conversation — so it's a no-op (and disabled) when we're already on a
+    // fresh, empty chat with no thread to clear.
+    const isFreshChat = computed(() => isEmpty.value && !thread.value)
 
     // The pending proposal is always the last PROPOSED_ACTION message; the interactive card below the
     // transcript renders it, so CopilotMessage skips it inline (past proposals still render read-only).
@@ -333,8 +337,8 @@
     .copilot-topbar-pill {
         display: inline-flex;
         align-items: center;
-        gap: var(--ks-spacing-1);
-        padding: var(--ks-spacing-1) var(--ks-spacing-2);
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
         /* Solid raised-surface grey (Figma pill ≈ #1d1d21) — reads darker and more
            defined than the translucent bg-tag, consistently across dark themes. */
         background: var(--ks-bg-elevated);
@@ -342,6 +346,23 @@
         color: var(--ks-text-primary);
         border-radius: var(--ks-radius-sm);
         font-weight: 400;
+        transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    /* Hover feedback so the pills read as interactive (the disabled New-chat pill excepted). The
+       bg interaction tokens are all near-identical dark greys, so a fill change alone is barely
+       visible — pair it with a lighter inset ring (border-strong) so the hover clearly reads. */
+    .copilot-topbar-pill:not(.is-disabled):hover {
+        background: var(--ks-bg-hover-elevated);
+        box-shadow: inset 0 0 0 1px var(--ks-border-strong);
+    }
+
+    /* Disabled New-chat — already on a fresh, empty chat with nothing to reset. Dim the whole
+       pill (opacity) so it clearly reads as non-interactive, not just muted text. */
+    .copilot-topbar-pill.is-disabled {
+        color: var(--ks-text-inactive);
+        cursor: not-allowed;
+        opacity: 0.5;
     }
 
     .copilot-empty {
@@ -401,8 +422,9 @@
     }
 
     .copilot-artwork-img {
-        width: var(--ks-spacing-16);
-        height: var(--ks-spacing-16);
+        /* 128px per the design spec; no spacing token maps to 8rem, so a raw rem is the fallback. */
+        width: 8rem;
+        height: 8rem;
     }
 
     .copilot-empty-title {

@@ -1,7 +1,6 @@
 import type {Locator} from "@playwright/test"
 import {expect} from "@playwright/test"
 import {BasePage} from "./base.page"
-import {shared} from "../fixtures/shared"
 
 interface McpServerFormData {
     id?: string;
@@ -14,16 +13,6 @@ interface McpServerFormData {
 export class McpPage extends BasePage {
     async goto(): Promise<void> {
         await this.page.goto("/ui/main/admin/mcp-servers")
-
-        // If redirected to the login page, authenticate then navigate back
-        const emailInput = this.page.getByRole("textbox", {name: "Email"})
-        if (await emailInput.isVisible({timeout: 3000}).catch(() => false)) {
-            await emailInput.fill(shared.username)
-            await this.page.getByRole("textbox", {name: "Password"}).fill(shared.password)
-            await this.page.getByRole("button", {name: "Login"}).click()
-            await expect(this.page.getByRole("link", {name: "Flows"})).toBeVisible()
-            await this.page.goto("/ui/main/admin/mcp-servers")
-        }
 
         await expect(this.page.getByRole("heading", {name: "MCP Servers"})).toBeVisible()
     }

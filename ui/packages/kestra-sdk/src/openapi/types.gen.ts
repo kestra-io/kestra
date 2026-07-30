@@ -121,6 +121,37 @@ export type AbstractTriggerForExecution = {
     version?: string;
 };
 
+export type AgentMessageRole = 'USER' | 'ASSISTANT' | 'TOOL' | 'SYSTEM';
+
+export type AgentMessageType = 'TEXT' | 'TOOL_CALL' | 'TOOL_RESULT' | 'PROPOSED_ACTION' | 'ARTEFACT_DRAFT' | 'CANCELLED';
+
+export type AgentMode = 'ASK' | 'PLAN' | 'EDIT';
+
+export type AgentThinking = {
+    text?: string | null;
+    signature?: string | null;
+    redacted?: Array<string> | null;
+};
+
+export type AgentThreadStatus = 'IDLE' | 'RUNNING' | 'AWAITING_CONFIRMATION';
+
+export type AgentToolCall = {
+    id?: string | null;
+    kind?: AgentToolCallKind;
+    tool?: string;
+    family?: AgentToolFamily | null;
+    arguments?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+    thinking?: AgentThinking | null;
+};
+
+export type AgentToolCallKind = 'PLATFORM' | 'AUTHORING';
+
+export type AgentToolFamily = 'READ' | 'MUTATE' | 'ACT';
+
 export type AiControllerAiProviderResponse = {
     id?: string;
     displayName?: string;
@@ -154,6 +185,39 @@ export type ApiAutocomplete = {
     ids?: Array<string> | null;
     existingOnly?: boolean;
 };
+
+/**
+ * A single chat turn request.
+ *
+ *
+ * `additionalContext` is arbitrary, caller-supplied context (e.g. what the user is currently
+ * looking at) that is rendered into the conversation for this turn only: it is appended at the end of
+ * the model input and is *not* persisted in the thread's message history.
+ */
+export type ApiChatTurnRequest = {
+    prompt?: string;
+    mode?: AgentMode | null;
+    additionalContext?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    } | null;
+    providerId?: string | null;
+};
+
+export type ApiConfirmActionRequest = {
+    confirmationId?: string;
+    decision?: ApiDecision;
+    reason?: string | null;
+    providerId?: string | null;
+};
+
+export type ApiCreateThreadRequest = {
+    mode?: AgentMode | null;
+    title?: string | null;
+};
+
+export type ApiDecision = 'APPROVE' | 'REJECT';
 
 export type ApiExecution = {
     tenantId: string;
@@ -247,6 +311,21 @@ export type ApiMcpServer = {
     readonly updated?: string;
 };
 
+export type ApiMessageView = {
+    uid?: string;
+    role?: AgentMessageRole;
+    type?: AgentMessageType;
+    content?: string | null;
+    toolCall?: AgentToolCall | null;
+    toolResult?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    } | null;
+    draft?: ArtefactDraft | null;
+    createdAt?: string;
+};
+
 export type ApiSecretListResponseApiSecretMeta = {
     readOnly: boolean;
     results: Array<ApiSecretMeta>;
@@ -268,6 +347,25 @@ export type ApiTaskRun = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+};
+
+export type ApiThreadDetail = {
+    uid?: string;
+    title?: string | null;
+    mode?: AgentMode;
+    status?: AgentThreadStatus;
+    pendingConfirmationId?: string | null;
+    messages?: Array<ApiMessageView>;
+};
+
+export type ApiThreadSummary = {
+    uid?: string;
+    title?: string | null;
+    mode?: AgentMode;
+    status?: AgentThreadStatus;
+    createdAt?: string;
+    updatedAt?: string;
+    lastTurnAt?: string | null;
 };
 
 /**
@@ -302,6 +400,16 @@ export type ApiTriggerState = {
     executionId?: string;
     kind?: TriggerType;
 };
+
+export type ArtefactDraft = {
+    draftId?: string;
+    kind?: ArtefactKind;
+    yaml?: string;
+    valid?: boolean;
+    constraints?: string | null;
+};
+
+export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
 
 export type Asset = {
     namespace?: string;
@@ -590,6 +698,16 @@ export type EventExecution = {
 
 export type EventFollowLogEvent = {
     data?: FollowLogEvent;
+    id?: string;
+    name?: string;
+    comment?: string;
+    retry?: string;
+};
+
+export type EventObject = {
+    data?: {
+        [key: string]: unknown;
+    };
     id?: string;
     name?: string;
     comment?: string;
@@ -945,7 +1063,7 @@ export type FlowNode = {
     id?: string;
 };
 
-export type FlowRelation = 'FLOW_TASK' | 'FLOW_TRIGGER';
+export type FlowRelation = 'FLOW_TASK' | 'FLOW_TRIGGER' | 'SUBFLOW_FUNCTION';
 
 export type FlowServiceTaskDeprecation = {
     taskId?: string;
@@ -2780,6 +2898,81 @@ export type SetTenantDefaultDashboardResponses = {
 
 export type SetTenantDefaultDashboardResponse = SetTenantDefaultDashboardResponses[keyof SetTenantDefaultDashboardResponses];
 
+export type CreateData = {
+    body: ApiCreateThreadRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/ai/threads';
+};
+
+export type CreateResponses = {
+    /**
+     * create 200 response
+     */
+    200: ApiThreadSummary;
+};
+
+export type CreateResponse = CreateResponses[keyof CreateResponses];
+
+export type GetData = {
+    body?: never;
+    path: {
+        threadId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/ai/threads/{threadId}';
+};
+
+export type GetResponses = {
+    /**
+     * get 200 response
+     */
+    200: ApiThreadDetail;
+};
+
+export type GetResponse = GetResponses[keyof GetResponses];
+
+export type ChatData = {
+    body: ApiChatTurnRequest;
+    path: {
+        threadId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/ai/threads/{threadId}/chat';
+};
+
+export type ChatResponses = {
+    /**
+     * chat 200 response
+     */
+    200: EventObject;
+};
+
+export type ChatResponse = ChatResponses[keyof ChatResponses];
+
+export type ConfirmData = {
+    body: ApiConfirmActionRequest;
+    path: {
+        threadId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/ai/threads/{threadId}/confirm';
+};
+
+export type ConfirmResponses = {
+    /**
+     * confirm 200 response
+     */
+    200: EventObject;
+};
+
+export type ConfirmResponse = ConfirmResponses[keyof ConfirmResponses];
+
 export type CreateBasicAuthData = {
     body: BasicAuthCredentials;
     path: {
@@ -4020,7 +4213,12 @@ export type RestartExecutionsByIdsData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * If latest revision should be used
+         */
+        latestRevision?: boolean | null;
+    };
     url: '/api/v1/{tenant}/executions/restart/by-ids';
 };
 
@@ -4052,6 +4250,10 @@ export type RestartExecutionsByQueryData = {
          * Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`
          */
         filters?: Array<QueryFilter> | null;
+        /**
+         * If latest revision should be used
+         */
+        latestRevision?: boolean | null;
     };
     url: '/api/v1/{tenant}/executions/restart/by-query';
 };

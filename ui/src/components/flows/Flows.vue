@@ -14,6 +14,7 @@
                         :icon="Plus"
                         :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}"
                         :label="$t('create')"
+                        data-test="flows-create"
                     />
                 </template>
             </NavBarActions>

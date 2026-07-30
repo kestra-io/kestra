@@ -75,7 +75,7 @@
     const activeTabValue = computed(() => {
         const fromEmbed = routeTabsStore.embedActiveTab
         if (fromEmbed !== undefined) return fromEmbed
-        const fromRoute = route?.params?.tab
+        const fromRoute = route?.meta?.tab ?? route?.params?.tab
         const explicit = typeof fromRoute === "string" ? fromRoute : undefined
         return explicit ?? selectTabs.value[0]?.name ?? "default"
     })
@@ -83,8 +83,20 @@
     function onTabChange(value: string) {
         const tab = routeTabsStore.tabs.find((t) => (t.name ?? "default") === value)
         if (!tab) return
+        const base = routeTabsStore.routeName || (route?.name as string)
+        // Router-driven pages (tab identity lives in a matched child route) link
+        // straight to the matching child route by name; a `tab` param would be
+        // silently discarded before the parent route's redirect runs.
+        if (route?.meta?.tab !== undefined) {
+            router.push({
+                name: `${base}/${tab.name}`,
+                params: {...route?.params},
+                query: {...tab.query} as Record<string, string>,
+            })
+            return
+        }
         router.push({
-            name: routeTabsStore.routeName || (route?.name as string),
+            name: base,
             params: {...route?.params, tab: tab.name},
             query: {...tab.query} as Record<string, string>,
         })

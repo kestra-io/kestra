@@ -4,7 +4,6 @@ import {BasePage, ExecutionState, Pagination} from "./base.page"
 
 export class ExecutionsPage extends BasePage {
     async goto() {
-        await this.login()
         await this.page.goto("/ui/executions")
 
         await expect(this.page.getByRole("heading", {name: "Executions"})).toBeVisible()
@@ -33,15 +32,20 @@ export class ExecutionsPage extends BasePage {
         return expect(this.page.getByRole("row")).toHaveCount(expectedCount + 1)
     }
 
-    async expectTotalExecutionsCountToBe(expectedCount: number) {
-        return expect(this.page.locator(".kel-pagination__total").first()).toHaveText(`Total ${expectedCount}`)
+    /**
+     * Same assertion, but for counts that only settle once the server finishes applying an
+     * asynchronous bulk action. The list is fetched on navigation and never polls, so the
+     * page has to be reloaded until the backend catches up.
+     */
+    async expectCountOfExecutionsToBeAfterRefresh(expectedCount: number) {
+        await expect(async () => {
+            await this.page.reload()
+            await expect(this.page.getByRole("row")).toHaveCount(expectedCount + 1, {timeout: 2000})
+        }).toPass({timeout: 60000})
     }
 
-    async getCountOfDisplayedExecutions() {
-        await this.page.waitForTimeout(20) // wait for data load to start
-        await this.page.waitForLoadState("networkidle") // wait for data load to finish
-        const rows = this.page.getByRole("row")
-        return await rows.count() - 1
+    async expectTotalExecutionsCountToBe(expectedCount: number) {
+        return expect(this.page.locator(".kel-pagination__total").first()).toHaveText(`Total ${expectedCount}`)
     }
 
     async getTotalExecutionsCount() {
@@ -63,9 +67,13 @@ export class ExecutionsPage extends BasePage {
         const checkbox = this.page.getByRole("row").nth(rowNumber).locator("label.kel-checkbox")
 
         await checkbox.waitFor({state: "visible"})
-        await checkbox.click()
 
-        await expect(checkbox).toContainClass("is-checked")
+        // A background data load can re-render the table and drop the selection, so retry
+        // until it sticks rather than sleeping first and hoping the reload already happened.
+        await expect(async () => {
+            await checkbox.click()
+            await expect(checkbox).toContainClass("is-checked", {timeout: 1000})
+        }).toPass({timeout: 15000})
     }
 
     async clickOnSelectAll() {
@@ -99,10 +107,18 @@ export class ExecutionsPage extends BasePage {
     async setLabelOnSelectedExecutions() {
         await this.page.getByRole("textbox", {name: "Key"}).fill("foo")
         await this.page.getByRole("textbox", {name: "Value"}).fill("baz")
+        const labelsAccepted = this.page.waitForResponse(
+            (response) => response.url().includes("/executions/labels/by-query") && response.request().method() === "POST",
+        )
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
         // Confirm
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
-        await this.page.reload()
+
+        await labelsAccepted
+        await expect(async () => {
+            await this.page.reload()
+            await expect(this.page.getByRole("row")).toHaveCount(1)
+        }).toPass({timeout: 30000})
         await this.page.waitForLoadState("networkidle")
     }
 
@@ -115,11 +131,11 @@ export class ExecutionsPage extends BasePage {
         const visibleDropdown = dropdowns.filter({has: this.page.locator(":visible")}).last()
 
         // Wait for the visible dropdown to actually appear
-        await visibleDropdown.waitFor({state: "visible", timeout: 500})
+        await visibleDropdown.waitFor({state: "visible"})
 
         // Find and click the matching option
         const option = visibleDropdown.locator(".kel-select-dropdown__item", {hasText: `${size} per page`})
-        await option.waitFor({state: "visible", timeout: 500})
+        await option.waitFor({state: "visible"})
         await option.click()
     }
 }

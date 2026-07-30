@@ -3,11 +3,16 @@ import {mount} from "@vue/test-utils"
 import type {AiSseFrame} from "../../../../../src/components/ai/copilot/types"
 import {mountGlobal} from "./_helpers"
 
-// Mock the axios client (thread create) and the SSE reader so we can drive frames
+// Mock the generated SDK AI endpoints (thread create/get) and the SSE reader so we can drive frames
 // deterministically without a backend — same harness as useAiChat.spec.
-const post = vi.fn()
-const get = vi.fn()
-vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({post, get})}))
+const create = vi.fn()
+const getThread = vi.fn()
+vi.mock("@kestra-io/kestra-sdk/ai", () => ({
+    create: (...a: unknown[]) => create(...a),
+    get: (...a: unknown[]) => getThread(...a),
+}))
+// streamSse (overridden below) imports useClient from the SDK root; stub it so the module resolves.
+vi.mock("@kestra-io/kestra-sdk", () => ({useClient: () => ({})}))
 
 let nextFrames: AiSseFrame[] = []
 vi.mock("../../../../../src/components/ai/copilot/streamSse", async (importOriginal) => {
@@ -65,10 +70,10 @@ const mountMessage = (message: any) => mount(CopilotMessage, {props: {message}, 
 
 describe("AI Copilot v2 — full tool catalog", () => {
     beforeEach(() => {
-        post.mockReset()
-        get.mockReset()
+        create.mockReset()
+        getThread.mockReset()
         nextFrames = []
-        post.mockResolvedValue({data: {uid: "t1", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""}})
+        create.mockResolvedValue({uid: "t1", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""})
     })
 
     it("reduces a stream that exercises every tool into the expected transcript", async () => {

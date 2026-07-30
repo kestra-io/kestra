@@ -2,14 +2,23 @@
     <!-- Shows the page the copilot is focused on (sent as `additionalContext`). Dismissible to drop it. -->
     <div class="copilot-context" data-test="copilot-context-chip">
         <KsTag closable size="small" :icon="icon" @close="emit('clear')">
-            {{ label }}
+            <!-- Render the id/namespace/flowId via <KsId> so it stands out as a code-styled,
+                 link-coloured token — the same treatment execution/flow ids get in tables. -->
+            <i18n-t :keypath="context.keypath" scope="global" tag="span">
+                <template #[context.slot]>
+                    <!-- For a flow, show its namespace alongside the id so the full context is visible. -->
+                    <template v-if="context.namespace">
+                        <KsId :value="context.namespace" :shrink="false" /><span class="copilot-context-sep">/</span><KsId :value="context.value" :shrink="false" />
+                    </template>
+                    <KsId v-else :value="context.value" :shrink="false" />
+                </template>
+            </i18n-t>
         </KsTag>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useI18n} from "vue-i18n"
     import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
     import PlayCircleOutline from "vue-material-design-icons/PlayCircleOutline.vue"
     import FolderOutline from "vue-material-design-icons/FolderOutline.vue"
@@ -17,8 +26,6 @@
 
     const props = defineProps<{scope: ScopeBinding}>()
     const emit = defineEmits<{clear: []}>()
-
-    const {t} = useI18n()
 
     const icon = computed(() => {
         switch (props.scope.kind) {
@@ -32,14 +39,17 @@
     })
 
     // A short, human label for the focused resource. Falls back gracefully if a field is missing.
-    const label = computed(() => {
+    // Each context i18n string ("Execution {id}" / "Namespace {namespace}" / "Flow {flow}") has one
+    // interpolation slot; the slot name differs per kind, so drive the <i18n-t> slot dynamically.
+    const context = computed(() => {
         switch (props.scope.kind) {
         case "EXECUTION":
-            return t("ai.copilot.context.execution", {id: props.scope.executionId ?? ""})
+            return {keypath: "ai.copilot.context.execution", slot: "id", value: props.scope.executionId ?? "", namespace: undefined as string | undefined}
         case "NAMESPACE":
-            return t("ai.copilot.context.namespace", {namespace: props.scope.namespace ?? ""})
+            return {keypath: "ai.copilot.context.namespace", slot: "namespace", value: props.scope.namespace ?? "", namespace: undefined as string | undefined}
         default:
-            return t("ai.copilot.context.flow", {flow: props.scope.flowId ?? ""})
+            // FLOW — show the namespace next to the id (a flow is only unique within its namespace).
+            return {keypath: "ai.copilot.context.flow", slot: "flow", value: props.scope.flowId ?? "", namespace: props.scope.namespace}
         }
     })
 </script>
@@ -48,5 +58,10 @@
     .copilot-context {
         display: flex;
         margin-bottom: var(--ks-spacing-2);
+    }
+
+    /* Separator between the namespace and flow id tokens. */
+    .copilot-context-sep {
+        color: var(--ks-text-secondary);
     }
 </style>

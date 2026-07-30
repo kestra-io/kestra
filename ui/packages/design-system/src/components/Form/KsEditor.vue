@@ -122,7 +122,7 @@
 
     import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useStorage, useThrottleFn} from "@vueuse/core"
+    import {useStorage} from "@vueuse/core"
     import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../../utils/fontScale"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
@@ -146,6 +146,7 @@
     import {useEditorScrollMemory} from "../../composables/useEditorScrollMemory"
     import {useEditorDatePicker} from "../../composables/useEditorDatePicker"
     import {useSuggestWidgetIcons} from "../../composables/useSuggestWidgetIcons"
+    import {registerEditorActions} from "../../composables/useEditorActions"
 
     type ICodeEditor = monacoEditorNs.ICodeEditor
 
@@ -289,8 +290,6 @@
     })
 
     const scrollMemory = useEditorScrollMemory(computed(() => mergedOptions.value.scrollKey))
-    const loadScrollData = scrollMemory.load
-    const saveScrollData = scrollMemory.save
 
     const isDiff = computed(() => props.original !== undefined)
 
@@ -650,30 +649,13 @@
         const ed = monacoMounted
         if (!ed) return
 
-        const KeyCode = monaco.KeyCode
-        const KeyMod = monaco.KeyMod
-
         decorationsApi.attach(ed)
 
         if (!isCodeEditor(ed)) return
 
         const codeEditor = ed
 
-        if (mergedOptions.value.scrollKey) {
-            const savedState = loadScrollData<monaco.editor.ICodeEditorViewState>("viewState")
-            if (savedState) {
-                codeEditor.restoreViewState(savedState)
-                codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1)
-            }
-            const top = loadScrollData<number>("scrollTop", 0)
-            if (typeof top === "number") codeEditor.setScrollTop(top)
-
-            const throttledSave = useThrottleFn(() => {
-                saveScrollData(codeEditor.saveViewState(), "viewState")
-                saveScrollData(codeEditor.getScrollTop(), "scrollTop")
-            }, 100)
-            codeEditor.onDidScrollChange?.(throttledSave)
-        }
+        scrollMemory.restoreAndTrack(codeEditor)
 
         if (!isDiff.value) {
             ed.onDidBlurEditorWidget?.(() => {
@@ -686,89 +668,21 @@
             }
         }
 
-        if (!props.readOnly) {
-            ed.addAction({
-                id: "kestra-save",
-                label: t("save"),
-                keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
-                contextMenuGroupId: "navigation",
-                contextMenuOrder: 1.5,
-                run: (e) => emit("save", e.getValue()),
-            })
-        } else if (props.lang === "json") {
-            ed.getAction("editor.action.formatDocument")?.run()
-        }
-
-        ed.addAction({
-            id: "moveCursor",
-            label: "Move cursor",
-            run: (e, args?: {lineNumber: number, column: number}) => {
-                if (!args?.lineNumber || !args?.column) return
-                e.setPosition({lineNumber: args.lineNumber, column: args.column})
-                e.revealPositionInCenter({lineNumber: args.lineNumber, column: args.column})
-                e.focus()
-            },
-        })
-
-        ed.addAction({
-            id: "kestra-execute",
-            label: t("execute flow behaviour"),
-            keybindings: [KeyMod.CtrlCmd | KeyCode.KeyE],
-            contextMenuGroupId: "navigation",
-            contextMenuOrder: 1.5,
-            run: (e) => emit("execute", e.getValue()),
-        })
-
-        ed.addAction({
-            id: "confirm",
-            label: t("confirm"),
-            keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
-            contextMenuGroupId: "navigation",
-            contextMenuOrder: 1.5,
-            run: (e) => emit("confirm", e.getValue()),
+        registerEditorActions(ed, {
+            t,
+            readOnly: props.readOnly,
+            inline: props.inline,
+            lang: props.lang,
+            canFoldFromNavbar: !isDiff.value && props.navbar && Boolean(mergedOptions.value.fullHeight),
+            onSave: (value) => emit("save", value),
+            onExecute: (value) => emit("execute", value),
+            onConfirm: (value) => emit("confirm", value),
+            autoFold,
         })
 
         ed.onDidFocusEditorText?.(() => {
             TabFocus.setTabFocusMode(mergedOptions.value.keepFocused === undefined ? props.inline : false)
         })
-
-        if (props.inline) {
-            ed.addAction({id: "prevent-ctrl-h", label: "Prevent CTRL + H", keybindings: [KeyMod.CtrlCmd | KeyCode.KeyH], run: () => {}})
-            ed.addAction({id: "prevent-f1", label: "Prevent F1", keybindings: [KeyCode.F1], run: () => {}})
-            if (!props.readOnly) {
-                ed.addAction({id: "prevent-ctrl-f", label: "Prevent CTRL + F", keybindings: [KeyMod.CtrlCmd | KeyCode.KeyF], run: () => {}})
-            }
-        }
-
-        if (!isDiff.value && props.navbar && mergedOptions.value.fullHeight) {
-            ed.addAction({
-                id: "fold-multiline",
-                label: t("fold_all_multi_lines"),
-                keybindings: [KeyCode.F10],
-                contextMenuGroupId: "fold",
-                contextMenuOrder: 1.5,
-                async run(e) {
-                    const foldingContrib = e.getContribution("editor.contrib.folding") as any
-                    const foldingModel = await foldingContrib?.getFoldingModel()
-                    const editorModel = foldingModel.textModel
-                    const regions = foldingModel.regions
-                    const toToggle = []
-                    for (let i = regions.length - 1; i >= 0; i--) {
-                        if (regions.isCollapsed(i) === false) {
-                            const startLineNumber = regions.getStartLineNumber(i)
-                            if (editorModel.getLineContent(startLineNumber).trim().endsWith("|")) {
-                                toToggle.push(regions.toRegion(i))
-                            }
-                        }
-                    }
-                    foldingModel.toggleCollapseState(toToggle)
-                },
-            })
-
-            if (localStorage.getItem("autofoldTextEditor") === "true") {
-                autoFold(true)
-            }
-        }
 
         if (!mergedOptions.value.fullHeight) {
             ed.onDidContentSizeChange((e2) => {
@@ -791,7 +705,7 @@
                 lastTimeout = window.setTimeout(() => {
                     if (!position || !model) return
                     emit("cursor", {position, model})
-                    if (mergedOptions.value.scrollKey) saveScrollData(codeEditor.saveViewState(), "viewState")
+                    scrollMemory.saveViewState(codeEditor)
                 }, 100)
                 highlightPebble()
             })

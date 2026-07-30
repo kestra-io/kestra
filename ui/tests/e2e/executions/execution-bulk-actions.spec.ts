@@ -81,12 +81,11 @@ test.describe("Executions' view Bulk Actions", () => {
                 await executionsPage.clickOnRestart()
             })
 
-            await test.step("Show all 26 now successfully finished 'foo:bar' executions on a single page", async () => {
+            await test.step("Count all 26 'foo:bar' executions as successfully finished", async () => {
                 await executionsPage.setFilterByState(ExecutionState.SUCCESS)
-                await executionsPage.setPaginationTo(Pagination.ITEMS_50)
 
                 // Restart is asynchronous — reload until the server has finished all 26.
-                await executionsPage.expectCountOfExecutionsToBeAfterRefresh(26)
+                await executionsPage.expectTotalExecutionsCountToBeAfterRefresh(26)
             })
 
             await test.step("Switch filter to label 'a:b' which should not be affected by the Restart action", async () => {
@@ -130,11 +129,9 @@ test.describe("Executions' view Bulk Actions", () => {
                 await executionsPage.clickOnReplay()
             })
 
-            await test.step("Show 26 original and 26 replayed 'foo:bar' executions on a single page", async () => {
-                await executionsPage.setPaginationTo(Pagination.ITEMS_100)
-
+            await test.step("Count 26 original and 26 replayed 'foo:bar' executions", async () => {
                 // Replay is asynchronous — reload until the 26 replays have joined the originals.
-                await executionsPage.expectCountOfExecutionsToBeAfterRefresh(26 * 2)
+                await executionsPage.expectTotalExecutionsCountToBeAfterRefresh(26 * 2)
             })
 
             await test.step("Switch filter to label 'a:b' which should not be affected by the Restart action", async () => {

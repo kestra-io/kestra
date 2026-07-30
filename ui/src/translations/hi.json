@@ -2071,10 +2071,17 @@
         },
         "toolCall": "{tool} चल रहा है",
         "context": {
+          "app": "ऐप: {app}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "डैशबोर्ड: {dashboard}",
           "execution": "निष्पादन: {id}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
+          "namespace": "Namespace: {namespace}",
+          "plugin": "Plugin: {plugin}",
+          "test": "परीक्षण: {test}"
         },
+        "contextAdded": "{label} को संदर्भ में जोड़ा गया",
+        "contextRemoved": "{{label}} को संदर्भ से हटाया गया",
         "toolResult": {
           "detail": "विवरण",
           "error": "{tool} विफल रहा",

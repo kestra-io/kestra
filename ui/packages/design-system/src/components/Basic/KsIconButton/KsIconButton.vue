@@ -32,6 +32,39 @@
     </KsButton>
 </template>
 
+<style scoped lang="scss">
+    .ks-icon-button {
+        color: var(--ks-text-primary);
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        border-radius: var(--kel-border-radius-base);
+        text-align: center;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        cursor: pointer;
+
+        :deep(.material-design-icon__svg) {
+            width: 16px;
+            height: 16px;
+            transform: translateY(1px) translateX(-0.5px);
+        }
+    }
+
+    .ks-icon-button:not(.ks-icon-button--filled) {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+
+        &:hover {
+            color: var(--ks-text-primary);
+            background-color: var(--ks-bg-tag);
+        }
+    }
+</style>
+
 <script setup lang="ts">
     import {computed, useAttrs} from "vue"
     import KsButton from "../KsButton/KsButton.vue"
@@ -70,36 +103,3 @@
     const buttonTag = computed(() => (props.to ? "router-link" : undefined))
     const nativeType = computed(() => (props.to ? undefined : "button" as const))
 </script>
-
-<style scoped lang="scss">
-    .ks-icon-button {
-        color: var(--ks-text-primary);
-        width: 24px;
-        height: 24px;
-        min-width: 24px;
-        border-radius: var(--kel-border-radius-base);
-        text-align: center;
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        padding: 0;
-        cursor: pointer;
-
-        :deep(.material-design-icon__svg) {
-            width: 16px;
-            height: 16px;
-            transform: translateY(1px) translateX(-0.5px);
-        }
-    }
-
-    .ks-icon-button:not(.ks-icon-button--filled) {
-        background-color: transparent;
-        border: none;
-        box-shadow: none;
-
-        &:hover {
-            color: var(--ks-text-primary);
-            background-color: var(--ks-bg-tag);
-        }
-    }
-</style>

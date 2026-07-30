@@ -28,26 +28,6 @@
     </button>
 </template>
 
-<script setup lang="ts">
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-
-    withDefaults(defineProps<{
-        label: string;
-        type?: string;
-        preview?: string;
-        disabled?: boolean;
-        ariaLabel?: string;
-    }>(), {})
-
-    const emit = defineEmits<{open: []}>()
-
-    defineSlots<{
-        default?(): unknown;
-        leading?(): unknown;
-        trailing?(): unknown;
-    }>()
-</script>
-
 <style lang="scss">
     .kel-drill-row {
         display: flex;
@@ -140,3 +120,23 @@
         color: var(--ks-text-link);
     }
 </style>
+
+<script setup lang="ts">
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+
+    withDefaults(defineProps<{
+        label: string;
+        type?: string;
+        preview?: string;
+        disabled?: boolean;
+        ariaLabel?: string;
+    }>(), {})
+
+    const emit = defineEmits<{open: []}>()
+
+    defineSlots<{
+        default?(): unknown;
+        leading?(): unknown;
+        trailing?(): unknown;
+    }>()
+</script>

@@ -252,6 +252,20 @@
     <SidebarCustomizeModal v-model="showSidebarCustomize" :menu="menu" />
 </template>
 
+<style scoped lang="scss">
+:deep(kbd) {
+    display: inline-block;
+    padding: 0.1em 0.4em;
+    border: 1px solid var(--ks-border-default);
+    border-radius: 3px;
+    background: var(--ks-bg-surface);
+    color: var(--ks-text-primary);
+    font-family: inherit;
+    font-size: var(--ks-font-size-xs);
+    line-height: 1.4;
+}
+</style>
+
 <script setup lang="ts">
     import {computed, reactive, ref, watch, onMounted, onBeforeUnmount} from "vue"
     import {useI18n} from "vue-i18n"
@@ -661,17 +675,3 @@
         settings.theme = Utils.getSelectedTheme()
     }, {immediate: true})
 </script>
-
-<style scoped lang="scss">
-:deep(kbd) {
-    display: inline-block;
-    padding: 0.1em 0.4em;
-    border: 1px solid var(--ks-border-default);
-    border-radius: 3px;
-    background: var(--ks-bg-surface);
-    color: var(--ks-text-primary);
-    font-family: inherit;
-    font-size: var(--ks-font-size-xs);
-    line-height: 1.4;
-}
-</style>

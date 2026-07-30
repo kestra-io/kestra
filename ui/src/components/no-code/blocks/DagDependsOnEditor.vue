@@ -24,27 +24,6 @@
     </div>
 </template>
 
-<script setup lang="ts">
-    import {useI18n} from "vue-i18n"
-    import SourceBranch from "vue-material-design-icons/SourceBranch.vue"
-    import {KsSelect, KsOption} from "@kestra-io/design-system"
-
-    const {t} = useI18n()
-
-    defineProps<{
-        dependsOn?: string[]
-        siblingIds: string[]
-    }>()
-
-    const emit = defineEmits<{
-        (e: "update", dependsOn: string[]): void
-    }>()
-
-    function onUpdate(value: string[]) {
-        emit("update", value)
-    }
-</script>
-
 <style scoped lang="scss">
     .dag-depends-on {
         display: flex;
@@ -72,3 +51,24 @@
         min-width: 0;
     }
 </style>
+
+<script setup lang="ts">
+    import {useI18n} from "vue-i18n"
+    import SourceBranch from "vue-material-design-icons/SourceBranch.vue"
+    import {KsSelect, KsOption} from "@kestra-io/design-system"
+
+    const {t} = useI18n()
+
+    defineProps<{
+        dependsOn?: string[]
+        siblingIds: string[]
+    }>()
+
+    const emit = defineEmits<{
+        (e: "update", dependsOn: string[]): void
+    }>()
+
+    function onUpdate(value: string[]) {
+        emit("update", value)
+    }
+</script>

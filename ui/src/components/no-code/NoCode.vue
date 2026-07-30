@@ -30,6 +30,17 @@
     </div>
 </template>
 
+<style scoped lang="scss">
+    .no-code {
+        height: 100%;
+        overflow-y: auto;
+
+        hr {
+            margin: 0;
+        }
+    }
+</style>
+
 <script setup lang="ts">
     import {computed, onActivated, provide, ref, watch} from "vue"
 
@@ -213,14 +224,3 @@
     useScrollMemory(scrollKey, scrollContainer)
 
 </script>
-
-<style scoped lang="scss">
-    .no-code {
-        height: 100%;
-        overflow-y: auto;
-
-        hr {
-            margin: 0;
-        }
-    }
-</style>

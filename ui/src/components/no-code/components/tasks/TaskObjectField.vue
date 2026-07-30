@@ -138,6 +138,135 @@
     </KsFormItem>
 </template>
 
+<style scoped lang="scss">
+.kel-form-item {
+    width: 100%;
+
+    > :deep(.kel-form-item__label) {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0;
+    }
+}
+
+.required-missing {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    margin-top: var(--ks-spacing-1);
+    font-size: var(--ks-font-size-xs);
+    color: var(--ks-text-error);
+}
+
+.required-missing-icon {
+    display: inline-flex;
+    font-size: var(--ks-font-size-sm);
+}
+
+.field-help {
+    margin-top: var(--ks-spacing-1);
+    font-size: var(--ks-font-size-sm);
+    color: var(--ks-text-muted);
+    line-height: 1.45;
+    text-wrap: pretty;
+}
+
+.inline-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    min-width: 0;
+
+    .inline-start {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        min-width: 0;
+        flex: 0 1 auto;
+    }
+
+    .label {
+        color: var(--ks-text-primary);
+        min-width: 0;
+        flex: 0 1 auto;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
+    }
+
+    .plugin-default-hint {
+        flex-shrink: 0;
+        font-size: var(--ks-font-size-xs);
+        font-family: var(--ks-font-family-mono);
+        color: var(--ks-text-muted);
+    }
+
+    .information-icon {
+        color: var(--ks-text-secondary);
+        cursor: pointer;
+    }
+}
+
+.inline-boolean {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.inline-number {
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 8rem;
+}
+
+.inline-code-toggle {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.type-pill {
+    flex-shrink: 0;
+    font-size: var(--ks-font-size-xs);
+    line-height: 1.5;
+    padding: 0 var(--ks-spacing-2);
+    border-radius: var(--ks-radius-base);
+    background: var(--ks-bg-tag-inactive);
+    border: 1px solid var(--ks-border-subtle);
+    color: var(--ks-text-secondary);
+    text-transform: capitalize;
+}
+
+.nested-card {
+    border: 1px solid var(--ks-border-subtle);
+    border-radius: var(--ks-radius-base);
+    background: var(--ks-bg-surface);
+    overflow: hidden;
+    margin: var(--ks-spacing-1) 0 var(--ks-spacing-2);
+}
+
+.nested-card-head {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+    padding: var(--ks-spacing-2) var(--ks-spacing-3);
+    background: var(--ks-bg-elevated);
+    border-bottom: 1px solid var(--ks-border-subtle);
+}
+
+.nested-card-label {
+    font-size: var(--ks-font-size-sm);
+    font-weight: 600;
+    color: var(--ks-text-primary);
+}
+
+.nested-card-body {
+    padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
+}
+</style>
+
 <script setup lang="ts">
     import {computed, inject, ref, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
@@ -269,132 +398,3 @@
             || (simpleType.value === "any-of" && isObjectAnyOf.value)),
     )
 </script>
-
-<style scoped lang="scss">
-.kel-form-item {
-    width: 100%;
-
-    > :deep(.kel-form-item__label) {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        padding: 0;
-    }
-}
-
-.required-missing {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    margin-top: var(--ks-spacing-1);
-    font-size: var(--ks-font-size-xs);
-    color: var(--ks-text-error);
-}
-
-.required-missing-icon {
-    display: inline-flex;
-    font-size: var(--ks-font-size-sm);
-}
-
-.field-help {
-    margin-top: var(--ks-spacing-1);
-    font-size: var(--ks-font-size-sm);
-    color: var(--ks-text-muted);
-    line-height: 1.45;
-    text-wrap: pretty;
-}
-
-.inline-wrapper {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-2);
-    min-width: 0;
-
-    .inline-start {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        min-width: 0;
-        flex: 0 1 auto;
-    }
-
-    .label {
-        color: var(--ks-text-primary);
-        min-width: 0;
-        flex: 0 1 auto;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: var(--ks-font-size-sm);
-        font-weight: 600;
-    }
-
-    .plugin-default-hint {
-        flex-shrink: 0;
-        font-size: var(--ks-font-size-xs);
-        font-family: var(--ks-font-family-mono);
-        color: var(--ks-text-muted);
-    }
-
-    .information-icon {
-        color: var(--ks-text-secondary);
-        cursor: pointer;
-    }
-}
-
-.inline-boolean {
-    margin-left: auto;
-    flex-shrink: 0;
-}
-
-.inline-number {
-    margin-left: auto;
-    flex-shrink: 0;
-    width: 8rem;
-}
-
-.inline-code-toggle {
-    margin-left: auto;
-    flex-shrink: 0;
-}
-
-.type-pill {
-    flex-shrink: 0;
-    font-size: var(--ks-font-size-xs);
-    line-height: 1.5;
-    padding: 0 var(--ks-spacing-2);
-    border-radius: var(--ks-radius-base);
-    background: var(--ks-bg-tag-inactive);
-    border: 1px solid var(--ks-border-subtle);
-    color: var(--ks-text-secondary);
-    text-transform: capitalize;
-}
-
-.nested-card {
-    border: 1px solid var(--ks-border-subtle);
-    border-radius: var(--ks-radius-base);
-    background: var(--ks-bg-surface);
-    overflow: hidden;
-    margin: var(--ks-spacing-1) 0 var(--ks-spacing-2);
-}
-
-.nested-card-head {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-2);
-    padding: var(--ks-spacing-2) var(--ks-spacing-3);
-    background: var(--ks-bg-elevated);
-    border-bottom: 1px solid var(--ks-border-subtle);
-}
-
-.nested-card-label {
-    font-size: var(--ks-font-size-sm);
-    font-weight: 600;
-    color: var(--ks-text-primary);
-}
-
-.nested-card-body {
-    padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
-}
-</style>

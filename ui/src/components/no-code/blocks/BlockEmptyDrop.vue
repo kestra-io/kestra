@@ -15,26 +15,6 @@
     </button>
 </template>
 
-<script setup lang="ts">
-    import {useI18n} from "vue-i18n"
-    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
-
-    const {t} = useI18n()
-
-    withDefaults(defineProps<{
-        label: string
-        variant?: "empty" | "inline"
-        hint?: string
-        dataTest?: string
-    }>(), {
-        variant: "inline",
-    })
-
-    const emit = defineEmits<{
-        (e: "add", evt: MouseEvent): void
-    }>()
-</script>
-
 <style scoped lang="scss">
     .block-empty-drop {
         display: flex;
@@ -97,3 +77,23 @@
         color: var(--ks-text-muted);
     }
 </style>
+
+<script setup lang="ts">
+    import {useI18n} from "vue-i18n"
+    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+
+    const {t} = useI18n()
+
+    withDefaults(defineProps<{
+        label: string
+        variant?: "empty" | "inline"
+        hint?: string
+        dataTest?: string
+    }>(), {
+        variant: "inline",
+    })
+
+    const emit = defineEmits<{
+        (e: "add", evt: MouseEvent): void
+    }>()
+</script>

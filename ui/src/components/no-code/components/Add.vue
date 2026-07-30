@@ -10,17 +10,6 @@
     </button>
 </template>
 
-<script setup lang="ts">
-    const emit = defineEmits<{
-        (e: "add", what: string | undefined): void;
-    }>()
-
-    defineProps<{
-        what?: string;
-        to?: string;
-    }>()
-</script>
-
 <style scoped lang="scss">
 .add-value-btn {
     width: 100%;
@@ -40,3 +29,14 @@
     background: var(--ks-bg-hover);
 }
 </style>
+
+<script setup lang="ts">
+    const emit = defineEmits<{
+        (e: "add", what: string | undefined): void;
+    }>()
+
+    defineProps<{
+        what?: string;
+        to?: string;
+    }>()
+</script>

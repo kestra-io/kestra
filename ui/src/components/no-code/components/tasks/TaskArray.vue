@@ -152,6 +152,77 @@
     </div>
 </template>
 
+<style scoped lang="scss">
+@import "../../styles/code.scss";
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.array-value-col {
+    flex: 1;
+    max-width: none;
+}
+
+.task-collection--cards {
+    gap: var(--ks-spacing-3);
+}
+
+.task-array-drill {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-2);
+}
+
+.task-array-drill-row {
+    flex: 1;
+    min-width: 0;
+}
+
+.task-array-drill-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    flex: none;
+}
+
+.task-array-item {
+    border: 1px solid var(--ks-border-subtle);
+    border-radius: var(--ks-radius-base);
+    background: var(--ks-bg-surface);
+    overflow: hidden;
+}
+
+.task-array-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ks-spacing-2);
+    padding: var(--ks-spacing-1) var(--ks-spacing-2) var(--ks-spacing-1) var(--ks-spacing-3);
+    background: var(--ks-bg-elevated);
+    border-bottom: 1px solid var(--ks-border-subtle);
+}
+
+.task-array-item-index {
+    font-size: var(--ks-font-size-xs);
+    font-weight: 600;
+    color: var(--ks-text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.task-array-item-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+}
+
+.task-array-item-body {
+    padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
+}
+</style>
+
 <script setup lang="ts">
     import {computed, inject, provide, ref, watch} from "vue"
 
@@ -287,74 +358,3 @@
         emitItems(next)
     }
 </script>
-
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
-.disabled {
-    opacity: 0.5;
-    pointer-events: none;
-    cursor: not-allowed;
-}
-
-.array-value-col {
-    flex: 1;
-    max-width: none;
-}
-
-.task-collection--cards {
-    gap: var(--ks-spacing-3);
-}
-
-.task-array-drill {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-2);
-}
-
-.task-array-drill-row {
-    flex: 1;
-    min-width: 0;
-}
-
-.task-array-drill-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-    flex: none;
-}
-
-.task-array-item {
-    border: 1px solid var(--ks-border-subtle);
-    border-radius: var(--ks-radius-base);
-    background: var(--ks-bg-surface);
-    overflow: hidden;
-}
-
-.task-array-item-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ks-spacing-2);
-    padding: var(--ks-spacing-1) var(--ks-spacing-2) var(--ks-spacing-1) var(--ks-spacing-3);
-    background: var(--ks-bg-elevated);
-    border-bottom: 1px solid var(--ks-border-subtle);
-}
-
-.task-array-item-index {
-    font-size: var(--ks-font-size-xs);
-    font-weight: 600;
-    color: var(--ks-text-secondary);
-    font-variant-numeric: tabular-nums;
-}
-
-.task-array-item-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--ks-spacing-1);
-}
-
-.task-array-item-body {
-    padding: var(--ks-spacing-4) var(--ks-spacing-4) var(--ks-spacing-2);
-}
-</style>

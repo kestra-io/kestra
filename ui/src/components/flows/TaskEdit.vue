@@ -153,6 +153,161 @@
     </div>
 </template>
 
+<style scoped lang="scss">
+    .task-edit-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-lg);
+        overflow: hidden;
+        container-type: inline-size;
+    }
+
+    .task-edit-tabstrip {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2) var(--ks-spacing-2) 0;
+        background: var(--ks-bg-base);
+        border-bottom: 1px solid var(--ks-border-subtle);
+    }
+
+    .task-edit-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        background: var(--ks-bg-surface);
+        border: 1px solid var(--ks-border-subtle);
+        border-bottom: none;
+        border-radius: var(--ks-radius-base) var(--ks-radius-base) 0 0;
+    }
+
+    .task-edit-tab-ico {
+        flex-shrink: 0;
+        width: var(--ks-icon-size-base);
+        height: var(--ks-icon-size-base);
+    }
+
+    .task-edit-tab-id {
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
+        font-family: var(--ks-font-family-mono);
+        color: var(--ks-text-primary);
+    }
+
+    .task-edit-panel-body {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+    }
+
+    .task-edit-col {
+        min-width: 0;
+        min-height: 0;
+        height: 100%;
+    }
+
+    .task-edit-col-inputs {
+        flex: 0 0 220px;
+        border-right: 1px solid var(--ks-border-subtle);
+    }
+
+    .task-edit-col-output {
+        flex: 0 0 230px;
+        border-left: 1px solid var(--ks-border-subtle);
+    }
+
+    .task-edit-col-inputs.task-edit-col--collapsed,
+    .task-edit-col-output.task-edit-col--collapsed {
+        flex: 0 0 2.5rem;
+    }
+
+    .task-edit-col-params {
+        position: relative;
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @mixin task-edit-stacked {
+        flex-direction: column;
+
+        .task-edit-col {
+            flex: none;
+            width: 100%;
+            height: auto;
+            border: none;
+            border-bottom: 1px solid var(--ks-border-subtle);
+        }
+
+        .task-edit-col-inputs,
+        .task-edit-col-output {
+            max-height: 30%;
+        }
+
+        .task-edit-col-params {
+            order: -1;
+            flex: 1 1 auto;
+            min-height: 55%;
+        }
+
+        .task-edit-col-inputs.task-edit-col--collapsed,
+        .task-edit-col-output.task-edit-col--collapsed {
+            flex: none;
+            width: 100%;
+            max-height: none;
+        }
+    }
+
+    @container (max-width: 760px) {
+        .task-edit-panel-body {
+            @include task-edit-stacked;
+        }
+    }
+
+    .task-edit-params-toolbar {
+        position: absolute;
+        top: var(--ks-spacing-5);
+        right: var(--ks-spacing-5);
+        z-index: 1;
+        display: flex;
+        gap: var(--ks-spacing-2);
+    }
+
+    @container (max-width: 550px) {
+        .task-edit-params-toolbar {
+            position: static;
+            justify-content: flex-end;
+            padding: var(--ks-spacing-3) var(--ks-spacing-5) 0;
+        }
+    }
+
+    .task-edit-panes {
+        flex: 1;
+        min-height: 0;
+        padding: var(--ks-spacing-5) 0 var(--ks-spacing-6);
+    }
+
+    .task-edit-panel-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: var(--ks-spacing-3);
+        flex-shrink: 0;
+        padding: var(--ks-spacing-3) var(--ks-spacing-4);
+        border-top: 1px solid var(--ks-border-subtle);
+        background: var(--ks-bg-surface);
+    }
+
+    .task-edit-validation-status {
+        display: flex;
+        align-items: center;
+    }
+</style>
+
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, onBeforeUnmount, onDeactivated} from "vue"
     import {useI18n} from "vue-i18n"
@@ -541,158 +696,3 @@
 
     defineExpose({open: onShow, flushPendingEdit})
 </script>
-
-<style scoped lang="scss">
-    .task-edit-panel {
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-radius: var(--ks-radius-lg);
-        overflow: hidden;
-        container-type: inline-size;
-    }
-
-    .task-edit-tabstrip {
-        display: flex;
-        align-items: flex-end;
-        gap: var(--ks-spacing-1);
-        padding: var(--ks-spacing-2) var(--ks-spacing-2) 0;
-        background: var(--ks-bg-base);
-        border-bottom: 1px solid var(--ks-border-subtle);
-    }
-
-    .task-edit-tab {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ks-spacing-2);
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-subtle);
-        border-bottom: none;
-        border-radius: var(--ks-radius-base) var(--ks-radius-base) 0 0;
-    }
-
-    .task-edit-tab-ico {
-        flex-shrink: 0;
-        width: var(--ks-icon-size-base);
-        height: var(--ks-icon-size-base);
-    }
-
-    .task-edit-tab-id {
-        font-size: var(--ks-font-size-sm);
-        font-weight: 600;
-        font-family: var(--ks-font-family-mono);
-        color: var(--ks-text-primary);
-    }
-
-    .task-edit-panel-body {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-    }
-
-    .task-edit-col {
-        min-width: 0;
-        min-height: 0;
-        height: 100%;
-    }
-
-    .task-edit-col-inputs {
-        flex: 0 0 220px;
-        border-right: 1px solid var(--ks-border-subtle);
-    }
-
-    .task-edit-col-output {
-        flex: 0 0 230px;
-        border-left: 1px solid var(--ks-border-subtle);
-    }
-
-    .task-edit-col-inputs.task-edit-col--collapsed,
-    .task-edit-col-output.task-edit-col--collapsed {
-        flex: 0 0 2.5rem;
-    }
-
-    .task-edit-col-params {
-        position: relative;
-        flex: 1 1 0;
-        display: flex;
-        flex-direction: column;
-    }
-
-    @mixin task-edit-stacked {
-        flex-direction: column;
-
-        .task-edit-col {
-            flex: none;
-            width: 100%;
-            height: auto;
-            border: none;
-            border-bottom: 1px solid var(--ks-border-subtle);
-        }
-
-        .task-edit-col-inputs,
-        .task-edit-col-output {
-            max-height: 30%;
-        }
-
-        .task-edit-col-params {
-            order: -1;
-            flex: 1 1 auto;
-            min-height: 55%;
-        }
-
-        .task-edit-col-inputs.task-edit-col--collapsed,
-        .task-edit-col-output.task-edit-col--collapsed {
-            flex: none;
-            width: 100%;
-            max-height: none;
-        }
-    }
-
-    @container (max-width: 760px) {
-        .task-edit-panel-body {
-            @include task-edit-stacked;
-        }
-    }
-
-    .task-edit-params-toolbar {
-        position: absolute;
-        top: var(--ks-spacing-5);
-        right: var(--ks-spacing-5);
-        z-index: 1;
-        display: flex;
-        gap: var(--ks-spacing-2);
-    }
-
-    @container (max-width: 550px) {
-        .task-edit-params-toolbar {
-            position: static;
-            justify-content: flex-end;
-            padding: var(--ks-spacing-3) var(--ks-spacing-5) 0;
-        }
-    }
-
-    .task-edit-panes {
-        flex: 1;
-        min-height: 0;
-        padding: var(--ks-spacing-5) 0 var(--ks-spacing-6);
-    }
-
-    .task-edit-panel-footer {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: var(--ks-spacing-3);
-        flex-shrink: 0;
-        padding: var(--ks-spacing-3) var(--ks-spacing-4);
-        border-top: 1px solid var(--ks-border-subtle);
-        background: var(--ks-bg-surface);
-    }
-
-    .task-edit-validation-status {
-        display: flex;
-        align-items: center;
-    }
-</style>

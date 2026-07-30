@@ -19,32 +19,6 @@
     </div>
 </template>
 
-<script setup lang="ts">
-    import {onMounted, ref, computed} from "vue"
-    import {useI18n} from "vue-i18n"
-    import {useMiscStore} from "override/stores/misc"
-    import {usePluginsStore} from "../../stores/plugins"
-    import {useFlowStore} from "../../stores/flow"
-    import {KsMarkdown} from "@kestra-io/design-system"
-    import PluginList from "./PluginList.vue"
-
-    const {t} = useI18n()
-    const isLoading = ref(false)
-    const pluginsStore = usePluginsStore()
-    const flowStore = useFlowStore()
-
-    const pluginsData = computed(() => pluginsStore.plugins)
-
-    const flowDescription = computed(() => flowStore.flowParsed?.description as string | undefined)
-    const showFlowDoc = computed(() => flowStore.flowParsed !== undefined)
-
-    onMounted(async () => {
-        if (!pluginsData.value?.length) {
-            await pluginsStore.listWithSubgroup({includeDeprecated: false})
-        }
-    })
-</script>
-
 <style scoped lang="scss">
     .plugin-list-wrapper {
         height: 100%;
@@ -86,3 +60,29 @@
         font-style: italic;
     }
 </style>
+
+<script setup lang="ts">
+    import {onMounted, ref, computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useMiscStore} from "override/stores/misc"
+    import {usePluginsStore} from "../../stores/plugins"
+    import {useFlowStore} from "../../stores/flow"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import PluginList from "./PluginList.vue"
+
+    const {t} = useI18n()
+    const isLoading = ref(false)
+    const pluginsStore = usePluginsStore()
+    const flowStore = useFlowStore()
+
+    const pluginsData = computed(() => pluginsStore.plugins)
+
+    const flowDescription = computed(() => flowStore.flowParsed?.description as string | undefined)
+    const showFlowDoc = computed(() => flowStore.flowParsed !== undefined)
+
+    onMounted(async () => {
+        if (!pluginsData.value?.length) {
+            await pluginsStore.listWithSubgroup({includeDeprecated: false})
+        }
+    })
+</script>

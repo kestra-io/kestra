@@ -80,6 +80,233 @@
     </div>
 </template>
 
+<style lang="scss">
+    .highlight-lines {
+        background-color: rgba(#3991ff, .2);
+    }
+
+    .editor-content-widget-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .kel-button-group {
+            display: inline-flex;
+        }
+    }
+
+    :not(.namespace-defaults, .kel-drawer__body) > .ks-editor {
+        flex-direction: column;
+        height: 100%;
+        z-index: 1001;
+    }
+
+    :not(.blueprint-container) .ks-editor {
+        z-index: 1;
+    }
+
+    .kel-form .ks-editor {
+        display: flex;
+        width: 100%;
+    }
+
+    .ks-editor {
+        display: flex;
+        overflow: hidden;
+
+        .top-nav {
+            background-color: var(--ks-bg-surface);
+            padding: 0.5rem;
+            border-radius: var(--kel-border-radius-round);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .editor-absolute-container {
+            position: absolute;
+            top: 8px;
+            right: var(--ks-font-size-lg);
+            z-index: 10;
+            color: var(--ks-text-secondary);
+            cursor: pointer;
+        }
+
+        .editor-absolute-container > * {
+            pointer-events: auto;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-grow: 1;
+
+            &:not(.single-line) .editor-wrapper {
+                padding-bottom: 4rem;
+            }
+
+            &.single-line {
+                min-height: var(--kel-component-size);
+                padding: 7px 11px;
+                background-color: var(--ks-bg-input);
+                border-radius: var(--kel-input-border-radius, var(--kel-border-radius-base));
+                transition: var(--kel-transition-box-shadow);
+                box-shadow: 0 0 0 1px var(--ks-border-default) inset;
+
+                &.custom-dark-vs-theme {
+                    background-color: var(--ks-bg-input);
+                }
+            }
+
+            .placeholder {
+                position: absolute;
+                top: -3px;
+                overflow: hidden;
+                padding-left: inherit;
+                padding-right: inherit;
+                cursor: text;
+                user-select: none;
+                color: var(--ks-text-inactive);
+            }
+
+            .editor-wrapper {
+                min-width: 75%;
+                width: 100%;
+
+                .monaco-hover-content {
+                    h4 {
+                        font-size: var(--ks-font-size-base);
+                        font-weight: bold;
+                        line-height: var(--kbs-body-line-height);
+                    }
+
+                    p {
+                        margin-bottom: 0.5rem;
+
+                        &:last-child {
+                            display: none;
+                        }
+                    }
+
+                    *:nth-last-child(2n) {
+                        margin-bottom: 0;
+                    }
+                }
+            }
+
+            .bottom-right {
+                bottom: 0px;
+                right: 0px;
+
+                ul {
+                    display: flex;
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+            }
+
+            .editor-footer-row {
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1100;
+                pointer-events: none;
+                display: flex;
+                justify-content: center;
+
+                > * {
+                    pointer-events: auto;
+                    width: 100%;
+                }
+            }
+        }
+    }
+
+    .custom-dark-vs-theme {
+        .monaco-editor,
+        .monaco-editor-background {
+            outline: none;
+            background-color: var(--ks-bg-input);
+            --vscode-editor-background: var(--ks-bg-input);
+            --vscode-breadcrumb-background: var(--ks-bg-input);
+            --vscode-editorGutter-background: var(--ks-bg-input);
+        }
+
+        .monaco-editor .margin {
+            background-color: var(--ks-bg-input);
+            --vscode-editorGutter-background: var(--ks-bg-input);
+            --vscode-editorLineNumber-activeForeground: var(--ks-text-secondary);
+            --vscode-editorLineNumber-foreground: var(--ks-text-secondary);
+            --vscode-editorLineNumber-rangeHighlightBackground: var(--ks-text-secondary);
+        }
+    }
+
+    .highlight-text {
+        cursor: pointer;
+        font-weight: 700;
+        box-shadow: 0 19px 44px rgba(157, 29, 236, 0.31);
+
+        html.dark & {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    }
+
+    .highlight-pebble {
+        color: #977100 !important;
+
+        html.dark & {
+            color: #ffca16 !important;
+        }
+    }
+
+    .disable-text {
+        color: var(--ks-text-inactive) !important;
+    }
+
+    .monaco-editor .codelens-decoration > a:hover,
+    .monaco-editor .codelens-decoration > a:hover .codicon {
+        color: var(--ks-text-link) !important;
+    }
+
+    .ks-monaco-editor {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        outline: none;
+    }
+
+    .main-editor > #flowFileEditorTab .monaco-editor {
+        padding: 1rem 0 0 1rem;
+    }
+
+    .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
+        background-color: var(--ks-bg-input);
+    }
+
+    .monaco-editor {
+        .monaco-scrollable-element {
+            > .scrollbar {
+                .slider {
+                    width: 13px !important;
+                    background: var(--ks-border-default) !important;
+                    border-radius: 8px !important;
+                    border: 4px solid var(--ks-bg-base) !important;
+                }
+            }
+
+            .monaco-list-row[aria-label="_DATE_PICKER_"] {
+                display: none;
+            }
+        }
+    }
+
+    .kestra-icon-wrapper {
+        flex-shrink: 0;
+        width: 1em;
+        height: 1em;
+    }
+</style>
+
 
 <script setup lang="ts">
     import {ref} from "vue"
@@ -164,5 +391,3 @@
         getEditor,
     })
 </script>
-
-<style lang="scss" src="./KsEditor.scss" />

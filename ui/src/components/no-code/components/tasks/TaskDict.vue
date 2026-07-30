@@ -70,6 +70,42 @@
     </div>
 </template>
 
+<style scoped lang="scss">
+@import "../../styles/code.scss";
+
+.task-container{
+    margin-bottom: 1rem;
+}
+
+.delete-container{
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+    justify-content: end;
+}
+
+.remove-entry{
+    color: var(--ks-text-secondary);
+    background-color: var(--ks-btn-secondary-bg-default);
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    opacity: 0.7;
+    padding: 0;
+    height: .75rem;
+    &:hover {
+        color: var(--ks-text-secondary);
+        opacity: 1;
+    }
+}
+
+.item-wrapper {
+    margin: .25rem 0;
+    background-color: var(--ks-bg-surface);
+}
+</style>
+
 <script setup lang="ts">
     import {computed, ref, watch, nextTick} from "vue"
     import {useI18n} from "vue-i18n"
@@ -190,39 +226,3 @@
         })
     }
 </script>
-
-<style scoped lang="scss">
-@import "../../styles/code.scss";
-
-.task-container{
-    margin-bottom: 1rem;
-}
-
-.delete-container{
-    display: flex;
-    align-items: center;
-    margin-left: 1rem;
-    justify-content: end;
-}
-
-.remove-entry{
-    color: var(--ks-text-secondary);
-    background-color: var(--ks-btn-secondary-bg-default);
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    opacity: 0.7;
-    padding: 0;
-    height: .75rem;
-    &:hover {
-        color: var(--ks-text-secondary);
-        opacity: 1;
-    }
-}
-
-.item-wrapper {
-    margin: .25rem 0;
-    background-color: var(--ks-bg-surface);
-}
-</style>

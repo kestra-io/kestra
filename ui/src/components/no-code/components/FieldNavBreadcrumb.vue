@@ -31,25 +31,6 @@
     </nav>
 </template>
 
-<script setup lang="ts">
-    import {useI18n} from "vue-i18n"
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import type {NavFrame} from "../utils/useFieldNavigation"
-
-    const {t} = useI18n()
-
-    defineProps<{
-        frames: NavFrame[];
-        rootLabel: string;
-    }>()
-
-    const emit = defineEmits<{
-        (e: "navigate", index: number): void;
-        (e: "back"): void;
-    }>()
-</script>
-
 <style scoped lang="scss">
     .field-nav-breadcrumb {
         display: flex;
@@ -131,3 +112,22 @@
         cursor: default;
     }
 </style>
+
+<script setup lang="ts">
+    import {useI18n} from "vue-i18n"
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import type {NavFrame} from "../utils/useFieldNavigation"
+
+    const {t} = useI18n()
+
+    defineProps<{
+        frames: NavFrame[];
+        rootLabel: string;
+    }>()
+
+    const emit = defineEmits<{
+        (e: "navigate", index: number): void;
+        (e: "back"): void;
+    }>()
+</script>

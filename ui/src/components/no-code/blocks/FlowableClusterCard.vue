@@ -122,171 +122,6 @@
     </div>
 </template>
 
-<script setup lang="ts">
-    import {computed, defineAsyncComponent, inject, ref} from "vue"
-    import {useI18n} from "vue-i18n"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
-    import Cog from "vue-material-design-icons/CogOutline.vue"
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
-    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
-
-    import {KsTag, KsIconButton, KsInput} from "@kestra-io/design-system"
-    import TaskIcon from "../../plugins/TaskIcon.vue"
-    import BlockErrorBadge from "./BlockErrorBadge.vue"
-
-    import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
-    import {displayTaskOf, taskEditPathFor} from "../../../utils/flowableBlockOps"
-    import {flowYamlUtils} from "@kestra-io/topology"
-    import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY} from "../injectionKeys"
-
-    const BranchLane = defineAsyncComponent(() => import("./BranchLane.vue"))
-
-    const {t} = useI18n()
-
-    const pluginsStore = usePluginsStore()
-
-    const FLOWABLE_SUFFIX_MAP: Record<string, string[]> = {
-        "If": ["then", "else", "errors", "finally"],
-        "Switch": ["cases", "defaults", "errors", "finally"],
-        "Parallel": ["tasks", "errors", "finally"],
-        "Sequential": ["tasks", "errors", "finally"],
-        "ForEach": ["tasks", "errors", "finally"],
-        "EachSequential": ["tasks", "errors", "finally"],
-        "Dag": ["tasks", "errors", "finally"],
-        "WaitFor": ["tasks", "errors", "finally"],
-        "ForEachItem": ["tasks", "errors", "finally"],
-    }
-
-    const props = defineProps<{
-        block: Record<string, unknown>
-        path: string
-        domId?: string
-        icons?: Record<string, PluginIconData>
-        selectedId?: string
-        focusedId?: string
-        depth?: number
-        playgroundEnabled?: boolean
-    }>()
-
-    const emit = defineEmits<{
-        (e: "select", path: string): void
-        (e: "open-split", path: string): void
-        (e: "delete", path: string): void
-        (e: "duplicate", path: string): void
-        (e: "run", taskId: string): void
-        (e: "add-at-path", parentPath: string, afterIndex: number, evt?: Event): void
-        (e: "update-depends-on", itemPath: string, dependsOn: string[]): void
-        (e: "reorder", parentPath: string, fromIndex: number, toIndex: number): void
-    }>()
-
-    const depth = computed(() => props.depth ?? 0)
-
-    const displayBlock = computed(() => displayTaskOf(props.block))
-
-    const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
-    const issues = computed<string[]>(() =>
-        validationIssues?.value?.get(String(displayBlock.value.id ?? "")) ?? [],
-    )
-
-    const taskPath = computed(() => taskEditPathFor(props.path, props.block))
-
-    const focused = computed(() => props.focusedId !== undefined && props.focusedId === (props.domId ?? String(displayBlock.value.id ?? "")))
-
-    const expanded = ref(true)
-
-    function toggle() {
-        expanded.value = !expanded.value
-    }
-
-    const shortType = computed(() => {
-        const type = String(displayBlock.value.type ?? "")
-        const parts = type.split(".")
-        return parts[parts.length - 1] ?? type
-    })
-
-    const flowableSuffix = computed(() => {
-        return Object.keys(FLOWABLE_SUFFIX_MAP).find(suffix =>
-            String(displayBlock.value.type ?? "").endsWith(`.${suffix}`),
-        ) ?? null
-    })
-
-    const isSwitchTask = computed(() => flowableSuffix.value === "Switch")
-
-    const branchKeys = computed<string[]>(() => {
-        const suffix = flowableSuffix.value
-        if (!suffix) return ["tasks"]
-        const keys = FLOWABLE_SUFFIX_MAP[suffix] ?? ["tasks"]
-        const result: string[] = []
-        for (const key of keys) {
-            if (key === "cases") {
-                const casesObj = displayBlock.value.cases
-                if (casesObj && typeof casesObj === "object" && !Array.isArray(casesObj)) {
-                    for (const caseKey of Object.keys(casesObj as Record<string, unknown>)) {
-                        result.push(`cases.${caseKey}`)
-                    }
-                }
-            } else {
-                result.push(key)
-            }
-        }
-        if (isSwitchTask.value && !result.includes("defaults")) {
-            result.push("defaults")
-        }
-        return result
-    })
-
-    interface Lane {
-        name: string
-        tasks: Record<string, unknown>[]
-    }
-
-    const lanes = computed<Lane[]>(() => {
-        return branchKeys.value.map(laneName => {
-            if (laneName.startsWith("cases.")) {
-                const caseKey = laneName.slice("cases.".length)
-                const casesObj = displayBlock.value.cases as Record<string, unknown> | undefined
-                const caseArr = casesObj?.[caseKey]
-                return {
-                    name: laneName,
-                    tasks: Array.isArray(caseArr) ? (caseArr as Record<string, unknown>[]) : [],
-                }
-            }
-            const val = displayBlock.value[laneName]
-            return {
-                name: laneName,
-                tasks: Array.isArray(val) ? (val as Record<string, unknown>[]) : [],
-            }
-        })
-    })
-
-    const totalNestedCount = computed(() => lanes.value.reduce((sum, l) => sum + l.tasks.length, 0))
-
-    const headerAriaLabel = computed(() =>
-        expanded.value
-            ? t("block_editor.cluster_collapse_aria", {id: String(displayBlock.value.id ?? "")})
-            : t("block_editor.cluster_expand_aria", {id: String(displayBlock.value.id ?? ""), count: totalNestedCount.value}),
-    )
-
-    function laneParentPath(laneName: string): string {
-        if (laneName.startsWith("cases.")) {
-            const caseKey = laneName.slice("cases.".length)
-            return flowYamlUtils.appendKeyToPath(`${taskPath.value}.cases`, caseKey)
-        }
-        return `${taskPath.value}.${laneName}`
-    }
-
-    const newCaseKey = ref("")
-
-    function addCase(evt?: Event) {
-        const key = newCaseKey.value.trim()
-        if (!key) return
-        emit("add-at-path", flowYamlUtils.appendKeyToPath(`${props.path}.cases`, key), -1, evt)
-        newCaseKey.value = ""
-    }
-</script>
-
 <style scoped lang="scss">
     .flowable-cluster {
         border: 1px solid var(--ks-border-default);
@@ -452,3 +287,168 @@
         box-shadow: 0 0 0 2px var(--ks-border-focus);
     }
 </style>
+
+<script setup lang="ts">
+    import {computed, defineAsyncComponent, inject, ref} from "vue"
+    import {useI18n} from "vue-i18n"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import Cog from "vue-material-design-icons/CogOutline.vue"
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
+    import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+
+    import {KsTag, KsIconButton, KsInput} from "@kestra-io/design-system"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
+    import BlockErrorBadge from "./BlockErrorBadge.vue"
+
+    import {usePluginsStore, type PluginIconData} from "../../../stores/plugins"
+    import {displayTaskOf, taskEditPathFor} from "../../../utils/flowableBlockOps"
+    import {flowYamlUtils} from "@kestra-io/topology"
+    import {BLOCK_VALIDATION_ISSUES_INJECTION_KEY} from "../injectionKeys"
+
+    const BranchLane = defineAsyncComponent(() => import("./BranchLane.vue"))
+
+    const {t} = useI18n()
+
+    const pluginsStore = usePluginsStore()
+
+    const FLOWABLE_SUFFIX_MAP: Record<string, string[]> = {
+        "If": ["then", "else", "errors", "finally"],
+        "Switch": ["cases", "defaults", "errors", "finally"],
+        "Parallel": ["tasks", "errors", "finally"],
+        "Sequential": ["tasks", "errors", "finally"],
+        "ForEach": ["tasks", "errors", "finally"],
+        "EachSequential": ["tasks", "errors", "finally"],
+        "Dag": ["tasks", "errors", "finally"],
+        "WaitFor": ["tasks", "errors", "finally"],
+        "ForEachItem": ["tasks", "errors", "finally"],
+    }
+
+    const props = defineProps<{
+        block: Record<string, unknown>
+        path: string
+        domId?: string
+        icons?: Record<string, PluginIconData>
+        selectedId?: string
+        focusedId?: string
+        depth?: number
+        playgroundEnabled?: boolean
+    }>()
+
+    const emit = defineEmits<{
+        (e: "select", path: string): void
+        (e: "open-split", path: string): void
+        (e: "delete", path: string): void
+        (e: "duplicate", path: string): void
+        (e: "run", taskId: string): void
+        (e: "add-at-path", parentPath: string, afterIndex: number, evt?: Event): void
+        (e: "update-depends-on", itemPath: string, dependsOn: string[]): void
+        (e: "reorder", parentPath: string, fromIndex: number, toIndex: number): void
+    }>()
+
+    const depth = computed(() => props.depth ?? 0)
+
+    const displayBlock = computed(() => displayTaskOf(props.block))
+
+    const validationIssues = inject(BLOCK_VALIDATION_ISSUES_INJECTION_KEY, undefined)
+    const issues = computed<string[]>(() =>
+        validationIssues?.value?.get(String(displayBlock.value.id ?? "")) ?? [],
+    )
+
+    const taskPath = computed(() => taskEditPathFor(props.path, props.block))
+
+    const focused = computed(() => props.focusedId !== undefined && props.focusedId === (props.domId ?? String(displayBlock.value.id ?? "")))
+
+    const expanded = ref(true)
+
+    function toggle() {
+        expanded.value = !expanded.value
+    }
+
+    const shortType = computed(() => {
+        const type = String(displayBlock.value.type ?? "")
+        const parts = type.split(".")
+        return parts[parts.length - 1] ?? type
+    })
+
+    const flowableSuffix = computed(() => {
+        return Object.keys(FLOWABLE_SUFFIX_MAP).find(suffix =>
+            String(displayBlock.value.type ?? "").endsWith(`.${suffix}`),
+        ) ?? null
+    })
+
+    const isSwitchTask = computed(() => flowableSuffix.value === "Switch")
+
+    const branchKeys = computed<string[]>(() => {
+        const suffix = flowableSuffix.value
+        if (!suffix) return ["tasks"]
+        const keys = FLOWABLE_SUFFIX_MAP[suffix] ?? ["tasks"]
+        const result: string[] = []
+        for (const key of keys) {
+            if (key === "cases") {
+                const casesObj = displayBlock.value.cases
+                if (casesObj && typeof casesObj === "object" && !Array.isArray(casesObj)) {
+                    for (const caseKey of Object.keys(casesObj as Record<string, unknown>)) {
+                        result.push(`cases.${caseKey}`)
+                    }
+                }
+            } else {
+                result.push(key)
+            }
+        }
+        if (isSwitchTask.value && !result.includes("defaults")) {
+            result.push("defaults")
+        }
+        return result
+    })
+
+    interface Lane {
+        name: string
+        tasks: Record<string, unknown>[]
+    }
+
+    const lanes = computed<Lane[]>(() => {
+        return branchKeys.value.map(laneName => {
+            if (laneName.startsWith("cases.")) {
+                const caseKey = laneName.slice("cases.".length)
+                const casesObj = displayBlock.value.cases as Record<string, unknown> | undefined
+                const caseArr = casesObj?.[caseKey]
+                return {
+                    name: laneName,
+                    tasks: Array.isArray(caseArr) ? (caseArr as Record<string, unknown>[]) : [],
+                }
+            }
+            const val = displayBlock.value[laneName]
+            return {
+                name: laneName,
+                tasks: Array.isArray(val) ? (val as Record<string, unknown>[]) : [],
+            }
+        })
+    })
+
+    const totalNestedCount = computed(() => lanes.value.reduce((sum, l) => sum + l.tasks.length, 0))
+
+    const headerAriaLabel = computed(() =>
+        expanded.value
+            ? t("block_editor.cluster_collapse_aria", {id: String(displayBlock.value.id ?? "")})
+            : t("block_editor.cluster_expand_aria", {id: String(displayBlock.value.id ?? ""), count: totalNestedCount.value}),
+    )
+
+    function laneParentPath(laneName: string): string {
+        if (laneName.startsWith("cases.")) {
+            const caseKey = laneName.slice("cases.".length)
+            return flowYamlUtils.appendKeyToPath(`${taskPath.value}.cases`, caseKey)
+        }
+        return `${taskPath.value}.${laneName}`
+    }
+
+    const newCaseKey = ref("")
+
+    function addCase(evt?: Event) {
+        const key = newCaseKey.value.trim()
+        if (!key) return
+        emit("add-at-path", flowYamlUtils.appendKeyToPath(`${props.path}.cases`, key), -1, evt)
+        newCaseKey.value = ""
+    }
+</script>

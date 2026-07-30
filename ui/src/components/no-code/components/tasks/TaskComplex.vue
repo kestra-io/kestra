@@ -9,6 +9,18 @@
     </div>
 </template>
 
+<style scoped lang="scss">
+.task-nested {
+    border-left: 2px solid var(--ks-border-subtle);
+    padding-left: var(--ks-spacing-4);
+}
+
+.task-nested--bare {
+    border-left: none;
+    padding-left: 0;
+}
+</style>
+
 <script lang="ts" setup>
     import {computed, inject, ref} from "vue"
     import TaskObject from "./TaskObject.vue"
@@ -49,15 +61,3 @@
         }, {})
     })
 </script>
-
-<style scoped lang="scss">
-.task-nested {
-    border-left: 2px solid var(--ks-border-subtle);
-    padding-left: var(--ks-spacing-4);
-}
-
-.task-nested--bare {
-    border-left: none;
-    padding-left: 0;
-}
-</style>

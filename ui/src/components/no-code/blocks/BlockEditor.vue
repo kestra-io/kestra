@@ -132,6 +132,93 @@
     />
 </template>
 
+<style scoped lang="scss">
+    .block-editor {
+        position: relative;
+        height: 100%;
+        overflow: hidden;
+        background: var(--ks-bg-base);
+    }
+
+    .block-editor-split {
+        height: 100%;
+    }
+
+    .block-editor-main {
+        height: 100%;
+        overflow-y: auto;
+        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(2.25rem + var(--ks-spacing-6));
+    }
+
+    .block-editor-inline-edit {
+        height: 100%;
+        min-width: 0;
+        min-height: 0;
+    }
+
+    .flow-summary {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ks-spacing-2);
+        width: 100%;
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        text-align: left;
+        background: transparent;
+        border: 1px solid var(--ks-border-subtle);
+        border-radius: var(--ks-radius-base);
+        cursor: pointer;
+        transition: background-color 0.12s, border-color 0.12s;
+
+        &:hover {
+            background: var(--ks-bg-hover);
+            border-color: var(--ks-border-default);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--ks-border-focus);
+            outline-offset: 1px;
+        }
+    }
+
+    .flow-summary-path {
+        font-size: var(--ks-font-size-sm);
+        font-weight: 600;
+        color: var(--ks-text-primary);
+    }
+
+    .flow-summary-desc {
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-secondary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .flow-summary-labels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-1);
+    }
+
+    .block-editor-canvas {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-4);
+        max-width: 880px;
+        margin: 0 auto;
+    }
+
+    .block-section-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+    }
+
+</style>
+
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
@@ -635,90 +722,3 @@
 
     const commandMenuItems = computed<BlockCommandMenuItem[]>(() => buildCommandMenuItems(commandMenuContext.value))
 </script>
-
-<style scoped lang="scss">
-    .block-editor {
-        position: relative;
-        height: 100%;
-        overflow: hidden;
-        background: var(--ks-bg-base);
-    }
-
-    .block-editor-split {
-        height: 100%;
-    }
-
-    .block-editor-main {
-        height: 100%;
-        overflow-y: auto;
-        padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(2.25rem + var(--ks-spacing-6));
-    }
-
-    .block-editor-inline-edit {
-        height: 100%;
-        min-width: 0;
-        min-height: 0;
-    }
-
-    .flow-summary {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--ks-spacing-2);
-        width: 100%;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        text-align: left;
-        background: transparent;
-        border: 1px solid var(--ks-border-subtle);
-        border-radius: var(--ks-radius-base);
-        cursor: pointer;
-        transition: background-color 0.12s, border-color 0.12s;
-
-        &:hover {
-            background: var(--ks-bg-hover);
-            border-color: var(--ks-border-default);
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--ks-border-focus);
-            outline-offset: 1px;
-        }
-    }
-
-    .flow-summary-path {
-        font-size: var(--ks-font-size-sm);
-        font-weight: 600;
-        color: var(--ks-text-primary);
-    }
-
-    .flow-summary-desc {
-        font-size: var(--ks-font-size-xs);
-        color: var(--ks-text-secondary);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-    }
-
-    .flow-summary-labels {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--ks-spacing-1);
-    }
-
-    .block-editor-canvas {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-4);
-        max-width: 880px;
-        margin: 0 auto;
-    }
-
-    .block-section-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--ks-spacing-2);
-    }
-
-</style>

@@ -21,6 +21,42 @@
     </ElInput>
 </template>
 
+<style lang="scss">
+    @use '../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/input';
+
+    .kel-textarea, .kel-input {
+        --kel-input-border-color: var(--ks-border-strong);
+        --kel-input-hover-border-color: var(--ks-border-strong);
+        --kel-input-bg-color: var(--ks-bg-input);
+    }
+
+    .kel-input {
+        width: 100%;
+        &.kel-input--small {
+            .kel-input__wrapper {
+                border-radius: var(--ks-radius-sm);
+            }
+        }
+
+        .kel-input-group__append, .kel-input-group__prepend {
+            color: var(--ks-text-dim);
+        }
+
+        &.ks-input--reserve-clear {
+            .kel-input__inner {
+                padding-inline-end: var(--ks-spacing-5);
+            }
+
+            .kel-input__suffix {
+                position: absolute;
+                inset-block: 0;
+                inset-inline-end: var(--ks-spacing-3);
+            }
+        }
+    }
+</style>
+
 <script setup lang="ts">
     import {computed, ref} from "vue"
     import {ElInput} from "element-plus"
@@ -69,39 +105,3 @@
         Boolean(props.clearable) && !props.showPassword && !props.suffixIcon && !slots.suffix,
     )
 </script>
-
-<style lang="scss">
-    @use '../../assets/styles/el-ns';
-    @use 'element-plus/theme-chalk/src/input';
-
-    .kel-textarea, .kel-input {
-        --kel-input-border-color: var(--ks-border-strong);
-        --kel-input-hover-border-color: var(--ks-border-strong);
-        --kel-input-bg-color: var(--ks-bg-input);
-    }
-
-    .kel-input {
-        width: 100%;
-        &.kel-input--small {
-            .kel-input__wrapper {
-                border-radius: var(--ks-radius-sm);
-            }
-        }
-
-        .kel-input-group__append, .kel-input-group__prepend {
-            color: var(--ks-text-dim);
-        }
-
-        &.ks-input--reserve-clear {
-            .kel-input__inner {
-                padding-inline-end: var(--ks-spacing-5);
-            }
-
-            .kel-input__suffix {
-                position: absolute;
-                inset-block: 0;
-                inset-inline-end: var(--ks-spacing-3);
-            }
-        }
-    }
-</style>

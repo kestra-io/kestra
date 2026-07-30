@@ -81,85 +81,6 @@
     </div>
 </template>
 
-<script setup lang="ts">
-    import {computed, ref} from "vue"
-    import {useI18n} from "vue-i18n"
-    import Magnify from "vue-material-design-icons/Magnify.vue"
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-
-    interface DataChip {
-        label: string
-        expr?: string
-        type?: string
-    }
-    interface DataSection {
-        key: string
-        label: string
-        chips: DataChip[]
-    }
-
-    const props = withDefaults(defineProps<{
-        kind: string
-        title: string
-        subtitle: string
-        sections: DataSection[]
-        filterable?: boolean
-        collapsible?: boolean
-        isCollapsed?: boolean
-        side?: "left" | "right"
-        stacked?: boolean
-        interactive?: boolean
-    }>(), {
-        filterable: false,
-        collapsible: false,
-        isCollapsed: false,
-        side: "left",
-        stacked: false,
-        interactive: true,
-    })
-
-    const emit = defineEmits<{(e: "toggle"): void}>()
-
-    const {t} = useI18n()
-
-    const filter = ref("")
-    const collapsed = ref(new Set<string>())
-    const copied = ref<string | undefined>(undefined)
-
-    const visibleSections = computed<DataSection[]>(() => {
-        const q = filter.value.trim().toLowerCase()
-        return props.sections
-            .map(section => q
-                ? {...section, chips: section.chips.filter(c => c.label.toLowerCase().includes(q) || (c.expr ?? "").toLowerCase().includes(q))}
-                : section)
-            .filter(section => section.chips.length > 0)
-    })
-
-    function toggle(key: string) {
-        if (collapsed.value.has(key)) collapsed.value.delete(key)
-        else collapsed.value.add(key)
-        collapsed.value = new Set(collapsed.value)
-    }
-
-    function onDragStart(event: DragEvent, expr: string) {
-        event.dataTransfer?.setData("text/plain", expr)
-        if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
-    }
-
-    let copiedTimer: ReturnType<typeof setTimeout> | undefined
-    function copy(expr: string) {
-        navigator.clipboard?.writeText(expr)
-        copied.value = expr
-        clearTimeout(copiedTimer)
-        copiedTimer = setTimeout(() => {
-            copied.value = undefined
-        }, 1200)
-    }
-</script>
-
 <style scoped lang="scss">
     .task-edit-data {
         display: flex;
@@ -390,3 +311,82 @@
         margin: 0;
     }
 </style>
+
+<script setup lang="ts">
+    import {computed, ref} from "vue"
+    import {useI18n} from "vue-i18n"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+
+    interface DataChip {
+        label: string
+        expr?: string
+        type?: string
+    }
+    interface DataSection {
+        key: string
+        label: string
+        chips: DataChip[]
+    }
+
+    const props = withDefaults(defineProps<{
+        kind: string
+        title: string
+        subtitle: string
+        sections: DataSection[]
+        filterable?: boolean
+        collapsible?: boolean
+        isCollapsed?: boolean
+        side?: "left" | "right"
+        stacked?: boolean
+        interactive?: boolean
+    }>(), {
+        filterable: false,
+        collapsible: false,
+        isCollapsed: false,
+        side: "left",
+        stacked: false,
+        interactive: true,
+    })
+
+    const emit = defineEmits<{(e: "toggle"): void}>()
+
+    const {t} = useI18n()
+
+    const filter = ref("")
+    const collapsed = ref(new Set<string>())
+    const copied = ref<string | undefined>(undefined)
+
+    const visibleSections = computed<DataSection[]>(() => {
+        const q = filter.value.trim().toLowerCase()
+        return props.sections
+            .map(section => q
+                ? {...section, chips: section.chips.filter(c => c.label.toLowerCase().includes(q) || (c.expr ?? "").toLowerCase().includes(q))}
+                : section)
+            .filter(section => section.chips.length > 0)
+    })
+
+    function toggle(key: string) {
+        if (collapsed.value.has(key)) collapsed.value.delete(key)
+        else collapsed.value.add(key)
+        collapsed.value = new Set(collapsed.value)
+    }
+
+    function onDragStart(event: DragEvent, expr: string) {
+        event.dataTransfer?.setData("text/plain", expr)
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
+    }
+
+    let copiedTimer: ReturnType<typeof setTimeout> | undefined
+    function copy(expr: string) {
+        navigator.clipboard?.writeText(expr)
+        copied.value = expr
+        clearTimeout(copiedTimer)
+        copiedTimer = setTimeout(() => {
+            copied.value = undefined
+        }, 1200)
+    }
+</script>

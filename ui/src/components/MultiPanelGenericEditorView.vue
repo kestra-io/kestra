@@ -25,6 +25,48 @@
     </div>
 </template>
 
+<style lang="scss" scoped>
+    .main-editor{
+        display: grid;
+        grid-template-rows: auto 1fr;
+        height: 100%;
+
+        .editor-wrapper {
+            position: relative;
+            height: 100%;
+        }
+    }
+
+    .tabs-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        flex-shrink: 0;
+    }
+
+    :deep(.editor-panels){
+        position: absolute;
+    }
+    :deep(.kel-splitter-bar){
+        width: 2px !important;
+    }
+
+    .default-theme{
+        :deep(.kel-splitter-panel) {
+            background-color: var(--ks-bg-surface);
+        }
+
+        :deep(.kel-splitter__splitter){
+            border-top-color: var(--ks-border-default);
+            background-color: var(--ks-bg-surface);
+            &:before, &:after{
+                background-color: var(--ks-text-secondary);
+            }
+        }
+    }
+</style>
+
 <script lang="ts" setup>
     import {computed, useSlots} from "vue"
     import {useStorage} from "@vueuse/core"
@@ -141,46 +183,3 @@
         splitOrientation,
     })
 </script>
-
-<style lang="scss" scoped>
-    .main-editor{
-        display: grid;
-        grid-template-rows: auto 1fr;
-        height: 100%;
-
-        .editor-wrapper {
-            position: relative;
-            height: 100%;
-        }
-    }
-
-    .tabs-actions {
-        display: flex;
-        align-items: center;
-        gap: var(--ks-spacing-1);
-        padding: var(--ks-spacing-2) var(--ks-spacing-4);
-        flex-shrink: 0;
-    }
-
-    :deep(.editor-panels){
-        position: absolute;
-    }
-    :deep(.kel-splitter-bar){
-        width: 2px !important;
-    }
-
-    .default-theme{
-        :deep(.kel-splitter-panel) {
-            background-color: var(--ks-bg-surface);
-        }
-
-        :deep(.kel-splitter__splitter){
-            border-top-color: var(--ks-border-default);
-            background-color: var(--ks-bg-surface);
-            &:before, &:after{
-                background-color: var(--ks-text-secondary);
-            }
-        }
-    }
-</style>
-

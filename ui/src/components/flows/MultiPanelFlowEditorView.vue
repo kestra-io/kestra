@@ -23,6 +23,13 @@
     </div>
 </template>
 
+<style lang="scss" scoped>
+    .flow-editor-shell {
+        position: relative;
+        height: 100%;
+    }
+</style>
+
 <script setup lang="ts">
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
@@ -206,10 +213,3 @@
         }
     }, {immediate: true})
 </script>
-
-<style lang="scss" scoped>
-    .flow-editor-shell {
-        position: relative;
-        height: 100%;
-    }
-</style>

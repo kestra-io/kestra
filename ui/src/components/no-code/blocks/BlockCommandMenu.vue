@@ -69,77 +69,6 @@
     </Teleport>
 </template>
 
-<script setup lang="ts">
-    import {computed, nextTick, onMounted, ref, watch, type Component} from "vue"
-    import {useI18n} from "vue-i18n"
-
-    import {KsInput} from "@kestra-io/design-system"
-
-    export interface BlockCommandMenuItem {
-        id: string
-        group: string
-        title: string
-        subtitle?: string
-        icon?: Component
-        shortcut?: string
-        run: () => void
-    }
-
-    const props = defineProps<{
-        items: BlockCommandMenuItem[]
-        contextLabel?: string
-    }>()
-
-    const emit = defineEmits<{
-        (e: "close"): void
-    }>()
-
-    const {t} = useI18n()
-
-    const query = ref("")
-    const activeIndex = ref(0)
-    const searchInput = ref<InstanceType<typeof KsInput>>()
-
-    const filteredItems = computed<BlockCommandMenuItem[]>(() => {
-        const search = query.value.trim().toLowerCase()
-        if (!search) return props.items
-        return props.items.filter(item =>
-            `${item.title} ${item.subtitle ?? ""}`.toLowerCase().includes(search),
-        )
-    })
-
-    watch(filteredItems, (items) => {
-        if (activeIndex.value >= items.length) activeIndex.value = Math.max(0, items.length - 1)
-    })
-
-    function run(item: BlockCommandMenuItem) {
-        item.run()
-    }
-
-    function onKeydown(event: KeyboardEvent) {
-        if (!["Escape", "ArrowDown", "ArrowUp", "Enter"].includes(event.key)) return
-        event.preventDefault()
-        event.stopPropagation()
-
-        if (event.key === "Escape") {
-            if (query.value) {
-                query.value = ""
-            } else {
-                emit("close")
-            }
-        } else if (event.key === "ArrowDown") {
-            activeIndex.value = Math.min(activeIndex.value + 1, filteredItems.value.length - 1)
-        } else if (event.key === "ArrowUp") {
-            activeIndex.value = Math.max(activeIndex.value - 1, 0)
-        } else if (event.key === "Enter") {
-            const item = filteredItems.value[activeIndex.value]
-            if (item) run(item)
-        }
-    }
-
-    onMounted(() => nextTick(() => searchInput.value?.focus()))
-</script>
-
 <style scoped lang="scss">
     .block-command-menu-overlay {
         position: fixed;
@@ -272,3 +201,74 @@
         margin: 0;
     }
 </style>
+
+<script setup lang="ts">
+    import {computed, nextTick, onMounted, ref, watch, type Component} from "vue"
+    import {useI18n} from "vue-i18n"
+
+    import {KsInput} from "@kestra-io/design-system"
+
+    export interface BlockCommandMenuItem {
+        id: string
+        group: string
+        title: string
+        subtitle?: string
+        icon?: Component
+        shortcut?: string
+        run: () => void
+    }
+
+    const props = defineProps<{
+        items: BlockCommandMenuItem[]
+        contextLabel?: string
+    }>()
+
+    const emit = defineEmits<{
+        (e: "close"): void
+    }>()
+
+    const {t} = useI18n()
+
+    const query = ref("")
+    const activeIndex = ref(0)
+    const searchInput = ref<InstanceType<typeof KsInput>>()
+
+    const filteredItems = computed<BlockCommandMenuItem[]>(() => {
+        const search = query.value.trim().toLowerCase()
+        if (!search) return props.items
+        return props.items.filter(item =>
+            `${item.title} ${item.subtitle ?? ""}`.toLowerCase().includes(search),
+        )
+    })
+
+    watch(filteredItems, (items) => {
+        if (activeIndex.value >= items.length) activeIndex.value = Math.max(0, items.length - 1)
+    })
+
+    function run(item: BlockCommandMenuItem) {
+        item.run()
+    }
+
+    function onKeydown(event: KeyboardEvent) {
+        if (!["Escape", "ArrowDown", "ArrowUp", "Enter"].includes(event.key)) return
+        event.preventDefault()
+        event.stopPropagation()
+
+        if (event.key === "Escape") {
+            if (query.value) {
+                query.value = ""
+            } else {
+                emit("close")
+            }
+        } else if (event.key === "ArrowDown") {
+            activeIndex.value = Math.min(activeIndex.value + 1, filteredItems.value.length - 1)
+        } else if (event.key === "ArrowUp") {
+            activeIndex.value = Math.max(activeIndex.value - 1, 0)
+        } else if (event.key === "Enter") {
+            const item = filteredItems.value[activeIndex.value]
+            if (item) run(item)
+        }
+    }
+
+    onMounted(() => nextTick(() => searchInput.value?.focus()))
+</script>

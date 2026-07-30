@@ -1063,7 +1063,7 @@ export type FlowNode = {
     id?: string;
 };
 
-export type FlowRelation = 'FLOW_TASK' | 'FLOW_TRIGGER';
+export type FlowRelation = 'FLOW_TASK' | 'FLOW_TRIGGER' | 'SUBFLOW_FUNCTION';
 
 export type FlowServiceTaskDeprecation = {
     taskId?: string;

@@ -58,25 +58,65 @@ public abstract class PostgresFlowRepositoryService {
 
     public static Condition findCondition(Object labels, QueryFilter.Op operation) {
         List<Condition> conditions = new ArrayList<>();
+        List<Condition> inConditions = new ArrayList<>();
 
-        if (labels instanceof Map<?, ?> labelValues) {
+        if (labels instanceof String label) {
+            switch (operation) {
+                case CONTAINS -> conditions.add(labelContainsCondition(label));
+                case NOT_CONTAINS -> conditions.add(labelContainsCondition(label).not());
+                case IS_NULL -> conditions.add(labelKeyCondition(label).not());
+                case IS_NOT_NULL -> conditions.add(labelKeyCondition(label));
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            }
+        } else if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) ->
             {
+                Field<Boolean> labelMatches = DSL.field(
+                    "COALESCE(value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text)), false)",
+                    Boolean.class,
+                    DSL.val(key, String.class),
+                    DSL.val(value, String.class)
+                );
                 if (operation.equals(EQUALS)) {
-                    conditions.add(
-                        DSL.condition(
-                            "value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)
-                        )
-                    );
+                    conditions.add(labelMatches.isTrue());
+                } else if (operation.equals(QueryFilter.Op.IN)) {
+                    inConditions.add(labelMatches.isTrue());
+                } else if (operation.equals(QueryFilter.Op.NOT_IN)) {
+                    conditions.add(labelMatches.isFalse());
                 } else if (operation.equals(QueryFilter.Op.NOT_EQUALS)) {
-                    // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
-                    String extractValueSql = "(SELECT jsonb_path_query_first(value, '$.labels[*] ? (@.key == $labelKey).value', jsonb_build_object('labelKey', {0}::text))#>>'{}')";
-                    Field<String> extractedValue = DSL.field(extractValueSql, String.class, DSL.val(key, String.class));
-                    conditions.add(extractedValue.isNull().or(extractedValue.ne((String) value)));
+                    conditions.add(labelMatches.isFalse());
+                } else if (operation.equals(QueryFilter.Op.IS_NULL)) {
+                    conditions.add(labelKeyCondition((String) key).not());
+                } else if (operation.equals(QueryFilter.Op.IS_NOT_NULL)) {
+                    conditions.add(labelKeyCondition((String) key));
+                } else {
+                    throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             });
         }
+        if (!inConditions.isEmpty()) {
+            conditions.add(DSL.or(inConditions));
+        }
         return conditions.isEmpty() ? DSL.noCondition() : DSL.and(conditions);
+    }
+
+    private static Condition labelContainsCondition(String query) {
+        String sql = "EXISTS (" +
+            " SELECT 1 FROM jsonb_array_elements(COALESCE(value -> 'labels', '[]'::jsonb)) AS lbl" +
+            " WHERE lower(lbl ->> 'value') LIKE lower('%' || ? || '%')" +
+            "    OR lower(lbl ->> 'key') LIKE lower('%' || ? || '%')" +
+            ")";
+        return DSL.condition(sql, query, query);
+    }
+
+    private static Condition labelKeyCondition(String key) {
+        return DSL.condition(
+            "EXISTS (" +
+                " SELECT 1 FROM jsonb_array_elements(COALESCE(value -> 'labels', '[]'::jsonb)) AS lbl" +
+                " WHERE lbl ->> 'key' = ?" +
+                ")",
+            key
+        );
     }
 
 }

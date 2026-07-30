@@ -229,7 +229,8 @@
 
     import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
-    import {KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
 
     import action from "../../models/action"

@@ -90,7 +90,7 @@ public abstract class AbstractSQLInjectionTest {
         assertThat(
             executionRepository.find(
                 null, tenant, null, null, null, null, null, null,
-                Map.of("' OR '1'='1", "anything"), null, null, false
+                Map.of("' OR '1'='1", "anything"), null, false
             )
                 .collectList().block()
         ).as("Old API: SQL injection in label key should return no results").isEmpty();
@@ -99,7 +99,7 @@ public abstract class AbstractSQLInjectionTest {
         assertThat(
             executionRepository.find(
                 null, tenant, null, null, null, null, null, null,
-                Map.of("mykey", "' OR '1'='1"), null, null, false
+                Map.of("mykey", "' OR '1'='1"), null, false
             )
                 .collectList().block()
         ).as("Old API: SQL injection in label value should return no results").isEmpty();

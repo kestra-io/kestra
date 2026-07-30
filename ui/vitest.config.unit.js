@@ -13,14 +13,12 @@ export default defineProject({
     test: {
         name: "unit",
         environment: "jsdom",
+        // Cheaper than the forks default (no process spawn per worker). Full
+        // isolation is kept: ~4 spec files leak module state without it.
+        pool: "threads",
         setupFiles: ["./tests/unit/setup.ts"],
-        reporters: [
-            ["default"],
-            ["junit"],
-        ],
-        outputFile: {
-            junit: "./test-report.junit.xml",
-        },
+        // No reporters here: Vitest ignores project-level `reporters`, so the
+        // junit report is configured on the CLI (see test:unit in package.json).
         exclude: [
             "tests/e2e/**",
             // Match node_modules at ANY depth. A bare "node_modules/**" only excludes

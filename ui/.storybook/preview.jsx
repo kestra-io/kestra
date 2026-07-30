@@ -105,20 +105,9 @@ window.addEventListener("unhandledrejection", (evt) => {
     }
 })
 
+// monacoEnvironment lazily registers @types/node on the first TS/JS worker
+// request (see src/utils/monacoNodeTypes.ts), so stories that exercise Monaco
+// completions still get Node types without eagerly loading them per page.
 import "../src/utils/monacoEnvironment"
-
-const NodeTypesRaw = import.meta.glob("../node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"})
-function loadNodeTypes(tries = 0) {
-    import("monaco-editor/esm/vs/editor/editor.api").then(({languages}) => {
-        if (languages.typescript) {
-            for (const path in NodeTypesRaw) {
-                languages.typescript.typescriptDefaults.addExtraLib(NodeTypesRaw[path], `file://${path}`)
-            }
-        } else if (tries <= 15) {
-            setTimeout(() => loadNodeTypes(tries + 1), (tries + 1) * 100)
-        }
-    })
-}
-loadNodeTypes()
 
 export default preview;

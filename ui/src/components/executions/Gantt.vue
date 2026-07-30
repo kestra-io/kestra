@@ -5,7 +5,7 @@
     />
     <template v-else-if="execution && executionsStore.flow">
         <ExecutionProgress
-            v-if="isRunning"
+            v-if="isProgressing"
             :execution="execution"
             class="gantt-progress"
         />
@@ -414,7 +414,7 @@
 
     const isQueued = computed<boolean>(() => execution.value?.state?.current === "QUEUED")
 
-    const isRunning = computed<boolean>(() => Boolean(execution.value && State.isRunning(execution.value.state.current)))
+    const isProgressing = computed<boolean>(() => execution.value?.state?.current === State.RUNNING)
 
     // Supporting line shown under the status badge when the Gantt has no task runs to plot.
     const emptyStateHint = computed<string>(() => {

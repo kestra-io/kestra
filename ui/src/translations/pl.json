@@ -110,7 +110,8 @@
     "executionProgress": {
         "title": "Postęp wykonania",
         "estimatedRemaining": "Szacowany pozostały czas: {duration}",
-        "noBaseline": "Brak danych historycznych — nie można oszacować pozostałego czasu"
+        "noBaseline": "Brak danych historycznych — nie można oszacować pozostałego czasu",
+        "pastEstimate": "Wykonanie trwa dłużej niż zwykle"
     },
     "choose file": "Wybierz plik lub upuść go tutaj...",
     "launch execution": "Wykonaj",

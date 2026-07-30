@@ -110,7 +110,8 @@
     "executionProgress": {
         "title": "実行の進行状況",
         "estimatedRemaining": "残り時間の目安: {duration}",
-        "noBaseline": "履歴データがないため、残り時間を推定できません"
+        "noBaseline": "履歴データがないため、残り時間を推定できません",
+        "pastEstimate": "通常より時間がかかっています"
     },
     "choose file": "ファイルを選択するか、ここにドロップしてください...",
     "launch execution": "実行",

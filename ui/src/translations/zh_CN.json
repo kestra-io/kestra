@@ -110,7 +110,8 @@
     "executionProgress": {
         "title": "执行进度",
         "estimatedRemaining": "预计剩余：{duration}",
-        "noBaseline": "没有历史数据 — 无法估算剩余时间"
+        "noBaseline": "没有历史数据 — 无法估算剩余时间",
+        "pastEstimate": "运行时间比平常更长"
     },
     "choose file": "选择文件或拖放到此处...",
     "launch execution": "执行",

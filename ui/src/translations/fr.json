@@ -110,7 +110,8 @@
     "executionProgress": {
         "title": "Progression de l'exécution",
         "estimatedRemaining": "Temps restant estimé : {duration}",
-        "noBaseline": "Aucune donnée historique — impossible d'estimer le temps restant"
+        "noBaseline": "Aucune donnée historique — impossible d'estimer le temps restant",
+        "pastEstimate": "L'exécution dure plus longtemps que d'habitude"
     },
     "choose file": "Choisir un fichier ou le glisser le ici...",
     "launch execution": "Déclencher",

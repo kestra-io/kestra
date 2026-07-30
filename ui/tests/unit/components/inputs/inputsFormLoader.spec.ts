@@ -405,3 +405,29 @@ describe("InputsForm surfaces render errors on load, but keeps value errors gate
         expect(wrapper.vm.inputsValues.name).toBe("rendered-value")
     })
 })
+
+describe("InputsForm ready event", () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+    })
+
+    afterEach(() => {
+        document.body.innerHTML = ""
+    })
+
+    test("emits ready once the initial validation has settled", async () => {
+        let resolveValidate!: (value: unknown) => void
+        const pending = new Promise((resolve) => {resolveValidate = resolve})
+        const store = useExecutionsStore()
+        store.validateExecution = vi.fn().mockReturnValue(pending)
+
+        const wrapper = mountForm()
+        await flushPromises()
+
+        expect(wrapper.emitted("ready")).toBeUndefined()
+
+        resolveValidate({data: {checks: [], inputs: []}})
+        await flushPromises()
+        expect(wrapper.emitted("ready")).toHaveLength(1)
+    })
+})

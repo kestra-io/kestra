@@ -126,7 +126,8 @@ public class ExecutionStreamingService {
         // already in a terminal state, deliver the "end" event directly.
         // FluxSink is thread-safe: duplicate complete() calls are no-ops, and next()
         // after complete() is silently dropped, so double-delivery is harmless.
-        executionRepository.findById(flow.getTenantId(), executionId).ifPresent(execution -> {
+        executionRepository.findById(flow.getTenantId(), executionId).ifPresent(execution ->
+        {
             if (isStopFollow(flow, execution)) {
                 sink.next(Event.of(execution).id("end"));
                 sink.complete();

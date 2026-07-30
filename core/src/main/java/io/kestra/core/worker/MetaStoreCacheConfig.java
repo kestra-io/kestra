@@ -1,9 +1,9 @@
 package io.kestra.core.worker;
 
+import java.time.Duration;
+
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.bind.annotation.Bindable;
-
-import java.time.Duration;
 
 /**
  * {@code expireAfterAccess} is a safety bound only; entries are normally evicted by push
@@ -12,5 +12,5 @@ import java.time.Duration;
 @ConfigurationProperties("kestra.worker.metastore-cache")
 public record MetaStoreCacheConfig(
     @Bindable(defaultValue = "10000") Long maximumSize,
-    @Bindable(defaultValue = "PT1H")  Duration expireAfterAccess
-) {}
+    @Bindable(defaultValue = "PT1H") Duration expireAfterAccess) {
+}

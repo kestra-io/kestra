@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 
@@ -32,8 +33,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.property.Property;
@@ -53,7 +52,6 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.params.provider.FieldSource;
 import reactor.core.publisher.Flux;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
@@ -293,29 +291,35 @@ public abstract class AbstractExecutionRepositoryTest {
             // OR at root: state = RUNNING OR state = FAILED -> 5 + 3 = 8
             Arguments.of(
                 "RUNNING OR FAILED",
-                List.of(QueryFilter.builder()
-                    .logical(Logical.OR)
-                    .children(List.of(runningState, failedState))
-                    .build()),
+                List.of(
+                    QueryFilter.builder()
+                        .logical(Logical.OR)
+                        .children(List.of(runningState, failedState))
+                        .build()
+                ),
                 8
             ),
 
             // (state=RUNNING AND flow=full) OR (state=SUCCESS AND flow=second) -> 5 + 13 = 18
             Arguments.of(
                 "(RUNNING AND flow=full) OR (SUCCESS AND flow=second)",
-                List.of(QueryFilter.builder()
-                    .logical(Logical.OR)
-                    .children(List.of(
-                        QueryFilter.builder()
-                            .logical(Logical.AND)
-                            .children(List.of(runningState, flowFull))
-                            .build(),
-                        QueryFilter.builder()
-                            .logical(Logical.AND)
-                            .children(List.of(successState, flowSecond))
-                            .build()
-                    ))
-                    .build()),
+                List.of(
+                    QueryFilter.builder()
+                        .logical(Logical.OR)
+                        .children(
+                            List.of(
+                                QueryFilter.builder()
+                                    .logical(Logical.AND)
+                                    .children(List.of(runningState, flowFull))
+                                    .build(),
+                                QueryFilter.builder()
+                                    .logical(Logical.AND)
+                                    .children(List.of(successState, flowSecond))
+                                    .build()
+                            )
+                        )
+                        .build()
+                ),
                 18
             ),
 
@@ -336,20 +340,24 @@ public abstract class AbstractExecutionRepositoryTest {
             // (RUNNING AND flow=full) OR FAILED OR (SUCCESS AND flow=second) -> 5 + 3 + 13 = 21
             Arguments.of(
                 "(RUNNING AND flow=full) OR FAILED OR (SUCCESS AND flow=second)",
-                List.of(QueryFilter.builder()
-                    .logical(Logical.OR)
-                    .children(List.of(
-                        QueryFilter.builder()
-                            .logical(Logical.AND)
-                            .children(List.of(runningState, flowFull))
-                            .build(),
-                        failedState,
-                        QueryFilter.builder()
-                            .logical(Logical.AND)
-                            .children(List.of(successState, flowSecond))
-                            .build()
-                    ))
-                    .build()),
+                List.of(
+                    QueryFilter.builder()
+                        .logical(Logical.OR)
+                        .children(
+                            List.of(
+                                QueryFilter.builder()
+                                    .logical(Logical.AND)
+                                    .children(List.of(runningState, flowFull))
+                                    .build(),
+                                failedState,
+                                QueryFilter.builder()
+                                    .logical(Logical.AND)
+                                    .children(List.of(successState, flowSecond))
+                                    .build()
+                            )
+                        )
+                        .build()
+                ),
                 21
             ),
 
@@ -360,13 +368,15 @@ public abstract class AbstractExecutionRepositoryTest {
                     namespaceEq,
                     QueryFilter.builder()
                         .logical(Logical.OR)
-                        .children(List.of(
-                            QueryFilter.builder()
-                                .logical(Logical.AND)
-                                .children(List.of(runningState, flowFull))
-                                .build(),
-                            failedState
-                        ))
+                        .children(
+                            List.of(
+                                QueryFilter.builder()
+                                    .logical(Logical.AND)
+                                    .children(List.of(runningState, flowFull))
+                                    .build(),
+                                failedState
+                            )
+                        )
                         .build()
                 ),
                 8
@@ -375,10 +385,12 @@ public abstract class AbstractExecutionRepositoryTest {
             // Single-child AND wrapper -> behaves identically to the leaf -> 5
             Arguments.of(
                 "AND wrapper containing only RUNNING",
-                List.of(QueryFilter.builder()
-                    .logical(Logical.AND)
-                    .children(List.of(runningState))
-                    .build()),
+                List.of(
+                    QueryFilter.builder()
+                        .logical(Logical.AND)
+                        .children(List.of(runningState))
+                        .build()
+                ),
                 5
             )
         );
@@ -730,94 +742,6 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
-    protected void dailyStatistics() throws InterruptedException {
-        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        for (int i = 0; i < 28; i++) {
-            executionRepository.save(
-                builder(
-                    tenant,
-                    i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
-                    i < 15 ? null : "second"
-                ).build()
-            );
-        }
-
-        executionRepository.save(
-            builder(
-                tenant,
-                State.Type.SUCCESS,
-                "second"
-            ).namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE).build()
-        );
-
-        // mysql need some time ...
-        Thread.sleep(500);
-
-        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            null,
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null
-        );
-
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
-        assertThat(result.get(10).getDuration().getAvg().toMillis()).isGreaterThan(0L);
-
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.USER, FlowScope.SYSTEM),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null
-        );
-
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.USER),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null
-        );
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
-
-        result = executionRepository.dailyStatistics(
-            null,
-            tenant,
-            List.of(FlowScope.SYSTEM),
-            null,
-            null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
-            null,
-            null
-        );
-        assertThat(result.size()).isEqualTo(11);
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
-    }
-
-    @Test
     void shouldFindLatestExecutionGivenState() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution earliest = buildWithCreatedDate(tenant, Instant.now().minus(Duration.ofMinutes(10)));
@@ -1077,6 +1001,44 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(result.getTotal()).isEqualTo(3L);
         assertThat(result).hasSize(3)
             .allMatch(e -> parent.getId().equals(e.getParentId()));
+    }
+
+    @Test
+    protected void shouldFindLoopSubExecutionsScopedByTaskId() {
+        // Given a parent execution with iterations from two distinct Loop tasks
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution parent = executionRepository.save(builder(tenant, State.Type.SUCCESS, null).build());
+
+        TaskRun loop1TaskRun = TaskRun.of(
+            parent, ResolvedTask.of(
+                Return.builder().id("loop1").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+        TaskRun loop2TaskRun = TaskRun.of(
+            parent, ResolvedTask.of(
+                Return.builder().id("loop2").type(Return.class.getName()).format(Property.ofValue("test")).build()
+            )
+        );
+
+        for (int i = 0; i < 2; i++) {
+            executionRepository.save(parent.loopExecution(loop1TaskRun, i, null, "value" + i));
+        }
+        for (int i = 0; i < 3; i++) {
+            executionRepository.save(parent.loopExecution(loop2TaskRun, i, null, "value" + i));
+        }
+
+        // When / Then: scoping to a single loop task returns only that task's iterations
+        List<Execution> loop1Subs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), "loop1");
+        assertThat(loop1Subs).hasSize(2)
+            .allMatch(e -> "loop1".equals(e.getLoopRun().taskId()));
+
+        List<Execution> loop2Subs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), "loop2");
+        assertThat(loop2Subs).hasSize(3)
+            .allMatch(e -> "loop2".equals(e.getLoopRun().taskId()));
+
+        // A null taskId returns every loop task's iterations
+        List<Execution> allSubs = executionRepository.findLoopSubExecutions(tenant, parent.getId(), null);
+        assertThat(allSubs).hasSize(5);
     }
 
     @Test
@@ -1603,9 +1565,14 @@ public abstract class AbstractExecutionRepositoryTest {
         .namespace(NAMESPACE)
         .flowId("scope-test")
         .flowRevision(1)
-        .state(new State(Type.SUCCESS, List.of(
-            new State.History(State.Type.CREATED, SCOPE_TEST_CREATE_DATE),
-            new State.History(Type.SUCCESS, SCOPE_TEST_CREATE_DATE.plus(SCOPE_TEST_DURATION)))))
+        .state(
+            new State(
+                Type.SUCCESS, List.of(
+                    new State.History(State.Type.CREATED, SCOPE_TEST_CREATE_DATE),
+                    new State.History(Type.SUCCESS, SCOPE_TEST_CREATE_DATE.plus(SCOPE_TEST_DURATION))
+                )
+            )
+        )
         .taskRunList(List.of())
         .build();
 
@@ -1614,16 +1581,21 @@ public abstract class AbstractExecutionRepositoryTest {
         .namespace(SystemFlowsConfiguration.DEFAULT_NAMESPACE)
         .flowId("scope-test")
         .flowRevision(1)
-        .state(new State(Type.SUCCESS, List.of(
-            new State.History(State.Type.CREATED, SCOPE_TEST_CREATE_DATE),
-            new State.History(Type.SUCCESS, SCOPE_TEST_CREATE_DATE.plus(SCOPE_TEST_DURATION)))))
+        .state(
+            new State(
+                Type.SUCCESS, List.of(
+                    new State.History(State.Type.CREATED, SCOPE_TEST_CREATE_DATE),
+                    new State.History(Type.SUCCESS, SCOPE_TEST_CREATE_DATE.plus(SCOPE_TEST_DURATION))
+                )
+            )
+        )
         .taskRunList(List.of())
         .build();
 
     private record DashboardScopeFilterTestCase(
         QueryFilter queryFilter,
-        List<String> expectedIds
-    ) {}
+        List<String> expectedIds) {
+    }
 
     private static QueryFilter scopeFilter(QueryFilter.Op op, Object value) {
         return QueryFilter.builder()
@@ -1634,14 +1606,14 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     static final List<DashboardScopeFilterTestCase> dashboardScopeFilterTestCases = List.of(
-        new DashboardScopeFilterTestCase(scopeFilter(Op.EQUALS, USER),        List.of(SCOPE_USER_EXECUTION_ID)),
-        new DashboardScopeFilterTestCase(scopeFilter(Op.EQUALS, SYSTEM),      List.of(SCOPE_SYSTEM_EXECUTION_ID)),
-        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_EQUALS, USER),    List.of(SCOPE_SYSTEM_EXECUTION_ID)),
-        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_EQUALS, SYSTEM),  List.of(SCOPE_USER_EXECUTION_ID)),
-        new DashboardScopeFilterTestCase(scopeFilter(Op.IN, List.of(USER)),   List.of(SCOPE_USER_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.EQUALS, USER), List.of(SCOPE_USER_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.EQUALS, SYSTEM), List.of(SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_EQUALS, USER), List.of(SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_EQUALS, SYSTEM), List.of(SCOPE_USER_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.IN, List.of(USER)), List.of(SCOPE_USER_EXECUTION_ID)),
         new DashboardScopeFilterTestCase(scopeFilter(Op.IN, List.of(SYSTEM)), List.of(SCOPE_SYSTEM_EXECUTION_ID)),
-        new DashboardScopeFilterTestCase(scopeFilter(Op.IN,     List.of(USER, SYSTEM)), List.of(SCOPE_USER_EXECUTION_ID, SCOPE_SYSTEM_EXECUTION_ID)),
-        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_IN, List.of(USER)),   List.of(SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.IN, List.of(USER, SYSTEM)), List.of(SCOPE_USER_EXECUTION_ID, SCOPE_SYSTEM_EXECUTION_ID)),
+        new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_IN, List.of(USER)), List.of(SCOPE_SYSTEM_EXECUTION_ID)),
         new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_IN, List.of(SYSTEM)), List.of(SCOPE_USER_EXECUTION_ID)),
         new DashboardScopeFilterTestCase(scopeFilter(Op.NOT_IN, List.of(USER, SYSTEM)), List.of())
     );
@@ -1659,9 +1631,11 @@ public abstract class AbstractExecutionRepositoryTest {
         var now = ZonedDateTime.now();
         var dataFilter = Executions.builder()
             .type(Executions.class.getName())
-            .columns(Map.of(
-                "id", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).build()
-            ))
+            .columns(
+                Map.of(
+                    "id", ColumnDescriptor.<Executions.Fields> builder().field(Executions.Fields.ID).build()
+                )
+            )
             .build();
         dataFilter.updateWhereWithGlobalFilters(List.of(testCase.queryFilter()), now.minusHours(1), now);
 
@@ -1685,7 +1659,7 @@ public abstract class AbstractExecutionRepositoryTest {
         var now = ZonedDateTime.now();
         var dataFilter = ExecutionsKPI.builder()
             .type(ExecutionsKPI.class.getName())
-            .columns(ColumnDescriptor.<ExecutionsKPI.Fields>builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
+            .columns(ColumnDescriptor.<ExecutionsKPI.Fields> builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
             .build();
         dataFilter.updateWhereWithGlobalFilters(List.of(testCase.queryFilter()), now.minusHours(1), now);
 
@@ -1705,10 +1679,12 @@ public abstract class AbstractExecutionRepositoryTest {
         ZonedDateTime midWindow = ZonedDateTime.now().minusMinutes(150);
 
         // Execution A: started inside window, ended after window
-        State stateA = State.of(Type.SUCCESS, List.of(
-            new State.History(Type.CREATED, midWindow.toInstant()),
-            new State.History(Type.SUCCESS, Instant.now())
-        ));
+        State stateA = State.of(
+            Type.SUCCESS, List.of(
+                new State.History(Type.CREATED, midWindow.toInstant()),
+                new State.History(Type.SUCCESS, Instant.now())
+            )
+        );
         var execA = Execution.builder()
             .id(FriendlyId.createFriendlyId())
             .namespace(NAMESPACE)
@@ -1721,10 +1697,12 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(execA);
 
         // Execution B: started before window, ended inside window
-        State stateB = State.of(Type.SUCCESS, List.of(
-            new State.History(Type.CREATED, ZonedDateTime.now().minusHours(4).toInstant()),
-            new State.History(Type.SUCCESS, midWindow.toInstant())
-        ));
+        State stateB = State.of(
+            Type.SUCCESS, List.of(
+                new State.History(Type.CREATED, ZonedDateTime.now().minusHours(4).toInstant()),
+                new State.History(Type.SUCCESS, midWindow.toInstant())
+            )
+        );
         var execB = Execution.builder()
             .id(FriendlyId.createFriendlyId())
             .namespace(NAMESPACE)

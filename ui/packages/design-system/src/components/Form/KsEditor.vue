@@ -201,12 +201,14 @@
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
     import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
     import "monaco-editor/esm/vs/language/json/monaco.contribution"
+    import "monaco-editor/esm/vs/language/typescript/monaco.contribution"
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution"
 
     import type {VNode} from "vue"
     import {computed, h, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useThrottleFn} from "@vueuse/core"
+    import {useStorage, useThrottleFn} from "@vueuse/core"
+    import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../../utils/fontScale"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     // @ts-expect-error tab focus path lacks types
@@ -218,7 +220,7 @@
     import uniqBy from "lodash/uniqBy"
 
     import KsDatePicker from "./KsDatePicker.vue"
-    import KsTaskIcon from "../Kestra/KsTaskIcon.vue"
+    import {useTaskIcon, type TaskIconProps} from "../../composables/taskIcon"
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
@@ -233,6 +235,8 @@
 
     const {t} = useI18n()
 
+    const taskIconComponent = useTaskIcon()
+
     const props = withDefaults(defineProps<{
         modelValue?: string
         original?: string
@@ -246,7 +250,7 @@
         inline?: boolean
         navbar?: boolean
         configureLanguage?: (editor: ICodeEditor | undefined, language: string, schemaType?: string) => Promise<void>
-        pluginIcons?: Record<string, {icon: string; flowable: boolean}>
+        loadTaskIcon?: TaskIconProps["loadIcon"]
         options?: KsEditorOptions
     }>(), {
         modelValue: "",
@@ -261,7 +265,7 @@
         inline: false,
         navbar: true,
         configureLanguage: undefined,
-        pluginIcons: () => ({}),
+        loadTaskIcon: undefined,
         options: undefined,
     })
 
@@ -300,6 +304,21 @@
         UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
         UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
     } as const
+
+    const storedEditorFontSizeOverride = useStorage<number | null>("editorFontSize", null, localStorage, {
+        serializer: {
+            read: (v) => {
+                if (v === null || v === "null" || v === "") return null
+                const n = Number(v)
+                return isNaN(n) ? null : n
+            },
+            write: (v) => (v === null ? "null" : String(v)),
+        },
+    })
+    const storedAppFontSizeMode = useStorage<AppFontSizeMode>(APP_FONT_SIZE_KEY, "medium")
+    const resolvedEditorFontSize = computed(
+        () => storedEditorFontSizeOverride.value ?? (BASE_PX[storedAppFontSizeMode.value] ?? BASE_PX.medium),
+    )
 
     const editorRef = ref<HTMLDivElement | null>(null)
     const container = ref<HTMLDivElement>()
@@ -409,12 +428,10 @@
         opts.wordWrap = mergedOptions.value.wordWrap ? "on" : "off"
         opts.automaticLayout = true
 
-        const settingsEditorFontSize = localStorage.getItem("editorFontSize")
-
         return {
             tabSize: 2,
             fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
-            fontSize: settingsEditorFontSize ? parseInt(settingsEditorFontSize) : 12,
+            fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",
             scrollBeyondLastLine: false,
             roundedSelection: false,
@@ -520,14 +537,12 @@
             const vsCodeIcon = node.querySelector(".suggest-icon") as HTMLElement
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove()
 
-            if (completionValue.includes(".") && !completionValue.includes("{")) {
-                if (props.pluginIcons?.[completionValue] !== undefined) {
-                    replaceRowIcon(vsCodeIcon, h(KsTaskIcon as any, {
-                        cls: completionValue,
-                        "only-icon": true,
-                        icons: props.pluginIcons,
-                    }))
-                }
+            if (completionValue.includes(".") && !completionValue.includes("{") && props.loadTaskIcon) {
+                replaceRowIcon(vsCodeIcon, h(taskIconComponent, {
+                    cls: completionValue,
+                    onlyIcon: true,
+                    loadIcon: props.loadTaskIcon,
+                }))
             } else if ((STATES as any)[completionValue] !== undefined) {
                 replaceRowIcon(vsCodeIcon, h((STATES as any)[completionValue].icon))
             } else {
@@ -550,13 +565,6 @@
             return maybeRows
         }) as HTMLElement[]
     }
-
-    watch(() => props.pluginIcons, () => {
-        const widget = suggestWidget.value
-        if (widget === undefined) return
-        const rows = [...widget.getElementsByClassName("monaco-list-row")] as HTMLElement[]
-        if (rows.length > 0) replaceRowsIcons(rows)
-    })
 
     watch(suggestWidget, async (newVal) => {
         const asCodeEditor = editorResolved.value?.getEditorType() === monaco.editor.EditorType.ICodeEditor
@@ -1038,7 +1046,11 @@
 
         observeAndResizeSuggestWidget()
 
+        // Remeasure once now for the already-cached font, and again once web fonts finish
+        // loading — otherwise Monaco caches fallback-font glyph widths and the caret drifts
+        // as you type. See https://github.com/microsoft/monaco-editor/issues/392
         setTimeout(() => monaco.editor.remeasureFonts(), 1)
+        document.fonts.ready.then(() => monaco.editor.remeasureFonts())
 
         // Editor-did-mount: setup keybindings + decorations
         editorDidMount(editorResolved.value)

@@ -4,8 +4,6 @@
         type="auditlogs"
         demoCta
         :title="$t('demos.audit-logs.title')"
-        video="https://www.youtube.com/embed/Qz24gBPGZHs"
-        learnMore="https://kestra.io/docs/enterprise/governance/audit-logs"
     >
         <template #description>
             {{ $t('demos.audit-logs.message') }}

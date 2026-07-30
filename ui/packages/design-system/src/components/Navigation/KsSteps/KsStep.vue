@@ -1,5 +1,15 @@
 <template>
+    <!-- Inside <KsSteps variant="bar">: render as a single label-less progress segment. -->
+    <span
+        v-if="isBar"
+        class="ks-stepbar__seg"
+        :class="`is-${segState}`"
+        role="listitem"
+        :aria-label="title || undefined"
+        :aria-current="segState === 'active' ? 'step' : undefined"
+    />
     <ElStep
+        v-else
         v-bind="({...filteredProps(), ...$attrs} as any)"
     >
         <template v-if="$slots.default" #default>
@@ -28,6 +38,7 @@
 <script setup lang="ts">
     import {ElStep, ElIcon} from "element-plus"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
+    import {inject, computed, type Ref} from "vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -40,6 +51,16 @@
     }>()
 
     const filteredProps = useFilteredProps(props)
+
+    // Provided by a parent KsSteps. In the "bar" variant this step is a progress segment whose state
+    // comes from its own `status`: process -> active, success/finish -> filled, anything else -> upcoming.
+    const ksStepsVariant = inject<Ref<"steps" | "bar" | undefined> | undefined>("ksStepsVariant", undefined)
+    const isBar = computed(() => ksStepsVariant?.value === "bar")
+    const segState = computed(() =>
+        props.status === "process"
+            ? "active"
+            : (props.status === "success" || props.status === "finish") ? "filled" : "upcoming",
+    )
 
     defineSlots<{
         default?(): unknown

@@ -17,10 +17,10 @@ import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.LoopRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.DependsOn;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.BoolInput;
 import io.kestra.core.models.property.Property;
@@ -283,7 +283,7 @@ class RunVariablesTest {
         // Then
         assertThat((Map<String, Object>) variables.get("trigger")).containsEntry("date", "2024-01-01T00:00:00Z");
 
-        Map<String, Object> triggerContext = (Map<String, Object>)((Map<String, Object>) variables.get("trigger")).get("_context");
+        Map<String, Object> triggerContext = (Map<String, Object>) ((Map<String, Object>) variables.get("trigger")).get("_context");
         assertThat(triggerContext).containsEntry("id", "schedule-trigger");
         assertThat(triggerContext).containsEntry("type", "io.kestra.plugin.core.trigger.Schedule");
     }
@@ -311,7 +311,7 @@ class RunVariablesTest {
             .build(new RunContextLogger(), PropertyContext.create(renderer));
 
         // Then — trigger._context must be present even without variables
-        Map<String, Object> triggerContext = (Map<String, Object>)((Map<String, Object>) variables.get("trigger")).get("_context");
+        Map<String, Object> triggerContext = (Map<String, Object>) ((Map<String, Object>) variables.get("trigger")).get("_context");
         assertThat(triggerContext).containsEntry("id", "schedule-trigger");
         assertThat(triggerContext).containsEntry("type", "io.kestra.plugin.core.trigger.Schedule");
     }
@@ -333,6 +333,55 @@ class RunVariablesTest {
 
         // Then
         assertThat(variables).doesNotContainKey("triggerContext");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldBuildTasksMapWhenSameTaskIdHasValuelessAndValuedTaskRuns() {
+        // Given — the crash order: a valueless taskRun for "hello" recorded first (stored as an
+        // immutable Map.of in computeTasksMap), then another taskRun for the SAME id carrying a
+        // value (as produced by a Loop/iteration whose parent context is concatenated in). This is
+        // the SubflowExecutionEnd queue crash: computeTasksMap must not put() into an immutable map.
+        TaskRun valueless = TaskRun.builder()
+            .id(IdUtils.create()).taskId("hello").executionId("exec-id")
+            .namespace("ns").flowId("flow").state(new State())
+            .build();
+        TaskRun valued = TaskRun.builder()
+            .id(IdUtils.create()).taskId("hello").executionId("exec-id")
+            .namespace("ns").flowId("flow").value("item-1").state(new State())
+            .build();
+
+        Execution execution = Execution.builder()
+            .id("exec-id").namespace("ns").flowId("flow").state(new State())
+            .taskRunList(List.of(valueless, valued))
+            .build();
+
+        // When
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withExecution(execution)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        // Then — the valueless state and the per-value state coexist under the same task id
+        Map<String, Object> tasks = (Map<String, Object>) variables.get("tasks");
+        Map<String, Object> hello = (Map<String, Object>) tasks.get("hello");
+        assertThat(hello).containsKey("state");
+        assertThat(hello).containsKey("item-1");
+    }
+
+    @Test
+    void shouldExposeFlowVarsWhenNoExecution() {
+        Flow flow = Flow.builder()
+            .id("id-value")
+            .namespace("namespace-value")
+            .revision(42)
+            .variables(Map.of("region", "us-east-1"))
+            .build();
+
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withFlow(flow)
+            .build(new RunContextLogger(), PropertyContext.create(renderer));
+
+        assertThat(variables.get("vars")).isEqualTo(Map.of("region", "us-east-1"));
     }
 
     @Test
@@ -374,7 +423,7 @@ class RunVariablesTest {
      * Dynamic top-level keys ({@code inputs}, {@code outputs}, {@code tasks}, etc.) are noted
      * as present but their children are not walked, since their structure varies per flow/execution.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     void contextPathsShouldMatchExplicitRegistry() {
         String parentRunId = IdUtils.create();
@@ -421,8 +470,15 @@ class RunVariablesTest {
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withFlow(GenericFlow.builder().id("flow").namespace("ns").revision(1).tenantId("tenant").build())
             .withTask(new Task() {
-                @Override public String getId() { return "task-id"; }
-                @Override public String getType() { return "task-type"; }
+                @Override
+                public String getId() {
+                    return "task-id";
+                }
+
+                @Override
+                public String getType() {
+                    return "task-type";
+                }
             })
             .withTaskRun(childRun)
             .withExecution(execution)
@@ -434,8 +490,10 @@ class RunVariablesTest {
 
         // Dynamic top-level keys whose children vary per flow/execution — not walked.
         // "trigger" holds execution-trigger variables (dynamic like inputs/outputs).
-        Set<String> dynamicTopLevel = Set.of("envs", "files", "globals", "inputs", "labels",
-            "outputs", "tasks", "trigger", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME);
+        Set<String> dynamicTopLevel = Set.of(
+            "envs", "files", "globals", "inputs", "labels",
+            "outputs", "tasks", "trigger", "vars", RunVariables.SECRET_CONSUMER_VARIABLE_NAME
+        );
 
         List<String> foundPaths = new ArrayList<>();
         collectStructuralPaths(variables, "", dynamicTopLevel, foundPaths);

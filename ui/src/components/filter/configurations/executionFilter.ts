@@ -8,6 +8,7 @@ import {useExecutionsStore} from "../../../stores/executions"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -18,7 +19,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.execution_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_executions"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),
@@ -51,7 +52,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         searchable: true,
                     },
                 ] : []) as any,
-                ...(route.name !== "flows/update" ? [{
+                ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
                     description: t("filter.flowId.description"),
@@ -68,7 +69,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async (options?: {search?: string}) => {
                         const search = options?.search?.trim()
                         const ids = await useExecutionsStore().findDistinctFieldValues({
-                            field: "FLOW_ID",
+                            field: "flowId",
                             filters: search ? {"filters[flowId][CONTAINS]": search} : undefined,
                             size: 100,
                         })

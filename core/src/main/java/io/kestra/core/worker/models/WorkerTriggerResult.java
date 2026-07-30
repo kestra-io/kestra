@@ -28,7 +28,7 @@ public record WorkerTriggerResult(
     /**
      * Create a new {@link WorkerTriggerResult} from a {@link WorkerTrigger} and a {@link TriggerEvaluationResult}.
      *
-     * @param trigger    the trigger.
+     * @param trigger the trigger.
      * @param evaluation the evaluation result, or {@code null} if the trigger did not match.
      * @return a new {@link WorkerTriggerResult}.
      */

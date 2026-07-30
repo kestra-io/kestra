@@ -1,4 +1,6 @@
 import {describe, test, expect, beforeEach} from "vitest"
+import {defineComponent} from "vue"
+import {mount} from "@vue/test-utils"
 import {useTableColumns, type ColumnConfig} from "../../../src/components/Data/KsDataTable/filter/composables/useTableColumns"
 
 const COLUMNS: ColumnConfig[] = [
@@ -7,9 +9,19 @@ const COLUMNS: ColumnConfig[] = [
     {label: "C", prop: "c", default: true},
 ]
 
+// useTableColumns calls onMounted internally, so it needs a real component
+// instance to attach to — calling it bare would warn "onMounted is called
+// when there is no active component instance". Mounting synchronously runs
+// that onMounted hook, so initializeVisibleColumns is already applied by the
+// time this returns.
 const setup = (storageKey: string, initialVisibleColumns = ["a", "b", "c"]) => {
-    const table = useTableColumns({columns: COLUMNS, storageKey, initialVisibleColumns})
-    table.initializeVisibleColumns()
+    let table!: ReturnType<typeof useTableColumns>
+    mount(defineComponent({
+        setup() {
+            table = useTableColumns({columns: COLUMNS, storageKey, initialVisibleColumns})
+            return () => null
+        },
+    }))
     return table
 }
 

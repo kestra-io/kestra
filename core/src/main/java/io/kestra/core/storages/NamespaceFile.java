@@ -1,6 +1,7 @@
 package io.kestra.core.storages;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -146,12 +147,21 @@ public record NamespaceFile(
             storagePath += ".v" + revision;
         }
 
-        return new NamespaceFile(
-            pathWithoutLeadingSlash,
-            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/") + (isDirectory(path) ? "/" : "")),
-            namespace,
-            revision
-        );
+        // Use the multi-argument URI constructor so that URI-illegal characters (e.g. spaces)
+        // are percent-encoded (space → %20) while legal URI path characters (e.g. '+') are
+        // preserved unchanged — keeping "a b.txt" and "a+b.txt" as two distinct stored objects.
+        String uriPath = namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/")
+            + (isDirectory(path) ? "/" : "");
+        try {
+            return new NamespaceFile(
+                pathWithoutLeadingSlash,
+                new URI(StorageContext.KESTRA_SCHEME, "", uriPath, null),
+                namespace,
+                revision
+            );
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid namespace file path: " + path, e);
+        }
     }
 
     public static Path normalize(Path path) {

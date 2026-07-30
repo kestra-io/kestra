@@ -1,8 +1,15 @@
+/** External resources shown on an empty state: a video and a "Learn more" documentation page. */
 export interface EmptyLinks {
     video?: string;
     learnMore?: string;
 }
 
+/**
+ * Registry of {@link EmptyLinks} keyed by the `Empty` component's `type` prop.
+ *
+ * `Empty.vue` falls back to this registry when no explicit `video` /
+ * `learnMore` prop is passed; an explicit prop always wins.
+ */
 export const links: Record<string, EmptyLinks> = {
     namespaceFiles: {
         video: "https://www.youtube.com/watch?v=BeQNI2XRddA",
@@ -72,9 +79,39 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=lDGOqqMyQEo",
         learnMore: "https://kestra.io/docs/workflow-components/concurrency",
     },
-    pluginDefaults: {
+    policies: {
         video: "https://www.youtube.com/watch?v=9zQTUeL0KMc",
-        learnMore: "https://kestra.io/docs/workflow-components/plugin-defaults",
+        learnMore: "https://kestra.io/docs/enterprise/governance/policies",
+    },
+    tests: {
+        video: "https://www.youtube.com/watch?v=jMZ9Cs3xxpo",
+        learnMore: "https://kestra.io/docs/enterprise/governance/unit-tests",
+    },
+    iam: {
+        video: "https://www.youtube.com/watch?v=9I87QZJPl1Y",
+        learnMore: "https://kestra.io/docs/enterprise/auth",
+    },
+    tenants: {
+        video: "https://www.youtube.com/watch?v=z4uzAyjKeoc",
+        learnMore: "https://kestra.io/docs/enterprise/governance/tenants",
+    },
+    auditlogs: {
+        video: "https://www.youtube.com/watch?v=Qz24gBPGZHs",
+        learnMore: "https://kestra.io/docs/enterprise/governance/audit-logs",
+    },
+    quotas: {
+        learnMore: "https://kestra.io/docs/workflow-components/quotas",
+    },
+    instance: {
+        video: "https://www.youtube.com/watch?v=pcC3OAJPQao",
+        learnMore: "https://kestra.io/docs/enterprise/instance",
+    },
+    blueprints: {
+        video: "https://www.youtube.com/watch?v=qbGfK-FJi6s",
+        learnMore: "https://kestra.io/docs/enterprise/governance/custom-blueprints",
+    },
+    namespace: {
+        learnMore: "https://kestra.io/docs/enterprise/governance/namespace-management",
     },
     variables: {
         video: "https://www.youtube.com/watch?v=fs86GLg-OGM",

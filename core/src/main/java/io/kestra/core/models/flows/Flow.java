@@ -16,6 +16,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.check.Check;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
@@ -89,8 +90,12 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     List<AbstractTrigger> triggers;
 
-    @Valid
-    List<FlowPluginDefault> pluginDefaults;
+    @Schema(
+        title = "References to governance policies (Enterprise Edition).",
+        description = "Identifiers of `enforcement: REFERENCE` policies to attach to this flow, resolved within the flow's tenant/namespace scope chain. Enterprise Edition only; parsed but ignored in the open-source edition."
+    )
+    @PluginProperty
+    List<String> policyRefs;
 
     @Valid
     Concurrency concurrency;
@@ -126,11 +131,20 @@ public class Flow extends AbstractFlow implements HasUID {
     @PluginProperty
     List<Check> checks;
 
+    @Schema(
+        title = "Quotas evaluated before the flow is executed (EE only).",
+        description = """
+            A list of quotas that are evaluated before the flow is executed. If no quotas are defined, the flow executes normally.
+            Quotas can also be defined at the namespace and tenant level."""
+    )
+    @Valid
+    @PluginProperty
+    List<Quota> quotas;
+
     public Stream<String> allTypes() {
         return Stream.of(
             Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
-            allTasks().map(Task::getType),
-            Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(FlowPluginDefault::getType)
+            allTasks().map(Task::getType)
         ).reduce(Stream::concat).orElse(Stream.empty())
             .distinct();
     }

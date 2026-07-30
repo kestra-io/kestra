@@ -11,14 +11,22 @@ import com.google.common.annotations.VisibleForTesting;
  * Utilities for running regex operations with a timeout guard to prevent ReDoS
  * (catastrophic backtracking) attacks.
  *
- * <p>All methods wrap the input {@link CharSequence} so that every {@code charAt()} call
+ * <p>
+ * All methods wrap the input {@link CharSequence} so that every {@code charAt()} call
  * checks a deadline. If the deadline is exceeded, a {@link RegexTimeoutException} is thrown,
- * terminating the backtracking without needing a separate thread.</p>
+ * terminating the backtracking without needing a separate thread.
+ * </p>
  */
 public final class RegexUtils {
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
     private static final AtomicBoolean initialized = new AtomicBoolean(false);
+
+    /**
+     * Maximum length allowed for a user-supplied regex pattern that is executed by the database engine.
+     * Longer patterns are rejected without evaluation.
+     */
+    public static final int MAX_USER_REGEX_LENGTH = 250;
 
     private static volatile Duration timeout = DEFAULT_TIMEOUT;
 
@@ -69,8 +77,8 @@ public final class RegexUtils {
     /**
      * Tests whether the input matches the given regex pattern with an explicit timeout.
      *
-     * @param regex   the regex pattern string.
-     * @param input   the input to test.
+     * @param regex the regex pattern string.
+     * @param input the input to test.
      * @param timeout the maximum duration for this operation.
      * @return {@code true} if the full input matches the pattern.
      * @throws RegexTimeoutException if the operation exceeds the given timeout.
@@ -84,7 +92,7 @@ public final class RegexUtils {
      * Tests whether the input matches the given compiled pattern.
      *
      * @param pattern the compiled regex pattern.
-     * @param input   the input to test.
+     * @param input the input to test.
      * @return {@code true} if the full input matches the pattern.
      * @throws RegexTimeoutException if the operation exceeds the configured timeout.
      */
@@ -96,7 +104,7 @@ public final class RegexUtils {
      * Tests whether the input matches the given compiled pattern with an explicit timeout.
      *
      * @param pattern the compiled regex pattern.
-     * @param input   the input to test.
+     * @param input the input to test.
      * @param timeout the maximum duration for this operation.
      * @return {@code true} if the full input matches the pattern.
      * @throws RegexTimeoutException if the operation exceeds the given timeout.
@@ -109,7 +117,7 @@ public final class RegexUtils {
      * Creates a {@link Matcher} with timeout protection on the input.
      *
      * @param pattern the compiled regex pattern.
-     * @param input   the input to match against.
+     * @param input the input to match against.
      * @return a matcher that will throw {@link RegexTimeoutException} if the timeout is exceeded.
      */
     public static Matcher matcher(Pattern pattern, CharSequence input) {
@@ -120,7 +128,7 @@ public final class RegexUtils {
      * Creates a {@link Matcher} with timeout protection on the input using an explicit timeout.
      *
      * @param pattern the compiled regex pattern.
-     * @param input   the input to match against.
+     * @param input the input to match against.
      * @param timeout the maximum duration for this operation.
      * @return a matcher that will throw {@link RegexTimeoutException} if the given timeout is exceeded.
      */
@@ -131,8 +139,8 @@ public final class RegexUtils {
     /**
      * Replaces all occurrences of the regex in the input string.
      *
-     * @param input       the input string.
-     * @param regex       the regex pattern string.
+     * @param input the input string.
+     * @param regex the regex pattern string.
      * @param replacement the replacement string.
      * @return the result with all matches replaced.
      * @throws RegexTimeoutException if the operation exceeds the configured timeout.
@@ -144,10 +152,10 @@ public final class RegexUtils {
     /**
      * Replaces all occurrences of the regex in the input string with an explicit timeout.
      *
-     * @param input       the input string.
-     * @param regex       the regex pattern string.
+     * @param input the input string.
+     * @param regex the regex pattern string.
      * @param replacement the replacement string.
-     * @param timeout     the maximum duration for this operation.
+     * @param timeout the maximum duration for this operation.
      * @return the result with all matches replaced.
      * @throws RegexTimeoutException if the operation exceeds the given timeout.
      */
@@ -157,12 +165,67 @@ public final class RegexUtils {
     }
 
     /**
+     * A repetition quantifier: {@code +}, {@code *}, {@code ?} (unescaped — a backslash-escaped
+     * {@code \+}/{@code \*}/{@code \?} is a literal character, not a quantifier), or a curly-brace
+     * count ({@code {n}}, {@code {n,}}, {@code {n,m}}).
+     */
+    private static final String QUANTIFIER = "(?:(?<!\\\\)[+*?]|\\{\\d+(?:,\\d*)?})";
+
+    /**
+     * A group containing a quantifier (including {@code ?}, e.g. {@code (a?)}) that is itself
+     * followed by another quantifier, e.g. {@code (a+)+}, {@code (a*)*}, {@code (a?){25}}. Nesting an
+     * optional/unbounded quantifier inside a repeated group is the classic signature of catastrophic
+     * backtracking (ReDoS), whether the outer repetition is unbounded ({@code +}/{@code *}) or a large
+     * bounded count ({@code {25}}).
+     */
+    private static final Pattern NESTED_QUANTIFIER = Pattern.compile(
+        "\\([^()]*" + QUANTIFIER + "[^()]*\\)\\s*" + QUANTIFIER
+    );
+
+    /**
+     * A group containing a top-level alternation ({@code |}) that is itself followed by a
+     * quantifier, e.g. {@code (a|a)+}, {@code (a|ab)*}. Ambiguous alternation combined with
+     * repetition is another classic catastrophic-backtracking shape, distinct from a nested
+     * quantifier.
+     */
+    private static final Pattern ALTERNATION_WITH_REPETITION = Pattern.compile(
+        "\\([^()|]*\\|[^()]*\\)\\s*" + QUANTIFIER
+    );
+
+    /**
+     * Checks whether a user-supplied regex pattern is safe to execute against a database engine
+     * (e.g. via Postgres {@code ~} or MySQL {@code REGEXP}), which offer no backtracking timeout of
+     * their own.
+     *
+     * <p>
+     * This is a heuristic, not a full ReDoS analysis: it rejects patterns that are too long, and
+     * patterns containing a group with a nested quantifier (e.g. {@code (a+)+}, {@code (a?){25}}) or a
+     * repeated ambiguous alternation (e.g. {@code (a|a)+}) — the two most common causes of
+     * catastrophic backtracking. Other shapes (e.g. backreference-based ambiguity, or blowup spread
+     * across multiple sibling groups) are not covered.
+     * </p>
+     *
+     * @param pattern the user-supplied regex pattern.
+     * @return {@code true} if the pattern is within the length limit and contains neither a nested
+     *         quantifier nor a repeated alternation.
+     */
+    public static boolean isSafeUserRegex(String pattern) {
+        if (pattern == null || pattern.length() > MAX_USER_REGEX_LENGTH) {
+            return false;
+        }
+        return !NESTED_QUANTIFIER.matcher(pattern).find()
+            && !ALTERNATION_WITH_REPETITION.matcher(pattern).find();
+    }
+
+    /**
      * Exception thrown when a regex operation exceeds the configured timeout.
      */
     public static class RegexTimeoutException extends RuntimeException {
         public RegexTimeoutException(Duration timeout) {
-            super("Regex operation timed out after " + timeout.toMillis() + "ms. " +
-                "The pattern may be vulnerable to catastrophic backtracking (ReDoS).");
+            super(
+                "Regex operation timed out after " + timeout.toMillis() + "ms. " +
+                    "The pattern may be vulnerable to catastrophic backtracking (ReDoS)."
+            );
         }
     }
 

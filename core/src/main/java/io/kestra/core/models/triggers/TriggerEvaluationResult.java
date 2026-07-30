@@ -25,10 +25,10 @@ import jakarta.annotation.Nullable;
  * Flow-level variables are NOT transported — the executor resolves them
  * directly from the {@code Flow} via {@code RunVariables}.
  *
- * @param executionId  the generated execution ID.
- * @param stateType    the execution state type (CREATED or FAILED).
- * @param trigger      the execution trigger metadata containing plugin output variables and log file URI.
- * @param labels       the execution labels including system labels (FROM, CORRELATION_ID).
+ * @param executionId the generated execution ID.
+ * @param stateType the execution state type (CREATED or FAILED).
+ * @param trigger the execution trigger metadata containing plugin output variables and log file URI.
+ * @param labels the execution labels including system labels (FROM, CORRELATION_ID).
  * @param flowRevision the flow revision at evaluation time.
  */
 public record TriggerEvaluationResult(
@@ -39,9 +39,7 @@ public record TriggerEvaluationResult(
     @JsonProperty @Nullable Integer flowRevision,
     @JsonProperty @Nullable Instant scheduleDate,
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    @Schema(implementation = Object.class)
-    Map<String, Object> inputs
-) {
+    @Schema(implementation = Object.class) Map<String, Object> inputs) {
 
     /**
      * Extracts a lightweight result from a full {@link Execution} (worker-side).

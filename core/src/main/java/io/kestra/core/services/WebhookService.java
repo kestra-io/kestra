@@ -10,15 +10,15 @@ import org.apache.hc.core5.net.URIBuilder;
 import io.kestra.core.async.AsyncOperationProcessedEvent;
 import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.events.CrudEvent;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.executor.command.Create;
-import io.kestra.core.executor.command.ExecutionCommand;
-import io.kestra.core.models.executions.ExecutionId;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
@@ -35,7 +35,6 @@ import io.micronaut.http.sse.Event;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.context.propagation.TextMapPropagator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -165,7 +164,8 @@ public class WebhookService {
         Optional<String> traceParent = openTelemetry
             .map(OpenTelemetry::getPropagators)
             .map(ContextPropagators::getTextMapPropagator)
-            .map(propagator -> {
+            .map(propagator ->
+            {
                 Map<String, String> carrier = new HashMap<>();
                 propagator.inject(Context.current(), carrier, Map::put);
                 return carrier.get("traceparent");
@@ -180,7 +180,8 @@ public class WebhookService {
 
         return asyncOperationWaiter.submit(
             execution.getId(),
-            operationId -> {
+            operationId ->
+            {
                 try {
                     executionCommandQueue.emit(command.withOperationId(operationId));
                     eventPublisher.publishEvent(CrudEvent.create(execution));

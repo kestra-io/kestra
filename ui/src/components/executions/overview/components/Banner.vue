@@ -2,7 +2,7 @@
     <div class="execution-banner">
         <div class="execution-banner__content">
             <div class="execution-banner__state">
-                <ChangeExecutionStatus :execution @follow="emit('follow', $event)">
+                <ChangeExecutionStatus :execution>
                     <template #trigger="{visible, enabled}">
                         <KsExecutionStatus
                             class="execution-banner__status"
@@ -24,7 +24,9 @@
             </div>
 
             <div class="execution-banner__top">
-                <span class="execution-banner__flow">{{ execution.flowId }}</span>
+                <router-link class="execution-banner__flow" :to="createLink('flows', execution)">
+                    {{ execution.flowId }}
+                </router-link>
 
                 <span class="execution-banner__id">
                     <code>{{ execution.id }}</code>
@@ -143,7 +145,6 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute, useRouter} from "vue-router"
 
     import moment from "moment"
     import {KsExecutionStatus, State} from "@kestra-io/design-system"
@@ -176,11 +177,8 @@
     import GraphOutline from "vue-material-design-icons/GraphOutline.vue"
 
     const props = defineProps<{execution: Execution}>()
-    const emit = defineEmits<{follow: [event?: unknown]}>()
 
     const {t} = useI18n({useScope: "global"})
-    const route = useRoute()
-    const router = useRouter()
     const executionsStore = useExecutionsStore()
     const toast = useToast()
 
@@ -267,18 +265,7 @@
         const prompt = errorLines
             ? `Fix the flow ${props.execution.flowId} as it generated the following error:\n${errorLines}`
             : `Fix the flow ${props.execution.flowId} as its execution failed.`
-        window.sessionStorage.setItem("kestra-ai-prompt", prompt)
-
-        router.push({
-            name: "flows/update",
-            params: {
-                namespace: props.execution.namespace,
-                id: props.execution.flowId,
-                tab: "edit",
-                tenant: route.params?.tenant,
-            },
-            query: {ai: "open"},
-        })
+        useMiscStore().promptCopilot(prompt)
     }
 </script>
 
@@ -375,6 +362,12 @@
             font-weight: 700;
             font-size: var(--ks-font-size-xl);
             color: var(--ks-text-primary);
+            text-decoration: none;
+
+            &:hover {
+                color: var(--ks-text-link);
+                text-decoration: underline;
+            }
         }
 
         &__id {

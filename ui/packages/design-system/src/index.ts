@@ -43,6 +43,8 @@ import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
 import KsEditor from "./components/Form/KsEditor.vue"
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./components/Form/KsEditor.vue"
+export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
+export type {TaskIconProps} from "./composables/taskIcon"
 export {findDuplicateTaskIds} from "./utils/yamlValidation"
 export type {EditorMarker} from "./utils/yamlValidation"
 export {isOffsetInPebbleBlock} from "./utils/pebbleBlock"
@@ -51,6 +53,8 @@ import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vu
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
 import KsEmpty from "./components/Data/KsEmpty.vue"
 import KsEmptyState from "./components/Data/KsEmptyState.vue"
+import KsEntityLink from "./components/Data/KsEntityLink/KsEntityLink.vue"
+export type {KsEntityLinkEntity} from "./components/Data/KsEntityLink/KsEntityLink.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
 import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
@@ -70,7 +74,6 @@ import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
 import KsOptionGroup from "./components/Form/KsOptionGroup.vue"
 import KsPagination from "./components/Data/KsPagination.vue"
-import KsPluginCard from "./components/Data/KsPluginCard.vue"
 import KsPopover from "./components/Feedback/KsPopover.vue"
 import KsProgress from "./components/Data/KsProgress.vue"
 import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
@@ -91,11 +94,11 @@ import KsSteps from "./components/Navigation/KsSteps/KsSteps.vue"
 import KsSwitch from "./components/Form/KsSwitch.vue"
 import KsTabPane from "./components/Navigation/KsTabs/KsTabPane.vue"
 import KsTabs from "./components/Navigation/KsTabs/KsTabs.vue"
-import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
 import KsNoData from "./components/Data/KsNoData.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
+export type {KsTagType} from "./components/Data/KsTag/KsTag.vue"
 import KsText from "./components/Basic/KsText.vue"
 import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
 import KsTimelineItem from "./components/Data/KsTimeline/KsTimelineItem.vue"
@@ -103,7 +106,6 @@ import KsTimePicker from "./components/Form/KsTimePicker.vue"
 import KsTooltip from "./components/Feedback/KsTooltip.vue"
 import KsTopNavBar from "./components/Navigation/KsTopNavBar/KsTopNavBar.vue"
 import KsLogoBadge from "./components/Kestra/KsLogoBadge.vue"
-import KsTaskIcon from "./components/Kestra/KsTaskIcon.vue"
 import KsTree from "./components/Data/KsTree.vue"
 import KsJsonTree from "./components/Data/KsJsonTree.vue"
 import KsUpload from "./components/Form/KsUpload.vue"
@@ -134,13 +136,14 @@ export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
 export {setMomentInstance, setDateFormatter} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
-export type {RouterTab} from "./components/Navigation/KsTabs/KsRouterTab.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
+export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
+export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export {applyDefaultFilters} from "./components/Data/KsDataTable/filter/composables/useDefaultFilter"
 export {useRouteFilterPolicy} from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
 export {
@@ -168,6 +171,8 @@ export {
     serializeFiltersToString,
     parseFiltersFromString,
     validStructureSignature,
+    routeQueryToQueryFilters,
+    type QueryFilter,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
 export {pickStarterField} from "./components/Data/KsDataTable/filter/utils/filterChipFactory"
 export {
@@ -248,6 +253,7 @@ const components: Record<string, Component> = {
     KsEditor,
     KsEmpty,
     KsEmptyState,
+    KsEntityLink,
     KsExecutionStatus,
     KsFilter,
     KsForm,
@@ -266,7 +272,6 @@ const components: Record<string, Component> = {
     KsOption,
     KsOptionGroup,
     KsPagination,
-    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -288,13 +293,11 @@ const components: Record<string, Component> = {
     KsSwitch,
     KsTabPane,
     KsTabs,
-    KsRouterTab,
     KsTable,
     KsTableColumn,
     KsNoData,
     KsTag,
     KsLogoBadge,
-    KsTaskIcon,
     KsText,
     KsTimeline,
     KsTimelineItem,
@@ -358,6 +361,7 @@ export {
     KsEditor,
     KsEmpty,
     KsEmptyState,
+    KsEntityLink,
     KsExecutionStatus,
     KsFilter,
     KsForm,
@@ -376,7 +380,6 @@ export {
     KsOption,
     KsOptionGroup,
     KsPagination,
-    KsPluginCard,
     KsPopover,
     KsProgress,
     KsRadio,
@@ -398,13 +401,11 @@ export {
     KsSwitch,
     KsTabPane,
     KsTabs,
-    KsRouterTab,
     KsTable,
     KsTableColumn,
     KsNoData,
     KsTag,
     KsLogoBadge,
-    KsTaskIcon,
     KsText,
     KsTimeline,
     KsTimelineItem,
@@ -488,6 +489,7 @@ declare module "vue" {
         KsDropdownMenu: typeof KsDropdownMenu
         KsEmpty: typeof KsEmpty
         KsEmptyState: typeof KsEmptyState
+        KsEntityLink: typeof KsEntityLink
         KsExecutionStatus: typeof KsExecutionStatus
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm
@@ -527,13 +529,11 @@ declare module "vue" {
         KsSwitch: typeof KsSwitch
         KsTabPane: typeof KsTabPane
         KsTabs: typeof KsTabs
-        KsRouterTab: typeof KsRouterTab
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
         KsNoData: typeof KsNoData
         KsTag: typeof KsTag
         KsLogoBadge: typeof KsLogoBadge
-        KsTaskIcon: typeof KsTaskIcon
         KsText: typeof KsText
         KsTimeline: typeof KsTimeline
         KsTimelineItem: typeof KsTimelineItem

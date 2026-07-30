@@ -115,9 +115,9 @@ function filterMissingRequiredTaskProperties({
 }
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
-    private readonly yamlAutoCompletionObject: YamlAutoCompletion
-    private readonly router?: Router
-    private readonly flowStore?: ReturnType<typeof useFlowStore>
+    protected readonly yamlAutoCompletionObject: YamlAutoCompletion
+    protected readonly router?: Router
+    protected readonly flowStore?: ReturnType<typeof useFlowStore>
 
     constructor(yamlAutoCompletion: YamlAutoCompletion, router?: Router, flowStore?: ReturnType<typeof useFlowStore>) {
         super("yaml")
@@ -637,8 +637,17 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         )
 
         this.registerSubflowLinks(autoCompletionProviders)
+        this.registerEditionProviders(autoCompletionProviders, t)
 
         return autoCompletionProviders
+    }
+
+    /**
+     * Seam for edition-specific Monaco providers (hover/definition/etc.). Empty in open-source; the Enterprise
+     * {@link YamlLanguageConfigurator} subclass overrides it to register the reusable-inputs flow-editor providers.
+     */
+    protected registerEditionProviders(_disposables: IDisposable[], _t: ReturnType<typeof useI18n>["t"]): void {
+        // no-op in open-source
     }
 
     private registerEditorArtifacts(t: ReturnType<typeof useI18n>["t"]): IDisposable[] {

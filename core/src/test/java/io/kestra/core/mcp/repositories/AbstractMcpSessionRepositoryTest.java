@@ -99,9 +99,9 @@ public abstract class AbstractMcpSessionRepositoryTest {
         String targetNode = "node-" + IdUtils.create();
 
         mcpSessionRepository.save(createSession(tenant1, "srv-1", targetNode));
-        mcpSessionRepository.save(createSession(tenant2,"srv-2", targetNode));
+        mcpSessionRepository.save(createSession(tenant2, "srv-2", targetNode));
         // Different node — must not appear
-        mcpSessionRepository.save(createSession(tenant1,"srv-3", "other-node"));
+        mcpSessionRepository.save(createSession(tenant1, "srv-3", "other-node"));
 
         // When
         List<McpSession> results = mcpSessionRepository.findBySseNode(targetNode);

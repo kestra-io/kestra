@@ -6,7 +6,6 @@
         :state="state"
         :class="classes"
         :icons="icons"
-        :iconComponent="iconComponent"
         @mouseover="emit(EVENTS.MOUSE_OVER, $event)"
         @mouseleave="emit(EVENTS.MOUSE_LEAVE)"
     >
@@ -143,7 +142,6 @@
         targetPosition?: Position;
         id: string;
         icons?: Record<string, unknown>;
-        iconComponent?: object;
         enableSubflowInteraction?: boolean;
         playgroundEnabled: boolean;
         playgroundReadyToStart: boolean;
@@ -155,7 +153,6 @@
         targetPosition: Position.Left,
         enableSubflowInteraction: true,
         icons: undefined,
-        iconComponent: undefined,
         replayEnabled: false,
         customActions: () => ({}),
         showDetails: () => ({}),
@@ -450,7 +447,7 @@
     width: 1rem;
     padding: .1rem;
     margin: 6px;
-    font-size: .8rem;
+    font-size: var(--ks-font-size-sm);
 }
 
 button.playground-button {

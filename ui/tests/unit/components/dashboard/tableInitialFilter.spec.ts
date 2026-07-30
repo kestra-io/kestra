@@ -40,7 +40,7 @@ const mountTable = (where?: unknown) =>
         },
         global: {
             plugins: [i18n],
-            stubs: {KsDataTable: true, KsTableColumn: true, KsTableEmpty: true, TableQuickFilter: true, Motion: true},
+            stubs: {KsDataTable: true, KsTableColumn: true, KsTableEmpty: true, KsNoData: true, TableQuickFilter: true, Motion: true},
         },
     })
 

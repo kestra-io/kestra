@@ -56,13 +56,12 @@
     const logs = ref<Log[]>([])
 
     const to = {
-        name: "executions/update",
+        name: "executions/update/logs",
         params: {
             tenantId: props.execution.tenantId,
             id: props.execution.id,
             namespace: props.execution.namespace,
             flowId: props.execution.flowId,
-            tab: "logs",
         },
         query: {"filters[level][EQUALS]": "ERROR"},
     }
@@ -80,7 +79,7 @@
                 showMessageOnError: false,
             })
 
-            if (response.length) logs.value = response
+            if (response.length) logs.value = response as any
         } catch {
             // User may not have ACCESS_LOGS permission — silently skip
         }

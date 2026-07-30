@@ -1,16 +1,17 @@
 package io.kestra.core.models.tasks.retrys;
 
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.Instant;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link Exponential#nextRetryDate(Integer, Instant)}.
  *
- * <p>Verifies that the scheduler path matches Failsafe {@code withBackoff} semantics:
+ * <p>
+ * Verifies that the scheduler path matches Failsafe {@code withBackoff} semantics:
  * delay before retry {@code n} = {@code interval * factor^(n-1)}, clamped to {@code maxInterval}.
  */
 class ExponentialTest {

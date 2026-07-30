@@ -93,6 +93,10 @@
             }
         }
 
+        &.is-disabled.is-checked .kel-switch__core {
+            background-color: var(--ks-toggle-active);
+        }
+
         .kel-switch__label {
             color: var(--ks-text-primary);
         }

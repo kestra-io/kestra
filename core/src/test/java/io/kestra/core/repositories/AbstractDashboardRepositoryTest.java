@@ -1,5 +1,13 @@
 package io.kestra.core.repositories;
 
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -9,15 +17,9 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.chart.KPI;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -92,7 +94,7 @@ public abstract class AbstractDashboardRepositoryTest {
     }
 
     @Test
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     void generate_shouldReturnExpectedRows() throws IOException {
         DataChart chart = (DataChart) YamlParser.parse("""
                              id: table_logs
@@ -117,7 +119,7 @@ public abstract class AbstractDashboardRepositoryTest {
     }
 
     @Test
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     void generateKPI_shouldReturnExpectedValue() throws Exception {
 
         DataChartKPI chart = YamlParser.parse("""
@@ -147,6 +149,5 @@ public abstract class AbstractDashboardRepositoryTest {
 
         assertThat(result).isNotEmpty();
     }
-
 
 }

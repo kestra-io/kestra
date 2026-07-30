@@ -11,7 +11,7 @@
         <template #actions>
             <slot name="actions" />
             <div
-                v-if="hasVisibleActions && $route.params.tab !== 'audit-logs'"
+                v-if="hasVisibleActions && activeTab !== 'audit-logs'"
                 class="d-flex align-items-center gap-2"
             >
                 <ul v-if="!isOverviewTab" class="d-none d-xl-flex align-items-center">
@@ -42,7 +42,7 @@
                 </KsDropdown>
 
                 <ExecutionActions
-                    v-if="isOverviewTab && overviewActions.length"
+                    v-if="execution && isOverviewTab && overviewActions.length"
                     :actions="overviewActions"
                     :execution="execution"
                 />
@@ -89,11 +89,13 @@
     import Pause from "./overview/components/actions/Pause.vue"
     import Restart from "./overview/components/actions/Restart.vue"
     import Resume from "./overview/components/actions/Resume.vue"
+    import ResumeFromBreakpoint from "./overview/components/actions/ResumeFromBreakpoint.vue"
     import Unqueue from "./overview/components/actions/Unqueue.vue"
     import action from "../../models/action"
     import resource from "../../models/resource"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useActiveTab} from "../../composables/useActiveTab"
 
     defineProps<{
         // FIXME: any - routeInfo shape varies across usage
@@ -102,11 +104,11 @@
 
     const router = useRouter()
     const route = useRoute()
+    const activeTab = useActiveTab()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
-    // FIXME: any - execution is an untyped domain object from the store
-    const execution = computed(() => executionsStore.execution as any) // FIXME: any
+    const execution = computed(() => executionsStore.execution)
 
     const isAllowedEdit = computed(() =>
         execution.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, execution.value.namespace),
@@ -119,6 +121,10 @@
     const primaryAction = computed(() => {
         if (!execution.value?.state) {
             return null
+        }
+
+        if (execution.value.state.current === "BREAKPOINT") {
+            return {component: ResumeFromBreakpoint, props: {}}
         }
 
         if (State.isPaused(execution.value.state.current)) {
@@ -145,7 +151,7 @@
     )
 
     const isOverviewTab = computed(() =>
-        !route.params.tab || route.params.tab === "overview",
+        !activeTab.value || activeTab.value === "overview",
     )
 
     const overviewActions = computed(() => {
@@ -157,6 +163,7 @@
             execution.value.state.current !== "PAUSED"
                 ? {component: Pause}
                 : {component: Resume},
+            {component: ResumeFromBreakpoint},
             {component: Unqueue},
             {component: ForceRun},
             {component: Api},
@@ -179,10 +186,9 @@
 
     function editFlow() {
         router.push({
-            name: "flows/update", params: {
+            name: "flows/update/edit", params: {
                 namespace: route.params.namespace as string,
                 id: route.params.flowId as string,
-                tab: "edit",
                 tenant: route.params.tenant as string,
             },
         })

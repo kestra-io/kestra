@@ -26,7 +26,8 @@ public abstract class H2ExecutionRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(H2Functions.escapeJqString(key), String.class));
+                Field<String> valueField = DSL
+                    .field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(H2Functions.escapeJqString(key), String.class));
                 if (value == null) {
                     conditions.add(valueField.isNull());
                 } else {
@@ -54,7 +55,9 @@ public abstract class H2ExecutionRepositoryService {
             var labels = input.left().get();
             labels.forEach((key, value) ->
             {
-                Field<String> valueField = DSL.field("JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(H2Functions.escapeJqString((String) key), String.class));
+                Field<String> valueField = DSL.field(
+                    "JQ_STRING(\"value\", CONCAT('.labels[]? | select(.key == \"', {0}, '\") | .value'))", String.class, DSL.val(H2Functions.escapeJqString((String) key), String.class)
+                );
                 switch (operation) {
                     case EQUALS -> conditions.add(value == null ? valueField.isNull() : valueField.eq((String) value));
                     case NOT_EQUALS, NOT_IN ->

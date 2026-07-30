@@ -8,6 +8,11 @@
             >
                 <DockLeft />
             </KsIconButton>
+            <div
+                ref="dragHandle"
+                class="menu-drag-handle"
+                aria-hidden="true"
+            />
         </template>
 
         <template v-for="(section, sIdx) in menu" :key="section.id ?? `s-${sIdx}`">
@@ -76,6 +81,7 @@
     import type {PropType} from "vue"
     import {useRoute, RouterLink} from "vue-router"
     import {useI18n} from "vue-i18n"
+    import {usePointerSwipe} from "@vueuse/core"
     import {KsSideBar, KsSideBarSection, KsSideBarItem, KsIconButton, KsNewBadge} from "@kestra-io/design-system"
     import DockLeft from "vue-material-design-icons/DockLeft.vue"
     import SquareEditOutline from "vue-material-design-icons/SquareEditOutline.vue"
@@ -100,7 +106,7 @@
         collapsed?: boolean,
     }>(), {
         showLink: true,
-        logoTo: () => ({name: "welcome"}),
+        logoTo: () => ({name: "ai"}),
         collapsed: false,
     })
 
@@ -150,6 +156,16 @@
         layoutStore.setSideMenuCollapsed(folded)
         emit("menu-collapse", folded)
     }
+
+    const DRAG_CLOSE_THRESHOLD = 60
+    const dragHandle = ref<HTMLElement>()
+    const {direction} = usePointerSwipe(dragHandle, {
+        threshold: DRAG_CLOSE_THRESHOLD,
+        disableTextSelect: true,
+        onSwipeEnd: () => {
+            if (direction.value === "left") onCollapse(true)
+        },
+    })
 
     function isItemActive(item: MenuItem): boolean {
         if (item.routes?.includes($route.name)) {
@@ -261,8 +277,35 @@
     position: absolute;
     top: var(--ks-spacing-4);
     right: var(--ks-spacing-4);
-    z-index: 1;
+    z-index: 2;
     color: var(--ks-icon-muted);
+}
+
+.menu-drag-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--ks-spacing-2);
+    z-index: 1;
+    cursor: w-resize;
+    touch-action: pan-y;
+}
+
+.menu-drag-handle::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: var(--ks-border-width-thin);
+    background: var(--ks-border-focus);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.menu-drag-handle:hover::after {
+    opacity: 1;
 }
 
 .sidebar-context-menu {

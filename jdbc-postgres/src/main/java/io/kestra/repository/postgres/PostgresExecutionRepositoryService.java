@@ -23,7 +23,9 @@ public abstract class PostgresExecutionRepositoryService {
         if (labels != null) {
             labels.forEach((key, value) ->
             {
-                conditions.add(DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class)));
+                conditions.add(
+                    DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val(key, String.class), DSL.val(value, String.class))
+                );
             });
         }
 
@@ -49,7 +51,10 @@ public abstract class PostgresExecutionRepositoryService {
             var labels = input.getLeft();
             labels.forEach((key, value) ->
             {
-                Condition labelCondition = DSL.condition("value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val((String) key, String.class), DSL.val((String) value, String.class));
+                Condition labelCondition = DSL.condition(
+                    "value -> 'labels' @> jsonb_build_array(jsonb_build_object('key', {0}::text, 'value', {1}::text))", DSL.val((String) key, String.class),
+                    DSL.val((String) value, String.class)
+                );
                 switch (operation) {
                     case EQUALS -> conditions.add(labelCondition);
                     case NOT_EQUALS, NOT_IN -> conditions.add(DSL.not(labelCondition));

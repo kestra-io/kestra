@@ -1,9 +1,10 @@
 package io.kestra.core.async;
 
-import io.kestra.core.queues.event.BroadcastEvent;
-import jakarta.annotation.Nullable;
-
 import java.time.Instant;
+
+import io.kestra.core.queues.event.BroadcastEvent;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Broadcast event emitted by a domain consumer after processing a domain event
@@ -19,10 +20,12 @@ public record AsyncOperationProcessedEvent(
     String itemId,
     Outcome outcome,
     @Nullable String error,
-    Instant timestamp
-) implements BroadcastEvent {
+    Instant timestamp) implements BroadcastEvent {
 
-    public enum Outcome { SUCCEEDED, FAILED }
+    public enum Outcome {
+        SUCCEEDED,
+        FAILED
+    }
 
     @Override
     public String key() {

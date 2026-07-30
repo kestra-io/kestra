@@ -23,21 +23,25 @@ export default defineProject({
         },
         exclude: [
             "tests/e2e/**",
-            "node_modules/**",
+            // Match node_modules at ANY depth. A bare "node_modules/**" only excludes
+            // the top-level one, so bundled test files inside nested package
+            // node_modules (e.g. packages/topology/node_modules/cytoscape/**,
+            // @upsetjs/venn.js, ts-dedent) leaked into this project and failed to
+            // collect (they expect jest/playwright globals, not vitest).
+            "**/node_modules/**",
             "tests/unit/**/translation.spec.js",
+            // Design system runs in its own CI job with its own config/setup; no more double run.
+            "packages/design-system/**",
         ],
-        coverage: {
-            include: [
-                "src/**/*.{js,ts,vue}",
-            ],
-            exclude: [
-                "stylelint.config.mjs",
-                "storybook-static/**",
-                "**/.storybook/**",
-                "**/*.stories.*",
-                "**/*.d.ts",
-                "**/*.json",
-            ],
+        server: {
+            deps: {
+                // element-plus components do `import { placements } from "@popperjs/core"`;
+                // externalised in jsdom that resolves popper's CJS build → "Named export
+                // 'placements' not found ... is a CommonJS module". Inlining element-plus (and
+                // popper) routes them through Vite's transform, which provides the named
+                // exports. This is what unblocks the ~20 element-plus-backed suites.
+                inline: [/element-plus/, "@popperjs/core"],
+            },
         },
     },
     define: {

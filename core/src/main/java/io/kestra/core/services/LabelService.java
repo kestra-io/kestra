@@ -33,14 +33,14 @@ public final class LabelService {
      * Trigger labels will be rendered via the run context but not flow labels.
      * In case rendering is not possible, the label will be omitted.
      */
-    public static List<Label> fromTrigger(RunContext runContext, FlowInterface flow, AbstractTrigger trigger) {
+    public static List<Label> fromTrigger(RunContext runContext, FlowInterface flow, AbstractTrigger trigger, Map<String, Object> variables) {
 
         final List<Label> labels = new ArrayList<>(labelsExcludingSystem(flow.getLabels())); // no need for rendering
 
         // It is better to remove system labels before rendering
         List<Label> triggerLabels = labelsExcludingSystem(trigger.getLabels());
         for (Label label : triggerLabels) {
-            final var value = renderLabelValue(runContext, label);
+            final var value = renderLabelValue(runContext, label, variables);
             if (value != null) {
                 labels.add(new Label(label.key(), value));
             }
@@ -49,9 +49,9 @@ public final class LabelService {
         return labels;
     }
 
-    private static String renderLabelValue(RunContext runContext, Label label) {
+    private static String renderLabelValue(RunContext runContext, Label label, Map<String, Object> variables) {
         try {
-            String value = runContext.render(label.value());
+            String value = runContext.render(label.value(), variables);
             return (value != null && !value.isEmpty()) ? value : null;
         } catch (IllegalVariableEvaluationException e) {
             runContext.logger().warn("Failed to render label '{}', it will be omitted", label.key(), e);

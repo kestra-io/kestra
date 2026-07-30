@@ -51,7 +51,7 @@ public class AiController {
         HttpRequest<?> httpRequest) {
         AiServiceInterface service = aiServiceManager.getAiService(flowGenerationPrompt.getProviderId());
         if (service == null) {
-            return HttpResponse.<String>status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
+            return HttpResponse.<String> status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
         }
 
         GenerationResult result = service
@@ -67,7 +67,7 @@ public class AiController {
         HttpRequest<?> httpRequest) {
         AiServiceInterface service = aiServiceManager.getAiService(dashboardGenerationPrompt.getProviderId());
         if (service == null) {
-            return HttpResponse.<String>status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
+            return HttpResponse.<String> status(HttpStatus.SERVICE_UNAVAILABLE).body("AI Copilot is not available: no AI provider is configured or reachable.");
         }
 
         GenerationResult result = service

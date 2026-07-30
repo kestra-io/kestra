@@ -213,7 +213,8 @@ tasks:
         overlayPosition: {vertical: "bottom", horizontal: "right"},
         targetSelector: "[data-onboarding-target=\"execution-gantt\"], #gantt",
         validate: ({routeName}) => {
-            if (routeName !== "executions/update") {
+            // Execution tabs are now child routes (e.g. "executions/update/gantt").
+            if (!routeName?.startsWith("executions/update")) {
                 return {ok: false, level: "info", message: "onboarding.validation.view_logs_status"}
             }
             return {ok: true}
@@ -225,11 +226,12 @@ tasks:
         title: "onboarding.steps.edit_flow_from_execution.title",
         description: "onboarding.steps.edit_flow_from_execution.description",
         overlayPosition: {vertical: "bottom", horizontal: "right"},
-        targetSelector: "[data-onboarding-target=\"execution-edit-flow-button\"], .execution-edit-flow-button",
+        targetSelector: "[data-onboarding-target=\"execution-actions-menu\"], .execution-edit-flow-button",
         actionNote: "onboarding.actions.edit_flow_to_continue",
-        shouldAutoAdvance: ({routeName}) => routeName === "flows/update",
+        // Flow tabs are now child routes (e.g. "flows/update/edit").
+        shouldAutoAdvance: ({routeName}) => !!routeName?.startsWith("flows/update"),
         validate: ({routeName}) => {
-            if (routeName !== "flows/update") {
+            if (!routeName?.startsWith("flows/update")) {
                 return {ok: false, level: "info", message: "onboarding.validation.edit_flow_from_execution"}
             }
             return {ok: true}

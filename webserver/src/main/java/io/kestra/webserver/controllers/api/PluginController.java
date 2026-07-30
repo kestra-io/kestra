@@ -11,17 +11,24 @@ import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.EeOnly;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.ui.PluginDistribution;
 import io.kestra.core.models.ui.PluginUiManifest;
 import io.kestra.core.models.ui.PluginUiModuleWithGroup;
 import io.kestra.core.models.ui.TaskWithVersion;
+import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.utils.EditionProvider;
+import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
 
 import io.micronaut.cache.annotation.Cacheable;
@@ -35,6 +42,7 @@ import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
@@ -46,6 +54,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.validation.constraints.Max;
 
 import static io.kestra.core.models.Plugin.isDeprecated;
 import static io.kestra.core.models.Plugin.isInternal;
@@ -54,6 +63,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Controller("/api/v1/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
+    private static final String ICON_CACHE_DIRECTIVE = "public, max-age=31536000, immutable";
+    // Plugin schemas depend on the set of installed plugins, which can change while the server runs.
+    // They must therefore be revalidated on every use (via ETag) instead of being cached blindly, otherwise
+    // the editor keeps validating/completing against a stale schema after a plugin is added or removed (#12102).
+    private static final String REVALIDATE_CACHE_DIRECTIVE = "no-cache";
 
     @Inject
     protected JsonSchemaGenerator jsonSchemaGenerator;
@@ -65,8 +79,18 @@ public class PluginController {
     protected JsonSchemaCache jsonSchemaCache;
 
     @Inject
+    protected VersionProvider versionProvider;
+
+    @Inject
     @Named("PLUGIN")
     protected Searchable<Plugin> pluginSearchable;
+
+    @Inject
+    protected EditionProvider editionProvider;
+
+    @Inject
+    @Named("withIcons")
+    protected PluginCatalogService pluginCatalogService;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -77,10 +101,15 @@ public class PluginController {
     )
     public HttpResponse<Map<String, Object>> getSchemasFromType(
         @Parameter(description = "The schema needed") @PathVariable SchemaType type,
-        @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf) {
-        return HttpResponse.ok()
-            .body(jsonSchemaCache.getSchemaForType(type, arrayOf))
-            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf,
+        @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
+        final String etag = schemaETag("schema", type, arrayOf);
+        if (etag.equals(ifNoneMatch)) {
+            return notModified(etag);
+        }
+        return HttpResponse.ok(jsonSchemaCache.getSchemaForType(type, arrayOf))
+            .header(HttpHeaders.ETAG, etag)
+            .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
 
     @Get(uri = "properties/{type}")
@@ -91,10 +120,30 @@ public class PluginController {
         description = "The schema will be a [JSON Schema Draft 7](http://json-schema.org/draft-07/schema)"
     )
     public HttpResponse<Map<String, Object>> getPropertiesFromType(
-        @Parameter(description = "The schema needed") @PathVariable SchemaType type) {
-        return HttpResponse.ok()
-            .body(jsonSchemaCache.getPropertiesForType(type))
-            .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        @Parameter(description = "The schema needed") @PathVariable SchemaType type,
+        @Parameter(hidden = true) @Nullable @Header(HttpHeaders.IF_NONE_MATCH) String ifNoneMatch) {
+        final String etag = schemaETag("properties", type, false);
+        if (etag.equals(ifNoneMatch)) {
+            return notModified(etag);
+        }
+        return HttpResponse.ok(jsonSchemaCache.getPropertiesForType(type))
+            .header(HttpHeaders.ETAG, etag)
+            .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
+    }
+
+    /**
+     * Builds a strong ETag for a plugin schema response. The tag changes whenever the installed plugin
+     * set changes (via {@link PluginRegistry#hash()}) or the server version changes, so browsers holding a
+     * previously cached schema revalidate and receive the fresh one instead of a stale cached copy.
+     */
+    private String schemaETag(final String kind, final SchemaType type, final boolean arrayOf) {
+        return "\"" + kind + "-" + type + "-" + arrayOf + "-" + versionProvider.getVersion() + "-" + pluginRegistry.hash() + "\"";
+    }
+
+    private <T> HttpResponse<T> notModified(final String etag) {
+        return HttpResponse.<T>notModified()
+            .header(HttpHeaders.ETAG, etag)
+            .header(HttpHeaders.CACHE_CONTROL, REVALIDATE_CACHE_DIRECTIVE);
     }
 
     @Get(uri = "inputs")
@@ -105,6 +154,8 @@ public class PluginController {
     )
     public List<InputType> getAllInputTypes() throws ClassNotFoundException {
         return Stream.of(Type.values())
+            // exclude edition-restricted (@EeOnly) input types (e.g. REUSABLE_INPUTS) from the open-source listing
+            .filter(type -> !type.cls().isAnnotationPresent(EeOnly.class))
             .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
             .toList();
     }
@@ -146,10 +197,9 @@ public class PluginController {
     @Operation(tags = { "Plugins" }, summary = "Get list of plugins")
     public PagedResults<Plugin> listPlugins(
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10000") int size,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "1000") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "A list of sort fields") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters
-    ) {
+        @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters) {
         List<Plugin> items = pluginRegistry.plugins()
             .stream()
             .map(p -> Plugin.of(p, null))
@@ -169,14 +219,17 @@ public class PluginController {
     )
     public PagedResults<ApiTriggerPlugin> listTriggerPlugins() {
         List<ApiTriggerPlugin> all = pluginRegistry.plugins().stream()
-            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream()
-                .filter(c -> !isInternal(c))
-                .filter(c -> !c.getName().startsWith("org.kestra."))
-                .map(c -> toApiTriggerPlugin(registeredPlugin, c))
+            .flatMap(
+                registeredPlugin -> registeredPlugin.getTriggers().stream()
+                    .filter(c -> !isInternal(c))
+                    .filter(c -> !c.getName().startsWith("org.kestra."))
+                    .map(c -> toApiTriggerPlugin(registeredPlugin, c))
             )
             .filter(dto -> dto.group() != TriggerPluginCategory.UNKNOWN)
-            .sorted(Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
-                .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER))
+            .sorted(
+                Comparator.comparing((ApiTriggerPlugin dto) -> dto.group().ordinal())
+                    .thenComparing(ApiTriggerPlugin::name, String.CASE_INSENSITIVE_ORDER)
+            )
             .toList();
 
         return PagedResults.of(new ArrayListTotal<>(all, all.size()));
@@ -224,10 +277,73 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Plugins" }, summary = "Get plugins icons")
     public MutableHttpResponse<Map<String, PluginIcon>> getPluginIcons() {
+        return HttpResponse.ok(pluginIconsIndex()).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Get(uri = "icons/{cls}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a single plugin icon",
+        description = "Lightweight alternative to `GET /plugins/icons` for resolving one icon at a time, " +
+            "so callers don't have to download the whole plugin catalog just to render one task icon. " +
+            "Not every class has an icon, which is a normal outcome (not every plugin ships one), so this " +
+            "always answers 200 with `icon: null` rather than 404 — a bare 404 here would be indistinguishable, " +
+            "to the frontend's shared HTTP client, from a genuine routing error and trip its global error page."
+    )
+    public HttpResponse<PluginIconResponse> getPluginIcon(
+        @Parameter(description = "The plugin full class name") @PathVariable String cls) {
+        PluginIcon icon = resolvePluginIcon(cls);
+
+        return HttpResponse.ok(new PluginIconResponse(icon)).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+    }
+
+    @Get(uri = "icons/{cls}/icon.svg", produces = "image/svg+xml")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Plugins" },
+        summary = "Get a single plugin icon as a raw SVG",
+        description = "Serves the plugin icon as a real, browser-cacheable `image/svg+xml` resource so it can " +
+            "be referenced directly from an `<img src>` or CSS `mask-image` instead of being inlined as a data " +
+            "URI. Falls back to the Kestra plugin catalog when the class or group isn't locally registered, or " +
+            "is registered but ships no bundled icon. Cached indefinitely by the browser — callers append " +
+            "`PluginIcon#hash` as a query param so the URL changes whenever the icon's bytes do."
+    )
+    public HttpResponse<byte[]> getPluginIconSvg(
+        @Parameter(description = "The plugin full class name") @PathVariable String cls) {
+        PluginIcon icon = resolvePluginIcon(cls);
+        if (icon != null && icon.getIcon() != null) {
+            return HttpResponse.ok(Base64.getDecoder().decode(icon.getIcon())).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE);
+        }
+
+        return pluginCatalogService.icon(cls)
+            .<HttpResponse<byte[]>> map(bytes -> HttpResponse.ok(bytes).header(HttpHeaders.CACHE_CONTROL, ICON_CACHE_DIRECTIVE))
+            .orElseGet(HttpResponse::notFound);
+    }
+
+    private PluginIcon resolvePluginIcon(String cls) {
+        PluginIcon icon = pluginIconsIndex().get(cls);
+        return icon != null ? icon : loadPluginsIcon().get(cls);
+    }
+
+    private static PluginIcon toPluginIcon(String name, Optional<RegisteredPlugin.IconAndMonochrome> icon, boolean flowable) {
+        return new PluginIcon(
+            name,
+            icon.map(RegisteredPlugin.IconAndMonochrome::icon).orElse(null),
+            flowable,
+            icon.map(RegisteredPlugin.IconAndMonochrome::monochrome).orElse(false),
+            icon.map(i -> Hashing.hashToString(i.icon())).orElse(null)
+        );
+    }
+
+    @Cacheable("default")
+    protected Map<String, PluginIcon> pluginIconsIndex() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
-            .flatMap(
-                plugin -> Stream.of(
+            .flatMap(plugin ->
+            {
+                Optional<RegisteredPlugin.IconAndMonochrome> defaultIcon = plugin.iconAndMonochrome("plugin-icon");
+                return Stream.of(
                     plugin.getTasks().stream(),
                     plugin.getTriggers().stream(),
                     plugin.getTaskRunners().stream(),
@@ -240,36 +356,34 @@ public class PluginController {
                     .map(
                         e -> new AbstractMap.SimpleEntry<>(
                             e.getName(),
-                            new PluginIcon(
-                                e.getSimpleName(),
-                                plugin.icon(e),
-                                FlowableTask.class.isAssignableFrom(e)
-                            )
+                            toPluginIcon(e.getSimpleName(), plugin.iconAndMonochrome(e).or(() -> defaultIcon), FlowableTask.class.isAssignableFrom(e))
                         )
-                    )
-            )
+                    );
+            })
             .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
 
         // add aliases
         Map<String, PluginIcon> aliasIcons = pluginRegistry.plugins().stream()
-            .flatMap(
-                plugin -> plugin.getAliases().values().stream().map(
+            .flatMap(plugin ->
+            {
+                Optional<RegisteredPlugin.IconAndMonochrome> defaultIcon = plugin.iconAndMonochrome("plugin-icon");
+                return plugin.getAliases().values().stream().map(
                     e -> new AbstractMap.SimpleEntry<>(
                         e.getKey(),
-                        new PluginIcon(
+                        toPluginIcon(
                             e.getKey().substring(e.getKey().lastIndexOf('.') + 1),
-                            plugin.icon(e.getValue()),
+                            plugin.iconAndMonochrome(e.getValue()).or(() -> defaultIcon),
                             FlowableTask.class.isAssignableFrom(e.getValue())
                         )
                     )
-                )
-            )
+                );
+            })
             .filter(entry -> entry.getKey() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
         icons.putAll(aliasIcons);
 
-        return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
+        return icons;
     }
 
     @Get(uri = "icons/groups")
@@ -291,12 +405,12 @@ public class PluginController {
             {
                 String group = plugin.group();
                 if (group != null) {
-                    icons.put(group, new PluginIcon("plugin-icon", plugin.icon("plugin-icon"), false));
+                    icons.put(group, toPluginIcon("plugin-icon", plugin.iconAndMonochrome("plugin-icon"), false));
                 }
 
                 plugin.subGroupNames().forEach(subgroup ->
                 {
-                    icons.put(subgroup, new PluginIcon("plugin-icon", plugin.icon(subgroup), false));
+                    icons.put(subgroup, toPluginIcon("plugin-icon", plugin.iconAndMonochrome(subgroup), false));
                 });
             });
 
@@ -393,7 +507,12 @@ public class PluginController {
                         manifest.put(
                             task, plugin.getPluginUiManifest().get(task)
                                 .stream()
-                                .map(module -> new PluginUiModuleWithGroup(module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash()))
+                                .filter(module -> isDistributionAllowed(module.distribution()))
+                                .map(
+                                    module -> new PluginUiModuleWithGroup(
+                                        module.uiModule(), plugin.group(), module.staticInfo(), module.styles(), plugin.getPluginUiSourceHash(), module.distribution()
+                                    )
+                                )
                                 .toList()
                         );
                     }
@@ -402,6 +521,13 @@ public class PluginController {
         }
 
         return new PluginUiManifest(manifest);
+    }
+
+    private boolean isDistributionAllowed(PluginDistribution distribution) {
+        if (editionProvider.get() == EditionProvider.Edition.OSS) {
+            return distribution != PluginDistribution.EE;
+        }
+        return true;
     }
 
     @Get(value = "/{group}/pluginUi/{path:.*}")
@@ -485,9 +611,12 @@ public class PluginController {
 
     @SuppressWarnings("unchecked")
     private List<Object> applyAlertReplacementToList(List<Object> list) {
-        return list.stream().map(item -> {
-            if (item instanceof Map<?, ?> m) return (Object) applyAlertReplacementToMap((Map<String, Object>) m);
-            if (item instanceof List<?> l) return (Object) applyAlertReplacementToList((List<Object>) l);
+        return list.stream().map(item ->
+        {
+            if (item instanceof Map<?, ?> m)
+                return (Object) applyAlertReplacementToMap((Map<String, Object>) m);
+            if (item instanceof List<?> l)
+                return (Object) applyAlertReplacementToList((List<Object>) l);
             return item;
         }).toList();
     }
@@ -495,6 +624,14 @@ public class PluginController {
     public record ApiPluginVersions(
         String type,
         List<String> versions) {
+    }
+
+    /**
+     * Always-present wrapper around a possibly-absent {@link PluginIcon}, so the response body
+     * itself is never null. Micronaut treats a null response body as a 404, which would defeat
+     * the purpose of {@link #getPluginIcon} always answering 200.
+     */
+    public record PluginIconResponse(@Nullable PluginIcon icon) {
     }
 
     /**
@@ -515,7 +652,6 @@ public class PluginController {
         TriggerPluginCategory group,
         boolean ee,
         String icon,
-        Boolean deprecated
-    ) {
+        Boolean deprecated) {
     }
 }

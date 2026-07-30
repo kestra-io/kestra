@@ -27,11 +27,15 @@ import io.kestra.webserver.services.ai.AiServiceManager;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.cookie.Cookie;
+import io.micronaut.http.cookie.SameSite;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
@@ -120,7 +124,10 @@ public class MiscController {
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = { "Misc" }, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
+    @Operation(
+        tags = { "Misc" }, summary = "Retrieve the instance configuration.",
+        description = "Requires authentication; see /configs/login for the public, unauthenticated subset used by the login page."
+    )
     public Configuration getConfiguration() throws JsonProcessingException { // JsonProcessingException might be thrown in EE
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
@@ -140,7 +147,7 @@ public class MiscController {
             )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .isAiApiKeyConfigured(aiServiceManager.map(AiServiceManager::hasConfiguredProvider).orElse(false))
-            .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
+            .isBasicAuthInitialized(isBasicAuthInitialized())
             .systemNamespace(systemFlowsConfiguration.namespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
@@ -161,6 +168,20 @@ public class MiscController {
         return builder.build();
     }
 
+    @Get("/configs/login")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Misc" }, summary = "Retrieve the configuration required by the login page.",
+        description = "Public endpoint available to unauthenticated users; exposes only what the login/setup UI needs."
+    )
+    public LoginConfiguration getLoginConfiguration() {
+        return new LoginConfiguration(isBasicAuthInitialized());
+    }
+
+    private boolean isBasicAuthInitialized() {
+        return basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false);
+    }
+
     @Get("/{tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Retrieve instance usage information")
@@ -176,13 +197,16 @@ public class MiscController {
     @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
-    public HttpResponse<Void> createBasicAuth(
+    public MutableHttpResponse<?> createBasicAuth(
+        HttpRequest<?> request,
         @RequestBody @Valid @Body BasicAuthCredentials basicAuthCredentials) {
         basicAuthService
             .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
             .save(basicAuthCredentials);
 
-        return HttpResponse.noContent();
+        // Log the caller in immediately: they just proved they know these credentials by submitting them.
+        return HttpResponse.noContent()
+            .cookie(authCookie(request, basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
     }
 
     @Get("/basicAuthValidationErrors")
@@ -192,6 +216,48 @@ public class MiscController {
         return basicAuthService
             .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
             .validationErrors();
+    }
+
+    @Post("/login")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = { "Misc" }, summary = "Authenticate with basic auth credentials.",
+        description = "On success, issues an HttpOnly session cookie; the credentials never need to be readable by client-side JavaScript."
+    )
+    public MutableHttpResponse<?> login(HttpRequest<?> request, @Body LoginRequest loginRequest) {
+        BasicAuthService service = basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"));
+
+        String username = loginRequest.username() == null ? null : loginRequest.username().trim();
+        if (!service.validateCredentials(username, loginRequest.password())) {
+            return HttpResponse.unauthorized();
+        }
+
+        return HttpResponse.noContent().cookie(authCookie(request, username, loginRequest.password()));
+    }
+
+    @Post("/logout")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = { "Misc" }, summary = "Clear the basic auth session cookie.")
+    public MutableHttpResponse<?> logout() {
+        Cookie cookie = Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, "")
+            .path("/")
+            .httpOnly(true)
+            .sameSite(SameSite.Strict)
+            .maxAge(0);
+
+        return HttpResponse.noContent().cookie(cookie);
+    }
+
+    private static Cookie authCookie(HttpRequest<?> request, String username, String password) {
+        return Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, BasicAuthService.encodeToken(username, password))
+            .path("/")
+            .httpOnly(true)
+            .secure(request.isSecure())
+            .sameSite(SameSite.Strict);
+    }
+
+    public record LoginRequest(String username, String password) {
     }
 
     @Get("/pebble/filters")
@@ -275,5 +341,11 @@ public class MiscController {
     public static class ApiUsage {
         private FlowUsage flows;
         private ExecutionUsage executions;
+    }
+
+    /**
+     * Minimal configuration exposed to unauthenticated callers for the login/setup UI.
+     */
+    public record LoginConfiguration(@JsonInclude Boolean isBasicAuthInitialized) {
     }
 }

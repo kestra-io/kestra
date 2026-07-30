@@ -104,7 +104,7 @@ class TimeLineSearchTest {
         // WHEN
         Exception exception = assertThrows(IllegalArgumentException.class, () -> TimeLineSearch.extractFrom(filters));
         // THEN
-        assertThat(exception.getMessage()).contains("Invalid duration");
+        assertThat(exception.getMessage()).contains("Cannot convert value 'invalid-duration' to Duration");
     }
 
     @Test

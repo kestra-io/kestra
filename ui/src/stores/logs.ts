@@ -1,9 +1,22 @@
 import {defineStore} from "pinia"
-import {apiUrl} from "override/utils/route"
 import {ref} from "vue"
-import {useClient} from "@kestra-io/kestra-sdk"
+import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
+import {routeQueryToQueryFilters, type QueryFilter} from "@kestra-io/design-system"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
+
+/** Splits a flat `{page, size, sort, "filters[field][OP]": value, ...}` options object
+ * (as built by callers' `loadQuery()` route.query merges) into the SDK's declared
+ * page/size/sort params plus a proper QueryFilter[] array. */
+function toSearchParams(options: Record<string, any>) {
+    const {page, size, sort, ...filterKeys} = options
+    return {
+        page,
+        size,
+        sort: sort ? [sort] : undefined,
+        filters: routeQueryToQueryFilters(filterKeys),
+    } as Parameters<typeof LogsAPI.searchLogs>[0]
+}
 
 export interface Log{
     level: LevelKey;
@@ -24,28 +37,24 @@ export interface Log{
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
     const total = ref(0)
-    const level = ref<LevelKey>("INFO")
 
-    const axios = useClient()
-
-
-    function findLogs(options: any) {
-        return axios.get(`${apiUrl()}/logs/search`, {params: options}).then(response => {
-            logs.value = response.data.results
-            total.value = response.data.total
+    function findLogs(options: Record<string, any>) {
+        return LogsAPI.searchLogs(toSearchParams(options)).then(response => {
+            logs.value = response.results as unknown as Log[]
+            total.value = response.total ?? 0
         })
     }
 
     function deleteLogs(log: { namespace: string, flowId: string, triggerId?: string }) {
-        const URL = `${apiUrl()}/logs/${log.namespace}/${log.flowId}${log.triggerId ? `?triggerId=${log.triggerId}` : ""}`
-        return axios.delete(URL).then(() => (logs.value = undefined))
+        return LogsAPI.deleteLogsFromFlow(log as Parameters<typeof LogsAPI.deleteLogsFromFlow>[0])
+            .then(() => (logs.value = undefined))
     }
 
-    function downloadLogs(options: any) {
-        return axios
-            .get(`${apiUrl()}/logs/search`, {params: {...options, page: 1, size: options.size ?? 10000}})
+    function downloadLogs(options: Record<string, any>) {
+        const params = toSearchParams({...options, page: 1, size: options.size ?? 1000})
+        return LogsAPI.searchLogs(params)
             .then(response => {
-                const results = (response.data.results ?? []) as Log[]
+                const results = (response.results ?? []) as unknown as Log[]
                 const text = formatLogsAsText(results.slice().reverse())
                 Utils.downloadUrl(
                     window.URL.createObjectURL(new Blob([text], {type: "text/plain"})),
@@ -56,16 +65,14 @@ export const useLogsStore = defineStore("logs", () => {
 
     const LEVELS_ASC: LevelKey[] = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]
 
-    async function levelCounts(baseParams: any): Promise<Record<string, number>> {
+    async function levelCounts(baseParams: Record<string, any>): Promise<Record<string, number>> {
+        const baseFilters = (routeQueryToQueryFilters(baseParams) as QueryFilter[])
+            .filter((f) => f.field !== "level")
+
         const cumulative = await Promise.all(LEVELS_ASC.map((logLevel) => {
-            const params: Record<string, any> = {...baseParams, page: 1, size: 1}
-            Object.keys(params)
-                .filter((key) => key.startsWith("filters[level]"))
-                .forEach((key) => delete params[key])
-            params["filters[level][GREATER_THAN_OR_EQUAL_TO]"] = logLevel
-            return axios
-                .get(`${apiUrl()}/logs/search`, {params})
-                .then((response) => (response.data.total ?? 0) as number)
+            const filters = [...baseFilters, {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: logLevel}]
+            return LogsAPI.searchLogs({page: 1, size: 1, filters} as Parameters<typeof LogsAPI.searchLogs>[0])
+                .then((response) => (response.total ?? 0) as number)
                 .catch(() => 0)
         }))
 
@@ -79,7 +86,6 @@ export const useLogsStore = defineStore("logs", () => {
     return {
         logs,
         total,
-        level,
         findLogs,
         deleteLogs,
         downloadLogs,

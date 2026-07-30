@@ -2,30 +2,37 @@ package io.kestra.core.runners;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
+import org.slf4j.event.KeyValuePair;
 import org.slf4j.event.Level;
 
+import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.PropertyContext;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.utils.TestsUtils;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import io.micronaut.context.annotation.Value;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +49,12 @@ class RunContextLoggerTest {
 
     @Inject
     private LogEntryEmitter logEntryEmitter;
+
+    @Inject
+    private VariableRenderer renderer;
+
+    @Value("${kestra.encryption.secret-key}")
+    private String secretKey;
 
     @Test
     void logs() {
@@ -131,6 +144,43 @@ class RunContextLoggerTest {
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElseThrow().getMessage())
             .isEqualTo("test ****** ************ ****** ************");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.WARN)).findFirst().orElseThrow().getMessage()).isEqualTo("test ******");
+    }
+
+    @Test
+    void shouldMaskSecretFlowOutputWhenDecrypted() throws GeneralSecurityException {
+        // Given a SECRET-typed flow output already encrypted, as it would be after being produced by a subflow.
+        // Persisted/wire-format shape is a plain Map{type, value} (as produced by JacksonMapper.toMap), not an
+        // EncryptedString instance.
+        String encrypted = EncryptionService.encrypt(secretKey, "my-super-secret-value");
+        Map<String, Object> outputs = Map.of(
+            "subflow", Map.of("outputs", Map.of("secret", Map.of("type", EncryptedString.TYPE, "value", encrypted)))
+        );
+
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(log -> logs.add(log));
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            false
+        );
+
+        // When the outputs are decrypted while building the run variables
+        new RunVariables.DefaultBuilder(Optional.of(secretKey))
+            .withExecution(execution)
+            .withOutputs(outputs)
+            .withDecryptVariables(true)
+            .build(runContextLogger, PropertyContext.create(renderer));
+
+        // Then the decrypted plaintext is registered for log masking, exactly like a SECRET input
+        runContextLogger.logger().info("the secret is {}", "my-super-secret-value");
+
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 1);
+        assertThat(matchingLog.getFirst().getMessage()).isEqualTo("the secret is ******");
     }
 
     @Test
@@ -286,10 +336,12 @@ class RunContextLoggerTest {
             .attempts(List.of(TaskRunAttempt.builder().build()))
             .build();
 
-        runContextLogger.emitDynamicTaskRunLogs(dynamicTaskRun, List.of(
-            new DynamicTaskRunLog(Level.INFO, "info dropped by filter"),
-            new DynamicTaskRunLog(Level.ERROR, "error kept")
-        ));
+        runContextLogger.emitDynamicTaskRunLogs(
+            dynamicTaskRun, List.of(
+                new DynamicTaskRunLog(Level.INFO, "info dropped by filter"),
+                new DynamicTaskRunLog(Level.ERROR, "error kept")
+            )
+        );
 
         List<LogEntry> queueLogs = TestsUtils.awaitLogs(logs, 1);
         assertThat(queueLogs).hasSize(1);
@@ -322,9 +374,11 @@ class RunContextLoggerTest {
             .attempts(List.of(TaskRunAttempt.builder().build()))
             .build();
 
-        runContextLogger.emitDynamicTaskRunLogs(dynamicTaskRun, List.of(
-            new DynamicTaskRunLog(Level.INFO, "to file super-secret-value")
-        ));
+        runContextLogger.emitDynamicTaskRunLogs(
+            dynamicTaskRun, List.of(
+                new DynamicTaskRunLog(Level.INFO, "to file super-secret-value")
+            )
+        );
 
         runContextLogger.closeLogFile();
         String fileContent = java.nio.file.Files.readString(runContextLogger.getLogFile().toPath());
@@ -352,8 +406,7 @@ class RunContextLoggerTest {
             Level.TRACE,
             false
         );
-        ch.qos.logback.classic.Logger perRunLogger =
-            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        ch.qos.logback.classic.Logger perRunLogger = (ch.qos.logback.classic.Logger) runContextLogger.logger();
 
         // the per-run MDC carries the dynamic taskrun identity (taskRunId/taskId), not just the
         // execution context — so forwarded server logs are attributed to the dynamic taskrun too
@@ -378,8 +431,7 @@ class RunContextLoggerTest {
             false
         );
         // initializeLogger() populates the per-run LoggerContext's MDC adapter on this thread.
-        ch.qos.logback.classic.Logger perRunLogger =
-            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        ch.qos.logback.classic.Logger perRunLogger = (ch.qos.logback.classic.Logger) runContextLogger.logger();
 
         LoggingEvent original = new LoggingEvent(
             RunContextLoggerTest.class.getName(),
@@ -417,8 +469,7 @@ class RunContextLoggerTest {
             Level.TRACE,
             false
         );
-        ch.qos.logback.classic.Logger perRunLogger =
-            (ch.qos.logback.classic.Logger) runContextLogger.logger();
+        ch.qos.logback.classic.Logger perRunLogger = (ch.qos.logback.classic.Logger) runContextLogger.logger();
         var adapter = perRunLogger.getLoggerContext().getMDCAdapter();
 
         assertThat(adapter.getCopyOfContextMap())
@@ -430,6 +481,93 @@ class RunContextLoggerTest {
         runContextLogger.resetMDC();
 
         assertThat(adapter.getCopyOfContextMap()).isNullOrEmpty();
+    }
+
+    @Test
+    void emitProgress_setsTypedProgressOnLogEntry() {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(logs::add);
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.TRACE,
+            false
+        );
+
+        // mirrors RunContext#emitProgress, which is a thin wrapper over this exact call
+        runContextLogger.logger().atInfo().addKeyValue(RunContextLogger.PROGRESS_KEY, "pod.created").log("Pod created");
+        runContextLogger.logger().info("a plain log line has no progress");
+
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 2);
+        LogEntry progressEntry = matchingLog.stream().filter(l -> "Pod created".equals(l.getMessage())).findFirst().orElseThrow();
+        LogEntry plainEntry = matchingLog.stream().filter(l -> l.getMessage().startsWith("a plain log line")).findFirst().orElseThrow();
+
+        assertThat(progressEntry.getProgress()).isEqualTo("pod.created");
+        assertThat(plainEntry.getProgress()).isNull();
+    }
+
+    @Test
+    void transformPreservesKeyValuePairs() throws Exception {
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+        LogEntry logEntry = LogEntry.of(execution);
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            logEntry,
+            Level.TRACE,
+            false
+        );
+        ch.qos.logback.classic.Logger perRunLogger = (ch.qos.logback.classic.Logger) runContextLogger.logger();
+
+        LoggingEvent original = new LoggingEvent(
+            RunContextLoggerTest.class.getName(),
+            perRunLogger,
+            ch.qos.logback.classic.Level.INFO,
+            "msg",
+            null,
+            null
+        );
+        original.addKeyValuePair(new KeyValuePair(RunContextLogger.PROGRESS_KEY, "pod.created"));
+
+        // transform() rebuilds the event from scratch; without re-attaching key-value pairs
+        // the progress token would be silently lost before logEntry() ever gets to read it
+        ILoggingEvent transformed = new TransformExposingAppender(runContextLogger, perRunLogger)
+            .transform(original);
+
+        assertThat(transformed.getKeyValuePairs())
+            .extracting(kv -> kv.key, kv -> kv.value)
+            .contains(org.assertj.core.groups.Tuple.tuple(RunContextLogger.PROGRESS_KEY, "pod.created"));
+    }
+
+    @Test
+    void shouldFilterDirectlyEmittedLogEntriesWhenLevelIsBelowConfiguredLogLevel() {
+        // Given: a logger whose configured level filter is WARN
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        logQueue.addListener(log -> logs.add(log));
+
+        Flow flow = TestsUtils.mockFlow();
+        Execution execution = TestsUtils.mockExecution(flow, Map.of());
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            logEntryEmitter,
+            LogEntry.of(execution),
+            Level.WARN,
+            false
+        );
+
+        // When: directly emitting one entry below and one entry at the configured level
+        runContextLogger.emitLogIfEnabled(LogEntry.of(execution).toBuilder().level(Level.INFO).message("suppressed info message").build());
+        runContextLogger.emitLogIfEnabled(LogEntry.of(execution).toBuilder().level(Level.WARN).message("emitted warn message").build());
+
+        // Then: only the entry at the configured level reaches the queue
+        await().atMost(Duration.ofSeconds(5)).until(() -> logs.stream()
+            .anyMatch(logEntry -> "emitted warn message".equals(logEntry.getMessage())));
+        assertThat(logs).noneMatch(logEntry -> "suppressed info message".equals(logEntry.getMessage()));
     }
 
     /**

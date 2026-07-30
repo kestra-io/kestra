@@ -1,9 +1,11 @@
-import {expect, test} from "@playwright/test"
+import {expect, test} from "./fixtures/auth"
 import {v4 as uuidv4} from "uuid"
 import fs from "fs"
 import {fileURLToPath} from "url"
 import path from "path"
-import {shared} from "./fixtures/shared"
+
+// The repo doesn't set `testIdAttribute`, so `data-test` is matched by hand.
+const CREATE = "[data-test=\"flows-create\"]"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -18,17 +20,13 @@ test.describe("Flow Page", () => {
 
     let testUUID = ""
 
-    test.beforeEach(async ({page}) => {
+    // Both tests create and run real flows against the single shared Kestra instance, so
+    // keep them in one worker. `default` rather than `serial`: `serial` would skip the
+    // remaining tests after a failure and hide a second regression.
+    test.describe.configure({mode: "default"})
+
+    test.beforeEach(() => {
         testUUID = uuidv4().replace(/-/g, "_")
-
-        await page.goto("/ui")
-
-        await test.step("login", async () => {
-            await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
-            await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
-            await page.getByRole("button", {name: "Login"}).click()
-            await page.waitForURL("**/ui/**")
-        })
     })
 
     test("should create and execute the example Flow", async ({page}) => {
@@ -37,7 +35,7 @@ test.describe("Flow Page", () => {
         await test.step("create the example Flow", async () => {
             await page.waitForURL("**/flows")
 
-            await page.getByRole("button", {name: "Create", exact: true}).click()
+            await page.locator(CREATE).click()
 
             await page.waitForURL("**/flows/new")
 
@@ -67,10 +65,12 @@ test.describe("Flow Page", () => {
         await page.goto("/ui/flows")
 
         await test.step("create a the flow by pasting the YAML", async () => {
-            await expect(page.getByRole("button", {name: "Create", exact: true})).toBeVisible()
-            await page.getByRole("button", {name: "Create", exact: true}).click()
+            await expect(page.locator(CREATE)).toBeVisible()
+            await page.locator(CREATE).click()
             await page.waitForURL("**/flows/new")
-            await page.getByTestId("monaco-editor").getByText("Hello World").isVisible()
+            // Must be awaited as an assertion: the `clear({force: true})` below skips
+            // actionability checks, so it would happily fire into an unmounted editor.
+            await expect(page.getByTestId("monaco-editor").getByText("Hello World")).toBeVisible()
 
             const monacoEditor = page.getByTestId("monaco-editor-hidden-synced-textarea")
             await monacoEditor.clear({force: true})
@@ -79,11 +79,14 @@ test.describe("Flow Page", () => {
             await monacoEditor.blur()
             await expect(page.getByTestId("monaco-editor").getByText(flowId)).toBeVisible()
 
-            await page.getByRole("button", {name: "Save"}).click()
+            await page.getByRole("button", {name: "Save", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
             await page.locator(".tab-select").click()
             await page.getByRole("option", {name: "Overview"}).click()
-            await expect(page.locator("#app").getByText(flowId)).toBeVisible()
+            // Scoped to the topnav title, not #app: the Monaco editor (still disposing during
+            // the tab switch) also contains the flowId, so a broader match is a strict-mode
+            // violation, not a sign the navigation failed.
+            await expect(page.locator("#topnav-title-slot").getByText(flowId)).toBeVisible()
         })
 
         const inputValue = "my-input_" + testUUID

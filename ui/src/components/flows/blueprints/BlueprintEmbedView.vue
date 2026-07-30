@@ -5,7 +5,11 @@
                 {{ $t("blueprints.title") }}
             </KsButton>
             <div v-if="$slots.actions" class="actions">
-                <slot name="actions" />
+                <slot
+                    name="actions"
+                    :hasMissingPlugins="hasMissingPlugins"
+                    :missingPlugins="missingPlugins"
+                />
             </div>
         </div>
         <h2 class="title">{{ blueprint.title }}</h2>
@@ -28,42 +32,63 @@
                     :modelValue="blueprint.source"
                 >
                     <template #absolute>
-                        <CopyToClipboard :text="blueprint.source" />
+                        <CopyToClipboard v-if="blueprint.source" :text="blueprint.source" />
                     </template>
                 </KsEditor>
             </KsCard>
 
             <KsMarkdown v-if="blueprint.description" class="markdown" :content="blueprint.description" />
 
-            <BlueprintOverview :blueprint :tags :icons :columns="2" />
+            <BlueprintOverview :blueprint :tags :icons :loadIcon :columns="2">
+                <template #missing-plugins-action="slotProps">
+                    <slot name="missing-plugins-action" v-bind="slotProps" />
+                </template>
+            </BlueprintOverview>
         </template>
     </section>
 </template>
 
 <script setup lang="ts">
+    import {computed, onMounted} from "vue"
+
     import {KsEditor} from "@kestra-io/design-system"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue"
     import BlueprintOverview from "./BlueprintOverview.vue"
     import {useEditorBindings} from "../../../composables/useEditorBindings"
+    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const props = withDefaults(defineProps<{
         blueprint?: FlowBlueprint & {shortDescription?: string};
         tags?: Record<string, BlueprintTag>;
         icons?: Record<string, any>;
+        loadIcon?: (cls: string) => Promise<any>;
         kind?: string;
     }>(), {
         blueprint: undefined,
         tags: undefined,
         icons: () => ({}),
+        loadIcon: undefined,
         kind: "flow",
     })
 
     const emit = defineEmits<{back: []}>()
 
     const editorBindings = useEditorBindings()
+
+    const {ensureInstalledPluginsLoaded, missingTaskTypes, missingPluginNames} = useBlueprintPlugins()
+
+    const hasMissingPlugins = computed(() =>
+        missingTaskTypes(props.blueprint?.includedTasks).length > 0,
+    )
+
+    const missingPlugins = computed(() =>
+        missingPluginNames(props.blueprint?.includedTasks),
+    )
+
+    onMounted(ensureInstalledPluginsLoaded)
 </script>
 
 <style scoped lang="scss">

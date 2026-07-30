@@ -75,8 +75,9 @@ public class MyService {
 - Return empty collections (e.g., `List.of()`, `Collections.emptyList()`) for absent values
 - Use try-with-resources for resource management
 - Log errors before re-throwing: `log.error("message", exception)`
+- Write exception messages as plain, complete sentences that state the fact and the actionable detail — build them with `String.formatted()`/`String.format()`, not string concatenation or em dashes, e.g. `"Cannot acquire lock on asset '%s': already locked by '%s' until %s.".formatted(id, owner, until)`
 
-**DON'T**: Use generic `Exception`. Don't return null for collections.
+**DON'T**: Use generic `Exception`. Don't return null for collections. Don't write terse or telegraphic exception messages (e.g. dropping articles/verbs) or string-concatenate message parts.
 
 ### Java Language Features
 - Use java records for simple data carriers
@@ -95,8 +96,10 @@ public class MyService {
 * Use static methods only
 * Use existing utility classes (e.g., `ListUtils`, `MapUtils`) instead of creating new ones (`io.kestra.core.utils.*`)
 
+**MANDATORY — never hand-roll Pebble delimiter detection.** Pebble has two block delimiter pairs — print blocks (`{{ ... }}`) and execute/statement blocks (`{% ... %}`) — and code that only checks for `{{`/`}}` silently misses `{%`/`%}` blocks. Use `io.kestra.core.utils.PebbleUtil` (`containsOpeningBlockDelimiter`, `startsWithOpeningBlockDelimiter`, `endsWithClosingBlockDelimiter`, `openingBlockDelimiters()`/`closingBlockDelimiters()`) instead of writing a new delimiter regex or literal — it derives the delimiter pairs from Pebble's own `Syntax.Builder` defaults, so it never drifts from what Pebble actually parses.
+
 ### Enums
-- Use enums for fixed sets of constants
+- Use enums for fixed sets of constants, including internal fields not exposed over the API — prefer a typed enum over a raw `String`/`int` whenever the value is drawn from a closed set of known cases, even if the set may only ever have a couple of members
 - Use `@JsonValue` for custom serialization if needed
 - Use `UNKNOWN` enum value for unknown cases in deserialization
 - Compare Constants From The Left (a.k.a., Yoda conditions)
@@ -148,7 +151,7 @@ public enum MyEnum {
 - Place tests in same package structure as source code
 - Simple unit test with mocks over complex integration tests when possible
 - Add // Given-When-Then comments for clarity
-- Always use naming conventions for test methods (e.g., `shouldPerformActionWhenCondition`)
+- Test method naming: `should<ExpectedBehavior>When<ConditionOrAction>` (also `...Given<Input>`, `...For<Condition>`, `...If<Condition>`), e.g. `shouldThrowExceptionWhenDividingByZero()`
 - Use `@MicronautTest` for tests that require Micronaut beans
 - Use `@KestraTest` for tests that require running Kestra services (e.g., Executor, Scheduler)
 -
@@ -375,6 +378,8 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.
 
 ## UI Translations
+
+**MANDATORY — never hardcode user-facing strings.** Every label, button, tooltip, placeholder, dialog/section title, table-column header, and toast/confirm message rendered to the user MUST go through vue-i18n: `t("key")` (or `:label`/`:tooltip` bindings) in components, and `<i18n-t keypath="...">` with named slots when the string embeds markup or a component (e.g. a `<code>` fragment). Never write a literal user-facing string in a template, a `:tooltip`/`:label` attribute, or a `toast.*` call. Reuse existing generic keys (`cancel`, `delete`, `edit`, `save`, `add`, `id`, `description`, `namespace`, `revision`, …) instead of duplicating them; put feature-specific strings under one namespaced object (e.g. `"reusableInputs": { … }`). After adding keys to `en.json`, propagate them to every language (translation generation script) so the missing-keys check stays clean — a key present only in `en.json` fails the check.
 
 Translation files live in `ui/src/translations/`. There is one JSON file per language code (e.g. `de.json`, `fr.json`) plus the source `en.json`.
 

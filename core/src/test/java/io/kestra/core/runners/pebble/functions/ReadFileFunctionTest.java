@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import io.pebbletemplates.pebble.error.PebbleException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -28,6 +27,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.getVariables;
@@ -249,8 +249,8 @@ class ReadFileFunctionTest {
             "file", file.toString()
         );
 
-       var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
-       assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
     @Test

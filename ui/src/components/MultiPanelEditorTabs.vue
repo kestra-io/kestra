@@ -120,7 +120,7 @@
     }
 
     .tabs-icon {
-        font-size: 1.1em;
+        font-size: var(--ks-font-size-lg);
         vertical-align: middle;
         flex-shrink: 0;
     }

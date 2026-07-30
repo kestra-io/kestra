@@ -29,7 +29,7 @@ html.dark {
 
 .text-danger { color: $base-red-500; }
 
-.button-icon { font-size: 0.66rem; }
+.button-icon { font-size: var(--ks-font-size-2xs); }
 
 .circle-button {
     display: flex;
@@ -111,17 +111,12 @@ html.dark {
 }
 
 .vue-flow__container {
-    .vue-flow__node.topology-node-hovered,
-    .vue-flow__node.topology-node-drop-target {
+    .vue-flow__node.topology-node-hovered {
         outline: none !important;
     }
 
     .vue-flow__node.topology-node-hovered .node-wrapper {
         border-color: var(--ks-border-default) !important;
-    }
-
-    .vue-flow__node.topology-node-drop-target .node-wrapper {
-        border-color: var(--ks-border-active) !important;
     }
 
     .top-button-div {

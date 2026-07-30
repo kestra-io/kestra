@@ -47,17 +47,20 @@ public interface MaintenanceService {
             .entrySet()
             .stream()
             .sorted(Map.Entry.comparingByKey())
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> {
-                    int inMaintenance = (int) entry.getValue().stream()
-                        .filter(si -> ServiceState.MAINTENANCE.equals(si.state()))
-                        .count();
-                    return new ServiceStatus(entry.getValue().size(), inMaintenance);
-                },
-                (a, b) -> a,
-                LinkedHashMap::new
-            ));
+            .collect(
+                Collectors.toMap(
+                    Map.Entry::getKey,
+                    entry ->
+                    {
+                        int inMaintenance = (int) entry.getValue().stream()
+                            .filter(si -> ServiceState.MAINTENANCE.equals(si.state()))
+                            .count();
+                        return new ServiceStatus(entry.getValue().size(), inMaintenance);
+                    },
+                    (a, b) -> a,
+                    LinkedHashMap::new
+                )
+            );
 
         boolean ready = maintenance && !allRunning.isEmpty() && allRunning.stream()
             .allMatch(si -> ServiceState.MAINTENANCE.equals(si.state()));

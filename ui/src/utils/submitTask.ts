@@ -4,12 +4,14 @@ import {useOnboardingV2Store} from "../stores/onboardingV2"
 import {Router, type useRoute} from "vue-router"
 import {Flow} from "../stores/flow"
 import {flattenInputs} from "./inputs"
+import {EXECUTION_TAB_ROUTES} from "../components/executions/executionTabs"
+import {resolveDefaultTab} from "./routeTabs"
 
-export const inputsToFormData = (
-    submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } }, 
-    inputsList: {id:string, type?: string}[] | undefined, 
+export const normalizeInputValues = (
+    submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } },
+    inputsList: {id:string, type?: string}[] | undefined,
     values: Record<string, any>,
-) => {
+): Record<string, any> | undefined => {
 
     let inputValuesCloned = _cloneDeep(values)
 
@@ -20,27 +22,48 @@ export const inputsToFormData = (
     }
 
     if (Object.keys(inputValuesCloned).length === 0) {
-        return
+        return undefined
     }
 
-    const formData = new FormData()
+    const normalized: Record<string, any> = {}
 
     for (let input of inputsList || []) {
         const inputName = input.id
         const inputValue = inputValuesCloned[inputName]
         if (inputValue !== undefined) {
             if (input.type === "DATETIME" && inputValue) {
-                formData.append(inputName, submitor.$moment(inputValue).toISOString())
+                normalized[inputName] = submitor.$moment(inputValue).toISOString()
             } else if (input.type === "DATE" && inputValue) {
-                formData.append(inputName, submitor.$moment(inputValue).format("YYYY-MM-DD"))
+                normalized[inputName] = submitor.$moment(inputValue).format("YYYY-MM-DD")
             } else if (input.type === "TIME") {
-                formData.append(inputName, submitor.$moment(inputValue).format("hh:mm:ss"))
+                normalized[inputName] = submitor.$moment(inputValue).format("hh:mm:ss")
             } else {
-                formData.append(inputName, inputValue)
+                normalized[inputName] = inputValue
             }
         }
     }
 
+    return normalized
+}
+
+// Only Resume.vue/ReplayWithInputs.vue need an actual FormData instance (they post it via raw
+// axios without the SDK's own multipart serialization); executeTask() below uses
+// normalizeInputValues() directly since triggerExecution() now builds its own FormData via
+// ExecutionsAPI.createExecution()'s multipart body serializer.
+export const inputsToFormData = (
+    submitor: { $moment: (date: any) => { toISOString: () => string; format: (format: string) => string } },
+    inputsList: {id:string, type?: string}[] | undefined,
+    values: Record<string, any>,
+) => {
+    const normalized = normalizeInputValues(submitor, inputsList, values)
+    if (!normalized) {
+        return undefined
+    }
+
+    const formData = new FormData()
+    for (const [key, value] of Object.entries(normalized)) {
+        formData.append(key, value)
+    }
     return formData
 }
 
@@ -56,7 +79,7 @@ export const executeTask = (
     values: Record<string, any>,
     options: Omit<Parameters<ReturnType<typeof useExecutionsStore>["triggerExecution"]>[0], "formData" | "kind"> & { redirect?: boolean; newTab?: boolean; query?: Record<string, any>; nextStep?: boolean },
 ): Promise<Execution> => {
-    const formData = inputsToFormData(submitor, flattenInputs(flow.inputs), values)
+    const formData = normalizeInputValues(submitor, flattenInputs(flow.inputs), values)
     const executionsStore = useExecutionsStore()
     const onboardingV2Store = useOnboardingV2Store()
 
@@ -67,17 +90,17 @@ export const executeTask = (
             formData,
         })
         .then(response => {
-            executionsStore.execution = response.data
+            executionsStore.execution = response
             onboardingV2Store.recordExecution()
             if (options.redirect) {
+                const tab = resolveDefaultTab(EXECUTION_TAB_ROUTES, localStorage.getItem("executeDefaultTab"), "gantt")
                 if (options.newTab) {
                     const resolved = submitor.$router.resolve({
-                        name: "executions/update",
+                        name: `executions/update/${tab}`,
                         params: {
-                            namespace: response.data.namespace,
-                            flowId: response.data.flowId,
-                            id: response.data.id,
-                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
+                            namespace: response.namespace,
+                            flowId: response.flowId,
+                            id: response.id,
                             tenant: submitor.$route.params.tenant,
                         },
                         query: options.query,
@@ -85,19 +108,18 @@ export const executeTask = (
                     window.open(resolved.href, "_blank")
                 } else {
                     submitor.$router.push({
-                        name: "executions/update",
+                        name: `executions/update/${tab}`,
                         params: {
-                            namespace: response.data.namespace,
-                            flowId: response.data.flowId,
-                            id: response.data.id,
-                            tab: localStorage.getItem("executeDefaultTab") || "gantt",
+                            namespace: response.namespace,
+                            flowId: response.flowId,
+                            id: response.id,
                             tenant: submitor.$route.params.tenant,
                         },
                         query: options.query,
                     })
                 }
             }
-            return response.data
+            return response
         })
         .then((execution) => {
             if (!options.nextStep) {

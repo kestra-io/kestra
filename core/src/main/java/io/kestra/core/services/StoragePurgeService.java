@@ -49,12 +49,12 @@ public class StoragePurgeService {
      * {@code namespace}. This walk-based discovery is deliberate: it lets the purge reclaim files of flows
      * (and whole namespaces) that no longer exist, which a flow-metadata enumeration could not.
      *
-     * @param tenantId  tenant identifier
+     * @param tenantId tenant identifier
      * @param namespace namespace and all its sub-namespaces sharing its backend; {@code null} = walk every namespace under the tenant
-     * @param flowId    restrict to a single flow (requires {@code namespace})
+     * @param flowId restrict to a single flow (requires {@code namespace})
      * @param startDate inclusive lower bound on file mtime
-     * @param endDate   inclusive upper bound on file mtime (acts as the in-flight guard)
-     * @param dryRun    when {@code true}, match but delete nothing
+     * @param endDate inclusive upper bound on file mtime (acts as the in-flight guard)
+     * @param dryRun when {@code true}, match but delete nothing
      */
     public StoragePurgeResult purgeByLastModified(
         @Nullable String tenantId,
@@ -62,8 +62,7 @@ public class StoragePurgeService {
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        boolean dryRun
-    ) throws IOException {
+        boolean dryRun) throws IOException {
         if (flowId != null && namespace == null) {
             throw new IllegalArgumentException("'namespace' is required when 'flowId' is set.");
         }
@@ -75,11 +74,15 @@ public class StoragePurgeService {
         if (namespace != null && flowId != null) {
             purgeFlow(tenantId, namespace, flowId, startInstant, endInstant, dryRun, agg);
         } else if (namespace != null) {
-            walkNamespaceTree(tenantId, namespace, StorageContext.namespaceRootUri(namespace),
-                startInstant, endInstant, dryRun, agg);
+            walkNamespaceTree(
+                tenantId, namespace, StorageContext.namespaceRootUri(namespace),
+                startInstant, endInstant, dryRun, agg
+            );
         } else {
-            walkNamespaceTree(tenantId, "", URI.create(StorageContext.KESTRA_PROTOCOL + "/"),
-                startInstant, endInstant, dryRun, agg);
+            walkNamespaceTree(
+                tenantId, "", URI.create(StorageContext.KESTRA_PROTOCOL + "/"),
+                startInstant, endInstant, dryRun, agg
+            );
         }
 
         return new StoragePurgeResult(agg.scanned, agg.purgedExecutions.size(), agg.deletedFiles);
@@ -102,7 +105,8 @@ public class StoragePurgeService {
         }
 
         List<URI> matched = storageInterface.purgeByLastModified(
-            tenantId, namespace, executionsPrefix, startDate, endDate, dryRun);
+            tenantId, namespace, executionsPrefix, startDate, endDate, dryRun
+        );
         for (URI uri : matched) {
             StorageContext.extractExecutionId(uri).ifPresent(agg.purgedExecutions::add);
         }
@@ -159,8 +163,10 @@ public class StoragePurgeService {
         if (!StorageContext.EXECUTIONS_DIR_NAME.equals(childName)) {
             return false;
         }
-        log.warn("Skipping ambiguous flow/sub-namespace path segment '{}' under namespace '{}'; target the flow explicitly via 'flowId' to purge it.",
-            childName, namespace);
+        log.warn(
+            "Skipping ambiguous flow/sub-namespace path segment '{}' under namespace '{}'; target the flow explicitly via 'flowId' to purge it.",
+            childName, namespace
+        );
         return true;
     }
 
@@ -185,7 +191,8 @@ public class StoragePurgeService {
      * had at least one file in the window (or would in dry-run mode); {@code deletedFilesCount} is the
      * raw file count (always 0 in dry-run).
      */
-    public record StoragePurgeResult(int scannedCount, int purgedCount, int deletedFilesCount) { }
+    public record StoragePurgeResult(int scannedCount, int purgedCount, int deletedFilesCount) {
+    }
 
     private static final class Aggregator {
         int scanned;

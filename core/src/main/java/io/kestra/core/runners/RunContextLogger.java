@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     private static final int MAX_MESSAGE_LENGTH = 1024 * 15;
     public static final String ORIGINAL_TIMESTAMP_KEY = "originalTimestamp";
+    public static final String PROGRESS_KEY = "progress";
 
     private final String loggerName;
     private volatile Logger logger; // must be volatile as it is built lazily via DCL
@@ -104,6 +105,13 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             return new ArrayList<>();
         }
 
+        String progress = event.getKeyValuePairs() == null ? null
+            : event.getKeyValuePairs().stream()
+                .filter(kv -> kv.key.equals(PROGRESS_KEY))
+                .map(kv -> (String) kv.value)
+                .findFirst()
+                .orElse(null);
+
         if (message.length() > MAX_MESSAGE_LENGTH) {
             split = Splitter.fixedLength(MAX_MESSAGE_LENGTH).split(message);
         } else {
@@ -127,6 +135,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     .message(s)
                     .timestamp(event.getInstant())
                     .thread(event.getThreadName())
+                    .progress(progress)
                     .build()
             );
         }
@@ -212,6 +221,27 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
      */
     public void emitLogs(List<LogEntry> logEntries) {
         this.logEmitter.emits(logEntries);
+    }
+
+    /**
+     * Emit the given log entry only when its level is enabled for this context's configured
+     * log level. Prefer this over {@link #emitLog(LogEntry)} for manually built entries:
+     * direct emission bypasses the regular logging pipeline, so the configured level filter
+     * (e.g. a task's {@code logLevel} property) must be applied explicitly.
+     *
+     * @see #emitLog(LogEntry)
+     */
+    public void emitLogIfEnabled(LogEntry logEntry) {
+        if (logEntry.getLevel() == null || isLogLevelEnabled(logEntry.getLevel())) {
+            this.emitLog(logEntry);
+        }
+    }
+
+    /**
+     * Returns true when the given level is enabled for this context's configured log level.
+     */
+    public boolean isLogLevelEnabled(org.slf4j.event.Level level) {
+        return this.loglevel == null || Level.toLevel(level.toString()).isGreaterOrEqual(this.loglevel);
     }
 
     /**
@@ -425,6 +455,11 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 }
                 if (customTimestamp != null) {
                     lle.setTimeStamp(customTimestamp.toEpochMilli());
+                }
+                // the new LoggingEvent starts with no key-value pairs; carry the original ones
+                // over (e.g. PROGRESS_KEY) so logEntry() below can still read them
+                if (event.getKeyValuePairs() != null) {
+                    lle.setKeyValuePairs(event.getKeyValuePairs());
                 }
                 return lle;
             } catch (Throwable e) {

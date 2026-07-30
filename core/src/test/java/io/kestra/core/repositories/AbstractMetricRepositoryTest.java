@@ -94,6 +94,23 @@ public abstract class AbstractMetricRepositoryTest {
         assertThat(aggregationResults.getAggregations().size()).isBetween(26, 27);
         assertThat(aggregationResults.getGroupBy()).isEqualTo("week");
 
+        // avg/min/max must aggregate over a window with mostly empty buckets without failing
+        // (regression for the Elasticsearch backend returning a null value for empty buckets).
+        for (String aggregation : List.of("avg", "min", "max")) {
+            MetricAggregations aggregations = metricRepository.aggregateByFlowId(
+                tenant,
+                "namespace",
+                "flow",
+                null,
+                counter.getName(),
+                ZonedDateTime.now().minusDays(30),
+                ZonedDateTime.now(),
+                aggregation
+            );
+
+            assertThat(aggregations.getAggregations().size()).isEqualTo(31);
+            assertThat(aggregations.getGroupBy()).isEqualTo("day");
+        }
     }
 
     @Test

@@ -39,7 +39,7 @@
                     pill
                     @change="toggleState(stateName)"
                 >
-                    <component :is="STATES[stateName].icon" class="state-icon" :style="{color: `var(--ks-status-${stateName.toLowerCase()})`}" />
+                    <component :is="STATES[stateName].icon" class="state-icon" :class="`state-icon-${stateName.toLowerCase()}`" />
                     {{ stateName }}
                 </KsCheckTag>
             </div>
@@ -89,6 +89,26 @@
         height: var(--ks-spacing-4);
         vertical-align: middle;
         margin-right: var(--ks-spacing-1);
+    }
+
+    .state-icon-failed {
+        color: var(--ks-status-error);
+    }
+
+    .state-icon-warning {
+        color: var(--ks-status-warning);
+    }
+
+    .state-icon-success {
+        color: var(--ks-status-success);
+    }
+
+    .state-icon-killed {
+        color: var(--ks-status-neutral);
+    }
+
+    .state-icon-paused {
+        color: var(--ks-status-pending);
     }
 
     .hint {

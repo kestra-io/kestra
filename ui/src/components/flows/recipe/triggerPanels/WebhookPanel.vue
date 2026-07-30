@@ -17,12 +17,9 @@
                     class="endpoint-input"
                     data-test="recipe-webhook-url"
                 />
-                <KsIconButton
-                    icon="content-copy"
-                    size="small"
-                    :aria-label="$t('copy')"
-                    @click="copyUrl"
-                />
+                <KsIconButton :tooltip="$t('copy')" placement="top" @click="copyUrl">
+                    <ContentCopy />
+                </KsIconButton>
             </div>
             <span class="hint">{{ $t("recipe.webhook.endpoint_hint") }}</span>
         </KsFormItem>
@@ -31,8 +28,11 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
     import * as Utils from "../../../../utils/utils"
+    import {webhookUrl} from "../../../../utils/webhook"
+    import {DEFAULT_WEBHOOK_KEY} from "../../../../utils/recipeToYaml"
 
     const props = defineProps<{
         recipe: RecipeState
@@ -40,10 +40,11 @@
         flowId: string
     }>()
 
-    const endpointUrl = computed(() => {
-        const key = props.recipe.webhookKey || "{key}"
-        return `/api/v1/executions/webhook/${props.systemNamespace}/${props.flowId}/${key}`
-    })
+    const endpointUrl = computed(() => webhookUrl({
+        namespace: props.systemNamespace,
+        id: props.flowId,
+        key: props.recipe.webhookKey || DEFAULT_WEBHOOK_KEY,
+    }))
 
     const copyUrl = () => {
         Utils.copy(endpointUrl.value)

@@ -53,6 +53,7 @@ export const ORDER = [
     "variables",
     "policies",
     "kv",
+    "reusable-inputs",
     "files",
     "history",
     "audit-logs",

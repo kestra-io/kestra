@@ -86,6 +86,26 @@ describe("useFlowRecipe", () => {
         expect(r.hasNotifyChannel.value).toBe(true)
     })
 
+    it("does not leak state changes into the next recipe", () => {
+        const first = setup()
+        first.toggleState("SUCCESS")
+        first.toggleState("FAILED")
+        first.toggleNotify("slack")
+
+        const second = setup()
+        expect(second.recipe.states).toEqual(["FAILED", "WARNING"])
+        expect(second.recipe.notify.slack).toBe(false)
+    })
+
+    it("reset restores the default watched states", () => {
+        const r = setup()
+        r.toggleState("FAILED")
+        r.toggleState("KILLED")
+
+        r.reset()
+        expect(r.recipe.states).toEqual(["FAILED", "WARNING"])
+    })
+
     it("reset clears the chosen channels and inputs", () => {
         const r = setup()
         r.toggleNotify("slack")

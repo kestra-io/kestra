@@ -8,31 +8,33 @@ import {extractPluginElements} from "../utils/pluginUtils"
 
 export type {RecipeState, TriggerType}
 
-const DEFAULT_STATE: RecipeState = {
-    triggerType: "execution",
-    watchNamespace: "",
-    includeSub: true,
-    states: ["FAILED", "WARNING"],
-    cron: "0 9 * * *",
-    timezone: "",
-    webhookKey: "",
-    otherTriggerType: "",
-    notify: {
-        slack: false,
-        teams: false,
-        email: false,
-        custom: false,
-    },
-    slackChannel: "#alerts",
-    teamsWebhook: "",
-    emailTo: "",
+function createDefaultState(): RecipeState {
+    return {
+        triggerType: "execution",
+        watchNamespace: "",
+        includeSub: true,
+        states: ["FAILED", "WARNING"],
+        cron: "0 9 * * *",
+        timezone: "",
+        webhookKey: "",
+        otherTriggerType: "",
+        notify: {
+            slack: false,
+            teams: false,
+            email: false,
+            custom: false,
+        },
+        slackChannel: "#alerts",
+        teamsWebhook: "",
+        emailTo: "",
+    }
 }
 
 export function useFlowRecipe() {
     const {t} = useI18n()
     const pluginsStore = usePluginsStore()
 
-    const recipe = reactive<RecipeState>({...DEFAULT_STATE, notify: {...DEFAULT_STATE.notify}})
+    const recipe = reactive<RecipeState>(createDefaultState())
 
     const availableFqcns = ref<Set<string>>(new Set())
     const fqcnsLoaded = ref(false)
@@ -50,6 +52,8 @@ export function useFlowRecipe() {
                 }
             }
             availableFqcns.value = fqcns
+        } catch {
+            availableFqcns.value = new Set()
         } finally {
             fqcnsLoaded.value = true
         }
@@ -157,7 +161,7 @@ export function useFlowRecipe() {
     }
 
     function reset() {
-        Object.assign(recipe, {...DEFAULT_STATE, notify: {...DEFAULT_STATE.notify}})
+        Object.assign(recipe, createDefaultState())
     }
 
     return {

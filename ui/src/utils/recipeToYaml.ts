@@ -4,6 +4,8 @@ export type TriggerType = "execution" | "schedule" | "webhook" | "other"
 
 export const SYSTEM_FLOW_RECIPE_ID = "system-flow-alert"
 
+export const DEFAULT_WEBHOOK_KEY = "my-webhook-key"
+
 export interface RecipeState {
     triggerType: TriggerType
     watchNamespace: string
@@ -86,7 +88,7 @@ function buildWebhookTrigger(state: RecipeState): object[] {
         {
             id: "on_webhook",
             type: "io.kestra.plugin.core.trigger.Webhook",
-            key: state.webhookKey || "my-webhook-key",
+            key: state.webhookKey || DEFAULT_WEBHOOK_KEY,
         },
     ]
 }
@@ -170,7 +172,7 @@ function buildNotifyTasks(state: RecipeState, isExecutionTrigger: boolean, avail
             id: "notify_custom",
             type: "io.kestra.plugin.core.log.Log",
             message: isExecutionTrigger
-                ? "Replace this task with your notification of choice — execution {{ trigger.executionId }} reached state {{ trigger.state }}."
+                ? "Replace this task with your notification of choice: execution {{ trigger.executionId }} reached state {{ trigger.state }}."
                 : "Replace this task with your notification of choice.",
         })
     }

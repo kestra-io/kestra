@@ -2071,10 +2071,27 @@
         },
         "toolCall": "Запущено {tool}",
         "context": {
+          "app": "Приложение: {{app}}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "Дашборд: {dashboard}",
           "execution": "Выполнение: {id}",
           "flow": "Flow: {{flow}}",
-          "namespace": "Пространство имён: {namespace}"
+          "namespace": "Пространство имён: {namespace}",
+          "plugin": "Плагин: {plugin}",
+          "test": "Тест: {test}"
         },
+        "contextAdded": "Добавлено {type} {id} в контекст.",
+        "contextNoun": {
+          "app": "приложение",
+          "blueprint": "blueprint",
+          "dashboard": "Панель управления",
+          "execution": "выполнение",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "плагин",
+          "test": "тест"
+        },
+        "contextRemoved": "Удалено {type} {id} из контекста.",
         "toolResult": {
           "detail": "Подробности",
           "error": "{{tool}} FAILED",

@@ -2071,10 +2071,27 @@
         },
         "toolCall": "Executando {tool}",
         "context": {
+          "app": "Aplicativo: {{app}}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "Painel: {{dashboard}}",
           "execution": "Execução: {id}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
+          "namespace": "Namespace: {namespace}",
+          "plugin": "Plugin: {plugin}",
+          "test": "Teste: {test}"
         },
+        "contextAdded": "Adicionado {type} {id} ao contexto.",
+        "contextNoun": {
+          "app": "Aplicativo",
+          "blueprint": "modelo",
+          "dashboard": "Painel",
+          "execution": "execução",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "plugin",
+          "test": "teste"
+        },
+        "contextRemoved": "Removido {type} {id} do contexto.",
         "toolResult": {
           "detail": "Detalhes",
           "error": "{tool} falhou",

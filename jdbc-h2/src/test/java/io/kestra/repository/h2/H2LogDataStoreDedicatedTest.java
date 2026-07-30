@@ -10,6 +10,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.log.LogDataStoreInterfaceFactory;
+import io.kestra.core.repositories.log.LogsConfig;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -35,6 +36,12 @@ class H2LogDataStoreDedicatedTest {
     @Inject
     LogDataStoreInterfaceFactory logRepositoryInterfaceFactory;
 
+    // The whole kestra.logs.* subtree, so the store is built from the SAME config map production
+    // passes to make() (url/table/... included) — not an empty map, which would sidestep the
+    // plugin-config deserialization that regressed in #9549.
+    @Inject
+    LogsConfig logsConfig;
+
     // The low-level repository bound to the PRIMARY datasource's `logs` table, to prove logs did NOT land there.
     @Inject
     @Named("logs")
@@ -42,8 +49,8 @@ class H2LogDataStoreDedicatedTest {
 
     @Test
     void shouldWriteAndReadFromDedicatedDatabaseAndNotThePrimary() {
-        // Given: the h2 log store built against the dedicated datasource
-        LogDataStoreInterface dedicated = logRepositoryInterfaceFactory.make("h2", java.util.Map.of());
+        // Given: the h2 log store built against the dedicated datasource, from the real kestra.logs.h2.* config
+        LogDataStoreInterface dedicated = logRepositoryInterfaceFactory.make("h2", logsConfig.getLogConfig("h2"));
         String executionId = "dedicated-exec-" + Instant.now().toEpochMilli();
         LogEntry log = LogEntry.builder()
             .tenantId("main")

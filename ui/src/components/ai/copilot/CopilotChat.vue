@@ -28,7 +28,7 @@
                     <img :src="logo" alt="" class="copilot-artwork-img" >
                 </div>
                 <KsText size="large" class="copilot-empty-title">{{ $t("ai.copilot.empty.title") }}</KsText>
-                <CopilotContextChip v-if="activeScope" :scope="activeScope" @clear="scopeDismissed = true" />
+                <CopilotContextChip v-if="activeScope" :scope="activeScope" @remove="removeContext" />
                 <CopilotComposer
                     ref="emptyComposer"
                     v-model="composerText"
@@ -104,7 +104,7 @@
             </div>
 
             <div class="copilot-footer">
-                <CopilotContextChip v-if="activeScope" :scope="activeScope" @clear="scopeDismissed = true" />
+                <CopilotContextChip v-if="activeScope" :scope="activeScope" @remove="removeContext" />
                 <CopilotComposer
                     ref="footerComposer"
                     v-model="composerText"
@@ -136,8 +136,8 @@
     import CopilotHelp from "./CopilotHelp.vue"
     import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
     import {useAiChat} from "./useAiChat"
-    import {scopeFromRoute, scopeToContext} from "./routeScope"
-    import type {ScopeBinding} from "./types"
+    import {scopeFromRoute, scopeToContext, CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
+    import type {ScopeBinding, ContextPart} from "./types"
     import {useMiscStore} from "override/stores/misc"
 
     const props = withDefaults(defineProps<{
@@ -160,14 +160,55 @@
     // (if a parent ever passes one) still wins. Recomputed as the route changes while the drawer is open.
     const routeInFocus = computed<ScopeBinding | null>(() => props.inFocus ?? scopeFromRoute(route))
 
-    // The user can dismiss the context chip to run a turn without the current page's scope. Dismissal
-    // is re-armed whenever the focused resource changes (navigating to a new page re-attaches scope).
-    const scopeDismissed = ref(false)
-    const activeScope = computed<ScopeBinding | null>(() => (scopeDismissed.value ? null : routeInFocus.value))
+    // The user can dismiss individual context pills to run a turn without that resource. Dismissals
+    // are re-armed whenever the focused resource changes (navigating to a new page re-attaches scope).
+    const dismissedParts = ref(new Set<ContextPart>())
+    const activeScope = computed<ScopeBinding | null>(() => {
+        const scope = routeInFocus.value
+        if (!scope) return null
+        const keep = (part: ContextPart) => (dismissedParts.value.has(part) ? undefined : scope[part])
+        const effective: ScopeBinding = {
+            kind: scope.kind,
+            namespace: keep("namespace"),
+            flowId: keep("flowId"),
+            executionId: keep("executionId"),
+            dashboardId: keep("dashboardId"),
+            appId: keep("appId"),
+            testId: keep("testId"),
+            blueprintId: keep("blueprintId"),
+            pluginId: keep("pluginId"),
+        }
+        // Once every focused resource is dismissed there's nothing left to show or send.
+        return Object.entries(effective).some(([field, value]) => field !== "kind" && value) ? effective : null
+    })
+    // The i18n context label for a resource, e.g. "Flow: my-flow" — shared with the chip's pills.
+    const contextLabel = (part: ContextPart, value: string) =>
+        t(CONTEXT_PART_I18N[part].keypath, {[CONTEXT_PART_I18N[part].slot]: value})
+
+    // Announce focus changes in the transcript (display-only). Navigating to a new resource adds its
+    // primary pill; dismissing a pill removes it. Also re-arms dismissals for the newly-focused
+    // resource. `noteContext` no-ops until a conversation has started, so the empty state stays clean.
+    let previousFocus: ScopeBinding | null = routeInFocus.value
     watch(
         () => JSON.stringify(routeInFocus.value),
-        () => (scopeDismissed.value = false),
+        () => {
+            const current = routeInFocus.value
+            dismissedParts.value = new Set()
+            const primary = current ? CONTEXT_PRIMARY[current.kind] : null
+            const value = primary ? current?.[primary] : undefined
+            if (primary && value && value !== previousFocus?.[primary]) {
+                noteContext(t("ai.copilot.contextAdded", {label: contextLabel(primary, value)}))
+            }
+            previousFocus = current
+        },
     )
+
+    /** Dismiss a single context pill and note its removal in the transcript. */
+    function removeContext(part: ContextPart): void {
+        const value = routeInFocus.value?.[part]
+        dismissedParts.value.add(part)
+        if (value) noteContext(t("ai.copilot.contextRemoved", {label: contextLabel(part, value)}))
+    }
 
     // Shared composer text (both the empty-state and footer composers bind it), so an external
     // entry point can seed a prompt via the misc store (see consumeSeededPrompt).
@@ -197,7 +238,7 @@
         t("ai.copilot.suggestions.dbt"),
     ])
 
-    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread} = useAiChat()
+    const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext} = useAiChat()
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
     onMounted(() => { restoreThread() })

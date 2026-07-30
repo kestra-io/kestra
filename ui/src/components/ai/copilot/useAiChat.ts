@@ -8,12 +8,12 @@
  *   - RUNNING               → a turn is streaming; composer disabled (a 2nd turn 409s)
  *   - AWAITING_CONFIRMATION → a proposal is suspended; call `confirm(...)` to resume
  *
- * Non-streaming calls (create/get) go through the generated SDK (`AiApi.create`/`AiApi.get`); the
- * `chat` and `confirm` turns are POST SSE streams read via the custom `streamSse` (the SDK's SSE
- * result doesn't expose the pre-stream HTTP status the error handling depends on).
+ * Non-streaming calls (create/get) go through the `useClient()` facade — not the generated SDK AI
+ * endpoints, which differ per edition (the EE SDK doesn't expose thread `create`/`get`); the `chat`
+ * and `confirm` turns are POST SSE streams read via `streamSse`.
  */
 import {ref, computed} from "vue"
-import * as AiApi from "@kestra-io/kestra-sdk/ai"
+import {useClient} from "@kestra-io/kestra-sdk"
 import type {AgentMessageRole, AgentMessageType, AgentThreadStatus, ApiDecision} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
 import {uid} from "../../../utils/utils"
@@ -46,7 +46,8 @@ export interface ChatMessage {
     /** Local, stable key for v-for. */
     id: string
     role: AgentMessageRole
-    type: AgentMessageType
+    /** `"CONTEXT"` is a local, display-only transcript line noting a focus change — never a wire type. */
+    type: AgentMessageType | "CONTEXT"
     /** Assistant text; appended to as `token` events arrive. */
     content?: string
     toolCall?: ToolCallEvent
@@ -57,6 +58,8 @@ export interface ChatMessage {
 }
 
 export function useAiChat() {
+    const client = useClient()
+
     const thread = ref<ThreadSummary | null>(null)
     const messages = ref<ChatMessage[]>([])
     const status = ref<AgentThreadStatus>("IDLE")
@@ -107,10 +110,7 @@ export function useAiChat() {
         // provider is configured the agentic endpoints (`AiAgentController`, `@Requires` the
         // AiServiceManager bean) aren't registered, so this create 404s — surfaced as the copilot's
         // own "unavailable" state by sendChat, not a full-page redirect.
-        const data = await AiApi.create(
-            request,
-            {showMessageOnError: false} as Parameters<typeof AiApi.create>[1],
-        ) as ThreadSummary
+        const {data} = await client.post<ThreadSummary>(base(), request, {showMessageOnError: false})
         thread.value = data
         status.value = data.status
         rememberThread(data.uid)
@@ -140,17 +140,17 @@ export function useAiChat() {
         // `showMessageOnError: false` opts out of the global "page not found" so an expected 404 —
         // the thread no longer exists (e.g. an evicted OSS in-memory conversation, or a deleted one) —
         // is handled here: forget the remembered id and start a fresh session instead of erroring out.
-        const data = await AiApi.get(
-            {threadId},
-            {showMessageOnError: false} as Parameters<typeof AiApi.get>[1],
-        ).catch((e: {status?: number; response?: {status?: number}}) => {
-            if (e?.status === 404 || e?.response?.status === 404) return null
-            throw e
-        }) as unknown as ThreadDetail | null
-        if (!data) {
+        const response = await client
+            .get<ThreadDetail>(`${base()}/${threadId}`, {showMessageOnError: false})
+            .catch((e: {status?: number; response?: {status?: number}}) => {
+                if (e?.status === 404 || e?.response?.status === 404) return null
+                throw e
+            })
+        if (!response) {
             forgetThread()
             return
         }
+        const {data} = response
         thread.value = {
             uid: data.uid,
             title: data.title,
@@ -369,6 +369,16 @@ export function useAiChat() {
         messages.value.push(message)
     }
 
+    /**
+     * Appends a display-only system line noting a context (focus) change. Not a turn — never sent to
+     * the backend or persisted. Suppressed until a conversation has started: before that the context
+     * pills already convey the focus, so the empty state stays clean.
+     */
+    function noteContext(text: string): void {
+        if (messages.value.length === 0) return
+        push({id: uid(), role: "SYSTEM", type: "CONTEXT", content: text})
+    }
+
     function toErrorCode(e: unknown): ErrorCode {
         if (e instanceof SseHttpError) {
             if (e.status === 409) return "turnInProgress"
@@ -419,6 +429,7 @@ export function useAiChat() {
         reset,
         retry,
         retryLastTurn,
+        noteContext,
     }
 }
 

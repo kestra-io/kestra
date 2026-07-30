@@ -5,6 +5,11 @@
         </div>
     </div>
 
+    <!-- A display-only line noting a context (focus) change; centred + muted, not a chat bubble. -->
+    <div v-else-if="message.type === 'CONTEXT'" class="copilot-msg copilot-context-notice" data-test="copilot-context-notice">
+        <KsText size="small" class="copilot-context-notice-text">{{ message.content }}</KsText>
+    </div>
+
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
         <div class="copilot-bubble copilot-bubble-assistant">
             <KsMarkdown v-if="message.content" :content="message.content" />
@@ -138,6 +143,17 @@
     .copilot-msg-assistant {
         display: flex;
         justify-content: flex-start;
+    }
+
+    /* Context-change notice: a quiet, centred line, not a chat bubble. */
+    .copilot-context-notice {
+        display: flex;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .copilot-context-notice-text {
+        --kel-text-color: var(--ks-text-secondary);
     }
 
     .copilot-msg-cancelled {

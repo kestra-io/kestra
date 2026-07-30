@@ -28,11 +28,22 @@ import type {
 
 /** The artefact a turn is bound to / focused on. */
 export interface ScopeBinding {
-    kind: "FLOW" | "NAMESPACE" | "EXECUTION"
+    kind: "FLOW" | "NAMESPACE" | "EXECUTION" | "DASHBOARD" | "APP" | "TEST" | "BLUEPRINT" | "PLUGIN"
     namespace?: string | null
     flowId?: string | null
     executionId?: string | null
+    dashboardId?: string | null
+    appId?: string | null
+    testId?: string | null
+    blueprintId?: string | null
+    pluginId?: string | null
 }
+
+/**
+ * A removable context pill's identity — the scope field it drops from the focus when dismissed
+ * (`"namespace" | "flowId" | "executionId"`). Reuses `ScopeBinding`'s own keys so the two can't drift.
+ */
+export type ContextPart = keyof Omit<ScopeBinding, "kind">
 
 export interface ToolCall {
     id?: string | null

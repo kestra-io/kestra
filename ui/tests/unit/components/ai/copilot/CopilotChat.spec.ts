@@ -23,6 +23,7 @@ const state = {
     retryLastTurn: vi.fn(),
     loadThread: vi.fn(),
     restoreThread: vi.fn(),
+    noteContext: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
 // CopilotChat derives the page scope from the current route — mock a mutable route so tests control it.
@@ -58,6 +59,7 @@ describe("CopilotChat", () => {
         state.retryLastTurn.mockReset()
         state.loadThread.mockReset()
         state.restoreThread.mockReset()
+        state.noteContext.mockReset()
         state.thread.value = null
         miscStore.copilotPrompt = null
     })
@@ -120,15 +122,20 @@ describe("CopilotChat", () => {
         expect(mountChat().findComponent({name: "CopilotContextChip"}).exists()).toBe(false)
     })
 
-    it("drops the scope from the turn after the context chip is dismissed", async () => {
+    it("drops each resource from the turn as its context pill is dismissed", async () => {
         routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
         const w = mountChat()
         const chip = w.findComponent({name: "CopilotContextChip"})
         expect(chip.exists()).toBe(true)
 
-        chip.vm.$emit("clear")
+        // Dismiss each pill (flow + namespace); the chip disappears once nothing is focused.
+        chip.vm.$emit("remove", "flowId")
+        chip.vm.$emit("remove", "namespace")
         await flushPromises()
         expect(w.findComponent({name: "CopilotContextChip"}).exists()).toBe(false)
+        // Each removal is announced in the transcript (display-only).
+        expect(state.noteContext).toHaveBeenCalledWith("Removed Flow: my-flow from context")
+        expect(state.noteContext).toHaveBeenCalledWith("Removed Namespace: company.team from context")
 
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no scope please")
         await flushPromises()

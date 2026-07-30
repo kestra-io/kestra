@@ -110,7 +110,8 @@
     "executionProgress": {
         "title": "실행 진행률",
         "estimatedRemaining": "예상 남은 시간: {duration}",
-        "noBaseline": "이력 데이터가 없어 남은 시간을 추정할 수 없습니다"
+        "noBaseline": "이력 데이터가 없어 남은 시간을 추정할 수 없습니다",
+        "pastEstimate": "평소보다 오래 실행되고 있습니다"
     },
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
     "launch execution": "실행",

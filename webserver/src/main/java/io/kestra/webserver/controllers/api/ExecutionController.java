@@ -2515,7 +2515,7 @@ public class ExecutionController {
         tags = { "Executions" },
         summary = "Get the average duration of the recent executions of a flow, used to estimate the progress of a running execution."
     )
-    public FlowAverageDuration getFlowAverageDuration(
+    public ExecutionAverageDuration getExecutionAverageDuration(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId) {
         Instant endDate = Instant.now();
@@ -2541,7 +2541,7 @@ public class ExecutionController {
         }
 
         // Weighted by bucket count: averaging the per-bucket averages would over-weight quiet days.
-        return new FlowAverageDuration(0 == count ? null : durationSumMs / count, count);
+        return new ExecutionAverageDuration(0 == count ? null : durationSumMs / count, count);
     }
 
     /**
@@ -2551,8 +2551,8 @@ public class ExecutionController {
      *        terminated execution in the lookback window.
      * @param count the number of executions the average was computed from.
      */
-    public record FlowAverageDuration(
-        @Nullable Long avgDurationMs,
+    public record ExecutionAverageDuration(
+        @jakarta.annotation.Nullable Long avgDurationMs,
         long count) {
     }
 

@@ -393,6 +393,8 @@ cd ui && npm run translations:check
 
 A clean run reports `No missing keys. No extra keys.` for every language. Any listed missing keys must be added.
 
+> **Enterprise Edition:** EE-only keys live in `ui-ee/src/translations/ee_translations/en.json` and are checked separately — run `npm run translations:check` in `ui-ee` as well (see `kestra-ee/AGENTS.md` → "Frontend i18n").
+
 ### Adding missing translations
 
 1. Identify gaps by running `npm run translations:check` (or by diffing the flattened `en.json` keys against each language file).

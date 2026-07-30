@@ -4,19 +4,20 @@ import {FLOW_PARENT_ROUTE} from "../../flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE} from "../../../utils/namespaceTabRoutes"
 
 /**
- * i18n string + interpolation slot for each scope field, shared by the context chip (pill labels) and
- * the transcript's context-change notices. Each `ai.copilot.context.*` string ("Flow: {flow}" /
- * "Execution: {id}" / …) has one slot, whose name differs per field.
+ * i18n metadata for each scope field:
+ *   - `keypath` + `slot`: the chip's pill label ("Flow: {flow}" / "Execution: {id}" / …), one slot each.
+ *   - `noun`: the bare, lowercase type word ("flow", "namespace", …) under `ai.copilot.contextNoun`,
+ *     used by the transcript's context-change notices ("Added {type} {id} to context.").
  */
-export const CONTEXT_PART_I18N: Record<ContextPart, {keypath: string; slot: string}> = {
-    flowId: {keypath: "ai.copilot.context.flow", slot: "flow"},
-    executionId: {keypath: "ai.copilot.context.execution", slot: "id"},
-    dashboardId: {keypath: "ai.copilot.context.dashboard", slot: "dashboard"},
-    appId: {keypath: "ai.copilot.context.app", slot: "app"},
-    testId: {keypath: "ai.copilot.context.test", slot: "test"},
-    blueprintId: {keypath: "ai.copilot.context.blueprint", slot: "blueprint"},
-    pluginId: {keypath: "ai.copilot.context.plugin", slot: "plugin"},
-    namespace: {keypath: "ai.copilot.context.namespace", slot: "namespace"},
+export const CONTEXT_PART_I18N: Record<ContextPart, {keypath: string; slot: string; noun: string}> = {
+    flowId: {keypath: "ai.copilot.context.flow", slot: "flow", noun: "ai.copilot.contextNoun.flow"},
+    executionId: {keypath: "ai.copilot.context.execution", slot: "id", noun: "ai.copilot.contextNoun.execution"},
+    dashboardId: {keypath: "ai.copilot.context.dashboard", slot: "dashboard", noun: "ai.copilot.contextNoun.dashboard"},
+    appId: {keypath: "ai.copilot.context.app", slot: "app", noun: "ai.copilot.contextNoun.app"},
+    testId: {keypath: "ai.copilot.context.test", slot: "test", noun: "ai.copilot.contextNoun.test"},
+    blueprintId: {keypath: "ai.copilot.context.blueprint", slot: "blueprint", noun: "ai.copilot.contextNoun.blueprint"},
+    pluginId: {keypath: "ai.copilot.context.plugin", slot: "plugin", noun: "ai.copilot.contextNoun.plugin"},
+    namespace: {keypath: "ai.copilot.context.namespace", slot: "namespace", noun: "ai.copilot.contextNoun.namespace"},
 }
 
 /** The primary resource field for each scope kind — the pill shown first, and the one a navigation announces. */

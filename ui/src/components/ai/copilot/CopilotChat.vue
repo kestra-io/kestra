@@ -181,10 +181,6 @@
         // Once every focused resource is dismissed there's nothing left to show or send.
         return Object.entries(effective).some(([field, value]) => field !== "kind" && value) ? effective : null
     })
-    // The i18n context label for a resource, e.g. "Flow: my-flow" — shared with the chip's pills.
-    const contextLabel = (part: ContextPart, value: string) =>
-        t(CONTEXT_PART_I18N[part].keypath, {[CONTEXT_PART_I18N[part].slot]: value})
-
     // Announce focus changes in the transcript (display-only). Navigating to a new resource adds its
     // primary pill; dismissing a pill removes it. Also re-arms dismissals for the newly-focused
     // resource. `noteContext` no-ops until a conversation has started, so the empty state stays clean.
@@ -197,7 +193,7 @@
             const primary = current ? CONTEXT_PRIMARY[current.kind] : null
             const value = primary ? current?.[primary] : undefined
             if (primary && value && value !== previousFocus?.[primary]) {
-                noteContext(t("ai.copilot.contextAdded", {label: contextLabel(primary, value)}))
+                noteContext({action: "added", noun: CONTEXT_PART_I18N[primary].noun, id: value})
             }
             previousFocus = current
         },
@@ -207,7 +203,7 @@
     function removeContext(part: ContextPart): void {
         const value = routeInFocus.value?.[part]
         dismissedParts.value.add(part)
-        if (value) noteContext(t("ai.copilot.contextRemoved", {label: contextLabel(part, value)}))
+        if (value) noteContext({action: "removed", noun: CONTEXT_PART_I18N[part].noun, id: value})
     }
 
     // Shared composer text (both the empty-state and footer composers bind it), so an external

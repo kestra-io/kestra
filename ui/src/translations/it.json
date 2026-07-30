@@ -2071,17 +2071,10 @@
         },
         "toolCall": "{{tool}} in esecuzione",
         "context": {
-          "app": "App: {app}",
-          "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Dashboard: {{dashboard}}",
           "execution": "Esecuzione: {id}",
           "flow": "Flow: {{flow}}",
-          "namespace": "Namespace: {namespace}",
-          "plugin": "Plugin: {plugin}",
-          "test": "Test: {test}"
+          "namespace": "Namespace: {namespace}"
         },
-        "contextAdded": "Aggiunto {label} al contesto",
-        "contextRemoved": "Rimosso {label} dal contesto",
         "toolResult": {
           "detail": "Dettagli",
           "error": "{{tool}} fallito",

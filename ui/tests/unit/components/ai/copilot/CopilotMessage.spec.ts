@@ -22,6 +22,18 @@ describe("CopilotMessage", () => {
         expect(md.text()).toContain("**bold** answer")
     })
 
+    it("renders a context-change notice with a lowercase type word and the id as a code token", () => {
+        const w = mountMessage({
+            id: "ctx", role: "SYSTEM", type: "CONTEXT",
+            context: {action: "removed", noun: "ai.copilot.contextNoun.flow", id: "good-morning"},
+        })
+        const notice = w.find("[data-test=\"copilot-context-notice\"]")
+        expect(notice.exists()).toBe(true)
+        expect(notice.text()).toBe("Removed flow good-morning from context.")
+        // The id renders as a monospace code token, not plain text.
+        expect(notice.find("code.copilot-context-id").text()).toBe("good-morning")
+    })
+
     it("renders a collapsible tool_call with its name in the title and args as JSON", () => {
         const w = mountMessage({
             id: "3", role: "TOOL", type: "TOOL_CALL",

@@ -134,8 +134,8 @@ describe("CopilotChat", () => {
         await flushPromises()
         expect(w.findComponent({name: "CopilotContextChip"}).exists()).toBe(false)
         // Each removal is announced in the transcript (display-only).
-        expect(state.noteContext).toHaveBeenCalledWith("Removed Flow: my-flow from context")
-        expect(state.noteContext).toHaveBeenCalledWith("Removed Namespace: company.team from context")
+        expect(state.noteContext).toHaveBeenCalledWith({action: "removed", noun: "ai.copilot.contextNoun.flow", id: "my-flow"})
+        expect(state.noteContext).toHaveBeenCalledWith({action: "removed", noun: "ai.copilot.contextNoun.namespace", id: "company.team"})
 
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no scope please")
         await flushPromises()

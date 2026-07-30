@@ -41,6 +41,15 @@ export type ErrorCode = "turnInProgress" | "turnCap" | "request" | "generic"
 /** Locale-agnostic non-error notice identifier; the component maps it to `ai.copilot.notice.<code>`. */
 export type NoticeCode = "emptyTurn"
 
+/** A display-only transcript line noting a focus change (a context resource added or removed). */
+export interface ContextNotice {
+    action: "added" | "removed"
+    /** i18n keypath for the resource's type word (e.g. `"flow"` → "Flow"). */
+    noun: string
+    /** The resource id/value, rendered as a code-styled token. */
+    id: string
+}
+
 /** A message as rendered in the chat transcript (a superset of the wire MessageView). */
 export interface ChatMessage {
     /** Local, stable key for v-for. */
@@ -50,6 +59,8 @@ export interface ChatMessage {
     type: AgentMessageType | "CONTEXT"
     /** Assistant text; appended to as `token` events arrive. */
     content?: string
+    /** The focus change to render; present only on a `"CONTEXT"` line. */
+    context?: ContextNotice
     toolCall?: ToolCallEvent
     toolResult?: ToolResultEvent
     proposedAction?: ProposedActionEvent
@@ -374,9 +385,9 @@ export function useAiChat() {
      * the backend or persisted. Suppressed until a conversation has started: before that the context
      * pills already convey the focus, so the empty state stays clean.
      */
-    function noteContext(text: string): void {
+    function noteContext(notice: ContextNotice): void {
         if (messages.value.length === 0) return
-        push({id: uid(), role: "SYSTEM", type: "CONTEXT", content: text})
+        push({id: uid(), role: "SYSTEM", type: "CONTEXT", context: notice})
     }
 
     function toErrorCode(e: unknown): ErrorCode {

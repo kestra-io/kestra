@@ -2080,8 +2080,18 @@
           "plugin": "Plugin: {plugin}",
           "test": "Test: {test}"
         },
-        "contextAdded": "Added {label} to context",
-        "contextRemoved": "Removed {label} from context",
+        "contextAdded": "Added {type} {id} to context.",
+        "contextNoun": {
+          "app": "app",
+          "blueprint": "blueprint",
+          "dashboard": "dashboard",
+          "execution": "execution",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "plugin",
+          "test": "test"
+        },
+        "contextRemoved": "Removed {type} {id} from context.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} failed",

@@ -1,6 +1,7 @@
 import {defineStore} from "pinia"
 import {ref} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
+import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
@@ -15,7 +16,7 @@ function toSearchParams(options: Record<string, any>) {
         size,
         sort: sort ? [sort] : undefined,
         filters: routeQueryToQueryFilters(filterKeys),
-    } as Parameters<typeof LogsAPI.searchLogs>[0]
+    }
 }
 
 export interface Log{
@@ -70,8 +71,8 @@ export const useLogsStore = defineStore("logs", () => {
             .filter((f) => f.field !== "level")
 
         const cumulative = await Promise.all(LEVELS_ASC.map((logLevel) => {
-            const filters = [...baseFilters, {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: logLevel}]
-            return LogsAPI.searchLogs({page: 1, size: 1, filters} as Parameters<typeof LogsAPI.searchLogs>[0])
+            const filters: QueryFilter[] = [...baseFilters, {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: logLevel}]
+            return LogsAPI.searchLogs({page: 1, size: 1, filters})
                 .then((response) => (response.total ?? 0) as number)
                 .catch(() => 0)
         }))

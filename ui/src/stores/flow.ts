@@ -406,7 +406,7 @@ export const useFlowStore = defineStore("flow", () => {
             size,
             sort: sort ? [sort] : undefined,
             filters: routeQueryToQueryFilters(filterKeys),
-        } as Parameters<typeof FlowsAPI.searchFlows>[0]
+        }
     }
 
     function findFlows(options: { [key: string]: any }): Promise<any> {

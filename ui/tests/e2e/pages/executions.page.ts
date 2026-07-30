@@ -128,7 +128,6 @@ export class ExecutionsPage extends BasePage {
             await this.page.reload()
             await expect(this.page.getByRole("row")).toHaveCount(1)
         }).toPass({timeout: 30000})
-        await this.page.waitForLoadState("networkidle")
     }
 
     /*

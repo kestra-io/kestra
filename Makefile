@@ -44,8 +44,10 @@ buildSkipTests: clean
 test: clean
 	./gradlew test
 
+# Set SKIP_NPM_CI=true when dependencies are already installed (e.g. the CI
+# workflow ran `npm ci` beforehand) to avoid a redundant reinstall.
 build-frontend:
-	cd ui && npm ci && npm run build
+	cd ui && { [ "${SKIP_NPM_CI}" = "true" ] && [ -d node_modules ] || npm ci; } && npm run build
 
 build-exec: build-frontend
 	./gradlew -q executableJar --no-daemon --priority=normal

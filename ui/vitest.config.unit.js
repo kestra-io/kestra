@@ -14,8 +14,8 @@ export default defineProject({
         name: "unit",
         environment: "jsdom",
         setupFiles: ["./tests/unit/setup.ts", "./tests/unit/leakGuard.ts"],
-        // Reuse each worker's jsdom environment across files instead of rebuilding it per file
-        // (~48s -> ~16s locally). The setup file's vi.resetModules() keeps modules per-file fresh.
+        // Keep node_modules warm in the worker instead of re-importing them per file (cumulative
+        // import 285s -> 94s). The setup file's vi.resetModules() keeps modules per-file fresh.
         isolate: false,
         reporters: [
             ["default"],

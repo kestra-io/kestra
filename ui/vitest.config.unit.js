@@ -14,6 +14,9 @@ export default defineProject({
         name: "unit",
         environment: "jsdom",
         setupFiles: ["./tests/unit/setup.ts"],
+        // Reuse each worker's jsdom environment across files instead of rebuilding it per file
+        // (~48s -> ~16s locally). The setup file's vi.resetModules() keeps modules per-file fresh.
+        isolate: false,
         reporters: [
             ["default"],
             ["junit"],

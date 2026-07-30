@@ -169,42 +169,42 @@
 
 <style scoped lang="scss">
     .test-event-description {
-        margin-bottom: 0.5rem;
+        margin-bottom: var(--ks-spacing-2);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
     }
 
     .test-event-url {
-        margin-bottom: 1rem;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid var(--ks-border-default);
+        margin-bottom: var(--ks-spacing-4);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-sm);
-        background: var(--ks-bg-input, var(--ks-bg-base));
+        background: var(--ks-bg-input);
         color: var(--ks-text-secondary);
-        font-family: var(--ks-font-family-monospace, monospace);
+        font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-xs);
         word-break: break-all;
     }
 
     .test-event-field {
-        margin-bottom: 1rem;
+        margin-bottom: var(--ks-spacing-4);
     }
 
     .test-event-label {
         display: block;
-        margin-bottom: 0.375rem;
+        margin-bottom: var(--ks-spacing-1);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
-        font-weight: 600;
+        font-weight: var(--ks-font-weight-semibold);
     }
 
     .test-event-editor {
-        border: 1px solid var(--ks-border-default);
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-sm);
         overflow: hidden;
     }
 
     .test-event-link {
-        margin-left: 0.5rem;
+        margin-left: var(--ks-spacing-2);
     }
 </style>

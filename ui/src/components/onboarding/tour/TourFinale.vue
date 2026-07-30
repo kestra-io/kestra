@@ -122,8 +122,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 1.5rem;
-        background: color-mix(in srgb, var(--ks-bg-base) 80%, transparent);
+        padding: var(--ks-spacing-5);
+        background: var(--ks-bg-scrim);
         backdrop-filter: blur(6px);
         overflow-y: auto;
     }
@@ -132,36 +132,36 @@
         width: 100%;
         max-width: 660px;
         // Keeps the buttons reachable on short screens.
-        max-height: calc(100vh - 3rem);
+        max-height: calc(100vh - var(--ks-spacing-8));
         overflow-y: auto;
-        padding: 2rem;
-        border: 1px solid var(--ks-border-default);
-        border-radius: 14px;
-        background: var(--ks-bg-elevated, var(--ks-bg-surface));
-        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+        padding: var(--ks-spacing-6);
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
+        border-radius: var(--ks-radius-xl);
+        background: var(--ks-bg-elevated);
+        box-shadow: var(--ks-shadow-lg);
 
         h1 {
-            margin-bottom: 0.75rem;
-            font-size: var(--ks-font-size-2xl, 1.5rem);
+            margin-bottom: var(--ks-spacing-3);
+            font-size: var(--ks-font-size-2xl);
         }
     }
 
     .tour-kicker {
-        margin-bottom: 0.5rem;
-        color: var(--ks-content-link, var(--ks-text-link));
+        margin-bottom: var(--ks-spacing-2);
+        color: var(--ks-text-link);
         font-size: var(--ks-font-size-xs);
-        font-weight: 700;
+        font-weight: var(--ks-font-weight-bold);
         letter-spacing: 0.1em;
         text-transform: uppercase;
     }
 
     .tour-lead {
-        margin-bottom: 0.75rem;
+        margin-bottom: var(--ks-spacing-3);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
 
         :deep(a) {
-            color: var(--ks-content-link, var(--ks-text-link));
+            color: var(--ks-text-link);
             text-decoration: none;
 
             &:hover {
@@ -173,15 +173,15 @@
     .tour-card-actions {
         display: flex;
         justify-content: flex-end;
-        gap: 0.5rem;
-        margin-top: 1.5rem;
+        gap: var(--ks-spacing-2);
+        margin-top: var(--ks-spacing-5);
     }
 
     .takeaways {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-        margin: 1rem 0;
+        gap: var(--ks-spacing-3);
+        margin: var(--ks-spacing-4) 0;
 
         @media (max-width: 640px) {
             grid-template-columns: 1fr;
@@ -193,15 +193,15 @@
         margin-top: auto !important;
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
-        padding-top: 0.5rem;
+        gap: var(--ks-spacing-2);
+        padding-top: var(--ks-spacing-2);
 
         span {
             color: var(--ks-text-secondary);
         }
 
         a {
-            color: var(--ks-content-link, var(--ks-text-link));
+            color: var(--ks-text-link);
             text-decoration: none;
 
             &:hover {
@@ -213,13 +213,13 @@
     .takeaway {
         display: flex;
         flex-direction: column;
-        padding: 1rem;
-        border: 1px solid var(--ks-border-default);
+        padding: var(--ks-spacing-4);
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);
         background: var(--ks-bg-surface);
 
         h4 {
-            margin-bottom: 0.25rem;
+            margin-bottom: var(--ks-spacing-1);
             font-size: var(--ks-font-size-sm);
         }
 
@@ -231,10 +231,10 @@
     }
 
     .resources-title {
-        margin-bottom: 0.5rem;
+        margin-bottom: var(--ks-spacing-2);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
-        font-weight: 600;
+        font-weight: var(--ks-font-weight-semibold);
         letter-spacing: 0.06em;
         text-transform: uppercase;
     }

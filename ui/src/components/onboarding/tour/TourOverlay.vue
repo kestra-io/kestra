@@ -112,14 +112,11 @@
                     </KsButton>
                     <KsButton
                         type="primary"
+                        :loading="isBusy || !isReady"
                         :disabled="isBusy || !isReady"
                         @click="next"
                     >
-                        <span v-if="isBusy || !isReady" class="guide-running">
-                            <span class="guide-spinner" />
-                            {{ t("onboarding.tour.actions.running") }}
-                        </span>
-                        <span v-else>{{ nextLabel }}</span>
+                        {{ isBusy || !isReady ? t("onboarding.tour.actions.running") : nextLabel }}
                     </KsButton>
                 </div>
             </template>
@@ -371,7 +368,14 @@
 
     /* ---------- confetti, for the milestones worth celebrating ---------- */
 
-    const CONFETTI_COLORS = ["#9869f7", "#43f6b6", "#718bfe", "#fce070", "#F62E76", "#cdb6fb"]
+    const CONFETTI_TOKENS = [
+        "--ks-btn-primary-bg-default",
+        "--ks-status-success",
+        "--ks-status-info",
+        "--ks-status-warning",
+        "--ks-status-error",
+        "--ks-btn-primary-bg-hover",
+    ]
 
     const confettiBurst = (count = 90) => {
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -381,7 +385,7 @@
             const piece = document.createElement("span")
             piece.className = "tour-confetti-piece"
             piece.style.left = `${20 + Math.random() * 60}vw`
-            piece.style.background = CONFETTI_COLORS[index % CONFETTI_COLORS.length]
+            piece.style.background = `var(${CONFETTI_TOKENS[index % CONFETTI_TOKENS.length]})`
             piece.style.animationDelay = `${Math.random() * 0.3}s`
             piece.style.animationDuration = `${1.6 + Math.random() * 1.2}s`
             document.body.appendChild(piece)
@@ -601,15 +605,15 @@
 
     .guide-card {
         position: absolute;
-        right: 3rem;
-        bottom: 3rem;
-        width: min(460px, calc(100vw - 6rem));
+        right: var(--ks-spacing-8);
+        bottom: var(--ks-spacing-8);
+        width: min(460px, calc(100vw - var(--ks-spacing-16)));
         background: var(--ks-bg-surface);
-        border: 1px solid var(--ks-border-default);
-        border-top: 3px solid var(--ks-btn-primary-bg-default);
-        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(0, 0, 0, 0.22);
-        border-radius: 8px;
-        padding: 1rem;
+        border: var(--ks-border-width-thin) solid var(--ks-border-default);
+        border-top: var(--ks-border-width-thick) solid var(--ks-btn-primary-bg-default);
+        box-shadow: var(--ks-shadow-lg);
+        border-radius: var(--ks-radius-base);
+        padding: var(--ks-spacing-4);
         pointer-events: auto;
         // Dragging is the default, except over the wording, which stays selectable.
         cursor: move;
@@ -617,10 +621,10 @@
     }
 
     // Over the left half of the page, next to the left menu, for scenes whose content sits in the
-    // bottom right. Dragging still works from here.
+    // bottom right. Dragging still works from here. `--menu-width` is set on `:root` by app.scss.
     .guide-card.is-left {
         right: auto;
-        left: calc(var(--menu-width, 268px) + 1rem);
+        left: calc(var(--menu-width) + var(--ks-spacing-4));
     }
 
     // Same list as SELECTABLE_TEXT in the script above.
@@ -637,16 +641,16 @@
     .guide-top {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: var(--ks-spacing-3);
         user-select: none;
     }
 
     .guide-step {
         display: flex;
         align-items: baseline;
-        gap: 0.5rem;
+        gap: var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
-        font-weight: 600;
+        font-weight: var(--ks-font-weight-semibold);
         letter-spacing: 0.06em;
         text-transform: uppercase;
         color: var(--ks-text-secondary);
@@ -660,62 +664,46 @@
     }
 
     .guide-note {
-        margin: 0.75rem 0 0;
+        margin: var(--ks-spacing-3) 0 0;
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-xs);
     }
 
     .guide-plan {
-        margin: 0.75rem 0 0;
-        padding-left: 1.25rem;
+        margin: var(--ks-spacing-3) 0 0;
+        padding-left: var(--ks-spacing-5);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
-        line-height: 1.6;
+        line-height: var(--ks-line-height-loose);
     }
 
     // A step's body may list what it is describing, as an ordered list in its translation.
     .guide-body :deep(ol) {
-        margin: 0.375rem 0;
-        padding-left: 1.25rem;
+        margin: var(--ks-spacing-1) 0;
+        padding-left: var(--ks-spacing-5);
     }
 
     .guide-progress {
         display: flex;
-        gap: 6px;
-        margin-top: 0.625rem;
+        gap: var(--ks-spacing-1);
+        margin-top: var(--ks-spacing-2);
     }
 
     // One segment per step, each split into a tick per substep.
     .guide-progress-group {
         display: flex;
         flex: 1;
-        gap: 2px;
+        gap: var(--ks-spacing-px);
     }
 
     .guide-progress-tick {
         flex: 1;
         height: 3px;
-        border-radius: 2px;
+        border-radius: var(--ks-radius-xs);
         background: var(--ks-border-default);
-        transition: background 0.2s ease;
+        transition: background var(--ks-duration-base) var(--ks-ease-standard);
 
         &.filled {
-            background: var(--ks-btn-primary-bg-default);
-        }
-    }
-
-    .guide-dots {
-        display: flex;
-        gap: 4px;
-    }
-
-    .guide-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--ks-border-default);
-
-        &.done {
             background: var(--ks-btn-primary-bg-default);
         }
     }
@@ -727,43 +715,43 @@
     .milestone {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-top: 0.75rem;
-        padding: 0.5rem 0.75rem;
-        border-radius: 6px;
+        gap: var(--ks-spacing-2);
+        margin-top: var(--ks-spacing-3);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        border-radius: var(--ks-radius-sm);
         color: var(--ks-status-success);
         background: color-mix(in srgb, var(--ks-status-success) 12%, transparent);
         font-size: var(--ks-font-size-sm);
-        font-weight: 600;
+        font-weight: var(--ks-font-weight-semibold);
     }
 
     .guide-title {
-        margin: 0.75rem 0 0.25rem;
+        margin: var(--ks-spacing-3) 0 var(--ks-spacing-1);
         font-size: var(--ks-font-size-lg);
     }
 
     .guide-body {
-        margin-bottom: 0.75rem;
+        margin-bottom: var(--ks-spacing-3);
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
-        line-height: 1.5;
+        line-height: var(--ks-line-height-base);
     }
 
     .guide-alert {
-        margin-bottom: 0.75rem;
+        margin-bottom: var(--ks-spacing-3);
     }
 
     // A KsAlert of type info renders dim text on a dim background, which is hard to read in a small
     // card, so the callout is a plain block with primary text and an accent edge.
     .guide-callout {
-        margin: 0 0 0.75rem;
-        padding: 0.625rem 0.75rem;
-        border-left: 3px solid var(--ks-btn-primary-bg-default);
+        margin: 0 0 var(--ks-spacing-3);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        border-left: var(--ks-border-width-thick) solid var(--ks-btn-primary-bg-default);
         border-radius: var(--ks-radius-sm);
         background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 12%, transparent);
         color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
-        line-height: 1.5;
+        line-height: var(--ks-line-height-base);
         cursor: text;
         user-select: text;
     }
@@ -771,32 +759,11 @@
     .guide-actions {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--ks-spacing-2);
     }
 
     .guide-spacer {
         flex: 1;
-    }
-
-    .guide-running {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .guide-spinner {
-        width: 12px;
-        height: 12px;
-        border: 2px solid rgba(255, 255, 255, 0.35);
-        border-top-color: #fff;
-        border-radius: 50%;
-        animation: tourSpin 0.7s linear infinite;
-    }
-
-    @keyframes tourSpin {
-        to {
-            transform: rotate(360deg);
-        }
     }
 
     /* Highlight applied to real controls in the app, so it has to leave the scoped tree. */
@@ -805,8 +772,8 @@
         box-shadow:
             0 0 16px 2px color-mix(in srgb, var(--onboarding-static-color) 36%, transparent),
             0 0 34px 10px color-mix(in srgb, var(--onboarding-static-color) 20%, transparent);
-        border-radius: 10px;
-        transition: box-shadow 0.2s ease;
+        border-radius: var(--ks-radius-lg);
+        transition: box-shadow var(--ks-duration-base) var(--ks-ease-standard);
     }
 
     :global(html.dark .onboarding-v2-highlight-static) {
@@ -821,7 +788,7 @@
         top: -12px;
         width: 8px;
         height: 14px;
-        border-radius: 2px;
+        border-radius: var(--ks-radius-xs);
         pointer-events: none;
         z-index: 6000;
         animation-name: tourConfettiFall;

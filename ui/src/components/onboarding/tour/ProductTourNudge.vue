@@ -44,27 +44,25 @@
 
 <style scoped lang="scss">
     .product-tour-nudge {
-        // The tour's purple, as in the left menu entry and on the Copilot page.
-        --product-tour-accent: #8b5cf6;
         position: relative;
         margin: var(--ks-spacing-4) var(--ks-spacing-2) 0;
-        padding: 0.75rem;
-        border: 1px solid color-mix(in srgb, var(--product-tour-accent) 45%, transparent);
+        padding: var(--ks-spacing-3);
+        border: var(--ks-border-width-thin) solid color-mix(in srgb, var(--ks-btn-primary-bg-default) 45%, transparent);
         border-radius: var(--ks-radius-base);
-        background: color-mix(in srgb, var(--product-tour-accent) 12%, transparent);
+        background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 12%, transparent);
     }
 
     .product-tour-nudge__dismiss {
         position: absolute;
-        top: 2px;
-        right: 2px;
+        top: var(--ks-spacing-1);
+        right: var(--ks-spacing-1);
     }
 
     .product-tour-nudge__title {
-        margin: 0 1rem 0.5rem 0;
+        margin: 0 var(--ks-spacing-4) var(--ks-spacing-2) 0;
         color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
-        font-weight: 600;
+        font-weight: var(--ks-font-weight-semibold);
     }
 
     // Deliberately not the link colour: this opens the tour rather than navigating somewhere, and
@@ -72,7 +70,7 @@
     .product-tour-nudge__link {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--ks-spacing-2);
         color: var(--ks-text-primary);
         font-size: var(--ks-font-size-sm);
         text-decoration: none;
@@ -81,7 +79,7 @@
             color: var(--ks-text-primary);
 
             .product-tour-nudge__play {
-                background: color-mix(in srgb, var(--product-tour-accent) 80%, white);
+                background: var(--ks-btn-primary-bg-hover);
             }
         }
     }
@@ -90,12 +88,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 22px;
-        height: 22px;
+        width: var(--ks-spacing-5);
+        height: var(--ks-spacing-5);
         flex-shrink: 0;
         border-radius: var(--ks-radius-sm);
-        background: var(--product-tour-accent);
-        color: #0d1117;
-        transition: background 0.15s ease;
+        background: var(--ks-btn-primary-bg-default);
+        color: var(--ks-btn-primary-text);
+        transition: background var(--ks-duration-fast) var(--ks-ease-standard);
     }
 </style>

@@ -35,9 +35,6 @@
 
 <style scoped lang="scss">
     .product-tour-entry {
-        // Same purple as the tour's card on the Copilot page, so both entries look like one feature
-        // rather than another primary action.
-        --product-tour-accent: #8b5cf6;
         position: relative;
 
         &:hover .product-tour-dismiss {
@@ -47,27 +44,28 @@
 
     .product-tour-dismiss {
         position: absolute;
-        top: 2px;
-        right: 2px;
+        top: var(--ks-spacing-1);
+        right: var(--ks-spacing-1);
         opacity: 0;
-        transition: opacity 0.15s ease;
+        transition: opacity var(--ks-duration-fast) var(--ks-ease-standard);
     }
 
     .product-tour-item {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.625rem 0.75rem;
-        border: 1px solid color-mix(in srgb, var(--product-tour-accent) 55%, transparent);
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        border: var(--ks-border-width-thin) solid color-mix(in srgb, var(--ks-btn-primary-bg-default) 55%, transparent);
         border-radius: var(--ks-radius-base);
-        background: color-mix(in srgb, var(--product-tour-accent) 14%, transparent);
+        background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 14%, transparent);
         color: var(--ks-text-primary);
         text-decoration: none;
-        transition: background 0.15s ease, border-color 0.15s ease;
+        transition: background var(--ks-duration-fast) var(--ks-ease-standard),
+            border-color var(--ks-duration-fast) var(--ks-ease-standard);
 
         &:hover {
-            border-color: var(--product-tour-accent);
-            background: color-mix(in srgb, var(--product-tour-accent) 24%, transparent);
+            border-color: var(--ks-btn-primary-bg-default);
+            background: color-mix(in srgb, var(--ks-btn-primary-bg-default) 24%, transparent);
         }
     }
 
@@ -75,16 +73,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 30px;
-        height: 30px;
+        width: var(--ks-spacing-6);
+        height: var(--ks-spacing-6);
         flex-shrink: 0;
         border-radius: var(--ks-radius-sm);
-        background: var(--product-tour-accent);
-        color: #0d1117;
+        background: var(--ks-btn-primary-bg-default);
+        color: var(--ks-btn-primary-text);
     }
 
     .product-tour-label {
-        font-size: var(--ks-font-size-md, 0.875rem);
-        font-weight: 600;
+        font-size: var(--ks-font-size-md);
+        font-weight: var(--ks-font-weight-semibold);
     }
 </style>

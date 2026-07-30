@@ -1,11 +1,7 @@
 <template>
-    <TourFinale
-        v-if="showFinale"
-        @restart="restartTour"
-        @close="closeFinale"
-    />
+    <TourFinale v-model="showFinale" @restart="restartTour" />
 
-    <div v-else-if="tourStore.isGuidedActive" class="tour-overlay" aria-live="polite">
+    <div v-if="tourStore.isGuidedActive && !showFinale" class="tour-overlay" aria-live="polite">
         <div
             ref="cardEl"
             class="guide-card"
@@ -490,10 +486,6 @@
         actions.restoreEditorPanels()
         tourStore.complete()
         showFinale.value = true
-    }
-
-    const closeFinale = () => {
-        showFinale.value = false
     }
 
     const restartTour = async () => {

@@ -3,7 +3,6 @@
         v-model="isOpen"
         appendToBody
         width="min(660px, 92vw)"
-        @close="emit('close')"
     >
         <template #header>
             <p class="tour-kicker">
@@ -48,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue"
+    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
 
@@ -62,10 +61,9 @@
 
     const emit = defineEmits<{
         restart: [];
-        close: [];
     }>()
 
-    const isOpen = ref(true)
+    const isOpen = defineModel<boolean>()
 
     /**
      * Documentation for the concepts the tour went through, kept here rather than in the translations:
@@ -108,7 +106,7 @@
     }))
 
     const startBuilding = async () => {
-        emit("close")
+        isOpen.value = false
         // The same namespace as everything else from the tour, so the story stays consistent.
         await router.push({
             name: "flows/create",

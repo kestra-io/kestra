@@ -29,7 +29,6 @@
             </template>
         </div>
 
-        <!-- Only on the Blueprints page, where the rail has room and the readers are new. -->
         <ProductTourNudge />
     </KsSideBar>
 </template>

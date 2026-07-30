@@ -72,7 +72,6 @@ public class WebhookPluginTest {
             MAIN_TENANT, TESTS_FLOW_NS, "webhook-plugin"
         );
 
-        // Sent from the UI's "Send test event" action, so it can be filtered out of real traffic.
         assertThat(execution.getLabels()).contains(new Label(Label.FROM, "testEvent"));
     }
 

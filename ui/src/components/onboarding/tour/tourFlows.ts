@@ -1,10 +1,5 @@
-/**
- * Flow sources used by the product tour.
- *
- * The tour needs deterministic sources: every scene after the first one refers to known task ids,
- * to a known broken expression, and to a known webhook key, so the flows are defined here rather
- * than generated. They are only ever written to the `tutorial` namespace while the tour is running.
- */
+// Flow sources used by the product tour. Hardcoded rather than generated: every scene after the
+// first refers to known task ids, a known broken expression and a known webhook key.
 
 import {TUTORIAL_NAMESPACE} from "../../../utils/constants"
 
@@ -14,23 +9,11 @@ export const TOUR_REPORT_FLOW_ID = "daily_report"
 export const TOUR_WEBHOOK_TRIGGER_ID = "new_order"
 export const TOUR_WEBHOOK_TRIGGER_TYPE = "io.kestra.plugin.core.trigger.Webhook"
 
-/**
- * Endpoint the notify task posts to, held in a flow variable.
- *
- * The task's `url` is a secret property, so a plain value there raises a validation warning in the
- * editor. A flow variable is a Pebble expression, so the warning is gone, the flow stays entirely
- * self-contained (nothing stored on the instance), and the line a user replaces in production is
- * obvious.
- */
+// Held in a flow variable rather than inline: `url` is a secret property, so a plain value there
+// raises a validation warning in the editor.
 export const TOUR_SLACK_VARIABLE = "slack_webhook"
 export const TOUR_SLACK_MOCK_URL = "https://kestra.io/api/mock"
 
-/**
- * Step 1: what the user gets back from the Copilot scene.
- *
- * Two tasks, and nothing else: the prompt asks for exactly this, and a variable for a task that is
- * only added later would be unused on the first screen.
- */
 const TOUR_FLOW_HEADER = `id: ${TOUR_FLOW_ID}
 namespace: ${TOUR_NAMESPACE}`
 
@@ -57,21 +40,16 @@ tasks:
 
 export const TOUR_FLOW_BASE = TOUR_FLOW_HEADER + TOUR_BASE_TASKS
 
-/**
- * Step 3: the task added by hand in the editor.
- *
- * `revenu` is missing its final `e` on purpose. Rendering the message fails, the task fails with a
- * message naming the missing variable, and the two tasks before it stay successful.
- */
 export const TOUR_NOTIFY_TASK_TYPE = "io.kestra.plugin.slack.notifications.SlackIncomingWebhook"
 
-/** Added with the notify task, which is what uses it. */
 export const TOUR_SLACK_VARIABLES = `
 
 variables:
   # A mock endpoint for this tour. In production: {{ secret('SLACK_WEBHOOK') }}
   ${TOUR_SLACK_VARIABLE}: ${TOUR_SLACK_MOCK_URL}`
 
+// `revenu` is missing its final `e` on purpose: rendering the message fails so the notify task fails
+// while the two tasks before it stay successful. Do not "fix" it here.
 export const TOUR_NOTIFY_TASK_BROKEN = `
 
   - id: notify
@@ -79,16 +57,15 @@ export const TOUR_NOTIFY_TASK_BROKEN = `
     url: "{{ vars.${TOUR_SLACK_VARIABLE} }}"
     messageText: "Revenue today: \${{ outputs.summarize.vars.revenu }}"`
 
-/** Step 4: the one-character fix. */
 export const TOUR_NOTIFY_TASK_FIXED = TOUR_NOTIFY_TASK_BROKEN.replace(
     "vars.revenu }}",
     "vars.revenue }}",
 )
 
-/** The line the revision diff opens on, so the fix is not several screens below the fold. */
+// The line the revision diff scrolls to.
 export const TOUR_FIXED_EXPRESSION = "vars.revenue }}"
 
-/** Step 5: the webhook trigger, keyed per instance so two users never share a URL. */
+// Keyed per instance so two users never share a webhook URL.
 export const tourWebhookTrigger = (key: string) => `
 
 triggers:
@@ -98,7 +75,6 @@ triggers:
     labels:
       started_by: webhook event`
 
-/** Step 5 (optional exit): the second flow, started by the first one finishing. */
 export const TOUR_REPORT_FLOW = `id: ${TOUR_REPORT_FLOW_ID}
 namespace: ${TOUR_NAMESPACE}
 
@@ -118,10 +94,8 @@ triggers:
         states:
           - SUCCESS`
 
-/** Sources per tour stage, so a scene can render or restore the exact state it needs. */
 export const tourFlowSource = {
     generated: () => TOUR_FLOW_BASE,
-    // The variable goes above the tasks, where a flow would normally declare it.
     withBrokenNotify: () =>
         TOUR_FLOW_HEADER + TOUR_SLACK_VARIABLES + TOUR_BASE_TASKS + TOUR_NOTIFY_TASK_BROKEN,
     withFixedNotify: () =>
@@ -131,8 +105,6 @@ export const tourFlowSource = {
         + tourWebhookTrigger(key),
 }
 
-/** Label on executions the tour starts from the Execute button, next to the trigger ones. */
 export const TOUR_MANUAL_LABEL = "started_by:you"
 
-/** Payload prefilled in the Send test event dialog. */
 export {SAMPLE_TEST_EVENT_PAYLOAD as TOUR_TEST_EVENT_PAYLOAD} from "../../flows/testEvent"

@@ -121,7 +121,6 @@
         },
     })
 
-    // A fresh payload every time the dialog opens, so a previous edit is not carried over.
     watch(open, (value) => {
         if (value) {
             payload.value = SAMPLE_TEST_EVENT_PAYLOAD

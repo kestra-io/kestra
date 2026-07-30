@@ -4,7 +4,6 @@
     <div class="copilot-help" data-test="copilot-help">
         <KsText size="small" class="copilot-help-title">{{ $t("welcome_copilot.need_help") }}</KsText>
 
-        <!-- The product tour, where the retired welcome page used to offer it. -->
         <RouterLink class="copilot-help-card" :to="{name: 'ai', query: {tour: 'start'}}">
             <KsIcon class="copilot-help-icon"><Play /></KsIcon>
             <span class="copilot-help-text">

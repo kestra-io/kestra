@@ -23,9 +23,7 @@ const routes: KestraRouteRecord[] = [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
 
-    // The AI Copilot full-page home (#7909), where the product tour starts as well: login, setup and
-    // the sidebar logo all navigate here.
-    {name: "ai", path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
+    {name: "ai",path: "/:tenant?/ai", component: () => import("../components/ai/copilot/CopilotPage.vue")},
 
     //Dashboards
     {

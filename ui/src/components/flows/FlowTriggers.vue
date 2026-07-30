@@ -52,8 +52,6 @@
                     <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
                 </template>
             </KsTableColumn>
-            <!-- The id and the type are what a trigger is recognised by, so they keep a minimum
-                 width and the table scrolls instead of wrapping them one character per line. -->
             <KsTableColumn
                 prop="id"
                 :label="$t('id')"
@@ -165,13 +163,9 @@
                 </template>
             </KsTableColumn>
 
-            <!-- Pinned: with the identifiers keeping their width, the table can scroll, and the
-                 actions of a row have to stay reachable. -->
             <KsTableColumn columnKey="row-actions" className="row-action" fixed="right">
                 <template #default="scope">
                     <div class="row-actions-cell">
-                        <!-- Webhook triggers can be tried out from here, with the payload of the
-                             request in the dialog. -->
                         <KsTooltip v-if="canSendTestEvent(scope.row)" :content="$t('test_event.button')">
                             <KsButton
                                 data-onboarding-target="trigger-test-event-button"
@@ -673,16 +667,12 @@
         isOpen.value = true
     }
 
-    /* Send test event: only offered while the product tour is running. */
     const tourStore = useProductTourStore()
     const testEventTarget = ref<TestEventTarget | null>(null)
     const isTestEventOpen = ref(false)
 
-    /**
-     * A webhook trigger can be tried out by anyone who is allowed to create executions: sending the
-     * event is the same request an external system would make, and it creates a real execution.
-     */
-    const canSendTestEvent = (row: any) =>
+    // Gated on execution-create: a test event creates a real execution.
+    const canSendTestEvent =(row: any) =>
         row?.type === WEBHOOK_TRIGGER_TYPE
         && Boolean(row?.key)
         && Boolean(authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, flowStore.flow?.namespace))
@@ -697,11 +687,7 @@
         isTestEventOpen.value = true
     }
 
-    /**
-     * An event sent from this dialog counts as the tour's step: it is the same request the tour makes,
-     * so the execution it created is the one the next step talks about.
-     */
-    const onTestEventSent = (result: {executionId?: string}) => {
+    const onTestEventSent =(result: {executionId?: string}) => {
         if (!tourStore.isGuidedActive || !result?.executionId) return
         tourStore.setTourState({
             eventExecutionId: result.executionId,
@@ -835,7 +821,6 @@
     padding-inline: var(--ks-spacing-5);
 }
 
-// Keeps the tour's test event button on the same line as the actions menu.
 .row-actions-cell {
     display: flex;
     align-items: center;

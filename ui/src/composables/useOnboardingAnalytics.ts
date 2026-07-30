@@ -7,14 +7,6 @@ import {TOUR_SCENE_IDS} from "../components/onboarding/tour/tourScenes"
 export const TOUR_ANALYTICS_VERSION = "3.0.0"
 export const TOUR_ANALYTICS_EXPERIENCE = "product_tour"
 
-/**
- * Events the product tour reports, resolved to `app.onboarding-tour.*` in PostHog.
- *
- * `offered` fires when the invitation appears and `started` when it is accepted, so the start rate
- * is one over the other. `continued` fires on every step the user moves through, so the funnel can be
- * read step by step from the `action` property. `completed` covers the early exit offered on a
- * milestone as well as the last step.
- */
 export type OnboardingTourEvent =
     | "tour_offered"
     | "tour_started"
@@ -23,9 +15,7 @@ export type OnboardingTourEvent =
     | "tour_closed";
 
 interface TrackOnboardingOptions {
-    /** Names the event. */
     event: OnboardingTourEvent;
-    /** The step it happened on, reported as the `action` property. */
     action?: string | null;
     mode?: "guided" | null;
     additional?: Record<string, unknown>;
@@ -53,7 +43,6 @@ export function useOnboardingAnalytics() {
                 template: TOUR_ANALYTICS_EXPERIENCE,
                 guideId: "product_tour",
                 event,
-                // The step name, per the tracking plan: one event name, broken down by step.
                 action,
                 step,
                 mode,

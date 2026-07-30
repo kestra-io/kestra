@@ -209,11 +209,9 @@ public class FlowConcurrencyCaseTest {
         assertThat(results).extracting(e -> e.getState().getCurrent())
             .allMatch(State.Type.FAILED::equals);
 
-        // The concurrency counter must be back to 0 — no slot leak.
-        // Its decrement is committed in a separate, later transaction than the terminal execution row,
-        // so a single read taken right after awaitFlowExecutionNumber can race a still-in-flight release.
-        // Poll instead of asserting a single read. Await throws on timeout, so report the last value
-        // observed rather than letting a bare ConditionTimeoutException hide how many slots leaked.
+        // The concurrency counter must be back to 0 — no slot leak. Polled rather than read once:
+        // its decrement is committed in a later transaction than the terminal execution row, so a
+        // single read right after awaitFlowExecutionNumber can race a still-in-flight release.
         AtomicInteger lastObservedRunning = new AtomicInteger(-1);
         try {
             Await.await()

@@ -1,8 +1,4 @@
 <template>
-    <!--
-        Blueprints are read by people who have not built anything yet, and the tabs rail has room to
-        spare, so the tour is offered here as well. It stays until it is closed here.
-    -->
     <div v-if="visible && isBlueprints" class="product-tour-nudge">
         <span class="product-tour-nudge__dismiss">
             <KsIconButton :tooltip="t('onboarding.tour.actions.dismiss')" placement="top" @click="dismiss">
@@ -60,8 +56,6 @@
         font-weight: var(--ks-font-weight-semibold);
     }
 
-    // Deliberately not the link colour: this opens the tour rather than navigating somewhere, and
-    // the accent is dark enough on this background to be hard to read.
     .product-tour-nudge__link {
         display: inline-flex;
         align-items: center;

@@ -177,18 +177,11 @@
         // Whether per-revision delete is available. Flows support it (default); consumers without a
         // delete-by-revision backend (e.g. reusable inputs) pass false to hide the delete control.
         canDelete?: boolean,
-        // Text to reveal in the diff. A long revision opens on its first lines, which can leave the
-        // change that was linked to off screen.
+        // Text to scroll the diff to, so a linked change is not left off screen.
         highlight?: string
     }>(), {editRouteQuery: true, canDelete: true})
 
-    /**
-     * Scroll the diff to the first line of the new revision containing `highlight`.
-     *
-     * Near the top rather than centered: what is being compared should be readable without scrolling
-     * on a short window.
-     */
-    const revealHighlight = (editor: any) => {
+    const revealHighlight =(editor: any) => {
         if (!props.highlight) return
 
         const modified = editor?.getModifiedEditor?.() ?? editor

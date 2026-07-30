@@ -71,10 +71,7 @@
 
     const isOpen = defineModel<boolean>()
 
-    /**
-     * Documentation for the concepts the tour went through, kept here rather than in the translations:
-     * the URLs are not something to translate, and the rest of the app keeps its doc links in code too.
-     */
+    // URLs are not translated, so the tour's doc links live in code rather than in i18n.
     const DOCS: Record<string, string> = {
         autocompletion: "https://kestra.io/docs/tutorial/fundamentals#autocompletion",
         execution: "https://kestra.io/docs/workflow-components/execution",
@@ -106,7 +103,6 @@
 
     const startBuilding = async () => {
         isOpen.value = false
-        // The same namespace as everything else from the tour, so the story stays consistent.
         await router.push({
             name: "flows/create",
             params: {tenant: route.params.tenant},
@@ -156,7 +152,6 @@
     }
 
     .takeaway-docs {
-        // Pushed to the bottom of the card, so the links of all four line up.
         margin-top: auto !important;
         display: flex;
         flex-wrap: wrap;

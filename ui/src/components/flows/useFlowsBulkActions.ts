@@ -9,7 +9,6 @@ import type {IdWithNamespace} from "@kestra-io/kestra-sdk"
 import type {LocationQuery} from "vue-router"
 
 
-/** A row of the flows table: the identity the bulk endpoints take, plus the enabled flag the toolbar reads. */
 type SelectedFlow = IdWithNamespace & {enabled: boolean}
 
 export default function useFlowsBulkActions(options: {

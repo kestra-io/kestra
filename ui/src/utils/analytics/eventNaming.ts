@@ -26,8 +26,6 @@ const OSSAUTH_NAMES: Record<string, string> = {
 }
 
 const ONBOARDING_NAMES: Record<string, string> = {
-    // Product tour: `onboarding.event` names the event, `onboarding.action` carries the step it
-    // happened on, so a single event name can be broken down per step.
     tour_offered: "app.onboarding-tour.offered",
     tour_started: "app.onboarding-tour.started",
     tour_continued: "app.onboarding-tour.continued",

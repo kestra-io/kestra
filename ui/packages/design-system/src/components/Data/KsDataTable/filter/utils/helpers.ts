@@ -2,10 +2,7 @@ import type {LocationQuery} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
 import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
 
-/**
- * Decodes a raw `filters[...]` query-param value. Exported because callers translating the route
- * into a backend request payload decode the same values as {@link decodeSearchParams} does.
- */
+/** Decodes a raw `filters[...]` query-param value. */
 export const decodeFilterValue = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)
         ? value.filter(v => v !== null).map(decodeURIComponent)
@@ -70,11 +67,7 @@ export interface ParsedFilterKey {
     subKey?: string
 }
 
-/**
- * Parses a filter URL key into its parts, or returns null when the key does not match
- * {@link FILTER_KEY_PATTERN}. Exported so callers that translate the route into a backend request
- * payload read the key format from its owner instead of restating the regex.
- */
+/** Parses a filter URL key into its parts, or null when it does not match {@link FILTER_KEY_PATTERN}. */
 export const parseFilterKey = (key: string): ParsedFilterKey | null => {
     const match = key.match(FILTER_KEY_PATTERN)
     if (!match) return null

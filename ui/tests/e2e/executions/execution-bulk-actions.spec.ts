@@ -1,19 +1,14 @@
 import {test, expect} from "../fixtures/executions.fixture"
 import {ExecutionState, Pagination} from "../pages/base.page"
 
-/*
- * One more labeled execution than the page size, so "Select All" has to reach
- * beyond the visible page — the exact semantics under test. Kept small: every
- * execution is a real flow run on the shared Kestra instance.
- */
+// One more than the page size, so "Select All" has to reach beyond the visible page.
 const PAGE_SIZE = Pagination.ITEMS_10
 const LABELED_COUNT = PAGE_SIZE + 1
 
 test.describe("Executions' view Bulk Actions", () => {
 
-    // Each test drives real flow executions against the single shared Kestra instance,
-    // so keep them in one worker. `default` rather than `serial`: `serial` would skip the
-    // remaining tests after a failure and hide a second regression.
+    // One worker: the tests drive real executions on the shared instance. `default` rather than
+    // `serial`, which would skip the remaining tests after a failure and hide a second regression.
     test.describe.configure({mode: "default"})
 
     test.describe("Set labels", () => {

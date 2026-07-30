@@ -28,7 +28,6 @@ describe("product tour scenes", () => {
     })
 
     it("counts one numbered step per scene", () => {
-        // What the card shows: "step 5 of 13", with 13 ticks in the progress bar.
         expect(TOUR_TOTAL_STEPS).toBe(TOUR_SCENES.length)
         expect(TOUR_STEP_GROUPS.reduce((total, group) => total + group.scenes.length, 0))
             .toBe(TOUR_TOTAL_STEPS)
@@ -49,8 +48,6 @@ describe("product tour scenes", () => {
             expect(copy, `missing translations for scene ${scene.id}`).toBeDefined()
             expect(copy.title, `missing title for ${scene.id}`).toBeTruthy()
             expect(copy.body, `missing body for ${scene.id}`).toBeTruthy()
-
-            // The last scene ends the tour from its primary button like any other.
             expect(copy.next, `missing next label for ${scene.id}`).toBeTruthy()
 
             if (scene.milestone) {
@@ -63,8 +60,6 @@ describe("product tour scenes", () => {
     })
 
     it("shows every callout it has copy for", () => {
-        // The other way round from the check above: a callout in the translations that no scene asks
-        // for is copy nobody ever reads.
         const withCopy = Object.entries(translations.scenes)
             .filter(([, copy]) => (copy as any).callout)
             .map(([id]) => id)
@@ -74,8 +69,7 @@ describe("product tour scenes", () => {
     })
 
     it("keeps mustaches out of the copy", () => {
-        // vue-i18n parses `{...}` as interpolation, so a literal `{{ ... }}` in a message throws
-        // while the card renders. Expression examples belong in <code> without the braces.
+        // vue-i18n parses `{...}` as interpolation, so a literal `{{ ... }}` throws at render time.
         const strings: string[] = []
         const collect = (value: unknown) => {
             if (typeof value === "string") {
@@ -90,7 +84,6 @@ describe("product tour scenes", () => {
     })
 
     it("keeps markup to the strings that are rendered as HTML", () => {
-        // Everything else is interpolated, where a <strong> would be shown as its own tags.
         const rendersHtml = [
             /^scenes\.[a-z_]+\.(body|callout)$/,
             /^finale\.takeaways\.[a-z_]+\.body$/,
@@ -125,9 +118,6 @@ describe("product tour scenes", () => {
     })
 
     it("only skips the work on the scenes that describe what is already on screen", () => {
-        // These hand over to the scene that follows, which does the work: the editor is opened by
-        // the scene that needs it, after the Docs panel has been put in its layout. `chain` is the
-        // last scene, where the button ends the tour.
         const withoutAction = TOUR_SCENES.filter((scene) => !scene.action)
         expect(withoutAction.map((scene) => scene.id)).toEqual([
             "first_execution",
@@ -139,8 +129,6 @@ describe("product tour scenes", () => {
     })
 
     it("knows which steps the user can also do in the UI", () => {
-        // These are the steps whose action has a control of its own on screen. The tour follows the
-        // user there instead of asking for its own button as well.
         const followed = TOUR_SCENES.filter((scene) => scene.completedByUser).map((scene) => scene.id)
 
         expect(followed).toEqual([
@@ -177,8 +165,6 @@ describe("product tour flows", () => {
     it("builds each stage on top of the previous one", () => {
         expect(tourFlowSource.generated()).toBe(TOUR_FLOW_BASE)
 
-        // The generated flow is two tasks and nothing else, so what the prompt asks for is what the
-        // first card describes. The Slack variable arrives with the task that uses it.
         expect(tourFlowSource.generated()).not.toContain("variables:")
         expect(tourFlowSource.generated()).not.toContain("notify")
 
@@ -191,17 +177,12 @@ describe("product tour flows", () => {
         const withWebhook = tourFlowSource.withWebhook("order-events-test")
         expect(withWebhook).toContain(TOUR_NOTIFY_TASK_FIXED)
         expect(withWebhook).toContain("key: order-events-test")
-        // The payload is read in the execution's context, so no task logs it.
         expect(withWebhook).not.toContain("log_event")
     })
 
     it("keeps the flow runnable on any instance", () => {
         const source = tourFlowSource.withFixedNotify()
-
-        // No task runner is pinned, so the Python task uses the default one.
         expect(source).not.toContain("taskRunner")
-        // The Slack URL is a flow variable: no credentials needed, nothing stored on the instance,
-        // and no editor warning about a plain value in a property annotated as a secret.
         expect(source).toContain(`vars.${TOUR_SLACK_VARIABLE}`)
         expect(source).toContain(`${TOUR_SLACK_VARIABLE}: ${TOUR_SLACK_MOCK_URL}`)
         expect(source).not.toContain(`url: ${TOUR_SLACK_MOCK_URL}`)

@@ -46,12 +46,6 @@ import static io.kestra.core.models.Label.CORRELATION_ID;
 @Slf4j
 @Singleton
 public class WebhookService {
-    /**
-     * Header sent by the UI's "Send test event" action.
-     * <p>
-     * Executions created that way are labelled {@code system.from: testEvent} instead of
-     * {@code system.from: trigger}, so test events can be filtered out of production metrics.
-     */
     public static final String TEST_EVENT_HEADER = "X-Kestra-Test-Event";
 
     private static final String FROM_TRIGGER = "trigger";
@@ -106,9 +100,6 @@ public class WebhookService {
             );
     }
 
-    /**
-     * Whether the request was sent by the UI's test event action rather than an external system.
-     */
     private static boolean isTestEvent(WebhookContext context) {
         if (context.request() == null || context.request().getHeaders() == null) {
             return false;

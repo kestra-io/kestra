@@ -38,7 +38,6 @@ export class ExecutionsApi extends BaseApi {
         this.executionIds.push(responseJson["id"])
     }
 
-    /** Concurrent bulk variant of {@link generateExecutionViaApi} — the calls are independent. */
     async generateExecutionsViaApi(count: number, labels: [string, string][] = []) {
         await Promise.all(Array.from({length: count}, () => this.generateExecutionViaApi(labels)))
     }

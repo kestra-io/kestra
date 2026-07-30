@@ -9,8 +9,6 @@
             :style="cardInlineStyle"
             @mousedown="onCardMouseDown"
         >
-            <!-- The invitation lives in the same card as the rest of the tour, rather than behind a
-                 full-screen dialog the user has to dismiss before seeing anything. -->
             <template v-if="showIntro">
                 <div class="guide-top">
                     <span class="guide-step">{{ t("onboarding.tour.intro.kicker") }}</span>
@@ -26,9 +24,6 @@
                     {{ t("onboarding.tour.intro.body") }}
                 </div>
 
-                <!-- What is about to happen, so the card does not read as the first step of
-                     something already running. Not numbered: the steps are counted in the card
-                     header, and these are the groups they are shown in. -->
                 <ul class="guide-plan">
                     <li v-for="group in TOUR_STEP_GROUPS" :key="group.step">
                         {{ t(`onboarding.tour.steps.${group.step}`) }}
@@ -58,8 +53,6 @@
                     </KsButton>
                 </div>
 
-                <!-- One segment per step, split into ticks for the substeps it contains, so the
-                     grouping is visible without listing a dozen steps. -->
                 <div class="guide-progress">
                     <span
                         v-for="group in TOUR_STEP_GROUPS"
@@ -155,7 +148,6 @@
     const {trackOnboarding} = useOnboardingAnalytics()
     const toast = useToast()
 
-    /** `?tour=start` on any route starts the tour, which is what the left menu entry links to. */
     const consumeStartQuery = async () => {
         if (route.query.tour !== "start") {
             return false
@@ -167,17 +159,9 @@
         return true
     }
 
-    // One answered check per session is enough: an instance does not become new again while the app
-    // is open. A check that could not be answered is not counted, so it is tried again later.
+    // Only set once the check actually answered, so a failed check is retried later.
     let autoStartChecked = false
 
-    /**
-     * The Copilot page is where a new instance opens, so the invitation is on screen there without
-     * having to be asked for.
-     *
-     * Only on an instance without flows of its own, and only until the tour has been started once:
-     * whoever skipped it keeps the left menu entry, but is not asked again.
-     */
     const autoStartOnCopilot = async () => {
         if (autoStartChecked || route.name !== "ai") {
             return false
@@ -215,7 +199,6 @@
 
     const sceneKey = (suffix: string) => `onboarding.tour.scenes.${scene.value.id}.${suffix}`
 
-    /** A tick is filled for steps already done, and up to the current substep of this step. */
     const isTickFilled = (step: number, tickIndex: number) => {
         if (step < scene.value.step) {
             return true
@@ -228,12 +211,6 @@
     }
     const nextLabel = computed(() => t(sceneKey("next")))
 
-    /**
-     * One event name per tour milestone, with the current step as the `action` property.
-     *
-     * `step_number` and `step_total` are what the card shows, so how far people get can be read
-     * without knowing the order of the scenes.
-     */
     const track = (event: OnboardingTourEvent, additional: Record<string, unknown> = {}) => {
         trackOnboarding({
             event,
@@ -247,8 +224,6 @@
             },
         })
     }
-
-    /* ---------- highlighting the real UI ---------- */
 
     const highlighted = ref<HTMLElement[]>([])
     const HIGHLIGHT_CLASS = "onboarding-v2-highlight-static"
@@ -264,12 +239,7 @@
         highlighted.value = []
     }
 
-    /**
-     * The elements to highlight, from the first of the comma-separated selectors that matches.
-     *
-     * All of the matches, not only the first: some controls come in pairs, like the two revision
-     * selectors of a diff, and a wrapper around them would leave the glow around half-empty columns.
-     */
+    /** All visible matches of the first comma-separated selector that matches: some controls come in pairs. */
     const findTargets = (selector: string) => {
         for (const candidate of selector.split(",").map((value) => value.trim()).filter(Boolean)) {
             const visible = (Array.from(document.querySelectorAll(candidate)) as HTMLElement[])
@@ -308,15 +278,8 @@
         targets.forEach((target) => target.classList.add(HIGHLIGHT_CLASS))
     }
 
-    /* ---------- dragging the card ---------- */
-
-    /**
-     * Everything in the card that reads as text rather than as chrome.
-     *
-     * The same list is used twice: dragging never starts here, and the cursor and selection are the
-     * ones of ordinary text. Keep it in step with the `cursor: text` rule of the same name.
-     */
-    const SELECTABLE_TEXT = ".guide-title, .guide-body, .guide-plan, .guide-alert, .guide-callout, .milestone, code"
+    // Keep in sync with the `cursor: text` rule listing the same selectors in the style block.
+    const SELECTABLE_TEXT =".guide-title, .guide-body, .guide-plan, .guide-alert, .guide-callout, .milestone, code"
 
     const cardEl = ref<HTMLElement | null>(null)
     const dragOffset = ref({x: 0, y: 0})
@@ -332,7 +295,6 @@
         if (target?.closest("button, a, input, textarea, select, [role='button'], .kel-button")) {
             return
         }
-        // Text stays selectable: dragging starts from the card's chrome, not from its wording.
         if (target?.closest(SELECTABLE_TEXT)) {
             return
         }
@@ -365,8 +327,6 @@
         window.addEventListener("mouseup", onMouseUp)
     }
 
-    /* ---------- confetti, for the milestones worth celebrating ---------- */
-
     const CONFETTI_TOKENS = [
         "--ks-btn-primary-bg-default",
         "--ks-status-success",
@@ -392,10 +352,7 @@
         }
     }
 
-    /* ---------- scene flow ---------- */
-
-    /** Scene errors carry a translation key; anything else is shown as-is. */
-    const describeError = (e: any) =>
+    const describeError =(e: any) =>
         e instanceof TourSceneError ? t(e.key, e.params) : (e?.message ?? String(e))
 
     const runScene = async () => {
@@ -472,16 +429,10 @@
         stopPolling()
         actions.restoreEditorPanels()
         tourStore.skip()
-        // Skipping leaves the user wherever the tour had taken them, so it says how to come back.
         toast.success(t("onboarding.tour.actions.skipped_hint"), t("onboarding.tour.menu"))
     }
 
-    /**
-     * Ends the tour, from the last step or from the early exit on a milestone.
-     *
-     * Both count as completed: someone who leaves at the end of a milestone has seen the tour
-     * through, and the step it happened on is in the event.
-     */
+    /** Last step and the early exit offered on a milestone both count as completed. */
     const finishTour = () => {
         track("tour_completed")
         clearHighlight()
@@ -499,29 +450,15 @@
         await runScene()
     }
 
-    // Re-highlight when the user navigates by hand in the middle of a scene.
     watch(() => scene.value?.id, () => applyHighlight())
 
-    /**
-     * The invitation appearing is the denominator of the start rate.
-     *
-     * Not immediate on purpose: a reload with the invitation still on screen is the same offer, and
-     * counting it again would make the rate look worse than it is.
-     */
     watch(showIntro, (visible) => {
         if (visible) {
             track("tour_offered")
         }
     })
 
-    /**
-     * Follow a step the user did themselves, in the real UI.
-     *
-     * Someone who presses the Copilot's own send button, runs the flow from the editor, opens a tab or
-     * sends the test event from the trigger row has done exactly what the card asked for, so the tour
-     * moves on instead of asking for its button as well. Never while the card's own button is working,
-     * which is what `isBusy` is.
-     */
+    /** Moves the tour on when the user performed the step themselves, in the real UI. */
     const followUserStep = async () => {
         if (isBusy.value || showIntro.value || !tourStore.isGuidedActive) {
             return
@@ -540,10 +477,8 @@
         {deep: true},
     )
 
-    /**
-     * Some steps can be finished without the app noticing: an HTTP request sent with curl leaves
-     * nothing on screen. Those scenes declare a `poll`, which runs while they are the current one.
-     */
+    // Some steps leave nothing on screen when done (e.g. an HTTP request sent with curl); those
+    // scenes declare a `poll`, which runs while they are the current one.
     let pollTimer: number | null = null
 
     const stopPolling = () => {
@@ -563,17 +498,14 @@
             if (isBusy.value || showIntro.value) {
                 return
             }
-            // Whatever it records is picked up by the watcher above, which moves the tour on.
             void poll(context.value)
         }, 2500)
     }
 
-    // Also on entry, from runScene: a tour resumed on this scene never changes scene.
     watch(() => tourStore.isGuidedActive, (active) => (active ? startPolling() : stopPolling()))
 
     watch(() => route.query.tour, () => void consumeStartQuery())
 
-    // Reaching the Copilot page later in the session, without a reload, counts too.
     watch(() => route.name, () => void autoStartOnCopilot())
 
     onMounted(async () => {
@@ -610,13 +542,11 @@
         border-radius: var(--ks-radius-base);
         padding: var(--ks-spacing-4);
         pointer-events: auto;
-        // Dragging is the default, except over the wording, which stays selectable.
         cursor: move;
         user-select: none;
     }
 
-    // Over the left half of the page, next to the left menu, for scenes whose content sits in the
-    // bottom right. Dragging still works from here. `--menu-width` is set on `:root` by app.scss.
+    // `--menu-width` is set on `:root` by app.scss.
     .guide-card.is-left {
         right: auto;
         left: calc(var(--menu-width) + var(--ks-spacing-4));
@@ -651,7 +581,6 @@
         color: var(--ks-text-secondary);
     }
 
-    // Not the link colour: it names the step rather than leading anywhere.
     .guide-step-name {
         color: var(--ks-text-primary);
         letter-spacing: 0.02em;
@@ -672,7 +601,7 @@
         line-height: var(--ks-line-height-loose);
     }
 
-    // A step's body may list what it is describing, as an ordered list in its translation.
+    // The body is v-html: an ordered list may come from the translation.
     .guide-body :deep(ol) {
         margin: var(--ks-spacing-1) 0;
         padding-left: var(--ks-spacing-5);
@@ -684,7 +613,6 @@
         margin-top: var(--ks-spacing-2);
     }
 
-    // One segment per step, each split into a tick per substep.
     .guide-progress-group {
         display: flex;
         flex: 1;
@@ -727,8 +655,7 @@
         margin-bottom: var(--ks-spacing-3);
     }
 
-    // A KsAlert of type info renders dim text on a dim background, which is hard to read in a small
-    // card, so the callout is a plain block with primary text and an accent edge.
+    // Not a KsAlert: its info variant renders dim text on a dim background, unreadable in this card.
     .guide-callout {
         margin: 0 0 var(--ks-spacing-3);
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
@@ -752,7 +679,7 @@
         flex: 1;
     }
 
-    /* Highlight applied to real controls in the app, so it has to leave the scoped tree. */
+    // Applied to real controls elsewhere in the app, so it has to leave the scoped tree.
     :global(.onboarding-v2-highlight-static) {
         --onboarding-static-color: var(--ks-btn-primary-bg-default);
         box-shadow:

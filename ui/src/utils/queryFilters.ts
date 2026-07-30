@@ -5,20 +5,11 @@ import type {QueryFilter, QueryFilterField, QueryFilterLogical, QueryFilterOp} f
 
 const QUERY_FILTER_LOGICAL: Record<LogicalOperator, QueryFilterLogical> = {AND: "and", OR: "or"}
 
-/**
- * Builds a `QueryFilter` group node. The backend rejects a node that also carries a
- * `field`/`operation`/`value` (see `QueryFilter`'s canonical constructor), so a group is only ever
- * `logical` + `children`, with `logical` in the lowercase form its enum accepts.
- */
-const queryFilterNode = (logical: LogicalOperator, children: QueryFilter[]): QueryFilter =>
+/** A group node is only ever `logical` + `children`: the backend rejects one that also carries a field. */
+const queryFilterNode =(logical: LogicalOperator, children: QueryFilter[]): QueryFilter =>
     ({logical: QUERY_FILTER_LOGICAL[logical], children})
 
-/**
- * Builds one logical position in the filter tree, mirroring the backend's
- * `QueryFilterFormatBinder.NodeBuilder`: direct leaves land here directly, LABELS leaves sharing an
- * operation are merged into one filter with a map value, and nested `[and|or][N]` segments descend
- * into a sub-node keyed by (logical, index) that is recursively flattened by {@link build}.
- */
+/** One logical position in the filter tree, mirroring the backend's `QueryFilterFormatBinder.NodeBuilder`. */
 class FilterNodeBuilder {
     private readonly directLeaves: QueryFilter[] = []
     private readonly labelsByOp = new Map<QueryFilterOp, Record<string, string>>()
@@ -74,16 +65,11 @@ class FilterNodeBuilder {
 }
 
 /**
- * Converts a route's raw `filters[...]` query params (as produced by the design system's
- * `encodeFiltersToQuery` / `encodeFilterGroupsToQuery`) into the `QueryFilter[]` array shape the
- * generated `@kestra-io/kestra-sdk` search functions expect. This lives in the app, not in the
- * design system: the design system owns the URL key format (and exposes `parseFilterKey` for it),
- * while the backend payload shape is the app's business.
+ * Converts a route's raw `filters[...]` query params into the `QueryFilter[]` shape the SDK search
+ * functions expect.
  *
- * Unlike `decodeSearchParams` — which targets restoring `KsFilter` UI chips and lossily flattens a
- * labels `subKey` into a `"key:value"` string — this preserves the LABELS sub-key structure and
- * nested AND/OR grouping needed for a faithful backend request, by porting
- * `QueryFilterFormatBinder`'s tree-building.
+ * Not `decodeSearchParams`, which targets `KsFilter` UI chips and lossily flattens a labels `subKey`
+ * into a `"key:value"` string: this preserves the sub-key structure and the AND/OR nesting.
  */
 export const routeQueryToQueryFilters = (query: LocationQuery): QueryFilter[] => {
     const root = new FilterNodeBuilder()

@@ -259,16 +259,13 @@
 
     /* ------------------------------- Selection ------------------------------- */
 
-    /** `?expression=trigger.body` opens the debugger on that expression, ready to be evaluated. */
+    /** `?expression=trigger.body` seeds the debugger with that expression. */
     function seededExpression() {
         const seed = route.query.expression?.toString()
         return seed ? `{{ ${seed} }}` : ""
     }
 
-    /**
-     * `?select=trigger.variables` opens that item in the viewer, so a link can land on a value
-     * instead of on the prompt to pick one. Applied once, as soon as the item exists.
-     */
+    /** `?select=trigger.variables` opens that item in the viewer, once, as soon as it exists. */
     let selectionApplied = false
 
     function applySeededSelection(available: ExplorerSection[]) {
@@ -283,7 +280,7 @@
         }
         selectionApplied = true
         void selectItem(item).then(() => {
-            // Selecting an item rewrites the debugger's expression, and the link's own wins.
+            // selectItem rewrites the expression, so re-apply the link's own.
             const seed = seededExpression()
             if (seed) {
                 expression.value = seed
@@ -295,8 +292,6 @@
     const selectedBase = ref<string>("")
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
-    // Suggested expression handed to the debugger; follows the current selection. A link can seed it
-    // with `?expression=`, to point at what is worth evaluating on this execution.
     const expression = ref<string>(seededExpression())
 
     const isExpandableValue = computed(

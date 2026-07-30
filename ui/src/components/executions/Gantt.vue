@@ -616,11 +616,7 @@
         {immediate: true},
     )
 
-    /**
-     * `autoExpandGantt` expands task runs on arrival: `true` for all of them, `failed` for the ones
-     * that failed, or a comma-separated list of task ids. The product tour uses it to put the right
-     * logs in front of the user without an extra click.
-     */
+    /** `autoExpandGantt` route query: `true` (all), `failed`, or a comma-separated task id list. */
     function applyAutoExpandFromRoute(currentExecution: any) {
         const autoExpand = route.query.autoExpandGantt
         if (typeof autoExpand !== "string" || !autoExpand) {
@@ -640,16 +636,13 @@
                 ? currentExecution.taskRunList.filter((taskRun: any) => taskIds.includes(taskRun.taskId))
                 : currentExecution.taskRunList
 
-        // A failed task run may not exist yet while the execution is still running; the watcher
-        // runs again on the next update.
         if (taskRuns.length) {
             selectedTaskRuns.value = taskRuns.map((taskRun: any) => taskRun.id)
             expandedFromRoute.value = true
         }
     }
 
-    // The query can also arrive after the component is mounted, when only the route changes.
-    watch(() => route.query.autoExpandGantt, () => applyAutoExpandFromRoute(execution.value))
+    watch(() => route.query.autoExpandGantt,() => applyAutoExpandFromRoute(execution.value))
 
     watch(
         execution,

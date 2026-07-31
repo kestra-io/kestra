@@ -17,7 +17,9 @@ import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -65,5 +67,15 @@ class PausedTaskNotifierTest {
 
         // resuming must not trigger a second notification
         verify(pausedTaskNotifier, times(1)).taskPaused(any(), any(), any(), any());
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/pause-test.yaml" })
+    void reachesPausedEvenWhenNotifierThrows() throws Exception {
+        doThrow(new RuntimeException("notifier boom")).when(pausedTaskNotifier).taskPaused(any(), any(), any(), any());
+
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-test", null, null, Duration.ofSeconds(30));
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
     }
 }

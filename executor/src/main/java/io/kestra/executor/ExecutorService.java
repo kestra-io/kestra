@@ -940,8 +940,8 @@ public class ExecutorService {
                 .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
                 .forEach(throwConsumer(workerTaskResult ->
                 {
-                    Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
                     try {
+                        Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
                         pausedTaskNotifier.taskPaused(executor.getFlow(), executor.getExecution(), workerTaskResult.getTaskRun(), task);
                     } catch (Exception e) {
                         log.warn("Unable to notify paused task '{}' for execution '{}'", workerTaskResult.getTaskRun().getTaskId(), executor.getExecution().getId(), e);

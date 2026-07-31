@@ -272,15 +272,8 @@ public class FlowController {
     @Operation(tags = { "Flows" }, summary = "Search for flows source code")
     public PagedResults<SourceSearchResult> searchFlowsBySourceCode(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-<<<<<<< HEAD
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-||||||| parent of dda5cda927 (feat(flows): VS Code-style find & replace for Source Search)
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-=======
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
->>>>>>> dda5cda927 (feat(flows): VS Code-style find & replace for Source Search)
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "Whether the query must match with exact case") @QueryValue(defaultValue = "false") boolean caseSensitive,
@@ -288,7 +281,7 @@ public class FlowController {
         @Parameter(description = "Whether the query is a regular expression rather than a literal string") @QueryValue(defaultValue = "false") boolean regex,
         @Parameter(description = "Restricts matches to a top-level section of the flow YAML") @QueryValue(defaultValue = "all") SourceSearchScope scope) throws HttpStatusException {
         return PagedResults.of(sourceSearchService.search(
-            PageableUtils.from(page, size),
+            PageableUtils.from(page, size, sort),
             tenantService.resolveTenant(),
             namespace,
             query,

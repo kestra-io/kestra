@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.exceptions.InvalidSourceSearchQueryException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.SourceMatch;
 import io.kestra.core.models.flows.Flow;
@@ -21,10 +21,13 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RegexUtils;
 import io.kestra.core.utils.SourceSearchMatcher;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
+import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse.SkipReason;
+import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse.SkippedFlow;
 import io.kestra.webserver.models.flows.SourceSearchReplacePreviewResponse;
 import io.kestra.webserver.models.flows.SourceSearchResult;
 
@@ -58,6 +61,8 @@ public class SourceSearchService {
         boolean regex,
         SourceSearchScope scope
     ) {
+        SourceSearchMatcher.ensureSafeQuery(query, regex);
+
         return flowRepository
             .findSourceCode(pageable, query, caseSensitive, wholeWord, regex, scope, tenantId, namespace)
             .map(result -> new SourceSearchResult(
@@ -78,9 +83,11 @@ public class SourceSearchService {
         SourceSearchScope scope,
         String replacement
     ) {
-        List<SearchResult<Flow>> matched = flowRepository.findSourceCode(Pageable.UNPAGED, query, caseSensitive, wholeWord, regex, scope, tenantId, namespace);
         Pattern pattern = SourceSearchMatcher.toPattern(query, caseSensitive, wholeWord, regex);
+        SourceSearchMatcher.ensureValidReplacement(pattern, replacement, regex);
         String effectiveReplacement = regex ? replacement : Matcher.quoteReplacement(replacement);
+
+        List<SearchResult<Flow>> matched = flowRepository.findSourceCode(Pageable.UNPAGED, query, caseSensitive, wholeWord, regex, scope, tenantId, namespace);
 
         List<SourceSearchReplacePreviewResponse.FlowMatches> flows = new ArrayList<>(matched.size());
         int totalMatches = 0;
@@ -109,27 +116,27 @@ public class SourceSearchService {
         List<IdWithNamespace> selection
     ) throws QueueException {
         Pattern pattern = SourceSearchMatcher.toPattern(query, caseSensitive, wholeWord, regex);
+        SourceSearchMatcher.ensureValidReplacement(pattern, replacement, regex);
         String effectiveReplacement = regex ? replacement : Matcher.quoteReplacement(replacement);
 
         List<FlowWithSource> updated = new ArrayList<>();
-        List<IdWithNamespace> skipped = new ArrayList<>();
+        List<SkippedFlow> skipped = new ArrayList<>();
 
         for (IdWithNamespace ref : selection) {
             Optional<FlowWithSource> existing = flowRepository.findByIdWithSource(tenantId, ref.getNamespace(), ref.getId());
-            if (existing.isEmpty() || !isEditable(existing.get())) {
-                skipped.add(ref);
+            if (existing.isEmpty()) {
+                skipped.add(SkippedFlow.of(ref, SkipReason.NOT_FOUND));
+                continue;
+            }
+            if (!isEditable(existing.get())) {
+                skipped.add(SkippedFlow.of(ref, SkipReason.READ_ONLY));
                 continue;
             }
 
             FlowWithSource current = existing.get();
-            String newSource;
-            try {
-                newSource = SourceSearchMatcher.replaceWithinScope(current.getSource(), pattern, effectiveReplacement, scope);
-            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                throw new InvalidSourceSearchQueryException(invalidReplacementMessage(e));
-            }
+            String newSource = SourceSearchMatcher.replaceWithinScope(current.getSource(), pattern, effectiveReplacement, scope);
             if (newSource.equals(current.getSource())) {
-                skipped.add(ref);
+                skipped.add(SkippedFlow.of(ref, SkipReason.NO_CHANGE));
                 continue;
             }
 
@@ -138,7 +145,7 @@ public class SourceSearchService {
                 updated.add(flowService.update(genericFlow, current));
             } catch (ConstraintViolationException | FlowProcessingException | DeserializationException e) {
                 log.warn("Skipping flow {}.{} during Source Search replace: {}", ref.getNamespace(), ref.getId(), e.getMessage());
-                skipped.add(ref);
+                skipped.add(SkippedFlow.of(ref, SkipReason.INVALID_FLOW, e.getMessage()));
             }
         }
 
@@ -159,37 +166,40 @@ public class SourceSearchService {
     ) throws QueueException {
         IdWithNamespace ref = new IdWithNamespace(namespace, id);
         Optional<FlowWithSource> existing = flowRepository.findByIdWithSource(tenantId, namespace, id);
-        if (existing.isEmpty() || !isEditable(existing.get())) {
-            return new SourceSearchReplaceApplyResponse(List.of(), List.of(ref));
+        if (existing.isEmpty()) {
+            return skippedOnly(ref, SkipReason.NOT_FOUND);
+        }
+        if (!isEditable(existing.get())) {
+            return skippedOnly(ref, SkipReason.READ_ONLY);
         }
 
         FlowWithSource current = existing.get();
         String[] lines = current.getSource().split("\n", -1);
         if (line < 1 || line > lines.length) {
-            return new SourceSearchReplaceApplyResponse(List.of(), List.of(ref));
+            return skippedOnly(ref, SkipReason.NO_MATCH);
         }
 
         String originalLine = lines[line - 1];
+        if (column < 0 || column > originalLine.length()) {
+            return skippedOnly(ref, SkipReason.NO_MATCH);
+        }
+
         Pattern pattern = SourceSearchMatcher.toPattern(query, caseSensitive, wholeWord, regex);
+        SourceSearchMatcher.ensureValidReplacement(pattern, replacement, regex);
         String effectiveReplacement = regex ? replacement : Matcher.quoteReplacement(replacement);
 
         Matcher matcher = RegexUtils.matcher(pattern, originalLine);
-        if (column < 0 || !matcher.find(column) || matcher.start() != column) {
-            return new SourceSearchReplaceApplyResponse(List.of(), List.of(ref));
+        if (!matcher.find(column) || matcher.start() != column) {
+            return skippedOnly(ref, SkipReason.NO_MATCH);
         }
 
-        String replacedLine;
-        try {
-            StringBuilder builder = new StringBuilder();
-            matcher.appendReplacement(builder, effectiveReplacement);
-            matcher.appendTail(builder);
-            replacedLine = builder.toString();
-        } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-            throw new InvalidSourceSearchQueryException(invalidReplacementMessage(e));
-        }
+        StringBuilder builder = new StringBuilder();
+        matcher.appendReplacement(builder, effectiveReplacement);
+        matcher.appendTail(builder);
+        String replacedLine = builder.toString();
 
         if (replacedLine.equals(originalLine)) {
-            return new SourceSearchReplaceApplyResponse(List.of(), List.of(ref));
+            return skippedOnly(ref, SkipReason.NO_CHANGE);
         }
         lines[line - 1] = replacedLine;
         String newSource = String.join("\n", lines);
@@ -199,12 +209,30 @@ public class SourceSearchService {
             return new SourceSearchReplaceApplyResponse(List.of(flowService.update(genericFlow, current)), List.of());
         } catch (ConstraintViolationException | FlowProcessingException | DeserializationException e) {
             log.warn("Skipping flow {}.{} line {} during Source Search replace: {}", namespace, id, line, e.getMessage());
-            return new SourceSearchReplaceApplyResponse(List.of(), List.of(ref));
+            return skippedOnly(ref, SkipReason.INVALID_FLOW, e.getMessage());
         }
     }
 
+    /**
+     * Whether the caller may rewrite the given flow. OSS has no per-flow permission, so only the
+     * {@code system.readOnly} label and soft deletion make a flow read-only; the Enterprise Edition
+     * overrides this to also check {@code FLOW · UPDATE} and Git-synced namespaces.
+     */
     protected boolean isEditable(FlowInterface flow) {
-        return true;
+        return !flow.isDeleted() && !isFlaggedReadOnly(flow);
+    }
+
+    private static boolean isFlaggedReadOnly(FlowInterface flow) {
+        return ListUtils.emptyOnNull(flow.getLabels()).stream()
+            .anyMatch(label -> Label.READ_ONLY.equals(label.key()) && Boolean.parseBoolean(label.value()));
+    }
+
+    private static SourceSearchReplaceApplyResponse skippedOnly(IdWithNamespace ref, SkipReason reason) {
+        return new SourceSearchReplaceApplyResponse(List.of(), List.of(SkippedFlow.of(ref, reason)));
+    }
+
+    private static SourceSearchReplaceApplyResponse skippedOnly(IdWithNamespace ref, SkipReason reason, String message) {
+        return new SourceSearchReplaceApplyResponse(List.of(), List.of(SkippedFlow.of(ref, reason, message)));
     }
 
     private static List<SourceSearchReplacePreviewResponse.Match> replacementMatches(
@@ -215,12 +243,7 @@ public class SourceSearchService {
         return matches.stream()
             .map(match -> {
                 String before = stripMarkers(match.snippet());
-                String after;
-                try {
-                    after = RegexUtils.matcher(pattern, before).replaceAll(effectiveReplacement);
-                } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                    throw new InvalidSourceSearchQueryException(invalidReplacementMessage(e));
-                }
+                String after = RegexUtils.matcher(pattern, before).replaceAll(effectiveReplacement);
                 return new SourceSearchReplacePreviewResponse.Match(match.line(), before, after);
             })
             .toList();
@@ -228,9 +251,5 @@ public class SourceSearchService {
 
     private static String stripMarkers(String snippet) {
         return snippet.replace("[mark]", "").replace("[/mark]", "");
-    }
-
-    private static String invalidReplacementMessage(RuntimeException e) {
-        return "Invalid replacement: " + e.getMessage();
     }
 }

@@ -7,20 +7,27 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import io.micronaut.data.model.Pageable;
 import jakarta.validation.ConstraintViolationException;
 
 import io.kestra.core.exceptions.InvalidSourceSearchQueryException;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.SourceSearchScope;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
+import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse.SkipReason;
+import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse.SkippedFlow;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -55,7 +62,31 @@ class SourceSearchServiceTest {
         );
 
         assertThat(response.updated()).isEmpty();
-        assertThat(response.skipped()).containsExactly(ref);
+        assertThat(response.skipped()).containsExactly(SkippedFlow.of(ref, SkipReason.READ_ONLY));
+        verify(flowService, never()).update(any(), any());
+    }
+
+    @Test
+    void shouldSkipFlowsCarryingTheReadOnlySystemLabelWhenApplyingReplace() throws Exception {
+        String tenantId = "main";
+        IdWithNamespace ref = new IdWithNamespace("io.kestra.tests", "git-synced-flow");
+        FlowWithSource flow = FlowWithSource.builder()
+            .tenantId(tenantId)
+            .namespace(ref.getNamespace())
+            .id(ref.getId())
+            .labels(List.of(new Label(Label.READ_ONLY, "true")))
+            .source("id: git-synced-flow\nnamespace: io.kestra.tests\ndescription: legacy-value here\n")
+            .build();
+        when(flowRepository.findByIdWithSource(tenantId, ref.getNamespace(), ref.getId())).thenReturn(Optional.of(flow));
+
+        SourceSearchService service = new SourceSearchService(flowRepository, flowService);
+
+        SourceSearchReplaceApplyResponse response = service.apply(
+            tenantId, "legacy-value", false, false, false, null, "new-value", List.of(ref)
+        );
+
+        assertThat(response.updated()).isEmpty();
+        assertThat(response.skipped()).containsExactly(SkippedFlow.of(ref, SkipReason.READ_ONLY));
         verify(flowService, never()).update(any(), any());
     }
 
@@ -72,7 +103,30 @@ class SourceSearchServiceTest {
         );
 
         assertThat(response.updated()).isEmpty();
-        assertThat(response.skipped()).containsExactly(ref);
+        assertThat(response.skipped()).containsExactly(SkippedFlow.of(ref, SkipReason.NOT_FOUND));
+        verify(flowService, never()).update(any(), any());
+    }
+
+    @Test
+    void shouldSkipFlowsLeftUnchangedByTheReplacement() throws Exception {
+        String tenantId = "main";
+        IdWithNamespace ref = new IdWithNamespace("io.kestra.tests", "untouched-flow");
+        FlowWithSource flow = FlowWithSource.builder()
+            .tenantId(tenantId)
+            .namespace(ref.getNamespace())
+            .id(ref.getId())
+            .source("id: untouched-flow\nnamespace: io.kestra.tests\ndescription: nothing to see\n")
+            .build();
+        when(flowRepository.findByIdWithSource(tenantId, ref.getNamespace(), ref.getId())).thenReturn(Optional.of(flow));
+
+        SourceSearchService service = new SourceSearchService(flowRepository, flowService);
+
+        SourceSearchReplaceApplyResponse response = service.apply(
+            tenantId, "legacy-value", false, false, false, null, "new-value", List.of(ref)
+        );
+
+        assertThat(response.updated()).isEmpty();
+        assertThat(response.skipped()).containsExactly(SkippedFlow.of(ref, SkipReason.NO_CHANGE));
         verify(flowService, never()).update(any(), any());
     }
 
@@ -96,7 +150,9 @@ class SourceSearchServiceTest {
         );
 
         assertThat(response.updated()).isEmpty();
-        assertThat(response.skipped()).containsExactly(ref);
+        assertThat(response.skipped()).hasSize(1);
+        assertThat(response.skipped().getFirst().reason()).isEqualTo(SkipReason.INVALID_FLOW);
+        assertThat(response.skipped().getFirst().message()).contains("Invalid type");
     }
 
     @Test
@@ -178,5 +234,48 @@ class SourceSearchServiceTest {
 
         assertThatThrownBy(() -> service.applyLine(tenantId, "(a)", false, false, true, "$9", "io.kestra.tests", "flow", 3, 13))
             .isInstanceOf(InvalidSourceSearchQueryException.class);
+    }
+
+    @Test
+    void shouldRejectRegexProneToCatastrophicBacktrackingWhenSearching() {
+        SourceSearchService service = new SourceSearchService(flowRepository, flowService);
+
+        assertThatThrownBy(() -> service.search(Pageable.UNPAGED, "main", null, "(a+)+$", false, false, true, SourceSearchScope.ALL))
+            .isInstanceOf(InvalidSourceSearchQueryException.class)
+            .hasMessageContaining("unsafe");
+
+        verify(flowRepository, never()).findSourceCode(any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(), any(), any());
+    }
+
+    @Test
+    void shouldAcceptRegexProneToCatastrophicBacktrackingWhenSearchedAsALiteral() {
+        SourceSearchService service = new SourceSearchService(flowRepository, flowService);
+        when(flowRepository.findSourceCode(any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(), any(), any()))
+            .thenReturn(ArrayListTotal.of(Pageable.UNPAGED, List.of()));
+
+        assertThat(service.search(Pageable.UNPAGED, "main", null, "(a+)+$", false, false, false, SourceSearchScope.ALL)).isEmpty();
+    }
+
+    @Test
+    void shouldSkipTheLineWhenTheColumnIsPastTheEndOfTheLine() throws Exception {
+        String tenantId = "main";
+        IdWithNamespace ref = new IdWithNamespace("io.kestra.tests", "flow");
+        FlowWithSource flow = FlowWithSource.builder()
+            .tenantId(tenantId)
+            .namespace(ref.getNamespace())
+            .id(ref.getId())
+            .source("id: flow\nnamespace: io.kestra.tests\ndescription: legacy-value\n")
+            .build();
+        when(flowRepository.findByIdWithSource(tenantId, ref.getNamespace(), ref.getId())).thenReturn(Optional.of(flow));
+
+        SourceSearchService service = new SourceSearchService(flowRepository, flowService);
+
+        SourceSearchReplaceApplyResponse response = service.applyLine(
+            tenantId, "legacy-value", false, false, false, "new-value", ref.getNamespace(), ref.getId(), 3, 9999
+        );
+
+        assertThat(response.updated()).isEmpty();
+        assertThat(response.skipped()).containsExactly(SkippedFlow.of(ref, SkipReason.NO_MATCH));
+        verify(flowService, never()).update(any(), any());
     }
 }

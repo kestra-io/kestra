@@ -1220,7 +1220,7 @@ public abstract class AbstractFlowRepositoryTest {
         try {
             // When — filter by namespace only
             ArrayListTotal<SearchResult<Flow>> byNamespaceA = flowRepository.findSourceCode(
-                Pageable.UNPAGED, null, tenant, namespaceA
+                Pageable.UNPAGED, null, false, false, false, SourceSearchScope.ALL, tenant, namespaceA
             );
 
             // Then — only the flow in namespaceA is returned
@@ -1234,7 +1234,7 @@ public abstract class AbstractFlowRepositoryTest {
 
             // When — filter by query using a token unique to flow-beta's source
             ArrayListTotal<SearchResult<Flow>> byQuery = flowRepository.findSourceCode(
-                Pageable.UNPAGED, "beta", tenant, null
+                Pageable.UNPAGED, "beta", false, false, false, SourceSearchScope.ALL, tenant, null
             );
 
             // Then — only the flow whose source contains "beta" is returned

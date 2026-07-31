@@ -3,6 +3,7 @@ package io.kestra.core.utils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -19,7 +20,94 @@ public final class SourceSearchMatcher {
     private SourceSearchMatcher() {
     }
 
+    /**
+     * Rejects a user-supplied regular expression that is too long or prone to catastrophic
+     * backtracking (ReDoS). Literal queries are always safe as they get quoted before compilation.
+     *
+     * @throws InvalidSourceSearchQueryException if the query is a regex and is not safe to evaluate.
+     */
+    public static void ensureSafeQuery(String query, boolean regex) {
+        if (regex && !RegexUtils.isSafeUserRegex(query)) {
+            throw new InvalidSourceSearchQueryException(
+                "The regular expression is rejected as unsafe. It must be at most %d characters long and must not nest a quantifier or repeat an alternation, as both can cause catastrophic backtracking. Please simplify the pattern."
+                    .formatted(RegexUtils.MAX_USER_REGEX_LENGTH)
+            );
+        }
+    }
+
+    /**
+     * Rejects a replacement string that Java's regex engine could not expand against the given
+     * pattern, i.e. one holding a trailing backslash, a malformed group reference, or a reference to a
+     * capturing group the pattern does not declare. Literal replacements are always valid as they get
+     * quoted before expansion.
+     *
+     * @throws InvalidSourceSearchQueryException if the replacement cannot be expanded.
+     */
+    public static void ensureValidReplacement(Pattern pattern, String replacement, boolean regex) {
+        if (!regex || replacement == null) {
+            return;
+        }
+
+        int groupCount = pattern.matcher("").groupCount();
+        Map<String, Integer> namedGroups = pattern.namedGroups();
+
+        for (int i = 0; i < replacement.length(); i++) {
+            char c = replacement.charAt(i);
+
+            if (c == '\\') {
+                if (i + 1 == replacement.length()) {
+                    throw new InvalidSourceSearchQueryException(
+                        "The replacement ends with a dangling backslash. Escape it as '\\\\' to insert a literal backslash."
+                    );
+                }
+                i++;
+            } else if (c == '$') {
+                i = validateGroupReference(replacement, i, groupCount, namedGroups);
+            }
+        }
+    }
+
+    private static int validateGroupReference(String replacement, int dollarIndex, int groupCount, Map<String, Integer> namedGroups) {
+        if (dollarIndex + 1 == replacement.length()) {
+            throw new InvalidSourceSearchQueryException(
+                "The replacement ends with a dangling '$'. Escape it as '\\$' to insert a literal dollar sign."
+            );
+        }
+
+        char next = replacement.charAt(dollarIndex + 1);
+        if (next == '{') {
+            int closing = replacement.indexOf('}', dollarIndex + 2);
+            if (closing < 0) {
+                throw new InvalidSourceSearchQueryException(
+                    "The replacement contains a named group reference with no closing '}'."
+                );
+            }
+            String name = replacement.substring(dollarIndex + 2, closing);
+            if (!namedGroups.containsKey(name)) {
+                throw new InvalidSourceSearchQueryException(
+                    "The replacement refers to the named group '%s', which the search pattern does not declare.".formatted(name)
+                );
+            }
+            return closing;
+        }
+
+        if (!Character.isDigit(next)) {
+            throw new InvalidSourceSearchQueryException(
+                "The replacement contains an illegal group reference '$%c'. Use '$1', '${name}', or escape it as '\\$'.".formatted(next)
+            );
+        }
+        if (next - '0' > groupCount) {
+            throw new InvalidSourceSearchQueryException(
+                "The replacement refers to the capturing group %c, but the search pattern declares only %d.".formatted(next, groupCount)
+            );
+        }
+
+        return dollarIndex + 1;
+    }
+
     public static Pattern toPattern(String query, boolean caseSensitive, boolean wholeWord, boolean regex) {
+        ensureSafeQuery(query, regex);
+
         String base = regex ? query : Pattern.quote(query);
         String withBoundaries = wholeWord ? "\\b(?:" + base + ")\\b" : base;
         int flags = caseSensitive ? 0 : (Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);

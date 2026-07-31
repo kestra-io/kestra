@@ -10,6 +10,7 @@ import io.kestra.core.models.SourceMatch;
 import io.kestra.core.models.flows.SourceSearchScope;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SourceSearchMatcherTest {
@@ -84,6 +85,52 @@ class SourceSearchMatcherTest {
         assertThatThrownBy(() -> SourceSearchMatcher.findMatches(SOURCE, "concurrency:(\\s*limit:", false, false, true))
             .isInstanceOf(InvalidSourceSearchQueryException.class)
             .hasMessageContaining("Unclosed group");
+    }
+
+    @Test
+    void shouldRejectRegexProneToCatastrophicBacktracking() {
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureSafeQuery("(a+)+$", true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class)
+            .hasMessageContaining("unsafe");
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureSafeQuery("(id|id)*", true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class);
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureSafeQuery("a".repeat(RegexUtils.MAX_USER_REGEX_LENGTH + 1), true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class);
+    }
+
+    @Test
+    void shouldAcceptUnsafeRegexShapesWhenSearchedAsALiteral() {
+        assertThatNoException().isThrownBy(() -> SourceSearchMatcher.ensureSafeQuery("(a+)+$", false));
+        assertThat(SourceSearchMatcher.findMatches("description: (a+)+$", "(a+)+$", false, false, false)).hasSize(1);
+    }
+
+    @Test
+    void shouldRejectReplacementReferencingAnUndeclaredGroup() {
+        Pattern pattern = SourceSearchMatcher.toPattern("(a)(b)", false, false, true);
+
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(pattern, "$9", true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class)
+            .hasMessageContaining("only 2");
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(pattern, "${missing}", true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class)
+            .hasMessageContaining("missing");
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(pattern, "${unclosed", true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class);
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(pattern, "trailing\\", true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class);
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(pattern, "dangling$", true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class);
+        assertThatThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(pattern, "$x", true))
+            .isInstanceOf(InvalidSourceSearchQueryException.class);
+    }
+
+    @Test
+    void shouldAcceptReplacementReferencingDeclaredGroups() {
+        Pattern named = SourceSearchMatcher.toPattern("(?<prefix>a)(b)", false, false, true);
+
+        assertThatNoException().isThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(named, "${prefix}-$2", true));
+        assertThatNoException().isThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(named, "escaped \\$ and \\\\", true));
+        assertThatNoException().isThrownBy(() -> SourceSearchMatcher.ensureValidReplacement(named, "$9 is fine as a literal", false));
     }
 
     @Test

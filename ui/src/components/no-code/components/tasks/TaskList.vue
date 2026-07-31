@@ -9,14 +9,6 @@
                 <template #title>
                     <span :class="{required}">{{ `${section}${elements ? ` (${elements.length})` : ''}` }}</span>
                 </template>
-                <template #icon>
-                    <Creation
-                        :parentPathComplete
-                        :refPath="elements?.length ? elements.length - 1 : -1"
-                        :blockSchemaPath
-                    />
-                </template>
-
                 <div class="block-section-list" @dragend="handleDragEnd">
                     <LeafBlockCard
                         v-for="(element, elementIndex) in filteredElements"
@@ -39,6 +31,8 @@
                         @drop="onDrop($event, elementIndex)"
                         @drag-end="handleDragEnd"
                     />
+
+                    <Add ref="addButton" :to="section" @add="onCreate" />
                 </div>
             </KsCollapseItem>
         </KsCollapse>
@@ -46,14 +40,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue"
-    import Creation from "./taskList/buttons/Creation.vue"
+    import {computed, inject, ref, useTemplateRef} from "vue"
+    import Add from "../Add.vue"
     import LeafBlockCard from "../../blocks/LeafBlockCard.vue"
 
     import {CollapseItem} from "../../utils/types"
 
     import {
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        CREATE_TASK_FUNCTION_INJECTION_KEY,
         CREATING_TASK_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
@@ -152,6 +147,18 @@
 
     const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
     const editTask = inject(EDIT_TASK_FUNCTION_INJECTION_KEY, () => {})
+    const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {})
+
+    const addButton = useTemplateRef<{$el: HTMLElement}>("addButton")
+
+    const onCreate = () => {
+        createTask(
+            parentPathComplete.value,
+            blockSchemaPath.value,
+            filteredElements.value.length ? filteredElements.value.length - 1 : -1,
+            addButton.value?.$el,
+        )
+    }
 
     const pluginsStore = usePluginsStore()
     const {runTask, playgroundStore} = usePlaygroundRun()

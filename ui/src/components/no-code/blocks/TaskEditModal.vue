@@ -19,7 +19,7 @@
                     data-test="task-edit-modal-docs-toggle"
                     @click="toggleDocs"
                 >
-                    <HelpCircleOutline />
+                    <FileDocumentIcon />
                 </KsIconButton>
                 <KsIconButton
                     class="task-edit-modal-header-action"
@@ -52,21 +52,21 @@
                     @navigate="(index) => emit('navigate', index + 1)"
                     @back="emit('navigate', crumbs.length - 2)"
                 />
-                <Suspense>
-                    <TaskEdit
-                        :task="task"
-                        :taskRaw="taskRaw"
-                        :section="section"
-                        :flowId="flowId"
-                        :namespace="namespace"
-                        :editorKey="editorKey"
-                        presentation="panel"
-                        :isHidden="true"
-                        :hideTabstrip="true"
-                        @update:task="emit('update:task', $event)"
-                        @close="emit('close')"
-                    />
-                </Suspense>
+                <TaskEditModalForm
+                    :key="editorKey"
+                    :task="task"
+                    :taskRaw="taskRaw"
+                    :section="section"
+                    :flowId="flowId"
+                    :namespace="namespace"
+                    :editorKey="editorKey"
+                    :parentPath="parentPath"
+                    :refPath="refPath"
+                    :blockSchemaPath="blockSchemaPath"
+                    @update:task="emit('update:task', $event)"
+                    @close="emit('close')"
+                    @select-nested="(...args) => emit('select-nested', ...args)"
+                />
             </div>
 
             <div v-if="docsOpen" class="task-edit-modal-docs" v-ks-loading="docsLoading">
@@ -103,26 +103,19 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, provide, ref} from "vue"
+    import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {KsDialog, KsIconButton, KsText, vKsLoading} from "@kestra-io/design-system"
-    import HelpCircleOutline from "vue-material-design-icons/HelpCircleOutline.vue"
+    import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue"
     import DockWindow from "vue-material-design-icons/DockWindow.vue"
     import Close from "vue-material-design-icons/Close.vue"
-    import TaskEdit from "../../flows/TaskEdit.vue"
+    import TaskEditModalForm from "./TaskEditModalForm.vue"
     import FieldNavBreadcrumb from "../components/FieldNavBreadcrumb.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
     import {usePluginsStore, type PluginComponent} from "../../../stores/plugins"
     import type {BlockSection} from "../../../utils/flowableBlockOps"
     import type {Crumb} from "../utils/useFieldNavigation"
     import {storageKeys} from "../../../utils/constants"
-    import {
-        BLOCK_SCHEMA_PATH_INJECTION_KEY,
-        EDIT_TASK_FUNCTION_INJECTION_KEY,
-        EDITING_TASK_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY,
-        REF_PATH_INJECTION_KEY,
-    } from "../injectionKeys"
 
     const props = defineProps<{
         task?: Record<string, unknown>
@@ -154,14 +147,6 @@
         hintDismissed.value = true
         localStorage.setItem(storageKeys.TASK_EDIT_MODE_HINT_DISMISSED, "true")
     }
-
-    provide(PARENT_PATH_INJECTION_KEY, props.parentPath)
-    provide(REF_PATH_INJECTION_KEY, props.refPath)
-    provide(EDITING_TASK_INJECTION_KEY, true)
-    provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath))
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
-        emit("select-nested", parentPath, blockSchemaPath, refPath, split)
-    })
 
     const title = computed(() => {
         const id = (props.task?.id as string) ?? ""

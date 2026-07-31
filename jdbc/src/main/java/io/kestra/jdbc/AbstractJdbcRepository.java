@@ -170,8 +170,20 @@ public abstract class AbstractJdbcRepository<T> {
             .set(KEY_FIELD, key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
-            .set(finalFields)
+            .set(excluded(finalFields))
             .execute();
+    }
+
+    /**
+     * Turns a column-to-value map into a column-to-{@code EXCLUDED}/{@code VALUES(...)} map, so the
+     * update clause of an upsert re-references the row already bound by the insert clause instead of
+     * binding the (potentially large) value a second time. jOOQ renders this per-dialect: the
+     * {@code EXCLUDED} pseudo-table on PostgreSQL, {@code VALUES(column)} on MySQL/MariaDB.
+     */
+    protected static Map<Field<Object>, Object> excluded(Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> excluded = HashMap.newHashMap(fields.size());
+        fields.keySet().forEach(field -> excluded.put(field, DSL.excluded(field)));
+        return excluded;
     }
 
     /**
@@ -256,7 +268,7 @@ public abstract class AbstractJdbcRepository<T> {
             .set(KEY_FIELD, key(entity))
             .set(fields)
             .onDuplicateKeyUpdate()
-            .set(fields);
+            .set(excluded(fields));
     }
 
     public int delete(T entity) {

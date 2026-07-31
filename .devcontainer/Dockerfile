@@ -59,7 +59,7 @@ ENV KESTRA_PLUGINS_PATH="/workspaces/kestra/local/plugins"
 # --------------------------------------
 # Node.js
 # --------------------------------------
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh \
   && bash nodesource_setup.sh && apt install -y nodejs
 # Increases JavaScript heap memory to 4GB to prevent heap out of error during startup
 ENV NODE_OPTIONS=--max-old-space-size=4096

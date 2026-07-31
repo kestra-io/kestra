@@ -258,6 +258,12 @@
     "total_duration": "Total duration",
     "running duration": "Running duration",
     "queued duration": "Queued duration",
+    "executionProgress": {
+        "title": "Execution progress",
+        "estimatedRemaining": "Est. remaining: {duration}",
+        "noBaseline": "No historical data — cannot estimate the remaining time",
+        "pastEstimate": "Running longer than usual"
+    },
     "choose file": "Choose a file or drop it here...",
     "launch execution": "Execute",
     "warning flow with triggers": "This flow contains triggers and a manual execution will fail if this flow depends on trigger expressions.",

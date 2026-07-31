@@ -1432,72 +1432,63 @@ public class ExecutorService {
 
         if (taskRun.getState().isTerminated()) {
             log.trace("TaskRun terminated: {}", taskRun);
-            metricRegistry
-                .counter(
-                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,
-                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION,
-                    metricRegistry.tags(workerTaskResult)
-                )
-                .increment();
 
-            metricRegistry
-                .timer(
-                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION,
-                    MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
-                    metricRegistry.tags(workerTaskResult)
-                )
-                .record(taskRun.getState().getDurationOrComputeIt());
+            // may be escalated below by assetFailureBehavior; kept separate from `taskRun` for the metrics in the finally block
+            TaskRun finalTaskRun = taskRun;
+            try {
+                // outputs
+                taskOutputService.saveOutputs(taskRun, workerTaskResult.getOutputs());
 
-            // outputs
-            taskOutputService.saveOutputs(taskRun, workerTaskResult.getOutputs());
-
-            ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
-            if (
-                taskRun.getAssets() != null &&
-                    (!taskRun.getAssets().getInputs().isEmpty() || !taskRun.getAssets().getOutputs().isEmpty())
-                    && executionKind != ExecutionKind.TEST
-            ) {
-                AssetUser assetUser = new AssetUser(
-                    taskRun.getTenantId(),
-                    taskRun.getNamespace(),
-                    taskRun.getFlowId(),
-                    newExecution.getFlowRevision(),
-                    taskRun.getExecutionId(),
-                    taskRun.getTaskId(),
-                    taskRun.getId(),
-                    taskRun.getState().getCurrent(),
-                    taskRun.getState().getStartDate(),
-                    taskRun.getState().getEndDate().orElse(null)
-                );
-
-                List<AssetIdentifier> outputIdentifiers = taskRun.getAssets().getOutputs().stream()
-                    .map(asset -> asset.withTenantId(taskRun.getTenantId()))
-                    .map(AssetIdentifier::of)
-                    .toList();
-                List<AssetIdentifier> inputAssets = taskRun.getAssets().getInputs().stream()
-                    .map(assetIdentifier -> assetIdentifier.withTenantId(taskRun.getTenantId()))
-                    .toList();
-                try {
-                    assetService.assetLineage(
-                        assetUser,
-                        inputAssets,
-                        outputIdentifiers
+                ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
+                if (
+                    taskRun.getAssets() != null &&
+                        (!taskRun.getAssets().getInputs().isEmpty() || !taskRun.getAssets().getOutputs().isEmpty())
+                        && executionKind != ExecutionKind.TEST
+                ) {
+                    AssetUser assetUser = new AssetUser(
+                        taskRun.getTenantId(),
+                        taskRun.getNamespace(),
+                        taskRun.getFlowId(),
+                        newExecution.getFlowRevision(),
+                        taskRun.getExecutionId(),
+                        taskRun.getTaskId(),
+                        taskRun.getId(),
+                        taskRun.getState().getCurrent(),
+                        taskRun.getState().getStartDate(),
+                        taskRun.getState().getEndDate().orElse(null)
                     );
-                } catch (QueueException e) {
-                    log.warn("Unable to submit asset lineage event for {} -> {}", inputAssets, outputIdentifiers, e);
-                }
 
-                // don't update output assets if task fail
-                if (!taskRun.getState().isFailed()) {
-                    // Plain for-loop so a locked-asset InternalException from asyncUpsert propagates and fails the execution (fail-fast, ordering-dependent).
-                    for (var asset : taskRun.getAssets().getOutputs()) {
-                        try {
-                            assetService.asyncUpsert(assetUser, asset);
-                        } catch (QueueException e) {
-                            log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
+                    try {
+                        Optional<TaskRun> escalated = assetService.processTaskRunAssets(assetUser, taskRun, newExecution, flow, executionKind);
+                        if (escalated.isPresent()) {
+                            finalTaskRun = escalated.get();
+                            executor.withExecution(executor.getExecution().withTaskRun(finalTaskRun), "addWorkerTaskResult");
                         }
+                    } catch (Exception e) {
+                        // a bug in asset-lineage/escalation processing must not prevent the taskRun's own
+                        // (already-terminated) result from being recorded; metrics below still tag from taskRun
+                        log.error("Unable to process assets for taskRun {}", taskRun.getId(), e);
                     }
                 }
+            } finally {
+                // tagged from finalTaskRun so a state escalated above by assetFailureBehavior is reflected in the metrics too
+                WorkerTaskResult finalWorkerTaskResult = workerTaskResult.withTaskRun(finalTaskRun);
+                metricRegistry
+                    .counter(
+                        MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT,
+                        MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION,
+                        metricRegistry.tags(finalWorkerTaskResult)
+                    )
+                    .increment();
+
+                // duration from the original taskRun: withState() above would otherwise inflate it by the escalation delay
+                metricRegistry
+                    .timer(
+                        MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION,
+                        MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
+                        metricRegistry.tags(finalWorkerTaskResult)
+                    )
+                    .record(taskRun.getState().getDurationOrComputeIt());
             }
         }
     }

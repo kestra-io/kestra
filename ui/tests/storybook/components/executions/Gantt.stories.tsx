@@ -1,5 +1,6 @@
 import { vueRouter } from "storybook-vue3-router";
 import type { Meta, StoryObj } from "@storybook/vue3";
+import { within, expect, waitFor } from "storybook/test";
 import { useExecutionsStore } from "../../../../src/stores/executions";
 import { useFlowStore } from "../../../../src/stores/flow";
 import Gantt from "../../../../src/components/executions/Gantt.vue";
@@ -9,7 +10,7 @@ const FLOW_ID = "qa_flow_concurrency";
 const EXECUTION_ID = "12HqIIvMvw5K1k5Zksxgus";
 
 // States the Gantt renders an empty view for (an execution with no task runs).
-const STATE_OPTIONS = ["CREATED", "CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
+const STATE_OPTIONS = ["CREATED", "RUNNING", "PAUSED", "CANCELLED", "FAILED", "KILLED", "WARNING", "QUEUED"];
 
 const FLOW = {
     id: FLOW_ID,
@@ -103,4 +104,27 @@ export const Failed: Story = {
 
 export const Queued: Story = {
     args: { state: "QUEUED" },
+};
+
+/** A progressing execution: the progress bar is shown above the (empty) Gantt. */
+export const Running: Story = {
+    args: { state: "RUNNING" },
+    play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+        const canvas = within(canvasElement);
+        await waitFor(() => expect(canvas.getByRole("progressbar")).toBeInTheDocument());
+    },
+};
+
+/**
+ * PAUSED satisfies State.isRunning() but is not progressing, so the progress bar must stay hidden —
+ * otherwise an execution paused on a manual approval climbs to the bar's cap while nothing advances.
+ */
+export const Paused: Story = {
+    args: { state: "PAUSED" },
+    play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+        const canvas = within(canvasElement);
+        // Wait for the status badge so the absence below is a real absence, not an unrendered Gantt.
+        await waitFor(() => expect(canvas.getByText("Paused")).toBeInTheDocument());
+        expect(canvas.queryByRole("progressbar")).toBeNull();
+    },
 };

@@ -1,4 +1,4 @@
-import {describe, test, expect, vi, beforeEach} from "vitest"
+import {describe, test, expect, vi, beforeEach, afterAll} from "vitest"
 import {mount, RouterLinkStub} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {createPinia} from "pinia"
@@ -38,6 +38,11 @@ const globalConfig = {
 }
 
 import SystemBlueprintsTab from "../../../../src/components/flows/SystemBlueprintsTab.vue"
+
+afterAll(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+})
 
 describe("SystemBlueprintsTab", () => {
     beforeEach(() => {

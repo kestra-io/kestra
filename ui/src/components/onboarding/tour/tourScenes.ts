@@ -99,6 +99,7 @@ export const TOUR_SCENES: TourScene[] = [
         id: "flow_generated",
         step: 1,
         targetSelector: EXECUTE_BUTTON,
+        placement: "left",
         enter: async ({actions}) => {
             if (await actions.tourFlowExists()) {
                 await actions.openEditorWith(tourFlowSource.generated())
@@ -265,7 +266,6 @@ export const TOUR_SCENES: TourScene[] = [
         targetSelector: EXPRESSION_DEBUGGER,
         callout: true,
         offersExit: true,
-        placement: "left",
         enter: async ({actions, store}) => {
             const executionId = store.state.tour.eventExecutionId
             if (executionId) {

@@ -17,6 +17,8 @@ export const STORAGE_STATE = path.resolve(__dirname, "../.auth/user.json")
  */
 const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
 
+const PRODUCT_TOUR_STORAGE_KEY = "kestra.productTour.state"
+
 /**
  * The `test` every spec should import.
  *
@@ -29,9 +31,10 @@ const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
  */
 export const test = base.extend({
     context: async ({context}, use) => {
-        await context.addInitScript(([key]) => {
-            sessionStorage.setItem(key, "true")
-        }, [AUTH_FLAG_KEY])
+        await context.addInitScript(([authKey, tourKey]) => {
+            sessionStorage.setItem(authKey, "true")
+            localStorage.setItem(tourKey, JSON.stringify({status: "skipped"}))
+        }, [AUTH_FLAG_KEY, PRODUCT_TOUR_STORAGE_KEY])
 
         await use(context)
     },

@@ -23,10 +23,14 @@ const isMergeReports = process.argv.includes("--merge-reports")
 
 // `storybook dev/build` set STORYBOOK themselves, but the storybook vitest
 // addon does not — without it, vite.config.js enables Module Federation and
-// VitePWA in every test run. Must be set before viteConfig() is called below.
+// VitePWA in every test run. Set it only for this call (then restore
+// immediately) so it can't leak into vitest.config.unit.js's own, separate
+// call to viteConfig() once Vitest loads that project file.
+const previousStorybookEnv = process.env.STORYBOOK
 process.env.STORYBOOK ??= "true"
-
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
+if (previousStorybookEnv === undefined) delete process.env.STORYBOOK
+else process.env.STORYBOOK = previousStorybookEnv
 
 if (resolvedViteConfig.server) {
     resolvedViteConfig.server.proxy = {}

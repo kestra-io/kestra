@@ -424,6 +424,8 @@ export type Asset = {
     };
 };
 
+export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
+
 export type AssetIdentifier = {
     id?: string;
     type?: string;
@@ -433,6 +435,12 @@ export type AssetsDeclaration = {
     enableAuto?: PropertyBoolean;
     inputs?: PropertyListAssetIdentifier;
     outputs?: PropertyListAsset;
+    /**
+     * Asset failure behavior
+     *
+     * Behavior applied to the task state when a declared asset fails to render, emit, or be persisted (e.g. a lock conflict): FAIL escalates it to FAILED, WARN (default) warns it if it would otherwise succeed, IGNORE leaves the state untouched.
+     */
+    assetFailureBehavior?: PropertyAssetFailureBehavior;
 };
 
 export type AssetsInOut = {
@@ -1762,6 +1770,13 @@ export type PluginUiModuleWithGroup = {
     styles?: Array<string>;
     sourceHash?: string;
     distribution?: PluginDistribution;
+};
+
+export type PropertyAssetFailureBehavior = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: AssetFailureBehavior;
 };
 
 export type PropertyBoolean = ({

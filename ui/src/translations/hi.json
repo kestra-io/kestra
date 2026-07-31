@@ -112,7 +112,7 @@
         "no_channel_warning": "कम से कम एक नोटिफिकेशन चैनल चुनें।",
         "subtitle": "चुनें कि अपनी टीम को कैसे सूचित करें।",
         "title": "तब सूचित करें",
-        "unavailable_channels_warning": "{channels} छोड़ दिया जाएगा: इस trigger प्रकार के लिए plugin स्थापित नहीं है।"
+        "unavailable_channels_warning": "{channels}: इस trigger प्रकार के लिए plugin स्थापित नहीं है, कोई सूचना नहीं भेजी जाएगी।"
       },
       "trigger": {
         "case_sub": "केवल EE सुविधा",

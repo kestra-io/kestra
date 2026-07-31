@@ -112,7 +112,7 @@
         "no_channel_warning": "Wählen Sie mindestens einen Benachrichtigungskanal.",
         "subtitle": "Wählen Sie, wie Sie Ihr Team benachrichtigen möchten.",
         "title": "Dann benachrichtigen",
-        "unavailable_channels_warning": "{channels} wird ausgelassen: das Plugin ist für diesen trigger-Typ nicht installiert."
+        "unavailable_channels_warning": "{channels}: Plugin für diesen trigger-Typ nicht installiert, es wird keine Benachrichtigung gesendet."
       },
       "trigger": {
         "case_sub": "Nur in EE verfügbar",

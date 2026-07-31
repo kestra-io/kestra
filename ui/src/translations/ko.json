@@ -112,7 +112,7 @@
         "no_channel_warning": "최소 하나의 알림 채널을 선택하세요.",
         "subtitle": "팀에 알림을 보내는 방법을 선택하세요.",
         "title": "그러면 알림",
-        "unavailable_channels_warning": "{channels}는 제외됩니다. 이 trigger 유형에 필요한 plugin이 설치되지 않았습니다."
+        "unavailable_channels_warning": "{channels}: 이 trigger 유형에 필요한 plugin이 설치되지 않아 알림이 전송되지 않습니다."
       },
       "trigger": {
         "case_sub": "EE 전용 기능",

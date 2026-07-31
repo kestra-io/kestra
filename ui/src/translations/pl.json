@@ -112,7 +112,7 @@
         "no_channel_warning": "Wybierz co najmniej jeden kanał powiadomień.",
         "subtitle": "Wybierz sposób powiadamiania zespołu.",
         "title": "Wtedy powiadom",
-        "unavailable_channels_warning": "{channels} zostanie pominięty: plugin nie jest zainstalowany dla tego typu trigger."
+        "unavailable_channels_warning": "{channels}: plugin nie jest zainstalowany dla tego typu trigger, powiadomienie nie zostanie wysłane."
       },
       "trigger": {
         "case_sub": "Tylko funkcja EE",

@@ -97,7 +97,7 @@
                     </KsAlert>
 
                     <KsAlert
-                        v-if="hasInteracted && !hasNotifyChannel"
+                        v-if="hasInteracted && !hasNotifyChannel && unavailableSelectedChannels.length === 0"
                         type="warning"
                         :closable="false"
                         class="wizard-alert"

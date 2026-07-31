@@ -112,7 +112,7 @@
         "no_channel_warning": "Selecciona al menos un canal de notificación.",
         "subtitle": "Selecciona cómo notificar a tu equipo.",
         "title": "Entonces notificar",
-        "unavailable_channels_warning": "{channels} se omitirá: el plugin no está instalado para este tipo de trigger."
+        "unavailable_channels_warning": "{channels}: plugin no instalado para este tipo de trigger, no se enviará ninguna notificación."
       },
       "trigger": {
         "case_sub": "Solo en EE",

@@ -112,7 +112,7 @@
         "no_channel_warning": "Выберите хотя бы один канал уведомлений.",
         "subtitle": "Выберите способ уведомления команды.",
         "title": "Тогда уведомить",
-        "unavailable_channels_warning": "{channels} будет пропущен: plugin не установлен для этого типа trigger."
+        "unavailable_channels_warning": "{channels}: plugin не установлен для этого типа trigger, уведомление не будет отправлено."
       },
       "trigger": {
         "case_sub": "Только функция EE",

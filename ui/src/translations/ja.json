@@ -112,7 +112,7 @@
         "no_channel_warning": "少なくとも1つの通知チャンネルを選択してください。",
         "subtitle": "チームへの通知方法を選択します。",
         "title": "そのとき通知する",
-        "unavailable_channels_warning": "{channels} は除外されます。この trigger タイプ用の plugin がインストールされていません。"
+        "unavailable_channels_warning": "{channels}：この trigger タイプ用の plugin がインストールされていないため、通知は送信されません。"
       },
       "trigger": {
         "case_sub": "EE専用機能",

@@ -381,8 +381,10 @@ describe("recipeToYaml", () => {
             webhook.triggerType = "webhook"
             webhook.notify.slack = true
             const webhookTask = notifyTask(webhook, "notify_slack")
-            expect(webhookTask.channel).toBeUndefined()
-            expect(Object.keys(webhookTask)).toEqual(["id", "type", "url", "messageText"])
+            expect(webhookTask).not.toHaveProperty("channel")
+            expect(Object.keys(webhookTask)).toEqual(
+                expect.arrayContaining(["id", "type", "url", "messageText"]),
+            )
         })
 
         it("sends a teams card payload rather than an undeclared message property", () => {

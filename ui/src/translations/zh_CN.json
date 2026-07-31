@@ -112,7 +112,7 @@
         "no_channel_warning": "请至少选择一个通知渠道。",
         "subtitle": "选择通知团队的方式。",
         "title": "则进行通知",
-        "unavailable_channels_warning": "{channels} 将被跳过：该 trigger 类型所需的 plugin 未安装。"
+        "unavailable_channels_warning": "{channels}：该 trigger 类型所需的 plugin 未安装，将不会发送通知。"
       },
       "trigger": {
         "case_sub": "仅EE功能",

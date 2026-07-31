@@ -1,10 +1,14 @@
-import {beforeEach, describe, expect, it} from "vitest"
+import {afterAll, beforeEach, describe, expect, it} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
 describe("onboardingV2 store", () => {
     beforeEach(() => {
         localStorage.clear()
         setActivePinia(createPinia())
+    })
+
+    afterAll(() => {
+        localStorage.clear()
     })
 
     it("starts guided mode at first flow step", async () => {

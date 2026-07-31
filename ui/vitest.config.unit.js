@@ -13,7 +13,10 @@ export default defineProject({
     test: {
         name: "unit",
         environment: "jsdom",
-        setupFiles: ["./tests/unit/setup.ts"],
+        // One jsdom per worker instead of one per file: much faster, but shared
+        // state now travels between specs. `leakGuard` fails the file that leaks.
+        isolate: false,
+        setupFiles: ["./tests/unit/setup.ts", "./tests/unit/leakGuard.ts"],
         reporters: [
             ["default"],
             ["junit"],

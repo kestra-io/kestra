@@ -1,5 +1,19 @@
-import {vi} from "vitest"
-import {config} from "@vue/test-utils"
+import {afterEach, vi} from "vitest"
+import {config, disableAutoUnmount, enableAutoUnmount} from "@vue/test-utils"
+
+// Setup files run before each spec file's own imports, so this hands every file a
+// fresh registry for `src/**`: without it a module another spec already imported
+// stays cached with its real dependencies, and this file's `vi.mock` never applies.
+// Externalized node_modules (vue, @vue/test-utils, …) are unaffected.
+vi.resetModules()
+
+// Components that teleport (dialogs, drawers, poppers) keep their content attached
+// to document.body until the wrapper unmounts, and with `isolate: false` that debris
+// outlives the spec file. Auto-unmount every mounted wrapper instead of relying on
+// each test to remember. `enableAutoUnmount` refuses to run twice and the test-utils
+// module is shared across files here, so reset it before re-arming per file.
+disableAutoUnmount()
+enableAutoUnmount(afterEach)
 
 // Most unit tests mount a component in isolation, without installing vue-router,
 // so a literal <router-link> in its template can never resolve and spams

@@ -80,6 +80,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   publish-develop-docker:
     name: Publish Docker

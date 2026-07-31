@@ -58,9 +58,14 @@ component_management:
       paths:
         - webserver/**
 
-ignore:
-  - ui/**
-# we are not mature yet to have a ui code coverage
+    - component_id: ui
+      name: Ui
+      paths:
+        - ui/**
+    - component_id: design-system
+      name: Design System
+      paths:
+        - ui/packages/design-system/**
 
 flag_management:
   default_rules:
@@ -72,3 +77,32 @@ flag_management:
       - type: patch
         target: 75%
         threshold: 10%
+  individual_flags:
+    - name: ui-unit
+      carryforward: true
+      statuses:
+        - type: project
+          informational: true
+        - type: patch
+          informational: true
+    - name: ui-storybook
+      carryforward: true
+      statuses:
+        - type: project
+          informational: true
+        - type: patch
+          informational: true
+    - name: design-system-unit
+      carryforward: true
+      statuses:
+        - type: project
+          informational: true
+        - type: patch
+          informational: true
+    - name: design-system-storybook
+      carryforward: true
+      statuses:
+        - type: project
+          informational: true
+        - type: patch
+          informational: true

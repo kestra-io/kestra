@@ -112,10 +112,9 @@ describe("ChangeExecutionStatus", () => {
         isAllowedMock.mockReturnValue(true)
     })
 
-    test.each(RUNNING_FAMILY_STATES.map((state) => ({state, hasPermission: true})))(
-        "disables the change-state affordance and blocks the popover for a running-family state ($state)",
-        async ({state, hasPermission}) => {
-            isAllowedMock.mockReturnValue(hasPermission)
+    test.each(RUNNING_FAMILY_STATES)(
+        "disables the change-state affordance and blocks the popover for a running-family state (%s)",
+        async (state) => {
             const wrapper = mountChangeExecutionStatus(state)
 
             const trigger = wrapper.get("[data-test=\"trigger\"]")
@@ -127,10 +126,9 @@ describe("ChangeExecutionStatus", () => {
         },
     )
 
-    test.each(FALSE_AFFORDANCE_STATES.map((state) => ({state, hasPermission: true})))(
-        "no longer offers a state change for a terminated-but-not-changeable state ($state)",
-        async ({state, hasPermission}) => {
-            isAllowedMock.mockReturnValue(hasPermission)
+    test.each(FALSE_AFFORDANCE_STATES)(
+        "no longer offers a state change for a terminated-but-not-changeable state (%s)",
+        async (state) => {
             const wrapper = mountChangeExecutionStatus(state)
 
             const trigger = wrapper.get("[data-test=\"trigger\"]")

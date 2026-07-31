@@ -1,8 +1,11 @@
 import {ref, computed} from "vue"
 
-export interface NavFrame {
+export interface Crumb {
     path: string;
     label: string;
+}
+
+export interface NavFrame extends Crumb {
     schema: any;
 }
 

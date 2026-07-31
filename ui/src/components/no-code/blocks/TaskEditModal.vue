@@ -3,6 +3,7 @@
         :modelValue="true"
         width="min(1400px, 94vw)"
         top="4vh"
+        fill
         :showClose="false"
         appendToBody
         @close="emit('close')"
@@ -43,6 +44,14 @@
 
         <div class="task-edit-modal-body">
             <div class="task-edit-modal-form">
+                <FieldNavBreadcrumb
+                    v-if="crumbs.length > 1"
+                    class="task-edit-modal-breadcrumb"
+                    :frames="crumbs.slice(1)"
+                    :rootLabel="crumbs[0].label"
+                    @navigate="(index) => emit('navigate', index + 1)"
+                    @back="emit('navigate', crumbs.length - 2)"
+                />
                 <Suspense>
                     <TaskEdit
                         :task="task"
@@ -101,12 +110,15 @@
     import DockWindow from "vue-material-design-icons/DockWindow.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import TaskEdit from "../../flows/TaskEdit.vue"
+    import FieldNavBreadcrumb from "../components/FieldNavBreadcrumb.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
     import {usePluginsStore, type PluginComponent} from "../../../stores/plugins"
     import type {BlockSection} from "../../../utils/flowableBlockOps"
+    import type {Crumb} from "../utils/useFieldNavigation"
     import {storageKeys} from "../../../utils/constants"
     import {
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
@@ -122,12 +134,15 @@
         parentPath: string
         refPath?: number
         blockSchemaPath: string
+        crumbs: Crumb[]
     }>()
 
     const emit = defineEmits<{
         (e: "update:task", value: string): void
         (e: "close"): void
         (e: "open-in-tabs"): void
+        (e: "navigate", index: number): void
+        (e: "select-nested", parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean): void
     }>()
 
     const {t} = useI18n()
@@ -144,6 +159,9 @@
     provide(REF_PATH_INJECTION_KEY, props.refPath)
     provide(EDITING_TASK_INJECTION_KEY, true)
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath))
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
+        emit("select-nested", parentPath, blockSchemaPath, refPath, split)
+    })
 
     const title = computed(() => {
         const id = (props.task?.id as string) ?? ""
@@ -193,7 +211,7 @@
 
     .task-edit-modal-body {
         display: flex;
-        height: 82vh;
+        flex: 1;
         min-height: 0;
         gap: var(--ks-spacing-4);
     }
@@ -204,6 +222,10 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
+    }
+
+    .task-edit-modal-breadcrumb {
+        flex-shrink: 0;
     }
 
     .task-edit-modal-docs {

@@ -35,12 +35,13 @@
     import {useI18n} from "vue-i18n"
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import type {NavFrame} from "../utils/useFieldNavigation"
+
+    import type {Crumb} from "../utils/useFieldNavigation"
 
     const {t} = useI18n()
 
     defineProps<{
-        frames: NavFrame[];
+        frames: Crumb[];
         rootLabel: string;
     }>()
 

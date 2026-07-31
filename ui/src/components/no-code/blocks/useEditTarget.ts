@@ -1,6 +1,7 @@
 import {computed, type Ref} from "vue"
 import {flowYamlUtils} from "@kestra-io/topology"
-import {taskEditPathFor} from "../../../utils/flowableBlockOps"
+import {displayTaskOf, taskEditPathFor} from "../../../utils/flowableBlockOps"
+import type {Crumb} from "../utils/useFieldNavigation"
 
 function parseBlock(source: string, path: string): Record<string, unknown> | undefined {
     const blockYaml = flowYamlUtils.extractBlockWithPath({source, path})
@@ -16,6 +17,12 @@ export function resolveTaskEditPath(source: string, itemPath: string): string {
     if (!itemPath) return itemPath
     const item = parseBlock(source, itemPath)
     return item ? taskEditPathFor(itemPath, item) : itemPath
+}
+
+export function taskCrumbAt(source: string, itemPath: string): Crumb {
+    const item = parseBlock(source, resolveTaskEditPath(source, itemPath))
+    const id = item ? displayTaskOf(item).id : undefined
+    return {path: itemPath, label: id != null ? String(id) : itemPath}
 }
 
 export function useEditTarget(

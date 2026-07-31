@@ -121,9 +121,12 @@
         :parentPath="modalTarget.parentPath"
         :refPath="modalTarget.refPath"
         :blockSchemaPath="modalTarget.blockSchemaPath"
+        :crumbs="modalCrumbs"
         @update:task="onModalTaskEdited"
-        @close="modalTarget = undefined"
+        @close="closeModal"
         @open-in-tabs="onModalOpenInTabs"
+        @navigate="popModalTo"
+        @select-nested="onModalSelectNested"
     />
 
     <FlowPropertiesModal
@@ -159,10 +162,11 @@
     import BlockTaskPicker from "./BlockTaskPicker.vue"
     import BlockEditorStatusBar from "./BlockEditorStatusBar.vue"
     import {useBlockEditorProvides} from "./useBlockEditorProvides"
-    import {useEditTarget} from "./useEditTarget"
+    import type {Crumb} from "../utils/useFieldNavigation"
+    import {taskCrumbAt, useEditTarget} from "./useEditTarget"
     import {useBlockDragAndDrop} from "./useBlockDragAndDrop"
     import {useBlockOperations} from "./useBlockOperations"
-    import {useBlockSelection} from "./useBlockSelection"
+    import {modalItemPathOf, useBlockSelection} from "./useBlockSelection"
     import {useBlockMutations} from "./useBlockMutations"
     import {opensInModalByDefault} from "./taskEditMode"
     import BlockSectionLane from "./BlockSectionLane.vue"
@@ -291,9 +295,12 @@
 
     const modalItemPath = computed<string>(() => {
         const target = modalTarget.value
-        if (!target) return ""
-        return target.refPath !== undefined ? `${target.parentPath}[${target.refPath}]` : target.parentPath
+        return target ? modalItemPathOf(target) : ""
     })
+
+    const modalCrumbs = computed<Crumb[]>(() =>
+        modalStack.value.map((target) => taskCrumbAt(flowYaml.value, modalItemPathOf(target))),
+    )
 
     const alwaysResolved = computed(() => true)
 
@@ -314,7 +321,16 @@
         const target = modalTarget.value
         if (!target) return
         emit("editTask", target.parentPath, target.blockSchemaPath, target.refPath, true)
-        modalTarget.value = undefined
+        closeModal()
+    }
+
+    function onModalSelectNested(parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean) {
+        if (split) {
+            emit("editTask", parentPath, blockSchemaPath, refPath, true)
+            closeModal()
+            return
+        }
+        pushModalTarget({parentPath, blockSchemaPath, refPath})
     }
 
     function isFlowable(task: Record<string, unknown>): boolean {
@@ -393,10 +409,14 @@
     const {
         activeSelectedId,
         activeSelectedPath,
+        modalStack,
         modalTarget,
         selectBlock,
         openNestedEdit,
         deselectIfCurrent,
+        pushModalTarget,
+        popModalTo,
+        closeModal,
     } = useBlockSelection({
         selectedId: computed(() => props.selectedId),
         editorEl,

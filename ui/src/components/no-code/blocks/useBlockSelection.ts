@@ -10,6 +10,10 @@ export interface ModalTarget {
     refPath?: number
 }
 
+export function modalItemPathOf(target: ModalTarget): string {
+    return target.refPath !== undefined ? `${target.parentPath}[${target.refPath}]` : target.parentPath
+}
+
 export interface BlockSelectionContext {
     selectedId: Ref<string | undefined>
     editorEl: Ref<HTMLElement | undefined>
@@ -33,7 +37,8 @@ export function useBlockSelection(ctx: BlockSelectionContext) {
     })
 
     const activeSelectedPath = ref<string | undefined>()
-    const modalTarget = ref<ModalTarget | undefined>(undefined)
+    const modalStack = ref<ModalTarget[]>([])
+    const modalTarget = computed<ModalTarget | undefined>(() => modalStack.value[modalStack.value.length - 1])
 
     watch(ctx.selectedId, async (id) => {
         internalSelectedId.value = id
@@ -50,10 +55,22 @@ export function useBlockSelection(ctx: BlockSelectionContext) {
 
     function openTarget(parentPath: string, section: BlockSection, refPath: number, split: boolean) {
         if (!split && opensInModalByDefault()) {
-            modalTarget.value = {parentPath, blockSchemaPath: blockSchemaPathFor(section), refPath}
+            modalStack.value = [{parentPath, blockSchemaPath: blockSchemaPathFor(section), refPath}]
         } else {
             ctx.onEditTask(parentPath, blockSchemaPathFor(section), refPath, split)
         }
+    }
+
+    function pushModalTarget(target: ModalTarget) {
+        modalStack.value = [...modalStack.value, target]
+    }
+
+    function popModalTo(index: number) {
+        modalStack.value = modalStack.value.slice(0, index + 1)
+    }
+
+    function closeModal() {
+        modalStack.value = []
     }
 
     function selectBlock(section: BlockSection, block: Record<string, unknown>, split = false) {
@@ -93,10 +110,14 @@ export function useBlockSelection(ctx: BlockSelectionContext) {
     return {
         activeSelectedId,
         activeSelectedPath,
+        modalStack,
         modalTarget,
         blockSchemaPathFor,
         selectBlock,
         openNestedEdit,
         deselectIfCurrent,
+        pushModalTarget,
+        popModalTo,
+        closeModal,
     }
 }

@@ -1647,7 +1647,9 @@
       "connection_lost": {
         "title": "Verbindung unterbrochen",
         "message": "Wir konnten Ihre Kestra-Instanz nicht erreichen. Stellen Sie sicher, dass sie läuft, und aktualisieren Sie dann die Seite."
-      }
+      },
+      "opening_flow_editor": "Beim Öffnen des flow-Editors ist etwas schiefgelaufen.",
+      "retry": "Wiederholen"
     },
     "debug": "Debuggen",
     "default": "Standard",

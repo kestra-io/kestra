@@ -1647,7 +1647,9 @@
       "connection_lost": {
         "title": "连接中断",
         "message": "无法连接到您的Kestra实例。请确保它正在运行，然后刷新页面。"
-      }
+      },
+      "opening_flow_editor": "打开 flow 编辑器时出现问题",
+      "retry": "重试"
     },
     "debug": "调试",
     "default": "默认值",

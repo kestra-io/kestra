@@ -1647,7 +1647,9 @@
       "connection_lost": {
         "title": "Połączenie przerwane",
         "message": "Nie udało nam się połączyć z instancją Kestra. Upewnij się, że jest uruchomiona, a następnie odśwież stronę."
-      }
+      },
+      "opening_flow_editor": "Wystąpił problem podczas otwierania edytora flow",
+      "retry": "Ponów próbę"
     },
     "debug": "Debugowanie",
     "default": "Domyślny",

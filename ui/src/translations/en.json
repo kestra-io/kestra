@@ -1822,7 +1822,9 @@
       "connection_lost": {
         "title": "Connection interrupted",
         "message": "We couldn't reach your Kestra instance. Make sure it's running, then refresh the page."
-      }
+      },
+      "opening_flow_editor": "Something went wrong while opening the flow editor",
+      "retry": "Retry"
     },
     "debug": "Debug",
     "default": "Default",

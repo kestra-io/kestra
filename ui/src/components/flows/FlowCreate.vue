@@ -4,7 +4,7 @@
             <Actions />
         </template>
     </TopNavBar>
-    <section class="full-container">
+    <section class="full-container flush-top">
         <MultiPanelFlowEditorView v-if="flowStore.flow" />
     </section>
 </template>

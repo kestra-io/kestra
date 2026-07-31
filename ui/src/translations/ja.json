@@ -1641,7 +1641,9 @@
       "connection_lost": {
         "title": "接続が中断されました",
         "message": "Kestraインスタンスに接続できませんでした。実行中であることを確認し、ページを更新してください。"
-      }
+      },
+      "opening_flow_editor": "flow エディターを開く際に問題が発生しました。",
+      "retry": "リトライ"
     },
     "debug": "デバッグ",
     "default": "デフォルト",

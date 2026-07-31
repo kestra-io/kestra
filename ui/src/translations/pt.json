@@ -1641,7 +1641,9 @@
       "connection_lost": {
         "title": "Conexão interrompida",
         "message": "Não conseguimos acessar sua instância do Kestra. Certifique-se de que está em execução e, em seguida, atualize a página."
-      }
+      },
+      "opening_flow_editor": "Algo deu errado ao abrir o editor de flow",
+      "retry": "Repetir"
     },
     "debug": "Depurar",
     "default": "Padrão",

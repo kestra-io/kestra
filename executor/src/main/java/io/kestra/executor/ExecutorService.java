@@ -22,6 +22,7 @@ import io.kestra.core.models.assets.AssetUser;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
@@ -98,26 +99,27 @@ public class ExecutorService {
         this.taskOutputService = taskOutputService;
     }
 
-    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, int queuedCount, ExecutionRunning executionRunning) {
-        // if concurrency was removed, it can be null as we always get the latest flow definition
-        if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
-            return switch (flow.getConcurrency().getBehavior()) {
     /**
      * Evaluate the scoped concurrency limits in order against their running counts: the first
      * limit reached defines the behavior applied to the execution; when none is reached the
      * execution runs.
      */
-    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, ExecutionRunning executionRunning) {
+    public ExecutionRunning processExecutionRunning(List<ScopedConcurrencyLimit> limits, List<Integer> runningCounts, int queuedCount, ExecutionRunning executionRunning) {
         for (int i = 0; i < limits.size(); i++) {
             ScopedConcurrencyLimit limit = limits.get(i);
             int runningCount = runningCounts.get(i);
-            if (runningCount < limit.concurrency().getLimit()) {
+            Concurrency concurrency = limit.concurrency();
+            if (concurrency == null) {
+                continue;
+            }
+
+            if (runningCount < concurrency.getLimit()) {
                 continue;
             }
 
             return switch (limit.concurrency().getBehavior()) {
                 case QUEUE -> {
-                    Integer queueSize = flow.getConcurrency().getQueueSize();
+                    Integer queueSize = limit.concurrency().getQueueSize();
                     if (queueSize != null && queuedCount >= queueSize) {
                         Logs.logExecution(
                             executionRunning.getExecution(),

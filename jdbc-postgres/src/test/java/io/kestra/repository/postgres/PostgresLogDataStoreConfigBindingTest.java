@@ -11,8 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Guards the exact deserialization production performs in
  * {@code AbstractPluginInterfaceFactory.resolve()} → {@code JacksonMapper.toMap(config, cls)} with
- * the real {@code kestra.logs.postgres.*} sub-config. This is the path that crashed with
- * {@code Unrecognized field "url"/"table"} (issue #9549). A plain unit test — no Micronaut context.
+ * the real {@code kestra.logs.postgres.*} sub-config. A plain unit test — no Micronaut context.
  */
 class PostgresLogDataStoreConfigBindingTest {
 

@@ -10,8 +10,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * MySQL counterpart of {@code PostgresLogDataStoreConfigBindingTest}: guards that the real
- * {@code kestra.logs.mysql.*} sub-config deserializes onto the store plugin (issue #9549). A plain
- * unit test — no Micronaut context.
+ * {@code kestra.logs.mysql.*} sub-config deserializes onto the store plugin. A plain unit test — no
+ * Micronaut context.
  */
 class MysqlLogDataStoreConfigBindingTest {
 

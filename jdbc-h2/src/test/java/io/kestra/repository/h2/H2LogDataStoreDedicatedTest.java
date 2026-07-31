@@ -41,7 +41,7 @@ class H2LogDataStoreDedicatedTest {
 
     // The whole kestra.logs.* subtree, so the store is built from the SAME config map production
     // passes to make() (url/table/... included) — not an empty map, which would sidestep the
-    // plugin-config deserialization that regressed in #9549.
+    // plugin-config deserialization the store must go through.
     @Inject
     LogsConfig logsConfig;
 

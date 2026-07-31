@@ -1,7 +1,6 @@
 import pluginVue from "eslint-plugin-vue"
 import tsParser from "@typescript-eslint/parser"
 import {defineConfig, globalIgnores} from "eslint/config"
-import kestraTestHygiene from "./eslint-rules/index.js"
 
 export default defineConfig([
     globalIgnores(["**/node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*", "**/dist/*", "packages/kestra-sdk/src/openapi/*"]),
@@ -54,19 +53,6 @@ export default defineConfig([
         files: ["packages/design-system/src/components/**/*.vue"],
         rules: {
             "vue/enforce-style-attribute": "off",
-        },
-    },
-    {
-        // Unit specs share one jsdom per worker (isolate: false), so state a spec
-        // mutates and never restores breaks a later, unrelated file.
-        files: ["**/*.spec.{js,ts}", "**/*.test.{js,ts}", "tests/unit/**/*.{js,ts}"],
-        ignores: ["tests/e2e/**"],
-        plugins: {"kestra-test-hygiene": kestraTestHygiene},
-        rules: {
-            "kestra-test-hygiene/no-direct-global-assignment": "error",
-            "kestra-test-hygiene/no-unrestored-fake-timers": "error",
-            "kestra-test-hygiene/no-unrestored-global-stub": "error",
-            "kestra-test-hygiene/require-mock-reset": "error",
         },
     },
 

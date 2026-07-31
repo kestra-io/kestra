@@ -2,6 +2,9 @@ import {describe, it} from "vitest"
 import {RuleTester} from "eslint"
 import plugin from "./index.js"
 
+// The rules run under oxlint (see .oxlintrc.json), which ships no rule tester of its own.
+// ESLint's exercises the same plugin object, since oxlint consumes the ESLint rule shape.
+
 const ruleTester = new RuleTester({languageOptions: {ecmaVersion: 2022, sourceType: "module"}})
 
 const run = (name, tests) => it(name, () => ruleTester.run(name, plugin.rules[name], tests))

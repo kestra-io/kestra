@@ -190,7 +190,7 @@
 <style scoped lang="scss">
 
 .filterPadding {
-    margin-top: 1rem;
+    margin-top: 2rem;
     padding: 0 2rem;
 }
 

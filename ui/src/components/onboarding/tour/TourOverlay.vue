@@ -250,6 +250,7 @@
 
     let spotlightFrame: number | null = null
     let lastSpotlightKey = ""
+    let activeSelector = ""
 
     const px = (value: number) => `${Math.round(value)}px`
 
@@ -263,11 +264,31 @@
     const trackSpotlight = () => {
         spotlightFrame = window.requestAnimationFrame(trackSpotlight)
 
-        const rects = dialogOpen()
-            ? []
-            : highlighted.value
-                .map((element) => element.getBoundingClientRect())
-                .filter((rect) => rect.width > 0 && rect.height > 0)
+        if (dialogOpen()) {
+            if (lastSpotlightKey !== "") {
+                lastSpotlightKey = ""
+                spotlight.value = null
+            }
+            return
+        }
+
+        // Matched again rather than remembered: a table fills its rows in after the page, so the set
+        // of elements the step is about can still grow.
+        const matches = activeSelector
+            ? (Array.from(document.querySelectorAll(activeSelector)) as HTMLElement[])
+                .map((element) => ({element, rect: element.getBoundingClientRect()}))
+                .filter(({rect}) => rect.width > 0 && rect.height > 0)
+            : []
+
+        const elements = matches.map((match) => match.element)
+        if (elements.some((element, index) => element !== highlighted.value[index])
+            || elements.length !== highlighted.value.length) {
+            highlighted.value.forEach((element) => element.classList.remove(HIGHLIGHT_CLASS))
+            elements.forEach((element) => element.classList.add(HIGHLIGHT_CLASS))
+            highlighted.value = elements
+        }
+
+        const rects = matches.map((match) => match.rect)
 
         if (!rects.length) {
             if (lastSpotlightKey !== "") {
@@ -319,12 +340,13 @@
             spotlightFrame = null
         }
         lastSpotlightKey = ""
+        activeSelector = ""
         spotlight.value = null
         highlighted.value.forEach((element) => element.classList.remove(HIGHLIGHT_CLASS))
         highlighted.value = []
     }
 
-    /** All visible matches of the first selector that matches, with its rank in the list. */
+    /** All visible matches of the first selector that matches, with that selector and its rank. */
     const findTargets = (selector: string) => {
         const candidates = selector.split(",").map((value) => value.trim()).filter(Boolean)
         for (const [index, candidate] of candidates.entries()) {
@@ -338,10 +360,10 @@
                     return rect.width > 0 && rect.height > 0
                 })
             if (visible.length) {
-                return {elements: visible, rank: index}
+                return {elements: visible, rank: index, candidate}
             }
         }
-        return {elements: [] as HTMLElement[], rank: -1}
+        return {elements: [] as HTMLElement[], rank: -1, candidate: ""}
     }
 
     // Panels mount asynchronously after a route change, so retry for a couple of seconds.
@@ -351,7 +373,7 @@
         if (!selector || !tourStore.isGuidedActive) {
             return
         }
-        const {elements: targets, rank} = findTargets(selector)
+        const {elements: targets, rank, candidate} = findTargets(selector)
         // Only the first selector is what the card is about, so a fallback is shown while it is awaited.
         const keepLooking = rank !== 0 && highlightAttempts < 25
         if (keepLooking) {
@@ -364,6 +386,7 @@
             return
         }
         highlighted.value = targets
+        activeSelector = candidate
         targets.forEach((target) => target.classList.add(HIGHLIGHT_CLASS))
 
         const rect = targets[0].getBoundingClientRect()

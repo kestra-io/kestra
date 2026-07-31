@@ -76,17 +76,14 @@ const adoptExecution = (
     return true
 }
 
+// Ranked: the first selector is what the card is about, the rest keep something lit until it renders.
 const EDITOR = "#flowFileEditorTab"
 const DOCS_PANEL = ".plugin-doc-wrapper, .plugin-list-wrapper"
 const GANTT = "[data-onboarding-target=\"execution-gantt\"], #gantt"
-// Both failure steps talk about the one task run the tour expands, with the timeline as the fallback
-// while its logs load.
 const FAILED_LOG = `.log-row-error, .task-details, ${GANTT}`
 const REPLAYED_TASK = `.task-details, ${GANTT}`
-// The diff itself, with the revision selectors as the fallback until it has rendered.
 const REVISION_DIFF = ".revision .ks-editor, .revision-select"
 const TEST_EVENT_BUTTON = "[data-onboarding-target=\"trigger-test-event-button\"]"
-// The tab around the button is the fallback until the debugger panel has rendered.
 const EXPRESSION_DEBUGGER = ".expression-debugger .button, .variable-explorer"
 // Set by Executions.vue on the header and the cells of the labels column.
 const EXECUTION_LABELS = ".execution-labels-column"
@@ -307,6 +304,7 @@ export const TOUR_SCENES: TourScene[] = [
         id: "chain",
         step: 4,
         targetSelector: EXECUTION_LABELS,
+        placement: "left",
         milestone: true,
         confetti: true,
         enter: ({actions}) => actions.openExecutionsList(),

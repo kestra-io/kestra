@@ -73,6 +73,8 @@
 
     // URLs are not translated, so the tour's doc links live in code rather than in i18n.
     const DOCS: Record<string, string> = {
+        copilot: "https://kestra.io/docs/ai-tools/ai-copilot",
+        agentSkills: "https://kestra.io/docs/ai-tools/agent-skills",
         autocompletion: "https://kestra.io/docs/tutorial/fundamentals#autocompletion",
         execution: "https://kestra.io/docs/workflow-components/execution",
         replay: "https://kestra.io/docs/concepts/replay",
@@ -93,7 +95,7 @@
     }
 
     const TAKEAWAYS = [
-        {key: "copilot", docs: ["autocompletion", "execution"]},
+        {key: "copilot", docs: ["copilot", "agentSkills", "autocompletion"]},
         {key: "restart", docs: ["replay", "revision"]},
         {key: "events", docs: ["webhook", "schedule"]},
         {key: "chain", docs: ["flowTrigger", "namespace"]},

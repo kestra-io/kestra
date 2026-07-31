@@ -2,6 +2,16 @@
     <TourFinale v-model="showFinale" @restart="restartTour" />
 
     <div v-if="tourStore.isGuidedActive && !showFinale" class="tour-overlay" aria-live="polite">
+        <!-- Spotlight: everything but the part this step is about is dimmed, and that part gets a ring
+             of its own. Decoration only, so it never takes a click. -->
+        <template v-if="spotlight">
+            <div class="tour-scrim" :style="spotlight.scrim.top" />
+            <div class="tour-scrim" :style="spotlight.scrim.bottom" />
+            <div class="tour-scrim" :style="spotlight.scrim.left" />
+            <div class="tour-scrim" :style="spotlight.scrim.right" />
+            <div v-for="(ring, index) in spotlight.rings" :key="index" class="tour-ring" :style="ring" />
+        </template>
+
         <div
             ref="cardEl"
             class="guide-card"
@@ -230,18 +240,98 @@
     let highlightTimer: number | null = null
     let highlightAttempts = 0
 
+    /** Padding between a highlighted element and the ring around it. */
+    const RING_PADDING = 6
+
+    /**
+     * Where the highlighted elements are, so the scrim can leave them lit.
+     *
+     * Read every frame while a highlight is up: pages scroll, panels resize and logs arrive late, and
+     * the ring has to stay on what it points at. Nothing is written unless the rectangles moved.
+     */
+    const spotlight = ref<{
+        scrim: Record<"top" | "bottom" | "left" | "right", Record<string, string>>;
+        rings: Record<string, string>[];
+    } | null>(null)
+
+    let spotlightFrame: number | null = null
+    let lastSpotlightKey = ""
+
+    const px = (value: number) => `${Math.round(value)}px`
+
+    /** A dialog is already the only thing on screen; its own wrapper stays in the DOM once used. */
+    const dialogOpen = () =>
+        Array.from(document.querySelectorAll(".kel-overlay-dialog, .el-overlay")).some((element) => {
+            const rect = element.getBoundingClientRect()
+            return rect.width > 0 && rect.height > 0
+        })
+
+    const trackSpotlight = () => {
+        spotlightFrame = window.requestAnimationFrame(trackSpotlight)
+
+        const rects = dialogOpen()
+            ? []
+            : highlighted.value
+                .map((element) => element.getBoundingClientRect())
+                .filter((rect) => rect.width > 0 && rect.height > 0)
+
+        if (!rects.length) {
+            if (lastSpotlightKey !== "") {
+                lastSpotlightKey = ""
+                spotlight.value = null
+            }
+            return
+        }
+
+        const top = Math.max(0, Math.min(...rects.map((rect) => rect.top)) - RING_PADDING)
+        const left = Math.max(0, Math.min(...rects.map((rect) => rect.left)) - RING_PADDING)
+        const bottom = Math.min(window.innerHeight, Math.max(...rects.map((rect) => rect.bottom)) + RING_PADDING)
+        const right = Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING)
+
+        const key = [top, left, bottom, right, rects.length].map(Math.round).join(":")
+        if (key === lastSpotlightKey) {
+            return
+        }
+        lastSpotlightKey = key
+
+        spotlight.value = {
+            scrim: {
+                top: {top: "0", left: "0", right: "0", height: px(top)},
+                bottom: {top: px(bottom), left: "0", right: "0", bottom: "0"},
+                left: {top: px(top), left: "0", width: px(left), height: px(bottom - top)},
+                right: {top: px(top), left: px(right), right: "0", height: px(bottom - top)},
+            },
+            rings: rects.map((rect) => ({
+                top: px(rect.top - RING_PADDING),
+                left: px(rect.left - RING_PADDING),
+                width: px(rect.width + RING_PADDING * 2),
+                height: px(rect.height + RING_PADDING * 2),
+            })),
+        }
+    }
+
     const clearHighlight = () => {
         if (highlightTimer !== null) {
             window.clearTimeout(highlightTimer)
             highlightTimer = null
         }
+        if (spotlightFrame !== null) {
+            window.cancelAnimationFrame(spotlightFrame)
+            spotlightFrame = null
+        }
+        lastSpotlightKey = ""
+        spotlight.value = null
         highlighted.value.forEach((element) => element.classList.remove(HIGHLIGHT_CLASS))
         highlighted.value = []
     }
 
-    /** All visible matches of the first comma-separated selector that matches: some controls come in pairs. */
+    /**
+     * All visible matches of the first comma-separated selector that matches: some controls come in
+     * pairs. The rank says which selector answered, so a fallback can be upgraded later.
+     */
     const findTargets = (selector: string) => {
-        for (const candidate of selector.split(",").map((value) => value.trim()).filter(Boolean)) {
+        const candidates = selector.split(",").map((value) => value.trim()).filter(Boolean)
+        for (const [index, candidate] of candidates.entries()) {
             const visible = (Array.from(document.querySelectorAll(candidate)) as HTMLElement[])
                 .filter((target) => {
                     const style = window.getComputedStyle(target)
@@ -252,10 +342,10 @@
                     return rect.width > 0 && rect.height > 0
                 })
             if (visible.length) {
-                return visible
+                return {elements: visible, rank: index}
             }
         }
-        return []
+        return {elements: [] as HTMLElement[], rank: -1}
     }
 
     // Panels mount asynchronously after a route change, so retry for a couple of seconds.
@@ -265,17 +355,29 @@
         if (!selector || !tourStore.isGuidedActive) {
             return
         }
-        const targets = findTargets(selector)
+        const {elements: targets, rank} = findTargets(selector)
+        // Anything but the first selector is a fallback: shown right away, replaced as soon as the one
+        // the card is really about renders. Logs in particular arrive a second after the page does.
+        const keepLooking = rank !== 0 && highlightAttempts < 25
+        if (keepLooking) {
+            highlightAttempts += 1
+            highlightTimer = window.setTimeout(applyHighlight, 150)
+        } else {
+            highlightAttempts = 0
+        }
         if (!targets.length) {
-            if (highlightAttempts < 25) {
-                highlightAttempts += 1
-                highlightTimer = window.setTimeout(applyHighlight, 150)
-            }
             return
         }
-        highlightAttempts = 0
         highlighted.value = targets
         targets.forEach((target) => target.classList.add(HIGHLIGHT_CLASS))
+
+        // The card describes what is on screen, so bring it there.
+        const rect = targets[0].getBoundingClientRect()
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+            targets[0].scrollIntoView({block: "center", behavior: "smooth"})
+        }
+
+        trackSpotlight()
     }
 
     // Keep in sync with the `cursor: text` rule listing the same selectors in the style block.
@@ -679,21 +781,71 @@
         flex: 1;
     }
 
-    // Applied to real controls elsewhere in the app, so it has to leave the scoped tree.
+    // Applied to real controls elsewhere in the app, so it has to leave the scoped tree. Only a soft
+    // edge: the ring drawn over it carries the glow.
     :global(.onboarding-v2-highlight-static) {
         --onboarding-static-color: var(--ks-btn-primary-bg-default);
-        box-shadow:
-            0 0 16px 2px color-mix(in srgb, var(--onboarding-static-color) 36%, transparent),
-            0 0 34px 10px color-mix(in srgb, var(--onboarding-static-color) 20%, transparent);
         border-radius: var(--ks-radius-lg);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--onboarding-static-color) 45%, transparent);
         transition: box-shadow var(--ks-duration-base) var(--ks-ease-standard);
     }
 
     :global(html.dark .onboarding-v2-highlight-static) {
         --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, white 30%);
-        box-shadow:
-            0 0 18px 3px color-mix(in srgb, var(--onboarding-static-color) 48%, transparent),
-            0 0 40px 12px color-mix(in srgb, var(--onboarding-static-color) 24%, transparent);
+    }
+
+    // Everything the step is not about, dimmed. Four pieces around the lit rectangle: a hole in one
+    // overlay would need clipping, and this needs to work everywhere.
+    .tour-scrim {
+        position: fixed;
+        background: rgba(4, 6, 16, 0.45);
+        pointer-events: none;
+        transition: all var(--ks-duration-base) var(--ks-ease-standard);
+    }
+
+    .tour-ring {
+        --tour-ring-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 75%, white 25%);
+        position: fixed;
+        border: 2px solid var(--tour-ring-color);
+        border-radius: var(--ks-radius-lg);
+        pointer-events: none;
+        transition:
+            top var(--ks-duration-base) var(--ks-ease-standard),
+            left var(--ks-duration-base) var(--ks-ease-standard),
+            width var(--ks-duration-base) var(--ks-ease-standard),
+            height var(--ks-duration-base) var(--ks-ease-standard);
+        animation: tourRingPulse 1.5s ease-out 3 forwards;
+    }
+
+    @keyframes tourRingPulse {
+        0% {
+            box-shadow:
+                0 0 0 0 color-mix(in srgb, var(--tour-ring-color) 55%, transparent),
+                0 0 24px 6px color-mix(in srgb, var(--tour-ring-color) 45%, transparent);
+        }
+        70% {
+            box-shadow:
+                0 0 0 12px color-mix(in srgb, var(--tour-ring-color) 0%, transparent),
+                0 0 34px 12px color-mix(in srgb, var(--tour-ring-color) 30%, transparent);
+        }
+        100% {
+            box-shadow:
+                0 0 0 0 color-mix(in srgb, var(--tour-ring-color) 0%, transparent),
+                0 0 26px 8px color-mix(in srgb, var(--tour-ring-color) 32%, transparent);
+        }
+    }
+
+    // A ring that keeps moving is worse than no ring for anyone who asked for less motion.
+    @media (prefers-reduced-motion: reduce) {
+        .tour-ring {
+            animation: none;
+            box-shadow: 0 0 24px 6px color-mix(in srgb, var(--tour-ring-color) 32%, transparent);
+        }
+
+        .tour-scrim,
+        .tour-ring {
+            transition: none;
+        }
     }
 
     :global(.tour-confetti-piece) {

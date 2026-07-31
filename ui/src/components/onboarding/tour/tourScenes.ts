@@ -76,13 +76,21 @@ const adoptExecution = (
     return true
 }
 
-const EXECUTE_BUTTON = "[data-onboarding-target=\"flow-execute-button\"], #execute-button"
 const EDITOR = "#flowFileEditorTab"
 const DOCS_PANEL = ".plugin-doc-wrapper, .plugin-list-wrapper"
 const GANTT = "[data-onboarding-target=\"execution-gantt\"], #gantt"
-const REVISION_DIFF = ".revision-select"
+/*
+ * Both failure steps talk about one task run, and the tour expands exactly that one, so the details
+ * panel of the expanded row is what the reader should be looking at. Logs arrive a moment after the
+ * page, and earlier selectors win as soon as they render, so the timeline covers the wait.
+ */
+const FAILED_LOG = `.log-row-error, .task-details, ${GANTT}`
+const REPLAYED_TASK = `.task-details, ${GANTT}`
+// The diff itself, with the revision selectors as the fallback until it has rendered.
+const REVISION_DIFF = ".revision .ks-editor, .revision-select"
 const TEST_EVENT_BUTTON = "[data-onboarding-target=\"trigger-test-event-button\"]"
-const EXPRESSION_DEBUGGER = ".expression-debugger .button"
+// The whole tab, which is what the card describes, with the debugger's button as the fallback.
+const EXECUTION_CONTEXT = ".variable-explorer, .expression-debugger .button"
 
 export const TOUR_SCENES: TourScene[] = [
     {
@@ -98,7 +106,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "flow_generated",
         step: 1,
-        targetSelector: EXECUTE_BUTTON,
+        targetSelector: EDITOR,
         placement: "left",
         enter: async ({actions}) => {
             if (await actions.tourFlowExists()) {
@@ -159,7 +167,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "failed_execution",
         step: 2,
-        targetSelector: GANTT,
+        targetSelector: FAILED_LOG,
         callout: true,
         enter: async ({actions, store}) => {
             const executionId = store.state.tour.failedExecutionId
@@ -190,7 +198,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "replayed_execution",
         step: 2,
-        targetSelector: GANTT,
+        targetSelector: REPLAYED_TASK,
         milestone: true,
         callout: true,
         enter: async ({actions, store}) => {
@@ -263,7 +271,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "explore_payload",
         step: 3,
-        targetSelector: EXPRESSION_DEBUGGER,
+        targetSelector: EXECUTION_CONTEXT,
         callout: true,
         offersExit: true,
         enter: async ({actions, store}) => {

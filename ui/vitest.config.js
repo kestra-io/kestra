@@ -91,7 +91,18 @@ export default defineConfig({
                     browser: {
                         enabled: true,
                         headless: true,
-                        provider: playwright(),
+                        // Running all ~55 story files sequentially in one long-lived Chromium tab lets
+                        // its RSS climb steadily (confirmed by memory tracing: ~700MB -> 2GB+ over a
+                        // full run, with no single leaking component — every newly-visited story adds
+                        // its own compiled code/module graph that never gets released mid-run). These
+                        // flags bound that growth: a capped V8 old-space forces more frequent GC instead
+                        // of letting the heap balloon, and disabling /dev/shm (small by default on CI
+                        // runners) avoids a common headless-Chrome crash source under memory pressure.
+                        provider: playwright({
+                            launchOptions: {
+                                args: ["--js-flags=--max-old-space-size=1536", "--disable-dev-shm-usage"],
+                            },
+                        }),
                         instances: [
                             {
                                 browser: "chromium",

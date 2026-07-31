@@ -1,8 +1,7 @@
-// Namespace the "Getting Started" blueprints are auto-loaded into (see FlowAutoLoaderService).
-const EXAMPLE_NAMESPACE = "tutorial"
+import {TUTORIAL_NAMESPACE} from "../constants"
 
 export function isExampleFlow(namespace: string | undefined): boolean {
-    return namespace === EXAMPLE_NAMESPACE
+    return namespace === TUTORIAL_NAMESPACE
 }
 
 /**
@@ -51,18 +50,23 @@ export function flowTaskStats(tasks: TaskLike[] | undefined): {taskCount: number
     return {taskCount, pluginCount: types.size}
 }
 
+// Keyed on the full type, not the short class name: 78 of the ~140 plugin triggers are literally
+// named `Trigger`, so short names collide into one meaningless bucket.
 const TRIGGER_KINDS: Record<string, string> = {
-    schedule: "cron",
+    "io.kestra.plugin.core.trigger.Schedule": "cron",
+    "io.kestra.plugin.core.trigger.ScheduleOnDates": "cron",
+    "io.kestra.plugin.core.trigger.Webhook": "webhook",
+    "io.kestra.plugin.core.trigger.Flow": "flow",
 }
 
 /**
- * How the flow is meant to be started: `manual` with no trigger, otherwise the first trigger's kind
- * (short class name, mapped to the funnel vocabulary where one exists).
+ * How the flow is meant to be started: `manual` with no trigger, otherwise the first trigger mapped
+ * to the funnel vocabulary. Everything else — plugin triggers included — is bucketed as `other` to
+ * keep this a curated dimension; per-plugin usage is not what this property is for.
  */
 export function primaryTriggerType(triggers: {type?: string}[] | undefined): string {
     const first = triggers?.[0]?.type
     if (!first) return "manual"
 
-    const shortName = (first.split(".").pop() ?? first).toLowerCase()
-    return TRIGGER_KINDS[shortName] ?? shortName
+    return TRIGGER_KINDS[first] ?? "other"
 }

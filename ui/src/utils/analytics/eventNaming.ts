@@ -1,8 +1,6 @@
 // Taxonomy source of truth: kestra-io/data#354
 const FLAT_EVENT_NAMES: Record<string, string> = {
     flow_created: "app.flow.created",
-    secret_created: "app.secret.created",
-    secret_updated: "app.secret.updated",
     user_invited: "app.user.invited",
     ai_copilot: "app.ai-copilot.invoked",
     blueprint: "app.blueprint.used",
@@ -34,6 +32,14 @@ const FLOW_EXECUTION_NAMES: Record<string, string> = {
     submit: "app.execute-modal.submitted",
 }
 
+// KV entry, namespace secret and API token are three different objects, so the taxonomy gives them
+// three object segments rather than one event disambiguated by a property.
+const SECRET_OBJECTS: Record<string, string> = {
+    kv: "kv",
+    secret: "secret",
+    token: "token",
+}
+
 const ONBOARDING_NAMES: Record<string, string> = {
     step_viewed: "app.onboarding-step.viewed",
     step_next_clicked: "app.onboarding-step.advanced",
@@ -63,8 +69,17 @@ function resolveOnboarding(properties: Record<string, any>): string {
     return ONBOARDING_NAMES[properties.onboarding?.action] ?? "onboarding"
 }
 
+function resolveSecret(action: "created" | "updated"): (properties: Record<string, any>) => string {
+    return (properties) => {
+        const object = SECRET_OBJECTS[properties.secret_type]
+        return object ? `app.${object}.${action}` : `secret_${action}`
+    }
+}
+
 const SPLIT_EVENT_RESOLVERS: Record<string, (properties: Record<string, any>) => string> = {
     flow_execution: resolveFlowExecution,
+    secret_created: resolveSecret("created"),
+    secret_updated: resolveSecret("updated"),
     editor_tab_action: resolveEditorTabAction,
     ossauth: resolveOssAuth,
     onboarding: resolveOnboarding,

@@ -530,7 +530,7 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function createFlow(options: { flow: string, draft?: boolean }) {
+    function createFlow(options: { flow: string, draft?: boolean, restore?: boolean }) {
         return FlowsAPI.createFlow({
             body: options.flow,
             draft: options.draft ?? false,
@@ -546,7 +546,7 @@ export const useFlowStore = defineStore("flow", () => {
             creationId.value = undefined
 
             if (!options.draft) {
-                trackFlowCreated(flow.value)
+                trackFlowCreated(flow.value, options.restore === true)
             }
 
             return flow.value
@@ -554,7 +554,9 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     // Only on creation: saveFlow() fires on every editor save, which would drown the signal.
-    function trackFlowCreated(created: Flow) {
+    // restoreFlow() also goes through createFlow(), on a flow_id that already reported a creation -
+    // flagged rather than dropped so activation can exclude it downstream.
+    function trackFlowCreated(created: Flow, isRestore: boolean) {
         const {taskCount, pluginCount} = flowTaskStats(created.tasks)
 
         useApiStore().posthogEvents({
@@ -565,6 +567,7 @@ export const useFlowStore = defineStore("flow", () => {
             plugin_count: pluginCount,
             trigger_type: primaryTriggerType(created.triggers),
             is_example: isExampleFlow(created.namespace),
+            is_restore: isRestore,
         })
     }
 

@@ -398,6 +398,9 @@
                 apiStore.posthogEvents({
                     type: "FLOW_EXECUTION",
                     action: "submit",
+                    // Replay-with-inputs bypasses triggerExecution, so it never emits a matching
+                    // `executed`: flagged so it can be excluded from the submit/executed funnel.
+                    is_replay: Boolean(props.replaySubmit),
                 })
 
                 const mergedInputs = props.selectedTrigger?.inputs

@@ -74,10 +74,21 @@ describe("primaryTriggerType", () => {
         [undefined, "manual"],
         [[], "manual"],
         [[{type: "io.kestra.plugin.core.trigger.Schedule"}], "cron"],
+        [[{type: "io.kestra.plugin.core.trigger.ScheduleOnDates"}], "cron"],
         [[{type: "io.kestra.plugin.core.trigger.Webhook"}], "webhook"],
         [[{type: "io.kestra.plugin.core.trigger.Flow"}], "flow"],
+        [[{type: "io.kestra.plugin.core.trigger.McpToolTrigger"}], "other"],
     ])("maps %j to %s", (triggers, expected) => {
         expect(primaryTriggerType(triggers)).toEqual(expected)
+    })
+
+    // 78 plugin triggers share the short name `Trigger`, 23 share `RealtimeTrigger`.
+    it.each([
+        "io.kestra.plugin.kafka.Trigger",
+        "io.kestra.plugin.jdbc.postgresql.Trigger",
+        "io.kestra.plugin.aws.sqs.RealtimeTrigger",
+    ])("buckets the plugin trigger %s as other", (type) => {
+        expect(primaryTriggerType([{type}])).toEqual("other")
     })
 
     it("reads the first trigger when several are declared", () => {

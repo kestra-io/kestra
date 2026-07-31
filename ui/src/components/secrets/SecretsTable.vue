@@ -564,12 +564,17 @@
                 ? namespacesStore.createSecrets
                 : namespacesStore.patchSecret
 
-            actionMethod({namespace: secret.value?.namespace as string, secret: secretData})
+            // Snapshot before the request: resetForm() swaps secret.value out when the drawer closes,
+            // and the .then() would then read the flag off a different object.
+            const wasUpdate = secret.value?.update === true
+            const namespace = secret.value?.namespace
+
+            actionMethod({namespace: namespace as string, secret: secretData})
                 .then(() => {
                     apiStore.posthogEvents({
-                        type: secret.value?.update === true ? "SECRET_UPDATED" : "SECRET_CREATED",
+                        type: wasUpdate ? "SECRET_UPDATED" : "SECRET_CREATED",
                         secret_type: "secret",
-                        namespace: secret.value?.namespace,
+                        namespace,
                         has_tags: (secretData.tags?.length ?? 0) > 0,
                     })
 

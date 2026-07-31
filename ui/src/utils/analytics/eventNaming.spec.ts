@@ -6,8 +6,11 @@ const fixtures: [string, Record<string, any>, string][] = [
     ["flow_execution", {action: "open_modal"}, "app.execute-modal.opened"],
     ["flow_execution", {action: "submit"}, "app.execute-modal.submitted"],
     ["flow_created", {}, "app.flow.created"],
-    ["secret_created", {}, "app.secret.created"],
-    ["secret_updated", {}, "app.secret.updated"],
+    ["secret_created", {secret_type: "secret"}, "app.secret.created"],
+    ["secret_updated", {secret_type: "secret"}, "app.secret.updated"],
+    ["secret_created", {secret_type: "kv"}, "app.kv.created"],
+    ["secret_updated", {secret_type: "kv"}, "app.kv.updated"],
+    ["secret_created", {secret_type: "token"}, "app.token.created"],
     ["user_invited", {}, "app.user.invited"],
     ["ai_copilot", {}, "app.ai-copilot.invoked"],
     ["blueprint", {}, "app.blueprint.used"],
@@ -50,6 +53,11 @@ describe("resolvePosthogEventName", () => {
     it("never resolves an unknown flow_execution action to the activation event", () => {
         expect(resolvePosthogEventName("flow_execution", {action: "unknown_action"})).toEqual("flow_execution")
         expect(resolvePosthogEventName("flow_execution", {})).toEqual("flow_execution")
+    })
+
+    it("falls back to the base name when secret_type is unknown or missing", () => {
+        expect(resolvePosthogEventName("secret_created", {secret_type: "unknown"})).toEqual("secret_created")
+        expect(resolvePosthogEventName("secret_updated", {})).toEqual("secret_updated")
     })
 
     it("falls back to the base lowercased name when editor_tab_action has an unknown action", () => {

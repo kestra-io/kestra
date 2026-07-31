@@ -140,6 +140,7 @@
       "hero_eyebrow": "Your system flow",
       "hero_empty": "Pick a trigger and a channel to preview your flow.",
       "browse_blueprints": "Prefer to start from a template? Browse community system blueprints",
+      "start_blank": "Prefer to write it yourself? Skip the steps and open an empty flow",
       "steps": {
         "trigger_title": "Trigger",
         "trigger_desc": "When it runs",

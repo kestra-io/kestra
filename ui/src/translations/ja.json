@@ -140,6 +140,7 @@
       "hero_eyebrow": "あなたの system flow",
       "hero_empty": "trigger とチャンネルを選ぶと flow をプレビューできます。",
       "browse_blueprints": "テンプレートから始めますか？コミュニティの system blueprints を見る",
+      "start_blank": "自分で書きますか？ステップをスキップして空の flow を開く",
       "steps": {
         "trigger_title": "トリガー",
         "trigger_desc": "実行のタイミング",

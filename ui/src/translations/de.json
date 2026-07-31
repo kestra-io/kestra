@@ -140,6 +140,7 @@
       "hero_eyebrow": "Ihr System-Flow",
       "hero_empty": "Wählen Sie einen Trigger und einen Kanal, um Ihren Flow in der Vorschau zu sehen.",
       "browse_blueprints": "Lieber mit einer Vorlage starten? Community-System-Blueprints durchsuchen",
+      "start_blank": "Lieber selbst schreiben? Schritte überspringen und einen leeren flow öffnen",
       "steps": {
         "trigger_title": "Auslöser",
         "trigger_desc": "Wann er läuft",

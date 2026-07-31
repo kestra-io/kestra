@@ -140,6 +140,7 @@
       "hero_eyebrow": "आपका system flow",
       "hero_empty": "अपने flow का पूर्वावलोकन देखने के लिए एक trigger और एक चैनल चुनें।",
       "browse_blueprints": "टेम्पलेट से शुरू करना पसंद करेंगे? समुदाय के system blueprints ब्राउज़ करें",
+      "start_blank": "खुद लिखना पसंद करेंगे? चरणों को छोड़ें और एक खाली flow खोलें",
       "steps": {
         "trigger_title": "ट्रिगर",
         "trigger_desc": "कब चलता है",

@@ -7,21 +7,39 @@
 
         <FlowRecipe :namespace="systemNamespace" @submit="handleRecipeSubmit" />
 
-        <router-link
-            :to="{name: 'blueprints', params: {tenant: route.params.tenant, kind: 'flow', tab: 'community'}}"
-            class="blueprint-link"
-            data-test="system-blueprints-link"
-        >
-            <div class="blueprint-link-icon">
-                <KsIcon size="base">
-                    <ViewGridOutline />
+        <div class="escape-hatches">
+            <router-link
+                :to="{name: 'blueprints', params: {tenant: route.params.tenant, kind: 'flow', tab: 'community'}}"
+                class="blueprint-link"
+                data-test="system-blueprints-link"
+            >
+                <div class="blueprint-link-icon">
+                    <KsIcon size="base">
+                        <ViewGridOutline />
+                    </KsIcon>
+                </div>
+                <span class="blueprint-link-text">{{ $t("recipe.browse_blueprints") }}</span>
+                <KsIcon size="sm" class="blueprint-link-arrow">
+                    <ChevronRight />
                 </KsIcon>
-            </div>
-            <span class="blueprint-link-text">{{ $t("recipe.browse_blueprints") }}</span>
-            <KsIcon size="sm" class="blueprint-link-arrow">
-                <ChevronRight />
-            </KsIcon>
-        </router-link>
+            </router-link>
+
+            <router-link
+                :to="{name: 'flows/create', params: {tenant: route.params.tenant}, query: {blank: 'true', namespace: systemNamespace}}"
+                class="blueprint-link"
+                data-test="system-blank-flow-link"
+            >
+                <div class="blueprint-link-icon">
+                    <KsIcon size="base">
+                        <Plus />
+                    </KsIcon>
+                </div>
+                <span class="blueprint-link-text">{{ $t("recipe.start_blank") }}</span>
+                <KsIcon size="sm" class="blueprint-link-arrow">
+                    <ChevronRight />
+                </KsIcon>
+            </router-link>
+        </div>
     </div>
 </template>
 
@@ -31,6 +49,7 @@
     import {useMiscStore} from "override/stores/misc"
     import FlowRecipe from "./recipe/FlowRecipe.vue"
     import ViewGridOutline from "vue-material-design-icons/ViewGridOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue"
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
     import {RECIPE_PRESET_KEY} from "../../utils/storageKeys"
 
@@ -78,11 +97,17 @@
         font-size: var(--ks-font-size-sm);
     }
 
+    .escape-hatches {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+        margin: var(--ks-spacing-2) var(--ks-spacing-4) var(--ks-spacing-6);
+    }
+
     .blueprint-link {
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-3);
-        margin: var(--ks-spacing-2) var(--ks-spacing-4) var(--ks-spacing-6);
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border: var(--ks-border-width-thin) solid var(--ks-border-default);
         border-radius: var(--ks-radius-base);

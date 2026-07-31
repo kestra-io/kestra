@@ -140,6 +140,7 @@
       "hero_eyebrow": "Il tuo system flow",
       "hero_empty": "Scegli un trigger e un canale per vedere l'anteprima del tuo flow.",
       "browse_blueprints": "Preferisci partire da un modello? Sfoglia i system blueprints della community",
+      "start_blank": "Preferisci scriverlo tu? Salta i passaggi e apri un flow vuoto",
       "steps": {
         "trigger_title": "Trigger",
         "trigger_desc": "Quando viene eseguito",

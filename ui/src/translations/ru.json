@@ -140,6 +140,7 @@
       "hero_eyebrow": "Ваш system flow",
       "hero_empty": "Выберите trigger и канал, чтобы увидеть предпросмотр flow.",
       "browse_blueprints": "Предпочитаете начать с шаблона? Просмотрите system blueprints сообщества",
+      "start_blank": "Предпочитаете написать самостоятельно? Пропустите шаги и откройте пустой flow",
       "steps": {
         "trigger_title": "Триггер",
         "trigger_desc": "Когда запускается",

@@ -22,6 +22,7 @@ const messages = {
         "recipe.section_title": "System flows",
         "recipe.section_subtitle": "Build an alert flow for your platform.",
         "recipe.browse_blueprints": "Browse blueprints",
+        "recipe.start_blank": "Skip the steps and open an empty flow",
     },
 }
 
@@ -92,5 +93,20 @@ describe("SystemBlueprintsTab", () => {
             .find(l => l.attributes("data-test") === "system-blueprints-link")
         expect(link).toBeDefined()
         expect((link!.props("to") as {name: string}).name).toBe("blueprints")
+    })
+
+    test("offers an escape hatch that skips the wizard for a blank flow", () => {
+        // Given / When — the guided steps must not be the only way out
+        const wrapper = mount(SystemBlueprintsTab, globalConfig)
+
+        // Then — `blank` is param-driven, so FlowCreate opens the editor
+        // directly instead of bouncing the user back to the funnel
+        const link = wrapper.findAllComponents(RouterLinkStub)
+            .find(l => l.attributes("data-test") === "system-blank-flow-link")
+        expect(link).toBeDefined()
+        const to = link!.props("to") as {name: string; query: Record<string, string>}
+        expect(to.name).toBe("flows/create")
+        expect(to.query.blank).toBe("true")
+        expect(to.query.namespace).toBe("kestra.system")
     })
 })

@@ -140,6 +140,7 @@
       "hero_eyebrow": "O seu system flow",
       "hero_empty": "Escolha um trigger e um canal para pré-visualizar o seu flow.",
       "browse_blueprints": "Prefere começar a partir de um modelo? Explore os system blueprints da comunidade",
+      "start_blank": "Prefere escrever você mesmo? Ignore os passos e abra um flow vazio",
       "steps": {
         "trigger_title": "Gatilho",
         "trigger_desc": "Quando é executado",

@@ -11,6 +11,7 @@ describe("shouldShowLanding", () => {
     })
 
     test.each([
+        ["blank", "true"],
         ["blueprintId", "mcp-tool-trigger"],
         ["blueprintSource", "community"],
         ["blueprintSourceYaml", "id: x"],

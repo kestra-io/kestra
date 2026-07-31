@@ -140,6 +140,7 @@
       "hero_eyebrow": "您的 system flow",
       "hero_empty": "选择一个 trigger 和一个渠道以预览您的 flow。",
       "browse_blueprints": "更想从模板开始？浏览社区 system blueprints",
+      "start_blank": "更想自己编写？跳过步骤，打开空白 flow",
       "steps": {
         "trigger_title": "触发器",
         "trigger_desc": "何时运行",

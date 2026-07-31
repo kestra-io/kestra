@@ -140,6 +140,7 @@
       "hero_eyebrow": "Twój system flow",
       "hero_empty": "Wybierz trigger i kanał, aby zobaczyć podgląd flow.",
       "browse_blueprints": "Wolisz zacząć od szablonu? Przeglądaj systemowe blueprints społeczności",
+      "start_blank": "Wolisz napisać samodzielnie? Pomiń kroki i otwórz pusty flow",
       "steps": {
         "trigger_title": "Wyzwalacz",
         "trigger_desc": "Kiedy działa",

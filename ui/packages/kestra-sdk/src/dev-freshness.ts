@@ -44,7 +44,6 @@ export async function warnIfSdkStale(
     label = "@kestra-io/kestra-sdk",
 ): Promise<void> {
     if (alreadyChecked || !committedHash) return
-    alreadyChecked = true
 
     try {
         if (typeof fetch !== "function" || typeof crypto?.subtle?.digest !== "function") return
@@ -52,8 +51,17 @@ export async function warnIfSdkStale(
         const basePath = (typeof window !== "undefined" && window.KESTRA_BASE_PATH) || ""
         const url = specUrl ?? `${basePath}swagger/kestra.yml`
 
-        const response = await fetch(url, {credentials: "include"})
-        if (!response.ok) return
+        // no-store: the spec endpoint is served with a long Cache-Control (dev convenience for
+        // normal fetches), which would make this staleness check compare against a stale cached
+        // response instead of the live backend.
+        const response = await fetch(url, {credentials: "include", cache: "no-store"})
+        // Unauthenticated (e.g. on the login screen itself, before any session cookie exists), the
+        // spec endpoint redirects to the login page and `fetch` follows it — hashing that HTML would
+        // be a false positive, and a stable one (same page, same build), so it can look like permanent
+        // drift. Don't consume the one-shot check on this: only commit to `alreadyChecked` once we
+        // actually got the spec, so a later call (e.g. after logging in and reloading) can still work.
+        if (!response.ok || response.redirected) return
+        alreadyChecked = true
 
         const liveHash = await sha256First16(await response.arrayBuffer())
         if (liveHash !== committedHash) {

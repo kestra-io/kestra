@@ -133,7 +133,21 @@ export function createClientFacade(
             if (fn) request = await fn(request, interceptorOptions)
         }
 
-        let response = await fetch(request)
+        let response: Response
+        try {
+            response = await fetch(request)
+        } catch (networkError) {
+            // A network-level failure (offline, CORS block, abort) rejects here instead of
+            // producing a Response. Without this catch, client.interceptors.error.fns - where
+            // the app wires NProgress's "requestsCompleted" bump - never runs for this request,
+            // so its "requestsTotal" increment is never matched and the loading indicator
+            // never reaches done.
+            let finalError: unknown = networkError
+            for (const fn of client.interceptors.error.fns) {
+                if (fn) finalError = await fn(finalError, undefined as unknown as Response, request, interceptorOptions)
+            }
+            throw finalError
+        }
         for (const fn of client.interceptors.response.fns) {
             if (fn) response = await fn(response, request, interceptorOptions)
         }

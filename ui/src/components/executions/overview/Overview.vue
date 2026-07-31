@@ -9,11 +9,11 @@
                 :execution
             />
         </div>
+        <component :is="executionOverviewPanel" v-if="executionOverviewPanel" :execution="execution" />
         <Topology
             class="topology"
             :horizontalDefault="!verticalLayout"
         />
-        <component :is="executionOverviewPanel" v-if="executionOverviewPanel" :execution="execution" />
         <PrevNext :execution />
     </div>
     <KsNoData

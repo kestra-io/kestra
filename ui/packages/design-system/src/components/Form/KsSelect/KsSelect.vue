@@ -16,7 +16,8 @@
             <slot name="label" v-bind="p" />
         </template>
         <template v-else-if="colorMap" #label="p">
-            <span class="kel-select-color-option" :style="{color: colorMap[p.value]}">{{ p.label }}</span>
+            <span v-if="colorMap[p.value]" class="kel-select-color-option" :style="{color: colorMap[p.value]}">{{ p.label }}</span>
+            <span v-else>{{ p.label }}</span>
         </template>
         <template v-if="$slots.tag" #tag="tagScope">
             <slot name="tag" v-bind="tagScope" />

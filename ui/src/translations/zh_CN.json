@@ -1944,10 +1944,27 @@
         },
         "toolCall": "正在运行 {tool}",
         "context": {
+          "app": "应用: {{app}}",
+          "blueprint": "Blueprint：{blueprint}",
+          "dashboard": "仪表盘：{{dashboard}}",
           "execution": "执行：{id}",
           "flow": "Flow：{{flow}}",
-          "namespace": "Namespace: {{namespace}}"
+          "namespace": "Namespace: {{namespace}}",
+          "plugin": "插件: {plugin}",
+          "test": "测试: {test}"
         },
+        "contextAdded": "已添加 {type} {id} 到上下文。",
+        "contextNoun": {
+          "app": "应用",
+          "blueprint": "蓝图",
+          "dashboard": "仪表盘",
+          "execution": "执行",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "插件",
+          "test": "测试"
+        },
+        "contextRemoved": "已从上下文移除 {type} {id}。",
         "toolResult": {
           "detail": "详情",
           "error": "{{tool}} 失败",

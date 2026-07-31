@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import type {AiSseFrame} from "../../../../../src/components/ai/copilot/types"
 
 // Mock the axios client (thread create/get) and the SSE reader so we can drive
@@ -41,6 +41,10 @@ describe("useAiChat", () => {
         lastBody = null
         localStorage.clear()
         post.mockResolvedValue(idleThread())
+    })
+
+    afterAll(() => {
+        localStorage.clear()
     })
 
     it("creates the thread once and reuses its uid", async () => {

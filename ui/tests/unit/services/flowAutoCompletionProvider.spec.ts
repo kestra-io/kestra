@@ -1,4 +1,4 @@
-import {describe, expect, it, vi, beforeAll} from "vitest"
+import {describe, expect, it, vi, beforeAll, beforeEach} from "vitest"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider"
 import {fillExpressionCache, functionToSnippet} from "../../../src/services/autoCompletionProvider"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -180,13 +180,21 @@ const mockFunctions = [
     {name: "subflow", arguments: [{name: "namespace", defaultValue: null}, {name: "id", defaultValue: null}]},
 ]
 
-const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, dashboardStore)
+let provider: FlowAutoCompletion
 const parsed = YAML_UTILS.parse(defaultFlow)
 const flowWithOutputsAutocompleteInTaskParsed = YAML_UTILS.parse(flowWithOutputsAutocompleteInTask)
 
 describe("FlowAutoCompletionProvider", () => {
     beforeAll(() => {
         fillExpressionCache([], mockFunctions)
+    })
+
+    // Several tests assert call counts on the store mocks and rely on a cold subflow
+    // cache, so both the spies and the provider must start fresh — otherwise the file
+    // only passes in declaration order.
+    beforeEach(() => {
+        vi.clearAllMocks()
+        provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, mcpStore, dashboardStore)
     })
 
     it("root autocompletions include variables and function snippets", async () => {

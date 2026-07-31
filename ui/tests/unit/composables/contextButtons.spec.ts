@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach, vi} from "vitest"
+import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
 import {defineComponent} from "vue"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
@@ -37,6 +37,10 @@ describe("useContextButtons news unread", () => {
     beforeEach(() => {
         localStorage.clear()
         mockFeeds.value = []
+    })
+
+    afterAll(() => {
+        localStorage.clear()
     })
 
     it("is unread when no read date has been stored yet", () => {

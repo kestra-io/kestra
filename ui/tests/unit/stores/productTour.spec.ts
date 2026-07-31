@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
 // jsdom runs without an origin, so it provides no localStorage for the store to persist to.
@@ -20,6 +20,10 @@ describe("product tour store", () => {
         persisted = installLocalStorage()
         persisted.clear()
         setActivePinia(createPinia())
+    })
+
+    afterAll(() => {
+        vi.unstubAllGlobals()
     })
 
     it("starts the product tour at its first scene", async () => {

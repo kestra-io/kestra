@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {setActivePinia, createPinia} from "pinia"
 
 const getMock = vi.fn()
@@ -42,6 +42,9 @@ describe("plugins store loadIcon", () => {
     let store: any
 
     beforeEach(async () => {
+        // Another spec may already have imported the store against the real SDK;
+        // with `isolate: false` that instance is cached, so rebuild it under our mocks.
+        vi.resetModules()
         getMock.mockReset()
         nextImageOutcome = "error"
         lastImageSrc = undefined
@@ -49,6 +52,10 @@ describe("plugins store loadIcon", () => {
         setActivePinia(createPinia())
         const {usePluginsStore} = await import("../../../src/stores/plugins")
         store = usePluginsStore()
+    })
+
+    afterAll(() => {
+        vi.unstubAllGlobals()
     })
 
     it("resolves the icon and caches it when the backend finds one", async () => {

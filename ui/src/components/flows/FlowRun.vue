@@ -387,10 +387,6 @@
 
     function onSubmit() {
         if (form.value && flowCanBeExecuted.value) {
-            apiStore.posthogEvents({
-                type: "FLOW_EXECUTION",
-                action: "submit",
-            })
             checks.value = []
             executeClicked.value = false
             coreStore.message = undefined
@@ -398,6 +394,11 @@
                 if (!valid) {
                     return
                 }
+
+                apiStore.posthogEvents({
+                    type: "FLOW_EXECUTION",
+                    action: "submit",
+                })
 
                 const mergedInputs = props.selectedTrigger?.inputs
                     ? {...props.selectedTrigger.inputs, ...inputsNoDefaults.value}

@@ -1,6 +1,9 @@
 // Taxonomy source of truth: kestra-io/data#354
 const FLAT_EVENT_NAMES: Record<string, string> = {
-    flow_execution: "app.flow.executed",
+    flow_created: "app.flow.created",
+    secret_created: "app.secret.created",
+    secret_updated: "app.secret.updated",
+    user_invited: "app.user.invited",
     ai_copilot: "app.ai-copilot.invoked",
     blueprint: "app.blueprint.used",
     survey_submitted: "app.survey.submitted",
@@ -25,6 +28,12 @@ const OSSAUTH_NAMES: Record<string, string> = {
     forgot_password_click: "app.forgot-password.clicked",
 }
 
+const FLOW_EXECUTION_NAMES: Record<string, string> = {
+    executed: "app.flow.executed",
+    open_modal: "app.execute-modal.opened",
+    submit: "app.execute-modal.submitted",
+}
+
 const ONBOARDING_NAMES: Record<string, string> = {
     step_viewed: "app.onboarding-step.viewed",
     step_next_clicked: "app.onboarding-step.advanced",
@@ -46,11 +55,16 @@ function resolveOssAuth(properties: Record<string, any>): string {
     return OSSAUTH_NAMES[properties.action] ?? "app.oss-auth.completed"
 }
 
+function resolveFlowExecution(properties: Record<string, any>): string {
+    return FLOW_EXECUTION_NAMES[properties.action] ?? "flow_execution"
+}
+
 function resolveOnboarding(properties: Record<string, any>): string {
     return ONBOARDING_NAMES[properties.onboarding?.action] ?? "onboarding"
 }
 
 const SPLIT_EVENT_RESOLVERS: Record<string, (properties: Record<string, any>) => string> = {
+    flow_execution: resolveFlowExecution,
     editor_tab_action: resolveEditorTabAction,
     ossauth: resolveOssAuth,
     onboarding: resolveOnboarding,

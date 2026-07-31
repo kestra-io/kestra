@@ -2,7 +2,13 @@ import {describe, expect, it} from "vitest"
 import {resolvePosthogEventName} from "./eventNaming"
 
 const fixtures: [string, Record<string, any>, string][] = [
-    ["flow_execution", {}, "app.flow.executed"],
+    ["flow_execution", {action: "executed"}, "app.flow.executed"],
+    ["flow_execution", {action: "open_modal"}, "app.execute-modal.opened"],
+    ["flow_execution", {action: "submit"}, "app.execute-modal.submitted"],
+    ["flow_created", {}, "app.flow.created"],
+    ["secret_created", {}, "app.secret.created"],
+    ["secret_updated", {}, "app.secret.updated"],
+    ["user_invited", {}, "app.user.invited"],
     ["ai_copilot", {}, "app.ai-copilot.invoked"],
     ["blueprint", {}, "app.blueprint.used"],
     ["survey_submitted", {}, "app.survey.submitted"],
@@ -39,6 +45,11 @@ describe("resolvePosthogEventName", () => {
 
     it("falls back to the lowercased type for an unmapped event", () => {
         expect(resolvePosthogEventName("SOMETHING_NEW", {})).toEqual("something_new")
+    })
+
+    it("never resolves an unknown flow_execution action to the activation event", () => {
+        expect(resolvePosthogEventName("flow_execution", {action: "unknown_action"})).toEqual("flow_execution")
+        expect(resolvePosthogEventName("flow_execution", {})).toEqual("flow_execution")
     })
 
     it("falls back to the base lowercased name when editor_tab_action has an unknown action", () => {

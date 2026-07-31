@@ -241,6 +241,7 @@
     import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations"
     import {useTableColumns} from "../../composables/useTableColumns"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
@@ -294,6 +295,7 @@
     const router = useRouter()
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
+    const apiStore = useApiStore()
 
     const form = ref<FormInstance>()
 
@@ -564,6 +566,13 @@
 
             actionMethod({namespace: secret.value?.namespace as string, secret: secretData})
                 .then(() => {
+                    apiStore.posthogEvents({
+                        type: secret.value?.update === true ? "SECRET_UPDATED" : "SECRET_CREATED",
+                        secret_type: "secret",
+                        namespace: secret.value?.namespace,
+                        has_tags: (secretData.tags?.length ?? 0) > 0,
+                    })
+
                     secret.value!.update = true
                     toast.saved(secret.value?.key || "")
                     addSecretDrawerVisible.value = false

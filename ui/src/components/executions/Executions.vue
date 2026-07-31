@@ -745,10 +745,7 @@
         ]
     })
 
-    /**
-     * A column of the table can only be found from the outside by the class name it puts on its
-     * cells, and the last step of the product tour points at the labels of these executions.
-     */
+    // The product tour points at the labels column, which is only findable by a class on its cells.
     const columnClassName = (prop: string) => (prop === "labels" ? "execution-labels-column" : undefined)
 
     const filteredLabels = (labels: any[]) => {

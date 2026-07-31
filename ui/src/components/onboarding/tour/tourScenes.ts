@@ -79,21 +79,15 @@ const adoptExecution = (
 const EDITOR = "#flowFileEditorTab"
 const DOCS_PANEL = ".plugin-doc-wrapper, .plugin-list-wrapper"
 const GANTT = "[data-onboarding-target=\"execution-gantt\"], #gantt"
-/*
- * Both failure steps talk about one task run, and the tour expands exactly that one, so the details
- * panel of the expanded row is what the reader should be looking at. Logs arrive a moment after the
- * page, and earlier selectors win as soon as they render, so the timeline covers the wait.
- */
+// Both failure steps talk about the one task run the tour expands, with the timeline as the fallback
+// while its logs load.
 const FAILED_LOG = `.log-row-error, .task-details, ${GANTT}`
 const REPLAYED_TASK = `.task-details, ${GANTT}`
 // The diff itself, with the revision selectors as the fallback until it has rendered.
 const REVISION_DIFF = ".revision .ks-editor, .revision-select"
 const TEST_EVENT_BUTTON = "[data-onboarding-target=\"trigger-test-event-button\"]"
-/*
- * The card asks for one click, so only the button gets the ring. The tab around it is the fallback
- * until the debugger panel has rendered.
- */
-const EXECUTION_CONTEXT = ".expression-debugger .button, .variable-explorer"
+// The tab around the button is the fallback until the debugger panel has rendered.
+const EXPRESSION_DEBUGGER = ".expression-debugger .button, .variable-explorer"
 // Set by Executions.vue on the header and the cells of the labels column.
 const EXECUTION_LABELS = ".execution-labels-column"
 
@@ -276,7 +270,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "explore_payload",
         step: 3,
-        targetSelector: EXECUTION_CONTEXT,
+        targetSelector: EXPRESSION_DEBUGGER,
         callout: true,
         offersExit: true,
         enter: async ({actions, store}) => {

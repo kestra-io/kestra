@@ -2,8 +2,7 @@
     <TourFinale v-model="showFinale" @restart="restartTour" />
 
     <div v-if="tourStore.isGuidedActive && !showFinale" class="tour-overlay" aria-live="polite">
-        <!-- Spotlight: everything but the part this step is about is dimmed, and that part gets a ring
-             of its own. Decoration only, so it never takes a click. -->
+        <!-- Dims everything but the part this step is about. Decoration only, never takes a click. -->
         <template v-if="spotlight">
             <div class="tour-scrim" :style="spotlight.scrim.top" />
             <div class="tour-scrim" :style="spotlight.scrim.bottom" />
@@ -240,15 +239,10 @@
     let highlightTimer: number | null = null
     let highlightAttempts = 0
 
-    /** Padding between a highlighted element and the ring around it. */
     const RING_PADDING = 6
 
-    /**
-     * Where the highlighted elements are, so the scrim can leave them lit.
-     *
-     * Read every frame while a highlight is up: pages scroll, panels resize and logs arrive late, and
-     * the ring has to stay on what it points at. Nothing is written unless the rectangles moved.
-     */
+    // Measured every frame while a highlight is up, since pages scroll, panels resize and logs arrive
+    // late. Nothing is written unless the rectangles moved.
     const spotlight = ref<{
         scrim: Record<"top" | "bottom" | "left" | "right", Record<string, string>>;
         rings: Record<string, string>[];
@@ -259,7 +253,7 @@
 
     const px = (value: number) => `${Math.round(value)}px`
 
-    /** A dialog is already the only thing on screen; its own wrapper stays in the DOM once used. */
+    // A used dialog leaves its wrapper in the DOM, so the size decides whether one is really open.
     const dialogOpen = () =>
         Array.from(document.querySelectorAll(".kel-overlay-dialog, .el-overlay")).some((element) => {
             const rect = element.getBoundingClientRect()
@@ -294,8 +288,7 @@
         }
         lastSpotlightKey = key
 
-        // A column of cells is one area the card talks about, so it gets one ring instead of a ring
-        // per row. Paired controls, which is what the other steps match, keep one each.
+        // More than two matches is an area, like a table column: one ring around all of them.
         const rings = rects.length > 2
             ? [{top: px(top), left: px(left), width: px(right - left), height: px(bottom - top)}]
             : rects.map((rect) => ({
@@ -331,10 +324,7 @@
         highlighted.value = []
     }
 
-    /**
-     * All visible matches of the first comma-separated selector that matches: some controls come in
-     * pairs. The rank says which selector answered, so a fallback can be upgraded later.
-     */
+    /** All visible matches of the first selector that matches, with its rank in the list. */
     const findTargets = (selector: string) => {
         const candidates = selector.split(",").map((value) => value.trim()).filter(Boolean)
         for (const [index, candidate] of candidates.entries()) {
@@ -362,8 +352,7 @@
             return
         }
         const {elements: targets, rank} = findTargets(selector)
-        // Anything but the first selector is a fallback: shown right away, replaced as soon as the one
-        // the card is really about renders. Logs in particular arrive a second after the page does.
+        // Only the first selector is what the card is about, so a fallback is shown while it is awaited.
         const keepLooking = rank !== 0 && highlightAttempts < 25
         if (keepLooking) {
             highlightAttempts += 1
@@ -377,7 +366,6 @@
         highlighted.value = targets
         targets.forEach((target) => target.classList.add(HIGHLIGHT_CLASS))
 
-        // The card describes what is on screen, so bring it there.
         const rect = targets[0].getBoundingClientRect()
         if (rect.top < 0 || rect.bottom > window.innerHeight) {
             targets[0].scrollIntoView({block: "center", behavior: "smooth"})
@@ -788,7 +776,7 @@
     }
 
     // Applied to real controls elsewhere in the app, so it has to leave the scoped tree. Only a soft
-    // edge: the ring drawn over it carries the glow.
+    // edge now, since the glow comes from the ring drawn over it.
     :global(.onboarding-v2-highlight-static) {
         --onboarding-static-color: var(--ks-btn-primary-bg-default);
         border-radius: var(--ks-radius-lg);
@@ -800,11 +788,10 @@
         --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, white 30%);
     }
 
-    // Everything the step is not about, dimmed. Four pieces around the lit rectangle: a hole in one
-    // overlay would need clipping, and this needs to work everywhere.
+    // Four pieces around the lit rectangle, rather than one overlay with a hole clipped out of it.
     .tour-scrim {
         position: fixed;
-        background: rgba(4, 6, 16, 0.45);
+        background: var(--kel-overlay-color-lighter);
         pointer-events: none;
         transition: all var(--ks-duration-base) var(--ks-ease-standard);
     }
@@ -812,7 +799,7 @@
     .tour-ring {
         --tour-ring-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 75%, white 25%);
         position: fixed;
-        border: 2px solid var(--tour-ring-color);
+        border: var(--ks-border-width-base) solid var(--tour-ring-color);
         border-radius: var(--ks-radius-lg);
         pointer-events: none;
         transition:
@@ -820,7 +807,7 @@
             left var(--ks-duration-base) var(--ks-ease-standard),
             width var(--ks-duration-base) var(--ks-ease-standard),
             height var(--ks-duration-base) var(--ks-ease-standard);
-        animation: tourRingPulse 1.5s ease-out 3 forwards;
+        animation: tourRingPulse 1.5s var(--ks-ease-out) 3 forwards;
     }
 
     @keyframes tourRingPulse {
@@ -841,7 +828,6 @@
         }
     }
 
-    // A ring that keeps moving is worse than no ring for anyone who asked for less motion.
     @media (prefers-reduced-motion: reduce) {
         .tour-ring {
             animation: none;

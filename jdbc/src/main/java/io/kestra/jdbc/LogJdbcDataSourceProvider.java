@@ -75,9 +75,6 @@ public class LogJdbcDataSourceProvider implements AutoCloseable {
                 if (url != null) {
                     Object username = config.get("username");
                     if (username == null || username.toString().isBlank()) {
-                        // The dedicated log datasource is fully independent: credentials are never
-                        // inherited from the main datasource (that could silently connect to the log
-                        // database as a privileged backend user). Require them to be set explicitly.
                         throw new KestraRuntimeException(
                             ("A dedicated log database URL is configured ('kestra.logs.%s.url') but no username "
                                 + "('kestra.logs.%s.username'). Configure the credentials for the dedicated log database "

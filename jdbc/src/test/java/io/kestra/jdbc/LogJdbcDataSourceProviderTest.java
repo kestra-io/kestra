@@ -43,10 +43,6 @@ class LogJdbcDataSourceProviderTest {
         assertThat(provider.isDedicated()).isFalse();
     }
 
-    // Note: the dedicated happy-path (url + username actually building a Hikari pool) needs a JDBC
-    // driver on the classpath, which this dialect-agnostic module doesn't have — it is covered by
-    // H2LogDataStoreDedicatedTest in :jdbc-h2 instead.
-
     @Test
     void shouldFailFastWhenUrlIsConfiguredWithoutUsername() {
         // Given: a dedicated logs database URL but no username (credentials must be explicit)

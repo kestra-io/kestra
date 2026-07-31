@@ -49,8 +49,6 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
     private static final String DATE_COLUMN = "timestamp";
 
-    // Dedicated logs-database connection (kestra.logs.<type>.*); the pool is built from these by
-    // LogJdbcDataSourceProvider. Unset 'url' keeps logs in the main backend.
     @Schema(title = "JDBC URL of a dedicated logs database; leave unset to keep logs in the main backend.")
     @PluginProperty
     @Getter

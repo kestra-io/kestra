@@ -1,20 +1,27 @@
 import {computed, onMounted, reactive, ref} from "vue"
 import {useI18n} from "vue-i18n"
 import {stringUtils} from "@kestra-io/design-system"
-import type {RecipeState, TriggerType} from "../utils/recipeToYaml"
-import {NOTIFY_TASK_CONFIGS} from "../utils/recipeToYaml"
+import type {NotifyChannel, RecipeState, TriggerType} from "../utils/recipeToYaml"
+import {
+    DEFAULT_CRON,
+    DEFAULT_SLACK_CHANNEL,
+    DEFAULT_STATES,
+    notifyTaskFqcn,
+} from "../utils/recipeToYaml"
 import {usePluginsStore} from "../stores/plugins"
 import {extractPluginElements} from "../utils/pluginUtils"
 
-export type {RecipeState, TriggerType}
+export type {NotifyChannel, RecipeState, TriggerType}
+
+const PLUGIN_BACKED_CHANNELS = ["slack", "teams", "email"] as const
 
 function createDefaultState(): RecipeState {
     return {
         triggerType: "execution",
         watchNamespace: "",
         includeSub: true,
-        states: ["FAILED", "WARNING"],
-        cron: "0 9 * * *",
+        states: [...DEFAULT_STATES],
+        cron: DEFAULT_CRON,
         timezone: "",
         webhookKey: "",
         otherTriggerType: "",
@@ -24,7 +31,7 @@ function createDefaultState(): RecipeState {
             email: false,
             custom: false,
         },
-        slackChannel: "#alerts",
+        slackChannel: DEFAULT_SLACK_CHANNEL,
         teamsWebhook: "",
         emailTo: "",
     }
@@ -59,33 +66,29 @@ export function useFlowRecipe() {
         }
     })
 
-    const channelAvailability = computed(() => {
+    const channelAvailability = computed<Record<NotifyChannel, boolean>>(() => {
         if (!fqcnsLoaded.value || availableFqcns.value.size === 0) {
             return {slack: true, teams: true, email: true, custom: true}
         }
+
         const isExecutionTrigger = recipe.triggerType === "execution"
-        return {
-            slack: availableFqcns.value.has(
-                isExecutionTrigger
-                    ? NOTIFY_TASK_CONFIGS.slack.executionFqcn
-                    : NOTIFY_TASK_CONFIGS.slack.webhookFqcn,
-            ),
-            teams: availableFqcns.value.has(
-                isExecutionTrigger
-                    ? NOTIFY_TASK_CONFIGS.teams.executionFqcn
-                    : NOTIFY_TASK_CONFIGS.teams.webhookFqcn,
-            ),
-            email: availableFqcns.value.has(
-                isExecutionTrigger
-                    ? NOTIFY_TASK_CONFIGS.email.executionFqcn
-                    : NOTIFY_TASK_CONFIGS.email.webhookFqcn,
-            ),
-            custom: true,
+        const availability = {custom: true} as Record<NotifyChannel, boolean>
+        for (const channel of PLUGIN_BACKED_CHANNELS) {
+            availability[channel] = availableFqcns.value.has(notifyTaskFqcn(channel, isExecutionTrigger))
         }
+        return availability
     })
 
+    const selectedChannels = computed<NotifyChannel[]>(() =>
+        (Object.keys(recipe.notify) as NotifyChannel[]).filter(channel => recipe.notify[channel]),
+    )
+
+    const unavailableSelectedChannels = computed(() =>
+        selectedChannels.value.filter(channel => !channelAvailability.value[channel]),
+    )
+
     const hasNotifyChannel = computed(() =>
-        recipe.notify.slack || recipe.notify.teams || recipe.notify.email || recipe.notify.custom,
+        selectedChannels.value.some(channel => channelAvailability.value[channel]),
     )
 
     const isTriggerConfigValid = computed(() => {
@@ -106,11 +109,15 @@ export function useFlowRecipe() {
     const isValid = computed(() => hasNotifyChannel.value && isTriggerConfigValid.value)
 
     const summary = computed(() => {
-        const channels: string[] = []
-        if (recipe.notify.slack) channels.push("Slack")
-        if (recipe.notify.teams) channels.push("Microsoft Teams")
-        if (recipe.notify.email) channels.push(t("email"))
-        if (recipe.notify.custom) channels.push(t("recipe.notify.custom_label"))
+        const labels: Record<NotifyChannel, string> = {
+            slack: "Slack",
+            teams: "Microsoft Teams",
+            email: t("email"),
+            custom: t("recipe.notify.custom_label"),
+        }
+        const channels = selectedChannels.value
+            .filter(channel => channelAvailability.value[channel])
+            .map(channel => labels[channel])
 
         const channelText = channels.length > 0
             ? channels.join(", ")
@@ -124,11 +131,11 @@ export function useFlowRecipe() {
                 : t("recipe.summary.exact_match")
             const stateText = recipe.states.length > 0
                 ? recipe.states.join(", ")
-                : "FAILED, WARNING"
+                : DEFAULT_STATES.join(", ")
             return t("recipe.summary.execution", {ns, scope, states: stateText, channels: channelText})
         }
         case "schedule":
-            return t("recipe.summary.schedule", {cron: recipe.cron || "0 9 * * *", channels: channelText})
+            return t("recipe.summary.schedule", {cron: recipe.cron || DEFAULT_CRON, channels: channelText})
         case "webhook":
             return t("recipe.summary.webhook", {channels: channelText})
         case "other":
@@ -143,7 +150,7 @@ export function useFlowRecipe() {
         }
     })
 
-    function toggleNotify(key: keyof typeof recipe.notify) {
+    function toggleNotify(key: NotifyChannel) {
         recipe.notify[key] = !recipe.notify[key]
     }
 
@@ -169,6 +176,7 @@ export function useFlowRecipe() {
         isValid,
         isTriggerConfigValid,
         hasNotifyChannel,
+        unavailableSelectedChannels,
         summary,
         channelAvailability,
         availableFqcns,

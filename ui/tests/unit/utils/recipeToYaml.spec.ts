@@ -109,7 +109,7 @@ describe("recipeToYaml", () => {
             const parsed = flowYamlUtils.parse(yaml)
             const taskTypes = parsed.tasks.map((t: any) => t.type)
             expect(taskTypes).toContain("io.kestra.plugin.microsoft365.teams.TeamsExecution")
-            expect(taskTypes).toContain("io.kestra.plugin.email.MailSend")
+            expect(taskTypes).toContain("io.kestra.plugin.email.MailExecution")
         })
 
         it("email uses executionFqcn for execution trigger", () => {
@@ -123,8 +123,8 @@ describe("recipeToYaml", () => {
             // Then
             const parsed = flowYamlUtils.parse(yaml)
             const emailTask = parsed.tasks.find((t: any) => t.id === "notify_email")
-            expect(emailTask.type).toBe("io.kestra.plugin.email.MailSend")
-            expect(emailTask.htmlTextContent).toContain("trigger.executionId")
+            expect(emailTask.type).toBe("io.kestra.plugin.email.MailExecution")
+            expect(emailTask.executionId).toContain("trigger.executionId")
         })
     })
 
@@ -145,7 +145,7 @@ describe("recipeToYaml", () => {
             expect(slackTask.executionId).toBeUndefined()
         })
 
-        it("slack IncomingWebhook payload includes flow context", () => {
+        it("slack IncomingWebhook sends messageText, not a channel it cannot honour", () => {
             // Given
             const state = baseState()
             state.triggerType = "schedule"
@@ -157,7 +157,8 @@ describe("recipeToYaml", () => {
             // Then
             const parsed = flowYamlUtils.parse(yaml)
             const slackTask = parsed.tasks.find((t: any) => t.id === "notify_slack")
-            expect(slackTask.payload).toContain("flow.id")
+            expect(slackTask.messageText).toContain("flow.id")
+            expect(slackTask.channel).toBeUndefined()
         })
 
         it("generates schedule trigger with cron and timezone", () => {
@@ -192,6 +193,7 @@ describe("recipeToYaml", () => {
             const parsed = flowYamlUtils.parse(yaml)
             const emailTask = parsed.tasks.find((t: any) => t.id === "notify_email")
             expect(emailTask.type).toBe("io.kestra.plugin.email.MailSend")
+            expect(emailTask.executionId).toBeUndefined()
             expect(emailTask.htmlTextContent).not.toContain("trigger.executionId")
         })
 
@@ -297,7 +299,7 @@ describe("recipeToYaml", () => {
             const state = baseState()
             state.notify.slack = true
             state.notify.email = true
-            const available = new Set(["io.kestra.plugin.email.MailSend"])
+            const available = new Set(["io.kestra.plugin.email.MailExecution"])
 
             // When
             const flowObj = recipeToFlowObject(state, "system", available)
@@ -364,6 +366,54 @@ describe("recipeToYaml", () => {
 
             // Then
             expect(flowObj.id).toBe(SYSTEM_FLOW_RECIPE_ID)
+        })
+    })
+    describe("notify task properties match the plugin schemas", () => {
+        const notifyTask = (state: RecipeState, id: string) =>
+            flowYamlUtils.parse(recipeToYaml(state, "system")).tasks.find((t: any) => t.id === id)
+
+        it("only sets slack channel where SlackTemplate declares it", () => {
+            const execution = baseState()
+            execution.notify.slack = true
+            expect(notifyTask(execution, "notify_slack").channel).toBe("#alerts")
+
+            const webhook = baseState()
+            webhook.triggerType = "webhook"
+            webhook.notify.slack = true
+            const webhookTask = notifyTask(webhook, "notify_slack")
+            expect(webhookTask.channel).toBeUndefined()
+            expect(Object.keys(webhookTask)).toEqual(["id", "type", "url", "messageText"])
+        })
+
+        it("sends a teams card payload rather than an undeclared message property", () => {
+            const state = baseState()
+            state.triggerType = "schedule"
+            state.notify.teams = true
+
+            const task = notifyTask(state, "notify_teams")
+            expect(task.message).toBeUndefined()
+            expect(JSON.parse(task.payload)["@type"]).toBe("MessageCard")
+        })
+
+        it("sends the teams execution id rather than a payload on execution triggers", () => {
+            const state = baseState()
+            state.notify.teams = true
+
+            const task = notifyTask(state, "notify_teams")
+            expect(task.payload).toBeUndefined()
+            expect(task.executionId).toContain("trigger.executionId")
+        })
+
+        it("declares a single-string recipient and an smtp host on mail tasks", () => {
+            const state = baseState()
+            state.notify.email = true
+            state.emailTo = "ops@example.com"
+
+            const task = notifyTask(state, "notify_email")
+            expect(task.to).toBe("ops@example.com")
+            expect(Array.isArray(task.to)).toBe(false)
+            expect(task.host).toContain("EMAIL_HOST")
+            expect(task.port).toBe(465)
         })
     })
 })

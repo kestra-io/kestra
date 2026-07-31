@@ -87,6 +87,16 @@
                     />
 
                     <KsAlert
+                        v-if="unavailableSelectedChannels.length > 0"
+                        type="warning"
+                        :closable="false"
+                        class="wizard-alert"
+                        data-test="recipe-dropped-channel-alert"
+                    >
+                        {{ $t("recipe.then.unavailable_channels_warning", {channels: unavailableChannelLabels}) }}
+                    </KsAlert>
+
+                    <KsAlert
                         v-if="hasInteracted && !hasNotifyChannel"
                         type="warning"
                         :closable="false"
@@ -143,13 +153,14 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref, watch} from "vue"
+    import {computed, ref, watch, type Component} from "vue"
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import {useFlowRecipe} from "../../../composables/useFlowRecipe"
     import {recipeToYaml, SYSTEM_FLOW_RECIPE_ID} from "../../../utils/recipeToYaml"
-    import useNamespaces from "../../../composables/useNamespaces"
-    import type {TriggerType} from "../../../utils/recipeToYaml"
+    import {useNamespaceOptions} from "../../../composables/useNamespaceOptions"
+    import {getRandomID} from "../../../utils/id"
+    import type {NotifyChannel, TriggerType} from "../../../utils/recipeToYaml"
 
     import ExecutionPanel from "./triggerPanels/ExecutionPanel.vue"
     import SchedulePanel from "./triggerPanels/SchedulePanel.vue"
@@ -180,13 +191,16 @@
 
     const systemNamespace = computed(() => props.namespace ?? miscStore.configs?.systemNamespace ?? "system")
 
-    const flowId = `${SYSTEM_FLOW_RECIPE_ID}-${Math.random().toString(36).slice(2, 7)}`
+    const flowId = `${SYSTEM_FLOW_RECIPE_ID}-${getRandomID()}`
 
-    const {recipe, isValid, isTriggerConfigValid, hasNotifyChannel, summary, channelAvailability, availableFqcns, toggleNotify, toggleState, setOtherTriggerType} = useFlowRecipe()
+    const {recipe, isValid, isTriggerConfigValid, hasNotifyChannel, unavailableSelectedChannels, summary, channelAvailability, availableFqcns, toggleNotify, toggleState, setOtherTriggerType} = useFlowRecipe()
 
-    const namespaceOptions = ref<string[]>([])
-    const namespacesLoading = ref(false)
-    const namespacesError = ref(false)
+    const {
+        namespaces: namespaceOptions,
+        loading: namespacesLoading,
+        error: namespacesError,
+    } = useNamespaceOptions()
+
     const hasInteracted = ref(false)
     const activeStep = ref(0)
 
@@ -205,19 +219,6 @@
         if (activeStep.value > 0) activeStep.value -= 1
     }
 
-    onMounted(async () => {
-        namespacesLoading.value = true
-        try {
-            const ns = await useNamespaces(500).all()
-            namespaceOptions.value = ns.map(n => n.id)
-        } catch {
-            namespaceOptions.value = []
-            namespacesError.value = true
-        } finally {
-            namespacesLoading.value = false
-        }
-    })
-
     watch(recipe, () => {
         hasInteracted.value = true
     }, {deep: true})
@@ -230,10 +231,30 @@
         }
     })
 
-    const triggerCards = computed(() => [
+    const CHANNEL_LABELS: Record<NotifyChannel, () => string> = {
+        slack: () => "Slack",
+        teams: () => "Microsoft Teams",
+        email: () => t("email"),
+        custom: () => t("recipe.notify.custom_label"),
+    }
+
+    const unavailableChannelLabels = computed(() =>
+        unavailableSelectedChannels.value.map(channel => CHANNEL_LABELS[channel]()).join(", "),
+    )
+
+    interface TriggerCard {
+        key: string
+        type: TriggerType | null
+        icon: Component
+        title: string
+        sub: string
+        disabled: boolean
+    }
+
+    const triggerCards = computed<TriggerCard[]>(() => [
         {
             key: "execution",
-            type: "execution" as TriggerType,
+            type: "execution",
             icon: LightningBolt,
             title: t("recipe.trigger.execution_title"),
             sub: t("recipe.trigger.execution_sub"),
@@ -241,7 +262,7 @@
         },
         {
             key: "schedule",
-            type: "schedule" as TriggerType,
+            type: "schedule",
             icon: ClockOutline,
             title: t("recipe.trigger.schedule_title"),
             sub: t("recipe.trigger.schedule_sub"),
@@ -249,7 +270,7 @@
         },
         {
             key: "case",
-            type: "other" as TriggerType,
+            type: null,
             icon: FolderMultipleOutline,
             title: t("recipe.trigger.case_title"),
             sub: t("recipe.trigger.case_sub"),
@@ -257,7 +278,7 @@
         },
         {
             key: "webhook",
-            type: "webhook" as TriggerType,
+            type: "webhook",
             icon: Webhook,
             title: t("recipe.trigger.webhook_title"),
             sub: t("recipe.trigger.webhook_sub"),
@@ -265,7 +286,7 @@
         },
         {
             key: "other",
-            type: "other" as TriggerType,
+            type: "other",
             icon: DotsHorizontal,
             title: t("recipe.trigger.other_title"),
             sub: t("recipe.trigger.other_sub"),
@@ -273,7 +294,8 @@
         },
     ])
 
-    const selectTrigger = (type: TriggerType) => {
+    const selectTrigger = (type: TriggerType | null) => {
+        if (!type) return
         recipe.triggerType = type
         hasInteracted.value = true
     }
@@ -344,7 +366,7 @@
         padding: var(--ks-spacing-4) var(--ks-spacing-5);
         margin-bottom: var(--ks-spacing-4);
         background-color: var(--ks-bg-base);
-        border-left: var(--ks-border-width-thick, 4px) solid var(--ks-border-focus);
+        border-left: var(--ks-border-width-thick) solid var(--ks-border-focus);
         border-radius: var(--ks-radius-base);
     }
 

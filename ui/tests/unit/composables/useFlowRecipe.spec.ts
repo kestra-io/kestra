@@ -1,13 +1,16 @@
 import {describe, it, expect, vi} from "vitest"
-import {mount} from "@vue/test-utils"
+import {mount, flushPromises} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {defineComponent, h} from "vue"
 
+const installedPlugins: unknown[] = []
+
 vi.mock("../../../src/stores/plugins", () => ({
-    usePluginsStore: () => ({ensurePlugins: vi.fn().mockResolvedValue([])}),
+    usePluginsStore: () => ({ensurePlugins: vi.fn().mockResolvedValue(installedPlugins)}),
 }))
 
 import {useFlowRecipe} from "../../../src/composables/useFlowRecipe"
+import {NOTIFY_TASK_CONFIGS} from "../../../src/utils/recipeToYaml"
 
 const i18n = createI18n({legacy: false, locale: "en", missingWarn: false, fallbackWarn: false, messages: {en: {}}})
 
@@ -95,6 +98,36 @@ describe("useFlowRecipe", () => {
         const second = setup()
         expect(second.recipe.states).toEqual(["FAILED", "WARNING"])
         expect(second.recipe.notify.slack).toBe(false)
+    })
+
+    it("stops counting a channel whose plugin is missing for the current trigger type", async () => {
+        // Given — only the execution-trigger Slack task is installed
+        installedPlugins.length = 0
+        installedPlugins.push({tasks: [{cls: NOTIFY_TASK_CONFIGS.slack.executionFqcn}]})
+
+        const r = setup()
+        await flushPromises()
+        r.toggleNotify("slack")
+        expect(r.channelAvailability.value.slack).toBe(true)
+        expect(r.isValid.value).toBe(true)
+
+        // When — the webhook variant is not installed
+        r.recipe.triggerType = "webhook"
+        r.recipe.webhookKey = "my-key"
+
+        // Then — the selection survives, but it no longer makes the recipe valid
+        expect(r.recipe.notify.slack).toBe(true)
+        expect(r.channelAvailability.value.slack).toBe(false)
+        expect(r.hasNotifyChannel.value).toBe(false)
+        expect(r.isValid.value).toBe(false)
+        expect(r.unavailableSelectedChannels.value).toEqual(["slack"])
+
+        // And — switching back restores it
+        r.recipe.triggerType = "execution"
+        expect(r.hasNotifyChannel.value).toBe(true)
+        expect(r.unavailableSelectedChannels.value).toEqual([])
+
+        installedPlugins.length = 0
     })
 
     it("reset restores the default watched states", () => {

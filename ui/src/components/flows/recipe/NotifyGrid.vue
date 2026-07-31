@@ -28,7 +28,7 @@
 
             <template #config>
                 <KsInput
-                    v-if="channel.key === 'slack'"
+                    v-if="channel.key === 'slack' && recipe.triggerType === 'execution'"
                     v-model="recipe.slackChannel"
                     :placeholder="$t('recipe.notify.slack_channel_placeholder')"
                     size="small"
@@ -59,7 +59,7 @@
 <script setup lang="ts">
     import {computed, type Component} from "vue"
     import {useI18n} from "vue-i18n"
-    import type {RecipeState} from "../../../composables/useFlowRecipe"
+    import type {NotifyChannel, RecipeState} from "../../../composables/useFlowRecipe"
     import SelectableTile from "./SelectableTile.vue"
 
     import Slack from "vue-material-design-icons/Slack.vue"
@@ -69,17 +69,15 @@
     import CheckboxMarked from "vue-material-design-icons/CheckboxMarked.vue"
     import CheckboxBlankOutline from "vue-material-design-icons/CheckboxBlankOutline.vue"
 
-    type ChannelKey = keyof RecipeState["notify"]
-
     defineProps<{
         recipe: RecipeState
-        channelAvailability: Record<ChannelKey, boolean>
-        toggleNotify: (key: ChannelKey) => void
+        channelAvailability: Record<NotifyChannel, boolean>
+        toggleNotify: (key: NotifyChannel) => void
     }>()
 
     const {t} = useI18n()
 
-    const channels = computed<{key: ChannelKey; label: string; sub: string; icon: Component}[]>(() => [
+    const channels = computed<{key: NotifyChannel; label: string; sub: string; icon: Component}[]>(() => [
         {
             key: "slack",
             label: "Slack",

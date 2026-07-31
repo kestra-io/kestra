@@ -6,6 +6,14 @@ export const SYSTEM_FLOW_RECIPE_ID = "system-flow-alert"
 
 export const DEFAULT_WEBHOOK_KEY = "my-webhook-key"
 
+export const DEFAULT_CRON = "0 9 * * *"
+
+export const DEFAULT_STATES = ["FAILED", "WARNING"]
+
+export const DEFAULT_SLACK_CHANNEL = "#alerts"
+
+export const DEFAULT_EMAIL_TO = "team@your-domain.com"
+
 export interface RecipeState {
     triggerType: TriggerType
     watchNamespace: string
@@ -26,12 +34,14 @@ export interface RecipeState {
     emailTo: string
 }
 
+export type NotifyChannel = "slack" | "teams" | "email" | "custom"
+
 interface NotifyTaskConfig {
     executionFqcn: string
     webhookFqcn: string
 }
 
-export const NOTIFY_TASK_CONFIGS: Record<string, NotifyTaskConfig> = {
+export const NOTIFY_TASK_CONFIGS: Record<Exclude<NotifyChannel, "custom">, NotifyTaskConfig> = {
     slack: {
         executionFqcn: "io.kestra.plugin.slack.notifications.SlackExecution",
         webhookFqcn: "io.kestra.plugin.slack.notifications.SlackIncomingWebhook",
@@ -41,12 +51,10 @@ export const NOTIFY_TASK_CONFIGS: Record<string, NotifyTaskConfig> = {
         webhookFqcn: "io.kestra.plugin.microsoft365.teams.TeamsIncomingWebhook",
     },
     email: {
-        executionFqcn: "io.kestra.plugin.email.MailSend",
+        executionFqcn: "io.kestra.plugin.email.MailExecution",
         webhookFqcn: "io.kestra.plugin.email.MailSend",
     },
 }
-
-const FALLBACK_STATES = ["FAILED", "WARNING"]
 
 function buildExecutionTrigger(state: RecipeState): object[] {
     const conditions: object[] = []
@@ -61,7 +69,7 @@ function buildExecutionTrigger(state: RecipeState): object[] {
     const trigger: Record<string, unknown> = {
         id: "on_flow_state",
         type: "io.kestra.plugin.core.trigger.Flow",
-        states: state.states.length > 0 ? state.states : FALLBACK_STATES,
+        states: state.states.length > 0 ? state.states : DEFAULT_STATES,
     }
 
     if (conditions.length > 0) {
@@ -75,7 +83,7 @@ function buildScheduleTrigger(state: RecipeState): object[] {
     const trigger: Record<string, unknown> = {
         id: "on_schedule",
         type: "io.kestra.plugin.core.trigger.Schedule",
-        cron: state.cron || "0 9 * * *",
+        cron: state.cron || DEFAULT_CRON,
     }
     if (state.timezone) {
         trigger.timezone = state.timezone
@@ -103,68 +111,99 @@ function buildOtherTrigger(state: RecipeState): object[] {
     ]
 }
 
+const TEAMS_CARD_PAYLOAD = `{
+  "@type": "MessageCard",
+  "@context": "http://schema.org/extensions",
+  "themeColor": "8405FF",
+  "summary": "Kestra notification",
+  "sections": [
+    {
+      "activityTitle": "{{ flow.namespace }}.{{ flow.id }} was triggered",
+      "markdown": true
+    }
+  ]
+}
+`
+
+export function notifyTaskFqcn(channel: Exclude<NotifyChannel, "custom">, isExecutionTrigger: boolean): string {
+    const config = NOTIFY_TASK_CONFIGS[channel]
+    return isExecutionTrigger ? config.executionFqcn : config.webhookFqcn
+}
+
+function buildSlackTask(state: RecipeState, isExecutionTrigger: boolean, fqcn: string): Record<string, unknown> {
+    const task: Record<string, unknown> = {
+        id: "notify_slack",
+        type: fqcn,
+        url: "{{ secret('SLACK_WEBHOOK') }}",
+    }
+
+    if (isExecutionTrigger) {
+        task.channel = state.slackChannel || DEFAULT_SLACK_CHANNEL
+        task.executionId = "{{ trigger.executionId }}"
+    } else {
+        task.messageText = "{{ flow.namespace }}.{{ flow.id }} was triggered."
+    }
+
+    return task
+}
+
+function buildTeamsTask(state: RecipeState, isExecutionTrigger: boolean, fqcn: string): Record<string, unknown> {
+    const task: Record<string, unknown> = {
+        id: "notify_teams",
+        type: fqcn,
+        url: state.teamsWebhook || "{{ secret('TEAMS_WEBHOOK') }}",
+    }
+
+    if (isExecutionTrigger) {
+        task.executionId = "{{ trigger.executionId }}"
+    } else {
+        task.payload = TEAMS_CARD_PAYLOAD
+    }
+
+    return task
+}
+
+function buildEmailTask(state: RecipeState, isExecutionTrigger: boolean, fqcn: string): Record<string, unknown> {
+    const task: Record<string, unknown> = {
+        id: "notify_email",
+        type: fqcn,
+        host: "{{ secret('EMAIL_HOST') }}",
+        port: 465,
+        username: "{{ secret('EMAIL_USERNAME') }}",
+        password: "{{ secret('EMAIL_PASSWORD') }}",
+        from: "kestra@your-domain.com",
+        to: state.emailTo || DEFAULT_EMAIL_TO,
+        subject: "{{ flow.namespace }}.{{ flow.id }} notification",
+    }
+
+    if (isExecutionTrigger) {
+        task.executionId = "{{ trigger.executionId }}"
+    } else {
+        task.htmlTextContent = "{{ flow.namespace }}.{{ flow.id }} was triggered."
+    }
+
+    return task
+}
+
+const NOTIFY_TASK_BUILDERS: Record<
+    Exclude<NotifyChannel, "custom">,
+    (state: RecipeState, isExecutionTrigger: boolean, fqcn: string) => Record<string, unknown>
+> = {
+    slack: buildSlackTask,
+    teams: buildTeamsTask,
+    email: buildEmailTask,
+}
+
 function buildNotifyTasks(state: RecipeState, isExecutionTrigger: boolean, availableFqcns: Set<string>): object[] {
     const tasks: object[] = []
 
-    if (state.notify.slack) {
-        const fqcn = isExecutionTrigger
-            ? NOTIFY_TASK_CONFIGS.slack.executionFqcn
-            : NOTIFY_TASK_CONFIGS.slack.webhookFqcn
+    for (const channel of ["slack", "teams", "email"] as const) {
+        if (!state.notify[channel]) continue
 
-        if (availableFqcns.size === 0 || availableFqcns.has(fqcn)) {
-            const task: Record<string, unknown> = {
-                id: "notify_slack",
-                type: fqcn,
-                url: "{{ secret('SLACK_WEBHOOK') }}",
-                channel: state.slackChannel || "#alerts",
-            }
-            if (isExecutionTrigger) {
-                task.executionId = "{{ trigger.executionId }}"
-            } else {
-                task.payload = "{\"text\": \"Flow {{ flow.id }} triggered\"}"
-            }
-            tasks.push(task)
-        }
-    }
+        const fqcn = notifyTaskFqcn(channel, isExecutionTrigger)
+        if (availableFqcns.size > 0 && !availableFqcns.has(fqcn)) continue
 
-    if (state.notify.teams) {
-        const fqcn = isExecutionTrigger
-            ? NOTIFY_TASK_CONFIGS.teams.executionFqcn
-            : NOTIFY_TASK_CONFIGS.teams.webhookFqcn
-
-        if (availableFqcns.size === 0 || availableFqcns.has(fqcn)) {
-            const task: Record<string, unknown> = {
-                id: "notify_teams",
-                type: fqcn,
-                url: state.teamsWebhook || "{{ secret('TEAMS_WEBHOOK') }}",
-            }
-            if (isExecutionTrigger) {
-                task.executionId = "{{ trigger.executionId }}"
-            } else {
-                task.message = "Flow {{ flow.id }} triggered"
-            }
-            tasks.push(task)
-        }
-    }
-
-    if (state.notify.email) {
-        const fqcn = isExecutionTrigger
-            ? NOTIFY_TASK_CONFIGS.email.executionFqcn
-            : NOTIFY_TASK_CONFIGS.email.webhookFqcn
-
-        if (availableFqcns.size === 0 || availableFqcns.has(fqcn)) {
-            const task: Record<string, unknown> = {
-                id: "notify_email",
-                type: fqcn,
-                from: "kestra@your-domain.com",
-                to: [state.emailTo || "team@your-domain.com"],
-                subject: "Flow {{ flow.id }} notification",
-                htmlTextContent: isExecutionTrigger
-                    ? "Execution {{ trigger.executionId }} completed with state {{ trigger.state }}."
-                    : "Flow {{ flow.id }} was triggered.",
-            }
-            tasks.push(task)
-        }
+        tasks.push(NOTIFY_TASK_BUILDERS[channel](state, isExecutionTrigger, fqcn))
     }
 
     if (state.notify.custom) {

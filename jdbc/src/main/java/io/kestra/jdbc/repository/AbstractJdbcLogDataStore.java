@@ -49,14 +49,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
     private static final String DATE_COLUMN = "timestamp";
 
-    // --- Dedicated logs-database connection ---------------------------------------------------
-    // These map the kestra.logs.<type>.* sub-config (url/username/password/table). They are declared
-    // here so that sub-config deserializes cleanly onto the store plugin; the actual dedicated
-    // connection pool and log-table migrations are built from the same keys by
-    // LogJdbcDataSourceProvider (which reads them from LogsConfig, not from this instance). Leave
-    // 'url' unset to keep logs in the main backend database (the backward-compatible default).
-
-    @Schema(title = "JDBC URL of a dedicated logs database. When set, logs are written to and read from this separate database; leave unset to keep logs in the main backend.")
+    // Dedicated logs-database connection (kestra.logs.<type>.*); the pool is built from these by
+    // LogJdbcDataSourceProvider. Unset 'url' keeps logs in the main backend.
+    @Schema(title = "JDBC URL of a dedicated logs database; leave unset to keep logs in the main backend.")
     @PluginProperty
     @Getter
     @Setter
@@ -74,6 +69,7 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Setter
     private String password;
 
+    // Named 'tableName' (mapped to the 'table' key) so its getter doesn't clash with the inherited jOOQ getTable().
     @Schema(title = "Name of the log table in the dedicated logs database (defaults to 'logs').")
     @PluginProperty
     @JsonProperty("table")

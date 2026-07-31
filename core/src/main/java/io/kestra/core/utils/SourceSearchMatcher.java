@@ -14,6 +14,13 @@ import io.kestra.core.models.flows.SourceSearchScope;
 
 public final class SourceSearchMatcher {
 
+    /**
+     * Maximum number of flows a single source search loads to match in memory. Whole-word, regex and
+     * scope matching cannot be delegated to the datastore, so every repository implementation has to
+     * bound the candidate set it pulls back before matching.
+     */
+    public static final int MAX_SOURCE_SEARCH_CANDIDATES = 1000;
+
     private static final int MAX_MATCHES_PER_SOURCE = 500;
     private static final Pattern TOP_LEVEL_KEY = Pattern.compile("^[A-Za-z_][\\w-]*:.*");
 

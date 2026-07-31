@@ -58,9 +58,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
-    // Bounds the fetch: regex queries cannot be pre-filtered in SQL, so precise matching runs in Java over this cap.
-    private static final int MAX_SOURCE_SEARCH_CANDIDATES = 1000;
-
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     public static final Field<String> SOURCE_FIELD = field("source_code", String.class);
     public static final Field<Integer> REVISION_FIELD = field("revision", Integer.class);
@@ -902,7 +899,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 }
 
                 List<SearchResult<Flow>> results = select
-                    .limit(MAX_SOURCE_SEARCH_CANDIDATES)
+                    .limit(SourceSearchMatcher.MAX_SOURCE_SEARCH_CANDIDATES)
                     .fetch()
                     .stream()
                     .map(record -> new SearchResult<>(

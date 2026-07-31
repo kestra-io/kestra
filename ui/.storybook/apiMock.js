@@ -135,7 +135,7 @@ function reportUnmocked(key, rawUrl) {
     // The key is what a handler must be registered under; the raw URL is what was actually called.
     console.warn(
         `[storybook] unmocked API request: ${key} — returning empty data, so this story renders without it.`
-        + ` Add a handler in .storybook/apiMock.js (or mock it in the story).`
+        + " Add a handler in .storybook/apiMock.js (or mock it in the story)."
         + `\n  story: ${currentStory || "unknown"}\n  url:   ${rawUrl}`,
     )
 }

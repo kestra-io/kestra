@@ -254,7 +254,7 @@
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {useToast} from "../../utils/toast"
-    import {computeSelectionSummary, type ReplaceContext, type SourceSearchResult} from "../../utils/sourceSearchDiff"
+    import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext, type SourceSearchResult} from "../../utils/sourceSearchDiff"
 
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
     import type {SourceSearchReplacePreviewResponse, SourceSearchReplaceApplyResponse, SourceSearchScope} from "@kestra-io/kestra-sdk"
@@ -469,7 +469,10 @@
             toast.success(t("source_search.replace_apply_success", {count: response.updated.length}))
         }
         if (response.skipped?.length) {
-            toast.warning(t("source_search.replace_apply_skipped", {count: response.skipped.length}))
+            const reasons = distinctSkipReasons(response.skipped)
+                .map((reason) => t(`source_search.replace_skip_reason.${reason}`))
+                .join(", ")
+            toast.warning(t("source_search.replace_apply_skipped", {count: response.skipped.length, reasons}))
         }
         previewResponse.value = null
         return fetchResults()

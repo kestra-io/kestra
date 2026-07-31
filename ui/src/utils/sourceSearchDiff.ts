@@ -33,6 +33,16 @@ export function computeSelectionSummary(results: SourceSearchSelectionGroup[], s
     return {selectedFlowCount, selectedMatchCount}
 }
 
+export const SKIP_REASONS = ["READ_ONLY", "NOT_FOUND", "NO_MATCH", "NO_CHANGE", "INVALID_FLOW", "UNKNOWN"] as const
+
+export type SkipReason = (typeof SKIP_REASONS)[number]
+
+export function distinctSkipReasons(skipped: {reason?: string}[]): SkipReason[] {
+    const present = new Set(skipped.map((flow) => flow.reason))
+    const known = SKIP_REASONS.filter((reason) => present.has(reason))
+    return known.length > 0 ? known : ["UNKNOWN"]
+}
+
 export interface ReplaceContext {
     query: string;
     replacement: string;

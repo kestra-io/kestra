@@ -1,10 +1,9 @@
 import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox, routeQueryToQueryFilters} from "@kestra-io/design-system"
+import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-import * as Utils from "../utils/utils"
-import {apiUrl} from "override/utils/route"
 import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {defineStore} from "pinia"
@@ -15,7 +14,7 @@ import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/composables/useDependencies"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import {useClient, type FlowWithSource, type AbstractTrigger, type Task as SdkTask} from "@kestra-io/kestra-sdk"
+import type {FlowWithSource,  AbstractTrigger, Task as SdkTask} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
@@ -90,6 +89,7 @@ export function isSuccessfulFlowSaveOutcome(
 export const useFlowStore = defineStore("flow", () => {
     const flows = ref<Flow[]>()
     const flow = ref<Flow>()
+    const search = ref<any[]>()
     const total = ref<number>(0)
     const flowGraph = ref<FlowGraph>()
     const invalidGraph = ref<boolean>(false)
@@ -110,8 +110,6 @@ export const useFlowStore = defineStore("flow", () => {
     const previewSource = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
-
-    const axios = useClient()
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
@@ -410,7 +408,7 @@ export const useFlowStore = defineStore("flow", () => {
             size,
             sort: sort ? [sort] : undefined,
             filters: routeQueryToQueryFilters(filterKeys),
-        } as Parameters<typeof FlowsAPI.searchFlows>[0]
+        }
     }
 
     function findFlows(options: { [key: string]: any }): Promise<any> {
@@ -429,6 +427,16 @@ export const useFlowStore = defineStore("flow", () => {
             }
         })
     }
+    function searchFlows(options: { [key: string]: any }) {
+        const {sort, ...rest} = options
+        return FlowsAPI.searchFlowsBySourceCode({...rest, sort: sort ? [sort] : undefined}).then(response => {
+            search.value = response.results as unknown as any[]
+            total.value = response.total ?? 0
+
+            return response
+        })
+    }
+
     function flowsByNamespace(namespace: string) {
         return FlowsAPI.listFlowsByNamespace({namespace}).then(response => {
             return response
@@ -520,19 +528,6 @@ export const useFlowStore = defineStore("flow", () => {
 
             return flow.value
         })
-    }
-    function updateFlowTask(options: { flow: Flow, task: Task }) {
-        return axios
-            .patch(`${apiUrl()}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
-                flow.value = response.data
-
-                return response.data
-            })
-            .then(f => {
-                loadGraph({flow: f})
-
-                return f
-            })
     }
 
     function createFlow(options: { flow: string, draft?: boolean, restore?: boolean }) {
@@ -732,67 +727,6 @@ function deleteFlowAndDependencies() {
     function clearFlowStats() {
         revisionsCount.value = undefined
         dependenciesCount.value = undefined
-    }
-
-    function exportFlowByIds(options: { ids: string[] }) {
-        return axios.post(`${apiUrl()}/flows/export/by-ids`, options.ids, {responseType: "blob"})
-            .then(response => {
-                const blob = new Blob([response.data], {type: "application/octet-stream"})
-                const url = window.URL.createObjectURL(blob)
-                Utils.downloadUrl(url, "flows.zip")
-            })
-    }
-
-    function exportFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.get(`${apiUrl()}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
-            .then(response => {
-                Utils.downloadUrl(response.request?.responseURL ?? "", "flows.zip")
-            })
-    }
-
-    async function exportFlowAsCSV(params: any) {
-        const response = await axios.get(
-            `${apiUrl()}/flows/export/by-query/csv`,
-            {params, responseType: "text", headers: {Accept: "text/csv"}},
-        )
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement("a")
-        link.href = url
-        link.setAttribute("download", "flows.csv")
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-    }
-
-    function importFlows(options: { file: FormData,  failOnError: boolean }) {
-         const {file, failOnError} = options
-        // Don't set Content-Type - the browser must generate the multipart boundary itself.
-        return axios.post(`${apiUrl()}/flows/import`, file, {
-            params: {failOnError},
-        }).then(response => {
-            return response
-        })
-    }
-    function disableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.disableFlowsByIds({body: options.ids})
-    }
-    function disableFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.disableFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.disableFlowsByQuery>[0])
-    }
-    function enableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.enableFlowsByIds({body: options.ids})
-    }
-    function enableFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.enableFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.enableFlowsByQuery>[0])
-    }
-
-    function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.deleteFlowsByIds({body: options.ids})
-    }
-
-    function deleteFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.deleteFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.deleteFlowsByQuery>[0])
     }
 
     function validateFlow(options: { flow: string }) {
@@ -1008,6 +942,7 @@ function deleteFlowAndDependencies() {
         flowYamlMetadata,
         flows,
         flow,
+        search,
         total,
         flowGraph,
         invalidGraph,
@@ -1038,11 +973,11 @@ function deleteFlowAndDependencies() {
         onEdit,
         initYamlSource,
         findFlows,
+        searchFlows,
         flowsByNamespace,
         loadFlow,
         loadTask,
         saveFlow,
-        updateFlowTask,
         createFlow,
         loadDependencies,
         deleteFlowAndDependencies,
@@ -1053,16 +988,6 @@ function deleteFlowAndDependencies() {
         loadRevisions,
         loadFlowStats,
         clearFlowStats,
-        exportFlowByIds,
-        exportFlowByQuery,
-        exportFlowAsCSV,
-        importFlows,
-        disableFlowByIds,
-        disableFlowByQuery,
-        enableFlowByIds,
-        enableFlowByQuery,
-        deleteFlowByIds,
-        deleteFlowByQuery,
         validateFlow,
         validateTask,
         loadFlowMetrics,

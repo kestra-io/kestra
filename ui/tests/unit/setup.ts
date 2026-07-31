@@ -1,9 +1,9 @@
 import {afterEach, vi} from "vitest"
 import {config, disableAutoUnmount, enableAutoUnmount} from "@vue/test-utils"
 
-// Setup files run before each spec file's own imports, so this hands every file a
-// fresh registry for `src/**`: without it a module another spec already imported
-// stays cached with its real dependencies, and this file's `vi.mock` never applies.
+// Required by `isolate: false` (vitest.config.unit.js): workers reuse one module registry, so a
+// module cached while another file's vi.mock was active keeps that mock. Setup files run before
+// each spec's own imports, so resetting here hands every file a fresh `src/**` registry.
 // Externalized node_modules (vue, @vue/test-utils, …) are unaffected.
 vi.resetModules()
 

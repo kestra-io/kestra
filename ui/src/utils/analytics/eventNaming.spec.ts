@@ -30,6 +30,11 @@ const fixtures: [string, Record<string, any>, string][] = [
     ["onboarding", {onboarding: {action: "tutorial_canceled"}}, "app.onboarding.cancelled"],
     ["onboarding", {onboarding: {action: "flow_saved_during_tutorial"}}, "app.onboarding-step.viewed"],
     ["onboarding", {onboarding: {action: "flow_executed_during_tutorial"}}, "app.onboarding-step.viewed"],
+    ["onboarding", {onboarding: {event: "tour_offered", action: "copilot"}}, "app.onboarding-tour.offered"],
+    ["onboarding", {onboarding: {event: "tour_started", action: "copilot"}}, "app.onboarding-tour.started"],
+    ["onboarding", {onboarding: {event: "tour_continued", action: "add_task"}}, "app.onboarding-tour.continued"],
+    ["onboarding", {onboarding: {event: "tour_completed", action: "chain"}}, "app.onboarding-tour.completed"],
+    ["onboarding", {onboarding: {event: "tour_closed", action: "test_event"}}, "app.onboarding-tour.closed"],
 ]
 
 describe("resolvePosthogEventName", () => {

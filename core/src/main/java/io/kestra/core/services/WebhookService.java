@@ -46,6 +46,11 @@ import static io.kestra.core.models.Label.CORRELATION_ID;
 @Slf4j
 @Singleton
 public class WebhookService {
+    public static final String TEST_EVENT_HEADER = "X-Kestra-Test-Event";
+
+    private static final String FROM_TRIGGER = "trigger";
+    private static final String FROM_TEST_EVENT = "testEvent";
+
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -95,6 +100,17 @@ public class WebhookService {
             );
     }
 
+    private static boolean isTestEvent(WebhookContext context) {
+        if (context.request() == null || context.request().getHeaders() == null) {
+            return false;
+        }
+
+        return context.request().getHeaders()
+            .firstValue(TEST_EVENT_HEADER)
+            .map(Boolean::parseBoolean)
+            .orElse(false);
+    }
+
     /**
      * Prepare the execution checking conditions, and injecting inputs.
      *
@@ -117,10 +133,13 @@ public class WebhookService {
             .trigger(ExecutionTrigger.of(trigger, output))
             .build();
 
+        var runContext = runContext(flow, execution);
+
         // Add labels
         List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, "trigger"));
-        labels.addAll(LabelService.labelsExcludingSystem(flow.getLabels()));
+        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : FROM_TRIGGER));
+        // The trigger's own labels, as the other trigger types get them through TriggerService
+        labels.addAll(LabelService.fromTrigger(runContext, flow, trigger, Map.of()));
         if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
             labels.add(new Label(CORRELATION_ID, execution.getId()));
         }
@@ -128,7 +147,6 @@ public class WebhookService {
         execution = execution.withLabels(labels);
 
         // Check conditions
-        var runContext = runContext(flow, execution);
         if (!conditionService.isValid(trigger, flow, runContext)) {
             return Optional.empty(); // Conditions not met
         }

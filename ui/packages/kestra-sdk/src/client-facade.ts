@@ -39,7 +39,9 @@ interface InterceptedFetchClient {
     interceptors: {
         request: { fns: Array<((request: Request, options: any) => Request | Promise<Request>) | null> }
         response: { fns: Array<((response: Response, request: Request, options: any) => Response | Promise<Response>) | null> }
-        error: { fns: Array<((error: unknown, response: Response, request: Request, options: any) => unknown) | null> }
+        // `response` is undefined for a network-level failure (offline, CORS block, abort), which
+        // never produces a Response — see the network-error catch below.
+        error: { fns: Array<((error: unknown, response: Response | undefined, request: Request, options: any) => unknown) | null> }
     }
 }
 
@@ -144,7 +146,7 @@ export function createClientFacade(
             // never reaches done.
             let finalError: unknown = networkError
             for (const fn of client.interceptors.error.fns) {
-                if (fn) finalError = await fn(finalError, undefined as unknown as Response, request, interceptorOptions)
+                if (fn) finalError = await fn(finalError, undefined, request, interceptorOptions)
             }
             throw finalError
         }

@@ -4,14 +4,14 @@ import {useRoute, useRouter} from "vue-router"
 import * as localUtils from "../../utils/utils"
 import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow"
 import {useExecutionsStore} from "../../stores/executions"
-import {useOnboardingV2Store} from "../../stores/onboardingV2"
+import {useProductTourStore} from "../../stores/productTour"
 import {usePlaygroundStore} from "../../stores/playground"
 import {useToast} from "../../utils/toast"
 
 export function useFlowEditorActions() {
     const flowStore = useFlowStore()
     const executionsStore = useExecutionsStore()
-    const onboardingStore = useOnboardingV2Store()
+    const tourStore = useProductTourStore()
     const playgroundStore = usePlaygroundStore()
     const router = useRouter()
     const route = useRoute()
@@ -36,9 +36,6 @@ export function useFlowEditorActions() {
     async function persistAll(draft?: boolean) {
         const isCreating = flowStore.isCreating
         const outcome = await flowStore.saveAll(draft)
-        if (isSuccessfulFlowSaveOutcome(outcome)) {
-            onboardingStore.recordSave()
-        }
 
         if (isCreating && outcome === "redirect_to_update") {
             await router.push({
@@ -77,10 +74,7 @@ export function useFlowEditorActions() {
 
     async function publishDraft() {
         try {
-            const outcome = await flowStore.publishDraft()
-            if (isSuccessfulFlowSaveOutcome(outcome)) {
-                onboardingStore.recordSave()
-            }
+            await flowStore.publishDraft()
             await flushDirtyFiles()
         } catch (error: any) {
             if (error?.status === 401) {
@@ -95,9 +89,6 @@ export function useFlowEditorActions() {
             const outcome = await flowStore.saveAll()
             const hasInputs = Array.isArray(flowStore.flowParsed?.inputs)
                 && flowStore.flowParsed.inputs.length > 0
-            if (isSuccessfulFlowSaveOutcome(outcome)) {
-                onboardingStore.recordSave()
-            }
 
             if (
                 isSuccessfulFlowSaveOutcome(outcome)
@@ -117,7 +108,6 @@ export function useFlowEditorActions() {
                 })
 
                 executionsStore.execution = response
-                onboardingStore.recordExecution()
 
                 await router.push({
                     name: "executions/update/gantt",
@@ -129,7 +119,6 @@ export function useFlowEditorActions() {
                     },
                     query: {
                         autoExpandGantt: "true",
-                        onboardingSuccess: "true",
                     },
                 })
 
@@ -200,7 +189,7 @@ export function useFlowEditorActions() {
     const isPlaygroundEnabled = computed(() => playgroundStore.enabled)
     const isPlaygroundAllowed = computed(
         () => localStorage.getItem("editorPlayground") !== "false"
-            && !onboardingStore.isGuidedActive,
+            && !tourStore.isGuidedActive,
     )
 
     return {

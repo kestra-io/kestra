@@ -1,16 +1,20 @@
 <template>
-    <!-- Shows the page the copilot is focused on (sent as `additionalContext`). Dismissible to drop it. -->
-    <div class="copilot-context" data-test="copilot-context-chip">
-        <KsTag closable size="small" :icon="icon" @close="emit('clear')">
-            <!-- Render the id/namespace/flowId via <KsId> so it stands out as a code-styled,
-                 link-coloured token — the same treatment execution/flow ids get in tables. -->
-            <i18n-t :keypath="context.keypath" scope="global" tag="span">
-                <template #[context.slot]>
-                    <!-- For a flow, show its namespace alongside the id so the full context is visible. -->
-                    <template v-if="context.namespace">
-                        <KsId :value="context.namespace" :shrink="false" /><span class="copilot-context-sep">/</span><KsId :value="context.value" :shrink="false" />
-                    </template>
-                    <KsId v-else :value="context.value" :shrink="false" />
+    <!-- The resources the copilot is focused on (sent as `additionalContext`), one dismissible pill
+         each: the type word (Flow / Execution / Namespace / …) plus the value as a code-styled,
+         link-coloured `KsId` token — the same treatment ids get in tables. Removing a pill drops only
+         that resource from the focus for the next turn. -->
+    <div v-if="pills.length" class="copilot-context" data-test="copilot-context-chip">
+        <KsTag
+            v-for="pill in pills"
+            :key="pill.part"
+            closable
+            size="small"
+            :data-test="`copilot-context-${pill.part}`"
+            @close="emit('remove', pill.part)"
+        >
+            <i18n-t :keypath="pill.keypath" scope="global" tag="span">
+                <template #[pill.slot]>
+                    <KsId :value="pill.value" :shrink="false" />
                 </template>
             </i18n-t>
         </KsTag>
@@ -19,49 +23,36 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
-    import PlayCircleOutline from "vue-material-design-icons/PlayCircleOutline.vue"
-    import FolderOutline from "vue-material-design-icons/FolderOutline.vue"
-    import type {ScopeBinding} from "./types"
+    import type {ScopeBinding, ContextPart} from "./types"
+    import {CONTEXT_PART_I18N, CONTEXT_PRIMARY} from "./routeScope"
 
     const props = defineProps<{scope: ScopeBinding}>()
-    const emit = defineEmits<{clear: []}>()
+    const emit = defineEmits<{remove: [part: ContextPart]}>()
 
-    const icon = computed(() => {
-        switch (props.scope.kind) {
-        case "EXECUTION":
-            return PlayCircleOutline
-        case "NAMESPACE":
-            return FolderOutline
-        default:
-            return FileDocumentOutline
-        }
-    })
+    interface Pill {
+        part: ContextPart
+        keypath: string
+        slot: string
+        value: string
+    }
 
-    // A short, human label for the focused resource. Falls back gracefully if a field is missing.
-    // Each context i18n string ("Execution {id}" / "Namespace {namespace}" / "Flow {flow}") has one
-    // interpolation slot; the slot name differs per kind, so drive the <i18n-t> slot dynamically.
-    const context = computed(() => {
-        switch (props.scope.kind) {
-        case "EXECUTION":
-            return {keypath: "ai.copilot.context.execution", slot: "id", value: props.scope.executionId ?? "", namespace: undefined as string | undefined}
-        case "NAMESPACE":
-            return {keypath: "ai.copilot.context.namespace", slot: "namespace", value: props.scope.namespace ?? "", namespace: undefined as string | undefined}
-        default:
-            // FLOW — show the namespace next to the id (a flow is only unique within its namespace).
-            return {keypath: "ai.copilot.context.flow", slot: "flow", value: props.scope.flowId ?? "", namespace: props.scope.namespace}
-        }
+    // One pill per present field — the resource first, then its namespace (deduped for a namespace
+    // scope, whose primary already is the namespace). Absent fields are skipped.
+    const pills = computed<Pill[]>(() => {
+        const scope = props.scope
+        const parts: ContextPart[] = [CONTEXT_PRIMARY[scope.kind]]
+        if (!parts.includes("namespace")) parts.push("namespace")
+        return parts
+            .filter((part): part is ContextPart => Boolean(scope[part]))
+            .map((part) => ({part, ...CONTEXT_PART_I18N[part], value: scope[part] as string}))
     })
 </script>
 
 <style scoped>
     .copilot-context {
         display: flex;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
         margin-bottom: var(--ks-spacing-2);
-    }
-
-    /* Separator between the namespace and flow id tokens. */
-    .copilot-context-sep {
-        color: var(--ks-text-secondary);
     }
 </style>

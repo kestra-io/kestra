@@ -1,4 +1,4 @@
-import {computed, nextTick, ref, watch, type Component, type ComponentPublicInstance, type Ref} from "vue"
+import {computed, nextTick, onBeforeUnmount, ref, watch, type Component, type ComponentPublicInstance, type Ref} from "vue"
 import SuggestedIcon from "vue-material-design-icons/Creation.vue"
 import AppsIcon from "vue-material-design-icons/ViewGridOutline.vue"
 import RecentIcon from "vue-material-design-icons/History.vue"
@@ -22,6 +22,7 @@ import {
     type PickerEntry,
 } from "./taskPickerCatalog"
 import {parentPathFromLaneSentinel, sectionFromParentPath, sectionFromSentinel} from "./blockSections"
+import {computePickerPosition, type AnchorRect} from "./taskPickerPosition"
 
 export type PickerTab = "suggested" | "apps" | "recent"
 
@@ -36,7 +37,7 @@ export interface TaskPickerDeps {
     pluginsStore: PluginsStoreLike
     editorEl: Ref<HTMLElement | undefined>
     focusedId: Ref<string | undefined>
-    focusedCard: () => HTMLElement | undefined
+    focusedAnchor: () => HTMLElement | undefined
     focusedBlockPath: () => string | undefined
     focusCanvasCard: (id: string | undefined) => void
     sectionList: (section: BlockSection) => Record<string, unknown>[]
@@ -144,7 +145,8 @@ export function useTaskPicker(deps: TaskPickerDeps) {
     }
 
     function anchorFrom(evt?: Event, explicitEl?: HTMLElement) {
-        pickerAnchor.value = explicitEl ?? (evt?.currentTarget as HTMLElement) ?? deps.focusedCard() ?? deps.editorEl.value ?? undefined
+        pickerAnchor.value = explicitEl ?? (evt?.currentTarget as HTMLElement) ?? deps.focusedAnchor() ?? deps.editorEl.value ?? undefined
+        syncAnchorRect()
     }
 
     function resetPickerView() {
@@ -223,31 +225,45 @@ export function useTaskPicker(deps: TaskPickerDeps) {
         openTaskPickerAtPath(match[1], parseInt(match[2], 10), undefined, position)
     }
 
-    const pickerStyle = computed(() => {
+    const anchorRect = ref<AnchorRect | null>(null)
+
+    function syncAnchorRect() {
         const anchor = pickerAnchor.value
-        if (!anchor) return {}
-        const rect = anchor.getBoundingClientRect()
-        const gap = 4
-        const margin = 8
-        const maxHeight = 420
-        const preferredWidth = 440
-        const minWidth = 280
-        const maxRight = window.innerWidth - margin
-        const left = Math.max(margin, Math.min(rect.left, maxRight - minWidth))
-        const width = Math.max(minWidth, Math.min(preferredWidth, maxRight - left))
-        const spaceBelow = window.innerHeight - rect.bottom - gap - margin
-        const spaceAbove = rect.top - gap - margin
-        const openUp = spaceBelow < Math.min(maxHeight, 280) && spaceAbove > spaceBelow
-        const available = Math.max(200, Math.min(maxHeight, openUp ? spaceAbove : spaceBelow))
-        return {
-            left: `${left}px`,
-            width: `${width}px`,
-            maxHeight: `${available}px`,
-            ...(openUp
-                ? {bottom: `${window.innerHeight - rect.top + gap}px`}
-                : {top: `${rect.bottom + gap}px`}),
+        if (!anchor) {
+            anchorRect.value = null
+            return
         }
+        const {top, bottom, left} = anchor.getBoundingClientRect()
+        anchorRect.value = {top, bottom, left}
+    }
+
+    function trackAnchor() {
+        window.addEventListener("scroll", syncAnchorRect, {capture: true, passive: true})
+        window.addEventListener("resize", syncAnchorRect, {passive: true})
+    }
+
+    function untrackAnchor() {
+        window.removeEventListener("scroll", syncAnchorRect, {capture: true})
+        window.removeEventListener("resize", syncAnchorRect)
+    }
+
+    watch(taskPickerVisible, (visible) => {
+        if (!visible) {
+            untrackAnchor()
+            return
+        }
+        syncAnchorRect()
+        trackAnchor()
+        nextTick(() => requestAnimationFrame(syncAnchorRect))
     })
+
+    onBeforeUnmount(untrackAnchor)
+
+    const pickerStyle = computed(() =>
+        anchorRect.value
+            ? computePickerPosition(anchorRect.value, {width: window.innerWidth, height: window.innerHeight})
+            : {},
+    )
 
     function insertTask(fqcn: string) {
         recentFqcns.value = pushRecentFqcn(fqcn, recentFqcns.value)

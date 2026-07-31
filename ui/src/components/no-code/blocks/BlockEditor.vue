@@ -425,7 +425,7 @@
         pluginsStore,
         editorEl,
         focusedId,
-        focusedCard: focus.focusedCard,
+        focusedAnchor: focus.focusedAnchor,
         focusedBlockPath,
         focusCanvasCard,
         sectionList,

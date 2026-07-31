@@ -108,6 +108,11 @@ export function useCanvasFocus(
         focusedCard()?.querySelector<HTMLElement>(selector)?.click()
     }
 
+    function focusedAnchor(): HTMLElement | undefined {
+        const card = focusedCard()
+        return card ? cardFocusTarget(card) : undefined
+    }
+
     function focusedBlockPath(): string | undefined {
         const id = focusedId.value
         if (!id) return undefined
@@ -131,6 +136,7 @@ export function useCanvasFocus(
         focusedId,
         navigableCards,
         focusedCard,
+        focusedAnchor,
         focusCanvasCard,
         onCanvasFocusIn,
         onCanvasEntryFocus,

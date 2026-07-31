@@ -107,6 +107,12 @@
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeitdauer",
     "queued duration": "Warteschlangendauer",
+    "executionProgress": {
+        "title": "Ausführungsfortschritt",
+        "estimatedRemaining": "Geschätzte Restzeit: {duration}",
+        "noBaseline": "Keine historischen Daten — Restzeit kann nicht geschätzt werden",
+        "pastEstimate": "Läuft länger als üblich"
+    },
     "choose file": "Wählen Sie eine Datei oder ziehen Sie sie hierher...",
     "launch execution": "Ausführen",
     "warning flow with triggers": "Dieser Flow enthält Trigger und eine manuelle Ausführung wird fehlschlagen, wenn dieser Flow von Trigger-Ausdrücken abhängt.",
@@ -1641,7 +1647,9 @@
       "connection_lost": {
         "title": "Verbindung unterbrochen",
         "message": "Wir konnten Ihre Kestra-Instanz nicht erreichen. Stellen Sie sicher, dass sie läuft, und aktualisieren Sie dann die Seite."
-      }
+      },
+      "opening_flow_editor": "Beim Öffnen des flow-Editors ist etwas schiefgelaufen.",
+      "retry": "Wiederholen"
     },
     "debug": "Debuggen",
     "default": "Standard",

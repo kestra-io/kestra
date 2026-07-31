@@ -107,6 +107,12 @@
     "total_duration": "合計時間",
     "running duration": "実行期間",
     "queued duration": "キュー待ち期間",
+    "executionProgress": {
+        "title": "実行の進行状況",
+        "estimatedRemaining": "残り時間の目安: {duration}",
+        "noBaseline": "履歴データがないため、残り時間を推定できません",
+        "pastEstimate": "通常より時間がかかっています"
+    },
     "choose file": "ファイルを選択するか、ここにドロップしてください...",
     "launch execution": "実行",
     "warning flow with triggers": "このflowにはtriggersが含まれており、trigger expressionsに依存する場合、手動実行は失敗します。",
@@ -1641,7 +1647,9 @@
       "connection_lost": {
         "title": "接続が中断されました",
         "message": "Kestraインスタンスに接続できませんでした。実行中であることを確認し、ページを更新してください。"
-      }
+      },
+      "opening_flow_editor": "flow エディターを開く際に問題が発生しました。",
+      "retry": "リトライ"
     },
     "debug": "デバッグ",
     "default": "デフォルト",

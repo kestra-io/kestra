@@ -171,6 +171,7 @@
                     title: err,
                     message: err,
                 }
+                await useDefaultDashboardBundledInUI()
             }
         }
 

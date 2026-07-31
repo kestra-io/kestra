@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "type": "module",
-    "packageManager": "npm@10.9.0",
+    "packageManager": "npm@11.16.0",
     "workspaces": [
         "packages/*"
     ],

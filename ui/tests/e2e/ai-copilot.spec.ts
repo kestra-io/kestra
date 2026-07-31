@@ -1,5 +1,5 @@
 import {expect, test} from "./fixtures/auth"
-import {CHAT, disableProductTour, ensureCopilotHost, openCopilotDock, resetCopilotChat, sse, stubThreadCreation} from "./fixtures/copilot"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * End-to-end coverage for the AI Copilot chat drawer.
@@ -35,9 +35,10 @@ test.describe("AI Copilot", () => {
         await stubThreadCreation(page, THREAD)
         await disableProductTour(page)
 
-        await ensureCopilotHost(page)
+        // Fresh tab per test (see fixtures/auth.ts): boot the SPA from the worker's
+        // warm context — a couple of seconds, not the ~9s a cold context pays.
+        await page.goto("/ui")
         await openCopilotDock(page)
-        await resetCopilotChat(page)
     })
 
     test("streams an assistant answer", async ({page}) => {

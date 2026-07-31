@@ -19,23 +19,22 @@ const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
 
 const PRODUCT_TOUR_STORAGE_KEY = "kestra.productTour.state"
 
-type SharedPageFixtures = {
+type SharedContextFixtures = {
     sharedContext: BrowserContext
-    sharedPage: Page
 }
 
 /**
  * The `test` every spec should import.
  *
- * The authenticated context and page are shared per worker rather than recreated per
- * test: a fresh context means a cold SPA boot (full bundle fetch + parse + the
- * sequential auth/config round-trips in main.ts), which is the dominant per-test cost
- * in CI. Specs keep using the standard `page`/`context` fixtures — they resolve to the
- * worker-shared instances — and reset in-app state in their `beforeEach` instead.
- * Playwright restarts the worker after any test failure, so a broken page never leaks
- * into the following tests.
+ * The authenticated context is shared per worker: the login and its warm browser
+ * caches (HTTP + compiled code) are paid once, so a fresh tab boots the SPA in a
+ * couple of seconds instead of the ~9s a cold context pays. Each test still gets its
+ * OWN page (tab): fresh DOM, JS heap, stores and sessionStorage — no in-app state can
+ * leak between tests. Only cookies and localStorage are shared, which is the point
+ * (the login). Playwright restarts the worker after any test failure, so even the
+ * shared context never survives a failing test.
  */
-export const test = base.extend<{forEachTest: void}, SharedPageFixtures>({
+export const test = base.extend<{page: Page}, SharedContextFixtures>({
     sharedContext: [async ({browser}, use) => {
         const context = await browser.newContext({storageState: STORAGE_STATE})
 
@@ -54,34 +53,24 @@ export const test = base.extend<{forEachTest: void}, SharedPageFixtures>({
         await context.close()
     }, {scope: "worker"}],
 
-    sharedPage: [async ({sharedContext}, use) => {
+    context: async ({sharedContext}, use) => {
+        await use(sharedContext)
+    },
+
+    page: async ({sharedContext}, use) => {
         const page = await sharedContext.newPage()
 
         // The app arms a native beforeunload confirm while an editor holds unsaved
-        // changes (utils/unsavedChange.ts). On a shared page, a dirty editor left by
-        // one test would block the next test's hard navigation — accept to proceed.
-        // Safe blanket policy: the app uses in-DOM dialogs everywhere else, so no
-        // other native dialog can reach this handler.
+        // changes (utils/unsavedChange.ts); accept it so a test navigating away from
+        // its own dirty editor never hangs. Safe blanket policy: the app uses in-DOM
+        // dialogs everywhere else, so no other native dialog can reach this handler.
         page.on("dialog", (dialog) => {
             dialog.accept().catch(() => {})
         })
 
         await use(page)
         await page.close()
-    }, {scope: "worker"}],
-
-    context: async ({sharedContext}, use) => {
-        await use(sharedContext)
     },
-    page: async ({sharedPage}, use) => {
-        await use(sharedPage)
-    },
-
-    // Route stubs registered by one test must not leak into the next test on the shared page.
-    forEachTest: [async ({sharedPage}, use) => {
-        await use()
-        await sharedPage.unrouteAll({behavior: "ignoreErrors"})
-    }, {auto: true}],
 })
 
 export {expect} from "@playwright/test"

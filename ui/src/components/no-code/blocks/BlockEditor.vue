@@ -112,6 +112,7 @@
 
     <TaskEditModal
         v-if="modalTarget"
+        :key="modalItemPath"
         :task="modalTaskData"
         :taskRaw="modalTaskRaw"
         :section="modalSection"

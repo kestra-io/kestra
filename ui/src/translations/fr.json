@@ -1944,10 +1944,27 @@
         },
         "toolCall": "Exécution de {tool}",
         "context": {
+          "app": "Application : {{app}}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "Tableau de bord : {{dashboard}}",
           "execution": "Exécution : {{id}}",
           "flow": "Flux : {flow}",
-          "namespace": "Namespace : {namespace}"
+          "namespace": "Namespace : {namespace}",
+          "plugin": "Extension : {plugin}",
+          "test": "Test : {test}"
         },
+        "contextAdded": "Ajouté {type} {id} au contexte.",
+        "contextNoun": {
+          "app": "Application",
+          "blueprint": "blueprint",
+          "dashboard": "tableau de bord",
+          "execution": "Exécution",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "plugin",
+          "test": "test"
+        },
+        "contextRemoved": "Retiré {type} {id} du contexte.",
         "toolResult": {
           "detail": "Détails",
           "error": "{{tool}} a échoué",

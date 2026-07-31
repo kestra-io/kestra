@@ -2119,10 +2119,27 @@
         },
         "toolCall": "Running {tool}",
         "context": {
+          "app": "App: {app}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "Dashboard: {dashboard}",
           "execution": "Execution: {id}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {namespace}"
+          "namespace": "Namespace: {namespace}",
+          "plugin": "Plugin: {plugin}",
+          "test": "Test: {test}"
         },
+        "contextAdded": "Added {type} {id} to context.",
+        "contextNoun": {
+          "app": "app",
+          "blueprint": "blueprint",
+          "dashboard": "dashboard",
+          "execution": "execution",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "plugin",
+          "test": "test"
+        },
+        "contextRemoved": "Removed {type} {id} from context.",
         "toolResult": {
           "detail": "Details",
           "error": "{tool} failed",

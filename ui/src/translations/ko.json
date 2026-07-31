@@ -1944,10 +1944,27 @@
         },
         "toolCall": "실행 중 {tool}",
         "context": {
+          "app": "앱: {app}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "대시보드: {{dashboard}}",
           "execution": "실행: {{id}}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {{namespace}}"
+          "namespace": "Namespace: {{namespace}}",
+          "plugin": "플러그인: {plugin}",
+          "test": "테스트: {test}"
         },
+        "contextAdded": "컨텍스트에 {type} {id}가 추가되었습니다.",
+        "contextNoun": {
+          "app": "앱",
+          "blueprint": "blueprint",
+          "dashboard": "대시보드",
+          "execution": "실행",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "플러그인",
+          "test": "테스트"
+        },
+        "contextRemoved": "{type} {id}이(가) 컨텍스트에서 제거되었습니다.",
         "toolResult": {
           "detail": "세부 정보",
           "error": "{tool} 실패했습니다",

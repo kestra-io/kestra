@@ -1,0 +1,128 @@
+import {beforeEach, describe, expect, it, vi} from "vitest"
+import {createPinia, setActivePinia} from "pinia"
+
+// jsdom runs without an origin, so it provides no localStorage for the store to persist to.
+const installLocalStorage = () => {
+    const entries = new Map<string, string>()
+    vi.stubGlobal("localStorage", {
+        getItem: (key: string) => entries.get(key) ?? null,
+        setItem: (key: string, value: string) => void entries.set(key, value),
+        removeItem: (key: string) => void entries.delete(key),
+        clear: () => entries.clear(),
+    })
+    return entries
+}
+
+describe("product tour store", () => {
+    let persisted: Map<string, string>
+
+    beforeEach(() => {
+        persisted = installLocalStorage()
+        persisted.clear()
+        setActivePinia(createPinia())
+    })
+
+    it("starts the product tour at its first scene", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        store.startGuided()
+
+        expect(store.state.status).toBe("in_progress")
+        expect(store.state.mode).toBe("guided")
+        expect(store.state.guideId).toBe("product_tour")
+        expect(store.state.currentStepId).toBe("copilot")
+        expect(store.state.tour.introSeen).toBe(false)
+    })
+
+    it("keeps track of what the tour created", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        store.startGuided()
+        store.setTourState({webhookKey: "order-events-abc", failedExecutionId: "exec-1"})
+
+        expect(store.state.tour.webhookKey).toBe("order-events-abc")
+        expect(store.state.tour.failedExecutionId).toBe("exec-1")
+        expect(store.state.tour.flowId).toBe("order_summary")
+    })
+
+    it("hides the left menu entry when it is dismissed by hand", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        expect(store.isDismissed).toBe(false)
+
+        store.dismissMenuEntry()
+
+        expect(store.isDismissed).toBe(true)
+        expect(store.state.status).toBe("not_started")
+    })
+
+    it("keeps offering the tour after a skip, and hides it once completed", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        expect(store.isDismissed).toBe(false)
+
+        store.startGuided()
+        expect(store.isDismissed).toBe(false)
+
+        store.skip()
+        expect(store.isGuidedActive).toBe(false)
+        expect(store.isDismissed).toBe(false)
+
+        store.startGuided()
+        store.complete()
+        expect(store.isDismissed).toBe(true)
+    })
+
+    it("dismisses the blueprints nudge on its own, and keeps it across a run", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        store.dismissBlueprintsNudge()
+
+        expect(store.state.tour.blueprintsNudgeDismissed).toBe(true)
+        expect(store.isDismissed).toBe(false)
+
+        store.startGuided()
+        expect(store.state.tour.blueprintsNudgeDismissed).toBe(true)
+    })
+
+    it("forgets progress that belongs to another instance", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        store.syncInstance("instance-a")
+        store.startGuided()
+        store.setStep("webhook_trigger")
+        store.skip()
+
+        store.syncInstance("instance-a")
+        expect(store.state.status).toBe("skipped")
+        expect(store.state.currentStepId).toBe("webhook_trigger")
+
+        store.syncInstance("instance-b")
+        expect(store.state.status).toBe("not_started")
+        expect(store.state.currentStepId).toBe(null)
+        expect(store.state.instanceUuid).toBe("instance-b")
+    })
+
+    it("restores a tour left in the middle of a scene", async () => {
+        const {useProductTourStore} = await import("../../../src/stores/productTour")
+        const store = useProductTourStore()
+
+        store.startGuided()
+        store.setStep("webhook_trigger")
+        store.setTourState({introSeen: true})
+
+        setActivePinia(createPinia())
+        const {useProductTourStore: reimport} = await import("../../../src/stores/productTour")
+        const restored = reimport()
+
+        expect(restored.state.currentStepId).toBe("webhook_trigger")
+        expect(restored.state.tour.introSeen).toBe(true)
+        expect(restored.isGuidedActive).toBe(true)
+    })
+})

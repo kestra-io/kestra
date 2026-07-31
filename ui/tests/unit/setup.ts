@@ -1,6 +1,10 @@
 import {vi} from "vitest"
 import {config} from "@vue/test-utils"
 
+// Required by `isolate: false` (vitest.config.unit.js): workers reuse one module registry, so a
+// module cached while another file's vi.mock was active keeps that mock. Reset it per test file.
+vi.resetModules()
+
 // Most unit tests mount a component in isolation, without installing vue-router,
 // so a literal <router-link> in its template can never resolve and spams
 // "[Vue warn]: Failed to resolve component: router-link" on every mount.

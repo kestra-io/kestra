@@ -4,6 +4,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.awaitility.core.ConditionTimeoutException;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -21,6 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 @Singleton
 public class FlowConcurrencyCaseTest {
@@ -206,12 +210,28 @@ public class FlowConcurrencyCaseTest {
             .allMatch(State.Type.FAILED::equals);
 
         // The concurrency counter must be back to 0 — no slot leak.
-        ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository
-            .findById(tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent")
-            .orElseThrow(() -> new AssertionError("ConcurrencyLimit record must exist after executions ran"));
-        assertThat(concurrencyLimit.getRunning())
-            .as("Concurrency running counter must be 0 after all executions terminate")
-            .isEqualTo(0);
+        // Its decrement is committed in a separate, later transaction than the terminal execution row,
+        // so a single read taken right after awaitFlowExecutionNumber can race a still-in-flight release.
+        // Poll instead of asserting a single read. Await throws on timeout, so report the last value
+        // observed rather than letting a bare ConditionTimeoutException hide how many slots leaked.
+        AtomicInteger lastObservedRunning = new AtomicInteger(-1);
+        try {
+            Await.await()
+                .atMost(Duration.ofSeconds(10))
+                .until(() -> {
+                    ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository
+                        .findById(tenantId, NAMESPACE, "flow-concurrency-sla-fail-parent")
+                        .orElseThrow(() -> new AssertionError("ConcurrencyLimit record must exist after executions ran"));
+                    lastObservedRunning.set(concurrencyLimit.getRunning());
+                    return concurrencyLimit.getRunning() == 0;
+                });
+        } catch (ConditionTimeoutException e) {
+            fail(
+                "Concurrency running counter must be 0 after all executions terminate but was %d.".formatted(
+                    lastObservedRunning.get()
+                )
+            );
+        }
     }
 
     public void flowConcurrencySubflow(String tenantId) throws TimeoutException, QueueException {

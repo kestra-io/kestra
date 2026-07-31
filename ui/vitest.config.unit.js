@@ -16,9 +16,17 @@ export default defineProject({
         // Cheaper than the forks default (no process spawn per worker). Full
         // isolation is kept: ~4 spec files leak module state without it.
         pool: "threads",
-        setupFiles: ["./tests/unit/setup.ts"],
-        // No reporters here: Vitest ignores project-level `reporters`, so the
-        // junit report is configured on the CLI (see test:unit in package.json).
+        setupFiles: ["./tests/unit/setup.ts", "./tests/unit/leakGuard.ts"],
+        // Keep node_modules warm in the worker instead of re-importing them per file (cumulative
+        // import 285s -> 94s). The setup file's vi.resetModules() keeps modules per-file fresh.
+        isolate: false,
+        reporters: [
+            ["default"],
+            ["junit"],
+        ],
+        outputFile: {
+            junit: "./test-report.junit.xml",
+        },
         exclude: [
             "tests/e2e/**",
             // Match node_modules at ANY depth. A bare "node_modules/**" only excludes

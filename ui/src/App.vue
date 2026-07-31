@@ -10,7 +10,7 @@
             </component>
         </div>
     </div>
-    <OnboardingOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
+    <TourOverlay v-if="loaded && route?.name && !route.meta?.anonymous" />
     <UnsavedChangesDialog />
     <DrillDownDrawer />
     <PwaInstallPrompt v-if="loaded && route?.name && !route.meta?.anonymous" />
@@ -33,7 +33,7 @@
     import {initPosthogIfEnabled} from "./utils/posthog"
     import {SAVED_FILTER_ANALYTICS_INJECTION_KEY, trackSavedFilter} from "./utils/savedFilterTracking"
     import ErrorToast from "./components/ErrorToast.vue"
-    import OnboardingOverlay from "./components/onboarding/OnboardingOverlay.vue"
+    import TourOverlay from "./components/onboarding/tour/TourOverlay.vue"
     import DefaultLayout from "override/components/layout/DefaultLayout.vue"
     import AppTopNavBar from "./components/layout/AppTopNavBar.vue"
     import DocIdDisplay from "./components/DocIdDisplay.vue"

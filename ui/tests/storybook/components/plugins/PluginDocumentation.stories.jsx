@@ -1,4 +1,5 @@
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue";
+import dashboardIntro from "../../../../src/assets/docs/dashboard_home.md?raw"
 import {setMockClient} from "@kestra-io/kestra-sdk"
 
 export default {
@@ -22,6 +23,9 @@ const Template = (args) => ({
 });
 
 export const Default = Template.bind({});
-Default.args = {
-    overrideIntro: "This is an overridden intro content.",
+Default.args = {};
+
+export const WithOverrideIntro = Template.bind({});
+WithOverrideIntro.args = {
+    overrideIntro: dashboardIntro,
 };

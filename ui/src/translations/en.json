@@ -413,6 +413,7 @@
       "tree": "Tree",
       "raw_json": "Raw JSON",
       "select_prompt": "Select a variable to inspect its value.",
+      "select_hint": "Variables, the trigger, and task outputs are listed on the left.",
       "empty": "No variables available for this execution.",
       "one_key": "\\{ 1 key \\}",
       "n_keys": "\\{ {count} keys \\}",
@@ -534,6 +535,18 @@
     "trigger": "Trigger",
     "no_trigger": "No trigger available.",
     "triggers": "Triggers",
+    "test_event": {
+      "title": "Send a test event",
+      "description": "This posts the payload below to the webhook URL of the {trigger} trigger.",
+      "payload": "Payload",
+      "headers": "Headers (optional)",
+      "send": "Send event",
+      "sending": "Sending",
+      "response": "Response {status}",
+      "execution_created": "Execution created",
+      "failed": "The webhook answered {status}. Check that the flow is saved and the trigger is enabled.",
+      "button": "Send test event"
+    },
     "triggers_header_description": "Browse, add, and manage triggers to automate your flows. Choose from exposing your flow as an AI tool, scheduling, adding a webhook trigger, polling for changes in external apps, or realtime event listeners.",
     "triggers_tabs_add": "Add",
     "triggers_tabs_manage": "Manage",
@@ -1293,130 +1306,165 @@
       "title": "Assets"
     },
     "onboarding": {
-      "welcome": {
-        "headline": "Build and run your first workflow in minutes",
-        "guided_title": "Build your first flow",
-        "badge": "Tutorial",
-        "guided_description": "Learn how to create and run your first flow with guided steps.",
-        "guided_duration": "Recommended for most",
-        "self_serve_title": "Create flow from scratch",
-        "self_serve_description": "Go directly to the editor and build your own flow.",
-        "self_serve_note": "For experienced users",
-        "additional_help": "Additional help",
-        "docs": "Documentation",
-        "tutorial": "Tutorial",
-        "blueprints": "Blueprints",
-        "slack": "Slack community"
-      },
-      "steps": {
-        "flow_basics": {
-          "title": "Flow basics",
-          "description": "In Kestra, a <code>flow</code> is the core orchestration unit. You define it in YAML with metadata and ordered tasks.<br><br>Review the example structure below, then continue to build it step by step."
+      "tour": {
+        "menu": "Product tour",
+        "menu_description": "Build, run, and fix a flow, then start it from an event",
+        "step_of": "Step {current} of {total}",
+        "actions": {
+          "back": "Back",
+          "skip": "Skip tour",
+          "running": "Running",
+          "finish_now": "Finish tour",
+          "dismiss": "Hide this",
+          "skipped_hint": "The product tour stays in the left menu if you want to pick it up later."
         },
-        "add_id": {
-          "title": "Add flow id",
-          "description": "The ID is the unique name of your flow, so you can find it, run it, and reference it consistently.<br><br>Now add <code>id</code> at the root level."
+        "intro": {
+          "kicker": "Welcome to Kestra",
+          "title": "Learn Kestra in under 5 minutes",
+          "body": "Kestra is an orchestration platform. It makes scheduled and event-driven workflows easy to build, run, and fix.",
+          "note": "You can stop at any point.",
+          "start": "Start the tour",
+          "skip": "Skip tour"
         },
-        "add_namespace": {
-          "title": "Add namespace",
-          "description": "The Namespace is the folder-like grouping that organizes flows by team, project, or environment.<br><br>Now add <code>namespace</code> at the root level."
+        "scenes": {
+          "copilot": {
+            "title": "Describe the workflow you want",
+            "body": "Describe what you want to automate, and the AI Copilot will draft it for you. The tour continues with a ready-made example flow, so nothing has to be typed here.",
+            "next": "Generate the flow"
+          },
+          "flow_generated": {
+            "title": "This is a flow",
+            "body": "The flow is written in YAML with two tasks:<ol><li><code>fetch_orders</code> to download the orders</li><li><code>summarize</code> to compute the revenue in Python</li></ol>Tasks are executed sequentially, in the order in which they are defined.",
+            "next": "Save and execute"
+          },
+          "first_execution": {
+            "title": "Every execution is recorded",
+            "body": "Each task is timed in the Gantt view. Clicking a task shows its logs.",
+            "milestone": "Your first execution succeeded",
+            "next": "Edit the flow",
+            "callout": "Unlike a cron job or a script run by hand, every execution is kept with its inputs, outputs, and logs, so what ran can be audited afterwards."
+          },
+          "add_task": {
+            "title": "Flows are edited like code",
+            "body": "We added a <code>notify</code> task for you without the AI Copilot, so you can see what editing the YAML directly looks like. It posts the final result to Slack.",
+            "next": "See the task docs",
+            "callout": "AI Copilot gave you the first draft; the editor is where you can iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
+          },
+          "editor_help": {
+            "title": "The docs are next to the flow",
+            "body": "Documentation for the task under the cursor is shown in the <strong>Docs</strong> panel, with its properties, outputs, and examples.",
+            "callout": "Flows are built by iteration: change a property, run it, read the logs, repeat. Autocompletion and the <strong>Docs</strong> panel mean you never have to leave the editor to look something up.",
+            "next": "Execute the flow"
+          },
+          "failed_execution": {
+            "title": "A task failed",
+            "body": "The expression for the revenue in the Slack message has a typo: <code>vars.revenu</code> instead of <code>vars.revenue</code>.",
+            "callout": "The tasks before <code>notify</code> succeeded, so their outputs are still available.",
+            "next": "Fix the flow"
+          },
+          "fix_and_replay": {
+            "title": "One character changed",
+            "body": "The expression is now <code>vars.revenue</code>. The diff shows the one line that changed, and the failed execution can be replayed from the <code>notify</code> task against the new revision.",
+            "next": "Replay from the failed task"
+          },
+          "replayed_execution": {
+            "title": "Only what failed ran again",
+            "body": "Outputs from the first attempt were reused, so only the <code>notify</code> task had to run again. This time the Slack message was sent successfully.",
+            "milestone": "The replay succeeded",
+            "next": "Add a trigger",
+            "callout": "Without replay, one failed task would require rerunning the entire flow. Paid API calls would be made again, long computations repeated, and rows already written duplicated."
+          },
+          "webhook_trigger": {
+            "title": "Your flow can be started by an event",
+            "body": "With a Webhook trigger, this flow has its own URL. An execution is created whenever an HTTP request is sent to that URL, and the request body is available to the tasks as <code>trigger.body</code>.",
+            "next": "See the trigger"
+          },
+          "test_event": {
+            "title": "Send a test event",
+            "body": "The trigger is listed here. A test event can be sent from your browser, the way an external system would send it, so the trigger can be tested without leaving Kestra.",
+            "next": "Send a test event"
+          },
+          "event_execution": {
+            "title": "The event created an execution",
+            "body": "The event arrived, and an execution was created from it, timed and logged like any other. No separate service has to be hosted for this; the trigger endpoint is part of Kestra.",
+            "milestone": "An execution you did not start",
+            "next": "Explore the payload"
+          },
+          "explore_payload": {
+            "title": "Variables, trigger, and task outputs",
+            "body": "The <strong>Input/Output</strong> tab lists every value available to this execution.",
+            "callout": "<code>trigger.body</code> is already filled in on the right. Press <strong>Debug Expression</strong> to see what it returns for this execution.",
+            "next": "Chain a second flow"
+          },
+          "report_flow": {
+            "title": "One flow can depend on another",
+            "body": "<code>daily_report</code> has a Flow trigger, so it is started whenever <code>order_summary</code> succeeds. Nothing needs to be added to <code>order_summary</code> for that.",
+            "next": "Send another event",
+            "callout": "The two flows can be owned by different teams: <code>daily_report</code> declares what it waits for, and <code>order_summary</code> does not have to know that it exists."
+          },
+          "chain": {
+            "title": "How each execution was started",
+            "body": "Executions you started yourself are labelled <code>started_by:you</code>. Others were created by the webhook event or the flow trigger.",
+            "milestone": "Two executions from one event",
+            "next": "Finish"
+          }
         },
-        "add_input": {
-          "title": "Add an input",
-          "description": "Inputs are flow-level parameters that can be referenced inside tasks to dynamically control behavior at runtime.<br><br>Now add an input named <code>name</code> with type <code>STRING</code>."
+        "finale": {
+          "kicker": "Tour complete",
+          "title": "What you built, and what to try next",
+          "takeaways": {
+            "copilot": {
+              "title": "Flows generated from plain English",
+              "body": "Describe what you want to automate, and a flow is drafted by the AI Copilot. From there you refine it in the editor, with autocompletion and the <strong>Docs</strong> panel. Flows are run from the <strong>Execute</strong> button of the flow or of any execution."
+            },
+            "restart": {
+              "title": "Replay instead of running everything again",
+              "body": "Task runs that already succeeded are reused, so only the work that failed has to run again, against the latest revision of the flow. Replay and restart are offered under <strong>Actions</strong> on an execution, and on a task run in the Gantt view."
+            },
+            "events": {
+              "title": "Executions started by events",
+              "body": "Webhook and Schedule triggers are part of Kestra, so an execution can be started by an event or on a schedule with nothing extra to host."
+            },
+            "chain": {
+              "title": "Flows that depend on flows",
+              "body": "With a Flow trigger, one flow can be started by the success or failure of another flow, across namespaces. This keeps flows decoupled. Nothing in the first flow refers to the second, so both can be owned and changed independently."
+            }
+          },
+          "namespace_note": "Everything from this tour is in your {namespace} namespace. The Slack and API endpoints were mocks; real webhook URLs would be stored as {secrets}.",
+          "keep_going": "Keep going",
+          "restart": "Restart tour",
+          "start_building": "Start building",
+          "docs": {
+            "title": "Read more",
+            "autocompletion": "Autocompletion",
+            "execution": "Executions",
+            "replay": "Replay",
+            "revision": "Revisions",
+            "webhook": "Webhook",
+            "schedule": "Schedule",
+            "flowTrigger": "Flow triggers",
+            "namespace": "Namespaces",
+            "secret": "Secrets"
+          }
         },
-        "add_log_task": {
-          "title": "Add first task",
-          "description": "Tasks are the units of work your flow executes, defined as an ordered list of steps. Each task needs a unique <code>id</code> and a <code>type</code>. Kestra provides many task plugins for external systems; here we use a Python Script task.<br><br>The <code>&#123;&#123; ... &#125;&#125;</code> syntax is a Pebble expression, used to reference variables dynamically at runtime, like <code>&#123;&#123; inputs.name &#125;&#125;</code> from your flow inputs.<br><br>Now add the first task under <code>tasks</code> with <code>id</code>, <code>type</code>, and a <code>script</code> that prints a greeting."
+        "errors": {
+          "first_execution": "The first execution finished as {state} instead of succeeding. Open the logs on this page to see why, then try again.",
+          "expected_failure": "This execution finished as {state}, so there is no failure to fix yet. Check that the flow still has the <code>notify</code> task, then try again.",
+          "no_execution_to_replay": "There is no execution to replay yet. Run the flow on the previous step, then try again.",
+          "replay": "The replay finished as {state}. Open the logs on this page to see what <code>notify</code> reported, then try again.",
+          "save_flow": "The tour flow could not be saved. {reason}",
+          "test_event": "The webhook responded with {status}. Check that the flow is saved and the trigger is enabled, then try again."
         },
-        "save_flow": {
-          "title": "Save flow",
-          "description": "Saving persists your flow definition so it can be executed."
+        "steps": {
+          "1": "Write and run a flow",
+          "2": "Recover from a failure",
+          "3": "Start a flow from an event",
+          "4": "Chain two flows"
         },
-        "execute_flow": {
-          "title": "Execute flow",
-          "description": "Executing starts a run of your flow with runtime input values."
-        },
-        "view_logs_status": {
-          "title": "Check execution",
-          "description": "Execution details show run status, timing, and task-level output logs.<br><br>Now open the execution details and click <code>greet</code> in the Gantt chart to see the logs."
-        },
-        "edit_flow_from_execution": {
-          "title": "Return to Flow Editor",
-          "description": "You can jump directly from an execution back to the flow definition to iterate quickly."
-        },
-        "add_cron_trigger": {
-          "title": "Add a cron trigger",
-          "description": "Triggers can start runs based on schedules or external events (for example webhooks or MQTT messages).<br><br>Now add a cron schedule trigger so this flow runs every 5 minutes."
-        },
-        "add_input_default": {
-          "title": "Set a default input value",
-          "description": "When a flow is triggered automatically, inputs still need values at runtime.<br><br>The <code>name</code> input was already created in the previous step, so there’s no need to add it again. Just set a default value for the existing <code>name</code> input."
-        },
-        "save_flow_again": {
-          "title": "Save flow",
-          "description": "Your flow now has a schedule and a default input value for automatic runs."
-        },
-        "background_runs_info": {
-          "title": "Scheduled runs",
-          "description": "This flow will now execute in the background every 5 minutes.<br><br>You can navigate to the Executions overview from the left menu to monitor scheduled runs."
-        },
-        "finish": {
-          "title": "You completed the First Flow tutorial",
-          "description": "Great start. You created, executed, parameterized, and scheduled a flow.<br><br>Choose what to do next ..."
+        "nudge": {
+          "title": "New to Kestra?",
+          "action": "Take the product tour"
         }
-      },
-      "actions": {
-        "next": "Next",
-        "complete": "Complete",
-        "save_to_continue": "Press Save in the top bar (right).",
-        "execute_to_continue": "1. Press Execute in the top bar (right).\n2. Provide a value for <strong>name</strong>.\n3. Press Execute again in the modal.",
-        "edit_flow_to_continue": "Open the actions menu (top bar, right) and select Edit flow.",
-        "cancel_tutorial": "Cancel tutorial",
-        "finish_tutorial": "Finish tutorial"
-      },
-      "finish_actions": {
-        "explore_blueprints": "Explore Blueprints",
-        "create_flow": "Create Flow"
-      },
-      "editor_hints": {
-        "build_intro": "Build your first flow step by step.",
-        "step_1": "# 1) Add id",
-        "step_2": "# 2) Add namespace",
-        "step_3": "# 3) Add an input",
-        "step_4": "# 4) Add tasks and your first Python task",
-        "step_5": "# 5) Add a cron trigger"
-      },
-      "cancel_modal": {
-        "title": "Cancel First Flow tutorial",
-        "description": "Do you want to cancel the First Flow tutorial?",
-        "confirm": "Cancel tutorial",
-        "keep": "Keep tutorial"
-      },
-      "validation": {
-        "complete_step": "You're close. Complete this step to continue.",
-        "fix_yaml": "There is a small YAML formatting issue. Fix it, then continue.",
-        "add_id": "Add a flow ID at the top. Example: `id: hello_flow`.",
-        "add_namespace": "Add a namespace at the top. Example: `namespace: company.team`.",
-        "add_input_section": "Create an `inputs` section with one input.",
-        "add_input_id": "Inside `inputs`, add `id: name`.",
-        "add_input_type": "Set the input type to `STRING`.",
-        "add_log_task_section": "Create a `tasks` section and add your first task.",
-        "add_log_task_id": "Give the task an ID, for example: `id: greet`.",
-        "add_log_task_type": "Set the task type to `io.kestra.plugin.scripts.python.Script`.",
-        "add_log_task_message": "Add a `script` field to the task.",
-        "add_log_task_pebble": "Use a Pebble expression in the script so it uses your input value (for example: `inputs.name`).",
-        "save_flow": "Click Save to continue.",
-        "execute_flow": "Run the flow once to continue.",
-        "view_logs_status": "Open the execution details and check the logs for `greet`.",
-        "edit_flow_from_execution": "Open the actions menu and click `Edit flow` to continue.",
-        "add_cron_trigger_section": "Create a `triggers` section with a schedule trigger.",
-        "add_cron_trigger_type": "Set trigger type to `io.kestra.plugin.core.trigger.Schedule`.",
-        "add_cron_trigger_cron": "Add a cron expression, for example: `\"*/5 * * * *\"`.",
-        "add_input_default_section": "Go back to `inputs` and keep one existing input named `name` (do not add a second input).",
-        "add_input_default_id": "Keep the existing input ID as `name`.",
-        "add_input_default_defaults": "Add a default value for `name`, for example: `defaults: \"Kestra\"`.",
-        "save_flow_again": "Click Save again to continue."
       }
     },
     "enable concurrency": "Enable concurrency",
@@ -2264,20 +2312,7 @@
       "show_more": "Show more prompts",
       "show_less": "Show fewer prompts",
       "remaining_quota": "You have {count} AI generations left. Limit resets daily at midnight UTC.",
-      "execute_hint": {
-        "title": "Save & Execute your flow",
-        "description": "Click to save your workflow and run it immediately."
-      },
-      "success_popup": {
-        "title": "Congratulations!",
-        "description": "You've successfully executed your first flow! You're on your way to becoming a Kestra pro.",
-        "tutorial": "Deep Dive Tutorial",
-        "explore": "Explore More"
-      },
       "success_page": {
-        "title": "You're all set!",
-        "description": "You've learned the basics of Kestra. Here are some resources to help you continue your journey.",
-        "restart": "Restart Tutorial",
         "items": {
           "tutorial": {
             "title": "Start a Tutorial",
@@ -2292,8 +2327,8 @@
             "description": "Connect with other users and get help from the community"
           },
           "videos": {
-            "title": "Videos Tutorials",
-            "description": "Step-by-step video guides for advanced features"
+            "title": "Video tutorials",
+            "description": "Step-by-step video guides"
           },
           "demo": {
             "title": "Get a Demo",
@@ -2316,6 +2351,10 @@
         }
       },
       "flows": {
+        "ordersRevenueToSlack": {
+          "label": "Order summary with Python",
+          "prompt": "Fetch orders from an API and summarize the revenue with Python"
+        },
         "jsonApiToDuckdb": {
           "label": "JSON API to DuckDB",
           "prompt": "Create a flow that downloads a JSON file from a public API, transforms it with a Python script, and processes it with a DuckDB Queries task."

@@ -1820,7 +1820,7 @@ export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SC
 
 export type QueryFilterLogical = 'and' | 'or';
 
-export type QueryFilterOp = 'EQUALS' | 'NOT_EQUALS' | 'GREATER_THAN' | 'LESS_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'LESS_THAN_OR_EQUAL_TO' | 'IN' | 'NOT_IN' | 'STARTS_WITH' | 'ENDS_WITH' | 'CONTAINS' | 'REGEX' | 'PREFIX';
+export type QueryFilterOp = 'EQUALS' | 'NOT_EQUALS' | 'GREATER_THAN' | 'LESS_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'LESS_THAN_OR_EQUAL_TO' | 'IN' | 'NOT_IN' | 'STARTS_WITH' | 'ENDS_WITH' | 'CONTAINS' | 'NOT_CONTAINS' | 'IS_NULL' | 'IS_NOT_NULL' | 'REGEX' | 'PREFIX';
 
 export type Quota = {
     duration: string;

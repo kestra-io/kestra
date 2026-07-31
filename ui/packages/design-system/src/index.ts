@@ -171,8 +171,10 @@ export {
     serializeFiltersToString,
     parseFiltersFromString,
     validStructureSignature,
-    routeQueryToQueryFilters,
-    type QueryFilter,
+    parseFilterKey,
+    decodeFilterValue,
+    type ParsedFilterKey,
+    type PrefixSegment,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
 export {pickStarterField} from "./components/Data/KsDataTable/filter/utils/filterChipFactory"
 export {

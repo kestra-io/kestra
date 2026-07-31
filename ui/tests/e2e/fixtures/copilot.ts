@@ -47,3 +47,22 @@ export async function openCopilotDock(page: Page) {
 
     await expect(chat).toBeVisible()
 }
+
+const NEW_CHAT = "[data-test=\"copilot-new-chat\"]"
+
+/**
+ * Returns the worker-shared page to a fresh conversation between tests: closes any
+ * dropdown a previous test left open, then clicks "New chat" — a purely client-side
+ * reset (`useAiChat.reset()`), so no stubs are needed. The pill is disabled when the
+ * chat is already fresh (the worker's first test), and goes back to disabled once the
+ * reset lands, which doubles as the wait condition.
+ */
+export async function resetCopilotChat(page: Page) {
+    await page.keyboard.press("Escape")
+
+    const newChat = page.locator(NEW_CHAT)
+    if (await newChat.isEnabled().catch(() => false)) {
+        await newChat.click()
+        await expect(newChat).toBeDisabled()
+    }
+}

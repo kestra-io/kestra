@@ -1,5 +1,5 @@
 import {expect, test} from "./fixtures/auth"
-import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
+import {CHAT, disableProductTour, openCopilotDock, resetCopilotChat, sse, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * End-to-end coverage for the AI Copilot chat drawer.
@@ -35,8 +35,13 @@ test.describe("AI Copilot", () => {
         await stubThreadCreation(page, THREAD)
         await disableProductTour(page)
 
-        await page.goto("/ui")
+        // The worker's shared page boots the SPA once; every later test reuses it live
+        // (about:blank on the worker's first test, an in-app route afterwards).
+        if (!page.url().includes("/ui")) {
+            await page.goto("/ui")
+        }
         await openCopilotDock(page)
+        await resetCopilotChat(page)
     })
 
     test("streams an assistant answer", async ({page}) => {
@@ -390,7 +395,8 @@ test.describe("AI Copilot — full-page /ai surface", () => {
         const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
         await page.goto(`/ui/${tenant}/ai`, {waitUntil: "domcontentloaded"})
 
-        // The copilot mounts as the full-page host (fresh context → empty state, no dock).
+        // The copilot mounts as the full-page host (hard navigation → fresh document; a thread uid
+        // remembered by an earlier test 404s server-side and is forgotten → empty state, no dock).
         await expect(page.locator(D.chat)).toBeVisible({timeout: 15000})
         await expect(page.locator(D.input)).toBeVisible()
 

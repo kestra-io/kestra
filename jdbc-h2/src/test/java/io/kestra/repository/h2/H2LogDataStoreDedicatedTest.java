@@ -27,6 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @MicronautTest
 @Property(name = "kestra.logs.type", value = "h2")
 @Property(name = "kestra.logs.h2.url", value = "jdbc:h2:mem:logs_dedicated;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE")
+// Credentials for the dedicated log datasource are required and never inherited from the main
+// datasource (LogJdbcDataSourceProvider fails fast without them); H2's default user is 'sa'.
+@Property(name = "kestra.logs.h2.username", value = "sa")
 // Use an isolated primary datasource so this test's migration history (which records the log-table
 // migrations applied to the dedicated log database) does not leak into the shared in-memory "public"
 // database used by the other repository tests in the same JVM.

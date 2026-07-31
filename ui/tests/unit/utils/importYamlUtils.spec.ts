@@ -1,21 +1,4 @@
-import {describe, test, expect, vi} from "vitest"
-
-vi.mock("@kestra-io/topology", () => ({
-    flowYamlUtils: {
-        parse: (s: string) => {
-            if (s.includes("bad: {{{")) throw new Error("YAML parse error: unexpected token")
-            if (s === "- item") return ["item"]
-            const lines = s.split("\n")
-            const result: Record<string, string> = {}
-            for (const line of lines) {
-                const m = line.match(/^(\w+):\s*(.+)$/)
-                if (m) result[m[1]] = m[2].trim()
-            }
-            return result
-        },
-    },
-}))
-
+import {describe, test, expect} from "vitest"
 import {parseImportYaml} from "../../../src/utils/importYamlUtils"
 
 describe("parseImportYaml", () => {
@@ -28,27 +11,50 @@ describe("parseImportYaml", () => {
         expect(result.parseMessage).toBeUndefined()
     })
 
-    test("returns parse_error code when YAML fails to parse, with raw message", () => {
-        // Given / When
-        const result = parseImportYaml("bad: {{{")
+    test("returns parse_error code with the parser's own message on malformed YAML", () => {
+        // Given — an unclosed flow mapping the real parser rejects
+        const result = parseImportYaml("id: my-flow\ntasks: {unclosed")
 
         // Then
         expect(result.errorCode).toBe("parse_error")
-        expect(result.parseMessage).toContain("YAML parse error")
+        expect(result.parseMessage).toBeTruthy()
     })
 
-    test("returns invalid_mapping error code for non-mapping YAML (list)", () => {
+    test("returns parse_error code on duplicate keys", () => {
         // Given / When
-        const result = parseImportYaml("- item")
+        const result = parseImportYaml("id: a\nid: b")
+
+        // Then
+        expect(result.errorCode).toBe("parse_error")
+    })
+
+    test("returns invalid_mapping error code for a top-level list", () => {
+        // Given / When
+        const result = parseImportYaml("- id: my-flow\n- id: other")
 
         // Then
         expect(result.errorCode).toBe("invalid_mapping")
         expect(result.parseMessage).toBeUndefined()
     })
 
-    test("extracts id and namespace from a valid flow mapping without error", () => {
+    test("returns invalid_mapping error code for a top-level scalar", () => {
+        // Given / When
+        const result = parseImportYaml("just a string")
+
+        // Then
+        expect(result.errorCode).toBe("invalid_mapping")
+    })
+
+    test("extracts id and namespace from a real flow definition", () => {
         // Given
-        const yaml = "id: my-flow\nnamespace: company.team"
+        const yaml = `id: my-flow
+namespace: company.team
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World!
+`
 
         // When
         const result = parseImportYaml(yaml)
@@ -59,12 +65,26 @@ describe("parseImportYaml", () => {
         expect(result.namespace).toBe("company.team")
     })
 
-    test("returns undefined id and namespace when absent from mapping", () => {
+    test("returns undefined id and namespace for a fragment that omits them", () => {
         // Given
-        const yaml = "tasks: some-value"
+        const yaml = `tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World!
+`
 
         // When
         const result = parseImportYaml(yaml)
+
+        // Then
+        expect(result.errorCode).toBeUndefined()
+        expect(result.id).toBeUndefined()
+        expect(result.namespace).toBeUndefined()
+    })
+
+    test("ignores a non-string id or namespace", () => {
+        // Given / When
+        const result = parseImportYaml("id: 42\nnamespace:\n  nested: true\n")
 
         // Then
         expect(result.errorCode).toBeUndefined()

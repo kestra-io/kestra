@@ -1,6 +1,6 @@
 import {flowYamlUtils} from "@kestra-io/topology"
 
-export type ImportErrorCode = "empty" | "invalid_mapping" | "parse_error"
+export type ImportErrorCode = "empty" | "invalid_mapping" | "parse_error" | "too_large"
 
 export interface ParseImportResult {
     errorCode?: ImportErrorCode

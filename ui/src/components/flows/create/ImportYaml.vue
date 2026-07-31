@@ -96,8 +96,15 @@
     const errorCode = ref<ImportErrorCode | null>(null)
     const parseMessage = ref<string | null>(null)
 
+    const MAX_UPLOAD_BYTES = 1024 * 1024
+
     const handleFileChange = async (file: {raw: File}) => {
         if (!file?.raw) return
+        if (file.raw.size > MAX_UPLOAD_BYTES) {
+            errorCode.value = "too_large"
+            parseMessage.value = null
+            return
+        }
         try {
             const text = await file.raw.text()
             yamlContent.value = text

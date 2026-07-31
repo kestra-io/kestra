@@ -91,7 +91,6 @@ export function useHelpers() {
                 title: t("recipe.section_title"),
                 component: SystemBlueprintsTab,
                 props: {namespace: namespace.value},
-                blueprintDetail: true,
             },
         ]
             : []),

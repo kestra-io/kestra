@@ -116,6 +116,7 @@ tasks:
             flowYaml = flowStore.flow.source
         } else if (importYaml) {
             flowYaml = importYaml
+            shouldApplyGeneratedMetadata = true
         } else if (recipePresetFlow) {
             flowYaml = recipePresetFlow
             sessionStorage.removeItem(RECIPE_PRESET_KEY)
@@ -163,14 +164,14 @@ tasks:
     }
 
     const handleLandingProceed = async ({id, namespace}: {id: string; namespace: string}) => {
-        showLanding.value = false
         await setupFlow(id, namespace)
+        showLanding.value = false
     }
 
     const handleImportSubmit = async ({yaml}: {yaml: string}) => {
-        showLanding.value = false
-        showImport.value = false
         await setupFlow(undefined, undefined, yaml)
+        showImport.value = false
+        showLanding.value = false
     }
 
     const routeInfo = computed(() => {

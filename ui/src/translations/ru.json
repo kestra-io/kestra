@@ -107,6 +107,12 @@
     "total_duration": "Общая продолжительность",
     "running duration": "Время выполнения",
     "queued duration": "Время в очереди",
+    "executionProgress": {
+        "title": "Прогресс выполнения",
+        "estimatedRemaining": "Осталось примерно: {duration}",
+        "noBaseline": "Нет исторических данных — невозможно оценить оставшееся время",
+        "pastEstimate": "Выполнение занимает больше времени, чем обычно"
+    },
     "choose file": "Выберите файл или перетащите его сюда...",
     "launch execution": "Выполнить",
     "warning flow with triggers": "Этот flow содержит triggers, и ручное выполнение завершится неудачей, если этот flow зависит от trigger выражений.",

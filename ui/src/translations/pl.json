@@ -107,6 +107,12 @@
     "total_duration": "Całkowity czas trwania",
     "running duration": "Czas trwania w trakcie działania",
     "queued duration": "Czas trwania w kolejce",
+    "executionProgress": {
+        "title": "Postęp wykonania",
+        "estimatedRemaining": "Szacowany pozostały czas: {duration}",
+        "noBaseline": "Brak danych historycznych — nie można oszacować pozostałego czasu",
+        "pastEstimate": "Wykonanie trwa dłużej niż zwykle"
+    },
     "choose file": "Wybierz plik lub upuść go tutaj...",
     "launch execution": "Wykonaj",
     "warning flow with triggers": "Ten flow zawiera triggery i ręczne wykonanie zakończy się niepowodzeniem, jeśli ten flow zależy od wyrażeń trigger.",

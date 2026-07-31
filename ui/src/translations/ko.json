@@ -107,6 +107,12 @@
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
     "queued duration": "대기 중 지속 시간",
+    "executionProgress": {
+        "title": "실행 진행률",
+        "estimatedRemaining": "예상 남은 시간: {duration}",
+        "noBaseline": "이력 데이터가 없어 남은 시간을 추정할 수 없습니다",
+        "pastEstimate": "평소보다 오래 실행되고 있습니다"
+    },
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
     "launch execution": "실행",
     "warning flow with triggers": "이 flow는 triggers를 포함하고 있으며, 이 flow가 trigger expressions에 의존하는 경우 수동 실행이 실패합니다. 해당 Flow는 Trigger를 포함하고 있으며,  Trigger Expression을 의존하는 경우 수동 실행이 실패할 수 있습니다. ",

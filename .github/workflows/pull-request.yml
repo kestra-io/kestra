@@ -14,12 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout  # required so the local composite action below can resolve
-      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
+      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]' }}
       uses: actions/checkout@v7
 
+      # Dependabot PRs are not forks, but GitHub still withholds repo secrets from
+      # workflow runs it triggers, so create-github-app-token would fail with an
+      # empty app-id. Skip this and the dependent steps below for Dependabot.
     - name: Generate GitHub App token for kestra-ee dispatch
       id: ee-token
-      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
+      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]' }}
       uses: actions/create-github-app-token@v3
       with:
         app-id: ${{ secrets.GH_BOT_APP_ID }}
@@ -33,7 +36,8 @@ jobs:
     - name: EE compile check (via Kestra webhook)
       if: ${{ github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
-        && github.event.pull_request.head.repo.fork == false }}
+        && github.event.pull_request.head.repo.fork == false
+        && github.actor != 'dependabot[bot]' }}
       uses: ./.github/actions/ee-compile-check
       with:
         webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
@@ -42,12 +46,13 @@ jobs:
         pr-number: ${{ github.event.pull_request.number }}
         pr-repo: ${{ github.repository }}
 
-      # Always trigger EE OpenAPI check on non-fork PRs
+      # Always trigger EE OpenAPI check on non-fork, non-Dependabot PRs
     - name: Trigger EE OpenAPI spec check
       uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
       if: ${{ github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
-        && github.event.pull_request.head.repo.fork == false }}
+        && github.event.pull_request.head.repo.fork == false
+        && github.actor != 'dependabot[bot]' }}
       with:
         token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee

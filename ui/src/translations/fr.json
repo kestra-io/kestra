@@ -430,6 +430,13 @@
       "dialog_title": "Limites de Concurrence",
       "warning": "Modifier le compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
     },
+    "flowConcurrency": {
+      "loadError": "Impossible de charger la limite de concurrence de ce flow.",
+      "staleLimit": {
+        "message": "Ce flow ne déclare plus de bloc de concurrence, mais un enregistrement de limite compte encore {count} exécution(s) en cours. Il n'affecte plus les nouvelles exécutions et peut être réinitialisé depuis Administration → Limites de Concurrence.",
+        "title": "Limite de concurrence résiduelle"
+      }
+    },
     "documentation": {
       "documentation": "Documentation",
       "github": "Bugs GitHub"

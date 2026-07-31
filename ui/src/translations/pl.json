@@ -430,6 +430,13 @@
       "dialog_title": "Limity Równoczesności",
       "warning": "Zmiana bieżącego licznika może uszkodzić współbieżność, co może spowodować przekroczenie dozwolonego limitu przez wykonania."
     },
+    "flowConcurrency": {
+      "loadError": "Nie udało się wczytać limitu współbieżności tego flow.",
+      "staleLimit": {
+        "message": "Ten flow nie deklaruje już bloku współbieżności, ale rekord limitu wciąż zlicza {count} trwających wykonań. Nie wpływa już na nowe wykonania i można go zresetować w Administracja → Limity współbieżności.",
+        "title": "Pozostały limit współbieżności"
+      }
+    },
     "documentation": {
       "documentation": "Dokumentacja",
       "github": "Otwórz problem na GitHub"

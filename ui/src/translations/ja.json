@@ -430,6 +430,13 @@
       "dialog_title": "同時実行制限",
       "warning": "実行中のカウンターを変更すると、並行性が損なわれ、実行が許可された制限を超える可能性があります。"
     },
+    "flowConcurrency": {
+      "loadError": "この flow の同時実行制限を読み込めませんでした。",
+      "staleLimit": {
+        "message": "この flow は同時実行ブロックを宣言しなくなりましたが、制限レコードは依然として {count} 件の実行中の実行をカウントしています。新しい実行には影響しませんが、管理 → 同時実行制限からリセットできます。",
+        "title": "残存している同時実行制限"
+      }
+    },
     "documentation": {
       "documentation": "ドキュメント",
       "github": "GitHub issueを開く"

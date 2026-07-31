@@ -430,6 +430,13 @@
       "dialog_title": "并发限制",
       "warning": "更改运行计数器可能会破坏并发性，因此执行可能会超出允许的限制。"
     },
+    "flowConcurrency": {
+      "loadError": "无法加载此 flow 的并发限制。",
+      "staleLimit": {
+        "message": "此 flow 不再声明并发块，但限制记录仍在统计 {count} 个正在运行的执行。它不再影响新的执行，可从管理 → 并发限制中重置。",
+        "title": "残留的并发限制"
+      }
+    },
     "documentation": {
       "documentation": "文档",
       "github": "打开一个GitHub问题"

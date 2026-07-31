@@ -430,6 +430,13 @@
       "dialog_title": "동시성 제한",
       "warning": "실행 중인 카운터를 변경하면 동시성이 손상되어 실행이 허용된 한도를 초과할 수 있습니다."
     },
+    "flowConcurrency": {
+      "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
+      "staleLimit": {
+        "message": "이 flow는 더 이상 동시성 블록을 선언하지 않지만, 제한 레코드가 여전히 실행 중인 실행 {count}개를 세고 있습니다. 새 실행에는 영향을 주지 않으며 관리 → 동시성 제한에서 초기화할 수 있습니다.",
+        "title": "남아 있는 동시성 제한"
+      }
+    },
     "documentation": {
       "documentation": "문서",
       "github": "GitHub 이슈 열기"

@@ -430,6 +430,13 @@
       "dialog_title": "Nebenläufigkeitsgrenzen",
       "warning": "Das Ändern des laufenden Zählers kann die Nebenläufigkeit beeinträchtigen, sodass Ausführungen das erlaubte Limit überschreiten können."
     },
+    "flowConcurrency": {
+      "loadError": "Das Nebenläufigkeitslimit dieses flow konnte nicht geladen werden.",
+      "staleLimit": {
+        "message": "Dieser flow deklariert keinen Nebenläufigkeitsblock mehr, aber ein Limit-Eintrag zählt weiterhin {count} laufende Ausführung(en). Er wirkt sich nicht mehr auf neue Ausführungen aus und kann unter Administration → Nebenläufigkeitsgrenzen zurückgesetzt werden.",
+        "title": "Übrig gebliebenes Nebenläufigkeitslimit"
+      }
+    },
     "documentation": {
       "documentation": "Dokumentation",
       "github": "GitHub-Issue öffnen"

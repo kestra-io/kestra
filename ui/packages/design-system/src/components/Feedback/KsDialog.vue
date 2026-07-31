@@ -2,7 +2,7 @@
     <ElDialog
         v-model="model"
         :width="resolvedWidth"
-        :class="{'is-form-layout': formLayout}"
+        :class="{'is-form-layout': formLayout, 'is-fill': fill}"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @close="emit('close')"
     >
@@ -38,6 +38,8 @@
         width?: string | number
         large?: boolean
         formLayout?: boolean
+        /** Cap the dialog to the viewport so its own body scrolls instead of the overlay dragging the whole dialog around. */
+        fill?: boolean
         top?: string
         beforeClose?: (done: () => void) => void
     }>(), {
@@ -49,6 +51,7 @@
         width: undefined,
         large: false,
         formLayout: false,
+        fill: false,
         top: undefined,
         beforeClose: undefined,
     })
@@ -65,7 +68,7 @@
         footer?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout"])
+    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout", "fill"])
 </script>
 
 <style lang="scss">
@@ -115,6 +118,23 @@
             background-color: var(--ks-bg-base);
             border-bottom-left-radius: var(--ks-radius-xl);
             border-bottom-right-radius: var(--ks-radius-xl);
+        }
+
+        &.is-fill {
+            --kel-dialog-fill-gutter: 2vh;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - var(--kel-dialog-margin-top, 15vh) - var(--kel-dialog-fill-gutter));
+            margin-bottom: var(--kel-dialog-fill-gutter);
+            overflow: hidden;
+
+            .kel-dialog__body {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+            }
         }
 
         &.is-form-layout form {

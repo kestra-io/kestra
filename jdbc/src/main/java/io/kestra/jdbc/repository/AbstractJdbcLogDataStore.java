@@ -10,8 +10,11 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -35,14 +38,42 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
+import lombok.Setter;
 import reactor.core.publisher.Flux;
 
 public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
     private static final String DATE_COLUMN = "timestamp";
+
+    @Schema(title = "JDBC URL of a dedicated logs database; leave unset to keep logs in the main backend.")
+    @PluginProperty
+    @Getter
+    @Setter
+    private String url;
+
+    @Schema(title = "Username for the dedicated logs database.")
+    @PluginProperty
+    @Getter
+    @Setter
+    private String username;
+
+    @Schema(title = "Password for the dedicated logs database.")
+    @PluginProperty(hidden = true)
+    @Getter
+    @Setter
+    private String password;
+
+    // Named 'tableName' (mapped to the 'table' key) so its getter doesn't clash with the inherited jOOQ getTable().
+    @Schema(title = "Name of the log table in the dedicated logs database (defaults to 'logs').")
+    @PluginProperty
+    @JsonProperty("table")
+    @Getter
+    @Setter
+    private String tableName;
 
     public AbstractJdbcLogDataStore(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
         super(jdbcRepository);

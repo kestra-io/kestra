@@ -294,6 +294,17 @@
         }
         lastSpotlightKey = key
 
+        // A column of cells is one area the card talks about, so it gets one ring instead of a ring
+        // per row. Paired controls, which is what the other steps match, keep one each.
+        const rings = rects.length > 2
+            ? [{top: px(top), left: px(left), width: px(right - left), height: px(bottom - top)}]
+            : rects.map((rect) => ({
+                top: px(rect.top - RING_PADDING),
+                left: px(rect.left - RING_PADDING),
+                width: px(rect.width + RING_PADDING * 2),
+                height: px(rect.height + RING_PADDING * 2),
+            }))
+
         spotlight.value = {
             scrim: {
                 top: {top: "0", left: "0", right: "0", height: px(top)},
@@ -301,12 +312,7 @@
                 left: {top: px(top), left: "0", width: px(left), height: px(bottom - top)},
                 right: {top: px(top), left: px(right), right: "0", height: px(bottom - top)},
             },
-            rings: rects.map((rect) => ({
-                top: px(rect.top - RING_PADDING),
-                left: px(rect.left - RING_PADDING),
-                width: px(rect.width + RING_PADDING * 2),
-                height: px(rect.height + RING_PADDING * 2),
-            })),
+            rings,
         }
     }
 

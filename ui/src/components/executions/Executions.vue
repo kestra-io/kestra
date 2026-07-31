@@ -173,6 +173,8 @@
                 :key="col.prop"
                 :prop="col.prop"
                 :label="col.label"
+                :className="columnClassName(col.prop)"
+                :labelClassName="columnClassName(col.prop)"
                 :class="col.prop === 'flowRevision' ? 'shrink' : ''"
                 :align="col.prop === 'inputs' ? 'center' : undefined"
                 :sortable="isColumnSortable(col.prop) ? 'custom' : false"
@@ -742,6 +744,12 @@
             {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
         ]
     })
+
+    /**
+     * A column of the table can only be found from the outside by the class name it puts on its
+     * cells, and the last step of the product tour points at the labels of these executions.
+     */
+    const columnClassName = (prop: string) => (prop === "labels" ? "execution-labels-column" : undefined)
 
     const filteredLabels = (labels: any[]) => {
         const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []

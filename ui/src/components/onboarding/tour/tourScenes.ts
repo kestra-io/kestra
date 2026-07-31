@@ -89,8 +89,13 @@ const REPLAYED_TASK = `.task-details, ${GANTT}`
 // The diff itself, with the revision selectors as the fallback until it has rendered.
 const REVISION_DIFF = ".revision .ks-editor, .revision-select"
 const TEST_EVENT_BUTTON = "[data-onboarding-target=\"trigger-test-event-button\"]"
-// The whole tab, which is what the card describes, with the debugger's button as the fallback.
-const EXECUTION_CONTEXT = ".variable-explorer, .expression-debugger .button"
+/*
+ * The card asks for one click, so only the button gets the ring. The tab around it is the fallback
+ * until the debugger panel has rendered.
+ */
+const EXECUTION_CONTEXT = ".expression-debugger .button, .variable-explorer"
+// Set by Executions.vue on the header and the cells of the labels column.
+const EXECUTION_LABELS = ".execution-labels-column"
 
 export const TOUR_SCENES: TourScene[] = [
     {
@@ -307,6 +312,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "chain",
         step: 4,
+        targetSelector: EXECUTION_LABELS,
         milestone: true,
         confetti: true,
         enter: ({actions}) => actions.openExecutionsList(),

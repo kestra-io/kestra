@@ -1,5 +1,5 @@
 import {expect, test} from "./fixtures/auth"
-import {CHAT, disableProductTour, openCopilotDock, resetCopilotChat, sse, stubThreadCreation} from "./fixtures/copilot"
+import {CHAT, disableProductTour, ensureCopilotHost, openCopilotDock, resetCopilotChat, sse, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * End-to-end coverage for the AI Copilot chat drawer.
@@ -35,11 +35,7 @@ test.describe("AI Copilot", () => {
         await stubThreadCreation(page, THREAD)
         await disableProductTour(page)
 
-        // The worker's shared page boots the SPA once; every later test reuses it live
-        // (about:blank on the worker's first test, an in-app route afterwards).
-        if (!page.url().includes("/ui")) {
-            await page.goto("/ui")
-        }
+        await ensureCopilotHost(page)
         await openCopilotDock(page)
         await resetCopilotChat(page)
     })

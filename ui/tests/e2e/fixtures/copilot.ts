@@ -66,3 +66,19 @@ export async function resetCopilotChat(page: Page) {
         await expect(newChat).toBeDisabled()
     }
 }
+
+/**
+ * Parks the worker-shared page somewhere the copilot specs can run from: boots the
+ * SPA on the worker's first test (about:blank), and re-boots when the previous test
+ * left the page on an editor route (`…/new`, `…/edit/…`). Editor routes can hold
+ * unsaved draft content — e.g. the draft-accept tests land on `…/new?sourceYaml=…` —
+ * and the unsaved-changes router guard would block any client-side navigation away
+ * from them with an in-DOM confirm. A hard navigation bypasses that guard; the
+ * shared-page fixture auto-accepts the native beforeunload confirm it raises instead.
+ */
+export async function ensureCopilotHost(page: Page) {
+    const url = page.url()
+    if (!url.includes("/ui") || url.includes("/edit/") || /\/new([/?#]|$)/.test(url)) {
+        await page.goto("/ui")
+    }
+}

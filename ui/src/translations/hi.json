@@ -23,7 +23,8 @@
         "error": {
           "empty": "YAML सामग्री खाली है।",
           "invalid_mapping": "अमान्य flow YAML: key-value mapping अपेक्षित था, list या scalar नहीं।",
-          "parse_error": "YAML को parse नहीं किया जा सका।"
+          "parse_error": "YAML को parse नहीं किया जा सका।",
+          "too_large": "यह फ़ाइल बहुत बड़ी है। flow परिभाषा चिपकाएँ, या 1 MB से छोटी फ़ाइल अपलोड करें।"
         },
         "paste_label": "YAML पेस्ट करें",
         "read_error": "फ़ाइल नहीं पढ़ी जा सकी।",
@@ -43,7 +44,6 @@
       "title": "नया flow बनाएं"
     },
     "recipe": {
-      "blueprints_section_title": "या एक blueprint से शुरू करें",
       "create_flow": "flow बनाएं",
       "email": "ईमेल",
       "execution": {
@@ -105,14 +105,14 @@
         "selected_trigger": "चयनित",
         "title": "सारांश",
         "webhook": "जब webhook प्राप्त हो, {channels} के माध्यम से सूचित करें।",
-        "yaml_preview": "YAML पूर्वावलोकन",
         "preview_title": "पूर्वावलोकन",
         "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "कम से कम एक नोटिफिकेशन चैनल चुनें।",
         "subtitle": "चुनें कि अपनी टीम को कैसे सूचित करें।",
-        "title": "तब सूचित करें"
+        "title": "तब सूचित करें",
+        "unavailable_channels_warning": "{channels} छोड़ दिया जाएगा: इस trigger प्रकार के लिए plugin स्थापित नहीं है।"
       },
       "trigger": {
         "case_sub": "केवल EE सुविधा",

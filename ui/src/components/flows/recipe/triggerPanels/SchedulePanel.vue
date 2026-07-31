@@ -12,7 +12,7 @@
             <KsInput
                 v-model="recipe.cron"
                 class="cron-input"
-                placeholder="0 9 * * *"
+                :placeholder="DEFAULT_CRON"
                 data-test="recipe-cron-input"
             />
             <span v-if="cronHint" class="hint">{{ cronHint }}</span>
@@ -27,7 +27,7 @@
                 data-test="recipe-timezone-select"
             >
                 <KsOption
-                    v-for="tz in commonTimezones"
+                    v-for="tz in timezones"
                     :key="tz"
                     :label="tz"
                     :value="tz"
@@ -41,6 +41,8 @@
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import type {RecipeState} from "../../../../composables/useFlowRecipe"
+    import {DEFAULT_CRON} from "../../../../utils/recipeToYaml"
+    import {timeZones} from "../../../../utils/timeZones"
 
     const props = defineProps<{
         recipe: RecipeState
@@ -49,7 +51,7 @@
     const {t} = useI18n()
 
     const FREQUENCY_CRONS: Record<string, string> = {
-        daily: "0 9 * * *",
+        daily: DEFAULT_CRON,
         hourly: "0 * * * *",
         weekly: "0 9 * * 1",
     }
@@ -84,17 +86,7 @@
         return hints[selectedFrequency.value] ?? ""
     })
 
-    const commonTimezones = [
-        "UTC",
-        "Europe/Paris",
-        "Europe/London",
-        "America/New_York",
-        "America/Chicago",
-        "America/Los_Angeles",
-        "Asia/Tokyo",
-        "Asia/Shanghai",
-        "Australia/Sydney",
-    ]
+    const timezones = timeZones()
 </script>
 
 <style scoped lang="scss">

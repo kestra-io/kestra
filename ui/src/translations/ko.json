@@ -23,7 +23,8 @@
         "error": {
           "empty": "YAML 콘텐츠가 비어 있습니다.",
           "invalid_mapping": "유효하지 않은 flow YAML: 목록이나 스칼라가 아닌 키-값 매핑이 필요합니다.",
-          "parse_error": "YAML을 파싱할 수 없습니다."
+          "parse_error": "YAML을 파싱할 수 없습니다.",
+          "too_large": "파일이 너무 큽니다. flow 정의를 붙여넣거나 1 MB 미만 파일을 업로드하세요."
         },
         "paste_label": "YAML 붙여넣기",
         "read_error": "파일을 읽을 수 없습니다.",
@@ -43,7 +44,6 @@
       "title": "새 flow 만들기"
     },
     "recipe": {
-      "blueprints_section_title": "또는 blueprint에서 시작",
       "create_flow": "flow 생성",
       "email": "이메일",
       "execution": {
@@ -105,14 +105,14 @@
         "selected_trigger": "선택한",
         "title": "요약",
         "webhook": "webhook을 수신하면 {channels}를 통해 알림을 보냅니다.",
-        "yaml_preview": "YAML 미리보기",
         "preview_title": "미리보기",
         "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "최소 하나의 알림 채널을 선택하세요.",
         "subtitle": "팀에 알림을 보내는 방법을 선택하세요.",
-        "title": "그러면 알림"
+        "title": "그러면 알림",
+        "unavailable_channels_warning": "{channels}는 제외됩니다. 이 trigger 유형에 필요한 plugin이 설치되지 않았습니다."
       },
       "trigger": {
         "case_sub": "EE 전용 기능",

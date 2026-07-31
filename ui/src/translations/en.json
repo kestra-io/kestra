@@ -23,7 +23,8 @@
         "error": {
           "empty": "YAML content is empty.",
           "invalid_mapping": "Invalid flow YAML: expected a key-value mapping, not a list or scalar.",
-          "parse_error": "Could not parse YAML."
+          "parse_error": "Could not parse YAML.",
+          "too_large": "That file is too large. Paste the flow definition instead, or upload a file under 1 MB."
         },
         "paste_label": "Paste YAML",
         "read_error": "Could not read the file.",
@@ -43,7 +44,6 @@
       "title": "Create a new flow"
     },
     "recipe": {
-      "blueprints_section_title": "Or start from a blueprint",
       "create_flow": "Create flow",
       "email": "Email",
       "execution": {
@@ -105,14 +105,14 @@
         "selected_trigger": "selected",
         "title": "Summary",
         "webhook": "When a webhook is received, notify via {channels}.",
-        "yaml_preview": "Preview YAML",
         "preview_title": "Preview",
         "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "Select at least one notification channel.",
         "subtitle": "Select how to notify your team.",
-        "title": "Then notify"
+        "title": "Then notify",
+        "unavailable_channels_warning": "{channels} will be left out: the plugin is not installed for this trigger type."
       },
       "trigger": {
         "case_sub": "EE only feature",

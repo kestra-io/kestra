@@ -23,7 +23,8 @@
         "error": {
           "empty": "Il contenuto YAML è vuoto.",
           "invalid_mapping": "YAML del flow non valido: atteso un mapping chiave-valore, non una lista o scalare.",
-          "parse_error": "Impossibile analizzare il YAML."
+          "parse_error": "Impossibile analizzare il YAML.",
+          "too_large": "Il file è troppo grande. Incolla la definizione del flow o carica un file sotto 1 MB."
         },
         "paste_label": "Incolla YAML",
         "read_error": "Impossibile leggere il file.",
@@ -43,7 +44,6 @@
       "title": "Crea un nuovo flow"
     },
     "recipe": {
-      "blueprints_section_title": "O inizia da un blueprint",
       "create_flow": "Crea flow",
       "email": "E-mail",
       "execution": {
@@ -105,14 +105,14 @@
         "selected_trigger": "selezionato",
         "title": "Riepilogo",
         "webhook": "Quando viene ricevuto un webhook, notifica tramite {channels}.",
-        "yaml_preview": "Anteprima YAML",
         "preview_title": "Anteprima",
         "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "Seleziona almeno un canale di notifica.",
         "subtitle": "Seleziona come notificare il tuo team.",
-        "title": "Allora notifica"
+        "title": "Allora notifica",
+        "unavailable_channels_warning": "{channels} verrà escluso: il plugin non è installato per questo tipo di trigger."
       },
       "trigger": {
         "case_sub": "Funzionalità solo EE",

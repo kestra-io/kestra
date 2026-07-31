@@ -23,7 +23,8 @@
         "error": {
           "empty": "YAML-Inhalt ist leer.",
           "invalid_mapping": "Ungültiges flow-YAML: erwartet eine Schlüssel-Wert-Zuordnung, keine Liste oder skalaren Wert.",
-          "parse_error": "YAML konnte nicht verarbeitet werden."
+          "parse_error": "YAML konnte nicht verarbeitet werden.",
+          "too_large": "Diese Datei ist zu groß. Fügen Sie die flow-Definition ein oder laden Sie eine Datei unter 1 MB hoch."
         },
         "paste_label": "YAML einfügen",
         "read_error": "Die Datei konnte nicht gelesen werden.",
@@ -43,7 +44,6 @@
       "title": "Neuen flow erstellen"
     },
     "recipe": {
-      "blueprints_section_title": "Oder beginnen Sie mit einem Blueprint",
       "create_flow": "Flow erstellen",
       "email": "E-Mail",
       "execution": {
@@ -105,14 +105,14 @@
         "selected_trigger": "ausgewählte",
         "title": "Zusammenfassung",
         "webhook": "Wenn ein Webhook empfangen wird, benachrichtige via {channels}.",
-        "yaml_preview": "YAML-Vorschau",
         "preview_title": "Vorschau",
         "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "Wählen Sie mindestens einen Benachrichtigungskanal.",
         "subtitle": "Wählen Sie, wie Sie Ihr Team benachrichtigen möchten.",
-        "title": "Dann benachrichtigen"
+        "title": "Dann benachrichtigen",
+        "unavailable_channels_warning": "{channels} wird ausgelassen: das Plugin ist für diesen trigger-Typ nicht installiert."
       },
       "trigger": {
         "case_sub": "Nur in EE verfügbar",

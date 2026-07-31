@@ -23,7 +23,8 @@
         "error": {
           "empty": "YAMLコンテンツが空です。",
           "invalid_mapping": "flow YAMLが無効です: リストやスカラーではなく、キーと値のマッピングが必要です。",
-          "parse_error": "YAMLを解析できませんでした。"
+          "parse_error": "YAMLを解析できませんでした。",
+          "too_large": "ファイルが大きすぎます。flow 定義を貼り付けるか、1 MB 未満のファイルをアップロードしてください。"
         },
         "paste_label": "YAMLを貼り付け",
         "read_error": "ファイルを読み込めませんでした。",
@@ -43,7 +44,6 @@
       "title": "新しいflowを作成"
     },
     "recipe": {
-      "blueprints_section_title": "またはblueprintから開始する",
       "create_flow": "flowを作成",
       "email": "メール",
       "execution": {
@@ -105,14 +105,14 @@
         "selected_trigger": "選択した",
         "title": "サマリー",
         "webhook": "webhookを受信したとき、{channels} で通知します。",
-        "yaml_preview": "YAMLプレビュー",
         "preview_title": "プレビュー",
         "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "少なくとも1つの通知チャンネルを選択してください。",
         "subtitle": "チームへの通知方法を選択します。",
-        "title": "そのとき通知する"
+        "title": "そのとき通知する",
+        "unavailable_channels_warning": "{channels} は除外されます。この trigger タイプ用の plugin がインストールされていません。"
       },
       "trigger": {
         "case_sub": "EE専用機能",

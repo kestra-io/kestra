@@ -23,7 +23,8 @@
         "error": {
           "empty": "YAML 内容为空。",
           "invalid_mapping": "无效的 flow YAML：需要键值映射，而非列表或标量。",
-          "parse_error": "无法解析 YAML。"
+          "parse_error": "无法解析 YAML。",
+          "too_large": "文件过大。请粘贴 flow 定义，或上传小于 1 MB 的文件。"
         },
         "paste_label": "粘贴 YAML",
         "read_error": "无法读取文件。",
@@ -43,7 +44,6 @@
       "title": "创建新 flow"
     },
     "recipe": {
-      "blueprints_section_title": "或从blueprint开始",
       "create_flow": "创建flow",
       "email": "电子邮件",
       "execution": {
@@ -105,14 +105,14 @@
         "selected_trigger": "所选",
         "title": "摘要",
         "webhook": "收到webhook时，通过{channels}通知。",
-        "yaml_preview": "YAML预览",
         "preview_title": "预览",
         "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "请至少选择一个通知渠道。",
         "subtitle": "选择通知团队的方式。",
-        "title": "则进行通知"
+        "title": "则进行通知",
+        "unavailable_channels_warning": "{channels} 将被跳过：该 trigger 类型所需的 plugin 未安装。"
       },
       "trigger": {
         "case_sub": "仅EE功能",

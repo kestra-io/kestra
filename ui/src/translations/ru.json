@@ -23,7 +23,8 @@
         "error": {
           "empty": "Содержимое YAML пустое.",
           "invalid_mapping": "Недействительный YAML flow: ожидалось отображение ключ-значение, а не список или скаляр.",
-          "parse_error": "Не удалось разобрать YAML."
+          "parse_error": "Не удалось разобрать YAML.",
+          "too_large": "Этот файл слишком большой. Вставьте определение flow или загрузите файл меньше 1 МБ."
         },
         "paste_label": "Вставить YAML",
         "read_error": "Не удалось прочитать файл.",
@@ -43,7 +44,6 @@
       "title": "Создать новый flow"
     },
     "recipe": {
-      "blueprints_section_title": "Или начните с blueprint",
       "create_flow": "Создать flow",
       "email": "Электронная почта",
       "execution": {
@@ -105,14 +105,14 @@
         "selected_trigger": "выбранный",
         "title": "Сводка",
         "webhook": "При получении webhook, уведомить через {channels}.",
-        "yaml_preview": "Предварительный просмотр YAML",
         "preview_title": "Предпросмотр",
         "live": "LIVE"
       },
       "then": {
         "no_channel_warning": "Выберите хотя бы один канал уведомлений.",
         "subtitle": "Выберите способ уведомления команды.",
-        "title": "Тогда уведомить"
+        "title": "Тогда уведомить",
+        "unavailable_channels_warning": "{channels} будет пропущен: plugin не установлен для этого типа trigger."
       },
       "trigger": {
         "case_sub": "Только функция EE",

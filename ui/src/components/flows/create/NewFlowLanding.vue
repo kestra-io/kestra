@@ -144,10 +144,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue"
+    import {ref, computed} from "vue"
     import {useRoute} from "vue-router"
     import {useMiscStore} from "override/stores/misc"
-    import useNamespaces from "../../../composables/useNamespaces"
+    import {useNamespaceOptions} from "../../../composables/useNamespaceOptions"
     import {isValidFlowId, isValidNamespace} from "../../../utils/flowIdentifiers"
     import Plus from "vue-material-design-icons/Plus.vue"
     import ViewGridOutline from "vue-material-design-icons/ViewGridOutline.vue"
@@ -167,26 +167,16 @@
 
     const flowId = ref("")
     const selectedNamespace = ref((route.query.namespace as string) ?? "")
-    const fetchedNamespaces = ref<string[]>([])
-    const namespacesError = ref(false)
-    const namespacesLoading = ref(false)
+    const {
+        namespaces: fetchedNamespaces,
+        loading: namespacesLoading,
+        error: namespacesError,
+    } = useNamespaceOptions()
 
     const namespaceOptions = computed(() => {
         const selected = selectedNamespace.value
         if (!selected || fetchedNamespaces.value.includes(selected)) return fetchedNamespaces.value
         return [selected, ...fetchedNamespaces.value]
-    })
-
-    onMounted(async () => {
-        namespacesLoading.value = true
-        try {
-            const ns = await useNamespaces(500).all()
-            fetchedNamespaces.value = ns.map(n => n.id)
-        } catch {
-            namespacesError.value = true
-        } finally {
-            namespacesLoading.value = false
-        }
     })
 
     const flowIdInvalid = computed(() => Boolean(flowId.value) && !isValidFlowId(flowId.value))

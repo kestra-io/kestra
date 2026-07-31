@@ -5,7 +5,6 @@ const PARAM_DRIVEN_QUERY_KEYS = [
     "blueprintSource",
     "blueprintSourceYaml",
     "copy",
-    "onboarding",
     "onboardingPreset",
     "recipePreset",
     "ai",

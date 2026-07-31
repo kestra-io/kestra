@@ -15,7 +15,6 @@ describe("shouldShowLanding", () => {
         ["blueprintSource", "community"],
         ["blueprintSourceYaml", "id: x"],
         ["copy", "true"],
-        ["onboarding", "guided"],
         ["onboardingPreset", "true"],
         ["recipePreset", "true"],
         ["ai", "true"],

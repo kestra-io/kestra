@@ -179,16 +179,6 @@
                 </KsCard>
             </div>
         </template>
-        <OnboardingSuccessPopup
-            :modelValue="showOnboardingSuccessPopup"
-            :backdrop="false"
-            @update:modelValue="showOnboardingSuccessPopup = $event"
-        />
-        <SaveExecuteAnimation
-            :modelValue="showSaveExecuteAnimation"
-            @update:modelValue="showSaveExecuteAnimation = $event"
-            @finished="onSaveExecuteAnimationFinished"
-        />
     </template>
 </template>
 
@@ -234,8 +224,6 @@
     import ExecutionPending from "./ExecutionPending.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
-    import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
 
     interface TaskRun {
@@ -316,9 +304,6 @@
     const selectedTaskRunId = ref<string | undefined>(undefined)
     const regularPaintingInterval = ref<ReturnType<typeof setInterval> | undefined>(undefined)
     const expandedFromRoute = ref(false)
-    const showOnboardingSuccessPopup = ref(false)
-    const showSaveExecuteAnimation = ref(false)
-    const onboardingAnimationPlayed = ref(false)
 
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
     const {
@@ -631,30 +616,41 @@
         {immediate: true},
     )
 
+    /** `autoExpandGantt` route query: `true` (all), `failed`, or a comma-separated task id list. */
+    function applyAutoExpandFromRoute(currentExecution: any) {
+        const autoExpand = route.query.autoExpandGantt
+        if (typeof autoExpand !== "string" || !autoExpand) {
+            return
+        }
+        if (!currentExecution?.taskRunList || expandedFromRoute.value) {
+            return
+        }
+
+        const taskIds = autoExpand === "true" || autoExpand === "failed"
+            ? undefined
+            : autoExpand.split(",").map((id) => id.trim()).filter(Boolean)
+
+        const taskRuns = autoExpand === "failed"
+            ? currentExecution.taskRunList.filter((taskRun: any) => taskRun.state?.current === "FAILED")
+            : taskIds
+                ? currentExecution.taskRunList.filter((taskRun: any) => taskIds.includes(taskRun.taskId))
+                : currentExecution.taskRunList
+
+        if (taskRuns.length) {
+            selectedTaskRuns.value = taskRuns.map((taskRun: any) => taskRun.id)
+            expandedFromRoute.value = true
+        }
+    }
+
+    watch(() => route.query.autoExpandGantt,() => applyAutoExpandFromRoute(execution.value))
+
     watch(
         execution,
         (newExecution) => {
-            if (route.query.autoExpandGantt === "true" && newExecution?.taskRunList && !expandedFromRoute.value) {
-                selectedTaskRuns.value = newExecution.taskRunList.map(taskRun => taskRun.id)
-                expandedFromRoute.value = true
-            }
-
-            if (
-                route.query.onboardingSuccess === "true" &&
-                newExecution?.state?.current === "SUCCESS" &&
-                !onboardingAnimationPlayed.value
-            ) {
-                onboardingAnimationPlayed.value = true
-                showSaveExecuteAnimation.value = true
-                showOnboardingSuccessPopup.value = true
-            }
+            applyAutoExpandFromRoute(newExecution)
         },
         {immediate: true},
     )
-
-    function onSaveExecuteAnimationFinished() {
-        showOnboardingSuccessPopup.value = true
-    }
 
     onUnmounted(() => {
         clearInterval(regularPaintingInterval.value)

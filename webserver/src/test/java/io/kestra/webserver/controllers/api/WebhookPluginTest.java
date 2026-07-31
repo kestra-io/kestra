@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.Label;
 import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.core.services.WebhookService;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
@@ -50,6 +52,48 @@ public class WebhookPluginTest {
             MAIN_TENANT, TESTS_FLOW_NS, "webhook-plugin"
         );
         assertThat(((Map<String, String>) execution.getTrigger().getVariables().get("body")).get("test")).isEqualTo("data");
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-plugin.yaml")
+    void marksTestEventsAsSuch() {
+        var response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/%s/executions/webhook/io.kestra.tests/webhook-plugin/case1".formatted(MAIN_TENANT),
+                "{\"test\": \"data\"}"
+            ).header(WebhookService.TEST_EVENT_HEADER, "true"),
+            String.class
+        );
+
+        assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.OK);
+
+        var execution = runnerUtils.awaitFlowExecution(
+            e -> e.getTrigger() != null && e.getTrigger().getId().equals("webhook1"),
+            MAIN_TENANT, TESTS_FLOW_NS, "webhook-plugin"
+        );
+
+        assertThat(execution.getLabels()).contains(new Label(Label.FROM, "testEvent"));
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-plugin.yaml")
+    void marksRegularEventsAsComingFromATrigger() {
+        var response = client.toBlocking().exchange(
+            POST(
+                "/api/v1/%s/executions/webhook/io.kestra.tests/webhook-plugin/case1".formatted(MAIN_TENANT),
+                "{\"test\": \"data\"}"
+            ),
+            String.class
+        );
+
+        assertThat((Object) response.getStatus()).isEqualTo(HttpStatus.OK);
+
+        var execution = runnerUtils.awaitFlowExecution(
+            e -> e.getTrigger() != null && e.getTrigger().getId().equals("webhook1"),
+            MAIN_TENANT, TESTS_FLOW_NS, "webhook-plugin"
+        );
+
+        assertThat(execution.getLabels()).contains(new Label(Label.FROM, "trigger"));
     }
 
     @SuppressWarnings("unchecked")

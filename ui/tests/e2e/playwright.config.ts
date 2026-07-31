@@ -37,7 +37,7 @@ const config: PlaywrightTestConfig = {
     /* Retry on CI only. Kept low: a genuinely broken test costs a full run per retry. */
     retries: process.env.CI ? 2 : 0,
     /*
-     * The CI runner has 4 vCPUs and also hosts the Kestra JVM, Postgres and dind, so the
+     * The CI runner has 4 vCPUs and also hosts the Kestra JVM and Postgres, so the
      * browsers compete with the backend under test. Two is the sweet spot; more makes the
      * execution-heavy specs slower and flakier rather than faster.
      */

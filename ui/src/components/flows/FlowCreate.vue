@@ -28,7 +28,6 @@
     import {useMiscStore} from "override/stores/misc"
     import resource from "../../models/resource"
     import action from "../../models/action"
-    import {useOnboardingV2Store} from "../../stores/onboardingV2"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -36,7 +35,6 @@
     const blueprintsStore = useBlueprintsStore()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
-    const onboardingV2Store = useOnboardingV2Store()
     const miscStore = useMiscStore()
     const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset"
 
@@ -77,7 +75,6 @@ tasks:
         const blueprintId = route.query.blueprintId as string
         const blueprintSource = route.query.blueprintSource as BlueprintType
         const blueprintSourceYaml = route.query.blueprintSourceYaml as string
-        const isGuidedOnboarding = route.query.onboarding === "guided"
         const onboardingPresetFlow = route.query.onboardingPreset === "true"
             ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
             : ""
@@ -111,8 +108,6 @@ tasks:
             if(flowBlueprint.source){
                 flowYaml = flowBlueprint.source
             }
-        } else if (isGuidedOnboarding) {
-            flowYaml = `# ${t("onboarding.editor_hints.build_intro")}\n`
         } else {
             flowYaml = defaultFlowTemplate(id, selectedNamespace)
             shouldApplyGeneratedMetadata = true
@@ -149,9 +144,6 @@ tasks:
     useRouteContext(routeInfo)
 
     flowStore.isCreating = true
-    if (route.query.reset || route.query.onboarding === "guided") {
-        onboardingV2Store.startGuided()
-    }
     setupFlow()
 
     onBeforeUnmount(() => {

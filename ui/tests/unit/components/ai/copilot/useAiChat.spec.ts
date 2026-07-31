@@ -393,4 +393,19 @@ describe("useAiChat", () => {
         chat.reset()
         expect(localStorage.getItem("kestra.copilot.activeThread")).toBeNull()
     })
+
+    it("noteContext appends a display-only CONTEXT line, but only once a conversation has started", async () => {
+        const chat = useAiChat()
+        // Suppressed while the transcript is empty — the context pills already convey the focus there.
+        chat.noteContext({action: "added", noun: "ai.copilot.contextNoun.flow", id: "my-flow"})
+        expect(chat.messages.value).toHaveLength(0)
+
+        // After a turn the transcript exists → the notice is appended as a SYSTEM / CONTEXT line.
+        nextFrames = [{event: "token", data: {text: "hi"}}, {event: "done", data: {status: "IDLE"}}]
+        await chat.sendChat({prompt: "hello"})
+        chat.noteContext({action: "removed", noun: "ai.copilot.contextNoun.namespace", id: "company.team"})
+        const notices = chat.messages.value.filter((m) => m.type === "CONTEXT")
+        expect(notices).toHaveLength(1)
+        expect(notices[0]).toMatchObject({role: "SYSTEM", type: "CONTEXT", context: {action: "removed", noun: "ai.copilot.contextNoun.namespace", id: "company.team"}})
+    })
 })

@@ -470,12 +470,13 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                // STATUS is virtual for Invitation (ACCEPTED/PENDING map to the status column,
+                // EXPIRED is computed from expired_at), so unlike Case it can't support IN/NOT_IN
+                // even though Field.STATUS.supportedOp() offers it globally — see Resource.supportedOp().
                 Field.STATUS, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS,
-                    Op.NOT_EQUALS,
-                    Op.IN,
-                    Op.NOT_IN
+                    Op.NOT_EQUALS
                 )
             ),
 
@@ -1322,6 +1323,8 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.STATUS, Resource.INVITATION,
                 Set.of(
+                    Op.IN,
+                    Op.NOT_IN,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,

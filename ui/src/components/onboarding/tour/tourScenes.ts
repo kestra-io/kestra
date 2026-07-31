@@ -84,9 +84,8 @@ const FAILED_LOG = `.log-row-error, .task-details, ${GANTT}`
 const REPLAYED_TASK = `.task-details, ${GANTT}`
 const REVISION_DIFF = ".revision .ks-editor, .revision-select"
 const TEST_EVENT_BUTTON = "[data-onboarding-target=\"trigger-test-event-button\"]"
-const EXPRESSION_DEBUGGER = ".expression-debugger .button, .variable-explorer"
-// Set by Executions.vue on the header and the cells of the labels column.
-const EXECUTION_LABELS = ".execution-labels-column"
+// No fallback: a ring on the tab around the button would only have to move once it renders.
+const EXPRESSION_DEBUGGER = ".expression-debugger .button"
 
 export const TOUR_SCENES: TourScene[] = [
     {
@@ -303,8 +302,6 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "chain",
         step: 4,
-        targetSelector: EXECUTION_LABELS,
-        placement: "left",
         milestone: true,
         confetti: true,
         enter: ({actions}) => actions.openExecutionsList(),

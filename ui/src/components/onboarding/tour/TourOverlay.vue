@@ -309,16 +309,6 @@
         }
         lastSpotlightKey = key
 
-        // More than two matches is an area, like a table column: one ring around all of them.
-        const rings = rects.length > 2
-            ? [{top: px(top), left: px(left), width: px(right - left), height: px(bottom - top)}]
-            : rects.map((rect) => ({
-                top: px(rect.top - RING_PADDING),
-                left: px(rect.left - RING_PADDING),
-                width: px(rect.width + RING_PADDING * 2),
-                height: px(rect.height + RING_PADDING * 2),
-            }))
-
         spotlight.value = {
             scrim: {
                 top: {top: "0", left: "0", right: "0", height: px(top)},
@@ -326,7 +316,12 @@
                 left: {top: px(top), left: "0", width: px(left), height: px(bottom - top)},
                 right: {top: px(top), left: px(right), right: "0", height: px(bottom - top)},
             },
-            rings,
+            rings: rects.map((rect) => ({
+                top: px(rect.top - RING_PADDING),
+                left: px(rect.left - RING_PADDING),
+                width: px(rect.width + RING_PADDING * 2),
+                height: px(rect.height + RING_PADDING * 2),
+            })),
         }
     }
 
@@ -812,11 +807,12 @@
     }
 
     // Four pieces around the lit rectangle, rather than one overlay with a hole clipped out of it.
+    // Position and size are set every frame, so they must not be transitioned: the ring would trail
+    // behind a scroll and travel across the page when a step changes what it points at.
     .tour-scrim {
         position: fixed;
         background: var(--kel-overlay-color-lighter);
         pointer-events: none;
-        transition: all var(--ks-duration-base) var(--ks-ease-standard);
     }
 
     .tour-ring {
@@ -825,11 +821,6 @@
         border: var(--ks-border-width-base) solid var(--tour-ring-color);
         border-radius: var(--ks-radius-lg);
         pointer-events: none;
-        transition:
-            top var(--ks-duration-base) var(--ks-ease-standard),
-            left var(--ks-duration-base) var(--ks-ease-standard),
-            width var(--ks-duration-base) var(--ks-ease-standard),
-            height var(--ks-duration-base) var(--ks-ease-standard);
         animation: tourRingPulse 1.5s var(--ks-ease-out) 3 forwards;
     }
 
@@ -855,11 +846,6 @@
         .tour-ring {
             animation: none;
             box-shadow: 0 0 24px 6px color-mix(in srgb, var(--tour-ring-color) 32%, transparent);
-        }
-
-        .tour-scrim,
-        .tour-ring {
-            transition: none;
         }
     }
 

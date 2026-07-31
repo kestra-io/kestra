@@ -221,15 +221,22 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                     .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
                                     .build();
 
-                                ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) ->
+                                ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, concurrencyLimits, (txContext, runningCounts) ->
                                 {
-                                    ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                                    Integer queueSize = flow.getConcurrency().getQueueSize();
+                                    int queuedCount = queueSize == null ? 0 : executionQueuedStateStore.count(txContext, flow.getTenantId(), flow.getNamespace(), flow.getId());
+                                    ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), queuedCount, executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
                                     if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
                                         return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
+                                    }
+                                    if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                    ExecutionRunning computed = executorService.processExecutionRunning(concurrencyLimits, runningCounts, executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                                    if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
+                                        return Pair.of(computed, true);
                                     } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
                                         executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
                                     }
-                                    return Pair.of(computed, concurrencyLimit);
+                                    return Pair.of(computed, false);
                                 });
 
                                 // if the execution is queued or terminated due to concurrency limit, we stop here

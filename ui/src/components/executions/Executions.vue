@@ -58,7 +58,7 @@
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
                         shown: true,
-                        columns: optionalColumns,
+                        columns: allColumns,
                         displayColumns,
                         storageKey: storageKey
                     }"
@@ -267,22 +267,14 @@
                         </RouterLink>
                         <span v-else>-</span>
                     </template>
+                    <template v-else-if="cellComponents[col.prop]">
+                        <component :is="cellComponents[col.prop]" :execution="scope.row" />
+                    </template>
                 </template>
                 <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
                     <KsTooltip :content="$t('taskid column details')">
                         {{ scope.column.label }}
                     </KsTooltip>
-                </template>
-            </KsTableColumn>
-
-            <KsTableColumn
-                v-for="col in extraColumns"
-                :key="col.prop"
-                :prop="col.prop"
-                :label="$t(col.label)"
-            >
-                <template #default="scope">
-                    <component :is="cellComponents[col.prop]" :execution="scope.row" />
                 </template>
             </KsTableColumn>
         </KsDataTable>
@@ -473,7 +465,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
     import {Label, useExecutionsStore} from "../../stores/executions"
-    import {extraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
+    import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
     import {useStateFilter} from "../filter/composables/useStateFilter"
@@ -624,18 +616,24 @@
             : storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
     )
 
+    const allColumns = computed(() => [
+        ...optionalColumns.value,
+        ...getExtraColumns().map(col => ({...col, label: t(col.label)})),
+    ])
+
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
-        columns: optionalColumns.value,
+        columns: allColumns.value,
         storageKey: storageKey.value,
     })
 
     const visibleColumns = computed(() =>
         displayColumns.value
-            .map(prop => optionalColumns.value.find(c => c.prop === prop))
+            .map(prop => allColumns.value.find(c => c.prop === prop))
             .filter(Boolean) as any[],
     )
 
     const isColumnSortable = (prop: string) => {
+        if (prop in cellComponents) return false
         return !["labels", "flowRevision", "inputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
     }
 

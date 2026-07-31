@@ -39,7 +39,9 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=XhICXP_GXic",
         learnMore: "https://kestra.io/docs/enterprise/governance/assets",
     },
-    cases: {},
+    cases: {
+        learnMore: "https://kestra.io/docs/enterprise/governance/cases",
+    },
     apiTokens: {
         video: "https://www.youtube.com/watch?v=g-740VZLRdA",
         learnMore: "https://kestra.io/docs/enterprise/auth/api-tokens",

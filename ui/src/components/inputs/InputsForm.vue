@@ -13,11 +13,13 @@
         <el-form-item
             v-for="input in visibleInputs"
             :key="input.id"
+            :ref="(el: unknown) => registerFormItem(input.id, el)"
             :required="input.required !== false"
             :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
             :inlineMessage="true"
+            @focusout="onFieldBlur(input.id)"
         >
             <template #label>
                 <Markdown :source="inputLabel(input)" class="d-inline-flex md-label" />
@@ -39,6 +41,7 @@
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
                 :allowCreate="input.allowCustomValue"
                 :disabled="isComputingInput(input.id)"
@@ -60,12 +63,14 @@
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
             >
                 <el-radio v-for="item in input.values" :key="item" :label="item" :value="item" />
                 <el-input
                     v-if="input.allowCustomValue"
                     v-model="inputsValues[input.id]"
+                    :validateEvent="isInteracted(input.id)"
                     @update:model-value="onChange(input)"
                     :placeholder="$t('custom value')"
                 />
@@ -77,6 +82,7 @@
                 v-if="input.type === 'MULTISELECT'"
                 :data-testid="`input-form-${input.id}`"
                 v-model="multiSelectInputs[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onMultiSelectChange(input, $event)"
                 multiple
                 filterable
@@ -100,6 +106,7 @@
                 v-if="input.type === 'SECRET'"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
                 showPassword
             />
@@ -107,6 +114,7 @@
                 <el-input-number
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
+                    :validateEvent="isInteracted(input.id)"
                     @update:model-value="onChange(input)"
                     :min="input.min"
                     :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
@@ -118,6 +126,7 @@
                 <el-input-number
                     :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
+                    :validateEvent="isInteracted(input.id)"
                     @update:model-value="onChange(input)"
                     :min="input.min"
                     :max="input.max && input.max >= (input.min || -Infinity) ? input.max : Infinity"
@@ -129,6 +138,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
                 class="w-100 boolean-inputs"
             >
@@ -140,6 +150,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
                 class="w-100 boolean-inputs"
             />
@@ -147,6 +158,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
                 type="datetime"
             />
@@ -154,6 +166,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATE'"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
                 type="date"
             />
@@ -161,6 +174,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'TIME'"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
                 type="time"
             />
@@ -259,11 +273,6 @@
                 @update:model-value="onChange(input)"
             />
             <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
-            <template v-for="err in input.errors ?? []" :key="err.message">
-                <el-text type="warning">
-                    {{ err.message }}
-                </el-text>
-            </template>
         </el-form-item>
 
         <div v-if="isOnRecap" class="wizard-recap" data-testid="inputs-wizard-recap">
@@ -401,6 +410,8 @@
     const inputsMetaData = ref<InputMetaData[]>([]);
     const multiSelectInputs = reactive<Record<string, any>>({});
     const inputsValidated = ref<Set<string>>(new Set());
+    const interactedInputs = ref<Set<string>>(new Set());
+    const formItemRefs = new Map<string, {validate: (trigger?: string) => Promise<unknown>}>();
     const editingArrayId = ref<string | null>(null);
     const editableItems = reactive<Record<string, string[]>>({});
 
@@ -515,6 +526,25 @@
             console.error("Failed to normalize JSON:", (e as Error).message);
             return null;
         }
+    }
+
+    function isInteracted(id: string): boolean {
+        return interactedInputs.value.has(id);
+    }
+
+    function registerFormItem(id: string, el: unknown): void {
+        if (el) {
+            formItemRefs.set(id, el as {validate: (trigger?: string) => Promise<unknown>});
+        } else {
+            formItemRefs.delete(id);
+        }
+    }
+
+    function onFieldBlur(id: string): void {
+        interactedInputs.value.add(id);
+        // el-form-item.validate() rejects on failure; the rejection is the error message being
+        // displayed, which is the point, so swallow it rather than let it escape as unhandled.
+        formItemRefs.get(id)?.validate().catch(() => {});
     }
 
     function inputError(id: string): string | undefined {
@@ -953,6 +983,9 @@
         inputsValues,
         inputsMetaData,
         inputsValidated,
+        interactedInputs,
+        isInteracted,
+        onFieldBlur,
         isComputingValues,
         isComputingInput,
         isLoadingInput,

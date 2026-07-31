@@ -94,6 +94,7 @@
     import {TYPES} from "../dashboard-types"
 
     import {useRoute} from "vue-router"
+    import {routeFamily} from "../../../utils/routeFamily"
     const route = useRoute()
 
     import {decodeSearchParams, KsDropdown, KsDropdownMenu, KsDropdownItem, KsTooltip} from "@kestra-io/design-system"
@@ -131,14 +132,14 @@
     const filters = computed<QueryFilter[]>(() => {
         const baseFilters: QueryFilter[] = []
 
-        if (route.name === "flows/update") {
+        if (routeFamily(route.name) === "flows/update") {
             baseFilters.push({
                 field: "namespace", operation: "EQUALS", value: route.params.namespace as string,
             })
             baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string})
         }
 
-        if (route.name === "namespaces/update") {
+        if (routeFamily(route.name) === "namespaces/update") {
             baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.id as string})
         }
 

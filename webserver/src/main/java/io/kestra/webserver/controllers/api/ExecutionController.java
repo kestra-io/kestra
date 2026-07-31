@@ -43,6 +43,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
@@ -63,6 +64,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
+import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
@@ -150,6 +152,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
+    private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
+
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
@@ -165,6 +169,9 @@ public class ExecutionController {
 
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
 
     @Inject
     private GraphService graphService;
@@ -1135,7 +1142,8 @@ public class ExecutionController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
-        @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
+        @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -1181,7 +1189,14 @@ public class ExecutionController {
 
         return submitBatchAction(
             executions,
-            (execution, opId) -> executionCommandQueue.emit(Restart.from(execution, null).withOperationId(opId))
+            (execution, opId) -> {
+                Integer revision = null;
+                if (Boolean.TRUE.equals(latestRevision)) {
+                    Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+                    revision = flow.getRevision();
+                }
+                executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(opId));
+            }
         );
     }
 
@@ -1194,9 +1209,11 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-        return restartExecutionsByIds(ids);
+        return restartExecutionsByIds(ids, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2493,6 +2510,53 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/namespaces/{namespace}/flows/{flowId}/average-duration")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Get the average duration of the recent executions of a flow, used to estimate the progress of a running execution."
+    )
+    public ExecutionAverageDuration getExecutionAverageDuration(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId) {
+        Instant endDate = Instant.now();
+
+        long durationSumMs = 0;
+        long count = 0;
+
+        for (DailyExecutionStatistics statistic : executionStatisticsRepository.statistics(
+            tenantService.resolveTenant(),
+            namespace,
+            flowId,
+            endDate.minus(AVERAGE_DURATION_LOOKBACK),
+            endDate,
+            DateUtils.GroupType.DAY
+        )) {
+            DailyExecutionStatistics.Duration duration = statistic.getDuration();
+            // Buckets without any execution are gap-filled with an all-null duration, so the count
+            // must be checked before reading the sum.
+            if (duration != null && 0 < duration.getCount()) {
+                durationSumMs += duration.getSum().toMillis();
+                count += duration.getCount();
+            }
+        }
+
+        // Weighted by bucket count: averaging the per-bucket averages would over-weight quiet days.
+        return new ExecutionAverageDuration(0 == count ? null : durationSumMs / count, count);
+    }
+
+    /**
+     * The average duration of the recent executions of a flow.
+     *
+     * @param avgDurationMs the average duration in milliseconds, or {@code null} when the flow has no
+     *        terminated execution in the lookback window.
+     * @param count the number of executions the average was computed from.
+     */
+    public record ExecutionAverageDuration(
+        @jakarta.annotation.Nullable Long avgDurationMs,
+        long count) {
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow-dependencies", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(
         tags = { "Executions" },
@@ -2550,7 +2614,7 @@ public class ExecutionController {
 
                 // check if there are already terminated executions so we could end them immediately
                 List<Execution> terminatedExecutions = executionRepository
-                    .find(null, current.getTenantId(), null, null, null, null, null, null, Map.of(CORRELATION_ID, correlationId), null, null)
+                    .find(null, current.getTenantId(), null, null, null, null, null, null, Map.of(CORRELATION_ID, correlationId), null)
                     .mapNotNull(exec ->
                     {
                         if (

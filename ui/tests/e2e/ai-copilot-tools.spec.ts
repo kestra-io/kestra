@@ -1,5 +1,5 @@
-import {expect, test} from "@playwright/test"
-import {shared} from "./fixtures/shared"
+import {expect, test} from "./fixtures/auth"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * Per-tool end-to-end coverage for the AI Copilot v2 tool catalog.
@@ -13,13 +13,10 @@ import {shared} from "./fixtures/shared"
  * When the backend adds a tool, add it to PLATFORM_TOOLS / AUTHORING_TOOLS below.
  */
 
-const sse = (events: [string, unknown][]) =>
-    events.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join("")
-
 const THREAD = {uid: "e2e-thread", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""}
 
 const D = {
-    chat: "[data-test=\"copilot-chat\"]",
+    chat: CHAT,
     input: "[data-test=\"copilot-composer-input\"]",
     send: "[data-test=\"copilot-send\"]",
     toolCall: "[data-test=\"copilot-tool-call\"]",
@@ -47,35 +44,11 @@ const AUTHORING_TOOLS = [
 
 test.describe("AI Copilot v2 — tool catalog", () => {
     test.beforeEach(async ({page}) => {
-        await page.route("**/api/v1/*/ai/threads", async (route) => {
-            if (route.request().method() === "POST") {
-                await route.fulfill({status: 200, contentType: "application/json", body: JSON.stringify(THREAD)})
-            } else {
-                await route.continue()
-            }
-        })
+        await stubThreadCreation(page, THREAD)
+        await disableProductTour(page)
 
-        await test.step("login", async () => {
-            await page.goto("/ui")
-            await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
-            await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
-            await page.getByRole("button", {name: "Login"}).click()
-            await page.waitForTimeout(2000)
-            for (let i = 0; i < 3; i++) {
-                try { await page.goto("/ui", {waitUntil: "domcontentloaded"}); break } catch { await page.waitForTimeout(1000) }
-            }
-            await expect(page.getByRole("heading", {name: "Default Dashboard"})).toBeVisible({timeout: 25000})
-        })
-
-        await test.step("open the AI copilot dock tab", async () => {
-            const chat = page.locator(D.chat)
-            if (!(await chat.isVisible().catch(() => false))) {
-                await page.getByRole("button", {name: "Toggle panel"}).click().catch(() => {})
-                await page.waitForTimeout(500)
-            }
-            await page.getByRole("tab", {name: "AI"}).click().catch(() => {})
-            await expect(chat).toBeVisible({timeout: 15000})
-        })
+        await page.goto("/ui")
+        await openCopilotDock(page)
     })
 
     // Stub the next chat turn's SSE stream, then send a prompt.

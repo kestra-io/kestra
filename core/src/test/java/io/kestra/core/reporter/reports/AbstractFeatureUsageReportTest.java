@@ -130,7 +130,7 @@ public abstract class AbstractFeatureUsageReportTest {
                         .runIf("{{ 1 == 1 }}")
                         .allowWarning(true)
                         .taskCache(new Cache(true, Duration.ofMinutes(1)))
-                        .assets(new AssetsDeclaration(null, null, null))
+                        .assets(new AssetsDeclaration(null, null, null, null))
                         .build(),
                     Sequential.builder()
                         .id("seq")
@@ -156,7 +156,7 @@ public abstract class AbstractFeatureUsageReportTest {
                         .logToFile(true)
                         .failOnTriggerError(true)
                         .allowConcurrent(true)
-                        .assets(new AssetsDeclaration(null, null, null))
+                        .assets(new AssetsDeclaration(null, null, null, null))
                         .build()
                 )
             )

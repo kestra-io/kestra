@@ -107,6 +107,12 @@
     "total_duration": "Общая продолжительность",
     "running duration": "Время выполнения",
     "queued duration": "Время в очереди",
+    "executionProgress": {
+        "title": "Прогресс выполнения",
+        "estimatedRemaining": "Осталось примерно: {duration}",
+        "noBaseline": "Нет исторических данных — невозможно оценить оставшееся время",
+        "pastEstimate": "Выполнение занимает больше времени, чем обычно"
+    },
     "choose file": "Выберите файл или перетащите его сюда...",
     "launch execution": "Выполнить",
     "warning flow with triggers": "Этот flow содержит triggers, и ручное выполнение завершится неудачей, если этот flow зависит от trigger выражений.",
@@ -1292,133 +1298,6 @@
     "assets": {
       "title": "Активы"
     },
-    "onboarding": {
-      "welcome": {
-        "headline": "Создайте и запустите свой первый workflow за несколько минут",
-        "guided_title": "Создайте свой первый flow",
-        "badge": "Руководство",
-        "guided_description": "Узнайте, как создать и запустить свой первый flow с помощью пошаговых инструкций.",
-        "guided_duration": "Рекомендуется большинству пользователей",
-        "self_serve_title": "Создать flow с нуля",
-        "self_serve_description": "Перейдите прямо в редактор и создайте свой flow.",
-        "self_serve_note": "Для опытных пользователей",
-        "additional_help": "Дополнительная помощь",
-        "docs": "Документация",
-        "tutorial": "Руководство",
-        "blueprints": "Шаблоны",
-        "slack": "Сообщество Slack"
-      },
-      "steps": {
-        "flow_basics": {
-          "title": "Основы flow",
-          "description": "В Kestra <code>flow</code> — это основная единица оркестрации. Вы определяете его в YAML с метаданными и упорядоченными задачами.<br><br>Просмотрите пример структуры ниже, затем продолжайте создавать её шаг за шагом."
-        },
-        "add_id": {
-          "title": "Добавьте ID flow",
-          "description": "ID — это уникальное имя вашего flow, чтобы вы могли находить его, запускать и последовательно ссылаться на него.<br><br>Теперь добавьте <code>id</code> на корневом уровне."
-        },
-        "add_namespace": {
-          "title": "Добавьте namespace",
-          "description": "Namespace — это группировка, похожая на папку, которая организует flow по команде, проекту или окружению.<br><br>Теперь добавьте <code>namespace</code> на корневом уровне."
-        },
-        "add_input": {
-          "title": "Добавьте input",
-          "description": "Inputs — это параметры на уровне flow, которые можно использовать внутри задач, чтобы динамически управлять поведением во время выполнения.<br><br>Теперь добавьте input с именем <code>name</code> и типом <code>STRING</code>."
-        },
-        "add_log_task": {
-          "title": "Добавьте первую задачу",
-          "description": "Tasks — это единицы работы, которые выполняет ваш flow, определённые как упорядоченный список шагов. Каждой задаче нужен уникальный <code>id</code> и <code>type</code>. Kestra предоставляет множество плагинов задач для внешних систем; здесь мы используем задачу Python Script.<br><br>Синтаксис <code>&#123;&#123; ... &#125;&#125;</code> — это выражение Pebble, используемое для динамического обращения к переменным во время выполнения, например <code>&#123;&#123; inputs.name &#125;&#125;</code> из inputs flow.<br><br>Теперь добавьте первую задачу под <code>tasks</code> с <code>id</code>, <code>type</code> и <code>script</code>, который выводит приветствие."
-        },
-        "save_flow": {
-          "title": "Сохраните flow",
-          "description": "Сохранение фиксирует определение вашего flow, чтобы его можно было выполнить."
-        },
-        "execute_flow": {
-          "title": "Запустите flow",
-          "description": "Запуск начинает выполнение flow с входными значениями, заданными во время выполнения."
-        },
-        "view_logs_status": {
-          "title": "Проверьте выполнение",
-          "description": "Детали выполнения показывают статус запуска, тайминги и выходные логи на уровне задач.<br><br>Теперь откройте детали выполнения и нажмите <code>greet</code> на диаграмме Ганта, чтобы посмотреть логи."
-        },
-        "edit_flow_from_execution": {
-          "title": "Вернитесь в редактор flow",
-          "description": "Вы можете перейти напрямую из выполнения обратно к определению flow, чтобы быстро вносить изменения."
-        },
-        "add_cron_trigger": {
-          "title": "Добавьте cron-триггер",
-          "description": "Triggers могут запускать выполнения по расписанию или по внешним событиям (например, webhooks или MQTT-сообщения).<br><br>Теперь добавьте cron-триггер расписания, чтобы этот flow запускался каждые 5 минут."
-        },
-        "add_input_default": {
-          "title": "Задайте значение input по умолчанию",
-          "description": "Когда flow запускается автоматически, inputs всё равно нуждаются в значениях во время выполнения.<br><br>Input <code>name</code> уже был создан на предыдущем шаге, поэтому добавлять его снова не нужно. Просто задайте значение по умолчанию для существующего input <code>name</code>."
-        },
-        "save_flow_again": {
-          "title": "Сохраните flow",
-          "description": "Теперь у вашего flow есть расписание и значение input по умолчанию для автоматических запусков."
-        },
-        "background_runs_info": {
-          "title": "Запуски по расписанию",
-          "description": "Этот flow теперь будет выполняться в фоне каждые 5 минут.<br><br>Вы можете перейти к обзору Executions в левом меню, чтобы отслеживать запуски по расписанию."
-        },
-        "finish": {
-          "title": "Вы завершили руководство «Первый Flow»",
-          "description": "Отличное начало. Вы создали flow, запустили его, добавили параметры и расписание.<br><br>Выберите, что делать дальше ..."
-        }
-      },
-      "actions": {
-        "next": "Далее",
-        "complete": "Завершить",
-        "save_to_continue": "Нажмите Save в верхней панели (справа).",
-        "execute_to_continue": "1. Нажмите Execute в верхней панели (справа).\n2. Укажите значение для <strong>name</strong>.\n3. Нажмите Execute ещё раз в модальном окне.",
-        "edit_flow_to_continue": "Откройте меню действий (верхняя панель, справа) и выберите «Редактировать flow».",
-        "cancel_tutorial": "Отменить руководство",
-        "finish_tutorial": "Завершить руководство"
-      },
-      "finish_actions": {
-        "explore_blueprints": "Посмотреть шаблоны",
-        "create_flow": "Создать flow"
-      },
-      "editor_hints": {
-        "build_intro": "Создайте свой первый flow шаг за шагом.",
-        "step_1": "# 1) Добавьте id",
-        "step_2": "# 2) Добавьте namespace",
-        "step_3": "# 3) Добавьте input",
-        "step_4": "# 4) Добавьте tasks и вашу первую Python-задачу",
-        "step_5": "# 5) Добавьте cron-триггер"
-      },
-      "cancel_modal": {
-        "title": "Отменить руководство «Первый Flow»",
-        "description": "Вы хотите отменить руководство «Первый Flow»?",
-        "confirm": "Отменить руководство",
-        "keep": "Продолжить руководство"
-      },
-      "validation": {
-        "complete_step": "Вы почти у цели. Завершите этот шаг, чтобы продолжить.",
-        "fix_yaml": "Есть небольшая проблема с форматированием YAML. Исправьте её, затем продолжайте.",
-        "add_id": "Добавьте ID flow вверху. Пример: `id: hello_flow`.",
-        "add_namespace": "Добавьте namespace вверху. Пример: `namespace: company.team`.",
-        "add_input_section": "Создайте секцию `inputs` с одним input.",
-        "add_input_id": "Внутри `inputs` добавьте `id: name`.",
-        "add_input_type": "Установите тип input в `STRING`.",
-        "add_log_task_section": "Создайте секцию `tasks` и добавьте первую задачу.",
-        "add_log_task_id": "Дайте задаче ID, например: `id: greet`.",
-        "add_log_task_type": "Установите тип задачи в `io.kestra.plugin.scripts.python.Script`.",
-        "add_log_task_message": "Добавьте поле `script` в задачу.",
-        "add_log_task_pebble": "Используйте выражение Pebble в скрипте, чтобы оно использовало значение input (например: `inputs.name`).",
-        "save_flow": "Нажмите Save, чтобы продолжить.",
-        "execute_flow": "Запустите flow один раз, чтобы продолжить.",
-        "view_logs_status": "Откройте детали выполнения и проверьте логи для `greet`.",
-        "edit_flow_from_execution": "Откройте меню действий и нажмите `Редактировать flow`, чтобы продолжить.",
-        "add_cron_trigger_section": "Создайте секцию `triggers` с триггером расписания.",
-        "add_cron_trigger_type": "Установите тип триггера в `io.kestra.plugin.core.trigger.Schedule`.",
-        "add_cron_trigger_cron": "Добавьте cron-выражение, например: `\"*/5 * * * *\"`.",
-        "add_input_default_section": "Вернитесь в `inputs` и оставьте один существующий input с именем `name` (не добавляйте второй input).",
-        "add_input_default_id": "Оставьте существующий ID input как `name`.",
-        "add_input_default_defaults": "Добавьте значение по умолчанию для `name`, например: `defaults: \"Kestra\"`.",
-        "save_flow_again": "Нажмите Save ещё раз, чтобы продолжить."
-      }
-    },
     "enable concurrency": "Включить concurrency",
     "auditlogs": "Аудиторские логи",
     "quotas": "Квоты",
@@ -1768,7 +1647,9 @@
       "connection_lost": {
         "title": "Соединение прервано",
         "message": "Мы не смогли подключиться к вашей Kestra instance. Убедитесь, что она запущена, затем обновите страницу."
-      }
+      },
+      "opening_flow_editor": "Произошла ошибка при открытии редактора flow",
+      "retry": "Повторить попытку"
     },
     "debug": "Отладка",
     "default": "По умолчанию",
@@ -2071,10 +1952,27 @@
         },
         "toolCall": "Запущено {tool}",
         "context": {
+          "app": "Приложение: {{app}}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "Дашборд: {dashboard}",
           "execution": "Выполнение: {id}",
           "flow": "Flow: {{flow}}",
-          "namespace": "Пространство имён: {namespace}"
+          "namespace": "Пространство имён: {namespace}",
+          "plugin": "Плагин: {plugin}",
+          "test": "Тест: {test}"
         },
+        "contextAdded": "Добавлено {type} {id} в контекст.",
+        "contextNoun": {
+          "app": "приложение",
+          "blueprint": "blueprint",
+          "dashboard": "Панель управления",
+          "execution": "выполнение",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "плагин",
+          "test": "тест"
+        },
+        "contextRemoved": "Удалено {type} {id} из контекста.",
         "toolResult": {
           "detail": "Подробности",
           "error": "{{tool}} FAILED",
@@ -2264,20 +2162,7 @@
       "show_more": "Показать больше подсказок",
       "show_less": "Показать меньше подсказок",
       "remaining_quota": "У вас осталось {count} AI generations. Лимит сбрасывается ежедневно в полночь UTC.",
-      "execute_hint": {
-        "title": "Сохранить и выполнить ваш flow",
-        "description": "Нажмите, чтобы сохранить ваш workflow и запустить его немедленно."
-      },
-      "success_popup": {
-        "title": "Поздравляем!",
-        "description": "Вы успешно выполнили свой первый flow! Вы на пути к тому, чтобы стать профессионалом в Kestra.",
-        "tutorial": "Углубленный учебник",
-        "explore": "Исследовать больше"
-      },
       "success_page": {
-        "title": "Вы готовы!",
-        "description": "Вы изучили основы Kestra. Вот некоторые ресурсы, которые помогут вам продолжить ваше путешествие.",
-        "restart": "Перезапустить учебник",
         "items": {
           "tutorial": {
             "title": "Начать учебное пособие",

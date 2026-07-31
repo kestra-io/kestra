@@ -125,8 +125,8 @@ describe("createSubflowLinkOpener", () => {
 
         expect(opener.open({scheme: SUBFLOW_LINK_SCHEME, query})).toBe(true)
         expect(router.resolve).toHaveBeenCalledWith({
-            name: "flows/update",
-            params: {namespace: "ns", id: "f", tab: "edit", tenant: "main"},
+            name: "flows/update/edit",
+            params: {namespace: "ns", id: "f", tenant: "main"},
         })
         expect(openSpy).toHaveBeenCalledWith("/resolved", "_blank")
     })

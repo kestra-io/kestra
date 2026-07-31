@@ -102,6 +102,7 @@
             class="mt-1"
             v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
             :options="{diffSideBySide: sideBySide}"
+            @editorMounted="revealHighlight"
             :modelValue="revisionRightText"
             :original="revisionLeftText"
             readOnly
@@ -175,8 +176,21 @@
         editRouteQuery?: boolean,
         // Whether per-revision delete is available. Flows support it (default); consumers without a
         // delete-by-revision backend (e.g. reusable inputs) pass false to hide the delete control.
-        canDelete?: boolean
+        canDelete?: boolean,
+        // Text to scroll the diff to, so a linked change is not left off screen.
+        highlight?: string
     }>(), {editRouteQuery: true, canDelete: true})
+
+    const revealHighlight =(editor: any) => {
+        if (!props.highlight) return
+
+        const modified = editor?.getModifiedEditor?.() ?? editor
+        const lines: string[] | undefined = modified?.getModel?.()?.getLinesContent?.()
+        if (!lines) return
+
+        const index = lines.findIndex(line => line.includes(props.highlight!))
+        if (index >= 0) modified.revealLineNearTop(index + 1)
+    }
 
     const sortedRevisions = computed(() => {
         return props.revisions.toSorted((a, b) => a.revision - b.revision)

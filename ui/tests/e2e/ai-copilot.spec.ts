@@ -1,5 +1,5 @@
-import {expect, test} from "@playwright/test"
-import {shared} from "./fixtures/shared"
+import {expect, test} from "./fixtures/auth"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * End-to-end coverage for the AI Copilot chat drawer.
@@ -12,13 +12,10 @@ import {shared} from "./fixtures/shared"
  * Uses explicit `[data-test=…]` locators (the repo doesn't set testIdAttribute).
  */
 
-const sse = (events: [string, unknown][]) =>
-    events.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join("")
-
 const THREAD = {uid: "e2e-thread", mode: "ASK", status: "IDLE", createdAt: "", updatedAt: ""}
 
 const D = {
-    chat: "[data-test=\"copilot-chat\"]",
+    chat: CHAT,
     input: "[data-test=\"copilot-composer-input\"]",
     send: "[data-test=\"copilot-send\"]",
     card: "[data-test=\"copilot-proposed-action\"]",
@@ -35,38 +32,11 @@ const FLOW_YAML = "id: applied\nnamespace: company.team\ntasks:\n  - id: log\n  
 test.describe("AI Copilot", () => {
     test.beforeEach(async ({page}) => {
         // Thread creation is always the same stubbed thread.
-        await page.route("**/api/v1/*/ai/threads", async (route) => {
-            if (route.request().method() === "POST") {
-                await route.fulfill({status: 200, contentType: "application/json", body: JSON.stringify(THREAD)})
-            } else {
-                await route.continue()
-            }
-        })
+        await stubThreadCreation(page, THREAD)
+        await disableProductTour(page)
 
-        await test.step("login", async () => {
-            await page.goto("/ui")
-            await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
-            await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
-            await page.getByRole("button", {name: "Login"}).click()
-            // Reload so the auth cookie applies on a clean load. Let the post-login redirect
-            // settle first, and retry (the redirect can interrupt an eager goto).
-            await page.waitForTimeout(2000)
-            for (let i = 0; i < 3; i++) {
-                try { await page.goto("/ui", {waitUntil: "domcontentloaded"}); break } catch { await page.waitForTimeout(1000) }
-            }
-            await expect(page.getByRole("heading", {name: "Default Dashboard"})).toBeVisible({timeout: 25000})
-        })
-
-        await test.step("open the AI copilot dock tab", async () => {
-            // The right panel is closed after login — toggle it open first, then select AI.
-            const chat = page.locator(D.chat)
-            if (!(await chat.isVisible().catch(() => false))) {
-                await page.getByRole("button", {name: "Toggle panel"}).click().catch(() => {})
-                await page.waitForTimeout(500)
-            }
-            await page.getByRole("tab", {name: "AI"}).click().catch(() => {})
-            await expect(chat).toBeVisible({timeout: 15000})
-        })
+        await page.goto("/ui")
+        await openCopilotDock(page)
     })
 
     test("streams an assistant answer", async ({page}) => {
@@ -338,13 +308,7 @@ test.describe("AI Copilot", () => {
         const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
         await page.goto(`/ui/${tenant}/flows/edit/company.team/e2e-context-flow`, {waitUntil: "domcontentloaded"})
 
-        const chat = page.locator(D.chat)
-        if (!(await chat.isVisible().catch(() => false))) {
-            await page.getByRole("button", {name: "Toggle panel"}).click().catch(() => {})
-            await page.waitForTimeout(500)
-            await page.getByRole("tab", {name: "AI"}).click().catch(() => {})
-        }
-        await expect(chat).toBeVisible({timeout: 15000})
+        await openCopilotDock(page)
 
         const chip = page.locator("[data-test=\"copilot-context-chip\"]")
         await expect(chip).toBeVisible()
@@ -420,21 +384,9 @@ test.describe("AI Copilot", () => {
  * in the "page" layout. No dock here; we navigate straight to the route.
  */
 test.describe("AI Copilot — full-page /ai surface", () => {
-    test.beforeEach(async ({page}) => {
-        await test.step("login", async () => {
-            await page.goto("/ui")
-            await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
-            await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
-            await page.getByRole("button", {name: "Login"}).click()
-            await page.waitForTimeout(2000)
-            for (let i = 0; i < 3; i++) {
-                try { await page.goto("/ui", {waitUntil: "domcontentloaded"}); break } catch { await page.waitForTimeout(1000) }
-            }
-            await expect(page.getByRole("heading", {name: "Default Dashboard"})).toBeVisible({timeout: 25000})
-        })
-    })
-
     test("hosts the copilot full-page at /ai with the page-only Need Help section", async ({page}) => {
+        await disableProductTour(page)
+        await page.goto("/ui")
         const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
         await page.goto(`/ui/${tenant}/ai`, {waitUntil: "domcontentloaded"})
 

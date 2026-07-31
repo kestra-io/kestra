@@ -417,7 +417,6 @@
                             breakpoints: breakpoints.value,
                         })
                     } else {
-                        const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
                         if (flow.value) {
                             await executeTask(submitor, flow.value, mergedInputs, {
                                 redirect: props.redirect,
@@ -431,10 +430,6 @@
                                     .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
                                     .toISOString(true),
                                 nextStep: true,
-                                query: shouldShowOnboardingSuccessAnimation ? {
-                                    autoExpandGantt: "true",
-                                    onboardingSuccess: "true",
-                                } : undefined,
                                 breakpoints: breakpoints.value,
                             })
                         }

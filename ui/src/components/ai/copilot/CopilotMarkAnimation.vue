@@ -41,6 +41,9 @@
 
     .copilot-mark-dots {
         display: block;
+        /* The dots sit near the top of the viewBox and the "thinking" bounce lifts them past it;
+           an SVG's viewport clips by default, so let them overflow to show the full bounce. */
+        overflow: visible;
     }
 
     .copilot-mark-dot {

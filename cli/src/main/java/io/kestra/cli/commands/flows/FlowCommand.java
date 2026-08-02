@@ -30,4 +30,3 @@ public class FlowCommand extends AbstractCommand {
     }
 }
 
-

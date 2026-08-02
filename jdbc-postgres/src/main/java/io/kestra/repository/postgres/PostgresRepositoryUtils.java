@@ -15,7 +15,7 @@ public final class PostgresRepositoryUtils {
     public static Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
         switch (groupType) {
             case MONTH:
-                return DSL.field("TO_CHAR({0}, 'YYYY-MM')", Date.class, DSL.field(dateField));
+                return DSL.field("DATE_TRUNC('month', {0})", Date.class, DSL.field(dateField));
             case WEEK:
                 return DSL.field("DATE_TRUNC('week', {0})", Date.class, DSL.field(dateField));
             case DAY:

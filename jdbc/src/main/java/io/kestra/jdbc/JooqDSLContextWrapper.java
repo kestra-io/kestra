@@ -54,13 +54,18 @@ public class JooqDSLContextWrapper {
         this.rawDataSource = DelegatingDataSource.unwrapDataSource(dataSource);
     }
 
-    private static <T> RetryUtils.Instance<T, RuntimeException> retryer() {
-        return RetryUtils.of(RETRY_POLICY);
-    }
+    /**
+     * Shared retryer for every transaction run by this wrapper, built once at class initialisation.
+     * <p>
+     * Building it per call rebuilt the retry policy, the fallback and their two listeners on every
+     * database operation, which is the hottest path in the application.
+     */
+    private static final RetryUtils.Retryer DEADLOCK_RETRYER = RetryUtils
+        .<Object, RuntimeException> of(RETRY_POLICY)
+        .retryerIf(DEADLOCK_PREDICATE);
 
     public void transaction(TransactionalRunnable transactional) {
-        JooqDSLContextWrapper.<Void> retryer().runRetryIf(
-            DEADLOCK_PREDICATE,
+        DEADLOCK_RETRYER.<Void> run(
             () ->
             {
                 dslContext.transaction(transactional);
@@ -70,8 +75,7 @@ public class JooqDSLContextWrapper {
     }
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {
-        return JooqDSLContextWrapper.<T> retryer().runRetryIf(
-            DEADLOCK_PREDICATE,
+        return DEADLOCK_RETRYER.run(
             () -> dslContext.transactionResult(transactional)
         );
     }
@@ -89,8 +93,7 @@ public class JooqDSLContextWrapper {
      * one — keep the work short.
      */
     public void requireNewTransaction(TransactionalRunnable transactional) {
-        JooqDSLContextWrapper.<Void> retryer().runRetryIf(
-            DEADLOCK_PREDICATE,
+        DEADLOCK_RETRYER.<Void> run(
             () ->
             {
                 try (Connection connection = rawDataSource.getConnection()) {

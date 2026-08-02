@@ -40,5 +40,9 @@
     .button-top {
         background: none;
         border: none;
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
     }
 </style>

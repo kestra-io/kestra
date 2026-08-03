@@ -14,6 +14,7 @@ import io.kestra.core.services.ConcurrencyLimitResolver;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Releases a terminated execution's concurrency slots — one per applicable scope: flow,
@@ -27,8 +28,14 @@ import jakarta.inject.Singleton;
  * that does not exist yet. This class therefore deliberately has <b>no queue dependency</b> — it
  * only returns the popped execution, and the caller emits it <b>after</b> this method returns,
  * i.e. after the transaction has committed. Same rule as {@link ExecutionDelayProcessor}.
+ * <p>
+ * IMPORTANT — best-effort: the release runs once the terminated execution row has already been
+ * committed, so it is a compensating action rather than part of the terminal transition. A failure
+ * is logged and counted, never propagated: propagating it would abort the caller's terminal
+ * notification pipeline.
  */
 @Singleton
+@Slf4j
 public class ConcurrencySlotReleaseProcessor {
     private final ConcurrencyLimitStateStore concurrencyLimitStateStore;
     private final ConcurrencyLimitResolver concurrencyLimitResolver;
@@ -56,41 +63,42 @@ public class ConcurrencySlotReleaseProcessor {
      * the next queued execution, already marked RUNNING, when one was popped. The caller must
      * emit the returned execution only after this method returns — never from inside the
      * state-store transaction (see the class Javadoc).
+     *
+     * @param terminatedByThisCycle whether this executor cycle is the one that terminated the
+     *        execution. A terminated execution keeps being processed by late events.
      */
-    public Optional<Execution> release(ExecutorContext executor) {
+    public Optional<Execution> release(ExecutorContext executor, boolean terminatedByThisCycle) {
         Execution execution = executor.getExecution();
 
-        // release the scopes the execution was admitted under — not the currently defined
-        // ones: a namespace/tenant limit removed while it ran must still get its slot back
-        // (current definitions, when still present, are carried along for the pop). Executions
-        // without the claim stamp (admitted before it existed, or never admitted) fall back to
-        // the current definitions.
-        List<ScopedConcurrencyLimit> currentLimits = concurrencyLimitResolver.resolveLimits(executor.getFlow());
-        List<String> admittedScopes = execution.getMetadata() == null ? null : execution.getMetadata().getConcurrencyScopes();
-        List<ScopedConcurrencyLimit> limits = admittedScopes == null
-            ? currentLimits
-            : admittedScopes.stream()
-                .map(
-                    uid -> currentLimits.stream()
-                        .filter(limit -> limit.uid().equals(uid))
-                        .findFirst()
-                        .orElseGet(() -> ScopedConcurrencyLimit.fromUid(uid, null))
-                )
-                .toList();
-        if (limits.isEmpty()) {
-            return Optional.empty();
-        }
+        try {
+            // release the scopes the execution was admitted under — not the currently defined
+            // ones: a namespace/tenant limit removed while it ran must still get its slot back
+            // (current definitions, when still present, are carried along for the pop). Executions
+            // without the claim stamp (admitted before it existed, or never admitted) fall back to
+            // the current definitions.
+            List<ScopedConcurrencyLimit> currentLimits = concurrencyLimitResolver.resolveLimits(executor.getFlow());
+            List<String> admittedScopes = execution.getMetadata() == null ? null : execution.getMetadata().getConcurrencyScopes();
+            List<ScopedConcurrencyLimit> limits = admittedScopes == null
+                ? currentLimits
+                : admittedScopes.stream()
+                    .map(
+                        uid -> currentLimits.stream()
+                            .filter(limit -> limit.uid().equals(uid))
+                            .findFirst()
+                            .orElseGet(() -> ScopedConcurrencyLimit.fromUid(uid, null))
+                    )
+                    .toList();
+            if (limits.isEmpty()) {
+                return Optional.empty();
+            }
 
-        // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
-        boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
-            && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
-            && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
-        // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
-        boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
-            && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
-        // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
-        boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
-        if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
+            // Two independent facts decide a release: whether this execution ever claimed a slot,
+            // and whether this is the cycle that terminated it.
+            boolean claimedASlot = admittedScopes != null || claimedASlotAccordingToHistory(execution);
+            if (!claimedASlot || !terminatedByThisCycle) {
+                return Optional.empty();
+            }
+
             // a flow-scoped-only release pops through the legacy flow-keyed path, which claims
             // only the popped execution's flow slot; the multi-scope path claims every scope
             boolean flowScopedRelease = limits.size() == 1 && limits.getFirst().scope() == ScopedConcurrencyLimit.Scope.FLOW;
@@ -122,9 +130,40 @@ public class ConcurrencySlotReleaseProcessor {
                     return newExecution;
                 }
             );
+        } catch (RuntimeException e) {
+            // The execution row has already been committed as terminated, so this release is a
+            // compensating action running after the fact: it must never abort the caller's
+            // terminal-notification pipeline.
+            log.error(
+                "Cannot release the concurrency slots held by execution '{}' of flow '{}.{}': the running count stays at its current value until it is corrected manually.",
+                execution.getId(), executor.getFlow().getNamespace(), executor.getFlow().getId(), e
+            );
+            return Optional.empty();
         }
+    }
 
-        return Optional.empty();
+    /**
+     * Whether an execution without the {@link io.kestra.core.models.executions.ExecutionMetadata#getConcurrencyScopes()}
+     * claim stamp held a slot, decided from its state history.
+     * Both cases below describe an execution the concurrency gate rejected, which was therefore never counted.
+     * <p>
+     * Two different populations reach this fallback, and only one of them is temporary:
+     * <ul>
+     *     <li>executions admitted by a pre 2.0 version, still running across an upgrade, those disappear on their own;</li>
+     *     <li>executions moved to RUNNING while bypassing the admission gate, which never
+     *     increments nor stamps: {@code ConcurrencyLimitService#unqueue} and {@code ExecutionService#forceRun}.</li>
+     * </ul>
+     */
+    private static boolean claimedASlotAccordingToHistory(Execution execution) {
+        // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
+        boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
+            && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
+            && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
+        // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
+        boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
+            && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
+
+        return !queuedThenKilled && !concurrencyShortCircuitState;
     }
 
     private List<ScopedConcurrencyLimit> candidateLimits(Execution candidate) {

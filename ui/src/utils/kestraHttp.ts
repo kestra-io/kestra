@@ -8,6 +8,9 @@ let pendingRoute = false
 let requestsTotal = 0
 let requestsCompleted = 0
 
+/** Request-option flag marking a request that must be left out of progress accounting. */
+const SKIP_PROGRESS = "__kestraSkipProgress"
+
 function progressComplete() {
     pendingRoute = false
     requestsTotal = 0
@@ -150,8 +153,18 @@ export function setupKestraHttp(
 
     const client = configureClient(clientConfig)
 
-    client.interceptors.request.use((request) => {
-        if (typeof document !== "undefined") initProgress()
+    // Long-lived SSE streams must not participate in progress accounting: the SDK runs request
+    // interceptors for them (createSseClient calls them from its onRequest hook) but never the
+    // response/error ones, so such a request would stay pending forever and pin the bar open.
+    // Tagging the whole `sse` namespace covers every current and future stream endpoint.
+    const sse = (client as unknown as {sse?: Record<string, (streamOptions: Record<string, unknown>) => unknown>}).sse
+    for (const method of Object.keys(sse ?? {})) {
+        const streamFn = sse![method].bind(sse)
+        sse![method] = (streamOptions) => streamFn({...streamOptions, [SKIP_PROGRESS]: true})
+    }
+
+    client.interceptors.request.use((request, opts: unknown) => {
+        if (typeof document !== "undefined" && !(opts as Record<string, unknown>)?.[SKIP_PROGRESS]) initProgress()
         return request
     })
 
@@ -204,7 +217,7 @@ export function setupKestraHttp(
     // place here covers both paths for every future call, no matter where it's made from.
     for (const target of [client, useClient()] as const) {
         const targetAny = target as unknown as Record<string, (...args: any[]) => Promise<any>>
-        for (const method of ["get", "post", "put", "patch", "delete", "request"]) {
+        for (const method of ["get", "post", "put", "patch", "delete", "request", "stream"]) {
             if (typeof targetAny[method] === "function") targetAny[method] = withAuthRetry(targetAny[method].bind(target))
         }
     }

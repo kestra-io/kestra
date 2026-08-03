@@ -38,11 +38,10 @@ export const usePlaygroundStore = defineStore("playground", () => {
     function navigateToEdit(runUntilTaskId?: string, runDownstreamTasks?: boolean) {
         const flowParsed = flowStore.flow
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 id: flowParsed?.id,
                 namespace: flowParsed?.namespace,
-                tab: "edit",
                 tenant: route.params.tenant,
             },
             query: {

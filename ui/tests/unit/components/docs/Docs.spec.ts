@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
+import {describe, it, expect, vi, afterAll, afterEach, beforeAll, beforeEach} from "vitest"
 import {nextTick, reactive} from "vue"
 import {createI18n} from "vue-i18n"
 import {shallowMount, flushPromises, VueWrapper} from "@vue/test-utils"
@@ -37,6 +37,16 @@ function mountDocs() {
 }
 
 describe("Docs.vue — fetch gated on resourceUrlTemplate", () => {
+    let originalTitle: string
+
+    beforeAll(() => {
+        originalTitle = document.title
+    })
+
+    afterAll(() => {
+        document.title = originalTitle
+    })
+
     beforeEach(() => {
         routeParams.path = undefined
         docStoreState.resourceUrlTemplate = undefined

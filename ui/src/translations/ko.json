@@ -107,6 +107,12 @@
     "total_duration": "총 지속 시간",
     "running duration": "실행 중 지속 시간",
     "queued duration": "대기 중 지속 시간",
+    "executionProgress": {
+      "title": "실행 진행률",
+      "estimatedRemaining": "예상 남은 시간: {duration}",
+      "noBaseline": "이력 데이터가 없어 남은 시간을 추정할 수 없습니다",
+      "pastEstimate": "평소보다 오래 실행되고 있습니다"
+    },
     "choose file": "파일을 선택하거나 여기에 드롭하세요...",
     "launch execution": "실행",
     "warning flow with triggers": "이 flow는 triggers를 포함하고 있으며, 이 flow가 trigger expressions에 의존하는 경우 수동 실행이 실패합니다. 해당 Flow는 Trigger를 포함하고 있으며,  Trigger Expression을 의존하는 경우 수동 실행이 실패할 수 있습니다. ",
@@ -413,6 +419,7 @@
       "tree": "트리",
       "raw_json": "Raw JSON",
       "select_prompt": "value를 확인할 변수를 선택하세요.",
+      "select_hint": "변수, trigger, 그리고 task output이 왼쪽에 나열됩니다.",
       "empty": "이 실행에 사용할 수 있는 변수가 없습니다.",
       "one_key": "\\{ 1 key \\}",
       "n_keys": "\\{ {count} keys \\}",
@@ -429,6 +436,13 @@
     "concurrency_limit": {
       "dialog_title": "동시성 제한",
       "warning": "실행 중인 카운터를 변경하면 동시성이 손상되어 실행이 허용된 한도를 초과할 수 있습니다."
+    },
+    "flowConcurrency": {
+      "loadError": "이 flow의 동시성 제한을 불러오지 못했습니다.",
+      "staleLimit": {
+        "message": "이 flow는 더 이상 동시성 블록을 선언하지 않지만, 제한 레코드가 여전히 실행 중인 실행 {count}개를 세고 있습니다. 새 실행에는 영향을 주지 않으며 관리 → 동시성 제한에서 초기화할 수 있습니다.",
+        "title": "남아 있는 동시성 제한"
+      }
     },
     "documentation": {
       "documentation": "문서",
@@ -534,6 +548,18 @@
     "trigger": "Trigger",
     "no_trigger": "사용 가능한 trigger가 없습니다.",
     "triggers": "Triggers",
+    "test_event": {
+      "title": "테스트 이벤트 보내기",
+      "description": "이것은 아래 페이로드를 {trigger} trigger의 웹훅 URL로 게시합니다.",
+      "payload": "페이로드",
+      "headers": "헤더 (선택 사항)",
+      "send": "이벤트 전송",
+      "sending": "전송 중",
+      "response": "응답 {status}",
+      "execution_created": "실행 생성됨",
+      "failed": "웹훅이 {status}로 응답했습니다. flow가 저장되었고 trigger가 활성화되었는지 확인하세요.",
+      "button": "테스트 이벤트 보내기"
+    },
     "triggers_header_description": "트리거를 찾아보고 추가하고 관리하여 flow를 자동화하세요. flow를 AI 도구로 노출하거나, 스케줄링, webhook trigger 추가, 외부 앱의 변경 사항 폴링, 실시간 이벤트 리스너 중에서 선택하세요.",
     "triggers_tabs_add": "추가",
     "triggers_tabs_manage": "관리",
@@ -1293,130 +1319,165 @@
       "title": "자산"
     },
     "onboarding": {
-      "welcome": {
-        "headline": "Build and run your first workflow in minutes",
-        "guided_title": "Build your first flow",
-        "badge": "Tutorial",
-        "guided_description": "Learn how to create and run your first flow with guided steps.",
-        "guided_duration": "Recommended for most",
-        "self_serve_title": "Create flow from scratch",
-        "self_serve_description": "Go directly to the editor and build your own flow.",
-        "self_serve_note": "For experienced users",
-        "additional_help": "Additional help",
-        "docs": "Documentation",
-        "tutorial": "Tutorial",
-        "blueprints": "Blueprints",
-        "slack": "Slack community"
-      },
-      "steps": {
-        "flow_basics": {
-          "title": "Flow basics",
-          "description": "In Kestra, a <code>flow</code> is the core orchestration unit. You define it in YAML with metadata and ordered tasks.<br><br>Review the example structure below, then continue to build it step by step."
+      "tour": {
+        "menu": "제품 둘러보기",
+        "menu_description": "flow를 구축하고, 실행하고, 수정한 다음, 이벤트에서 시작하세요.",
+        "step_of": "총 {total}단계 중 {current}단계",
+        "actions": {
+          "back": "뒤로",
+          "skip": "둘러보기 건너뛰기",
+          "running": "실행 중",
+          "finish_now": "투어 완료",
+          "dismiss": "숨기기",
+          "skipped_hint": "제품 둘러보기는 나중에 다시 시작하고 싶을 경우 왼쪽 메뉴에 남아 있습니다."
         },
-        "add_id": {
-          "title": "Add flow id",
-          "description": "The ID is the unique name of your flow, so you can find it, run it, and reference it consistently.<br><br>Now add <code>id</code> at the root level."
+        "intro": {
+          "kicker": "Kestra에 오신 것을 환영합니다",
+          "title": "5분 안에 Kestra 배우기",
+          "body": "Kestra는 오케스트레이션 플랫폼입니다. 예약된 및 이벤트 기반 워크플로우를 쉽게 구축, 실행 및 수정할 수 있습니다.",
+          "note": "어떤 시점에서든 멈출 수 있습니다.",
+          "start": "둘러보기 시작",
+          "skip": "둘러보기 건너뛰기"
         },
-        "add_namespace": {
-          "title": "Add namespace",
-          "description": "The Namespace is the folder-like grouping that organizes flows by team, project, or environment.<br><br>Now add <code>namespace</code> at the root level."
+        "scenes": {
+          "copilot": {
+            "title": "원하는 flow를 설명하세요",
+            "body": "자동화하려는 내용을 설명하면 AI Copilot이 초안을 작성해 드립니다. 투어는 미리 만들어진 예시 flow로 계속되므로 여기에 아무것도 입력할 필요가 없습니다.",
+            "next": "flow 생성"
+          },
+          "flow_generated": {
+            "title": "이것은 flow입니다",
+            "body": "flow는 YAML로 작성되었으며, 두 개의 task를 포함합니다:<ol><li><code>fetch_orders</code>: 주문을 다운로드합니다.</li><li><code>summarize</code>: Python에서 수익을 계산합니다.</li></ol>task는 정의된 순서대로 순차적으로 실행됩니다.",
+            "next": "저장 및 실행"
+          },
+          "first_execution": {
+            "title": "모든 실행이 기록됩니다",
+            "body": "각 task는 Gantt 뷰에서 시간이 측정됩니다. task를 클릭하면 해당 log가 표시됩니다.",
+            "milestone": "당신의 첫 번째 실행이 성공했습니다",
+            "next": "flow 편집",
+            "callout": "cron job이나 수동으로 실행된 스크립트와 달리, 모든 실행은 해당 input, output 및 log와 함께 보관되므로, 실행된 내용을 나중에 감사할 수 있습니다."
+          },
+          "add_task": {
+            "title": "Flow는 코드처럼 편집됩니다",
+            "body": "AI Copilot 없이 사용자를 위해 `notify` task를 추가했습니다. YAML을 직접 편집하는 것이 어떤 모습인지 확인할 수 있습니다. 최종 결과는 Slack에 게시됩니다.",
+            "next": "task 문서 보기",
+            "callout": "AI Copilot이 첫 초안을 생성했습니다. 에디터에서 코드 또는 노코드 에디터 탭을 통해 이를 반복하여 수정할 수 있으며, 이 두 가지 모두 동일한 YAML을 생성하므로 flow는 어떻게 구축되었든 코드로 유지됩니다."
+          },
+          "editor_help": {
+            "title": "문서는 flow 옆에 있습니다",
+            "body": "커서 아래에 있는 task에 대한 문서는 해당 속성, output, 예시와 함께 **Docs** 패널에 표시됩니다.",
+            "callout": "flow는 반복을 통해 구축됩니다: 속성을 변경하고, 실행하고, log를 읽고, 반복합니다. 자동 완성 및 <strong>Docs</strong> 패널 덕분에 에디터를 떠나지 않고도 무엇이든 찾아볼 수 있습니다.",
+            "next": "flow 실행"
+          },
+          "failed_execution": {
+            "title": "Task가 실패했습니다",
+            "body": "슬랙 메시지의 수익 표현식에 오타가 있습니다: <code>vars.revenue</code> 대신 <code>vars.revenu</code>.",
+            "callout": "`notify` 이전의 task들이 성공했으므로, 해당 output은 여전히 사용 가능합니다.",
+            "next": "flow 수정"
+          },
+          "fix_and_replay": {
+            "title": "하나의 문자가 변경되었습니다.",
+            "body": "표현식은 이제 `vars.revenue`입니다. diff는 변경된 한 줄을 보여주며, 실패한 실행은 새 revision에 대해 `notify` task부터 다시 실행할 수 있습니다.",
+            "next": "실패한 task부터 재실행"
+          },
+          "replayed_execution": {
+            "title": "실패한 것만 다시 실행됨",
+            "body": "첫 번째 시도의 출력물이 재사용되어 <code>notify</code> task만 다시 실행되어야 했습니다. 이번에는 Slack 메시지가 성공적으로 전송되었습니다.",
+            "milestone": "재실행이 성공했습니다",
+            "next": "trigger 추가",
+            "callout": "리플레이가 없다면, 하나의 실패한 task로 인해 전체 flow를 재실행해야 합니다. 유료 API 호출이 다시 발생하고, 긴 계산이 반복되며, 이미 작성된 행이 중복됩니다."
+          },
+          "webhook_trigger": {
+            "title": "flow는 이벤트로 시작될 수 있습니다.",
+            "body": "Webhook trigger를 사용하면 이 flow는 고유한 URL을 갖게 됩니다. 해당 URL로 HTTP 요청이 전송될 때마다 실행이 생성되며, 요청 본문은 <code>trigger.body</code>로 task에서 사용할 수 있습니다.",
+            "next": "trigger를 확인하세요"
+          },
+          "test_event": {
+            "title": "테스트 이벤트 보내기",
+            "body": "trigger가 여기에 나열됩니다. 테스트 이벤트를 브라우저에서 외부 시스템이 보내는 방식과 동일하게 보낼 수 있으므로, Kestra를 벗어나지 않고도 trigger를 테스트할 수 있습니다.",
+            "next": "테스트 이벤트 보내기"
+          },
+          "event_execution": {
+            "title": "이벤트가 실행을 생성했습니다.",
+            "body": "이벤트가 도착했고, 이를 통해 실행이 생성되었으며, 다른 실행과 마찬가지로 시간 기록 및 log가 남겨졌습니다. 이를 위해 별도의 서비스를 호스팅할 필요가 없습니다. trigger endpoint는 Kestra의 일부입니다.",
+            "milestone": "시작하지 않은 실행",
+            "next": "페이로드 탐색"
+          },
+          "explore_payload": {
+            "title": "변수, trigger 및 task outputs",
+            "body": "<strong>Input/Output</strong> 탭은 이 실행에서 사용 가능한 모든 value를 나열합니다.",
+            "callout": "`trigger.body`는 오른쪽에 이미 채워져 있습니다. 이 실행에 대해 무엇을 반환하는지 확인하려면 **Debug 표현식**을(를) 누르세요.",
+            "next": "두 번째 flow 연결"
+          },
+          "report_flow": {
+            "title": "하나의 flow는 다른 flow에 의존할 수 있습니다.",
+            "body": "`daily_report`는 Flow trigger를 가지고 있어서, `order_summary`가 성공할 때마다 시작됩니다. 이를 위해 `order_summary`에 아무것도 추가할 필요가 없습니다.",
+            "next": "다른 이벤트 보내기",
+            "callout": "두 개의 flow는 다른 팀이 소유할 수 있습니다: `daily_report`는 무엇을 기다리는지 선언하고, `order_summary`는 그것이 존재하는지 알 필요가 없습니다."
+          },
+          "chain": {
+            "title": "각 실행이 어떻게 시작되었는지",
+            "body": "직접 시작한 실행은 <code>started_by:you</code>로 label이 지정됩니다. 다른 실행은 webhook 이벤트 또는 flow trigger로 생성되었습니다.",
+            "milestone": "하나의 이벤트에서 두 개의 실행",
+            "next": "완료"
+          }
         },
-        "add_input": {
-          "title": "Add an input",
-          "description": "Inputs are flow-level parameters that can be referenced inside tasks to dynamically control behavior at runtime.<br><br>Now add an input named <code>name</code> with type <code>STRING</code>."
+        "finale": {
+          "kicker": "둘러보기 완료",
+          "title": "구축한 내용, 그리고 다음에 시도할 것",
+          "takeaways": {
+            "copilot": {
+              "title": "일반 영어에서 생성된 flow",
+              "body": "자동화하려는 내용을 설명하면 AI Copilot이 flow 초안을 작성합니다. 거기서부터 자동 완성 기능과 <strong>Docs</strong> 패널을 사용하여 에디터에서 다듬을 수 있습니다. flow는 해당 flow 또는 모든 실행의 <strong>Execute</strong> 버튼에서 실행됩니다."
+            },
+            "restart": {
+              "title": "모든 것을 다시 실행하는 대신 재실행",
+              "body": "이미 성공한 Task 실행은 재사용되므로, 실패한 작업만 flow의 최신 개정 버전을 기준으로 다시 실행하면 됩니다. Replay 및 restart는 실행의 <strong>Actions</strong> 아래와 Gantt 뷰의 task 실행에서 제공됩니다."
+            },
+            "events": {
+              "title": "이벤트에 의해 시작된 실행",
+              "body": "Webhook과 스케줄 trigger는 Kestra의 일부이므로, 추가 호스팅 없이 이벤트 또는 스케줄에 따라 실행을 시작할 수 있습니다."
+            },
+            "chain": {
+              "title": "flow에 의존하는 flow",
+              "body": "Flow trigger를 사용하면, 한 flow는 다른 flow의 성공 또는 실패에 의해 namespace 간에 시작될 수 있습니다. 이는 flow 간의 결합도를 낮춥니다. 첫 번째 flow는 두 번째 flow를 참조하지 않으므로, 둘 다 독립적으로 소유하고 변경할 수 있습니다."
+            }
+          },
+          "namespace_note": "이 투어의 모든 내용은 귀하의 {namespace} namespace에 있습니다. Slack 및 API 엔드포인트는 모의였으며, 실제 웹훅 URL은 {secrets}로 저장됩니다.",
+          "keep_going": "계속 진행",
+          "restart": "둘러보기 재시작",
+          "start_building": "만들기 시작",
+          "docs": {
+            "title": "더 보기",
+            "autocompletion": "자동 완성",
+            "execution": "실행",
+            "replay": "재실행",
+            "revision": "개정",
+            "webhook": "웹훅",
+            "schedule": "스케줄",
+            "flowTrigger": "Flow triggers",
+            "namespace": "Namespaces",
+            "secret": "비밀"
+          }
         },
-        "add_log_task": {
-          "title": "Add first task",
-          "description": "Tasks are the units of work your flow executes, defined as an ordered list of steps. Each task needs a unique <code>id</code> and a <code>type</code>. Kestra provides many task plugins for external systems; here we use a Python Script task.<br><br>The <code>&#123;&#123; ... &#125;&#125;</code> syntax is a Pebble expression, used to reference variables dynamically at runtime, like <code>&#123;&#123; inputs.name &#125;&#125;</code> from your flow inputs.<br><br>Now add the first task under <code>tasks</code> with <code>id</code>, <code>type</code>, and a <code>script</code> that prints a greeting."
+        "errors": {
+          "first_execution": "첫 번째 실행이 성공하는 대신 {state} 상태로 완료되었습니다. 이유를 확인하려면 이 페이지에서 log를 열고 다시 시도하세요.",
+          "expected_failure": "이 실행은 {state}로 완료되었으므로, 아직 수정할 실패가 없습니다. flow에 여전히 <code>notify</code> task가 있는지 확인한 다음 다시 시도하세요.",
+          "no_execution_to_replay": "아직 재실행할 실행 내역이 없습니다. 이전 단계에서 flow를 실행한 다음 다시 시도하세요.",
+          "replay": "재실행이 {state} 상태로 완료되었습니다. <code>notify</code>가 무엇을 보고했는지 확인하려면 이 페이지에서 log를 열고 다시 시도하십시오.",
+          "save_flow": "투어 flow를 저장할 수 없습니다. {reason}",
+          "test_event": "웹훅이 {status}로 응답했습니다. flow가 저장되었고 trigger가 활성화되었는지 확인한 다음, 다시 시도하세요."
         },
-        "save_flow": {
-          "title": "Save flow",
-          "description": "Saving persists your flow definition so it can be executed."
+        "steps": {
+          "1": "flow 작성 및 실행",
+          "2": "실패로부터 복구",
+          "3": "이벤트에서 flow 시작",
+          "4": "두 flow 연결"
         },
-        "execute_flow": {
-          "title": "Execute flow",
-          "description": "Executing starts a run of your flow with runtime input values."
-        },
-        "view_logs_status": {
-          "title": "Check execution",
-          "description": "Execution details show run status, timing, and task-level output logs.<br><br>Now open the execution details and click <code>greet</code> in the Gantt chart to see the logs."
-        },
-        "edit_flow_from_execution": {
-          "title": "Return to Flow Editor",
-          "description": "You can jump directly from an execution back to the flow definition to iterate quickly."
-        },
-        "add_cron_trigger": {
-          "title": "Add a cron trigger",
-          "description": "Triggers can start runs based on schedules or external events (for example webhooks or MQTT messages).<br><br>Now add a cron schedule trigger so this flow runs every 5 minutes."
-        },
-        "add_input_default": {
-          "title": "Set a default input value",
-          "description": "When a flow is triggered automatically, inputs still need values at runtime.<br><br>The <code>name</code> input was already created in the previous step, so there’s no need to add it again. Just set a default value for the existing <code>name</code> input."
-        },
-        "save_flow_again": {
-          "title": "Save flow",
-          "description": "Your flow now has a schedule and a default input value for automatic runs."
-        },
-        "background_runs_info": {
-          "title": "Scheduled runs",
-          "description": "This flow will now execute in the background every 5 minutes.<br><br>You can navigate to the Executions overview from the left menu to monitor scheduled runs."
-        },
-        "finish": {
-          "title": "You completed the First Flow tutorial",
-          "description": "Great start. You created, executed, parameterized, and scheduled a flow.<br><br>Choose what to do next ..."
+        "nudge": {
+          "title": "Kestra가 처음이신가요?",
+          "action": "제품 둘러보기"
         }
-      },
-      "actions": {
-        "next": "Next",
-        "complete": "Complete",
-        "save_to_continue": "Press Save in the top bar (right).",
-        "execute_to_continue": "1. Press Execute in the top bar (right).\n2. Provide a value for <strong>name</strong>.\n3. Press Execute again in the modal.",
-        "edit_flow_to_continue": "작업 메뉴(상단 바 오른쪽)를 열고 ‘Flow 편집’을 선택하세요.",
-        "cancel_tutorial": "Cancel tutorial",
-        "finish_tutorial": "Finish tutorial"
-      },
-      "finish_actions": {
-        "explore_blueprints": "Explore Blueprints",
-        "create_flow": "Create Flow"
-      },
-      "editor_hints": {
-        "build_intro": "Build your first flow step by step.",
-        "step_1": "# 1) Add id",
-        "step_2": "# 2) Add namespace",
-        "step_3": "# 3) Add an input",
-        "step_4": "# 4) Add tasks and your first Python task",
-        "step_5": "# 5) Add a cron trigger"
-      },
-      "cancel_modal": {
-        "title": "Cancel First Flow tutorial",
-        "description": "Do you want to cancel the First Flow tutorial?",
-        "confirm": "Cancel tutorial",
-        "keep": "Keep tutorial"
-      },
-      "validation": {
-        "complete_step": "You're close. Complete this step to continue.",
-        "fix_yaml": "There is a small YAML formatting issue. Fix it, then continue.",
-        "add_id": "Add a flow ID at the top. Example: `id: hello_flow`.",
-        "add_namespace": "Add a namespace at the top. Example: `namespace: company.team`.",
-        "add_input_section": "Create an `inputs` section with one input.",
-        "add_input_id": "Inside `inputs`, add `id: name`.",
-        "add_input_type": "Set the input type to `STRING`.",
-        "add_log_task_section": "Create a `tasks` section and add your first task.",
-        "add_log_task_id": "Give the task an ID, for example: `id: greet`.",
-        "add_log_task_type": "Set the task type to `io.kestra.plugin.scripts.python.Script`.",
-        "add_log_task_message": "Add a `script` field to the task.",
-        "add_log_task_pebble": "Use a Pebble expression in the script so it uses your input value (for example: `inputs.name`).",
-        "save_flow": "Click Save to continue.",
-        "execute_flow": "Run the flow once to continue.",
-        "view_logs_status": "Open the execution details and check the logs for `greet`.",
-        "edit_flow_from_execution": "계속하려면 작업 메뉴를 열고 ‘Flow 편집’을 클릭하세요.",
-        "add_cron_trigger_section": "Create a `triggers` section with a schedule trigger.",
-        "add_cron_trigger_type": "Set trigger type to `io.kestra.plugin.core.trigger.Schedule`.",
-        "add_cron_trigger_cron": "Add a cron expression, for example: `\"*/5 * * * *\"`.",
-        "add_input_default_section": "Go back to `inputs` and keep one existing input named `name` (do not add a second input).",
-        "add_input_default_id": "Keep the existing input ID as `name`.",
-        "add_input_default_defaults": "Add a default value for `name`, for example: `defaults: \"Kestra\"`.",
-        "save_flow_again": "Click Save again to continue."
       }
     },
     "enable concurrency": "동시성 활성화",
@@ -1768,7 +1829,9 @@
       "connection_lost": {
         "title": "연결이 중단되었습니다",
         "message": "Kestra 인스턴스에 연결할 수 없습니다. 실행 중인지 확인한 후 페이지를 새로 고치세요."
-      }
+      },
+      "opening_flow_editor": "flow 에디터를 여는 중 문제가 발생했습니다.",
+      "retry": "재시도"
     },
     "debug": "디버그",
     "default": "기본값",
@@ -2071,10 +2134,27 @@
         },
         "toolCall": "실행 중 {tool}",
         "context": {
+          "app": "앱: {app}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "대시보드: {{dashboard}}",
           "execution": "실행: {{id}}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {{namespace}}"
+          "namespace": "Namespace: {{namespace}}",
+          "plugin": "플러그인: {plugin}",
+          "test": "테스트: {test}"
         },
+        "contextAdded": "컨텍스트에 {type} {id}가 추가되었습니다.",
+        "contextNoun": {
+          "app": "앱",
+          "blueprint": "blueprint",
+          "dashboard": "대시보드",
+          "execution": "실행",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "플러그인",
+          "test": "테스트"
+        },
+        "contextRemoved": "{type} {id}이(가) 컨텍스트에서 제거되었습니다.",
         "toolResult": {
           "detail": "세부 정보",
           "error": "{tool} 실패했습니다",
@@ -2264,20 +2344,7 @@
       "show_more": "더 많은 프롬프트 보기",
       "show_less": "더 적은 프롬프트 표시",
       "remaining_quota": "{count}개의 AI 생성이 남아 있습니다. 제한은 매일 자정 UTC에 초기화됩니다.",
-      "execute_hint": {
-        "title": "저장 및 flow 실행",
-        "description": "클릭하여 워크플로우를 저장하고 즉시 실행하세요."
-      },
-      "success_popup": {
-        "title": "축하합니다!",
-        "description": "첫 번째 flow를 성공적으로 실행했습니다! Kestra 전문가가 되는 길에 있습니다.",
-        "tutorial": "심층 튜토리얼",
-        "explore": "더 보기"
-      },
       "success_page": {
-        "title": "모든 준비가 완료되었습니다!",
-        "description": "Kestra의 기본을 배웠습니다. 여정을 계속하는 데 도움이 될 몇 가지 리소스를 소개합니다.",
-        "restart": "튜토리얼 다시 시작",
         "items": {
           "tutorial": {
             "title": "튜토리얼 시작",
@@ -2316,6 +2383,10 @@
         }
       },
       "flows": {
+        "ordersRevenueToSlack": {
+          "label": "파이썬으로 주문 요약",
+          "prompt": "API에서 주문을 가져오고 Python으로 수익을 요약"
+        },
         "jsonApiToDuckdb": {
           "label": "DuckDB로의 JSON API",
           "prompt": "공용 API에서 JSON 파일을 다운로드하고 Python 스크립트로 변환한 후 DuckDB Queries task로 처리하는 flow를 생성하세요."

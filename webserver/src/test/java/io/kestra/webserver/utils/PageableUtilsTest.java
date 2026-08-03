@@ -42,6 +42,27 @@ class PageableUtilsTest {
     }
 
     @Test
+    void shouldThrowWhenSizeExceedsMaxPageSize() {
+        // When a size above the cap is requested
+        HttpStatusException e = assertThrows(
+            HttpStatusException.class,
+            () -> PageableUtils.from(1, PageableUtils.MAX_PAGE_SIZE + 1)
+        );
+
+        // Then a 422 is returned
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.getStatus());
+        assertThat(e.getMessage()).contains(String.valueOf(PageableUtils.MAX_PAGE_SIZE));
+    }
+
+    @Test
+    void shouldAllowSizeEqualToMaxPageSize() {
+        final Pageable pageable = PageableUtils.from(1, PageableUtils.MAX_PAGE_SIZE);
+
+        assertFalse(pageable.isUnpaged());
+        assertThat(pageable.getSize()).isEqualTo(PageableUtils.MAX_PAGE_SIZE);
+    }
+
+    @Test
     void shouldThrowWhenSortFieldIsUnknown() {
         // Given a mapper that only knows "id" — any other field returns null
         Function<String, String> mapper = Map.of("id", "id")::get;

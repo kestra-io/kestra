@@ -5,13 +5,18 @@
         v-bind="$attrs"
         @click="onClick"
     >
-        <slot>{{ label }}</slot>
+        <RouterLink v-if="props.to" :to="props.to">
+            <slot>{{ label }}</slot>
+        </RouterLink>
+        <slot v-else>{{ label }}</slot>
     </KsDropdownItem>
     <KsButton
         v-else
         :type="type ?? 'default'"
         :icon="icon"
         v-bind="$attrs"
+        :tag="props.to ? RouterLink : 'button'"
+        :to="props.to"
         @click="onClick"
     >
         <slot>{{ label }}</slot>
@@ -20,7 +25,7 @@
 
 <script setup lang="ts">
     import {inject, type Component} from "vue"
-    import {useRouter, type RouteLocationRaw} from "vue-router"
+    import {useRouter, type RouteLocationRaw, RouterLink} from "vue-router"
     import {asItemKey} from "./navBarActionsContext"
 
     defineOptions({inheritAttrs: false})

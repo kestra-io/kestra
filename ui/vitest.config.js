@@ -13,13 +13,9 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
-// `--merge-reports` only recombines existing report blobs; it runs no tests.
-// But loading the config still boots a Vite dev server whose dependency scan
-// segfaults (CI and locally). We can't swap in a lighter project to dodge it:
-// the merge recreates each spec using the pool recorded in its blob ("browser"),
-// so the project's pool shape must match the sharded runs exactly.
-// Instead, disable the scan during merge only — nothing is served here anyway.
-const isMergeReports = process.argv.includes("--merge-reports")
+// vite.config.js skips the federation()/VitePWA() plugins when this is set (they have no
+// place in a test run); the storybook CLI sets it automatically, so mirror that here.
+process.env.STORYBOOK = "true"
 
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
@@ -76,12 +72,16 @@ export default defineConfig({
                         configDir: path.join(dirname, ".storybook"),
                     }),
                 ],
-                // Merge-only: skip Vite's automatic dependency scan — see the
-                // comment above `isMergeReports` for why.
-                ...(isMergeReports ? {optimizeDeps: {noDiscovery: true, entries: []}} : {}),
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.js"],
+                    reporters: [
+                        ["default"],
+                        ["junit"],
+                    ],
+                    outputFile: {
+                        junit: "./test-report.storybook.junit.xml",
+                    },
                     // Each worker drives its own headless Chromium instance; letting
                     // this scale with CPU count (the default) spins up enough
                     // concurrent browsers to exhaust CI memory, which kills a
@@ -91,7 +91,12 @@ export default defineConfig({
                     browser: {
                         enabled: true,
                         headless: true,
-                        provider: playwright(),
+                        // enable early garbage collection
+                        provider: playwright({
+                            launchOptions: {
+                                args: ["--js-flags=--max-old-space-size=1536", "--disable-dev-shm-usage"],
+                            },
+                        }),
                         instances: [
                             {
                                 browser: "chromium",

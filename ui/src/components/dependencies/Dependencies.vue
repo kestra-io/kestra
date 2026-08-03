@@ -3,6 +3,8 @@
         <div v-if="showExecutionChart" class="chart-header">
             <ChartDurationSelect v-model="chartDuration" />
             <TimeSeries
+                v-show="chartHasData"
+                ref="chartRef"
                 :chart="chartDefinition"
                 :filters="chartFilters()"
                 showDefault
@@ -84,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue"
+    import {ref, computed, useTemplateRef, watch} from "vue"
 
     import Table from "./components/Table.vue"
     import Empty from "../layout/empty/Empty.vue"
@@ -102,6 +104,7 @@
     const PANEL = {size: "70%", min: "30%", max: "80%"}
 
     import {useRoute} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     const route = useRoute()
 
     import Plus from "vue-material-design-icons/Plus.vue"
@@ -119,7 +122,14 @@
         }>;
     }>()
 
-    const SUBTYPE: Types = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION
+    const SUBTYPE: Types = ((): Types => {
+        switch (routeFamily(route.name)) {
+        case "flows/update": return FLOW
+        case "namespaces/update": return NAMESPACE
+        case "assets/update": return ASSET
+        default: return EXECUTION
+        }
+    })()
 
     const graphRef = ref(null)
     const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId)
@@ -142,6 +152,12 @@
 
     const chartDuration = ref("PT336H") // default: 14 days
 
+    const chartRef = useTemplateRef<InstanceType<typeof TimeSeries>>("chartRef")
+
+    const chartHasData = computed(() => (chartRef.value?.total ?? 0) > 0)
+
+    watch(chartDuration, () => void chartRef.value?.refresh(), {flush: "post"})
+
     interface ChartDefinition {
         id: string;
         type: string;
@@ -158,8 +174,8 @@
             columns: {
                 date: {field: string; displayName: string};
                 state: {field: string};
-                total: {displayName: string; agg: string};
-                duration: {field: string; displayName: string; agg: string};
+                total: {displayName: string; agg: string; graphStyle: string};
+                duration: {field: string; displayName: string; agg: string; graphStyle: string};
             };
             where: {field: string; type: string; value: string}[];
         };
@@ -193,8 +209,8 @@
                 columns: {
                     date: {field: "START_DATE", displayName: "Date"},
                     state: {field: "STATE"},
-                    total: {displayName: "Executions", agg: "COUNT"},
-                    duration: {field: "DURATION", displayName: "Duration", agg: "SUM"},
+                    total: {displayName: "Executions", agg: "COUNT", graphStyle: "BARS"},
+                    duration: {field: "DURATION", displayName: "Duration", agg: "SUM", graphStyle: "LINES"},
                 },
                 where,
             },
@@ -220,7 +236,6 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
-    gap: var(--ks-spacing-2);
 }
 
 .chart-header {
@@ -228,7 +243,8 @@
     flex-direction: column;
     flex-shrink: 0;
     gap: var(--ks-spacing-2);
-    padding: var(--ks-spacing-2) 0;
+    padding: var(--ks-spacing-2);
+    padding-bottom: 0;
 }
 
 .dependencies {

@@ -107,6 +107,18 @@
             font-weight: var(--ks-font-weight-semibold);
         }
 
+        /* The close ✕: a muted glyph at rest that firms to full strength on hover. Element Plus's
+           default turns it white and fills it with `--kel-tag-hover-color`, which in dark mode reads
+           as a solid white dot (kestra-ee#9590); no fill here, so the ✕ stays readable in every theme. */
+        .kel-tag__close {
+            color: var(--ks-icon-muted);
+
+            &:hover {
+                color: var(--ks-icon-default) !important;
+                background-color: transparent !important;
+            }
+        }
+
         [class*="kel-icon"] {
             display: inline-flex;
             align-items: center;

@@ -23,6 +23,7 @@ const state = {
     retryLastTurn: vi.fn(),
     loadThread: vi.fn(),
     restoreThread: vi.fn(),
+    noteContext: vi.fn(),
 }
 vi.mock("../../../../../src/components/ai/copilot/useAiChat", () => ({useAiChat: () => state}))
 // CopilotChat derives the page scope from the current route — mock a mutable route so tests control it.
@@ -58,6 +59,7 @@ describe("CopilotChat", () => {
         state.retryLastTurn.mockReset()
         state.loadThread.mockReset()
         state.restoreThread.mockReset()
+        state.noteContext.mockReset()
         state.thread.value = null
         miscStore.copilotPrompt = null
     })
@@ -120,15 +122,20 @@ describe("CopilotChat", () => {
         expect(mountChat().findComponent({name: "CopilotContextChip"}).exists()).toBe(false)
     })
 
-    it("drops the scope from the turn after the context chip is dismissed", async () => {
+    it("drops each resource from the turn as its context pill is dismissed", async () => {
         routeStub = {name: "flows/update", params: {namespace: "company.team", id: "my-flow"}}
         const w = mountChat()
         const chip = w.findComponent({name: "CopilotContextChip"})
         expect(chip.exists()).toBe(true)
 
-        chip.vm.$emit("clear")
+        // Dismiss each pill (flow + namespace); the chip disappears once nothing is focused.
+        chip.vm.$emit("remove", "flowId")
+        chip.vm.$emit("remove", "namespace")
         await flushPromises()
         expect(w.findComponent({name: "CopilotContextChip"}).exists()).toBe(false)
+        // Each removal is announced in the transcript (display-only).
+        expect(state.noteContext).toHaveBeenCalledWith({action: "removed", noun: "ai.copilot.contextNoun.flow", id: "my-flow"})
+        expect(state.noteContext).toHaveBeenCalledWith({action: "removed", noun: "ai.copilot.contextNoun.namespace", id: "company.team"})
 
         w.findComponent({name: "CopilotComposer"}).vm.$emit("submit", "no scope please")
         await flushPromises()
@@ -195,22 +202,35 @@ describe("CopilotChat", () => {
         expect(w.findComponent({name: "CopilotComposer"}).props("disabled")).toBe(true)
     })
 
-    it("shows the thinking indicator while streaming before the next output", () => {
+    it("shows the thinking movement while streaming before the next output", () => {
         state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
         state.streaming.value = true
-        expect(mountChat().find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        expect(w.find(".copilot-mark").classes()).toContain("copilot-mark-thinking")
     })
 
-    it("hides the thinking indicator while assistant text is streaming", () => {
+    it("switches to the answering movement while assistant text is streaming", () => {
         state.messages.value = [{id: "2", role: "ASSISTANT", type: "TEXT", content: "partial"}]
         state.streaming.value = true
-        expect(mountChat().find("[data-test=\"copilot-thinking\"]").exists()).toBe(false)
+        const w = mountChat()
+        expect(w.find("[data-test=\"copilot-thinking\"]").exists()).toBe(true)
+        expect(w.find(".copilot-mark").classes()).toContain("copilot-mark-answering")
     })
 
     it("starts a new chat via the top bar", async () => {
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}] // something to reset → enabled
         const w = mountChat()
         await w.find("[data-test=\"copilot-new-chat\"]").trigger("click")
         expect(state.reset).toHaveBeenCalled()
+    })
+
+    it("disables New chat on a fresh, empty chat and enables it once there is something to reset", () => {
+        // beforeEach leaves the chat fresh (no messages, no thread) → nothing to reset.
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeDefined()
+
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "hi"}]
+        expect(mountChat().find("[data-test=\"copilot-new-chat\"]").attributes("disabled")).toBeUndefined()
     })
 
     it("mounts the thread controls (EE-only Recents; a no-op in OSS)", () => {

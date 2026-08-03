@@ -35,7 +35,10 @@
                             </div>
 
                             <template v-if="selectedValue === undefined">
-                                <KsNoData :title="$t('variable_explorer.select_prompt')" />
+                                <KsNoData
+                                    :title="$t('variable_explorer.select_prompt')"
+                                    :description="$t('variable_explorer.select_hint')"
+                                />
                             </template>
 
                             <KsEditor
@@ -56,11 +59,13 @@
                                 />
                             </div>
 
-                            <VariableTreeView
+                            <KsJsonTree
                                 v-else-if="isExpandableValue"
                                 :value="selectedValue"
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
+                                :previewFormatter="treePreviewFormatter"
+                                defaultExpanded
                                 @select="onSelectPath"
                             />
 
@@ -89,6 +94,7 @@
     import {ref, computed, watch} from "vue"
     import {useDebounceFn, useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {
         KsSplitter,
@@ -96,6 +102,7 @@
         KsSegmented,
         KsIconButton,
         KsEditor,
+        KsJsonTree,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
@@ -105,13 +112,13 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
-    import VariableTreeView from "./VariableTreeView.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const editorBindings = useEditorBindings()
 
     const executionsStore = useExecutionsStore()
@@ -146,6 +153,18 @@
             return `{ ${keys.join(", ")} }`
         }
         return String(value)
+    }
+
+    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
+        if (context.kind === "array") {
+            return context.count === 1
+                ? t("variable_explorer.one_item")
+                : t("variable_explorer.n_items", {count: context.count})
+        }
+
+        return context.count === 1
+            ? t("variable_explorer.one_key")
+            : t("variable_explorer.n_keys", {count: context.count})
     }
 
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
@@ -307,12 +326,40 @@
 
     /* ------------------------------- Selection ------------------------------- */
 
+    /** `?expression=trigger.body` seeds the debugger with that expression. */
+    function seededExpression() {
+        const seed = route.query.expression?.toString()
+        return seed ? `{{ ${seed} }}` : ""
+    }
+
+    /** `?select=trigger.variables` opens that item in the viewer, once, as soon as it exists. */
+    let selectionApplied = false
+
+    function applySeededSelection(available: ExplorerSection[]) {
+        const target = route.query.select?.toString()
+        if (selectionApplied || !target) {
+            return
+        }
+        const item = available.flatMap((section) => section.items)
+            .find((candidate) => candidate.expression === target)
+        if (!item) {
+            return
+        }
+        selectionApplied = true
+        void selectItem(item).then(() => {
+            // selectItem rewrites the expression, so re-apply the link's own.
+            const seed = seededExpression()
+            if (seed) {
+                expression.value = seed
+            }
+        })
+    }
+
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const expressionPath = ref<string>("")
     const previewedValue = ref<unknown>(undefined)
-    // Suggested expression handed to the debugger; follows the current selection.
-    const expression = ref<string>("")
+    const expression = ref<string>(seededExpression())
 
     const isExpandableValue = computed(
         () => selectedValue.value !== null && typeof selectedValue.value === "object",
@@ -379,6 +426,8 @@
         expression.value = `{{ ${path} }}`
         previewedValue.value = value
     }
+
+    watch(sections, applySeededSelection, {immediate: true})
 
     /* --------------------------------- Viewer -------------------------------- */
 

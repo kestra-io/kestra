@@ -9,10 +9,23 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 
 public class PageableUtils {
+    /**
+     * Maximum page size accepted on any list/search endpoint, to protect the server and
+     * backend stores from accidental or abusive very-large page requests.
+     */
+    public static final int MAX_PAGE_SIZE = 1000;
+
     private PageableUtils() {
     }
 
     public static Pageable from(int page, int size, List<String> sort, Function<String, String> sortMapper) throws HttpStatusException {
+        if (size > MAX_PAGE_SIZE) {
+            throw new HttpStatusException(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                "The page size must be less than or equal to %d.".formatted(MAX_PAGE_SIZE)
+            );
+        }
+
         final Pageable pageable = Pageable.from(
             page,
             size,

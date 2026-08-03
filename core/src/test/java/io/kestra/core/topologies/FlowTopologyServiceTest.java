@@ -11,6 +11,9 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.input.MultiselectInput;
+import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.serializers.YamlParser;
@@ -165,6 +168,78 @@ class FlowTopologyServiceTest {
     void self() throws IOException {
         Flow flow = parse("flows/valids/trigger-flow-listener.yaml").toBuilder().revision(1).build();
         assertThat(flowTopologyService.isChild(flow, flow)).isNull();
+    }
+
+    @Test
+    void isChildShouldReturnTrueForSelectInput() {
+        Flow parent = Flow.builder()
+            .namespace("io.kestra.ee")
+            .id("parent")
+            .revision(1)
+            .inputs(
+                List.of(
+                    SelectInput.builder().id("select").type(Type.SELECT).expression("{{subflow(id='child', namespace='io.kestra.ee')}}").build()
+                )
+            )
+            .tasks(List.of(returnTask()))
+            .build();
+
+        FlowWithSource child = FlowWithSource.builder()
+            .namespace("io.kestra.ee")
+            .id("child")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .build();
+
+        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.SUBFLOW_FUNCTION);
+    }
+
+    @Test
+    void isChildShouldReturnFalseForPartialMatch() {
+        Flow parent = Flow.builder()
+            .namespace("io.kestra.ee")
+            .id("parent")
+            .revision(1)
+            .inputs(
+                List.of(
+                    SelectInput.builder().id("select").type(Type.SELECT).expression("{{subflow(id='child-longer', namespace='io.kestra.ee')}}").build()
+                )
+            )
+            .tasks(List.of(returnTask()))
+            .build();
+
+        FlowWithSource child = FlowWithSource.builder()
+            .namespace("io.kestra.ee")
+            .id("child")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .build();
+
+        assertThat(flowTopologyService.isChild(parent, child)).isNull();
+    }
+
+    @Test
+    void isChildShouldReturnTrueForMultiSelectInput() {
+        Flow parent = Flow.builder()
+            .namespace("io.kestra.ee")
+            .id("parent")
+            .revision(1)
+            .inputs(
+                List.of(
+                    MultiselectInput.builder().id("multiselect").type(Type.MULTISELECT).expression("{{subflow(id='child', namespace='io.kestra.ee')}}").build()
+                )
+            )
+            .tasks(List.of(returnTask()))
+            .build();
+
+        FlowWithSource child = FlowWithSource.builder()
+            .namespace("io.kestra.ee")
+            .id("child")
+            .revision(1)
+            .tasks(List.of(returnTask()))
+            .build();
+
+        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.SUBFLOW_FUNCTION);
     }
 
     private Return returnTask() {

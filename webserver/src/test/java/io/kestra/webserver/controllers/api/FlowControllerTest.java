@@ -36,7 +36,6 @@ import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.YamlParser;
@@ -578,7 +577,6 @@ class FlowControllerTest {
         assertThat(e.getResponse().getBody(String.class).get()).contains("Required QueryValue [revisions] not specified");
     }
 
-    @FlakyTest(description = "CI load can cause ReadTimeoutException instead of HttpClientResponseException on PUT to non-existent flow")
     @Test
     void updateFlowFlowFromJson() {
         String flowId = IdUtils.create();
@@ -839,7 +837,6 @@ class FlowControllerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
     }
 
-    @FlakyTest(description = "CI load can cause ReadTimeoutException instead of HttpClientResponseException on PUT to non-existent flow")
     @Test
     void updateFlowFlowFromJsonFromString() throws IOException {
         String flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE, "a");
@@ -903,8 +900,7 @@ class FlowControllerTest {
     }
 
     /**
-     * this is testing legacy > new filters /by-query endpoints, related file is
-     * {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     * this is testing legacy > new filters /by-query endpoints
      */
     @Test
     void exportFlowsByQueryForANamespace() throws IOException {

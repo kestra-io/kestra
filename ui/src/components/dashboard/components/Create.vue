@@ -1,6 +1,6 @@
 <template>
     <TopNavBar v-bind="header" />
-    <section class="full-container">
+    <section class="full-container flush-top">
         <MultiPanelDashboardEditorView @save="save" />
     </section>
 </template>

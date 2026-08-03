@@ -109,6 +109,10 @@ public class ExecutorService {
         this.pausedTaskNotifier = pausedTaskNotifier;
     }
 
+    public ExecutionRunning processExecutionRunning(FlowInterface flow, int runningCount, int queuedCount, ExecutionRunning executionRunning) {
+        // if concurrency was removed, it can be null as we always get the latest flow definition
+        if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
+            return switch (flow.getConcurrency().getBehavior()) {
     /**
      * Evaluate the scoped concurrency limits in order against their running counts: the first
      * limit reached defines the behavior applied to the execution; when none is reached the

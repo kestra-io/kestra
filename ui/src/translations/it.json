@@ -437,6 +437,13 @@
       "dialog_title": "Limiti di Concorrenza",
       "warning": "Modificare il contatore in esecuzione può corrompere la concorrenza, quindi le esecuzioni potrebbero superare il limite consentito."
     },
+    "flowConcurrency": {
+      "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",
+      "staleLimit": {
+        "message": "Questo flow non dichiara più un blocco di concorrenza, ma un record di limite conta ancora {count} esecuzione/i in corso. Non influisce più sulle nuove esecuzioni e può essere reimpostato da Amministrazione → Limiti di Concorrenza.",
+        "title": "Limite di concorrenza residuo"
+      }
+    },
     "documentation": {
       "documentation": "Documentazione",
       "github": "Apri un problema su GitHub"
@@ -1334,9 +1341,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "Descrivi il flow che desideri",
-            "body": "Descrivi cosa vuoi automatizzare e l'AI Copilot lo abbozzerà per te. Il tour continua con un example flow già pronto, quindi non è necessario digitare nulla qui.",
-            "next": "Genera il flow"
+            "title": "Flows possono essere abbozzati da un prompt",
+            "body": "Il tour utilizza un flow di esempio già pronto, quindi non è necessario digitare nulla qui.",
+            "next": "Utilizza il flow di esempio"
           },
           "flow_generated": {
             "title": "Questo è un flow",
@@ -1354,7 +1361,7 @@
             "title": "I flow sono modificati come codice",
             "body": "Abbiamo aggiunto un task `notify` per te senza l'AI Copilot, così puoi vedere come appare la modifica diretta del YAML. Pubblica il risultato finale su Slack.",
             "next": "Consulta la documentazione del task",
-            "callout": "AI Copilot ti ha fornito la prima bozza; l'editor è dove puoi iterare su di essa in una tab dell'editor Code o No-Code, entrambi i quali producono lo stesso YAML, così il tuo flow rimane come codice, indipendentemente da come è stato costruito."
+            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No-Code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
           },
           "editor_help": {
             "title": "La documentazione è accanto al flow",
@@ -1421,7 +1428,7 @@
           "takeaways": {
             "copilot": {
               "title": "Flows generati da inglese naturale",
-              "body": "Descrivi cosa vuoi automatizzare, e un flow viene abbozzato dall'AI Copilot. Da lì lo raffini nell'editor, con il completamento automatico e il pannello <strong>Docs</strong>. I flow vengono eseguiti dal pulsante <strong>Execute</strong> del flow o di qualsiasi esecuzione."
+              "body": "Descrivi cosa vuoi automatizzare nella chat dell'AI Copilot, e una prima versione del flow viene generata dallo schema del flow live. Lo stesso è possibile dal tuo editor o terminale: Claude Code, Cursor e altri agenti di codifica possono generare flow con le skill dell'agente Kestra."
             },
             "restart": {
               "title": "Riesegui invece di eseguire tutto di nuovo",
@@ -1442,6 +1449,8 @@
           "start_building": "Inizia a costruire",
           "docs": {
             "title": "Leggi di più",
+            "copilot": "Copilota AI",
+            "agentSkills": "Competenze dell'agente",
             "autocompletion": "Completamento automatico",
             "execution": "Esecuzioni",
             "replay": "Riesegui",

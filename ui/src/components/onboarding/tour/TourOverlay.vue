@@ -1,7 +1,26 @@
 <template>
     <TourFinale v-model="showFinale" @restart="restartTour" />
 
-    <div v-if="tourStore.isGuidedActive && !showFinale" class="tour-overlay" aria-live="polite">
+    <div
+        v-if="tourStore.isGuidedActive && !showFinale"
+        class="tour-overlay"
+        aria-live="polite"
+    >
+        <template v-if="spotlight">
+            <template v-if="spotlight.scrim">
+                <div class="tour-scrim" :style="spotlight.scrim.top" />
+                <div class="tour-scrim" :style="spotlight.scrim.bottom" />
+                <div class="tour-scrim" :style="spotlight.scrim.left" />
+                <div class="tour-scrim" :style="spotlight.scrim.right" />
+            </template>
+            <div
+                v-for="(ring, index) in spotlight.rings"
+                :key="index"
+                class="tour-ring"
+                :style="ring"
+            />
+        </template>
+
         <div
             ref="cardEl"
             class="guide-card"
@@ -11,33 +30,33 @@
         >
             <template v-if="showIntro">
                 <div class="guide-top">
-                    <span class="guide-step">{{ t("onboarding.tour.intro.kicker") }}</span>
+                    <span class="guide-step">{{ $t("onboarding.tour.intro.kicker") }}</span>
                     <KsButton link class="guide-skip" @click="skipTour">
-                        {{ t("onboarding.tour.intro.skip") }}
+                        {{ $t("onboarding.tour.intro.skip") }}
                     </KsButton>
                 </div>
 
                 <h3 class="guide-title">
-                    {{ t("onboarding.tour.intro.title") }}
+                    {{ $t("onboarding.tour.intro.title") }}
                 </h3>
                 <div class="guide-body">
-                    {{ t("onboarding.tour.intro.body") }}
+                    {{ $t("onboarding.tour.intro.body") }}
                 </div>
 
                 <ul class="guide-plan">
                     <li v-for="group in TOUR_STEP_GROUPS" :key="group.step">
-                        {{ t(`onboarding.tour.steps.${group.step}`) }}
+                        {{ $t(`onboarding.tour.steps.${group.step}`) }}
                     </li>
                 </ul>
 
                 <p class="guide-note">
-                    {{ t("onboarding.tour.intro.note") }}
+                    {{ $t("onboarding.tour.intro.note") }}
                 </p>
 
                 <div class="guide-actions">
                     <span class="guide-spacer" />
                     <KsButton type="primary" @click="beginTour">
-                        {{ t("onboarding.tour.intro.start") }}
+                        {{ $t("onboarding.tour.intro.start") }}
                     </KsButton>
                 </div>
             </template>
@@ -45,11 +64,11 @@
             <template v-else>
                 <div class="guide-top">
                     <span class="guide-step">
-                        {{ t("onboarding.tour.step_of", {current: sceneIndex + 1, total: TOUR_TOTAL_STEPS}) }}
-                        <span class="guide-step-name">{{ t(`onboarding.tour.steps.${scene.step}`) }}</span>
+                        {{ $t("onboarding.tour.step_of", {current: sceneIndex + 1, total: TOUR_TOTAL_STEPS}) }}
+                        <span class="guide-step-name">{{ $t(`onboarding.tour.steps.${scene.step}`) }}</span>
                     </span>
                     <KsButton link class="guide-skip" @click="skipTour">
-                        {{ t("onboarding.tour.actions.skip") }}
+                        {{ $t("onboarding.tour.actions.skip") }}
                     </KsButton>
                 </div>
 
@@ -74,41 +93,51 @@
                     class="milestone"
                     type="success"
                     :icon="CheckCircle"
-                    :label="t(sceneKey('milestone'))"
+                    :label="$t(sceneKey('milestone'))"
                 />
 
                 <h3 class="guide-title">
-                    {{ t(sceneKey("title")) }}
+                    {{ $t(sceneKey("title")) }}
                 </h3>
-                <div class="guide-body" v-html="t(sceneKey('body'))" />
+                <div class="guide-body" v-html="$t(sceneKey('body'))" />
 
-                <p v-if="scene.callout" class="guide-callout" v-html="t(sceneKey('callout'))" />
+                <p
+                    v-if="scene.callout"
+                    class="guide-callout"
+                    v-html="$t(sceneKey('callout'))"
+                />
 
-                <KsAlert v-if="error" type="error" :closable="false" class="guide-alert">
+                <KsAlert
+                    v-if="error"
+                    type="error"
+                    :closable="false"
+                    class="guide-alert"
+                >
                     <template #title>
-                        <span v-html="error" />
+                        <span v-if="error.isHtml" v-html="error.message" />
+                        <span v-else>{{ error.message }}</span>
                     </template>
                 </KsAlert>
 
                 <div class="guide-actions">
                     <KsButton v-if="sceneIndex > 0" :disabled="isBusy" @click="back">
-                        {{ t("onboarding.tour.actions.back") }}
+                        {{ $t("onboarding.tour.actions.back") }}
                     </KsButton>
                     <span class="guide-spacer" />
                     <KsButton
                         v-if="scene.offersExit"
-                        :disabled="isBusy || !isReady"
+                        :disabled="isWorking"
                         @click="finishTour"
                     >
-                        {{ t("onboarding.tour.actions.finish_now") }}
+                        {{ $t("onboarding.tour.actions.finish_now") }}
                     </KsButton>
                     <KsButton
                         type="primary"
-                        :loading="isBusy || !isReady"
-                        :disabled="isBusy || !isReady"
+                        :loading="isWorking"
+                        :disabled="isWorking"
                         @click="next"
                     >
-                        {{ isBusy || !isReady ? t("onboarding.tour.actions.running") : nextLabel }}
+                        {{ nextLabel }}
                     </KsButton>
                 </div>
             </template>
@@ -122,7 +151,6 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
-
     import TourFinale from "./TourFinale.vue"
     import {
         TOUR_SCENES,
@@ -159,14 +187,12 @@
         return true
     }
 
-    // Only set once the check actually answered, so a failed check is retried later.
     let autoStartChecked = false
 
     const autoStartOnCopilot = async () => {
         if (autoStartChecked || route.name !== "ai") {
             return false
         }
-        // Progress from another instance would otherwise count as "already offered here".
         tourStore.syncInstance(miscStore.configs?.uuid)
         if (tourStore.state.status !== "not_started" || tourStore.isDismissed) {
             return false
@@ -184,10 +210,14 @@
         return true
     }
 
+    type TourError = {message: string; isHtml: boolean}
+
     const isBusy = ref(false)
     const isReady = ref(false)
-    const error = ref<string | null>(null)
+    const error = ref<TourError | null>(null)
     const showFinale = ref(false)
+
+    const isWorking = computed(() => isBusy.value || !isReady.value)
 
     const sceneIndex = computed(() => tourSceneIndex(tourStore.state.currentStepId))
     const scene = computed(() => TOUR_SCENES[sceneIndex.value])
@@ -209,7 +239,9 @@
         const group = TOUR_STEP_GROUPS.find((candidate) => candidate.step === step)
         return tickIndex <= (group?.scenes.indexOf(scene.value.id) ?? 0)
     }
-    const nextLabel = computed(() => t(sceneKey("next")))
+    const nextLabel = computed(() =>
+        isWorking.value ? t("onboarding.tour.actions.running") : t(sceneKey("next")),
+    )
 
     const track = (event: OnboardingTourEvent, additional: Record<string, unknown> = {}) => {
         trackOnboarding({
@@ -230,19 +262,108 @@
     let highlightTimer: number | null = null
     let highlightAttempts = 0
 
+    const RING_PADDING = 6
+
+    const spotlight = ref<{
+        scrim: Record<"top" | "bottom" | "left" | "right", Record<string, string>> | null;
+        rings: Record<string, string>[];
+    } | null>(null)
+
+    let spotlightFrame: number | null = null
+    let lastSpotlightKey = ""
+    let activeSelector = ""
+
+    const px = (value: number) => `${Math.round(value)}px`
+
+    const dialogOpen = () =>
+        Array.from(document.querySelectorAll(".kel-overlay-dialog, .kel-overlay")).some((element) => {
+            const rect = element.getBoundingClientRect()
+            return rect.width > 0 && rect.height > 0
+        })
+
+    const hideSpotlight = () => {
+        if (lastSpotlightKey !== "") {
+            lastSpotlightKey = ""
+            spotlight.value = null
+        }
+    }
+
+    const trackSpotlight = () => {
+        spotlightFrame = window.requestAnimationFrame(trackSpotlight)
+
+        if (dialogOpen()) {
+            hideSpotlight()
+            return
+        }
+
+        const matches = activeSelector
+            ? Array.from(document.querySelectorAll<HTMLElement>(activeSelector))
+                .map((element) => ({element, rect: element.getBoundingClientRect()}))
+                .filter(({rect}) => rect.width > 0 && rect.height > 0)
+            : []
+
+        const elements = matches.map((match) => match.element)
+        if (elements.length !== highlighted.value.length
+            || elements.some((element, index) => element !== highlighted.value[index])) {
+            highlighted.value.forEach((element) => element.classList.remove(HIGHLIGHT_CLASS))
+            elements.forEach((element) => element.classList.add(HIGHLIGHT_CLASS))
+            highlighted.value = elements
+        }
+
+        const rects = matches.map((match) => match.rect)
+
+        if (!rects.length) {
+            hideSpotlight()
+            return
+        }
+
+        const top = Math.max(0, Math.min(...rects.map((rect) => rect.top)) - RING_PADDING)
+        const left = Math.max(0, Math.min(...rects.map((rect) => rect.left)) - RING_PADDING)
+        const bottom = Math.min(window.innerHeight, Math.max(...rects.map((rect) => rect.bottom)) + RING_PADDING)
+        const right = Math.min(window.innerWidth, Math.max(...rects.map((rect) => rect.right)) + RING_PADDING)
+
+        const key = [top, left, bottom, right, rects.length].map(Math.round).join(":")
+        if (key === lastSpotlightKey) {
+            return
+        }
+        lastSpotlightKey = key
+
+        spotlight.value = {
+            scrim: scene.value?.dim === false ? null : {
+                top: {top: "0", left: "0", right: "0", height: px(top)},
+                bottom: {top: px(bottom), left: "0", right: "0", bottom: "0"},
+                left: {top: px(top), left: "0", width: px(left), height: px(bottom - top)},
+                right: {top: px(top), left: px(right), right: "0", height: px(bottom - top)},
+            },
+            rings: rects.map((rect) => ({
+                top: px(rect.top - RING_PADDING),
+                left: px(rect.left - RING_PADDING),
+                width: px(rect.width + RING_PADDING * 2),
+                height: px(rect.height + RING_PADDING * 2),
+            })),
+        }
+    }
+
     const clearHighlight = () => {
         if (highlightTimer !== null) {
             window.clearTimeout(highlightTimer)
             highlightTimer = null
         }
+        if (spotlightFrame !== null) {
+            window.cancelAnimationFrame(spotlightFrame)
+            spotlightFrame = null
+        }
+        lastSpotlightKey = ""
+        activeSelector = ""
+        spotlight.value = null
         highlighted.value.forEach((element) => element.classList.remove(HIGHLIGHT_CLASS))
         highlighted.value = []
     }
 
-    /** All visible matches of the first comma-separated selector that matches: some controls come in pairs. */
     const findTargets = (selector: string) => {
-        for (const candidate of selector.split(",").map((value) => value.trim()).filter(Boolean)) {
-            const visible = (Array.from(document.querySelectorAll(candidate)) as HTMLElement[])
+        const candidates = selector.split(",").map((value) => value.trim()).filter(Boolean)
+        for (const [index, candidate] of candidates.entries()) {
+            const visible = Array.from(document.querySelectorAll<HTMLElement>(candidate))
                 .filter((target) => {
                     const style = window.getComputedStyle(target)
                     if (style.display === "none" || style.visibility === "hidden") {
@@ -252,40 +373,51 @@
                     return rect.width > 0 && rect.height > 0
                 })
             if (visible.length) {
-                return visible
+                return {elements: visible, rank: index, candidate}
             }
         }
-        return []
+        return {elements: [] as HTMLElement[], rank: -1, candidate: ""}
     }
 
-    // Panels mount asynchronously after a route change, so retry for a couple of seconds.
     const applyHighlight = () => {
         clearHighlight()
         const selector = scene.value?.targetSelector
         if (!selector || !tourStore.isGuidedActive) {
             return
         }
-        const targets = findTargets(selector)
+        const {elements: targets, rank, candidate} = findTargets(selector)
+        const keepLooking = rank !== 0 && highlightAttempts < 25
+        if (keepLooking) {
+            highlightAttempts += 1
+            highlightTimer = window.setTimeout(applyHighlight, 150)
+        } else {
+            highlightAttempts = 0
+        }
         if (!targets.length) {
-            if (highlightAttempts < 25) {
-                highlightAttempts += 1
-                highlightTimer = window.setTimeout(applyHighlight, 150)
-            }
             return
         }
-        highlightAttempts = 0
         highlighted.value = targets
+        activeSelector = candidate
         targets.forEach((target) => target.classList.add(HIGHLIGHT_CLASS))
+
+        const rect = targets[0].getBoundingClientRect()
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+            targets[0].scrollIntoView({block: "center", behavior: "smooth"})
+        }
+
+        trackSpotlight()
     }
 
     // Keep in sync with the `cursor: text` rule listing the same selectors in the style block.
-    const SELECTABLE_TEXT =".guide-title, .guide-body, .guide-plan, .guide-alert, .guide-callout, .milestone, code"
+    const SELECTABLE_TEXT = ".guide-title, .guide-body, .guide-plan, .guide-alert, .guide-callout, .milestone, code"
 
     const cardEl = ref<HTMLElement | null>(null)
     const dragOffset = ref({x: 0, y: 0})
     const cardInlineStyle = computed(() => ({
         transform: `translate(${dragOffset.value.x}px, ${dragOffset.value.y}px)`,
     }))
+
+    let stopDrag: (() => void) | null = null
 
     const onCardMouseDown = (event: MouseEvent) => {
         if (event.button !== 0) {
@@ -321,7 +453,9 @@
         const onMouseUp = () => {
             window.removeEventListener("mousemove", onMouseMove)
             window.removeEventListener("mouseup", onMouseUp)
+            stopDrag = null
         }
+        stopDrag = onMouseUp
 
         window.addEventListener("mousemove", onMouseMove)
         window.addEventListener("mouseup", onMouseUp)
@@ -352,8 +486,12 @@
         }
     }
 
-    const describeError =(e: any) =>
-        e instanceof TourSceneError ? t(e.key, e.params) : (e?.message ?? String(e))
+    const describeError = (e: unknown): TourError => {
+        if (e instanceof TourSceneError) {
+            return {message: t(e.key, e.params), isHtml: true}
+        }
+        return {message: (e as {message?: string} | null)?.message ?? String(e), isHtml: false}
+    }
 
     const runScene = async () => {
         isReady.value = false
@@ -367,7 +505,7 @@
             if (scene.value?.confetti) {
                 confettiBurst()
             }
-        } catch (e: any) {
+        } catch (e) {
             error.value = describeError(e)
             isReady.value = true
             startPolling()
@@ -397,7 +535,7 @@
             } else {
                 finishTour()
             }
-        } catch (e: any) {
+        } catch (e) {
             error.value = describeError(e)
         } finally {
             isBusy.value = false
@@ -432,7 +570,6 @@
         toast.success(t("onboarding.tour.actions.skipped_hint"), t("onboarding.tour.menu"))
     }
 
-    /** Last step and the early exit offered on a milestone both count as completed. */
     const finishTour = () => {
         track("tour_completed")
         clearHighlight()
@@ -458,7 +595,6 @@
         }
     })
 
-    /** Moves the tour on when the user performed the step themselves, in the real UI. */
     const followUserStep = async () => {
         if (isBusy.value || showIntro.value || !tourStore.isGuidedActive) {
             return
@@ -477,8 +613,6 @@
         {deep: true},
     )
 
-    // Some steps leave nothing on screen when done (e.g. an HTTP request sent with curl); those
-    // scenes declare a `poll`, which runs while they are the current one.
     let pollTimer: number | null = null
 
     const stopPolling = () => {
@@ -511,7 +645,6 @@
     onMounted(async () => {
         const started = (await consumeStartQuery()) || (await autoStartOnCopilot())
         if (!started && tourStore.isGuidedActive && tourStore.state.tour.introSeen) {
-            // Resuming after a reload: re-enter the current scene so the app matches the card.
             await runScene()
         }
     })
@@ -519,6 +652,7 @@
     onBeforeUnmount(() => {
         clearHighlight()
         stopPolling()
+        stopDrag?.()
     })
 </script>
 
@@ -546,7 +680,6 @@
         user-select: none;
     }
 
-    // `--menu-width` is set on `:root` by app.scss.
     .guide-card.is-left {
         right: auto;
         left: calc(var(--menu-width) + var(--ks-spacing-4));
@@ -601,7 +734,6 @@
         line-height: var(--ks-line-height-loose);
     }
 
-    // The body is v-html: an ordered list may come from the translation.
     .guide-body :deep(ol) {
         margin: var(--ks-spacing-1) 0;
         padding-left: var(--ks-spacing-5);
@@ -655,7 +787,6 @@
         margin-bottom: var(--ks-spacing-3);
     }
 
-    // Not a KsAlert: its info variant renders dim text on a dim background, unreadable in this card.
     .guide-callout {
         margin: 0 0 var(--ks-spacing-3);
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
@@ -679,21 +810,56 @@
         flex: 1;
     }
 
-    // Applied to real controls elsewhere in the app, so it has to leave the scoped tree.
     :global(.onboarding-v2-highlight-static) {
         --onboarding-static-color: var(--ks-btn-primary-bg-default);
-        box-shadow:
-            0 0 16px 2px color-mix(in srgb, var(--onboarding-static-color) 36%, transparent),
-            0 0 34px 10px color-mix(in srgb, var(--onboarding-static-color) 20%, transparent);
         border-radius: var(--ks-radius-lg);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--onboarding-static-color) 45%, transparent);
         transition: box-shadow var(--ks-duration-base) var(--ks-ease-standard);
     }
 
     :global(html.dark .onboarding-v2-highlight-static) {
         --onboarding-static-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 70%, white 30%);
-        box-shadow:
-            0 0 18px 3px color-mix(in srgb, var(--onboarding-static-color) 48%, transparent),
-            0 0 40px 12px color-mix(in srgb, var(--onboarding-static-color) 24%, transparent);
+    }
+
+    // Position is set every frame; a transition would make the ring trail behind its target.
+    .tour-scrim {
+        position: fixed;
+        background: var(--kel-overlay-color-lighter);
+        pointer-events: none;
+    }
+
+    .tour-ring {
+        --tour-ring-color: color-mix(in srgb, var(--ks-btn-primary-bg-default) 75%, white 25%);
+        position: fixed;
+        border: var(--ks-border-width-base) solid var(--tour-ring-color);
+        border-radius: var(--ks-radius-lg);
+        pointer-events: none;
+        animation: tourRingPulse 1.5s var(--ks-ease-out) 3 forwards;
+    }
+
+    @keyframes tourRingPulse {
+        0% {
+            box-shadow:
+                0 0 0 0 color-mix(in srgb, var(--tour-ring-color) 55%, transparent),
+                0 0 24px 6px color-mix(in srgb, var(--tour-ring-color) 45%, transparent);
+        }
+        70% {
+            box-shadow:
+                0 0 0 12px color-mix(in srgb, var(--tour-ring-color) 0%, transparent),
+                0 0 34px 12px color-mix(in srgb, var(--tour-ring-color) 30%, transparent);
+        }
+        100% {
+            box-shadow:
+                0 0 0 0 color-mix(in srgb, var(--tour-ring-color) 0%, transparent),
+                0 0 26px 8px color-mix(in srgb, var(--tour-ring-color) 32%, transparent);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .tour-ring {
+            animation: none;
+            box-shadow: 0 0 24px 6px color-mix(in srgb, var(--tour-ring-color) 32%, transparent);
+        }
     }
 
     :global(.tour-confetti-piece) {

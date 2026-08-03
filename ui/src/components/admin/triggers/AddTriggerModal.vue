@@ -3,7 +3,7 @@
         v-model="visible"
         destroyOnClose
         appendToBody
-        :large="activeTab === 'documentation'"
+        large
     >
         <template #header>
             <div class="header">
@@ -17,7 +17,7 @@
             </div>
         </template>
 
-        <div class="modal-body">
+        <KsScrollbar class="modal-body" maxHeight="70vh">
             <KsTabs v-model="activeTab" type="segmented">
                 <KsTabPane name="form" :label="$t('triggers_add_modal_tab_form')">
                     <div class="form">
@@ -109,7 +109,7 @@
                     </div>
                 </KsTabPane>
             </KsTabs>
-        </div>
+        </KsScrollbar>
 
         <template #footer>
             <div class="footer">
@@ -342,9 +342,14 @@
         }
     }
 
-    .modal-body :deep(.kel-tabs--segmented) {
-        .kel-tabs__header {
-            margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
+    .modal-body {
+        margin-right: calc(var(--kel-dialog-padding-primary) * -1);
+        padding-right: var(--kel-dialog-padding-primary);
+
+        :deep(.kel-tabs--segmented) {
+            .kel-tabs__header {
+                margin: var(--ks-spacing-3) 0 var(--ks-spacing-5);
+            }
         }
     }
 

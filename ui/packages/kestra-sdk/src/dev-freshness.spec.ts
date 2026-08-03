@@ -1,10 +1,12 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
 
 describe("warnIfSdkStale", () => {
     beforeEach(() => {
         vi.resetModules()
         vi.restoreAllMocks()
     })
+
+    afterAll(() => vi.unstubAllGlobals())
 
     it("bypasses the HTTP cache when fetching the live spec", async () => {
         const fetchMock = vi.fn().mockResolvedValue({

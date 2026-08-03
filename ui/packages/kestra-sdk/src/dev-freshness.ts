@@ -44,6 +44,7 @@ export async function warnIfSdkStale(
     label = "@kestra-io/kestra-sdk",
 ): Promise<void> {
     if (alreadyChecked || !committedHash) return
+    alreadyChecked = true
 
     try {
         if (typeof fetch !== "function" || typeof crypto?.subtle?.digest !== "function") return
@@ -58,10 +59,12 @@ export async function warnIfSdkStale(
         // Unauthenticated (e.g. on the login screen itself, before any session cookie exists), the
         // spec endpoint redirects to the login page and `fetch` follows it — hashing that HTML would
         // be a false positive, and a stable one (same page, same build), so it can look like permanent
-        // drift. Don't consume the one-shot check on this: only commit to `alreadyChecked` once we
-        // actually got the spec, so a later call (e.g. after logging in and reloading) can still work.
-        if (!response.ok || response.redirected) return
-        alreadyChecked = true
+        // drift. Don't consume the one-shot check on this: release the latch so a later call (e.g.
+        // after logging in and reloading) can still work.
+        if (!response.ok || response.redirected) {
+            alreadyChecked = false
+            return
+        }
 
         const liveHash = await sha256First16(await response.arrayBuffer())
         if (liveHash !== committedHash) {
@@ -75,6 +78,8 @@ export async function warnIfSdkStale(
             window.dispatchEvent(new CustomEvent(SDK_DRIFT_EVENT, {detail: {label, committedHash, liveHash}}))
         }
     } catch {
-        // best-effort only — never break dev or an API call over a freshness check
+        // best-effort only — never break dev or an API call over a freshness check. The backend may
+        // just not be up yet, so release the latch to stay retryable (same as the redirect case).
+        alreadyChecked = false
     }
 }

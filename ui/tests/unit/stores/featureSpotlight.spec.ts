@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {createPinia, setActivePinia} from "pinia"
 
 const SEEN_STORAGE_KEY = "featureSpotlightsSeen"
@@ -14,6 +14,10 @@ describe("featureSpotlight store", () => {
     beforeEach(() => {
         localStorage.clear()
         setActivePinia(createPinia())
+    })
+
+    afterAll(() => {
+        localStorage.clear()
     })
 
     it("flags a nav item with an unseen spotlight", async () => {

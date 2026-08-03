@@ -31,10 +31,11 @@ describe("CopilotHelp", () => {
 
     it("links the Blueprints card to the community flow blueprints route", () => {
         const w = mountHelp()
-        const link = w.find(".router-link-stub")
-        expect(link.exists()).toBe(true)
-        const to = JSON.parse(link.attributes("data-to") ?? "{}")
-        expect(to).toEqual({name: "blueprints", params: {kind: "community", tab: "flow"}})
+        const link = w.findAll(".router-link-stub")
+            .find((l) => JSON.parse(l.attributes("data-to") ?? "{}").name === "blueprints")
+        expect(link).toBeDefined()
+        const to = JSON.parse(link!.attributes("data-to") ?? "{}")
+        expect(to).toEqual({name: "blueprints", params: {kind: "flow", tab: "community"}})
     })
 
     it("links the Slack card to the external community URL, opened safely in a new tab", () => {

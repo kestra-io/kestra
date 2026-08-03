@@ -19,7 +19,7 @@
                 </KsFormItem>
                 <KsFormItem>
                     <NamespaceSelect
-                        v-if="$route.name !== 'flows/update'"
+                        v-if="routeFamily($route.name) !== 'flows/update'"
                         data-type="flow"
                         v-model="namespace"
                         @update:model-value="onNamespaceChange"
@@ -54,6 +54,7 @@
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     import TopNavBar from "../layout/TopNavBar.vue"
     import SearchField from "../layout/SearchField.vue"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"

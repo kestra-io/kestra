@@ -20,6 +20,7 @@ vi.mock("@kestra-io/kestra-sdk/plugins", () => ({
 import Triggers from "../../../../src/components/admin/triggers/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
 import {setMockClient} from "@kestra-io/kestra-sdk"
+import {mockClientFallback} from "../../../../.storybook/apiMock";
 
 const meta = {
     title: "Components/Admin/Triggers",
@@ -135,18 +136,17 @@ const Template = (args) => ({
                 }
             }
 
-            console.log("get request", uri)
-            return {data: {}}
+            // Anything this story doesn't answer itself falls back to the shared table in
+            // .storybook/apiMock.js, which reports the route if nothing there covers it either.
+            return mockClientFallback("GET", uri)
         }
 
-        store.post = async function (uri) {
-            console.log("post request", uri)
-            return {data: {}}
+        store.post = async function (uri, data) {
+            return mockClientFallback("POST", uri, data)
         }
 
-        store.put = async function (uri) {
-            console.log("put request", uri)
-            return {data: {}}
+        store.put = async function (uri, data) {
+            return mockClientFallback("PUT", uri, data)
         }
 
         setMockClient(store);

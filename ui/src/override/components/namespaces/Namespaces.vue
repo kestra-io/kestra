@@ -43,10 +43,9 @@
                 <template #default="{data}">
                     <router-link
                         :to="{
-                            name: 'namespaces/update',
+                            name: `namespaces/update/${data.system ? 'blueprints' : 'overview'}`,
                             params: {
                                 id: data.id,
-                                tab: data.system ? 'blueprints' : 'overview',
                             },
                         }"
                         tag="div"
@@ -83,7 +82,8 @@
 
     import Navbar from "../../../components/layout/TopNavBar.vue"
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
-    import {KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useNamespacesFilter} from "../../../components/filter/configurations"
     import resource from "../../../models/resource"
     import action from "../../../models/action"

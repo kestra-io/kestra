@@ -68,8 +68,8 @@
     const axios = useClient()
 
     const startTutorial = computed(() => ({
-        name: "flows/create",
-        query: {onboarding: "guided", reset: "true"},
+        name: "ai",
+        query: {tour: "start"},
         params: {tenant: route.params.tenant},
     }))
 

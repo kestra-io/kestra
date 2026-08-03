@@ -1,6 +1,7 @@
 import {Component, computed, Ref} from "vue"
 import {useRoute} from "vue-router"
 import {useI18n} from "vue-i18n"
+import {NAMESPACE_PARENT_ROUTE} from "../../../utils/namespaceTabRoutes"
 
 import BlueprintsBrowser from "../../flows/blueprints/BlueprintsBrowser.vue"
 import Flows from "../../../components/flows/Flows.vue"
@@ -28,7 +29,6 @@ export interface Breadcrumb {
         name?: string,
         params?: {
             id: string,
-            tab: string,
         }
     },
     disabled?: boolean;
@@ -72,10 +72,9 @@ export function useHelpers() {
             ...parts.value.slice(0, -1).map((_: string, index: number): Breadcrumb => ({
                 label: parts.value[index],
                 link: {
-                    name: "namespaces/update",
+                    name: `${NAMESPACE_PARENT_ROUTE}/overview`,
                     params: {
                         id: parts.value.slice(0, index + 1).join("."),
-                        tab: "overview",
                     },
                 },
             })),

@@ -42,6 +42,7 @@
         RANGE_COMPARATORS,
         TEXT_COMPARATORS,
         KV_COMPARATORS,
+        NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
     import FilterText from "./FilterText.vue"
@@ -108,11 +109,11 @@
     )
 
     const isTextOp = computed(() =>
-        TEXT_COMPARATORS.includes(state.selectedComparator) && props.filterKey?.key !== "resources",
+        (TEXT_COMPARATORS.includes(state.selectedComparator) || NULL_COMPARATORS.includes(state.selectedComparator)) && props.filterKey?.key !== "resources",
     )
 
     const isKVPairFilter = computed(() =>
-        props.filterKey?.valueType === "key-value",
+        props.filterKey?.valueType === "key-value" && !isTextOp.value,
     )
 
     const isTimeRange = computed(() =>
@@ -412,7 +413,7 @@
             state.endDateValue = null
         }
 
-        const isTextOpLocal = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey?.key !== "resources"
+        const isTextOpLocal = (TEXT_COMPARATORS.includes(filter.comparator) || NULL_COMPARATORS.includes(filter.comparator)) && props.filterKey?.key !== "resources"
         const isKVPair = props.filterKey?.valueType === "key-value" || (props.filterKey?.key === "labels" && KV_COMPARATORS.includes(filter.comparator))
 
         if (isTextOpLocal) {

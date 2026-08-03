@@ -44,6 +44,26 @@ class LogJdbcDataSourceProviderTest {
     }
 
     @Test
+    void shouldFailFastWhenUrlIsConfiguredWithoutUsername() {
+        // Given: a dedicated logs database URL but no username (credentials must be explicit)
+        LogJdbcDataSourceProvider provider = provider(
+            Map.of(
+                "type", "postgres", "postgres", Map.of(
+                    "url", "jdbc:postgresql://postgres-logs:5432/kestra_logs"
+                )
+            ),
+            "postgres"
+        );
+
+        // When-Then: fail fast rather than silently connecting as an unintended user
+        assertThatThrownBy(provider::isDedicated)
+            .isInstanceOf(KestraRuntimeException.class)
+            .hasMessageContaining("kestra.logs.postgres.url")
+            .hasMessageContaining("kestra.logs.postgres.username")
+            .hasMessageContaining("never inherited");
+    }
+
+    @Test
     void shouldFailFastWhenLogTypeDiffersFromRepositoryAndNoUrl() {
         // Given: kestra.logs.type=mysql but the main repository is h2, and no dedicated url
         LogJdbcDataSourceProvider provider = provider(Map.of("type", "mysql"), "h2");

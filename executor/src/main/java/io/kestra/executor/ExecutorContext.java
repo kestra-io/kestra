@@ -40,22 +40,26 @@ public class ExecutorContext {
     private final List<SubflowExecution<?>> subflowExecutions = new ArrayList<>(0);
     private final List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>(0);
     private final List<Execution> loopExecutions = new ArrayList<>(0);
-    private State.Type originalState;
+    /**
+     * The execution as loaded at cycle entry when it was <b>already in a terminal
+     * state</b> then, and {@code null} otherwise.
+     */
+    private final Execution terminalExecutionAtEntry;
     // Tracks every distinct state this execution passes through within a single cycle.
-    // Index 0 = state at cycle entry (== originalState); each subsequent entry is a new state.
+    // Index 0 = state at cycle entry; each subsequent entry is a new state.
     private final List<State.Type> stateTransitions = new ArrayList<>(1);
 
     public ExecutorContext(Execution execution) {
         this.execution = execution;
-        this.originalState = execution.getState().getCurrent();
-        this.stateTransitions.add(this.originalState);
+        this.terminalExecutionAtEntry = execution.getState().isTerminated() ? execution : null;
+        this.stateTransitions.add(execution.getState().getCurrent());
     }
 
     public ExecutorContext(Execution execution, FlowWithSource flow) {
         this.execution = execution;
         this.flow = flow;
-        this.originalState = execution.getState().getCurrent();
-        this.stateTransitions.add(this.originalState);
+        this.terminalExecutionAtEntry = execution.getState().isTerminated() ? execution : null;
+        this.stateTransitions.add(execution.getState().getCurrent());
     }
 
     public Boolean canBeProcessed() {

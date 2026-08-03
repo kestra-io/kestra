@@ -1,8 +1,8 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
 import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
         matches: prefersDark,
         media: query,
         onchange: null,
@@ -11,7 +11,7 @@ function mockSystemPrefersDark(prefersDark: boolean) {
         addListener: () => {},
         removeListener: () => {},
         dispatchEvent: () => false,
-    })) as any
+    })))
 }
 
 describe("theme utils", () => {
@@ -19,6 +19,12 @@ describe("theme utils", () => {
         localStorage.clear()
         document.documentElement.className = ""
         mockSystemPrefersDark(false)
+    })
+
+    afterAll(() => {
+        localStorage.clear()
+        document.documentElement.className = ""
+        vi.unstubAllGlobals()
     })
 
     describe("getTheme()", () => {

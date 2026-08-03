@@ -2,6 +2,7 @@ import {computed, ComputedRef} from "vue"
 import {FilterConfiguration, Comparators, FilterMeta} from "@kestra-io/design-system"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
+import {labelComparatorLabels} from "./labelComparatorLabels"
 
 export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -87,8 +88,18 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "labels",
                     label: t("filter.labels_execution.label"),
                     description: t("filter.labels_execution.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
                     valueType: "key-value",
+                    showComparatorSelection: true,
                 },
                 {
                     key: "triggerExecutionId",

@@ -127,6 +127,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     }
 
                     if (typeof field !== "string" || typeof operation !== "string" || logical !== undefined || children !== undefined) return undefined
+                    if (Array.isArray(value)) return undefined
                     if (typeof value === "object" && value != null && !Array.isArray(value)) {
                         const entries = Object.entries(value)
                         if (entries.length === 0) return undefined

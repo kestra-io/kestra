@@ -253,6 +253,20 @@ describe("routeQueryToQueryFilters", () => {
         expect(new URLSearchParams(query).getAll("filters")).toEqual(filters.map(value => JSON.stringify(value)))
     })
 
+    it.each(["IN", "IS_NULL"])("falls back atomically when a %s leaf has an empty array value", (operation) => {
+        const filters = [{
+            logical: "or",
+            children: [
+                {field: "labels", operation, value: []},
+                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            ],
+        }]
+
+        const query = serializeQuery({filters})
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual(filters.map(value => JSON.stringify(value)))
+    })
+
     it("falls back atomically when a map value has no toString method", () => {
         const valueWithoutToString = Object.assign(Object.create(null), {value: "production"})
         const filters = [{

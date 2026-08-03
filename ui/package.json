@@ -28,6 +28,7 @@
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
         "translations:check": "npx --yes tsx ./src/translations/check.ts",
+        "translations:generate": "node --experimental-strip-types ./scripts/generate_translations.ts",
         "lint": "oxlint --fix src packages tests && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",

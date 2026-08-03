@@ -230,6 +230,29 @@ describe("routeQueryToQueryFilters", () => {
         expect(params.get("filters[or][1][status][IS_NOT_NULL]")).toBe("")
     })
 
+    it("falls back atomically when a comparator-only leaf has an empty object value", () => {
+        const filters = [
+            {field: "labels", operation: "IS_NULL", value: {}},
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+        ]
+        const query = serializeQuery({filters})
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual(filters.map(value => JSON.stringify(value)))
+    })
+
+    it("falls back atomically when a logical group contains a comparator-only leaf with an empty object value", () => {
+        const filters = [{
+            logical: "or",
+            children: [
+                {field: "labels", operation: "IS_NULL", value: {}},
+                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            ],
+        }]
+        const query = serializeQuery({filters})
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual(filters.map(value => JSON.stringify(value)))
+    })
+
     it.each([
         ["a null logical child", {logical: "or", children: [null, {field: "state", operation: "EQUALS", value: "RUNNING"}]}],
         ["a string logical child", {logical: "or", children: ["invalid", {field: "state", operation: "EQUALS", value: "RUNNING"}]}],

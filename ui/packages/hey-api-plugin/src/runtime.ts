@@ -117,13 +117,12 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     if (filter == null || typeof filter !== "object") return false
 
                     const isValueOptional = filter.operation === "IS_NULL" || filter.operation === "IS_NOT_NULL"
-                    const hasSerializableValue = isValueOptional || (
-                        filter.value !== null &&
-                        typeof filter.value === "object" &&
-                        !Array.isArray(filter.value)
+                    const isValueAbsent = filter.value === null || filter.value === undefined
+                    const hasSerializableValue = isValueAbsent
+                        ? isValueOptional
+                        : typeof filter.value === "object" && !Array.isArray(filter.value)
                             ? Object.values(filter.value).length > 0 && Object.values(filter.value).every(value => serializeQueryValue(value) !== undefined)
                             : serializeQueryValue(filter.value) !== undefined
-                    )
                     const isLeaf = typeof filter.field === "string" &&
                         typeof filter.operation === "string" &&
                         hasSerializableValue

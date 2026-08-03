@@ -93,8 +93,8 @@
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
 
-    const PAUSED_STATES = [State.FAILED, State.RUNNING, State.CANCELLED]
     const DEFAULT_STATES = [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED]
+    const CHANGEABLE_FROM_STATES: string[] = [State.FAILED, State.WARNING, State.SUCCESS, State.CANCELLED, State.RETRIED, State.SKIPPED]
 
     const POPPER_STYLE = {
         padding: "0",
@@ -106,16 +106,13 @@
     const selectedStatus = ref<string>()
     const visible = ref(false)
 
-    const states = computed(() => {
-        const current = props.execution.state.current
-        const available = current === "PAUSED" ? PAUSED_STATES : DEFAULT_STATES
-
-        return available.filter(state => state !== current)
-    })
+    const states = computed(() =>
+        DEFAULT_STATES.filter(state => state !== props.execution.state.current),
+    )
 
     const enabled = computed(() =>
         !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace) &&
-        !State.isRunning(props.execution.state.current),
+        CHANGEABLE_FROM_STATES.includes(props.execution.state.current),
     )
 
     watch(visible, (open) => {

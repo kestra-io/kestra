@@ -41,6 +41,8 @@ describe("executions/Logs toolbar layout", () => {
 
     afterEach(() => {
         vi.restoreAllMocks()
+        // The toolbar persists its saved filters on mount.
+        localStorage.clear()
     })
 
     test("toolbar actions keep Download and Copy but no longer render a standalone Refresh", async () => {

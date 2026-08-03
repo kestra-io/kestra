@@ -1,4 +1,4 @@
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {afterAll, afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {defineComponent} from "vue"
 import {mount} from "@vue/test-utils"
 import {usePwaInstall} from "../../../src/composables/usePwaInstall"
@@ -17,12 +17,12 @@ function mountPwaInstall() {
 }
 
 function stubMatchMedia(matches: boolean) {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
         matches,
         media: query,
         addEventListener: () => {},
         removeEventListener: () => {},
-    })) as unknown as typeof window.matchMedia
+    })))
 }
 
 function stubLocation(protocol: string, hostname: string) {
@@ -57,6 +57,10 @@ describe("usePwaInstall", () => {
 
     afterEach(() => {
         restoreLocation()
+    })
+
+    afterAll(() => {
+        vi.unstubAllGlobals()
     })
 
     it("cannot install until the browser fires beforeinstallprompt", () => {

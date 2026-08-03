@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {ref, nextTick} from "vue"
 import {useDependencies, transformResponse} from "../../../../src/components/dependencies/composables/useDependencies"
 import {type Node, type Edge, FLOW, EXECUTION, NAMESPACE} from "../../../../src/components/dependencies/utils/types"
@@ -142,6 +142,10 @@ const mountComponentWithUseDependencies = (
 describe("useDependencies composable", () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+  })
+
+  afterAll(() => {
+    vi.unstubAllGlobals()
   })
 
   describe("onMounted", () => {

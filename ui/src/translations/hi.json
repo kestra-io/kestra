@@ -107,6 +107,12 @@
     "total_duration": "कुल अवधि",
     "running duration": "चलने की अवधि",
     "queued duration": "कतारबद्ध अवधि",
+    "executionProgress": {
+        "title": "निष्पादन प्रगति",
+        "estimatedRemaining": "अनुमानित शेष समय: {duration}",
+        "noBaseline": "कोई ऐतिहासिक डेटा नहीं — शेष समय का अनुमान नहीं लगाया जा सकता",
+        "pastEstimate": "सामान्य से अधिक समय ले रहा है"
+    },
     "choose file": "एक फ़ाइल चुनें या इसे यहां छोड़ें...",
     "launch execution": "निष्पादित करें",
     "warning flow with triggers": "इस flow में triggers शामिल हैं और यदि यह flow trigger अभिव्यक्तियों पर निर्भर करता है तो मैन्युअल निष्पादन विफल हो जाएगा।",
@@ -1641,7 +1647,9 @@
       "connection_lost": {
         "title": "कनेक्शन बाधित",
         "message": "हम आपकी Kestra instance तक नहीं पहुँच सके। सुनिश्चित करें कि यह चल रहा है, फिर पृष्ठ को रीफ्रेश करें।"
-      }
+      },
+      "opening_flow_editor": "flow एडिटर खोलते समय कुछ गलत हो गया।",
+      "retry": "पुनः प्रयास करें"
     },
     "debug": "डिबग",
     "default": "डिफ़ॉल्ट",

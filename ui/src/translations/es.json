@@ -107,6 +107,12 @@
     "total_duration": "Duración total",
     "running duration": "Duración en ejecución",
     "queued duration": "Duración en cola",
+    "executionProgress": {
+        "title": "Progreso de la ejecución",
+        "estimatedRemaining": "Tiempo restante estimado: {duration}",
+        "noBaseline": "Sin datos históricos — no se puede estimar el tiempo restante",
+        "pastEstimate": "Se está ejecutando más de lo habitual"
+    },
     "choose file": "Elige un archivo o suéltalo aquí...",
     "launch execution": "Ejecutar",
     "warning flow with triggers": "Este flujo contiene triggers y una ejecución manual fallará si este flujo depende de expresiones de trigger.",
@@ -1641,7 +1647,9 @@
       "connection_lost": {
         "title": "Conexión interrumpida",
         "message": "No pudimos alcanzar tu instancia de Kestra. Asegúrate de que esté en ejecución, luego actualiza la página."
-      }
+      },
+      "opening_flow_editor": "Algo salió mal al abrir el editor de flow.",
+      "retry": "Reintentar"
     },
     "debug": "Depuración",
     "default": "Predeterminado",

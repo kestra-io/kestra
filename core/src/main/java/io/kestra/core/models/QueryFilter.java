@@ -700,7 +700,8 @@ public record QueryFilter(
                     Field.TYPE,
                     Field.NAMESPACE,
                     Field.METADATA,
-                    Field.UPDATED
+                    Field.UPDATED,
+                    Field.LOCKED
                 );
             }
         },

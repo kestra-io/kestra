@@ -15,6 +15,8 @@ import * as ExecutionUtils from "../utils/executionUtils"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
 import {Optional} from "../utils/utils"
+import {useApiStore} from "./api"
+import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 
 export interface Check {
     message: string
@@ -354,7 +356,20 @@ export const useExecutionsStore = defineStore("executions", () => {
         // Don't set Content-Type here - createExecution() already defaults it to null so the
         // browser can generate the multipart boundary itself. An explicit "multipart/form-data"
         // header (needed under the old axios client) has no boundary and corrupts the request.
-        }, {timeout: 60 * 60 * 1000})
+        }, {timeout: 60 * 60 * 1000}).then(execution => {
+            useApiStore().posthogEvents({
+                type: "FLOW_EXECUTION",
+                action: "executed",
+                execution_id: execution.id,
+                namespace: execution.namespace,
+                flow_id: execution.flowId,
+                location: executionLocation(route.name?.toString(), options.kind),
+                is_example: isExampleFlow(execution.namespace),
+                revision: execution.flowRevision,
+            })
+
+            return execution
+        })
     }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {

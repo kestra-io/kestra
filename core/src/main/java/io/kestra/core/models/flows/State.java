@@ -97,6 +97,11 @@ public class State {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Instant getStartDate() {
+        // this specifically might happen for dynamic task runs
+        if (this.histories.isEmpty()) {
+            return null;
+        }
+
         return this.histories.getFirst().getDate();
     }
 

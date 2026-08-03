@@ -17,7 +17,6 @@ import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
@@ -40,6 +39,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
+import io.kestra.core.utils.Base62Encoder;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
@@ -79,7 +79,7 @@ public abstract class AbstractExecutionRepositoryTest {
         State finalState = randomDuration(state);
 
         Execution.ExecutionBuilder execution = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(Base62Encoder.createId())
             .namespace(namespace)
             .tenantId(tenantId)
             .flowId(flowId == null ? FLOW : flowId)
@@ -1252,7 +1252,7 @@ public abstract class AbstractExecutionRepositoryTest {
             var ten = 10;
 
             var createdExecution = Execution.builder()
-                .id("createdExecution__" + FriendlyId.createFriendlyId())
+                .id("createdExecution__" + Base62Encoder.createId())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1268,7 +1268,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(createdExecution);
 
             var successExecution = Execution.builder()
-                .id("successExecution__" + FriendlyId.createFriendlyId())
+                .id("successExecution__" + Base62Encoder.createId())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1289,7 +1289,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(successExecution);
 
             var runningExecution = Execution.builder()
-                .id("runningExecution__" + FriendlyId.createFriendlyId())
+                .id("runningExecution__" + Base62Encoder.createId())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1307,7 +1307,7 @@ public abstract class AbstractExecutionRepositoryTest {
             executionRepository.save(runningExecution);
 
             var failedExecution = Execution.builder()
-                .id("failedExecution__" + FriendlyId.createFriendlyId())
+                .id("failedExecution__" + Base62Encoder.createId())
                 .namespace(NAMESPACE)
                 .tenantId(tenant)
                 .flowId(FLOW)
@@ -1775,7 +1775,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         var execA = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(Base62Encoder.createId())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)
@@ -1793,7 +1793,7 @@ public abstract class AbstractExecutionRepositoryTest {
             )
         );
         var execB = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(Base62Encoder.createId())
             .namespace(NAMESPACE)
             .tenantId(tenant)
             .flowId(FLOW)

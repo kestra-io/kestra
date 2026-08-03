@@ -63,7 +63,7 @@ public class AuthorFlowTool implements AiAuthoringTool {
     )
     public Result authorFlow(
         @P(name = "instructions", value = "What the flow should do, or how the current flow should be changed") String instructions,
-        @P(name = "namespace", value = "The namespace the flow belongs to; omit if unknown", required = false) String namespace,
+        @P(name = "namespace", value = "The namespace the flow belongs to; omit if unknown — a new flow authored without one defaults to '" + DEFAULT_NAMESPACE + "'", required = false) String namespace,
         @P(name = "currentFlowYaml", value = "The full current flow YAML when revising an existing flow; omit when creating a new one", required = false) String currentFlowYaml,
         final AgentCallContext.Context context) {
 

@@ -76,7 +76,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             .set(finalFields)
             .onConflict(KEY_FIELD)
             .doUpdate()
-            .set(finalFields)
+            .set(excluded(finalFields))
             .execute();
     }
 
@@ -90,7 +90,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             .set(fields)
             .onConflict(KEY_FIELD)
             .doUpdate()
-            .set(fields);
+            .set(excluded(fields));
     }
 
     @SuppressWarnings("unchecked")

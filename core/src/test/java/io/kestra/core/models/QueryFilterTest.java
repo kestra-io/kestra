@@ -44,6 +44,16 @@ public class QueryFilterTest {
         assertThat(e.getMessage()).contains("Operation");
     }
 
+    @Test
+    void shouldThrowExceptionWhenFieldIsNotSupportedForResource() {
+        QueryFilter filter = QueryFilter.builder().field(Field.LOCKED).operation(Op.EQUALS).value(true).build();
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.FLOW)
+        );
+        assertThat(e.getMessage()).contains("LOCKED", "FLOW");
+    }
+
     static Stream<Arguments> validOperationFilters() {
         return Stream.of(
             buildQueryFiltersForOperations(
@@ -326,6 +336,13 @@ public class QueryFilterTest {
                     Op.REGEX,
                     Op.IN,
                     Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.LOCKED, Resource.ASSET,
+                Set.of(
+                    Op.EQUALS
                 )
             ),
 
@@ -1171,6 +1188,24 @@ public class QueryFilterTest {
                     Op.LESS_THAN_OR_EQUAL_TO,
                     Op.GREATER_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.LOCKED, Resource.ASSET,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
                 )
             ),
 

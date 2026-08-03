@@ -10,6 +10,15 @@ import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
 import {labelComparatorLabels} from "./labelComparatorLabels"
 import {routeFamily} from "../../../utils/routeFamily"
+import {keepTopLevelFilters} from "../../../utils/queryFilters"
+
+/**
+ * Applied filters forwarded to the flowId option lookup to narrow it by what the list already shows.
+ *
+ * Only the namespace-bearing filters are forwarded so existing indices should be used.
+ * Everything else is deliberately left out.
+ */
+const FLOW_ID_NARROWING_FIELDS = ["namespace", "scope"]
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -70,7 +79,10 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const search = options?.search?.trim()
                         const ids = await useExecutionsStore().findDistinctFieldValues({
                             field: "flowId",
-                            filters: search ? {"filters[flowId][CONTAINS]": search} : undefined,
+                            filters: {
+                                ...keepTopLevelFilters(route.query, FLOW_ID_NARROWING_FIELDS),
+                                ...(search ? {"filters[flowId][CONTAINS]": search} : {}),
+                            },
                             size: 100,
                         })
                         return ids.map(id => ({label: id, value: id}))

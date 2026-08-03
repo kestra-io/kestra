@@ -1,4 +1,4 @@
-import {afterEach, beforeAll, describe, expect, test, vi} from "vitest"
+import {afterAll, afterEach, beforeAll, describe, expect, test, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {nextTick} from "vue"
 import KestraDesignSystem from "../../../src/index"
@@ -24,6 +24,10 @@ beforeAll(() => {
             disconnect() {}
         },
     )
+})
+
+afterAll(() => {
+    vi.unstubAllGlobals()
 })
 
 describe("KsTooltip", () => {

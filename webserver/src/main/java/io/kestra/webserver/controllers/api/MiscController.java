@@ -154,7 +154,7 @@ public class MiscController {
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
             .flowTemplate(this.flowTemplate)
-            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"));
+            ;
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -318,8 +318,6 @@ public class MiscController {
         Boolean isBasicAuthInitialized;
 
         Long pluginsHash;
-
-        Boolean isConcurrencyViewEnabled;
     }
 
     @Value

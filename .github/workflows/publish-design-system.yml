@@ -46,7 +46,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 22.18
+          node-version: "24.x"
           cache: npm
           registry-url: https://registry.npmjs.org
           cache-dependency-path: ui/package-lock.json

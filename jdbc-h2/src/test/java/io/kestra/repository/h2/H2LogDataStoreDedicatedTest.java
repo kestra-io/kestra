@@ -10,6 +10,7 @@ import org.slf4j.event.Level;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogDataStoreInterface;
 import io.kestra.core.repositories.log.LogDataStoreInterfaceFactory;
+import io.kestra.core.repositories.log.LogsConfig;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -26,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @MicronautTest
 @Property(name = "kestra.logs.type", value = "h2")
 @Property(name = "kestra.logs.h2.url", value = "jdbc:h2:mem:logs_dedicated;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE")
+@Property(name = "kestra.logs.h2.username", value = "sa")
 // Use an isolated primary datasource so this test's migration history (which records the log-table
 // migrations applied to the dedicated log database) does not leak into the shared in-memory "public"
 // database used by the other repository tests in the same JVM.
@@ -35,6 +37,9 @@ class H2LogDataStoreDedicatedTest {
     @Inject
     LogDataStoreInterfaceFactory logRepositoryInterfaceFactory;
 
+    @Inject
+    LogsConfig logsConfig;
+
     // The low-level repository bound to the PRIMARY datasource's `logs` table, to prove logs did NOT land there.
     @Inject
     @Named("logs")
@@ -42,8 +47,8 @@ class H2LogDataStoreDedicatedTest {
 
     @Test
     void shouldWriteAndReadFromDedicatedDatabaseAndNotThePrimary() {
-        // Given: the h2 log store built against the dedicated datasource
-        LogDataStoreInterface dedicated = logRepositoryInterfaceFactory.make("h2", java.util.Map.of());
+        // Given: the h2 log store built against the dedicated datasource, from the real kestra.logs.h2.* config
+        LogDataStoreInterface dedicated = logRepositoryInterfaceFactory.make("h2", logsConfig.getLogConfig("h2"));
         String executionId = "dedicated-exec-" + Instant.now().toEpochMilli();
         LogEntry log = LogEntry.builder()
             .tenantId("main")

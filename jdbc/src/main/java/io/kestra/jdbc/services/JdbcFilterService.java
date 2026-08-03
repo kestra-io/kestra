@@ -53,6 +53,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
             case IS_TRUE -> isTrueCondition(fieldsMapping.get(filter.getField()), (IsTrue<F>) filter);
             case LESS_THAN -> lessThanCondition(fieldsMapping.get(filter.getField()), (LessThan<F>) filter);
             case LESS_THAN_OR_EQUAL_TO -> lessThanOrEqualToCondition(fieldsMapping.get(filter.getField()), (LessThanOrEqualTo<F>) filter);
+            case NOT_CONTAINS -> notContainsCondition(fieldsMapping.get(filter.getField()), (NotContains<F>) filter);
             case NOT_EQUAL_TO -> notEqualToCondition(fieldsMapping.get(filter.getField()), (NotEqualTo<F>) filter);
             case NOT_IN -> notInCondition(fieldsMapping.get(filter.getField()), (NotIn<F>) filter);
             case OR -> orCondition(fieldsMapping, (Or<F>) filter);
@@ -128,6 +129,11 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     @Override
+    protected <F extends Enum<F>> SelectConditionStep<Record> notContains(SelectConditionStep<Record> query, String field, NotContains<F> filter) {
+        return query.and(field(field).contains(filter.getValue().toString()).not());
+    }
+
+    @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> notIn(SelectConditionStep<Record> query, String field, NotIn<F> filter) {
         return query.and(field(field).notIn(filter.getValues()));
     }
@@ -180,8 +186,20 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
         return field(field).ge(filter.getValue());
     }
 
+    private boolean isLabelField(String field) {
+        return "labels".equals(field);
+    }
+
     private <F extends Enum<F>> org.jooq.Condition inCondition(String field, In<F> filter) {
-        return field(field).in(filter.getValues());
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValues())),
+                    QueryFilter.Op.NOT_IN
+                );
+        }
+
+        return field(field).notIn(filter.getValues());
     }
 
     private <F extends Enum<F>> org.jooq.Condition isFalseCondition(String field, IsFalse<F> filter) {
@@ -189,10 +207,26 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition isNotNullCondition(String field, IsNotNull<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.right(filter.getKey()),
+                    QueryFilter.Op.IS_NOT_NULL
+                );
+        }
+
         return field(field).isNotNull();
     }
 
     private <F extends Enum<F>> org.jooq.Condition isNullCondition(String field, IsNull<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.right(filter.getKey()),
+                    QueryFilter.Op.IS_NULL
+                );
+        }
+
         return field(field).isNull();
     }
 
@@ -212,7 +246,27 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
         return field(field).ne(filter.getValue());
     }
 
+    private <F extends Enum<F>> org.jooq.Condition notContainsCondition(String field, NotContains<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValue())),
+                    QueryFilter.Op.NOT_EQUALS
+                );
+                
+        }
+        return field(field).ne(filter.getValue());
+    }
+
     private <F extends Enum<F>> org.jooq.Condition notInCondition(String field, NotIn<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValues())),
+                    QueryFilter.Op.NOT_IN
+                );
+        }
+
         return field(field).notIn(filter.getValues());
     }
 

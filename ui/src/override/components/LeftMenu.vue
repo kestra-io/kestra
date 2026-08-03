@@ -9,6 +9,7 @@
     >
         <template #footer>
             <div class="left-menu-footer">
+                <ProductTourItem v-if="!collapsed" />
                 <AdminItem :tabs="adminTabs" />
                 <Environment />
                 <Auth />
@@ -22,6 +23,7 @@
 
     import SideBar from "../../components/layout/SideBar.vue"
     import AdminItem from "../../components/admin/AdminItem.vue"
+    import ProductTourItem from "../../components/onboarding/tour/ProductTourItem.vue"
     import Auth from "override/components/auth/Auth.vue"
     import Environment from "../../components/layout/Environment.vue"
 

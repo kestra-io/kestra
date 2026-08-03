@@ -387,10 +387,6 @@
 
     function onSubmit() {
         if (form.value && flowCanBeExecuted.value) {
-            apiStore.posthogEvents({
-                type: "FLOW_EXECUTION",
-                action: "submit",
-            })
             checks.value = []
             executeClicked.value = false
             coreStore.message = undefined
@@ -398,6 +394,14 @@
                 if (!valid) {
                     return
                 }
+
+                apiStore.posthogEvents({
+                    type: "FLOW_EXECUTION",
+                    action: "submit",
+                    // Replay-with-inputs bypasses triggerExecution, so it never emits a matching
+                    // `executed`: flagged so it can be excluded from the submit/executed funnel.
+                    is_replay: Boolean(props.replaySubmit),
+                })
 
                 const mergedInputs = props.selectedTrigger?.inputs
                     ? {...props.selectedTrigger.inputs, ...inputsNoDefaults.value}
@@ -417,7 +421,6 @@
                             breakpoints: breakpoints.value,
                         })
                     } else {
-                        const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
                         if (flow.value) {
                             await executeTask(submitor, flow.value, mergedInputs, {
                                 redirect: props.redirect,
@@ -431,10 +434,6 @@
                                     .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
                                     .toISOString(true),
                                 nextStep: true,
-                                query: shouldShowOnboardingSuccessAnimation ? {
-                                    autoExpandGantt: "true",
-                                    onboardingSuccess: "true",
-                                } : undefined,
                                 breakpoints: breakpoints.value,
                             })
                         }

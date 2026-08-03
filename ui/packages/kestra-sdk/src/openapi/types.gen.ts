@@ -424,6 +424,8 @@ export type Asset = {
     };
 };
 
+export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
+
 export type AssetIdentifier = {
     id?: string;
     type?: string;
@@ -433,6 +435,12 @@ export type AssetsDeclaration = {
     enableAuto?: PropertyBoolean;
     inputs?: PropertyListAssetIdentifier;
     outputs?: PropertyListAsset;
+    /**
+     * Asset failure behavior
+     *
+     * Behavior applied to the task state when a declared asset fails to render, emit, or be persisted (e.g. a lock conflict): FAIL escalates it to FAILED, WARN (default) warns it if it would otherwise succeed, IGNORE leaves the state untouched.
+     */
+    assetFailureBehavior?: PropertyAssetFailureBehavior;
 };
 
 export type AssetsInOut = {
@@ -774,6 +782,20 @@ export type ExecutionControllerEvalResult = {
     error?: string;
 };
 
+/**
+ * The average duration of the recent executions of a flow.
+ */
+export type ExecutionControllerExecutionAverageDuration = {
+    /**
+     * the average duration in milliseconds, or `null` when the flow has no terminated execution in the lookback window.
+     */
+    avgDurationMs?: number | null;
+    /**
+     * the number of executions the average was computed from.
+     */
+    count?: number;
+};
+
 export type ExecutionControllerExecutionResponse = Execution & {
     deleted: boolean;
     url?: string;
@@ -1063,7 +1085,7 @@ export type FlowNode = {
     id?: string;
 };
 
-export type FlowRelation = 'FLOW_TASK' | 'FLOW_TRIGGER';
+export type FlowRelation = 'FLOW_TASK' | 'FLOW_TRIGGER' | 'SUBFLOW_FUNCTION';
 
 export type FlowServiceTaskDeprecation = {
     taskId?: string;
@@ -1447,7 +1469,6 @@ export type MiscControllerConfiguration = {
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
     pluginsHash?: number;
-    isConcurrencyViewEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -1764,6 +1785,13 @@ export type PluginUiModuleWithGroup = {
     distribution?: PluginDistribution;
 };
 
+export type PropertyAssetFailureBehavior = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: AssetFailureBehavior;
+};
+
 export type PropertyBoolean = ({
     [key: string]: unknown;
 } | string) & {
@@ -1820,7 +1848,7 @@ export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SC
 
 export type QueryFilterLogical = 'and' | 'or';
 
-export type QueryFilterOp = 'EQUALS' | 'NOT_EQUALS' | 'GREATER_THAN' | 'LESS_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'LESS_THAN_OR_EQUAL_TO' | 'IN' | 'NOT_IN' | 'STARTS_WITH' | 'ENDS_WITH' | 'CONTAINS' | 'REGEX' | 'PREFIX';
+export type QueryFilterOp = 'EQUALS' | 'NOT_EQUALS' | 'GREATER_THAN' | 'LESS_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'LESS_THAN_OR_EQUAL_TO' | 'IN' | 'NOT_IN' | 'STARTS_WITH' | 'ENDS_WITH' | 'CONTAINS' | 'NOT_CONTAINS' | 'IS_NULL' | 'IS_NOT_NULL' | 'REGEX' | 'PREFIX';
 
 export type Quota = {
     duration: string;
@@ -4072,6 +4100,32 @@ export type ListFlowExecutionsByNamespaceResponses = {
 
 export type ListFlowExecutionsByNamespaceResponse = ListFlowExecutionsByNamespaceResponses[keyof ListFlowExecutionsByNamespaceResponses];
 
+export type GetExecutionAverageDurationData = {
+    body?: never;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        flowId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/namespaces/{namespace}/flows/{flowId}/average-duration';
+};
+
+export type GetExecutionAverageDurationResponses = {
+    /**
+     * getExecutionAverageDuration 200 response
+     */
+    200: ExecutionControllerExecutionAverageDuration;
+};
+
+export type GetExecutionAverageDurationResponse = GetExecutionAverageDurationResponses[keyof GetExecutionAverageDurationResponses];
+
 export type PauseExecutionsByIdsData = {
     /**
      * The list of executions id
@@ -4213,7 +4267,12 @@ export type RestartExecutionsByIdsData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * If latest revision should be used
+         */
+        latestRevision?: boolean | null;
+    };
     url: '/api/v1/{tenant}/executions/restart/by-ids';
 };
 
@@ -4245,6 +4304,10 @@ export type RestartExecutionsByQueryData = {
          * Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`
          */
         filters?: Array<QueryFilter> | null;
+        /**
+         * If latest revision should be used
+         */
+        latestRevision?: boolean | null;
     };
     url: '/api/v1/{tenant}/executions/restart/by-query';
 };

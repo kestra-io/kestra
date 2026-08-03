@@ -236,7 +236,7 @@ class FlowServiceTest {
 
     flowService.importFlow("my-tenant", source);
     verify(triggerEventQueue).send(any());
-    
+
     }
 
     @Test
@@ -482,7 +482,12 @@ class FlowServiceTest {
             }
         });
 
-        flowService.create(GenericFlow.of(subflow));
+        // The fixture flow is created through the repository, not the service: creating it through the
+        // service would schedule a second topology recomputation that owns the flow->subflow edge in both
+        // directions and can race with the recomputation asserted below (a separate, cross-flow race that
+        // idempotent recomputation of a single flow does not address). This test asserts the recomputation
+        // triggered by 'flow', not by 'subflow'.
+        flowRepository.create(GenericFlow.of(subflow));
         flowService.create(GenericFlow.of(flow));
 
         // check that it has been created
@@ -531,7 +536,8 @@ class FlowServiceTest {
             }
         });
 
-        flowService.create(GenericFlow.of(subflow));
+        // See create() above for why the fixture is created through the repository, not the service.
+        flowRepository.create(GenericFlow.of(subflow));
         flowService.create(GenericFlow.of(flow));
         Flow updated = flow.toBuilder()
             .tasks(List.of(Subflow.builder().id("test").type(Subflow.class.getName()).namespace("io.kestra.unittest").flowId(subflow.getId()).build()))
@@ -586,7 +592,8 @@ class FlowServiceTest {
             }
         });
 
-        flowService.create(GenericFlow.of(subflow));
+        // See create() above for why the fixture is created through the repository, not the service.
+        flowRepository.create(GenericFlow.of(subflow));
         FlowWithSource created = flowService.create(GenericFlow.of(flow));
 
         // be sure that topology and triggers have been computed
@@ -612,6 +619,122 @@ class FlowServiceTest {
 
         // check that the flow has been sent to the queue 2x
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void shouldRecomputeTopologyFromCurrentStateWhenReplayingAnOlderRevision() {
+        Flow subflow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+
+        flowRepository.create(GenericFlow.of(subflow));
+        FlowWithSource revision1 = flowRepository.create(GenericFlow.of(flow));
+        Flow withSubflowTask = flow.toBuilder()
+            .tasks(List.of(Subflow.builder().id("test").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(subflow.getId()).build()))
+            .build();
+        flowRepository.update(GenericFlow.of(withSubflowTask), revision1);
+
+        // Replaying updateTopology() with the stale revision-1 object must still compute the edges of
+        // whatever is currently persisted (revision 2), not of the argument it was called with.
+        flowService.updateTopology(revision1);
+
+        List<FlowTopology> topo = flowTopologyRepository.findByFlow(flow.getTenantId(), flow.getNamespace(), flow.getId(), false);
+        assertThat(topo).hasSize(1);
+        assertThat(topo.getFirst().getSource().getId()).isEqualTo(flow.getId());
+        assertThat(topo.getFirst().getDestination().getId()).isEqualTo(subflow.getId());
+    }
+
+    @Test
+    void shouldNotCreateEdgeTowardsDeletedFlow() {
+        Flow subflow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("test").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(subflow.getId()).build()))
+            .build();
+
+        FlowWithSource subflowRevision1 = flowRepository.create(GenericFlow.of(subflow));
+        FlowWithSource flowRevision1 = flowRepository.create(GenericFlow.of(flow));
+        flowRepository.delete(subflowRevision1);
+
+        flowService.updateTopology(flowRevision1);
+
+        assertThat(flowTopologyRepository.findByFlow(flow.getTenantId(), flow.getNamespace(), flow.getId(), false)).isEmpty();
+    }
+
+    @Test
+    void shouldBeIdempotentWhenRecomputingTwice() {
+        Flow subflow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("test").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(subflow.getId()).build()))
+            .build();
+
+        flowRepository.create(GenericFlow.of(subflow));
+        FlowWithSource revision1 = flowRepository.create(GenericFlow.of(flow));
+
+        flowService.updateTopology(revision1);
+        flowService.updateTopology(revision1);
+
+        assertThat(flowTopologyRepository.findByFlow(flow.getTenantId(), flow.getNamespace(), flow.getId(), false)).hasSize(1);
+    }
+
+    @Test
+    void shouldSkipSaveWhenFlowRevisionMovedDuringCompute() {
+        Flow subflow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
+            .build();
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Subflow.builder().id("test").type(Subflow.class.getName()).namespace(TEST_NAMESPACE).flowId(subflow.getId()).build()))
+            .build();
+
+        flowRepository.create(GenericFlow.of(subflow));
+        FlowWithSource revision1 = flowRepository.create(GenericFlow.of(flow));
+
+        // Simulates a newer revision landing while the (potentially slow) topology compute is in flight:
+        // stub the post-compute re-check to report a revision that was never actually read from allFlows.
+        // Without the re-check, this would write the flow->subflow edge computed from revision1's real,
+        // still-persisted state, even though a newer revision is now supposed to own that write.
+        FlowRepositoryInterface realFlowRepository = flowService.flowRepository;
+        FlowRepositoryInterface spiedFlowRepository = spy(realFlowRepository);
+        doReturn(Optional.of(revision1.toBuilder().revision(revision1.getRevision() + 1).build()))
+            .when(spiedFlowRepository).findByIdWithSourceWithoutAcl(revision1.getTenantId(), revision1.getNamespace(), revision1.getId(), Optional.empty());
+        flowService.flowRepository = spiedFlowRepository;
+        try {
+            flowService.updateTopology(revision1);
+        } finally {
+            flowService.flowRepository = realFlowRepository;
+        }
+
+        assertThat(flowTopologyRepository.findByFlow(flow.getTenantId(), flow.getNamespace(), flow.getId(), false)).isEmpty();
     }
 
     @Test
@@ -724,6 +847,31 @@ class FlowServiceTest {
         Optional<ConcurrencyLimit> limit = concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
         assertThat(limit).isPresent();
         assertThat(limit.get().getRunning()).isEqualTo(3);
+    }
+
+    @Test
+    void shouldRemoveOrphanConcurrencyLimitWhenPreviousRevisionAlsoHadNoConcurrency() throws FlowProcessingException, QueueException {
+        // Given a flow that does not declare a concurrency block, but whose limit record survived.
+        // Removal used to be a diff against revision - 1, so it only fired on the exact revision
+        // that dropped the block: any record outliving that boundary stayed forever and kept a
+        // stuck running count alive, invisible outside the superadmin pages (kestra-ee#9200).
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("original")).build()))
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        concurrencyLimitRepository.update(new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 1));
+
+        // When the flow is updated, still without a concurrency block
+        Flow updated = flow.toBuilder()
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("updated")).build()))
+            .build();
+        flowService.update(GenericFlow.of(updated), created);
+
+        // Then the orphan record is gone
+        assertThat(concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId())).isEmpty();
     }
 
     @Test

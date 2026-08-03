@@ -212,27 +212,44 @@ public class FlowService {
         updateConcurrencyLimit(flow);
     }
 
-    private void updateTopology(FlowWithSource flow) {
-        // Runs on a background thread with no HTTP request / user context, so the ACL-aware
-        // findAllWithSource() would return zero flows in EE and produce an empty topology.
-        // Topology is a system-wide computation: bypass ACLs with findAllWithSourceWithNoAcl().
+    @VisibleForTesting
+    void updateTopology(FlowWithSource flow) {
         try {
-            flowTopologyRepository.save(
-                flow,
-                (flow.isDeleted() ? Stream.<FlowTopology> empty()
-                    : flowTopologyService
-                        .topology(
-                            flow,
-                            flowRepository.findAllWithSourceWithNoAcl(flow.getTenantId())
-                        ))
-                    .distinct()
-                    .toList()
-            );
+            // Runs on a background thread with no HTTP request / user context, so the ACL-aware
+            // findAllWithSource() would return zero flows in EE: bypass ACLs with findAllWithSourceWithNoAcl().
+            List<FlowWithSource> allFlows = flowRepository.findAllWithSourceWithNoAcl(flow.getTenantId())
+                .stream()
+                .filter(candidate -> !candidate.isDeleted())
+                .toList();
+
+            // Taken from the same snapshot as the edges, so "does this flow still exist" and "what are its
+            // edges" can never be answered from two different states of the repository.
+            Optional<FlowWithSource> current = allFlows.stream()
+                .filter(candidate -> candidate.uidWithoutRevision().equals(flow.uidWithoutRevision()))
+                .findFirst();
+
+            List<FlowTopology> topologies = current
+                .map(it -> flowTopologyService.topology(it, allFlows).distinct().toList())
+                .orElseGet(List::of);
+
+            // If the flow changed meanwhile, that change scheduled its own recomputation and saving
+            // ours would replace a fresher topology with a staler one.
+            Optional<FlowWithSource> latest = flowRepository.findByIdWithSourceWithoutAcl(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.empty());
+            if (!Objects.equals(liveRevision(current), liveRevision(latest))) {
+                log.debug("Skipping an outdated flow topology computation for flow '{}'", flow.uidWithoutRevision());
+                return;
+            }
+
+            flowTopologyRepository.save(flow, topologies);
         } catch (Exception e) {
             // The Future returned by executorService.submit(...) is never get()-ed, so without
             // this log a topology failure would be silently swallowed.
             log.error("Unable to update the flow topology for flow '{}'", flow.uidWithoutRevision(), e);
         }
+    }
+
+    private static Integer liveRevision(Optional<? extends FlowInterface> flow) {
+        return flow.filter(it -> !it.isDeleted()).map(FlowInterface::getRevision).orElse(null);
     }
 
     private void recomputeTriggers(FlowWithSource flow) {
@@ -304,6 +321,22 @@ public class FlowService {
     }
 
     private void updateConcurrencyLimit(FlowWithSource flow) {
+        if (flow.isDeleted()) {
+            removeConcurrencyLimit(flow);
+            return;
+        }
+
+        // A draft revision is never picked up by the executor, so it must neither get a live
+        // concurrency limit nor remove the one belonging to the live revision.
+        if (flow.isDraft()) {
+            return;
+        }
+
+        if (flow.getConcurrency() == null) {
+            removeConcurrencyLimit(flow);
+            return;
+        }
+
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
         // If the previous revision was soft-deleted, its concurrency limit was already removed:
@@ -312,25 +345,7 @@ public class FlowService {
             previous = null;
         }
 
-        if (flow.isDeleted()) {
-            removeConcurrencyLimit(flow);
-            return;
-        }
-
-        // A draft revision is never picked up by the executor, so it must not get a live concurrency limit.
-        if (flow.isDraft()) {
-            return;
-        }
-
-        if (previous != null) {
-            if (previous.getConcurrency() == null && flow.getConcurrency() != null) {
-                initConcurrencyLimit(flow);
-            }
-
-            if (previous.getConcurrency() != null && flow.getConcurrency() == null) {
-                removeConcurrencyLimit(flow);
-            }
-        } else if (flow.getConcurrency() != null) {
+        if (previous == null || previous.getConcurrency() == null) {
             initConcurrencyLimit(flow);
         }
     }

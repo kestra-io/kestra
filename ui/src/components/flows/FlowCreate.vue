@@ -4,13 +4,25 @@
             <Actions />
         </template>
     </TopNavBar>
-    <section class="full-container">
-        <MultiPanelFlowEditorView v-if="flowStore.flow" />
+    <section class="full-container flush-top">
+        <div v-if="setupError" class="flow-create-error" data-test="flow-create-error">
+            <KsAlert
+                type="error"
+                :closable="false"
+                :title="$t('something_went_wrong.opening_flow_editor')"
+            >
+                {{ setupError }}
+            </KsAlert>
+            <KsButton size="small" data-test="flow-create-error-retry" @click="initialize">
+                {{ $t("something_went_wrong.retry") }}
+            </KsButton>
+        </div>
+        <MultiPanelFlowEditorView v-else-if="flowStore.flow" />
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount} from "vue"
+    import {computed, onBeforeUnmount, ref} from "vue"
     import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -28,7 +40,6 @@
     import {useMiscStore} from "override/stores/misc"
     import resource from "../../models/resource"
     import action from "../../models/action"
-    import {useOnboardingV2Store} from "../../stores/onboardingV2"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -36,9 +47,10 @@
     const blueprintsStore = useBlueprintsStore()
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
-    const onboardingV2Store = useOnboardingV2Store()
     const miscStore = useMiscStore()
     const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset"
+
+    const setupError = ref<string>()
 
     const defaultFlowTemplate = (id: string, namespace: string) => {
         const configuredTemplate = miscStore.configs?.flowTemplate
@@ -77,7 +89,6 @@ tasks:
         const blueprintId = route.query.blueprintId as string
         const blueprintSource = route.query.blueprintSource as BlueprintType
         const blueprintSourceYaml = route.query.blueprintSourceYaml as string
-        const isGuidedOnboarding = route.query.onboarding === "guided"
         const onboardingPresetFlow = route.query.onboardingPreset === "true"
             ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
             : ""
@@ -111,8 +122,6 @@ tasks:
             if(flowBlueprint.source){
                 flowYaml = flowBlueprint.source
             }
-        } else if (isGuidedOnboarding) {
-            flowYaml = `# ${t("onboarding.editor_hints.build_intro")}\n`
         } else {
             flowYaml = defaultFlowTemplate(id, selectedNamespace)
             shouldApplyGeneratedMetadata = true
@@ -140,6 +149,24 @@ tasks:
         flowStore.initYamlSource()
     }
 
+    /*
+     * `setupFlow` used to be called without awaiting it or catching it. A rejection was
+     * therefore an unhandled promise rejection, and the page stayed empty for good: the
+     * editor is gated on `flowStore.flow` and the Save button on `isAllowedEdit`, which is
+     * false while there is no flow. Awaiting it here turns that silent blank page into an
+     * error the user (and the E2E suite) can see, with a way to try again.
+     */
+    const initialize = async () => {
+        setupError.value = undefined
+
+        try {
+            await setupFlow()
+        } catch (error) {
+            setupError.value = error instanceof Error ? error.message : String(error)
+            console.error("Cannot open the flow creation editor.", error)
+        }
+    }
+
     const routeInfo = computed(() => {
         return {
             title: t("flows"),
@@ -149,13 +176,20 @@ tasks:
     useRouteContext(routeInfo)
 
     flowStore.isCreating = true
-    if (route.query.reset || route.query.onboarding === "guided") {
-        onboardingV2Store.startGuided()
-    }
-    setupFlow()
+    initialize()
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined
         flowStore.flow = undefined
     })
 </script>
+
+<style scoped>
+    .flow-create-error {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-5);
+    }
+</style>

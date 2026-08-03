@@ -1341,9 +1341,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "원하는 flow를 설명하세요",
-            "body": "자동화하려는 내용을 설명하면 AI Copilot이 초안을 작성해 드립니다. 투어는 미리 만들어진 예시 flow로 계속되므로 여기에 아무것도 입력할 필요가 없습니다.",
-            "next": "flow 생성"
+            "title": "Flows는 프롬프트에서 초안 작성이 가능합니다.",
+            "body": "투어는 미리 만들어진 예시 flow를 사용하므로, 여기에 아무것도 입력할 필요가 없습니다.",
+            "next": "예제 flow 사용"
           },
           "flow_generated": {
             "title": "이것은 flow입니다",
@@ -1361,7 +1361,7 @@
             "title": "Flow는 코드처럼 편집됩니다",
             "body": "AI Copilot 없이 사용자를 위해 `notify` task를 추가했습니다. YAML을 직접 편집하는 것이 어떤 모습인지 확인할 수 있습니다. 최종 결과는 Slack에 게시됩니다.",
             "next": "task 문서 보기",
-            "callout": "AI Copilot이 첫 초안을 생성했습니다. 에디터에서 코드 또는 노코드 에디터 탭을 통해 이를 반복하여 수정할 수 있으며, 이 두 가지 모두 동일한 YAML을 생성하므로 flow는 어떻게 구축되었든 코드로 유지됩니다."
+            "callout": "AI Copilot의 첫 번째 초안은 시작점에 불과합니다. 에디터는 코드 또는 노코드 에디터 탭에서 이를 반복하여 개선하는 곳이며, 두 탭 모두 동일한 YAML을 생성하므로, 어떻게 구축되었든 flow는 코드로 유지됩니다."
           },
           "editor_help": {
             "title": "문서는 flow 옆에 있습니다",
@@ -1428,7 +1428,7 @@
           "takeaways": {
             "copilot": {
               "title": "일반 영어에서 생성된 flow",
-              "body": "자동화하려는 내용을 설명하면 AI Copilot이 flow 초안을 작성합니다. 거기서부터 자동 완성 기능과 <strong>Docs</strong> 패널을 사용하여 에디터에서 다듬을 수 있습니다. flow는 해당 flow 또는 모든 실행의 <strong>Execute</strong> 버튼에서 실행됩니다."
+              "body": "AI Copilot 채팅에서 자동화하려는 내용을 설명하면, 라이브 flow 스키마에서 flow의 첫 번째 버전이 생성됩니다. 에디터나 터미널에서도 동일하게 가능합니다. Claude Code, Cursor 및 기타 코딩 에이전트는 Kestra 에이전트 스킬을 사용하여 flow를 생성할 수 있습니다."
             },
             "restart": {
               "title": "모든 것을 다시 실행하는 대신 재실행",
@@ -1449,6 +1449,8 @@
           "start_building": "만들기 시작",
           "docs": {
             "title": "더 보기",
+            "copilot": "AI 코파일럿",
+            "agentSkills": "에이전트 기술",
             "autocompletion": "자동 완성",
             "execution": "실행",
             "replay": "재실행",

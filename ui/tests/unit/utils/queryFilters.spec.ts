@@ -239,7 +239,7 @@ describe("routeQueryToQueryFilters", () => {
         expect(params.has("filters")).toBe(false)
     })
 
-    it("rejects atomically from one snapshot when a later filter is invalid", () => {
+    it("rejects an accessor-backed filter without invoking it when a later filter is invalid", () => {
         let reads = 0
         const firstFilter = {field: "namespace", operation: "EQUALS"}
         Object.defineProperty(firstFilter, "value", {
@@ -249,10 +249,10 @@ describe("routeQueryToQueryFilters", () => {
         const filters = [firstFilter, {logical: "or", children: []}]
 
         expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
-        expect(reads).toBe(1)
+        expect(reads).toBe(0)
     })
 
-    it("rejects atomically from one snapshot for a custom-prototype filter", () => {
+    it("rejects an accessor-backed custom-prototype filter without invoking it", () => {
         let reads = 0
         const firstFilter = Object.assign(Object.create({kind: "custom"}), {
             field: "namespace",
@@ -265,7 +265,58 @@ describe("routeQueryToQueryFilters", () => {
         const filters = [firstFilter, {logical: "or", children: []}]
 
         expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
-        expect(reads).toBe(1)
+        expect(reads).toBe(0)
+    })
+
+    it("rejects an invalid root filter after an accessor truncates the source array", () => {
+        const filters = [null]
+        Object.defineProperty(filters, 0, {
+            enumerable: true,
+            get: () => {
+                filters.length = 0
+                return null
+            },
+        })
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+        expect(filters).toHaveLength(1)
+    })
+
+    it("rejects atomically when a valid leaf accessor truncates a later invalid filter", () => {
+        const filters: any[] = []
+        const firstFilter = {field: "namespace", operation: "EQUALS"}
+        Object.defineProperty(firstFilter, "value", {
+            enumerable: true,
+            get: () => {
+                filters.length = 0
+                return "io.kestra"
+            },
+        })
+        filters.push(firstFilter, null)
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+        expect(filters).toHaveLength(2)
+    })
+
+    it("rejects a custom logical node whose child accessor truncates a later invalid child", () => {
+        class LogicalFilter {
+            logical = "and"
+            children: any[] = []
+        }
+
+        const filter = new LogicalFilter()
+        const firstChild = {field: "namespace", operation: "EQUALS"}
+        Object.defineProperty(firstChild, "value", {
+            enumerable: true,
+            get: () => {
+                filter.children.length = 1
+                return "io.kestra"
+            },
+        })
+        filter.children.push(firstChild, null)
+
+        expect(() => serializeQuery({filters: [filter]})).toThrow("Invalid QueryFilter array")
+        expect(filter.children).toHaveLength(2)
     })
 
     it.each([
@@ -289,6 +340,27 @@ describe("routeQueryToQueryFilters", () => {
         ]))
 
         expect(params.get("filters[state][EQUALS]")).toBe("RUNNING")
+    })
+
+    it("snapshots a custom-prototype filter without invoking its constructor accessor", () => {
+        let reads = 0
+        const prototype = {}
+        Object.defineProperty(prototype, "constructor", {
+            get: () => {
+                reads++
+                return Object
+            },
+        })
+        const filter = Object.assign(Object.create(prototype), {
+            field: "namespace",
+            operation: "EQUALS",
+            value: "io.kestra",
+        })
+
+        const params = new URLSearchParams(serializeQueryFilters([filter]))
+
+        expect(params.get("filters[namespace][EQUALS]")).toBe("io.kestra")
+        expect(reads).toBe(0)
     })
 
     it("rejects atomically when a comparator-only leaf has an empty object value", () => {
@@ -337,12 +409,30 @@ describe("routeQueryToQueryFilters", () => {
         expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
     })
 
-    it("serializes an accessor-backed map atomically from one value snapshot", () => {
+    it("rejects accessor-backed filter values without invoking the accessor", () => {
+        let reads = 0
+        const filter = {field: "namespace", operation: "EQUALS"}
+        Object.defineProperty(filter, "value", {
+            enumerable: true,
+            get: () => {
+                reads++
+                return "io.kestra"
+            },
+        })
+
+        expect(() => serializeQuery({filters: [filter]})).toThrow("Invalid QueryFilter array")
+        expect(reads).toBe(0)
+    })
+
+    it("rejects an accessor-backed map without invoking it", () => {
         let reads = 0
         const labels = {}
         Object.defineProperty(labels, "environment", {
             enumerable: true,
-            get: () => ++reads <= 2 ? "production" : undefined,
+            get: () => {
+                reads++
+                return "production"
+            },
         })
         const filters = [{
             logical: "or",
@@ -352,10 +442,8 @@ describe("routeQueryToQueryFilters", () => {
             ],
         }]
 
-        const params = new URLSearchParams(serializeQuery({filters}))
-
-        expect(params.get("filters[or][0][labels][IN][environment]")).toBe("production")
-        expect(params.get("filters[or][1][state][EQUALS]")).toBe("RUNNING")
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+        expect(reads).toBe(0)
     })
 
     it.each([

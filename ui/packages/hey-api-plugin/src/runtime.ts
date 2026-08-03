@@ -107,23 +107,29 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
 
                 const isObjectRecord = (input: object): boolean => {
                     const prototype = Object.getPrototypeOf(input)
-                    return prototype === null || prototype?.constructor === Object
+                    return prototype === null || prototype === Object.prototype || !Object.getOwnPropertyDescriptor(prototype, "constructor")
                 }
 
-                const snapshotQueryValue = (input: any, seen = new WeakMap<object, any>()): any => {
+                const snapshotQueryValue = (input: any, seen = new WeakMap<object, any>(), snapshotCustomObject = false): any => {
                     if (input == null || typeof input !== "object") return input
 
                     const prototype = Object.getPrototypeOf(input)
-                    if (!Array.isArray(input) && !isObjectRecord(input)) return input
+                    if (!snapshotCustomObject && !Array.isArray(input) && !isObjectRecord(input)) return input
 
                     const existing = seen.get(input)
                     if (existing) return existing
 
-                    const snapshot = Array.isArray(input) ? new Array(input.length) : Object.create(prototype)
+                    const snapshot = Array.isArray(input) ? new Array(input.length) : Object.create(snapshotCustomObject ? null : prototype)
                     seen.set(input, snapshot)
                     for (const key of Object.keys(input)) {
+                        const descriptor = Object.getOwnPropertyDescriptor(input, key)
+                        if (!descriptor || !("value" in descriptor)) throw new TypeError("Invalid QueryFilter array")
                         Object.defineProperty(snapshot, key, {
-                            value: snapshotQueryValue(input[key], seen),
+                            value: snapshotQueryValue(
+                                descriptor.value,
+                                seen,
+                                snapshotCustomObject && (Array.isArray(input) || key === "children"),
+                            ),
                             enumerable: true,
                             configurable: true,
                             writable: true,
@@ -186,7 +192,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     let serializedFilters: Array<[string, string]> | undefined
                     let fallbackParam = param
                     if (key === "filters" && Array.isArray(param)) {
-                        fallbackParam = snapshotQueryValue(param)
+                        fallbackParam = snapshotQueryValue(param, new WeakMap(), true)
                         try {
                             serializedFilters = serializeQueryFilterArray(fallbackParam)
                         } catch {
@@ -196,7 +202,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
 
                     if (serializedFilters) {
                         for (const [filterKey, filterValue] of serializedFilters) queryParameters.append(filterKey, filterValue)
-                    } else if (key === "filters" && Array.isArray(param) && param.length > 0) {
+                    } else if (key === "filters" && Array.isArray(param) && fallbackParam.length > 0) {
                         throw new TypeError("Invalid QueryFilter array")
                     } else if (fallbackParam instanceof Array) {
                         fallbackParam.forEach((value: any) => {

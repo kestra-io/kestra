@@ -6,64 +6,53 @@
     >
         <template #header>
             <p class="tour-kicker">
-                {{ t("onboarding.tour.finale.kicker") }}
+                {{ $t("onboarding.tour.finale.kicker") }}
             </p>
-            <h1 class="tour-title">{{ t("onboarding.tour.finale.title") }}</h1>
+            <h1 class="tour-title">{{ $t("onboarding.tour.finale.title") }}</h1>
         </template>
 
         <div class="takeaways">
             <div v-for="takeaway in TAKEAWAYS" :key="takeaway.key" class="takeaway">
-                <h4>{{ t(`onboarding.tour.finale.takeaways.${takeaway.key}.title`) }}</h4>
-                <p v-html="t(`onboarding.tour.finale.takeaways.${takeaway.key}.body`)" />
+                <h4>{{ $t(`onboarding.tour.finale.takeaways.${takeaway.key}.title`) }}</h4>
+                <p v-html="$t(`onboarding.tour.finale.takeaways.${takeaway.key}.body`)" />
                 <p class="takeaway-docs">
-                    <span>{{ t("onboarding.tour.finale.docs.title") }}</span>
+                    <span>{{ $t("onboarding.tour.finale.docs.title") }}</span>
                     <a
                         v-for="name in takeaway.docs"
                         :key="name"
                         :href="docsUrl(name)"
                         target="_blank"
                         rel="noopener"
-                    >{{ t(`onboarding.tour.finale.docs.${name}`) }}</a>
+                    >{{ $t(`onboarding.tour.finale.docs.${name}`) }}</a>
                 </p>
             </div>
         </div>
 
-        <i18n-t keypath="onboarding.tour.finale.namespace_note" tag="p" class="tour-lead" scope="global">
-            <template #namespace>{{ TOUR_NAMESPACE }}</template>
-            <template #secrets>
-                <a :href="docsUrl('secret')" target="_blank" rel="noopener">
-                    {{ t("onboarding.tour.finale.docs.secret") }}
-                </a>
-            </template>
-        </i18n-t>
+        <p class="tour-lead" v-html="namespaceNote" />
 
         <p class="resources-title">
-            {{ t("onboarding.tour.finale.keep_going") }}
+            {{ $t("onboarding.tour.finale.keep_going") }}
         </p>
         <OnboardingResourceList :items="resources" />
 
         <template #footer>
             <KsButton @click="emit('restart')">
-                {{ t("onboarding.tour.finale.restart") }}
+                {{ $t("onboarding.tour.finale.restart") }}
             </KsButton>
             <KsButton type="primary" @click="startBuilding">
-                {{ t("onboarding.tour.finale.start_building") }}
+                {{ $t("onboarding.tour.finale.start_building") }}
             </KsButton>
         </template>
     </KsDialog>
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
-
-    import OnboardingResourceList from "../OnboardingResourceList.vue"
     import {useOnboardingResources} from "../useOnboardingResources"
+    import OnboardingResourceList from "../OnboardingResourceList.vue"
     import {TOUR_NAMESPACE} from "./tourFlows"
-
-    const {t} = useI18n()
-    const route = useRoute()
-    const router = useRouter()
 
     const emit = defineEmits<{
         restart: [];
@@ -71,8 +60,14 @@
 
     const isOpen = defineModel<boolean>()
 
-    // URLs are not translated, so the tour's doc links live in code rather than in i18n.
-    const DOCS: Record<string, string> = {
+    const {t} = useI18n()
+    const route = useRoute()
+    const router = useRouter()
+    const {onboardingResources: resources} = useOnboardingResources()
+
+    const DOCS = {
+        copilot: "https://kestra.io/docs/ai-tools/ai-copilot",
+        agentSkills: "https://kestra.io/docs/ai-tools/agent-skills",
         autocompletion: "https://kestra.io/docs/tutorial/fundamentals#autocompletion",
         execution: "https://kestra.io/docs/workflow-components/execution",
         replay: "https://kestra.io/docs/concepts/replay",
@@ -86,20 +81,23 @@
 
     const DOCS_UTM = "?utm_source=app&utm_medium=referral&utm_campaign=product-tour"
 
-    /** The query goes before the fragment, or the anchor would swallow it. */
-    const docsUrl = (name: string) => {
+    const docsUrl = (name: keyof typeof DOCS) => {
         const [base, fragment] = DOCS[name].split("#")
         return `${base}${DOCS_UTM}${fragment ? `#${fragment}` : ""}`
     }
 
+    const namespaceNote = computed(() =>
+        t("onboarding.tour.finale.namespace_note", {
+            namespace: TOUR_NAMESPACE,
+            secrets: `<a href="${docsUrl("secret")}" target="_blank" rel="noopener">${t("onboarding.tour.finale.docs.secret")}</a>`,
+        }))
+
     const TAKEAWAYS = [
-        {key: "copilot", docs: ["autocompletion", "execution"]},
+        {key: "copilot", docs: ["copilot", "agentSkills", "autocompletion"]},
         {key: "restart", docs: ["replay", "revision"]},
         {key: "events", docs: ["webhook", "schedule"]},
         {key: "chain", docs: ["flowTrigger", "namespace"]},
     ] as const
-
-    const {onboardingResources: resources} = useOnboardingResources()
 
     const startBuilding = async () => {
         isOpen.value = false
@@ -130,7 +128,7 @@
         color: var(--ks-text-secondary);
         font-size: var(--ks-font-size-sm);
 
-        a {
+        :deep(a) {
             color: var(--ks-text-link);
             text-decoration: none;
 
@@ -151,8 +149,8 @@
         }
     }
 
-    .takeaway-docs {
-        margin-top: auto !important;
+    .takeaway .takeaway-docs {
+        margin-top: auto;
         display: flex;
         flex-wrap: wrap;
         gap: var(--ks-spacing-2);

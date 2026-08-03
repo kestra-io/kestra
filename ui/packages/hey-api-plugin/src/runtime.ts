@@ -109,8 +109,8 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     if (input == null || typeof input !== "object") return input
 
                     const prototype = Object.getPrototypeOf(input)
-                    const isPlainObject = prototype === Object.prototype || prototype === null
-                    if (!Array.isArray(input) && !isPlainObject) return input
+                    const isObjectRecord = Object.prototype.toString.call(input) === "[object Object]"
+                    if (!Array.isArray(input) && !isObjectRecord) return input
 
                     const existing = seen.get(input)
                     if (existing) return existing

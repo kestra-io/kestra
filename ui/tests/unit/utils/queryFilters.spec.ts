@@ -257,6 +257,27 @@ describe("routeQueryToQueryFilters", () => {
         expect(reads).toBe(1)
     })
 
+    it("falls back atomically from one snapshot for a custom-prototype filter", () => {
+        let reads = 0
+        const firstFilter = Object.assign(Object.create({kind: "custom"}), {
+            field: "namespace",
+            operation: "EQUALS",
+        })
+        Object.defineProperty(firstFilter, "value", {
+            enumerable: true,
+            get: () => ++reads === 1 ? "io.kestra" : undefined,
+        })
+        const filters = [firstFilter, {logical: "or", children: []}]
+
+        const query = serializeQuery({filters})
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual([
+            JSON.stringify({field: "namespace", operation: "EQUALS", value: "io.kestra"}),
+            JSON.stringify(filters[1]),
+        ])
+        expect(reads).toBe(1)
+    })
+
     it("falls back atomically when a comparator-only leaf has an empty object value", () => {
         const filters = [
             {field: "labels", operation: "IS_NULL", value: {}},

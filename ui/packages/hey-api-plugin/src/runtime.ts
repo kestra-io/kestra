@@ -105,12 +105,16 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             querySerializer(query: Record<string, any>) {
                 const queryParameters = new URLSearchParams()
 
+                const isObjectRecord = (input: object): boolean => {
+                    const prototype = Object.getPrototypeOf(input)
+                    return prototype === null || prototype?.constructor === Object
+                }
+
                 const snapshotQueryValue = (input: any, seen = new WeakMap<object, any>()): any => {
                     if (input == null || typeof input !== "object") return input
 
                     const prototype = Object.getPrototypeOf(input)
-                    const isObjectRecord = Object.prototype.toString.call(input) === "[object Object]"
-                    if (!Array.isArray(input) && !isObjectRecord) return input
+                    if (!Array.isArray(input) && !isObjectRecord(input)) return input
 
                     const existing = seen.get(input)
                     if (existing) return existing
@@ -156,7 +160,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                         if (serialized === undefined) return undefined
                         return [[`${prefix}[${field}][${operation}]`, serialized]]
                     }
-                    if (typeof value === "object" && value != null && !Array.isArray(value)) {
+                    if (typeof value === "object" && value != null && !Array.isArray(value) && isObjectRecord(value)) {
                         const entries = Object.entries(value)
                         if (entries.length === 0) return undefined
                         const parameters: Array<[string, string]> = []
@@ -192,6 +196,8 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
 
                     if (serializedFilters) {
                         for (const [filterKey, filterValue] of serializedFilters) queryParameters.append(filterKey, filterValue)
+                    } else if (key === "filters" && Array.isArray(param) && param.length > 0) {
+                        throw new TypeError("Invalid QueryFilter array")
                     } else if (fallbackParam instanceof Array) {
                         fallbackParam.forEach((value: any) => {
                             const ser = serializeQueryValue(value)

@@ -9,9 +9,6 @@ import type {
 
 import {useI18n} from "vue-i18n"
 
-import {useMiscStore} from "override/stores/misc"
-
-
 // Main icons
 import AiMenuIcon from "../../components/ai/AiMenuIcon.vue"
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
@@ -61,8 +58,6 @@ export function useLeftMenu() {
     const $router = useRouter()
 
     const {t} = useI18n({useScope: "global"})
-
-    const configs = useMiscStore().configs
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -369,8 +364,7 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: Battery40,
-                        },
-                        hidden: !configs?.isConcurrencyViewEnabled,
+                        }
                     },
                     {
                         id: "iam",

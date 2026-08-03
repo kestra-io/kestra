@@ -87,6 +87,12 @@ Deploy Kestra on AWS using our CloudFormation template:
 
 Deploy Kestra on Google Cloud Infrastructure Manager using [our Terraform module](https://github.com/kestra-io/deployment-templates/tree/main/gcp/terraform/infrastructure-manager/vm-sql-gcs).
 
+### Launch on Zenith (third-party managed hosting)
+
+One-click managed Kestra from a community provider, with storage, backups and a free subdomain included:
+
+[![Deploy with Zenith](https://cdn.zenith.hosting/buttons/deploy-with-zenith.svg)](https://zenith.hosting/host/kestra)
+
 ### Get Started Locally in 5 Minutes
 
 #### Launch Kestra in Docker

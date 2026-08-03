@@ -230,6 +230,33 @@ describe("routeQueryToQueryFilters", () => {
         expect(params.get("filters[or][1][status][IS_NOT_NULL]")).toBe("")
     })
 
+    it("keeps non-empty array values compatible with the existing filter wire format", () => {
+        const params = new URLSearchParams(serializeQueryFilters([
+            {field: "state", operation: "IN", value: ["RUNNING", "FAILED"]},
+        ]))
+
+        expect(params.get("filters[state][IN]")).toBe("RUNNING,FAILED")
+        expect(params.has("filters")).toBe(false)
+    })
+
+    it("falls back atomically from one snapshot when a later filter is invalid", () => {
+        let reads = 0
+        const firstFilter = {field: "namespace", operation: "EQUALS"}
+        Object.defineProperty(firstFilter, "value", {
+            enumerable: true,
+            get: () => ++reads === 1 ? "io.kestra" : "mutated",
+        })
+        const filters = [firstFilter, {logical: "or", children: []}]
+
+        const query = serializeQuery({filters})
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual([
+            JSON.stringify({field: "namespace", operation: "EQUALS", value: "io.kestra"}),
+            JSON.stringify(filters[1]),
+        ])
+        expect(reads).toBe(1)
+    })
+
     it("falls back atomically when a comparator-only leaf has an empty object value", () => {
         const filters = [
             {field: "labels", operation: "IS_NULL", value: {}},

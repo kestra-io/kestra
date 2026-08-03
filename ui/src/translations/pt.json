@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Este arquivo tem {size}. Pode demorar um pouco para carregar, bloqueando seu navegador. Deseja carregá-lo mesmo assim?",
-      "load_anyway": "Carregar mesmo assim"
+      "load_anyway": "Carregar mesmo assim",
+      "load_error": "Falha ao carregar a pré-visualização do ficheiro. Pode tratar-se de um problema temporário ou de permissões.",
+      "retry": "Tentar novamente",
+      "html_asset_warning": "Esta pré-visualização renderiza o HTML num quadro isolado. Recursos locais como imagens e folhas de estilo referenciados por caminhos relativos não serão carregados.",
+      "html_preview_title": "Pré-visualização do ficheiro HTML"
     },
     "no_variables": "Nenhuma variável disponível.",
     "download": "Baixar",

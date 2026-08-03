@@ -47,7 +47,7 @@
         </KsButton>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
-        <Sections :dashboard="{id: 'default', charts: []}" :charts="charts.map(chart => chart.data)" showDefault />
+        <Sections :dashboard="DEFAULT_DASHBOARD" :charts="charts.map(chart => chart.data)" showDefault />
     </div>
     <div class="main-editor" v-else>
         <KsSplitter v-if="displaySide" class="dashboard-edit" @resize="onSplitterResize">
@@ -77,7 +77,7 @@
                     v-else-if="currentView === views.CHART"
                 >
                     <div v-if="selectedChart.length" class="w-100">
-                        <Sections :dashboard="{id: 'default', charts: []}" :charts="selectedChart" showDefault />
+                        <Sections :dashboard="DEFAULT_DASHBOARD" :charts="selectedChart" showDefault />
                     </div>
                     <div v-else-if="chartError" class="text-container">
                         <span>{{ chartError }}</span>
@@ -121,13 +121,13 @@
     import ChartBar from "vue-material-design-icons/ChartBar.vue"
     import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue"
     import ViewDashboard from "vue-material-design-icons/ViewDashboard.vue"
-    import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg"
+    import EmptyVisualDashboard from "../../../assets/empty_visuals/dashboard.svg"
     import ContentSave from "vue-material-design-icons/ContentSave.vue"
     import intro from "../../../assets/docs/dashboard_home.md?raw"
     import yaml from "yaml"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {usePluginsStore} from "../../../stores/plugins"
-    import {useDashboardStore} from "../../../stores/dashboard"
+    import {DEFAULT_DASHBOARD, useDashboardStore} from "../../../stores/dashboard"
 
     const props = defineProps<{
         allowSaveUnchanged?: boolean;

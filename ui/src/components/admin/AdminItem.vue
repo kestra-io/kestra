@@ -1,6 +1,6 @@
 <template>
     <KsSideBarItem
-        :title="t('admin')"
+        :title="title ?? t('admin')"
         :icon="CogOutline"
         :active="active"
         class="admin-item"
@@ -34,12 +34,14 @@
     import {useRoute, useRouter, type RouteLocationRaw} from "vue-router"
     import CogOutline from "vue-material-design-icons/CogOutline.vue"
     import {KsSideBarItem, KsTooltip, dateUtils} from "@kestra-io/design-system"
-    import {useRouteTabsStore, type RouteTab} from "../../stores/routeTabs"
+    import {useRouteTabsStore, activeScopeTab, type RouteTab} from "../../stores/routeTabs"
     import {useMiscStore} from "override/stores/misc"
 
     const props = defineProps<{
         tabs: RouteTab[]
         landingRoute?: RouteLocationRaw
+        /** Overrides the entry label — EE narrows this panel down to settings. */
+        title?: string
     }>()
 
     const OWNER = Symbol("admin-tabs")
@@ -52,11 +54,7 @@
 
     const configs = computed(() => miscStore.configs)
 
-    const active = computed(() => props.tabs
-        .filter(tab => tab.route && !tab.header && !tab.excludeFromScope)
-        .map(tab => router.resolve(tab.route!).path)
-        .some(p => route.path === p || route.path.startsWith(p + "/")),
-    )
+    const active = computed(() => Boolean(activeScopeTab(route, props.tabs, router)))
 
     function open() {
         store.setTabs({ownerId: OWNER, tabs: props.tabs})
@@ -77,7 +75,8 @@
 
 <style scoped lang="scss">
     .admin-item {
-        margin: 0 var(--ks-spacing-4) var(--ks-spacing-2);
+        margin: 0;
+        --ks-sidebar-item-title-color: currentColor;
     }
 
     .admin-item__version {

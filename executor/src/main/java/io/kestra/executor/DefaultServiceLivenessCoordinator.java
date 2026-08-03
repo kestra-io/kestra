@@ -2,6 +2,7 @@ package io.kestra.executor;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -13,17 +14,16 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
-import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
+import io.kestra.core.scheduler.events.TriggerWorkerLost;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.vnodes.VNodeController;
 import io.kestra.core.server.*;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
 
 import io.micrometer.core.instrument.Counter;
@@ -62,12 +62,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private final ServiceInstanceRepositoryInterface serviceInstanceRepository;
     private final Duration purgeRetention;
 
-    private final LockService lockService;
     private final KillSwitchService killSwitchService;
     private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
+    private final TriggerEventQueue triggerEventQueue;
     private final MetricRegistry metricRegistry;
     private final VNodeController vNodeController;
+    private final List<ServiceResourceReleaser> serviceResourceReleasers;
+
     private Counter workerJobResubmitCounter;
     // mutable for testing purpose
     String serverId = ServerInstance.INSTANCE_ID;
@@ -88,13 +90,14 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         final ServiceRegistry serviceRegistry,
         final ServiceLivenessUpdater serviceLivenessUpdater,
         final ServiceInstanceRepositoryInterface serviceInstanceRepository,
-        final LockService lockService,
         final KillSwitchService killSwitchService,
         final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
         final WorkerJobRunningStateStore workerJobRunningStateStore,
+        final TriggerEventQueue triggerEventQueue,
         final ServerConfig serverConfig,
         final MetricRegistry metricRegistry,
-        final VNodeController vNodeController) {
+        final VNodeController vNodeController,
+        final List<ServiceResourceReleaser> serviceResourceReleasers) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
         this.serviceLivenessUpdater = serviceLivenessUpdater;
@@ -103,12 +106,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.killSwitchService = killSwitchService;
         this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
-        this.lockService = lockService;
+        this.triggerEventQueue = triggerEventQueue;
         this.metricRegistry = metricRegistry;
         this.purgeRetention = serverConfig.service() != null && serverConfig.service().purge() != null
             ? serverConfig.service().purge().retention()
             : null;
         this.vNodeController = vNodeController;
+        this.serviceResourceReleasers = serviceResourceReleasers;
     }
 
     @PostConstruct
@@ -176,10 +180,10 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     reEmitWorkerJobsForWorker(txContext, serviceInstance.uid());
                 }
             } else if (serviceInstance.is(Service.ServiceState.TERMINATED_GRACEFULLY)) {
-                // realtime triggers need to be resubmitted even when terminated gracefully
+                // triggers whose terminal result was not flushed need to be released even when terminated gracefully
                 if (serviceInstance.config().workerTaskRestartStrategy().isRestartable()) {
-                    log.info("Trigger realtime trigger restart for terminated gracefully worker: {}.", serviceInstance.uid());
-                    reEmitRealtimeTriggerForWorker(txContext, serviceInstance.uid());
+                    log.info("Trigger restart for terminated gracefully worker: {}.", serviceInstance.uid());
+                    notifyTriggersLostForWorker(txContext, serviceInstance.uid());
                 }
             }
 
@@ -231,15 +235,11 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     log.info("Trigger task restart for non-responding worker after timeout: {}.", serviceInstance.uid());
                     reEmitWorkerJobsForWorker(txContext, serviceInstance.uid());
                 }
-                mayReleaseLocksForService(serviceInstance, "service disconnected");
+
+                // release service resources
+                serviceResourceReleasers.forEach(releaser -> releaser.releaseResources(serviceInstance, DEFAULT_REASON_FOR_DISCONNECTED));
             }
         });
-    }
-
-    private void mayReleaseLocksForService(ServiceInstance serviceInstance, String reason) {
-        // Eventually release all owned locks
-        lockService.releaseAllLocks(serviceInstance.server().id())
-            .forEach(l -> log.info("Released lock '{}' for service instance '{}'. Reason: {}", IdUtils.fromParts(l.getCategory(), l.getId()), serviceInstance.uid(), reason));
     }
 
     @Scheduled(initialDelay = "${kestra.server.service.purge.initial-delay}", fixedDelay = "${kestra.server.service.purge.fixed-delay}")
@@ -257,10 +257,12 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         });
     }
 
-    private void reEmitRealtimeTriggerForWorker(final TransactionContext txContext, final String id) {
+    private void notifyTriggersLostForWorker(final TransactionContext txContext, final String id) {
         workerJobRunningStateStore.processWorkerJobsForDeadWorker(txContext, id, (txContext2, workerJobRunning) ->
         {
-            resubmitRealtimeTrigger(txContext2, workerJobRunning);
+            if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
+                notifyTriggerWorkerLost(txContext2, workerTriggerRunning);
+            }
         });
     }
 
@@ -320,7 +322,9 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             .forEach(instance ->
             {
                 safelyUpdate(instance, Service.ServiceState.INACTIVE, null);
-                mayReleaseLocksForService(instance, "service inactive");
+
+                // release service resources
+                serviceResourceReleasers.forEach(releaser -> releaser.releaseResources(instance, "service inactive"));
             });
     }
 
@@ -393,14 +397,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
 
         // WorkerTriggerRunning
         if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
-            resubmitWorkerTrigger(workerTriggerRunning);
-        }
-    }
-
-    private void resubmitRealtimeTrigger(TransactionContext txContext, WorkerJobRunning workerJobRunning) {
-        // we only resubmit realtime triggers
-        if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning && workerTriggerRunning.getTrigger() instanceof RealtimeTriggerInterface) {
-            resubmitWorkerTrigger(workerTriggerRunning);
+            notifyTriggerWorkerLost(txContext, workerTriggerRunning);
         }
     }
 
@@ -435,30 +432,25 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         }
     }
 
-    private void resubmitWorkerTrigger(WorkerTriggerRunning workerTriggerRunning) {
-        try {
-            String raw = workerTriggerRunning.getWorkerInstance().workerQueueId();
-            String workerQueueId = (raw == null || raw.isEmpty()) ? null : raw;
-            WorkerTrigger workerTrigger = WorkerTrigger.builder()
-                .trigger(workerTriggerRunning.getTrigger())
-                .data(workerTriggerRunning.getData())
-                .build();
-            workerJobEventQueue.emit(workerQueueId, WorkerJobEvent.of(workerTrigger, workerQueueId));
-            Logs.logTrigger(
-                workerTrigger.triggerId(),
-                Level.WARN,
-                "Re-emitting WorkerTrigger."
-            );
-        } catch (QueueException e) {
-            Logs.logTrigger(
-                TriggerId.of(
-                    workerTriggerRunning.getData().tenantId(), workerTriggerRunning.getData().namespace(), workerTriggerRunning.getData().flowId(),
-                    workerTriggerRunning.getTrigger().getId()
-                ),
-                Level.ERROR,
-                "Unable to re-emit WorkerTrigger.",
-                e
-            );
-        }
+    /**
+     * The worker holding the trigger is gone: delete its running entry and notify the scheduler,
+     * which owns resubmission. Re-emitting the persisted job from here would replay a stale
+     * trigger definition and ignore a disabled or deleted state.
+     */
+    private void notifyTriggerWorkerLost(TransactionContext txContext, WorkerTriggerRunning workerTriggerRunning) {
+        TriggerId triggerId = TriggerId.of(
+            workerTriggerRunning.getData().tenantId(),
+            workerTriggerRunning.getData().namespace(),
+            workerTriggerRunning.getData().flowId(),
+            workerTriggerRunning.getTrigger().getId()
+        );
+        workerJobRunningStateStore.deleteByKey(txContext, workerTriggerRunning.uid());
+        triggerEventQueue.send(new TriggerWorkerLost(triggerId, workerTriggerRunning.getWorkerInstance().uid(), workerTriggerRunning.getDispatchEpoch()));
+        Logs.logTrigger(
+            triggerId,
+            Level.WARN,
+            "Worker '{}' lost, notifying the scheduler.",
+            workerTriggerRunning.getWorkerInstance().uid()
+        );
     }
 }

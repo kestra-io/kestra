@@ -1,12 +1,12 @@
 <template>
     <component :icon="AxisYArrow" :is="component" @click="click" class="node-action" size="small">
-        <span v-if="component !== 'el-button'">{{ $t('sub flow') }}</span>
+        <span v-if="component !== 'KsButton'">{{ $t('sub flow') }}</span>
     </component>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {useExecutionsStore} from "../../stores/executions"
+    import {useExecutionsStore, type Execution} from "../../stores/executions"
     import {useRouter, useRoute} from "vue-router"
     import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue"
 
@@ -18,9 +18,9 @@
         tabFlow?: string;
         tabExecution?: string;
     }>(), {
-        component: "el-button",
+        component: "KsButton",
         tabFlow: "overview",
-        tabExecution: "topology",
+        tabExecution: "overview",
         executionId: undefined,
         namespace: undefined,
         flowId: undefined,
@@ -30,33 +30,28 @@
     const route = useRoute()
     const executionsStore = useExecutionsStore()
 
-    const routeName = computed(() => {
-        return props.executionId ? "executions/update" : "flows/update"
-    })
-
     const tab = computed(() => {
         return props.executionId ? props.tabExecution : props.tabFlow
     })
 
-    interface Execution {
-        id: string;
-        namespace: string;
-        flowId: string;
-    }
+    // Both Executions and Flows detail pages are router-view driven (child route
+    // per tab), so the tab is baked into the route name rather than passed as a
+    // `tab` param (which would be silently discarded before the parent's redirect).
+    const routeName = computed(() => {
+        return props.executionId ? `executions/update/${tab.value}` : `flows/update/${tab.value}`
+    })
 
     const params = (execution?: Execution) => {
         if (execution) {
             return {
-                namespace: execution.namespace, 
-                flowId: execution.flowId, 
-                id: execution.id, 
-                tab: tab.value,
+                namespace: execution.namespace,
+                flowId: execution.flowId,
+                id: execution.id,
             }
         } else {
             return {
-                namespace: props.namespace, 
-                id: props.flowId, 
-                tab: tab.value,
+                namespace: props.namespace,
+                id: props.flowId,
             }
         }
     }
@@ -69,7 +64,6 @@
                     namespace: props.namespace,
                     flowId: props.flowId,
                     id: props.executionId,
-                    tab: tab.value,
                     tenant: route.params.tenant,
                 },
             })

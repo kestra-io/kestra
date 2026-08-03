@@ -1,0 +1,19 @@
+id: subflow-function-mutual-a
+namespace: io.kestra.tests
+
+# Mutual recursion a -> b -> a -> ... Each hop targets a *different* flow, so the self-call check
+# does not fire; only the per-thread depth cap can stop it.
+inputs:
+  - id: x
+    type: STRING
+    defaults: "{{ subflow(namespace='io.kestra.tests', id='subflow-function-mutual-b').outputs.x }}"
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.x }}"
+
+outputs:
+  - id: x
+    type: STRING
+    value: "{{ inputs.x }}"

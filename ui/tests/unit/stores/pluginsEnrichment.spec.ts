@@ -43,6 +43,9 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
     })
 
     it("does NOT cache a failure, so a later call retries", async () => {
+        // The store intentionally console.warns on a failed fetch — silence the
+        // expected warning this test deliberately triggers.
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
         mockedGet.mockRejectedValueOnce(new Error("network"))
 
         const failed = await store.fetchVersions("io.kestra.plugin.x.Y")
@@ -55,5 +58,7 @@ describe("pluginsEnrichment store — fetchVersions cache", () => {
 
         expect(retried).toEqual(data)
         expect(mockedGet).toHaveBeenCalledTimes(2)
+        expect(warnSpy).toHaveBeenCalledWith("Failed to load plugin versions", "io.kestra.plugin.x.Y", expect.any(Error))
+        warnSpy.mockRestore()
     })
 })

@@ -1,19 +1,17 @@
 package io.kestra.cli.commands.namespaces.kv;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.migration.MigrationRunnerInterface;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 
-import io.kestra.core.migration.MigrationRunnerInterface;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;

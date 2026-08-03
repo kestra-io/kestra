@@ -11,7 +11,7 @@
             :disabled
             :type="disabled ? '' : 'textarea'"
             :autosize="{minRows: 1}"
-            :inputStyle="haveError ? {boxShadow: '0 0 6px #ab0009'} : {}"
+            :inputStyle="{...(haveError ? {boxShadow: '0 0 6px #ab0009'} : {}), ...inputStyle}"
             :suffixIcon="SuffixIcon"
         />
     </div>
@@ -44,6 +44,7 @@
         margin: {type: String, default: "mt-1 mb-2"},
         class: {type: String, default: undefined},
         haveError: {type: Boolean, default: false},
+        inputStyle: {type: Object, default: () => ({})},
     })
 
     const input = computed({

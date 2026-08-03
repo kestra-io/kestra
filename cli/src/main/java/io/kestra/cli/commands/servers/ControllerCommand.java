@@ -6,14 +6,12 @@ import java.util.Map;
 
 import io.kestra.core.models.ServerType;
 import io.kestra.core.services.IgnoreExecutionService;
-import org.awaitility.Awaitility;
+import io.kestra.core.utils.Await;
 import io.kestra.core.worker.Controller;
 
-import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import io.kestra.core.utils.Await;
 
 @Command(
     name = "controller",

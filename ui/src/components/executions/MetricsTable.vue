@@ -12,6 +12,10 @@
             <slot name="navbar" />
         </template>
 
+        <template v-if="$slots.empty" #empty>
+            <slot name="empty" />
+        </template>
+
         <template v-for="col in displayColumns" :key="col">
             <KsTableColumn v-if="col === 'taskId' && showTask" prop="taskId" sortable :label="$t('task')">
                 <template #default="scope">
@@ -63,8 +67,8 @@
             <KsTableColumn className="row-action">
                 <template #default="scope">
                     <router-link
-                        :to="{name: 'flows/update',
-                              params: {namespace: scope.row.namespace, id: scope.row.flowId, tab: 'metrics', tenant: scope.row.tenant},
+                        :to="{name: 'flows/update/metrics',
+                              params: {namespace: scope.row.namespace, id: scope.row.flowId, tenant: scope.row.tenant},
                               query: {'filters[q][EQUALS]': scope.row.name}
                         }"
                     >

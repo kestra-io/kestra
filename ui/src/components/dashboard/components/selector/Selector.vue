@@ -1,13 +1,12 @@
 <template>
     <template v-if="asItem">
-        <KsDropdownItem :icon="SwapHorizontal" @click="isOpen = true">
+        <KsDropdownItem :icon="ChartLineVariant" @click="isOpen = true">
             {{ selected?.title ?? $t("dashboards.default") }}
         </KsDropdownItem>
         <KsDialog
             v-model="isOpen"
             destroyOnClose
             appendToBody
-            width="360px"
         >
             <template #header>
                 <h5 class="mb-0">
@@ -25,16 +24,16 @@
             />
         </KsDialog>
     </template>
-    <KsDropdown v-else trigger="click" hideOnClick placement="bottom-end">
+    <KsDropdown v-else trigger="click" hideOnClick :placement>
         <slot>
-            <KsButton :icon="SwapHorizontal" class="selected">
+            <KsButton :icon="ChartLineVariant" class="selected">
                 <span v-if="!verticalLayout" class="text-truncate">
                     {{ selected?.title ?? $t('dashboards.default') }}
                 </span>
             </KsButton>
         </slot>
         <template #dropdown>
-            <KsDropdownMenu class="p-3 dropdown">
+            <KsDropdownMenu class="p-2 dropdown">
                 <Content
                     :dashboards="dashboards"
                     :selected="selected"
@@ -50,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, computed, inject, watch} from "vue"
+    import {ref, computed, inject, watch} from "vue"
 
     import {useRoute, useRouter} from "vue-router"
     import Content from "./Content.vue"
@@ -60,6 +59,9 @@
 
     const route = useRoute()
     const router = useRouter()
+    import {useActiveTab} from "../../../../composables/useActiveTab"
+    const activeTab = useActiveTab()
+    const isRouterDriven = computed(() => route.meta?.tab !== undefined)
 
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
@@ -73,17 +75,37 @@
     import {useBreakpoints, breakpointsElement} from "@vueuse/core"
     const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
 
-    import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue"
+    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
+
+    withDefaults(defineProps<{placement?: string}>(), {placement: "bottom-end"})
 
     const emits = defineEmits<{dashboard: [id: string]}>()
 
     const isOpen = ref(false)
 
-    const rootName = computed(() => ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home")
-    const query = computed(() => ({
-        name: rootName.value,
-        params: JSON.stringify({...route.params, dashboard: undefined}),
-    }))
+    const rootName = computed(() => {
+        const name = String(route.name ?? "")
+        if (name.startsWith("flows/update")) return "flows/update"
+        if (name.startsWith("namespaces/update")) return "namespaces/update"
+        return "home"
+    })
+    // Pages migrated to router children (e.g. flows/update) no longer carry the
+    // active tab in route.params, so re-derive it via useActiveTab and bake it into
+    // the target route name directly rather than a `tab` param (which would be
+    // silently discarded before the parent route's redirect runs).
+    const query = computed(() => {
+        const {tab: _tab, ...restParams} = route.params as Record<string, unknown>
+        const name = rootName.value === "home" || !isRouterDriven.value
+            ? rootName.value
+            : `${rootName.value}/${activeTab.value}`
+        const params = rootName.value === "home" || isRouterDriven.value
+            ? restParams
+            : {...restParams, tab: activeTab.value}
+        return {
+            name,
+            params: JSON.stringify({...params, dashboard: undefined}),
+        }
+    })
 
     const dashboards = ref<{id: string; title: string; isDefault: boolean}[]>([])
 
@@ -102,7 +124,6 @@
         case "namespaces/update": await dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break
         default: await dashboardStore.saveDefaults({defaultHomeDashboard: id})
         }
-        dashboards.value = []
         await fetchDashboards()
     }
 
@@ -123,15 +144,8 @@
         dashboards.value = await dashboardStore.list({}, route)
     }
 
-    onBeforeMount(fetchDashboards)
-
-    const tenant = ref()
-    watch(() => route.params.tenant, (newTenant) => {
-        if (tenant.value !== newTenant) {
-            fetchDashboards()
-            tenant.value = newTenant
-        }
-    }, {immediate: true})
+    fetchDashboards()
+    watch(() => route.params.tenant, fetchDashboards)
 
 </script>
 
@@ -142,6 +156,6 @@
     }
 }
 .dropdown {
-    width: 300px;
+    width: 18rem;
 }
 </style>

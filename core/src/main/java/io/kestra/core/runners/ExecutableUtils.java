@@ -106,17 +106,17 @@ public final class ExecutableUtils {
 
                     if (existingSubflowExecution.isEmpty()) {
                         List<Execution> childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
-                                .filter(
-                                    e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId())
-                                        && e.getTrigger().getId().equals(currentTask.getId())
-                                )
-                                .filter(
-                                    e -> Objects.equals(e.getTrigger().getVariables().get("taskRunId"), currentTaskRun.getId())
-                                        && Objects.equals(e.getTrigger().getVariables().get("taskRunValue"), currentTaskRun.getValue())
-                                        && Objects.equals(e.getTrigger().getVariables().get("taskRunIteration"), currentTaskRun.getIteration())
-                                )
-                                .collectList()
-                                .block();
+                            .filter(
+                                e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId())
+                                    && e.getTrigger().getId().equals(currentTask.getId())
+                            )
+                            .filter(
+                                e -> Objects.equals(e.getTrigger().getVariables().get("taskRunId"), currentTaskRun.getId())
+                                    && Objects.equals(e.getTrigger().getVariables().get("taskRunValue"), currentTaskRun.getValue())
+                                    && Objects.equals(e.getTrigger().getVariables().get("taskRunIteration"), currentTaskRun.getIteration())
+                            )
+                            .collectList()
+                            .block();
 
                         if (childExecutions != null && childExecutions.size() == 1) {
                             // if there are more than one, we ignore the results and create a new one

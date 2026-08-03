@@ -792,6 +792,48 @@ export function extractFieldFromMaps<T extends string>(
     return maps
 }
 
+export interface TypedBlock {
+    type: string;
+    value: Record<string, any>;
+    range: Range;
+    path: string;
+}
+
+export function extractTypedBlocks(source: string): TypedBlock[] {
+    return extractTypedBlocksWithMeta(source).blocks
+}
+
+export interface FlowSourceData {
+    blocks: TypedBlock[];
+    namespace?: string;
+    id?: string;
+}
+
+export function extractTypedBlocksWithMeta(source: string): FlowSourceData {
+    const yamlDoc = parseDocument(source) as any
+    const blocks: TypedBlock[] = []
+    visit(yamlDoc, {
+        Map(_, map: any, parents) {
+            const type = map.items?.find((item: any) => item?.key?.value === "type")?.value?.value
+            if (typeof type === "string" && map.range) {
+                const path = parents
+                    .filter((parent) => isPair(parent))
+                    .map((parent: any) => parent?.key?.value)
+                    .join(".")
+                blocks.push({type, value: map.toJSON(), range: map.range, path})
+            }
+        },
+    })
+    const root = yamlDoc.contents
+    const namespace = isMap(root) ? root.get("namespace") : undefined
+    const id = isMap(root) ? root.get("id") : undefined
+    return {
+        blocks,
+        namespace: typeof namespace === "string" ? namespace : undefined,
+        id: typeof id === "string" ? id : undefined,
+    }
+}
+
 function extractAllTypes(source: string, validTypes: string[] = []){
     return extractFieldFromMaps(source, "type", () => true, (value) =>
         validTypes.some((t) => t === value),

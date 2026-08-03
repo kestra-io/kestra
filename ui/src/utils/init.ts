@@ -4,31 +4,26 @@ import type {RouteRecordRaw} from "vue-router"
 import {configure} from "vue-gtag"
 import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n"
 import moment from "moment-timezone"
-// @ts-ignore - moment locale files don't have type declarations
-import "moment/dist/locale/de"
-// @ts-ignore
-import "moment/dist/locale/es"
-// @ts-ignore
-import "moment/dist/locale/fr"
-// @ts-ignore
-import "moment/dist/locale/hi"
-// @ts-ignore
-import "moment/dist/locale/it"
-// @ts-ignore
-import "moment/dist/locale/ja"
-// @ts-ignore
-import "moment/dist/locale/ko"
-// @ts-ignore
-import "moment/dist/locale/pl"
-// @ts-ignore
-import "moment/dist/locale/pt"
-// @ts-ignore
-import "moment/dist/locale/ru"
-// @ts-ignore
-import "moment/dist/locale/zh-cn"
-// @ts-ignore
-import "moment/dist/locale/pt-br"
 import {extendMoment} from "moment-range"
+
+// Moment locales are loaded on demand: only the active language's locale is fetched,
+// instead of eagerly bundling every supported locale on startup. "en" is built into
+// moment's core and needs no import. Each entry is a static dynamic-import so Vite/Rollup
+// can code-split one chunk per locale.
+const MOMENT_LOCALE_LOADERS: Record<string, () => Promise<unknown>> = {
+    de: () => import("moment/dist/locale/de"),
+    es: () => import("moment/dist/locale/es"),
+    fr: () => import("moment/dist/locale/fr"),
+    hi: () => import("moment/dist/locale/hi"),
+    it: () => import("moment/dist/locale/it"),
+    ja: () => import("moment/dist/locale/ja"),
+    ko: () => import("moment/dist/locale/ko"),
+    pl: () => import("moment/dist/locale/pl"),
+    pt: () => import("moment/dist/locale/pt"),
+    "pt-br": () => import("moment/dist/locale/pt-br"),
+    ru: () => import("moment/dist/locale/ru"),
+    "zh-cn": () => import("moment/dist/locale/zh-cn"),
+}
 import VueVirtualScroller from "vue-virtual-scroller"
 import {createPinia} from "pinia"
 
@@ -138,8 +133,12 @@ export default async (
     setDesignSystemLocale(locale)
     app.use(i18n)
 
-    // moment
-    moment.locale(locale)
+    // moment — load the active language's locale on demand ("en" is built in).
+    // Normalize the stored lang (e.g. "pt_BR", "zh_CN") to moment's locale key
+    // ("pt-br", "zh-cn"), matching moment's own normalizeLocale behavior.
+    const momentLocale = locale.toLowerCase().replace(/_/g, "-")
+    await MOMENT_LOCALE_LOADERS[momentLocale]?.()
+    moment.locale(momentLocale)
     const momentExtended = extendMoment(moment)
     app.config.globalProperties.$moment = momentExtended
     setMomentInstance(momentExtended)
@@ -161,16 +160,6 @@ export default async (
     createEventsRouter(app, router)
 
     app.component("RouterMd", RouterMd)
-    const components = {
-        ...(import.meta.glob("../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),
-        ...(import.meta.glob("../../node_modules/@kestra-io/ui-libs/src/components/content/*.vue", {eager: true})),
-        ...(import.meta.glob("../components/content/*.vue", {eager: true})),
-    }
-    const componentsByName = Object.entries(components)
-        .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), (component as {default: unknown}).default])
-    const componentsNames = componentsByName.map(([name]) => name)
-    componentsByName.filter(([name], index) => componentsNames.lastIndexOf(name) === index)
-        .forEach(([name, component]) => app.component(name as string, component as Parameters<typeof app.component>[1]))
 
     app.config.globalProperties.append = (path: string, pathToAppend: string) => path + (path.endsWith("/") ? "" : "/") + pathToAppend
 

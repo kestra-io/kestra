@@ -1,5 +1,6 @@
-import {describe, test, expect} from "vitest"
+import {describe, test, expect, vi} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
+import {ElDrawer} from "element-plus"
 import KestraDesignSystem from "../../../src/index"
 import KsDrawer from "../../../src/components/Feedback/KsDrawer.vue"
 
@@ -22,6 +23,15 @@ describe("KsDrawer", () => {
         })
         wrapper.vm.$emit("update:modelValue", false)
         expect(wrapper.emitted("update:modelValue")).toBeTruthy()
+    })
+
+    test("forwards beforeClose to the underlying drawer", () => {
+        const beforeClose = vi.fn()
+        const wrapper = mount(KsDrawer, {
+            props: {modelValue: true, beforeClose},
+            global: globalConfig,
+        })
+        expect(wrapper.findComponent(ElDrawer).props("beforeClose")).toBe(beforeClose)
     })
 
     test("reflects full-screen state in the toggle icon when resizable", async () => {

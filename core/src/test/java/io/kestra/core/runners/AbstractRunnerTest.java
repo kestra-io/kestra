@@ -14,7 +14,6 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.executor.command.Create;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -56,9 +55,6 @@ public abstract class AbstractRunnerTest {
 
     @Inject
     protected MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
-
-    @Inject
-    private PluginDefaultsCaseTest pluginDefaultsCaseTest;
 
     @Inject
     protected FlowCaseTest flowCaseTest;
@@ -226,11 +222,12 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows(
-        { "flows/valids/trigger-flow-listener-with-pause.yaml",
-            "flows/valids/trigger-flow-with-pause.yaml" }
+        value = { "flows/valids/trigger-flow-listener-with-pause.yaml",
+            "flows/valids/trigger-flow-with-pause.yaml" },
+        tenantId = "pause-tenant"
     )
     void flowTriggerWithPause() throws Exception {
-        flowTriggerCaseTest.triggerWithPause();
+        flowTriggerCaseTest.triggerWithPause("pause-tenant");
     }
 
     @Test
@@ -339,12 +336,6 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/tests/plugin-defaults.yaml" })
-    void taskDefaults() throws Exception {
-        pluginDefaultsCaseTest.pluginDefaults();
-    }
-
-    @Test
     @LoadFlows(
         value = { "flows/valids/switch.yaml",
             "flows/valids/task-flow.yaml",
@@ -397,15 +388,15 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({ "flows/valids/pause-delay.yaml" })
+    @LoadFlows(value = { "flows/valids/pause-delay.yaml" }, tenantId = "pause-run-delay")
     public void pauseRunDelay() throws Exception {
-        pauseTest.runDelay(runnerUtils);
+        pauseTest.runDelay("pause-run-delay", runnerUtils);
     }
 
     @Test
-    @LoadFlows({ "flows/valids/pause-duration-from-input.yaml" })
+    @LoadFlows(value = { "flows/valids/pause-duration-from-input.yaml" }, tenantId = "pause-run-duration")
     public void pauseRunDurationFromInput() throws Exception {
-        pauseTest.runDurationFromInput(runnerUtils);
+        pauseTest.runDurationFromInput("pause-run-duration", runnerUtils);
     }
 
     @Test
@@ -714,6 +705,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("flows/valids/after-execution-flowable.yaml")
+    public void shouldCallFlowableTasksAfterExecution(Execution execution) {
+        afterExecutionTestCase.shouldCallFlowableTasksAfterExecution(execution);
+    }
+
+    @Test
     @LoadFlows({ "flows/valids/workertask-result-too-large.yaml" })
     protected void workerTaskResultTooLarge() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
@@ -807,13 +804,12 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @FlakyTest(description = "Kill-path race: timing-sensitive in CI")
-    @LoadFlows({ "flows/valids/sequential-sleep.yaml" })
+    @LoadFlows(value = { "flows/valids/sequential-sleep.yaml" }, tenantId = "killed-flowable")
     void killedFlowableTaskRunShouldHaveTerminalAttempt() throws QueueException {
         // Given — wait until the leaf sleep task is actually running so the Sequential flowable
         // parent has a live attempt; killing too early could bypass the attempt-update path entirely.
         Execution running = runnerUtils.runOneUntil(
-            MAIN_TENANT, NAMESPACE, "sequential-sleep", null, null, Duration.ofSeconds(30),
+            "killed-flowable", NAMESPACE, "sequential-sleep", null, null, Duration.ofSeconds(30),
             e -> e.getState().isRunning()
                 && e.getTaskRunList() != null
                 && e.getTaskRunList().stream().anyMatch(t -> "sleep".equals(t.getTaskId()) && t.getState().isRunning())

@@ -106,7 +106,7 @@ class LogConsumerTest {
     }
 
     @Test
-    @FlakyTest
+    @FlakyTest(description = "Docker log delivery timing is non-deterministic under CI load")
     void logs() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         logQueue.addListener(logs::add);

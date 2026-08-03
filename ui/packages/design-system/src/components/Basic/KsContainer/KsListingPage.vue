@@ -14,7 +14,24 @@
 
 <style lang="scss">
     .ks-listing-page {
-        padding-block: 1.5rem;
+        padding-top: 2rem;
         padding-inline: 0;
+
+        &:has(.empty-state) {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+
+            > .kel-table,
+            > .ks-data-table-wrapper {
+                flex: 1;
+                min-height: 0;
+            }
+
+            .kel-scrollbar__view {
+                height: 100%;
+            }
+        }
     }
 </style>

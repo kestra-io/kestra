@@ -29,14 +29,6 @@
                 {{ $t("product_tour") }}
             </RouterLink>
         </KsOption>
-
-        <KsOption label="settings" value="settings">
-            <RouterLink :to="{name: 'preferences'}" class="menu-item">
-                <CogOutline class="menu-icon" />
-                {{ $t("settings.label") }}
-            </RouterLink>
-        </KsOption>
-
         <KsOption label="slack" value="slack">
             <a :href="SLACK_URL" target="_blank" class="menu-item">
                 <Slack class="menu-icon" />
@@ -62,7 +54,6 @@
     import {useClient} from "@kestra-io/kestra-sdk"
 
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
-    import CogOutline from "vue-material-design-icons/CogOutline.vue"
     import Logout from "vue-material-design-icons/Logout.vue"
     import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
     import Slack from "vue-material-design-icons/Slack.vue"
@@ -77,8 +68,8 @@
     const axios = useClient()
 
     const startTutorial = computed(() => ({
-        name: "flows/create",
-        query: {onboarding: "guided", reset: "true"},
+        name: "ai",
+        query: {tour: "start"},
         params: {tenant: route.params.tenant},
     }))
 

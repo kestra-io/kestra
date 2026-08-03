@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -15,6 +14,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
 
 import jakarta.inject.Inject;
@@ -138,7 +138,7 @@ class IfTest {
 
         assertThat(execution.getTaskRunList()).hasSize(1);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
         assertThat(subExecutions.get(1).findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(subExecutions.getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -158,7 +158,7 @@ class IfTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
     }
 

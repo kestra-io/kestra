@@ -38,11 +38,10 @@ export const usePlaygroundStore = defineStore("playground", () => {
     function navigateToEdit(runUntilTaskId?: string, runDownstreamTasks?: boolean) {
         const flowParsed = flowStore.flow
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 id: flowParsed?.id,
                 namespace: flowParsed?.namespace,
-                tab: "edit",
                 tenant: route.params.tenant,
             },
             query: {
@@ -89,6 +88,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
             formData: defaultInputValues,
             kind: "PLAYGROUND",
             breakpoints,
+            // Explicit revision so drafts run too - the backend otherwise resolves the latest published one.
+            revision: flow.revision,
         })
     }
 
@@ -251,10 +252,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {}
 
-        let execution
+        let execution: Execution | undefined = undefined
         try {
-            const response = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph)
-            execution = response?.data
+            execution = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph)
         } catch (error: any) {
             if (error?.response?.status === 422) {
                 // Invalid entity, most likely due to invalid inputs - allow triggering the task again

@@ -1,4 +1,4 @@
-import {describe, test, expect, vi, beforeAll} from "vitest"
+import {describe, test, expect, vi, afterAll, beforeAll} from "vitest"
 import {mount} from "@vue/test-utils"
 import {ref} from "vue"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
@@ -16,11 +16,14 @@ vi.mock("@vueuse/core", () => ({
 
 const mockGetDataURL = vi.fn().mockReturnValue("data:image/png;base64,abc123")
 
+const mockZr = {on: vi.fn(), off: vi.fn()}
+
 const mockEchartsInstance = {
     resize: vi.fn(),
     getOption: vi.fn(() => ({xAxis: [{data: ["Jan", "Feb", "Mar"]}]})),
     convertFromPixel: vi.fn(() => [1, 0]),
     getDataURL: mockGetDataURL,
+    getZr: vi.fn(() => mockZr),
 }
 
 vi.mock("vue-echarts", () => ({
@@ -98,6 +101,10 @@ describe("KsEchart", () => {
                 disconnect() {}
             },
         )
+    })
+
+    afterAll(() => {
+        vi.unstubAllGlobals()
     })
 
     // ── Rendering ──────────────────────────────────────────────────────────────

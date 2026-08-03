@@ -14,7 +14,10 @@ const meta: Meta<typeof KsExecutionStatus> = {
         status: {control: "select", options: [...statuses]},
         size: {control: "select", options: ["large", "default", "small"]},
         icon: {control: "boolean"},
+        glow: {control: "boolean"},
         title: {control: "text"},
+        clickable: {control: "boolean"},
+        disabled: {control: "boolean"},
     },
     parameters: {
         docs: {description: {component: "KsExecutionStatus displays an execution status badge with optional icon, color-coded by status."}},
@@ -69,6 +72,18 @@ export const Sizes: Story = {
     }),
 }
 
+export const Glow: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup() { return {statuses} },
+        template: `
+            <div style="padding:48px;display:flex;flex-wrap:wrap;gap:32px">
+                <ks-execution-status v-for="s in statuses" :key="s" :status="s" glow />
+            </div>
+        `,
+    }),
+}
+
 export const CustomTitle: Story = {
     render: (args) => ({
         components: {KsExecutionStatus},
@@ -76,4 +91,40 @@ export const CustomTitle: Story = {
         template: "<div style=\"padding:24px\"><ks-execution-status v-bind=\"args\" /></div>",
     }),
     args: {status: "RUNNING", title: "In Progress", icon: true},
+}
+
+export const Clickable: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup() { return {statuses} },
+        template: `
+            <div style="padding:24px;display:flex;flex-wrap:wrap;gap:8px">
+                <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon clickable />
+            </div>
+        `,
+    }),
+}
+
+export const GlowClickable: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup() { return {statuses} },
+        template: `
+            <div style="padding:48px;display:flex;flex-wrap:wrap;gap:32px">
+                <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon glow clickable />
+            </div>
+        `,
+    }),
+}
+
+export const Disabled: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup() { return {statuses} },
+        template: `
+            <div style="padding:24px;display:flex;flex-wrap:wrap;gap:8px">
+                <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon glow clickable disabled />
+            </div>
+        `,
+    }),
 }

@@ -9,22 +9,24 @@
     // typography
     --ks-font-family-sans: #{v.$font-family-sans-serif};
     --ks-font-family-mono: #{v.$font-family-monospace};
-    --ks-font-size-2xs: #{v.$font-size-2xs};
-    --ks-font-size-xs: #{v.$font-size-xs};
-    --ks-font-size-sm: #{v.$font-size-sm};
-    --ks-font-size-base: #{v.$font-size-base};
-    --ks-font-size-md: #{v.$font-size-md};
-    --ks-font-size-lg: #{v.$font-size-lg};
-    --ks-font-size-xl: #{v.$font-size-xl};
-    --ks-font-size-2xl: #{v.$font-size-2xl};
-    --ks-font-size-3xl: #{v.$font-size-3xl};
-    --ks-font-size-4xl: #{v.$font-size-4xl};
+    --ks-font-scale: 1;
+    --ks-font-size-2xs: calc(#{v.$font-size-2xs} * var(--ks-font-scale));
+    --ks-font-size-xs: calc(#{v.$font-size-xs} * var(--ks-font-scale));
+    --ks-font-size-sm: calc(#{v.$font-size-sm} * var(--ks-font-scale));
+    --ks-font-size-base: calc(#{v.$font-size-base} * var(--ks-font-scale));
+    --ks-font-size-md: calc(#{v.$font-size-md} * var(--ks-font-scale));
+    --ks-font-size-lg: calc(#{v.$font-size-lg} * var(--ks-font-scale));
+    --ks-font-size-xl: calc(#{v.$font-size-xl} * var(--ks-font-scale));
+    --ks-font-size-2xl: calc(#{v.$font-size-2xl} * var(--ks-font-scale));
+    --ks-font-size-3xl: calc(#{v.$font-size-3xl} * var(--ks-font-scale));
+    --ks-font-size-4xl: calc(#{v.$font-size-4xl} * var(--ks-font-scale));
 
     // radius
     --ks-radius-xs: #{v.$border-radius-xs};
     --ks-radius-sm: #{v.$border-radius-sm};
     --ks-radius-base: #{v.$border-radius};
     --ks-radius-lg: #{v.$border-radius-lg};
+    --ks-radius-xl: #{v.$border-radius-xl};
 
     // shadow
     --ks-shadow-sm: #{v.$box-shadow-sm};
@@ -114,21 +116,21 @@
     --ks-status-border-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-base) 80%);
     --ks-status-border-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-base) 80%);
 
-    --ks-status-background-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-base) 95%);
-    --ks-status-background-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-base) 95%);
-    --ks-status-background-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-base) 95%);
-    --ks-status-background-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-base) 95%);
-    --ks-status-background-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-base) 95%);
-    --ks-status-background-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-base) 95%);
-    --ks-status-background-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-base) 95%);
-    --ks-status-background-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-base) 95%);
-    --ks-status-background-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-base) 95%);
-    --ks-status-background-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-base) 95%);
-    --ks-status-background-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-base) 95%);
-    --ks-status-background-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-base) 95%);
-    --ks-status-background-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-base) 95%);
-    --ks-status-background-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-base) 95%);
-    --ks-status-background-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-base) 95%);
+    --ks-status-background-created: color-mix(in srgb, var(--ks-status-created), var(--ks-bg-badge) 90%);
+    --ks-status-background-restarted: color-mix(in srgb, var(--ks-status-restarted), var(--ks-bg-badge) 90%);
+    --ks-status-background-retried: color-mix(in srgb, var(--ks-status-retried), var(--ks-bg-badge) 90%);
+    --ks-status-background-failed: color-mix(in srgb, var(--ks-status-failed), var(--ks-bg-badge) 90%);
+    --ks-status-background-killed: color-mix(in srgb, var(--ks-status-killed), var(--ks-bg-badge) 90%);
+    --ks-status-background-success: color-mix(in srgb, var(--ks-status-success), var(--ks-bg-badge) 90%);
+    --ks-status-background-running: color-mix(in srgb, var(--ks-status-running), var(--ks-bg-badge) 90%);
+    --ks-status-background-breakpoint: color-mix(in srgb, var(--ks-status-breakpoint), var(--ks-bg-badge) 90%);
+    --ks-status-background-paused: color-mix(in srgb, var(--ks-status-paused), var(--ks-bg-badge) 90%);
+    --ks-status-background-warning: color-mix(in srgb, var(--ks-status-warning), var(--ks-bg-badge) 90%);
+    --ks-status-background-retrying: color-mix(in srgb, var(--ks-status-retrying), var(--ks-bg-badge) 90%);
+    --ks-status-background-killing: color-mix(in srgb, var(--ks-status-killing), var(--ks-bg-badge) 90%);
+    --ks-status-background-cancelled: color-mix(in srgb, var(--ks-status-cancelled), var(--ks-bg-badge) 90%);
+    --ks-status-background-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-badge) 90%);
+    --ks-status-background-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-badge) 90%);
 
     // logs
     --ks-log-trace: var(--ks-status-neutral);

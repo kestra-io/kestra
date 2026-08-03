@@ -4,7 +4,7 @@ import {isSuccessfulFlowSaveOutcome, type FlowSaveOutcome} from "../../../src/st
 describe("flow save outcome", () => {
     it("returns true only for successful outcomes", () => {
         const successful: FlowSaveOutcome[] = ["saved", "redirect_to_update"]
-        const unsuccessful: FlowSaveOutcome[] = ["blocked", "no_op", "confirmOutdatedSaveDialog"]
+        const unsuccessful: FlowSaveOutcome[] = ["blocked", "no_op"]
 
         successful.forEach((outcome) => {
             expect(isSuccessfulFlowSaveOutcome(outcome)).toBe(true)

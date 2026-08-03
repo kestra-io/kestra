@@ -1,11 +1,12 @@
 package io.kestra.jdbc.migration;
 
-import io.kestra.core.migration.MigrationScript;
+import java.util.UUID;
+
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
+import io.kestra.core.migration.MigrationScript;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -86,6 +87,29 @@ class JdbcMigrationHistoryStoreTest {
     }
 
     @Test
+    void updateChecksum_updatesAppliedScriptChecksum() throws Exception {
+        // Given
+        store.markApplied(script("2.0", "original-checksum"), 10L);
+
+        // When
+        store.updateChecksum(script("2.0", "current-checksum"));
+
+        // Then
+        assertThatNoException().isThrownBy(() -> store.validateChecksum(script("2.0", "current-checksum")));
+        assertThatThrownBy(() -> store.validateChecksum(script("2.0", "original-checksum")))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Checksum mismatch");
+    }
+
+    @Test
+    void updateChecksum_rejectsUnknownScript() {
+        // Given / When / Then
+        assertThatThrownBy(() -> store.updateChecksum(script("missing", "checksum")))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Cannot repair checksum for unapplied migration [missing]");
+    }
+
+    @Test
     void shouldReturnFalseForLegacyUpgradeOnFreshInstall() throws Exception {
         // Given: fresh H2 database with no flyway_schema_history table
         assertThat(store.detectLegacyUpgrade()).isFalse();
@@ -95,10 +119,24 @@ class JdbcMigrationHistoryStoreTest {
 
     private MigrationScript script(final String scriptId, final String checksum) {
         return new MigrationScript() {
-            @Override public String scriptId() { return scriptId; }
-            @Override public String description() { return "Migration " + scriptId; }
-            @Override public String checksum() { return checksum; }
-            @Override public void migrate() {}
+            @Override
+            public String scriptId() {
+                return scriptId;
+            }
+
+            @Override
+            public String description() {
+                return "Migration " + scriptId;
+            }
+
+            @Override
+            public String checksum() {
+                return checksum;
+            }
+
+            @Override
+            public void migrate() {
+            }
         };
     }
 }

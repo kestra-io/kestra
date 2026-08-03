@@ -1,18 +1,29 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.mcp.models.McpServer;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
+
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -24,17 +35,8 @@ import io.modelcontextprotocol.spec.HttpHeaders;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.ProtocolVersions;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import reactor.core.Disposable;
 import tools.jackson.databind.json.JsonMapper;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.micronaut.http.HttpRequest.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -332,14 +334,21 @@ class McpToolControllerTest {
                 .header(HttpHeaders.MCP_SESSION_ID, sessionId),
             String.class
         ).subscribe(
-            event -> {
-                if (event.getData() != null &&
-                    event.getData().contains(McpSchema.METHOD_NOTIFICATION_TOOLS_LIST_CHANGED)) {
+            event ->
+            {
+                if (
+                    event.getData() != null &&
+                        event.getData().contains(McpSchema.METHOD_NOTIFICATION_TOOLS_LIST_CHANGED)
+                ) {
                     notificationReceived.countDown();
                 }
             },
-            error -> {},
-            () -> {}
+            error ->
+            {
+            },
+            () ->
+            {
+            }
         );
         Thread.sleep(200);
 
@@ -367,14 +376,21 @@ class McpToolControllerTest {
                 .header(HttpHeaders.MCP_SESSION_ID, sessionId),
             String.class
         ).subscribe(
-            event -> {
-                if (event.getData() != null &&
-                    event.getData().contains(McpSchema.METHOD_NOTIFICATION_TOOLS_LIST_CHANGED)) {
+            event ->
+            {
+                if (
+                    event.getData() != null &&
+                        event.getData().contains(McpSchema.METHOD_NOTIFICATION_TOOLS_LIST_CHANGED)
+                ) {
                     notificationReceived.countDown();
                 }
             },
-            error -> {},
-            () -> {}
+            error ->
+            {
+            },
+            () ->
+            {
+            }
         );
         Thread.sleep(200);
 
@@ -399,7 +415,9 @@ class McpToolControllerTest {
                 .header(HttpHeaders.MCP_SESSION_ID, sessionId),
             String.class
         ).subscribe(
-            event -> {},
+            event ->
+            {
+            },
             error -> connectionClosed.countDown(),
             connectionClosed::countDown
         );
@@ -427,9 +445,12 @@ class McpToolControllerTest {
                 .header(HttpHeaders.MCP_SESSION_ID, sessionId),
             String.class
         ).subscribe(
-            event -> {},
+            event ->
+            {
+            },
             error -> connectionClosed.countDown(),
-            () -> {
+            () ->
+            {
                 closedGracefully.set(true);
                 connectionClosed.countDown();
             }
@@ -455,14 +476,16 @@ class McpToolControllerTest {
     /** Saves an MCP server record directly to the repository and returns its id. */
     private String saveServer(boolean disabled, String instructions) {
         String serverId = "server-" + IdUtils.create();
-        McpServer mcpServer = new McpServer(TenantService.MAIN_TENANT, serverId,
-            "A test MCP server", instructions, null, null, null, null, disabled, false, false, null, null);
+        McpServer mcpServer = new McpServer(
+            TenantService.MAIN_TENANT, serverId,
+            "A test MCP server", instructions, null, null, null, null, disabled, false, false, null, null
+        );
         return mcpServerRepository.save(null, mcpServer).id();
     }
 
     /** Full URL for the MCP Streamable HTTP transport endpoint. */
     private String serverUrl(String serverId) {
-        return MCP_TOOL_PATH + "/" + serverId ;
+        return MCP_TOOL_PATH + "/" + serverId;
     }
 
     /**
@@ -515,13 +538,15 @@ class McpToolControllerTest {
                 .id(IdUtils.create())
                 .namespace(TEST_NAMESPACE)
                 .tenantId(TenantService.MAIN_TENANT)
-                .tasks(List.of(
-                    Return.builder()
-                        .id("task")
-                        .type(Return.class.getName())
-                        .format(Property.ofValue("done"))
-                        .build()
-                ))
+                .tasks(
+                    List.of(
+                        Return.builder()
+                            .id("task")
+                            .type(Return.class.getName())
+                            .format(Property.ofValue("done"))
+                            .build()
+                    )
+                )
                 .triggers(List.of(trigger))
                 .build()
         );
@@ -543,20 +568,24 @@ class McpToolControllerTest {
             .mcpServer(serverId)
             .build();
 
-        flowRepository.create(GenericFlow.of(
-            Flow.builder()
-                .id(flowId)
-                .namespace(TEST_NAMESPACE)
-                .tenantId(TenantService.MAIN_TENANT)
-                .tasks(List.of(
-                    Return.builder()
-                        .id("task")
-                        .type(Return.class.getName())
-                        .format(Property.ofValue("done"))
-                        .build()
-                ))
-                .triggers(List.of(trigger))
-                .build()
-        ));
+        flowRepository.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .id(flowId)
+                    .namespace(TEST_NAMESPACE)
+                    .tenantId(TenantService.MAIN_TENANT)
+                    .tasks(
+                        List.of(
+                            Return.builder()
+                                .id("task")
+                                .type(Return.class.getName())
+                                .format(Property.ofValue("done"))
+                                .build()
+                        )
+                    )
+                    .triggers(List.of(trigger))
+                    .build()
+            )
+        );
     }
 }

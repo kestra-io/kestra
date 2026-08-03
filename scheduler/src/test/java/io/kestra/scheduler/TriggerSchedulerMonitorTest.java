@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.scheduler.model.TriggerState;

@@ -11,26 +11,37 @@
             </span>
         </template>
         <template #default>
-            <span v-html="duration" />
+            <span class="ks-duration-value" v-html="duration" />
         </template>
     </KsTooltip>
 </template>
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue"
-    import {type Moment} from "moment"
+    import moment, {type Moment} from "moment"
     import {State, KsTooltip} from "@kestra-io/design-system"
     import * as Utils from "../utils/utils"
 
-    const props = defineProps<{
-        histories: {
-            date: Moment;
+    const props = withDefaults(defineProps<{
+        histories?: {
+            date: string | number | Moment;
             state: string;
         }[];
-    }>()
+        interval?: number;
+    }>(), {
+        histories: undefined,
+        interval: 100,
+    })
+
+    const normalizedHistories = computed(() =>
+        (props.histories ?? []).map((h) => ({
+            date: moment(h.date),
+            state: h.state,
+        })),
+    )
 
     watch(
-        () => props.histories,
+        normalizedHistories,
         (newValue, oldValue) => {
             if (newValue?.[0]?.date?.valueOf() !== oldValue?.[0]?.date?.valueOf()) {
                 paint()
@@ -46,25 +57,26 @@
     })
 
     const start = computed(() => {
-        return props.histories?.[0]?.date?.valueOf() ?? null
+        return normalizedHistories.value?.[0]?.date?.valueOf() ?? null
     })
 
     const lastStep = computed(() => {
-        return props.histories?.length ? props.histories[props.histories.length - 1] : undefined
+        return normalizedHistories.value.length ? normalizedHistories.value[normalizedHistories.value.length - 1] : undefined
     })
 
     const filteredHistories = computed(() => {
-        return props.histories.filter((h) => h.date.isValid() && h.date && h.state)
+        return normalizedHistories.value.filter((h) => h.date.isValid() && h.date && h.state)
     })
 
     function paint() {
+        computeDuration()
         if (!refreshHandler.value) {
             refreshHandler.value = setInterval(() => {
                 computeDuration()
                 if (lastStep.value && !State.isRunning(lastStep.value.state)) {
                     cancel()
                 }
-            }, 10)
+            }, props.interval)
         }
     }
 
@@ -89,21 +101,38 @@
     }
 
     function computeDuration() {
-        duration.value =
-            filteredHistories.value.length === 0
-                ? "&nbsp;"
-                : Utils.humanDuration(delta() / 1000, {
-                    maxDecimalPoints: 2,
-                    units: ["h", "m", "s"],
-                })
+        if (filteredHistories.value.length === 0) {
+            duration.value = "&nbsp;"
+            return
+        }
+
+        const human = Utils.humanDuration(delta() / 1000, {
+            maxDecimalPoints: 2,
+            units: ["h", "m", "s"],
+        })
+
+        const isBareSeconds = human.endsWith("s") && !human.endsWith("ms") && !human.includes(".")
+        duration.value = isBareSeconds ? `${human.slice(0, -1)}.00s` : human
     }
 
     function squareClass(state: string) {
-        return "ks-duration-tt-square-" + state.toLowerCase()
+        let statusVarname = state.toLowerCase()
+
+        // Minor hack to reuse created color for submitted status.
+        // See https://github.com/kestra-io/kestra/issues/14876 for more details.
+        if (statusVarname === "submitted") statusVarname = "created"
+
+        return "ks-duration-tt-square-" + statusVarname
     }
 
     onBeforeUnmount(() => {
         cancel()
     })
 </script>
+
+<style scoped>
+    .ks-duration-value {
+        font-variant-numeric: tabular-nums;
+    }
+</style>
 

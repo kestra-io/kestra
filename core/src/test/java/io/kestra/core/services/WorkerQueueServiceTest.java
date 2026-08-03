@@ -43,11 +43,13 @@ class WorkerQueueServiceTest {
     @Test
     void shouldRouteSystemTaskToSystemQueueWhenSystemTaskCarriesWorkerSelectorTags() throws NoMatchingWorkerQueueException {
         WorkerTask workerTask = WorkerTask.builder()
-            .task(PurgeLogs.builder()
-                .id("purge")
-                .type(PurgeLogs.class.getName())
-                .workerSelector(new WorkerSelector(List.of("docker"), null))
-                .build())
+            .task(
+                PurgeLogs.builder()
+                    .id("purge")
+                    .type(PurgeLogs.class.getName())
+                    .workerSelector(new WorkerSelector(List.of("docker"), null))
+                    .build()
+            )
             .taskRun(TaskRun.builder().build())
             .build();
 
@@ -72,9 +74,12 @@ class WorkerQueueServiceTest {
     void shouldDelegateToDoResolveWhenWorkerJobIsTrigger() throws NoMatchingWorkerQueueException {
         WorkerTrigger workerTrigger = WorkerTrigger.builder()
             .trigger(Schedule.builder().id("trigger").build())
-            .data(new WorkerTriggerData(
-                "tenant", "ns", "flow", null, null, null, null,
-                Collections.emptyMap(), null, null, Collections.emptyMap()))
+            .data(
+                new WorkerTriggerData(
+                    "tenant", "ns", "flow", null, null, null, null,
+                    Collections.emptyMap(), null, null, Collections.emptyMap()
+                )
+            )
             .build();
 
         // Triggers cannot be SystemTasks, so the short-circuit does not apply.

@@ -1,21 +1,13 @@
 <template>
-    <div class="row row-cols-1 row-cols-xxl-2 g-3 card-group">
+    <div class="card-grid">
         <router-link
             :to="{path: '/' + item.path}"
-            class="col"
+            class="card-grid-item"
             v-for="item in navigation"
             :key="item.path"
         >
             <div class="card h-100">
                 <div class="card-body d-flex align-items-center">
-                    <span class="card-icon">
-                        <img
-                            :src="docStore.resourceUrl(item.icon)"
-                            :alt="item.title"
-                            width="50px"
-                            height="50px"
-                        >
-                    </span>
                     <div class="overflow-hidden">
                         <h4 class="card-title">
                             {{ item.title }}
@@ -24,6 +16,7 @@
                             {{ item.description?.replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1") }}
                         </p>
                     </div>
+                    <ChevronRight class="card-chevron" />
                 </div>
             </div>
         </router-link>
@@ -34,6 +27,7 @@
     import {computed, ref} from "vue"
     import {useRoute} from "vue-router"
     import {useDocStore} from "../../stores/doc"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
     interface ResourceMetadata {
         title: string;
@@ -50,7 +44,8 @@
     const docStore = useDocStore()
 
     const currentPage = computed(() => {
-        const url = props.pageUrl ?? route.path
+        const routePath = Array.isArray(route.params.path) ? route.params.path.join("/") : route.params.path
+        const url = props.pageUrl ?? routePath ?? ""
         return url.replace(/^\/?(.*?)\/?$/, "$1")
     })
 
@@ -81,22 +76,49 @@
 </script>
 
 <style scoped lang="scss">
+    .card {
+        transition: border-color 0.2s ease;
+
+        &:hover {
+            border-color: var(--ks-border-strong);
+        }
+    }
 
     .card-title {
-        font-size: var(--ks-font-size-xl) !important;
+        font-size: var(--ks-font-size-md) !important;
+        font-weight: 700;
         line-height: 1.375rem !important;
     }
 
     .card-text {
-        font-size: var(--ks-font-size-sm) !important;
+        font-size: var(--ks-font-size-xs) !important;
+        font-weight: 400;
+        color: var(--ks-text-secondary);
         line-height: 1rem !important;
     }
 
-    .card-icon {
-        img {
-            max-width: unset;
-            width: 48px !important;
-            height: 48px !important;
+    .card-chevron {
+        display: inline-flex;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .card-grid {
+        container-type: inline-size;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .card-grid-item {
+        display: block;
+        flex: 1 1 100%;
+    }
+
+    /* two cards per row once the panel is wide enough */
+    @container (min-width: 550px) {
+        .card-grid-item {
+            flex: 0 1 calc(50% - 8px);
         }
     }
 </style>

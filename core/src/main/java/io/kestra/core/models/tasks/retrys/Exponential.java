@@ -4,9 +4,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import dev.failsafe.RetryPolicyBuilder;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -50,29 +49,27 @@ public class Exponential extends AbstractRetry {
 
     @Override
     public Instant nextRetryDate(Integer attemptCount, Instant lastAttempt) {
-        Duration computedInterval = interval.multipliedBy(
-            (long) (this.delayFactor == null ? 2 : this.delayFactor.intValue()) * (attemptCount - 1)
-        );
-        Instant next = lastAttempt.plus(computedInterval);
-        if (next.isAfter(lastAttempt.plus(maxInterval))) {
-
-            return lastAttempt.plus(maxInterval);
-        }
-
-        return next;
+        double factor = this.delayFactor == null ? 2d : this.delayFactor;
+        double delayMillis = interval.toMillis() * Math.pow(factor, attemptCount - 1);
+        long maxMillis = maxInterval.toMillis();
+        // delayMillis may be Double.POSITIVE_INFINITY for very large attemptCount — the >= guard handles that correctly
+        long cappedMillis = delayMillis >= maxMillis ? maxMillis : Math.round(delayMillis);
+        return lastAttempt.plusMillis(cappedMillis);
     }
 
     @AssertTrue(message = "'interval' must be less than 'maxDuration'")
     @JsonIgnore
     boolean isIntervalLessThanMaxDuration() {
-        if (getMaxDuration() == null || interval == null) return true;
+        if (getMaxDuration() == null || interval == null)
+            return true;
         return getMaxDuration().compareTo(interval) > 0;
     }
 
     @AssertTrue(message = "'interval' must be less than 'maxInterval'")
     @JsonIgnore
     boolean isIntervalLessThanMaxInterval() {
-        if (interval == null || maxInterval == null) return true;
+        if (interval == null || maxInterval == null)
+            return true;
         return interval.compareTo(maxInterval) < 0;
     }
 }

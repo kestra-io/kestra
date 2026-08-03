@@ -38,6 +38,7 @@ export const storageKeys = {
     DATE_FORMAT_STORAGE_KEY: "dateFormat",
     TIMEZONE_STORAGE_KEY: "timezone",
     SAVED_FILTERS_PREFIX: "saved_filters",
+    EXECUTE_FORM_VALUES_PREFIX: "executeFormValues",
     FILTER_DATA_OPTIONS_PREFIX: "filterDataOptions",
     FILTER_ORDER_PREFIX: "filter-order",
     LOGS_VIEW_TYPE: "logsViewType",
@@ -53,32 +54,17 @@ export const stateDisplayValues = {
     INPROGRESS: "IN-PROGRESS",
 } as const
 
-export const PLUGIN_DEFAULTS_SECTION = "plugin defaults"
-
 export const SECTIONS_MAP = {
     tasks: "tasks",
     triggers: "triggers",
     "error handlers": "errors",
     finally: "finally",
     "after execution": "afterExecution",
-    [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
 } as const
 
 export const groupMemberships = {
     OWNER: "OWNER",
     MEMBER: "MEMBER",
 } as const
-
-export const aiGenerationTypes = {
-    FLOW: "flow",
-    APP: "app",
-    TEST: "test",
-    DASHBOARD: "dashboard",
-} as const
-export type AiGenerationType = typeof aiGenerationTypes[keyof typeof aiGenerationTypes];
-
-// Class set on the AI provider select dropdown popper (teleported to body) so
-// AiCopilotWrapper's click-outside handler can ignore clicks inside it.
-export const AI_PROVIDER_POPPER_CLASS = "ai-provider-select-popper"
 
 export const TUTORIAL_NAMESPACE = "tutorial"

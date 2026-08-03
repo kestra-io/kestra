@@ -46,15 +46,17 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(
-                configuration -> new HashSet<>(DSL
-                    .using(configuration)
-                    .select(field("namespace"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId, false))
-                    .and(lastCondition())
-                    .groupBy(field("namespace"))
-                    .fetch()
-                    .map(record -> record.getValue("namespace", String.class)))
+                configuration -> new HashSet<>(
+                    DSL
+                        .using(configuration)
+                        .select(field("namespace"))
+                        .from(this.jdbcRepository.getTable())
+                        .where(this.defaultFilter(tenantId, false))
+                        .and(lastCondition())
+                        .groupBy(field("namespace"))
+                        .fetch()
+                        .map(record -> record.getValue("namespace", String.class))
+                )
             );
     }
 
@@ -119,7 +121,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
                         .where(this.defaultFilter(e.getKey().tenantId(), true))
                         .and(field("namespace").eq(e.getKey().namespace()))
                         .and(field("last").in(true, false));
-                    if (e.getValue().getFirst().getVersion() == null) {
+                    if (e.getValue().getFirst().getRevision() == null) {
                         deleteCondition = deleteCondition.and(field("name").in(persistedKvsMetadata.stream().map(PersistedKvMetadata::getName).toList()));
                     } else {
                         deleteCondition = deleteCondition.and(
@@ -128,7 +130,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
                                     kvMetadata -> DSL.and(
                                         field("name").eq(kvMetadata.getName()),
                                         field("version").eq(
-                                            kvMetadata.getVersion()
+                                            kvMetadata.getRevision()
                                         )
                                     )
                                 ).toList()
@@ -157,11 +159,11 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
 
     private PersistedKvMetadata saveKvMetadata(DSLContext context, PersistedKvMetadata kvMetadata) {
         Optional<PersistedKvMetadata> maybePrevious = this.findByName(kvMetadata.getTenantId(), kvMetadata.getNamespace(), kvMetadata.getName());
-        PersistedKvMetadata kvMetadataToPersist = kvMetadata.asLast().toBuilder().version(maybePrevious.map(PersistedKvMetadata::getVersion).orElse(0) + 1).build();
+        PersistedKvMetadata kvMetadataToPersist = kvMetadata.asLast().toBuilder().revision(maybePrevious.map(PersistedKvMetadata::getRevision).orElse(0) + 1).build();
         if (maybePrevious.isPresent()) {
             PersistedKvMetadata previous = maybePrevious.get();
             if (kvMetadata.isDeleted()) {
-                // If we are deleting, we just mark the previous as deleted without changing version and we return directly
+                // If we are deleting, we just mark the previous as deleted without changing revision and we return directly
                 kvMetadataToPersist = previous.toBuilder().deleted(true).updated(Instant.now()).build();
             } else {
                 // We mark the previous as not last

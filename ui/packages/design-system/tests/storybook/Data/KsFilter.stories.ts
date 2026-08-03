@@ -256,3 +256,134 @@ export const WithUnrenderableQuery: Story = {
         `,
     }),
 }
+
+/**
+ * Two conditions in one group (`ruleCount > 1`) — the chip bar collapses into
+ * a "2 rules" pill. Clicking it opens the AdvancedFilterBuilder panel where
+ * each condition is edited in its own ConditionRow.
+ */
+export const WithAdvancedBuilder: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[state][IN]": "RUNNING",
+                "filters[namespace][CONTAINS]": "io.kestra",
+            })
+            return {ready, configuration: SIMPLE_CONFIGURATION}
+        },
+        template: `
+            <div style="padding: 24px">
+                <KsFilter v-if="ready" :configuration="configuration" />
+            </div>
+        `,
+    }),
+}
+
+const COLORED_CONFIGURATION = {
+    searchPlaceholder: "Search...",
+    keys: [
+        {
+            key: "state",
+            label: "State",
+            valueType: "multi-select",
+            comparators: ["IN", "NOT_IN"],
+            colored: true,
+            valueProvider: () => Promise.resolve([
+                {label: "Success", value: "SUCCESS"},
+                {label: "Failed", value: "FAILED"},
+                {label: "Running", value: "RUNNING"},
+                {label: "Created", value: "CREATED"},
+                {label: "Warning", value: "WARNING"},
+                {label: "Paused", value: "PAUSED"},
+            ]),
+        },
+        {
+            key: "namespace",
+            label: "Namespace",
+            valueType: "text",
+            comparators: ["*=", "^="],
+        },
+    ],
+}
+
+/**
+ * Multi-select filter with `colored: true` — ConditionRow renders status tags
+ * with per-state colors instead of plain labels. Open the AdvancedFilterBuilder
+ * (by clicking the "2 rules" pill) to see the colored tag display.
+ */
+export const WithColoredStatusFilter: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[state][IN]": "RUNNING,FAILED",
+                "filters[namespace][CONTAINS]": "io.kestra",
+            })
+            return {ready, configuration: COLORED_CONFIGURATION}
+        },
+        template: `
+            <div style="padding: 24px">
+                <KsFilter v-if="ready" :configuration="configuration" />
+            </div>
+        `,
+    }),
+}
+
+/**
+ * At viewports ≤768px the bar collapses to a search field plus a filter button.
+ * The button opens a bottom-anchored sheet (Figma `[mob]Filter`) with the
+ * `All Filters` / `My Filters saved` segmented control, a per-field accordion
+ * (each row expands to its value editor), and a `Clear all` / `Save` /
+ * `Apply filters` footer. Seeded with one applied filter so the count badge shows.
+ */
+export const Mobile: Story = {
+    parameters: {
+        viewport: {
+            options: {
+                mobile: {name: "Mobile", styles: {width: "375px", height: "812px"}},
+            },
+        },
+    },
+    globals: {
+        viewport: {value: "mobile", isRotated: false},
+    },
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter({
+                "filters[namespace][CONTAINS]": "io.kestra",
+            })
+            return {ready, configuration: SIMPLE_CONFIGURATION}
+        },
+        template: `
+            <div style="padding: 16px">
+                <KsFilter v-if="ready" :configuration="configuration" />
+            </div>
+        `,
+    }),
+}
+
+/**
+ * Filter with chart and data-refresh table options — the FilterSettings panel
+ * (opened from the right-side gear button) exposes a chart visibility toggle
+ * and a periodic-refresh switch.
+ */
+export const WithTableOptions: Story = {
+    render: () => ({
+        components: {KsFilter},
+        setup() {
+            const ready = useIsolatedRouter()
+            const tableOptions = {
+                chart: {shown: true, value: true, callback: () => {}},
+                refresh: {shown: true, callback: () => {}},
+            }
+            return {ready, configuration: SIMPLE_CONFIGURATION, tableOptions}
+        },
+        template: `
+            <div style="padding: 24px">
+                <KsFilter v-if="ready" :configuration="configuration" :tableOptions="tableOptions" />
+            </div>
+        `,
+    }),
+}

@@ -36,7 +36,6 @@ import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.YamlParser;
@@ -578,7 +577,6 @@ class FlowControllerTest {
         assertThat(e.getResponse().getBody(String.class).get()).contains("Required QueryValue [revisions] not specified");
     }
 
-    @FlakyTest
     @Test
     void updateFlowFlowFromJson() {
         String flowId = IdUtils.create();
@@ -654,6 +652,150 @@ class FlowControllerTest {
     }
 
     @Test
+    void updateFlowAsDraftWithUnrecognizedProperty() {
+        // Regression: updating a draft with an unknown task property should return 200, not 422.
+        String flowId = IdUtils.create();
+        String validSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        client.toBlocking().retrieve(POST("/api/v1/main/flows", validSource).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+
+        String draftSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                unknownProp: someValue
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource result = client.toBlocking().retrieve(
+            PUT("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + flowId + "?draft=true", draftSource).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(result.isDraft()).isTrue();
+        assertThat(result.getSource()).contains("unknownProp");
+    }
+
+    @Test
+    void updateFlowAsDraftWithInvalidYaml() {
+        // Regression: updating a draft with unparsable YAML should return 200, not 422.
+        String flowId = IdUtils.create();
+        String validSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        client.toBlocking().retrieve(POST("/api/v1/main/flows", validSource).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+
+        // Syntactically broken YAML (unclosed bracket)
+        String brokenSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: [unclosed
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource result = client.toBlocking().retrieve(
+            PUT("/api/v1/main/flows/" + TEST_NAMESPACE + "/" + flowId + "?draft=true", brokenSource).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(result.isDraft()).isTrue();
+        assertThat(result.getSource()).contains("unclosed");
+    }
+
+    @Test
+    void createFlowAsDraftWithUnrecognizedProperty() {
+        String flowId = IdUtils.create();
+        // unknown task property: a constraint violation that a draft is allowed to carry
+        String draftSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: hello
+                unknownProp: someValue
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource result = client.toBlocking().retrieve(
+            POST("/api/v1/main/flows?draft=true", draftSource).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(result.isDraft())
+            .as("creating a draft with an unknown property is accepted (not 422), unlike a non-draft create")
+            .isTrue();
+        assertThat(result.getSource())
+            .as("the verbatim invalid source is preserved on the created draft")
+            .contains("unknownProp");
+    }
+
+    @Test
+    void createFlowAsDraftWithMissingTasks() {
+        String flowId = IdUtils.create();
+        // no tasks: violates @NotEmpty, but the identity (namespace/id) is still parseable
+        String draftSource = """
+            id: %s
+            namespace: %s
+            """.formatted(flowId, TEST_NAMESPACE);
+
+        FlowWithSource result = client.toBlocking().retrieve(
+            POST("/api/v1/main/flows?draft=true", draftSource).contentType(MediaType.APPLICATION_YAML),
+            FlowWithSource.class
+        );
+
+        assertThat(result.isDraft())
+            .as("a constraint-invalid (no-tasks) flow can be created as a draft, validation is deferred to execution")
+            .isTrue();
+        assertThat(result.getId())
+            .as("the draft is persisted under the namespace/id read from the raw source")
+            .isEqualTo(flowId);
+    }
+
+    @Test
+    void createFlowAsDraftWithUnparsableYamlIsRejected() {
+        // Syntactically broken YAML (unclosed bracket) - the identity cannot be extracted.
+        // Unlike updateFlow (which reads namespace/id from the URL), createFlow has no other source
+        // of identity, so a flow cannot be persisted and the request must be rejected.
+        String brokenSource = """
+            id: %s
+            namespace: %s
+            tasks:
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: [unclosed
+            """.formatted(IdUtils.create(), TEST_NAMESPACE);
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/flows?draft=true", brokenSource).contentType(MediaType.APPLICATION_YAML),
+                FlowWithSource.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode())
+            .as("a create-draft whose YAML is too broken to extract namespace/id is rejected, not silently persisted")
+            .isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
     void listDistinctNamespaces() {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class)
@@ -696,7 +838,6 @@ class FlowControllerTest {
     }
 
     @Test
-    @FlakyTest
     void updateFlowFlowFromJsonFromString() throws IOException {
         String flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE, "a");
         Flow assertFlow = parseFlow(flow);
@@ -759,8 +900,7 @@ class FlowControllerTest {
     }
 
     /**
-     * this is testing legacy > new filters /by-query endpoints, related file is
-     * {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     * this is testing legacy > new filters /by-query endpoints
      */
     @Test
     void exportFlowsByQueryForANamespace() throws IOException {
@@ -1583,8 +1723,8 @@ class FlowControllerTest {
         String invalidYaml = "this is not valid flow yaml: [[[";
 
         // When / Then — YAML parse errors are wrapped as ConstraintViolationException → 422
-        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.POST(FLOW_PATH + "/expressions", invalidYaml)
                     .contentType("application/x-yaml"),
                 Argument.mapOf(String.class, List.class)

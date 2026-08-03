@@ -4,7 +4,7 @@
             v-if="sidebarCollapsed"
             class="icon-btn"
             data-testid="topnav-sidebar-toggle"
-            :ariaLabel="t('topnav_sidebar_toggle')"
+            :ariaLabel="$t('topnav_sidebar_toggle')"
             @click="$emit('sidebar-toggle')"
         >
             <Menu />
@@ -26,9 +26,10 @@
                 </KsTooltip>
                 <KsTag v-if="beta" type="primary" size="small" class="beta-tag">Beta</KsTag>
                 <KsIconButton
+                    v-if="!hideBookmark"
                     class="icon-btn star"
                     :class="{active: isBookmarked}"
-                    :ariaLabel="t('topnav_bookmark')"
+                    :ariaLabel="$t('topnav_bookmark')"
                     @click="$emit('star-click')"
                 >
                     <component :is="isBookmarked ? StarIcon : StarOutlineIcon" />
@@ -56,11 +57,12 @@
         <div class="side d-flex gap-2 flex-shrink-0 align-items-center">
             <slot name="search" />
             <slot name="actions" />
+            <slot name="panel-toggle" />
             <KsIconButton
                 v-if="showDockToggle"
                 class="icon-btn dock-toggle"
                 :class="{'is-open': isDockOpen}"
-                :ariaLabel="t('topnav_dock_toggle')"
+                :ariaLabel="$t('topnav_dock_toggle')"
                 @click="$emit('dock-toggle')"
             >
                 <DockRight />
@@ -71,7 +73,6 @@
 
 <script setup lang="ts">
     import {type Component} from "vue"
-    import {useI18n} from "vue-i18n"
     import Menu from "vue-material-design-icons/Menu.vue"
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
     import StarIcon from "vue-material-design-icons/Star.vue"
@@ -98,6 +99,7 @@
         mainIcon?: Component
         beta?: boolean
         isBookmarked?: boolean
+        hideBookmark?: boolean
         sidebarCollapsed?: boolean
         tabs?: KsTopNavBarTab[]
         activeTab?: string
@@ -118,16 +120,16 @@
         description?(): unknown
         search?(): unknown
         actions?(): unknown
+        "panel-toggle"?(): unknown
     }>()
 
-    const {t} = useI18n({useScope: "global"})
 </script>
 
 <style scoped lang="scss">
     .ks-topnavbar {
         height: 60px;
         flex-shrink: 0;
-        padding: 0 var(--ks-spacing-6);
+        padding: 0 var(--ks-spacing-4);
         gap: var(--ks-spacing-4);
         border-bottom: var(--ks-border-block-primary);
         background: var(--ks-bg-surface);
@@ -174,7 +176,7 @@
 
     .icon-btn {
         border: none;
-        color: var(--ks-text-dim);
+        color: var(--ks-icon-muted);
 
         &:deep(svg) {
             fill: currentColor;
@@ -187,10 +189,10 @@
     }
 
     .dock-toggle {
-        &.is-open {
+         &.is-open {
             color: var(--ks-icon-default);
         }
-
+        
         @media (max-width: 767px) {
             display: none;
         }

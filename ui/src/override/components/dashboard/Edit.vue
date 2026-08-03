@@ -1,6 +1,6 @@
 <template>
     <TopNavBar v-bind="header" />
-    <section class="full-container">
+    <section class="full-container flush-top">
         <MultiPanelDashboardEditorView @save="save" />
     </section>
 </template>
@@ -16,7 +16,7 @@
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
     const unsavedChangesStore = useUnsavedChangesStore()
 
-    import {useDashboardStore} from "../../../stores/dashboard"
+    import {DEFAULT_DASHBOARD, useDashboardStore} from "../../../stores/dashboard"
     const dashboardStore = useDashboardStore()
 
     import {useI18n} from "vue-i18n"
@@ -29,7 +29,7 @@
 
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards"
 
-    const dashboard = ref<Dashboard>({id: "", charts: []})
+    const dashboard = ref<Dashboard>(DEFAULT_DASHBOARD)
     const save = async (source?: string) => {
         const response = await dashboardStore.update({id: route.params.dashboard.toString(), source})
 

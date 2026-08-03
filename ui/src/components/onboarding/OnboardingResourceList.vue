@@ -19,13 +19,13 @@
                 <p>{{ $t(item.descriptionKey) }}</p>
             </div>
 
-            <ChevronRight class="onboarding-resource-item__arrow" />
+            <ArrowRight class="onboarding-resource-item__arrow" />
         </component>
     </div>
 </template>
 
 <script setup lang="ts">
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
 
     export interface OnboardingResourceItem {
         titleKey: string;
@@ -46,7 +46,7 @@
     .onboarding-resource-list {
         overflow: hidden;
         border: 1px solid var(--ks-border-default);
-        border-radius: 14px;
+        border-radius: var(--ks-radius-base);
         background: var(--ks-bg-surface);
     }
 
@@ -61,7 +61,7 @@
         transition: background-color 0.15s ease;
 
         &:not(:last-child) {
-            border-bottom: 1px solid var(--ks-border-default);
+            border-bottom: 1px solid var(--ks-border-subtle);
         }
 
         &:hover {
@@ -82,24 +82,20 @@
             height: 22px;
         }
 
-        &.is-tutorial {
-            color: #4dabf7;
-        }
-
         &.is-blueprints {
-            color: #8b5cf6;
+            color: var(--ks-status-info);
         }
 
         &.is-slack {
-            color: #22c55e;
+            color: var(--ks-status-success);
         }
 
         &.is-videos {
-            color: #f87171;
+            color: var(--ks-status-error);
         }
 
         &.is-demo {
-            color: #fb923c;
+            color: var(--ks-status-warning);
         }
     }
 

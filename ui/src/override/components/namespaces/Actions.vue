@@ -1,6 +1,6 @@
 <template>
     <Dashboards
-        v-if="tab === 'overview' && ALLOWED_CREATION_ROUTES.includes(String(route.name))"
+        v-if="tab === 'overview' && ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name))"
         @dashboard="onSelectDashboard"
     />
 
@@ -32,6 +32,8 @@
     import Action from "../../../components/namespaces/components/buttons/Action.vue"
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
+    import {useActiveTab} from "../../../composables/useActiveTab"
+    import {routeFamily} from "../../../utils/routeFamily"
     import FamilyTree from "vue-material-design-icons/FamilyTree.vue"
 
     const route = useRoute()
@@ -44,6 +46,6 @@
         })
     }
 
-    const tab = computed(() => route.params?.tab)
+    const tab = useActiveTab()
     const namespace = computed(() => route.params?.id) as Ref<string>
 </script>

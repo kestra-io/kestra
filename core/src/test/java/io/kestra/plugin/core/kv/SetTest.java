@@ -2,6 +2,7 @@ package io.kestra.plugin.core.kv;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.property.Property;
@@ -180,7 +180,6 @@ class SetTest {
         assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
     }
 
-    @FlakyTest
     @Test
     void shouldFailGivenExistingKeyAndOverwriteFalse() throws Exception {
         // Given
@@ -228,6 +227,13 @@ class SetTest {
 
         kv = createAndPerformSetTask(key, "2023-05-02T01:02:03Z", KVType.DATETIME);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Instant.parse("2023-05-02T01:02:03Z"));
+
+        kv = createAndPerformSetTask(key, "2023-05-02", KVType.DATE);
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(LocalDate.parse("2023-05-02"));
+
+        // a full ISO instant with DATE type is also accepted and truncated to its UTC date
+        kv = createAndPerformSetTask(key, "2023-05-02T01:02:03Z", KVType.DATE);
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(LocalDate.parse("2023-05-02"));
 
         kv = createAndPerformSetTask(key, "P1DT5S", KVType.DURATION);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Duration.ofDays(1).plus(Duration.ofSeconds(5)));

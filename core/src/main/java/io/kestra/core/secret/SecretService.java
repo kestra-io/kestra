@@ -57,6 +57,14 @@ public class SecretService<META> {
         return secret;
     }
 
+    /**
+     * Finds the secret in full mode, as a value plus metadata.
+     * The default returns the value with empty metadata. Multi-field secret managers override this to add metadata.
+     */
+    public SecretObject findSecretObject(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
+        return new SecretObject(findSecret(tenantId, namespace, key));
+    }
+
     public ArrayListTotal<META> list(Pageable pageable, String tenantId, List<QueryFilter> filters) throws IOException {
         final Predicate<String> queryPredicate = filters.stream()
             .filter(filter -> QueryFilter.Field.QUERY.equals(filter.field()) && filter.value() != null)

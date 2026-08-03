@@ -1,15 +1,16 @@
 <template>
-    <KsButton
+    <NavBarAction
         v-if="enabled"
+        v-bind="$attrs"
         :icon="Play"
         @click="click"
     >
         {{ $t('resume') }}
-    </KsButton>
+    </NavBarAction>
 
     <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('resumed title', {id: execution.id})" />
+            <span v-html="$t('resumed title', {id: escape(execution.id)})" />
         </template>
         <KsForm :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
             <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
@@ -25,7 +26,9 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, getCurrentInstance} from "vue"
     import {useI18n} from "vue-i18n"
+    import escape from "lodash/escape"
     import Play from "vue-material-design-icons/Play.vue"
+    import NavBarAction from "../../../../layout/NavBarAction.vue"
     import PlayBox from "vue-material-design-icons/PlayBox.vue"
     import resource from "../../../../../models/resource"
     import action from "../../../../../models/action"
@@ -38,13 +41,12 @@
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../../../../utils/toast"
 
-    const props = withDefaults(defineProps<{
+    defineOptions({inheritAttrs: false})
+
+    const props = defineProps<{
         // FIXME: any - execution is an untyped domain object
         execution: any // FIXME: any
-        component?: string
-    }>(), {
-        component: "el-button",
-    })
+    }>()
 
     const {t} = useI18n()
     const executionsStore = useExecutionsStore()
@@ -56,7 +58,6 @@
 
     const inputs = ref<Record<string, unknown>>({})
     const isDrawerOpen = ref(false)
-    // FIXME: any - form ref type from element-plus
     const form = ref<any>(null) // FIXME: any
 
     const enabled = computed(() => {

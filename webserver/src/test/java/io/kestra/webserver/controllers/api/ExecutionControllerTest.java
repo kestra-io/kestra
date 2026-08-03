@@ -1,29 +1,36 @@
 package io.kestra.webserver.controllers.api;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
-import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
+import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -50,6 +57,9 @@ class ExecutionControllerTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
+    private ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
+
+    @Inject
     private StorageInterface storageInterface;
 
     @Inject
@@ -57,6 +67,8 @@ class ExecutionControllerTest {
     private ReactorHttpClient client;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
+
+    private static final String AVERAGE_DURATION_NS = "io.kestra.tests.progress";
 
     @Test
     void getExecutionNotFound() {
@@ -163,6 +175,25 @@ class ExecutionControllerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
         assertThat(exception.getMessage()).contains("Not Found: Flow not found");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-draft.yaml" })
+    void webhookOnDraftFlowReturnsNotFound() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                GET("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-draft/webhook-draft-key"),
+                Execution.class
+            )
+        );
+
+        assertThat(exception.getStatus().getCode())
+            .as("a webhook on a draft-only flow is treated as non-existent (404) and must not fire an execution")
+            .isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage())
+            .as("the 404 message explains the flow was not found")
+            .contains("Flow not found");
     }
 
     @Test
@@ -342,7 +373,7 @@ class ExecutionControllerTest {
         );
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
         assertThat(exception.getMessage()).isEqualTo(
-            "Invalid query filters: Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID"
+            "Invalid query filters: Provided query filters are invalid: Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND, PARENT_ID, TASK_ID"
         );
 
         exception = assertThrows(
@@ -357,7 +388,7 @@ class ExecutionControllerTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"})
+    @LoadFlows(value = { "flows/valids/inputs.yaml" })
     void shouldValidateInputsForCreateExecutionGivenSimpleInputs() {
         // given
         String namespace = "io.kestra.tests";
@@ -430,6 +461,56 @@ class ExecutionControllerTest {
     }
 
     @Test
+    void shouldDownloadIonFileAsJsonl() throws Exception {
+        // Given - an execution with a stored Ion output file
+        String execId = IdUtils.create();
+        String ns = "io.kestra.test-jsonl";
+
+        Execution execution = Execution.builder()
+            .id(execId)
+            .tenantId(MAIN_TENANT)
+            .namespace(ns)
+            .flowId("flow-jsonl")
+            .flowRevision(1)
+            .state(new State().withState(State.Type.SUCCESS))
+            .build();
+        executionRepository.save(execution);
+
+        // Build a binary Ion file with two records
+        ByteArrayOutputStream ionBaos = new ByteArrayOutputStream();
+        FileSerde.write(ionBaos, Map.of("id", 1, "name", "alice"));
+        FileSerde.write(ionBaos, Map.of("id", 2, "name", "bob"));
+
+        URI ionFilePath = URI.create(
+            "/" + ns.replace(".", "/") + "/flow-jsonl/executions/" + execId + "/tasks/task1/tr1/output.ion"
+        );
+        URI ionFileUri = storageInterface.put(
+            MAIN_TENANT, ns, ionFilePath,
+            new ByteArrayInputStream(ionBaos.toByteArray())
+        );
+
+        // When - download with format=JSONL
+        String encodedPath = URLEncoder.encode(ionFileUri.toString(), StandardCharsets.UTF_8);
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/main/executions/" + execId + "/file?path=" + encodedPath + "&format=JSONL"),
+            String.class
+        );
+
+        // Then - response is JSON Lines with one record per line
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.header(HttpHeaders.CONTENT_DISPOSITION)).contains(".jsonl");
+
+        String body = response.body();
+        assertThat(body).isNotNull();
+        String[] lines = body.split("\n");
+        assertThat(lines).hasSize(2);
+        // Each line must be a valid JSON object
+        for (String line : lines) {
+            assertThat(line.trim()).startsWith("{").endsWith("}");
+        }
+    }
+
+    @Test
     void shouldNotLeakFilePreviewFromAnotherExecution() throws Exception {
         // Given - execution A exists in the repository
         String execAId = IdUtils.create();
@@ -451,8 +532,10 @@ class ExecutionControllerTest {
         URI execBFilePath = URI.create(
             "/" + nsB.replace(".", "/") + "/flow-b/executions/" + execBId + "/tasks/task1/tr1/output.txt"
         );
-        URI execBFileUri = storageInterface.put(MAIN_TENANT, nsB, execBFilePath,
-            new ByteArrayInputStream("sensitive-data".getBytes(StandardCharsets.UTF_8)));
+        URI execBFileUri = storageInterface.put(
+            MAIN_TENANT, nsB, execBFilePath,
+            new ByteArrayInputStream("sensitive-data".getBytes(StandardCharsets.UTF_8))
+        );
 
         // When - request preview for execution A but supply a path belonging to execution B
         String encodedPath = URLEncoder.encode(execBFileUri.toString(), StandardCharsets.UTF_8);
@@ -471,4 +554,67 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
+    @Test
+    void shouldReturnNullAverageDurationWhenFlowHasNoStatistics() {
+        // Given a flow that never ran
+        String flowId = IdUtils.create();
+
+        // When
+        ExecutionController.ExecutionAverageDuration result = averageDuration(flowId);
+
+        // Then
+        assertThat(result.avgDurationMs()).isNull();
+        assertThat(result.count()).isZero();
+    }
+
+    @Test
+    void shouldWeightAverageDurationByExecutionCountWhenBucketsSpanSeveralDays() {
+        // Given one execution today (5_000ms) and three much shorter ones a week ago (2_000ms in
+        // total), the count-weighted average is 7_000/4 = 1_750ms. Averaging the two daily buckets'
+        // own averages instead would skew the result toward the single slow execution.
+        String flowId = IdUtils.create();
+        Instant today = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+        Instant lastWeek = today.minus(7, ChronoUnit.DAYS);
+        executionStatisticsRepository.saveBatch(
+            List.of(
+                executionStatistic(flowId, today, 5_000),
+                executionStatistic(flowId, lastWeek, 1_000),
+                executionStatistic(flowId, lastWeek, 500),
+                executionStatistic(flowId, lastWeek, 500)
+            )
+        );
+
+        // When
+        ExecutionController.ExecutionAverageDuration result = averageDuration(flowId);
+
+        // Then
+        assertThat(result.avgDurationMs()).isEqualTo(1_750L);
+        assertThat(result.count()).isEqualTo(4L);
+    }
+
+    private ExecutionController.ExecutionAverageDuration averageDuration(String flowId) {
+        return client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/namespaces/" + AVERAGE_DURATION_NS + "/flows/" + flowId + "/average-duration"),
+            ExecutionController.ExecutionAverageDuration.class
+        );
+    }
+
+    private ExecutionStatistic executionStatistic(String flowId, Instant bucket, long durationMs) {
+        return new ExecutionStatistic(
+            MAIN_TENANT,
+            AVERAGE_DURATION_NS,
+            flowId,
+            bucket,
+            State.Type.SUCCESS,
+            1,
+            durationMs,
+            durationMs,
+            durationMs,
+            1,
+            durationMs,
+            durationMs,
+            durationMs,
+            IdUtils.create()
+        );
+    }
 }

@@ -3,10 +3,26 @@ import {
     type FilterKeyConfig,
     COMPARATOR_LABELS,
     Comparators,
+    KV_COMPARATORS,
+    RANGE_COMPARATORS,
     TEXT_COMPARATORS,
 } from "./filterTypes"
 import {type DecodedParam, keyOfComparator} from "./helpers"
 import {TIME_RANGE_KEY} from "./constants"
+
+export const buildNewFilter = (key: FilterKeyConfig): AppliedFilter | null => {
+    const comparator = key.comparators?.[0]
+    if (!comparator) return null
+    return {
+        id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        key: key.key,
+        keyLabel: key.label,
+        comparator,
+        comparatorLabel: COMPARATOR_LABELS[comparator],
+        value: [],
+        valueLabel: "",
+    }
+}
 
 export const createAppliedFilter = (
     key: string,
@@ -77,8 +93,11 @@ export const processFieldValue = (
     comparator: Comparators,
 ): {value: AppliedFilter["value"]; valueLabel: string} => {
     const isTextOp = TEXT_COMPARATORS.includes(comparator)
+    // Range/threshold comparators (GTE/LTE/…) always target one bound value.
+    // Other comparators (IN/NOT_IN) are multi-value.
+    const isSingleValueOp = isTextOp || RANGE_COMPARATORS.includes(comparator)
 
-    if (config?.valueType === "key-value") {
+    if (config?.valueType === "key-value" && KV_COMPARATORS.includes(comparator)) {
         const combinedValue = params.map(p => p?.value as string)
         return {
             value: combinedValue,
@@ -88,7 +107,7 @@ export const processFieldValue = (
         }
     }
 
-    if (config?.valueType === "multi-select" && !isTextOp) {
+    if (config?.valueType === "multi-select" && !isSingleValueOp) {
         const combinedValue = params.flatMap(p =>
             Array.isArray(p?.value) ? p.value : (p?.value as string)?.split(",") ?? [],
         )
@@ -153,3 +172,24 @@ export const createDefaultVisibleFilters = (
                 isDefaultVisible: true,
             } as AppliedFilter
         }) ?? []
+
+export const pickStarterField = (
+    allKeys: FilterKeyConfig[],
+    usedFilters: {key: string; comparator: Comparators}[],
+): {key: FilterKeyConfig; comparator: Comparators} | null => {
+    const groupable = allKeys.filter((k) => k.groupable !== false && k.comparators?.length)
+    if (groupable.length === 0) return null
+
+    const usedKeys = new Set(usedFilters.map((f) => f.key))
+    const usedPairs = new Set(usedFilters.map((f) => `${f.key}::${f.comparator}`))
+
+    const freshKey = groupable.find((k) => !usedKeys.has(k.key))
+    if (freshKey) return {key: freshKey, comparator: freshKey.comparators[0]}
+
+    for (const key of groupable) {
+        const comparator = key.comparators.find((c) => !usedPairs.has(`${key.key}::${c}`))
+        if (comparator) return {key, comparator}
+    }
+
+    return {key: groupable[0], comparator: groupable[0].comparators[0]}
+}

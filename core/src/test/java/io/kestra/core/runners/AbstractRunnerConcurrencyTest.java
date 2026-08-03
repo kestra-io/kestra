@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.queues.QueueException;
@@ -17,7 +16,6 @@ public abstract class AbstractRunnerConcurrencyTest {
     protected FlowConcurrencyCaseTest flowConcurrencyCaseTest;
 
     @Test
-    @FlakyTest
     @LoadFlows(value = { "flows/valids/flow-concurrency-cancel.yml" }, tenantId = "concurrency-cancel")
     void concurrencyCancel() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyCancel("concurrency-cancel");
@@ -60,13 +58,33 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
+    @LoadFlows(
+        value = { "flows/valids/flow-concurrency-sla-fail-parent.yml", "flows/valids/flow-concurrency-sla-fail-child.yml" },
+        tenantId = "flow-concurrency-sla-fail"
+    )
+    void flowConcurrencySlaFailSubflow() throws QueueException {
+        flowConcurrencyCaseTest.flowConcurrencySlaFailSubflow("flow-concurrency-sla-fail");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-sla-assert-cancel.yml" }, tenantId = "flow-concurrency-sla-assert-cancel")
+    void flowConcurrencySlaAssertCancel() throws QueueException {
+        flowConcurrencyCaseTest.flowConcurrencySlaAssertCancel("flow-concurrency-sla-assert-cancel");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-killed-after-execution.yml" }, tenantId = "flow-concurrency-queue-killed-after-execution")
+    void flowConcurrencyQueueKilledAfterExecution() throws QueueException {
+        flowConcurrencyCaseTest.flowConcurrencyQueueKilledAfterExecution("flow-concurrency-queue-killed-after-execution");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/flow-concurrency-subflow.yml", "flows/valids/flow-concurrency-cancel.yml" }, tenantId = "flow-concurrency-subflow")
     void flowConcurrencySubflow() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencySubflow("flow-concurrency-subflow");
     }
 
     @Test
-    @FlakyTest(description = "Only flaky in CI")
     @LoadFlows(
         value = { "flows/valids/flow-concurrency-parallel-subflow-kill.yaml", "flows/valids/flow-concurrency-parallel-subflow-kill-child.yaml",
             "flows/valids/flow-concurrency-parallel-subflow-kill-grandchild.yaml" },
@@ -77,14 +95,12 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
-    @FlakyTest(description = "Only flaky in CI")
     @LoadFlows(value = { "flows/valids/flow-concurrency-queue-killed.yml" }, tenantId = "flow-concurrency-killed")
     void flowConcurrencyKilled() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyKilled("flow-concurrency-killed");
     }
 
     @Test
-    @FlakyTest(description = "Only flaky in CI")
     @LoadFlows(value = { "flows/valids/flow-concurrency-queue-killed.yml" }, tenantId = "flow-concurrency-queue-killed")
     void flowConcurrencyQueueKilled() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueKilled("flow-concurrency-queue-killed");

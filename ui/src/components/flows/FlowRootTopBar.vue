@@ -2,12 +2,13 @@
     <NavBar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title">
         <template #title>
             <template v-if="isDeleted">
-                <Alert class="text-warning me-2" />{{ $t('deleted_label') }}:&nbsp;
+                <Alert class="text-warning me-2" />{{ $t('deleted_label') }}
             </template>
             <Lock v-else-if="!isAllowedToEdit" class="me-2 gray-700" />
             <span :class="{'body-color': isDeleted}">
                 {{ routeInfo.title }}
                 <Badge v-if="routeInfo.beta" label="Beta" />
+                <Badge v-if="isDraft" :label="$t('draft')" />
             </span>
         </template>
         <template #actions>
@@ -40,6 +41,7 @@
     const authStore = useAuthStore()
 
     const isDeleted = computed(() => flowStore.flow?.deleted || false)
+    const isDraft = computed(() => flowStore.flow?.draft || false)
     const isAllowedToEdit = computed(() =>
         authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flowStore.flow?.namespace),
     )

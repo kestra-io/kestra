@@ -180,7 +180,7 @@ public class PurgeFilesTest {
         assertThat(namespaceFiles.size()).isEqualTo(4);
         List<NamespaceFile> files = namespaceFiles.stream().filter(nsFile -> nsFile.path().endsWith("file.txt")).toList();
         assertThat(files.size()).isEqualTo(1);
-        assertThat(files.getFirst().version()).isEqualTo(2);
+        assertThat(files.getFirst().revision()).isEqualTo(2);
     }
 
     @Test
@@ -210,7 +210,7 @@ public class PurgeFilesTest {
         assertThat(namespaceFiles.size()).isEqualTo(5);
         List<NamespaceFile> files = namespaceFiles.stream().filter(nsFile -> nsFile.path().endsWith("file.txt")).toList();
         assertThat(files.size()).isEqualTo(2);
-        assertThat(files.stream().map(NamespaceFile::version)).containsExactlyInAnyOrder(2, 3);
+        assertThat(files.stream().map(NamespaceFile::revision)).containsExactlyInAnyOrder(2, 3);
     }
 
     @Test

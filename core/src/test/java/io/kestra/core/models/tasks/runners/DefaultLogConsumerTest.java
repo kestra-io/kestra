@@ -4,13 +4,12 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
-
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.utils.IdUtils;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,11 +79,13 @@ class DefaultLogConsumerTest {
 
         // Then
         List<ILoggingEvent> events = listAppender.list;
-        assertThat(events).anySatisfy(e -> {
+        assertThat(events).anySatisfy(e ->
+        {
             assertThat(e.getFormattedMessage()).isEqualTo("before-command output");
             assertThat(e.getLevel()).isEqualTo(ch.qos.logback.classic.Level.DEBUG);
         });
-        assertThat(events).anySatisfy(e -> {
+        assertThat(events).anySatisfy(e ->
+        {
             assertThat(e.getFormattedMessage()).isEqualTo("main output");
             assertThat(e.getLevel()).isEqualTo(ch.qos.logback.classic.Level.INFO);
         });

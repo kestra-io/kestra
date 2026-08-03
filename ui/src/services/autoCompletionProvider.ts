@@ -67,8 +67,13 @@ export function functionToSnippet(fn: PebbleFunctionDef): string {
     return `${fn.name}(${params})`
 }
 
+export interface RootCompletionContext {
+    source: string
+    offset: number
+}
+
 export class PebbleAutoCompletion {
-    rootFieldAutoCompletion(): Promise<string[]> {
+    rootFieldAutoCompletion(_context?: RootCompletionContext): Promise<string[]> {
         return Promise.resolve([])
     }
 

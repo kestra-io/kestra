@@ -13,10 +13,12 @@ const dirname =
         ? __dirname
         : path.dirname(fileURLToPath(import.meta.url))
 
+// vite.config.js skips the federation()/VitePWA() plugins when this is set (they have no
+// place in a test run); the storybook CLI sets it automatically, so mirror that here.
+process.env.STORYBOOK = "true"
+
 const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
 
-// No backend is available during tests — clear the API proxy so Vite doesn't
-// emit "[vite] http proxy error" for every story that fires an /api request.
 if (resolvedViteConfig.server) {
     resolvedViteConfig.server.proxy = {}
 }
@@ -59,9 +61,6 @@ export default defineConfig({
             ...resolvedViteConfig.resolve.alias,
         ],
     },
-    coverage: {
-        exclude: ["**/*.json"],
-    },
     test: {
         projects: [
             "./vitest.config.unit.js",
@@ -76,10 +75,28 @@ export default defineConfig({
                 test: {
                     name: "storybook",
                     setupFiles: ["./.storybook/vitest.setup.js"],
+                    reporters: [
+                        ["default"],
+                        ["junit"],
+                    ],
+                    outputFile: {
+                        junit: "./test-report.storybook.junit.xml",
+                    },
+                    // Each worker drives its own headless Chromium instance; letting
+                    // this scale with CPU count (the default) spins up enough
+                    // concurrent browsers to exhaust CI memory, which kills a
+                    // worker mid-run and surfaces as "[birpc] rpc is closed,
+                    // cannot call 'createTesters'" rather than a real test failure.
+                    maxWorkers: 2,
                     browser: {
                         enabled: true,
                         headless: true,
-                        provider: playwright(),
+                        // enable early garbage collection
+                        provider: playwright({
+                            launchOptions: {
+                                args: ["--js-flags=--max-old-space-size=1536", "--disable-dev-shm-usage"],
+                            },
+                        }),
                         instances: [
                             {
                                 browser: "chromium",
@@ -89,6 +106,21 @@ export default defineConfig({
                 },
             }),
         ],
+        coverage: {
+            reporter: ["text", "html"],
+            include: [
+                "src/**/*.{ts,vue}",
+            ],
+            exclude: [
+                "**/node_modules/**",
+                "**/*.stories.*",
+                "**/*.spec.{ts,tsx}",
+                "**/*.d.ts",
+                "**/.storybook/**",
+                "storybook-static/**",
+                "stylelint.config.mjs",
+            ],
+        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

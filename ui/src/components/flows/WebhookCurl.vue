@@ -35,21 +35,8 @@
     import CopyToClipboard from "../layout/CopyToClipboard.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
-    import {baseUrl, basePath, apiUrl} from "override/utils/route"
-    import {useFlowStore} from "../../stores/flow"
-
-    interface Flow {
-        namespace: string;
-        id: string;
-        triggers?: Trigger[];
-    }
-
-    interface Trigger {
-        id: string;
-        type: string;
-        key?: string;
-        disabled?: boolean;
-    }
+    import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
+    import {useFlowStore, type Flow, type Trigger} from "../../stores/flow"
 
     const props = defineProps<{
         flow: Flow;
@@ -68,22 +55,18 @@
         }
 
         return sourceFlow.triggers.filter((trigger: Trigger) =>
-            trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
+            trigger.type === WEBHOOK_TRIGGER_TYPE &&
             (trigger.disabled === undefined || trigger.disabled === false),
         )
     })
-
-    const generateWebhookUrl = (trigger: Trigger): string => {
-        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`
-        return `${origin}/executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`
-    }
 
     const generateWebhookCurlCommand = (trigger: Trigger): string => {
         if (!trigger.key) {
             return "Webhook key not available"
         }
 
-        const command = [`curl -X POST ${generateWebhookUrl(trigger)}`]
+        const url = webhookUrl({namespace: props.flow.namespace, id: props.flow.id, key: trigger.key})
+        const command = [`curl -X POST ${url}`]
         command.push("-H \"Content-Type: application/json\"")
 
         if (webhookPayload.value.trim()) {

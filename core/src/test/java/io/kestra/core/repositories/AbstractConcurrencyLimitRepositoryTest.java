@@ -39,6 +39,16 @@ public abstract class AbstractConcurrencyLimitRepositoryTest {
     }
 
     @Test
+    void delete() {
+        ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository.update(create("delete"));
+
+        concurrencyLimitRepository.delete(concurrencyLimit);
+
+        var limit = concurrencyLimitRepository.findById("tenant", "namespace", "delete");
+        assertThat(limit).isEmpty();
+    }
+
+    @Test
     void list() {
         concurrencyLimitRepository.update(create("list1"));
         concurrencyLimitRepository.update(create("list2"));

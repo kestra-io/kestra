@@ -1,37 +1,27 @@
 <template>
     <div class="plugin-list-wrapper">
-        <div v-if="isLoading || !pluginsData" class="loading-container">
-            <div class="loading-text">
-                Loading plugins...
-            </div>
-        </div>
         <PluginList
-            v-else
-            :plugins="pluginsData"
+            :plugins="pluginsData ?? []"
             :key="useMiscStore().theme"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref, computed} from "vue"
+    import {onMounted, computed} from "vue"
     import {useMiscStore} from "override/stores/misc"
     import {usePluginsStore} from "../../stores/plugins"
     import PluginList from "./PluginList.vue"
 
-    const isLoading = ref(false)
     const pluginsStore = usePluginsStore()
 
     const pluginsData = computed(() => pluginsStore.plugins)
 
     onMounted(async () => {
         if (!pluginsData.value?.length) {
-            isLoading.value = true
             await pluginsStore.listWithSubgroup({includeDeprecated: false})
-            isLoading.value = false
         }
     })
-
 </script>
 
 <style scoped lang="scss">
@@ -40,17 +30,5 @@
         display: flex;
         flex-direction: column;
         background-color: var(--ks-bg-surface);
-    }
-
-    .loading-container {
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .loading-text {
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-        }
     }
 </style>

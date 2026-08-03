@@ -2,6 +2,7 @@
     <FlowRun
         flow
         execution
+        autoPrefill
         buttonText="replay"
         :buttonIcon="PlayBoxMultiple"
         :replaySubmit="handleReplaySubmit"
@@ -42,13 +43,14 @@
 
     const axios = useClient()
 
-    const handleReplaySubmit = async ({inputs}: any) => {
+    const handleReplaySubmit = async ({inputs, breakpoints}: any) => {
 
         const formData = inputsToFormData({$moment: moment}, flow.value.inputs, inputs)
         let response = await executionsStore.replayExecutionWithInputs({
             executionId: props.execution.id,
             taskRunId: props.taskRun?.id,
             revision: props.revision,
+            breakpoints,
             formData,
         })
 
@@ -59,18 +61,16 @@
         const execution = response.data
         executionsStore.execution = execution
         await router.push({
-            name: "executions/update",
+            name: "executions/update/gantt",
             params: {
                 namespace: execution.namespace,
                 flowId: execution.flowId,
                 id: execution.id,
-                tab: "gantt",
                 tenant: route.params.tenant,
             },
         })
 
         toast.success(t("replayed"))
-        emit("executionTrigger")
     }
 </script>
 

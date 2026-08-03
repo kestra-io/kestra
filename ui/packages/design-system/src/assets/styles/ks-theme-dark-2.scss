@@ -16,26 +16,27 @@ html.dark-2 {
     #{--ks-bg-badge}: $base-gray-neutral-800;
     #{--ks-bg-base}: $base-gray-neutral-950;
     #{--ks-bg-elevated}: $base-gray-neutral-900;
-    #{--ks-bg-error}: $base-gray-neutral-950;
+    #{--ks-bg-error}: rgba($base-red-300, 0.1);
     #{--ks-bg-hover}: $base-gray-neutral-800;
     #{--ks-bg-hover-elevated}: $base-gray-neutral-700;
     #{--ks-bg-inactive}: $base-gray-neutral-800;
-    #{--ks-bg-info}: $base-gray-neutral-950;
+    #{--ks-bg-info}: rgba($base-blue-300, 0.1);
     #{--ks-bg-input}: $base-gray-neutral-950;
     #{--ks-bg-overlay}: $base-gray-neutral-900;
     #{--ks-bg-scrim}: #0e1016cc;
     #{--ks-bg-sidebar}: $base-gray-neutral-900;
-    #{--ks-bg-success}: $base-gray-neutral-950;
+    #{--ks-bg-success}: rgba($base-green-400, 0.1);
     #{--ks-bg-surface}: $base-gray-neutral-900;
+    #{--ks-bg-tabs-default}: $base-gray-neutral-700;
     #{--ks-bg-tag}: rgba($base-gray-cool-white, 0.05);
     #{--ks-bg-tag-active}: rgba($base-primary-300, 0.4);
     #{--ks-bg-tag-hover}: rgba($base-primary-300, 0.2);
     #{--ks-bg-tag-inactive}: rgba($base-gray-cool-white, 0.03);
-    #{--ks-bg-warning}: $base-gray-neutral-950;
+    #{--ks-bg-warning}: rgba($base-orange-300, 0.1);
 
     /* border */
     #{--ks-border-default}: $base-gray-neutral-700;
-    #{--ks-border-error}: $base-red-500;
+    #{--ks-border-error}: $base-red-400;
     #{--ks-border-focus}: $base-primary-300;
     #{--ks-border-info}: $base-blue-300;
     #{--ks-border-strong}: $base-gray-neutral-600;
@@ -62,17 +63,40 @@ html.dark-2 {
     #{--ks-btn-secondary-border-hover}: $base-gray-neutral-500;
     #{--ks-btn-secondary-border-inactive}: $base-gray-neutral-600;
 
+    /* chart */
+    #{--ks-chart-breakpoint}: #c4a5ff;
+    #{--ks-chart-cancelled}: #b4b4c4;
+    #{--ks-chart-created}: $base-blue-300;
+    #{--ks-chart-debug}: #c4a5ff;
+    #{--ks-chart-duration}: #4545fa;
+    #{--ks-chart-error}: $base-red-300;
+    #{--ks-chart-failed}: $base-red-300;
+    #{--ks-chart-info}: #3f6fe0;
+    #{--ks-chart-killed}: #d44a4c;
+    #{--ks-chart-killing}: $base-yellow-300;
+    #{--ks-chart-paused}: #ffb27d;
+    #{--ks-chart-queued}: #4c4c5c;
+    #{--ks-chart-restarted}: #4fc3f7;
+    #{--ks-chart-retried}: #3f6fe0;
+    #{--ks-chart-retrying}: #f7693c;
+    #{--ks-chart-running}: $base-primary-300;
+    #{--ks-chart-skipped}: #8585a0;
+    #{--ks-chart-success}: #27a676;
+    #{--ks-chart-trace}: #b4b4c4;
+    #{--ks-chart-warn}: $base-orange-300;
+    #{--ks-chart-warning}: $base-orange-300;
+
     /* dependencies */
     #{--ks-dependencies-edge-default}: $base-gray-neutral-300;
     #{--ks-dependencies-edge-faded}: $base-gray-neutral-600;
     #{--ks-dependencies-edge-hovered}: $base-gray-neutral-white;
     #{--ks-dependencies-edge-selected}: $base-primary-300;
-    #{--ks-dependencies-node-background-assets}: $base-blue-300;
+    #{--ks-dependencies-node-background-assets}: $base-blue-800;
     #{--ks-dependencies-node-background-default}: $base-gray-neutral-600;
     #{--ks-dependencies-node-background-faded}: $base-gray-neutral-800;
     #{--ks-dependencies-node-background-hovered}: $base-gray-neutral-300;
     #{--ks-dependencies-node-background-selected}: $base-primary-400;
-    #{--ks-dependencies-node-border-assets}: $base-blue-200;
+    #{--ks-dependencies-node-border-assets}: $base-blue-500;
     #{--ks-dependencies-node-border-default}: $base-gray-neutral-400;
     #{--ks-dependencies-node-border-faded}: $base-gray-neutral-700;
     #{--ks-dependencies-node-border-hovered}: $base-gray-neutral-200;
@@ -115,7 +139,7 @@ html.dark-2 {
     #{--ks-status-neutral}: $base-gray-neutral-300;
     #{--ks-status-pending}: $base-yellow-300;
     #{--ks-status-running}: $base-primary-300;
-    #{--ks-status-success}: $base-green-300;
+    #{--ks-status-success}: $base-green-400;
     #{--ks-status-warning}: $base-orange-300;
 
     /* text */
@@ -141,5 +165,29 @@ html.dark-2 {
 
     /* topology */
     #{--ks-topology-bg}: $base-gray-neutral-800;
+    #{--ks-topology-bg-cancelled}: $base-gray-neutral-700;
+    #{--ks-topology-bg-errors}: rgba($base-red-400, 0.1);
+    #{--ks-topology-bg-flowable-task}: rgba($base-blue-500, 0.1);
+    #{--ks-topology-bg-killing}: $base-yellow-1000;
+    #{--ks-topology-bg-running}: $base-primary-1000;
+    #{--ks-topology-bg-subflow}: rgba($base-primary-400, 0.1);
+    #{--ks-topology-bg-success}: $base-green-1000;
+    #{--ks-topology-bg-triggers}: rgba($base-green-500, 0.1);
+    #{--ks-topology-border-cancelled}: $base-gray-neutral-600;
+    #{--ks-topology-border-errors}: $base-red-400;
+    #{--ks-topology-border-flowable-task}: $base-blue-500;
+    #{--ks-topology-border-killing}: $base-yellow-500;
+    #{--ks-topology-border-running}: $base-primary-300;
+    #{--ks-topology-border-subflow}: $base-primary-300;
+    #{--ks-topology-border-success}: $base-green-700;
+    #{--ks-topology-border-triggers}: $base-green-500;
+    #{--ks-topology-btn-cancelled}: $base-gray-neutral-800;
+    #{--ks-topology-btn-errors}: $base-red-400;
+    #{--ks-topology-btn-flowable-task}: $base-blue-500;
+    #{--ks-topology-btn-killing}: $base-yellow-500;
+    #{--ks-topology-btn-running}: $base-primary-300;
+    #{--ks-topology-btn-subflow}: $base-primary-300;
+    #{--ks-topology-btn-success}: $base-green-700;
+    #{--ks-topology-btn-triggers}: $base-green-500;
     #{--ks-topology-dash}: $base-gray-neutral-300;
 }

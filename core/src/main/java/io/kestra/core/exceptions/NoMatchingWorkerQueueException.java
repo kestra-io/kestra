@@ -18,8 +18,10 @@ public class NoMatchingWorkerQueueException extends KestraException {
 
     private static String buildMessage(Collection<String> requiredTags, String tenant, String source) {
         StringBuilder sb = new StringBuilder("No worker queue matches required tags ").append(requiredTags);
-        if (tenant != null) sb.append(" [tenant=").append(tenant).append(']');
-        if (source != null) sb.append(" [source=").append(source).append(']');
+        if (tenant != null)
+            sb.append(" [tenant=").append(tenant).append(']');
+        if (source != null)
+            sb.append(" [source=").append(source).append(']');
         return sb.toString();
     }
 }

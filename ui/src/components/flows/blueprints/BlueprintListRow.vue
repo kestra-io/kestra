@@ -7,11 +7,12 @@
 
             <div class="blueprint-row__meta">
                 <div class="blueprint-row__icons">
-                    <KsTaskIcon
+                    <TaskIcon
                         v-for="task in visibleTasks"
                         :key="task"
                         :cls="task"
                         :icons="pluginsStore.icons"
+                        :loadIcon="pluginsStore.loadIcon"
                     />
                     <span v-if="hiddenTaskCount > 0" class="blueprint-row__overflow">
                         +{{ hiddenTaskCount }}
@@ -56,7 +57,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue"
-    import {KsTaskIcon} from "@kestra-io/design-system"
+    import TaskIcon from "../../plugins/TaskIcon.vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import {usePluginsStore} from "../../../stores/plugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
@@ -92,7 +93,7 @@
         display: flex;
         align-items: center;
         gap: var(--ks-spacing-4);
-        padding: 1.25rem 2.75rem 1.25rem 1.25rem;
+        padding: 1.25rem 2rem 1.25rem 1.25rem;
         background-color: var(--ks-bg-surface);
         border-bottom: 1px solid var(--ks-border-default);
         cursor: pointer;
@@ -136,7 +137,7 @@
             align-items: center;
             gap: var(--ks-spacing-2);
 
-            :deep(.ks-task-icon) {
+            :deep(.task-icon) {
                 width: 1.5rem;
                 height: 1.5rem;
             }

@@ -48,7 +48,8 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
-- Use semantic tokens, not raw colors. `var(--ks-content-link)` communicates intent; `var(--ks-content-blue-500)` does not exist for a reason.
+- Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
+- Use semantic tokens, not raw colors. `var(--ks-text-link)` communicates intent; `var(--ks-text-blue-500)` does not exist for a reason.
 - Co-locate component-specific tokens (e.g. `--ks-card-shadow`) in the component's SCSS, but always derive them from semantic tokens.
 
 ### When extending the design system
@@ -72,6 +73,7 @@ Reject (or ask to fix) anything that:
 - Adds a `Ks*` component without a Storybook story or test.
 - Mounts `KsDataTable` without binding `:currentPage` / `:pageSize` (or `v-model:currentPage` / `v-model:pageSize`) — pagination is controlled; see "Data tables & pagination state".
 - Watches a `computed` that returns a fresh object (spread / `{...}`) with `{deep: true}` — that fires on every dependency change regardless of content. See "The deep-watch / computed-spread trap".
+- Adds a modal/drawer where the user enters data without guarding accidental dismissal — see "Unsaved input in modals (discard guard)".
 
 ### Accessibility
 
@@ -80,11 +82,12 @@ Reject (or ask to fix) anything that:
 - Use semantic HTML inside slots: real `<button>`, `<a>`, `<label>`, headings in document order. Don't fake interactivity with `<div @click>`.
 - `KsDialog`, `KsDrawer`, `KsPopover` already manage focus trap and `Escape`-to-close — don't reimplement these in feature code.
 - Keep tab order logical; rely on the DOM order rather than `tabindex` hacks.
-- Color contrast comes for free as long as you use `--ks-content-*` against `--ks-background-*` pairings. If you mix-and-match, verify with the browser inspector.
+- Color contrast comes for free as long as you use `--ks-text-*` against `--ks-background-*` pairings. If you mix-and-match, verify with the browser inspector.
 
 ### Internationalization
 
-- No hardcoded user-facing strings. Always go through `t()` from `useI18n()`.
+- No hardcoded user-facing strings. Always go through i18n.
+- **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
 - Use `<i18n-t>` for plurals and interpolation — never string-concatenate.
 - Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
 - Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.
@@ -174,6 +177,30 @@ watch(filterQueryKey, () => dataTable.value?.resetAndReload())
 ```
 
 The general rule: **if you find yourself reaching for `{deep: true}` on a computed source, the source should probably return a primitive (string / number) instead of an object.** Strings compare by value; references compare by identity. Picking the right primitive is the fix.
+
+### Unsaved input in modals (discard guard)
+
+Any modal/drawer where the user **enters data** must not silently lose it on an accidental dismissal. Use the shared `useDiscardGuard` composable — never reimplement the confirm-before-discard logic per modal.
+
+```ts
+// ui/src/composables/useDiscardGuard.ts (import path is relative to your component)
+import {useDiscardGuard} from "../../composables/useDiscardGuard"
+
+// isDirty: true when there is unsaved input worth a prompt
+const {guardedClose} = useDiscardGuard(() => /* isDirty */, {message: t("...")}) // message optional; defaults to "discard changes confirmation"
+const beforeClose = (done: () => void) => guardedClose(() => { reset(); done() })
+```
+
+```vue
+<KsDialog :beforeClose="beforeClose" ... />
+<KsDrawer  :beforeClose="beforeClose" ... />
+```
+
+Rules:
+- **Guard only *accidental* close paths** — overlay click, `Escape`, the `X`. These all go through `beforeClose`. Explicit **Cancel / Save** buttons set `v-model = false` directly and **must not** be guarded (the user already expressed intent; a prompt there is friction). Note: a programmatic `v-model = false` does **not** trigger `beforeClose` (Element Plus only calls it for user-initiated closes), which is exactly why Cancel/Save bypass it.
+- **`isDirty` is per-modal.** Compare current input against a baseline captured on open (`JSON.stringify` snapshot), or "any meaningful input"; **ignore empty rows** (e.g. a blank label/tag row is not dirty). Reset dirty-relevant state on open so a reopen starts clean.
+- **`KsDialog` and `KsDrawer` both expose a `beforeClose` prop** with signature `(done) => void` — call `done()` to proceed with closing. (Element Plus's `ElDrawer.beforeClose` is a prop, not an event; `KsDrawer` forwards it.)
+- **Don't guard** read-only viewers, action/confirmation dialogs, or ephemeral forms that reset on every open.
 
 ### Icons
 
@@ -296,7 +323,9 @@ If your `<style>` block needs to exist:
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
 | `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". |
+| `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover |
 | `KsBadge` | Small indicator badge |
+| `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
 | `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag |
 | `KsAvatar` | Avatar with fallback |
 | `KsProgress` | Progress bar |
@@ -325,19 +354,13 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsTabs` / `KsTabPane` / `KsRouterTab` | Tabbed interface |
+| `KsTabs` / `KsTabPane` | Tabbed interface |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu |
 | `KsTopNavBar` | Top navigation bar |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
-
-### Kestra-specific
-
-| Component | Purpose |
-|-----------|---------|
-| `KsTaskIcon` | Plugin task icon resolver |
 
 ## Utilities (import from the design system)
 
@@ -357,6 +380,8 @@ If your `<style>` block needs to exist:
 
 - `useTheme()` — detects and tracks dark / light mode via MutationObserver. Use this instead of reading `document.documentElement` yourself.
 - `useFilters`, `useSavedFilters`, `useDefaultFilter`, `usePreAppliedFilters`, `useRouteFilterPolicy`, `useTableColumns`, `useDataOptions`, `useDragAndDrop`, `usePeriodicRefresh` — data-table filter composables
+- `useDiscardGuard(isDirty, {message?})` — confirm-before-discard for data-entry modals; see "Unsaved input in modals (discard guard)"
+- `useTaskIcon()` — resolves the app-provided task-icon component via `TASK_ICON_INJECTION_KEY` (falling back to a generic placeholder icon). The app provides its own `TaskIcon` component once, at bootstrap (`app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)`) — the design system cannot own that component since it depends on the app's plugin-icon backend API. Used internally by `KsEditor` (Monaco suggestion icons) and the `@kestra-io/topology` package (graph node icons) so both share the same app-provided instance.
 
 ## Design tokens
 
@@ -366,15 +391,17 @@ Tokens are CSS custom properties declared in [`ks-theme-light.scss`](packages/de
 
 Token families currently exposed:
 
-- `--ks-background-*` — page, card, table-row, panel, input backgrounds, plus per-state backgrounds (`--ks-bg-success`, `--ks-background-failed`, …)
-- `--ks-border-*` — primary / secondary borders, plus per-state borders
-- `--ks-content-*` — text colors (primary, inverse, link, link-hover, per-state)
-- `--ks-button-*` — button background and content variants (primary / secondary / success, idle / hover / active, …)
-- `--ks-badge-*`, `--ks-tag-*`, `--ks-card-*`, `--ks-dialog-*`, `--ks-dropdown-*`, `--ks-tooltip-*`, `--ks-select-*`, `--ks-scrollbar-*` — component-specific tokens
-- `--ks-status-*` — palette for charts; pair with `cssVar("--ks-status-success")` in JS
-- `--ks-editor-*`, `--ks-log-*`, `--ks-dependencies-*`, `--ks-dots-*` — domain-specific surfaces
+- `--ks-bg-*` — backgrounds: surfaces (`base`, `surface`, `elevated`, `sidebar`, `input`, `overlay`, `scrim`), interaction states (`hover`, `hover-elevated`, `active`, `inactive`), component fills (`badge`, `tag`, `tag-hover`, `tag-active`, `tag-inactive`), plus per-state (`--ks-bg-success`, `--ks-bg-error`, `--ks-bg-warning`, `--ks-bg-info`)
+- `--ks-border-*` — `default` / `subtle` / `strong` borders, `focus`, plus per-state (`error`, `success`, `warning`, `info`)
+- `--ks-text-*` — text colors: `primary`, `secondary`, `dim`, `muted`, `inactive`, `link`, named (`blue`, `green`), plus per-state (`error`, `success`, `warning`, `info`)
+- `--ks-icon-*` — icon colors: `default`, `hover`, `active`, `inactive`, `muted`, plus per-state
+- `--ks-btn-*` — button background / border / text variants (`primary`, `secondary`, `run`, `success`) across `default` / `hover` / `active` / `inactive` states
+- `--ks-toggle-*` — toggle / switch states (`default`, `hover`, `active`, `inactive`, `playground`)
+- `--ks-dropdown-*`, `--ks-scrollbar-*`, `--ks-shadow-*` — component-specific tokens
+- `--ks-status-*` — palette for charts and status (`success`, `error`, `warning`, `info`, `running`, `pending`, `neutral`); pair with `cssVar("--ks-status-success")` in JS
+- `--ks-editor-*`, `--ks-dependencies-*`, `--ks-topology-*` — domain-specific surfaces
 
-When a needed token is missing, **add it** to both `ks-theme-light.scss`,`ks-theme-dark.scss` and `ks-theme-dark-2.scss` (and review with design) rather than picking a raw color.
+When a needed token is missing, **add it** to all three of `ks-theme-light.scss`, `ks-theme-dark.scss` and `ks-theme-dark-2.scss` (and review with design) rather than picking a raw color.
 
 **SCSS variables — only inside `ui/packages/design-system/`, never in feature code:**
 

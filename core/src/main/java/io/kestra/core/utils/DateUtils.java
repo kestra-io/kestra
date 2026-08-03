@@ -8,6 +8,11 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.QueryFilter;
 
 public class DateUtils {
+    /**
+     * @deprecated use {@link TypeConverter#toZonedDateTime(Object)} instead — same strict
+     *             ISO-8601 parsing, but throws an unchecked {@code TypeConversionException}.
+     */
+    @Deprecated(since = "2.0", forRemoval = true)
     public static ZonedDateTime parseZonedDateTime(String render) throws InternalException {
         ZonedDateTime currentDate;
         try {
@@ -16,16 +21,6 @@ public class DateUtils {
             throw new InternalException(e);
         }
         return currentDate;
-    }
-
-    public static OffsetTime parseOffsetTime(String render) throws InternalException {
-        OffsetTime currentTime;
-        try {
-            currentTime = OffsetTime.parse(render);
-        } catch (DateTimeException e) {
-            throw new InternalException(e);
-        }
-        return currentTime;
     }
 
     public static LocalDate parseLocalDate(String render) throws InternalException {
@@ -37,28 +32,6 @@ public class DateUtils {
             } catch (DateTimeException e2) {
                 try {
                     return LocalDateTime.parse(render).toLocalDate();
-                } catch (DateTimeException e3) {
-                    throw new InternalException(e3);
-                }
-            }
-        }
-    }
-
-    /**
-     * Parses an ISO 8601 date or datetime string to an {@link Instant}.
-     *
-     * <p>Parsing order: {@link ZonedDateTime} → {@link LocalDateTime} (treated as UTC) →
-     * {@link LocalDate} (treated as midnight UTC). Throws {@link InternalException} if none match.
-     */
-    public static Instant parseInstant(String render) throws InternalException {
-        try {
-            return ZonedDateTime.parse(render).toInstant();
-        } catch (DateTimeException e1) {
-            try {
-                return LocalDateTime.parse(render).toInstant(ZoneOffset.UTC);
-            } catch (DateTimeException e2) {
-                try {
-                    return LocalDate.parse(render).atStartOfDay(ZoneOffset.UTC).toInstant();
                 } catch (DateTimeException e3) {
                     throw new InternalException(e3);
                 }
@@ -125,20 +98,12 @@ public class DateUtils {
         ZonedDateTime endDate = null;
         for (QueryFilter filter : filters) {
             if (isStartDateFilter(filter)) {
-                startDate = parse(filter.value());
+                startDate = TypeConverter.toZonedDateTime(filter.value());
             } else if (isEndDateFilter(filter)) {
-                endDate = parse(filter.value());
+                endDate = TypeConverter.toZonedDateTime(filter.value());
             }
         }
         validateTimeline(startDate, endDate);
-    }
-
-    private static ZonedDateTime parse(Object o) {
-        if (o instanceof ZonedDateTime) {
-            return (ZonedDateTime) o;
-        } else {
-            return ZonedDateTime.parse(o.toString());
-        }
     }
 
     private static boolean isEndDateFilter(QueryFilter filter) {

@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import io.pebbletemplates.pebble.error.PebbleException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -28,6 +27,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 
 import static io.kestra.core.runners.pebble.functions.FunctionTestUtils.getVariables;
@@ -74,12 +74,25 @@ class ReadFileFunctionTest {
         assertThat(render).isEqualTo("Hello from version 3");
 
         IllegalVariableEvaluationException illegalVariableEvaluationException = assertThrows(
-            IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', version=2)) }}", getVariables(namespace))
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', revision=2)) }}", getVariables(namespace))
         );
         assertThat(illegalVariableEvaluationException.getCause().getCause()).isInstanceOf(FileNotFoundException.class);
 
-        render = variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', version=1)) }}", getVariables(namespace));
+        render = variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', revision=1)) }}", getVariables(namespace));
         assertThat(render).isEqualTo("Hello from version 1");
+    }
+
+    @Test
+    void readNamespaceFileRejectsRemovedVersionArg() throws IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        URI nsFile = upsertNsFile(false, namespace, "Hello from version 1");
+
+        // The legacy 'version' argument was renamed to 'revision' in 2.0 - it must no longer be accepted
+        IllegalVariableEvaluationException exception = assertThrows(
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ render(read('" + nsFile.getPath() + "', version=1)) }}", getVariables(namespace))
+        );
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).contains("The following named argument does not exist: version");
     }
 
     @Test
@@ -236,8 +249,8 @@ class ReadFileFunctionTest {
             "file", file.toString()
         );
 
-       var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
-       assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
     @Test

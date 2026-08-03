@@ -28,44 +28,65 @@
                 </KsTooltip>
             </template>
         </div>
+
+        <ProductTourNudge />
     </KsSideBar>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue"
+
+    import ProductTourNudge from "../onboarding/tour/ProductTourNudge.vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import type {RouteLocationRaw} from "vue-router"
     import {storeToRefs} from "pinia"
     import {KsSideBar, KsSideBarItem} from "@kestra-io/design-system"
-    import {useRouteTabsStore, type RouteTab} from "../../stores/routeTabs"
+    import {useRouteTabsStore, activeScopeTab, type RouteTab} from "../../stores/routeTabs"
+    import {useActiveTab} from "../../composables/useActiveTab"
 
     const {t} = useI18n()
     const route = useRoute()
     const router = useRouter()
     const routeTabsStore = useRouteTabsStore()
     const {hasTabs, visibleTabs, routeName, embedActiveTab, displayMode} = storeToRefs(routeTabsStore)
+    const routeActiveTab = useActiveTab()
 
     const hasHeader = computed(() => visibleTabs.value.some((tab) => tab.header))
 
     const activeTabName = computed<string | undefined>(() => {
         if (embedActiveTab.value !== undefined) return embedActiveTab.value
-        const fromRoute = route.params?.tab
-        return typeof fromRoute === "string" ? fromRoute : undefined
+        return routeActiveTab.value
     })
 
+    /**
+     * Mirrors Tabs.vue's `isRouterDriven`: once the active route exposes a
+     * `meta.tab`, tab identity lives in the matched child route name rather than
+     * the legacy `:tab` route param — building a link with `params: {tab}` here
+     * would be silently discarded since the parent route no longer declares it.
+     */
+    const isRouterDriven = computed(() => route?.meta?.tab !== undefined)
+
+    const scopeTab = computed(() => activeScopeTab(route, visibleTabs.value, router))
+
     function isActive(tab: RouteTab): boolean {
-        if (tab.route) {
-            return router.resolve(tab.route).fullPath === route.fullPath
-        }
+        if (tab.route) return tab === scopeTab.value
         const current = activeTabName.value ?? visibleTabs.value[0]?.name
         return (tab.name ?? "default") === (current ?? "default")
     }
 
     function routeFor(tab: RouteTab): RouteLocationRaw {
         if (tab.route) return tab.route
+        const base = routeName.value || (route.name as string)
+        if (isRouterDriven.value) {
+            return {
+                name: `${base}/${tab.name}`,
+                params: {...route.params},
+                query: {...tab.query} as Record<string, string>,
+            }
+        }
         return {
-            name: routeName.value || route.name,
+            name: base,
             params: {...route.params, tab: tab.name},
             query: {...tab.query} as Record<string, string>,
         }
@@ -87,6 +108,7 @@
         width: 200px;
         flex-shrink: 0;
         --ks-sidebar-item-font-weight: normal;
+        --ks-sidebar-item-title-color: currentColor;
     }
 
     .tabs-list {
@@ -99,8 +121,12 @@
     .tab-header {
         padding: var(--ks-spacing-2) var(--ks-spacing-3);
         font-size: var(--ks-font-size-xs);
-        font-weight: 600;
-        color: var(--ks-text-primary);
+        font-weight: var(--ks-font-weight-regular);
+        color: var(--ks-text-dim);
+
+        & ~ .tab-header {
+            margin-top: var(--ks-spacing-3);
+        }
     }
 
     .indented {

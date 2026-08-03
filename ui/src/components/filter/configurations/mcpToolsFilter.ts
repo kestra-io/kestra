@@ -13,6 +13,7 @@ export const useMcpToolsFilter = (): ComputedRef<FilterConfiguration> => {
 
     return computed(() => ({
         title: t("filter.titles.mcp_tools_filters"),
+        searchPlaceholder: t("filter.search_placeholders.search_mcp_tools"),
         keys: [],
     }))
 }

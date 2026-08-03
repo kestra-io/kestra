@@ -2,6 +2,7 @@
     <button
         type="button"
         :class="classes"
+        :disabled="disabled"
     >
         <component
             v-if="icon"
@@ -28,10 +29,16 @@
         title?: string;
         icon?: boolean;
         size?: "large" | "default" | "small";
+        glow?: boolean;
+        clickable?: boolean;
+        disabled?: boolean;
     }>(), {
         icon: true,
         size: "default",
         title: undefined,
+        glow: false,
+        clickable: false,
+        disabled: false,
     })
 
     defineSlots<{
@@ -50,6 +57,8 @@
         "ks-execution-status",
         props.status?.toLowerCase() && `ks-execution-status--${props.status.toLowerCase()}`,
         props.size !== "default" && `ks-execution-status--${props.size}`,
+        props.glow && "ks-execution-status--glow",
+        props.clickable && !props.disabled && "ks-execution-status--clickable",
     ].filter(Boolean))
 </script>
 
@@ -72,8 +81,8 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     user-select: none;
     vertical-align: middle;
     appearance: none;
-    border: 1px solid var(--ks-border-default);
-    border-radius: 100px;
+    border: none;
+    border-radius: var(--ks-radius-sm);
     background: var(--ks-bg-badge);
     font-family: inherit;
     height: 2rem;
@@ -84,7 +93,7 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
     .ks-execution-status__icon {
         display: inline-flex;
         align-items: center;
-        font-size: 1.10rem;
+        font-size: var(--ks-font-size-xl);
     }
 
     .ks-execution-status__text {
@@ -105,17 +114,36 @@ $statusList: created, restarted, success, running, killing, killed, warning, fai
 
     &.ks-execution-status--small {
         height: 1.5rem;
-        padding: 0.3125rem 0.6875rem;
+        padding: 0 var(--ks-spacing-2);
         font-size: var(--ks-font-size-xs);
         gap: 0.25rem;
+    }
+
+    &.ks-execution-status--clickable {
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            box-shadow: inset 0 0 0 1px currentColor;
+        }
     }
 }
 
 @each $status in $statusList {
     .ks-execution-status--#{$status} {
         color: var(--ks-status-#{$status});
-        border-color: var(--ks-status-#{$status});
         background-color: var(--ks-status-background-#{$status});
+
+        &.ks-execution-status--glow {
+            box-shadow: 0 9.85px 29.54px 0 var(--ks-status-background-#{$status});
+        }
+
+        &.ks-execution-status--glow.ks-execution-status--clickable {
+            &:hover,
+            &:focus-visible {
+                box-shadow: inset 0 0 0 1px currentColor, 0 9.85px 29.54px 0 var(--ks-status-background-#{$status});
+            }
+        }
     }
 }
 </style>

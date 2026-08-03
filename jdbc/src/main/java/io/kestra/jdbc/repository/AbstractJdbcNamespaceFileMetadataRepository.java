@@ -51,15 +51,17 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(
-                configuration -> new HashSet<>(DSL
-                    .using(configuration)
-                    .select(field("namespace"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId, false))
-                    .and(lastCondition())
-                    .groupBy(field("namespace"))
-                    .fetch()
-                    .map(record -> record.getValue("namespace", String.class)))
+                configuration -> new HashSet<>(
+                    DSL
+                        .using(configuration)
+                        .select(field("namespace"))
+                        .from(this.jdbcRepository.getTable())
+                        .where(this.defaultFilter(tenantId, false))
+                        .and(lastCondition())
+                        .groupBy(field("namespace"))
+                        .fetch()
+                        .map(record -> record.getValue("namespace", String.class))
+                )
             );
     }
 
@@ -144,7 +146,7 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
                         .where(this.defaultFilter(e.getKey().tenantId(), true))
                         .and(field("namespace").eq(e.getKey().namespace()))
                         .and(field("last").in(true, false));
-                    if (e.getValue().getFirst().getVersion() == null) {
+                    if (e.getValue().getFirst().getRevision() == null) {
                         deleteCondition = deleteCondition.and(
                             field("path").in(
                                 namespaceFilesMetadata.stream()
@@ -159,7 +161,7 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
                                     namespaceFileMetadata -> DSL.and(
                                         pathCondition(namespaceFileMetadata.getPath()),
                                         field("version").eq(
-                                            namespaceFileMetadata.getVersion()
+                                            namespaceFileMetadata.getRevision()
                                         )
                                     )
                                 ).toList()
@@ -187,13 +189,13 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
                 DSLContext context = DSL.using(configuration);
 
                 Optional<NamespaceFileMetadata> maybePrevious = this.findByPath(namespaceFileMetadata.getTenantId(), namespaceFileMetadata.getNamespace(), namespaceFileMetadata.getPath());
-                NamespaceFileMetadata nsFileMetadataToPersist = namespaceFileMetadata.asLast().toBuilder().deleted(false).version(maybePrevious.map(previous ->
+                NamespaceFileMetadata nsFileMetadataToPersist = namespaceFileMetadata.asLast().toBuilder().deleted(false).revision(maybePrevious.map(previous ->
                 {
                     if (previous.isDirectory()) {
-                        // Directories stay at version 1
+                        // Directories stay at revision 1
                         return 1;
                     }
-                    return previous.getVersion() + 1;
+                    return previous.getRevision() + 1;
                 }).orElse(1)).created(maybePrevious.map(NamespaceFileMetadata::getCreated).orElse(Instant.now())).build();
 
                 if (maybePrevious.isPresent()) {

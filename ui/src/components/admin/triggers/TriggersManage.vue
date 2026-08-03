@@ -8,6 +8,7 @@
             :currentPage="urlPage"
             :pageSize="urlSize"
             :defaultSort="{prop: 'flowId', order: 'ascending'}"
+            fitHeight
             :selectable="canCheck"
             :selectionMapper="selectionMapper"
             :rowClassName="getClasses"
@@ -15,7 +16,7 @@
             :forceExpandedRowKeys="expandedRowKeys"
             :no-data-text="$t('no_results.triggers')"
             @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
-            @sort-change="({prop, order}: {prop: string; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
+            @sort-change="({prop, order}: {prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'descending' ? 'desc' : 'asc'}`}})"
         >
             <template #navbar>
                 <KsFilter
@@ -34,13 +35,6 @@
                     }"
                     :defaultScope="false"
                     :defaultTimeRange="false"
-                />
-                <QuickFilters
-                    :intervals="quickIntervals"
-                    :timeRange="selectedTimeRange"
-                    :intervalLabel="t('filter.timeRange_trigger.label')"
-                    :showLevel="false"
-                    @update:timeRange="onQuickFilterTimeRange"
                 />
             </template>
 
@@ -123,13 +117,13 @@
                 </template>
                 <template #default="scope">
                     <template v-if="col.prop === 'flowId'">
-                        <router-link
+                        <KsEntityLink
                             v-if="scope.row.namespace && scope.row.flowId"
+                            entity="flow"
+                            :value="scope.row.flowId"
                             :to="{name: 'flows/update', params: {tenant: route.params?.tenant, namespace: scope.row.namespace, id: scope.row.flowId}}"
-                        >
-                            {{ invisibleSpace(scope.row.flowId) }}
-                        </router-link>
-                        <span v-else>{{ invisibleSpace(scope.row.flowId) }}</span>
+                        />
+                        <span v-else><BreakableText :value="scope.row.flowId" /></span>
                         <MarkdownTooltip
                             v-if="scope.row.namespace && scope.row.flowId"
                             :id="scope.row.namespace + '-' + scope.row.flowId"
@@ -138,7 +132,12 @@
                         />
                     </template>
                     <template v-else-if="col.prop === 'namespace'">
-                        {{ invisibleSpace(scope.row.namespace) }}
+                        <KsEntityLink
+                            v-if="scope.row.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {tenant: route.params?.tenant, id: scope.row.namespace}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'workerId'">
                         <KsId :value="scope.row.workerId" :shrink="true" />
@@ -179,7 +178,7 @@
                             {{ scope.row.backfill.paused ? $t("paused") : $t("running") }}
                         </KsTag>
                     </template>
-                    <template v-else-if="isSchedule(scope.row.type) && authStore.user?.hasAnyAction(resource.EXECUTION, action.UPDATE)">
+                    <template v-else-if="isSchedule(scope.row.type) && authStore.user?.hasAnyAction(resource.TRIGGER, action.BACKFILL)">
                         <KsButton
                             :icon="CalendarCollapseHorizontalOutline"
                             @click="setBackfillModal(scope.row, true)"
@@ -193,7 +192,7 @@
                 </template>
             </KsTableColumn>
 
-            <KsTableColumn :label="$t('enabled')" columnKey="disable" className="row-action">
+            <KsTableColumn v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DISABLE)" :label="$t('enabled')" columnKey="disable" className="row-action">
                 <template #default="scope">
                     <KsTooltip
                         v-if="!scope.row.missingSource"
@@ -201,11 +200,11 @@
                         :disabled="!scope.row.codeDisabled"
                         effect="light"
                     >
+                        <!-- update:modelValue (not change) keeps the switch prop-controlled: the knob only
+                             moves when the row data changes, so cancelling the enable dialog leaves it intact. -->
                         <KsSwitch
                             :modelValue="!(scope.row.disabled || scope.row.codeDisabled)"
-                            @change="(value: string | number | boolean) => setDisabled(scope.row, Boolean(value))"
-                            inlinePrompt
-                            class="switch-text"
+                            @update:modelValue="(value: string | number | boolean | undefined) => setDisabled(scope.row, Boolean(value))"
                             :disabled="scope.row.codeDisabled"
                         />
                     </KsTooltip>
@@ -216,7 +215,7 @@
             </KsTableColumn>
 
             <KsTableColumn
-                v-if="authStore.user?.hasAnyAction(resource.EXECUTION, action.UPDATE)"
+                v-if="authStore.user?.hasAny(resource.TRIGGER)"
                 columnKey="row-actions"
                 className="row-action"
             >
@@ -235,6 +234,7 @@
                                     {{ $t("details") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.RESTART)"
                                     :disabled="!scope.row.locked"
                                     @click="restart(scope.row)"
                                 >
@@ -242,6 +242,7 @@
                                     {{ $t("restart") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.UNLOCK) && scope.row.kind !== 'REALTIME'"
                                     :disabled="!scope.row.locked"
                                     @click="unlock(scope.row)"
                                 >
@@ -249,6 +250,7 @@
                                     {{ $t("unlock") }}
                                 </KsDropdownItem>
                                 <KsDropdownItem
+                                    v-if="authStore.user?.hasAnyAction(resource.TRIGGER, action.DELETE)"
                                     divided
                                     class="danger"
                                     @click="confirmDeleteTrigger(scope.row)"
@@ -271,7 +273,7 @@
             <Vars :data="detailsData" />
         </KsDrawer>
 
-        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true">
+        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose">
             <template #header>
                 <span v-html="$t('backfill executions')" />
             </template>
@@ -301,6 +303,7 @@
             </KsForm>
             <FlowRun
                 @update-inputs="backfill.inputs = $event"
+                @update-inputs-no-default="backfillInputsNoDefault = $event"
                 @update-labels="backfill.labels = $event"
                 :selectedTrigger="selectedTrigger"
                 :redirect="false"
@@ -316,6 +319,16 @@
                 </KsButton>
             </template>
         </KsDialog>
+
+        <TriggerEnableDialog
+            v-model="isEnableDialogOpen"
+            :count="enableDialogTrigger ? undefined : (queryBulkAction ? total : selection?.length)"
+            @confirm="onEnableDialogConfirm"
+        >
+            <p v-if="!enableDialogTrigger">
+                {{ $t("bulk action async warning") }}
+            </p>
+        </TriggerEnableDialog>
     </div>
 </template>
 
@@ -325,17 +338,18 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {KsMessage, KsDrawer, KsMarkdown, KsTag, KsDropdown, KsDropdownMenu, KsDropdownItem} from "@kestra-io/design-system"
+    import {routeQueryToQueryFilters} from "../../../utils/queryFilters"
     import {useToast} from "../../../utils/toast"
     import {useFlowStore} from "../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
-    import {invisibleSpace} from "../../../utils/filters"
+    import BreakableText from "../../BreakableText"
     import {storageKeys} from "../../../utils/constants"
-    import {TriggerDeleteOptions, useTriggerStore} from "../../../stores/trigger"
+    import * as TriggersAPI from "@kestra-io/kestra-sdk/triggers"
+    import {searchTriggers, type TriggerDeleteOptions} from "../../../utils/triggers"
     import {useExecutionsStore} from "../../../stores/executions"
     import {useTriggerFilter} from "../../filter/configurations"
-    import {useQuickIntervalFilter} from "../../filter/composables/useQuickIntervalFilter"
-    import QuickFilters from "../../filter/QuickFilters.vue"
     import {type ColumnConfig, useTableColumns} from "../../../composables/useTableColumns"
+    import {useDiscardGuard} from "../../../composables/useDiscardGuard"
     import useRestoreUrl from "../../../composables/useRestoreUrl"
 
     import action from "../../../models/action"
@@ -354,6 +368,7 @@
     import BackfillBanner from "../../flows/BackfillBanner.vue"
     import Vars from "../../executions/Vars.vue"
     import MarkdownTooltip from "../../layout/MarkdownTooltip.vue"
+    import TriggerEnableDialog from "../../triggers/TriggerEnableDialog.vue"
 
     const triggerFilter = useTriggerFilter()
 
@@ -361,11 +376,9 @@
     const router = useRouter()
     const toast = useToast()
     const {t} = useI18n({useScope: "global"})
-    const {quickIntervals, selectedTimeRange, onQuickFilterTimeRange} = useQuickIntervalFilter()
 
     const authStore = useAuthStore()
     const flowStore = useFlowStore()
-    const triggerStore = useTriggerStore()
     const executionsStore = useExecutionsStore()
 
     const {loadInit} = useRestoreUrl()
@@ -398,6 +411,17 @@
         inputs: null,
         labels: [],
     })
+
+    // kept out of `backfill` so it never leaks into the submitted payload (cleanBackfill spreads backfill)
+    const backfillInputsNoDefault = ref<Record<string, unknown>>({})
+
+    const {guardedClose: guardBackfillClose} = useDiscardGuard(() => !!(
+        backfill.value.start ||
+        backfill.value.end ||
+        Object.keys(backfillInputsNoDefault.value).length > 0 ||
+        backfill.value.labels?.some((label: any) => label.key || label.value)
+    ))
+    const beforeBackfillClose = (done: () => void) => guardBackfillClose(() => done())
 
     const optionalColumns = computed<ColumnConfig[]>(() => [
         {
@@ -468,7 +492,7 @@
         updateVisibleColumns(newColumns)
     }
 
-    const canCheck = computed(() => authStore.user?.hasAnyAction(resource.EXECUTION, action.UPDATE) ?? false)
+    const canCheck = computed(() => authStore.user?.hasAny(resource.TRIGGER) ?? false)
 
     const selectionMapper = (row: any) => ({
         namespace: row.namespace,
@@ -515,7 +539,10 @@
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, ...restQuery} = route.query as Record<string, any>
-        return _merge(base, restQuery)
+        const nonFilterRest = Object.fromEntries(
+            Object.entries(restQuery).filter(([key]) => !key.startsWith("filters[")),
+        )
+        return _merge(base, nonFilterRest)
     }
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
@@ -526,9 +553,10 @@
             size,
             page,
             sort: sort ?? String(route.query?.sort ?? "triggerId:asc"),
+            filters: routeQueryToQueryFilters(route.query),
         })
 
-        const triggersData = await triggerStore.search(query)
+        const triggersData = await searchTriggers(query)
         triggers.value = triggersData?.results ?? []
         total.value = triggersData?.total ?? 0
 
@@ -564,6 +592,8 @@
             flowId: trigger.flowId,
             store: true,
         }).then(() => {
+            backfill.value = {start: null, end: null, inputs: null, labels: []}
+            backfillInputsNoDefault.value = {}
             isBackfillOpen.value = bool
             selectedTrigger.value = trigger
         })
@@ -576,11 +606,11 @@
 
     const postBackfill = () => {
         const trigger = selectedTrigger.value as any
-        triggerStore.createBackfill({
+        TriggersAPI.createBackfill({
             namespace: trigger.namespace,
             flowId: trigger.flowId,
             triggerId: trigger.triggerId,
-            backfill: cleanBackfill.value,
+            backfill: cleanBackfill.value as any,
         })
             .then(() => {
                 toast.saved(trigger?.triggerId)
@@ -618,7 +648,7 @@
     }
 
     const unlock = (row: any) => {
-        triggerStore.unlock({
+        TriggersAPI.unlockTrigger({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -632,7 +662,7 @@
     }
 
     const restart = (row: any) => {
-        triggerStore.restart({
+        TriggersAPI.restartTrigger({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -648,7 +678,7 @@
     }
 
     const pauseBackfill = (row: any) => {
-        triggerStore.pauseBackfill({
+        TriggersAPI.pauseBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -659,7 +689,7 @@
     }
 
     const unpauseBackfill = (row: any) => {
-        triggerStore.unpauseBackfill({
+        TriggersAPI.unpauseBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -670,7 +700,7 @@
     }
 
     const deleteBackfill = (row: any) => {
-        triggerStore.deleteBackfill({
+        TriggersAPI.deleteBackfill({
             namespace: row.namespace,
             flowId: row.flowId,
             triggerId: row.triggerId,
@@ -679,6 +709,12 @@
             triggerLoadDataAfterBulkEditAction()
         })
     }
+
+    const isEnableDialogOpen = ref(false)
+    // The schedule trigger being enabled; null when enabling in bulk.
+    const enableDialogTrigger = ref<any>(null)
+
+    const isScheduleTrigger = (row: any) => row?.kind === "SCHEDULE" || row?.type === "io.kestra.plugin.core.trigger.Schedule"
 
     const setDisabled = (trigger: any, value: boolean) => {
         if (trigger.codeDisabled) {
@@ -690,7 +726,16 @@
             })
             return
         }
-        triggerStore.setDisabled({...trigger, disabled: !value})
+        if (value && isScheduleTrigger(trigger)) {
+            enableDialogTrigger.value = trigger
+            isEnableDialogOpen.value = true
+            return
+        }
+        doSetDisabled(trigger, !value)
+    }
+
+    const doSetDisabled = (trigger: any, disabled: boolean, recoverMissedSchedules?: boolean) => {
+        TriggersAPI.disableTriggerById({...trigger, disabled, recoverMissedSchedules})
             .then((updatedTrigger: any) => {
                 toast.saved(updatedTrigger.triggerId)
                 triggers.value = triggers.value?.map((tr: any) => {
@@ -704,10 +749,23 @@
             })
     }
 
+    const onEnableDialogConfirm = (recoverMissedSchedules?: boolean) => {
+        if (enableDialogTrigger.value) {
+            doSetDisabled(enableDialogTrigger.value, false, recoverMissedSchedules)
+        } else {
+            genericConfirmCallback(
+                "setDisabledByQuery",
+                "setDisabledByTriggers",
+                "bulk success disabled status.false",
+                {disabled: false, recoverMissedSchedules},
+            )
+        }
+    }
+
     const confirmDeleteTrigger = (trigger: TriggerDeleteOptions) => {
         toast.confirm(
             t("delete trigger confirmation", {id: trigger.id}),
-            () => triggerStore.delete({
+            () => TriggersAPI.deleteTrigger({
                 namespace: trigger.namespace,
                 flowId: trigger.flowId,
                 triggerId: trigger.triggerId,
@@ -748,22 +806,22 @@
 
     const genericConfirmCallback = (queryAction: string, byIdAction: string, success: string, data?: any) => {
         const actionMap: Record<string, () => any> = {
-            "unpauseBackfillByQuery": () => triggerStore.unpauseBackfillByQuery,
-            "unpauseBackfillByTriggers": () => triggerStore.unpauseBackfillByTriggers,
-            "pauseBackfillByQuery": () => triggerStore.pauseBackfillByQuery,
-            "pauseBackfillByTriggers": () => triggerStore.pauseBackfillByTriggers,
-            "deleteBackfillByQuery": () => triggerStore.deleteBackfillByQuery,
-            "deleteBackfillByTriggers": () => triggerStore.deleteBackfillByTriggers,
-            "unlockByQuery": () => triggerStore.unlockByQuery,
-            "unlockByTriggers": () => triggerStore.unlockByTriggers,
-            "setDisabledByQuery": () => triggerStore.setDisabledByQuery,
-            "setDisabledByTriggers": () => triggerStore.setDisabledByTriggers,
-            "deleteByQuery": () => triggerStore.deleteByQuery,
-            "deleteByTriggers": () => triggerStore.deleteByTriggers,
+            "unpauseBackfillByQuery": () => (options: any) => TriggersAPI.unpauseBackfillByQuery(options),
+            "unpauseBackfillByTriggers": () => (triggers: any) => TriggersAPI.unpauseBackfillByIds({body: triggers}),
+            "pauseBackfillByQuery": () => (options: any) => TriggersAPI.pauseBackfillByQuery(options),
+            "pauseBackfillByTriggers": () => (triggers: any) => TriggersAPI.pauseBackfillByIds({body: triggers}),
+            "deleteBackfillByQuery": () => (options: any) => TriggersAPI.deleteBackfillByQuery(options),
+            "deleteBackfillByTriggers": () => (triggers: any) => TriggersAPI.deleteBackfillByIds({body: triggers}),
+            "unlockByQuery": () => (options: any) => TriggersAPI.unlockTriggersByQuery(options),
+            "unlockByTriggers": () => (triggers: any) => TriggersAPI.unlockTriggersByIds({body: triggers}),
+            "setDisabledByQuery": () => (options: any) => TriggersAPI.disabledTriggersByQuery(options),
+            "setDisabledByTriggers": () => (options: any) => TriggersAPI.disabledTriggersByIds(options),
+            "deleteByQuery": () => (options: any) => TriggersAPI.deleteTriggersByQuery(options),
+            "deleteByTriggers": () => (triggers: any) => TriggersAPI.deleteTriggersByIds({body: triggers}),
         }
 
         if (queryBulkAction.value) {
-            const query = loadQuery({})
+            const query = loadQuery({filters: routeQueryToQueryFilters(route.query)})
             const options = {...query, ...data}
             const actions = actionMap[queryAction]()
             return actions(options)
@@ -806,6 +864,14 @@
     }
 
     const setDisabledTriggers = (bool: boolean) => {
+        // Enabling may recover missed schedules: the dialog carries both the confirmation and the
+        // recovery choice. In query mode trigger types are unknowable so it is always shown; in
+        // selection mode only when the selection contains a schedule trigger.
+        if (!bool && (queryBulkAction.value || selection.value?.some((sel: any) => isScheduleTrigger(findRowBySelection(sel))))) {
+            enableDialogTrigger.value = null
+            isEnableDialogOpen.value = true
+            return
+        }
         genericConfirmAction(
             `bulk disabled status.${bool}`,
             "setDisabledByQuery",
@@ -814,6 +880,9 @@
             {disabled: bool},
         )
     }
+
+    const findRowBySelection = (sel: any) => triggersMerged.value.find((row: any) =>
+        (row.triggerId ?? row.id) === sel.triggerId && row.flowId === sel.flowId && row.namespace === sel.namespace)
 
     const checkBackfill = computed(() => {
         if (!backfill.value?.start) {
@@ -849,6 +918,10 @@
 
 <style scoped lang="scss">
     .triggers-manage {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
         :deep(tr.no-expand .kel-table__expand-icon) {
             pointer-events: none;
 
@@ -857,19 +930,8 @@
             }
         }
 
-        :deep(.kel-switch) {
-            .is-text {
-                padding: 0 3px;
-                color: inherit;
-            }
-
-            &.is-checked .is-text {
-                color: var(--ks-content-inverse);
-            }
-        }
-
         :deep(.kel-table) a {
-            color: var(--ks-content-link);
+            color: var(--ks-text-link);
         }
     }
 
@@ -884,7 +946,7 @@
     }
 
     .header-tooltip-icon {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: help;
         display: inline-flex;
         align-items: center;
@@ -903,6 +965,6 @@
         max-width: 25rem;
         white-space: normal;
         word-break: break-word;
-        color: var(--ks-content-primary) !important;
+        color: var(--ks-text-primary) !important;
     }
 </style>

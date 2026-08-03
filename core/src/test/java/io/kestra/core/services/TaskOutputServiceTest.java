@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.exceptions.InternalException;
@@ -16,6 +15,7 @@ import io.kestra.core.models.executions.TaskRunWithOutput;
 import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -41,7 +41,7 @@ class TaskOutputServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(3);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(2);
 
         Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());
@@ -54,7 +54,7 @@ class TaskOutputServiceTest {
         assertThat(switchOut).containsExactlyInAnyOrderEntriesOf(Map.of("defaults", false, "value", "a"));
         @SuppressWarnings("unchecked")
         Map<String, Object> eachOut = (Map<String, Object>) outputs.get("2_each");
-        assertThat(eachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", 2, "runningIterations", 0, "iterationCount", 2));
+        assertThat(eachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 2), "runningIterations", 0, "iterationCount", 2));
         @SuppressWarnings("unchecked")
         Map<String, Object> t1Out = (Map<String, Object>) outputs.get("t1");
         assertThat(t1Out).containsExactlyInAnyOrderEntriesOf(Map.of("value", "t1"));
@@ -66,7 +66,7 @@ class TaskOutputServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
 
         Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());
@@ -79,7 +79,7 @@ class TaskOutputServiceTest {
         assertThat(isJsonOut).containsExactlyInAnyOrderEntriesOf(Map.of("defaults", false, "value", "false"));
         @SuppressWarnings("unchecked")
         Map<String, Object> eachOut = (Map<String, Object>) outputs.get("1_each");
-        assertThat(eachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", 3, "runningIterations", 0, "iterationCount", 3));
+        assertThat(eachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 3), "runningIterations", 0, "iterationCount", 3));
     }
 
     @Test
@@ -88,7 +88,7 @@ class TaskOutputServiceTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(1);
 
-        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId());
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
         assertThat(subExecutions.size()).isEqualTo(3);
 
         Map<String, Object> outputs = taskOutputService.computeOutputs(subExecutions.getFirst());
@@ -101,7 +101,7 @@ class TaskOutputServiceTest {
         assertThat(ifOut).containsExactlyInAnyOrderEntriesOf(Map.of("evaluationResult", false));
         @SuppressWarnings("unchecked")
         Map<String, Object> forEachOut = (Map<String, Object>) outputs.get("for_each");
-        assertThat(forEachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", 3, "runningIterations", 0, "iterationCount", 3));
+        assertThat(forEachOut).containsExactlyInAnyOrderEntriesOf(Map.of("terminatedIterations", Map.of("SUCCESS", 3), "runningIterations", 0, "iterationCount", 3));
     }
 
     @Test

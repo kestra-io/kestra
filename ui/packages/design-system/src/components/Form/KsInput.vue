@@ -2,10 +2,14 @@
     <ElInput
         v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
+        :class="reserveClearSpace ? 'ks-input--reserve-clear' : undefined"
         @change="emit('change', $event)"
     >
         <template v-if="$slots.prepend" #prepend>
             <slot name="prepend" />
+        </template>
+        <template v-if="$slots.prefix" #prefix>
+            <slot name="prefix" />
         </template>
         <template v-if="$slots.suffix" #suffix>
             <slot name="suffix" />
@@ -17,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import {ElInput} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
@@ -42,13 +47,18 @@
         change: [value: string | number]
     }>()
 
-    defineSlots<{
+    const slots = defineSlots<{
         prepend?(): unknown
+        prefix?(): unknown
         suffix?(): unknown
         default?(): unknown
     }>()
 
     const filteredProps = useFilteredProps(props)
+
+    const reserveClearSpace = computed(() =>
+        Boolean(props.clearable) && !props.showPassword && !props.suffixIcon && !slots.suffix,
+    )
 </script>
 
 <style lang="scss">
@@ -56,7 +66,8 @@
     @use 'element-plus/theme-chalk/src/input';
 
     .kel-textarea, .kel-input {
-        --kel-input-border-color: var(--ks-border-default);
+        --kel-input-border-color: var(--ks-border-strong);
+        --kel-input-hover-border-color: var(--ks-border-strong);
         --kel-input-bg-color: var(--ks-bg-input);
     }
 
@@ -70,6 +81,18 @@
 
         .kel-input-group__append, .kel-input-group__prepend {
             color: var(--ks-text-dim);
+        }
+
+        &.ks-input--reserve-clear {
+            .kel-input__inner {
+                padding-inline-end: var(--ks-spacing-5);
+            }
+
+            .kel-input__suffix {
+                position: absolute;
+                inset-block: 0;
+                inset-inline-end: var(--ks-spacing-3);
+            }
         }
     }
 </style>

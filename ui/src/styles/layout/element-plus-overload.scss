@@ -2,7 +2,6 @@
 /* stylelint-disable color-no-hex */
 @use 'sass:math';
 @use "sass:map";
-@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
 // FIXME: create a new component for this
 .kel-input-file.custom-upload {

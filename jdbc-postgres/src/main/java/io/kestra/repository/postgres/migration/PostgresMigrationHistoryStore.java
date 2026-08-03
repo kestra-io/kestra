@@ -1,7 +1,15 @@
 package io.kestra.repository.postgres.migration;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import javax.sql.DataSource;
+
 import io.kestra.jdbc.migration.JdbcMigrationHistoryStore;
 import io.kestra.repository.postgres.PostgresRepositoryEnabled;
+
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.jdbc.DataSourceResolver;
@@ -9,17 +17,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 /**
  * PostgreSQL-specific {@link JdbcMigrationHistoryStore} that creates the configured schema
  * before the history table is bootstrapped.
  *
- * <p>When a custom schema is configured via the datasource {@code schema} property (e.g.
+ * <p>
+ * When a custom schema is configured via the datasource {@code schema} property (e.g.
  * {@code kestra_unit_webserver}), PostgreSQL's {@link Connection#getSchema()} returns
  * {@code null} because the schema does not exist yet. We query {@code SHOW search_path}
  * directly to obtain the configured (possibly non-existent) schema name and create it
@@ -33,7 +36,7 @@ public class PostgresMigrationHistoryStore extends JdbcMigrationHistoryStore {
 
     @Inject
     public PostgresMigrationHistoryStore(final DataSource dataSource,
-                                         @Nullable final DataSourceResolver dataSourceResolver) {
+        @Nullable final DataSourceResolver dataSourceResolver) {
         super(dataSource, dataSourceResolver);
     }
 
@@ -46,8 +49,10 @@ public class PostgresMigrationHistoryStore extends JdbcMigrationHistoryStore {
     protected void prepareDatabase(final Connection connection, final Statement stmt) throws SQLException {
         String schemaToCreate = resolveSchemaFromSearchPath(stmt);
         if (schemaToCreate == null) {
-            log.warn("No usable schema found in PostgreSQL search_path. "
-                + "The migration history table may fail to create if no default schema is writable.");
+            log.warn(
+                "No usable schema found in PostgreSQL search_path. "
+                    + "The migration history table may fail to create if no default schema is writable."
+            );
             return;
         }
         // Quote the identifier to handle case-sensitive or special-character schema names

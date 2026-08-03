@@ -1,55 +1,91 @@
 <template>
-    <section v-if="data?.results?.length" id="table">
-        <KsDataTable
-            :id="containerID"
-            :data="data.results"
-            :total="isPaginationEnabled(props.chart) ? data.total : 0"
-            :currentPage="pageNumber"
-            :pageSize="pageSize"
-            :height="240"
-            size="small"
-            noPaginationGutter
-            @page-changed="handlePageChange"
-        >
-            <KsTableColumn
-                v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
-                :label="value.displayName || key"
-                :key
-                :width="value.field === 'STATE' ? 140 : undefined"
-            >
-                <template #default="scope">
-                    <template v-if="resolvedComponent(value.field) === undefined">
-                        {{ scope.row[key] }}
-                    </template>
-                    <component v-else :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)" />
-                </template>
-            </KsTableColumn>
-        </KsDataTable>
-    </section>
+    <div class="table-root">
+        <TableQuickFilter :chart="props.chart" @change="onQuickFilterChange" />
 
-    <KsEmpty v-else :description="EMPTY_TEXT" />
+        <Motion
+            as="div"
+            class="table-motion"
+            :key="activeTab"
+            :initial="{opacity: 0, y: 4}"
+            :animate="{opacity: 1, y: 0}"
+            :transition="{duration: 0.15, ease: 'easeOut'}"
+        >
+            <section v-if="data?.results?.length" id="table">
+                <KsDataTable
+                    :id="containerID"
+                    :data="data.results"
+                    :total="isPaginationEnabled(props.chart) ? data.total : 0"
+                    :currentPage="pageNumber"
+                    :pageSize="pageSize"
+                    :height="240"
+                    tableLayout="fixed"
+                    noPaginationGutter
+                    noFirstColumnGutter
+                    @page-changed="handlePageChange"
+                >
+                    <KsTableColumn
+                        v-for="[key, value] in Object.entries(props.chart.data?.columns ?? {})"
+                        :key
+                        :label="value.displayName || key"
+                        :width="value.field === 'STATE' ? 140 : undefined"
+                    >
+                        <template #default="scope">
+                            <template v-if="resolvedComponent(value.field) === undefined">
+                                {{ scope.row[key] }}
+                            </template>
+                            <component
+                                v-else
+                                :is="resolvedComponent(value.field)"
+                                v-bind="resolvedProps(value.field, key, scope.row)"
+                            />
+                        </template>
+                    </KsTableColumn>
+                </KsDataTable>
+            </section>
+
+            <KsNoData v-else :title="EMPTY_TEXT" class="empty" />
+        </Motion>
+    </div>
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref} from "vue"
+    import {computed, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
+
+    import {Motion} from "motion-v"
+    import {KsExecutionStatus} from "@kestra-io/design-system"
 
     import type {Chart} from "../types.ts"
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
-
+    import TableQuickFilter from "./TableQuickFilter.vue"
+    import {stateFilterForTab} from "./quickFilters"
     import Date from "./table/columns/Date.vue"
     import Duration from "./table/columns/Duration.vue"
     import Link from "./table/columns/Link.vue"
     import Namespace from "./table/columns/Namespace.vue"
-    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {useStateFilter} from "../../filter/composables/useStateFilter"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const props = defineProps({
-        dashboardId: {type: String, required: false, default: undefined},
-        chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
-        showDefault: {type: Boolean, default: false},
+    const {navigateToStateFilter} = useStateFilter()
+
+    const props = withDefaults(defineProps<{
+        dashboardId?: string;
+        chart: Chart;
+        filters?: QueryFilter[];
+        showDefault?: boolean;
+    }>(), {
+        dashboardId: undefined,
+        filters: () => [],
+        showDefault: false,
     })
 
+    const route = useRoute()
+
     const containerID = `${props.chart.id}__${Math.random()}`
+
+    const hasIdColumn = computed(() =>
+        Object.values(props.chart.data?.columns ?? {}).some((c: any) => c?.field === "ID"),
+    )
 
     const resolvedComponent = (field: string) => {
         switch (field) {
@@ -75,37 +111,48 @@
         case "ID":
             return {...baseProps, execution: true}
         case "FLOW_ID":
-            return {...baseProps, flow: true}
+            return {...baseProps, flow: true, colored: !hasIdColumn.value}
         case "NAMESPACE":
             return {field: row[key]}
         case "STATE":
             return {
                 size: "small",
                 status: row[key].toString(),
+                clickable: true,
+                onClick: () => navigateToStateFilter(row[key].toString()),
             }
         case "DURATION":
             return {field: row[key], startDate: row["start_date"]}
         default:
             if (field.toLowerCase().includes("date")) {
-                return {field: row[key]}
+                return {field: row[key], relative: field === "NEXT_EXECUTION_DATE"}
             }
             return {}
         }
     }
 
     const data = ref()
-
-    import {useRoute} from "vue-router"
-    import {FilterObject} from "../../../utils/filters"
-    const route = useRoute()
-    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false)
-
-    const getData = async () => (data.value = await generate(
-        isPaginationEnabled(props.chart) ? {pageNumber: pageNumber.value, pageSize: pageSize.value} : undefined,
-    ))
-
+    const activeTab = ref("all")
+    const stateFilter = ref<QueryFilter | null>(stateFilterForTab(props.chart, "all"))
     const pageNumber = ref(1)
     const pageSize = ref(25)
+
+    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false)
+
+    const getData = async () => {
+        const pagination = isPaginationEnabled(props.chart)
+            ? {pageNumber: pageNumber.value, pageSize: pageSize.value}
+            : undefined
+        const append = stateFilter.value ? [stateFilter.value] : undefined
+        data.value = await generate(pagination, undefined, append)
+    }
+
+    const onQuickFilterChange = (filter: QueryFilter | null, tab: string) => {
+        stateFilter.value = filter
+        activeTab.value = tab
+        pageNumber.value = 1
+        getData()
+    }
 
     const handlePageChange = (options: { page?: number; size?: number | string }) => {
         if (pageNumber.value === options.page && pageSize.value === options.size) return
@@ -115,7 +162,7 @@
         if (sizeNumber && isNaN(sizeNumber)) {
             pageSize.value = 25
             return
-        };
+        }
         pageSize.value = sizeNumber ?? 25
 
         return getData()
@@ -125,17 +172,36 @@
         return getData()
     }
 
-    defineExpose({
-        refresh,
-    })
+    defineExpose({refresh})
 
-    watch(() => route.params.filters, () => {
-        refresh()
-    }, {deep: true, immediate: true})
+    watch(() => route.params.filters, () => refresh(), {deep: true, immediate: true})
 </script>
 
-<style lang="scss" scoped>
-section#table :deep(.kel-scrollbar__thumb) {
-    background-color: var(--ks-btn-primary-bg-default) !important;
-}
+<style scoped lang="scss">
+    .table-root {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .table-motion {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .empty {
+        min-height: 200px;
+    }
+
+    :deep(.ks-data-table-content) {
+        border-top: 1px solid var(--ks-border-default);
+        border-bottom: 1px solid var(--ks-border-default);
+        padding: var(--ks-spacing-2) 0;
+    }
+
+    :deep(.kel-pagination) {
+        margin-bottom: 0 !important;
+        flex-wrap: wrap;
+        row-gap: var(--ks-spacing-2);
+    }
 </style>

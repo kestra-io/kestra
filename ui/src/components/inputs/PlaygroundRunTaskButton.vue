@@ -2,7 +2,6 @@
     <KsDropdown
         splitButton
         @visible-change="playgroundStore.dropdownOpened = $event"
-        :buttonProps="{class: 'el-button--playground'}"
         @click="playgroundStore.runUntilTask(taskId)"
         :disabled="!playgroundStore.readyToStart"
     >

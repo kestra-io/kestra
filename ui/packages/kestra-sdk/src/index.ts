@@ -29,8 +29,13 @@ export const configureClient: typeof configure = (clientConfig) => {
     const result = configure(clientConfig)
     // Dev-only: warn (once) if the committed SDK is stale vs the backend's live OpenAPI spec. The
     // guard + dynamic import make bundlers drop this entirely from production builds (tree-shaken).
+    // Also excluded under Vitest (`MODE === "test"`, its documented default): there is no live
+    // backend to compare against there — Storybook's `preview.jsx` short-circuits every axios
+    // request but calls `configureClient()` on native `fetch` on every single story render, and
+    // without this guard each one hits an unmatched dev-server route and logs a bogus mismatch.
     // `import.meta.env` is a Vite construct (not in this package's lib types), hence the cast.
-    if ((import.meta as unknown as {env?: {DEV?: boolean}}).env?.DEV) {
+    const env = (import.meta as unknown as {env?: {DEV?: boolean, MODE?: string}}).env
+    if (env?.DEV && env.MODE !== "test") {
         void import("./dev-freshness").then((m) => m.warnIfSdkStale(OPENAPI_SPEC_HASH)).catch(() => {})
     }
     return result

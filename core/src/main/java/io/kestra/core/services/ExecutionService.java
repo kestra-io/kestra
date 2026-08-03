@@ -696,7 +696,6 @@ public class ExecutionService {
                 state,
                 null,
                 null,
-                null,
                 true
             )
             .buffer(batchSize)

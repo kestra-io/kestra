@@ -190,7 +190,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter,
         boolean deleted) {
         return Flux.create(
             emitter -> this.jdbcRepository
@@ -211,7 +210,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                         state,
                         labels,
                         triggerExecutionId,
-                        childFilter,
                         deleted
                     );
 
@@ -281,7 +279,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter,
         boolean deleted) {
         var select = context
             .select(
@@ -290,7 +287,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, deleted));
 
-        select = filteringQuery(select, scope, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
+        select = filteringQuery(select, scope, namespace, flowId, null, query, labels, triggerExecutionId);
 
         if (startDate != null) {
             select = select.and(START_DATE_FIELD.greaterOrEqual(startDate.toOffsetDateTime()));
@@ -330,8 +327,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable List<FlowFilter> flows,
         @Nullable String query,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter) {
+        @Nullable String triggerExecutionId) {
         if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
             if (scope.contains(FlowScope.USER)) {
                 select = select.and(field("namespace").ne(systemFlowsConfiguration.namespace()));
@@ -358,14 +354,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
         if (triggerExecutionId != null) {
             select = select.and(field("trigger_execution_id").eq(triggerExecutionId));
-        }
-
-        if (childFilter != null) {
-            if (childFilter.equals(ChildFilter.CHILD)) {
-                select = select.and(field("trigger_execution_id").isNotNull());
-            } else if (childFilter.equals(ChildFilter.MAIN)) {
-                select = select.and(field("trigger_execution_id").isNull());
-            }
         }
 
         if (flows != null) {

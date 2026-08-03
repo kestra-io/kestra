@@ -1,5 +1,5 @@
 import {expect, test} from "./fixtures/auth"
-import {CHAT, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * End-to-end coverage for the AI Copilot chat drawer.
@@ -33,6 +33,7 @@ test.describe("AI Copilot", () => {
     test.beforeEach(async ({page}) => {
         // Thread creation is always the same stubbed thread.
         await stubThreadCreation(page, THREAD)
+        await disableProductTour(page)
 
         await page.goto("/ui")
         await openCopilotDock(page)
@@ -384,6 +385,7 @@ test.describe("AI Copilot", () => {
  */
 test.describe("AI Copilot — full-page /ai surface", () => {
     test("hosts the copilot full-page at /ai with the page-only Need Help section", async ({page}) => {
+        await disableProductTour(page)
         await page.goto("/ui")
         const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
         await page.goto(`/ui/${tenant}/ai`, {waitUntil: "domcontentloaded"})

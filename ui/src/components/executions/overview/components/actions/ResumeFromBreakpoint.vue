@@ -1,6 +1,7 @@
 <template>
     <KsButton
         v-if="enabled"
+        v-bind="$attrs"
         :icon="Play"
         @click="click"
     >
@@ -48,6 +49,8 @@
     import {getAllTaskIds} from "../../../../../utils/flowUtils"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
+
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps({
         execution: {

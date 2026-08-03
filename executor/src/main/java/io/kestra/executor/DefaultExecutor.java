@@ -288,10 +288,26 @@ public class DefaultExecutor extends AbstractService implements Executor {
         );
         this.queueSubscribers.addFirst(this.workerTaskResultQueue.subscriber().subscribeBatch(workerTaskResults ->
         {
-            List<CompletableFuture<Void>> futures = workerTaskResults.stream()
-                .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
+            // process worker task results grouped by executionId, to avoid concurrency at the execution level:
+            // joining a later sibling's result (e.g. a failing task) before an earlier one can terminate a flowable,
+            // and silently drop the earlier task's outputs, which are never joined afterward.
+            List<CompletableFuture<Void>> perExecutionFutures = workerTaskResults.stream()
+                .filter(Either::isLeft)
+                .collect(Collectors.groupingBy(either -> either.getLeft().getTaskRun().getExecutionId()))
+                .values()
+                .stream()
+                .map(eithers -> CompletableFuture.runAsync(() ->
+                {
+                    eithers.forEach(this::workerTaskResultQueue);
+                }, workerTaskResultExecutorService))
                 .toList();
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            // directly process deserialization issues as most of the time there will be none
+            workerTaskResults.stream()
+                .filter(Either::isRight)
+                .forEach(either -> workerTaskResultQueue(either));
+
+            CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
         }
         ));
         this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));

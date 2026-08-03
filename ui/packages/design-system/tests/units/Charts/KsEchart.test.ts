@@ -1,4 +1,4 @@
-import {describe, test, expect, vi, beforeAll} from "vitest"
+import {describe, test, expect, vi, afterAll, beforeAll} from "vitest"
 import {mount} from "@vue/test-utils"
 import {ref} from "vue"
 import KsEchart from "../../../src/components/Charts/KsEchart.vue"
@@ -101,6 +101,10 @@ describe("KsEchart", () => {
                 disconnect() {}
             },
         )
+    })
+
+    afterAll(() => {
+        vi.unstubAllGlobals()
     })
 
     // ── Rendering ──────────────────────────────────────────────────────────────

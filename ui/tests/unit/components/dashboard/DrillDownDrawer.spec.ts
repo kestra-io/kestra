@@ -1,4 +1,4 @@
-import {describe, test, expect, vi, beforeEach} from "vitest"
+import {describe, test, expect, vi, afterAll, beforeEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import {createPinia, setActivePinia} from "pinia"
@@ -47,6 +47,11 @@ describe("DrillDownDrawer", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
         mockPush.mockClear()
+    })
+
+    afterAll(() => {
+        // The embedded logs wrapper persists its display preferences on mount.
+        localStorage.clear()
     })
 
     test("renders nothing when the store is closed", () => {

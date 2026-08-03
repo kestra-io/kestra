@@ -16,6 +16,7 @@ import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
@@ -31,6 +32,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -57,7 +59,7 @@ public class BlueprintController {
     public PagedResults<ApiBlueprintItem> searchBlueprints(
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") Optional<String> sort,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) Integer page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") @Min(1) Integer size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "1") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) Integer size,
         @Parameter(description = "The blueprint kind") Kind kind,
         @Parameter(
             description = "A list of query filters. Complex filters are not supported: only top-level QUERY and TAGS conditions are honored, and logical (AND/OR) or nested filter groups are rejected."

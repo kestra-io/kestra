@@ -67,11 +67,11 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"
-    import {isSuccessfulFlowSaveOutcome, useFlowStore} from "../../stores/flow"
+    import {useFlowStore} from "../../stores/flow"
     import {useDocStore} from "../../stores/doc"
     import {useNamespacesStore} from "override/stores/namespaces"
     import {useMiscStore} from "override/stores/misc"
-    import {useOnboardingV2Store} from "../../stores/onboardingV2"
+    import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
 
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
@@ -93,7 +93,7 @@
     // Ctrl/⌘+Alt+Shift+K opens the AI Copilot (the v2 context-dock tab). Suppressed during the
     // guided onboarding tour.
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (onboardingStore.isGuidedActive) {
+        if (tourStore.isGuidedActive) {
             return
         }
         if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && props.flow) {
@@ -213,7 +213,7 @@
     const pluginsStore = usePluginsStore()
     const namespacesStore = useNamespacesStore()
     const miscStore = useMiscStore()
-    const onboardingStore = useOnboardingV2Store()
+    const tourStore = useProductTourStore()
     const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0)
 
     const editorScrollKey = computed(() => {
@@ -290,18 +290,13 @@
 
         if (result === "redirect_to_update") {
             await router.push({
-                name: "flows/update",
+                name: "flows/update/edit",
                 params: {
                     id: flowStore.flow?.id,
                     namespace: flowStore.flow?.namespace,
-                    tab: "edit",
                     tenant: route.params?.tenant,
                 },
             })
-        }
-
-        if (isSuccessfulFlowSaveOutcome(result)) {
-            onboardingStore.recordSave()
         }
     }
 

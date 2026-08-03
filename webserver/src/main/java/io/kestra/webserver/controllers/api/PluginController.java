@@ -28,6 +28,7 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.Searchable;
 
 import io.micronaut.cache.annotation.Cacheable;
@@ -53,6 +54,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.validation.constraints.Max;
 
 import static io.kestra.core.models.Plugin.isDeprecated;
 import static io.kestra.core.models.Plugin.isInternal;
@@ -195,7 +197,7 @@ public class PluginController {
     @Operation(tags = { "Plugins" }, summary = "Get list of plugins")
     public PagedResults<Plugin> listPlugins(
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10000") int size,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "1000") @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "A list of sort fields") @Nullable @QueryValue(value = "sort") List<String> sort,
         @Parameter(description = "A list of query filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat(QueryFilter.Resource.PLUGIN) List<QueryFilter> filters) {
         List<Plugin> items = pluginRegistry.plugins()

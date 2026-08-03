@@ -60,6 +60,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -105,7 +106,7 @@ public class DashboardController {
     @Operation(tags = { "Dashboards" }, summary = "Search for dashboards")
     public PagedResults<DashboardResponse> searchDashboards(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(description = "The filter query") @Nullable @QueryValue String q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort) throws ConstraintViolationException {
         return PagedResults.of(dashboardRepository.list(PageableUtils.from(page, size, sort), tenantService.resolveTenant(), q).map(DashboardResponse::new));

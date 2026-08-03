@@ -288,10 +288,26 @@ public class DefaultExecutor extends AbstractService implements Executor {
         );
         this.queueSubscribers.addFirst(this.workerTaskResultQueue.subscriber().subscribeBatch(workerTaskResults ->
         {
-            List<CompletableFuture<Void>> futures = workerTaskResults.stream()
-                .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
+            // process worker task results grouped by executionId, to avoid concurrency at the execution level:
+            // joining a later sibling's result (e.g. a failing task) before an earlier one can terminate a flowable,
+            // and silently drop the earlier task's outputs, which are never joined afterward.
+            List<CompletableFuture<Void>> perExecutionFutures = workerTaskResults.stream()
+                .filter(Either::isLeft)
+                .collect(Collectors.groupingBy(either -> either.getLeft().getTaskRun().getExecutionId()))
+                .values()
+                .stream()
+                .map(eithers -> CompletableFuture.runAsync(() ->
+                {
+                    eithers.forEach(this::workerTaskResultQueue);
+                }, workerTaskResultExecutorService))
                 .toList();
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            // directly process deserialization issues as most of the time there will be none
+            workerTaskResults.stream()
+                .filter(Either::isRight)
+                .forEach(either -> workerTaskResultQueue(either));
+
+            CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
         }
         ));
         this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));
@@ -711,6 +727,27 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
             if (isTerminated) {
+                // release the concurrency slots (a no-op when no limit applies to the flow),
+                // then check if there exists a queued execution and submit it to the execution queue.
+                // Transactional outbox: the processor pops inside the concurrency-limit
+                // store's transaction and only returns the execution; it is emitted here,
+                // after releaseThenPop() has committed (same rule as executionDelayLoop).
+                // This runs first in the terminal block on purpose: only the cycle that terminated
+                // the execution may release.
+                // An execution that was not already terminal when this cycle started cannot have
+                // been over before it: afterExecution tasks run once the execution state is already terminal,
+                // and the cycle completing them is the one that really terminates the execution.
+                Execution executionAtEntry = executor.getTerminalExecutionAtEntry();
+                boolean terminatedByThisCycle = executionAtEntry == null
+                    || !executionService.isTerminated(executor.getFlow(), executionAtEntry);
+                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor, terminatedByThisCycle);
+                if (popped.isPresent()) {
+                    executionQueue.emit(popped.get());
+
+                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                    processFlowTriggers(popped.get());
+                }
+
                 // if there is a parent, we send a subflow execution result to it
                 if (ExecutableUtils.isSubflow(execution)) {
                     // locate the parent execution to find the parent task run
@@ -756,19 +793,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 // purge SLA monitors
                 if (!ListUtils.isEmpty(executor.getFlow().getSla()) && executor.getFlow().getSla().stream().anyMatch(ExecutionMonitoringSLA.class::isInstance)) {
                     slaMonitorStateStore.purge(executor.getExecution().getId());
-                }
-
-                // release the concurrency slots (a no-op when no limit applies to the flow),
-                // then check if there exists a queued execution and submit it to the execution queue.
-                // Transactional outbox: the processor pops inside the concurrency-limit
-                // store's transaction and only returns the execution; it is emitted here,
-                // after releaseThenPop() has committed (same rule as executionDelayLoop).
-                Optional<Execution> popped = concurrencySlotReleaseProcessor.release(executor);
-                if (popped.isPresent()) {
-                    executionQueue.emit(popped.get());
-
-                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                    processFlowTriggers(popped.get());
                 }
 
                 // purge the trigger: reset scheduler trigger at end

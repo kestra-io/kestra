@@ -57,6 +57,7 @@
     })
 
     import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     import {DEFAULT_DASHBOARD, useDashboardStore} from "../../stores/dashboard"
     import {useCoreStore} from "../../stores/core.ts"
     import {useI18n} from "vue-i18n"
@@ -118,7 +119,7 @@
     }
 
     const load = async (id = "default") => {
-        if (!ALLOWED_CREATION_ROUTES.includes(String(route.name))) {
+        if (!ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name))) {
             return
         }
 
@@ -170,6 +171,7 @@
                     title: err,
                     message: err,
                 }
+                await useDefaultDashboardBundledInUI()
             }
         }
 
@@ -188,7 +190,7 @@
 <style scoped lang="scss">
 
 .filterPadding {
-    margin-top: 1rem;
+    margin-top: 2rem;
     padding: 0 2rem;
 }
 

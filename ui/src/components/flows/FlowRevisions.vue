@@ -4,6 +4,7 @@
         lang="yaml"
         :revisions="flowRevisions"
         :revisionSource="loadRevisionContent"
+        :highlight="route.query.revisionHighlight?.toString()"
         @restore="restoreRevision"
         @deleted="onRevisionDeleted"
         class="flow-revisions"

@@ -2,20 +2,20 @@
     <div class="execution-banner">
         <div class="execution-banner__content">
             <div class="execution-banner__state">
-                <ChangeExecutionStatus :execution @follow="emit('follow', $event)">
+                <ChangeExecutionStatus :execution>
                     <template #trigger="{visible, enabled}">
                         <KsExecutionStatus
                             class="execution-banner__status"
-                            :class="{'is-disabled': !enabled}"
                             :status="execution.state.current"
                             size="large"
                             :disabled="!enabled"
+                            :clickable="enabled"
                             glow
                         >
                             <template #title>
                                 <span class="status-label">
                                     {{ statusLabel }}
-                                    <component :is="visible ? ChevronUp : ChevronDown" class="chevron" />
+                                    <component v-if="enabled" :is="visible ? ChevronUp : ChevronDown" class="chevron" />
                                 </span>
                             </template>
                         </KsExecutionStatus>
@@ -177,7 +177,6 @@
     import GraphOutline from "vue-material-design-icons/GraphOutline.vue"
 
     const props = defineProps<{execution: Execution}>()
-    const emit = defineEmits<{follow: [event?: unknown]}>()
 
     const {t} = useI18n({useScope: "global"})
     const executionsStore = useExecutionsStore()
@@ -345,12 +344,6 @@
         }
 
         &__status {
-            cursor: pointer;
-
-            &.is-disabled {
-                cursor: default;
-            }
-
             .status-label {
                 display: inline-flex;
                 align-items: center;

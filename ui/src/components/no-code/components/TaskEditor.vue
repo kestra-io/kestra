@@ -341,10 +341,13 @@
 
     provide(DATA_TYPES_MAP_INJECTION_KEY, dataTypesMap)
 
+    const miscStore = useMiscStore()
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0)
+
     watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
             if(isPlugin.value){
-                pluginsStore.updateDocumentation(taskModel.value as Parameters<typeof pluginsStore.updateDocumentation>[0])
+                pluginsStore.updateDocumentation({cls: task, version: taskModel.value?.version, hash: hash.value})
             }
         }
     }, {immediate: true})
@@ -367,9 +370,6 @@
 
         onTaskInput(value)
     }
-
-    const miscStore = useMiscStore()
-    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0)
 
     const onTaskEditorClick = inject(ON_TASK_EDITOR_CLICK_INJECTION_KEY, (elt?: PartialNoCodeElement) => {
         if(isPlugin.value && elt?.type){

@@ -8,9 +8,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # When an OSS PR opens, run the kestra-ee compile check for its ref (via a
-  # Kestra webhook) and trigger the EE OpenAPI spec check.
+  # When an OSS PR opens, run the kestra-ee checks its change-area can actually
+  # affect. `backend` drives the compile check (via a Kestra webhook) and the
+  # OpenAPI spec check — both pure Java, so a Vue-only change can never move them.
+  # `ui` drives the ui-ee type check: ui-ee npm-workspaces ui/packages/* and its
+  # check:types builds the OSS app tsconfig before its own.
   trigger-ee:
+    needs: [file-changes]
     runs-on: ubuntu-latest
     # The `secrets` context is not allowed in `if:` conditions, so expose the
     # app-id as a job-level env var (the `env` context IS allowed in `if:`) and
@@ -44,7 +48,8 @@ jobs:
       if: ${{ github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false
-        && env.GH_BOT_APP_ID != '' }}
+        && env.GH_BOT_APP_ID != ''
+        && needs.file-changes.outputs.backend == 'true' }}
       uses: ./.github/actions/ee-compile-check
       with:
         webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
@@ -53,17 +58,33 @@ jobs:
         pr-number: ${{ github.event.pull_request.number }}
         pr-repo: ${{ github.repository }}
 
-      # Always trigger EE OpenAPI check on non-fork PRs where secrets are available
     - name: Trigger EE OpenAPI spec check
       uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
       if: ${{ github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false
-        && env.GH_BOT_APP_ID != '' }}
+        && env.GH_BOT_APP_ID != ''
+        && needs.file-changes.outputs.backend == 'true' }}
       with:
         token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee
         event-type: "oss-pr-openapi-check"
+        client-payload: >-
+          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
+
+      # kestra-ee resolves its own ref (branch of the same name, else develop) and
+      # reports the verdict back as a commit status on this PR's head SHA.
+    - name: Trigger EE UI check
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      if: ${{ github.event_name == 'pull_request'
+        && github.event.pull_request.number != ''
+        && github.event.pull_request.head.repo.fork == false
+        && env.GH_BOT_APP_ID != ''
+        && needs.file-changes.outputs.ui == 'true' }}
+      with:
+        token: ${{ steps.ee-token.outputs.token }}
+        repository: kestra-io/kestra-ee
+        event-type: "oss-pr-ui-check"
         client-payload: >-
           {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
 

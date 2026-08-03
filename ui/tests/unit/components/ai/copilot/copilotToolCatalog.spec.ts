@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, afterAll, beforeEach} from "vitest"
 import {mount} from "@vue/test-utils"
 import type {AiSseFrame} from "../../../../../src/components/ai/copilot/types"
 import {mountGlobal} from "./_helpers"
@@ -69,6 +69,10 @@ describe("AI Copilot v2 — full tool catalog", () => {
         get.mockReset()
         nextFrames = []
         post.mockResolvedValue({data: {uid: "t1", mode: "EDIT", status: "IDLE", createdAt: "", updatedAt: ""}})
+    })
+
+    afterAll(() => {
+        localStorage.clear()
     })
 
     it("reduces a stream that exercises every tool into the expected transcript", async () => {

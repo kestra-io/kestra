@@ -127,10 +127,6 @@ public interface IExecutions extends IData<IExecutions.Fields> {
             return new ArrayList<>(values);
         }
 
-        if (value instanceof List<?> values) {
-            return new ArrayList<>(values);
-        }
-
         return List.of(value);
     }
 

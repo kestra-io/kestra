@@ -1,8 +1,10 @@
+// Must stay the FIRST import: it patches window.fetch before any src/ or SDK module is evaluated.
+import {apiFetch, beginStoryScope} from "./apiMock";
 import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
 import {globalI18n} from "../src/translations/i18n";
-import {configureClient} from "@kestra-io/kestra-sdk";
+import {configureClient, useClient} from "@kestra-io/kestra-sdk";
 import axios from "axios";
 import {createMemoryHistory} from "vue-router";
 import {vueRouter} from "storybook-vue3-router";
@@ -17,7 +19,8 @@ window.KESTRA_UI_PATH = "./";
 // No backend is running during storybook tests, so short-circuit every axios
 // request with an empty successful response instead of letting it hit the
 // network — this prevents network errors, proxy failures, and the Vue/axios
-// error cascade that follows.
+// error cascade that follows. The fetch-based SDK — which is everything except
+// the 4 remaining axios importers in src/ — is handled by ./apiMock instead.
 // Per axios docs, a custom adapter is just a function assigned to
 // `axios.defaults.adapter`: https://axios-http.com/docs/adapters — it must NOT
 // be read back out and re-invoked (axios.defaults.adapter is normally an array
@@ -82,7 +85,13 @@ const preview = {
         },
         defaultTheme: "light",
       }),
-  ]
+  ],
+  // Name the running story in "unmocked API request" warnings, and clear their de-duplication
+  // record, so an unmocked route is reported for every story it affects and points at the story to
+  // fix rather than at nothing.
+  beforeEach({title, name}) {
+    beginStoryScope(`${title} > ${name}`);
+  },
 };
 
 setup(async (app) => {
@@ -91,19 +100,22 @@ setup(async (app) => {
   // noisy "Not found" warnings in Storybook (it already falls back to the key).
   globalI18n.value.missingWarn = false;
   globalI18n.value.fallbackWarn = false;
-  configureClient()
+  // Pin the SDK's fetch to the mock: the generated client resolves
+  // `options.fetch ?? _config.fetch ?? globalThis.fetch`, so this makes the generated-SDK path
+  // explicit rather than depending on the global patch alone.
+  configureClient({fetch: apiFetch})
+  // The real app gives stores the full client (src/main.ts), so binding only `get` here left
+  // `$http.post/put/delete` as TypeErrors. useClient() goes through the mocked fetch like
+  // everything else.
   piniaStore.use(({store}) => {
-    store.$http = {
-        get: () => Promise.resolve({data: []}),
-    }
+    store.$http = useClient();
   });
 })
 
-window.addEventListener("unhandledrejection", (evt) => {
-    if (evt?.reason?.stack?.includes?.("/monaco/esm/vs") || evt?.reason?.stack?.includes?.("/monaco/min/vs")) {
-        evt.stopImmediatePropagation()
-    }
-})
+// The unhandledrejection listener that used to live here now lives in ./apiMock, installed before
+// anything else: it drops the same monaco teardown rejections (matching the node_modules path the
+// dev server actually serves, which this one missed) and prints the reason of every other rejection,
+// which vitest otherwise reports as a bare `PromiseRejectionEvent {isTrusted: true}`.
 
 import "../src/utils/monacoEnvironment"
 

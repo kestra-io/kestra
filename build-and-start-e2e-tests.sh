@@ -23,7 +23,11 @@ BASE_IMAGE="$(sed -n 's/^ARG BASE_IMAGE="\(.*\)"/\1/p' Dockerfile)"
 docker pull -q "${BASE_IMAGE:-ghcr.io/kestra-io/kestra-base:latest-no-plugins}" > /dev/null 2>&1 &
 docker pull -q postgres > /dev/null 2>&1 &
 
-if [ -n "$CI" ]; then
+if [ "${E2E_USE_PREBUILT_EXE:-false}" = "true" ]; then
+  # CI already downloaded a prebuilt executable into build/executable
+  # (the Build Artifacts job's artifact), so only the image remains to build.
+  make build-docker-from-exec VERSION=$LOCAL_IMAGE_VERSION
+elif [ -n "$CI" ]; then
   # CI runners start from a fresh checkout (nothing to clean) and the workflow
   # has already run `npm ci`, so skip both.
   make build-docker VERSION=$LOCAL_IMAGE_VERSION SKIP_NPM_CI=true

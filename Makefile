@@ -93,6 +93,11 @@ install-plugins:
 
 # Build docker image from Kestra source.
 build-docker: build-exec
+	$(MAKE) build-docker-from-exec
+
+# Build docker image from an existing build/executable (e.g. a CI artifact),
+# skipping the frontend/Gradle build entirely.
+build-docker-from-exec:
 	cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
 	echo "${DOCKER_IMAGE}:${VERSION}"
 	docker build \

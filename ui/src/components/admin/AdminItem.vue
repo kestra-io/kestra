@@ -1,6 +1,6 @@
 <template>
     <KsSideBarItem
-        :title="t('admin')"
+        :title="title ?? t('admin')"
         :icon="CogOutline"
         :active="active"
         class="admin-item"
@@ -40,6 +40,8 @@
     const props = defineProps<{
         tabs: RouteTab[]
         landingRoute?: RouteLocationRaw
+        /** Overrides the entry label — EE narrows this panel down to settings. */
+        title?: string
     }>()
 
     const OWNER = Symbol("admin-tabs")

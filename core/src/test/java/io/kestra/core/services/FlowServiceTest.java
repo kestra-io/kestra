@@ -850,6 +850,31 @@ class FlowServiceTest {
     }
 
     @Test
+    void shouldRemoveOrphanConcurrencyLimitWhenPreviousRevisionAlsoHadNoConcurrency() throws FlowProcessingException, QueueException {
+        // Given a flow that does not declare a concurrency block, but whose limit record survived.
+        // Removal used to be a diff against revision - 1, so it only fired on the exact revision
+        // that dropped the block: any record outliving that boundary stayed forever and kept a
+        // stuck running count alive, invisible outside the superadmin pages (kestra-ee#9200).
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TenantService.MAIN_TENANT)
+            .namespace(TEST_NAMESPACE)
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("original")).build()))
+            .build();
+        FlowWithSource created = flowService.create(GenericFlow.of(flow));
+        concurrencyLimitRepository.update(new ConcurrencyLimit(flow.getTenantId(), flow.getNamespace(), flow.getId(), 1));
+
+        // When the flow is updated, still without a concurrency block
+        Flow updated = flow.toBuilder()
+            .tasks(List.of(Return.builder().id("task").type(Return.class.getName()).format(Property.ofValue("updated")).build()))
+            .build();
+        flowService.update(GenericFlow.of(updated), created);
+
+        // Then the orphan record is gone
+        assertThat(concurrencyLimitRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId())).isEmpty();
+    }
+
+    @Test
     void shouldRemoveConcurrencyLimitWhenDeletingFlow() throws FlowProcessingException, QueueException {
         // Given a flow created with a concurrency limit
         Flow flow = Flow.builder()

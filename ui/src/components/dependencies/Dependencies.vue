@@ -3,6 +3,7 @@
         <div v-if="showExecutionChart" class="chart-header">
             <ChartDurationSelect v-model="chartDuration" />
             <TimeSeries
+                v-show="chartHasData"
                 ref="chartRef"
                 :chart="chartDefinition"
                 :filters="chartFilters()"
@@ -153,6 +154,8 @@
 
     const chartRef = useTemplateRef<InstanceType<typeof TimeSeries>>("chartRef")
 
+    const chartHasData = computed(() => (chartRef.value?.total ?? 0) > 0)
+
     watch(chartDuration, () => void chartRef.value?.refresh(), {flush: "post"})
 
     interface ChartDefinition {
@@ -233,7 +236,6 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
-    gap: var(--ks-spacing-2);
 }
 
 .chart-header {
@@ -241,7 +243,8 @@
     flex-direction: column;
     flex-shrink: 0;
     gap: var(--ks-spacing-2);
-    padding: var(--ks-spacing-2) 0;
+    padding: var(--ks-spacing-2);
+    padding-bottom: 0;
 }
 
 .dependencies {

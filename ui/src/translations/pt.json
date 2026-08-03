@@ -108,10 +108,10 @@
     "running duration": "Duração em execução",
     "queued duration": "Duração na fila",
     "executionProgress": {
-        "title": "Progresso da execução",
-        "estimatedRemaining": "Tempo restante estimado: {duration}",
-        "noBaseline": "Sem dados históricos — não é possível estimar o tempo restante",
-        "pastEstimate": "A execução está a demorar mais do que o habitual"
+      "title": "Progresso da execução",
+      "estimatedRemaining": "Tempo restante estimado: {duration}",
+      "noBaseline": "Sem dados históricos — não é possível estimar o tempo restante",
+      "pastEstimate": "A execução está a demorar mais do que o habitual"
     },
     "choose file": "Escolha um arquivo ou solte-o aqui...",
     "launch execution": "Executar",
@@ -419,6 +419,7 @@
       "tree": "Árvore",
       "raw_json": "Raw JSON",
       "select_prompt": "Selecione uma variável para inspecionar o seu value.",
+      "select_hint": "Variáveis, o trigger e os outputs da task estão listados à esquerda.",
       "empty": "Não há variáveis disponíveis para esta execução.",
       "one_key": "\\{ 1 key \\}",
       "n_keys": "\\{ {count} keys \\}",
@@ -435,6 +436,13 @@
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrency",
       "warning": "Alterar o contador em execução pode corromper a concorrência, fazendo com que as execuções excedam o limite permitido."
+    },
+    "flowConcurrency": {
+      "loadError": "Não foi possível carregar o limite de concorrência deste flow.",
+      "staleLimit": {
+        "message": "Este flow não declara mais um bloco de concorrência, mas um registo de limite ainda contabiliza {count} execução(ões) em curso. Já não afeta as novas execuções e pode ser reposto em Administração → Limites de Concorrência.",
+        "title": "Limite de concorrência remanescente"
+      }
     },
     "documentation": {
       "documentation": "Documentação",
@@ -540,6 +548,18 @@
     "trigger": "Trigger",
     "no_trigger": "Nenhum trigger disponível.",
     "triggers": "Triggers",
+    "test_event": {
+      "title": "Enviar um evento de teste",
+      "description": "Isso publica o payload abaixo para a URL do webhook do trigger {trigger}.",
+      "payload": "Payload",
+      "headers": "Cabeçalhos (opcional)",
+      "send": "Enviar evento",
+      "sending": "Enviando",
+      "response": "Resposta {status}",
+      "execution_created": "Execução criada",
+      "failed": "O webhook respondeu {status}. Certifique-se de que o flow está salvo e o trigger está ativado.",
+      "button": "Enviar evento de teste"
+    },
     "triggers_header_description": "Navegue, adicione e gerencie triggers para automatizar seus flows. Escolha entre expor seu flow como uma ferramenta de IA, agendar, adicionar um webhook trigger, verificar mudanças em aplicativos externos ou ouvintes de eventos em tempo real.",
     "triggers_tabs_add": "Adicionar",
     "triggers_tabs_manage": "Gerenciar",
@@ -1297,6 +1317,168 @@
     },
     "assets": {
       "title": "Ativos"
+    },
+    "onboarding": {
+      "tour": {
+        "menu": "Tour do produto",
+        "menu_description": "Construir, executar e corrigir um flow, depois inicie-o a partir de um evento",
+        "step_of": "Passo {current} de {total}",
+        "actions": {
+          "back": "Voltar",
+          "skip": "Pular tour",
+          "running": "Em execução",
+          "finish_now": "Finalizar tour",
+          "dismiss": "Ocultar isto",
+          "skipped_hint": "O tour do produto fica no menu esquerdo se você quiser retomá-lo mais tarde."
+        },
+        "intro": {
+          "kicker": "Bem-vindo ao Kestra",
+          "title": "Aprenda Kestra em menos de 5 minutos",
+          "body": "Kestra é uma plataforma de orquestração. Ela facilita a construção, execução e correção de flows agendados e orientados a eventos.",
+          "note": "Pode parar a qualquer momento.",
+          "start": "Iniciar o tour",
+          "skip": "Pular tour"
+        },
+        "scenes": {
+          "copilot": {
+            "title": "Descreva o fluxo de trabalho que você deseja",
+            "body": "Descreva o que você quer automatizar, e o AI Copilot irá rascunhá-lo para você. O tour continua com um example flow pronto, então nada precisa ser digitado aqui.",
+            "next": "Gerar o flow"
+          },
+          "flow_generated": {
+            "title": "Isto é um flow",
+            "body": "O flow é escrito em YAML com duas tasks:<ol><li><code>fetch_orders</code> para baixar os pedidos</li><li><code>summarize</code> para calcular a receita em Python</li></ol>As tasks são executadas sequencialmente, na ordem em que são definidas.",
+            "next": "Salvar e executar"
+          },
+          "first_execution": {
+            "title": "Toda execução é registrada",
+            "body": "Cada task é cronometrada na visualização Gantt. Clicar em uma task mostra seus logs.",
+            "milestone": "Sua primeira execução foi bem-sucedida",
+            "next": "Editar o flow",
+            "callout": "Ao contrário de um cron job ou um script executado manualmente, cada execução é mantida com seus inputs, outputs e logs, para que o que foi executado possa ser auditado posteriormente."
+          },
+          "add_task": {
+            "title": "Flows são editados como código",
+            "body": "Adicionamos uma task `notify` para você sem o AI Copilot, para que você possa ver como é editar o YAML diretamente. Ele publica o resultado final no Slack.",
+            "next": "Ver a documentação da task",
+            "callout": "O AI Copilot forneceu o primeiro rascunho; o editor é onde você pode iterar sobre ele em uma guia do editor de Código ou No-Code, que ambos produzem o mesmo YAML, para que seu flow permaneça como código, independentemente de como foi construído."
+          },
+          "editor_help": {
+            "title": "A documentação está ao lado do flow",
+            "body": "A documentação para a task sob o cursor é mostrada no painel **Docs**, com suas propriedades, outputs e exemplos.",
+            "callout": "Flows são construídos por iteração: altere uma propriedade, execute-o, leia os logs, repita. Autocompletar e o painel <strong>Docs</strong> significam que você nunca precisa sair do editor para consultar algo.",
+            "next": "Executar o flow"
+          },
+          "failed_execution": {
+            "title": "Uma task falhou",
+            "body": "A expressão para a receita na mensagem do Slack tem um erro de digitação: <code>vars.revenu</code> em vez de <code>vars.revenue</code>.",
+            "callout": "As tasks antes de <code>notify</code> foram bem-sucedidas, então seus outputs ainda estão disponíveis.",
+            "next": "Corrigir o flow"
+          },
+          "fix_and_replay": {
+            "title": "Um caractere alterado",
+            "body": "A expressão é agora `vars.revenue`. O diff mostra a única linha que mudou, e a execução FAILED pode ser reproduzida a partir da task `notify` contra a nova revisão.",
+            "next": "Reproduzir a partir da task FAILED"
+          },
+          "replayed_execution": {
+            "title": "Apenas o que falhou executou novamente",
+            "body": "Os outputs da primeira tentativa foram reutilizados, então apenas a task <code>notify</code> teve que ser executada novamente. Desta vez, a mensagem do Slack foi enviada com sucesso.",
+            "milestone": "A reprodução foi bem-sucedida",
+            "next": "Adicionar um trigger",
+            "callout": "Sem replay, uma task FAILED exigiria a reexecução de todo o flow. Chamadas de API pagas seriam feitas novamente, computações longas repetidas e linhas já escritas duplicadas."
+          },
+          "webhook_trigger": {
+            "title": "Seu flow pode ser iniciado por um evento",
+            "body": "Com um trigger Webhook, este flow tem a sua própria URL. Uma execução é criada sempre que um pedido HTTP é enviado para essa URL, e o corpo do pedido está disponível para as tasks como <code>trigger.body</code>.",
+            "next": "Ver o trigger"
+          },
+          "test_event": {
+            "title": "Enviar um evento de teste",
+            "body": "O trigger está listado aqui. Um evento de teste pode ser enviado do seu navegador, da mesma forma que um sistema externo o enviaria, para que o trigger possa ser testado sem sair do Kestra.",
+            "next": "Enviar um evento de teste"
+          },
+          "event_execution": {
+            "title": "O evento criou uma execução",
+            "body": "O evento chegou, e uma execução foi criada a partir dele, cronometrada e com logs como qualquer outra. Nenhum serviço separado precisa ser hospedado para isso; o endpoint do trigger faz parte do Kestra.",
+            "milestone": "Uma execução que você não iniciou",
+            "next": "Explorar a carga útil"
+          },
+          "explore_payload": {
+            "title": "Variáveis, trigger e task outputs",
+            "body": "A aba <strong>Input/Output</strong> lista cada value disponível para esta execução.",
+            "callout": "`trigger.body` já está preenchido à direita. Pressione **Debug Expression** para ver o que ele retorna para esta execução.",
+            "next": "Encadear um segundo flow"
+          },
+          "report_flow": {
+            "title": "Um flow pode depender de outro",
+            "body": "`daily_report` tem um Flow trigger, então ele é iniciado sempre que `order_summary` é bem-sucedido. Nada precisa ser adicionado a `order_summary` para isso.",
+            "next": "Enviar outro evento",
+            "callout": "Os dois flows podem pertencer a equipes diferentes: <code>daily_report</code> declara o que ele espera, e <code>order_summary</code> não precisa saber que ele existe."
+          },
+          "chain": {
+            "title": "Como cada execução foi iniciada",
+            "body": "Execuções que você iniciou recebem a label <code>started_by:you</code>. Outras foram criadas pelo evento webhook ou pelo trigger do flow.",
+            "milestone": "Duas execuções de um evento",
+            "next": "Concluir"
+          }
+        },
+        "finale": {
+          "kicker": "Tour concluído",
+          "title": "O que você construiu e o que experimentar a seguir",
+          "takeaways": {
+            "copilot": {
+              "title": "Flows gerados a partir de Inglês simples",
+              "body": "Descreva o que você quer automatizar, e um flow é rascunhado pelo AI Copilot. A partir daí, você o refina no editor, com preenchimento automático e o painel **Docs**. flows são executados a partir do botão **Executar** do flow ou de qualquer execução."
+            },
+            "restart": {
+              "title": "Repetir em vez de executar tudo novamente",
+              "body": "Execuções de task que já tiveram sucesso são reutilizadas, assim, apenas o trabalho que falhou precisa ser executado novamente, com base na revisão mais recente do flow. Reexecutar e reiniciar estão disponíveis em <strong>Ações</strong> em uma execução, e em uma execução de task na visualização Gantt."
+            },
+            "events": {
+              "title": "Execuções iniciadas por eventos",
+              "body": "Webhook e Schedule triggers fazem parte do Kestra, assim, uma execução pode ser iniciada por um evento ou em um agendamento sem a necessidade de hospedar nada extra."
+            },
+            "chain": {
+              "title": "Flows que dependem de Flows",
+              "body": "Com um Flow trigger, um flow pode ser iniciado pelo sucesso ou falha de outro flow, entre namespaces. Isso mantém os flows desacoplados. Nada no primeiro flow se refere ao segundo, assim, ambos podem ser gerenciados e alterados independentemente."
+            }
+          },
+          "namespace_note": "Tudo deste tour está no seu {namespace} namespace. Os endpoints do Slack e da API eram mocks; URLs de webhook reais seriam armazenadas como {secrets}.",
+          "keep_going": "Continuar",
+          "restart": "Reiniciar tour",
+          "start_building": "Começar a construir",
+          "docs": {
+            "title": "Ler mais",
+            "autocompletion": "Autocompletar",
+            "execution": "Execuções",
+            "replay": "Reproduzir",
+            "revision": "Revisões",
+            "webhook": "Webhook",
+            "schedule": "Agendamento",
+            "flowTrigger": "Gatilhos de flow",
+            "namespace": "Namespaces",
+            "secret": "Segredos"
+          }
+        },
+        "errors": {
+          "first_execution": "A primeira execução terminou como {state} em vez de ter sucesso. Abra os logs nesta página para ver o porquê e tente novamente.",
+          "expected_failure": "Esta execução terminou como {state}, então não há falha para corrigir ainda. Verifique se o flow ainda tem a task <code>notify</code>, então tente novamente.",
+          "no_execution_to_replay": "Não há execuções para reproduzir ainda. Execute o flow na etapa anterior e tente novamente.",
+          "replay": "A repetição terminou como {state}. Abra os logs nesta página para ver o que <code>notify</code> relatou, então tente novamente.",
+          "save_flow": "O flow do tour não pôde ser salvo. {reason}",
+          "test_event": "O webhook respondeu com {status}. Verifique se o flow está salvo e o trigger está habilitado, e tente novamente."
+        },
+        "steps": {
+          "1": "Escrever e executar um flow",
+          "2": "Recuperar de uma falha",
+          "3": "Iniciar um flow a partir de um evento",
+          "4": "Encadear dois flows"
+        },
+        "nudge": {
+          "title": "Novo no Kestra?",
+          "action": "Fazer o tour do produto"
+        }
+      }
     },
     "enable concurrency": "Habilitar concorrência",
     "auditlogs": "Audit Logs",
@@ -2201,6 +2383,10 @@
         }
       },
       "flows": {
+        "ordersRevenueToSlack": {
+          "label": "Resumo do pedido com Python",
+          "prompt": "Obter pedidos de uma API e resumir a receita com Python"
+        },
         "jsonApiToDuckdb": {
           "label": "API JSON para DuckDB",
           "prompt": "Crie um flow que baixe um arquivo JSON de uma API pública, transforme-o com um script Python e processe-o com uma task DuckDB Queries."

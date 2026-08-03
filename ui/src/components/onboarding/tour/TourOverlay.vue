@@ -4,10 +4,12 @@
     <div v-if="tourStore.isGuidedActive && !showFinale" class="tour-overlay" aria-live="polite">
         <!-- Dims everything but the part this step is about. Decoration only, never takes a click. -->
         <template v-if="spotlight">
-            <div class="tour-scrim" :style="spotlight.scrim.top" />
-            <div class="tour-scrim" :style="spotlight.scrim.bottom" />
-            <div class="tour-scrim" :style="spotlight.scrim.left" />
-            <div class="tour-scrim" :style="spotlight.scrim.right" />
+            <template v-if="spotlight.scrim">
+                <div class="tour-scrim" :style="spotlight.scrim.top" />
+                <div class="tour-scrim" :style="spotlight.scrim.bottom" />
+                <div class="tour-scrim" :style="spotlight.scrim.left" />
+                <div class="tour-scrim" :style="spotlight.scrim.right" />
+            </template>
             <div v-for="(ring, index) in spotlight.rings" :key="index" class="tour-ring" :style="ring" />
         </template>
 
@@ -244,7 +246,7 @@
     // Measured every frame while a highlight is up, since pages scroll, panels resize and logs arrive
     // late. Nothing is written unless the rectangles moved.
     const spotlight = ref<{
-        scrim: Record<"top" | "bottom" | "left" | "right", Record<string, string>>;
+        scrim: Record<"top" | "bottom" | "left" | "right", Record<string, string>> | null;
         rings: Record<string, string>[];
     } | null>(null)
 
@@ -310,7 +312,7 @@
         lastSpotlightKey = key
 
         spotlight.value = {
-            scrim: {
+            scrim: scene.value?.dim === false ? null : {
                 top: {top: "0", left: "0", right: "0", height: px(top)},
                 bottom: {top: px(bottom), left: "0", right: "0", bottom: "0"},
                 left: {top: px(top), left: "0", width: px(left), height: px(bottom - top)},

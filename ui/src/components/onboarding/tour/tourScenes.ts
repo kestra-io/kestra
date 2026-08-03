@@ -42,6 +42,8 @@ export interface TourScene {
     step: number;
     targetSelector?: string;
     placement?: "left";
+    /** False on a step whose reader has to read the rest of the page as well. */
+    dim?: boolean;
     milestone?: boolean;
     callout?: boolean;
     confetti?: boolean;
@@ -267,6 +269,8 @@ export const TOUR_SCENES: TourScene[] = [
         id: "explore_payload",
         step: 3,
         targetSelector: EXPRESSION_DEBUGGER,
+        // The values on this page, and what the button returns, are the point of the step.
+        dim: false,
         callout: true,
         offersExit: true,
         enter: async ({actions, store}) => {

@@ -46,18 +46,16 @@ public class PebbleExpressionService {
 
         this.functions = allFunctions.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
-            .map(entry ->
-            {
+            .map(entry -> {
                 Function fn = entry.getValue();
                 List<String> argNames = fn.getArgumentNames();
-                if (argNames == null) {
-                    return new PebbleFunction(entry.getKey(), List.of());
-                }
                 Map<String, String> defaults = fn instanceof KestraFunction kf ? kf.getArgumentDefaults() : Map.of();
-                List<PebbleFunction.Argument> arguments = argNames.stream()
+                boolean deprecated = fn instanceof KestraFunction kf ? kf.isDeprecated() : fn.getClass().isAnnotationPresent(Deprecated.class);
+                String replacement = fn instanceof KestraFunction kf ? kf.replacement() : null;
+                List<PebbleFunction.Argument> arguments = argNames == null ? List.of() : argNames.stream()
                     .map(name -> new PebbleFunction.Argument(name, defaults.get(name)))
                     .toList();
-                return new PebbleFunction(entry.getKey(), arguments);
+                return new PebbleFunction(entry.getKey(), arguments, deprecated, replacement);
             })
             .toList();
     }

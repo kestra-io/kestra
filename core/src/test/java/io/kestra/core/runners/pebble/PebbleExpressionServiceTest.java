@@ -114,4 +114,18 @@ class PebbleExpressionServiceTest {
         assertThat(findFunction("read").arguments()).extracting(PebbleFunction.Argument::name)
             .containsExactly("path", "namespace", "revision");
     }
+
+    @Test
+    void deprecatedFunctionMetadata() {
+        PebbleFunction fn = findFunction("secret");
+        assertThat(fn.deprecated()).isFalse();
+        assertThat(fn.replacement()).isNull();
+    }
+
+    @Test
+    void deprecatedFunctionShouldExposeMetadata() {
+        PebbleFunction fn = findFunction("deprecatedFunction");
+        assertThat(fn.deprecated()).isTrue();
+        assertThat(fn.replacement()).isEqualTo("replacementFunction");
+    }
 }

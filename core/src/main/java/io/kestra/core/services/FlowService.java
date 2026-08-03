@@ -52,7 +52,8 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.SecretUtils;
+import io.kestra.core.runners.pebble.PebbleFunction;
+import io.kestra.core.utils.PebbleUtil;
 import io.kestra.plugin.core.flow.Pause;
 
 import io.micronaut.core.annotation.Nullable;
@@ -95,6 +96,9 @@ public class FlowService {
 
     @Inject
     private PluginRegistry pluginRegistry;
+
+    @Inject
+    private io.kestra.core.runners.pebble.PebbleExpressionService pebbleExpressionService;
 
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
@@ -590,6 +594,32 @@ public class FlowService {
             trigger -> SecretUtils.validateSecretFields(trigger)
                 .forEach(msg -> warnings.add("Trigger '" + trigger.getId() + "': " + msg))
         );
+
+        if (pebbleExpressionService != null && flow.getSource() != null) {
+            Map<String, PebbleFunction> deprecatedFunctions = pebbleExpressionService.functions().stream()
+                .filter(PebbleFunction::deprecated)
+                .collect(Collectors.toMap(PebbleFunction::name, f -> f));
+            if (!deprecatedFunctions.isEmpty()) {
+                Pattern functionPattern = Pattern.compile("\\b([a-zA-Z0-9_]+)\\s*\\(");
+                PebbleUtil.replaceInBlock(flow.getSource(), block -> {
+                    Matcher matcher = functionPattern.matcher(block);
+                    while (matcher.find()) {
+                        String fnName = matcher.group(1);
+                        PebbleFunction pf = deprecatedFunctions.get(fnName);
+                        if (pf != null) {
+                            String msg = "Pebble function '" + fnName + "' is deprecated.";
+                            if (pf.replacement() != null && !pf.replacement().isBlank()) {
+                                msg += " Use '" + pf.replacement() + "' instead.";
+                            }
+                            if (!warnings.contains(msg)) {
+                                warnings.add(msg);
+                            }
+                        }
+                    }
+                    return block;
+                });
+            }
+        }
 
         return warnings;
     }

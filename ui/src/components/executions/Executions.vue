@@ -629,7 +629,10 @@
     const visibleColumns = computed(() =>
         displayColumns.value
             .map(prop => allColumns.value.find(c => c.prop === prop))
-            .filter(Boolean) as any[],
+            .filter(c => {
+                const condition = (c as {condition?: () => boolean})?.condition
+                return c && (!condition || condition())
+            }) as any[],
     )
 
     const isColumnSortable = (prop: string) => {

@@ -3,6 +3,9 @@ package io.kestra.core.utils;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * A utility class for encoding and decoding UUIDs in Base62 format.
+ */
 public class Base62Encoder {
     private static final short BASE62_UUID_LENGTH = 22;
     private static final long B62 = 62L;

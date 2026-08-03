@@ -121,6 +121,37 @@ export type AbstractTriggerForExecution = {
     version?: string;
 };
 
+export type AgentMessageRole = 'USER' | 'ASSISTANT' | 'TOOL' | 'SYSTEM';
+
+export type AgentMessageType = 'TEXT' | 'TOOL_CALL' | 'TOOL_RESULT' | 'PROPOSED_ACTION' | 'ARTEFACT_DRAFT' | 'CANCELLED';
+
+export type AgentMode = 'ASK' | 'PLAN' | 'EDIT';
+
+export type AgentThinking = {
+    text?: string | null;
+    signature?: string | null;
+    redacted?: Array<string> | null;
+};
+
+export type AgentThreadStatus = 'IDLE' | 'RUNNING' | 'AWAITING_CONFIRMATION';
+
+export type AgentToolCall = {
+    id?: string | null;
+    kind?: AgentToolCallKind;
+    tool?: string;
+    family?: AgentToolFamily | null;
+    arguments?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+    thinking?: AgentThinking | null;
+};
+
+export type AgentToolCallKind = 'PLATFORM' | 'AUTHORING';
+
+export type AgentToolFamily = 'READ' | 'MUTATE' | 'ACT';
+
 export type AiControllerAiProviderResponse = {
     id?: string;
     displayName?: string;
@@ -154,6 +185,39 @@ export type ApiAutocomplete = {
     ids?: Array<string> | null;
     existingOnly?: boolean;
 };
+
+/**
+ * A single chat turn request.
+ *
+ *
+ * `additionalContext` is arbitrary, caller-supplied context (e.g. what the user is currently
+ * looking at) that is rendered into the conversation for this turn only: it is appended at the end of
+ * the model input and is *not* persisted in the thread's message history.
+ */
+export type ApiChatTurnRequest = {
+    prompt?: string;
+    mode?: AgentMode | null;
+    additionalContext?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    } | null;
+    providerId?: string | null;
+};
+
+export type ApiConfirmActionRequest = {
+    confirmationId?: string;
+    decision?: ApiDecision;
+    reason?: string | null;
+    providerId?: string | null;
+};
+
+export type ApiCreateThreadRequest = {
+    mode?: AgentMode | null;
+    title?: string | null;
+};
+
+export type ApiDecision = 'APPROVE' | 'REJECT';
 
 export type ApiExecution = {
     tenantId: string;
@@ -247,6 +311,21 @@ export type ApiMcpServer = {
     readonly updated?: string;
 };
 
+export type ApiMessageView = {
+    uid?: string;
+    role?: AgentMessageRole;
+    type?: AgentMessageType;
+    content?: string | null;
+    toolCall?: AgentToolCall | null;
+    toolResult?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    } | null;
+    draft?: ArtefactDraft | null;
+    createdAt?: string;
+};
+
 export type ApiSecretListResponseApiSecretMeta = {
     readOnly: boolean;
     results: Array<ApiSecretMeta>;
@@ -268,6 +347,25 @@ export type ApiTaskRun = {
     iteration?: number;
     dynamic?: boolean;
     forceExecution?: boolean;
+};
+
+export type ApiThreadDetail = {
+    uid?: string;
+    title?: string | null;
+    mode?: AgentMode;
+    status?: AgentThreadStatus;
+    pendingConfirmationId?: string | null;
+    messages?: Array<ApiMessageView>;
+};
+
+export type ApiThreadSummary = {
+    uid?: string;
+    title?: string | null;
+    mode?: AgentMode;
+    status?: AgentThreadStatus;
+    createdAt?: string;
+    updatedAt?: string;
+    lastTurnAt?: string | null;
 };
 
 /**
@@ -303,6 +401,16 @@ export type ApiTriggerState = {
     kind?: TriggerType;
 };
 
+export type ArtefactDraft = {
+    draftId?: string;
+    kind?: ArtefactKind;
+    yaml?: string;
+    valid?: boolean;
+    constraints?: string | null;
+};
+
+export type ArtefactKind = 'FLOW' | 'DASHBOARD' | 'APP';
+
 export type Asset = {
     namespace?: string;
     id: string;
@@ -316,6 +424,8 @@ export type Asset = {
     };
 };
 
+export type AssetFailureBehavior = 'IGNORE' | 'FAIL' | 'WARN';
+
 export type AssetIdentifier = {
     id?: string;
     type?: string;
@@ -325,6 +435,12 @@ export type AssetsDeclaration = {
     enableAuto?: PropertyBoolean;
     inputs?: PropertyListAssetIdentifier;
     outputs?: PropertyListAsset;
+    /**
+     * Asset failure behavior
+     *
+     * Behavior applied to the task state when a declared asset fails to render, emit, or be persisted (e.g. a lock conflict): FAIL escalates it to FAILED, WARN (default) warns it if it would otherwise succeed, IGNORE leaves the state untouched.
+     */
+    assetFailureBehavior?: PropertyAssetFailureBehavior;
 };
 
 export type AssetsInOut = {
@@ -596,6 +712,16 @@ export type EventFollowLogEvent = {
     retry?: string;
 };
 
+export type EventObject = {
+    data?: {
+        [key: string]: unknown;
+    };
+    id?: string;
+    name?: string;
+    comment?: string;
+    retry?: string;
+};
+
 export type ExecutableTaskSubflowId = {
     namespace?: string;
     flowId?: string;
@@ -656,6 +782,20 @@ export type ExecutionControllerEvalResult = {
     error?: string;
 };
 
+/**
+ * The average duration of the recent executions of a flow.
+ */
+export type ExecutionControllerExecutionAverageDuration = {
+    /**
+     * the average duration in milliseconds, or `null` when the flow has no terminated execution in the lookback window.
+     */
+    avgDurationMs?: number | null;
+    /**
+     * the number of executions the average was computed from.
+     */
+    count?: number;
+};
+
 export type ExecutionControllerExecutionResponse = Execution & {
     deleted: boolean;
     url?: string;
@@ -714,6 +854,8 @@ export type ExecutionTrigger = {
 export type ExecutionUsage = {
     dailyExecutionsCount?: Array<DailyExecutionStatistics>;
 };
+
+export type ExportFormat = 'CSV' | 'ION';
 
 export type ExpressionContext = {
     categories?: {
@@ -943,7 +1085,7 @@ export type FlowNode = {
     id?: string;
 };
 
-export type FlowRelation = 'FLOW_TASK' | 'FLOW_TRIGGER';
+export type FlowRelation = 'FLOW_TASK' | 'FLOW_TRIGGER' | 'SUBFLOW_FUNCTION';
 
 export type FlowServiceTaskDeprecation = {
     taskId?: string;
@@ -1327,7 +1469,6 @@ export type MiscControllerConfiguration = {
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
     pluginsHash?: number;
-    isConcurrencyViewEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {
@@ -1644,6 +1785,13 @@ export type PluginUiModuleWithGroup = {
     distribution?: PluginDistribution;
 };
 
+export type PropertyAssetFailureBehavior = ({
+    [key: string]: unknown;
+} | string) & {
+    expression?: string;
+    value?: AssetFailureBehavior;
+};
+
 export type PropertyBoolean = ({
     [key: string]: unknown;
 } | string) & {
@@ -1700,7 +1848,7 @@ export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SC
 
 export type QueryFilterLogical = 'and' | 'or';
 
-export type QueryFilterOp = 'EQUALS' | 'NOT_EQUALS' | 'GREATER_THAN' | 'LESS_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'LESS_THAN_OR_EQUAL_TO' | 'IN' | 'NOT_IN' | 'STARTS_WITH' | 'ENDS_WITH' | 'CONTAINS' | 'REGEX' | 'PREFIX';
+export type QueryFilterOp = 'EQUALS' | 'NOT_EQUALS' | 'GREATER_THAN' | 'LESS_THAN' | 'GREATER_THAN_OR_EQUAL_TO' | 'LESS_THAN_OR_EQUAL_TO' | 'IN' | 'NOT_IN' | 'STARTS_WITH' | 'ENDS_WITH' | 'CONTAINS' | 'NOT_CONTAINS' | 'IS_NULL' | 'IS_NOT_NULL' | 'REGEX' | 'PREFIX';
 
 export type Quota = {
     duration: string;
@@ -2778,6 +2926,81 @@ export type SetTenantDefaultDashboardResponses = {
 
 export type SetTenantDefaultDashboardResponse = SetTenantDefaultDashboardResponses[keyof SetTenantDefaultDashboardResponses];
 
+export type CreateData = {
+    body: ApiCreateThreadRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/ai/threads';
+};
+
+export type CreateResponses = {
+    /**
+     * create 200 response
+     */
+    200: ApiThreadSummary;
+};
+
+export type CreateResponse = CreateResponses[keyof CreateResponses];
+
+export type GetData = {
+    body?: never;
+    path: {
+        threadId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/ai/threads/{threadId}';
+};
+
+export type GetResponses = {
+    /**
+     * get 200 response
+     */
+    200: ApiThreadDetail;
+};
+
+export type GetResponse = GetResponses[keyof GetResponses];
+
+export type ChatData = {
+    body: ApiChatTurnRequest;
+    path: {
+        threadId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/ai/threads/{threadId}/chat';
+};
+
+export type ChatResponses = {
+    /**
+     * chat 200 response
+     */
+    200: EventObject;
+};
+
+export type ChatResponse = ChatResponses[keyof ChatResponses];
+
+export type ConfirmData = {
+    body: ApiConfirmActionRequest;
+    path: {
+        threadId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/ai/threads/{threadId}/confirm';
+};
+
+export type ConfirmResponses = {
+    /**
+     * confirm 200 response
+     */
+    200: EventObject;
+};
+
+export type ConfirmResponse = ConfirmResponses[keyof ConfirmResponses];
+
 export type CreateBasicAuthData = {
     body: BasicAuthCredentials;
     path: {
@@ -3070,6 +3293,13 @@ export type CreateDashboardData = {
     url: '/api/v1/{tenant}/dashboards';
 };
 
+export type CreateDashboardErrors = {
+    /**
+     * If the dashboard id is reserved ('_default')
+     */
+    422: unknown;
+};
+
 export type CreateDashboardResponses = {
     /**
      * createDashboard 200 response
@@ -3079,23 +3309,28 @@ export type CreateDashboardResponses = {
 
 export type CreateDashboardResponse = CreateDashboardResponses[keyof CreateDashboardResponses];
 
-export type ExportChartToCsvData = {
+export type ExportChartData = {
     body: DashboardControllerPreviewRequest;
     path: {
         tenant: string;
     };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/charts/export/to-csv';
+    query?: {
+        /**
+         * The export format
+         */
+        format?: ExportFormat;
+    };
+    url: '/api/v1/{tenant}/dashboards/charts/export';
 };
 
-export type ExportChartToCsvResponses = {
+export type ExportChartResponses = {
     /**
-     * exportChartToCsv 200 response
+     * exportChart 200 response
      */
     200: string;
 };
 
-export type ExportChartToCsvResponse = ExportChartToCsvResponses[keyof ExportChartToCsvResponses];
+export type ExportChartResponse = ExportChartResponses[keyof ExportChartResponses];
 
 export type PreviewChartData = {
     body: DashboardControllerPreviewRequest;
@@ -3114,6 +3349,26 @@ export type PreviewChartResponses = {
 };
 
 export type PreviewChartResponse = PreviewChartResponses[keyof PreviewChartResponses];
+
+export type GetDefaultDashboardDefinitionsData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/dashboards/defaults/definitions';
+};
+
+export type GetDefaultDashboardDefinitionsResponses = {
+    /**
+     * getDefaultDashboardDefinitions 200 response
+     */
+    200: {
+        [key: string]: string;
+    };
+};
+
+export type GetDefaultDashboardDefinitionsResponse = GetDefaultDashboardDefinitionsResponses[keyof GetDefaultDashboardDefinitionsResponses];
 
 export type GetDefaultDashboardsData = {
     body?: never;
@@ -3233,6 +3488,13 @@ export type UpdateDashboardData = {
     url: '/api/v1/{tenant}/dashboards/{id}';
 };
 
+export type UpdateDashboardErrors = {
+    /**
+     * If the dashboard id is reserved ('_default')
+     */
+    422: unknown;
+};
+
 export type UpdateDashboardResponses = {
     /**
      * updateDashboard 200 response
@@ -3271,7 +3533,7 @@ export type GetDashboardChartDataResponses = {
 
 export type GetDashboardChartDataResponse = GetDashboardChartDataResponses[keyof GetDashboardChartDataResponses];
 
-export type ExportDashboardChartDataToCsvData = {
+export type ExportDashboardChartData = {
     /**
      * The filters to apply, some can override chart definition like labels & namespace
      */
@@ -3287,18 +3549,23 @@ export type ExportDashboardChartDataToCsvData = {
         chartId: string;
         tenant: string;
     };
-    query?: never;
-    url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}/export/to-csv';
+    query?: {
+        /**
+         * The export format
+         */
+        format?: ExportFormat;
+    };
+    url: '/api/v1/{tenant}/dashboards/{id}/charts/{chartId}/export';
 };
 
-export type ExportDashboardChartDataToCsvResponses = {
+export type ExportDashboardChartResponses = {
     /**
-     * exportDashboardChartDataToCSV 200 response
+     * exportDashboardChart 200 response
      */
     200: string;
 };
 
-export type ExportDashboardChartDataToCsvResponse = ExportDashboardChartDataToCsvResponses[keyof ExportDashboardChartDataToCsvResponses];
+export type ExportDashboardChartResponse = ExportDashboardChartResponses[keyof ExportDashboardChartResponses];
 
 export type SearchExecutionsByFlowIdData = {
     body?: never;
@@ -3833,6 +4100,32 @@ export type ListFlowExecutionsByNamespaceResponses = {
 
 export type ListFlowExecutionsByNamespaceResponse = ListFlowExecutionsByNamespaceResponses[keyof ListFlowExecutionsByNamespaceResponses];
 
+export type GetExecutionAverageDurationData = {
+    body?: never;
+    path: {
+        /**
+         * The flow namespace
+         */
+        namespace: string;
+        /**
+         * The flow id
+         */
+        flowId: string;
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/executions/namespaces/{namespace}/flows/{flowId}/average-duration';
+};
+
+export type GetExecutionAverageDurationResponses = {
+    /**
+     * getExecutionAverageDuration 200 response
+     */
+    200: ExecutionControllerExecutionAverageDuration;
+};
+
+export type GetExecutionAverageDurationResponse = GetExecutionAverageDurationResponses[keyof GetExecutionAverageDurationResponses];
+
 export type PauseExecutionsByIdsData = {
     /**
      * The list of executions id
@@ -3974,7 +4267,12 @@ export type RestartExecutionsByIdsData = {
     path: {
         tenant: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * If latest revision should be used
+         */
+        latestRevision?: boolean | null;
+    };
     url: '/api/v1/{tenant}/executions/restart/by-ids';
 };
 
@@ -4006,6 +4304,10 @@ export type RestartExecutionsByQueryData = {
          * Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`
          */
         filters?: Array<QueryFilter> | null;
+        /**
+         * If latest revision should be used
+         */
+        latestRevision?: boolean | null;
     };
     url: '/api/v1/{tenant}/executions/restart/by-query';
 };

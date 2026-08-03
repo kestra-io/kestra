@@ -1,5 +1,6 @@
 <template>
     <div class="flow-run-actions">
+        <ValidationMessages :messages="flowRun?.validationMessages ?? []" />
         <KsButton
             v-if="flowRun?.canPrefill"
             class="prefill-button"
@@ -26,6 +27,7 @@
 <script setup lang="ts">
     import type {Component} from "vue"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
+    import ValidationMessages from "./ValidationMessages.vue"
 
     interface FlowRunInstance {
         submit: () => void
@@ -37,6 +39,7 @@
         buttonIcon: Component
         buttonTestId: string
         showExecuteButton: boolean
+        validationMessages?: string[]
     }
 
     defineProps<{flowRun: FlowRunInstance | null}>()
@@ -47,7 +50,8 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: var(--ks-spacing-2);
+    flex-wrap: nowrap;
+    gap: var(--ks-spacing-4);
 }
 
 .prefill-button {

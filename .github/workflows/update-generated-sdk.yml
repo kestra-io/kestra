@@ -23,6 +23,9 @@ jobs:
           gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           repository: kestra-io/kestra
           ref: develop
+          # full history: a shallow clone has no merge base with the chore branch,
+          # so the merge below fails with "refusing to merge unrelated histories"
+          fetch-depth: 0
 
       # github.event.head_commit is only populated for push events; resolve the commit
       # subject from history so it's correct regardless of what triggered this run.
@@ -40,7 +43,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "22.x"
+          node-version: "24.x"
 
       - name: Install Node dependencies
         shell: bash
@@ -59,13 +62,17 @@ jobs:
       - name: Checkout the chore/update-kestra-sdk branch
         shell: bash
         run: |
-          # the checkout above is a shallow, single-branch clone of develop, so the
-          # remote chore branch is not present locally. Fetch it explicitly first.
-          git fetch --depth=1 origin chore/update-kestra-sdk || true
+          # the merge below creates a merge commit, which requires a committer identity
+          git config user.name "kestra-io"
+          git config user.email "hello@kestra.io"
+          # the checkout above is a single-branch clone of develop, so the remote chore
+          # branch is not present locally. Fetch it, with its history, explicitly first.
+          git fetch origin chore/update-kestra-sdk || true
           if git rev-parse --verify --quiet origin/chore/update-kestra-sdk; then
             # reuse it, bringing in anything new from develop since it was created
             git switch -c chore/update-kestra-sdk origin/chore/update-kestra-sdk
-            git merge origin/develop --no-edit
+            # the SDK is regenerated right below, so let develop win any conflict
+            git merge origin/develop --no-edit -X theirs
           else
             # otherwise, create it from develop
             git switch -c chore/update-kestra-sdk origin/develop
@@ -96,11 +103,15 @@ jobs:
       - name: Commit and push
         if: steps.compare.outputs.changed == 'true'
         shell: bash
+        # the subject comes from a contributor's commit, so keep it out of the script
+        # itself: interpolated directly, a `$(...)` subject would run on the runner
+        env:
+          SOURCE_MESSAGE: ${{ steps.source-commit.outputs.message }}
         run: |
           git config user.name "kestra-io"
           git config user.email "hello@kestra.io"
           git add ui/packages/kestra-sdk/src/openapi ui/packages/kestra-sdk/package.json
-          git commit -m "ci: auto-update generated kestra-sdk from ${{ steps.source-commit.outputs.message }}"
+          git commit -m "ci: auto-update generated kestra-sdk from ${SOURCE_MESSAGE}"
           git push --set-upstream origin HEAD
 
       - name: Get the body of a potential PR
@@ -134,19 +145,23 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
           SOURCE_MESSAGE: ${{ steps.source-commit.outputs.message }}
+          # carries earlier commit subjects, so keep it out of the script itself:
+          # interpolated there, a backtick or ${ would break out and run as JS
+          PREVIOUS_BODY: ${{ steps.pr-body.outputs.body }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const prNumber = '${{ steps.pr-body.outputs.pr_number }}';
             const sha = process.env.SOURCE_SHA;
             const message = process.env.SOURCE_MESSAGE;
+            const previousBody = process.env.PREVIOUS_BODY;
             const linkToCurrentCommit = `[${sha.slice(0, 7)}](https://github.com/kestra-io/kestra/commit/${sha})`;
             const body = `
               This PR is auto-generated whenever \`ui/packages/kestra-sdk/src/openapi\` drifts from the OpenAPI spec on \`develop\` (see [ui/packages/kestra-sdk/README.md](https://github.com/kestra-io/kestra/blob/develop/ui/packages/kestra-sdk/README.md)).
 
               List of commits that triggered a regeneration:
               <marker>
-              ${{ steps.pr-body.outputs.body }}
+              ${previousBody}
               - ${message} ${linkToCurrentCommit}
               </marker>
 

@@ -73,9 +73,17 @@ public class LogJdbcDataSourceProvider implements AutoCloseable {
                 }
                 Object url = config.get("url");
                 if (url != null) {
+                    Object username = config.get("username");
+                    if (username == null || username.toString().isBlank()) {
+                        throw new KestraRuntimeException(
+                            ("A dedicated log database URL is configured ('kestra.logs.%s.url') but no username "
+                                + "('kestra.logs.%s.username'). Configure the credentials for the dedicated log database "
+                                + "explicitly; they are never inherited from the main datasource.").formatted(type.get(), type.get())
+                        );
+                    }
                     HikariConfig hikariConfig = new HikariConfig();
                     hikariConfig.setJdbcUrl(url.toString());
-                    Optional.ofNullable(config.get("username")).ifPresent(u -> hikariConfig.setUsername(u.toString()));
+                    hikariConfig.setUsername(username.toString());
                     Optional.ofNullable(config.get("password")).ifPresent(p -> hikariConfig.setPassword(p.toString()));
                     hikariConfig.setPoolName("kestra-logs-" + type.get());
                     this.dedicatedDataSource = new HikariDataSource(hikariConfig);

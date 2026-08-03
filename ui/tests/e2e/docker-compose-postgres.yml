@@ -1,6 +1,4 @@
 volumes:
-  dind-socket:
-    driver: local
   tmp-data:
     driver: local
 
@@ -20,26 +18,8 @@ services:
   init:
     image: busybox
     volumes:
-      - dind-socket:/dind
       - tmp-data:/tmp/kestra-wd
-    command: "chown -R 1000:1000 -R /dind /tmp/kestra-wd"
-
-  dind:
-    image: docker:dind-rootless
-    privileged: true
-    user: "1000"
-    environment:
-      DOCKER_HOST: unix://dind/docker.sock
-      TINI_SUBREAPER: 1
-    command:
-      - --log-level=fatal
-      - --group=1000
-    volumes:
-      - dind-socket:/dind
-      - tmp-data:/tmp/kestra-wd
-    depends_on:
-      init:
-        condition: service_completed_successfully
+    command: "chown -R 1000:1000 /tmp/kestra-wd"
 
   kestra:
     container_name: kestra-e2e-backend
@@ -55,7 +35,6 @@ services:
       retries: 30
       start_period: 5s
     volumes:
-      - dind-socket:/dind
       - tmp-data:/tmp/kestra-wd:rw
       - ./data/entrypoint.sh:/app/entrypoint.sh:ro
       - ./data/flows/:/app/flows/:ro
@@ -67,7 +46,7 @@ services:
     links:
       - postgres
     depends_on:
-      dind:
-        condition: service_started
+      init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy

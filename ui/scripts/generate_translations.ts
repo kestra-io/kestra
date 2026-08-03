@@ -6,7 +6,7 @@
  *   2. The design-system `*.locale.ts` files (ui/packages/design-system/.../  *.locale.ts),
  *      each of which holds every language in a single `export default { en: {...}, de: {...}, ... }`.
  *
- * Run from the repository root so the relative paths below resolve correctly:
+ * Runs from anywhere — from `ui/` via `npm run translations:generate`, or from the repository root:
  *   GEMINI_API_KEY=... node --experimental-strip-types ui/scripts/generate_translations.ts [true|false]
  *
  * The single positional argument mirrors `retranslate_modified_keys`: pass "true"
@@ -16,7 +16,14 @@
  */
 import {execFileSync} from "node:child_process"
 import {globSync, readFileSync, writeFileSync} from "node:fs"
+import {dirname, resolve} from "node:path"
+import {fileURLToPath} from "node:url"
 import {GoogleGenAI} from "@google/genai"
+
+// Every path in this file — and the `git log`/`git show` pathspecs — is written relative to the
+// repository root, so the script anchors itself there rather than depending on where it was
+// launched from. Without this, running it from `ui/` would look for `ui/ui/src/translations`.
+process.chdir(resolve(dirname(fileURLToPath(import.meta.url)), "../.."))
 
 const MODEL = "gemini-2.5-flash"
 const client = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})

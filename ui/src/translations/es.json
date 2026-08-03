@@ -437,6 +437,13 @@
       "dialog_title": "Límites de Concurrencia",
       "warning": "Cambiar el contador en ejecución puede corromper la concurrencia, por lo que las ejecuciones pueden exceder el límite permitido."
     },
+    "flowConcurrency": {
+      "loadError": "No se pudo cargar el límite de concurrencia de este flow.",
+      "staleLimit": {
+        "message": "Este flow ya no declara un bloque de concurrencia, pero un registro de límite sigue contando {count} ejecución(es) en curso. Ya no afecta a las nuevas ejecuciones y puede restablecerse desde Administración → Límites de Concurrencia.",
+        "title": "Límite de concurrencia residual"
+      }
+    },
     "documentation": {
       "documentation": "Documentación",
       "github": "Abrir un issue en GitHub"

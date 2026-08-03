@@ -259,6 +259,25 @@ describe("routeQueryToQueryFilters", () => {
         expect(new URLSearchParams(query).getAll("sort")).toEqual(["state:asc", "id:desc"])
     })
 
+    it.each([
+        ["a leaf-shaped object", {field: "state", operation: "IS_NULL"}],
+        ["a logical-shaped object", {logical: "or", children: [{field: "state", operation: "IS_NULL"}]}],
+    ])("keeps ordinary object arrays under non-filter keys unchanged for %s", (_, value) => {
+        const query = serializeQuery({items: [value]})
+
+        expect(new URLSearchParams(query).getAll("items")).toEqual([JSON.stringify(value)])
+    })
+
+    it("falls back to ordinary array serialization when a value-required filter leaf has no value", () => {
+        const filters = [
+            {field: "state", operation: "EQUALS"},
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+        ]
+        const query = serializeQuery({filters})
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual(filters.map(value => JSON.stringify(value)))
+    })
+
     it("builds a top-level OR group", () => {
         expect(routeQueryToQueryFilters({
             "filters[or][0][state][EQUALS]": "RUNNING",

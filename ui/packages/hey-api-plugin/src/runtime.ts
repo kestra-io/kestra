@@ -116,7 +116,17 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                 const isQueryFilter = (filter: any): boolean => {
                     if (filter == null || typeof filter !== "object") return false
 
-                    const isLeaf = typeof filter.field === "string" && typeof filter.operation === "string"
+                    const isValueOptional = filter.operation === "IS_NULL" || filter.operation === "IS_NOT_NULL"
+                    const hasSerializableValue = isValueOptional || (
+                        filter.value !== null &&
+                        typeof filter.value === "object" &&
+                        !Array.isArray(filter.value)
+                            ? Object.values(filter.value).length > 0 && Object.values(filter.value).every(value => serializeQueryValue(value) !== undefined)
+                            : serializeQueryValue(filter.value) !== undefined
+                    )
+                    const isLeaf = typeof filter.field === "string" &&
+                        typeof filter.operation === "string" &&
+                        hasSerializableValue
                     const isLogical = (filter.logical === "and" || filter.logical === "or") &&
                         Array.isArray(filter.children) &&
                         isDenseQueryFilterArray(filter.children)
@@ -157,6 +167,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                         continue
                     }
                     const looksLikeQueryFilterArray =
+                        key === "filters" &&
                         Array.isArray(param) &&
                         isDenseQueryFilterArray(param)
 

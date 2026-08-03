@@ -8,28 +8,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # When an OSS PR opens, run the kestra-ee compile check for its ref (via a
-  # Kestra webhook) and trigger the EE OpenAPI spec check.
+  # When an OSS PR opens, run the kestra-ee checks that its change-area can
+  # actually affect — and only those. The area comes from the `file-changes` job
+  # below, so OSS and EE agree on what changed instead of EE re-deriving it:
+  #
+  #   backend -> EE compileJava check + EE OpenAPI spec check. Both are pure Java
+  #              (the spec is generated from controller annotations), so a Vue-only
+  #              change can never move either of them.
+  #   ui      -> EE frontend suite. `ui-ee` npm-workspaces `ui/packages/*` and its
+  #              `check:types` builds the OSS design-system and OSS app tsconfigs
+  #              before its own, so an OSS `ui/**` change genuinely can break it.
   trigger-ee:
+    needs: [file-changes]
+    if: "needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true'"
     runs-on: ubuntu-latest
-    # The `secrets` context is not allowed in `if:` conditions, so expose the
-    # app-id as a job-level env var (the `env` context IS allowed in `if:`) and
-    # gate the steps on that instead.
     env:
-      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+      # Whether this run can reach kestra-ee at all, resolved once for every step
+      # below. The `secrets` context is not allowed in `if:` conditions but the
+      # `env` context is, hence the indirection. Dependabot PRs are not forks, yet
+      # GitHub still withholds repo secrets from the runs they trigger, so
+      # create-github-app-token would fail on an empty app-id: guard on the secret
+      # itself rather than on the triggering actor, since that is the actual
+      # precondition and it covers every other case where the secrets are absent.
+      EE_DISPATCHABLE: ${{ github.event.pull_request.number != ''
+        && github.event.pull_request.head.repo.fork == false
+        && secrets.GH_BOT_APP_ID != '' }}
     steps:
     - name: Checkout  # required so the local composite action below can resolve
-      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
+      if: ${{ env.EE_DISPATCHABLE == 'true' }}
       uses: actions/checkout@v7
 
-      # Dependabot PRs are not forks, but GitHub still withholds repo secrets from
-      # workflow runs it triggers, so create-github-app-token would fail with an
-      # empty app-id. Guard on the secret itself rather than the triggering actor,
-      # since that's the actual precondition and it covers any other case where
-      # these secrets aren't available to the run.
     - name: Generate GitHub App token for kestra-ee dispatch
       id: ee-token
-      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && env.GH_BOT_APP_ID != '' }}
+      if: ${{ env.EE_DISPATCHABLE == 'true' }}
       uses: actions/create-github-app-token@v3
       with:
         app-id: ${{ secrets.GH_BOT_APP_ID }}
@@ -41,10 +52,7 @@ jobs:
       # surface the result inline. The flow resolves the matching kestra-ee ref
       # itself (same-name branch, else develop), so no branch pre-check is needed.
     - name: EE compile check (via Kestra webhook)
-      if: ${{ github.event_name == 'pull_request'
-        && github.event.pull_request.number != ''
-        && github.event.pull_request.head.repo.fork == false
-        && env.GH_BOT_APP_ID != '' }}
+      if: ${{ env.EE_DISPATCHABLE == 'true' && needs.file-changes.outputs.backend == 'true' }}
       uses: ./.github/actions/ee-compile-check
       with:
         webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
@@ -53,17 +61,26 @@ jobs:
         pr-number: ${{ github.event.pull_request.number }}
         pr-repo: ${{ github.repository }}
 
-      # Always trigger EE OpenAPI check on non-fork PRs where secrets are available
     - name: Trigger EE OpenAPI spec check
       uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
-      if: ${{ github.event_name == 'pull_request'
-        && github.event.pull_request.number != ''
-        && github.event.pull_request.head.repo.fork == false
-        && env.GH_BOT_APP_ID != '' }}
+      if: ${{ env.EE_DISPATCHABLE == 'true' && needs.file-changes.outputs.backend == 'true' }}
       with:
         token: ${{ steps.ee-token.outputs.token }}
         repository: kestra-io/kestra-ee
         event-type: "oss-pr-openapi-check"
+        client-payload: >-
+          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
+
+      # kestra-ee resolves its own ref (branch of the same name, else develop) and
+      # reports the verdict back as a commit status on this PR's head SHA, the same
+      # way the EE compile check above does.
+    - name: Trigger EE frontend check
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
+      if: ${{ env.EE_DISPATCHABLE == 'true' && needs.file-changes.outputs.ui == 'true' }}
+      with:
+        token: ${{ steps.ee-token.outputs.token }}
+        repository: kestra-io/kestra-ee
+        event-type: "oss-pr-frontend-check"
         client-payload: >-
           {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_number":"${{ github.event.pull_request.number }}","oss_branch":"${{ github.event.pull_request.head.ref }}"}
 

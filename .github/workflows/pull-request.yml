@@ -195,11 +195,15 @@ jobs:
   generate-pull-request-docker-image:
     name: Generate PR docker image
     needs: [build-artifacts]
-    if: "!cancelled() && needs.build-artifacts.result == 'success'"
+    # Refresh the PR docker image on every commit, including drafts and
+    # docs-only PRs where build-artifacts is skipped (only skip on an actual
+    # build failure). Reuse the shared `exe` when build-artifacts produced it,
+    # otherwise let the reusable workflow build it from source itself.
+    if: "!cancelled() && needs.build-artifacts.result != 'failure'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
     with:
       java-version: 25
-      skip-build: true
+      skip-build: ${{ needs.build-artifacts.result == 'success' }}
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace

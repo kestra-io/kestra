@@ -1341,9 +1341,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "Décrivez le workflow que vous souhaitez",
-            "body": "Décrivez ce que vous souhaitez automatiser, et l'IA Copilot le rédigera pour vous. La visite se poursuit avec un exemple de flow prêt à l'emploi, il n'y a donc rien à taper ici.",
-            "next": "Générer le flow"
+            "title": "Les flows peuvent être ébauchés à partir d'une invite",
+            "body": "Le tutoriel utilise un flow d'exemple prêt à l'emploi, donc il n'y a rien à taper ici.",
+            "next": "Utiliser l'exemple de flow"
           },
           "flow_generated": {
             "title": "Ceci est un flow",
@@ -1361,7 +1361,7 @@
             "title": "Les Flows sont édités comme du code",
             "body": "Nous avons ajouté une task `notify` pour vous sans l'AI Copilot, afin que vous puissiez voir à quoi ressemble l'édition directe du YAML. Elle publie le résultat final sur Slack.",
             "next": "Consulter la documentation de la task",
-            "callout": "AI Copilot vous a donné le premier brouillon ; c'est dans l'éditeur que vous pouvez itérer dessus dans un onglet d'éditeur Code ou No-Code, qui produisent tous deux le même YAML, ainsi votre flow reste sous forme de code quelle que soit la manière dont il a été construit."
+            "callout": "Un premier brouillon de l'IA Copilot n'est qu'un point de départ ; l'éditeur est l'endroit où vous l'itérerez dans un onglet d'éditeur Code ou No-Code, qui produisent tous deux le même YAML, ainsi votre flow reste sous forme de code quelle que soit la manière dont il a été construit."
           },
           "editor_help": {
             "title": "La documentation se trouve à côté du flow",
@@ -1428,7 +1428,7 @@
           "takeaways": {
             "copilot": {
               "title": "Flows générés à partir d'anglais courant",
-              "body": "Décrivez ce que vous voulez automatiser, et un flow est ébauché par l'AI Copilot. À partir de là, vous l'affinez dans l'éditeur, avec l'autocomplétion et le panneau <strong>Docs</strong>. Les flows sont exécutés à partir du bouton <strong>Exécuter</strong> du flow ou de toute exécution."
+              "body": "Décrivez ce que vous souhaitez automatiser dans le chat de l'IA Copilot, et une première version du flow est générée à partir du schéma de flow en direct. La même chose est possible depuis votre éditeur ou terminal : Claude Code, Cursor et d'autres agents de codage peuvent générer des flows avec les compétences des agents Kestra."
             },
             "restart": {
               "title": "Rejouer au lieu de tout exécuter à nouveau",
@@ -1449,6 +1449,8 @@
           "start_building": "Commencer à construire",
           "docs": {
             "title": "En savoir plus",
+            "copilot": "Copilote IA",
+            "agentSkills": "Compétences de l'agent",
             "autocompletion": "Autocomplétion",
             "execution": "Exécutions",
             "replay": "Rejouer",

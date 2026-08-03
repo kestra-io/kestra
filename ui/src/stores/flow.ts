@@ -18,6 +18,8 @@ import type {FlowWithSource,  AbstractTrigger, Task as SdkTask} from "@kestra-io
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
+import {useApiStore} from "./api"
+import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
 
 const textYamlHeader = {
     headers: {
@@ -528,7 +530,7 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function createFlow(options: { flow: string, draft?: boolean }) {
+    function createFlow(options: { flow: string, draft?: boolean, restore?: boolean }) {
         return FlowsAPI.createFlow({
             body: options.flow,
             draft: options.draft ?? false,
@@ -543,7 +545,29 @@ export const useFlowStore = defineStore("flow", () => {
             localStorage.removeItem(`el-fl-creation-${creationId.value}`)
             creationId.value = undefined
 
+            if (!options.draft) {
+                trackFlowCreated(flow.value, options.restore === true)
+            }
+
             return flow.value
+        })
+    }
+
+    // Only on creation: saveFlow() fires on every editor save, which would drown the signal.
+    // restoreFlow() also goes through createFlow(), on a flow_id that already reported a creation -
+    // flagged rather than dropped so activation can exclude it downstream.
+    function trackFlowCreated(created: Flow, isRestore: boolean) {
+        const {taskCount, pluginCount} = flowTaskStats(created.tasks)
+
+        useApiStore().posthogEvents({
+            type: "FLOW_CREATED",
+            namespace: created.namespace,
+            flow_id: created.id,
+            task_count: taskCount,
+            plugin_count: pluginCount,
+            trigger_type: primaryTriggerType(created.triggers),
+            is_example: isExampleFlow(created.namespace),
+            is_restore: isRestore,
         })
     }
 

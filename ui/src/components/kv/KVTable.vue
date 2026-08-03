@@ -321,6 +321,7 @@
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {useApiStore} from "../../stores/api"
     import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 
     import _merge from "lodash/merge"
@@ -343,6 +344,7 @@
 
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
+    const apiStore = useApiStore()
 
     const editorBindings = useEditorBindings()
 
@@ -708,9 +710,20 @@
                 (payload as any).ttl = ttl
             }
 
+            // update flag is set by updateKvModal(); setKeyValue() is an upsert and can't tell them apart.
+            const wasUpdate = kv.value.update === true
+
             return namespacesStore
                 .createKv(payload)
                 .then(() => {
+                    apiStore.posthogEvents({
+                        type: wasUpdate ? "SECRET_UPDATED" : "SECRET_CREATED",
+                        secret_type: "kv",
+                        namespace,
+                        value_type: type,
+                        has_ttl: Boolean(ttl),
+                    })
+
                     toast.saved(key)
                     addKvDrawerVisible.value = false
                     dataTable.value?.reload()

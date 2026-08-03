@@ -108,10 +108,10 @@
     "running duration": "実行期間",
     "queued duration": "キュー待ち期間",
     "executionProgress": {
-        "title": "実行の進行状況",
-        "estimatedRemaining": "残り時間の目安: {duration}",
-        "noBaseline": "履歴データがないため、残り時間を推定できません",
-        "pastEstimate": "通常より時間がかかっています"
+      "title": "実行の進行状況",
+      "estimatedRemaining": "残り時間の目安: {duration}",
+      "noBaseline": "履歴データがないため、残り時間を推定できません",
+      "pastEstimate": "通常より時間がかかっています"
     },
     "choose file": "ファイルを選択するか、ここにドロップしてください...",
     "launch execution": "実行",
@@ -419,6 +419,7 @@
       "tree": "ツリー",
       "raw_json": "Raw JSON",
       "select_prompt": "value を確認する変数を選択してください。",
+      "select_hint": "変数、trigger、および task outputs は左側に一覧表示されます。",
       "empty": "この実行に利用可能な変数はありません。",
       "one_key": "\\{ 1 key \\}",
       "n_keys": "\\{ {count} keys \\}",
@@ -540,6 +541,18 @@
     "trigger": "Trigger",
     "no_trigger": "トリガーが利用できません。",
     "triggers": "Triggers",
+    "test_event": {
+      "title": "テストイベントを送信",
+      "description": "以下のペイロードを、{trigger} trigger の webhook URL に送信します。",
+      "payload": "ペイロード",
+      "headers": "ヘッダー (任意)",
+      "send": "イベントを送信",
+      "sending": "送信中",
+      "response": "応答 {status}",
+      "execution_created": "実行が作成されました",
+      "failed": "webhookは{status}と応答しました。flowが保存され、triggerが有効になっていることを確認してください。",
+      "button": "テストイベントを送信"
+    },
     "triggers_header_description": "トリガーを閲覧、追加、管理して、flowを自動化します。flowをAIツールとして公開する、スケジューリング、Webhookトリガーの追加、外部アプリの変更をポーリング、またはリアルタイムイベントリスナーから選択します。",
     "triggers_tabs_add": "追加",
     "triggers_tabs_manage": "管理",
@@ -1297,6 +1310,168 @@
     },
     "assets": {
       "title": "アセット"
+    },
+    "onboarding": {
+      "tour": {
+        "menu": "製品ツアー",
+        "menu_description": "flow を構築、実行、修正し、その後イベントから開始します",
+        "step_of": "{total}ステップ中{current}",
+        "actions": {
+          "back": "戻る",
+          "skip": "ツアーをスキップ",
+          "running": "実行中",
+          "finish_now": "ツアーを完了",
+          "dismiss": "非表示にする",
+          "skipped_hint": "プロダクトツアーは、後で再開したい場合に左メニューに残ります。"
+        },
+        "intro": {
+          "kicker": "Kestraへようこそ",
+          "title": "Kestraを5分以内で学ぶ",
+          "body": "Kestra はオーケストレーションプラットフォームです。スケジュールベースおよびイベント駆動型のワークフローの構築、実行、修正を容易にします。",
+          "note": "いつでも停止できます。",
+          "start": "ツアーを開始",
+          "skip": "ツアーをスキップ"
+        },
+        "scenes": {
+          "copilot": {
+            "title": "希望するワークフローを記述してください",
+            "body": "自動化したい内容を記述してください。AI Copilotがドラフトを作成します。ツアーは、既製のサンプルflowで続きますので、ここに入力する必要はありません。",
+            "next": "flow を生成"
+          },
+          "flow_generated": {
+            "title": "これは flow です",
+            "body": "このflowはYAMLで記述されており、2つのtasksがあります。<ol><li><code>fetch_orders</code>: 注文をダウンロードする</li><li><code>summarize</code>: Pythonで収益を計算する</li></ol>Tasksは、定義された順序で順次実行されます。",
+            "next": "保存して実行"
+          },
+          "first_execution": {
+            "title": "すべての実行は記録されます",
+            "body": "各 Task はガントビューで実行時間が表示されます。Task をクリックすると、その Log が表示されます。",
+            "milestone": "最初の実行が成功しました",
+            "next": "flowを編集",
+            "callout": "cronジョブや手動で実行されるスクリプトとは異なり、すべての実行は、そのinputs、outputs、およびlogsとともに保持されるため、実行された内容を後から監査できます。"
+          },
+          "add_task": {
+            "title": "Flows はコードのように編集します",
+            "body": "AI Copilotを使用せずに`notify` taskを追加しました。これにより、YAMLを直接編集する様子を確認できます。最終結果はSlackに投稿されます。",
+            "next": "Taskドキュメントを参照してください",
+            "callout": "AI Copilotが初稿を作成しました。エディターでは、コードまたはノーコードエディターのタブで反復作業を行うことができ、どちらのタブも同じYAMLを生成するため、flow はどのように構築されたとしてもコードとして維持されます。"
+          },
+          "editor_help": {
+            "title": "ドキュメントは flow の隣にあります",
+            "body": "カーソル下の task のドキュメントは、「Docs」パネルに、プロパティ、output、例とともに表示されます。",
+            "callout": "Flowは反復によって構築されます。プロパティを変更し、実行し、logsを読み、繰り返します。オートコンプリートと<strong>Docs</strong>パネルにより、エディターを離れることなく何かを調べることができます。",
+            "next": "flowを実行"
+          },
+          "failed_execution": {
+            "title": "taskが失敗しました",
+            "body": "Slackメッセージ内の収益の式にタイプミスがあります: `vars.revenue`ではなく`vars.revenu`。",
+            "callout": "`<code>notify</code>` の前のtaskは成功したため、そのoutputは引き続き利用可能です。",
+            "next": "flowを修正する"
+          },
+          "fix_and_replay": {
+            "title": "1文字変更されました",
+            "body": "式は現在`vars.revenue`です。差分は変更された1行を示しており、失敗した実行は、新しいリビジョンに対して`notify` taskからリプレイできます。",
+            "next": "失敗した task から再実行"
+          },
+          "replayed_execution": {
+            "title": "失敗したもののみが再実行されました",
+            "body": "最初の試行からのoutputが再利用されたため、<code>notify</code> taskのみが再度実行される必要がありました。今回、Slackメッセージは正常に送信されました。",
+            "milestone": "リプレイが成功しました",
+            "next": "triggerを追加",
+            "callout": "リプレイなしでは、失敗したtaskが1つあるだけでflow全体の再実行が必要になります。有料のAPIコールが再度実行され、長時間の計算が繰り返され、既に書き込まれた行が重複します。"
+          },
+          "webhook_trigger": {
+            "title": "flow はイベントによって開始できます",
+            "body": "Webhook trigger を使用すると、この flow は独自のURLを持ちます。そのURLにHTTPリクエストが送信されるたびに実行が作成され、リクエストボディは <code>trigger.body</code> として task で利用可能です。",
+            "next": "triggerを見る"
+          },
+          "test_event": {
+            "title": "テストイベントを送信",
+            "body": "trigger はここに表示されます。テストイベントは、外部システムが送信するのと同様に、ブラウザから送信できます。これにより、Kestra を離れることなく trigger をテストできます。",
+            "next": "テストイベントを送信する"
+          },
+          "event_execution": {
+            "title": "イベントが実行を作成しました",
+            "body": "イベントが到着し、それから実行が作成され、他の実行と同様に時間計測され、ログが記録されました。これのために別途サービスをホストする必要はありません。triggerエンドポイントはKestraの一部です。",
+            "milestone": "開始していない実行",
+            "next": "ペイロードを調べる"
+          },
+          "explore_payload": {
+            "title": "変数、trigger、およびtask outputs",
+            "body": "<strong>Input/Output</strong> タブには、この実行で利用可能なすべての value が一覧表示されます。",
+            "callout": "`trigger.body` は右側にすでに設定されています。**デバッグ式** を押して、この実行で何が返されるかを確認してください。",
+            "next": "2番目の flow を連携させる"
+          },
+          "report_flow": {
+            "title": "1つの flow は別の flow に依存できます",
+            "body": "<code>daily_report</code> には Flow trigger があるため、<code>order_summary</code> が成功するたびに開始されます。そのために <code>order_summary</code> に何かを追加する必要はありません。",
+            "next": "別のイベントを送信",
+            "callout": "2つの flow は異なるチームが所有できます：<code>daily_report</code> は、それが待機するものを宣言し、<code>order_summary</code> は、その存在を知る必要はありません。"
+          },
+          "chain": {
+            "title": "各実行の開始方法",
+            "body": "自分で開始した実行には `started_by:you` の label が付いています。その他は、webhook イベントまたは flow trigger によって作成されました。",
+            "milestone": "一つのイベントから2つの実行",
+            "next": "完了"
+          }
+        },
+        "finale": {
+          "kicker": "ツアー完了",
+          "title": "あなたが構築したもの、次に試すこと",
+          "takeaways": {
+            "copilot": {
+              "title": "平易な英語から生成されたFlows",
+              "body": "自動化したい内容を記述すると、AI Copilotがflowをドラフトします。そこから、オートコンプリートと<strong>Docs</strong>パネルを使ってエディターで洗練させます。flowは、そのflowまたは任意の実行の<strong>Execute</strong>ボタンから実行されます。"
+            },
+            "restart": {
+              "title": "すべてを再実行するのではなく、リプレイする",
+              "body": "既に成功したTaskの実行は再利用されるため、失敗した作業のみがflowの最新リビジョンに対して再度実行されます。実行およびガントビューのTask実行では、<strong>アクション</strong>の下でリプレイと再起動が利用可能です。"
+            },
+            "events": {
+              "title": "イベントによって開始された実行",
+              "body": "WebhookおよびSchedule triggerはKestraに組み込まれているため、追加のホスティングなしに、イベントまたはスケジュールに基づいて実行を開始できます。"
+            },
+            "chain": {
+              "title": "他のflowに依存するflow",
+              "body": "Flow trigger を使用すると、namespace をまたいで、ある flow の成功または失敗によって別の flow を開始できます。これにより flow は疎結合に保たれます。最初の flow には2番目の flow への参照がないため、両方を独立して所有および変更できます。"
+            }
+          },
+          "namespace_note": "このツアーのすべては、あなたの {namespace} namespace にあります。Slack および API エンドポイントはモックでした。実際の webhook URL は {secrets} として保存されます。",
+          "keep_going": "続ける",
+          "restart": "ツアーを再開",
+          "start_building": "構築を開始する",
+          "docs": {
+            "title": "さらに表示",
+            "autocompletion": "オートコンプリート",
+            "execution": "実行",
+            "replay": "再実行",
+            "revision": "リビジョン",
+            "webhook": "ウェブフック",
+            "schedule": "スケジュール",
+            "flowTrigger": "Flow トリガー",
+            "namespace": "namespace",
+            "secret": "シークレット"
+          }
+        },
+        "errors": {
+          "first_execution": "最初の実行は成功せず、{state}として終了しました。理由を確認するには、このページのlogsを開き、もう一度お試しください。",
+          "expected_failure": "この実行は{state}で終了したため、まだ修正すべき失敗はありません。flowにまだ<code>notify</code> taskがあることを確認し、もう一度お試しください。",
+          "no_execution_to_replay": "リプレイできる実行がまだありません。前のステップでflowを実行してから、もう一度お試しください。",
+          "replay": "リプレイは {state} で終了しました。このページで log を開いて `notify` の報告内容を確認し、もう一度お試しください。",
+          "save_flow": "ツアー flow は保存できませんでした。{reason}",
+          "test_event": "webhookは{status}で応答しました。flowが保存され、triggerが有効になっていることを確認し、再度お試しください。"
+        },
+        "steps": {
+          "1": "flowを書いて実行する",
+          "2": "障害から復旧する",
+          "3": "イベントからflowを起動",
+          "4": "2つのflowを連携させる"
+        },
+        "nudge": {
+          "title": "Kestraを初めてご利用ですか？",
+          "action": "製品ツアーを開始する"
+        }
+      }
     },
     "enable concurrency": "同時実行を有効にする",
     "auditlogs": "Audit Logs",
@@ -2201,6 +2376,10 @@
         }
       },
       "flows": {
+        "ordersRevenueToSlack": {
+          "label": "Python を使用した注文概要",
+          "prompt": "APIから注文を取得し、Pythonで収益を要約する"
+        },
         "jsonApiToDuckdb": {
           "label": "JSON APIからDuckDBへ",
           "prompt": "パブリックAPIからJSONファイルをダウンロードし、Pythonスクリプトで変換し、DuckDB Queries Taskで処理するflowを作成します。"

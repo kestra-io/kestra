@@ -205,6 +205,11 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                             MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
                                         )
                                         .increment();
+                                metricRegistry
+                                    .counter(
+                                        MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT, MetricRegistry.METRIC_EXECUTOR_QUOTA_EXCEEDED_COUNT_DESCRIPTION, metricRegistry.tags(execution)
+                                    )
+                                    .increment();
 
                                 return executor.withExecution(newExecution, "processQuotas");
                             }
@@ -235,9 +240,45 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                         return Pair.of(computed, true);
                                     } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
                                         executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
+                                ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(
+                                    flow,
+                                    concurrencyLimits,
+                                    (txContext, runningCounts) -> {
+                                        Integer queueSize = flow.getConcurrency() == null
+                                            ? null
+                                            : flow.getConcurrency().getQueueSize();
+
+                                        int queuedCount = queueSize == null
+                                            ? 0
+                                            : executionQueuedStateStore.count(
+                                                txContext,
+                                                flow.getTenantId(),
+                                                flow.getNamespace(),
+                                                flow.getId()
+                                            );
+
+                                        ExecutionRunning computed = executorService.processExecutionRunning(
+                                            concurrencyLimits,
+                                            runningCounts,
+                                            queuedCount,
+                                            executionRunning.withExecution(execution)
+                                        );
+
+                                        if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING
+                                            && !computed.getExecution().getState().isTerminated()) {
+                                            return Pair.of(computed, true);
+                                        }
+
+                                        if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                            executionQueuedStateStore.save(
+                                                txContext,
+                                                ExecutionQueued.fromExecutionRunning(computed)
+                                            );
+                                        }
+
+                                        return Pair.of(computed, false);
                                     }
-                                    return Pair.of(computed, false);
-                                });
+                                );
 
                                 // if the execution is queued or terminated due to concurrency limit, we stop here
                                 if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {

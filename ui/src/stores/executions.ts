@@ -4,7 +4,7 @@ import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 import {useCoreStore} from "./core"
 import throttle from "lodash/throttle"
-import {useRoute} from "vue-router"
+import {useRoute, type LocationQuery} from "vue-router"
 import {CLUSTER_PREFIX} from "@kestra-io/design-system"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import {TaskRun, useClient, type Execution as SDKExecution, type StateType} from "@kestra-io/kestra-sdk"
@@ -308,7 +308,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const findDistinctFieldValues = async (options: {
         field: string;
-        filters?: Record<string, string>;
+        filters?: LocationQuery;
         size?: number;
     }): Promise<string[]> => {
         return ExecutionsAPI.findDistinctFieldValues({

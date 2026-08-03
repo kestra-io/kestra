@@ -1341,9 +1341,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "Describe the workflow you want",
-            "body": "Describe what you want to automate, and the AI Copilot will draft it for you. The tour continues with a ready-made example flow, so nothing has to be typed here.",
-            "next": "Generate the flow"
+            "title": "Flows can be drafted from a prompt",
+            "body": "The tour uses a ready-made example flow, so nothing has to be typed here.",
+            "next": "Use the example flow"
           },
           "flow_generated": {
             "title": "This is a flow",
@@ -1361,7 +1361,7 @@
             "title": "Flows are edited like code",
             "body": "We added a <code>notify</code> task for you without the AI Copilot, so you can see what editing the YAML directly looks like. It posts the final result to Slack.",
             "next": "See the task docs",
-            "callout": "AI Copilot gave you the first draft; the editor is where you can iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
+            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
           },
           "editor_help": {
             "title": "The docs are next to the flow",
@@ -1428,7 +1428,7 @@
           "takeaways": {
             "copilot": {
               "title": "Flows generated from plain English",
-              "body": "Describe what you want to automate, and a flow is drafted by the AI Copilot. From there you refine it in the editor, with autocompletion and the <strong>Docs</strong> panel. Flows are run from the <strong>Execute</strong> button of the flow or of any execution."
+              "body": "Describe what you want to automate in the AI Copilot chat, and a first version of the flow is generated from the live flow schema. The same is possible from your editor or terminal: Claude Code, Cursor, and other coding agents can generate flows with the Kestra agent skills."
             },
             "restart": {
               "title": "Replay instead of running everything again",
@@ -1449,6 +1449,8 @@
           "start_building": "Start building",
           "docs": {
             "title": "Read more",
+            "copilot": "AI Copilot",
+            "agentSkills": "Agent skills",
             "autocompletion": "Autocompletion",
             "execution": "Executions",
             "replay": "Replay",

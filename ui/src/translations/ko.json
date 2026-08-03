@@ -1333,11 +1333,7 @@
           "skip": "둘러보기 건너뛰기"
         },
         "scenes": {
-          "copilot": {
-            "title": "원하는 flow를 설명하세요",
-            "body": "자동화하려는 내용을 설명하면 AI Copilot이 초안을 작성해 드립니다. 투어는 미리 만들어진 예시 flow로 계속되므로 여기에 아무것도 입력할 필요가 없습니다.",
-            "next": "flow 생성"
-          },
+          "copilot": {},
           "flow_generated": {
             "title": "이것은 flow입니다",
             "body": "flow는 YAML로 작성되었으며, 두 개의 task를 포함합니다:<ol><li><code>fetch_orders</code>: 주문을 다운로드합니다.</li><li><code>summarize</code>: Python에서 수익을 계산합니다.</li></ol>task는 정의된 순서대로 순차적으로 실행됩니다.",
@@ -1353,8 +1349,7 @@
           "add_task": {
             "title": "Flow는 코드처럼 편집됩니다",
             "body": "AI Copilot 없이 사용자를 위해 `notify` task를 추가했습니다. YAML을 직접 편집하는 것이 어떤 모습인지 확인할 수 있습니다. 최종 결과는 Slack에 게시됩니다.",
-            "next": "task 문서 보기",
-            "callout": "AI Copilot이 첫 초안을 생성했습니다. 에디터에서 코드 또는 노코드 에디터 탭을 통해 이를 반복하여 수정할 수 있으며, 이 두 가지 모두 동일한 YAML을 생성하므로 flow는 어떻게 구축되었든 코드로 유지됩니다."
+            "next": "task 문서 보기"
           },
           "editor_help": {
             "title": "문서는 flow 옆에 있습니다",
@@ -1420,8 +1415,7 @@
           "title": "구축한 내용, 그리고 다음에 시도할 것",
           "takeaways": {
             "copilot": {
-              "title": "일반 영어에서 생성된 flow",
-              "body": "자동화하려는 내용을 설명하면 AI Copilot이 flow 초안을 작성합니다. 거기서부터 자동 완성 기능과 <strong>Docs</strong> 패널을 사용하여 에디터에서 다듬을 수 있습니다. flow는 해당 flow 또는 모든 실행의 <strong>Execute</strong> 버튼에서 실행됩니다."
+              "title": "일반 영어에서 생성된 flow"
             },
             "restart": {
               "title": "모든 것을 다시 실행하는 대신 재실행",

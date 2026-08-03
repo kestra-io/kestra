@@ -1333,11 +1333,7 @@
           "skip": "Pomiń wycieczkę"
         },
         "scenes": {
-          "copilot": {
-            "title": "Opisz flow, który chcesz",
-            "body": "Opisz, co chcesz zautomatyzować, a AI Copilot przygotuje dla Ciebie projekt. Wycieczka kontynuowana jest z gotowym przykładem flow, więc nic nie trzeba tutaj wpisywać.",
-            "next": "Generuj flow"
-          },
+          "copilot": {},
           "flow_generated": {
             "title": "To jest flow",
             "body": "flow jest napisany w YAML z dwoma taskami:<ol><li><code>fetch_orders</code> do pobierania zamówień</li><li><code>summarize</code> do obliczania przychodów w Pythonie</li></ol>Taski są wykonywane sekwencyjnie, w kolejności, w jakiej są zdefiniowane.",
@@ -1353,8 +1349,7 @@
           "add_task": {
             "title": "Flows są edytowane jak kod",
             "body": "Dodaliśmy dla Ciebie `notify` task bez AI Copilot, abyś mógł zobaczyć, jak wygląda bezpośrednia edycja YAML. Wysyła końcowy wynik do Slacka.",
-            "next": "Zobacz dokumentację taska",
-            "callout": "AI Copilot przygotował dla Ciebie pierwszą wersję roboczą; edytor to miejsce, w którym możesz ją dopracować w zakładce edytora Code lub No-Code, które oba generują ten sam YAML, dzięki czemu Twój flow pozostaje kodem, niezależnie od sposobu jego zbudowania."
+            "next": "Zobacz dokumentację taska"
           },
           "editor_help": {
             "title": "Dokumentacja znajduje się obok flow",
@@ -1420,8 +1415,7 @@
           "title": "Co stworzyłeś, i co dalej spróbować",
           "takeaways": {
             "copilot": {
-              "title": "Flows wygenerowane z prostego angielskiego",
-              "body": "Opisz, co chcesz zautomatyzować, a AI Copilot stworzy szkic flow. Następnie dopracowujesz go w edytorze, z autouzupełnianiem i panelem <strong>Docs</strong>. flow są uruchamiane z przycisku <strong>Execute</strong> flow lub dowolnego wykonania."
+              "title": "Flows wygenerowane z prostego angielskiego"
             },
             "restart": {
               "title": "Ponów zamiast uruchamiać wszystko od nowa",

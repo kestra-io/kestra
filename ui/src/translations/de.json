@@ -1333,11 +1333,7 @@
           "skip": "Tour überspringen"
         },
         "scenes": {
-          "copilot": {
-            "title": "Beschreiben Sie den gewünschten Arbeitsablauf",
-            "body": "Beschreiben Sie, was Sie automatisieren möchten, und der AI Copilot wird es für Sie entwerfen. Die Tour wird mit einem vorgefertigten Beispiel-flow fortgesetzt, sodass hier nichts eingegeben werden muss.",
-            "next": "Generiere den flow"
-          },
+          "copilot": {},
           "flow_generated": {
             "title": "Dies ist ein flow",
             "body": "Der flow ist in YAML mit zwei Tasks geschrieben:<ol><li><code>fetch_orders</code> zum Herunterladen der Bestellungen</li><li><code>summarize</code> zur Berechnung des Umsatzes in Python</li></ol>Tasks werden sequenziell ausgeführt, in der Reihenfolge, in der sie definiert sind.",
@@ -1353,8 +1349,7 @@
           "add_task": {
             "title": "Flows werden wie Code bearbeitet",
             "body": "Wir haben einen `notify` task für Sie ohne den AI Copilot hinzugefügt, damit Sie sehen können, wie das direkte Bearbeiten der YAML aussieht. Er postet das Endergebnis an Slack.",
-            "next": "Zur Task-Dokumentation",
-            "callout": "AI Copilot hat Ihnen den ersten Entwurf geliefert; im Editor können Sie diesen in einer Code- oder No-Code-Editor-Registerkarte überarbeiten. Beide erzeugen dasselbe YAML, sodass Ihr flow als Code erhalten bleibt, unabhängig davon, wie er erstellt wurde."
+            "next": "Zur Task-Dokumentation"
           },
           "editor_help": {
             "title": "Die Dokumentation befindet sich neben dem flow",
@@ -1420,8 +1415,7 @@
           "title": "Was Sie erstellt haben und was Sie als Nächstes ausprobieren können",
           "takeaways": {
             "copilot": {
-              "title": "Aus einfachem Englisch generierte Flows",
-              "body": "Beschreiben Sie, was Sie automatisieren möchten, und ein flow wird vom AI Copilot entworfen. Von dort aus verfeinern Sie ihn im Editor, mit Autovervollständigung und dem <strong>Docs</strong>-Panel. flows werden über die Schaltfläche <strong>Execute</strong> des flow oder einer beliebigen Ausführung ausgeführt."
+              "title": "Aus einfachem Englisch generierte Flows"
             },
             "restart": {
               "title": "Wiederholen, anstatt alles erneut auszuführen",

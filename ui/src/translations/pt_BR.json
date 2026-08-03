@@ -1333,11 +1333,7 @@
           "skip": "Pular tour"
         },
         "scenes": {
-          "copilot": {
-            "title": "Descreva o fluxo de trabalho que você deseja",
-            "body": "Descreva o que você quer automatizar, e o AI Copilot irá rascunhá-lo para você. O tour continua com um flow de exemplo pronto, então nada precisa ser digitado aqui.",
-            "next": "Gerar o flow"
-          },
+          "copilot": {},
           "flow_generated": {
             "title": "Este é um flow",
             "body": "O flow é escrito em YAML com duas tasks:<ol><li><code>fetch_orders</code> para baixar os pedidos</li><li><code>summarize</code> para calcular a receita em Python</li></ol>Tasks são executadas sequencialmente, na ordem em que são definidas.",
@@ -1353,8 +1349,7 @@
           "add_task": {
             "title": "Flows são editados como código",
             "body": "Adicionamos uma task <code>notify</code> para você sem o AI Copilot, para que você possa ver como é editar o YAML diretamente. Ele publica o resultado final no Slack.",
-            "next": "Ver a documentação da task",
-            "callout": "O AI Copilot forneceu o primeiro rascunho; no editor, você pode iterar sobre ele em uma aba Code ou No-Code, e ambas produzem o mesmo YAML, garantindo que seu flow permaneça como código, independentemente de como foi construído."
+            "next": "Ver a documentação da task"
           },
           "editor_help": {
             "title": "A documentação está ao lado do flow",
@@ -1420,8 +1415,7 @@
           "title": "O que você construiu e o que tentar a seguir",
           "takeaways": {
             "copilot": {
-              "title": "flows gerados a partir de inglês simples",
-              "body": "Descreva o que você quer automatizar, e um flow é rascunhado pelo AI Copilot. A partir daí, você o refina no editor, com autocompletion e o painel **Docs**. Flows são executados a partir do botão **Execute** do flow ou de qualquer execução."
+              "title": "flows gerados a partir de inglês simples"
             },
             "restart": {
               "title": "Reexecutar em vez de executar tudo novamente",

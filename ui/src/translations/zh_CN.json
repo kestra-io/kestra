@@ -1333,11 +1333,7 @@
           "skip": "跳过导览"
         },
         "scenes": {
-          "copilot": {
-            "title": "描述您想要的工作流",
-            "body": "描述您想要自动化的内容，AI Copilot 将为您起草。导览将继续展示一个现成的示例 flow，因此这里无需输入任何内容。",
-            "next": "生成 flow"
-          },
+          "copilot": {},
           "flow_generated": {
             "title": "这是一个 flow",
             "body": "此 flow 以 YAML 编写，包含两个 task：<ol><li><code>fetch_orders</code> 用于下载订单</li><li><code>summarize</code> 用于在 Python 中计算收入</li></ol>task 按照定义的顺序依次执行。",
@@ -1353,8 +1349,7 @@
           "add_task": {
             "title": "flow 像代码一样编辑",
             "body": "我们为您添加了一个 `notify` task，没有使用 AI Copilot，这样您就可以看到直接编辑 YAML 是什么样子。它会将最终结果发布到 Slack。",
-            "next": "查看 task 文档",
-            "callout": "AI Copilot 为你生成了初稿；你可以在编辑器中，通过“代码”或“无代码”编辑器选项卡对其进行迭代，这两个选项卡都会生成相同的 YAML，因此你的 flow 无论以何种方式构建，都始终是代码。"
+            "next": "查看 task 文档"
           },
           "editor_help": {
             "title": "文档在 flow 旁边",
@@ -1420,8 +1415,7 @@
           "title": "你构建了什么，以及接下来可以尝试什么",
           "takeaways": {
             "copilot": {
-              "title": "纯英文生成的 Flows",
-              "body": "描述您想要自动化的内容，AI Copilot 会为您草拟一个 flow。然后，您可以在编辑器中通过自动补全和 <strong>Docs</strong> 面板对其进行完善。flow 可以通过 flow 或任何执行的 <strong>Execute</strong> 按钮运行。"
+              "title": "纯英文生成的 Flows"
             },
             "restart": {
               "title": "重放而不是重新运行所有内容",

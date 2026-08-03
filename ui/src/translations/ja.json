@@ -1333,11 +1333,7 @@
           "skip": "ツアーをスキップ"
         },
         "scenes": {
-          "copilot": {
-            "title": "希望するワークフローを記述してください",
-            "body": "自動化したい内容を記述してください。AI Copilotがドラフトを作成します。ツアーは、既製のサンプルflowで続きますので、ここに入力する必要はありません。",
-            "next": "flow を生成"
-          },
+          "copilot": {},
           "flow_generated": {
             "title": "これは flow です",
             "body": "このflowはYAMLで記述されており、2つのtasksがあります。<ol><li><code>fetch_orders</code>: 注文をダウンロードする</li><li><code>summarize</code>: Pythonで収益を計算する</li></ol>Tasksは、定義された順序で順次実行されます。",
@@ -1353,8 +1349,7 @@
           "add_task": {
             "title": "Flows はコードのように編集します",
             "body": "AI Copilotを使用せずに`notify` taskを追加しました。これにより、YAMLを直接編集する様子を確認できます。最終結果はSlackに投稿されます。",
-            "next": "Taskドキュメントを参照してください",
-            "callout": "AI Copilotが初稿を作成しました。エディターでは、コードまたはノーコードエディターのタブで反復作業を行うことができ、どちらのタブも同じYAMLを生成するため、flow はどのように構築されたとしてもコードとして維持されます。"
+            "next": "Taskドキュメントを参照してください"
           },
           "editor_help": {
             "title": "ドキュメントは flow の隣にあります",
@@ -1420,8 +1415,7 @@
           "title": "あなたが構築したもの、次に試すこと",
           "takeaways": {
             "copilot": {
-              "title": "平易な英語から生成されたFlows",
-              "body": "自動化したい内容を記述すると、AI Copilotがflowをドラフトします。そこから、オートコンプリートと<strong>Docs</strong>パネルを使ってエディターで洗練させます。flowは、そのflowまたは任意の実行の<strong>Execute</strong>ボタンから実行されます。"
+              "title": "平易な英語から生成されたFlows"
             },
             "restart": {
               "title": "すべてを再実行するのではなく、リプレイする",

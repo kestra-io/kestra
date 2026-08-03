@@ -1333,11 +1333,7 @@
           "skip": "Omitir recorrido"
         },
         "scenes": {
-          "copilot": {
-            "title": "Describa el workflow que desea",
-            "body": "Describe lo que quieres automatizar, y el Copiloto de IA lo redactará por ti. El recorrido continúa con un flow de ejemplo predefinido, así que no es necesario escribir nada aquí.",
-            "next": "Generar el flow"
-          },
+          "copilot": {},
           "flow_generated": {
             "title": "Esto es un flow",
             "body": "El flow está escrito en YAML con dos tasks:<ol><li><code>fetch_orders</code> para descargar los pedidos</li><li><code>summarize</code> para calcular los ingresos en Python</li></ol>Los tasks se ejecutan secuencialmente, en el orden en que se definen.",
@@ -1353,8 +1349,7 @@
           "add_task": {
             "title": "Flows se editan como código",
             "body": "Hemos añadido una `notify` task para ti sin el Copilot de IA, para que puedas ver cómo es editar el YAML directamente. Publica el resultado final en Slack.",
-            "next": "Ver la documentación de la task",
-            "callout": "AI Copilot te dio el primer borrador; el editor es donde puedes iterar sobre él en una pestaña de editor de Código o No-Código. Ambas producen el mismo YAML, por lo que tu flow permanece como código, sin importar cómo se haya construido."
+            "next": "Ver la documentación de la task"
           },
           "editor_help": {
             "title": "La documentación está junto al flow",
@@ -1420,8 +1415,7 @@
           "title": "Lo que construiste, y qué probar a continuación",
           "takeaways": {
             "copilot": {
-              "title": "Flows generados a partir de inglés natural",
-              "body": "Describe lo que quieres automatizar, y un flow es redactado por el Copiloto de IA. Desde ahí lo refinas en el editor, con autocompletado y el panel de <strong>Docs</strong>. Los flows se ejecutan desde el botón de <strong>Execute</strong> del flow o de cualquier ejecución."
+              "title": "Flows generados a partir de inglés natural"
             },
             "restart": {
               "title": "Reproducir en lugar de ejecutar todo de nuevo",

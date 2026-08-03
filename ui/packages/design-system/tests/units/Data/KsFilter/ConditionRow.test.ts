@@ -201,6 +201,9 @@ describe("ConditionRow key-value comparator changes", () => {
                     comparator: Comparators.IN,
                     comparatorLabel: "In",
                     value: [
+                        "invalid",
+                        ":missing-key",
+                        "empty-value:",
                         "environment:production",
                         "environment:staging",
                         "team:core",

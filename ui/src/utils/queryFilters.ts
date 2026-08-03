@@ -34,12 +34,17 @@ class FilterNodeBuilder {
     }
 
     addLeaf(field: QueryFilterField, operation: QueryFilterOp, subKey: string | undefined, value: string | string[]) {
-        const scalarValue = Array.isArray(value) ? value[0] : value
-
-        if (field === "labels" && subKey) {
-            const map = this.labelsByOp.get(operation) ?? Object.create(null) as Record<string, string[]>
-            map[subKey] = [...(map[subKey] ?? []), ...(Array.isArray(value) ? value : [scalarValue])]
-            this.labelsByOp.set(operation, map)
+        if (field === "labels") {
+            const values = (Array.isArray(value) ? value : [value]).filter(Boolean)
+            if (values.length === 0) return
+            if (subKey !== undefined) {
+                if (!subKey) return
+                const map = this.labelsByOp.get(operation) ?? Object.create(null) as Record<string, string[]>
+                map[subKey] = [...(map[subKey] ?? []), ...values]
+                this.labelsByOp.set(operation, map)
+                return
+            }
+            this.directLeaves.push({field, operation, value: Array.isArray(value) ? values : values[0]})
             return
         }
 

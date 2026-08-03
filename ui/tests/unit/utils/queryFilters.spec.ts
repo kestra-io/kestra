@@ -1,9 +1,10 @@
 import {describe, expect, it} from "vitest"
 import {Comparators, encodeFilterGroupsToQuery, keyOfComparator} from "@kestra-io/design-system"
+import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {createConfigureClient} from "../../../packages/hey-api-plugin/src/runtime"
 import {routeQueryToQueryFilters} from "../../../src/utils/queryFilters"
 
-const serializeQueryFilters = (filters: ReturnType<typeof routeQueryToQueryFilters>) => {
+const serializeQueryFilters = (filters: QueryFilter[]) => {
     let config: any
     const slot = {clear() {}, use() {}}
     const client = {
@@ -91,6 +92,54 @@ describe("routeQueryToQueryFilters", () => {
     )
 
     it.each([
+        ["a single empty value", [""]],
+        ["repeated empty values", ["", ""]],
+        ["a null value", [null]],
+    ])("drops label filters containing only %s", (_, value) => {
+        expect(routeQueryToQueryFilters({
+            "filters[labels][IN][environment]": value,
+        })).toEqual([])
+    })
+
+    it("keeps valid label values while dropping empty route values", () => {
+        expect(routeQueryToQueryFilters({
+            "filters[labels][IN][environment]": [null, "", "production", ""],
+        })).toEqual([
+            {field: "labels", operation: "IN", value: {environment: "production"}},
+        ])
+    })
+
+    it.each([
+        ["CONTAINS", "team"],
+        ["NOT_CONTAINS", "legacy"],
+        ["IS_NULL", "deprecated"],
+        ["IS_NOT_NULL", "owner"],
+    ] as const)("preserves a scalar labels %s filter through the HTTP wire", (operation, value) => {
+        const filters = routeQueryToQueryFilters({[`filters[labels][${operation}]`]: value})
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(filters).toEqual([{field: "labels", operation, value}])
+        expect(params.get(`filters[labels][${operation}]`)).toBe(value)
+    })
+
+    it("preserves scalar label filters inside mixed nested groups", () => {
+        const filters = routeQueryToQueryFilters({
+            "filters[tenantId][EQUALS]": "tenant-1",
+            "filters[or][0][labels][CONTAINS]": "team",
+            "filters[or][1][labels][IS_NULL]": "deprecated",
+        })
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.get("filters[tenantId][EQUALS]")).toBe("tenant-1")
+        expect(params.get("filters[or][0][labels][CONTAINS]")).toBe("team")
+        expect(params.get("filters[or][1][labels][IS_NULL]")).toBe("deprecated")
+    })
+
+    it("drops a label filter with an empty sub-key", () => {
+        expect(routeQueryToQueryFilters({"filters[labels][IN][]": "production"})).toEqual([])
+    })
+
+    it.each([
         ["IN", "or"],
         ["NOT_IN", "and"],
     ] as const)("serializes repeated label %s values as grouped URL parameters", (operation, logical) => {
@@ -140,6 +189,43 @@ describe("routeQueryToQueryFilters", () => {
         expect(params.get("filters[or][0][and][0][namespace][EQUALS]")).toBe("io.kestra")
         expect(params.get("filters[or][0][and][1][state][EQUALS]")).toBe("RUNNING")
         expect(params.get("filters[or][1][state][EQUALS]")).toBe("FAILED")
+    })
+
+    it.each(["IS_NULL", "IS_NOT_NULL"] as const)(
+        "serializes a comparator-only %s leaf with an empty wire value",
+        (operation) => {
+            const params = new URLSearchParams(serializeQueryFilters([{field: "state", operation}]))
+
+            expect(params.has(`filters[state][${operation}]`)).toBe(true)
+            expect(params.get(`filters[state][${operation}]`)).toBe("")
+        },
+    )
+
+    it("serializes comparator-only leaves before and after valued leaves", () => {
+        const filters: QueryFilter[] = [
+            {field: "state", operation: "IS_NULL"},
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            {field: "status", operation: "IS_NOT_NULL", value: null},
+        ]
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.get("filters[state][IS_NULL]")).toBe("")
+        expect(params.get("filters[namespace][EQUALS]")).toBe("io.kestra")
+        expect(params.get("filters[status][IS_NOT_NULL]")).toBe("")
+    })
+
+    it("serializes comparator-only leaves inside logical groups", () => {
+        const filters: QueryFilter[] = [{
+            logical: "or",
+            children: [
+                {field: "state", operation: "IS_NULL"},
+                {field: "status", operation: "IS_NOT_NULL", value: null},
+            ],
+        }]
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.get("filters[or][0][state][IS_NULL]")).toBe("")
+        expect(params.get("filters[or][1][status][IS_NOT_NULL]")).toBe("")
     })
 
     it("builds a top-level OR group", () => {

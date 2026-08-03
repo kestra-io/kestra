@@ -138,7 +138,11 @@
 
     const normalizeKeyValuePairs = (values: string[]) => {
         const pairByKey = new Map<string, string>()
-        values.forEach(pair => pairByKey.set(pair.split(":", 1)[0], pair))
+        values.forEach(pair => {
+            const separatorIndex = pair.indexOf(":")
+            if (separatorIndex <= 0 || separatorIndex === pair.length - 1) return
+            pairByKey.set(pair.slice(0, separatorIndex), pair)
+        })
         return [...pairByKey.values()]
     }
 

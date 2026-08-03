@@ -105,6 +105,11 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             querySerializer(query: Record<string, any>) {
                 const queryParameters = new URLSearchParams()
 
+                const isQueryFilter = (filter: any) =>
+                    filter != null && typeof filter === "object" &&
+                    ((typeof filter.field === "string" && typeof filter.operation === "string") ||
+                        (typeof filter.logical === "string" && Array.isArray(filter.children)))
+
                 const appendQueryFilter = (filter: any, prefix = "filters") => {
                     if (filter.logical && Array.isArray(filter.children)) {
                         filter.children.forEach((child: any, index: number) =>
@@ -122,7 +127,10 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                         }
                     } else {
                         const ser = serializeQueryValue(filter.value)
-                        if (ser !== undefined) queryParameters.append(`${prefix}[${keyField}][${op}]`, ser)
+                        const isValueOptional = op === "IS_NULL" || op === "IS_NOT_NULL"
+                        if (ser !== undefined || isValueOptional) {
+                            queryParameters.append(`${prefix}[${keyField}][${op}]`, ser ?? "")
+                        }
                     }
                 }
 
@@ -134,10 +142,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     const looksLikeQueryFilterArray =
                         Array.isArray(param) &&
                         param.length > 0 &&
-                        typeof param[0] === "object" &&
-                        param[0] != null &&
-                        (("field" in param[0] && "operation" in param[0] && "value" in param[0]) ||
-                            ("logical" in param[0] && "children" in param[0]))
+                        param.every(isQueryFilter)
 
                     if (looksLikeQueryFilterArray) {
                         for (const qf of param) appendQueryFilter(qf)

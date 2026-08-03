@@ -195,15 +195,41 @@ export default defineConfig(({mode}) => {
                 "moment",
                 "moment-timezone",
                 "moment-range",
+                "vue-gtag",
+                // Locales are lazy-loaded per language in src/utils/init.ts (only the active
+                // locale reaches the browser). They are listed here so Vite pre-bundles them on
+                // the FIRST optimize pass — otherwise it discovers each dynamic import at runtime
+                // and triggers a page-reloading re-optimization at startup. This does NOT ship
+                // every locale to the client; it only affects dev-server pre-bundling.
+                "moment/dist/locale/de",
+                "moment/dist/locale/es",
+                "moment/dist/locale/fr",
+                "moment/dist/locale/hi",
+                "moment/dist/locale/it",
+                "moment/dist/locale/ja",
+                "moment/dist/locale/ko",
+                "moment/dist/locale/pl",
+                "moment/dist/locale/pt",
+                "moment/dist/locale/pt-br",
+                "moment/dist/locale/ru",
+                "moment/dist/locale/zh-cn",
                 "dagre",
                 "@vue-flow/background",
                 "@vue-flow/controls",
                 "html-to-image",
                 "@module-federation/runtime",
+                // Discovered late by the federation plugin at runtime otherwise, causing a
+                // startup re-optimization + reload. Pre-bundle it in the first pass.
+                "@module-federation/dts-plugin/dynamic-remote-type-hints-plugin",
                 "js-yaml",
                 "path-browserify",
                 "mailchecker",
                 "rapidoc",
+                // The AI Copilot stories/components import the SDK's `ai` subpath. Pre-bundle it so
+                // Vite doesn't discover it mid-run and reload the dev server — that reload kills
+                // whichever storybook test is loading at that instant (the addon-vitest setup import
+                // then fails), which is what intermittently red-flags unrelated stories in CI.
+                "@kestra-io/kestra-sdk/ai",
             ],
             exclude: [
                 "* > @kestra-io/ui-libs",

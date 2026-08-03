@@ -33,13 +33,15 @@ const app = createApp(App)
 // the design system depending on the app's plugin-icon API
 app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)
 
-const handleAuthError = (error: Error, to: {fullPath: string}) => {
-    if (error.message?.includes("401")) {
+// Fail closed: an error probing the pre-auth endpoints is no evidence that setup is needed.
+const handleAuthError = (to: {fullPath: string}, error: unknown) => {
+    if ((error as {response?: {status?: number}} | null)?.response?.status === 401) {
         BasicAuth.logout()
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
         return {name: "login", query: fromPath ? {from: fromPath} : {}}
-    }
-    return {name: "setup"}
+    } 
+    console.error("Error during authentication check:", error)
+    return
 }
 
 let httpClient: ReturnType<typeof setupKestraHttp> | undefined
@@ -137,7 +139,7 @@ async function beforeResolve(router: Router, to: any, from: any): Promise<unknow
         await miscStore.loadConfigs()
     } catch (error) {
         console.error("Error during authentication check:", error)
-        return handleAuthError(error as Error, to)
+        return handleAuthError(to, error)
     }
 }
 

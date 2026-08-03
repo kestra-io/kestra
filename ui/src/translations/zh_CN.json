@@ -107,6 +107,12 @@
     "total_duration": "总持续时间",
     "running duration": "运行时间",
     "queued duration": "排队时间",
+    "executionProgress": {
+      "title": "执行进度",
+      "estimatedRemaining": "预计剩余：{duration}",
+      "noBaseline": "没有历史数据 — 无法估算剩余时间",
+      "pastEstimate": "运行时间比平常更长"
+    },
     "choose file": "选择文件或拖放到此处...",
     "launch execution": "执行",
     "warning flow with triggers": "此流程包含触发器，如果此流程依赖触发表达式，则手动执行将失败。",
@@ -184,6 +190,7 @@
     "last execution status": "上次执行状态",
     "jump to...": "跳转到...",
     "contextBar": {
+      "ai": "人工智能",
       "news": "新闻",
       "docs": "文档",
       "help": "帮助",
@@ -412,6 +419,7 @@
       "tree": "树",
       "raw_json": "Raw JSON",
       "select_prompt": "选择一个变量以查看其 value。",
+      "select_hint": "变量、trigger 和 task outputs 列在左侧。",
       "empty": "此执行没有可用的变量。",
       "one_key": "\\{ 1 key \\}",
       "n_keys": "\\{ {count} keys \\}",
@@ -428,6 +436,13 @@
     "concurrency_limit": {
       "dialog_title": "并发限制",
       "warning": "更改运行计数器可能会破坏并发性，因此执行可能会超出允许的限制。"
+    },
+    "flowConcurrency": {
+      "loadError": "无法加载此 flow 的并发限制。",
+      "staleLimit": {
+        "message": "此 flow 不再声明并发块，但限制记录仍在统计 {count} 个正在运行的执行。它不再影响新的执行，可从管理 → 并发限制中重置。",
+        "title": "残留的并发限制"
+      }
     },
     "documentation": {
       "documentation": "文档",
@@ -533,6 +548,18 @@
     "trigger": "触发器",
     "no_trigger": "没有可用的trigger。",
     "triggers": "触发器",
+    "test_event": {
+      "title": "发送测试事件",
+      "description": "这会将下方的有效载荷发布到 {trigger} trigger 的 webhook URL。",
+      "payload": "有效载荷",
+      "headers": "头部 (可选)",
+      "send": "发送事件",
+      "sending": "正在发送",
+      "response": "响应 {status}",
+      "execution_created": "执行已创建",
+      "failed": "网络钩子 响应了 {status}。请检查 flow 是否已保存，并且 trigger 是否已启用。",
+      "button": "发送测试事件"
+    },
     "triggers_header_description": "浏览、添加和管理触发器以自动化您的flows。您可以选择将flow公开为AI工具、进行调度、添加webhook trigger、轮询外部应用程序中的更改或实时事件监听器。",
     "triggers_tabs_add": "添加",
     "triggers_tabs_manage": "管理",
@@ -1292,130 +1319,165 @@
       "title": "资产"
     },
     "onboarding": {
-      "welcome": {
-        "headline": "几分钟内构建并运行您的第一个工作流",
-        "guided_title": "构建您的第一个 Flow",
-        "badge": "教程",
-        "guided_description": "通过引导步骤学习如何创建并运行您的第一个 Flow。",
-        "guided_duration": "推荐大多数用户使用",
-        "self_serve_title": "从零开始创建 Flow",
-        "self_serve_description": "直接进入编辑器并创建您自己的 Flow。",
-        "self_serve_note": "适合有经验的用户",
-        "additional_help": "更多帮助",
-        "docs": "文档",
-        "tutorial": "教程",
-        "blueprints": "蓝图",
-        "slack": "Slack 社区"
-      },
-      "steps": {
-        "flow_basics": {
-          "title": "Flow 基础",
-          "description": "在 Kestra 中，<code>flow</code> 是核心的编排单元。您使用 YAML 定义它，包括元数据和按顺序排列的任务。<br><br>请查看下面的示例结构，然后逐步构建它。"
+      "tour": {
+        "menu": "产品导览",
+        "menu_description": "搭建、运行并修复一个 flow，然后从事件启动它",
+        "step_of": "第 {current} / {total} 步",
+        "actions": {
+          "back": "返回",
+          "skip": "跳过导览",
+          "running": "运行中",
+          "finish_now": "完成导览",
+          "dismiss": "隐藏",
+          "skipped_hint": "产品导览将保留在左侧菜单中，如果您想稍后继续。"
         },
-        "add_id": {
-          "title": "添加 Flow ID",
-          "description": "ID 是您的 Flow 的唯一名称，方便您查找、运行和一致地引用它。<br><br>现在在根级别添加 <code>id</code>。"
+        "intro": {
+          "kicker": "欢迎使用 Kestra",
+          "title": "5分钟快速上手 Kestra",
+          "body": "Kestra 是一个编排平台。它可以轻松地构建、运行和修复定时和事件驱动的 flow。",
+          "note": "你可以随时停止。",
+          "start": "开始导览",
+          "skip": "跳过导览"
         },
-        "add_namespace": {
-          "title": "添加命名空间",
-          "description": "Namespace 是类似文件夹的分组，用于按团队、项目或环境组织 Flow。<br><br>现在在根级别添加 <code>namespace</code>。"
+        "scenes": {
+          "copilot": {
+            "title": "描述您想要的工作流",
+            "body": "描述您想要自动化的内容，AI Copilot 将为您起草。导览将继续展示一个现成的示例 flow，因此这里无需输入任何内容。",
+            "next": "生成 flow"
+          },
+          "flow_generated": {
+            "title": "这是一个 flow",
+            "body": "此 flow 以 YAML 编写，包含两个 task：<ol><li><code>fetch_orders</code> 用于下载订单</li><li><code>summarize</code> 用于在 Python 中计算收入</li></ol>task 按照定义的顺序依次执行。",
+            "next": "保存并执行"
+          },
+          "first_execution": {
+            "title": "每次执行都被记录",
+            "body": "每个 task 在 Gantt 视图中都会计时。点击 task 可查看其 logs。",
+            "milestone": "您的首次执行成功",
+            "next": "编辑 flow",
+            "callout": "与定时任务或手动运行的脚本不同的是，每次执行都会保留其 input、output 和 log，这样之后就可以进行审计。"
+          },
+          "add_task": {
+            "title": "flow 像代码一样编辑",
+            "body": "我们为您添加了一个 `notify` task，没有使用 AI Copilot，这样您就可以看到直接编辑 YAML 是什么样子。它会将最终结果发布到 Slack。",
+            "next": "查看 task 文档",
+            "callout": "AI Copilot 为你生成了初稿；你可以在编辑器中，通过“代码”或“无代码”编辑器选项卡对其进行迭代，这两个选项卡都会生成相同的 YAML，因此你的 flow 无论以何种方式构建，都始终是代码。"
+          },
+          "editor_help": {
+            "title": "文档在 flow 旁边",
+            "body": "光标下的 task 文档会显示在 <strong>Docs</strong> 面板中，包含其属性、output 和示例。",
+            "callout": "flow 通过迭代来构建：修改属性，运行它，读取 logs，重复。自动补全和 <strong>Docs</strong> 面板意味着您无需离开编辑器即可查找任何内容。",
+            "next": "执行 flow"
+          },
+          "failed_execution": {
+            "title": "task 失败了",
+            "body": "Slack 消息中收入的表达式有一个拼写错误：<code>vars.revenu</code> 而不是 <code>vars.revenue</code>。",
+            "callout": "`notify` 之前的 tasks 已成功，因此它们的 outputs 仍然可用。",
+            "next": "修复 flow"
+          },
+          "fix_and_replay": {
+            "title": "一个字符已更改",
+            "body": "表达式现在是 `vars.revenue`。diff 显示了发生更改的一行，并且失败的执行可以从 `notify` task 针对新版本重放。",
+            "next": "从失败的 task 重放"
+          },
+          "replayed_execution": {
+            "title": "仅失败的重新运行了",
+            "body": "第一次尝试的 Outputs 被复用，因此只有 <code>notify</code> task 需要再次运行。这次 Slack 消息已成功发送。",
+            "milestone": "重放成功",
+            "next": "添加 trigger",
+            "callout": "没有重放，一个失败的 task 将需要重新运行整个 flow。付费 API 调用将再次执行，耗时计算将重复，并且已写入的行将被重复。"
+          },
+          "webhook_trigger": {
+            "title": "您的 flow 可以通过一个事件启动",
+            "body": "通过 Webhook trigger，这个 flow 有自己的 URL。每当 HTTP 请求发送到该 URL 时，都会创建一个执行，并且请求体可作为 <code>trigger.body</code> 供 tasks 使用。",
+            "next": "查看 trigger"
+          },
+          "test_event": {
+            "title": "发送测试事件",
+            "body": "trigger 在此处列出。一个测试事件可以从您的浏览器发送，模拟外部系统发送的方式，以便可以测试该 trigger，无需离开 Kestra。",
+            "next": "发送测试事件"
+          },
+          "event_execution": {
+            "title": "事件创建了一个执行",
+            "body": "事件已到达，并从中创建了一个执行，像其他执行一样被计时并记录了 log。无需为此托管单独的服务；trigger 端点 是 Kestra 的一部分。",
+            "milestone": "您未启动的执行",
+            "next": "探索 payload"
+          },
+          "explore_payload": {
+            "title": "变量, trigger 和 task outputs",
+            "body": "Input/Output 选项卡列出了此执行可用的所有 value。",
+            "callout": "<code>trigger.body</code> 已在右侧填充。点击 <strong>调试表达式</strong> 以查看它在此次执行中的返回值。",
+            "next": "串联第二个 flow"
+          },
+          "report_flow": {
+            "title": "一个 flow 可以依赖另一个 flow",
+            "body": "<code>daily_report</code> 有一个 Flow trigger，因此它会在 <code>order_summary</code> 成功时启动。为此，<code>order_summary</code> 无需任何额外配置。",
+            "next": "发送另一个事件",
+            "callout": "两个 flow 可以由不同的团队拥有：<code>daily_report</code> 声明它在等待什么，而 <code>order_summary</code> 无需知道它的存在。"
+          },
+          "chain": {
+            "title": "每次执行是如何启动的",
+            "body": "您自己启动的执行被标记为 <code>started_by:you</code>。其他执行由 webhook 事件或 flow trigger 创建。",
+            "milestone": "两次执行来自一个事件",
+            "next": "完成"
+          }
         },
-        "add_input": {
-          "title": "添加输入参数",
-          "description": "Inputs 是 Flow 级别的参数，可在任务中引用，以在运行时动态控制行为。<br><br>现在添加一个名为 <code>name</code> 且类型为 <code>STRING</code> 的输入参数。"
+        "finale": {
+          "kicker": "导览完成",
+          "title": "你构建了什么，以及接下来可以尝试什么",
+          "takeaways": {
+            "copilot": {
+              "title": "纯英文生成的 Flows",
+              "body": "描述您想要自动化的内容，AI Copilot 会为您草拟一个 flow。然后，您可以在编辑器中通过自动补全和 <strong>Docs</strong> 面板对其进行完善。flow 可以通过 flow 或任何执行的 <strong>Execute</strong> 按钮运行。"
+            },
+            "restart": {
+              "title": "重放而不是重新运行所有内容",
+              "body": "已成功的 Task 运行会被复用，所以只有失败的工作需要基于 flow 的最新版本重新运行。重放和重新启动功能在执行的 <strong>操作</strong> 下提供，并在 Gantt 视图中的 Task 运行上提供。"
+            },
+            "events": {
+              "title": "由事件启动的执行",
+              "body": "Webhook 和 Schedule trigger 是 Kestra 的一部分，因此一个 execution 可以通过事件或按计划启动，无需额外托管任何内容。"
+            },
+            "chain": {
+              "title": "依赖 flow 的 flow",
+              "body": "通过 Flow trigger，一个 flow 可以由另一个 flow 的成功或失败来启动，跨 namespace。这使得 flow 保持解耦。第一个 flow 中没有任何内容引用第二个 flow，因此两者可以独立拥有和更改。"
+            }
+          },
+          "namespace_note": "本次教程中的所有内容都位于您的 {namespace} namespace 中。Slack 和 API 端点是模拟的；真实的 webhook URL 将作为 {secrets} 存储。",
+          "keep_going": "继续",
+          "restart": "重新开始导览",
+          "start_building": "开始构建",
+          "docs": {
+            "title": "阅读更多",
+            "autocompletion": "自动补全",
+            "execution": "执行",
+            "replay": "重放",
+            "revision": "版本",
+            "webhook": "Webhook",
+            "schedule": "调度",
+            "flowTrigger": "Flow trigger",
+            "namespace": "Namespaces",
+            "secret": "密钥"
+          }
         },
-        "add_log_task": {
-          "title": "添加第一个任务",
-          "description": "Tasks 是 Flow 执行的工作单元，定义为按顺序排列的步骤列表。每个任务都需要唯一的 <code>id</code> 和 <code>type</code>。Kestra 提供了许多用于外部系统的任务插件；这里我们使用一个 Python Script 任务。<br><br><code>&#123;&#123; ... &#125;&#125;</code> 语法是 Pebble 表达式，用于在运行时动态引用变量，例如来自 Flow 输入的 <code>&#123;&#123; inputs.name &#125;&#125;</code>。<br><br>现在在 <code>tasks</code> 下添加第一个任务，包括 <code>id</code>、<code>type</code> 和一个输出问候语的 <code>script</code>。"
+        "errors": {
+          "first_execution": "第一次执行以 {state} 状态结束，而不是成功。打开此页面上的 logs 查看原因，然后重试。",
+          "expected_failure": "本次执行以 {state} 状态完成，因此尚无需要修复的故障。请检查该 flow 是否仍包含 <code>notify</code> task，然后重试。",
+          "no_execution_to_replay": "尚无可重放的执行。请在上一步运行该 flow，然后重试。",
+          "replay": "重放结束，状态为 {state}。在此页面打开 log 查看 <code>notify</code> 报告了什么，然后重试。",
+          "save_flow": "导览 flow 无法保存。{reason}",
+          "test_event": "Webhook 响应了 {status}。请检查 flow 已保存并且 trigger 已启用，然后重试。"
         },
-        "save_flow": {
-          "title": "保存 Flow",
-          "description": "保存后，您的 Flow 定义将被持久化，以便执行。"
+        "steps": {
+          "1": "编写和运行一个 flow",
+          "2": "从失败中恢复",
+          "3": "从事件开始 flow",
+          "4": "串联两个 flow"
         },
-        "execute_flow": {
-          "title": "执行 Flow",
-          "description": "执行将使用运行时输入值启动一次 Flow 运行。"
-        },
-        "view_logs_status": {
-          "title": "查看执行情况",
-          "description": "执行详情会显示运行状态、耗时以及任务级输出日志。<br><br>现在打开执行详情，并在甘特图中点击 <code>greet</code> 查看日志。"
-        },
-        "edit_flow_from_execution": {
-          "title": "返回 Flow 编辑器",
-          "description": "您可以直接从执行页面跳转回 Flow 定义，以便快速迭代。"
-        },
-        "add_cron_trigger": {
-          "title": "添加 Cron 触发器",
-          "description": "Triggers 可以根据计划或外部事件（例如 Webhook 或 MQTT 消息）启动运行。<br><br>现在添加一个 Cron 计划触发器，使该 Flow 每 5 分钟运行一次。"
-        },
-        "add_input_default": {
-          "title": "设置输入的默认值",
-          "description": "当 Flow 被自动触发时，输入参数仍然需要在运行时提供值。<br><br><code>name</code> 输入已在上一步创建，无需再次添加。只需为现有的 <code>name</code> 输入设置默认值。"
-        },
-        "save_flow_again": {
-          "title": "保存 Flow",
-          "description": "现在您的 Flow 已包含计划任务和自动运行所需的默认输入值。"
-        },
-        "background_runs_info": {
-          "title": "计划运行",
-          "description": "此 Flow 现在将每 5 分钟在后台执行一次。<br><br>您可以通过左侧菜单进入“Executions”概览页面以监控计划运行。"
-        },
-        "finish": {
-          "title": "您已完成“第一个 Flow”教程",
-          "description": "很好的开始。您已创建、执行、参数化并安排了一个 Flow。<br><br>请选择接下来要执行的操作 ..."
+        "nudge": {
+          "title": "Kestra 新手？",
+          "action": "体验产品导览"
         }
-      },
-      "actions": {
-        "next": "下一步",
-        "complete": "完成",
-        "save_to_continue": "请在顶部右侧点击“Save”。",
-        "execute_to_continue": "1. 在顶部右侧点击“Execute”。\n2. 为 <strong>name</strong> 提供一个值。\n3. 在弹窗中再次点击“Execute”。",
-        "edit_flow_to_continue": "打开操作菜单（顶部栏右侧）并选择“编辑流程”。",
-        "cancel_tutorial": "取消教程",
-        "finish_tutorial": "完成教程"
-      },
-      "finish_actions": {
-        "explore_blueprints": "浏览蓝图",
-        "create_flow": "创建 Flow"
-      },
-      "editor_hints": {
-        "build_intro": "逐步构建您的第一个 Flow。",
-        "step_1": "# 1) 添加 id",
-        "step_2": "# 2) 添加 namespace",
-        "step_3": "# 3) 添加输入参数",
-        "step_4": "# 4) 添加 tasks 并创建第一个 Python 任务",
-        "step_5": "# 5) 添加 Cron 触发器"
-      },
-      "cancel_modal": {
-        "title": "取消“第一个 Flow”教程",
-        "description": "您确定要取消“第一个 Flow”教程吗？",
-        "confirm": "取消教程",
-        "keep": "继续教程"
-      },
-      "validation": {
-        "complete_step": "快完成了。请完成此步骤以继续。",
-        "fix_yaml": "YAML 格式存在小问题。请修复后继续。",
-        "add_id": "请在顶部添加一个 Flow ID。例如：`id: hello_flow`。",
-        "add_namespace": "请在顶部添加一个 namespace。例如：`namespace: company.team`。",
-        "add_input_section": "请创建一个包含一个输入参数的 `inputs` 部分。",
-        "add_input_id": "在 `inputs` 中添加 `id: name`。",
-        "add_input_type": "将输入类型设置为 `STRING`。",
-        "add_log_task_section": "请创建一个 `tasks` 部分并添加第一个任务。",
-        "add_log_task_id": "为任务设置一个 ID，例如：`id: greet`。",
-        "add_log_task_type": "将任务类型设置为 `io.kestra.plugin.scripts.python.Script`。",
-        "add_log_task_message": "为任务添加一个 `script` 字段。",
-        "add_log_task_pebble": "在脚本中使用 Pebble 表达式以使用输入值（例如：`inputs.name`）。",
-        "save_flow": "点击“Save”以继续。",
-        "execute_flow": "请运行一次 Flow 以继续。",
-        "view_logs_status": "打开执行详情并检查 `greet` 的日志。",
-        "edit_flow_from_execution": "打开操作菜单并点击“编辑流程”以继续。",
-        "add_cron_trigger_section": "创建一个包含计划触发器的 `triggers` 部分。",
-        "add_cron_trigger_type": "将触发器类型设置为 `io.kestra.plugin.core.trigger.Schedule`。",
-        "add_cron_trigger_cron": "添加一个 Cron 表达式，例如：`\"*/5 * * * *\"`。",
-        "add_input_default_section": "返回 `inputs`，保留一个名为 `name` 的现有输入（不要添加第二个输入）。",
-        "add_input_default_id": "保持现有输入 ID 为 `name`。",
-        "add_input_default_defaults": "为 `name` 添加默认值，例如：`defaults: \"Kestra\"`。",
-        "save_flow_again": "再次点击“Save”以继续。"
       }
     },
     "enable concurrency": "启用并发",
@@ -1767,7 +1829,9 @@
       "connection_lost": {
         "title": "连接中断",
         "message": "无法连接到您的Kestra实例。请确保它正在运行，然后刷新页面。"
-      }
+      },
+      "opening_flow_editor": "打开 flow 编辑器时出现问题",
+      "retry": "重试"
     },
     "debug": "调试",
     "default": "默认值",
@@ -2055,6 +2119,136 @@
       },
       "dashboard": {
         "prompt_placeholder": "询问有关您数据的问题。示例提示：显示我过去7天内的flow成功率。"
+      },
+      "copilot": {
+        "title": "AI 副驾驶",
+        "placeholder": "告诉我构建什么…",
+        "send": "发送",
+        "mode": {
+          "ask": "询问",
+          "edit": "编辑",
+          "plan": "计划"
+        },
+        "empty": {
+          "title": "将您的想法转化为工作流"
+        },
+        "toolCall": "正在运行 {tool}",
+        "context": {
+          "app": "应用: {{app}}",
+          "blueprint": "Blueprint：{blueprint}",
+          "dashboard": "仪表盘：{{dashboard}}",
+          "execution": "执行：{id}",
+          "flow": "Flow：{{flow}}",
+          "namespace": "Namespace: {{namespace}}",
+          "plugin": "插件: {plugin}",
+          "test": "测试: {test}"
+        },
+        "contextAdded": "已添加 {type} {id} 到上下文。",
+        "contextNoun": {
+          "app": "应用",
+          "blueprint": "蓝图",
+          "dashboard": "仪表盘",
+          "execution": "执行",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "插件",
+          "test": "测试"
+        },
+        "contextRemoved": "已从上下文移除 {type} {id}。",
+        "toolResult": {
+          "detail": "详情",
+          "error": "{{tool}} 失败",
+          "ok": "{{tool}} 已完成",
+          "rejected": "{{tool}} 拒绝"
+        },
+        "confirm": {
+          "planTitle": "建议计划",
+          "actionTitle": "建议操作",
+          "approve": "批准",
+          "approveExecute": "批准并执行",
+          "reject": "拒绝",
+          "reasonPlaceholder": "回复以修订",
+          "pending": "待批准",
+          "revise": "回复以修改"
+        },
+        "notice": {
+          "emptyTurn": "助手未返回响应。请重试。",
+          "retry": "重试"
+        },
+        "cancelled": "轮次已取消",
+        "error": {
+          "turnCap": "此对话已达上限 — 开启新对话。",
+          "turnInProgress": "一个周期已在进行中。",
+          "request": "请求失败。请重试。",
+          "generic": "出错了。请重试。"
+        },
+        "emptyHelper": "我可以编辑这个 flow，生成测试，搭建相关文件，或者解释它是如何工作的。",
+        "suggestions": {
+          "errorHandling": "添加错误处理",
+          "unitTest": "生成单元测试",
+          "explain": "解释此 flow",
+          "dbt": "运行 dbt 管道"
+        },
+        "voice": {
+          "start": "开始语音输入",
+          "stop": "停止并插入",
+          "cancel": "取消语音输入"
+        },
+        "unavailable": {
+          "title": "AI Copilot 不可用",
+          "detail": "未配置 AI 提供商。请管理员设置，然后重试。",
+          "retry": "重试"
+        },
+        "thinking": "思考中",
+        "thinkingWords": [
+          "编排",
+          "调度",
+          "序列",
+          "路由",
+          "正在调度",
+          "排队中",
+          "Triggering",
+          "执行中",
+          "协调",
+          "置备",
+          "解析中",
+          "编排",
+          "组装",
+          "计划",
+          "映射",
+          "连接",
+          "分支",
+          "正在同步",
+          "协调中",
+          "具体化",
+          "正在编译",
+          "正在验证",
+          "正在传播",
+          "汇聚"
+        ],
+        "newChat": "新建聊天",
+        "recents": "最近",
+        "recentsEmpty": "暂无最近对话",
+        "draft": {
+          "openInEditor": "在编辑器中打开",
+          "apply": "应用",
+          "applyTitle": "应用 flow",
+          "applyConfirm": "应用 flow {{namespace}}.{{id}}？它将被创建，如果已存在则会被覆盖。",
+          "applyConfirmDashboard": "应用仪表盘 {id}？它将被创建，如果已存在则会覆盖。",
+          "applyError": "无法应用该 flow。请重试。",
+          "applyErrorDashboard": "未能应用仪表盘。请重试。",
+          "applyNoTarget": "这个草稿没有可应用的 namespace 或 id。",
+          "applyTitleDashboard": "应用仪表盘",
+          "title": {
+            "flow": "建议的 flow",
+            "dashboard": "建议的仪表盘",
+            "app": "拟议应用"
+          },
+          "valid": "有效",
+          "invalid": "需要修改",
+          "copy": "复制 YAML",
+          "copied": "已复制"
+        }
       }
     },
     "playground": {
@@ -2150,20 +2344,7 @@
       "show_more": "显示更多提示",
       "show_less": "显示更少提示",
       "remaining_quota": "您还有 {count} 次AI生成机会。限制将在每天的UTC午夜重置。",
-      "execute_hint": {
-        "title": "保存并执行您的flow",
-        "description": "单击以保存您的工作流并立即运行。"
-      },
-      "success_popup": {
-        "title": "恭喜！",
-        "description": "您已成功执行了您的第一个flow！您正在迈向成为Kestra专家的道路上。",
-        "tutorial": "深入教程",
-        "explore": "探索更多"
-      },
       "success_page": {
-        "title": "一切准备就绪！",
-        "description": "您已经了解了Kestra的基础知识。以下是一些资源，帮助您继续您的旅程。",
-        "restart": "重新启动教程",
         "items": {
           "tutorial": {
             "title": "开始教程",
@@ -2202,6 +2383,10 @@
         }
       },
       "flows": {
+        "ordersRevenueToSlack": {
+          "label": "使用 Python 的订单摘要",
+          "prompt": "从 API 获取订单并使用 Python 汇总收入"
+        },
         "jsonApiToDuckdb": {
           "label": "DuckDB 的 JSON API",
           "prompt": "创建一个flow，从公共API下载JSON文件，使用Python脚本进行转换，并通过DuckDB Queries task进行处理。"

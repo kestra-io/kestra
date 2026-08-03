@@ -6,6 +6,7 @@ import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
 import permission from "../../../models/resource"
 import action from "../../../models/action"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useKvFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -15,7 +16,7 @@ export const useKvFilter = (): ComputedRef<FilterConfiguration> => {
         return {
             title: t("filter.titles.kv_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_kv"),
-            keys: route.name !== "namespaces/update" ? [
+            keys: routeFamily(route.name) !== "namespaces/update" ? [
                 {
                     key: "namespace",
                     label: t("filter.namespace.label"),

@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from "vitest"
+import {beforeEach, describe, expect, it, vi} from "vitest"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
@@ -99,6 +99,11 @@ function findButtonByText(wrapper: ReturnType<typeof mountActions>, text: string
 }
 
 describe("Actions.vue — publish a draft flow", () => {
+    // publishDraft is module-level, so its call count carries between tests.
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
     it("shows an enabled Publish action for an unchanged draft flow, and clicking it publishes", async () => {
         const wrapper = mountActions()
 

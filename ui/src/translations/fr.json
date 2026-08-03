@@ -107,6 +107,12 @@
     "total_duration": "Durée totale",
     "running duration": "Durée de traitement",
     "queued duration": "Durée d'attente",
+    "executionProgress": {
+      "title": "Progression de l'exécution",
+      "estimatedRemaining": "Temps restant estimé : {duration}",
+      "noBaseline": "Aucune donnée historique — impossible d'estimer le temps restant",
+      "pastEstimate": "L'exécution dure plus longtemps que d'habitude"
+    },
     "choose file": "Choisir un fichier ou le glisser le ici...",
     "launch execution": "Déclencher",
     "warning flow with triggers": "Ce flow contient des déclencheurs, une exécution manuelle peut ne pas fonctionner si celui-ci dépend de variables de déclencheurs !",
@@ -184,6 +190,7 @@
     "last execution status": "Statut de la dernière exécution",
     "jump to...": "Aller à...",
     "contextBar": {
+      "ai": "IA",
       "news": "Nouvelles",
       "docs": "Docs",
       "help": "Aide",
@@ -412,6 +419,7 @@
       "tree": "Arborescence",
       "raw_json": "Raw JSON",
       "select_prompt": "Sélectionnez une variable pour inspecter sa value.",
+      "select_hint": "Les variables, le trigger et les outputs de task sont listés à gauche.",
       "empty": "Aucune variable disponible pour cette exécution.",
       "one_key": "\\{ 1 key \\}",
       "n_keys": "\\{ {count} keys \\}",
@@ -428,6 +436,13 @@
     "concurrency_limit": {
       "dialog_title": "Limites de Concurrence",
       "warning": "Modifier le compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
+    },
+    "flowConcurrency": {
+      "loadError": "Impossible de charger la limite de concurrence de ce flow.",
+      "staleLimit": {
+        "message": "Ce flow ne déclare plus de bloc de concurrence, mais un enregistrement de limite compte encore {count} exécution(s) en cours. Il n'affecte plus les nouvelles exécutions et peut être réinitialisé depuis Administration → Limites de Concurrence.",
+        "title": "Limite de concurrence résiduelle"
+      }
     },
     "documentation": {
       "documentation": "Documentation",
@@ -533,6 +548,18 @@
     "trigger": "Déclencheur",
     "no_trigger": "Aucun trigger disponible.",
     "triggers": "Déclencheurs",
+    "test_event": {
+      "title": "Envoyer un événement de test",
+      "description": "Cela publie la charge utile ci-dessous à l'URL du webhook du trigger {trigger}.",
+      "payload": "Charge utile",
+      "headers": "En-têtes (facultatif)",
+      "send": "Envoyer un événement",
+      "sending": "Envoi",
+      "response": "Réponse {status}",
+      "execution_created": "Exécution créée",
+      "failed": "Le webhook a répondu {status}. Vérifiez que le flow est enregistré et que le trigger est activé.",
+      "button": "Envoyer un événement de test"
+    },
     "triggers_header_description": "Parcourez, ajoutez et gérez des triggers pour automatiser vos flows. Choisissez parmi l'exposition de votre flow en tant qu'outil AI, la planification, l'ajout d'un trigger webhook, le sondage pour les changements dans les applications externes, ou les écouteurs d'événements en temps réel.",
     "triggers_tabs_add": "Ajouter",
     "triggers_tabs_manage": "Gérer",
@@ -1292,130 +1319,165 @@
       "title": "Ressources"
     },
     "onboarding": {
-      "welcome": {
-        "headline": "Créez et exécutez votre premier workflow en quelques minutes",
-        "guided_title": "Créez votre premier flow",
-        "badge": "Tutoriel",
-        "guided_description": "Apprenez à créer et exécuter votre premier flow grâce à des étapes guidées.",
-        "guided_duration": "Recommandé pour la plupart",
-        "self_serve_title": "Créer un flow à partir de zéro",
-        "self_serve_description": "Accédez directement à l’éditeur et créez votre propre flow.",
-        "self_serve_note": "Pour les utilisateurs expérimentés",
-        "additional_help": "Aide supplémentaire",
-        "docs": "Documentation",
-        "tutorial": "Tutoriel",
-        "blueprints": "Blueprints",
-        "slack": "Communauté Slack"
-      },
-      "steps": {
-        "flow_basics": {
-          "title": "Les bases des flows",
-          "description": "Dans Kestra, un <code>flow</code> est l’unité centrale d’orchestration. Vous le définissez en YAML avec des métadonnées et des tâches ordonnées.<br><br>Examinez la structure d’exemple ci-dessous, puis continuez à la construire étape par étape."
+      "tour": {
+        "menu": "Visite guidée du produit",
+        "menu_description": "Construire, exécuter et corriger un flow, puis le démarrer à partir d'un événement",
+        "step_of": "Étape {current} sur {total}",
+        "actions": {
+          "back": "Retour",
+          "skip": "Passer la visite",
+          "running": "En cours d'exécution",
+          "finish_now": "Terminer la visite",
+          "dismiss": "Masquer ceci",
+          "skipped_hint": "La visite guidée du produit reste dans le menu de gauche si vous souhaitez la reprendre plus tard."
         },
-        "add_id": {
-          "title": "Ajouter l’ID du flow",
-          "description": "L’ID est le nom unique de votre flow, afin que vous puissiez le retrouver, l’exécuter et le référencer de manière cohérente.<br><br>Ajoutez maintenant <code>id</code> au niveau racine."
+        "intro": {
+          "kicker": "Bienvenue sur Kestra",
+          "title": "Découvrir Kestra en moins de 5 minutes",
+          "body": "Kestra est une plateforme d'orchestration. Elle facilite la création, l'exécution et la correction de workflows planifiés et événementiels.",
+          "note": "Vous pouvez arrêter à tout moment.",
+          "start": "Démarrer la visite",
+          "skip": "Passer la visite"
         },
-        "add_namespace": {
-          "title": "Ajouter un namespace",
-          "description": "Le Namespace est un regroupement de type dossier qui organise les flows par équipe, projet ou environnement.<br><br>Ajoutez maintenant <code>namespace</code> au niveau racine."
+        "scenes": {
+          "copilot": {
+            "title": "Décrivez le workflow que vous souhaitez",
+            "body": "Décrivez ce que vous souhaitez automatiser, et l'IA Copilot le rédigera pour vous. La visite se poursuit avec un exemple de flow prêt à l'emploi, il n'y a donc rien à taper ici.",
+            "next": "Générer le flow"
+          },
+          "flow_generated": {
+            "title": "Ceci est un flow",
+            "body": "Le flow est écrit en YAML avec deux tasks :<ol><li><code>fetch_orders</code> pour télécharger les commandes</li><li><code>summarize</code> pour calculer les revenus en Python</li></ol>Les tasks sont exécutées séquentiellement, dans l'ordre dans lequel elles sont définies.",
+            "next": "Enregistrer et exécuter"
+          },
+          "first_execution": {
+            "title": "Chaque exécution est enregistrée",
+            "body": "Chaque task est chronométrée dans la vue Gantt. Cliquer sur une task affiche ses logs.",
+            "milestone": "Votre première exécution a réussi",
+            "next": "Modifier le flow",
+            "callout": "Contrairement à une tâche cron ou à un script exécuté manuellement, chaque exécution est conservée avec ses inputs, ses outputs et ses logs, ainsi, ce qui a été exécuté peut être audité par la suite."
+          },
+          "add_task": {
+            "title": "Les Flows sont édités comme du code",
+            "body": "Nous avons ajouté une task `notify` pour vous sans l'AI Copilot, afin que vous puissiez voir à quoi ressemble l'édition directe du YAML. Elle publie le résultat final sur Slack.",
+            "next": "Consulter la documentation de la task",
+            "callout": "AI Copilot vous a donné le premier brouillon ; c'est dans l'éditeur que vous pouvez itérer dessus dans un onglet d'éditeur Code ou No-Code, qui produisent tous deux le même YAML, ainsi votre flow reste sous forme de code quelle que soit la manière dont il a été construit."
+          },
+          "editor_help": {
+            "title": "La documentation se trouve à côté du flow",
+            "body": "La documentation de la task sous le curseur est affichée dans le panneau <strong>Docs</strong>, avec ses propriétés, ses outputs et ses exemples.",
+            "callout": "Les Flows se construisent par itération : modifiez une propriété, exécutez-le, lisez les logs, répétez. L'autocomplétion et le panneau <strong>Docs</strong> signifient que vous n'avez jamais à quitter l'éditeur pour consulter des informations.",
+            "next": "Exécuter le flow"
+          },
+          "failed_execution": {
+            "title": "Une task a échoué",
+            "body": "L'expression pour le revenu dans le message Slack contient une faute de frappe : <code>vars.revenu</code> au lieu de <code>vars.revenue</code>.",
+            "callout": "Les tasks avant <code>notify</code> ont réussi, donc leurs outputs sont toujours disponibles.",
+            "next": "Corriger le flow"
+          },
+          "fix_and_replay": {
+            "title": "Un caractère modifié",
+            "body": "L'expression est maintenant `vars.revenue`. Le diff montre la ligne qui a changé, et l'exécution échouée peut être rejouée à partir de la task `notify` par rapport à la nouvelle révision.",
+            "next": "Rejouer à partir de la tâche FAILED"
+          },
+          "replayed_execution": {
+            "title": "Seulement ce qui a échoué a été réexécuté",
+            "body": "Les outputs de la première tentative ont été réutilisés, donc seule la tâche <code>notify</code> a dû s'exécuter à nouveau. Cette fois, le message Slack a été envoyé avec succès.",
+            "milestone": "Le rejeu a réussi",
+            "next": "Ajouter un trigger",
+            "callout": "Sans rejeu, une task en échec nécessiterait de relancer l'intégralité du flow. Les appels d'API payants seraient effectués à nouveau, de longs calculs répétés et les lignes déjà écrites dupliquées."
+          },
+          "webhook_trigger": {
+            "title": "Votre flow peut être déclenché par un événement",
+            "body": "Avec un Webhook trigger, ce flow a sa propre URL. Une exécution est créée chaque fois qu'une requête HTTP est envoyée à cette URL, et le corps de la requête est disponible pour les tasks sous la forme <code>trigger.body</code>.",
+            "next": "Voir le trigger"
+          },
+          "test_event": {
+            "title": "Envoyer un événement de test",
+            "body": "Le trigger est affiché ici. Un événement de test peut être envoyé depuis votre navigateur, comme un système externe l'enverrait, pour que le trigger puisse être testé sans quitter Kestra.",
+            "next": "Envoyer un événement de test"
+          },
+          "event_execution": {
+            "title": "L'événement a créé une exécution",
+            "body": "L'événement est arrivé, et une exécution a été créée à partir de celui-ci, chronométrée et loggée comme n'importe quelle autre. Aucun service séparé n'a besoin d'être hébergé pour cela ; le endpoint du trigger fait partie de Kestra.",
+            "milestone": "Une exécution que vous n'avez pas démarrée",
+            "next": "Explorer la charge utile"
+          },
+          "explore_payload": {
+            "title": "Variables, trigger, et task outputs",
+            "body": "L'onglet <strong>Input/Output</strong> liste chaque valeur disponible pour cette exécution.",
+            "callout": "<code>trigger.body</code> est déjà pré-rempli sur la droite. Appuyez sur <strong>Debug Expression</strong> pour voir ce qu'il renvoie pour cette exécution.",
+            "next": "Enchaîner un deuxième flow"
+          },
+          "report_flow": {
+            "title": "Un flow peut dépendre d'un autre",
+            "body": "<code>daily_report</code> a un Flow trigger, il est donc démarré chaque fois que <code>order_summary</code> réussit. Rien n'a besoin d'être ajouté à <code>order_summary</code> pour cela.",
+            "next": "Envoyer un autre événement",
+            "callout": "Les deux flows peuvent appartenir à différentes équipes : <code>daily_report</code> déclare ce qu'il attend, et <code>order_summary</code> n'a pas besoin de savoir qu'il existe."
+          },
+          "chain": {
+            "title": "Comment chaque exécution a été démarrée",
+            "body": "Les exécutions que vous avez lancées vous-même portent le label <code>started_by:you</code>. D'autres ont été créées par l'événement webhook ou le trigger du flow.",
+            "milestone": "Deux exécutions issues d'un événement",
+            "next": "Terminer"
+          }
         },
-        "add_input": {
-          "title": "Ajouter une entrée",
-          "description": "Les inputs sont des paramètres au niveau du flow qui peuvent être référencés dans les tâches pour contrôler dynamiquement le comportement à l’exécution.<br><br>Ajoutez maintenant un input nommé <code>name</code> avec le type <code>STRING</code>."
+        "finale": {
+          "kicker": "Visite terminée",
+          "title": "Ce que vous avez construit, et ce qu'il faut essayer ensuite",
+          "takeaways": {
+            "copilot": {
+              "title": "Flows générés à partir d'anglais courant",
+              "body": "Décrivez ce que vous voulez automatiser, et un flow est ébauché par l'AI Copilot. À partir de là, vous l'affinez dans l'éditeur, avec l'autocomplétion et le panneau <strong>Docs</strong>. Les flows sont exécutés à partir du bouton <strong>Exécuter</strong> du flow ou de toute exécution."
+            },
+            "restart": {
+              "title": "Rejouer au lieu de tout exécuter à nouveau",
+              "body": "Les runs de task qui ont déjà réussi sont réutilisés, de sorte que seul le travail qui a échoué doit être exécuté à nouveau, par rapport à la dernière révision du flow. Rejouer et redémarrer sont proposés sous <strong>Actions</strong> sur une exécution, et sur un run de task dans la vue Gantt."
+            },
+            "events": {
+              "title": "Exécutions déclenchées par des événements",
+              "body": "Les triggers Webhook et Schedule font partie de Kestra, ainsi une exécution peut être démarrée par un événement ou selon un calendrier sans rien de plus à héberger."
+            },
+            "chain": {
+              "title": "Flows qui dépendent de flows",
+              "body": "Avec un trigger de flow, un flow peut être démarré par le succès ou l'échec d'un autre flow, à travers les namespaces. Cela permet de maintenir les flows découplés. Rien dans le premier flow ne fait référence au second, ainsi les deux peuvent être possédés et modifiés indépendamment."
+            }
+          },
+          "namespace_note": "Tout de cette visite se trouve dans votre namespace {namespace}. Les endpoints Slack et API étaient des maquettes ; de vraies URL de webhook seraient stockées en tant que {secrets}.",
+          "keep_going": "Continuer",
+          "restart": "Redémarrer la visite",
+          "start_building": "Commencer à construire",
+          "docs": {
+            "title": "En savoir plus",
+            "autocompletion": "Autocomplétion",
+            "execution": "Exécutions",
+            "replay": "Rejouer",
+            "revision": "Révisions",
+            "webhook": "Webhook",
+            "schedule": "Planification",
+            "flowTrigger": "Déclencheurs de flow",
+            "namespace": "Namespaces",
+            "secret": "Secrets"
+          }
         },
-        "add_log_task": {
-          "title": "Ajouter la première tâche",
-          "description": "Les tâches sont les unités de travail exécutées par votre flow, définies comme une liste ordonnée d’étapes. Chaque tâche a besoin d’un <code>id</code> unique et d’un <code>type</code>. Kestra fournit de nombreux plugins de tâches pour des systèmes externes ; ici, nous utilisons une tâche de script Python.<br><br>La syntaxe <code>&#123;&#123; ... &#125;&#125;</code> est une expression Pebble, utilisée pour référencer des variables dynamiquement à l’exécution, comme <code>&#123;&#123; inputs.name &#125;&#125;</code> depuis vos inputs de flow.<br><br>Ajoutez maintenant la première tâche sous <code>tasks</code> avec <code>id</code>, <code>type</code> et un <code>script</code> qui affiche un message de bienvenue."
+        "errors": {
+          "first_execution": "La première exécution s'est terminée en {state} au lieu de réussir. Ouvrez les logs sur cette page pour comprendre pourquoi, puis réessayez.",
+          "expected_failure": "Cette exécution s'est terminée en {state}, il n'y a donc aucune erreur à corriger pour l'instant. Vérifiez que le flow contient toujours la task <code>notify</code>, puis réessayez.",
+          "no_execution_to_replay": "Il n'y a aucune exécution à rejouer pour l'instant. Exécutez le flow à l'étape précédente, puis réessayez.",
+          "replay": "La relecture s'est terminée en {state}. Ouvrez les logs sur cette page pour voir ce que `notify` a rapporté, puis réessayez.",
+          "save_flow": "Le flow de la visite n'a pas pu être enregistré. {reason}",
+          "test_event": "Le webhook a répondu avec le statut {status}. Vérifiez que le flow est enregistré et que le trigger est activé, puis réessayez."
         },
-        "save_flow": {
-          "title": "Enregistrer le flow",
-          "description": "L’enregistrement conserve la définition de votre flow afin qu’il puisse être exécuté."
+        "steps": {
+          "1": "Créer et exécuter un flow",
+          "2": "Récupérer d'un échec",
+          "3": "Démarrer un flow à partir d'un événement",
+          "4": "Enchaîner deux flows"
         },
-        "execute_flow": {
-          "title": "Exécuter le flow",
-          "description": "L’exécution démarre un run de votre flow avec des valeurs d’input au moment de l’exécution."
-        },
-        "view_logs_status": {
-          "title": "Vérifier l’exécution",
-          "description": "Les détails d’exécution affichent le statut du run, les temps et les logs de sortie au niveau des tâches.<br><br>Ouvrez maintenant les détails d’exécution et cliquez sur <code>greet</code> dans le diagramme de Gantt pour voir les logs."
-        },
-        "edit_flow_from_execution": {
-          "title": "Retourner à l’éditeur de flows",
-          "description": "Vous pouvez revenir directement d’une exécution à la définition du flow pour itérer rapidement."
-        },
-        "add_cron_trigger": {
-          "title": "Ajouter un trigger cron",
-          "description": "Les triggers peuvent démarrer des runs selon des horaires ou des événements externes (par exemple des webhooks ou des messages MQTT).<br><br>Ajoutez maintenant un trigger de planification cron pour que ce flow s’exécute toutes les 5 minutes."
-        },
-        "add_input_default": {
-          "title": "Définir une valeur par défaut pour l’input",
-          "description": "Lorsqu’un flow est déclenché automatiquement, les inputs ont tout de même besoin de valeurs à l’exécution.<br><br>L’input <code>name</code> a déjà été créé à l’étape précédente, il n’est donc pas nécessaire de l’ajouter à nouveau. Définissez simplement une valeur par défaut pour l’input existant <code>name</code>."
-        },
-        "save_flow_again": {
-          "title": "Enregistrer le flow",
-          "description": "Votre flow dispose maintenant d’un planning et d’une valeur d’input par défaut pour les exécutions automatiques."
-        },
-        "background_runs_info": {
-          "title": "Exécutions planifiées",
-          "description": "Ce flow s’exécutera désormais en arrière-plan toutes les 5 minutes.<br><br>Vous pouvez accéder à la vue d’ensemble des Exécutions depuis le menu de gauche pour surveiller les runs planifiés."
-        },
-        "finish": {
-          "title": "Vous avez terminé le tutoriel Premier Flow",
-          "description": "Bon début. Vous avez créé, exécuté, paramétré et planifié un flow.<br><br>Choisissez ce que vous souhaitez faire ensuite ..."
+        "nudge": {
+          "title": "Nouveau sur Kestra ?",
+          "action": "Démarrer la visite guidée du produit"
         }
-      },
-      "actions": {
-        "next": "Suivant",
-        "complete": "Terminer",
-        "save_to_continue": "Cliquez sur Enregistrer dans la barre du haut (à droite).",
-        "execute_to_continue": "1. Cliquez sur Exécuter dans la barre du haut (à droite).\n2. Fournissez une valeur pour <strong>name</strong>.\n3. Cliquez à nouveau sur Exécuter dans la fenêtre modale.",
-        "edit_flow_to_continue": "Ouvrez le menu d’actions (barre du haut, à droite) et sélectionnez Modifier le flow.",
-        "cancel_tutorial": "Annuler le tutoriel",
-        "finish_tutorial": "Terminer le tutoriel"
-      },
-      "finish_actions": {
-        "explore_blueprints": "Explorer les Blueprints",
-        "create_flow": "Créer un flow"
-      },
-      "editor_hints": {
-        "build_intro": "Créez votre premier flow étape par étape.",
-        "step_1": "# 1) Ajouter l’id",
-        "step_2": "# 2) Ajouter le namespace",
-        "step_3": "# 3) Ajouter un input",
-        "step_4": "# 4) Ajouter des tâches et votre première tâche Python",
-        "step_5": "# 5) Ajouter un trigger cron"
-      },
-      "cancel_modal": {
-        "title": "Annuler le tutoriel Premier Flow",
-        "description": "Voulez-vous annuler le tutoriel Premier Flow ?",
-        "confirm": "Annuler le tutoriel",
-        "keep": "Conserver le tutoriel"
-      },
-      "validation": {
-        "complete_step": "Vous y êtes presque. Terminez cette étape pour continuer.",
-        "fix_yaml": "Il y a un petit problème de formatage YAML. Corrigez-le, puis continuez.",
-        "add_id": "Ajoutez un ID de flow en haut. Exemple : `id: hello_flow`.",
-        "add_namespace": "Ajoutez un namespace en haut. Exemple : `namespace: company.team`.",
-        "add_input_section": "Créez une section `inputs` avec un input.",
-        "add_input_id": "Dans `inputs`, ajoutez `id: name`.",
-        "add_input_type": "Définissez le type de l’input sur `STRING`.",
-        "add_log_task_section": "Créez une section `tasks` et ajoutez votre première tâche.",
-        "add_log_task_id": "Donnez un ID à la tâche, par exemple : `id: greet`.",
-        "add_log_task_type": "Définissez le type de la tâche sur `io.kestra.plugin.scripts.python.Script`.",
-        "add_log_task_message": "Ajoutez un champ `script` à la tâche.",
-        "add_log_task_pebble": "Utilisez une expression Pebble dans le script afin qu’il utilise votre valeur d’input (par exemple : `inputs.name`).",
-        "save_flow": "Cliquez sur Enregistrer pour continuer.",
-        "execute_flow": "Exécutez le flow une fois pour continuer.",
-        "view_logs_status": "Ouvrez les détails d’exécution et vérifiez les logs pour `greet`.",
-        "edit_flow_from_execution": "Ouvrez le menu d’actions et cliquez sur `Modifier le flow` pour continuer.",
-        "add_cron_trigger_section": "Créez une section `triggers` avec un trigger de planification.",
-        "add_cron_trigger_type": "Définissez le type du trigger sur `io.kestra.plugin.core.trigger.Schedule`.",
-        "add_cron_trigger_cron": "Ajoutez une expression cron, par exemple : `\"*/5 * * * *\"`.",
-        "add_input_default_section": "Revenez à `inputs` et conservez un input existant nommé `name` (n’ajoutez pas un second input).",
-        "add_input_default_id": "Conservez l’ID de l’input existant comme `name`.",
-        "add_input_default_defaults": "Ajoutez une valeur par défaut pour `name`, par exemple : `defaults: \"Kestra\"`.",
-        "save_flow_again": "Cliquez à nouveau sur Enregistrer pour continuer."
       }
     },
     "enable concurrency": "Activer la concurrence",
@@ -1767,7 +1829,9 @@
       "connection_lost": {
         "title": "Connexion interrompue",
         "message": "Nous n'avons pas pu atteindre votre instance Kestra. Assurez-vous qu'elle est en cours d'exécution, puis actualisez la page."
-      }
+      },
+      "opening_flow_editor": "Une erreur s'est produite lors de l'ouverture de l'éditeur de flow",
+      "retry": "Réessayer"
     },
     "debug": "Déboguer",
     "default": "Par défaut",
@@ -2055,6 +2119,136 @@
       },
       "dashboard": {
         "prompt_placeholder": "Posez une question sur vos données. Exemple de demande : Montrez-moi le taux de réussite de mes flows au cours des 7 derniers jours."
+      },
+      "copilot": {
+        "title": "Copilot IA",
+        "placeholder": "Dites-moi quoi construire…",
+        "send": "Envoyer",
+        "mode": {
+          "ask": "Demander",
+          "edit": "Modifier",
+          "plan": "Plan"
+        },
+        "empty": {
+          "title": "Transformez votre idée en un flux de travail"
+        },
+        "toolCall": "Exécution de {tool}",
+        "context": {
+          "app": "Application : {{app}}",
+          "blueprint": "Blueprint: {blueprint}",
+          "dashboard": "Tableau de bord : {{dashboard}}",
+          "execution": "Exécution : {{id}}",
+          "flow": "Flux : {flow}",
+          "namespace": "Namespace : {namespace}",
+          "plugin": "Extension : {plugin}",
+          "test": "Test : {test}"
+        },
+        "contextAdded": "Ajouté {type} {id} au contexte.",
+        "contextNoun": {
+          "app": "Application",
+          "blueprint": "blueprint",
+          "dashboard": "tableau de bord",
+          "execution": "Exécution",
+          "flow": "flow",
+          "namespace": "namespace",
+          "plugin": "plugin",
+          "test": "test"
+        },
+        "contextRemoved": "Retiré {type} {id} du contexte.",
+        "toolResult": {
+          "detail": "Détails",
+          "error": "{{tool}} a échoué",
+          "ok": "{tool} terminé",
+          "rejected": "{tool} rejeté"
+        },
+        "confirm": {
+          "planTitle": "Plan proposé",
+          "actionTitle": "Action proposée",
+          "approve": "Approuver",
+          "approveExecute": "Approuver et exécuter",
+          "reject": "Rejeter",
+          "reasonPlaceholder": "Répondre pour réviser…",
+          "pending": "En attente d'approbation",
+          "revise": "Répondre pour réviser"
+        },
+        "notice": {
+          "emptyTurn": "L'assistant n'a pas renvoyé de réponse. Veuillez réessayer.",
+          "retry": "Réessayer"
+        },
+        "cancelled": "Tour annulé",
+        "error": {
+          "turnCap": "Cette conversation a atteint sa limite — démarrez une nouvelle discussion.",
+          "turnInProgress": "Un tour est déjà en cours.",
+          "request": "La requête a échoué. Veuillez réessayer.",
+          "generic": "Une erreur est survenue. Veuillez réessayer."
+        },
+        "emptyHelper": "Je peux modifier ce flow, générer des tests, échafauder les fichiers associés, ou expliquer comment il fonctionne.",
+        "suggestions": {
+          "errorHandling": "Ajouter la gestion des erreurs",
+          "unitTest": "Générer un test unitaire",
+          "explain": "Expliquer ce flow",
+          "dbt": "Exécuter un pipeline dbt"
+        },
+        "voice": {
+          "start": "Démarrer la saisie vocale",
+          "stop": "Arrêter et insérer",
+          "cancel": "Annuler la saisie vocale"
+        },
+        "unavailable": {
+          "title": "AI Copilot n'est pas disponible",
+          "detail": "Aucun fournisseur d'IA n'est configuré. Demandez à un administrateur d'en configurer un, puis réessayez.",
+          "retry": "Réessayer"
+        },
+        "thinking": "Réflexion",
+        "thinkingWords": [
+          "Orchestration",
+          "Planification",
+          "Séquençage",
+          "Routage",
+          "Envoi",
+          "En attente",
+          "Déclenchement",
+          "Exécution",
+          "Coordination",
+          "Provisionnement",
+          "Résolution",
+          "Composition",
+          "Assemblage",
+          "Planification",
+          "Mappage",
+          "Connexions",
+          "Branchement",
+          "Synchronisation",
+          "En cours de réconciliation",
+          "Matérialisation",
+          "Compilation",
+          "Validation en cours",
+          "En cours de propagation",
+          "Convergence"
+        ],
+        "newChat": "Nouvelle discussion",
+        "recents": "Récents",
+        "recentsEmpty": "Aucune conversation récente pour l'instant",
+        "draft": {
+          "openInEditor": "Ouvrir dans l'éditeur",
+          "apply": "Appliquer",
+          "applyTitle": "Appliquer le flow",
+          "applyConfirm": "Appliquer le flow {namespace}.{id} ? Il sera créé, ou écrasé s'il existe déjà.",
+          "applyConfirmDashboard": "Appliquer le tableau de bord {id} ? Il sera créé, ou écrasé s'il existe déjà.",
+          "applyError": "Impossible d'appliquer le flow. Veuillez réessayer.",
+          "applyErrorDashboard": "Impossible d'appliquer le tableau de bord. Veuillez réessayer.",
+          "applyNoTarget": "Ce brouillon n'a pas de namespace ou d'id à appliquer.",
+          "applyTitleDashboard": "Appliquer le tableau de bord",
+          "title": {
+            "flow": "flow proposé",
+            "dashboard": "Tableau de bord proposé",
+            "app": "Application proposée"
+          },
+          "valid": "Valide",
+          "invalid": "Nécessite des modifications",
+          "copy": "Copier YAML",
+          "copied": "Copié"
+        }
       }
     },
     "playground": {
@@ -2150,20 +2344,7 @@
       "show_more": "Afficher plus d'invites",
       "show_less": "Afficher moins d'invites",
       "remaining_quota": "Il vous reste {count} générations d'IA. La limite se réinitialise quotidiennement à minuit UTC.",
-      "execute_hint": {
-        "title": "Enregistrer et exécuter votre flow",
-        "description": "Cliquez pour enregistrer votre workflow et l'exécuter immédiatement."
-      },
-      "success_popup": {
-        "title": "Félicitations !",
-        "description": "Vous avez exécuté avec succès votre premier flow ! Vous êtes en bonne voie pour devenir un pro de Kestra.",
-        "tutorial": "Tutoriel Approfondi",
-        "explore": "Explorez Plus"
-      },
       "success_page": {
-        "title": "Vous êtes prêt !",
-        "description": "Vous avez appris les bases de Kestra. Voici quelques ressources pour vous aider à poursuivre votre parcours.",
-        "restart": "Redémarrer le tutoriel",
         "items": {
           "tutorial": {
             "title": "Démarrer un tutoriel",
@@ -2202,6 +2383,10 @@
         }
       },
       "flows": {
+        "ordersRevenueToSlack": {
+          "label": "Récapitulatif de commande avec Python",
+          "prompt": "Récupérer les commandes depuis une API et résumer le chiffre d'affaires avec Python"
+        },
         "jsonApiToDuckdb": {
           "label": "API JSON vers DuckDB",
           "prompt": "Créez un flow qui télécharge un fichier JSON depuis une API publique, le transforme avec un script Python, et le traite avec une tâche DuckDB Queries."

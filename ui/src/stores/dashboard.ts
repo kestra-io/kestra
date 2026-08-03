@@ -15,6 +15,7 @@ const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: st
 import {apiUrl} from "override/utils/route"
 
 import * as Utils from "../utils/utils"
+import {routeFamily} from "../utils/routeFamily"
 
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
 import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
@@ -137,11 +138,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     function getDashboardType(route: RouteLocation) {
-        return KEY_MAP[route.name as string]
+        return KEY_MAP[routeFamily(route.name)]
     }
 
     const getDashboardId = async (route: RouteLocation): Promise<string> => {
-        const routeName = route.name?.toString()
+        const routeName = route.name ? routeFamily(route.name) : undefined
         if(!routeName || !DASHBOARD_ROUTES.includes(routeName)){
             throw new Error("invalid route in getDashboard: "+routeName?.toString())
         }
@@ -170,7 +171,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     function getUserDashboardStorageKey(route: RouteLocation){
         const tenant = route.params["tenant"]
-        const routeName = route.name?.toString()
+        const routeName = route.name ? routeFamily(route.name) : undefined
         if (!tenant) {
             throw new Error("tenant is mandatory in getUserDashboardStorageKey")
         }
@@ -204,10 +205,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return false
     }
 
+    const silent = {showMessageOnError: false} as Parameters<typeof DashboardsAPI.dashboard>[1]
+
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id}) as Dashboard
+            data = await DashboardsAPI.dashboard({id}, silent) as Dashboard
         } catch {
             return undefined
         }
@@ -241,7 +244,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
+            return await DashboardsAPI.dashboardChartData(
+                {id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0],
+                silent as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[1],
+            )
         } catch (e: any) {
             if (e.status === 404) return undefined
             throw e

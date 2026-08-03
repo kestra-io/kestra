@@ -1,10 +1,9 @@
 import {computed, h, ref, watch} from "vue"
-import {KsMarkdown, KsMessageBox, routeQueryToQueryFilters} from "@kestra-io/design-system"
+import {KsMarkdown, KsMessageBox} from "@kestra-io/design-system"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import resource from "../models/resource"
 import action from "../models/action"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
-import * as Utils from "../utils/utils"
-import {apiUrl} from "override/utils/route"
 import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
 import {defineStore} from "pinia"
@@ -15,10 +14,12 @@ import {globalI18n} from "../translations/i18n"
 import {transformResponse} from "../components/dependencies/composables/useDependencies"
 import {useAuthStore} from "override/stores/auth"
 import {useRoute} from "vue-router"
-import {useClient, type FlowWithSource, type AbstractTrigger, type Task as SdkTask} from "@kestra-io/kestra-sdk"
+import type {FlowWithSource,  AbstractTrigger, Task as SdkTask} from "@kestra-io/kestra-sdk"
 import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
 import {defaultNamespace} from "../composables/useNamespaces"
+import {useApiStore} from "./api"
+import {flowTaskStats, isExampleFlow, primaryTriggerType} from "../utils/analytics/activation"
 
 const textYamlHeader = {
     headers: {
@@ -102,7 +103,6 @@ export const useFlowStore = defineStore("flow", () => {
     const metrics = ref<any[]>()
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
-    const openAiCopilot = ref<boolean>(false)
     const isCreating = ref<boolean>(false)
     const readonlyToastShown = ref(false)
     const flowYaml = ref<string>("")
@@ -110,8 +110,6 @@ export const useFlowStore = defineStore("flow", () => {
     const previewSource = ref<string | undefined>(undefined)
     const expandedSubflows = ref<string[]>([])
     const creationId = ref<string>()
-
-    const axios = useClient()
 
     const coreStore = useCoreStore()
     const unsavedChangesStore = useUnsavedChangesStore()
@@ -410,7 +408,7 @@ export const useFlowStore = defineStore("flow", () => {
             size,
             sort: sort ? [sort] : undefined,
             filters: routeQueryToQueryFilters(filterKeys),
-        } as Parameters<typeof FlowsAPI.searchFlows>[0]
+        }
     }
 
     function findFlows(options: { [key: string]: any }): Promise<any> {
@@ -531,21 +529,8 @@ export const useFlowStore = defineStore("flow", () => {
             return flow.value
         })
     }
-    function updateFlowTask(options: { flow: Flow, task: Task }) {
-        return axios
-            .patch(`${apiUrl()}/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
-                flow.value = response.data
 
-                return response.data
-            })
-            .then(f => {
-                loadGraph({flow: f})
-
-                return f
-            })
-    }
-
-    function createFlow(options: { flow: string, draft?: boolean }) {
+    function createFlow(options: { flow: string, draft?: boolean, restore?: boolean }) {
         return FlowsAPI.createFlow({
             body: options.flow,
             draft: options.draft ?? false,
@@ -560,7 +545,29 @@ export const useFlowStore = defineStore("flow", () => {
             localStorage.removeItem(`el-fl-creation-${creationId.value}`)
             creationId.value = undefined
 
+            if (!options.draft) {
+                trackFlowCreated(flow.value, options.restore === true)
+            }
+
             return flow.value
+        })
+    }
+
+    // Only on creation: saveFlow() fires on every editor save, which would drown the signal.
+    // restoreFlow() also goes through createFlow(), on a flow_id that already reported a creation -
+    // flagged rather than dropped so activation can exclude it downstream.
+    function trackFlowCreated(created: Flow, isRestore: boolean) {
+        const {taskCount, pluginCount} = flowTaskStats(created.tasks)
+
+        useApiStore().posthogEvents({
+            type: "FLOW_CREATED",
+            namespace: created.namespace,
+            flow_id: created.id,
+            task_count: taskCount,
+            plugin_count: pluginCount,
+            trigger_type: primaryTriggerType(created.triggers),
+            is_example: isExampleFlow(created.namespace),
+            is_restore: isRestore,
         })
     }
 
@@ -722,67 +729,6 @@ function deleteFlowAndDependencies() {
         dependenciesCount.value = undefined
     }
 
-    function exportFlowByIds(options: { ids: string[] }) {
-        return axios.post(`${apiUrl()}/flows/export/by-ids`, options.ids, {responseType: "blob"})
-            .then(response => {
-                const blob = new Blob([response.data], {type: "application/octet-stream"})
-                const url = window.URL.createObjectURL(blob)
-                Utils.downloadUrl(url, "flows.zip")
-            })
-    }
-
-    function exportFlowByQuery(options: { namespace: string, id: string }) {
-        return axios.get(`${apiUrl()}/flows/export/by-query`, {params: options, headers: {"Accept": "application/octet-stream"}})
-            .then(response => {
-                Utils.downloadUrl(response.request?.responseURL ?? "", "flows.zip")
-            })
-    }
-
-    async function exportFlowAsCSV(params: any) {
-        const response = await axios.get(
-            `${apiUrl()}/flows/export/by-query/csv`,
-            {params, responseType: "text", headers: {Accept: "text/csv"}},
-        )
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement("a")
-        link.href = url
-        link.setAttribute("download", "flows.csv")
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-    }
-
-    function importFlows(options: { file: FormData,  failOnError: boolean }) {
-         const {file, failOnError} = options
-        // Don't set Content-Type - the browser must generate the multipart boundary itself.
-        return axios.post(`${apiUrl()}/flows/import`, file, {
-            params: {failOnError},
-        }).then(response => {
-            return response
-        })
-    }
-    function disableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.disableFlowsByIds({body: options.ids})
-    }
-    function disableFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.disableFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.disableFlowsByQuery>[0])
-    }
-    function enableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.enableFlowsByIds({body: options.ids})
-    }
-    function enableFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.enableFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.enableFlowsByQuery>[0])
-    }
-
-    function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
-        return FlowsAPI.deleteFlowsByIds({body: options.ids})
-    }
-
-    function deleteFlowByQuery(options: Record<string, any>) {
-        return FlowsAPI.deleteFlowsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof FlowsAPI.deleteFlowsByQuery>[0])
-    }
-
     function validateFlow(options: { flow: string }) {
         const flowValidationIssues: FlowValidations = {}
         if(isCreating.value) {
@@ -877,10 +823,6 @@ function deleteFlowAndDependencies() {
 
     function setExecuteFlow(value: boolean) {
         executeFlow.value = value
-    }
-
-    function setOpenAiCopilot(value: boolean) {
-        openAiCopilot.value = value
     }
 
     function addTrigger(trigger: Trigger) {
@@ -1014,7 +956,6 @@ function deleteFlowAndDependencies() {
         metrics,
         tasksWithMetrics,
         executeFlow,
-        openAiCopilot,
         isCreating,
         flowYaml,
         flowYamlOrigin,
@@ -1025,7 +966,6 @@ function deleteFlowAndDependencies() {
         setTrigger,
         removeTrigger,
         setExecuteFlow,
-        setOpenAiCopilot,
         saveAll,
         saveAsDraft,
         save,
@@ -1038,7 +978,6 @@ function deleteFlowAndDependencies() {
         loadFlow,
         loadTask,
         saveFlow,
-        updateFlowTask,
         createFlow,
         loadDependencies,
         deleteFlowAndDependencies,
@@ -1049,16 +988,6 @@ function deleteFlowAndDependencies() {
         loadRevisions,
         loadFlowStats,
         clearFlowStats,
-        exportFlowByIds,
-        exportFlowByQuery,
-        exportFlowAsCSV,
-        importFlows,
-        disableFlowByIds,
-        disableFlowByQuery,
-        enableFlowByIds,
-        enableFlowByQuery,
-        deleteFlowByIds,
-        deleteFlowByQuery,
         validateFlow,
         validateTask,
         loadFlowMetrics,

@@ -48,6 +48,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
+- Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
 - Use semantic tokens, not raw colors. `var(--ks-text-link)` communicates intent; `var(--ks-text-blue-500)` does not exist for a reason.
 - Co-locate component-specific tokens (e.g. `--ks-card-shadow`) in the component's SCSS, but always derive them from semantic tokens.
 
@@ -85,7 +86,8 @@ Reject (or ask to fix) anything that:
 
 ### Internationalization
 
-- No hardcoded user-facing strings. Always go through `t()` from `useI18n()`.
+- No hardcoded user-facing strings. Always go through i18n.
+- **In `<template>`, always use the global `$t(...)`** — never the `t` from `useI18n()`. Only call `useI18n()` (`const {t} = useI18n()`) when you need `t` in `<script>` (computed labels, toasts, etc.); if a component needs i18n **only** in its template, use `$t` and don't import `useI18n` at all.
 - Use `<i18n-t>` for plurals and interpolation — never string-concatenate.
 - Format dates and times via `dateUtils` (which respects `TIMEZONE_STORAGE_KEY` and `DATE_FORMAT_STORAGE_KEY`); format durations via `durationUtils.humanDuration()`. Don't reach for `Intl.DateTimeFormat` directly.
 - Strings owned by a `Ks*` component live in the design system's locale files and are registered via `registerDesignSystemI18n`. Strings owned by a feature live in that feature's locale files.
@@ -321,6 +323,7 @@ If your `<style>` block needs to exist:
 | `KsCard` | Card container |
 | `KsTable` / `KsTableColumn` | Basic table |
 | `KsDataTable` / `KsFilter` / `KsBulkSelect` | Advanced data table with filtering, sorting, pagination, bulk actions. **Pagination is fully controlled** — bind `:currentPage` / `:pageSize` (or `v-model:`). See "Data tables & pagination state". |
+| `KsEntityLink` | Clickable cross-entity reference (namespace / flow) for table cells — neutral tag with leading icon, violet on hover |
 | `KsBadge` | Small indicator badge |
 | `KsNewBadge` | Compact uppercase "NEW" pill flagging a newly shipped feature — caller supplies the label via the default slot |
 | `KsTag` / `KsCheckTag` | Tag / label; clickable checkbox-style tag |
@@ -351,19 +354,13 @@ If your `<style>` block needs to exist:
 
 | Component | Purpose |
 |-----------|---------|
-| `KsTabs` / `KsTabPane` / `KsRouterTab` | Tabbed interface |
+| `KsTabs` / `KsTabPane` | Tabbed interface |
 | `KsMenu` / `KsMenuItem` | Hierarchical menu |
 | `KsDropdown` / `KsDropdownMenu` / `KsDropdownItem` | Dropdown menu |
 | `KsTopNavBar` | Top navigation bar |
 | `KsSideBar` / `KsSideBarSection` / `KsSideBarItem` | Left sidebar shell (header / scrollable body / footer slots), section with title, and styled link primitive with icon, active and locked states |
 | `KsBreadcrumb` / `KsBreadcrumbItem` | Breadcrumb navigation |
 | `KsSteps` / `KsStep` | Step / wizard progress indicator |
-
-### Kestra-specific
-
-| Component | Purpose |
-|-----------|---------|
-| `KsTaskIcon` | Plugin task icon resolver |
 
 ## Utilities (import from the design system)
 
@@ -384,6 +381,7 @@ If your `<style>` block needs to exist:
 - `useTheme()` — detects and tracks dark / light mode via MutationObserver. Use this instead of reading `document.documentElement` yourself.
 - `useFilters`, `useSavedFilters`, `useDefaultFilter`, `usePreAppliedFilters`, `useRouteFilterPolicy`, `useTableColumns`, `useDataOptions`, `useDragAndDrop`, `usePeriodicRefresh` — data-table filter composables
 - `useDiscardGuard(isDirty, {message?})` — confirm-before-discard for data-entry modals; see "Unsaved input in modals (discard guard)"
+- `useTaskIcon()` — resolves the app-provided task-icon component via `TASK_ICON_INJECTION_KEY` (falling back to a generic placeholder icon). The app provides its own `TaskIcon` component once, at bootstrap (`app.provide(TASK_ICON_INJECTION_KEY, TaskIcon)`) — the design system cannot own that component since it depends on the app's plugin-icon backend API. Used internally by `KsEditor` (Monaco suggestion icons) and the `@kestra-io/topology` package (graph node icons) so both share the same app-provided instance.
 
 ## Design tokens
 

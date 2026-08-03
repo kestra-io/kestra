@@ -1,8 +1,8 @@
-import {beforeEach, describe, expect, it, vi} from "vitest"
-import {getTheme, getSelectedTheme, switchTheme} from "../../../src/utils/utils"
+import {afterAll, beforeEach, describe, expect, it, vi} from "vitest"
+import {getTheme, getSelectedTheme, switchTheme, type SelectedTheme, flatten, executionVars} from "../../../src/utils/utils"
 
 function mockSystemPrefersDark(prefersDark: boolean) {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    vi.stubGlobal("matchMedia", vi.fn().mockImplementation((query: string) => ({
         matches: prefersDark,
         media: query,
         onchange: null,
@@ -11,7 +11,7 @@ function mockSystemPrefersDark(prefersDark: boolean) {
         addListener: () => {},
         removeListener: () => {},
         dispatchEvent: () => false,
-    })) as any
+    })))
 }
 
 describe("theme utils", () => {
@@ -19,6 +19,12 @@ describe("theme utils", () => {
         localStorage.clear()
         document.documentElement.className = ""
         mockSystemPrefersDark(false)
+    })
+
+    afterAll(() => {
+        localStorage.clear()
+        document.documentElement.className = ""
+        vi.unstubAllGlobals()
     })
 
     describe("getTheme()", () => {
@@ -55,7 +61,7 @@ describe("theme utils", () => {
     })
 
     describe("switchTheme()", () => {
-        const newStore = () => ({theme: undefined} as Record<string, unknown>)
+        const newStore = () => ({theme: undefined} as unknown as {theme: SelectedTheme})
 
         it("layers both dark and dark-2 classes for the dark-2 theme", () => {
             switchTheme(newStore(), "dark-2")
@@ -78,5 +84,32 @@ describe("theme utils", () => {
             expect(localStorage.getItem("theme")).toBe("dark-2")
             expect(getSelectedTheme()).toBe("dark-2")
         })
+    })
+})
+
+describe("flatten()", () => {
+    it("keeps flat keys as-is", () => {
+        expect(flatten({a: 1, b: "x"})).toEqual({a: 1, b: "x"})
+    })
+
+    it("flattens nested objects to dotted keys", () => {
+        expect(flatten({values: {greeting: "hello", count: "42"}, uri: "kestra:///x"}))
+            .toEqual({"values.greeting": "hello", "values.count": "42", uri: "kestra:///x"})
+    })
+
+    it("flattens arrays with index keys and keeps nulls", () => {
+        expect(flatten({list: ["a", "b"], empty: null}))
+            .toEqual({"list.0": "a", "list.1": "b", empty: null})
+    })
+})
+
+describe("executionVars()", () => {
+    it("returns one row per flattened output", () => {
+        const rows = executionVars({values: {greeting: "hello"}})
+        expect(rows).toEqual([{key: "values.greeting", value: "hello"}])
+    })
+
+    it("returns an empty list when data is undefined", () => {
+        expect(executionVars(undefined as any)).toEqual([])
     })
 })

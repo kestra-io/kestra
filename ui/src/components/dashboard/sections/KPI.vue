@@ -7,7 +7,7 @@
         </p>
 
         <KsProgress
-            v-if="percentageShown"
+            v-if="percentageShown && progressValue > 0"
             class="progress"
             :percentage="progressValue"
             :strokeWidth="6"
@@ -19,7 +19,7 @@
         <span v-if="description" class="description">{{ description }}</span>
     </section>
 
-    <KsEmpty v-else :description="EMPTY_TEXT" />
+    <KsNoData v-else />
 </template>
 
 <script setup lang="ts">
@@ -27,16 +27,16 @@
     import {useRoute} from "vue-router"
 
     import {KsProgress} from "@kestra-io/design-system"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     import {Chart, getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards"
     import {getConsistentHEXColor} from "../composables/charts"
     import {useTheme} from "../../../utils/utils"
-    import {FilterObject} from "../../../utils/filters"
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
     }>(), {
         dashboardId: undefined,
@@ -47,7 +47,7 @@
     const route = useRoute()
     const theme = useTheme()
 
-    const {percentageShown, EMPTY_TEXT, data, generate} = useChartGenerator(props.dashboardId, props)
+    const {percentageShown, data, generate} = useChartGenerator(props.dashboardId, props)
 
     const description = computed(() => props.chart.chartOptions?.description)
 
@@ -99,7 +99,7 @@
         .progress {
             width: 100%;
             margin-top: var(--ks-spacing-3);
-            
+
             :deep(.kel-progress-bar__outer) {
                 background-color: var(--ks-bg-base);
             }

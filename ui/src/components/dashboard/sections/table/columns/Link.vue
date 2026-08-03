@@ -1,21 +1,28 @@
 <template>
+    <KsEntityLink
+        v-if="linkData && props.flow"
+        entity="flow"
+        :value="label"
+        :to="{name: 'flows/update', params: {namespace: linkData.NAMESPACE, id: linkData.FLOW_ID}}"
+    />
+
     <RouterLink
-        v-if="linkData"
+        v-else-if="linkData && props.execution"
         :to="{
-            name: props.execution ? 'executions/update' : props.flow ? 'flows/update' : undefined,
+            name: 'executions/update',
             params: {
                 namespace: linkData.NAMESPACE,
-                ...(props.execution && {flowId: linkData.FLOW_ID, id: label,}),
-                ...(props.flow && {id: linkData.FLOW_ID,}),
+                flowId: linkData.FLOW_ID,
+                id: label,
             },
         }"
     >
-        <code class="link">
-            {{ props.execution ? label.slice(0, 8) : label }}
+        <code class="link" :class="{colored: props.colored}">
+            {{ label.slice(0, 8) }}
         </code>
     </RouterLink>
 
-    <code v-else class="link">{{ label }}</code>
+    <code v-else class="link" :class="{colored: props.colored}">{{ label }}</code>
 </template>
 
 <script setup lang="ts">
@@ -24,6 +31,7 @@
     const props = defineProps({
         execution: {type: Boolean, default: false},
         flow: {type: Boolean, default: false},
+        colored: {type: Boolean, default: true},
         row: {type: Object as PropType<Record<string, any>>, required: true},
         field: {type: String, required: true},
         columns: {type: Object as PropType<Record<string, any>>, required: true},
@@ -49,6 +57,10 @@
 
 <style scoped>
 .link {
+    color: var(--ks-text-primary);
+    font-size: var(--ks-font-size-sm);
+}
+.link.colored {
     color: var(--ks-text-link);
 }
 </style>

@@ -14,10 +14,10 @@
             />
             <div class="pie-center-label">
                 <div class="pie-center-label__total">{{ totalValue }}</div>
-                <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ t("success") }}</div>
+                <div v-if="showSuccessRatio" class="pie-center-label__success">{{ successRatio }}% {{ $t("success") }}</div>
             </div>
         </div>
-        <KsTableEmpty v-else class="empty" />
+        <KsNoData v-else class="empty" />
 
         <ChartLegend
             v-if="legendItems.length"
@@ -32,7 +32,6 @@
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
-    import {useI18n} from "vue-i18n"
 
     import moment from "moment"
     import {KsPie, ChartFeature, TooltipType, durationUtils, type KsChartSeriesItem} from "@kestra-io/design-system"
@@ -41,14 +40,14 @@
     import {getConsistentHEXColor} from "../composables/charts"
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
-    import {FilterObject} from "../../../utils/filters"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     defineOptions({inheritAttrs: false})
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
     }>(), {
         dashboardId: undefined,
@@ -57,7 +56,6 @@
     })
 
     const route = useRoute()
-    const {t} = useI18n()
 
     const {drillDown} = useChartDrillDown(props.chart)
 
@@ -132,7 +130,7 @@
 
     const dimensionColumn = computed(() => {
         const dimensionKey = aggregator.field?.key
-        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; labelKey?: string} | undefined
+        return (dimensionKey ? columns[dimensionKey] : undefined) as {field?: string; key?: string} | undefined
     })
 
     function onSegmentClick(params: any) {
@@ -167,6 +165,7 @@
         justify-content: center;
         height: 231px;
         margin-top: -2rem;
+        container-type: inline-size;
     }
 
     .pie-center-label {
@@ -179,13 +178,15 @@
         align-items: center;
         pointer-events: none;
         z-index: 1;
-        white-space: nowrap;
+        max-width: min(52%, 7rem);
         text-align: center;
+        line-height: 1.2;
 
         &__total {
-            font-size: 22px;
+            font-size: var(--ks-font-size-3xl);
             color: var(--ks-text-primary);
             font-weight: 700;
+            white-space: nowrap;
         }
 
         &__success {

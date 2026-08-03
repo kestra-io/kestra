@@ -19,6 +19,7 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.assets.AssetManagerFactory;
+import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Plugin;
@@ -31,7 +32,6 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.encryption.EncryptionConfig;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -65,13 +65,14 @@ public class DefaultRunContext extends RunContext {
     private SDK sdk;
 
     private Map<String, Object> variables;
-    private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
+    private List<AbstractMetricEntry<?>> metrics = new ArrayList<>(4); // init to 4 to save memory as tasks usually produce few metrics if any
     private RunContextLogger logger;
-    private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>();
+    private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>(0); // init to 0 to save memory: this is used by only one task
     private String triggerExecutionId;
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
     private List<String> secretInputs;
+    private List<String> secretOutputs;
     private String traceParent;
 
     // those are only used to validate dynamic properties inside the RunContextProperty
@@ -123,6 +124,15 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     @JsonInclude
+    public List<String> getSecretOutputs() {
+        return secretOutputs;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonInclude
     public String getTraceParent() {
         return traceParent;
     }
@@ -133,7 +143,7 @@ public class DefaultRunContext extends RunContext {
 
         // add it inside variables if not already present to be available in expressions
         if (traceParent != null && !this.variables.containsKey("trace")) {
-            this.variables = ImmutableMap.<String, Object>builder()
+            this.variables = ImmutableMap.<String, Object> builder()
                 .putAll(this.variables)
                 .put("trace", Map.of("parent", traceParent))
                 .build();
@@ -193,6 +203,22 @@ public class DefaultRunContext extends RunContext {
                 }
             }
         }
+
+        // this is used when a run context is re-hydrated so we need to add again the decrypted SECRET flow outputs
+        if (!ListUtils.isEmpty(secretOutputs)) {
+            secretOutputs.forEach(logger::usedSecret);
+        }
+    }
+
+    /**
+     * Registers a value to be masked in this run context's logs, and records it in {@link #secretOutputs}.
+     * Makes a defensive copy of the list, since {@link #clone()} may share it with another run context.
+     */
+    void usedSecretOutput(final String secret) {
+        logger.usedSecret(secret);
+        List<String> updated = new ArrayList<>(ListUtils.emptyOnNull(secretOutputs));
+        updated.add(secret);
+        secretOutputs = updated;
     }
 
     @SuppressWarnings("unchecked")
@@ -233,10 +259,10 @@ public class DefaultRunContext extends RunContext {
         runContext.variables = new HashMap<>(this.variables);
         runContext.workingDir = this.workingDir;
         runContext.logger = this.logger;
-        runContext.metrics = new ArrayList<>();
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretInputs = this.secretInputs;
+        runContext.secretOutputs = this.secretOutputs;
         if (isInitialized.get()) {
             //Inject all services
             runContext.init(applicationContext);
@@ -506,6 +532,15 @@ public class DefaultRunContext extends RunContext {
         return dynamicWorkerTaskResult;
     }
 
+    @Override
+    public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
+        this.dynamicWorkerTaskResult.add(workerTaskResult);
+
+        if (logs != null && !logs.isEmpty() && workerTaskResult.getTaskRun() != null) {
+            this.logger.emitDynamicTaskRunLogs(workerTaskResult.getTaskRun(), logs);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -659,6 +694,19 @@ public class DefaultRunContext extends RunContext {
     }
 
     /**
+     * Get a task configuration property from the underlying application context.
+     * A task property is a property under the 'kestra.tasks' configuration root.
+     *
+     * @throws IllegalArgumentException if a property is not inside the 'kestra.tasks' configuration root.
+     */
+    public <T> Optional<T> getTaskProperty(String name, Class<T> clazz) {
+        if (!name.startsWith("kestra.tasks.")) {
+            throw new IllegalArgumentException("A plugin can only access configuration properties from the 'kestra.tasks' root property");
+        }
+        return this.applicationContext.getProperty(name, clazz);
+    }
+
+    /**
      * Builder class for constructing new {@link DefaultRunContext} objects.
      */
     @NoArgsConstructor
@@ -680,6 +728,7 @@ public class DefaultRunContext extends RunContext {
         private KVStoreService kvStoreService;
         private AssetManagerFactory assetManagerFactory;
         private List<String> secretInputs;
+        private List<String> secretOutputs;
         private Task task;
         private AbstractTrigger trigger;
 
@@ -703,6 +752,7 @@ public class DefaultRunContext extends RunContext {
             context.kvStoreService = kvStoreService;
             context.assetManagerFactory = assetManagerFactory;
             context.secretInputs = secretInputs;
+            context.secretOutputs = secretOutputs;
             context.task = task;
             context.trigger = trigger;
             return context;

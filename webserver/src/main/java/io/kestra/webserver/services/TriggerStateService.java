@@ -7,6 +7,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationsConfiguration;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.NotFoundException;
 import io.kestra.core.models.QueryFilter;
@@ -25,14 +26,15 @@ import io.kestra.core.scheduler.events.SetDisableTrigger;
 import io.kestra.core.scheduler.events.SetPauseBackfillTrigger;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.services.AsyncOperationWaiter;
-import io.kestra.core.async.AsyncOperationsConfiguration;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
 
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -74,14 +76,22 @@ public class TriggerStateService {
      *
      * @param trigger the trigger identifier.
      * @return the refreshed trigger state.
-     * @throws NotFoundException if the trigger does not exist.
-     * @throws ConflictException if the trigger is already unlocked or the reset failed.
+     * @throws NotFoundException if the trigger, its flow, or the trigger definition within that flow does not exist.
+     * @throws ConflictException if the trigger is already unlocked, is a realtime trigger, or the reset failed.
      */
     public TriggerState unlockTriggerById(final TriggerId trigger) throws NotFoundException, ConflictException {
         TriggerState state = getTriggerState(trigger);
         if (!state.isLocked()) {
             throw new ConflictException("trigger %s is already unlocked".formatted(trigger));
         }
+        if (TriggerType.REALTIME.equals(state.getType())) {
+            // Locked is the normal running state of a realtime trigger: unlocking it would make the
+            // scheduler submit a second instance while the first is still running on a worker.
+            throw new ConflictException("trigger %s is a realtime trigger, reset it to kill and restart it".formatted(trigger));
+        }
+        // Fail fast if the trigger is orphaned otherwise the reset would race the scheduler's orphan-GC.
+        validateToggleable(trigger);
+
         awaitBlockingAction(
             trigger.uid(),
             operationId -> triggerEventQueue.send(new ResetTrigger(trigger).withOperationId(operationId)),
@@ -91,15 +101,16 @@ public class TriggerStateService {
     }
 
     /**
-     * Unlocks all locked triggers among the given identifiers. Non-existing and already-unlocked
-     * triggers are silently skipped.
+     * Unlocks all locked triggers among the given identifiers. Non-existing, already-unlocked,
+     * realtime, and orphaned (flow or trigger definition missing) triggers are silently skipped.
      *
      * @param triggers the trigger identifiers.
      * @return an async-operation response with the count of unlock events emitted.
      */
     public ApiAsyncOperationResponse unlockAllByIds(List<TriggerId> triggers) {
         List<TriggerId> lockedIds = triggers.stream()
-            .filter(id -> triggerRepository.findById(id).map(TriggerState::isLocked).orElse(false))
+            .filter(id -> triggerRepository.findById(id).map(TriggerStateService::isUnlockable).orElse(false))
+            .filter(this::isFlowBackedTrigger)
             .toList();
         return submitBatch(
             lockedIds, (id, operationId) -> triggerEventQueue.send(new ResetTrigger(id).withOperationId(operationId))
@@ -107,7 +118,8 @@ public class TriggerStateService {
     }
 
     /**
-     * Unlocks all locked triggers matching the given filters.
+     * Unlocks all locked triggers matching the given filters. Realtime and orphaned (flow or
+     * trigger definition missing) triggers are silently skipped.
      *
      * @param tenant the tenant identifier.
      * @param filters the query filters.
@@ -115,8 +127,9 @@ public class TriggerStateService {
      */
     public ApiAsyncOperationResponse unlockAllMatching(String tenant, List<QueryFilter> filters) {
         List<TriggerId> lockedIds = triggerRepository.find(tenant, filters)
-            .filter(TriggerState::isLocked)
+            .filter(TriggerStateService::isUnlockable)
             .map(TriggerId::of)
+            .filter(this::isFlowBackedTrigger)
             .collectList()
             .blockOptional()
             .orElse(List.of());
@@ -131,12 +144,15 @@ public class TriggerStateService {
      *
      * @param triggerId the trigger identifier.
      * @return the refreshed trigger state.
-     * @throws NotFoundException if the trigger does not exist.
+     * @throws NotFoundException if the trigger, its flow, or the trigger definition within that flow does not exist.
      * @throws QueueException if the execution-killed event cannot be emitted.
      * @throws ConflictException if the reset failed.
      */
     public TriggerState resetTrigger(final TriggerId triggerId) throws NotFoundException, QueueException, ConflictException {
         getTriggerState(triggerId);
+        // Fail fast if the trigger is orphaned otherwise the reset would race the scheduler's orphan-GC.
+        validateToggleable(triggerId);
+
         executionKilledQueue.emit(
             ExecutionKilledTrigger.builder()
                 // Trigger kills are not processed by the Executor: emit them directly in the
@@ -294,14 +310,16 @@ public class TriggerStateService {
     /**
      * Enables or disables a trigger and waits for the scheduler to acknowledge.
      *
+     * @param recoverMissedSchedules when {@code true}, missed schedules are recovered on enable according to the
+     *                               trigger's own configuration; {@code null} or {@code false} means they are skipped.
      * @throws NotFoundException if the flow or trigger does not exist.
      * @throws ConflictException if the change failed.
      */
-    public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled) throws NotFoundException, ConflictException {
+    public TriggerState toggleTriggerById(TriggerId trigger, boolean disabled, @Nullable Boolean recoverMissedSchedules) throws NotFoundException, ConflictException {
         validateToggleable(trigger);
         awaitBlockingAction(
             trigger.uid(),
-            operationId -> triggerEventQueue.send(new SetDisableTrigger(trigger, disabled).withOperationId(operationId)),
+            operationId -> triggerEventQueue.send(new SetDisableTrigger(trigger, disabled, recoverMissedSchedules).withOperationId(operationId)),
             "Set disabled"
         );
         return refresh(trigger, "set-disabled");
@@ -310,7 +328,7 @@ public class TriggerStateService {
     /**
      * Enables or disables the given triggers. Missing triggers are silently skipped.
      */
-    public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled) {
+    public ApiAsyncOperationResponse toggleAllByIds(List<TriggerId> triggers, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         List<TriggerId> toggleable = triggers.stream()
             .filter(id ->
             {
@@ -323,14 +341,14 @@ public class TriggerStateService {
             })
             .toList();
         return submitBatch(
-            toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled).withOperationId(operationId))
+            toggleable, (id, operationId) -> triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId))
         );
     }
 
     /**
      * Enables or disables triggers matching the given filters.
      */
-    public ApiAsyncOperationResponse toggleAllMatching(String tenant, List<QueryFilter> filters, boolean disabled) {
+    public ApiAsyncOperationResponse toggleAllMatching(String tenant, List<QueryFilter> filters, boolean disabled, @Nullable Boolean recoverMissedSchedules) {
         String operationId = IdUtils.create();
         int count = triggerRepository.find(tenant, filters)
             .map(trigger ->
@@ -338,7 +356,7 @@ public class TriggerStateService {
                 TriggerId id = TriggerId.of(trigger);
                 try {
                     validateToggleable(id);
-                    triggerEventQueue.send(new SetDisableTrigger(id, disabled).withOperationId(operationId));
+                    triggerEventQueue.send(new SetDisableTrigger(id, disabled, recoverMissedSchedules).withOperationId(operationId));
                     return 1;
                 } catch (NotFoundException ignored) {
                     return 0;
@@ -348,6 +366,10 @@ public class TriggerStateService {
             .blockOptional()
             .orElse(0);
         return new ApiAsyncOperationResponse(operationId, count);
+    }
+
+    private static boolean isUnlockable(TriggerState state) {
+        return state.isLocked() && !TriggerType.REALTIME.equals(state.getType());
     }
 
     private TriggerState getTriggerState(TriggerId triggerId) throws NotFoundException {
@@ -368,6 +390,18 @@ public class TriggerStateService {
             .filter(t -> t.getId().equals(triggerId.getTriggerId()))
             .findFirst()
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(triggerId)));
+    }
+
+    /**
+     * Same check as {@link #validateToggleable(TriggerId)}, as a boolean predicate for stream filtering.
+     */
+    private boolean isFlowBackedTrigger(TriggerId triggerId) {
+        try {
+            validateToggleable(triggerId);
+            return true;
+        } catch (NotFoundException e) {
+            return false;
+        }
     }
 
     private ApiAsyncOperationResponse submitExistingBatch(List<TriggerId> triggers, java.util.function.BiConsumer<TriggerId, String> emit) {

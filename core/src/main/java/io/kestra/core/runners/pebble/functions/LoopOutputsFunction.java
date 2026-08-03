@@ -1,12 +1,12 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 /** Extracts a specific output key from all iterations of a Loop task's outputs list. */
 public class LoopOutputsFunction implements KestraFunction {

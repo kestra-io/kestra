@@ -108,7 +108,7 @@ public class InternalNamespace implements Namespace {
 
         return namespaceFilesMetadata.stream()
             .filter(nsFileMetadata -> !nsFileMetadata.getPath().equals("/"))
-            .map(nsFileMetadata -> NamespaceFile.of(namespace, Path.of(nsFileMetadata.getPath()), nsFileMetadata.getVersion()))
+            .map(nsFileMetadata -> NamespaceFile.of(namespace, Path.of(nsFileMetadata.getPath()), nsFileMetadata.getRevision()))
             .toList();
     }
 
@@ -151,7 +151,7 @@ public class InternalNamespace implements Namespace {
             allMetas.addAll(descendants);
         }
 
-        allMetas.sort(Comparator.comparing(NamespaceFileMetadata::getVersion));
+        allMetas.sort(Comparator.comparing(NamespaceFileMetadata::getRevision));
 
         // Phase 1: Copy all entries to their new locations, tracking what was created for rollback
         List<Pair<NamespaceFile, NamespaceFile>> results = new ArrayList<>();
@@ -168,7 +168,7 @@ public class InternalNamespace implements Namespace {
                 }
                 final String finalNewPath = intermediateNewPath;
 
-                NamespaceFile beforeNamespaceFile = NamespaceFile.of(namespace, Path.of(oldPath), nsFileMetadata.getVersion());
+                NamespaceFile beforeNamespaceFile = NamespaceFile.of(namespace, Path.of(oldPath), nsFileMetadata.getRevision());
                 NamespaceFile afterNamespaceFile;
 
                 if (nsFileMetadata.isDirectory()) {
@@ -215,10 +215,12 @@ public class InternalNamespace implements Namespace {
     }
 
     private void purge(NamespaceFile nsFile) throws IOException {
-        // Hard-delete the old entry via storage
-        storage.delete(tenant, namespace, nsFile.storagePath().toUri());
-        // Purge the old metadata entry
+        // Mark the metadata entry deleted before removing the object, so an interrupted purge can never
+        // leave a live index entry pointing at a missing object (which would surface as a 404 on read).
+        // The two stores cannot be updated atomically, so we order them to fail safe: a crash in between
+        // leaves an orphan object (harmless, reclaimable) rather than a dangling index entry.
         stateStore.save(NamespaceFileMetadata.of(tenant, nsFile).toBuilder().deleted(true).build());
+        storage.delete(tenant, namespace, nsFile.storagePath().toUri());
     }
 
     /**
@@ -228,9 +230,9 @@ public class InternalNamespace implements Namespace {
     public NamespaceFile get(Path path) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
-        int version = findByPath(normalizedPath).map(NamespaceFileMetadata::getVersion).orElse(1);
+        int revision = findByPath(normalizedPath).map(NamespaceFileMetadata::getRevision).orElse(1);
 
-        return NamespaceFile.of(namespace, normalizedPath, version);
+        return NamespaceFile.of(namespace, normalizedPath, revision);
     }
 
     public Path relativize(final URI uri) {
@@ -251,14 +253,38 @@ public class InternalNamespace implements Namespace {
      * {@inheritDoc}
      **/
     @Override
-    public InputStream getFileContent(Path path, @Nullable Integer version) throws IOException {
+    public InputStream getFileContent(Path path, @Nullable Integer revision) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
         // Throw if file not found OR if it's deleted
-        NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, version).orElseThrow(() -> fileNotFound(normalizedPath, version));
+        NamespaceFileMetadata namespaceFileMetadata = findByPath(normalizedPath, revision).orElseThrow(() -> fileNotFound(normalizedPath, revision));
 
-        Path namespaceFilePath = NamespaceFile.of(namespace, normalizedPath, namespaceFileMetadata.getVersion()).storagePath();
-        return storage.get(tenant, namespace, namespaceFilePath.toUri());
+        return storage.get(tenant, namespace, resolveExistingRevisionUri(normalizedPath, namespaceFileMetadata.getRevision()));
+    }
+
+    /**
+     * Resolves the storage URI for the given revision of a namespace file, falling back to the most
+     * recent lower revision whose object still exists when the metadata index and the storage have
+     * drifted. This keeps reads resilient to an index entry pointing at a revision whose object was
+     * removed out-of-band (e.g. an object deleted/replaced directly, or a migration that left the
+     * index ahead of storage), serving the latest available revision instead of failing with a 404.
+     *
+     * @throws FileNotFoundException if no revision down to the first has a backing object in storage.
+     */
+    private URI resolveExistingRevisionUri(Path normalizedPath, int revision) throws IOException {
+        for (int candidate = revision; candidate >= 1; candidate--) {
+            URI uri = NamespaceFile.of(namespace, normalizedPath, candidate).storagePath().toUri();
+            if (storage.exists(tenant, namespace, uri)) {
+                if (candidate != revision) {
+                    logger.warn(
+                        "Namespace file '{}' revision {} is missing from storage in namespace '{}' (metadata/storage drift); serving the latest available revision {} instead.",
+                        normalizedPath, revision, namespace, candidate
+                    );
+                }
+                return uri;
+            }
+        }
+        throw fileNotFound(normalizedPath, revision);
     }
 
     /**
@@ -271,22 +297,24 @@ public class InternalNamespace implements Namespace {
         return findByPath(normalizedPath).map(NamespaceFileAttributes::new).orElseThrow(() -> fileNotFound(normalizedPath, null));
     }
 
-    private FileNotFoundException fileNotFound(Path path, @Nullable Integer version) {
-        return new FileNotFoundException(Optional.ofNullable(version).map(v -> "Version " + v + " of file").orElse("File") + " '" + path + "' was not found in namespace '" + namespace + "'.");
+    private FileNotFoundException fileNotFound(Path path, @Nullable Integer revision) {
+        return new FileNotFoundException(
+            Optional.ofNullable(revision).map(v -> "Revision " + v + " of file").orElse("File") + " '" + path + "' was not found in namespace '" + namespace + "'."
+        );
     }
 
-    private Optional<NamespaceFileMetadata> findByPath(Path path, boolean allowDeleted, @Nullable Integer version) throws IOException {
+    private Optional<NamespaceFileMetadata> findByPath(Path path, boolean allowDeleted, @Nullable Integer revision) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
-        return stateStore.findByPath(tenant, namespace, normalizedPath.toString(), version, allowDeleted);
+        return stateStore.findByPath(tenant, namespace, normalizedPath.toString(), revision, allowDeleted);
     }
 
     private Optional<NamespaceFileMetadata> findByPath(Path path, boolean allowDeleted) throws IOException {
         return findByPath(path, allowDeleted, null);
     }
 
-    private Optional<NamespaceFileMetadata> findByPath(Path path, @Nullable Integer version) throws IOException {
-        return findByPath(path, false, version);
+    private Optional<NamespaceFileMetadata> findByPath(Path path, @Nullable Integer revision) throws IOException {
+        return findByPath(path, false, revision);
     }
 
     private Optional<NamespaceFileMetadata> findByPath(Path path) throws IOException {
@@ -310,8 +338,8 @@ public class InternalNamespace implements Namespace {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
         Optional<NamespaceFileMetadata> inRepository = findByPath(normalizedPath, true);
-        int currentVersion = inRepository.map(NamespaceFileMetadata::getVersion).orElse(0);
-        NamespaceFile namespaceFile = NamespaceFile.of(namespace, normalizedPath, currentVersion + 1);
+        int currentRevision = inRepository.map(NamespaceFileMetadata::getRevision).orElse(0);
+        NamespaceFile namespaceFile = NamespaceFile.of(namespace, normalizedPath, currentRevision + 1);
         Path storagePath = namespaceFile.storagePath();
         // Remove Windows letter
         URI cleanUri = new URI(storagePath.toUri().toString().replaceFirst("^file:///[a-zA-Z]:", ""));

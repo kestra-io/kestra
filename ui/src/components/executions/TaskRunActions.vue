@@ -16,7 +16,7 @@
                 </KsDropdownItem>
                 <SubFlowLink
                     v-if="isSubflow"
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     tabExecution="logs"
                     :executionId="taskRun.outputs.executionId"
                 />
@@ -24,12 +24,13 @@
                 <Metrics :taskRun="taskRun" :execution="execution" />
 
                 <Outputs
-                    :outputs="taskRun.outputs"
+                    :taskRun="taskRun"
+                    :executionId="execution.id"
                     :execution="execution"
                 />
 
                 <Restart
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :key="`restart-${attemptIndex}-${selectedAttempt?.state.startDate}`"
                     isReplay
                     tooltipPosition="left"
@@ -40,7 +41,7 @@
                 />
 
                 <ChangeStatus
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :key="`change-status-${attemptIndex}-${selectedAttempt?.state.startDate}`"
                     :execution="execution"
                     :taskRun="taskRun"
@@ -50,7 +51,7 @@
                 <TaskEdit
                     v-if="canReadFlow"
                     :readOnly="true"
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     :taskId="taskRun.taskId"
                     section="tasks"
                     :flowId="execution.flowId"
@@ -77,7 +78,7 @@
                     {{ t("delete logs") }}
                 </KsDropdownItem>
                 <WorkerInfo
-                    component="el-dropdown-item"
+                    component="KsDropdownItem"
                     v-if="hasWorkerId !== null"
                     :taskRun="taskRun"
                     @follow="emit('follow', $event)"
@@ -90,7 +91,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute} from "vue-router"
 
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Copy from "vue-material-design-icons/ContentCopy.vue"
@@ -106,6 +107,7 @@
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useMiscStore} from "override/stores/misc"
     import Restart from "./overview/components/actions/Restart.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
@@ -136,8 +138,8 @@
 
     const {t} = useI18n()
     const route = useRoute()
-    const router = useRouter()
     const toast = useToast()
+    const miscStore = useMiscStore()
     const coreStore = useCoreStore()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
@@ -226,30 +228,15 @@
             return last?.message ?? ""
         })()
         const prompt = `Fix the task ${props.taskRun.taskId} as it generated the following error:\n${errorLines}`
-        try {
-            window.sessionStorage.setItem("kestra-ai-prompt", prompt)
-        } catch (err) {
-            console.warn("AI prompt not persisted to sessionStorage:", err)
-        }
-
-        router.push({
-            name: "flows/update",
-            params: {
-                namespace: props.execution.namespace,
-                id: props.execution.flowId,
-                tab: "edit",
-                tenant: route.params?.tenant,
-            },
-            query: {ai: "open"},
-        })
+        miscStore.promptCopilot(prompt)
     }
 </script>
 
 <style scoped lang="scss">
     .task-run-buttons {
         padding: 0 .5rem;
-        border: 1px solid var(--ks-border-default);
-        background-color: var(--ks-btn-secondary-bg-default) !important;
+        border: none;
+        background: transparent !important;
 
         &:not(:hover) {
             background: var(--ks-btn-secondary-bg-inactive);

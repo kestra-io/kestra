@@ -1,5 +1,13 @@
 package io.kestra.mcp;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.google.common.annotations.VisibleForTesting;
+
 import io.kestra.core.mcp.models.McpServerClusterEventPayload;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.GenericFlow;
@@ -9,7 +17,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.McpToolTrigger;
-import com.google.common.annotations.VisibleForTesting;
+
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
@@ -17,14 +25,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static io.kestra.plugin.core.trigger.McpToolTrigger.DEFAULT_SERVER_ID;
 
@@ -46,8 +47,7 @@ public class McpServerChangeNotifier {
         Provider<McpServerHandlerTransport> mcpServerHandlerTransport,
         BroadcastQueueInterface<FlowInterface> flowQueue,
         BroadcastQueueInterface<ClusterEvent> clusterEventQueue,
-        FlowRepositoryInterface flowRepository
-    ) {
+        FlowRepositoryInterface flowRepository) {
         this.mcpServerHandlerTransport = mcpServerHandlerTransport;
         this.flowQueue = flowQueue;
         this.clusterEventQueue = clusterEventQueue;
@@ -56,7 +56,8 @@ public class McpServerChangeNotifier {
 
     @EventListener
     void initCache(StartupEvent startupEvent) {
-        this.flowSubscriber = flowQueue.subscriber().subscribe(either -> {
+        this.flowSubscriber = flowQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.warn("Failed to deserialize flow event for MCP change notification: {}", either.getRight().getMessage());
                 return;
@@ -64,7 +65,8 @@ public class McpServerChangeNotifier {
             handleFlowChange(either.getLeft());
         });
 
-        this.clusterEventSubscriber = clusterEventQueue.subscriber().subscribe(either -> {
+        this.clusterEventSubscriber = clusterEventQueue.subscriber().subscribe(either ->
+        {
             if (either.isRight()) {
                 log.warn("Failed to deserialize cluster event for MCP change notification: {}", either.getRight().getMessage());
                 return;
@@ -118,10 +120,12 @@ public class McpServerChangeNotifier {
         return flowRepository.findRevisions(flow.getTenantId(), flow.getNamespace(), flow.getId(), true, List.of(revision - 1))
             .stream()
             .findFirst()
-            .map(previous -> ListUtils.emptyOnNull(previous.getTriggers()).stream()
-                .filter(t -> t instanceof McpToolTrigger && !t.isDisabled())
-                .map(t -> Objects.requireNonNullElse(((McpToolTrigger) t).getMcpServer(), DEFAULT_SERVER_ID))
-                .collect(Collectors.toSet()))
+            .map(
+                previous -> ListUtils.emptyOnNull(previous.getTriggers()).stream()
+                    .filter(t -> t instanceof McpToolTrigger && !t.isDisabled())
+                    .map(t -> Objects.requireNonNullElse(((McpToolTrigger) t).getMcpServer(), DEFAULT_SERVER_ID))
+                    .collect(Collectors.toSet())
+            )
             .orElse(Set.of());
     }
 

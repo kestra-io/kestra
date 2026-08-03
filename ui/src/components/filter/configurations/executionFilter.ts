@@ -8,6 +8,17 @@ import {useExecutionsStore} from "../../../stores/executions"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
+import {labelComparatorLabels} from "./labelComparatorLabels"
+import {routeFamily} from "../../../utils/routeFamily"
+import {keepTopLevelFilters} from "../../../utils/queryFilters"
+
+/**
+ * Applied filters forwarded to the flowId option lookup to narrow it by what the list already shows.
+ *
+ * Only the namespace-bearing filters are forwarded so existing indices should be used.
+ * Everything else is deliberately left out.
+ */
+const FLOW_ID_NARROWING_FIELDS = ["namespace", "scope"]
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -18,7 +29,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.execution_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_executions"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),
@@ -51,7 +62,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         searchable: true,
                     },
                 ] : []) as any,
-                ...(route.name !== "flows/update" ? [{
+                ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
                     description: t("filter.flowId.description"),
@@ -59,7 +70,6 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.IN,
                         Comparators.NOT_IN,
                         Comparators.EQUALS,
-                        Comparators.NOT_EQUALS,
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
                         Comparators.ENDS_WITH,
@@ -68,8 +78,11 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     valueProvider: async (options?: {search?: string}) => {
                         const search = options?.search?.trim()
                         const ids = await useExecutionsStore().findDistinctFieldValues({
-                            field: "FLOW_ID",
-                            filters: search ? {"filters[flowId][CONTAINS]": search} : undefined,
+                            field: "flowId",
+                            filters: {
+                                ...keepTopLevelFilters(route.query, FLOW_ID_NARROWING_FIELDS),
+                                ...(search ? {"filters[flowId][CONTAINS]": search} : {}),
+                            },
                             size: 100,
                         })
                         return ids.map(id => ({label: id, value: id}))
@@ -101,6 +114,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     showComparatorSelection: true,
                     searchable: true,
                     visibleByDefault: true,
+                    colored: true,
                 },
                 {
                     key: "scope",
@@ -131,6 +145,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("executions", t)
                         return VALUES.RELATIVE_DATE
@@ -152,8 +167,18 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "labels",
                     label: t("filter.labels_execution.label"),
                     description: t("filter.labels_execution.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
                     valueType: "key-value",
+                    showComparatorSelection: true,
                 },
                 {
                     key: "triggerExecutionId",

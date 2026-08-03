@@ -2,7 +2,11 @@ import type {LocationQuery} from "vue-router"
 import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type LogicalOperator, Comparators, isWrapperGroup} from "./filterTypes"
 import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
 
-const decodeURIComponentSafely = (value: string | (string | null)[]): string | string[] =>
+/**
+ * Decodes a raw `filters[...]` query-param value. Exported because callers translating the route
+ * into a backend request payload decode the same values as {@link decodeSearchParams} does.
+ */
+export const decodeFilterValue = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)
         ? value.filter(v => v !== null).map(decodeURIComponent)
         : decodeURIComponent(value)
@@ -30,7 +34,7 @@ const FILTER_KEY_PATTERN = new RegExp(
 
 const PREFIX_SEGMENT_PATTERN = /\[(and|or)]\[(\d+)]/gi
 
-interface PrefixSegment {
+export interface PrefixSegment {
     logical: LogicalOperator
     index: number
 }
@@ -56,18 +60,38 @@ export interface DecodedParam {
     wrapperLogical?: LogicalOperator
 }
 
+/** One `filters[and|or][N]…[field][OPERATION][subKey]` key, split into its parts. */
+export interface ParsedFilterKey {
+    /** The `[and|or][N]` grouping chain, outermost first; empty for a root-level filter. */
+    chain: PrefixSegment[]
+    field: string
+    operation: string
+    /** Present for keys carrying a sub-key, e.g. the label name in `filters[labels][EQUALS][env]`. */
+    subKey?: string
+}
+
+/**
+ * Parses a filter URL key into its parts, or returns null when the key does not match
+ * {@link FILTER_KEY_PATTERN}. Exported so callers that translate the route into a backend request
+ * payload read the key format from its owner instead of restating the regex.
+ */
+export const parseFilterKey = (key: string): ParsedFilterKey | null => {
+    const match = key.match(FILTER_KEY_PATTERN)
+    if (!match) return null
+
+    const [, prefix, field, operation, subKey] = match
+    return {chain: parsePrefixChain(prefix), field, operation, subKey}
+}
 
 export const decodeSearchParams = (query: LocationQuery): DecodedParam[] =>
     Object.entries(query)
         .filter(([key]) => key.startsWith("filters[") || key === "q")
         .map(([key, value]): DecodedParam | null => {
             if (!value) return null
-            const match = key.match(FILTER_KEY_PATTERN)
-            if (!match) return null
+            const parsed = parseFilterKey(key)
+            if (!parsed) return null
 
-            const [, prefix, field, operation, subKey] = match
-            const chain = parsePrefixChain(prefix)
-            return buildParam(field, operation, subKey, value, chain)
+            return buildParam(parsed.field, parsed.operation, parsed.subKey, value, parsed.chain)
         })
         .filter((v): v is DecodedParam => v !== null)
 
@@ -79,8 +103,8 @@ const buildParam = (
     chain: PrefixSegment[],
 ): DecodedParam => {
     const decoded = subKey
-        ? `${subKey}:${decodeURIComponentSafely(value)}`
-        : decodeURIComponentSafely(value)
+        ? `${subKey}:${decodeFilterValue(value)}`
+        : decodeFilterValue(value)
     return {
         field,
         value: decoded,
@@ -142,7 +166,7 @@ const writeFilter = (
                 query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = value.startDate.toISOString()
                 query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = value.endDate.toISOString()
             } else {
-                query[`${prefix}[${key}][${comparatorKey}]`] = value?.toString() ?? ""
+                query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? ""
             }
             const dateFilter = (filter as any).meta?.dateFilter
             if (dateFilter) {
@@ -191,6 +215,29 @@ export const isValidFilter = (filter: Filter): boolean => {
     }
 }
 
+export const validStructureSignature = (groups: FilterGroup[]): string => {
+    const leafFilters = (leaf: LeafFilterGroup): string[] =>
+        leaf.filters
+            .filter(isValidFilter)
+            .map((f) => `${f.key} ${f.comparator} ${JSON.stringify(f.value)}`)
+            .sort()
+
+    const units = groups
+        .map((unit) => {
+            if (isWrapperGroup(unit)) {
+                const children = unit.children.map(leafFilters).filter((c) => c.length > 0)
+                if (children.length === 0) return null
+                if (children.length === 1) return {filters: children[0]}
+                return {logical: unit.logical, children}
+            }
+            const filters = leafFilters(unit as LeafFilterGroup)
+            return filters.length ? {filters} : null
+        })
+        .filter(Boolean)
+
+    return JSON.stringify(units)
+}
+
 export const getUniqueFilters = <T extends { key: string; comparator?: any }>(filters: T[]): T[] =>
     filters.filter((filter, index, self) =>
         index === self.findLastIndex(f =>
@@ -230,7 +277,7 @@ export const serializeFiltersToString = (query: LocationQuery): string => {
             append(String(value))
         }
     })
-    return lines.join("\n")
+    return lines.join("&")
 }
 
 const safeDecode = (s: string): string => {

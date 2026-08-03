@@ -23,6 +23,16 @@ import {useBlueprintsStore} from "../../../stores/blueprints"
 import * as Utils from "../../../utils/utils"
 import {makeToast} from "../../../utils/toast"
 import {provideEditorArtifacts, ARTIFACT_COPY_COMMAND} from "../artifacts"
+import type {Router} from "vue-router"
+import {useFlowStore} from "../../../stores/flow"
+import {
+    buildSubflowLinks,
+    createFlowExistenceChecker,
+    createSubflowLinkOpener,
+    encodeSubflowTarget,
+    filterExistingSubflowLinks,
+    SUBFLOW_LINK_SCHEME,
+} from "./subflowLinkProvider"
 import IPosition = monaco.IPosition;
 import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
@@ -105,11 +115,15 @@ function filterMissingRequiredTaskProperties({
 }
 
 export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
-    private readonly yamlAutoCompletionObject: YamlAutoCompletion
+    protected readonly yamlAutoCompletionObject: YamlAutoCompletion
+    protected readonly router?: Router
+    protected readonly flowStore?: ReturnType<typeof useFlowStore>
 
-    constructor(yamlAutoCompletion: YamlAutoCompletion) {
+    constructor(yamlAutoCompletion: YamlAutoCompletion, router?: Router, flowStore?: ReturnType<typeof useFlowStore>) {
         super("yaml")
         this.yamlAutoCompletionObject = yamlAutoCompletion
+        this.router = router
+        this.flowStore = flowStore
     }
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
@@ -125,7 +139,6 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             hover: localStorage.getItem("hoverTextEditor") === "true",
             completion: true,
             validate: validateYAML.value ?? true,
-            format: true,
             schemas: yamlSchemas(),
         })
 
@@ -180,9 +193,24 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             const isTypeValueContext = /^\s*(?:-\s*)?type\s*:\s*$/i.test(
                 beforeWord,
             )
-            // Split plugin class names (`a.b.C`) into lowercase searchable segments.
-            const getLabelSegments = (label: string) =>
-                label.toLowerCase().split(/\.(?=\w)/).filter(Boolean)
+            // Split plugin FQCN (`a.b.C`) into lowercase searchable segments,
+            // plus class name words in the last segment (e.g. `SentryExecution` → `sentry`, `execution`).
+            const getLabelSegments = (label: string) => {
+                const result: string[] = []
+                const dotSegments = label.split(/\.(?=\w)/)
+
+                for (const seg of dotSegments) {
+                    result.push(seg.toLowerCase())
+                }
+
+                const lastSegment = dotSegments[dotSegments.length - 1]
+                const parts = lastSegment.split(/(?=[A-Z])/)
+                if (parts.length > 1) {
+                    result.push(...parts.map((p) => p.toLowerCase()))
+                }
+
+                return result
+            }
             // Match typed input against any segment, while still preferring the last segment.
             const matchesTypeInput = (label: string, input: string) => {
                 if (!input) return true
@@ -608,7 +636,18 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             ["yaml", "plaintext"],
         )
 
+        this.registerSubflowLinks(autoCompletionProviders)
+        this.registerEditionProviders(autoCompletionProviders, t)
+
         return autoCompletionProviders
+    }
+
+    /**
+     * Seam for edition-specific Monaco providers (hover/definition/etc.). Empty in open-source; the Enterprise
+     * {@link YamlLanguageConfigurator} subclass overrides it to register the reusable-inputs flow-editor providers.
+     */
+    protected registerEditionProviders(_disposables: IDisposable[], _t: ReturnType<typeof useI18n>["t"]): void {
+        // no-op in open-source
     }
 
     private registerEditorArtifacts(t: ReturnType<typeof useI18n>["t"]): IDisposable[] {
@@ -670,5 +709,42 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
         })
 
         return [copyCommand, codeLensProvider]
+    }
+
+    private registerSubflowLinks(disposables: IDisposable[]) {
+        const router = this.router
+        const flowStore = this.flowStore
+        if (!router || !flowStore) {
+            return
+        }
+
+        const flowExists = createFlowExistenceChecker(
+            (namespace) =>
+                flowStore.flowsByNamespace(namespace).then((flows: {id: string}[]) => flows.map((flow) => flow.id)),
+            () => String(router.currentRoute.value.params.tenant ?? ""),
+        )
+
+        disposables.push(
+            monaco.languages.registerLinkProvider("yaml", {
+                async provideLinks(model) {
+                    const existing = await filterExistingSubflowLinks(buildSubflowLinks(model), flowExists)
+                    return {
+                        links: existing.map((link) => ({
+                            range: link.range,
+                            url: monaco.Uri.from({
+                                scheme: SUBFLOW_LINK_SCHEME,
+                                path: "/open",
+                                query: encodeSubflowTarget(link.target),
+                            }),
+                            tooltip: `${link.target.namespace} / ${link.target.flowId}`,
+                        })),
+                    }
+                },
+            }),
+        )
+
+        disposables.push(
+            monaco.editor.registerLinkOpener(createSubflowLinkOpener(router)),
+        )
     }
 }

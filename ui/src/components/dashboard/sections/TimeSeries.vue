@@ -18,10 +18,11 @@
             :options="echartsOption"
             :loading="false"
             :tooltipType="TooltipType.EXTERNAL"
+            :stickyTooltip="props.short"
             @echarts-click="onChartClick"
         />
     </div>
-    <KsTableEmpty
+    <KsNoData
         v-else-if="!props.short || (props.execution && generated?.total === 0)"
         :class="{empty: !props.short && !props.execution}"
     />
@@ -42,7 +43,7 @@
     import {useChartDrillDown} from "../composables/chartDrillDown"
     import ChartLegend from "./ChartLegend.vue"
     import {getDateFormat, useTheme} from "../../../utils/utils"
-    import {FilterObject} from "../../../utils/filters"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     use([BarChart, LineChart])
 
@@ -51,7 +52,7 @@
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
         short?: boolean;
         execution?: boolean;
@@ -225,7 +226,7 @@
                         data: duration,
                         label: label,
                         borderColor: cssVar("--ks-chart-duration"),
-                        smooth: true,
+                        smooth: false,
                         areaStyle: {
                             color: new graphic.LinearGradient(0, 0, 0, 1, [
                                 {
@@ -251,18 +252,34 @@
         const isCompact = props.short || props.execution
         const showAxes = !isCompact && !verticalLayout.value
 
-        const barSeries = (pd.datasets as any[])
-            .filter((ds) => ds.type !== "line")
-            .map((ds) => ({
-                type: "bar",
-                name: ds.label,
-                data: ds.data,
-                stack: "total",
-                yAxisIndex: 0,
-                itemStyle: {color: ds.backgroundColor},
-                barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
-                ...(props.short ? {barCategoryGap: "0%"} : {}),
-            }))
+        const barDatasets = (pd.datasets as any[]).filter((ds) => ds.type !== "line")
+        const radius = props.short ? 0.5 : 2
+
+        /**
+         * ECharts has no native gap for stacked segments — faked with a transparent border.
+         * Lowest non-zero segment per x gets a flat bottom to sit on the axis; rest are pills.
+         */
+        const barSeries = barDatasets.map((ds, index) => ({
+            type: "bar",
+            name: ds.label,
+            stack: "total",
+            yAxisIndex: 0,
+            data: (ds.data as number[]).map((value, x) => ({
+                value,
+                itemStyle: {
+                    borderRadius: index === barDatasets.findIndex((d) => (d.data[x] ?? 0) > 0)
+                        ? [radius, radius, 0, 0]
+                        : radius,
+                },
+            })),
+            itemStyle: {
+                color: ds.backgroundColor,
+                borderColor: "transparent",
+                borderWidth: props.short ? 0 : 2,
+            },
+            barMaxWidth: props.short ? 6 : props.execution ? 24 : 48,
+            ...(props.short ? {barCategoryGap: "0%"} : {}),
+        }))
 
         const lineSeries = (pd.datasets as any[])
             .filter((ds) => ds.type === "line")
@@ -271,7 +288,7 @@
                 name: ds.label,
                 data: ds.data,
                 yAxisIndex: yBShown.value ? 1 : 0,
-                smooth: true,
+                smooth: false,
                 showSymbol: false,
                 z: 1,
                 lineStyle: {width: props.short ? 0.5 : 1, color: ds.borderColor},
@@ -348,7 +365,7 @@
 
     const dimensionColumn = computed(() => {
         const key = (chartOptions as Record<string, any>)?.colorByColumn as string | undefined
-        return (key ? data?.columns?.[key] : undefined) as {field?: string; labelKey?: string} | undefined
+        return (key ? data?.columns?.[key] : undefined) as {field?: string; key?: string} | undefined
     })
 
     function onChartClick(params: any) {
@@ -361,12 +378,13 @@
         ])
     }
 
-    function refresh(customFilters?: FilterObject[]) {
+    function refresh(customFilters?: QueryFilter[]) {
         return generate(undefined, customFilters)
     }
 
     defineExpose({
         refresh,
+        total: computed(() => generated.value?.total ?? 0),
     })
 
     watch(() => route.params.filters, () => refresh(), {deep: true})

@@ -1,253 +1,259 @@
 <template>
-    <div class="json-node">
-        <template v-if="isBranch">
-            <button
-                ref="toggleEl"
-                type="button"
-                class="toggle"
-                :aria-expanded="expanded"
-                :aria-label="expanded ? t('collapse') : t('expand')"
-                @click="expanded = !expanded"
-            >
-                <KsIcon size="s" class="chevron" :class="{collapsed: !expanded}"><ChevronDown /></KsIcon>
-                <span v-if="nodeKey !== undefined" class="key">{{ nodeKey }}</span>
-                <span class="punct">{{ open }}</span>
-                <span v-if="!expanded" class="preview">
-                    <template v-for="(entry, i) in previewEntries" :key="i">
-                        <span v-if="!isArray" class="key">{{ entry.key }}</span><span v-if="!isArray" class="punct">: </span><span class="value" :class="entry.cls">{{ entry.display }}</span><span v-if="i < previewEntries.length - 1" class="punct">, </span>
-                    </template>
-                    <span v-if="previewMore" class="punct">{{ previewEntries.length ? ", " : "" }}+{{ previewMore }}</span>
-                    <span class="punct">&nbsp;{{ close }}</span>
-                </span>
-            </button>
-            <div v-if="expanded" class="children">
-                <KsJsonTree
-                    v-for="entry in entries"
-                    :key="entry.key"
-                    :value="entry.value"
-                    :nodeKey="entry.key"
-                    :depth="depth + 1"
-                />
-            </div>
-            <span v-if="expanded" class="punct close">{{ close }}</span>
-        </template>
+    <div class="json-tree">
+        <div
+            v-for="(row, index) in rows"
+            :key="row.path"
+            class="json-tree__row"
+            :class="{'json-tree__row--selected': row.path === selectedPath}"
+            :style="{'--depth': row.depth}"
+            @click="$emit('select', row.path, row.value)"
+        >
+            <span class="json-tree__gutter">{{ index + 1 }}</span>
 
-        <div v-else class="leaf">
-            <span v-if="nodeKey !== undefined" class="key">{{ nodeKey }}</span>
-            <span v-if="nodeKey !== undefined" class="punct">:</span>
-            <span :class="['value', valueClass]">{{ displayValue }}</span>
+            <span class="json-tree__content">
+                <button
+                    v-if="row.isExpandable"
+                    type="button"
+                    class="json-tree__caret"
+                    :aria-label="row.isExpanded ? $t('collapse') : $t('expand')"
+                    @click.stop="toggle(row.path)"
+                >
+                    <ChevronDown v-if="row.isExpanded" :size="14" />
+                    <ChevronRight v-else :size="14" />
+                </button>
+                <span v-else class="json-tree__caret-spacer" />
+
+                <span class="json-tree__key">"{{ row.label }}"</span>
+                <span class="json-tree__colon">:</span>
+
+                <span v-if="!row.isExpandable" class="json-tree__value" :class="`json-tree__value--${row.type}`">
+                    {{ row.display }}
+                </span>
+                <span v-else-if="!row.isExpanded" class="json-tree__preview">
+                    {{ row.display }}
+                </span>
+            </span>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, onMounted, onBeforeUnmount} from "vue"
+    import {ref, computed, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
-    const props = withDefaults(defineProps<{
-        value: unknown,
-        nodeKey?: string | number,
-        depth?: number,
+    const {t} = useI18n({useScope: "global"})
+
+    const props = defineProps<{
+        value: unknown;
+        basePath?: string;
+        selectedPath?: string;
         defaultExpanded?: boolean,
-    }>(), {depth: 0})
+    }>()
 
-    const {t} = useI18n()
+    defineEmits<{
+        (e: "select", path: string, value: unknown): void;
+    }>()
 
-    const expanded = ref(props.defaultExpanded ?? props.depth < 1)
+    interface TreeRow {
+        path: string;
+        depth: number;
+        label: string;
+        type: string;
+        value: unknown;
+        display: string;
+        isExpandable: boolean;
+        isExpanded: boolean;
+    }
 
-    watch(() => props.defaultExpanded, (value) => {
-        if (value !== undefined) expanded.value = value
-    })
+    function isValidVariable(key: string): boolean {
+        return /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)
+    }
 
-    const isArray = computed(() => Array.isArray(props.value))
-    const isBranch = computed(() => props.value !== null && typeof props.value === "object")
+    function formatStep(key: string): string {
+        return isValidVariable(key) ? `.${key}` : `["${key}"]`
+    }
 
-    const entries = computed(() => {
-        if (!isBranch.value) {
-            return []
-        }
-        if (isArray.value) {
-            return (props.value as unknown[]).map((value, index) => ({key: index, value}))
-        }
-        return Object.entries(props.value as Record<string, unknown>).map(([key, value]) => ({key, value}))
-    })
-
-    const open = computed(() => (isArray.value ? "[" : "{"))
-    const close = computed(() => (isArray.value ? "]" : "}"))
-
-    function shorten(value: unknown): string {
+    function valueType(value: unknown): string {
         if (value === null) return "null"
-        if (Array.isArray(value)) return "[…]"
-        if (typeof value === "object") return "{…}"
-        if (typeof value === "string") return `"${value.length > 24 ? value.slice(0, 24) + "…" : value}"`
+        if (Array.isArray(value)) return "array"
+        return typeof value
+    }
+
+    function isExpandable(value: unknown): boolean {
+        if (value === null || typeof value !== "object") return false
+        return Array.isArray(value)
+            ? value.length > 0
+            : Object.keys(value as object).length > 0
+    }
+
+    function leafDisplay(value: unknown): string {
+        if (value === null) return "null"
+        if (typeof value === "string") return `"${value}"`
         return String(value)
     }
 
-    function tokenClass(value: unknown): string {
-        if (typeof value === "string") return "is-string"
-        if (typeof value === "number") return "is-number"
-        if (value !== null && typeof value === "object") return "is-branch"
-        return "is-literal"
+    function collapsedPreview(value: unknown): string {
+        if (Array.isArray(value)) {
+            return value.length === 1
+                ? t("variable_explorer.one_item")
+                : t("variable_explorer.n_items", {count: value.length})
+        }
+        const count = Object.keys(value as object).length
+        return count === 1
+            ? t("variable_explorer.one_key")
+            : t("variable_explorer.n_keys", {count})
     }
 
-    const toggleEl = ref<HTMLElement>()
-    const availableChars = ref(48)
-    let resizeObserver: ResizeObserver | undefined
+    // Paths the user has manually toggled away from the default expansion state.
+    const expanded = ref<Set<string>>(new Set())
 
-    onMounted(() => {
-        const container = toggleEl.value?.parentElement
-        if (props.depth !== 0 || !container) {
-            return
-        }
-        const charPx = (parseFloat(getComputedStyle(toggleEl.value!).fontSize) || 12) * 0.6
-        resizeObserver = new ResizeObserver(([entry]) => {
-            availableChars.value = Math.max(12, Math.floor(entry.contentRect.width / charPx) - 8)
-        })
-        resizeObserver.observe(container)
-    })
-
-    onBeforeUnmount(() => resizeObserver?.disconnect())
-
-    const previewLimit = computed(() => {
-        if (props.depth !== 0) {
-            return 3
-        }
-        let used = 0
-        let count = 0
-        for (const entry of entries.value) {
-            const len = (isArray.value ? 0 : String(entry.key).length + 2) + shorten(entry.value).length + 2
-            if (count > 0 && used + len > availableChars.value) {
-                break
-            }
-            used += len
-            count++
-        }
-        return Math.max(1, count)
-    })
-
-    const previewEntries = computed(() =>
-        entries.value.slice(0, previewLimit.value).map(e => ({
-            key: e.key,
-            display: shorten(e.value),
-            cls: tokenClass(e.value),
-        })),
+    // Reset the toggle state whenever a brand new value is explored.
+    watch(
+        () => props.value,
+        () => {
+            expanded.value = new Set()
+        },
     )
 
-    const previewMore = computed(() => Math.max(0, entries.value.length - previewLimit.value))
+    function toggle(path: string) {
+        const next = new Set(expanded.value)
+        if (next.has(path)) {
+            next.delete(path)
+        } else {
+            next.add(path)
+        }
+        expanded.value = next
+    }
 
-    const valueClass = computed(() => {
-        const v = props.value
-        if (typeof v === "string") return "is-string"
-        if (typeof v === "number") return "is-number"
-        return "is-literal"
-    })
+    function isExpanded(path: string): boolean {
+        const defaultExpanded = props.defaultExpanded ?? true
+        return expanded.value.has(path) ? !defaultExpanded : defaultExpanded
+    }
 
-    const displayValue = computed(() => {
-        const v = props.value
-        if (v === null) return "null"
-        if (typeof v === "string") return `"${v}"`
-        return String(v)
+    function buildRows(value: unknown, path: string, depth: number, rows: TreeRow[]) {
+        const entries: [string, unknown][] = Array.isArray(value)
+            ? value.map((item, index) => [String(index), item])
+            : Object.entries(value as Record<string, unknown>)
+
+        for (const [key, child] of entries) {
+            const childPath = `${path}${formatStep(key)}`
+            const expandable = isExpandable(child)
+            const rowExpanded = expandable && isExpanded(childPath)
+
+            rows.push({
+                path: childPath,
+                depth,
+                label: key,
+                type: valueType(child),
+                value: child,
+                display: expandable ? collapsedPreview(child) : leafDisplay(child),
+                isExpandable: expandable,
+                isExpanded: rowExpanded,
+            })
+
+            if (rowExpanded) {
+                buildRows(child, childPath, depth + 1, rows)
+            }
+        }
+    }
+
+    const rows = computed<TreeRow[]>(() => {
+        const value = props.value
+        if (value === null || typeof value !== "object") {
+            return []
+        }
+        const result: TreeRow[] = []
+        buildRows(value, props.basePath ?? "", 0, result)
+        return result
     })
 </script>
 
 <style scoped lang="scss">
-    .json-node {
-        font-family: var(--ks-font-family-mono);
-        line-height: 1.7;
-    }
+.json-tree {
+    font-family: var(--ks-font-family-mono);
+    font-size: var(--ks-font-size-sm);
+    line-height: 1.6;
+    padding: var(--ks-spacing-2) 0;
 
-    .toggle {
-        background: none;
-        border: none;
-        padding: 0;
+    &__row {
+        display: flex;
+        align-items: flex-start;
         cursor: pointer;
-        color: inherit;
-        font: inherit;
-    }
-
-    .toggle {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ks-spacing-1);
-        line-height: 1;
-        max-width: 100%;
-        overflow: hidden;
-        white-space: nowrap;
-        border-radius: var(--ks-radius-xs);
 
         &:hover {
-            color: var(--ks-text-primary);
+            background-color: var(--ks-border-default);
         }
 
-        :deep(.material-design-icon) {
-            display: inline-flex;
-            align-items: center;
-            line-height: 0;
+        &--selected {
+            background-color: var(--ks-border-default);
         }
     }
 
-    .chevron {
+    &__gutter {
+        flex: 0 0 auto;
+        width: 2.5rem;
+        padding-right: var(--ks-spacing-3);
+        text-align: right;
+        color: var(--ks-text-secondary);
+        user-select: none;
+    }
+
+    &__content {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        padding-left: calc(var(--depth) * var(--ks-spacing-4));
+    }
+
+    &__caret {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 1.3em;
-        height: 1.3em;
-        transition: transform 0.15s ease;
+        width: 1rem;
+        height: 1rem;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: var(--ks-text-secondary);
+    }
 
-        :deep(svg) {
-            width: 100%;
-            height: 100%;
-            display: block;
+    &__caret-spacer {
+        display: inline-block;
+        width: 1rem;
+    }
+
+    &__key {
+        color: var(--ks-text-primary);
+    }
+
+    &__colon {
+        color: var(--ks-text-secondary);
+        margin-right: var(--ks-spacing-2);
+    }
+
+    &__preview {
+        color: var(--ks-text-secondary);
+    }
+
+    &__value {
+        word-break: break-word;
+
+        &--string {
+            color: var(--ks-text-success);
         }
 
-        &.collapsed {
-            transform: rotate(-90deg);
-        }
-    }
-
-    .children {
-        padding-left: var(--ks-spacing-3);
-        border-left: 1px solid var(--ks-border-subtle);
-        margin-left: var(--ks-spacing-2);
-    }
-
-    .leaf {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ks-spacing-1);
-        border-radius: var(--ks-radius-xs);
-        padding-inline: var(--ks-spacing-1);
-        margin-inline: calc(-1 * var(--ks-spacing-1));
-
-        &:hover {
-            background: var(--ks-bg-hover);
-        }
-    }
-
-    .key {
-        color: var(--ks-editor-property);
-    }
-
-    .punct {
-        color: var(--ks-editor-punctuation);
-    }
-
-    .preview {
-        opacity: 0.85;
-    }
-
-    .value {
-        &.is-string {
-            color: var(--ks-editor-value);
+        &--number,
+        &--boolean {
+            color: var(--ks-text-info);
         }
 
-        &.is-number, &.is-literal {
-            color: var(--ks-editor-pabble);
-        }
-
-        &.is-branch {
-            color: var(--ks-editor-punctuation);
+        &--null {
+            color: var(--ks-text-secondary);
+            font-style: italic;
         }
     }
+}
 </style>

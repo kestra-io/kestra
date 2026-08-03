@@ -1,98 +1,97 @@
 <template>
-    <Transition name="drawer">
-        <div v-if="hasButtons && activeTab" class="contextDrawer" :style="{'--drawer-width': `${drawerWidth}px`}">
-            <KsSplitter
-                class="drawerSplitter"
-                :style="{width: `${maxDrawerWidth}px`}"
-            >
-                <KsSplitterPanel class="drawerSpacerPanel" :min="0" />
+    <div v-if="hasButtons" class="contextDrawer" :class="{'is-closed': !activeTab}" :style="{'--drawer-width': `${drawerWidth}px`}">
+        <KsSplitter
+            class="drawerSplitter"
+            :style="{width: `${maxDrawerWidth}px`}"
+        >
+            <KsSplitterPanel class="drawerSpacerPanel" :min="0" />
 
-                <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH" :max="maxDrawerWidth">
-                    <div class="drawerContent">
-                        <div class="tabBar">
-                            <KsTabs
-                                class="context-tabs"
-                                :modelValue="activeTab"
-                                type="box"
-                                :beforeLeave="handleBeforeLeave"
+            <KsSplitterPanel v-model:size="drawerWidth" :min="MIN_DRAWER_WIDTH" :max="maxDrawerWidth">
+                <div class="drawerContent">
+                    <div v-if="showTabBar" class="tabBar">
+                        <KsTabs
+                            class="context-tabs"
+                            :modelValue="activeTab"
+                            type="box"
+                            :beforeLeave="handleBeforeLeave"
+                        >
+                            <KsTabPane
+                                v-for="(button, key) of visibleTabButtons"
+                                :key="key"
+                                :name="key as string"
                             >
-                                <KsTabPane
-                                    v-for="(button, key) of contextButtons"
-                                    :key="key"
-                                    :name="key as string"
-                                >
-                                    <template #label>
-                                        <span class="tab-label" :class="{'tab-label--active': key === activeTab}">
-                                            <component :is="button.icon" class="tab-icon" />
-                                            {{ button.title }}
-                                            <OpenInNew v-if="button.url" class="open-in-new" />
-                                            <span v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-                                        </span>
-                                    </template>
-                                </KsTabPane>
-                            </KsTabs>
+                                <template #label>
+                                    <span class="tab-label" :class="{'tab-label--active': key === activeTab}">
+                                        <component :is="button.icon" class="tab-icon" />
+                                        {{ button.title }}
+                                        <OpenInNew v-if="button.url" class="open-in-new" />
+                                        <span v-if="isUnread(button)" class="newsDot" />
+                                    </span>
+                                </template>
+                            </KsTabPane>
+                        </KsTabs>
 
-                            <KsIconButton class="close-btn" :ariaLabel="$t('close')" @click="setActiveTab('')">
-                                <Close />
-                            </KsIconButton>
-                        </div>
-
-                        <div class="panelContent">
-                            <KeepAlive v-if="activeTab">
-                                <component
-                                    :is="contextButtons[activeTab]?.component"
-                                    v-if="contextButtons[activeTab]?.component"
-                                    :key="activeTab"
-                                />
-                            </KeepAlive>
-                        </div>
                     </div>
-                </KsSplitterPanel>
-            </KsSplitter>
-        </div>
-    </Transition>
+
+                    <div class="panelContent">
+                        <KeepAlive v-if="activeTab">
+                            <component
+                                :is="contextButtons[activeTab]?.component"
+                                v-if="contextButtons[activeTab]?.component"
+                                :key="activeTab"
+                            />
+                        </KeepAlive>
+                    </div>
+                </div>
+            </KsSplitterPanel>
+        </KsSplitter>
+    </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, type Component, PropType} from "vue"
-    import {useStorage, useWindowSize} from "@vueuse/core"
+    import {computed, ref, watch, PropType} from "vue"
+    import {useWindowSize} from "@vueuse/core"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
-    import Close from "vue-material-design-icons/Close.vue"
 
-    import {useApiStore} from "../stores/api"
     import {useMiscStore} from "override/stores/misc"
-    import {useContextButtons} from "override/composables/contextButtons"
+    import {useContextButtons, type Button} from "override/composables/contextButtons"
 
     const props = defineProps({
         additionalButtons: {
-            type: Object as PropType<Record<string, {
-                title: string;
-                icon?: Component;
-                component?: Component;
-                url?: string;
-                hasUnreadMarker?: boolean;
-            }>>,
+            type: Object as PropType<Record<string, Button>>,
             default: () => ({}),
         },
     })
 
     const {buttons} = useContextButtons()
-    const apiStore = useApiStore()
     const miscStore = useMiscStore()
 
-    const activeTab = computed(() => miscStore.contextInfoBarOpenTab)
     const contextButtons = computed(() => ({...buttons, ...props.additionalButtons}))
     const hasButtons = computed(() => Object.keys(contextButtons.value).length > 0)
 
-    const lastNewsReadDate = useStorage<string | null>("feeds", null)
-    const hasUnread = computed(() => {
-        const feeds = apiStore.feeds
-        return (
-            lastNewsReadDate.value === null ||
-            (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
-        )
+    // `hidden: true` opts a button out of the tab strip while still letting it resolve panel content.
+    const visibleTabButtons = computed(() => Object.fromEntries(
+        Object.entries(contextButtons.value).filter(([, button]) => !button.hidden),
+    ))
+
+    // A tab hidden by the current route (e.g. the AI dock on the full-page /ai) falls back to the first
+    // visible tab, so reopening the dock there never gets stuck on a stripless hidden pane. Panel-only
+    // surfaces (the notifications bell) are exempt — they are meant to open as a stripless panel.
+    const activeTab = computed(() => {
+        const stored = miscStore.contextInfoBarOpenTab
+        const button = stored ? contextButtons.value[stored] : undefined
+        if (button?.hidden && !button.panelOnly) return Object.keys(visibleTabButtons.value)[0] ?? ""
+        return stored
     })
+
+    // Hide the strip entirely only while a panel-only surface (e.g. notifications) is active.
+    const showTabBar = computed(() => contextButtons.value[activeTab.value]?.panelOnly !== true)
+
+    // Each button supplies its own unread source; the drawer just renders the dot.
+    function isUnread(button: {hasUnreadMarker?: boolean; unread?: {readonly value: boolean}}) {
+        return button.hasUnreadMarker === true && !!button.unread?.value
+    }
 
     const MIN_DRAWER_WIDTH = 200
     const drawerWidth = ref(640)
@@ -162,22 +161,15 @@
         width: var(--drawer-width);
         flex-shrink: 0;
         overflow: hidden;
-    }
+        transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 
-    .drawer-enter-active,
-    .drawer-leave-active {
-        transition: width 0.2s ease, opacity 0.2s ease;
-    }
-
-    .drawer-enter-from,
-    .drawer-leave-to {
-        width: 0 !important;
-        opacity: 0;
+        &.is-closed {
+            width: 0;
+        }
     }
 
     @media (prefers-reduced-motion: reduce) {
-        .drawer-enter-active,
-        .drawer-leave-active {
+        .contextDrawer {
             transition: none;
         }
     }
@@ -215,14 +207,6 @@
 
         .open-in-new {
             opacity: 0.5;
-        }
-
-        .close-btn {
-            align-self: center;
-            margin-right: 0.5rem;
-            border: none;
-            color: var(--ks-text-dim);
-            flex-shrink: 0;
         }
 
         .newsDot {

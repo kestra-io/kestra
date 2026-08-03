@@ -29,18 +29,36 @@ public class AppConfigValidator {
 
     @PostConstruct
     void validate() {
-        final List<Boolean> validationResults = List.of(
-            isKestraUrlValid()
-        );
+        final List<ConfigValidationResult> results = validateConfiguration(environment);
 
-        if (validationResults.contains(false)) {
+        results.stream()
+            .filter(result -> !result.valid())
+            .forEach(result -> log.error(result.message()));
+
+        if (results.stream().anyMatch(result -> !result.valid())) {
             throw new AppConfigException("Invalid configuration");
         }
     }
 
-    private boolean isKestraUrlValid() {
+    /**
+     * Validates the application-wide configuration and returns the outcome of each check.
+     *
+     * <p>
+     * This method is side-effect free (it neither logs nor throws) so the same checks can be
+     * reused for on-demand validation.
+     *
+     * @param environment the configuration environment to validate
+     * @return the outcome of each check, never {@code null}
+     */
+    public static List<ConfigValidationResult> validateConfiguration(final Environment environment) {
+        return List.of(
+            validateKestraUrl(environment)
+        );
+    }
+
+    private static ConfigValidationResult validateKestraUrl(final Environment environment) {
         if (!environment.containsProperty(KESTRA_URL_KEY)) {
-            return true;
+            return ConfigValidationResult.valid(KESTRA_URL_KEY);
         }
         final String rawUrl = environment.getProperty(KESTRA_URL_KEY, String.class).orElseThrow();
         final URL url;
@@ -48,22 +66,20 @@ public class AppConfigValidator {
         try {
             url = URI.create(rawUrl).toURL();
         } catch (IllegalArgumentException | MalformedURLException e) {
-            log.error(
-                "Value of the '{}' configuration property must be a valid URL - e.g. https://your.company.com",
-                KESTRA_URL_KEY
+            return ConfigValidationResult.invalid(
+                KESTRA_URL_KEY,
+                "Value of the '" + KESTRA_URL_KEY + "' configuration property must be a valid URL - e.g. https://your.company.com"
             );
-            return false;
         }
 
         if (!List.of("http", "https").contains(url.getProtocol())) {
-            log.error(
-                "Value of the '{}' configuration property must contain either HTTP or HTTPS scheme - e.g. https://your.company.com",
-                KESTRA_URL_KEY
+            return ConfigValidationResult.invalid(
+                KESTRA_URL_KEY,
+                "Value of the '" + KESTRA_URL_KEY + "' configuration property must contain either HTTP or HTTPS scheme - e.g. https://your.company.com"
             );
-            return false;
         }
 
-        return true;
+        return ConfigValidationResult.valid(KESTRA_URL_KEY);
     }
 
     public static class AppConfigException extends RuntimeException {

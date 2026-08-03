@@ -181,11 +181,15 @@
         emit("update:modelValue", emitted)
     }
 
+    const buffer = ref<string>()
+
     function onInput(value: string) {
-        emit("update:modelValue", value)
+        buffer.value = value
+        emit("update:modelValue", value.trimEnd())
     }
 
-    const editorValue = computed(() => props.modelValue)
+    const editorValue = computed(() =>
+        buffer.value?.trimEnd() === (props.modelValue ?? "") ? buffer.value : props.modelValue)
 
 </script>
 

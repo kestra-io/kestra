@@ -28,10 +28,10 @@ public class McpServerService {
             McpServer.DEFAULT_ID,
             "Default MCP server for this tenant. Exposes all MCP Tool triggers as tools.",
             "Expose Kestra flows as tools. Invoke a tool only when the user's request clearly " +
-            "maps to executing one of the available flows, using the flow's inputs as the tool " +
-            "parameters. Do not invent tools or capabilities beyond the provided flows. If no " +
-            "suitable flow exists, state that the request cannot be fulfilled. Do not provide " +
-            "explanations about Kestra unless explicitly asked.",
+                "maps to executing one of the available flows, using the flow's inputs as the tool " +
+                "parameters. Do not invent tools or capabilities beyond the provided flows. If no " +
+                "suitable flow exists, state that the request cannot be fulfilled. Do not provide " +
+                "explanations about Kestra unless explicitly asked.",
             McpServer.ServerType.PRIVATE,
             McpServer.AuthType.BASIC,
             null,

@@ -8,7 +8,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueSubscriber;
@@ -249,7 +248,8 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         log.error("{} fatal error while consuming messages. Initiating application shutdown.", logPrefix, cause);
         this.markEnd();
         try {
-            KestraContext.getContext().shutdown();
+            // shutdown the context owning this subscriber.
+            this.queueService.getKestraContext().shutdown();
         } catch (Exception e) {
             log.warn("{} failed to initiate shutdown.", logPrefix, e);
         }

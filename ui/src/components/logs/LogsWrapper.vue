@@ -23,17 +23,10 @@
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
                     />
-                    <QuickFilters
-                        :showLevel="false"
-                        :intervals="quickIntervals"
-                        :timeRange="selectedTimeRange"
-                        :intervalLabel="t('filter.timeRange_log.label')"
-                        @update:time-range="onQuickFilterTimeRange"
-                    />
                 </template>
 
                 <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
-                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />
+                    <Sections ref="dashboard" :charts :dashboard="DEFAULT_DASHBOARD" showDefault class="mb-4" />
                 </template>
 
                 <template #table>
@@ -51,8 +44,8 @@
                             </div>
                             <div class="logs-toolbar__actions">
                                 <LogDisplaySettings />
-                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
-                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
+                                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
+                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
                             </div>
                         </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
@@ -72,14 +65,17 @@
                         </div>
 
                         <div v-else-if="!isLoading">
-                            <KsEmpty :description="$t('no_logs_data_description')" />
+                            <KsNoData
+                                :title="$t('no_logs_data_title')"
+                                :description="$t('no_logs_data_description')"
+                            />
                         </div>
                     </div>
                 </template>
             </KsDataTable>
         </div>
 
-        <KsDialog v-model="downloadOpen" :title="t('download logs')" width="480px" destroyOnClose>
+        <KsDialog v-model="downloadOpen" :title="t('download logs')" destroyOnClose>
             <p class="download-hint">{{ t('download_logs_description') }}</p>
             <QuickFilters
                 :levels="VALUES.LEVELS"
@@ -104,6 +100,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
     import moment from "moment"
@@ -129,7 +126,6 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
-        normalizeRouteTimeRangeFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
@@ -146,6 +142,7 @@
     import LogDisplaySettings from "./LogDisplaySettings.vue"
     import LogLevelNavigator from "./LogLevelNavigator.vue"
     import {buildValueFilterQuery} from "./logValueFilter"
+    import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -155,6 +152,7 @@
         reloadLogs?: number;
         namespace?: string | null;
         restoreurl?: boolean;
+        withCharts?: boolean;
     }>(), {
         embed: false,
         showFilters: false,
@@ -163,6 +161,7 @@
         reloadLogs: undefined,
         namespace: undefined,
         restoreurl: undefined,
+        withCharts: true,
     })
     defineEmits(["expand-subflow", "go-to-detail", "goToDetail"])
 
@@ -193,8 +192,8 @@
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false")
     const dashboardRef = useTemplateRef("dashboard")
 
-    const isFlowEdit = computed(() => route.name === "flows/update")
-    const isNamespaceEdit = computed(() => route.name === "namespaces/update")
+    const isFlowEdit = computed(() => routeFamily(route.name) === "flows/update")
+    const isNamespaceEdit = computed(() => routeFamily(route.name) === "namespaces/update")
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
@@ -232,6 +231,8 @@
         return key ? String(route.query[key] ?? "") : ""
     })
 
+    // Kind has no bespoke handling here: when no kind filter is in the URL the backend defaults to
+    // NORMAL only, and an explicit kind chip flows through `...routeFilters` like any other filter.
     const selectedTimeRange = computed(() => {
         if (route.query.timeRange) {
             return route.query.timeRange as string
@@ -247,38 +248,11 @@
 
         return rawValue as string | undefined
     })
-    const endDate = computed(() => {
-        if (route.query.endDate) {
-            return route.query.endDate
-        }
-        if (selectedTimeRange.value) {
-            return moment().toISOString(true)
-        }
-        return undefined
-    })
-    const startDate = computed(() => {
-        // we mention the last refresh date here to trick
-        // VueJs fine grained reactivity system and invalidate
-        // computed property startDate
-        if (route.query.startDate && lastRefreshDate.value) {
-            return route.query.startDate
-        }
-        if (selectedTimeRange.value) {
-            return moment().subtract(moment.duration(selectedTimeRange.value).as("milliseconds")).toISOString(true)
-        }
-
-        // the default is PT30D
-        return moment().subtract(7, "days").toISOString(true)
-    })
     const flowId = computed(() => route.params.id)
     const routeNamespace = computed(() => route.params.namespace ?? route.params.id)
     const charts = computed(() => [
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ])
-
-    const onQuickFilterTimeRange = (value: string) => {
-        router.replace({query: normalizeRouteTimeRangeFilter(route.query, value)})
-    }
 
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
@@ -291,17 +265,9 @@
             queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value
         }
 
-        // Level filter is a minimum threshold. Always normalize to a single EQUALS query.
         if (!props.filters) {
             queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value)
         }
-
-        if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
-            queryFilter["startDate"] = startDate.value
-            queryFilter["endDate"] = endDate.value
-        }
-
-        delete queryFilter["level"]
 
         return _merge(base, queryFilter)
     }
@@ -326,7 +292,10 @@
     const downloading = ref(false)
 
     const openDownload = () => {
-        downloadLevel.value = effectiveLogLevel.value?.value
+        const level = effectiveLogLevel.value
+        downloadLevel.value = level?.direction === "min" || level?.direction === "max"
+            ? level.value
+            : undefined
         downloadTimeRange.value = selectedTimeRange.value ?? undefined
         downloadOpen.value = true
     }
@@ -358,8 +327,8 @@
                 .toISOString(true)
             params.endDate = moment().toISOString(true)
         } else {
-            if (startDate.value) params.startDate = startDate.value
-            if (endDate.value) params.endDate = endDate.value
+            if (_sd) params.startDate = _sd
+            if (_ed) params.endDate = _ed
         }
         params.sort = "timestamp:desc"
 
@@ -445,7 +414,7 @@
         dataTable.value?.resetAndReload()
     })
 
-    const showStatChart = () => showChart.value
+    const showStatChart = () => props.withCharts && showChart.value
 
     const onShowChartChange = (value: boolean) => {
         showChart.value = value
@@ -487,7 +456,7 @@
         position: sticky;
         top: 0;
         z-index: 10;
-        margin: 0 var(--ks-spacing-5) var(--ks-spacing-3);
+        margin: 0 var(--ks-spacing-6) var(--ks-spacing-3);
         padding: var(--ks-spacing-2) 0;
         background: var(--ks-bg-base);
 
@@ -501,14 +470,12 @@
         &__actions {
             display: flex;
             align-items: center;
-            gap: var(--ks-spacing-2);
             margin-left: auto;
+            gap: var(--ks-spacing-2);
         }
 
-        &__btn {
+        :deep(.kel-button) {
             margin: 0;
-            padding: var(--ks-spacing-2);
-            border-radius: var(--ks-radius-base);
         }
     }
 
@@ -529,7 +496,7 @@
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             padding: 1rem;
-            margin: 0 var(--ks-spacing-5);
+            margin: 0 var(--ks-spacing-6);
             padding-top: .5rem;
             background-color: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);

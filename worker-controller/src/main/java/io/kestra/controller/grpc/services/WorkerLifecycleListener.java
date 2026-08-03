@@ -54,7 +54,7 @@ public interface WorkerLifecycleListener {
      * been updated. The {@code context} reflects the new subscription set.
      *
      * @param context the worker stream context, with its new subscriptions applied
-     * @param added   normalized queue ids the worker now serves but didn't before
+     * @param added normalized queue ids the worker now serves but didn't before
      * @param removed normalized queue ids the worker has stopped serving
      */
     default void onWorkerSubscriptionsChanged(WorkerStreamContext<?> context, Set<String> added, Set<String> removed) {

@@ -3,9 +3,8 @@ package io.kestra.core.models.tasks.retrys;
 import java.time.Duration;
 import java.time.Instant;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import dev.failsafe.RetryPolicyBuilder;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,7 +42,8 @@ public class Constant extends AbstractRetry {
     @AssertTrue(message = "'interval' must be less than 'maxDuration'")
     @JsonIgnore
     boolean isIntervalLessThanMaxDuration() {
-        if (getMaxDuration() == null || interval == null) return true;
+        if (getMaxDuration() == null || interval == null)
+            return true;
         return getMaxDuration().compareTo(interval) > 0;
     }
 }

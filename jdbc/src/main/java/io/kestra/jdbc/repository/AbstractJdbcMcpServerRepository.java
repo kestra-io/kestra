@@ -10,17 +10,16 @@ import org.jooq.impl.DSL;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.mcp.models.McpServer;
+import io.kestra.core.mcp.models.McpServerClusterEventPayload;
+import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.mcp.repositories.McpServerRepositoryInterface;
-import io.kestra.core.mcp.models.McpServerClusterEventPayload;
 import io.kestra.core.server.ClusterEvent;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import lombok.extern.slf4j.Slf4j;
-
 
 @Slf4j
 public abstract class AbstractJdbcMcpServerRepository extends AbstractJdbcCrudRepository<McpServer> implements McpServerRepositoryInterface {
@@ -39,16 +38,21 @@ public abstract class AbstractJdbcMcpServerRepository extends AbstractJdbcCrudRe
     public boolean exists(String tenantId, String id) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> DSL.using(configuration)
-                .fetchExists(jdbcRepository.getTable(),
-                    this.defaultFilter(tenantId).and(field("id", String.class).eq(id))));
+            .transactionResult(
+                configuration -> DSL.using(configuration)
+                    .fetchExists(
+                        jdbcRepository.getTable(),
+                        this.defaultFilter(tenantId).and(field("id", String.class).eq(id))
+                    )
+            );
     }
 
     @Override
     public Optional<McpServer> get(String tenantId, String id) {
         return jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 Record record = context
                     .select(VALUE_FIELD)

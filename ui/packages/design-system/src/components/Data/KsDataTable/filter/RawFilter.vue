@@ -6,40 +6,46 @@
             </KsAlert>
         </div>
 
-        <slot
-            name="rawEditor"
-            :modelValue="draft"
-            :onUpdate="(v: string) => (draft = v)"
-        >
-            <!-- Default editor: monospace textarea. Consumers can swap in Monaco via the rawEditor slot. -->
-            <textarea
-                v-model="draft"
-                class="raw-textarea"
-                spellcheck="false"
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="off"
-                :rows="rows"
-                :placeholder="$t('filter.raw_placeholder')"
-                :readonly="filter.readOnly?.value"
-            />
-        </slot>
-
-        <div class="raw-actions">
-            <KsButton
-                size="default"
-                :disabled="!isDirty || filter.readOnly?.value"
-                @click="handleApply"
+        <div class="raw-editor">
+            <slot
+                name="rawEditor"
+                :modelValue="draft"
+                :onUpdate="(v: string) => (draft = v)"
             >
-                {{ $t("filter.raw_apply") }}
-            </KsButton>
+                <input
+                    v-model="draft"
+                    type="text"
+                    class="raw-input"
+                    spellcheck="false"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    :placeholder="$t('filter.raw_placeholder')"
+                    :readonly="filter.readOnly?.value"
+                    @keydown.enter.prevent="handleApply"
+                >
+            </slot>
+
             <KsButton
                 link
-                :disabled="!isDirty"
+                size="small"
+                class="raw-action raw-apply"
+                :icon="CheckBold"
+                :disabled="!isDirty || filter.readOnly?.value"
+                :aria-label="$t('filter.raw_apply')"
+                :title="$t('filter.raw_apply')"
+                @click="handleApply"
+            />
+            <KsButton
+                link
+                size="small"
+                class="raw-action raw-clear"
+                :icon="Close"
+                :disabled="filter.readOnly?.value"
+                :aria-label="$t('filter.raw_revert')"
+                :title="$t('filter.raw_revert')"
                 @click="handleRevert"
-            >
-                {{ $t("filter.raw_revert") }}
-            </KsButton>
+            />
         </div>
     </div>
 </template>
@@ -47,11 +53,12 @@
 <script setup lang="ts">
     import {computed, inject, ref, watch} from "vue"
     import {FILTER_CONTEXT_INJECTION_KEY} from "./utils/filterInjectionKeys"
+    import {Close} from "./utils/icons"
+    import CheckBold from "vue-material-design-icons/CheckBold.vue"
 
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!
     const draft = ref(filter.rawQuery?.value ?? "")
 
-    // only update query filter text area if the user has not changed the input
     watch(() => filter.rawQuery?.value, (latest, previous) => {
         if (latest === undefined) return
         if (draft.value === (previous ?? "")) {
@@ -60,12 +67,6 @@
     })
 
     const isDirty = computed(() => draft.value !== (filter.rawQuery?.value ?? ""))
-
-    /** Rough auto-sizing: at least 4 rows, grow with content up to 16. */
-    const rows = computed(() => {
-        const n = (draft.value.match(/\n/g)?.length ?? 0) + 1
-        return Math.min(Math.max(n, 4), 16)
-    })
 
     const handleApply = () => filter.applyRawQuery(draft.value)
     const handleRevert = () => {
@@ -77,31 +78,44 @@
 .raw-filter {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ks-spacing-2);
     flex: 1;
     min-width: 0;
 }
 
 .unrenderable-banner {
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--ks-spacing-1);
 }
 
-.raw-textarea {
-    width: 100%;
-    box-sizing: border-box;
+.raw-editor {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-1);
+    height: 32px;
+    padding: 0 var(--ks-spacing-1) 0 var(--ks-spacing-3);
+    background-color: var(--ks-bg-input);
+    border: 1px solid var(--ks-border-strong);
+    border-radius: var(--ks-radius-base);
+    box-shadow: 0 1px 2px var(--ks-shadow-surface);
+
+    &:focus-within {
+        border-color: var(--ks-content-link, var(--ks-text-link));
+    }
+}
+
+.raw-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
     font-family: var(--ks-font-family-mono);
     font-size: var(--ks-font-size-xs);
-    line-height: 1.5;
-    padding: 0.5rem 0.75rem;
-    background-color: var(--ks-bg-elevated);
     color: var(--ks-text-primary);
-    border: 1px solid var(--ks-border-default);
-    border-radius: var(--ks-radius-sm);
-    resize: vertical;
 
-    &:focus {
-        outline: none;
-        border-color: var(--ks-text-link);
+    &::placeholder {
+        color: var(--ks-text-secondary);
     }
 
     &[readonly] {
@@ -110,9 +124,22 @@
     }
 }
 
-.raw-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.raw-action {
+    margin: 0 !important;
+    padding: var(--ks-spacing-1) !important;
+    flex-shrink: 0;
+    color: var(--ks-text-dim);
+
+    :deep(svg) {
+        font-size: var(--ks-font-size-base);
+    }
+}
+
+.raw-apply:not(:disabled):hover {
+    color: var(--ks-content-success, var(--ks-status-success));
+}
+
+.raw-clear:not(:disabled):hover {
+    color: var(--ks-status-error);
 }
 </style>

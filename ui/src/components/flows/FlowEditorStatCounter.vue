@@ -35,8 +35,8 @@
 
     function navigate() {
         router.push({
-            name: "flows/update",
-            params: {...route.params, tab: props.tab},
+            name: `flows/update/${props.tab}`,
+            params: {...route.params},
             query: {...route.query},
         })
     }
@@ -69,7 +69,7 @@
     }
 
     .stat-icon {
-        font-size: 1.1em;
+        font-size: var(--ks-font-size-lg);
         line-height: 0;
         flex-shrink: 0;
         color: var(--ks-icon-muted);

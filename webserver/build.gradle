@@ -1,12 +1,3 @@
-if (rootProject.name == "kestra") {
-    // mustRunAfter (not dependsOn) keeps assembleFrontend out of the check/test task graph,
-    // while still guaranteeing processResources sees the built UI files whenever shadowJar
-    // pulls assembleFrontend into the graph (e.g. executableJar, make build-docker).
-    tasks.named('processResources') {
-        mustRunAfter(':ui:assembleFrontend')
-    }
-}
-
 configurations {
     implementation.extendsFrom(micronaut)
 }
@@ -50,7 +41,7 @@ dependencies {
 
     // test
     testAnnotationProcessor project(':processor')
-    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
     testImplementation project(':storage-local')
     testImplementation project(':worker')
     testImplementation project(':indexer')
@@ -60,8 +51,8 @@ dependencies {
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')
-    testImplementation project(':jdbc').sourceSets.test.output
-    testImplementation project(':queue').sourceSets.test.output
+    testImplementation project(path: ':jdbc', configuration: 'testArtifacts')
+    testImplementation project(path: ':queue', configuration: 'testArtifacts')
     testImplementation project(':jdbc-h2')
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }

@@ -18,7 +18,6 @@
                     :currentPage="pageNumber"
                     :pageSize="pageSize"
                     :height="240"
-                    size="small"
                     tableLayout="fixed"
                     noPaginationGutter
                     noFirstColumnGutter
@@ -44,13 +43,13 @@
                 </KsDataTable>
             </section>
 
-            <KsTableEmpty v-else :title="EMPTY_TEXT" class="empty" />
+            <KsNoData v-else :title="EMPTY_TEXT" class="empty" />
         </Motion>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue"
+    import {computed, ref, watch} from "vue"
     import {useRoute} from "vue-router"
 
     import {Motion} from "motion-v"
@@ -58,17 +57,21 @@
 
     import type {Chart} from "../types.ts"
     import {isPaginationEnabled, useChartGenerator} from "../composables/useDashboards"
-    import {FilterObject} from "../../../utils/filters"
     import TableQuickFilter from "./TableQuickFilter.vue"
+    import {stateFilterForTab} from "./quickFilters"
     import Date from "./table/columns/Date.vue"
     import Duration from "./table/columns/Duration.vue"
     import Link from "./table/columns/Link.vue"
     import Namespace from "./table/columns/Namespace.vue"
+    import {useStateFilter} from "../../filter/composables/useStateFilter"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
+
+    const {navigateToStateFilter} = useStateFilter()
 
     const props = withDefaults(defineProps<{
         dashboardId?: string;
         chart: Chart;
-        filters?: FilterObject[];
+        filters?: QueryFilter[];
         showDefault?: boolean;
     }>(), {
         dashboardId: undefined,
@@ -79,6 +82,10 @@
     const route = useRoute()
 
     const containerID = `${props.chart.id}__${Math.random()}`
+
+    const hasIdColumn = computed(() =>
+        Object.values(props.chart.data?.columns ?? {}).some((c: any) => c?.field === "ID"),
+    )
 
     const resolvedComponent = (field: string) => {
         switch (field) {
@@ -104,13 +111,15 @@
         case "ID":
             return {...baseProps, execution: true}
         case "FLOW_ID":
-            return {...baseProps, flow: true}
+            return {...baseProps, flow: true, colored: !hasIdColumn.value}
         case "NAMESPACE":
             return {field: row[key]}
         case "STATE":
             return {
                 size: "small",
                 status: row[key].toString(),
+                clickable: true,
+                onClick: () => navigateToStateFilter(row[key].toString()),
             }
         case "DURATION":
             return {field: row[key], startDate: row["start_date"]}
@@ -124,7 +133,7 @@
 
     const data = ref()
     const activeTab = ref("all")
-    const stateFilter = ref<FilterObject | null>(null)
+    const stateFilter = ref<QueryFilter | null>(stateFilterForTab(props.chart, "all"))
     const pageNumber = ref(1)
     const pageSize = ref(25)
 
@@ -138,7 +147,7 @@
         data.value = await generate(pagination, undefined, append)
     }
 
-    const onQuickFilterChange = (filter: FilterObject | null, tab: string) => {
+    const onQuickFilterChange = (filter: QueryFilter | null, tab: string) => {
         stateFilter.value = filter
         activeTab.value = tab
         pageNumber.value = 1
@@ -174,7 +183,7 @@
         flex-direction: column;
         height: 100%;
     }
-    
+
     .table-motion {
         flex: 1;
         min-height: 0;

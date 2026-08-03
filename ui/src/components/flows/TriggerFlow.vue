@@ -29,12 +29,14 @@
             :showClose="true"
             :beforeClose="beforeClose"
             :appendToBody="true"
-            :width="dialogWidth"
         >
             <template #header>
                 <span v-html="t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun ref="flowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <FlowRun ref="flowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+            <template #footer>
+                <FlowRunActions :flowRun="flowRunRef" />
+            </template>
         </KsDialog>
         <KsDialog
             v-if="isSelectFlowOpen"
@@ -42,7 +44,6 @@
             destroyOnClose
             :beforeClose="beforeSelectFlowClose"
             :appendToBody="true"
-            :width="dialogWidth"
         >
             <KsForm
                 labelPosition="top"
@@ -77,10 +78,13 @@
                 </KsFormItem>
                 <KsFormItem v-if="localFlow" :label="t('inputs')">
                     <div class="w-100">
-                        <FlowRun ref="selectFlowRunRef" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
+                        <FlowRun ref="selectFlowRunRef" :embed="true" @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </KsFormItem>
             </KsForm>
+            <template #footer>
+                <FlowRunActions :flowRun="selectFlowRunRef" />
+            </template>
         </KsDialog>
     </div>
 </template>
@@ -88,7 +92,6 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../utils/toast"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
@@ -97,6 +100,7 @@
     import {usePlaygroundStore} from "../../stores/playground"
     import {useFlowStore} from "../../stores/flow"
     import FlowRun from "./FlowRun.vue"
+    import FlowRunActions from "./FlowRunActions.vue"
     import FlowWarningDialog from "./FlowWarningDialog.vue"
     import PlayOutlineIcon from "vue-material-design-icons/PlayOutline.vue"
 
@@ -133,7 +137,6 @@
     const selectFlowRunRef = ref<InstanceType<typeof FlowRun> | null>(null)
     const localFlow = ref<ExecutableFlow | undefined>(undefined)
     const localNamespace = ref<string | undefined>(undefined)
-    const isLargeScreen = useMediaQuery("(min-width: 768px)")
 
     function trackExecutionAction(action: string) {
         apiStore.posthogEvents({
@@ -239,10 +242,6 @@
         playgroundStore.enabled
             ? t("playground.run_all_tasks")
             : t("execute"),
-    )
-
-    const dialogWidth = computed(() =>
-        isLargeScreen.value ? "50%" : "90%",
     )
 
     const computedFlowId = computed(() =>

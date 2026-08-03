@@ -39,7 +39,7 @@
             <KsSkeleton :rows="3" animated />
         </div>
 
-        <KsTableEmpty
+        <KsNoData
             v-else-if="!hasAnyVisibleTrigger"
             class="triggers-empty"
             :title="$t('triggers_add_empty_title')"
@@ -133,11 +133,7 @@
 
     onMounted(async () => {
         try {
-            const [triggers] = await Promise.all([
-                pluginsStore.listTriggers(),
-                pluginsStore.fetchIcons(),
-            ])
-            allTriggers.value = triggers
+            allTriggers.value = await pluginsStore.listTriggers()
         } finally {
             loading.value = false
         }

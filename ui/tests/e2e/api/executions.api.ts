@@ -38,8 +38,13 @@ export class ExecutionsApi extends BaseApi {
         this.executionIds.push(responseJson["id"])
     }
 
+    /** Concurrent bulk variant of {@link generateExecutionViaApi} — the calls are independent. */
+    async generateExecutionsViaApi(count: number, labels: [string, string][] = []) {
+        await Promise.all(Array.from({length: count}, () => this.generateExecutionViaApi(labels)))
+    }
+
     async removeExecutionsViaApi() {
-        for (const executionId of this.executionIds) {
+        await Promise.all(this.executionIds.map(async (executionId) => {
             const params = new URLSearchParams()
             params.append("deleteLogs", "true")
             params.append("deleteMetric", "true")
@@ -55,7 +60,7 @@ export class ExecutionsApi extends BaseApi {
             if (status !== 204) {
                 throw new Error(`Deletion of execution ${executionId} failed with HTTP ${status}`)
             }
-        };
+        }))
     }
 
 }

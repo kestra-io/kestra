@@ -15,6 +15,8 @@ import io.kestra.worker.processors.internals.AbstractWorkerCallable;
 import io.kestra.worker.services.ExecutionKilledManager;
 
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 
 public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements WorkerJobProcessor<T> {
 
@@ -28,8 +30,14 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     private final AtomicReference<WorkerJob> currentWorkerJob = new AtomicReference<>();
     private final AtomicReference<AbstractWorkerCallable> currentWorkerCallable = new AtomicReference<>();
 
+    // Bound once instead of passed as `this::kill` on every process() call: `this` never changes
+    // across the many jobs a single processor instance handles, so re-capturing it as a fresh
+    // lambda per call was pure allocation churn.
+    private final Runnable killAction = this::kill;
+
     private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final AtomicBoolean killRequested = new AtomicBoolean(false);
+    private final AtomicBoolean shutdownInterrupted = new AtomicBoolean(false);
 
     public AbstractWorkerJobProcessor(String workerGroup,
         MetricRegistry metricRegistry,
@@ -49,7 +57,7 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
     @Override
     public void process(final T job) {
         if (currentWorkerJob.compareAndSet(null, job)) {
-            executionKilledManager.register(job.uid(), job, this::kill);
+            executionKilledManager.register(job.uid(), job, killAction);
             try {
                 doProcess(job);
             } finally {
@@ -76,7 +84,14 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
                 workerJobCallable.getRunContext(),
                 workerJobCallable.getType(),
                 Attributes.of(TraceUtils.ATTR_UID, workerJobCallable.getUid()),
-                () -> workerSecurityService.callInSecurityContext(workerJobCallable)
+                () ->
+                {
+                    var state = workerSecurityService.callInSecurityContext(workerJobCallable);
+                    if (state != null && state.isTerminatedInError()) {
+                        Span.current().setStatus(StatusCode.ERROR, "Task ended in state " + state.name());
+                    }
+                    return state;
+                }
             );
         } catch (Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
@@ -101,7 +116,19 @@ public abstract class AbstractWorkerJobProcessor<T extends WorkerJob> implements
         Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::kill);
     }
 
+    @Override
+    public void signalShutdownInterrupt() {
+        shutdownInterrupted.set(true);
+        // interrupt() (not kill()) so the callable still reports FAILED rather than KILLED;
+        // the shutdownInterrupted flag is what tells the processor to drop/defer the result.
+        Optional.ofNullable(currentWorkerCallable.get()).ifPresent(AbstractWorkerCallable::interrupt);
+    }
+
     protected boolean isStopped() {
         return this.stopped.get();
+    }
+
+    protected boolean isShutdownInterrupted() {
+        return this.shutdownInterrupted.get();
     }
 }

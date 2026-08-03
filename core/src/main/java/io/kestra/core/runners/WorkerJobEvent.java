@@ -9,7 +9,8 @@ import jakarta.annotation.Nullable;
  * Event wrapper for {@link WorkerJob} that implements {@link KeyedDispatchEvent}, routed
  * by the Worker Queue id used internally by the dispatch queue.
  *
- * <p>The internal routing convention is unchanged: {@code null} or empty {@code workerQueueId}
+ * <p>
+ * The internal routing convention is unchanged: {@code null} or empty {@code workerQueueId}
  * means the default queue. The user-facing
  * {@link io.kestra.core.worker.WorkerQueues#DEFAULT_ID "default"} sentinel that
  * appears on {@link io.kestra.core.worker.QueueSubscription} and
@@ -17,7 +18,7 @@ import jakarta.annotation.Nullable;
  * emitting.
  *
  * @param workerQueueId The Worker Queue id for routing. Null/empty for the default queue.
- * @param job           The actual worker job payload.
+ * @param job The actual worker job payload.
  */
 public record WorkerJobEvent(
     String workerQueueId,

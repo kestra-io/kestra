@@ -13,6 +13,7 @@
     import {useTabs} from "override/components/namespaces/useTabs"
     import {useHelpers} from "./utils/useHelpers"
     import useRouteContext from "../../composables/useRouteContext"
+    import {useActiveTab} from "../../composables/useActiveTab"
     import {useNamespacesStore} from "override/stores/namespaces"
     import TopNavBar from "../layout/TopNavBar.vue"
     import Actions from "override/components/namespaces/Actions.vue"
@@ -31,6 +32,7 @@
 
     const miscStore = useMiscStore()
     const namespacesStore = useNamespacesStore()
+    const activeTabName = useActiveTab()
 
     watch(namespace, (newID) => {
         if (newID) {
@@ -38,7 +40,7 @@
         }
     })
 
-    watch(() => route.params.tab, (newTab) => {
+    watch(activeTabName, (newTab) => {
         if (newTab === "overview" || newTab === "executions") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"]
 

@@ -19,11 +19,12 @@
                     {{ $t("pluginPage.group.plugins", {count: childSubGroups.length}) }}
                 </h5>
                 <div class="plugin-group__grid">
-                    <KsPluginCard
+                    <PluginCard
                         v-for="sub in childSubGroups"
                         :key="sub.subGroup"
                         :iconCls="sub.subGroup"
                         :icons="allIcons"
+                        :loadIcon="pluginsStore.loadIcon"
                         :title="sub.title"
                         :description="sub.description"
                         :categories="sub.categories"
@@ -39,11 +40,12 @@
                     {{ $t("pluginPage.group.tasks", {count: subElements.length}) }}
                 </h5>
                 <div class="plugin-group__grid">
-                    <KsPluginCard
+                    <PluginCard
                         v-for="el in subElements"
                         :key="el.cls"
                         :iconCls="el.cls"
                         :icons="allIcons"
+                        :loadIcon="pluginsStore.loadIcon"
                         :title="shortClassName(el.cls)"
                         :description="el.title"
                         @click="openTask(el.cls)"
@@ -56,7 +58,7 @@
                     {{ $t("pluginPage.group.blueprints", {count: groupBlueprints.length}) }}
                 </h5>
                 <div class="plugin-group__grid">
-                    <KsPluginCard
+                    <PluginCard
                         v-for="bp in groupBlueprints"
                         :key="bp.id"
                         :title="bp.title"
@@ -64,17 +66,17 @@
                         @click="openBlueprint(bp.id)"
                     >
                         <template #footer-content>
-                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" />
+                            <BlueprintIconStack :clses="bp.includedTasks ?? []" :icons="allIcons" :loadIcon="pluginsStore.loadIcon" />
                         </template>
-                    </KsPluginCard>
+                    </PluginCard>
                 </div>
             </section>
         </template>
 
-        <KsEmpty
+        <KsNoData
             v-else-if="pluginsStore.plugins"
-            :description="$t('pluginPage.notFound')"
             class="plugin-group__state"
+            :description="$t('pluginPage.notFound')"
         />
 
         <div v-else class="plugin-group__state">
@@ -88,7 +90,8 @@
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import axios from "axios"
-    import {KsPluginCard, KsEmpty, KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import {KsSkeleton, type KsBreadcrumbItem} from "@kestra-io/design-system"
+    import PluginCard from "./PluginCard.vue"
     import PluginLayout from "./PluginLayout.vue"
     import BlueprintIconStack from "./BlueprintIconStack.vue"
     import {usePluginsStore} from "../../stores/plugins"
@@ -282,6 +285,7 @@
     onMounted(() => {
         miscStore.loadConfigs()
         pluginsStore.ensurePlugins()
+        pluginsStore.fetchIcons()
         loadGroupIcons()
     })
 </script>

@@ -6,6 +6,7 @@ import {useNamespacesStore} from "override/stores/namespaces"
 import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
+import {labelComparatorLabels} from "./labelComparatorLabels"
 
 export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -52,6 +53,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange_dashboard.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")
                         return VALUES.RELATIVE_DATE
@@ -69,6 +71,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     searchable: true,
                     showComparatorSelection: true,
+                    colored: true,
                 },
                 {
                     key: "scope",
@@ -86,8 +89,18 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "labels",
                     label: t("filter.labels.label"),
                     description: t("filter.labels.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                    comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
                     valueType: "key-value",
+                    showComparatorSelection: true,
                 },
             ],
         }
@@ -129,6 +142,7 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                     description: t("filter.timeRange_dashboard.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")
                         return VALUES.RELATIVE_DATE
@@ -137,9 +151,17 @@ export const useNamespaceDashboardFilter = (): ComputedRef<FilterConfiguration> 
                 {
                     key: "labels",
                     label: t("filter.labels.label"),
-                    description: "Filter by labels",
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "text",
+                    description: t("filter.labels.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
+                    valueType: "key-value",
+                    showComparatorSelection: true,
                 },
             ],
         }
@@ -161,6 +183,7 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange_dashboard.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async () => {
                         const {VALUES} = useValues("dashboard")
                         return VALUES.RELATIVE_DATE
@@ -170,8 +193,16 @@ export const useFlowDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "labels",
                     label: t("filter.labels.label"),
                     description: t("filter.labels.description"),
-                    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "text",
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.CONTAINS,
+                        Comparators.NOT_CONTAINS,
+                        Comparators.IS_NOT_NULL,
+                        Comparators.IS_NULL,
+                    ],
+                    comparatorLabels: labelComparatorLabels(t),
+                    valueType: "key-value",
+                    showComparatorSelection: true,
                 },
             ],
         }

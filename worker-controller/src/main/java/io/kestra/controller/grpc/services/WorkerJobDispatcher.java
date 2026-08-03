@@ -36,8 +36,6 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.worker.QueueSubscription;
-import io.kestra.core.worker.WorkerQueues;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.BroadcastQueueInterface;
@@ -53,7 +51,9 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.utils.Either;
 import io.kestra.core.worker.MetadataChangePayload;
+import io.kestra.core.worker.QueueSubscription;
 import io.kestra.core.worker.WorkerBroadcastEvent;
+import io.kestra.core.worker.WorkerQueues;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -286,7 +286,8 @@ public class WorkerJobDispatcher {
         ClusterEvent.EventType.MAINTENANCE_ENTER,
         ClusterEvent.EventType.MAINTENANCE_EXIT,
         ClusterEvent.EventType.KILL_SWITCH_SYNC_REQUESTED,
-        ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED
+        ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED,
+        ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED
     );
 
     /**
@@ -296,6 +297,10 @@ public class WorkerJobDispatcher {
     private void onClusterEvent(ClusterEvent event) {
         if (event.eventType() == ClusterEvent.EventType.WORKER_GROUP_SYNC_REQUESTED) {
             onWorkerGroupSync(event.message());
+            return;
+        }
+        if (event.eventType() == ClusterEvent.EventType.WORKER_DISCONNECT_REQUESTED) {
+            evictWorker(event.message());
             return;
         }
         if (EXCLUDED_EVENT_TYPES.contains(event.eventType())) {
@@ -350,6 +355,26 @@ public class WorkerJobDispatcher {
                 );
             }
         }
+    }
+
+    /**
+     * Forcibly drops a single worker by id: unregisters it from all indices and closes its
+     * stream. Used to act on a {@link ClusterEvent.EventType#WORKER_DISCONNECT_REQUESTED} event
+     * The worker must reconnect and re-authenticate, which fails closed once the token is gone.
+     * <p>
+     * No-op if the worker is not connected to this controller.
+     *
+     * @param workerId the worker to drop
+     */
+    public void evictWorker(String workerId) {
+        WorkerStreamContext<WorkerJobResponse> context = activeStreams.get(workerId);
+        if (context == null) {
+            log.debug("Worker '{}' is not connected to this controller, nothing to evict", workerId);
+            return;
+        }
+        log.info("Evicting worker '{}': its registration token was revoked or removed", workerId);
+        unregisterWorker(context);
+        context.complete();
     }
 
     /**
@@ -482,7 +507,8 @@ public class WorkerJobDispatcher {
             metricRegistry.gauge(
                 MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE,
                 MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE_DESCRIPTION,
-                (Supplier<Integer>) () -> {
+                (Supplier<Integer>) () ->
+                {
                     Set<String> ids = workerIdsByWorkerQueue.get(workerQueueId);
                     return ids == null ? 0 : ids.size();
                 },
@@ -564,8 +590,10 @@ public class WorkerJobDispatcher {
                 // Queue, the new stream owns the registration and we must leave it alone.
                 WorkerStreamContext<WorkerJobResponse> current = activeStreams.get(workerId);
                 if (current != null && current.subscribedWorkerQueueIds().contains(workerQueueId)) {
-                    log.debug("Skipping unregister of worker [{}] from Worker Queue '{}': replaced by fresh registration",
-                        workerId, WorkerQueues.forLog(workerQueueId));
+                    log.debug(
+                        "Skipping unregister of worker [{}] from Worker Queue '{}': replaced by fresh registration",
+                        workerId, WorkerQueues.forLog(workerQueueId)
+                    );
                     continue;
                 }
 
@@ -847,7 +875,8 @@ public class WorkerJobDispatcher {
     /**
      * A worker that has reserved a slot in a specific bucket for an incoming job.
      */
-    private record ReservedSlot(WorkerStreamContext<WorkerJobResponse> context, String bucket) {}
+    private record ReservedSlot(WorkerStreamContext<WorkerJobResponse> context, String bucket) {
+    }
 
     /**
      * Dispatches a job to a worker.
@@ -885,8 +914,18 @@ public class WorkerJobDispatcher {
             return;
         }
 
-        // 1. PERSIST before sending (critical for recovery)
-        persistJobToStateStore(context, job, dispatchWorkerQueueId);
+        // 1. PERSIST before sending (critical for recovery). A transient failure (e.g. pool
+        // exhaustion) must not bubble up to the poller, which treats it as fatal and shuts down.
+        try {
+            persistJobToStateStore(context, job, dispatchWorkerQueueId);
+        } catch (Exception e) {
+            log.warn(
+                "Failed to persist running state for job {} on worker {}; re-queuing for redelivery: {}",
+                jobId, context.getWorkerId(), e.getMessage()
+            );
+            handlePersistFailure(context, job, originalEvent, dispatchWorkerQueueId, bucket);
+            return;
+        }
 
         // 2. Track in-flight locally
         context.trackInFlight(jobId, job, bucket);
@@ -951,14 +990,35 @@ public class WorkerJobDispatcher {
     }
 
     /**
+     * Handles a failure to persist the running state before dispatch. The job is not yet tracked
+     * in-flight, so the reserved permit and bucket are released directly (as in
+     * {@link #rejectOversizedJob}), then the job is re-queued for redelivery.
+     */
+    private void handlePersistFailure(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
+        WorkerJobEvent originalEvent, String dispatchWorkerQueueId, String bucket) {
+        metricRegistry.counter(
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
+            MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL_DESCRIPTION,
+            metricRegistry.workerGroupAndQueueTags(context.getWorkerGroupId(), dispatchWorkerQueueId)
+        ).increment();
+
+        context.addPermits(1);
+        context.releaseBucket(bucket);
+
+        requeue(originalEvent);
+    }
+
+    /**
      * Rejects a job whose serialized payload exceeds the worker's advertised gRPC inbound
      * limit. Releases the reserved permit and bucket and fails the job cleanly so the
      * execution terminates instead of hanging while the worker hot-loops reconnecting.
      */
     private void rejectOversizedJob(WorkerStreamContext<WorkerJobResponse> context, WorkerJob job,
         String dispatchWorkerQueueId, String bucket, int payloadSize, int workerLimit) {
-        log.error("Job {} payload ({} bytes) exceeds worker {} max inbound gRPC message size ({} bytes); failing the job instead of dispatching",
-            job.uid(), payloadSize, context.getWorkerId(), workerLimit);
+        log.error(
+            "Job {} payload ({} bytes) exceeds worker {} max inbound gRPC message size ({} bytes); failing the job instead of dispatching",
+            job.uid(), payloadSize, context.getWorkerId(), workerLimit
+        );
 
         metricRegistry.counter(
             MetricRegistry.METRIC_CONTROLLER_JOB_DISPATCH_FAILED_TOTAL,
@@ -1031,7 +1091,8 @@ public class WorkerJobDispatcher {
         for (String metricName : List.of(
             MetricRegistry.METRIC_CONTROLLER_WORKER_ACTIVE,
             MetricRegistry.METRIC_CONTROLLER_PERMITS_AVAILABLE,
-            MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT)) {
+            MetricRegistry.METRIC_CONTROLLER_JOB_INFLIGHT
+        )) {
             metricRegistry.find(metricName)
                 .tag(MetricRegistry.TAG_WORKER_QUEUE, workerQueueTag)
                 .gauges()
@@ -1281,8 +1342,7 @@ public class WorkerJobDispatcher {
     private void fireWorkerSubscriptionsChanged(
         WorkerStreamContext<WorkerJobResponse> context,
         Set<String> added,
-        Set<String> removed
-    ) {
+        Set<String> removed) {
         if (added.isEmpty() && removed.isEmpty()) {
             return;
         }

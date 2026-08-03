@@ -2,7 +2,6 @@ package io.kestra.executor.handler;
 
 import java.util.Collections;
 
-import io.micronaut.test.annotation.MockBean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.SubflowExecutionEnd;
 
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 
 import static org.mockito.ArgumentMatchers.any;

@@ -10,8 +10,8 @@
                 />
             </KsSelect>
         </div>
-        <KsRow :gutter="15" class="mb-2">
-            <KsCol :span="12" v-if="revisionLeftIndex !== undefined">
+        <div class="revision-grid mb-2">
+            <div class="revision-grid-col" v-if="revisionLeftIndex !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
                         <KsSelect v-model="revisionLeftIndex" @change="addQuery">
@@ -24,12 +24,16 @@
                             >
                                 <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <KsTag v-if="item.isDraft" size="small">
+                                        <CircleOpacity />
+                                        {{ $t('draft') }}
+                                    </KsTag>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
-                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                    v-if="canDelete && item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                 />
                             </KsOption>
                         </KsSelect>
@@ -48,8 +52,8 @@
                         <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
                     </div>
                 </div>
-            </KsCol>
-            <KsCol :span="12" v-if="revisionRightIndex !== undefined">
+            </div>
+            <div class="revision-grid-col" v-if="revisionRightIndex !== undefined">
                 <div class="revision-select-row">
                     <div class="revision-select">
                         <KsSelect v-model="revisionRightIndex" @change="addQuery">
@@ -62,12 +66,16 @@
                             >
                                 <div class="revision-label">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <KsTag v-if="item.isDraft" size="small">
+                                        <CircleOpacity />
+                                        {{ $t('draft') }}
+                                    </KsTag>
                                     <span class="revision-timestamp">{{ item.timestamp }}</span>
                                 </div>
                                 <TrashCanOutline
                                     @mousedown.stop.prevent
                                     @click.stop.prevent="onDelete(item.value)"
-                                    v-if="item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                    v-if="canDelete && item.value !== undefined && currentRevision !== revisionNumber(item.value)"
                                 />
                             </KsOption>
                         </KsSelect>
@@ -86,14 +94,15 @@
                         <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
                     </div>
                 </div>
-            </KsCol>
-        </KsRow>
+            </div>
+        </div>
 
         <KsEditor
             v-bind="editorBindings"
             class="mt-1"
             v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
             :options="{diffSideBySide: sideBySide}"
+            @editorMounted="revealHighlight"
             :modelValue="revisionRightText"
             :original="revisionLeftText"
             readOnly
@@ -105,19 +114,22 @@
             <span class="ml-2">Loading revisions...</span>
         </div>
     </div>
-    <div v-else>
-        <KsAlert class="mb-0" :closable="false">
-            {{ $t("no revisions found") }}
-        </KsAlert>
-    </div>
+    <KsNoData
+        v-else
+        :icon="History"
+        :title="$t('no revisions')"
+        :description="$t('no revisions found')"
+    />
 </template>
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import History from "vue-material-design-icons/History.vue"
     import Restore from "vue-material-design-icons/Restore.vue"
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import moment from "moment"
@@ -133,6 +145,7 @@
         revision: number;
         updated?: string;  // ISO datetime string
         source?: string;
+        draft?: boolean;
     }
 
     const {t} = useI18n()
@@ -160,8 +173,24 @@
         lang: string,
         revisions: Revision[],
         revisionSource: (revisionNumber: number) => Promise<string | undefined>,
-        editRouteQuery?: boolean
-    }>(), {editRouteQuery: true})
+        editRouteQuery?: boolean,
+        // Whether per-revision delete is available. Flows support it (default); consumers without a
+        // delete-by-revision backend (e.g. reusable inputs) pass false to hide the delete control.
+        canDelete?: boolean,
+        // Text to scroll the diff to, so a linked change is not left off screen.
+        highlight?: string
+    }>(), {editRouteQuery: true, canDelete: true})
+
+    const revealHighlight =(editor: any) => {
+        if (!props.highlight) return
+
+        const modified = editor?.getModifiedEditor?.() ?? editor
+        const lines: string[] | undefined = modified?.getModel?.()?.getLinesContent?.()
+        if (!lines) return
+
+        const index = lines.findIndex(line => line.includes(props.highlight!))
+        if (index >= 0) modified.revealLineNearTop(index + 1)
+    }
 
     const sortedRevisions = computed(() => {
         return props.revisions.toSorted((a, b) => a.revision - b.revision)
@@ -250,13 +279,14 @@
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
-            .map(({revision, updated}) => {
+            .map(({revision, updated, draft}) => {
                 const isCurrent = currentRevisionWithSource.value.revision === revision
                 return {
                     value: revisionIndex(revision.toString()),
                     revision: revision,
                     timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
+                    isDraft: draft === true,
                     text: formatRevisionText(revision),
                 }
             })
@@ -366,6 +396,16 @@
         padding-bottom: 1rem;
     }
 
+    .revision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-right: var(--ks-spacing-6);
+    }
+
+    .revision-grid-col {
+        min-width: 0;
+    }
+
     .revision-select-row {
         display: flex;
         align-items: center;
@@ -388,9 +428,10 @@
     }
 
     .revision-crud-info {
-        flex-shrink: 0;
-        white-space: nowrap;
+        width: calc(100% - var(--ks-spacing-4));
+        margin-right: var(--ks-spacing-4);
     }
+
 
     .revision-option {
         min-width: 350px;
@@ -408,20 +449,14 @@
         font-weight: 500;
     }
 
-    .revision-timestamp {
-        color: #888;
-        font-size: 0.85em;
-    }
-
     .display-select {
         width: 10%;
     }
 
     .revision-timestamp {
-        color: #888;
-        font-size: 0.85em;
+        color: var(--ks-text-muted);
+        font-size: var(--ks-font-size-sm);
         text-align: right;
         flex-shrink: 0;
     }
-
 </style>

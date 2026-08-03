@@ -1,74 +1,83 @@
 <template>
     <div class="variable-explorer">
         <KsSplitter :layout="isMobile ? 'vertical' : 'horizontal'">
-            <!-- Left: searchable list of context variables grouped by source -->
-            <KsSplitterPanel v-model:size="leftWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel">
-                <SidebarList
-                    :sections="sections"
-                    :selectedExpression="selectedBase"
-                    @select="selectItem"
-                />
-            </KsSplitterPanel>
-
-            <!-- Center: tree / raw JSON of the selected value -->
-            <KsSplitterPanel class="variable-explorer__panel">
-                <div class="viewer">
-                    <div class="viewer__header">
-                        <KsSegmented
-                            v-if="isExpandableValue && !fileSelectedOutput" 
-                            v-model="viewMode"
-                            :options="viewModes"
-                            size="small"
+            <!-- Left + Center: searchable list and tree/raw viewer as a single unified block -->
+            <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--main">
+                <KsSplitter layout="horizontal" class="variable-explorer__inner-splitter">
+                    <!-- Left: searchable list of context variables grouped by source -->
+                    <KsSplitterPanel v-model:size="leftWidth" :min="'25%'" :max="'60%'" class="variable-explorer__panel variable-explorer__panel--sidebar">
+                        <SidebarList
+                            :sections="sections"
+                            :selectedExpression="selectedBase"
+                            @select="selectItem"
                         />
-                        <span v-else-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
-                        <KsIconButton
-                            v-if="selectedValue !== undefined && !fileSelectedOutput"
-                            :aria-label="$t('copy')"
-                            @click="copyValue"
-                        >
-                            <ContentCopy :size="16" />
-                        </KsIconButton>
-                    </div>
-                    
-                    <template v-if="selectedValue === undefined">
-                        <KsEmpty :description="$t('variable_explorer.select_prompt')" />
-                    </template>
+                    </KsSplitterPanel>
 
-                    <KsEditor
-                        v-else-if="viewMode === 'raw' && isExpandableValue"
-                        v-bind="editorBindings"
-                        :readOnly="true"
-                        :inline="true"
-                        :navbar="false"
-                        :options="{fullHeight: true}"
-                        :modelValue="rawValue"
-                        lang="json"
-                    />
+                    <!-- Center: tree / raw JSON of the selected value -->
+                    <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--viewer">
+                        <div class="viewer" :class="{'viewer--fill': isRawEditor}">
+                            <div class="viewer__header">
+                                <KsSegmented
+                                    v-if="isExpandableValue && !fileSelectedOutput"
+                                    v-model="viewMode"
+                                    :options="viewModes"
+                                    size="small"
+                                />
+                                <span v-else-if="selectedBase">{{ selectedBase.split('.').join(' > ') }}</span>
+                                <KsIconButton
+                                    v-if="selectedValue !== undefined && !fileSelectedOutput"
+                                    :aria-label="$t('copy')"
+                                    @click="copyValue"
+                                >
+                                    <ContentCopy :size="16" />
+                                </KsIconButton>
+                            </div>
 
-                    <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
-                        <FilePreview
-                            :key="fileSelectedOutput"
-                            :path="fileSelectedOutput"
-                            :executionId="execution.id"
-                        />
-                    </div>
+                            <template v-if="selectedValue === undefined">
+                                <KsNoData
+                                    :title="$t('variable_explorer.select_prompt')"
+                                    :description="$t('variable_explorer.select_hint')"
+                                />
+                            </template>
 
-                    <VariableTreeView
-                        v-else-if="isExpandableValue"
-                        :value="selectedValue"
-                        :basePath="selectedBase"
-                        :selectedPath="expressionPath"
-                        @select="onSelectPath"
-                    />
+                            <KsEditor
+                                v-else-if="isRawEditor"
+                                v-bind="editorBindings"
+                                :readOnly="true"
+                                :inline="true"
+                                :navbar="false"
+                                :modelValue="rawValue"
+                                lang="json"
+                            />
 
-                    <div v-else class="viewer__scalar">
-                        <code>{{ rawValue }}</code>
-                    </div>
-                </div>
+                            <div class="file-preview" v-else-if="fileSelectedOutput && execution?.id">
+                                <FilePreview
+                                    :key="fileSelectedOutput"
+                                    :path="fileSelectedOutput"
+                                    :executionId="execution.id"
+                                />
+                            </div>
+
+                            <KsJsonTree
+                                v-else-if="isExpandableValue"
+                                :value="selectedValue"
+                                :basePath="selectedBase"
+                                :selectedPath="expressionPath"
+                                :previewFormatter="treePreviewFormatter"
+                                defaultExpanded
+                                @select="onSelectPath"
+                            />
+
+                            <div v-else class="viewer__scalar">
+                                <code>{{ rawValue }}</code>
+                            </div>
+                        </div>
+                    </KsSplitterPanel>
+                </KsSplitter>
             </KsSplitterPanel>
 
             <!-- Right: evaluate a Pebble expression against the live execution -->
-            <KsSplitterPanel v-if="!fileSelectedOutput" v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel">
+            <KsSplitterPanel v-model:size="rightWidth" :min="'20%'" :max="'40%'" class="variable-explorer__panel variable-explorer__panel--debug">
                 <div class="debug">
                     <ExpressionDebugger
                         :execution="execution"
@@ -84,14 +93,15 @@
     import {ref, computed, watch} from "vue"
     import {useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {
         KsSplitter,
         KsSplitterPanel,
-        KsEmpty,
         KsSegmented,
         KsIconButton,
         KsEditor,
+        KsJsonTree,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
@@ -101,12 +111,12 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
-    import VariableTreeView from "./VariableTreeView.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const editorBindings = useEditorBindings()
 
     const executionsStore = useExecutionsStore()
@@ -143,6 +153,18 @@
         return String(value)
     }
 
+    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
+        if (context.kind === "array") {
+            return context.count === 1
+                ? t("variable_explorer.one_item")
+                : t("variable_explorer.n_items", {count: context.count})
+        }
+
+        return context.count === 1
+            ? t("variable_explorer.one_key")
+            : t("variable_explorer.n_keys", {count: context.count})
+    }
+
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
         if (!record) return []
         return Object.entries(record).map(([label, value]) => ({
@@ -175,11 +197,11 @@
             }, {
                 validateStatus: (s: number) => s === 200 || s === 404,
             })
-            
+
             tasksWithOutputs.value = data
                 .map((task) => task.taskRunId)
                 .filter((taskRunId) => taskRunId !== undefined)
-            
+
         },
         {immediate: true},
     )
@@ -195,7 +217,7 @@
             validateStatus: (s: number) => s === 200 || s === 404,
         })
 
-        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}} 
+        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}}
     }
 
     function isOutputTaskAFile(item: any): item is { uri: string } {
@@ -229,38 +251,69 @@
         return [
             {key: "variables", label: t("variables"), items: itemsFromRecord(exec?.variables, "vars")},
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
-            {key: "inputs", label: t("inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
+            {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
+            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
         ]
     })
 
     /* ------------------------------- Selection ------------------------------- */
 
+    /** `?expression=trigger.body` seeds the debugger with that expression. */
+    function seededExpression() {
+        const seed = route.query.expression?.toString()
+        return seed ? `{{ ${seed} }}` : ""
+    }
+
+    /** `?select=trigger.variables` opens that item in the viewer, once, as soon as it exists. */
+    let selectionApplied = false
+
+    function applySeededSelection(available: ExplorerSection[]) {
+        const target = route.query.select?.toString()
+        if (selectionApplied || !target) {
+            return
+        }
+        const item = available.flatMap((section) => section.items)
+            .find((candidate) => candidate.expression === target)
+        if (!item) {
+            return
+        }
+        selectionApplied = true
+        void selectItem(item).then(() => {
+            // selectItem rewrites the expression, so re-apply the link's own.
+            const seed = seededExpression()
+            if (seed) {
+                expression.value = seed
+            }
+        })
+    }
+
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const expressionPath = ref<string>("")
-    // Suggested expression handed to the debugger; follows the current selection.
-    const expression = ref<string>("")
+    const previewedValue = ref<unknown>(undefined)
+    const expression = ref<string>(seededExpression())
 
     const isExpandableValue = computed(
         () => selectedValue.value !== null && typeof selectedValue.value === "object",
     )
 
     const fileSelectedOutput = computed(() => {
+        const value = previewedValue.value
+
         // if an input file is selected, show the contents of the file
-        if(typeof selectedValue.value === "string" && Utils.isFile(selectedValue.value)){
-            return selectedValue.value
+        if(typeof value === "string" && Utils.isFile(value)){
+            return value
         }
-        if (!isExpandableValue.value) return undefined
+        if (value === null || typeof value !== "object") return undefined
         try {
-            const fileMetadata = selectedValue.value as {uri?: string}
+            const fileMetadata = value as {uri?: string}
             if (Utils.isFile(fileMetadata.uri)) {
                 return fileMetadata.uri
             }
         } catch {
             // If the value is not an object or doesn't have a `uri` field, just ignore it.
-        }   
+        }
         return undefined
     })
 
@@ -279,28 +332,35 @@
         }
         selectedBase.value = item.expression
         expressionPath.value = item.expression
+        previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
         // it needs the `execution.` prefix to be debuggable.
-        const baseExpressionPath = sections.value.find((section) => 
+        const baseExpressionPath = sections.value.find((section) =>
             section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
-            ? `execution.${item.expression}` 
+            ? `execution.${item.expression}`
             : item.expression
 
         // if there is only one item in the tree, select it by default to save users one click
         // specially useful for files
         if(selectedValue.value && typeof selectedValue.value === "object" && Object.keys(selectedValue.value).length === 1) {
             const onlyKey = Object.keys(selectedValue.value)[0]
-            const fullExpressionPath = `${baseExpressionPath}${formatStep(onlyKey)}`
-            expression.value = `{{ ${fullExpressionPath} }}`
+            const treePath = `${item.expression}${formatStep(onlyKey)}`
+            const debugPath = `${baseExpressionPath}${formatStep(onlyKey)}`
+            expressionPath.value = treePath
+            previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
+            expression.value = `{{ ${debugPath} }}`
         }else {
             expression.value = `{{ ${baseExpressionPath} }}`
         }
     }
 
-    function onSelectPath(path: string) {
+    function onSelectPath(path: string, value: unknown) {
         expressionPath.value = path
         expression.value = `{{ ${path} }}`
+        previewedValue.value = value
     }
+
+    watch(sections, applySeededSelection, {immediate: true})
 
     /* --------------------------------- Viewer -------------------------------- */
 
@@ -309,6 +369,8 @@
         {label: t("variable_explorer.tree"), value: "tree"},
         {label: t("variable_explorer.raw_json"), value: "raw"},
     ])
+
+    const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
     function copyValue() {
         navigator.clipboard?.writeText(rawValue.value)
@@ -334,6 +396,20 @@
         min-height: 0;
         overflow: hidden;
     }
+
+    &__panel--main {
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-spacing-2);
+        overflow: hidden;
+    }
+
+    &__panel--sidebar {
+        background-color: var(--ks-bg-base);
+    }
+
+    &__panel--debug {
+        border-left: 1px solid var(--ks-border-default);
+    }
 }
 
 :deep(.kel-splitter),
@@ -342,12 +418,15 @@
     min-height: 0;
 }
 
+.variable-explorer__inner-splitter {
+    width: 100%;
+}
+
 .viewer {
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
-    min-height: 0;
+    min-height: 100%;
     background-color: var(--ks-bg-surface);
 
     &__header {
@@ -359,22 +438,21 @@
         border-bottom: 1px solid var(--ks-border-default);
     }
 
-    &__body {
-        flex: 1 1 0;
-        min-height: 0;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-    }
-
     &__scalar {
         font-family: var(--ks-font-family-mono);
         font-size: var(--ks-font-size-sm);
         word-break: break-word;
-        padding: .5rem 1rem;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
     }
 
-    .file-preview{
-        padding: 1rem;
+    .file-preview {
+        padding: var(--ks-spacing-4);
     }
+}
+
+.viewer--fill {
+    height: 100%;
+    min-height: 0;
 }
 
 .debug {

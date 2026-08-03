@@ -16,13 +16,10 @@
 
         <div class="list">
             <div
-                v-for="key in configuration.keys"
+                v-for="key in groupableKeys"
                 :key="key.key"
                 class="item"
-                :draggable="true"
                 @click="addFilterForKey(key)"
-                @dragstart="(e) => onFieldDragStart(e, key.key)"
-                @dragend="$emit('drag-end-field')"
             >
                 <div class="info">
                     <span class="label">{{ key.label }}</span>
@@ -39,6 +36,17 @@
             </div>
         </div>
 
+        <div class="advanced" @click="$emit('open-advanced')">
+            <span class="label">{{ $t("filter.add_advanced_filter") }}</span>
+            <KsButton
+                link
+                size="default"
+                :icon="Plus"
+                class="advanced-add"
+                @click.stop="$emit('open-advanced')"
+            />
+        </div>
+
         <div class="footer">
             <small>{{ $t("filter.filters_added", {selected: selectedCount, total: totalCount}) }}</small>
         </div>
@@ -49,11 +57,11 @@
     import {computed} from "vue"
     import {Close, Plus} from "../utils/icons"
     import {
-        COMPARATOR_LABELS,
         type FilterConfiguration,
         type FilterKeyConfig,
         type AppliedFilter,
     } from "../utils/filterTypes"
+    import {buildNewFilter} from "../utils/filterChipFactory"
 
     const props = defineProps<{
         configuration: FilterConfiguration;
@@ -64,77 +72,21 @@
         close: [];
         "add-filter": [filter: AppliedFilter];
         "remove-filter": [id: string];
-        "drag-end-field": [];
+        "open-advanced": [];
     }>()
 
-    const FIELD_DRAG_MIME = "application/x-kestra-filter-entity"
-
-    /**
-     * Build a transient DOM node styled to look like an empty FilterChip so the browser's
-     * drag preview matches what's actually being created on drop. The node lives off-screen
-     * for one frame so the browser can snapshot it, then we tear it down on the next tick.
-     */
-    const buildDragPreview = (label: string): HTMLElement => {
-        const preview = document.createElement("div")
-        preview.style.cssText = [
-            "display: inline-flex",
-            "align-items: center",
-            "gap: 6px",
-            "background-color: var(--ks-btn-secondary-bg-default)",
-            "border: 1px solid var(--ks-border-default)",
-            "padding: 3px 12px",
-            "border-radius: 4px",
-            "min-height: 32px",
-            "max-height: 32px",
-            "font-family: var(--ks-font-family-sans, inherit)",
-            "font-size: var(--ks-font-size-xs)",
-            "color: var(--ks-text-primary)",
-            "box-shadow: 0 1px 2px var(--ks-shadow-surface)",
-            "position: absolute",
-            "top: -1000px",
-            "left: -1000px",
-            "pointer-events: none",
-            "white-space: nowrap",
-        ].join("; ")
-        const keySpan = document.createElement("span")
-        keySpan.textContent = label
-        preview.append(keySpan)
-        document.body.appendChild(preview)
-        return preview
-    }
-
-    const onFieldDragStart = (event: DragEvent, keyName: string) => {
-        if (!event.dataTransfer) return
-        event.dataTransfer.effectAllowed = "copy"
-        event.dataTransfer.setData(FIELD_DRAG_MIME, `field:${keyName}`)
-        event.dataTransfer.setData("text/plain", keyName)
-
-        const keyConfig = props.configuration.keys.find((k) => k.key === keyName)
-        const preview = buildDragPreview(keyConfig?.label ?? keyName)
-        // Offset the cursor toward the chip's left edge so the preview sits naturally under the pointer.
-        event.dataTransfer.setDragImage(preview, 12, 16)
-        // Browsers snapshot the element synchronously at dragstart; remove it after the current task.
-        setTimeout(() => preview.remove(), 0)
-    }
+    const groupableKeys = computed(() =>
+        props.configuration.keys.filter((key) => key.groupable !== false),
+    )
 
     const selectedCount = computed(() =>
         new Set(props.appliedFilters.map(f => f.key)).size,
     )
-    const totalCount = computed(() => props.configuration.keys.length)
+    const totalCount = computed(() => groupableKeys.value.length)
 
     const addFilterForKey = (key: FilterKeyConfig) => {
-        const comparator = key.comparators?.[0]
-        if (!comparator) return
-        const newFilter: AppliedFilter = {
-            id: `${key.key}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-            key: key.key,
-            keyLabel: key.label,
-            comparator,
-            comparatorLabel: COMPARATOR_LABELS[comparator],
-            value: [],
-            valueLabel: "",
-        }
-        emits("add-filter", newFilter)
+        const newFilter = buildNewFilter(key)
+        if (newFilter) emits("add-filter", newFilter)
     }
 
 </script>
@@ -145,7 +97,7 @@
     max-height: 500px;
     display: flex;
     flex-direction: column;
-    border-radius: 8px;
+    border-radius: var(--ks-radius-lg);
 
     small {
         font-size: var(--ks-font-size-xs);
@@ -157,7 +109,7 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        padding: 0.75rem 1rem 0.5rem;
+        padding: var(--ks-spacing-3) var(--ks-spacing-4) var(--ks-spacing-2);
         background-color: var(--ks-bg-active);
         border-bottom: 1px solid var(--ks-border-default);
         flex-shrink: 0;
@@ -200,7 +152,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 1rem;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
         cursor: pointer;
         transition: all 0.2s ease;
         border-bottom: 1px solid var(--ks-border-default);
@@ -226,15 +178,42 @@
         }
     }
 
+    .advanced {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
+        cursor: pointer;
+        border-top: 1px solid var(--ks-border-default);
+        background-color: var(--ks-bg-active);
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background-color: var(--ks-bg-hover-elevated);
+        }
+
+        .label {
+            font-size: var(--ks-font-size-sm);
+            font-weight: 600;
+            color: var(--ks-content-link, var(--ks-text-link));
+        }
+    }
+
     .footer {
         border-top: 1px solid var(--ks-border-default);
         flex-shrink: 0;
         position: sticky;
         bottom: 0;
         z-index: 1;
-        padding: 0.5rem 1rem;
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
         text-align: center;
     }
+}
+
+:deep(.kel-button.advanced-add) {
+    color: var(--ks-text-link);
+    font-size: var(--ks-font-size-lg);
+    pointer-events: auto;
 }
 
 :deep(.kel-button.unselected) {

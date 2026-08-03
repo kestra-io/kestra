@@ -58,7 +58,7 @@
         inheritAttrs: false,
     })
 
-    const modelValue = defineModel<string | Record<string, any>>()
+    const modelValue = defineModel<string>()
 
     const pluginsStore = usePluginsStore()
     const playgroundStore = usePlaygroundStore()
@@ -77,19 +77,12 @@
 
     const isTask = computed(() => ["task", "tasks"].includes(parentPath.split(".").pop() ?? ""))
 
-    const isPluginDefaults = computed(() => {
-        return parentPath === "pluginDefaults" || /^pluginDefaults\[\d+\]$/.test(parentPath)
-    })
-
     const isPlugin = computed(() => {
         return parentPath !== "inputs"
     })
 
     const schemaAtBlockPath = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value))
     const isTaskDefinitionBasedOnType = computed(() => {
-        if(isPluginDefaults.value){
-            return true
-        }
         const firstAnyOf = Array.isArray(schemaAtBlockPath.value?.anyOf) ? schemaAtBlockPath.value?.anyOf[0] : undefined
         if (!firstAnyOf) return false
         if(firstAnyOf.properties){
@@ -134,16 +127,6 @@
             delete updatedProperties["type"]
         }
 
-        if(isPluginDefaults.value){
-            updatedProperties["id"] = undefined
-            updatedProperties["forced"] = {
-                type: "boolean",
-                $required: true,
-            }
-
-            return updatedProperties
-        }
-
         if(!updatedProperties?.id && (parentPath.endsWith("task")
             || parentPath.endsWith("tasks")
             || parentPath.endsWith("triggers"))){
@@ -157,20 +140,7 @@
     })
 
     function setup() {
-        let parsed: PartialNoCodeElement
-        if (typeof modelValue.value === "string") {
-            parsed = YAML_UTILS.parse<PartialNoCodeElement>(modelValue.value) ?? {}
-        } else {
-            parsed = (modelValue.value ?? {}) as PartialNoCodeElement
-        }
-
-        if(isPluginDefaults.value){
-            const item = Array.isArray(parsed) ? parsed[0] : parsed
-            const {forced, type, values} = item as any
-            taskModel.value = {...values, forced, type}
-        } else {
-            taskModel.value = parsed
-        }
+        taskModel.value = YAML_UTILS.parse<PartialNoCodeElement>(modelValue.value) ?? {}
         selectedTaskType.value = taskModel.value?.type
     }
 
@@ -371,10 +341,13 @@
 
     provide(DATA_TYPES_MAP_INJECTION_KEY, dataTypesMap)
 
+    const miscStore = useMiscStore()
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0)
+
     watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
             if(isPlugin.value){
-                pluginsStore.updateDocumentation(taskModel.value as Parameters<typeof pluginsStore.updateDocumentation>[0])
+                pluginsStore.updateDocumentation({cls: task, version: taskModel.value?.version, hash: hash.value})
             }
         }
     }, {immediate: true})
@@ -386,29 +359,8 @@
                 [fieldName]: val,
             }
         }
-        if (isPluginDefaults.value) {
-            const {
-                forced,
-                type,
-                id: _,
-                ...rest
-            } = (val ?? {}) as any
 
-            if(Object.keys(rest).length){
-                val = {
-                    type,
-                    forced,
-                    values: rest,
-                }
-            }
-        }
-
-        const cleanedValue = removeNullAndUndefined(toRaw(val))
-        if (typeof modelValue.value === "string") {
-            modelValue.value = YAML_UTILS.stringify(cleanedValue)
-        } else {
-            modelValue.value = cleanedValue
-        }
+        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)))
     }
 
     function onTaskTypeSelect() {
@@ -418,9 +370,6 @@
 
         onTaskInput(value)
     }
-
-    const miscStore = useMiscStore()
-    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0)
 
     const onTaskEditorClick = inject(ON_TASK_EDITOR_CLICK_INJECTION_KEY, (elt?: PartialNoCodeElement) => {
         if(isPlugin.value && elt?.type){

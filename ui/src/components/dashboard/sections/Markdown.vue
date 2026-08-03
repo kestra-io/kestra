@@ -3,35 +3,45 @@
         <KsMarkdown :content="data" />
     </section>
 
-    <KsEmpty v-else :description="EMPTY_TEXT" />
+    <KsNoData
+        v-else-if="isFlowDescription"
+        :icon="FileDocumentOutline"
+        :title="$t('dashboards.no_description')"
+        :description="$t('dashboards.no_description_hint')"
+    />
+
+    <KsNoData v-else />
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref} from "vue"
+    import {PropType, watch, ref, computed} from "vue"
 
     import type {Chart} from "../composables/useDashboards"
     import {getPropertyValue, useChartGenerator} from "../composables/useDashboards"
 
     import {KsMarkdown} from "@kestra-io/design-system"
-    import {FilterObject} from "../../../utils/filters"
+    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
 
     const props = defineProps({
         dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
+        filters: {type: Array as PropType<QueryFilter[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     })
 
     const data = ref()
 
     import {useRoute} from "vue-router"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const route = useRoute()
-    const {EMPTY_TEXT, generate} = useChartGenerator(props.dashboardId, props, false)
+    const {generate} = useChartGenerator(props.dashboardId, props, false)
+
+    const isFlowDescription = computed(() => props.chart.source?.type === "FlowDescription")
 
     const getData = async () => {
-        if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(), "description") ?? EMPTY_TEXT
-        else data.value = props.chart.content ?? props.chart.source?.content
+        if (isFlowDescription.value) data.value = getPropertyValue(await generate(), "description") || null
+        else data.value = props.chart.source?.content
     }
 
 

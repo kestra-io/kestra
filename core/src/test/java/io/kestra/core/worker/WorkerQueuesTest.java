@@ -28,6 +28,14 @@ class WorkerQueuesTest {
     }
 
     @Test
+    void shouldFormatAsDefaultPlaceholderWhenIdIsNullOrEmptyDispatchKey() {
+        // The dispatch-side routing key represents the default queue as the empty string
+        // (see QueueSubscription#normalizedWorkerQueueId), so forLog must render it as "default".
+        assertThat(WorkerQueues.forLog((String) null)).isEqualTo("default");
+        assertThat(WorkerQueues.forLog("")).isEqualTo("default");
+    }
+
+    @Test
     void shouldFormatAsIdWhenNamed() {
         assertThat(WorkerQueues.forLog("my-queue")).isEqualTo("my-queue");
     }

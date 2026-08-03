@@ -45,6 +45,7 @@ export const useGanttExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     },
                     showComparatorSelection: true,
                     searchable: true,
+                    colored: true,
                 },
                 {
                     key: "task",

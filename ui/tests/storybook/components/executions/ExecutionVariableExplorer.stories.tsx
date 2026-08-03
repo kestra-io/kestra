@@ -8,9 +8,9 @@ import ExecutionVariableExplorer from "../../../../src/components/executions/out
 /**
  * The explorer reads everything but task outputs straight from the active
  * execution in the executions store: `variables` → Variables, `trigger` →
- * Triggers, `inputs` → Inputs, `outputs` → Flow outputs. Task outputs are
- * fetched lazily from the backend (`/outputs/{id}`) and therefore only appear
- * against a live API — these stories exercise the store-sourced sections.
+ * Triggers, `inputs` → Flow Inputs. Task outputs are fetched lazily from the
+ * backend (`/outputs/{id}`) and therefore only appear against a live API —
+ * these stories exercise the store-sourced sections.
  */
 const FAKE_EXECUTION = {
     id: "test-exec-id",
@@ -36,10 +36,6 @@ const FAKE_EXECUTION = {
     inputs: {
         customerId: "cust-42",
         sendCopy: true,
-    },
-    outputs: {
-        notifiedCount: 128,
-        report: "kestra:///company/team/report.csv",
     },
 };
 

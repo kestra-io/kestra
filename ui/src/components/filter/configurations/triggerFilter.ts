@@ -7,6 +7,7 @@ import {useAuthStore} from "override/stores/auth"
 import {useValues} from "../composables/useValues"
 import {useI18n} from "vue-i18n"
 import {useRoute} from "vue-router"
+import {routeFamily} from "../../../utils/routeFamily"
 
 export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n()
@@ -19,7 +20,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
             title: t("filter.titles.trigger_filters"),
             searchPlaceholder: t("filter.search_placeholders.search_triggers"),
             keys: [
-                ...(route.name !== "namespaces/update" ? [
+                ...(routeFamily(route.name) !== "namespaces/update" ? [
                     {
                         key: "namespace",
                         label: t("filter.namespace.label"),
@@ -52,7 +53,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         searchable: true,
                     },
                 ] : []) as any,
-                ...(route.name !== "flows/update" ? [{
+                ...(routeFamily(route.name) !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),
                     description: t("filter.flowId.description"),
@@ -71,6 +72,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                     description: t("filter.timeRange_trigger.description"),
                     comparators: [Comparators.EQUALS],
                     valueType: "select",
+                    groupable: false,
                     valueProvider: async (meta?: FilterMeta) => {
                         return meta?.dateFilter === "LAST_TRIGGERED_DATE"
                             ? VALUES.RELATIVE_DATE

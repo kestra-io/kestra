@@ -1,5 +1,6 @@
 package io.kestra.core.models.dashboards.filters;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -25,6 +26,7 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = IsTrue.class, name = "IS_TRUE"),
         @JsonSubTypes.Type(value = LessThan.class, name = "LESS_THAN"),
         @JsonSubTypes.Type(value = LessThanOrEqualTo.class, name = "LESS_THAN_OR_EQUAL_TO"),
+        @JsonSubTypes.Type(value = NotContains.class, name = "NOT_CONTAINS"),
         @JsonSubTypes.Type(value = NotEqualTo.class, name = "NOT_EQUAL_TO"),
         @JsonSubTypes.Type(value = NotIn.class, name = "NOT_IN"),
         @JsonSubTypes.Type(value = Or.class, name = "OR"),
@@ -41,7 +43,9 @@ public abstract class AbstractFilter<F extends Enum<F>> {
     @JsonProperty(value = "field", required = true)
     @Valid
     private F field;
-    private String labelKey;
+    // `labelKey` is the legacy name (Executions LABELS); kept as a read alias for backward compatibility.
+    @JsonAlias("labelKey")
+    private String key;
 
     abstract public FilterType getType();
 
@@ -70,6 +74,7 @@ public abstract class AbstractFilter<F extends Enum<F>> {
         IS_TRUE,
         LESS_THAN,
         LESS_THAN_OR_EQUAL_TO,
+        NOT_CONTAINS,
         NOT_EQUAL_TO,
         NOT_IN,
         OR,

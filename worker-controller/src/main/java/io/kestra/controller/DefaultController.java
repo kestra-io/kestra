@@ -1,6 +1,5 @@
 package io.kestra.controller;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
@@ -11,6 +10,8 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.controller.config.GrpcConfiguration;
@@ -33,7 +34,6 @@ import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
 
 /**
  * The Controller service that manages worker nodes.
@@ -105,10 +105,14 @@ public class DefaultController extends AbstractService implements Controller {
      */
     @Override
     public void start() {
-        if (getState() != ServiceState.CREATED) {
-            throw new IllegalStateException("Controller is already started or stopped");
-        }
+        guardedStart(this::doStart, () ->
+        {
+            setState(ServiceState.RUNNING);
+            LOG.info("Controller started, listening on {}", controllerConfiguration.port());
+        });
+    }
 
+    private void doStart() {
         LOG.info("Starting Controller");
         int port = controllerConfiguration.port();
         try {
@@ -119,8 +123,6 @@ public class DefaultController extends AbstractService implements Controller {
         } catch (IOException e) {
             throw new UncheckedIOException("Error while building gRPC server", e);
         }
-        LOG.info("Controller started, listening on {}", port);
-        setState(ServiceState.RUNNING);
     }
 
     /**

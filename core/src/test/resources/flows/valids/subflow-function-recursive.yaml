@@ -1,0 +1,19 @@
+id: subflow-function-recursive
+namespace: io.kestra.tests
+
+# The default of 'x' renders subflow() on the same thread, which renders this flow's
+# default again, and so on. The per-thread depth cap must abort before any execution spawns.
+inputs:
+  - id: x
+    type: STRING
+    defaults: "{{ subflow(namespace='io.kestra.tests', id='subflow-function-recursive').outputs.x }}"
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.x }}"
+
+outputs:
+  - id: x
+    type: STRING
+    value: "{{ inputs.x }}"

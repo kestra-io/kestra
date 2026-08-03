@@ -164,6 +164,28 @@ export function useFilterGroups() {
         })
     }
 
+    const placeFilter = (filterId: string, targetLeafId: string, targetIndex: number) => {
+        const sourceLeaf = findLeafContaining(groups.value, filterId)
+        const targetLeaf = findLeafById(groups.value, targetLeafId)
+        if (!sourceLeaf || !targetLeaf) return
+
+        if (sourceLeaf.id !== targetLeaf.id) {
+            moveFilter(filterId, targetLeaf.id)
+        }
+
+        const landed = findLeafContaining(groups.value, filterId)
+        if (!landed) return
+        updateLeaf(landed.id, leaf => {
+            const filters = [...leaf.filters]
+            const from = filters.findIndex(f => f?.id === filterId)
+            if (from === -1) return leaf
+            const [moved] = filters.splice(from, 1)
+            const idx = Math.max(0, Math.min(targetIndex, filters.length))
+            filters.splice(idx, 0, moved)
+            return {...leaf, filters}
+        })
+    }
+
     const setTopLogical = (op: LogicalOperator) => {
         if (topLogical.value === op) return
         topLogical.value = op
@@ -196,6 +218,7 @@ export function useFilterGroups() {
         wrapGroups,
         unwrapGroup,
         moveFilter,
+        placeFilter,
         setTopLogical,
         setWrapperLogical,
         updateLeaf,

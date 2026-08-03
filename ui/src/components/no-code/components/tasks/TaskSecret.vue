@@ -32,7 +32,7 @@
     border: 1px solid var(--ks-border-default);
     width: 100%;
 
-    :deep(.kel-input__wrapper),
+    :deep(.kel-textarea__inner),
     :deep(.editor-container) {
         box-shadow: none;
     }

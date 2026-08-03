@@ -410,7 +410,8 @@ public class PauseTest {
         public void killTimedPause(TestRunnerUtils runnerUtils) throws Exception {
             // Given — execution is paused waiting for a PT1M auto-resume
             Execution execution = runnerUtils.runOneUntilPaused(
-                MAIN_TENANT, "io.kestra.tests", "pause-kill-delay", null, null, Duration.ofSeconds(30));
+                MAIN_TENANT, "io.kestra.tests", "pause-kill-delay", null, null, Duration.ofSeconds(30)
+            );
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
             assertThat(execution.getTaskRunList()).hasSize(1);

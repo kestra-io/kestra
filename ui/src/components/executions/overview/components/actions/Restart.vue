@@ -1,6 +1,6 @@
 <template>
     <NavBarAction
-        v-if="asItem && (isReplay || enabled)"
+        v-if="trigger && asItem && (isReplay || enabled)"
         :icon="icon"
         :disabled="!enabled"
         @click="isOpen = !isOpen"
@@ -8,7 +8,7 @@
         {{ $t(replayOrRestart) }}
     </NavBarAction>
     <KsTooltip
-        v-else-if="isReplay || enabled"
+        v-else-if="trigger && (isReplay || enabled)"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
@@ -16,7 +16,7 @@
         rawContent
     >
         <component
-            v-if="component !== 'el-dropdown-item'"
+            v-if="component !== 'KsDropdownItem'"
             v-bind="$attrs"
             :is="component"
             :icon="icon"
@@ -45,7 +45,6 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
-        width="500px"
     >
         <template #header>
             <div class="modal-header m-0">
@@ -57,7 +56,7 @@
         </template>
 
         <div class="p-3 pt-0">
-            <p class="mb-0" v-html="t('restart confirm', {id: execution.id})" />
+            <p class="mb-0" v-html="t('restart confirm', {id: escape(execution.id)})" />
         </div>
 
         <template #footer>
@@ -75,7 +74,6 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
-        width="600px"
     >
         <template #header>
             <div class="modal-header m-0">
@@ -160,13 +158,12 @@
         v-model="isReplayWithInputsOpen"
         destroyOnClose
         :appendToBody="true"
-        width="60%"
     >
         <template #header>
             <span
                 v-html="t('replay the execution', {
-                    executionId: execution.id,
-                    flowId: execution.flowId
+                    executionId: escape(execution.id),
+                    flowId: escape(execution.flowId)
                 })"
             />
         </template>
@@ -182,6 +179,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, inject} from "vue"
+    import escape from "lodash/escape"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
@@ -203,13 +201,14 @@
     const asItem = inject(asItemKey, false)
 
     const props = defineProps({
-        component: {type: String, default: "el-button"},
+        component: {type: String, default: "KsButton"},
         isReplay: {type: Boolean, default: false},
         isButton: {type: Boolean, default: true},
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
         tooltipPosition: {type: String, default: "bottom"},
+        trigger: {type: Boolean, default: true},
     })
 
     const {t} = useI18n()
@@ -264,7 +263,7 @@
         if (!props.execution?.state) return false
 
         const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(resource.EXECUTION, action.CREATE, props.execution.namespace)
+            ? authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
             : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
 
         if (!hasPermission) return false
@@ -370,12 +369,11 @@
 
         if (newExecution.id !== props.execution.id) {
             window.location.href = router.resolve({
-                name: "executions/update",
+                name: "executions/update/gantt",
                 params: {
                     namespace: newExecution.namespace,
                     flowId: newExecution.flowId,
                     id: newExecution.id,
-                    tab: "gantt",
                     tenant: router.currentRoute.value.params.tenant,
                 },
             }).href
@@ -399,6 +397,12 @@
 
     watch(canReuseInputs, (canReuse) => {
         inputMode.value = canReuse ? "reuse" : "modify"
+    })
+
+    defineExpose({
+        open: () => {
+            isOpen.value = true
+        },
     })
 </script>
 

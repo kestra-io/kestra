@@ -2,10 +2,10 @@ package io.kestra.controller.grpc.services;
 
 import java.util.List;
 
-import io.kestra.core.worker.QueueSubscription;
-import io.kestra.controller.grpc.services.WorkerStreamContext.PendingJob;
-
 import org.junit.jupiter.api.Test;
+
+import io.kestra.controller.grpc.services.WorkerStreamContext.PendingJob;
+import io.kestra.core.worker.QueueSubscription;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

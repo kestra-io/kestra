@@ -1,5 +1,5 @@
 <template>
-    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
+    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -15,15 +15,17 @@
         <template v-if="$slots.label" #label="p">
             <slot name="label" v-bind="p" />
         </template>
-        <template v-if="$slots.tag" #tag>
-            <slot name="tag" />
+        <template v-if="$slots.tag" #tag="tagScope">
+            <slot name="tag" v-bind="tagScope" />
         </template>
     </ElSelect>
 </template>
 
 <script setup lang="ts">
-    import {type Component} from "vue"
+    import {type Component, computed, h, markRaw} from "vue"
     import {ElSelect} from "element-plus"
+    import Loading from "vue-material-design-icons/Loading.vue"
+    import KsIcon from "../../Basic/KsIcon.vue"
     import {useFilteredProps} from "../../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -49,6 +51,7 @@
         popperClass?: string
         showArrow?: boolean
         suffixIcon?: Component | string
+        loading?: boolean
         fit?: boolean
     }>(), {
         placeholder: undefined,
@@ -60,6 +63,7 @@
         popperOffset: undefined,
         popperClass: undefined,
         suffixIcon: undefined,
+        loading: undefined,
     })
 
     const emit = defineEmits<{
@@ -75,13 +79,29 @@
         tag?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["fit"])
+    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading"])
+
+    // `loading` is intentionally NOT forwarded to ElSelect: ElSelect v-shows its option
+    // list on `!loading`, so forwarding would hide still-valid options while they
+    // recompute. We only surface a spinning suffix icon, leaving the dropdown usable.
+    const LoadingSpinner = markRaw({
+        render: () => h(KsIcon, {class: "is-loading"}, () => h(Loading)),
+    }) as Component
+
+    const resolvedSuffixIcon = computed<Component | string | undefined>(
+        () => props.loading ? LoadingSpinner : props.suffixIcon,
+    )
 </script>
 
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/select';
     @use 'element-plus/theme-chalk/src/select-dropdown';
+
+    @keyframes kel-select-loading-rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
 
     .kel-select {
         --kel-disabled-text-color: var(--ks-text-inactive);
@@ -106,12 +126,33 @@
             .kel-select__input-wrapper {
                 position: absolute;
             }
+
+            &:focus-within:has(input:not([readonly])) {
+                .kel-select__placeholder {
+                    position: absolute;
+                }
+
+                .kel-select__input-wrapper {
+                    position: relative;
+                }
+
+                .kel-select__input {
+                    width: fit-content;
+                    min-width: 120px;
+                }
+            }
         }
 
 
         &:not(.kel-select--small),
         &:not(.kel-select--large) {
             font-size: var(--ks-font-size-xs);
+        }
+
+        .kel-select__placeholder.is-transparent {
+            color: var(--ks-text-inactive);
+            font-size: var(--ks-font-size-xs);
+            font-weight: var(--ks-font-weight-regular);
         }
 
         .kel-select__wrapper {
@@ -124,7 +165,7 @@
                 box-shadow: 0 0 0 2px var(--ks-border-focus) inset;
             }
 
-            &.is-hovering:not(.is-focused) {
+            &.is-hovering:not(.is-focused):not(.is-disabled) {
                 box-shadow: 0 0 0 1px var(--ks-border-focus) inset;
             }
         }
@@ -133,25 +174,26 @@
             color: var(--kel-input-icon-color, var(--kel-text-color-placeholder));
         }
 
+        .kel-icon.is-loading svg {
+            animation: kel-select-loading-rotate 2s linear infinite;
+        }
+
         .kel-select__wrapper {
             background-color: var(--ks-bg-input);
             min-height: 30px;
-            padding: 4px 8px 4px 10px;
             font-size: var(--ks-font-size-xs);
             box-shadow: inset 0 0 0 1px var(--ks-border-strong), 0 1px 2px var(--ks-shadow-element);
 
-            &:hover {
+            &:not(.is-disabled):hover {
                 background-color: var(--ks-bg-hover);
             }
 
             &.is-disabled {
-                html.dark & {
-                    background-color: var(--ks-border-default);
-                }
+                background-color: var(--ks-bg-inactive);
 
                 .kel-select__suffix {
                     .kel-select__caret {
-                        color: var(--ks-text-inactive);
+                        color: var(--ks-icon-inactive);
                     }
                 }
             }
@@ -173,10 +215,14 @@
 
         .kel-select-dropdown__list {
             padding: var(--ks-spacing-1);
-            
+
             .kel-select-dropdown__item + .kel-select-dropdown__item {
                 margin-top: var(--ks-spacing-1);
             }
+        }
+
+        .kel-select-dropdown__empty {
+            padding: var(--ks-spacing-3) var(--ks-spacing-4);
         }
 
         .kel-select-dropdown__item {

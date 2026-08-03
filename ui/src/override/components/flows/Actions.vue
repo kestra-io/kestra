@@ -219,6 +219,7 @@
     const restoreFlow = () => {
         flowStore.createFlow({
             flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
+            restore: true,
         }).then(() => {
             unsavedChangesStore.unsavedChange = false
             router.go(0)

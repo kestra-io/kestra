@@ -4,7 +4,7 @@
             <Actions />
         </template>
     </TopNavBar>
-    <section class="full-container">
+    <section class="full-container flush-top">
         <div v-if="setupError" class="flow-create-error" data-test="flow-create-error">
             <KsAlert
                 type="error"

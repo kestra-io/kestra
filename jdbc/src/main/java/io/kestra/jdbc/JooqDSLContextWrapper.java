@@ -2,7 +2,9 @@ package io.kestra.jdbc;
 
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -81,17 +83,38 @@ public class JooqDSLContextWrapper {
     static final class DeadlockPredicate implements Predicate<Throwable> {
         @Override
         public boolean test(Throwable e) {
-            // Walk the full cause chain: once Postgres aborts a transaction after a deadlock,
-            // a later statement in the same failed attempt surfaces a secondary "current transaction is aborted" exception
-            // that wraps the original deadlock one level deeper.
-            // Track visited causes by identity to stop on a cyclic chain (e.g. a cause pointing back to an exception already seen).
+            // Walk the whole exception graph, not just the cause chain:
+            // - the thrown exception itself can already be the SQLException;
+            // - once Postgres aborts a transaction after a deadlock, a later statement in the same
+            //   failed attempt surfaces a secondary "current transaction is aborted" exception that
+            //   wraps the original deadlock one level deeper;
+            // - MySQL rolls the transaction back server-side on a deadlock, so the rollback jOOQ
+            //   then attempts can fail and be attached as a suppressed exception;
+            // - drivers chain secondary SQLExceptions on getNextException(), which is neither the
+            //   cause nor a suppressed exception.
+            // Track visited throwables by identity to stop on a cyclic or diamond-shaped graph.
             Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-            Throwable cause = e.getCause();
-            while (cause != null && seen.add(cause)) {
-                if (isDeadlockOrLockTimeout(cause)) {
+            Deque<Throwable> pending = new ArrayDeque<>();
+            pending.add(e);
+
+            while (!pending.isEmpty()) {
+                Throwable current = pending.poll();
+                if (!seen.add(current)) {
+                    continue;
+                }
+
+                if (isDeadlockOrLockTimeout(current)) {
                     return true;
                 }
-                cause = cause.getCause();
+
+                if (current.getCause() != null) {
+                    pending.add(current.getCause());
+                }
+                Collections.addAll(pending, current.getSuppressed());
+                // JDBC chains secondary failures on their own list rather than as causes
+                if (current instanceof SQLException sqlException && sqlException.getNextException() != null) {
+                    pending.add(sqlException.getNextException());
+                }
             }
             return false;
         }

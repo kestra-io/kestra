@@ -103,18 +103,32 @@ public abstract class AbstractJdbcRepository {
         return DSL.week(timestampField);
     }
 
+    /**
+     * The timestamp expression that {@link #groupByFields} extracts date parts from.
+     * <p>
+     * It must yield <em>UTC</em> wall-clock parts, because
+     * {@link io.kestra.jdbc.AbstractJdbcRepository#getDate} reassembles them in UTC. The default is
+     * correct for H2 and MySQL, whose date columns already hold UTC wall-clock values. Postgres
+     * stores {@code TIMESTAMPTZ}, for which a plain cast to {@code timestamp} resolves in the
+     * session timezone, so it overrides this.
+     */
+    protected Field<Timestamp> groupByTimestampField(String dateField) {
+        return DSL.timestamp(field(dateField, Date.class));
+    }
+
     protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField, @Nullable DateUtils.GroupType groupBy) {
         return groupByFields(duration, dateField, groupBy, true);
     }
 
     protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField, @Nullable DateUtils.GroupType groupBy, boolean withAs) {
         String field = dateField != null ? dateField : "timestamp";
-        Field<Integer> month = withAs ? DSL.month(DSL.timestamp(field(field, Date.class))).as("month") : DSL.month(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> year = withAs ? DSL.year(DSL.timestamp(field(field, Date.class))).as("year") : DSL.year(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> day = withAs ? DSL.day(DSL.timestamp(field(field, Date.class))).as("day") : DSL.day(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> week = withAs ? weekFromTimestamp(DSL.timestamp(field(field, Date.class))).as("week") : weekFromTimestamp(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> hour = withAs ? DSL.hour(DSL.timestamp(field(field, Date.class))).as("hour") : DSL.hour(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> minute = withAs ? DSL.minute(DSL.timestamp(field(field, Date.class))).as("minute") : DSL.minute(DSL.timestamp(field(field, Date.class)));
+        Field<Timestamp> timestamp = groupByTimestampField(field);
+        Field<Integer> month = withAs ? DSL.month(timestamp).as("month") : DSL.month(timestamp);
+        Field<Integer> year = withAs ? DSL.year(timestamp).as("year") : DSL.year(timestamp);
+        Field<Integer> day = withAs ? DSL.day(timestamp).as("day") : DSL.day(timestamp);
+        Field<Integer> week = withAs ? weekFromTimestamp(timestamp).as("week") : weekFromTimestamp(timestamp);
+        Field<Integer> hour = withAs ? DSL.hour(timestamp).as("hour") : DSL.hour(timestamp);
+        Field<Integer> minute = withAs ? DSL.minute(timestamp).as("minute") : DSL.minute(timestamp);
 
         if (groupBy == DateUtils.GroupType.MONTH || duration.toDays() > DateUtils.GroupValue.MONTH.getValue()) {
             return List.of(year, month);

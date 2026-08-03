@@ -1,7 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import java.time.Duration;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -309,7 +309,10 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         String format) {
         List<MetricAggregation> filledResult = new ArrayList<>();
         ZonedDateTime currentDate = startDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+        // UTC, to match the bucket keys returned by AbstractJdbcRepository#getDate. Anchoring this to
+        // the JVM default zone instead would make real data points miss the slot they belong to on a
+        // non-UTC host, leaving a zero-filled bucket next to a duplicated real one.
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneOffset.UTC);
         while (currentDate.isBefore(endDate)) {
             String finalCurrentDate = currentDate.format(formatter);
             MetricAggregation metricStat = result.stream()

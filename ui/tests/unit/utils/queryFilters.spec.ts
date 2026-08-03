@@ -342,6 +342,21 @@ describe("routeQueryToQueryFilters", () => {
         expect(params.get("filters[state][EQUALS]")).toBe("RUNNING")
     })
 
+    it("rejects a custom filter class with private state before an invalid sibling", () => {
+        class CustomFilter {
+            readonly #value = "RUNNING"
+            field = "state"
+            operation = "EQUALS"
+            value = this.#value
+
+            toJSON() {
+                return {field: this.field, operation: this.operation, value: this.#value}
+            }
+        }
+
+        expect(() => serializeQuery({filters: [new CustomFilter(), null]})).toThrow("Invalid QueryFilter array")
+    })
+
     it("snapshots a custom-prototype filter without invoking its constructor accessor", () => {
         let reads = 0
         const prototype = {}

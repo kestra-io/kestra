@@ -24,4 +24,12 @@ class WindowsUtilsTest {
             Locale.setDefault(previous);
         }
     }
+
+    @Test
+    void shouldPreserveColonsOutsideDriveLetter() {
+        assertThat(WindowsUtils.windowsToUnixPath("C:\\namespace\\file:name.txt"))
+            .isEqualTo("/c/namespace/file:name.txt");
+        assertThat(WindowsUtils.windowsToUnixPath("/some/file:name.txt"))
+            .isEqualTo("/some/file:name.txt");
+    }
 }

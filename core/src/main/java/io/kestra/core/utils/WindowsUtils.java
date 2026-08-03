@@ -7,12 +7,11 @@ import java.util.regex.Matcher;
 public class WindowsUtils {
 
     public static String windowsToUnixPath(String path, boolean startWithSlash) {
-        Matcher matcher = java.util.regex.Pattern.compile("([A-Za-z]:)").matcher(path);
-        String unixPath = matcher.replaceAll(m -> m.group().toLowerCase(Locale.ROOT));
+        // Only normalize a leading Windows drive letter (e.g. "C:") so colons in filenames are preserved.
+        Matcher matcher = java.util.regex.Pattern.compile("^([A-Za-z]):").matcher(path);
+        String unixPath = matcher.replaceAll(m -> m.group(1).toLowerCase(Locale.ROOT));
 
-        unixPath = unixPath
-            .replace("\\", "/")
-            .replace(":", "");
+        unixPath = unixPath.replace("\\", "/");
         if (!unixPath.startsWith("/") && startWithSlash) {
             unixPath = "/" + unixPath;
         }

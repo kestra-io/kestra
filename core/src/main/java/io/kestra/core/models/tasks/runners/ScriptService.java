@@ -33,9 +33,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Helper class for task runners and script tasks.
  */
 public final class ScriptService {
-    private static final String ALLOWED_PATH_CHARS = "-\\p{Alnum}._\\+~#=/,:;";
-    private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[" + ALLOWED_PATH_CHARS + "]*)", Pattern.UNICODE_CHARACTER_CLASS);
-    private static final Pattern VALID_STORAGE_PATH_PATTERN = Pattern.compile("[" + ALLOWED_PATH_CHARS + "]+", Pattern.UNICODE_CHARACTER_CLASS);
+    private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("kestra://[^\\s\"']+", Pattern.UNICODE_CHARACTER_CLASS);
+
+    private static final String INTERNAL_STORAGE_SCHEME = "kestra";
 
     // These are the three common additional variables task runners must provide for variable rendering.
     public static final String VAR_WORKING_DIR = "workingDir";
@@ -60,9 +60,14 @@ public final class ScriptService {
 
         return INTERNAL_STORAGE_PATTERN
             .matcher(command)
-            .replaceAll(throwFunction(matchResult ->
-            {
-                String localFile = saveOnLocalStorage(runContext, matchResult.group()).replace("\\", "/");
+            .replaceAll(throwFunction(matchResult -> {
+                String matched = matchResult.group();
+                URI uri = parseAndValidateInternalStorageUri(matched);
+                if (uri == null) {
+                    return matched;
+                }
+
+                String localFile = saveOnLocalStorage(runContext, uri).replace("\\", "/");
 
                 if (!replaceWithRelativePath) {
                     return localFile;
@@ -114,31 +119,87 @@ public final class ScriptService {
         return ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), commands, false);
     }
 
-    private static String saveOnLocalStorage(RunContext runContext, String uri) throws IOException {
+    private static String saveOnLocalStorage(RunContext runContext, URI uri) throws IOException {
         Path path = runContext.workingDir().createTempFile();
 
-        try (
-            InputStream inputStream = runContext.storage().getFile(URI.create(uri));
-            OutputStream outputStream = new FileOutputStream(path.toFile())
-        ) {
+        try (InputStream inputStream = runContext.storage().getFile(uri);
+            OutputStream outputStream = new FileOutputStream(path.toFile())) {
             IOUtils.copyLarge(inputStream, outputStream);
 
             return path.toString();
         }
     }
 
+    @Nullable
+    static URI parseAndValidateInternalStorageUri(String candidate) {
+        if (candidate == null || candidate.isEmpty()) {
+            return null;
+        }
+
+        if (containsControlCharacters(candidate)) {
+            return null;
+        }
+
+        URI uri = tryParse(candidate);
+
+        if (uri == null || !isInternalStorageUri(uri)) {
+            return null;
+        }
+
+        return uri;
+    }
+
+    @Nullable
+    private static URI tryParse(String candidate) {
+        try {
+            return URI.create(candidate);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static boolean isInternalStorageUri(URI uri) {
+        if (!INTERNAL_STORAGE_SCHEME.equalsIgnoreCase(uri.getScheme())) {
+            return false;
+        }
+
+        if (uri.getUserInfo() != null) {
+            return false;
+        }
+
+        String path = uri.getPath();
+        return path == null || !hasDotDotSegment(path);
+    }
+
+    private static boolean containsControlCharacters(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c <= 0x1F || c == 0x7F) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasDotDotSegment(String path) {
+        String[] segments = path.split("/");
+        for (String segment : segments) {
+            if ("..".equals(segment)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static Map<String, URI> uploadOutputFiles(RunContext runContext, Path outputDir) throws IOException {
-        // upload output files
         Map<String, URI> uploaded = new HashMap<>();
 
         try (Stream<Path> walk = Files.walk(outputDir)) {
             walk
                 .filter(Files::isRegularFile)
-                .filter(path -> !path.startsWith("."))
-                .forEach(throwConsumer(path ->
-                {
+                .filter(path -> !path.getFileName().toString().startsWith("."))
+                .forEach(throwConsumer(path -> {
                     String filename = outputDir.relativize(path).toString();
-                    validateStoragePath(filename);
 
                     uploaded.put(
                         filename,
@@ -148,15 +209,6 @@ public final class ScriptService {
         }
 
         return uploaded;
-    }
-
-    static void validateStoragePath(String filename) throws IOException {
-        if (!VALID_STORAGE_PATH_PATTERN.matcher(filename).matches()) {
-            throw new IOException(
-                "Output file '%s' contains unsupported characters. Allowed: letters, digits, hyphens, dots, underscores, plus, tilde, hash, equals, slashes, commas, colons, semicolons."
-                    .formatted(filename)
-            );
-        }
     }
 
     public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, String command) {

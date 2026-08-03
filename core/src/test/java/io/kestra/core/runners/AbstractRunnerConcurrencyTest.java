@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.queues.QueueException;
@@ -64,13 +63,6 @@ public abstract class AbstractRunnerConcurrencyTest {
         flowConcurrencyCaseTest.flowConcurrencyQueueAfterExecution("concurrency-queue-after-execution");
     }
 
-    @FlakyTest(
-        description = "SLA-triggered kill on the child subflow emits an async kill message from inside the " +
-            "still-open lock/transaction that marks the child FAILED (ExecutorService#markAs); a second consumer can " +
-            "re-lock the child before that transaction commits and race a duplicate SubflowExecutionResult, which can " +
-            "supersede the one that would carry the parent through its terminal decrementAndPop, leaking a concurrency slot " +
-            "under CI load"
-    )
     @Test
     @LoadFlows(
         value = { "flows/valids/flow-concurrency-sla-fail-parent.yml", "flows/valids/flow-concurrency-sla-fail-child.yml" },
@@ -78,6 +70,18 @@ public abstract class AbstractRunnerConcurrencyTest {
     )
     void flowConcurrencySlaFailSubflow() throws QueueException {
         flowConcurrencyCaseTest.flowConcurrencySlaFailSubflow("flow-concurrency-sla-fail");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-sla-assert-cancel.yml" }, tenantId = "flow-concurrency-sla-assert-cancel")
+    void flowConcurrencySlaAssertCancel() throws QueueException {
+        flowConcurrencyCaseTest.flowConcurrencySlaAssertCancel("flow-concurrency-sla-assert-cancel");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue-killed-after-execution.yml" }, tenantId = "flow-concurrency-queue-killed-after-execution")
+    void flowConcurrencyQueueKilledAfterExecution() throws QueueException {
+        flowConcurrencyCaseTest.flowConcurrencyQueueKilledAfterExecution("flow-concurrency-queue-killed-after-execution");
     }
 
     @Test

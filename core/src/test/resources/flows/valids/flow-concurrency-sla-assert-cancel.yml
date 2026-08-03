@@ -1,0 +1,17 @@
+id: flow-concurrency-sla-assert-cancel
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
+sla:
+  - id: alwaysViolated
+    type: EXECUTION_ASSERTION
+    behavior: CANCEL
+    assert: "{{ false }}"
+
+tasks:
+  - id: return
+    type: io.kestra.plugin.core.debug.Return
+    format: "true"

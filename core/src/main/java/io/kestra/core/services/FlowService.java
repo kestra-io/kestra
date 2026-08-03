@@ -321,6 +321,22 @@ public class FlowService {
     }
 
     private void updateConcurrencyLimit(FlowWithSource flow) {
+        if (flow.isDeleted()) {
+            removeConcurrencyLimit(flow);
+            return;
+        }
+
+        // A draft revision is never picked up by the executor, so it must neither get a live
+        // concurrency limit nor remove the one belonging to the live revision.
+        if (flow.isDraft()) {
+            return;
+        }
+
+        if (flow.getConcurrency() == null) {
+            removeConcurrencyLimit(flow);
+            return;
+        }
+
         var previous = flow.getRevision() <= 1 ? null : flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
 
         // If the previous revision was soft-deleted, its concurrency limit was already removed:
@@ -329,25 +345,7 @@ public class FlowService {
             previous = null;
         }
 
-        if (flow.isDeleted()) {
-            removeConcurrencyLimit(flow);
-            return;
-        }
-
-        // A draft revision is never picked up by the executor, so it must not get a live concurrency limit.
-        if (flow.isDraft()) {
-            return;
-        }
-
-        if (previous != null) {
-            if (previous.getConcurrency() == null && flow.getConcurrency() != null) {
-                initConcurrencyLimit(flow);
-            }
-
-            if (previous.getConcurrency() != null && flow.getConcurrency() == null) {
-                removeConcurrencyLimit(flow);
-            }
-        } else if (flow.getConcurrency() != null) {
+        if (previous == null || previous.getConcurrency() == null) {
             initConcurrencyLimit(flow);
         }
     }

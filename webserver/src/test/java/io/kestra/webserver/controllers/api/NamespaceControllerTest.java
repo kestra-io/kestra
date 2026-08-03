@@ -7,8 +7,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.devskiller.friendly_id.FriendlyId;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
@@ -19,6 +17,7 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.utils.Base62Encoder;
 import io.kestra.plugin.core.log.Log;
 import io.kestra.webserver.responses.PagedResults;
 
@@ -134,7 +133,7 @@ public class NamespaceControllerTest {
 
     protected Flow flow(String namespace) {
         Flow flow = Flow.builder()
-            .id("flow-" + FriendlyId.createFriendlyId())
+            .id("flow-" + Base62Encoder.createId())
             .namespace(namespace)
             .tenantId("main")
             .tasks(

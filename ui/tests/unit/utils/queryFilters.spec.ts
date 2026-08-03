@@ -73,6 +73,23 @@ describe("routeQueryToQueryFilters", () => {
         ])
     })
 
+    it.each(["constructor", "toString", "__proto__"])(
+        "preserves repeated values for the reserved label key %s",
+        (labelKey) => {
+            expect(routeQueryToQueryFilters({
+                [`filters[labels][IN][${labelKey}]`]: ["production", "staging"],
+            })).toEqual([
+                {
+                    logical: "or",
+                    children: [
+                        {field: "labels", operation: "IN", value: {[labelKey]: "production"}},
+                        {field: "labels", operation: "IN", value: {[labelKey]: "staging"}},
+                    ],
+                },
+            ])
+        },
+    )
+
     it.each([
         ["IN", "or"],
         ["NOT_IN", "and"],

@@ -37,7 +37,7 @@ class FilterNodeBuilder {
         const scalarValue = Array.isArray(value) ? value[0] : value
 
         if (field === "labels" && subKey) {
-            const map = this.labelsByOp.get(operation) ?? {}
+            const map = this.labelsByOp.get(operation) ?? Object.create(null) as Record<string, string[]>
             map[subKey] = [...(map[subKey] ?? []), ...(Array.isArray(value) ? value : [scalarValue])]
             this.labelsByOp.set(operation, map)
             return

@@ -31,6 +31,13 @@ const levelKey: FilterKeyConfig = {
     ],
 }
 
+const labelsKey: FilterKeyConfig = {
+    key: "labels",
+    label: "Labels",
+    valueType: "key-value",
+    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.IN, Comparators.NOT_IN],
+}
+
 const mountPopper = async (filter: AppliedFilter) => {
     const wrapper = mount(FilterEditPopper, {
         props: {filter, filterKey: levelKey, showComparatorSelection: true},
@@ -95,6 +102,44 @@ describe("FilterEditPopper range comparators on a multi-select field", () => {
         expect(updates!.at(-1)![0]).toMatchObject({
             comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
             value: "",
+        })
+    })
+})
+
+describe("FilterEditPopper key-value comparator changes", () => {
+    test("normalizes repeated keys before emitting a single-value comparator update", async () => {
+        const wrapper = mount(FilterEditPopper, {
+            props: {
+                filter: {
+                    id: "f1",
+                    key: "labels",
+                    keyLabel: "Labels",
+                    comparator: Comparators.IN,
+                    comparatorLabel: "In",
+                    value: [
+                        "environment:production",
+                        "environment:staging",
+                        "team:core",
+                        "team:platform",
+                    ],
+                    valueLabel: "environment:production",
+                },
+                filterKey: labelsKey,
+                showComparatorSelection: true,
+            },
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        wrapper.findComponent(FilterComparatorSelect).vm.$emit("update:selectedComparator", Comparators.EQUALS)
+        await flushPromises()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates).toHaveLength(1)
+        expect(updates![0][0]).toMatchObject({
+            comparator: Comparators.EQUALS,
+            value: ["environment:staging", "team:platform"],
+            valueLabel: "environment:staging",
         })
     })
 })

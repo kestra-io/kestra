@@ -1,5 +1,17 @@
 import {describe, expect, it} from "vitest"
+import {createConfigureClient} from "../../../packages/hey-api-plugin/src/runtime"
 import {routeQueryToQueryFilters} from "../../../src/utils/queryFilters"
+
+const serializeQueryFilters = (filters: ReturnType<typeof routeQueryToQueryFilters>) => {
+    let config: any
+    const slot = {clear() {}, use() {}}
+    const client = {
+        setConfig(value: any) { config = value },
+        interceptors: {request: slot, response: slot, error: slot},
+    }
+    createConfigureClient(client, {bodySerializer() {}})()
+    return config.querySerializer({filters}) as string
+}
 
 describe("routeQueryToQueryFilters", () => {
     it("builds a simple leaf filter", () => {
@@ -30,6 +42,62 @@ describe("routeQueryToQueryFilters", () => {
         })).toEqual([
             {field: "labels", operation: "EQUALS", value: {env: "prod", team: "backend"}},
         ])
+    })
+
+    it("builds an OR group for repeated IN values of the same label", () => {
+        expect(routeQueryToQueryFilters({
+            "filters[labels][IN][environment]": ["production", "staging"],
+        })).toEqual([
+            {
+                logical: "or",
+                children: [
+                    {field: "labels", operation: "IN", value: {environment: "production"}},
+                    {field: "labels", operation: "IN", value: {environment: "staging"}},
+                ],
+            },
+        ])
+    })
+
+    it("builds an AND group for repeated NOT_IN values of the same label", () => {
+        expect(routeQueryToQueryFilters({
+            "filters[labels][NOT_IN][environment]": ["production", "staging"],
+        })).toEqual([
+            {
+                logical: "and",
+                children: [
+                    {field: "labels", operation: "NOT_IN", value: {environment: "production"}},
+                    {field: "labels", operation: "NOT_IN", value: {environment: "staging"}},
+                ],
+            },
+        ])
+    })
+
+    it.each([
+        ["IN", "or"],
+        ["NOT_IN", "and"],
+    ] as const)("serializes repeated label %s values as grouped URL parameters", (operation, logical) => {
+        const filters = routeQueryToQueryFilters({
+            [`filters[labels][${operation}][environment]`]: ["production", "staging"],
+        })
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.getAll(`filters[${logical}][0][labels][${operation}][environment]`)).toEqual(["production"])
+        expect(params.getAll(`filters[${logical}][1][labels][${operation}][environment]`)).toEqual(["staging"])
+    })
+
+    it("serializes a leaf alongside a nested logical group", () => {
+        const filters = routeQueryToQueryFilters({
+            "filters[tenantId][EQUALS]": "tenant-1",
+            "filters[or][0][and][0][namespace][EQUALS]": "io.kestra",
+            "filters[or][0][and][1][state][EQUALS]": "RUNNING",
+            "filters[or][1][state][EQUALS]": "FAILED",
+        })
+        const params = new URLSearchParams(serializeQueryFilters(filters))
+
+        expect(params.get("filters[tenantId][EQUALS]")).toBe("tenant-1")
+        expect(params.get("filters[or][0][and][0][namespace][EQUALS]")).toBe("io.kestra")
+        expect(params.get("filters[or][0][and][1][state][EQUALS]")).toBe("RUNNING")
+        expect(params.get("filters[or][1][state][EQUALS]")).toBe("FAILED")
     })
 
     it("builds a top-level OR group", () => {

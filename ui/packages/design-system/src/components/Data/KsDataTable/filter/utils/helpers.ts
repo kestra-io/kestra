@@ -102,9 +102,12 @@ const buildParam = (
     value: string | (string | null)[],
     chain: PrefixSegment[],
 ): DecodedParam => {
+    const decodedValue = decodeFilterValue(value)
     const decoded = subKey
-        ? `${subKey}:${decodeFilterValue(value)}`
-        : decodeFilterValue(value)
+        ? Array.isArray(decodedValue)
+            ? decodedValue.map(item => `${subKey}:${item}`)
+            : `${subKey}:${decodedValue}`
+        : decodedValue
     return {
         field,
         value: decoded,
@@ -117,6 +120,7 @@ const buildParam = (
 type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
 
 type ComparatorKeyResolver = (comparator: Comparators) => string;
+type FilterQuery = Record<string, string | string[]>;
 
 export const encodeFiltersToQuery = (filters: Filter[], getComparatorKey: ComparatorKeyResolver) =>
     encodeFilterGroupsToQuery(
@@ -128,8 +132,8 @@ export const encodeFilterGroupsToQuery = (
     groups: FilterGroup[],
     getComparatorKey: ComparatorKeyResolver,
     topLogical: LogicalOperator = "OR",
-): Record<string, string> => {
-    const query: Record<string, string> = {}
+): FilterQuery => {
+    const query: FilterQuery = {}
     const onlyOneLeaf = groups.length === 1 && !isWrapperGroup(groups[0])
     const topOp = topLogical.toLowerCase()
 
@@ -152,7 +156,7 @@ export const encodeFilterGroupsToQuery = (
 }
 
 const writeFilter = (
-    query: Record<string, string>,
+    query: FilterQuery,
     prefix: string,
     filter: Filter,
     getComparatorKey: ComparatorKeyResolver,
@@ -185,7 +189,14 @@ const writeFilter = (
             } else if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
                 value.forEach((item: string) => {
                     const [k, v] = item.split(":", 2)
-                    if (k && v) query[`${prefix}[${key}][${comparatorKey}][${k}]`] = v
+                    if (!k || !v) return
+                    const queryKey = `${prefix}[${key}][${comparatorKey}][${k}]`
+                    const existing = query[queryKey]
+                    if ((comparator === Comparators.IN || comparator === Comparators.NOT_IN) && existing !== undefined) {
+                        query[queryKey] = Array.isArray(existing) ? [...existing, v] : [existing, v]
+                    } else {
+                        query[queryKey] = v
+                    }
                 })
             } else {
                 query[`${prefix}[${key}][${comparatorKey}]`] = Array.isArray(value)

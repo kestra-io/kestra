@@ -54,6 +54,13 @@ const rangeAndSetKey: FilterKeyConfig = {
 const mountLevelRow = (filter: AppliedFilter) =>
     mount(ConditionRow, {props: {filter, allKeys: [rangeAndSetKey]}, global: globalConfig})
 
+const labelsKey: FilterKeyConfig = {
+    key: "labels",
+    label: "Labels",
+    valueType: "key-value",
+    comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.IN, Comparators.NOT_IN],
+}
+
 describe("ConditionRow range comparators on a multi-select field", () => {
     test("renders a plain select (not the multi-select popover) for GREATER_THAN_OR_EQUAL_TO", () => {
         const wrapper = mountLevelRow({
@@ -180,5 +187,44 @@ describe("ConditionRow multi-select commit on close", () => {
         wrapper.unmount()
 
         expect(wrapper.emitted("update")).toBeFalsy()
+    })
+})
+
+describe("ConditionRow key-value comparator changes", () => {
+    test("normalizes repeated keys without mounting the lazy value popover", async () => {
+        const wrapper = mount(ConditionRow, {
+            props: {
+                filter: {
+                    id: "f1",
+                    key: "labels",
+                    keyLabel: "Labels",
+                    comparator: Comparators.IN,
+                    comparatorLabel: "In",
+                    value: [
+                        "environment:production",
+                        "environment:staging",
+                        "team:core",
+                        "team:platform",
+                    ],
+                    valueLabel: "environment:production",
+                },
+                allKeys: [labelsKey],
+            },
+            global: {
+                ...globalConfig,
+                stubs: {KsPopover: {template: "<div><slot name=\"reference\" /></div>"}},
+            },
+        })
+
+        const opSelect: any = wrapper.findComponent(".cond-op")
+        opSelect.vm.$emit("update:modelValue", Comparators.EQUALS)
+        await nextTick()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates!.at(-1)![0]).toMatchObject({
+            comparator: Comparators.EQUALS,
+            value: ["environment:staging", "team:platform"],
+            valueLabel: "environment:staging",
+        })
     })
 })

@@ -140,6 +140,23 @@ describe("Filter Helpers", () => {
     })
 
     describe("encodeFilterGroupsToQuery", () => {
+        it.each([Comparators.IN, Comparators.NOT_IN])(
+            "preserves repeated label values for %s",
+            (comparator) => {
+                const groups: FilterGroup[] = [
+                    leaf("g1", [{
+                        key: "labels",
+                        comparator,
+                        value: ["environment:production", "environment:staging"],
+                    }]),
+                ]
+
+                expect(encodeFilterGroupsToQuery(groups, keyOfComparator)).toEqual({
+                    [`filters[labels][${keyOfComparator(comparator)}][environment]`]: ["production", "staging"],
+                })
+            },
+        )
+
         it("emits the flat legacy format for a single leaf group", () => {
             const groups: FilterGroup[] = [
                 leaf("g1", [{key: "namespace", comparator: Comparators.EQUALS, value: "io.kestra"}]),

@@ -103,6 +103,7 @@
         </template>
         <FilterKVPairs
             :modelValue="kvModel"
+            :comparator="filter.comparator"
             @update:modelValue="onKeyValue"
         />
     </KsPopover>
@@ -232,15 +233,32 @@
         })
     }
 
+    const normalizeKeyValuePairs = (values: string[]) => {
+        const pairByKey = new Map<string, string>()
+        values.forEach(pair => pairByKey.set(pair.split(":", 1)[0], pair))
+        return [...pairByKey.values()]
+    }
+
     const changeComparator = (op: Comparators) => {
         const wasMulti = isMulti.value
         const willBeMulti = keyConfig.value?.valueType === "multi-select" && !RANGE_COMPARATORS.includes(op)
+        const shouldNormalizeKeyValues = keyConfig.value?.valueType === "key-value"
+            && op !== Comparators.IN
+            && op !== Comparators.NOT_IN
+            && Array.isArray(props.filter.value)
+        const normalizedKeyValues = shouldNormalizeKeyValues
+            ? normalizeKeyValuePairs(props.filter.value as string[])
+            : null
 
         emit("update", {
             ...props.filter,
             comparator: op,
             comparatorLabel: labelForComparator(op),
-            ...(wasMulti !== willBeMulti ? {value: willBeMulti ? [] : "", valueLabel: ""} : {}),
+            ...(normalizedKeyValues
+                ? {value: normalizedKeyValues, valueLabel: normalizedKeyValues[0] ?? ""}
+                : wasMulti !== willBeMulti
+                    ? {value: willBeMulti ? [] : "", valueLabel: ""}
+                    : {}),
         })
     }
 

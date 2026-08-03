@@ -104,6 +104,28 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             },
             querySerializer(query: Record<string, any>) {
                 const queryParameters = new URLSearchParams()
+
+                const appendQueryFilter = (filter: any, prefix = "filters") => {
+                    if (filter.logical && Array.isArray(filter.children)) {
+                        filter.children.forEach((child: any, index: number) =>
+                            appendQueryFilter(child, `${prefix}[${filter.logical}][${index}]`),
+                        )
+                        return
+                    }
+
+                    const keyField = String(filter.field)
+                    const op = String(filter.operation)
+                    if (typeof filter.value === "object" && filter.value != null && !Array.isArray(filter.value)) {
+                        for (const [k, v] of Object.entries(filter.value)) {
+                            const ser = serializeQueryValue(v)
+                            if (ser !== undefined) queryParameters.append(`${prefix}[${keyField}][${op}][${k}]`, ser)
+                        }
+                    } else {
+                        const ser = serializeQueryValue(filter.value)
+                        if (ser !== undefined) queryParameters.append(`${prefix}[${keyField}][${op}]`, ser)
+                    }
+                }
+
                 for (const key in query) {
                     const param = query[key]
                     if (param === undefined) {
@@ -114,33 +136,11 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                         param.length > 0 &&
                         typeof param[0] === "object" &&
                         param[0] != null &&
-                        "field" in param[0] &&
-                        "operation" in param[0] &&
-                        "value" in param[0]
+                        (("field" in param[0] && "operation" in param[0] && "value" in param[0]) ||
+                            ("logical" in param[0] && "children" in param[0]))
 
                     if (looksLikeQueryFilterArray) {
-                        for (const qf of param) {
-                            const keyField = String(qf.field)
-                            const op = String(qf.operation)
-
-                            if (
-                                typeof qf.value === "object" &&
-                                qf.value != null &&
-                                !Array.isArray(qf.value)
-                            ) {
-                                for (const [k, v] of Object.entries(qf.value)) {
-                                    const ser = serializeQueryValue(v)
-                                    if (ser !== undefined) {
-                                        queryParameters.append(`filters[${keyField}][${op}][${k}]`, ser)
-                                    }
-                                }
-                            } else {
-                                const ser = serializeQueryValue(qf.value)
-                                if (ser !== undefined) {
-                                    queryParameters.append(`filters[${keyField}][${op}]`, ser)
-                                }
-                            }
-                        }
+                        for (const qf of param) appendQueryFilter(qf)
                     } else if (param instanceof Array) {
                         param.forEach((value: any) => {
                             const ser = serializeQueryValue(value)

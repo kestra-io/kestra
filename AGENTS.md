@@ -375,6 +375,11 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - Use types: chore, feat, fix, refactor, test, docs, build
 - Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
 
+## Issue guidelines
+- **Classify an issue with its GitHub issue type, not a `kind/*` label.** The `kind/bug` label is retired — do not add it. Set the type instead: `gh issue create --title … ` followed by `gh issue edit <number> --type Bug`, or `gh issue edit <number> --type Task|Feature|Epic`. Available types are `Task`, `Bug`, `Feature` and `Epic` (list them with `gh api /orgs/kestra-io/issue-types`).
+- **Do add the `area/*` labels** — `area/frontend`, `area/backend`, `area/devops`, `area/docs`, `area/plugin`, `area/qa`, `area/analytics` — since those drive routing and are still in use.
+- Leave triage labels such as `kind/cooldown` to `kestrabot`; it applies them automatically on new issues.
+
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.
 
 ## UI Translations

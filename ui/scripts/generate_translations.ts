@@ -271,8 +271,6 @@ async function main(
 // re-serialise them back to TypeScript after filling in the translations.
 // ---------------------------------------------------------------------------
 
-const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/
-
 // Evaluate the body of a `*.locale.ts` default export into a plain object.
 // The files are pure data literals, so this is safe (and far simpler than parsing TS).
 function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
@@ -283,7 +281,11 @@ function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
 }
 
 // Serialise a value back to TypeScript source, matching the existing 4-space
-// indentation, trailing commas, and unquoted-identifier-keys style.
+// indentation and trailing-comma style. Keys are always quoted: many of them have to be
+// (`"customize tooltip"` contains a space), so quoting only the ones that strictly need it left
+// each file inconsistent with itself and made the serialiser rewrite whichever keys happened to be
+// stored the other way. Quoting everything is one rule, applied uniformly, and keeps regeneration
+// a no-op when nothing was translated.
 function serializeLocaleValue(value: NestedValue, indent: number): string {
     if (value === null || typeof value !== "object") {
         return JSON.stringify(value)
@@ -305,10 +307,8 @@ function serializeLocaleValue(value: NestedValue, indent: number): string {
         return "{}"
     }
 
-    const lines = entries.map(([k, v]) => {
-        const key = IDENTIFIER.test(k) ? k : JSON.stringify(k)
-        return `${padInner}${key}: ${serializeLocaleValue(v, indent + 1)},`
-    })
+    const lines = entries.map(([k, v]) =>
+        `${padInner}${JSON.stringify(k)}: ${serializeLocaleValue(v, indent + 1)},`)
     return `{\n${lines.join("\n")}\n${pad}}`
 }
 

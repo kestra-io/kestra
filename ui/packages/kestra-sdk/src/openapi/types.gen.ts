@@ -1469,7 +1469,6 @@ export type MiscControllerConfiguration = {
     isAiApiKeyConfigured?: boolean;
     isBasicAuthInitialized?: boolean;
     pluginsHash?: number;
-    isConcurrencyViewEnabled?: boolean;
 };
 
 export type MiscControllerEnvironment = {

@@ -253,6 +253,42 @@ describe("routeQueryToQueryFilters", () => {
         expect(new URLSearchParams(query).getAll("filters")).toEqual(filters.map(value => JSON.stringify(value)))
     })
 
+    it("falls back atomically when a map value has no toString method", () => {
+        const valueWithoutToString = Object.assign(Object.create(null), {value: "production"})
+        const filters = [{
+            logical: "or",
+            children: [
+                {field: "labels", operation: "IN", value: {environment: valueWithoutToString}},
+                {field: "state", operation: "EQUALS", value: "RUNNING"},
+            ],
+        }]
+
+        const query = serializeQuery({filters})
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual(filters.map(value => JSON.stringify(value)))
+    })
+
+    it("serializes an accessor-backed map atomically from one value snapshot", () => {
+        let reads = 0
+        const labels = {}
+        Object.defineProperty(labels, "environment", {
+            enumerable: true,
+            get: () => ++reads <= 2 ? "production" : undefined,
+        })
+        const filters = [{
+            logical: "or",
+            children: [
+                {field: "labels", operation: "IN", value: labels},
+                {field: "state", operation: "EQUALS", value: "RUNNING"},
+            ],
+        }]
+
+        const params = new URLSearchParams(serializeQuery({filters}))
+
+        expect(params.get("filters[or][0][labels][IN][environment]")).toBe("production")
+        expect(params.get("filters[or][1][state][EQUALS]")).toBe("RUNNING")
+    })
+
     it.each([
         ["a null logical child", {logical: "or", children: [null, {field: "state", operation: "EQUALS", value: "RUNNING"}]}],
         ["a string logical child", {logical: "or", children: ["invalid", {field: "state", operation: "EQUALS", value: "RUNNING"}]}],

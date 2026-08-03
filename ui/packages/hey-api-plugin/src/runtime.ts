@@ -105,59 +105,44 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             querySerializer(query: Record<string, any>) {
                 const queryParameters = new URLSearchParams()
 
-                const isDenseQueryFilterArray = (filters: any[]): boolean => {
-                    if (filters.length === 0) return false
+                const serializeQueryFilterArray = (filters: any[], prefix = "filters", indexed = false): Array<[string, string]> | undefined => {
+                    if (filters.length === 0) return undefined
+                    const parameters: Array<[string, string]> = []
                     for (let index = 0; index < filters.length; index++) {
-                        if (!(index in filters) || !isQueryFilter(filters[index])) return false
+                        if (!(index in filters)) return undefined
+                        const serialized = serializeQueryFilter(filters[index], indexed ? `${prefix}[${index}]` : prefix)
+                        if (!serialized) return undefined
+                        parameters.push(...serialized)
                     }
-                    return true
+                    return parameters
                 }
 
-                const isQueryFilter = (filter: any): boolean => {
-                    if (filter == null || typeof filter !== "object") return false
+                const serializeQueryFilter = (filter: any, prefix: string): Array<[string, string]> | undefined => {
+                    if (filter == null || typeof filter !== "object") return undefined
 
-                    const isValueOptional = filter.operation === "IS_NULL" || filter.operation === "IS_NOT_NULL"
-                    const isValueAbsent = filter.value === null || filter.value === undefined
-                    const hasSerializableValue = isValueAbsent
-                        ? isValueOptional
-                        : typeof filter.value === "object" && !Array.isArray(filter.value)
-                            ? Object.values(filter.value).length > 0 && Object.values(filter.value).every(value => serializeQueryValue(value) !== undefined)
-                            : serializeQueryValue(filter.value) !== undefined
-                    const isLeaf = typeof filter.field === "string" &&
-                        typeof filter.operation === "string" &&
-                        hasSerializableValue
-                    const isLogical = (filter.logical === "and" || filter.logical === "or") &&
-                        Array.isArray(filter.children) &&
-                        isDenseQueryFilterArray(filter.children)
-
-                    if (isLeaf === isLogical) return false
-                    return isLeaf
-                        ? filter.logical === undefined && filter.children === undefined
-                        : filter.field === undefined && filter.operation === undefined && filter.value === undefined
-                }
-
-                const appendQueryFilter = (filter: any, prefix = "filters") => {
-                    if (filter.logical && Array.isArray(filter.children)) {
-                        filter.children.forEach((child: any, index: number) =>
-                            appendQueryFilter(child, `${prefix}[${filter.logical}][${index}]`),
-                        )
-                        return
+                    const {field, operation, value, logical, children} = filter
+                    if (logical === "and" || logical === "or") {
+                        if (field !== undefined || operation !== undefined || value !== undefined || !Array.isArray(children)) return undefined
+                        return serializeQueryFilterArray(children, `${prefix}[${logical}]`, true)
                     }
 
-                    const keyField = String(filter.field)
-                    const op = String(filter.operation)
-                    if (typeof filter.value === "object" && filter.value != null && !Array.isArray(filter.value)) {
-                        for (const [k, v] of Object.entries(filter.value)) {
-                            const ser = serializeQueryValue(v)
-                            if (ser !== undefined) queryParameters.append(`${prefix}[${keyField}][${op}][${k}]`, ser)
+                    if (typeof field !== "string" || typeof operation !== "string" || logical !== undefined || children !== undefined) return undefined
+                    if (typeof value === "object" && value != null && !Array.isArray(value)) {
+                        const entries = Object.entries(value)
+                        if (entries.length === 0) return undefined
+                        const parameters: Array<[string, string]> = []
+                        for (const [key, entryValue] of entries) {
+                            const serialized = serializeQueryValue(entryValue)
+                            if (serialized === undefined) return undefined
+                            parameters.push([`${prefix}[${field}][${operation}][${key}]`, serialized])
                         }
-                    } else {
-                        const ser = serializeQueryValue(filter.value)
-                        const isValueOptional = op === "IS_NULL" || op === "IS_NOT_NULL"
-                        if (ser !== undefined || isValueOptional) {
-                            queryParameters.append(`${prefix}[${keyField}][${op}]`, ser ?? "")
-                        }
+                        return parameters
                     }
+
+                    const serialized = serializeQueryValue(value)
+                    const isValueOptional = operation === "IS_NULL" || operation === "IS_NOT_NULL"
+                    if (serialized === undefined && !isValueOptional) return undefined
+                    return [[`${prefix}[${field}][${operation}]`, serialized ?? ""]]
                 }
 
                 for (const key in query) {
@@ -165,13 +150,17 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     if (param === undefined) {
                         continue
                     }
-                    const looksLikeQueryFilterArray =
-                        key === "filters" &&
-                        Array.isArray(param) &&
-                        isDenseQueryFilterArray(param)
+                    let serializedFilters: Array<[string, string]> | undefined
+                    if (key === "filters" && Array.isArray(param)) {
+                        try {
+                            serializedFilters = serializeQueryFilterArray(param)
+                        } catch {
+                            serializedFilters = undefined
+                        }
+                    }
 
-                    if (looksLikeQueryFilterArray) {
-                        for (const qf of param) appendQueryFilter(qf)
+                    if (serializedFilters) {
+                        for (const [filterKey, filterValue] of serializedFilters) queryParameters.append(filterKey, filterValue)
                     } else if (param instanceof Array) {
                         param.forEach((value: any) => {
                             const ser = serializeQueryValue(value)

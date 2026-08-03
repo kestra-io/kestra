@@ -167,23 +167,45 @@ jobs:
     with:
       java-version: 25
 
-  e2e-tests:
-    name: E2E - Tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+  # Built once here, consumed by both the E2E tests and the PR docker image
+  # publish (previously each of them rebuilt the whole product themselves).
+  build-artifacts:
+    name: Build Artifacts
+    needs: [file-changes]
+    # Docs-only PRs (e.g. .github or markdown changes) don't need a product
+    # build; drafts are filtered by file-changes' own if. Fork PRs can't
+    # share artifacts (their runs hold no repo write token), so they keep
+    # the E2E build-from-source fallback below.
+    if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
     with:
       java-version: 25
 
+  e2e-tests:
+    name: E2E - Tests
+    needs: [file-changes, build-artifacts]
+    # Runs when build-artifacts succeeded (prebuilt exe) or was skipped for a
+    # fork (falls back to building from source); not when the build failed.
+    if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true')"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    with:
+      java-version: 25
+      exe-artifact: ${{ needs.build-artifacts.result == 'success' && 'exe' || '' }}
+
   generate-pull-request-docker-image:
     name: Generate PR docker image
+    needs: [build-artifacts]
+    if: "!cancelled() && needs.build-artifacts.result == 'success'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
     with:
       java-version: 25
+      skip-build: true
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace
     runs-on: ubuntu-latest
     if: always()
-    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, backend, e2e-tests, generate-pull-request-docker-image ]
+    needs: [ trigger-ee, file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
     env:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
     steps:

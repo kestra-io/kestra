@@ -186,9 +186,12 @@ const writeFilter = (
                 const {startDate, endDate} = value as {startDate: Date; endDate: Date}
                 query[`${prefix}[${key}][GREATER_THAN_OR_EQUAL_TO]`] = startDate.toISOString()
                 query[`${prefix}[${key}][LESS_THAN_OR_EQUAL_TO]`] = endDate.toISOString()
-            } else if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
+            } else if (Array.isArray(value) && (key === "labels" || value.some(v => typeof v === "string" && v.includes(":")))) {
                 value.forEach((item: string) => {
-                    const [k, v] = item.split(":", 2)
+                    const separatorIndex = item.indexOf(":")
+                    if (separatorIndex <= 0) return
+                    const k = item.slice(0, separatorIndex)
+                    const v = item.slice(separatorIndex + 1)
                     if (!k || !v) return
                     const queryKey = `${prefix}[${key}][${comparatorKey}][${k}]`
                     const existing = query[queryKey]

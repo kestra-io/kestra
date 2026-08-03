@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import {Comparators, encodeFilterGroupsToQuery, keyOfComparator} from "@kestra-io/design-system"
 import {createConfigureClient} from "../../../packages/hey-api-plugin/src/runtime"
 import {routeQueryToQueryFilters} from "../../../src/utils/queryFilters"
 
@@ -83,6 +84,30 @@ describe("routeQueryToQueryFilters", () => {
 
         expect(params.getAll(`filters[${logical}][0][labels][${operation}][environment]`)).toEqual(["production"])
         expect(params.getAll(`filters[${logical}][1][labels][${operation}][environment]`)).toEqual(["staging"])
+    })
+
+    it.each([
+        [Comparators.IN, "or"],
+        [Comparators.NOT_IN, "and"],
+    ] as const)("preserves colons through repeated label %s route and wire serialization", (comparator, logical) => {
+        const query = encodeFilterGroupsToQuery([{
+            id: "g1",
+            kind: "leaf",
+            filters: [{
+                id: "f1",
+                key: "labels",
+                keyLabel: "Labels",
+                comparator,
+                comparatorLabel: comparator,
+                value: ["url:https://prod:8443/a", "url:https://stage:9443/b"],
+                valueLabel: "url:https://prod:8443/a, url:https://stage:9443/b",
+            }],
+        }], keyOfComparator)
+        const params = new URLSearchParams(serializeQueryFilters(routeQueryToQueryFilters(query)))
+        const operation = keyOfComparator(comparator)
+
+        expect(params.get(`filters[${logical}][0][labels][${operation}][url]`)).toBe("https://prod:8443/a")
+        expect(params.get(`filters[${logical}][1][labels][${operation}][url]`)).toBe("https://stage:9443/b")
     })
 
     it("serializes a leaf alongside a nested logical group", () => {

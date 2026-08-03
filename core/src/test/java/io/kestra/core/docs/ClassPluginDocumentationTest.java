@@ -174,4 +174,32 @@ class ClassPluginDocumentationTest {
             assertThat((Boolean) withDefault.get("$dynamic")).isTrue();
         }));
     }
+
+    // The cache key is (class + version + allProperties): same key must return the cached
+    // instance, while a different version must generate a distinct documentation object.
+    // Bounding/eviction itself is Caffeine's contract (see #16983) and is not re-tested here.
+    @Test
+    void shouldCachePerClassVersionAndAllProperties() throws URISyntaxException {
+        Helpers.runApplicationContext(throwConsumer((applicationContext) ->
+        {
+            // Given
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+            RegisteredPlugin scan = pluginScanner.scan();
+
+            PluginClassAndMetadata<DynamicPropertyExampleTask> metadata = PluginClassAndMetadata.create(scan, DynamicPropertyExampleTask.class, DynamicPropertyExampleTask.class, null);
+
+            // When
+            ClassPluginDocumentation<? extends DynamicPropertyExampleTask> first = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, "1.0.0", true);
+            ClassPluginDocumentation<? extends DynamicPropertyExampleTask> sameKey = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, "1.0.0", true);
+            ClassPluginDocumentation<? extends DynamicPropertyExampleTask> otherVersion = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, "2.0.0", true);
+            ClassPluginDocumentation<? extends DynamicPropertyExampleTask> otherProperties = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, "1.0.0", false);
+
+            // Then
+            assertThat(sameKey).isSameAs(first);
+            assertThat(otherVersion).isNotSameAs(first);
+            assertThat(otherProperties).isNotSameAs(first);
+        }));
+    }
 }

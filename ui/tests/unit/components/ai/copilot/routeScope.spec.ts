@@ -17,9 +17,31 @@ describe("scopeFromRoute", () => {
             .toEqual({kind: "NAMESPACE", namespace: "company.team"})
     })
 
+    it("maps the dashboard / app / test / blueprint / plugin detail routes to their scopes", () => {
+        expect(scopeFromRoute({name: "dashboards/update", params: {dashboard: "my-dash"}}))
+            .toEqual({kind: "DASHBOARD", dashboardId: "my-dash"})
+        expect(scopeFromRoute({name: "apps/update", params: {id: "my-app"}}))
+            .toEqual({kind: "APP", appId: "my-app"})
+        expect(scopeFromRoute({name: "tests/result", params: {namespace: "company.team", testSuiteId: "suite-1", resultId: "r1"}}))
+            .toEqual({kind: "TEST", namespace: "company.team", testId: "suite-1"})
+        expect(scopeFromRoute({name: "blueprints/view", params: {kind: "flow", tab: "docs", blueprintId: "bp-1"}}))
+            .toEqual({kind: "BLUEPRINT", blueprintId: "bp-1"})
+        expect(scopeFromRoute({name: "plugins/view", params: {cls: "io.kestra.plugin.core.log.Log"}}))
+            .toEqual({kind: "PLUGIN", pluginId: "io.kestra.plugin.core.log.Log"})
+    })
+
     it("returns null for routes with no meaningful scope", () => {
         expect(scopeFromRoute({name: "flows/list", params: {}})).toBeNull()
         expect(scopeFromRoute({name: "home", params: {}})).toBeNull()
+    })
+
+    it("maps a detail page's actual (child) route name, not just its redirecting parent", () => {
+        expect(scopeFromRoute({name: "executions/update/overview", params: {namespace: "company.team", flowId: "my-flow", id: "exec-1"}}))
+            .toEqual({kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"})
+        expect(scopeFromRoute({name: "flows/update/edit", params: {namespace: "company.team", id: "my-flow"}}))
+            .toEqual({kind: "FLOW", namespace: "company.team", flowId: "my-flow"})
+        expect(scopeFromRoute({name: "namespaces/update/overview", params: {id: "company.team"}}))
+            .toEqual({kind: "NAMESPACE", namespace: "company.team"})
     })
 
     it("is defensive about missing/oddly-typed route input", () => {
@@ -44,6 +66,15 @@ describe("scopeToContext", () => {
             .toEqual({currentView: {kind: "EXECUTION", namespace: "company.team", flowId: "my-flow", executionId: "exec-1"}})
         expect(scopeToContext({kind: "NAMESPACE", namespace: "company.team"}))
             .toEqual({currentView: {kind: "NAMESPACE", namespace: "company.team"}})
+    })
+
+    it("carries the dashboard / test / plugin resource ids into currentView", () => {
+        expect(scopeToContext({kind: "DASHBOARD", dashboardId: "my-dash"}))
+            .toEqual({currentView: {kind: "DASHBOARD", dashboardId: "my-dash"}})
+        expect(scopeToContext({kind: "TEST", namespace: "company.team", testId: "suite-1"}))
+            .toEqual({currentView: {kind: "TEST", namespace: "company.team", testId: "suite-1"}})
+        expect(scopeToContext({kind: "PLUGIN", pluginId: "io.kestra.plugin.core.log.Log"}))
+            .toEqual({currentView: {kind: "PLUGIN", pluginId: "io.kestra.plugin.core.log.Log"}})
     })
 
     it("returns undefined when there is no scope", () => {

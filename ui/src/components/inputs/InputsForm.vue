@@ -220,6 +220,7 @@
                         <div v-for="(_item, index) in editableItems[input.id]" :key="index" class="list-row">
                             <el-input
                                 v-model="editableItems[input.id][index]"
+                                :validateEvent="isInteracted(input.id)"
                                 class="array-cell"
                             />
                             <el-button @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
@@ -270,6 +271,7 @@
             <DurationPicker
                 v-if="input.type === 'DURATION'"
                 v-model="inputsValues[input.id]"
+                :validateEvent="isInteracted(input.id)"
                 @update:model-value="onChange(input)"
             />
             <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
@@ -808,7 +810,15 @@
             }];
         }
 
-        return undefined;
+        // Every other required type (STRING, INT, DATE, DURATION, FILE, …). Without this, el-form-item
+        // falls back to the implicit `{required: true}` it derives from its own `required` prop, whose
+        // message comes from async-validator's hardcoded English "%s is required" using the raw input id.
+        // Returning the rule explicitly keeps the message translated and consistent with the branches
+        // above — el-form-item patches a rule that already carries `required` instead of adding its own.
+        return [{
+            required: true,
+            message: t("is required", {field: input.displayName || input.id}),
+        }];
     }
 
     function parseArrayValue(inputId: string): unknown[] {

@@ -1333,7 +1333,11 @@
           "skip": "Omitir recorrido"
         },
         "scenes": {
-          "copilot": {},
+          "copilot": {
+            "title": "Flows se pueden redactar a partir de un prompt",
+            "body": "El recorrido utiliza un flow de ejemplo ya preparado, por lo que no es necesario escribir nada aquí.",
+            "next": "Usar el flow de ejemplo"
+          },
           "flow_generated": {
             "title": "Esto es un flow",
             "body": "El flow está escrito en YAML con dos tasks:<ol><li><code>fetch_orders</code> para descargar los pedidos</li><li><code>summarize</code> para calcular los ingresos en Python</li></ol>Los tasks se ejecutan secuencialmente, en el orden en que se definen.",
@@ -1349,7 +1353,8 @@
           "add_task": {
             "title": "Flows se editan como código",
             "body": "Hemos añadido una `notify` task para ti sin el Copilot de IA, para que puedas ver cómo es editar el YAML directamente. Publica el resultado final en Slack.",
-            "next": "Ver la documentación de la task"
+            "next": "Ver la documentación de la task",
+            "callout": "Un primer borrador de AI Copilot es solo un punto de partida; el editor es donde lo iteras en una pestaña del editor de Código o Sin Código, ambos producen el mismo YAML, por lo que tu flow permanece como código independientemente de cómo fue construido."
           },
           "editor_help": {
             "title": "La documentación está junto al flow",
@@ -1415,7 +1420,8 @@
           "title": "Lo que construiste, y qué probar a continuación",
           "takeaways": {
             "copilot": {
-              "title": "Flows generados a partir de inglés natural"
+              "title": "Flows generados a partir de inglés natural",
+              "body": "Describe lo que quieres automatizar en el chat del Copiloto de IA, y se genera una primera versión del flow a partir del esquema de flow en vivo. Lo mismo es posible desde tu editor o terminal: Claude Code, Cursor y otros agentes de codificación pueden generar flows con las habilidades de agente de Kestra."
             },
             "restart": {
               "title": "Reproducir en lugar de ejecutar todo de nuevo",
@@ -1436,6 +1442,8 @@
           "start_building": "Empezar a construir",
           "docs": {
             "title": "Leer más",
+            "copilot": "Copiloto de IA",
+            "agentSkills": "Habilidades del agente",
             "autocompletion": "Autocompletado",
             "execution": "Ejecuciones",
             "replay": "Reejecutar",

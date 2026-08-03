@@ -1333,7 +1333,11 @@
           "skip": "Salta il tour"
         },
         "scenes": {
-          "copilot": {},
+          "copilot": {
+            "title": "Flows possono essere abbozzati da un prompt",
+            "body": "Il tour utilizza un flow di esempio già pronto, quindi non è necessario digitare nulla qui.",
+            "next": "Utilizza il flow di esempio"
+          },
           "flow_generated": {
             "title": "Questo è un flow",
             "body": "Il flow è scritto in YAML con due task:<ol><li><code>fetch_orders</code> per scaricare gli ordini</li><li><code>summarize</code> per calcolare le entrate in Python</li></ol>I task vengono eseguiti sequenzialmente, nell'ordine in cui sono definiti.",
@@ -1349,7 +1353,8 @@
           "add_task": {
             "title": "I flow sono modificati come codice",
             "body": "Abbiamo aggiunto un task `notify` per te senza l'AI Copilot, così puoi vedere come appare la modifica diretta del YAML. Pubblica il risultato finale su Slack.",
-            "next": "Consulta la documentazione del task"
+            "next": "Consulta la documentazione del task",
+            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No-Code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
           },
           "editor_help": {
             "title": "La documentazione è accanto al flow",
@@ -1415,7 +1420,8 @@
           "title": "Cosa hai costruito, e cosa provare dopo",
           "takeaways": {
             "copilot": {
-              "title": "Flows generati da inglese naturale"
+              "title": "Flows generati da inglese naturale",
+              "body": "Descrivi cosa vuoi automatizzare nella chat dell'AI Copilot, e una prima versione del flow viene generata dallo schema del flow live. Lo stesso è possibile dal tuo editor o terminale: Claude Code, Cursor e altri agenti di codifica possono generare flow con le skill dell'agente Kestra."
             },
             "restart": {
               "title": "Riesegui invece di eseguire tutto di nuovo",
@@ -1436,6 +1442,8 @@
           "start_building": "Inizia a costruire",
           "docs": {
             "title": "Leggi di più",
+            "copilot": "Copilota AI",
+            "agentSkills": "Competenze dell'agente",
             "autocompletion": "Completamento automatico",
             "execution": "Esecuzioni",
             "replay": "Riesegui",

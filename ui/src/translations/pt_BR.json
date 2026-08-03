@@ -1333,7 +1333,11 @@
           "skip": "Pular tour"
         },
         "scenes": {
-          "copilot": {},
+          "copilot": {
+            "title": "Flows podem ser gerados a partir de um prompt",
+            "body": "O tour usa um flow de exemplo pronto, então nada precisa ser digitado aqui.",
+            "next": "Usar o exemplo flow"
+          },
           "flow_generated": {
             "title": "Este é um flow",
             "body": "O flow é escrito em YAML com duas tasks:<ol><li><code>fetch_orders</code> para baixar os pedidos</li><li><code>summarize</code> para calcular a receita em Python</li></ol>Tasks são executadas sequencialmente, na ordem em que são definidas.",
@@ -1349,7 +1353,8 @@
           "add_task": {
             "title": "Flows são editados como código",
             "body": "Adicionamos uma task <code>notify</code> para você sem o AI Copilot, para que você possa ver como é editar o YAML diretamente. Ele publica o resultado final no Slack.",
-            "next": "Ver a documentação da task"
+            "next": "Ver a documentação da task",
+            "callout": "Um primeiro rascunho do AI Copilot é apenas um ponto de partida; o editor é onde você o refina em uma aba de editor Code ou No-Code, ambos produzindo o mesmo YAML, assim seu flow permanece como código, independentemente de como foi construído."
           },
           "editor_help": {
             "title": "A documentação está ao lado do flow",
@@ -1415,7 +1420,8 @@
           "title": "O que você construiu e o que tentar a seguir",
           "takeaways": {
             "copilot": {
-              "title": "flows gerados a partir de inglês simples"
+              "title": "flows gerados a partir de inglês simples",
+              "body": "Descreva o que você deseja automatizar no chat do AI Copilot, e uma primeira versão do flow é gerada a partir do esquema de flow em tempo real. O mesmo é possível a partir do seu editor ou terminal: Claude Code, Cursor e outros agentes de codificação podem gerar flows com as habilidades de agente do Kestra."
             },
             "restart": {
               "title": "Reexecutar em vez de executar tudo novamente",
@@ -1436,6 +1442,8 @@
           "start_building": "Começar a construir",
           "docs": {
             "title": "Ler mais",
+            "copilot": "Copiloto de IA",
+            "agentSkills": "Habilidades do Agente",
             "autocompletion": "Autocompletar",
             "execution": "Execuções",
             "replay": "Repetir",

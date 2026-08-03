@@ -1333,7 +1333,11 @@
           "skip": "跳过导览"
         },
         "scenes": {
-          "copilot": {},
+          "copilot": {
+            "title": "Flows 可以从提示生成",
+            "body": "导览使用一个现成的示例 flow，因此这里无需输入任何内容。",
+            "next": "使用示例 flow"
+          },
           "flow_generated": {
             "title": "这是一个 flow",
             "body": "此 flow 以 YAML 编写，包含两个 task：<ol><li><code>fetch_orders</code> 用于下载订单</li><li><code>summarize</code> 用于在 Python 中计算收入</li></ol>task 按照定义的顺序依次执行。",
@@ -1349,7 +1353,8 @@
           "add_task": {
             "title": "flow 像代码一样编辑",
             "body": "我们为您添加了一个 `notify` task，没有使用 AI Copilot，这样您就可以看到直接编辑 YAML 是什么样子。它会将最终结果发布到 Slack。",
-            "next": "查看 task 文档"
+            "next": "查看 task 文档",
+            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No-Code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
           },
           "editor_help": {
             "title": "文档在 flow 旁边",
@@ -1415,7 +1420,8 @@
           "title": "你构建了什么，以及接下来可以尝试什么",
           "takeaways": {
             "copilot": {
-              "title": "纯英文生成的 Flows"
+              "title": "纯英文生成的 Flows",
+              "body": "在 AI Copilot 聊天中描述您想要自动化的内容，系统将根据实时 flow schema 生成 flow 的第一个版本。您也可以通过编辑器或终端实现同样的功能：Claude Code、Cursor 和其他编码 agent 可以借助 Kestra agent 技能生成 flows。"
             },
             "restart": {
               "title": "重放而不是重新运行所有内容",
@@ -1436,6 +1442,8 @@
           "start_building": "开始构建",
           "docs": {
             "title": "阅读更多",
+            "copilot": "AI 副驾驶",
+            "agentSkills": "代理技能",
             "autocompletion": "自动补全",
             "execution": "执行",
             "replay": "重放",

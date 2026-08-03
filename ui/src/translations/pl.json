@@ -1333,7 +1333,11 @@
           "skip": "Pomiń wycieczkę"
         },
         "scenes": {
-          "copilot": {},
+          "copilot": {
+            "title": "Flows mogą być szkicowane na podstawie promptu",
+            "body": "Wycieczka wykorzystuje gotowy przykładowy flow, więc nic nie trzeba tutaj wpisywać.",
+            "next": "Użyj przykładowego flow"
+          },
           "flow_generated": {
             "title": "To jest flow",
             "body": "flow jest napisany w YAML z dwoma taskami:<ol><li><code>fetch_orders</code> do pobierania zamówień</li><li><code>summarize</code> do obliczania przychodów w Pythonie</li></ol>Taski są wykonywane sekwencyjnie, w kolejności, w jakiej są zdefiniowane.",
@@ -1349,7 +1353,8 @@
           "add_task": {
             "title": "Flows są edytowane jak kod",
             "body": "Dodaliśmy dla Ciebie `notify` task bez AI Copilot, abyś mógł zobaczyć, jak wygląda bezpośrednia edycja YAML. Wysyła końcowy wynik do Slacka.",
-            "next": "Zobacz dokumentację taska"
+            "next": "Zobacz dokumentację taska",
+            "callout": "Pierwszy szkic z AI Copilot jest tylko punktem wyjścia; edytor to miejsce, w którym nad nim iterujesz w zakładce edytora kodu lub bez kodu, które oba generują ten sam YAML, dzięki czemu twój flow pozostaje jako kod, niezależnie od tego, jak został zbudowany."
           },
           "editor_help": {
             "title": "Dokumentacja znajduje się obok flow",
@@ -1415,7 +1420,8 @@
           "title": "Co stworzyłeś, i co dalej spróbować",
           "takeaways": {
             "copilot": {
-              "title": "Flows wygenerowane z prostego angielskiego"
+              "title": "Flows wygenerowane z prostego angielskiego",
+              "body": "Opisz, co chcesz zautomatyzować w czacie AI Copilot, a pierwsza wersja flow zostanie wygenerowana na podstawie schematu flow na żywo. To samo jest możliwe z Twojego edytora lub terminala: Claude Code, Cursor i inne agenty kodujące mogą generować flows za pomocą umiejętności agenta Kestra."
             },
             "restart": {
               "title": "Ponów zamiast uruchamiać wszystko od nowa",
@@ -1436,6 +1442,8 @@
           "start_building": "Rozpocznij tworzenie",
           "docs": {
             "title": "Czytaj więcej",
+            "copilot": "Asystent AI",
+            "agentSkills": "Umiejętności agenta",
             "autocompletion": "Autouzupełnianie",
             "execution": "Wykonania",
             "replay": "Ponów",

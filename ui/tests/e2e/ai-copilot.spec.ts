@@ -35,6 +35,8 @@ test.describe("AI Copilot", () => {
         await stubThreadCreation(page, THREAD)
         await disableProductTour(page)
 
+        // Fresh tab per test (see fixtures/auth.ts): boot the SPA from the worker's
+        // warm context — a couple of seconds, not the ~9s a cold context pays.
         await page.goto("/ui")
         await openCopilotDock(page)
     })
@@ -390,7 +392,8 @@ test.describe("AI Copilot — full-page /ai surface", () => {
         const tenant = new URL(page.url()).pathname.split("/")[2] || "main"
         await page.goto(`/ui/${tenant}/ai`, {waitUntil: "domcontentloaded"})
 
-        // The copilot mounts as the full-page host (fresh context → empty state, no dock).
+        // The copilot mounts as the full-page host (hard navigation → fresh document; a thread uid
+        // remembered by an earlier test 404s server-side and is forgotten → empty state, no dock).
         await expect(page.locator(D.chat)).toBeVisible({timeout: 15000})
         await expect(page.locator(D.input)).toBeVisible()
 

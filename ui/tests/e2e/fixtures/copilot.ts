@@ -10,6 +10,14 @@ import {expect} from "@playwright/test"
 
 export const CHAT = "[data-test=\"copilot-chat\"]"
 
+const PRODUCT_TOUR_STORAGE_KEY = "kestra.productTour.state"
+
+export async function disableProductTour(page: Page) {
+    await page.addInitScript((key) => {
+        localStorage.setItem(key, JSON.stringify({status: "skipped"}))
+    }, PRODUCT_TOUR_STORAGE_KEY)
+}
+
 /** Serialises events into the SSE wire format the copilot stream reader expects. */
 export const sse = (events: [string, unknown][]) =>
     events.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join("")

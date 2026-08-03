@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "vue"],
+  "jsPlugins": ["./lint-rules/index.js"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn"
@@ -40,6 +41,16 @@
       ],
       "rules": {
         "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/*.spec.js", "**/*.spec.ts", "**/*.test.js", "**/*.test.ts", "tests/unit/**/*.js", "tests/unit/**/*.ts"],
+      "excludeFiles": ["tests/e2e/**"],
+      "rules": {
+        "kestra-test-hygiene/no-direct-global-assignment": "error",
+        "kestra-test-hygiene/no-unrestored-fake-timers": "error",
+        "kestra-test-hygiene/no-unrestored-global-stub": "error",
+        "kestra-test-hygiene/require-mock-reset": "error"
       }
     }
   ],

@@ -43,7 +43,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: "22.x"
+          node-version: "24.x"
 
       - name: Install Node dependencies
         shell: bash
@@ -62,6 +62,9 @@ jobs:
       - name: Checkout the chore/update-kestra-sdk branch
         shell: bash
         run: |
+          # the merge below creates a merge commit, which requires a committer identity
+          git config user.name "kestra-io"
+          git config user.email "hello@kestra.io"
           # the checkout above is a single-branch clone of develop, so the remote chore
           # branch is not present locally. Fetch it, with its history, explicitly first.
           git fetch origin chore/update-kestra-sdk || true

@@ -1,5 +1,5 @@
 import {expect, test} from "./fixtures/auth"
-import {CHAT, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
+import {CHAT, disableProductTour, openCopilotDock, sse, stubThreadCreation} from "./fixtures/copilot"
 
 /**
  * Per-tool end-to-end coverage for the AI Copilot v2 tool catalog.
@@ -45,7 +45,10 @@ const AUTHORING_TOOLS = [
 test.describe("AI Copilot v2 — tool catalog", () => {
     test.beforeEach(async ({page}) => {
         await stubThreadCreation(page, THREAD)
+        await disableProductTour(page)
 
+        // Fresh tab per test (see fixtures/auth.ts): boot the SPA from the worker's
+        // warm context — a couple of seconds, not the ~9s a cold context pays.
         await page.goto("/ui")
         await openCopilotDock(page)
     })

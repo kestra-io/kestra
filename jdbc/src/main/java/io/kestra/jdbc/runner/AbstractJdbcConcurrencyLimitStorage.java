@@ -188,13 +188,16 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
         return concurrencyLimit;
     }
 
+    /**
+     * Fetch the concurrency limit row of the given flow and lock it for the current transaction.
+     * <p>
+     * The row is looked up by primary key on purpose, so this is a unique-index lookup locking exactly one row.
+     */
     private Optional<ConcurrencyLimit> fetchOne(DSLContext dslContext, FlowInterface flow) {
         var select = dslContext
             .select()
             .from(this.jdbcRepository.getTable())
-            .where(this.buildTenantCondition(flow.getTenantId()))
-            .and(field("namespace").eq(flow.getNamespace()))
-            .and(field("flow_id").eq(flow.getId()));
+            .where(KEY_FIELD.eq(IdUtils.fromPartsAndSeparator('|', flow.getTenantId(), flow.getNamespace(), flow.getId())));
 
         return this.jdbcRepository.fetchOne(select.forUpdate());
     }

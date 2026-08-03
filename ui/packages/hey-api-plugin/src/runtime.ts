@@ -105,10 +105,27 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
             querySerializer(query: Record<string, any>) {
                 const queryParameters = new URLSearchParams()
 
-                const isQueryFilter = (filter: any) =>
-                    filter != null && typeof filter === "object" &&
-                    ((typeof filter.field === "string" && typeof filter.operation === "string") ||
-                        (typeof filter.logical === "string" && Array.isArray(filter.children)))
+                const isDenseQueryFilterArray = (filters: any[]): boolean => {
+                    if (filters.length === 0) return false
+                    for (let index = 0; index < filters.length; index++) {
+                        if (!(index in filters) || !isQueryFilter(filters[index])) return false
+                    }
+                    return true
+                }
+
+                const isQueryFilter = (filter: any): boolean => {
+                    if (filter == null || typeof filter !== "object") return false
+
+                    const isLeaf = typeof filter.field === "string" && typeof filter.operation === "string"
+                    const isLogical = (filter.logical === "and" || filter.logical === "or") &&
+                        Array.isArray(filter.children) &&
+                        isDenseQueryFilterArray(filter.children)
+
+                    if (isLeaf === isLogical) return false
+                    return isLeaf
+                        ? filter.logical === undefined && filter.children === undefined
+                        : filter.field === undefined && filter.operation === undefined && filter.value === undefined
+                }
 
                 const appendQueryFilter = (filter: any, prefix = "filters") => {
                     if (filter.logical && Array.isArray(filter.children)) {
@@ -141,8 +158,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     }
                     const looksLikeQueryFilterArray =
                         Array.isArray(param) &&
-                        param.length > 0 &&
-                        param.every(isQueryFilter)
+                        isDenseQueryFilterArray(param)
 
                     if (looksLikeQueryFilterArray) {
                         for (const qf of param) appendQueryFilter(qf)

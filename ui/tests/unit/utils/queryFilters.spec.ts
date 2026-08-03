@@ -4,7 +4,7 @@ import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {createConfigureClient} from "../../../packages/hey-api-plugin/src/runtime"
 import {routeQueryToQueryFilters} from "../../../src/utils/queryFilters"
 
-const serializeQueryFilters = (filters: QueryFilter[]) => {
+const serializeQuery = (query: Record<string, any>) => {
     let config: any
     const slot = {clear() {}, use() {}}
     const client = {
@@ -12,8 +12,10 @@ const serializeQueryFilters = (filters: QueryFilter[]) => {
         interceptors: {request: slot, response: slot, error: slot},
     }
     createConfigureClient(client, {bodySerializer() {}})()
-    return config.querySerializer({filters}) as string
+    return config.querySerializer(query) as string
 }
+
+const serializeQueryFilters = (filters: QueryFilter[]) => serializeQuery({filters})
 
 describe("routeQueryToQueryFilters", () => {
     it("builds a simple leaf filter", () => {
@@ -226,6 +228,35 @@ describe("routeQueryToQueryFilters", () => {
 
         expect(params.get("filters[or][0][state][IS_NULL]")).toBe("")
         expect(params.get("filters[or][1][status][IS_NOT_NULL]")).toBe("")
+    })
+
+    it.each([
+        ["a null logical child", {logical: "or", children: [null, {field: "state", operation: "EQUALS", value: "RUNNING"}]}],
+        ["a string logical child", {logical: "or", children: ["invalid", {field: "state", operation: "EQUALS", value: "RUNNING"}]}],
+        ["an empty logical group", {logical: "or", children: []}],
+        ["an unsupported logical operator", {logical: "xor", children: [{field: "state", operation: "EQUALS", value: "RUNNING"}]}],
+        ["an ambiguous leaf and logical node", {field: "state", operation: "EQUALS", logical: "or", children: [{field: "state", operation: "EQUALS", value: "RUNNING"}]}],
+    ])("falls back to ordinary array serialization for %s", (_, invalidFilter) => {
+        const query = serializeQuery({filters: [invalidFilter]})
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual([JSON.stringify(invalidFilter)])
+    })
+
+    it("falls back to ordinary array serialization for a sparse filter array", () => {
+        const filters = Array(2) as QueryFilter[]
+        filters[1] = {field: "state", operation: "EQUALS", value: "RUNNING"}
+
+        const query = serializeQueryFilters(filters)
+
+        expect(new URLSearchParams(query).getAll("filters")).toEqual([
+            JSON.stringify(filters[1]),
+        ])
+    })
+
+    it("keeps ordinary non-filter array serialization unchanged", () => {
+        const query = serializeQuery({sort: ["state:asc", "id:desc"]})
+
+        expect(new URLSearchParams(query).getAll("sort")).toEqual(["state:asc", "id:desc"])
     })
 
     it("builds a top-level OR group", () => {

@@ -437,6 +437,13 @@
       "dialog_title": "Limiti di Concorrenza",
       "warning": "Modificare il contatore in esecuzione può corrompere la concorrenza, quindi le esecuzioni potrebbero superare il limite consentito."
     },
+    "flowConcurrency": {
+      "loadError": "Impossibile caricare il limite di concorrenza di questo flow.",
+      "staleLimit": {
+        "message": "Questo flow non dichiara più un blocco di concorrenza, ma un record di limite conta ancora {count} esecuzione/i in corso. Non influisce più sulle nuove esecuzioni e può essere reimpostato da Amministrazione → Limiti di Concorrenza.",
+        "title": "Limite di concorrenza residuo"
+      }
+    },
     "documentation": {
       "documentation": "Documentazione",
       "github": "Apri un problema su GitHub"

@@ -437,6 +437,13 @@
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
     },
+    "flowConcurrency": {
+      "loadError": "Failed to load the concurrency limit of this flow.",
+      "staleLimit": {
+        "message": "This flow no longer declares a concurrency block, but a limit record still counts {count} running execution(s). It no longer affects new executions and can be reset from Administration → Concurrency Limits.",
+        "title": "Leftover concurrency limit"
+      }
+    },
     "documentation": {
       "documentation": "Documentation",
       "github": "Open a GitHub issue"

@@ -5,6 +5,21 @@
         </div>
     </div>
 
+    <!-- A display-only line noting a context (focus) change; centred + muted, not a chat bubble.
+         The resource id is a monospace code token, matching how ids read elsewhere in the copilot. -->
+    <div v-else-if="message.type === 'CONTEXT' && message.context" class="copilot-msg copilot-context-notice" data-test="copilot-context-notice">
+        <KsText size="small" class="copilot-context-notice-text">
+            <i18n-t
+                :keypath="message.context.action === 'added' ? 'ai.copilot.contextAdded' : 'ai.copilot.contextRemoved'"
+                scope="global"
+                tag="span"
+            >
+                <template #type>{{ $t(message.context.noun) }}</template>
+                <template #id><code class="copilot-context-id">{{ message.context.id }}</code></template>
+            </i18n-t>
+        </KsText>
+    </div>
+
     <div v-else-if="message.type === 'TEXT'" class="copilot-msg copilot-msg-assistant">
         <div class="copilot-bubble copilot-bubble-assistant">
             <KsMarkdown v-if="message.content" :content="message.content" />
@@ -138,6 +153,24 @@
     .copilot-msg-assistant {
         display: flex;
         justify-content: flex-start;
+    }
+
+    /* Context-change notice: a quiet, centred line, not a chat bubble. It's not selectable prose, so
+       the pointer stays the default arrow rather than the text I-beam. */
+    .copilot-context-notice {
+        display: flex;
+        justify-content: center;
+        text-align: center;
+        cursor: default;
+    }
+
+    .copilot-context-notice-text {
+        --kel-text-color: var(--ks-text-secondary);
+    }
+
+    /* The resource id inside a context notice — a quiet monospace token, colour inherited from the line. */
+    .copilot-context-id {
+        font-family: var(--ks-font-family-mono);
     }
 
     .copilot-msg-cancelled {

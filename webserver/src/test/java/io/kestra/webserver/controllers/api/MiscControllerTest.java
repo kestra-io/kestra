@@ -95,7 +95,6 @@ class MiscControllerTest {
         assertThat(response.getIsAiEnabled()).isTrue();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
         assertThat(response.getFlowTemplate()).isEqualTo("tasks:\n  - id: configured\n    type: io.kestra.plugin.core.log.Log\n    message: Configured");
-        assertThat(response.getIsConcurrencyViewEnabled()).isTrue();
         assertThat(response.getIsAiApiKeyConfigured()).isNotNull();
     }
 

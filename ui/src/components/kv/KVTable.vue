@@ -296,7 +296,8 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
     import Eye from "vue-material-design-icons/Eye.vue"
 
-    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
@@ -320,6 +321,7 @@
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {useApiStore} from "../../stores/api"
     import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 
     import _merge from "lodash/merge"
@@ -342,6 +344,7 @@
 
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
+    const apiStore = useApiStore()
 
     const editorBindings = useEditorBindings()
 
@@ -707,9 +710,20 @@
                 (payload as any).ttl = ttl
             }
 
+            // update flag is set by updateKvModal(); setKeyValue() is an upsert and can't tell them apart.
+            const wasUpdate = kv.value.update === true
+
             return namespacesStore
                 .createKv(payload)
                 .then(() => {
+                    apiStore.posthogEvents({
+                        type: wasUpdate ? "SECRET_UPDATED" : "SECRET_CREATED",
+                        secret_type: "kv",
+                        namespace,
+                        value_type: type,
+                        has_ttl: Boolean(ttl),
+                    })
+
                     toast.saved(key)
                     addKvDrawerVisible.value = false
                     dataTable.value?.reload()

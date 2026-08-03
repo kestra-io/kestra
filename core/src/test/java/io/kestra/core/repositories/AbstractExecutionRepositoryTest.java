@@ -1195,6 +1195,54 @@ public abstract class AbstractExecutionRepositoryTest {
             .as("find execution CONTAINS LABELS key")
             .usingRecursiveFieldByFieldElementComparatorOnFields("id")
             .containsOnly(exec1);
+
+        assertThat(
+            executionRepository.find(
+                Pageable.from(1, 10), tenant,
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LABELS)
+                        .operation(Op.NOT_CONTAINS)
+                        .value("alue2")
+                        .build()
+                )
+            )
+        )
+            .as("find execution NOT_CONTAINS LABELS")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec1);
+
+        assertThat(
+            executionRepository.find(
+                Pageable.from(1, 10), tenant,
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LABELS)
+                        .operation(Op.IS_NOT_NULL)
+                        .value("labelkey2")
+                        .build()
+                )
+            )
+        )
+            .as("find execution IS_NOT_NULL LABELS key")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec2, exec3);
+
+        assertThat(
+            executionRepository.find(
+                Pageable.from(1, 10), tenant,
+                List.of(
+                    QueryFilter.builder()
+                        .field(QueryFilter.Field.LABELS)
+                        .operation(Op.IS_NULL)
+                        .value("labelkey2")
+                        .build()
+                )
+            )
+        )
+            .as("find execution IS_NULL LABELS key")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec1);
     }
 
     record ExecutionSortTestData(Execution createdExecution, Execution successExecution, Execution runningExecution, Execution failedExecution) {

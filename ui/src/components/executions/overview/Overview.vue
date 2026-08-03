@@ -1,7 +1,7 @@
 <template>
     <div v-if="execution" class="wrapper">
         <KsCard class="banner" shadow="always">
-            <Banner :execution @follow="emits('follow', $event)" />
+            <Banner :execution />
         </KsCard>
         <div id="alerts">
             <ErrorAlert
@@ -12,7 +12,6 @@
         <Topology
             class="topology"
             :horizontalDefault="!verticalLayout"
-            @follow="emits('follow', $event)"
         />
         <PrevNext :execution />
     </div>
@@ -41,8 +40,6 @@
     import ErrorAlert from "./components/main/ErrorAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
-
-    const emits = defineEmits(["follow"])
 
     const execution = computed(() => store.execution)
 

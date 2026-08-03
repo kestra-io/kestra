@@ -2,12 +2,18 @@ import {describe, it, expect, vi, beforeEach} from "vitest"
 
 // --- mocks (hoisted) ---
 const push = vi.fn()
+let routeName: string | undefined = undefined
 let routeParams: Record<string, any> = {}
 vi.mock("vue-router", () => ({
     useRouter: () => ({push}),
-    useRoute: () => ({params: routeParams}),
+    useRoute: () => ({name: routeName, params: routeParams}),
 }))
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (k: string) => k})}))
+
+// Flow store — assert the in-place refresh (loadFlow/loadGraph) when applying to an open flow.
+const loadFlow = vi.fn()
+const loadGraph = vi.fn().mockResolvedValue(undefined)
+vi.mock("../../../../../src/stores/flow", () => ({useFlowStore: () => ({loadFlow, loadGraph})}))
 
 const confirm = vi.fn()
 const alert = vi.fn().mockResolvedValue(undefined)
@@ -41,6 +47,7 @@ const draft = (over = {}) => ({draftId: "d1", kind: "FLOW" as const, yaml: "id: 
 describe("useApplyDraft", () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        routeName = undefined
         routeParams = {tenant: "main"}
         parsed = {namespace: "company.team", id: "my-flow"}
         alert.mockResolvedValue(undefined)
@@ -48,6 +55,8 @@ describe("useApplyDraft", () => {
         updateFlow.mockResolvedValue({})
         createDashboard.mockResolvedValue({})
         updateDashboard.mockResolvedValue({})
+        loadFlow.mockResolvedValue({source: "id: my-flow\nnamespace: company.team"})
+        loadGraph.mockResolvedValue(undefined)
     })
 
     const dashboardDraft = (over = {}) => ({draftId: "d9", kind: "DASHBOARD" as const, yaml: "id: my-dash\ntitle: My dash", valid: true, constraints: null, ...over})
@@ -64,7 +73,12 @@ describe("useApplyDraft", () => {
     it("apply CREATES the flow, then navigates to it", async () => {
         confirm.mockResolvedValueOnce(undefined) // user confirms
         await useApplyDraft().apply(draft())
-        expect(createFlow).toHaveBeenCalledWith(expect.objectContaining({body: "id: my-flow\nnamespace: company.team"}))
+        // The create opts out of the global error toast (2nd arg) so the create→update fallback and
+        // our own alert stay the only user-facing failure paths.
+        expect(createFlow).toHaveBeenCalledWith(
+            expect.objectContaining({body: "id: my-flow\nnamespace: company.team"}),
+            expect.objectContaining({showMessageOnError: false}),
+        )
         expect(updateFlow).not.toHaveBeenCalled()
         // On success it navigates to the applied flow.
         expect(push).toHaveBeenCalledWith(expect.objectContaining({
@@ -73,12 +87,42 @@ describe("useApplyDraft", () => {
         }))
     })
 
+    it("apply refreshes the flow in place (no navigation) when already viewing it", async () => {
+        routeName = "flows/update"
+        routeParams = {tenant: "main", namespace: "company.team", id: "my-flow"}
+        confirm.mockResolvedValueOnce(undefined)
+        createFlow.mockRejectedValueOnce(alreadyExists) // existing flow → update in place
+        await useApplyDraft().apply(draft())
+        expect(updateFlow).toHaveBeenCalled()
+        // Stays on the current tab and refreshes the store like a save — no bounce to overview.
+        expect(loadFlow).toHaveBeenCalledWith({namespace: "company.team", id: "my-flow"})
+        expect(loadGraph).toHaveBeenCalledWith({flow: expect.objectContaining({source: expect.any(String)})})
+        expect(push).not.toHaveBeenCalled()
+    })
+
     it("apply UPDATES the flow when create reports it already exists", async () => {
         confirm.mockResolvedValueOnce(undefined)
         createFlow.mockRejectedValueOnce(alreadyExists) // create → 422 already exists → fall back to update
         await useApplyDraft().apply(draft())
-        expect(updateFlow).toHaveBeenCalledWith(expect.objectContaining({namespace: "company.team", id: "my-flow", body: "id: my-flow\nnamespace: company.team"}))
+        expect(updateFlow).toHaveBeenCalledWith(
+            expect.objectContaining({namespace: "company.team", id: "my-flow", body: "id: my-flow\nnamespace: company.team"}),
+            expect.objectContaining({showMessageOnError: false}),
+        )
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "flows/update"}))
+    })
+
+    it("falls back to update when the 'already exists' error is nested in the validation body", async () => {
+        // The real backend 422 puts the "already exists" text in the validation errors, not data.message.
+        confirm.mockResolvedValueOnce(undefined)
+        createFlow.mockRejectedValueOnce({
+            status: 422,
+            response: {status: 422, data: {message: "Validation failed", _embedded: {errors: [{message: "flow.id: Flow id already exists: my-flow"}]}}},
+        })
+        await useApplyDraft().apply(draft())
+        expect(updateFlow).toHaveBeenCalledWith(
+            expect.objectContaining({namespace: "company.team", id: "my-flow"}),
+            expect.objectContaining({showMessageOnError: false}),
+        )
     })
 
     it("apply surfaces an error (no update) when create fails for another reason", async () => {
@@ -120,7 +164,10 @@ describe("useApplyDraft", () => {
         parsed = {id: "my-dash"}
         confirm.mockResolvedValueOnce(true)
         await useApplyDraft().apply(dashboardDraft())
-        expect(createDashboard).toHaveBeenCalledWith(expect.objectContaining({body: "id: my-dash\ntitle: My dash"}))
+        expect(createDashboard).toHaveBeenCalledWith(
+            expect.objectContaining({body: "id: my-dash\ntitle: My dash"}),
+            expect.objectContaining({showMessageOnError: false}),
+        )
         expect(updateDashboard).not.toHaveBeenCalled()
         expect(push).toHaveBeenCalledWith(expect.objectContaining({name: "dashboards/update", params: {dashboard: "my-dash", tenant: "main"}}))
     })
@@ -130,7 +177,10 @@ describe("useApplyDraft", () => {
         confirm.mockResolvedValueOnce(true)
         createDashboard.mockRejectedValueOnce(dashboardExists)
         await useApplyDraft().apply(dashboardDraft())
-        expect(updateDashboard).toHaveBeenCalledWith(expect.objectContaining({id: "my-dash", body: "id: my-dash\ntitle: My dash"}))
+        expect(updateDashboard).toHaveBeenCalledWith(
+            expect.objectContaining({id: "my-dash", body: "id: my-dash\ntitle: My dash"}),
+            expect.objectContaining({showMessageOnError: false}),
+        )
     })
 
     it("apply alerts and skips confirm when the dashboard draft has no id", async () => {

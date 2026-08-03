@@ -100,6 +100,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
     import moment from "moment"
@@ -191,8 +192,8 @@
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false")
     const dashboardRef = useTemplateRef("dashboard")
 
-    const isFlowEdit = computed(() => route.name === "flows/update")
-    const isNamespaceEdit = computed(() => route.name === "namespaces/update")
+    const isFlowEdit = computed(() => routeFamily(route.name) === "flows/update")
+    const isNamespaceEdit = computed(() => routeFamily(route.name) === "namespaces/update")
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"

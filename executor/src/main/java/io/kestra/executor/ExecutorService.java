@@ -217,45 +217,31 @@ public class ExecutorService {
         return executor;
     }
 
-    public Execution onNexts(Execution execution, List<TaskRun> nexts) {
+    public Execution onNext(Execution execution, int nextCount) {
         if (log.isTraceEnabled()) {
             Logs.logExecution(
                 execution,
                 Level.TRACE,
-                "Found {} next(s) {}",
-                nexts.size(),
-                nexts
+                "Found {} next(s) tasks to process",
+                nextCount
             );
         }
 
-        List<TaskRun> executionTasksRun;
-        Execution newExecution;
-
-        if (execution.getTaskRunList() == null) {
-            executionTasksRun = nexts;
-        } else {
-            executionTasksRun = new ArrayList<>(execution.getTaskRunList());
-            executionTasksRun.addAll(nexts);
+        if (execution.getState().getCurrent() != State.Type.CREATED) {
+            return execution;
         }
 
-        // update Execution
-        newExecution = execution.withTaskRunList(executionTasksRun);
+        metricRegistry
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
+            .increment();
 
-        if (execution.getState().getCurrent() == State.Type.CREATED) {
-            metricRegistry
-                .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
-                .increment();
+        Logs.logExecution(
+            execution,
+            Level.INFO,
+            "Flow started"
+        );
 
-            Logs.logExecution(
-                execution,
-                Level.INFO,
-                "Flow started"
-            );
-
-            newExecution = newExecution.withState(State.Type.RUNNING);
-        }
-
-        return newExecution;
+        return execution.withState(State.Type.RUNNING);
     }
 
     public ExecutorContext handleFailedExecutionFromExecutor(ExecutorContext executor, Exception e) {
@@ -566,8 +552,7 @@ public class ExecutorService {
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
 
-            // For running flowable tasks: compute both next task runs and the worker task result in a single pass,
-            // but only when a child can actually progress — avoids rebuilding a RunContext (and its output query) on cycles that can only resolve empty.
+            // For running flowable tasks: compute both next task runs and the worker task result in a single pass.
             if (taskRun.getState().isRunning() && task instanceof FlowableTask<?> && this.canChildrenProgress(executor.getExecution(), taskRun)) {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
                 nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));

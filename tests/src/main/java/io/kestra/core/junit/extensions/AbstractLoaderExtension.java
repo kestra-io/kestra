@@ -17,9 +17,7 @@ import java.util.stream.Stream;
 
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.opentest4j.TestAbortedException;
 
-import io.kestra.core.junit.services.ContextShutdownRecorder;
 import io.kestra.core.junit.services.TestTenantLifecycle;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -66,20 +64,12 @@ public abstract class AbstractLoaderExtension {
     }
 
     /**
-     * Abort the test when the context has already been stopped, rather than letting a fixture fails with
-     * an unrelated error.
-     * <p>
-     * Reported as aborted rather than failed.
-     * The abort reason carries the recorded shutdown so it survives in the JUnit report. Note this only
-     * covers a context that has finished stopping, which is what produces a null-property binding;
-     * a resolution racing an in-progress {@code stop()} can still fail in its own way.
+     * Aborts the test when this extension's context has already been stopped.
+     *
+     * @see ExtensionUtils#abortIfContextStopped(ApplicationContext)
      */
     protected void abortIfContextStopped() {
-        if (!context.isRunning()) {
-            throw new TestAbortedException(
-                "Application context is no longer running, skipping test. %s".formatted(ContextShutdownRecorder.describeLastShutdown(context))
-            );
-        }
+        ExtensionUtils.abortIfContextStopped(context);
     }
 
     /**

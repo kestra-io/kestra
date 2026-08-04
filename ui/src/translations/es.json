@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Este archivo tiene un tamaño de {size}. Puede tardar un tiempo en cargarse, bloqueando su navegador. ¿Desea cargarlo de todos modos?",
-      "load_anyway": "Cargar de todos modos"
+      "load_anyway": "Cargar de todos modos",
+      "load_error": "No se pudo cargar la vista previa del archivo. Puede tratarse de un problema temporal o de permisos.",
+      "retry": "Reintentar",
+      "html_asset_warning": "Esta vista previa renderiza el HTML en un marco aislado. Los recursos locales como imágenes y hojas de estilo referenciados mediante rutas relativas no se cargarán.",
+      "html_preview_title": "Vista previa del archivo HTML"
     },
     "no_variables": "No hay variables disponibles.",
     "download": "Descargar",

@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "在{count}+个插件中搜索",
+      "search": "搜索 1400+ 插件",
       "searchTasks": "搜索 {count} 个 task",
       "noResults": "没有插件符合您的搜索。",
       "loadError": "无法加载插件。请重试。",

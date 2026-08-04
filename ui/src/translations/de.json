@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Suche in {count}+ Plugins",
+      "search": "Suchen in über 1400 Plugins",
       "searchTasks": "Suche {count} Tasks",
       "noResults": "Keine Plugins entsprechen Ihrer Suche.",
       "loadError": "Konnte Plugins nicht laden. Bitte versuchen Sie es erneut.",
@@ -1713,7 +1713,7 @@
         "remove": "Entfernen",
         "empty": "Sie haben noch keine Suche gespeichert.",
         "tooltip": "Sie können keine leeren Suchkriterien speichern.",
-        "name_already_used": "Suchbegriff {label} bereits verwendet.",
+        "name_already_used": "Suchlabel bereits verwendet.",
         "dialog": {
           "heading": "Aktuelle Suche speichern",
           "placeholder": "Label",

@@ -875,7 +875,7 @@
       "strategy": "使用する戦略を選択してください:",
       "options": {
         "skip": "見逃されたスケジュールを回復しない",
-        "follow": "triggerのプロパティ設定に従う"
+        "follow": "triggerの{property}設定に従う"
       }
     },
     "flow source not found": "フローソースが見つかりません",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ プラグインを検索",
+      "search": "1400以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
       "noResults": "検索に一致するプラグインがありません。",
       "loadError": "プラグインを読み込めませんでした。もう一度お試しください。",

@@ -534,9 +534,9 @@
     },
     "last execution date": "अंतिम निष्पादन तिथि",
     "last execution state": "अंतिम स्थिति",
-    "last X days count": "{दिनों} दिनों में {गिनती}",
-    "date range count": "{startDate} और {endDate} के बीच {गिनती}",
-    "date count": "{तारीख} पर {गिनती}",
+    "last X days count": "{count} पिछले {days} दिनों में",
+    "date range count": "{startDate} और {endDate} के बीच {count}",
+    "date count": "{count} {date} को",
     "revisions": "पुनरीक्षण",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
     "no revisions": "कोई संशोधन नहीं",
@@ -875,7 +875,7 @@
       "strategy": "उपयोग करने के लिए रणनीति चुनें:",
       "options": {
         "skip": "छूटी हुई अनुसूचियां पुनर्प्राप्त न करें",
-        "follow": "trigger के गुणधर्म कॉन्फ़िगरेशन का पालन करें"
+        "follow": "trigger के {property} कॉन्फ़िगरेशन का पालन करें"
       }
     },
     "flow source not found": "Flow source नहीं मिला",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ प्लगइन्स में खोजें",
+      "search": "1400+ plugins भर में खोजें",
       "searchTasks": "{count} tasks खोजें",
       "noResults": "आपकी खोज से कोई प्लगइन मेल नहीं खाता।",
       "loadError": "प्लगइन्स लोड नहीं हो सके। कृपया पुनः प्रयास करें।",

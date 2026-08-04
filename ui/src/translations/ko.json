@@ -255,7 +255,7 @@
     "replay from beginning tooltip": "처음부터 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
     "replayed": "실행이 재생되었습니다.",
-    "replay confirm": "재실행 하시겠습니까?",
+    "replay confirm": "이 실행 <code>{id}</code>을(를) 재실행하여 새 실행을 생성하시겠습니까?",
     "replay with inputs": "입력과 함께 재실행",
     "reuse_original_inputs": "원래 input 재사용",
     "modify_inputs": "입력 수정",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ 플러그인 검색",
+      "search": "1400개 이상의 플러그인 검색",
       "searchTasks": "{count}개의 task 검색",
       "noResults": "검색어와 일치하는 플러그인이 없습니다.",
       "loadError": "플러그인을 로드할 수 없습니다. 다시 시도해 주세요.",

@@ -205,10 +205,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return false
     }
 
+    const silent = {showMessageOnError: false} as Parameters<typeof DashboardsAPI.dashboard>[1]
+
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id}) as Dashboard
+            data = await DashboardsAPI.dashboard({id}, silent) as Dashboard
         } catch {
             return undefined
         }
@@ -242,7 +244,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
+            return await DashboardsAPI.dashboardChartData(
+                {id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0],
+                silent as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[1],
+            )
         } catch (e: any) {
             if (e.status === 404) return undefined
             throw e

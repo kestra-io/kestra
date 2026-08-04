@@ -384,6 +384,7 @@
 
     defineExpose({
         refresh,
+        total: computed(() => generated.value?.total ?? 0),
     })
 
     watch(() => route.params.filters, () => refresh(), {deep: true})

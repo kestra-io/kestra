@@ -83,7 +83,7 @@ export function compareTranslations(translationsDir: string, languages: string[]
 
     // English is the source every locale is generated from, so a broken message there spreads.
     const englishBroken = checkCompiles("en", englishStrings)
-    console.warn(`---\n\x1b[34mComparison with EN\x1b[0m  \n`)
+    console.warn("---\n\x1b[34mComparison with EN\x1b[0m  \n")
     console.warn(englishBroken.length ? `Uncompilable messages: \x1b[31m${englishBroken.join("\n  ")}\x1b[0m` : "No uncompilable messages.")
     console.warn("---\n")
 

@@ -19,6 +19,7 @@ const meta: Meta<typeof KsSelect> = {
         disabled: {control: "boolean"},
         allowCreate: {control: "boolean"},
         loading: {control: "boolean"},
+        selectAll: {control: "boolean"},
     },
     parameters: {
         docs: {
@@ -425,6 +426,40 @@ export const RichOptionContent: Story = {
         `,
     }),
     args: {size: "small", placeholder: "Previous versions"},
+}
+
+/** selectAll – "Select All / Deselect All" header for MULTISELECT flow inputs */
+export const SelectAll: Story = {
+    render: (args) => ({
+        components: {KsSelect, ElOption},
+        setup() {
+            const value = ref<string[]>([])
+            const JOBS = [
+                "CREATED", "RUNNING", "PAUSED",
+                "SUCCESS", "WARNING", "FAILED",
+                "KILLED", "CANCELLED",
+            ]
+            return {args, value, JOBS}
+        },
+        template: `
+            <div style="padding:24px;min-height:360px;display:flex;flex-direction:column;gap:12px">
+                <ks-select v-model="value" v-bind="args" style="width:300px">
+                    <ks-option v-for="j in JOBS" :key="j" :value="j" :label="j" />
+                </ks-select>
+                <span style="font-size:13px;opacity:0.6">Selected: {{ value.join(', ') || '(none)' }}</span>
+            </div>
+        `,
+    }),
+    args: {multiple: true, filterable: true, clearable: true, selectAll: true, placeholder: "Select statuses"},
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        const trigger = canvas.getByRole("combobox")
+        await userEvent.click(trigger)
+        const header = document.querySelector(".kel-select-all-header")
+        await expect(header).toBeTruthy()
+        const selectAllBtn = header?.querySelector("button")
+        await expect(selectAllBtn).toBeTruthy()
+    },
 }
 
 /** Label slot – as used in Plugin.vue for version display */

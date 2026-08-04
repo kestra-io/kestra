@@ -1,13 +1,21 @@
 <template>
-    <ElSelect v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
+    <ElSelect ref="elSelectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
         <template v-if="$slots.prefix" #prefix>
             <slot name="prefix" />
         </template>
-        <template v-if="$slots.header" #header>
-            <slot name="header" />
+        <template v-if="(selectAll && multiple) || $slots.header" #header>
+            <div v-if="selectAll && multiple" class="kel-select-all-header">
+                <button type="button" class="kel-select-all-btn" @click="selectAllVisible()">
+                    {{ $t('filter.select all') }}
+                </button>
+                <button v-if="model?.length" type="button" class="kel-select-all-btn" @click="model = []">
+                    {{ $t('filter.deselect all') }}
+                </button>
+            </div>
+            <slot v-if="$slots.header" name="header" />
         </template>
         <template v-if="$slots.footer" #footer>
             <slot name="footer" />
@@ -22,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-    import {type Component, computed, h, markRaw} from "vue"
+    import {type Component, computed, h, markRaw, ref} from "vue"
     import {ElSelect} from "element-plus"
     import Loading from "vue-material-design-icons/Loading.vue"
     import KsIcon from "../../Basic/KsIcon.vue"
@@ -53,6 +61,7 @@
         suffixIcon?: Component | string
         loading?: boolean
         fit?: boolean
+        selectAll?: boolean
     }>(), {
         placeholder: undefined,
         size: undefined,
@@ -70,6 +79,14 @@
         change: [value: any]
     }>()
 
+    const elSelectRef = ref<InstanceType<typeof ElSelect>>()
+
+    const selectAllVisible = (): void => {
+        const opts: Array<{visible: boolean; value: any}> = (elSelectRef.value as any)?.optionsArray ?? []
+        const values = opts.filter(o => o.visible).map(o => o.value)
+        model.value = [...new Set([...(model.value ?? []), ...values])]
+    }
+
     defineSlots<{
         default?(): unknown
         prefix?(): unknown
@@ -79,7 +96,7 @@
         tag?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading"])
+    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading", "selectAll"])
 
     // `loading` is intentionally NOT forwarded to ElSelect: ElSelect v-shows its option
     // list on `!loading`, so forwarding would hide still-valid options while they
@@ -258,5 +275,28 @@
 
     .kel-icon.kel-select__caret.kel-select__icon {
         font-size: var(--ks-font-size-md);
+    }
+
+    .kel-select-all-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--ks-spacing-2) var(--ks-spacing-3);
+        border-bottom: 1px solid var(--ks-border-default);
+
+        .kel-select-all-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: var(--ks-font-size-xs);
+            font-weight: var(--ks-font-weight-semibold);
+            color: var(--ks-text-link);
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
     }
 </style>

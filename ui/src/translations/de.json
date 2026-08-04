@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Diese Datei ist {size}. Es kann eine Weile dauern, sie zu laden, was Ihren Browser blockieren könnte. Möchten Sie sie trotzdem laden?",
-      "load_anyway": "Trotzdem laden"
+      "load_anyway": "Trotzdem laden",
+      "load_error": "Die Dateivorschau konnte nicht geladen werden. Möglicherweise handelt es sich um ein vorübergehendes Problem oder ein Berechtigungsproblem.",
+      "retry": "Erneut versuchen",
+      "html_asset_warning": "Diese Vorschau rendert das HTML in einem isolierten Frame. Lokale Assets wie Bilder und Stylesheets, die über relative Pfade referenziert werden, werden nicht geladen.",
+      "html_preview_title": "Vorschau der HTML-Datei"
     },
     "no_variables": "Keine Variablen verfügbar.",
     "download": "Herunterladen",

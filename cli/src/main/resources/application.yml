@@ -130,18 +130,11 @@ grpc:
 endpoints:
   all:
     port: 8081
-    enabled: true
-    sensitive: false
   health:
-    details-visible: ANONYMOUS
     disk-space:
       enabled: false
     discovery-client:
       enabled: false
-  loggers:
-    write-sensitive: false
-  env:
-    enabled: true
 
 kestra:
   tutorial-flows:

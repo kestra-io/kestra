@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Ten plik ma rozmiar {size}. Może to chwilę potrwać, blokując przeglądarkę. Czy chcesz go mimo to załadować?",
-      "load_anyway": "Załaduj mimo to"
+      "load_anyway": "Załaduj mimo to",
+      "load_error": "Nie udało się załadować podglądu pliku. Może to być problem tymczasowy lub problem z uprawnieniami.",
+      "retry": "Ponów próbę",
+      "html_asset_warning": "Ten podgląd renderuje HTML w izolowanej ramce. Lokalne zasoby, takie jak obrazy i arkusze stylów, do których odwołują się ścieżki względne, nie zostaną załadowane.",
+      "html_preview_title": "Podgląd pliku HTML"
     },
     "no_variables": "Brak dostępnych zmiennych.",
     "download": "Pobierz",

@@ -76,7 +76,6 @@
                     <DynamicScrollerItem
                         :item="asLog(item)"
                         :active="active"
-                        :sizeDependencies="[asLog(item).message]"
                         :data-index="asLog(item).index"
                         :key="asLog(item).uid"
                     >

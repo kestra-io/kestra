@@ -60,7 +60,7 @@ public class FlowExecutorExtension extends AbstractLoaderExtension implements Af
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws Exception {
-        if (!context.isRunning()) {
+        if (!isContextRunning()) {
             return;
         }
 

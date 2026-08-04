@@ -244,6 +244,7 @@
     /* The running spinner sits at the same neutral weight as the tool label; motion carries the
        "in progress" meaning (completed/failed states use a coloured check/cross instead). */
     .copilot-tool-spinner {
+        margin-right: var(--ks-spacing-1);
         color: var(--ks-icon-default);
         animation: copilot-tool-spin 1s linear infinite;
     }

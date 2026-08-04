@@ -2140,14 +2140,14 @@
         },
         "toolCall": "Wird ausgeführt {tool}",
         "context": {
-          "app": "App: {{app}}",
+          "app": "App: {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Dashboard: {{dashboard}}",
-          "execution": "Ausführung: {{id}}",
+          "dashboard": "Dashboard: {dashboard}",
+          "execution": "Ausführung: {id}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {{namespace}}",
+          "namespace": "Namespace: {namespace}",
           "plugin": "Plugin: {plugin}",
-          "test": "Test: {{test}}"
+          "test": "Test: {test}"
         },
         "contextAdded": "Hinzugefügt {type} {id} zum Kontext.",
         "contextNoun": {
@@ -2163,9 +2163,9 @@
         "contextRemoved": "Entfernt {type} {id} aus dem Kontext.",
         "toolResult": {
           "detail": "Details",
-          "error": "{{tool}} fehlgeschlagen",
+          "error": "{tool} fehlgeschlagen",
           "ok": "{tool} abgeschlossen",
-          "rejected": "{{tool}} abgelehnt"
+          "rejected": "{tool} abgelehnt"
         },
         "confirm": {
           "planTitle": "Planentwurf",
@@ -2239,7 +2239,7 @@
           "openInEditor": "Im Editor öffnen",
           "apply": "Anwenden",
           "applyTitle": "flow anwenden",
-          "applyConfirm": "Den flow {{namespace}}.{{id}} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
+          "applyConfirm": "Den flow {namespace}.{id} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
           "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",
           "applyError": "Der flow konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",
           "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",

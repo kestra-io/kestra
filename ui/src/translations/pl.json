@@ -2142,10 +2142,10 @@
         "context": {
           "app": "Aplikacja: {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Pulpit nawigacyjny: {{dashboard}}",
+          "dashboard": "Pulpit nawigacyjny: {dashboard}",
           "execution": "Wykonanie: {id}",
-          "flow": "Flow: {{flow}}",
-          "namespace": "Namespace: {{namespace}}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {namespace}",
           "plugin": "Wtyczka: {plugin}",
           "test": "Test: {test}"
         },
@@ -2163,9 +2163,9 @@
         "contextRemoved": "Usunięto {type} {id} z kontekstu.",
         "toolResult": {
           "detail": "Szczegóły",
-          "error": "{{tool}} nie powiodło się",
+          "error": "{tool} nie powiodło się",
           "ok": "{tool} zakończono",
-          "rejected": "{{tool}} odrzucony"
+          "rejected": "{tool} odrzucony"
         },
         "confirm": {
           "planTitle": "Proponowany plan",
@@ -2437,7 +2437,7 @@
     },
     "mcp": {
       "your_servers": "Twoje Serwery",
-      "servers_count": "{{count}} Serwerów MCP",
+      "servers_count": "{count} Serwerów MCP",
       "managed_by_kestra": "Zarządzane przez Kestra",
       "servers": "Serwery MCP",
       "server": "Serwer MCP",

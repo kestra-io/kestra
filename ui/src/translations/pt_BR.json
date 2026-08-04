@@ -2142,7 +2142,7 @@
         "context": {
           "app": "Aplicativo: {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Dashboard: {{dashboard}}",
+          "dashboard": "Dashboard: {dashboard}",
           "execution": "Execução: {id}",
           "flow": "Flow: {flow}",
           "namespace": "Namespace: {namespace}",
@@ -2163,9 +2163,9 @@
         "contextRemoved": "Removido {type} {id} do contexto.",
         "toolResult": {
           "detail": "Detalhes",
-          "error": "{{tool}} falhou",
-          "ok": "{{tool}} concluído",
-          "rejected": "{{tool}} rejeitado"
+          "error": "{tool} falhou",
+          "ok": "{tool} concluído",
+          "rejected": "{tool} rejeitado"
         },
         "confirm": {
           "planTitle": "Plano Proposto",

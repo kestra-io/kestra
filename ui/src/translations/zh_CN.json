@@ -318,7 +318,7 @@
     "resumed title": "恢复执行 <code>{id}</code>",
     "resumed confirm": "确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
-    "resume from breakpoint title": "从断点恢复执行 `{{id}}`",
+    "resume from breakpoint title": "从断点恢复执行 `{id}`",
     "resume from breakpoint done": "执行已从断点恢复",
     "breakpoints": "断点",
     "pause": "暂停",
@@ -869,7 +869,7 @@
     "trigger disabled": "在Flow源中触发器已禁用",
     "trigger enable dialog": {
       "title": "启用 trigger",
-      "bulk title": "启用 {{count}} triggers",
+      "bulk title": "启用 {count} triggers",
       "description": "此 trigger 在被禁用期间可能错过了计划。",
       "bulk description": "选定的 triggers 在它们被禁用期间可能错过了调度。",
       "strategy": "选择要使用的策略：",
@@ -2140,12 +2140,12 @@
         },
         "toolCall": "正在运行 {tool}",
         "context": {
-          "app": "应用: {{app}}",
+          "app": "应用: {app}",
           "blueprint": "Blueprint：{blueprint}",
-          "dashboard": "仪表盘：{{dashboard}}",
+          "dashboard": "仪表盘：{dashboard}",
           "execution": "执行：{id}",
-          "flow": "Flow：{{flow}}",
-          "namespace": "Namespace: {{namespace}}",
+          "flow": "Flow：{flow}",
+          "namespace": "Namespace: {namespace}",
           "plugin": "插件: {plugin}",
           "test": "测试: {test}"
         },
@@ -2163,9 +2163,9 @@
         "contextRemoved": "已从上下文移除 {type} {id}。",
         "toolResult": {
           "detail": "详情",
-          "error": "{{tool}} 失败",
-          "ok": "{{tool}} 已完成",
-          "rejected": "{{tool}} 拒绝"
+          "error": "{tool} 失败",
+          "ok": "{tool} 已完成",
+          "rejected": "{tool} 拒绝"
         },
         "confirm": {
           "planTitle": "建议计划",
@@ -2239,7 +2239,7 @@
           "openInEditor": "在编辑器中打开",
           "apply": "应用",
           "applyTitle": "应用 flow",
-          "applyConfirm": "应用 flow {{namespace}}.{{id}}？它将被创建，如果已存在则会被覆盖。",
+          "applyConfirm": "应用 flow {namespace}.{id}？它将被创建，如果已存在则会被覆盖。",
           "applyConfirmDashboard": "应用仪表盘 {id}？它将被创建，如果已存在则会覆盖。",
           "applyError": "无法应用该 flow。请重试。",
           "applyErrorDashboard": "未能应用仪表盘。请重试。",

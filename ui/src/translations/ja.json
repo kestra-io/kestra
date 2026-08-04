@@ -869,7 +869,7 @@
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
     "trigger enable dialog": {
       "title": "trigger を有効化",
-      "bulk title": "{{count}} triggers を有効にする",
+      "bulk title": "{count} triggers を有効にする",
       "description": "この trigger は、無効化されている間にスケジュールが実行されなかった可能性があります。",
       "bulk description": "選択されたトリガーは、無効化されている間にスケジュールを見逃した可能性があります。",
       "strategy": "使用する戦略を選択してください:",
@@ -2138,14 +2138,14 @@
         "empty": {
           "title": "あなたのアイデアをワークフローに変えましょう"
         },
-        "toolCall": "{{tool}} 実行中",
+        "toolCall": "{tool} 実行中",
         "context": {
           "app": "アプリ: {app}",
           "blueprint": "Blueprint: {blueprint}",
           "dashboard": "ダッシュボード: {dashboard}",
           "execution": "実行: {id}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {{namespace}}",
+          "namespace": "Namespace: {namespace}",
           "plugin": "プラグイン: {plugin}",
           "test": "テスト: {test}"
         },
@@ -2163,8 +2163,8 @@
         "contextRemoved": "コンテキストから {type} {id} を削除しました。",
         "toolResult": {
           "detail": "詳細",
-          "error": "{{tool}} が失敗しました",
-          "ok": "{{tool}} が完了しました",
+          "error": "{tool} が失敗しました",
+          "ok": "{tool} が完了しました",
           "rejected": "{tool} 拒否されました"
         },
         "confirm": {
@@ -2239,7 +2239,7 @@
           "openInEditor": "エディターで開く",
           "apply": "適用",
           "applyTitle": "flow を適用",
-          "applyConfirm": "flow {{namespace}}.{{id}} を適用しますか？作成されるか、既に存在する場合は上書きされます。",
+          "applyConfirm": "flow {namespace}.{id} を適用しますか？作成されるか、既に存在する場合は上書きされます。",
           "applyConfirmDashboard": "ダッシュボード {id} を適用しますか？作成されます。既に存在する場合は上書きされます。",
           "applyError": "flowの適用に失敗しました。もう一度お試しください。",
           "applyErrorDashboard": "ダッシュボードを適用できませんでした。もう一度お試しください。",
@@ -2437,7 +2437,7 @@
     },
     "mcp": {
       "your_servers": "あなたのサーバー",
-      "servers_count": "{{count}} MCPサーバー",
+      "servers_count": "{count} MCPサーバー",
       "managed_by_kestra": "Kestraによって管理されています",
       "servers": "MCPサーバー",
       "server": "MCPサーバー",

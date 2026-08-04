@@ -2140,9 +2140,9 @@
         },
         "toolCall": "Executando {tool}",
         "context": {
-          "app": "Aplicativo: {{app}}",
+          "app": "Aplicativo: {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Painel: {{dashboard}}",
+          "dashboard": "Painel: {dashboard}",
           "execution": "Execução: {id}",
           "flow": "Flow: {flow}",
           "namespace": "Namespace: {namespace}",
@@ -2437,7 +2437,7 @@
     },
     "mcp": {
       "your_servers": "Seus Servidores",
-      "servers_count": "{{count}} Servidores MCP",
+      "servers_count": "{count} Servidores MCP",
       "managed_by_kestra": "Gerenciado por Kestra",
       "servers": "Servidores MCP",
       "server": "Servidor MCP",

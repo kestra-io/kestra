@@ -2141,7 +2141,7 @@
         "toolCall": "{tool} चल रहा है",
         "context": {
           "app": "एप्लिकेशन: {app}",
-          "blueprint": "Blueprint: {{blueprint}}",
+          "blueprint": "Blueprint: {blueprint}",
           "dashboard": "डैशबोर्ड: {dashboard}",
           "execution": "निष्पादन: {id}",
           "flow": "Flow: {flow}",
@@ -2164,8 +2164,8 @@
         "toolResult": {
           "detail": "विवरण",
           "error": "{tool} विफल रहा",
-          "ok": "{{tool}} पूरा हुआ",
-          "rejected": "{{tool}} अस्वीकृत"
+          "ok": "{tool} पूरा हुआ",
+          "rejected": "{tool} अस्वीकृत"
         },
         "confirm": {
           "planTitle": "प्रस्तावित योजना",
@@ -2239,8 +2239,8 @@
           "openInEditor": "संपादक में खोलें",
           "apply": "लागू करें",
           "applyTitle": "flow लागू करें",
-          "applyConfirm": "flow {{namespace}}.{{id}} को लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
-          "applyConfirmDashboard": "डैशबोर्ड {{id}} लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
+          "applyConfirm": "flow {namespace}.{id} को लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
+          "applyConfirmDashboard": "डैशबोर्ड {id} लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
           "applyError": "flow लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
           "applyErrorDashboard": "डैशबोर्ड लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
           "applyNoTarget": "इस ड्राफ्ट में लागू करने के लिए कोई namespace या id नहीं है।",
@@ -2437,7 +2437,7 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{{count}} MCP Servers",
+      "servers_count": "{count} MCP Servers",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "server": "MCP सर्वर",

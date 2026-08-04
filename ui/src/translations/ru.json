@@ -1862,7 +1862,6 @@
     "learn_more": "Узнать больше",
     "watch_video": "Смотреть видео",
     "runners": "Запуски",
-    "select": "Выберите ваш {{section}}",
     "for flow": "для flow",
     "forbidden system labels": "Только system.correlationId можно использовать как system label",
     "confirm": "Подтвердить",

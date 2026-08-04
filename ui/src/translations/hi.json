@@ -1862,7 +1862,6 @@
     "learn_more": "और जानें",
     "watch_video": "वीडियो देखें",
     "runners": "धावक",
-    "select": "अपने {{section}} का चयन करें",
     "for flow": "फ्लो के लिए",
     "forbidden system labels": "सिर्फ़ system.correlationId को system label के रूप में उपयोग किया जा सकता है",
     "confirm": "पुष्टि करें",

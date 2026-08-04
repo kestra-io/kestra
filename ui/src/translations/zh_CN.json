@@ -1862,7 +1862,6 @@
     "learn_more": "了解更多",
     "watch_video": "观看视频",
     "runners": "运行者",
-    "select": "选择您的{{section}}",
     "for flow": "用于 flow",
     "forbidden system labels": "只有 system.correlationId 可以用作系统 label",
     "confirm": "确认",

@@ -1862,7 +1862,6 @@
     "learn_more": "Learn more",
     "watch_video": "Watch Video",
     "runners": "Runners",
-    "select": "Select your {{section}}",
     "for flow": "for flow",
     "forbidden system labels": "Only system.correlationId can be used as a system label",
     "confirm": "Confirm",

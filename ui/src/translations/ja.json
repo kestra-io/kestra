@@ -1862,7 +1862,6 @@
     "learn_more": "詳細を確認",
     "watch_video": "ビデオを見る",
     "runners": "ランナー",
-    "select": "{{section}}を選択してください",
     "for flow": "フロー用",
     "forbidden system labels": "system label として使用できるのは system.correlationId のみです",
     "confirm": "確認",

@@ -3,13 +3,13 @@ import {type AppliedFilter, type FilterGroup, type LeafFilterGroup, type Logical
 import {MAX_RENDERABLE_NESTING_DEPTH} from "./constants"
 
 /**
- * Decodes a raw `filters[...]` query-param value. Exported because callers translating the route
- * into a backend request payload decode the same values as {@link decodeSearchParams} does.
+ * Normalizes a `filters[...]` query-param value after vue-router (or
+ * {@link parseFiltersFromString}) has already decoded it.
  */
 export const decodeFilterValue = (value: string | (string | null)[]): string | string[] =>
     Array.isArray(value)
-        ? value.filter(v => v !== null).map(decodeURIComponent)
-        : decodeURIComponent(value)
+        ? value.filter((item): item is string => item !== null)
+        : value
 
 export function getComparator(comparatorKey: keyof typeof Comparators): Comparators {
     return Comparators[comparatorKey]

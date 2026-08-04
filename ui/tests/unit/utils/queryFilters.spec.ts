@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import {parseQuery, stringifyQuery} from "vue-router"
 import {Comparators, encodeFilterGroupsToQuery, keyOfComparator} from "@kestra-io/design-system"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {createConfigureClient} from "../../../packages/hey-api-plugin/src/runtime"
@@ -178,6 +179,28 @@ describe("routeQueryToQueryFilters", () => {
         expect(params.get(`filters[${logical}][1][labels][${operation}][url]`)).toBe("https://stage:9443/b")
     })
 
+    it("preserves percent characters through the real router and HTTP wire", () => {
+        const query = encodeFilterGroupsToQuery([{
+            id: "g1",
+            kind: "leaf",
+            filters: [{
+                id: "f1",
+                key: "labels",
+                keyLabel: "Labels",
+                comparator: Comparators.IN,
+                comparatorLabel: Comparators.IN,
+                value: ["discount:50%", "discount:literal%2Fpath", "discount:literal%25value"],
+                valueLabel: "50%, literal%2Fpath, literal%25value",
+            }],
+        }], keyOfComparator)
+        const routed = parseQuery(stringifyQuery(query))
+        const params = new URLSearchParams(serializeQueryFilters(routeQueryToQueryFilters(routed)))
+
+        expect(params.get("filters[or][0][labels][IN][discount]")).toBe("50%")
+        expect(params.get("filters[or][1][labels][IN][discount]")).toBe("literal%2Fpath")
+        expect(params.get("filters[or][2][labels][IN][discount]")).toBe("literal%25value")
+    })
+
     it("serializes a leaf alongside a nested logical group", () => {
         const filters = routeQueryToQueryFilters({
             "filters[tenantId][EQUALS]": "tenant-1",
@@ -237,6 +260,24 @@ describe("routeQueryToQueryFilters", () => {
 
         expect(params.get("filters[state][IN]")).toBe("RUNNING,FAILED")
         expect(params.has("filters")).toBe(false)
+    })
+
+    it.each([
+        ["a sparse array", (() => {
+            const value = Array(2)
+            value[1] = "RUNNING"
+            return value
+        })()],
+        ["a null member", ["RUNNING", null]],
+        ["a self-cycle", (() => {
+            const value: any[] = []
+            value.push(value)
+            return value
+        })()],
+    ])("rejects %s as an array-valued filter leaf", (_, value) => {
+        expect(() => serializeQuery({
+            filters: [{field: "state", operation: "IN", value}],
+        })).toThrow("Invalid QueryFilter array")
     })
 
     it("rejects an accessor-backed filter without invoking it when a later filter is invalid", () => {
@@ -340,6 +381,41 @@ describe("routeQueryToQueryFilters", () => {
         ]))
 
         expect(params.get("filters[state][EQUALS]")).toBe("RUNNING")
+    })
+
+    it("serializes a stateful custom class value exactly once", () => {
+        let calls = 0
+        class FilterValue {
+            toString() {
+                calls++
+                return calls === 1 ? "FIRST" : "SECOND"
+            }
+        }
+
+        const params = new URLSearchParams(serializeQueryFilters([
+            {field: "state", operation: "EQUALS", value: new FilterValue()},
+        ]))
+
+        expect(params.get("filters[state][EQUALS]")).toBe("FIRST")
+        expect(calls).toBe(1)
+    })
+
+    it("rejects an array proxy that hides an invalid sibling", () => {
+        const target = [
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            null,
+        ]
+        const filters = new Proxy(target, {
+            get: (source, property, receiver) => property === "length"
+                ? 1
+                : Reflect.get(source, property, receiver),
+            ownKeys: source => Reflect.ownKeys(source).filter(key => key !== "1"),
+            getOwnPropertyDescriptor: (source, property) => property === "1"
+                ? undefined
+                : Reflect.getOwnPropertyDescriptor(source, property),
+        })
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
     })
 
     it("rejects a custom filter class with private state before an invalid sibling", () => {

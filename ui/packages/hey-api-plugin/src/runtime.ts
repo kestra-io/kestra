@@ -51,21 +51,13 @@ interface FormDataBodySerializer {
     bodySerializer: (...args: any[]) => any;
 }
 
-function canBeJsonified(str: any): boolean {
-    if (typeof str !== "string" && typeof str !== "object") return false
-    try {
-        const type = str.toString()
-        return type === "[object Object]" || type === "[object Array]"
-    } catch {
-        return false
-    }
-}
-
 function serializeQueryValue(val: unknown): string | undefined {
-    if (canBeJsonified(val)) {
+    if (val == null) return undefined
+    const serialized = val.toString()
+    if (serialized === "[object Object]" || serialized === "[object Array]") {
         return JSON.stringify(val)
     }
-    return val?.toString()
+    return serialized
 }
 
 /**
@@ -110,32 +102,59 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     return prototype === null || prototype === Object.prototype || !Object.getOwnPropertyDescriptor(prototype, "constructor")
                 }
 
-                const snapshotQueryValue = (input: any, seen = new WeakMap<object, any>(), snapshotCustomObject = false): any => {
+                const snapshotQueryValue = (
+                    input: any,
+                    seen = new WeakMap<object, any>(),
+                    active = new WeakSet<object>(),
+                    snapshotCustomObject = false,
+                ): any => {
                     if (input == null || typeof input !== "object") return input
 
                     const prototype = Object.getPrototypeOf(input)
                     if (!snapshotCustomObject && !Array.isArray(input) && !isObjectRecord(input)) return input
+                    if (active.has(input)) throw new TypeError("Invalid QueryFilter array")
 
                     const existing = seen.get(input)
                     if (existing) return existing
 
-                    const snapshot = Array.isArray(input) ? new Array(input.length) : Object.create(snapshotCustomObject ? null : prototype)
-                    seen.set(input, snapshot)
-                    for (const key of Object.keys(input)) {
-                        const descriptor = Object.getOwnPropertyDescriptor(input, key)
-                        if (!descriptor || !("value" in descriptor)) throw new TypeError("Invalid QueryFilter array")
-                        Object.defineProperty(snapshot, key, {
-                            value: snapshotQueryValue(
-                                descriptor.value,
-                                seen,
-                                snapshotCustomObject && (Array.isArray(input) || key === "children"),
-                            ),
-                            enumerable: true,
-                            configurable: true,
-                            writable: true,
-                        })
+                    active.add(input)
+                    try {
+                        if (Array.isArray(input)) {
+                            const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length")
+                            const length = lengthDescriptor && "value" in lengthDescriptor ? lengthDescriptor.value : undefined
+                            if (!Number.isSafeInteger(length) || length < 0) throw new TypeError("Invalid QueryFilter array")
+
+                            const snapshot = new Array(length)
+                            seen.set(input, snapshot)
+                            for (let index = 0; index < length; index++) {
+                                const descriptor = Object.getOwnPropertyDescriptor(input, String(index))
+                                if (!descriptor || !("value" in descriptor) || !descriptor.enumerable) throw new TypeError("Invalid QueryFilter array")
+                                snapshot[index] = snapshotQueryValue(descriptor.value, seen, active, snapshotCustomObject)
+                            }
+                            return snapshot
+                        }
+
+                        const snapshot = Object.create(snapshotCustomObject ? null : prototype)
+                        seen.set(input, snapshot)
+                        for (const key of Object.keys(input)) {
+                            const descriptor = Object.getOwnPropertyDescriptor(input, key)
+                            if (!descriptor || !("value" in descriptor)) throw new TypeError("Invalid QueryFilter array")
+                            Object.defineProperty(snapshot, key, {
+                                value: snapshotQueryValue(
+                                    descriptor.value,
+                                    seen,
+                                    active,
+                                    snapshotCustomObject && key === "children",
+                                ),
+                                enumerable: true,
+                                configurable: true,
+                                writable: true,
+                            })
+                        }
+                        return snapshot
+                    } finally {
+                        active.delete(input)
                     }
-                    return snapshot
                 }
 
                 const serializeQueryFilterArray = (filters: any[], prefix = "filters", indexed = false): Array<[string, string]> | undefined => {
@@ -162,9 +181,14 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     if (typeof field !== "string" || typeof operation !== "string" || logical !== undefined || children !== undefined) return undefined
                     if (Array.isArray(value)) {
                         if (value.length === 0) return undefined
-                        const serialized = serializeQueryValue(value)
-                        if (serialized === undefined) return undefined
-                        return [[`${prefix}[${field}][${operation}]`, serialized]]
+                        const serializedValues: string[] = []
+                        for (let index = 0; index < value.length; index++) {
+                            if (!(index in value)) return undefined
+                            const serialized = serializeQueryValue(value[index])
+                            if (serialized === undefined || serialized === "") return undefined
+                            serializedValues.push(serialized)
+                        }
+                        return [[`${prefix}[${field}][${operation}]`, serializedValues.join(",")]]
                     }
                     if (typeof value === "object" && value != null && !Array.isArray(value) && isObjectRecord(value)) {
                         const entries = Object.entries(value)
@@ -192,7 +216,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     let serializedFilters: Array<[string, string]> | undefined
                     let fallbackParam = param
                     if (key === "filters" && Array.isArray(param)) {
-                        fallbackParam = snapshotQueryValue(param, new WeakMap(), true)
+                        fallbackParam = snapshotQueryValue(param, new WeakMap(), new WeakSet(), true)
                         try {
                             serializedFilters = serializeQueryFilterArray(fallbackParam)
                         } catch {

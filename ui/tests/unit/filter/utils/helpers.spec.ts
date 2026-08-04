@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import {parseQuery, stringifyQuery} from "vue-router"
 import {
     decodeSearchParams,
     encodeFiltersToQuery,
@@ -182,6 +183,26 @@ describe("Filter Helpers", () => {
                 ])
             },
         )
+
+        it("preserves percent characters after vue-router decodes the query", () => {
+            const groups: FilterGroup[] = [
+                leaf("g1", [{
+                    key: "labels",
+                    comparator: Comparators.IN,
+                    value: ["discount:50%", "discount:literal%2Fpath", "discount:literal%25value"],
+                }]),
+            ]
+            const query = encodeFilterGroupsToQuery(groups, keyOfComparator)
+            const routed = parseQuery(stringifyQuery(query))
+
+            expect(decodeSearchParams(routed)).toEqual([
+                {
+                    field: "labels",
+                    value: ["discount:50%", "discount:literal%2Fpath", "discount:literal%25value"],
+                    operation: "IN",
+                },
+            ])
+        })
 
         it("ignores malformed key-value entries while preserving valid labels", () => {
             const groups: FilterGroup[] = [

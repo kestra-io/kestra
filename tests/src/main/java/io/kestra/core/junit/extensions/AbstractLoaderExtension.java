@@ -17,7 +17,9 @@ import java.util.stream.Stream;
 
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.opentest4j.TestAbortedException;
 
+import io.kestra.core.junit.services.ContextShutdownRecorder;
 import io.kestra.core.junit.services.TestTenantLifecycle;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -64,11 +66,29 @@ public abstract class AbstractLoaderExtension {
     }
 
     /**
+     * Abort the test when the context has already been stopped, rather than letting a fixture fails with
+     * an unrelated error.
+     * <p>
+     * Reported as aborted rather than failed.
+     * The abort reason carries the recorded shutdown so it survives in the JUnit report. Note this only
+     * covers a context that has finished stopping, which is what produces a null-property binding;
+     * a resolution racing an in-progress {@code stop()} can still fail in its own way.
+     */
+    protected void abortIfContextStopped() {
+        if (!context.isRunning()) {
+            throw new TestAbortedException(
+                "Application context is no longer running, skipping test. %s".formatted(ContextShutdownRecorder.describeLastShutdown(context))
+            );
+        }
+    }
+
+    /**
      * Ensure the tenant a fixture targets exists before loading resources into it. No-op in OSS;
      * Enterprise replaces {@link TestTenantLifecycle} to actually create the tenant.
      */
     protected void createTenant(ExtensionContext extensionContext, String tenantId) {
         loadApplicationContext(extensionContext);
+        abortIfContextStopped();
         context.getBean(TestTenantLifecycle.class).create(tenantId);
     }
 
@@ -86,6 +106,7 @@ public abstract class AbstractLoaderExtension {
     protected void loadFlows(ExtensionContext extensionContext, String tenantId, String[] paths)
         throws IOException, URISyntaxException {
         loadApplicationContext(extensionContext);
+        abortIfContextStopped();
 
         LocalFlowRepositoryLoader repositoryLoader = context.getBean(
             LocalFlowRepositoryLoader.class

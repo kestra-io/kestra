@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "이 파일의 크기는 {size}입니다. 브라우저가 차단될 수 있으니 로드하는 데 시간이 걸릴 수 있습니다. 그래도 로드하시겠습니까?",
-      "load_anyway": "그래도 로드하기"
+      "load_anyway": "그래도 로드하기",
+      "load_error": "파일 미리보기를 로드하지 못했습니다. 일시적인 문제이거나 권한 문제일 수 있습니다.",
+      "retry": "다시 시도",
+      "html_asset_warning": "이 미리보기는 HTML을 샌드박스 프레임에서 렌더링합니다. 상대 경로로 참조된 이미지 및 스타일시트와 같은 로컬 자산은 로드되지 않습니다.",
+      "html_preview_title": "HTML 파일 미리보기"
     },
     "no_variables": "사용 가능한 변수가 없습니다.",
     "download": "다운로드",

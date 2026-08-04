@@ -33,8 +33,11 @@ const compileErrors = (message: string): string[] => {
  * Deduplicated, so a locale that collapses `{count} rule | {count} rules` into a single plural form
  * still matches English. `{'literal'}` escapes are not placeholders and are skipped.
  */
-const placeholders = (message: string): string[] =>
-    [...new Set([...message.replace(/\{'[^']*'\}/g, "").matchAll(/\{\s*([^{}\s][^{}]*?)\s*\}/g)].map((m) => m[1]))].sort()
+const placeholders = (message: string): string[] => {
+    // `\{` / `\}` backslash escapes and `{'...'}` literal blocks are text, not interpolation
+    const scannable = message.replace(/\\[{}]/g, "").replace(/\{'[^']*'\}/g, "")
+    return [...new Set([...scannable.matchAll(/\{\s*([^{}\s][^{}]*?)\s*\}/g)].map((m) => m[1]))].sort()
+}
 
 const getNestedKeys = (obj: Record<string, unknown>, prefix = ""): string[] =>
     Object.keys(obj).reduce((keys: string[], key: string) => {

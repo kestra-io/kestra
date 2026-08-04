@@ -418,6 +418,33 @@ describe("routeQueryToQueryFilters", () => {
         expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
     })
 
+    it("rejects an array proxy whose length descriptor hides an invalid sibling", () => {
+        const target = [
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            null,
+        ]
+        const filters = new Proxy(target, {
+            getOwnPropertyDescriptor: (source, property) => property === "length"
+                ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                : Reflect.getOwnPropertyDescriptor(source, property),
+        })
+
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("rejects an array proxy whose length descriptor hides an invalid leaf value", () => {
+        const target = ["RUNNING", null]
+        const value = new Proxy(target, {
+            getOwnPropertyDescriptor: (source, property) => property === "length"
+                ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                : Reflect.getOwnPropertyDescriptor(source, property),
+        })
+
+        expect(() => serializeQuery({
+            filters: [{field: "state", operation: "IN", value}],
+        })).toThrow("Invalid QueryFilter array")
+    })
+
     it.each([
         ["a string", "bad"],
         ["a number", 1],

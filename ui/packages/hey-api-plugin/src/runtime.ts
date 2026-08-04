@@ -122,7 +122,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                         if (Array.isArray(input)) {
                             const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length")
                             const length = lengthDescriptor && "value" in lengthDescriptor ? lengthDescriptor.value : undefined
-                            if (!Number.isSafeInteger(length) || length < 0) throw new TypeError("Invalid QueryFilter array")
+                            if (!Number.isSafeInteger(length) || length < 0 || input.length !== length) throw new TypeError("Invalid QueryFilter array")
 
                             const snapshot = new Array(length)
                             seen.set(input, snapshot)

@@ -77,7 +77,6 @@
                             <DynamicScrollerItem
                                 :item="item"
                                 :active="active"
-                                :sizeDependencies="[item.message, item.image, item.isGroup, item.isGroup && isGroupExpanded(currentTaskRunIndex, item)]"
                                 :data-index="item.index"
                             >
                                 <template v-if="item.isGroup">

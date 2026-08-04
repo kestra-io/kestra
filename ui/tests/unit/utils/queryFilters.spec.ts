@@ -418,6 +418,19 @@ describe("routeQueryToQueryFilters", () => {
         expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
     })
 
+    it.each([
+        ["a string", "bad"],
+        ["a number", 1],
+        ["a plain object", {field: "state", operation: "EQUALS", value: "RUNNING"}],
+        ["a custom class", new class FilterRoot { field = "state" }()],
+    ])("rejects %s as a non-array filters root", (_, filters) => {
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it("keeps null filters compatible with the generated optional no-filter contract", () => {
+        expect(serializeQuery({filters: null})).toBe("")
+    })
+
     it("rejects a custom filter class with private state before an invalid sibling", () => {
         class CustomFilter {
             readonly #value = "RUNNING"

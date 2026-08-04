@@ -213,6 +213,9 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     if (param === undefined) {
                         continue
                     }
+                    if (key === "filters" && param !== null && !Array.isArray(param)) {
+                        throw new TypeError("Invalid QueryFilter array")
+                    }
                     let serializedFilters: Array<[string, string]> | undefined
                     let fallbackParam = param
                     if (key === "filters" && Array.isArray(param)) {

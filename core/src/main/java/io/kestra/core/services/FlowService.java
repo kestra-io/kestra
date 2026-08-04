@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -52,6 +53,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.SecretUtils;
 import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.utils.PebbleUtil;
 import io.kestra.plugin.core.flow.Pause;
@@ -70,6 +72,8 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class FlowService {
+    private static final Pattern PEBBLE_FUNCTION_PATTERN = Pattern.compile("\\b([a-zA-Z0-9_]+)\\s*\\(");
+
     @Inject
     protected FlowRepositoryInterface flowRepository; // Used in EE
 
@@ -600,9 +604,8 @@ public class FlowService {
                 .filter(PebbleFunction::deprecated)
                 .collect(Collectors.toMap(PebbleFunction::name, f -> f));
             if (!deprecatedFunctions.isEmpty()) {
-                Pattern functionPattern = Pattern.compile("\\b([a-zA-Z0-9_]+)\\s*\\(");
                 PebbleUtil.replaceInBlock(flow.getSource(), block -> {
-                    Matcher matcher = functionPattern.matcher(block);
+                    Matcher matcher = PEBBLE_FUNCTION_PATTERN.matcher(block);
                     while (matcher.find()) {
                         String fnName = matcher.group(1);
                         PebbleFunction pf = deprecatedFunctions.get(fnName);

@@ -15,13 +15,6 @@ public interface KestraFunction extends Function {
      * Ordering is not required — callers use {@link #getArgumentNames()} to determine order.
      */
     Map<String, String> getArgumentDefaults();
-
-      /**
-     * Returns {@code true} if this Pebble function is deprecated.
-     */
-    default boolean isDeprecated() {
-        return getClass().isAnnotationPresent(Deprecated.class);
-    }
     /**
      * Returns the recommended replacement function name if deprecated, or {@code null}.
      */

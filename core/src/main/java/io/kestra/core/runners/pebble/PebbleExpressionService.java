@@ -50,7 +50,7 @@ public class PebbleExpressionService {
                 Function fn = entry.getValue();
                 List<String> argNames = fn.getArgumentNames();
                 Map<String, String> defaults = fn instanceof KestraFunction kf ? kf.getArgumentDefaults() : Map.of();
-                boolean deprecated = fn instanceof KestraFunction kf ? kf.isDeprecated() : fn.getClass().isAnnotationPresent(Deprecated.class);
+                boolean deprecated = fn.getClass().isAnnotationPresent(Deprecated.class);
                 String replacement = fn instanceof KestraFunction kf ? kf.replacement() : null;
                 List<PebbleFunction.Argument> arguments = argNames == null ? List.of() : argNames.stream()
                     .map(name -> new PebbleFunction.Argument(name, defaults.get(name)))

@@ -357,6 +357,32 @@ public class ExecutorService {
             .map(throwFunction(type -> new WorkerTaskResult(taskRun.withState(type))));
     }
 
+    /**
+     * A flowable can only create a new child task run, via {@code resolveNexts}, or terminate, via
+     * {@code resolveState}, when it has no child task run yet or when at least one of its child
+     * task runs has terminated — every {@code FlowableUtils.resolveSequentialNexts}/{@code resolveParallelNexts}/
+     * {@code resolveWaitForNext}/{@code resolveState} implementation already returns empty/absent
+     * otherwise. Checking this upfront avoids building a {@link RunContext} (and its output query)
+     * on cycles that can only resolve to nothing.
+     */
+    private boolean canChildrenProgress(Execution execution, TaskRun parentTaskRun) {
+        if (execution.getTaskRunList() == null) {
+            return true;
+        }
+
+        boolean hasChild = false;
+        for (TaskRun taskRun : execution.getTaskRunList()) {
+            if (parentTaskRun.getId().equals(taskRun.getParentTaskRunId())) {
+                hasChild = true;
+                if (taskRun.getState().isTerminated()) {
+                    return true;
+                }
+            }
+        }
+
+        return !hasChild;
+    }
+
     private List<TaskRun> childNextsTaskRun(ExecutorContext executor, TaskRun parentTaskRun, RunContext runContext) throws InternalException {
         Task parent = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
         if (parent instanceof FlowableTask<?> flowableParent) {
@@ -536,8 +562,9 @@ public class ExecutorService {
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
 
-            // For running flowable tasks: compute both next task runs and the worker task result in a single pass
-            if (taskRun.getState().isRunning() && task instanceof FlowableTask<?>) {
+            // For running flowable tasks: compute both next task runs and the worker task result in a single pass,
+            // but only when a child can actually progress — avoids rebuilding a RunContext (and its output query) on cycles that can only resolve empty.
+            if (taskRun.getState().isRunning() && task instanceof FlowableTask<?> && this.canChildrenProgress(executor.getExecution(), taskRun)) {
                 RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
                 nextTaskRuns.addAll(this.childNextsTaskRun(executor, taskRun, runContext));
                 this.childWorkerTaskResult(executor.getFlow(), executor.getExecution(), taskRun, runContext).ifPresent(list::add);

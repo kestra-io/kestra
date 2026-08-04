@@ -446,6 +446,42 @@ describe("routeQueryToQueryFilters", () => {
     })
 
     it.each([
+        ["root", new Proxy([
+            {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+            null,
+        ], {
+            get: (source, property, receiver) => property === "length" ? 1 : Reflect.get(source, property, receiver),
+            getOwnPropertyDescriptor: (source, property) => property === "length"
+                ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                : Reflect.getOwnPropertyDescriptor(source, property),
+        })],
+        ["leaf value", [{
+            field: "state",
+            operation: "IN",
+            value: new Proxy(["RUNNING", null], {
+                get: (source, property, receiver) => property === "length" ? 1 : Reflect.get(source, property, receiver),
+                getOwnPropertyDescriptor: (source, property) => property === "length"
+                    ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                    : Reflect.getOwnPropertyDescriptor(source, property),
+            }),
+        }]],
+        ["logical children", [{
+            logical: "or",
+            children: new Proxy([
+                {field: "namespace", operation: "EQUALS", value: "io.kestra"},
+                null,
+            ], {
+                get: (source, property, receiver) => property === "length" ? 1 : Reflect.get(source, property, receiver),
+                getOwnPropertyDescriptor: (source, property) => property === "length"
+                    ? {...Reflect.getOwnPropertyDescriptor(source, property)!, value: 1}
+                    : Reflect.getOwnPropertyDescriptor(source, property),
+            }),
+        }]],
+    ])("rejects a %s proxy that consistently hides an invalid sibling", (_, filters) => {
+        expect(() => serializeQuery({filters})).toThrow("Invalid QueryFilter array")
+    })
+
+    it.each([
         ["a string", "bad"],
         ["a number", 1],
         ["a plain object", {field: "state", operation: "EQUALS", value: "RUNNING"}],

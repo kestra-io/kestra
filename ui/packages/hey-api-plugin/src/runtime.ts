@@ -122,7 +122,7 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                         if (Array.isArray(input)) {
                             const lengthDescriptor = Object.getOwnPropertyDescriptor(input, "length")
                             const length = lengthDescriptor && "value" in lengthDescriptor ? lengthDescriptor.value : undefined
-                            if (!Number.isSafeInteger(length) || length < 0 || input.length !== length) throw new TypeError("Invalid QueryFilter array")
+                            if (!Number.isSafeInteger(length) || length < 0) throw new TypeError("Invalid QueryFilter array")
 
                             const snapshot = new Array(length)
                             seen.set(input, snapshot)
@@ -220,6 +220,11 @@ export function createConfigureClient<TClient extends ConfigurableFetchClient>(
                     let fallbackParam = param
                     if (key === "filters" && Array.isArray(param)) {
                         fallbackParam = snapshotQueryValue(param, new WeakMap(), new WeakSet(), true)
+                        try {
+                            structuredClone(param)
+                        } catch {
+                            throw new TypeError("Invalid QueryFilter array")
+                        }
                         try {
                             serializedFilters = serializeQueryFilterArray(fallbackParam)
                         } catch {

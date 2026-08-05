@@ -14,7 +14,7 @@
             <div class="filter-toolbar__search">
                 <KsSearch
                     v-model="searchText"
-                    :placeholder="$t('pluginPage.search')"
+                    :placeholder="$t('pluginPage.search', {count: baseList.length})"
                     clearable
                 />
             </div>

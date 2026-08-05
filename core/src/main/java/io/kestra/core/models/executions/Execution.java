@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
@@ -1089,5 +1090,11 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         crc32.update(this.toStringState().getBytes());
 
         return crc32.getValue();
+    }
+
+    public Duration getRunDuration() {
+        return ListUtils.emptyOnNull(this.taskRunList).stream()
+            .map(taskRun -> taskRun.getRunDuration())
+            .reduce(Duration.ZERO, Duration::plus);
     }
 }

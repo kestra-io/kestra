@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 
+import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
@@ -354,5 +356,11 @@ public class TaskRun implements TenantInterface {
         }
         this.attempts.add(attempt);
         return this;
+    }
+
+    public Duration getRunDuration() {
+        return ListUtils.emptyOnNull(this.attempts).stream()
+            .map(attempt -> attempt.getState().getDurationOrComputeIt())
+            .reduce(Duration.ZERO, Duration::plus);
     }
 }

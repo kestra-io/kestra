@@ -53,6 +53,9 @@ public record ExecutionStatistic(
      *        the execution's end date, falling back to the current time if not yet set).
      */
     public ExecutionStatistic(Execution execution, Instant bucket) {
+        var statistics = ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
+            .mapToLong(taskRun -> taskRun.getRunDuration().toMillis())
+            .summaryStatistics();
         this(
             execution.getTenantId(),
             execution.getNamespace(),
@@ -63,18 +66,10 @@ public record ExecutionStatistic(
             execution.getState().getDurationOrComputeIt().toMillis(),
             execution.getState().getDurationOrComputeIt().toMillis(),
             execution.getState().getDurationOrComputeIt().toMillis(),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).size(),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
-                .mapToLong(taskRun -> taskRun.getState().getDurationOrComputeIt().toMillis())
-                .sum(),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
-                .mapToLong(taskRun -> taskRun.getState().getDurationOrComputeIt().toMillis())
-                .min()
-                .stream().boxed().findFirst().orElse(null),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
-                .mapToLong(taskRun -> taskRun.getState().getDurationOrComputeIt().toMillis())
-                .max()
-                .stream().boxed().findFirst().orElse(null),
+            statistics.getCount(),
+            statistics.getSum(),
+            statistics.getCount() == 0 ? null : statistics.getMin(),
+            statistics.getCount() == 0 ? null : statistics.getMax(),
             execution.getId()
         );
     }

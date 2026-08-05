@@ -18,6 +18,8 @@ public class QueueConfiguration {
     @Nullable
     String prefix;
 
+    Boolean failFast = true;
+
     @Getter
     @ConfigurationProperties("message-protection")
     public static class MessageProtection {

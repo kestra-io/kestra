@@ -47,17 +47,21 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref} from "vue"
+    import {computed, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
     import {useI18n} from "vue-i18n"
     import TopNavBar from "../layout/TopNavBar.vue"
     import Empty from "../layout/empty/Empty.vue"
     import useRouteContext from "../../composables/useRouteContext"
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
-    import {apiUrl, apiUrlWithoutTenants} from "override/utils/route"
+    import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
 
     const {t} = useI18n()
+    const route = useRoute()
+
+    const baseUrl = computed(() => apiUrlWithTenant(route))
 
     const routeInfo = computed(() => {
         return {
@@ -81,7 +85,7 @@
     }>()
 
     async function loadData(){
-        const response = await axios.get(`${apiUrl()}/concurrency-limit/search`)
+        const response = await axios.get(`${baseUrl.value}/concurrency-limit/search`)
         if(response?.status !== 200){
             throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
         }
@@ -111,9 +115,7 @@
         editRunning.value = false
     }
 
-    onMounted(() => {
-        loadData()
-    })
+    watch(baseUrl, () => loadData(), {immediate: true})
 
     useRouteContext(routeInfo)
 </script>

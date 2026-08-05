@@ -26,7 +26,7 @@ dependencies {
     def jugVersion = "5.2.0"
     def langchain4jVersion = "1.18.1"
     def langchain4jCommunityVersion = "1.18.0-beta28"
-    def jettyVersion = "12.0.31" // Wiremock uses an older version as Micronaut
+    def jettyVersion = "12.1.11" // Wiremock uses an older version as Micronaut
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")

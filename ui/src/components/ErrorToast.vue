@@ -92,7 +92,10 @@
         close()
     })
 
-    onMounted(() => {
+    const show = () => {
+        // Close any previously open notification so a new message can surface it.
+        close()
+
         const error: ErrorEvent = {
             type: "ERROR",
             error: {
@@ -133,7 +136,14 @@
             dangerouslyUseHTMLString: true,
             customClass: isLargeNotification.value ? "error-notification kel-notification__large" : "error-notification",
         })
-    })
+    }
+
+    // The component stays mounted after the first error (coreStore.message is never reset),
+    // so a new message only replaces the prop — onMounted won't fire again. Watch the prop
+    // and re-open a fresh notification each time the message changes.
+    watch(() => props.message, show)
+
+    onMounted(show)
 </script>
 
 <style lang="scss" scoped>

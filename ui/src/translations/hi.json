@@ -439,6 +439,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "समानांतरता सीमाएँ",
+      "scope": "Scope",
       "warning": "चल रहे काउंटर को बदलने से concurrency खराब हो सकती है जिससे executions अनुमत सीमा से अधिक हो सकते हैं।"
     },
     "flowConcurrency": {

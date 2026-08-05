@@ -439,6 +439,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limiti di Concorrenza",
+      "scope": "Scope",
       "warning": "Modificare il contatore in esecuzione può corrompere la concorrenza, quindi le esecuzioni potrebbero superare il limite consentito."
     },
     "flowConcurrency": {

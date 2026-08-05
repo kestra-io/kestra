@@ -439,6 +439,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
+      "scope": "Scope",
       "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
     },
     "flowConcurrency": {

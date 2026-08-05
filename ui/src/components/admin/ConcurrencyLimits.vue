@@ -9,11 +9,16 @@
                     :data="data?.results"
                     stripe
                 >
+                    <KsTableColumn prop="scope" :label="$t('concurrency_limit.scope')">
+                        <template #default="scope">
+                            {{ $t(SCOPE_LABEL_KEYS[scopeOf(scope.row)]) }}
+                        </template>
+                    </KsTableColumn>
                     <KsTableColumn
                         v-for="k in KEYS"
                         :key="k"
                         :prop="k"
-                        :label="k"
+                        :label="$t(COLUMN_LABEL_KEYS[k])"
                     >
                         <template #default="scope">
                             <button v-if="k === 'running'" class="edit-running" @click="openDialog(scope.row)">
@@ -21,8 +26,19 @@
                                 <IconEdit />
                             </button>
                             <span v-else>
-                                {{ scope.row[k] }}
+                                {{ scope.row[k] === "" ? "-" : scope.row[k] }}
                             </span>
+                        </template>
+                    </KsTableColumn>
+                    <KsTableColumn columnKey="delete" className="row-action">
+                        <template #default="scope">
+                            <KsIconButton
+                                :tooltip="$t('delete')"
+                                placement="left"
+                                @click="removeLimit(scope.row)"
+                            >
+                                <IconDelete />
+                            </KsIconButton>
                         </template>
                     </KsTableColumn>
                 </KsTable>
@@ -55,10 +71,13 @@
     import useRouteContext from "../../composables/useRouteContext"
     import {useClient} from "@kestra-io/kestra-sdk"
     import IconEdit from "vue-material-design-icons/Pencil.vue"
+    import IconDelete from "vue-material-design-icons/Delete.vue"
     import {apiUrlWithTenant, apiUrlWithoutTenants} from "override/utils/route"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
+    import {useToast} from "../../utils/toast"
 
     const {t} = useI18n()
+    const toast = useToast()
     const route = useRoute()
 
     const baseUrl = computed(() => apiUrlWithTenant(route))
@@ -76,7 +95,40 @@
         running: number
     }
 
+    type Scope = "flow" | "namespace" | "tenant"
+
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"]
+
+    const COLUMN_LABEL_KEYS: Record<keyof ConcurrencyLimit, string> = {
+        tenantId: "tenant.name",
+        namespace: "namespace",
+        flowId: "flow",
+        running: "running",
+    }
+
+    const SCOPE_LABEL_KEYS: Record<Scope, string> = {
+        flow: "flow",
+        namespace: "namespace",
+        tenant: "tenant.name",
+    }
+
+    function scopeOf(row: ConcurrencyLimit): Scope {
+        if (row.flowId !== "") {
+            return "flow"
+        }
+        return row.namespace !== "" ? "namespace" : "tenant"
+    }
+
+    function rowName(row: ConcurrencyLimit): string {
+        switch (scopeOf(row)) {
+        case "flow":
+            return `${row.namespace}.${row.flowId}`
+        case "namespace":
+            return row.namespace
+        default:
+            return row.tenantId
+        }
+    }
 
     const axios = useClient()
     const data = ref<{
@@ -85,7 +137,7 @@
     }>()
 
     async function loadData(){
-        const response = await axios.get(`${baseUrl.value}/concurrency-limit/search`)
+        const response = await axios.get<{total: number; results: ConcurrencyLimit[]}>(`${baseUrl.value}/concurrency-limit/search`)
         if(response?.status !== 200){
             throw new Error(`Failed to load concurrency limits: status ${response?.status}`)
         }
@@ -110,9 +162,17 @@
     async function saveEditRunning(){
         if(editingRow.value){
             editingRow.value.running = newRunningCount.value
-            await axios.put(`${apiUrlWithoutTenants()}/${editingRow.value.tenantId}/concurrency-limit/${editingRow.value.namespace}/${editingRow.value.flowId}`, editingRow.value)
+            await axios.put<ConcurrencyLimit>(`${apiUrlWithoutTenants()}/${editingRow.value.tenantId}/concurrency-limit`, editingRow.value)
         }
         editRunning.value = false
+    }
+
+    function removeLimit(row: ConcurrencyLimit){
+        toast.confirm(t("delete confirm", {name: rowName(row)}), async () => {
+            await axios.delete<void>(`${apiUrlWithoutTenants()}/${row.tenantId}/concurrency-limit`, {params: {namespace: row.namespace, flowId: row.flowId}})
+            toast.deleted(rowName(row))
+            await loadData()
+        })
     }
 
     watch(baseUrl, () => loadData(), {immediate: true})

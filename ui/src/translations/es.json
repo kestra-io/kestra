@@ -439,6 +439,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Límites de Concurrencia",
+      "scope": "Scope",
       "warning": "Cambiar el contador en ejecución puede corromper la concurrencia, por lo que las ejecuciones pueden exceder el límite permitido."
     },
     "flowConcurrency": {

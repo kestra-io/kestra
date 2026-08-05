@@ -439,6 +439,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "并发限制",
+      "scope": "Scope",
       "warning": "更改运行计数器可能会破坏并发性，因此执行可能会超出允许的限制。"
     },
     "flowConcurrency": {

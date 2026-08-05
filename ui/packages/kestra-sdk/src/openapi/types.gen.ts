@@ -3208,6 +3208,51 @@ export type GetServiceResponses = {
 
 export type GetServiceResponse = GetServiceResponses[keyof GetServiceResponses];
 
+export type DeleteConcurrencyLimitData = {
+    body?: never;
+    path: {
+        tenant: string;
+    };
+    query: {
+        /**
+         * The namespace of the limit, empty for a tenant scoped limit
+         */
+        namespace: string;
+        /**
+         * The flow id of the limit, empty for namespace and tenant scoped limits
+         */
+        flowId: string;
+    };
+    url: '/api/v1/{tenant}/concurrency-limit';
+};
+
+export type DeleteConcurrencyLimitResponses = {
+    /**
+     * On success
+     */
+    204: void;
+};
+
+export type DeleteConcurrencyLimitResponse = DeleteConcurrencyLimitResponses[keyof DeleteConcurrencyLimitResponses];
+
+export type UpdateConcurrencyLimitData = {
+    body: ConcurrencyLimit;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/concurrency-limit';
+};
+
+export type UpdateConcurrencyLimitResponses = {
+    /**
+     * updateConcurrencyLimit 200 response
+     */
+    200: ConcurrencyLimit;
+};
+
+export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
+
 export type SearchConcurrencyLimitsData = {
     body?: never;
     path: {
@@ -3225,26 +3270,6 @@ export type SearchConcurrencyLimitsResponses = {
 };
 
 export type SearchConcurrencyLimitsResponse = SearchConcurrencyLimitsResponses[keyof SearchConcurrencyLimitsResponses];
-
-export type UpdateConcurrencyLimitData = {
-    body: ConcurrencyLimit;
-    path: {
-        namespace: string;
-        flowId: string;
-        tenant: string;
-    };
-    query?: never;
-    url: '/api/v1/{tenant}/concurrency-limit/{namespace}/{flowId}';
-};
-
-export type UpdateConcurrencyLimitResponses = {
-    /**
-     * updateConcurrencyLimit 200 response
-     */
-    200: ConcurrencyLimit;
-};
-
-export type UpdateConcurrencyLimitResponse = UpdateConcurrencyLimitResponses[keyof UpdateConcurrencyLimitResponses];
 
 export type SearchDashboardsData = {
     body?: never;

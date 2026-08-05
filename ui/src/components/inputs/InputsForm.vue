@@ -89,6 +89,7 @@
                     multiple
                     filterable
                     clearable
+                    selectAll
                     :allowCreate="input.allowCustomValue"
                     :disabled="isComputingInput(input.id)"
                     :placeholder="isComputingInput(input.id) ? t('loading') : undefined"

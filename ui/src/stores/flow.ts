@@ -163,7 +163,7 @@ export const useFlowStore = defineStore("flow", () => {
     const route = useRoute()
 
     const getNamespace = () => {
-        return route.query.namespace || defaultNamespace()
+        return route?.query?.namespace || defaultNamespace()
     }
 
     async function save(draft: boolean = false): Promise<FlowSaveOutcome> {

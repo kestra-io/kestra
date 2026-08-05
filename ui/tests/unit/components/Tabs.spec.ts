@@ -15,7 +15,7 @@ const router = createRouter({
     routes: [{path: "/", name: "home", component: {template: "<div />"}}],
 })
 
-const mountTabs = (props: Record<string, unknown>) =>
+const mountTabs = (props: InstanceType<typeof Tabs>["$props"]) =>
     mount(Tabs, {
         props,
         global: {

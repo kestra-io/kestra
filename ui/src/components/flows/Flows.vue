@@ -81,6 +81,11 @@
                 >
                     {{ $t("disable") }}
                 </KsButton>
+                <component
+                    :is="flowsExtension.bulkAction"
+                    v-if="flowsExtension.bulkAction && !dataTable?.queryBulkAction"
+                    :flows="dataTable?.selection ?? []"
+                />
             </template>
 
             <KsTableColumn

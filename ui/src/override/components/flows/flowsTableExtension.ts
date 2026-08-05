@@ -13,6 +13,7 @@ export interface FlowsTableExtensionColumn extends ColumnConfig {
 
 export interface FlowsTableExtension {
     columns: FlowsTableExtensionColumn[];
+    bulkAction?: Component;
     load?: (flows: FlowsTableFlowRef[]) => void;
 }
 

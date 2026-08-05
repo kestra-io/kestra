@@ -6,6 +6,7 @@
             controlsPosition="right"
             id="years"
             v-model="years"
+            :validateEvent="validateEvent"
             :min="0"
         />
     </div>
@@ -16,6 +17,7 @@
             controlsPosition="right"
             id="months"
             v-model="months"
+            :validateEvent="validateEvent"
             :min="0"
         />
     </div>
@@ -26,6 +28,7 @@
             controlsPosition="right"
             id="weeks"
             v-model="weeks"
+            :validateEvent="validateEvent"
             :min="0"
         />
     </div>
@@ -36,6 +39,7 @@
             controlsPosition="right"
             id="days"
             v-model="days"
+            :validateEvent="validateEvent"
             :min="0"
         />
     </div>
@@ -46,6 +50,7 @@
             controlsPosition="right"
             id="hours"
             v-model="hours"
+            :validateEvent="validateEvent"
             :min="0"
         />
     </div>
@@ -56,6 +61,7 @@
             controlsPosition="right"
             id="minutes"
             v-model="minutes"
+            :validateEvent="validateEvent"
             :min="0"
         />
     </div>
@@ -66,6 +72,7 @@
             controlsPosition="right"
             id="seconds"
             v-model="seconds"
+            :validateEvent="validateEvent"
             :min="0"
         />
     </div>
@@ -73,7 +80,7 @@
         <el-text size="small" :type="durationIssue ? 'danger': ''">
             {{ durationIssue ?? $t('input_custom_duration') }}
         </el-text>
-        <el-input type="text" id="customDuration" v-model="customDuration" @input="parseDuration" :placeholder="$t('datepicker.custom duration')" />
+        <el-input type="text" id="customDuration" v-model="customDuration" :validateEvent="validateEvent" @input="parseDuration" :placeholder="$t('datepicker.custom duration')" />
     </div>
 </template>
 
@@ -81,9 +88,16 @@
     import {Duration, Period} from "@js-joda/core";
     import {ref, watch, onMounted, onUpdated} from "vue";
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         modelValue?: string;
-    }>();
+        // Forwarded to every inner Element Plus control. onMounted seeds the seven number refs, whose
+        // watchers would otherwise validate the surrounding el-form-item with no user interaction — the
+        // parent gates this on its interactedInputs set. Defaults to Element Plus's own default.
+        validateEvent?: boolean;
+    }>(), {
+        modelValue: undefined,
+        validateEvent: true,
+    });
 
     const emit = defineEmits<{
         "update:model-value": [value: string | null];

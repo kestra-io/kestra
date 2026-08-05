@@ -428,7 +428,7 @@ export const RichOptionContent: Story = {
     args: {size: "small", placeholder: "Previous versions"},
 }
 
-/** selectAll – "Select All / Deselect All" header for MULTISELECT flow inputs */
+/** selectAll – "Select All" header row for MULTISELECT flow inputs; selects every option matching the active filter, then closes the dropdown */
 export const SelectAll: Story = {
     render: (args) => ({
         components: {KsSelect, ElOption},
@@ -455,9 +455,7 @@ export const SelectAll: Story = {
         const canvas = within(canvasElement)
         const trigger = canvas.getByRole("combobox")
         await userEvent.click(trigger)
-        const header = document.querySelector(".kel-select-all-header")
-        await expect(header).toBeTruthy()
-        const selectAllBtn = header?.querySelector("button")
+        const selectAllBtn = document.querySelector(".kel-select-all-btn")
         await expect(selectAllBtn).toBeTruthy()
     },
 }

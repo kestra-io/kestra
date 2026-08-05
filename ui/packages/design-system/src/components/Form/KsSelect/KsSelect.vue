@@ -6,15 +6,17 @@
         <template v-if="$slots.prefix" #prefix>
             <slot name="prefix" />
         </template>
-        <template v-if="(selectAll && multiple) || $slots.header" #header>
-            <div v-if="selectAll && multiple" class="kel-select-all-header">
-                <button type="button" class="kel-select-all-btn" @click="selectAllVisible()">
-                    {{ $t('filter.select all') }}
-                </button>
-                <button v-if="model?.length" type="button" class="kel-select-all-btn" @click="model = []">
-                    {{ $t('filter.deselect all') }}
-                </button>
-            </div>
+        <template v-if="showSelectAll || $slots.header" #header>
+            <button
+                v-if="showSelectAll"
+                type="button"
+                class="kel-select-all-btn"
+                role="checkbox"
+                :aria-checked="allVisibleSelected ? 'true' : (someVisibleSelected ? 'mixed' : 'false')"
+                @click="toggleSelectAll()"
+            >
+                {{ $t('filter.select all') }}
+            </button>
             <slot v-if="$slots.header" name="header" />
         </template>
         <template v-if="$slots.footer" #footer>
@@ -81,10 +83,32 @@
 
     const elSelectRef = ref<InstanceType<typeof ElSelect>>()
 
-    const selectAllVisible = (): void => {
-        const opts: Array<{visible: boolean; value: any}> = (elSelectRef.value as any)?.optionsArray ?? []
-        const values = opts.filter(o => o.visible).map(o => o.value)
-        model.value = [...new Set([...(model.value ?? []), ...values])]
+    // Options passing ElSelect's own filter. `optionsArray` is exposed as a ComputedRef in the
+    // Element Plus types but unwrapped on the instance proxy, hence the cast.
+    const visibleOptions = computed<Array<{visible: boolean; value: any}>>(() =>
+        ((elSelectRef.value as any)?.optionsArray ?? []).filter((o: {visible: boolean}) => o.visible),
+    )
+
+    // Selecting nothing is meaningless, so the action stays hidden until there is something to select.
+    const showSelectAll = computed(() => Boolean(props.selectAll && props.multiple && visibleOptions.value.length))
+
+    const selectedValues = computed(() => new Set(Array.isArray(model.value) ? model.value : []))
+
+    const allVisibleSelected = computed(() =>
+        visibleOptions.value.length > 0 && visibleOptions.value.every(o => selectedValues.value.has(o.value)),
+    )
+
+    const someVisibleSelected = computed(() =>
+        !allVisibleSelected.value && visibleOptions.value.some(o => selectedValues.value.has(o.value)),
+    )
+
+    const toggleSelectAll = (): void => {
+        const values = visibleOptions.value.map(o => o.value)
+        model.value = allVisibleSelected.value
+            ? [...selectedValues.value].filter(v => !values.includes(v))
+            : [...new Set([...selectedValues.value, ...values])]
+        // Closing also clears the filter query, so the next open starts from the full list.
+        elSelectRef.value?.blur()
     }
 
     defineSlots<{
@@ -230,6 +254,33 @@
             box-shadow: none;
         }
 
+        .kel-select-dropdown__header {
+            padding: var(--ks-spacing-1);
+            border-bottom: 1px solid var(--ks-border-default);
+        }
+
+        .kel-select-all-btn {
+            display: block;
+            position: relative;
+            width: 100%;
+            background: none;
+            border: none;
+            border-radius: var(--ks-radius-xs);
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-primary);
+            /* Mirrors the Element Plus option metrics — including the gutter kept free for the
+               check icon — so the row lines up with the list below. */
+            padding: 0 2rem 0 1.25rem;
+            height: 2.125rem;
+
+            &:hover {
+                background-color: var(--ks-bg-hover-elevated);
+            }
+        }
+
         .kel-select-dropdown__list {
             padding: var(--ks-spacing-1);
 
@@ -259,7 +310,8 @@
             }
         }
 
-        .kel-select-dropdown .kel-select-dropdown__item.is-selected::after {
+        .kel-select-dropdown .kel-select-dropdown__item.is-selected::after,
+        .kel-select-dropdown .kel-select-all-btn[aria-checked="true"]::after {
             content: "";
             position: absolute;
             right: 12px;
@@ -275,28 +327,5 @@
 
     .kel-icon.kel-select__caret.kel-select__icon {
         font-size: var(--ks-font-size-md);
-    }
-
-    .kel-select-all-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
-        border-bottom: 1px solid var(--ks-border-default);
-
-        .kel-select-all-btn {
-            background: none;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: var(--ks-font-size-xs);
-            font-weight: var(--ks-font-weight-semibold);
-            color: var(--ks-text-link);
-
-            &:hover {
-                text-decoration: underline;
-            }
-        }
     }
 </style>

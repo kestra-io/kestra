@@ -94,6 +94,29 @@ public abstract class AbstractMetricRepositoryTest {
         assertThat(aggregationResults.getAggregations().size()).isBetween(26, 27);
         assertThat(aggregationResults.getGroupBy()).isEqualTo("week");
 
+        // A window over 365 days groups by month; the bucket containing endDate must still be
+        // emitted, otherwise the most recent data point is silently zero-filled away (regression
+        // for JDBC backends walking un-floored buckets from startDate). endDate is captured fresh
+        // here (not the `now` above, which predates the save) so it is guaranteed to be at or
+        // after the counter's own timestamp.
+        ZonedDateTime monthlyEnd = ZonedDateTime.now();
+        aggregationResults = metricRepository.aggregateByFlowId(
+            tenant,
+            "namespace",
+            "flow",
+            null,
+            counter.getName(),
+            monthlyEnd.minusDays(400),
+            monthlyEnd,
+            "sum"
+        );
+
+        // The `timer` entry above reuses the metric name "counter" too, reporting its duration in
+        // milliseconds, so the expected sum is the counter's value plus the timer's millisecond value.
+        double expectedMonthlySum = 1.0 + timer.getValue();
+        assertThat(aggregationResults.getGroupBy()).isEqualTo("month");
+        assertThat(aggregationResults.getAggregations().stream().mapToDouble(bucket -> bucket.value).sum()).isEqualTo(expectedMonthlySum);
+
         // avg/min/max must aggregate over a window with mostly empty buckets without failing
         // (regression for the Elasticsearch backend returning a null value for empty buckets).
         for (String aggregation : List.of("avg", "min", "max")) {

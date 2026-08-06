@@ -2,6 +2,7 @@ package io.kestra.plugin.scripts.exec.scripts.runners;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
 class CommandsWrapperKoltpTest {
@@ -48,7 +50,7 @@ class CommandsWrapperKoltpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKoltp(new KoltpOptions(true, null))
+            .withKoltp(new KoltpOptions(true, null, null))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -76,7 +78,7 @@ class CommandsWrapperKoltpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKoltp(new KoltpOptions(true, "telemetry"))
+            .withKoltp(new KoltpOptions(true, "telemetry", null))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -101,6 +103,46 @@ class CommandsWrapperKoltpTest {
             JsonNode record = JacksonMapper.ofJson().readTree(line);
             assertThat(record.isObject()).isTrue();
         }
+    }
+
+    @Test
+    void shouldPassLogFlushIntervalOptionWhenConfigured() throws Exception {
+        // Given
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
+        CommandsWrapper wrapper = new CommandsWrapper(runContext)
+            .withTaskRunner(Process.instance())
+            .withKoltp(new KoltpOptions(true, "telemetry", Duration.ofSeconds(60)))
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
+            .withCommands(Property.ofValue(List.of("echo hello")));
+
+        // When
+        ScriptOutput run = wrapper.run();
+
+        // Then
+        assertThat(run.getExitCode()).isEqualTo(0);
+
+        List<String> finalCommands = runContext.render(wrapper.getCommands()).asList(String.class);
+        int logDirIndex = finalCommands.indexOf("--log-dir");
+        int logFlushIndex = finalCommands.indexOf("--log-flush-interval");
+        assertThat(logFlushIndex).isGreaterThan(logDirIndex);
+        assertThat(finalCommands.get(logFlushIndex + 1)).isEqualTo("60");
+        assertThat(logFlushIndex).isLessThan(finalCommands.indexOf("--"));
+    }
+
+    @Test
+    void shouldThrowWhenLogFlushIntervalIsSetWithoutLogDir() {
+        // Given
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
+        CommandsWrapper wrapper = new CommandsWrapper(runContext)
+            .withTaskRunner(Process.instance())
+            .withKoltp(new KoltpOptions(true, null, Duration.ofSeconds(60)))
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
+            .withCommands(Property.ofValue(List.of("echo hello")));
+
+        // When
+        // Then
+        assertThatThrownBy(wrapper::run).isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("The koltp 'logFlushInterval' option requires 'logDir' to be set.");
     }
 
     @Test
@@ -130,11 +172,12 @@ class CommandsWrapperKoltpTest {
         // When — withEnv re-invokes the all-args constructor and must thread the koltp options through.
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKoltp(new KoltpOptions(true, "telemetry"))
+            .withKoltp(new KoltpOptions(true, "telemetry", Duration.ofSeconds(60)))
             .withEnv(Map.of("FOO", "bar"));
 
         // Then
         assertThat(wrapper.getKoltp().isEnabled()).isTrue();
         assertThat(wrapper.getKoltp().logDir()).isEqualTo("telemetry");
+        assertThat(wrapper.getKoltp().logFlushInterval()).isEqualTo(Duration.ofSeconds(60));
     }
 }

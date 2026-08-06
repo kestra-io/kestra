@@ -206,8 +206,12 @@ public class CommandsWrapper implements TaskCommands {
             );
 
         if (this.isKoltpEnabled()) {
+            if (this.koltp.logFlushInterval() != null && this.koltp.logDir() == null) {
+                throw new IllegalArgumentException("The koltp 'logFlushInterval' option requires 'logDir' to be set.");
+            }
+
             String workingDir = String.valueOf(runnerVars.getOrDefault(ScriptService.VAR_WORKING_DIR, this.workingDirectory));
-            List<String> wrapped = new ArrayList<>(finalCommands.size() + 5);
+            List<String> wrapped = new ArrayList<>(finalCommands.size() + 7);
             if (!this.isWindowsTarget()) {
                 // The koltp APE binary cannot be exec'd directly without kernel binfmt support; its header is a valid shell script that bootstraps it.
                 wrapped.add("/bin/sh");
@@ -216,6 +220,10 @@ public class CommandsWrapper implements TaskCommands {
             if (this.koltp.logDir() != null) {
                 wrapped.add("--log-dir");
                 wrapped.add(this.koltp.logDir());
+                if (this.koltp.logFlushInterval() != null) {
+                    wrapped.add("--log-flush-interval");
+                    wrapped.add(String.valueOf(this.koltp.logFlushInterval().toSeconds()));
+                }
             }
             wrapped.add("--");
             wrapped.addAll(finalCommands);

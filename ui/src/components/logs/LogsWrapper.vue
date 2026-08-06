@@ -64,6 +64,20 @@
                             />
                         </div>
 
+                        <div
+                            v-if="logsStore.isCursorMode && logsStore.hasNextCursor"
+                            class="logs-cursor-nav"
+                        >
+                            <KsButton
+                                type="default"
+                                :loading="isLoading"
+                                :aria-label="t('next')"
+                                @click="loadNext"
+                            >
+                                {{ t("next") }}
+                            </KsButton>
+                        </div>
+
                         <div v-else-if="!isLoading">
                             <KsNoData
                                 :title="$t('no_logs_data_title')"
@@ -289,6 +303,18 @@
             })
     }
 
+    const loadNext = async () => {
+        if (!logsStore.hasNextCursor) return
+        isLoading.value = true
+        await logsStore.findLogs(loadQuery({
+            size: urlSize.value,
+            sort: "timestamp:desc",
+        }), logsStore.nextCursor)
+            .finally(() => {
+                isLoading.value = false
+            })
+    }
+
     const downloadOpen = ref(false)
     const downloadLevel = ref<string | undefined>(undefined)
     const downloadTimeRange = ref<string | undefined>(undefined)
@@ -347,7 +373,7 @@
 
     let lastCountedKey = ""
     const refreshLevelCounts = () => {
-        if (!loadInit.value || !isLevelRouteSettled.value || lastCountedKey === filterQueryKey.value) return
+        if (!loadInit.value || !isLevelRouteSettled.value || logsStore.isCursorMode || lastCountedKey === filterQueryKey.value) return
         const key = filterQueryKey.value
         lastCountedKey = key
         logsStore.levelCounts(loadQuery({})).then((counts) => {
@@ -460,6 +486,12 @@
 
     .shadow {
         box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
+    }
+
+    .logs-cursor-nav {
+        display: flex;
+        justify-content: center;
+        margin: 0 var(--ks-spacing-6) var(--ks-spacing-4);
     }
 
     .logs-toolbar {

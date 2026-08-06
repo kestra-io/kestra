@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {ref} from "vue"
+import {ref, computed} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import type {QueryFilter} from "@kestra-io/kestra-sdk"
 import {routeQueryToQueryFilters} from "../utils/queryFilters"
@@ -9,12 +9,13 @@ import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
 /** Splits a flat `{page, size, sort, "filters[field][OP]": value, ...}` options object
  * (as built by callers' `loadQuery()` route.query merges) into the SDK's declared
  * page/size/sort params plus a proper QueryFilter[] array. */
-function toSearchParams(options: Record<string, any>) {
+function toSearchParams(options: Record<string, any>, cursor?: string) {
     const {page, size, sort, ...filterKeys} = options
     return {
         page,
         size,
         sort: sort ? [sort] : undefined,
+        cursor,
         filters: routeQueryToQueryFilters(filterKeys),
     }
 }
@@ -38,17 +39,24 @@ export interface Log{
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
     const total = ref(0)
+    const paginationType = ref<"OFFSET" | "CURSOR">("OFFSET")
+    const nextCursor = ref<string | undefined>(undefined)
+
+    const isCursorMode = computed(() => paginationType.value === "CURSOR")
+    const hasNextCursor = computed(() => Boolean(nextCursor.value))
 
     let latestSearchId = 0
 
-    function findLogs(options: Record<string, any>) {
+    function findLogs(options: Record<string, any>, cursor?: string) {
         const searchId = ++latestSearchId
-        return LogsAPI.searchLogs(toSearchParams(options)).then(response => {
+        return LogsAPI.searchLogs(toSearchParams(options, cursor)).then(response => {
             const isSuperseded = searchId !== latestSearchId
             if (isSuperseded) return
 
             logs.value = response.results as unknown as Log[]
             total.value = response.total ?? 0
+            paginationType.value = response.type ?? "OFFSET"
+            nextCursor.value = response.nextCursor
         })
     }
 
@@ -93,6 +101,10 @@ export const useLogsStore = defineStore("logs", () => {
     return {
         logs,
         total,
+        paginationType,
+        nextCursor,
+        isCursorMode,
+        hasNextCursor,
         findLogs,
         deleteLogs,
         downloadLogs,

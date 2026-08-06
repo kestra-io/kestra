@@ -9,6 +9,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.test.annotation.MockBean;
@@ -109,6 +110,25 @@ class MetricRegistryTest {
             "namespace_id", "io.kestra.unittest",
             "state", "SUCCESS",
             "label_execution-label-foo",
+            "__none__"
+        );
+    }
+
+    @Test
+    void triggerTagsWithNullLabelsAndMetricsLabelsConfigured() {
+        when(mockConfig.getLabels()).thenReturn(
+            List.of("owner_team")
+        );
+
+        AbstractTrigger trigger = mock(AbstractTrigger.class);
+        when(trigger.getType()).thenReturn("io.kestra.plugin.core.trigger.Schedule");
+        when(trigger.getLabels()).thenReturn(null);
+
+        var tags = metricRegistry.tags(trigger);
+
+        assertThat(tags).containsExactly(
+            "trigger_type", "io.kestra.plugin.core.trigger.Schedule",
+            "label_owner_team",
             "__none__"
         );
     }

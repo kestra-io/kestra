@@ -13,6 +13,7 @@ This document provides essential information for AI coding agents working on the
 - **Surgical changes only**: touch **only** what is strictly necessary to achieve the goal.
 - **Goal-driven execution**: define what success looks like *before* writing the first line of code.
 - **Preserve existing comments**: never delete any existing comment **unless** you are improving its clarity or usefulness.
+- **Keep comments short and only where they earn their place**: a comment you write should be **one sentence**, or two at most when the *why* genuinely needs it (a non-obvious constraint, a workaround, a subtle ordering or concurrency requirement). Do **not** comment obvious code — no restating what the next line plainly says (`// increment the counter`), no narrating a self-explanatory getter, loop, or well-named call. If the code is readable, the comment is noise; if it isn't, prefer making the code clearer over explaining it.
 - **Write clear, maintainable, and well-documented code**
 - **Build & test are mandatory**
 
@@ -374,6 +375,11 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - Always add tests, keep your branch rebased instead of merged, and adhere to the commit message recommendations from https://www.conventionalcommits.org/en/v1.0.0.
 - Use types: chore, feat, fix, refactor, test, docs, build
 - Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
+
+## Issue guidelines
+- **Classify an issue with its GitHub issue type, not a `kind/*` label.** The `kind/bug` label is retired — do not add it. Set the type instead: `gh issue create --title … ` followed by `gh issue edit <number> --type Bug`, or `gh issue edit <number> --type Task|Feature|Epic`. Available types are `Task`, `Bug`, `Feature` and `Epic` (list them with `gh api /orgs/kestra-io/issue-types`).
+- **Do add the `area/*` labels** — `area/frontend`, `area/backend`, `area/devops`, `area/docs`, `area/plugin`, `area/qa`, `area/analytics` — since those drive routing and are still in use.
+- Leave triage labels such as `kind/cooldown` to `kestrabot`; it applies them automatically on new issues.
 
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.
 

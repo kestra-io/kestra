@@ -6,6 +6,8 @@ import java.io.File;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.statistics.ExecutionStatistic;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.State;
@@ -26,6 +29,7 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
@@ -53,6 +57,9 @@ class ExecutionControllerTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
+    private ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
+
+    @Inject
     private StorageInterface storageInterface;
 
     @Inject
@@ -60,6 +67,8 @@ class ExecutionControllerTest {
     private ReactorHttpClient client;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
+
+    private static final String AVERAGE_DURATION_NS = "io.kestra.tests.progress";
 
     @Test
     void getExecutionNotFound() {
@@ -545,4 +554,67 @@ class ExecutionControllerTest {
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
+    @Test
+    void shouldReturnNullAverageDurationWhenFlowHasNoStatistics() {
+        // Given a flow that never ran
+        String flowId = IdUtils.create();
+
+        // When
+        ExecutionController.ExecutionAverageDuration result = averageDuration(flowId);
+
+        // Then
+        assertThat(result.avgDurationMs()).isNull();
+        assertThat(result.count()).isZero();
+    }
+
+    @Test
+    void shouldWeightAverageDurationByExecutionCountWhenBucketsSpanSeveralDays() {
+        // Given one execution today (5_000ms) and three much shorter ones a week ago (2_000ms in
+        // total), the count-weighted average is 7_000/4 = 1_750ms. Averaging the two daily buckets'
+        // own averages instead would skew the result toward the single slow execution.
+        String flowId = IdUtils.create();
+        Instant today = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+        Instant lastWeek = today.minus(7, ChronoUnit.DAYS);
+        executionStatisticsRepository.saveBatch(
+            List.of(
+                executionStatistic(flowId, today, 5_000),
+                executionStatistic(flowId, lastWeek, 1_000),
+                executionStatistic(flowId, lastWeek, 500),
+                executionStatistic(flowId, lastWeek, 500)
+            )
+        );
+
+        // When
+        ExecutionController.ExecutionAverageDuration result = averageDuration(flowId);
+
+        // Then
+        assertThat(result.avgDurationMs()).isEqualTo(1_750L);
+        assertThat(result.count()).isEqualTo(4L);
+    }
+
+    private ExecutionController.ExecutionAverageDuration averageDuration(String flowId) {
+        return client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/namespaces/" + AVERAGE_DURATION_NS + "/flows/" + flowId + "/average-duration"),
+            ExecutionController.ExecutionAverageDuration.class
+        );
+    }
+
+    private ExecutionStatistic executionStatistic(String flowId, Instant bucket, long durationMs) {
+        return new ExecutionStatistic(
+            MAIN_TENANT,
+            AVERAGE_DURATION_NS,
+            flowId,
+            bucket,
+            State.Type.SUCCESS,
+            1,
+            durationMs,
+            durationMs,
+            durationMs,
+            1,
+            durationMs,
+            durationMs,
+            durationMs,
+            IdUtils.create()
+        );
+    }
 }

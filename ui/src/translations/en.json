@@ -107,6 +107,12 @@
     "total_duration": "Total duration",
     "running duration": "Running duration",
     "queued duration": "Queued duration",
+    "executionProgress": {
+        "title": "Execution progress",
+        "estimatedRemaining": "Est. remaining: {duration}",
+        "noBaseline": "No historical data — cannot estimate the remaining time",
+        "pastEstimate": "Running longer than usual"
+    },
     "choose file": "Choose a file or drop it here...",
     "launch execution": "Execute",
     "warning flow with triggers": "This flow contains triggers and a manual execution will fail if this flow depends on trigger expressions.",
@@ -422,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
-      "load_anyway": "Load anyway"
+      "load_anyway": "Load anyway",
+      "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
+      "retry": "Retry",
+      "html_asset_warning": "This preview renders the HTML in a sandboxed frame. Local assets such as images and stylesheets referenced by relative paths will not load.",
+      "html_preview_title": "HTML file preview"
     },
     "no_variables": "No variables available.",
     "download": "Download",
@@ -430,6 +440,13 @@
     "concurrency_limit": {
       "dialog_title": "Concurrency Limits",
       "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
+    },
+    "flowConcurrency": {
+      "loadError": "Failed to load the concurrency limit of this flow.",
+      "staleLimit": {
+        "message": "This flow no longer declares a concurrency block, but a limit record still counts {count} running execution(s). It no longer affects new executions and can be reset from Administration → Concurrency Limits.",
+        "title": "Leftover concurrency limit"
+      }
     },
     "documentation": {
       "documentation": "Documentation",
@@ -1328,9 +1345,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "Describe the workflow you want",
-            "body": "Describe what you want to automate, and the AI Copilot will draft it for you. The tour continues with a ready-made example flow, so nothing has to be typed here.",
-            "next": "Generate the flow"
+            "title": "Flows can be drafted from a prompt",
+            "body": "The tour uses a ready-made example flow, so nothing has to be typed here.",
+            "next": "Use the example flow"
           },
           "flow_generated": {
             "title": "This is a flow",
@@ -1348,7 +1365,7 @@
             "title": "Flows are edited like code",
             "body": "We added a <code>notify</code> task for you without the AI Copilot, so you can see what editing the YAML directly looks like. It posts the final result to Slack.",
             "next": "See the task docs",
-            "callout": "AI Copilot gave you the first draft; the editor is where you can iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
+            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
           },
           "editor_help": {
             "title": "The docs are next to the flow",
@@ -1415,7 +1432,7 @@
           "takeaways": {
             "copilot": {
               "title": "Flows generated from plain English",
-              "body": "Describe what you want to automate, and a flow is drafted by the AI Copilot. From there you refine it in the editor, with autocompletion and the <strong>Docs</strong> panel. Flows are run from the <strong>Execute</strong> button of the flow or of any execution."
+              "body": "Describe what you want to automate in the AI Copilot chat, and a first version of the flow is generated from the live flow schema. The same is possible from your editor or terminal: Claude Code, Cursor, and other coding agents can generate flows with the Kestra agent skills."
             },
             "restart": {
               "title": "Replay instead of running everything again",
@@ -1436,6 +1453,8 @@
           "start_building": "Start building",
           "docs": {
             "title": "Read more",
+            "copilot": "AI Copilot",
+            "agentSkills": "Agent skills",
             "autocompletion": "Autocompletion",
             "execution": "Executions",
             "replay": "Replay",
@@ -1816,7 +1835,9 @@
       "connection_lost": {
         "title": "Connection interrupted",
         "message": "We couldn't reach your Kestra instance. Make sure it's running, then refresh the page."
-      }
+      },
+      "opening_flow_editor": "Something went wrong while opening the flow editor",
+      "retry": "Retry"
     },
     "debug": "Debug",
     "default": "Default",

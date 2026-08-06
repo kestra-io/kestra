@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Requires(property = "kestra.kv.purge-expired.enabled", value = "true", defaultValue = "true")
+@Requires(property = "kestra.server-type", notEquals = "WORKER")
 @Singleton
 public class KVPurgeCleaner {
 

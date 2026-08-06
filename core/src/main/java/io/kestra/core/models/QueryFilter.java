@@ -716,7 +716,8 @@ public record QueryFilter(
                     Field.METADATA,
                     Field.ASSET_STATUS,
                     Field.LEASE_EXPIRY,
-                    Field.UPDATED
+                    Field.UPDATED,
+                    Field.LOCKED
                 );
             }
         },

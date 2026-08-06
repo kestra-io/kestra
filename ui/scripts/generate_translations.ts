@@ -6,7 +6,7 @@
  *   2. The design-system `*.locale.ts` files (ui/packages/design-system/.../  *.locale.ts),
  *      each of which holds every language in a single `export default { en: {...}, de: {...}, ... }`.
  *
- * Run from the repository root so the relative paths below resolve correctly:
+ * Runs from anywhere — from `ui/` via `npm run translations:generate`, or from the repository root:
  *   GEMINI_API_KEY=... node --experimental-strip-types ui/scripts/generate_translations.ts [true|false]
  *
  * The single positional argument mirrors `retranslate_modified_keys`: pass "true"
@@ -15,11 +15,45 @@
  * Requires the `@google/genai` package and Node 22+ (for native TypeScript type stripping and fs.globSync).
  */
 import {execFileSync} from "node:child_process"
-import {globSync, readFileSync, writeFileSync} from "node:fs"
+import {existsSync, globSync, readFileSync, writeFileSync} from "node:fs"
+import {dirname, resolve} from "node:path"
+import {fileURLToPath} from "node:url"
 import {GoogleGenAI} from "@google/genai"
+
+// Every path in this file — and the `git log`/`git show` pathspecs — is written relative to the
+// repository root, so the script anchors itself there rather than depending on where it was
+// launched from. Without this, running it from `ui/` would look for `ui/ui/src/translations`.
+process.chdir(resolve(dirname(fileURLToPath(import.meta.url)), "../.."))
 
 const MODEL = "gemini-2.5-flash"
 const client = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})
+
+/**
+ * Writes `nextContent` only if it differs from what is on disk by more than trailing whitespace,
+ * and matches the file's existing final-newline style when it does.
+ *
+ * Without this the generator is not formatting-neutral: it serialises with `JSON.stringify`, which
+ * emits no final newline, while most editors add one when a developer touches a language file by
+ * hand. Every scheduled run then stripped those twelve newlines back off and opened a PR whose
+ * entire diff was `\ No newline at end of file` — see #17823.
+ *
+ * @returns whether the file was written
+ */
+function writeIfChanged(filePath: string, nextContent: string): boolean {
+    if (!existsSync(filePath)) {
+        writeFileSync(filePath, nextContent)
+        return true
+    }
+
+    const currentContent = readFileSync(filePath, "utf-8")
+    if (currentContent.trimEnd() === nextContent.trimEnd()) return false
+
+    // Preserve whatever final-newline convention the file already uses, so a real content change
+    // doesn't smuggle in an unrelated whitespace flip alongside it.
+    const endsWithNewline = currentContent.endsWith("\n")
+    writeFileSync(filePath, endsWithNewline ? `${nextContent.trimEnd()}\n` : nextContent.trimEnd())
+    return true
+}
 
 type NestedValue = string | NestedValue[] | NestedDict;
 type NestedDict = {[key: string]: NestedValue};
@@ -244,7 +278,7 @@ async function main(
     const updatedTargetDict = unflattenDict(orderedTargetFlat)
 
     const output = {[languageCode]: updatedTargetDict}
-    writeFileSync(`ui/src/translations/${languageCode}.json`, JSON.stringify(output, null, 2))
+    writeIfChanged(`ui/src/translations/${languageCode}.json`, JSON.stringify(output, null, 2))
 }
 
 // ---------------------------------------------------------------------------
@@ -264,8 +298,6 @@ async function main(
 // re-serialise them back to TypeScript after filling in the translations.
 // ---------------------------------------------------------------------------
 
-const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/
-
 // Evaluate the body of a `*.locale.ts` default export into a plain object.
 // The files are pure data literals, so this is safe (and far simpler than parsing TS).
 function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
@@ -276,7 +308,11 @@ function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
 }
 
 // Serialise a value back to TypeScript source, matching the existing 4-space
-// indentation, trailing commas, and unquoted-identifier-keys style.
+// indentation and trailing-comma style. Keys are always quoted: many of them have to be
+// (`"customize tooltip"` contains a space), so quoting only the ones that strictly need it left
+// each file inconsistent with itself and made the serialiser rewrite whichever keys happened to be
+// stored the other way. Quoting everything is one rule, applied uniformly, and keeps regeneration
+// a no-op when nothing was translated.
 function serializeLocaleValue(value: NestedValue, indent: number): string {
     if (value === null || typeof value !== "object") {
         return JSON.stringify(value)
@@ -298,10 +334,8 @@ function serializeLocaleValue(value: NestedValue, indent: number): string {
         return "{}"
     }
 
-    const lines = entries.map(([k, v]) => {
-        const key = IDENTIFIER.test(k) ? k : JSON.stringify(k)
-        return `${padInner}${key}: ${serializeLocaleValue(v, indent + 1)},`
-    })
+    const lines = entries.map(([k, v]) =>
+        `${padInner}${JSON.stringify(k)}: ${serializeLocaleValue(v, indent + 1)},`)
     return `{\n${lines.join("\n")}\n${pad}}`
 }
 
@@ -398,7 +432,7 @@ async function translateLocaleFile(filePath: string, retranslateModifiedKeys: bo
         result[code] = unflattenDict(prunedTargetFlat)
     }
 
-    writeFileSync(filePath, serializeLocaleModule(result))
+    writeIfChanged(filePath, serializeLocaleModule(result))
 }
 
 const LANGUAGES: ReadonlyArray<readonly [string, string]> = [

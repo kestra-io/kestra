@@ -1,5 +1,6 @@
 <template>
     <NavBarAction
+        v-bind="$attrs"
         :disabled="!enabled"
         :icon="Pause"
         @click="click"
@@ -31,6 +32,8 @@
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useToast} from "../../../../../utils/toast"
+
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps({
         execution: {

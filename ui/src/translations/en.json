@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Search across 1400+ plugins",
+      "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
       "noResults": "No plugins match your search.",
       "loadError": "Could not load plugins. Please try again.",

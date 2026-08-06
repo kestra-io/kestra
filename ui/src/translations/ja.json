@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ プラグインを検索",
+      "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
       "noResults": "検索に一致するプラグインがありません。",
       "loadError": "プラグインを読み込めませんでした。もう一度お試しください。",

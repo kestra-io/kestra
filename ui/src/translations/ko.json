@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ 플러그인 검색",
+      "search": "{count}+개 플러그인 검색",
       "searchTasks": "{count}개의 task 검색",
       "noResults": "검색어와 일치하는 플러그인이 없습니다.",
       "loadError": "플러그인을 로드할 수 없습니다. 다시 시도해 주세요.",

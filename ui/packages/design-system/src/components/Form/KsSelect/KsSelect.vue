@@ -1,5 +1,5 @@
 <template>
-    <ElSelect ref="elSelectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit}" @change="emit('change', $event)">
+    <ElSelect ref="elSelectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit, 'kel-select--single-line-tags': singleLineTags}" @change="emit('change', $event)">
         <template v-if="$slots.default" #default>
             <slot />
         </template>
@@ -64,6 +64,7 @@
         loading?: boolean
         fit?: boolean
         selectAll?: boolean
+        singleLineTags?: boolean
     }>(), {
         placeholder: undefined,
         size: undefined,
@@ -120,7 +121,7 @@
         tag?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading", "selectAll"])
+    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading", "selectAll", "singleLineTags"])
 
     // `loading` is intentionally NOT forwarded to ElSelect: ElSelect v-shows its option
     // list on `!loading`, so forwarding would hide still-valid options while they
@@ -149,6 +150,33 @@
 
         &.fit-text .kel-select__input {
             width: fit-content !important;
+        }
+
+        &.kel-select--single-line-tags {
+            .kel-select__selection {
+                flex-wrap: nowrap;
+                overflow: clip;
+
+                .kel-tag {
+                    min-width: 0;
+
+                    .kel-tag__content {
+                        min-width: 0;
+                        overflow: hidden;
+                    }
+
+                    .kel-tag__close,
+                    [class*="kel-icon"],
+                    .material-design-icon {
+                        flex-shrink: 0;
+                    }
+                }
+            }
+
+            .kel-select__input-wrapper {
+                min-width: 2rem;
+                overflow: hidden;
+            }
         }
 
         &.kel-select--fit {

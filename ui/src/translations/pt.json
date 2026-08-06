@@ -765,8 +765,8 @@
     "dynamic": "Dinâmico",
     "choice": "Escolha",
     "sequential": "Sequencial",
-    "can not delete": "Não pode deletar",
-    "can not have less than 1 task": "Cada flow deve ter pelo menos uma task.",
+    "can not delete": "Não é possível excluir esta task",
+    "can not have less than 1 task": "Um flow deve ter pelo menos uma task. Adicione outra task antes de excluir esta.",
     "task id already exists": "Task Id já existe",
     "Task Id already exist in the flow": "Task Id {taskId} já existe no flow.",
     "task id": "Task ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Pesquisar em mais de {count} plugins",
+      "search": "Pesquisar em {count}+ plugins",
       "searchTasks": "Pesquisar {count} tasks",
       "noResults": "Nenhum plugin corresponde à sua pesquisa.",
       "loadError": "Não foi possível carregar os plugins. Por favor, tente novamente.",

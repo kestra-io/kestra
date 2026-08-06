@@ -765,8 +765,8 @@
     "dynamic": "डायनामिक",
     "choice": "विकल्प",
     "sequential": "अनुक्रमिक",
-    "can not delete": "हटाया नहीं जा सकता",
-    "can not have less than 1 task": "प्रत्येक flow में कम से कम एक Task होना चाहिए।",
+    "can not delete": "यह task हटाया नहीं जा सकता",
+    "can not have less than 1 task": "एक flow में कम से कम एक task होना चाहिए। इसे हटाने से पहले एक और task जोड़ें।",
     "task id already exists": "Task Id पहले से मौजूद है",
     "Task Id already exist in the flow": "Task Id {taskId} पहले से ही flow में मौजूद है।",
     "task id": "Task ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ प्लगइन्स में खोजें",
+      "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
       "noResults": "आपकी खोज से कोई प्लगइन मेल नहीं खाता।",
       "loadError": "प्लगइन्स लोड नहीं हो सके। कृपया पुनः प्रयास करें।",

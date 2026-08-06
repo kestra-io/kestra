@@ -680,7 +680,7 @@ subprojects {subProject ->
         }
 
         //These modules should not be published
-        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver", "worker", "scheduler", "worker-controller", "executor"]
         if (subProject.name in unpublishedModules){
             return
         }

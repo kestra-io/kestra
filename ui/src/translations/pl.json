@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Wyszukaj wśród {count}+ wtyczek",
+      "search": "Przeszukaj {count}+ wtyczek",
       "searchTasks": "Wyszukaj {count} tasków",
       "noResults": "Brak wtyczek pasujących do wyszukiwania.",
       "loadError": "Nie można załadować wtyczek. Proszę spróbować ponownie.",

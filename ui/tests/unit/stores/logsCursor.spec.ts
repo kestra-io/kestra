@@ -73,4 +73,21 @@ describe("logs store cursor pagination", () => {
         expect(store.hasNextCursor).toBe(false)
         expect(store.nextCursor).toBeUndefined()
     })
+
+    it("re-derives mode on each response: CURSOR then OFFSET flips back to offset", async () => {
+        searchLogs.mockResolvedValueOnce({results: [{message: "a"}], type: "CURSOR", nextCursor: "tok-1"})
+        const {useLogsStore} = await import("../../../src/stores/logs")
+        const store = useLogsStore()
+        await store.findLogs({page: 1, size: 25})
+        expect(store.isCursorMode).toBe(true)
+        expect(store.hasNextCursor).toBe(true)
+
+        searchLogs.mockResolvedValueOnce({results: [{message: "b"}], total: 7, type: "OFFSET"})
+        await store.findLogs({page: 1, size: 25})
+
+        expect(store.isCursorMode).toBe(false)
+        expect(store.total).toBe(7)
+        expect(store.hasNextCursor).toBe(false)
+        expect(store.nextCursor).toBeUndefined()
+    })
 })

@@ -1,28 +1,23 @@
 import {vueRouter} from "storybook-vue3-router";
 import type {Meta, StoryObj} from "@storybook/vue3";
 import {waitFor, within, userEvent, expect} from "storybook/test";
-import {vi} from "vitest";
 
-const {outputsState} = vi.hoisted(() => ({
-    outputsState: {
-        outputsInformation: [
-            {taskId: "http_request", taskRunId: "run-http", value: null, iteration: null, inline: false},
-            {taskId: "check_status", taskRunId: "run-check", value: null, iteration: null, inline: false},
-        ],
-        outputsByTaskRunId: {
-            "run-http": {code: 200, body: "healthy"},
-            "run-check": {passed: true},
-        } as Record<string, Record<string, unknown>>,
-    },
-}));
-
-vi.mock("@kestra-io/kestra-sdk/outputs", () => ({
-    taskOutputsInformation: vi.fn(async () => outputsState.outputsInformation),
-    taskRunOutputs: vi.fn(async ({taskRunId}: {taskRunId: string}) => outputsState.outputsByTaskRunId[taskRunId] ?? {}),
-}));
-
+import {mockStoryApiRoutes} from "../../../../.storybook/apiMock";
 import {useExecutionsStore} from "../../../../src/stores/executions";
 import ExecutionVariableExplorer from "../../../../src/components/executions/outputs/ExecutionVariableExplorer.vue";
+
+// Task-output payloads served through the fetch-layer API double (see meta.beforeEach below):
+// `vi.mock("@kestra-io/kestra-sdk/outputs")` would be a silent no-op here, because the SDK is a
+// pre-bundled dependency the vitest browser mocker cannot intercept.
+const OUTPUTS_INFORMATION = [
+    {taskId: "http_request", taskRunId: "run-http", value: null, iteration: null, inline: false},
+    {taskId: "check_status", taskRunId: "run-check", value: null, iteration: null, inline: false},
+];
+
+const OUTPUTS_BY_TASK_RUN_ID: Record<string, Record<string, unknown>> = {
+    "run-http": {code: 200, body: "healthy"},
+    "run-check": {passed: true},
+};
 
 /**
  * The explorer reads everything but task outputs straight from the active
@@ -84,6 +79,14 @@ const meta: Meta<typeof ExecutionVariableExplorer> = {
     component: ExecutionVariableExplorer,
     parameters: {layout: "fullscreen"},
     decorators: makeDecorators(),
+    // Runs after the preview-level beforeEach has reset the previous story's routes.
+    beforeEach() {
+        mockStoryApiRoutes({
+            [`GET /outputs/${FAKE_EXECUTION.id}`]: OUTPUTS_INFORMATION,
+            [`GET /outputs/${FAKE_EXECUTION.id}/run-http`]: OUTPUTS_BY_TASK_RUN_ID["run-http"],
+            [`GET /outputs/${FAKE_EXECUTION.id}/run-check`]: OUTPUTS_BY_TASK_RUN_ID["run-check"],
+        });
+    },
 };
 
 export default meta;

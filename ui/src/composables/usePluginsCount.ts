@@ -2,12 +2,12 @@ import {ref, type Ref} from "vue"
 import axios from "axios"
 import {API_URL} from "../stores/api"
 import {countUniquePluginElements, type Plugin} from "../utils/pluginUtils"
+// Build-time baseline for instances that cannot reach the public API at runtime.
+import {PLUGIN_CATALOG_COUNT} from "../utils/pluginCatalogCount"
 
-// Static fallback for air-gapped instances that cannot reach the public API.
-const FALLBACK_COUNT = 1000
 const PUBLIC_API_TIMEOUT_MS = 5000
 
-const totalPlugins = ref(FALLBACK_COUNT)
+const totalPlugins = ref(PLUGIN_CATALOG_COUNT)
 let pending: Promise<void> | null = null
 
 /**

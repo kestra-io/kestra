@@ -593,7 +593,7 @@
                     coreStore.message = {
                         variant: "error",
                         title: t("can not delete"),
-                        message: t("can not have less than 1 task"),
+                        content: t("can not have less than 1 task"),
                     }
                     return
                 }

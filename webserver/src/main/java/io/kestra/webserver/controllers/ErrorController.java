@@ -235,7 +235,7 @@ public class ErrorController {
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
             log.error("Server error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         } else {
-            log.trace("Client error: {}", e.getMessage() != null ? e.getMessage() : "", e);
+            log.debug("Client error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         }
 
         JsonError error = new JsonError(reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))

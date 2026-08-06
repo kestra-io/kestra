@@ -63,10 +63,12 @@ public record ExecutionStatistic(
             execution.getState().getDurationOrComputeIt().toMillis(),
             execution.getState().getDurationOrComputeIt().toMillis(),
             execution.getState().getDurationOrComputeIt().toMillis(),
-            ListUtils.emptyOnNull(execution.getTaskRunList()).size(),
+            ListUtils.emptyOnNull(execution.getTaskRunList()).size()
+                + (execution.getMetadata() != null ? execution.getMetadata().getAccumulatedTaskRunCount() : 0),
             ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
                 .mapToLong(taskRun -> taskRun.getState().getDurationOrComputeIt().toMillis())
-                .sum(),
+                .sum()
+                + (execution.getMetadata() != null ? execution.getMetadata().getAccumulatedTaskRunDurationSumMs() : 0),
             ListUtils.emptyOnNull(execution.getTaskRunList()).stream()
                 .mapToLong(taskRun -> taskRun.getState().getDurationOrComputeIt().toMillis())
                 .min()

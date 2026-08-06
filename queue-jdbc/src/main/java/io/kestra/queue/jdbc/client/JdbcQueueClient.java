@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.google.common.base.CaseFormat;
+import io.kestra.queue.QueueService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
 import org.jooq.Record;
@@ -52,12 +54,14 @@ public class JdbcQueueClient {
 
     @Getter
     private final JdbcQueueConfiguration configuration;
+    private final QueueService queueService;
 
     @Inject
-    public JdbcQueueClient(@Named("queues") AbstractJdbcRepository<JdbcQueueItem> jdbcRepository, JooqDSLContextWrapper dslContextWrapper, JdbcQueueConfiguration configuration) {
+    public JdbcQueueClient(@Named("queues") AbstractJdbcRepository<JdbcQueueItem> jdbcRepository, JooqDSLContextWrapper dslContextWrapper, JdbcQueueConfiguration configuration, QueueService queueService) {
         this.jdbcRepository = jdbcRepository;
         this.dslContextWrapper = dslContextWrapper;
         this.configuration = configuration;
+        this.queueService = queueService;
     }
 
     private boolean isUnsupportedUnicode(DataException e) {
@@ -96,7 +100,7 @@ public class JdbcQueueClient {
                 fields.put(CREATED, Instant.now());
 
                 var insert = context
-                    .insertInto(jdbcRepository.getTable())
+                    .insertInto(getTable(queue))
                     .set(fields);
 
                 insert.execute();
@@ -125,7 +129,7 @@ public class JdbcQueueClient {
             }
 
             return ctx.selectCount()
-                .from(jdbcRepository.getTable())
+                .from(getTable(queue))
                 .where(condition)
                 .fetchOneInto(Integer.class);
         });
@@ -135,13 +139,18 @@ public class JdbcQueueClient {
     }
 
     public void publish(List<PublishedMessage> messages) throws QueueException {
+        if (messages.isEmpty()) {
+            return;
+        }
+
         try {
             dslContextWrapper.transaction(configuration ->
             {
                 DSLContext context = DSL.using(configuration);
 
                 InsertValuesStepN<Record> insert = context
-                    .insertInto(jdbcRepository.getTable())
+                    // all messages are expected to be for the same queue
+                    .insertInto(getTable(messages.getFirst().queue))
                     .columns(COLUMNS);
 
                 Instant now = Instant.now();
@@ -174,7 +183,7 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
 
             var select = context.select(OFFSET, VALUE)
-                .from(this.jdbcRepository.getTable())
+                .from(getTable(queue))
                 .where(TYPE.eq(queue));
 
             if (routingKeys != null && !routingKeys.isEmpty()) {
@@ -201,7 +210,7 @@ public class JdbcQueueClient {
                     .toList();
 
                 if (!processedItems.isEmpty()) {
-                    DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
+                    DeleteConditionStep<Record> delete = context.delete(getTable(queue))
                         .where(OFFSET.in(processedItems));
 
                     delete.execute();
@@ -218,7 +227,7 @@ public class JdbcQueueClient {
             DSLContext context = DSL.using(conf);
 
             var select = context.select(OFFSET, VALUE)
-                .from(this.jdbcRepository.getTable())
+                .from(getTable(queue))
                 .where(TYPE.eq(queue));
 
             if (routingKeys != null && !routingKeys.isEmpty()) {
@@ -242,7 +251,7 @@ public class JdbcQueueClient {
                     .map(record -> record.get(OFFSET))
                     .toList();
 
-                DeleteConditionStep<Record> delete = context.delete(this.jdbcRepository.getTable())
+                DeleteConditionStep<Record> delete = context.delete(getTable(queue))
                     .where(OFFSET.in(processedItems));
                 delete.execute();
             }
@@ -259,7 +268,7 @@ public class JdbcQueueClient {
             // Filters identically to subscribeBroadcast/subscribeBroadcastBatch so the seeded
             // offset and the poll queries always operate over the same row set.
             return context.select(DSL.max(OFFSET))
-                .from(this.jdbcRepository.getTable())
+                .from(getTable(queue))
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull())
                 .fetchAny("max", Long.class);
@@ -278,7 +287,7 @@ public class JdbcQueueClient {
             // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
             // seek on offset instead of a full scan of every retained row for this type on each poll.
             var select = context.select(OFFSET, VALUE)
-                .from(this.jdbcRepository.getTable())
+                .from(getTable(queue))
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull());
 
@@ -315,7 +324,7 @@ public class JdbcQueueClient {
             // (instead of leaving it unconstrained) lets the (type, routing_key, offset) index be used as a
             // seek on offset instead of a full scan of every retained row for this type on each poll.
             var select = context.select(OFFSET, VALUE)
-                .from(this.jdbcRepository.getTable())
+                .from(getTable(queue))
                 .where(TYPE.eq(queue))
                 .and(ROUTING_KEY.isNull());
 
@@ -340,5 +349,47 @@ public class JdbcQueueClient {
 
             return Pair.of(result.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
         });
+    }
+
+    private Table<Record> getTable(String queue) {
+        var tableName = "queues_" + queue; // FIXME should comes from table config
+        return DSL.table(tableName); // TODO we should cache them to avoid re-creating the object on each call
+    }
+
+    public void createTableIfNotExist(Class<?> cls) {
+        // FIXME fragile and PG only !!!
+        String queueName = "queues_" + queueName(cls); // FIXME should comes from table config
+        String creatTable = """
+            CREATE TABLE IF NOT EXISTS %s (
+                "offset"      SERIAL       PRIMARY KEY,
+                type          VARCHAR(250) NOT NULL,
+                "routing_key" VARCHAR(250),
+                key           VARCHAR(250) NOT NULL,
+                value         JSONB        NOT NULL,
+                created       TIMESTAMPTZ  NOT NULL
+            );
+            """.formatted(queueName);
+        String createIndex1 = """
+            CREATE INDEX IF NOT EXISTS %s_type__key__offset ON %s (type, "routing_key", "offset");
+            """.formatted(queueName, queueName);
+        String createIndex2 = """
+            CREATE INDEX IF NOT EXISTS %s_type__created ON %s ("type", "created");
+            """.formatted(queueName, queueName);
+        dslContextWrapper.transaction(conf -> {
+            conf.dsl().execute(creatTable);
+            conf.dsl().execute(createIndex1);
+            conf.dsl().execute(createIndex2);
+        });
+    }
+
+    // TODO duplicated with AbstractQueue
+    private String queueName(Class<?> cls) {
+        String result = "";
+
+        if (queueService.getQueueConfiguration().getPrefix() != null) {
+            result = queueService.getQueueConfiguration().getPrefix() + "__";
+        }
+
+        return result + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, cls.getSimpleName());
     }
 }

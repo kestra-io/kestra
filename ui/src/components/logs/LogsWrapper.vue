@@ -64,6 +64,13 @@
                             />
                         </div>
 
+                        <div v-else-if="!isLoading">
+                            <KsNoData
+                                :title="$t('no_logs_data_title')"
+                                :description="$t('no_logs_data_description')"
+                            />
+                        </div>
+
                         <div
                             v-if="logsStore.isCursorMode && logsStore.hasNextCursor"
                             class="logs-cursor-nav"
@@ -76,13 +83,6 @@
                             >
                                 {{ t("next") }}
                             </KsButton>
-                        </div>
-
-                        <div v-else-if="!isLoading">
-                            <KsNoData
-                                :title="$t('no_logs_data_title')"
-                                :description="$t('no_logs_data_description')"
-                            />
                         </div>
                     </div>
                 </template>

@@ -28,11 +28,17 @@ export function usePreAppliedFilters() {
         return Array.from(preAppliedDefaults.value.values())
     }
 
+    const clearPreApplied = () => {
+        preAppliedKeys.value = new Set()
+        preAppliedDefaults.value = new Map()
+    }
+
     return {
         markAsPreApplied,
         hasPreApplied,
         getPreApplied,
         isPreApplied,
         getAllPreApplied,
+        clearPreApplied,
     }
 }

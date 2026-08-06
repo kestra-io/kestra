@@ -78,6 +78,7 @@
                 <KsRadioCardGroup
                     v-model="form.authType"
                     :options="authOptions"
+                    :ariaLabel="t('mcp.auth_type')"
                     @change="autoSubmit"
                 />
             </KsFormItem>

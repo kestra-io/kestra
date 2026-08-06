@@ -48,6 +48,14 @@ describe("KsRadioCardGroup", () => {
         expect(wrapper.emitted("change")?.at(-1)).toEqual(["CLIENT"])
     })
 
+    test("names the radiogroup with ariaLabel", () => {
+        const wrapper = mount(KsRadioCardGroup, {
+            props: {modelValue: "SERVER", options: OPTIONS, ariaLabel: "Connection mode"},
+            global: globalConfig,
+        })
+        expect(wrapper.find("[role='radiogroup']").attributes("aria-label")).toBe("Connection mode")
+    })
+
     test("disables an option and its input", () => {
         const wrapper = mount(KsRadioCardGroup, {
             props: {

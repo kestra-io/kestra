@@ -27,7 +27,7 @@ export const Default: Story = {
         },
         template: `
             <div style="padding:24px;max-width:520px">
-                <ks-radio-card-group v-model="value" :options="options" />
+                <ks-radio-card-group v-model="value" :options="options" ariaLabel="Connection mode" />
                 <span style="display:block;margin-top:8px;font-size:13px;opacity:0.6">Selected: {{ value }}</span>
             </div>
         `,

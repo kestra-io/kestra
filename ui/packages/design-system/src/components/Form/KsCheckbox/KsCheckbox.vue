@@ -50,7 +50,7 @@
         --kel-checkbox-font-weight: var(--kbs-body-font-weight);
         --kel-checkbox-input-width: 1rem;
         --kel-checkbox-input-height: 1rem;
-        --kel-checkbox-border-radius: 0.3rem;
+        --kel-checkbox-border-radius: var(--ks-radius-xs);
         --kel-checkbox-input-border: 1px solid var(--ks-border-strong);
         --kel-checkbox-bg-color: transparent;
     }

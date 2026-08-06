@@ -942,7 +942,7 @@
     },
     "apps": "Apps",
     "promote": {
-      "label": "Bereitstellen"
+      "label": "Hochstufen"
     },
     "demos": {
       "enterprise_edition": "Enterprise Edition",

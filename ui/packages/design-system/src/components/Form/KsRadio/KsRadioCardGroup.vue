@@ -1,8 +1,8 @@
 <template>
-    <div class="ks-radio-card-group" role="radiogroup">
+    <div class="ks-radio-card-group" role="radiogroup" :aria-label="ariaLabel">
         <label
             v-for="option in options"
-            :key="String(option.value)"
+            :key="`${typeof option.value}:${option.value}`"
             class="card"
             :class="{selected: model === option.value, disabled: option.disabled}"
         >
@@ -39,6 +39,7 @@
             disabled?: boolean
             icon?: Component
         }[]
+        ariaLabel?: string
     }>()
 
     const emit = defineEmits<{
@@ -98,6 +99,11 @@
                     &::after {
                         transform: scale(1);
                     }
+                }
+
+                &:focus-visible {
+                    outline: 2px solid var(--ks-border-focus);
+                    outline-offset: 2px;
                 }
             }
 

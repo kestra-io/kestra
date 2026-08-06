@@ -4,11 +4,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import io.kestra.controller.RequiresControllerServer;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.worker.WorkerGroups;
 import io.kestra.core.worker.WorkerQueues;
 
-import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
+@RequiresControllerServer
 public class WorkerCapacityMetricsPublisher implements WorkerLifecycleListener {
 
     private final MetricRegistry metricRegistry;

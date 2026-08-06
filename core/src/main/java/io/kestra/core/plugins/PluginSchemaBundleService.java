@@ -3,7 +3,10 @@ package io.kestra.core.plugins;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,7 +41,7 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Fetches and caches a pre-baked, per-release plugin schema bundle from a remote URL.
+ * Fetches and caches a pre-baked, per-release plugin schema bundle.
  *
  * <p>
  * Flow/task/trigger/dashboard schemas overlap heavily, so the bundle (built by
@@ -52,13 +56,23 @@ import lombok.extern.slf4j.Slf4j;
  * {@link #mergeWithBundle(SchemaType, Map)} is called.
  *
  * <p>
- * The bundle URL template is configurable via {@code kestra.plugins.schema-bundle-url-template},
- * where {@code {version}} is replaced by the current stable Kestra version. Setting the property
- * to empty turns the service into a no-op — useful for air-gapped instances that should never
- * phone {@code storage.googleapis.com}. The shipped default points at a real GCS bucket keyed by
- * the stripped stable version (e.g. {@code 1.2.3}, never {@code -SNAPSHOT}), so the fetch is a
- * silent no-op (404, logged and swallowed) on {@code develop}/dev builds, which only publish
- * under a {@code develop/} prefix.
+ * The bundle source is resolved once, at construction, in priority order (see
+ * {@link #resolveBundleSource}):
+ * <ol>
+ *   <li>{@code kestra.plugins.schema-bundle-path} — an explicit local file. Highest priority so a
+ *       developer (or the plugin-devtools setup) can point at a full-catalog bundle and always win
+ *       over the JAR-bundled default.</li>
+ *   <li>The {@code /plugins-schema.json} classpath resource — the bundle shipped inside the Kestra
+ *       JAR. Loaded with no network access, so autocompletion works offline / air-gapped out of the
+ *       box once CI embeds it.</li>
+ *   <li>{@code kestra.plugins.schema-bundle-url-template} — a remote URL where {@code {version}} is
+ *       replaced by the current stable Kestra version. Fallback for older/custom setups. The shipped
+ *       default points at a GCS bucket keyed by the stripped stable version (e.g. {@code 1.2.3},
+ *       never {@code -SNAPSHOT}), so the fetch is a silent no-op (404, logged and swallowed) on
+ *       {@code develop}/dev builds, which only publish under a {@code develop/} prefix.</li>
+ * </ol>
+ * When none of the three resolves, the service is a no-op — useful for air-gapped instances that set
+ * an empty URL template and ship no bundled resource.
  */
 @Singleton
 @Slf4j
@@ -76,7 +90,9 @@ public class PluginSchemaBundleService {
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
 
-    private final String bundleUrlTemplate;
+    // The bundle baked into the Kestra JAR as a classpath resource (embedded by release CI).
+    private static final String CLASSPATH_BUNDLE = "/plugins-schema.json";
+
     private final String resolvedBundleUrl;
 
     private volatile CompletableFuture<Bundle> future;
@@ -85,19 +101,65 @@ public class PluginSchemaBundleService {
     private final AtomicBoolean loading = new AtomicBoolean(false);
 
     public PluginSchemaBundleService(
+        @Nullable @Value("${kestra.plugins.schema-bundle-path:}") String bundlePath,
         @Nullable @Value("${kestra.plugins.schema-bundle-url-template:}") String bundleUrlTemplate) {
-        this.bundleUrlTemplate = bundleUrlTemplate == null ? "" : bundleUrlTemplate;
-        if (this.bundleUrlTemplate.isEmpty()) {
-            this.resolvedBundleUrl = "";
-        } else {
-            Version version = Version.of(KestraContext.getContext().getVersion());
-            String stable = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null).toString();
-            this.resolvedBundleUrl = this.bundleUrlTemplate.replace("{version}", stable);
-        }
+        this.resolvedBundleUrl = resolveBundleSource(
+            bundlePath,
+            bundleUrlTemplate,
+            PluginSchemaBundleService.class.getResource(CLASSPATH_BUNDLE),
+            () -> KestraContext.getContext().getVersion()
+        );
     }
 
     /**
-     * Returns whether this service has a bundle URL configured and is therefore active.
+     * Resolves the single bundle source URL, in priority order: explicit local file, then the
+     * JAR-bundled classpath resource, then the remote URL template. Returns {@code ""} when none
+     * applies (the service is then a no-op).
+     *
+     * <p>
+     * Package-private and side-effect-free (the classpath resource and version are passed in) so the
+     * resolution order can be unit-tested without a real classpath entry or a running
+     * {@link KestraContext}.
+     *
+     * @param bundlePath        value of {@code kestra.plugins.schema-bundle-path}, may be {@code null}/blank
+     * @param bundleUrlTemplate value of {@code kestra.plugins.schema-bundle-url-template}, may be {@code null}/blank
+     * @param classpathBundle   the {@link #CLASSPATH_BUNDLE} resource URL, or {@code null} when not bundled
+     * @param versionSupplier   supplies the running Kestra version, read only for the URL-template branch
+     * @return the resolved source as a URL string, or {@code ""} when the service should be a no-op
+     */
+    static String resolveBundleSource(
+        @Nullable String bundlePath,
+        @Nullable String bundleUrlTemplate,
+        @Nullable URL classpathBundle,
+        Supplier<String> versionSupplier) {
+        // 1. Explicit local-file override — highest priority so a developer (or plugin-devtools) can
+        //    point at a full-catalog bundle and always win over the JAR-bundled default.
+        if (bundlePath != null && !bundlePath.isBlank()) {
+            Path path = Path.of(bundlePath.trim());
+            if (Files.isRegularFile(path)) {
+                return path.toUri().toString();
+            }
+            log.warn("Configured plugin schema bundle path '{}' is not a readable file; ignoring it.", bundlePath);
+        }
+
+        // 2. Bundle shipped inside the Kestra JAR — no network access, works offline / air-gapped.
+        if (classpathBundle != null) {
+            return classpathBundle.toString();
+        }
+
+        // 3. Remote URL template fallback, keyed by the stripped stable version.
+        if (bundleUrlTemplate != null && !bundleUrlTemplate.isBlank()) {
+            Version version = Version.of(versionSupplier.get());
+            String stable = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null).toString();
+            return bundleUrlTemplate.replace("{version}", stable);
+        }
+
+        return "";
+    }
+
+    /**
+     * Returns whether a bundle source (local file, JAR-bundled resource, or remote URL) was resolved
+     * and the service is therefore active.
      */
     public boolean isEnabled() {
         return !resolvedBundleUrl.isEmpty();

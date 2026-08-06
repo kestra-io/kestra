@@ -1,6 +1,8 @@
 package io.kestra.core.plugins;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -39,7 +41,7 @@ class PluginSchemaBundleServiceTest {
     @Test
     void shouldReturnLocalSchemaUnchangedWhenDisabled() {
         // Given
-        PluginSchemaBundleService service = new PluginSchemaBundleService(null);
+        PluginSchemaBundleService service = new PluginSchemaBundleService(null, null);
         Map<String, Object> localSchema = Map.of("$ref", "#/definitions/io.kestra.core.models.tasks.Task");
 
         // When
@@ -88,7 +90,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toUri().toString());
+        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toString(), null);
 
         Map<String, Object> localSchema = JacksonMapper.ofJson().readValue("""
             {
@@ -179,7 +181,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toUri().toString());
+        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toString(), null);
 
         Map<String, Object> localFlowSchema = JacksonMapper.ofJson().readValue("""
             {
@@ -246,7 +248,7 @@ class PluginSchemaBundleServiceTest {
               }
             }
             """);
-        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toUri().toString());
+        PluginSchemaBundleService service = new PluginSchemaBundleService(tempDir.resolve("plugins-schema.json").toString(), null);
 
         Map<String, Object> localFlowSchema = JacksonMapper.ofJson().readValue("""
             {
@@ -298,6 +300,82 @@ class PluginSchemaBundleServiceTest {
         // … and an anyOf that shares nothing with any discriminator (a plain nullable scalar) is untouched.
         List<Map<String, Object>> idAnyOf = (List<Map<String, Object>>) ((Map<String, Object>) properties.get("id")).get("anyOf");
         assertThat(idAnyOf).hasSize(2);
+    }
+
+    @Test
+    void shouldPreferExplicitPathOverClasspathAndUrl() throws Exception {
+        // Given: all three sources present
+        Path localFile = Files.writeString(tempDir.resolve("plugins-schema.json"), "{}");
+        URL classpathBundle = URI.create("jar:file:/opt/kestra/kestra.jar!/plugins-schema.json").toURL();
+
+        // When
+        String resolved = PluginSchemaBundleService.resolveBundleSource(
+            localFile.toString(),
+            "https://example.test/{version}/plugins-schema.json",
+            classpathBundle,
+            () -> "1.2.3"
+        );
+
+        // Then: the explicit local file wins
+        assertThat(resolved).isEqualTo(localFile.toUri().toString());
+    }
+
+    @Test
+    void shouldFallBackToClasspathBundleWhenNoPathConfigured() throws Exception {
+        // Given: no path, but a JAR-bundled resource and a URL template
+        URL classpathBundle = URI.create("jar:file:/opt/kestra/kestra.jar!/plugins-schema.json").toURL();
+
+        // When
+        String resolved = PluginSchemaBundleService.resolveBundleSource(
+            null,
+            "https://example.test/{version}/plugins-schema.json",
+            classpathBundle,
+            () -> "1.2.3"
+        );
+
+        // Then: the bundled classpath resource wins over the remote URL
+        assertThat(resolved).isEqualTo(classpathBundle.toString());
+    }
+
+    @Test
+    void shouldIgnoreMissingPathAndFallThroughToClasspath() throws Exception {
+        // Given: a configured path that does not exist
+        URL classpathBundle = URI.create("jar:file:/opt/kestra/kestra.jar!/plugins-schema.json").toURL();
+
+        // When
+        String resolved = PluginSchemaBundleService.resolveBundleSource(
+            tempDir.resolve("does-not-exist.json").toString(),
+            null,
+            classpathBundle,
+            () -> "1.2.3"
+        );
+
+        // Then: the unreadable path is ignored and the classpath bundle is used
+        assertThat(resolved).isEqualTo(classpathBundle.toString());
+    }
+
+    @Test
+    void shouldFallBackToUrlTemplateWithStableVersionWhenNoPathOrClasspath() {
+        // Given: only the URL template, and a snapshot version that must be stripped to its stable form
+        // When
+        String resolved = PluginSchemaBundleService.resolveBundleSource(
+            null,
+            "https://example.test/{version}/plugins-schema.json",
+            null,
+            () -> "1.2.3-SNAPSHOT"
+        );
+
+        // Then: {version} is replaced by the stripped stable version
+        assertThat(resolved).isEqualTo("https://example.test/1.2.3/plugins-schema.json");
+    }
+
+    @Test
+    void shouldBeNoOpWhenNoSourceResolves() {
+        // Given / When: nothing configured and nothing bundled
+        String resolved = PluginSchemaBundleService.resolveBundleSource(null, "", null, () -> "1.2.3");
+
+        // Then
+        assertThat(resolved).isEmpty();
     }
 
     @SuppressWarnings("unchecked")

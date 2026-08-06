@@ -4,7 +4,6 @@
         type="promote"
         demoCta
         :title="$t('demos.promote.title')"
-        learnMore="https://kestra.io/docs/enterprise"
     >
         <template #description>
             {{ $t('demos.promote.message') }}

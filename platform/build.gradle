@@ -16,7 +16,7 @@ dependencies {
     def bouncycastleVersion = "1.85"
     def mavenResolverVersion = "2.0.10"
     def jollydayVersion = "2.19.0"
-    def jsonschemaVersion = "4.38.0"
+    def jsonschemaVersion = "5.0.0"
     def kafkaVersion = "4.3.1"
     def opensearchVersion = "3.9.0"
     def opensearchRestVersion = "3.7.0"

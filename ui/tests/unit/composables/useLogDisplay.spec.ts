@@ -1,9 +1,13 @@
-import {describe, it, expect, beforeEach, vi} from "vitest"
+import {describe, it, expect, afterAll, beforeEach, vi} from "vitest"
 
 describe("useLogDisplay", () => {
     beforeEach(() => {
         localStorage.clear()
         vi.resetModules()
+    })
+
+    afterAll(() => {
+        localStorage.clear()
     })
 
     it("effective logs font size defaults to mode base px", async () => {

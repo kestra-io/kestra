@@ -107,8 +107,33 @@ public class State {
         return this.getDuration().orElseGet(() -> Duration.between(this.getStartDate(), Instant.now()));
     }
 
+    /**
+     * Duration from the most recent {@link Type#RUNNING} transition to the terminal date — how long the last
+     * attempt actually ran. Empty if it never entered RUNNING or hasn't ended. Unlike {@link #getDuration()}
+     * (start → end), this excludes pre-RUNNING time and earlier retry attempts.
+     */
+    @JsonIgnore
+    public Optional<Duration> lastRunningDuration() {
+        Optional<Instant> end = this.getEndDate();
+        if (end.isEmpty()) {
+            return Optional.empty();
+        }
+        Instant runningAt = null;
+        for (History history : this.histories) {
+            if (history.getState() == Type.RUNNING) {
+                runningAt = history.getDate();
+            }
+        }
+        return runningAt == null ? Optional.empty() : Optional.of(Duration.between(runningAt, end.get()));
+    }
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Instant getStartDate() {
+        // this specifically might happen for dynamic task runs
+        if (this.histories.isEmpty()) {
+            return null;
+        }
+
         return this.histories.getFirst().getDate();
     }
 
@@ -116,6 +141,10 @@ public class State {
     @JsonInclude(JsonInclude.Include.NON_EMPTY) // otherwise empty optional will be included as null
     public Optional<Instant> getEndDate() {
         if (!this.isTerminated() && !this.isPaused()) {
+            return Optional.empty();
+        }
+
+        if (this.histories.isEmpty()) {
             return Optional.empty();
         }
 

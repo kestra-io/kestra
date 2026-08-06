@@ -3,6 +3,11 @@ package io.kestra.jdbc;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import javax.sql.DataSource;
@@ -51,13 +56,18 @@ public class JooqDSLContextWrapper {
         this.rawDataSource = DelegatingDataSource.unwrapDataSource(dataSource);
     }
 
-    private static <T> RetryUtils.Instance<T, RuntimeException> retryer() {
-        return RetryUtils.of(RETRY_POLICY);
-    }
+    /**
+     * Shared retryer for every transaction run by this wrapper, built once at class initialisation.
+     * <p>
+     * Building it per call rebuilt the retry policy, the fallback and their two listeners on every
+     * database operation, which is the hottest path in the application.
+     */
+    private static final RetryUtils.Retryer DEADLOCK_RETRYER = RetryUtils
+        .<Object, RuntimeException> of(RETRY_POLICY)
+        .retryerIf(DEADLOCK_PREDICATE);
 
     public void transaction(TransactionalRunnable transactional) {
-        JooqDSLContextWrapper.<Void> retryer().runRetryIf(
-            DEADLOCK_PREDICATE,
+        DEADLOCK_RETRYER.<Void> run(
             () ->
             {
                 dslContext.transaction(transactional);
@@ -67,8 +77,7 @@ public class JooqDSLContextWrapper {
     }
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {
-        return JooqDSLContextWrapper.<T> retryer().runRetryIf(
-            DEADLOCK_PREDICATE,
+        return DEADLOCK_RETRYER.run(
             () -> dslContext.transactionResult(transactional)
         );
     }
@@ -86,8 +95,7 @@ public class JooqDSLContextWrapper {
      * one — keep the work short.
      */
     public void requireNewTransaction(TransactionalRunnable transactional) {
-        JooqDSLContextWrapper.<Void> retryer().runRetryIf(
-            DEADLOCK_PREDICATE,
+        DEADLOCK_RETRYER.<Void> run(
             () ->
             {
                 try (Connection connection = rawDataSource.getConnection()) {
@@ -114,23 +122,60 @@ public class JooqDSLContextWrapper {
     static final class DeadlockPredicate implements Predicate<Throwable> {
         @Override
         public boolean test(Throwable e) {
-            if (!(e.getCause() instanceof SQLException cause)) {
+            // Walk the whole exception graph, not just the cause chain:
+            // - the thrown exception itself can already be the SQLException;
+            // - once Postgres aborts a transaction after a deadlock, a later statement in the same
+            //   failed attempt surfaces a secondary "current transaction is aborted" exception that
+            //   wraps the original deadlock one level deeper;
+            // - MySQL rolls the transaction back server-side on a deadlock, so the rollback jOOQ
+            //   then attempts can fail and be attached as a suppressed exception;
+            // - drivers chain secondary SQLExceptions on getNextException(), which is neither the
+            //   cause nor a suppressed exception.
+            // Track visited throwables by identity to stop on a cyclic or diamond-shaped graph.
+            Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+            Deque<Throwable> pending = new ArrayDeque<>();
+            pending.add(e);
+
+            while (!pending.isEmpty()) {
+                Throwable current = pending.poll();
+                if (!seen.add(current)) {
+                    continue;
+                }
+
+                if (isDeadlockOrLockTimeout(current)) {
+                    return true;
+                }
+
+                if (current.getCause() != null) {
+                    pending.add(current.getCause());
+                }
+                Collections.addAll(pending, current.getSuppressed());
+                // JDBC chains secondary failures on their own list rather than as causes
+                if (current instanceof SQLException sqlException && sqlException.getNextException() != null) {
+                    pending.add(sqlException.getNextException());
+                }
+            }
+            return false;
+        }
+
+        private static boolean isDeadlockOrLockTimeout(Throwable cause) {
+            if (!(cause instanceof SQLException sqlException)) {
                 return false;
             }
 
             // MySQL/MariaDB vendor codes:
             // 1213 = ER_LOCK_DEADLOCK
             // 1205 = ER_LOCK_WAIT_TIMEOUT
-            int vendorCode = cause.getErrorCode();
+            int vendorCode = sqlException.getErrorCode();
             if (vendorCode == 1213 || vendorCode == 1205) {
                 return true;
             }
 
             return
             // standard deadlock
-            "40001".equals(cause.getSQLState()) ||
+            "40001".equals(sqlException.getSQLState()) ||
             // postgres deadlock
-                "40P01".equals(cause.getSQLState());
+                "40P01".equals(sqlException.getSQLState());
         }
     }
 }

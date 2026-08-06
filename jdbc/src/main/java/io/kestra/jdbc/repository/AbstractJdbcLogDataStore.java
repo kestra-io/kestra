@@ -10,8 +10,11 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -32,16 +35,45 @@ import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Logs;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
+import lombok.Setter;
 import reactor.core.publisher.Flux;
 
 public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepository<LogEntry> implements LogDataStoreInterface {
 
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
     private static final String DATE_COLUMN = "timestamp";
+
+    @Schema(title = "JDBC URL of a dedicated logs database; leave unset to keep logs in the main backend.")
+    @PluginProperty
+    @Getter
+    @Setter
+    private String url;
+
+    @Schema(title = "Username for the dedicated logs database.")
+    @PluginProperty
+    @Getter
+    @Setter
+    private String username;
+
+    @Schema(title = "Password for the dedicated logs database.")
+    @PluginProperty(hidden = true)
+    @Getter
+    @Setter
+    private String password;
+
+    // Named 'tableName' (mapped to the 'table' key) so its getter doesn't clash with the inherited jOOQ getTable().
+    @Schema(title = "Name of the log table in the dedicated logs database (defaults to 'logs').")
+    @PluginProperty
+    @JsonProperty("table")
+    @Getter
+    @Setter
+    private String tableName;
 
     public AbstractJdbcLogDataStore(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository, JdbcFilterService filterService) {
         super(jdbcRepository);
@@ -127,13 +159,22 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     @Override
-    public ArrayListTotal<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
+    public Page<LogEntry> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         // Default to NORMAL kind only; an explicit KIND filter overrides that and selects the requested kind(s).
         var condition = this.filter(filters, DATE_COLUMN, Resource.LOG);
         if (!QueryFilter.hasField(filters, QueryFilter.Field.KIND)) {
             condition = NORMAL_KIND_CONDITION.and(condition);
         }
-        return findPage(pageable, tenantId, condition);
+        return toOffsetPage(findPage(pageable, tenantId, condition), pageable);
+    }
+
+    /**
+     * JDBC log stores paginate by offset with an exact total (the default {@code PaginationType.OFFSET}).
+     * Wrap the {@link ArrayListTotal} produced by the shared paging helpers into a Micronaut {@link Page}
+     * carrying that total, so the interface can also expose cursor pages from external stores.
+     */
+    private static Page<LogEntry> toOffsetPage(ArrayListTotal<LogEntry> result, Pageable pageable) {
+        return Page.of(result, pageable, result.getTotal());
     }
 
     /**
@@ -181,8 +222,8 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, Pageable pageable) {
-        return this.query(tenantId, field("execution_id").eq(executionId), minLevel, pageable);
+    public Page<LogEntry> findByExecutionId(String tenantId, String executionId, Level minLevel, Pageable pageable) {
+        return toOffsetPage(this.query(tenantId, field("execution_id").eq(executionId), minLevel, pageable), pageable);
     }
 
     @Override
@@ -205,8 +246,8 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, Pageable pageable) {
-        return this.query(tenantId, field("execution_id").eq(executionId).and(field("task_id").eq(taskId)), minLevel, pageable);
+    public Page<LogEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Level minLevel, Pageable pageable) {
+        return toOffsetPage(this.query(tenantId, field("execution_id").eq(executionId).and(field("task_id").eq(taskId)), minLevel, pageable), pageable);
     }
 
     @Override
@@ -230,8 +271,8 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel, Pageable pageable) {
-        return this.query(tenantId, field("execution_id").eq(executionId).and(field("taskrun_id").eq(taskRunId)), minLevel, pageable);
+    public Page<LogEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Level minLevel, Pageable pageable) {
+        return toOffsetPage(this.query(tenantId, field("execution_id").eq(executionId).and(field("taskrun_id").eq(taskRunId)), minLevel, pageable), pageable);
     }
 
     @Override
@@ -249,22 +290,36 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     }
 
     @Override
-    public ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
-        return this.query(tenantId, field("execution_id").eq(executionId).and(field("taskrun_id").eq(taskRunId)).and(field("attempt_number").eq(attempt)), minLevel, pageable);
+    public Page<LogEntry> findByExecutionIdAndTaskRunIdAndAttempt(String tenantId, String executionId, String taskRunId, Level minLevel, Integer attempt, Pageable pageable) {
+        return toOffsetPage(
+            this.query(tenantId, field("execution_id").eq(executionId).and(field("taskrun_id").eq(taskRunId)).and(field("attempt_number").eq(attempt)), minLevel, pageable), pageable
+        );
     }
 
     @Override
     public Integer purge(Execution execution) {
+        // A store that can't delete on demand (canPurge() == false, e.g. a retention/TTL-only cloud store) no-ops
+        // and reports 0 — callers already tolerate that. Enforced here so the contract can't be violated by a
+        // reduced-capability subclass, and so no delete-audit is fired for a deletion that never happened.
+        if (!canPurge()) {
+            return 0;
+        }
         return purge(DSL.noCondition(), field("execution_id", String.class).eq(execution.getId()));
     }
 
     @Override
     public Integer purge(List<Execution> executions) {
+        if (!canPurge()) {
+            return 0;
+        }
         return purge(DSL.noCondition(), field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()));
     }
 
     @Override
     public void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt) {
+        if (!canPurge()) {
+            return;
+        }
         accessControl.onDeleteByQuery(tenantId, executionId, taskId, taskRunId, minLevel, attempt);
 
         this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
@@ -295,6 +350,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
     @Override
     public void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId) {
+        if (!canPurge()) {
+            return;
+        }
         this.jdbcRepository.getDslContextWrapper().transaction(configuration ->
         {
             DSLContext context = DSL.using(configuration);
@@ -312,6 +370,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public int deleteByQuery(String tenantId, String namespace, String flowId, String executionId, List<Level> logLevels, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean purgeExecutionLogs, boolean purgeNonExecutionLogs, Integer batchSize) {
+        if (!canPurge()) {
+            return 0;
+        }
         Condition condition = buildDeleteCondition(tenantId, namespace, flowId, executionId, logLevels, startDate, endDate, purgeExecutionLogs, purgeNonExecutionLogs);
 
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
@@ -371,6 +432,9 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
 
     @Override
     public void deleteByFilters(String tenantId, List<QueryFilter> filters) {
+        if (!canPurge()) {
+            return;
+        }
         this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
             DSLContext context = DSL.using(configuration);
@@ -401,8 +465,17 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
+    protected Condition notLevelsCondition(List<Level> levels) {
+        return field("level").notIn(levels.stream().map(level -> level.name()).toList());
+    }
+
     public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
         boolean numeratorFilter) {
+        // A store that can't aggregate (canAggregate() == false) yields a zero KPI instead of running a query, so
+        // dashboards render "No data" — the store owns this, consumers (the dashboard engine) stay backend-agnostic.
+        if (!canAggregate()) {
+            return 0.0;
+        }
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
             DSLContext context = DSL.using(configuration);
@@ -433,6 +506,10 @@ public abstract class AbstractJdbcLogDataStore extends AbstractJdbcCrudRepositor
     @Override
     public ArrayListTotal<Map<String, Object>> fetchData(String tenantId, DataFilter<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> descriptors, ZonedDateTime startDate,
         ZonedDateTime endDate, Pageable pageable) {
+        // A store that can't aggregate (canAggregate() == false) yields no rows instead of running a query.
+        if (!canAggregate()) {
+            return new ArrayListTotal<>(List.of(), 0);
+        }
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
         {
             DSLContext context = DSL.using(configuration);

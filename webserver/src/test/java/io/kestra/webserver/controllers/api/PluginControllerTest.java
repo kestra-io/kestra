@@ -280,7 +280,7 @@ class PluginControllerTest {
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(properties.size()).isEqualTo(19);
+        assertThat(properties.size()).isEqualTo(20);
         assertThat(properties.get("id").size()).isEqualTo(5);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
@@ -293,6 +293,33 @@ class PluginControllerTest {
         );
 
         assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.flows.Flow");
+    }
+
+    @Test
+    void flowSchemaIsRevalidatedWithEtag() {
+        // The flow schema depends on the installed plugin set, which can change while the server runs, so it
+        // must be revalidated on every use (ETag) instead of being cached blindly for an hour — otherwise the
+        // editor keeps completing/validating against a stale schema after a plugin is added or removed (#12102).
+        HttpResponse<Map<String, Object>> response = client.toBlocking().exchange(
+            HttpRequest.GET(PATH + "/schemas/flow"),
+            Argument.mapOf(String.class, Object.class)
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getHeaders().get(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
+        String etag = response.getHeaders().get(HttpHeaders.ETAG);
+        assertThat(etag).isNotBlank();
+
+        // A conditional request carrying the current ETag is answered 304 Not Modified (no re-download).
+        HttpResponse<?> conditional;
+        try {
+            conditional = client.toBlocking().exchange(
+                HttpRequest.GET(PATH + "/schemas/flow").header(HttpHeaders.IF_NONE_MATCH, etag)
+            );
+        } catch (HttpClientResponseException e) {
+            conditional = e.getResponse();
+        }
+        assertThat(conditional.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
     }
 
     @Test

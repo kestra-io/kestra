@@ -14,22 +14,17 @@ function base(namespace: string) {
     return `${apiUrl()}/namespaces/${namespace}`
 }
 
-const HEADERS = {headers: {"Content-Type": "multipart/form-data"}}
 const slashPrefix = (path: string) => (path.startsWith("/") ? path : `/${path}`)
 const safePath = (path: string) => encodeURIComponent(path).replace(/%2C|%2F/g, "/")
 export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 404}
 
 export const useBaseNamespacesStore = () => {
     const namespace = ref<any>(undefined)
-    const namespaces = ref<any[] | undefined>(undefined)
-    const secrets = ref<any[] | undefined>(undefined)
     const inheritedSecrets = ref<any>(undefined)
-    const kvs = ref<any[] | undefined>(undefined)
     const inheritedKVs = ref<any>(undefined)
     const inheritedKVModalVisible = ref(false)
     const addKvModalVisible = ref(false)
     const autocomplete = ref<string[]>()
-    const total = ref(0)
     const existing = ref(true)
 
     const axios = useClient()
@@ -41,14 +36,9 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function search(options: {commit?: boolean, sort?: string, [key: string]: any}): Promise<PagedResultsNamespace> {
-        const {commit, sort, ...rest} = options
-        const shouldCommit = commit !== false
+        const {commit: _commit, sort, ...rest} = options
 
         const data = await NamespaceAPI.searchNamespaces({...rest, sort: sort ? [sort] : undefined})
-        if (shouldCommit) {
-            namespaces.value = data.results
-            total.value = data.total ?? 0
-        }
         return data
     }
 
@@ -77,7 +67,7 @@ export const useBaseNamespacesStore = () => {
 
     async function kvsList(item: {id: string}) {
         const data = await KvAPI.listAllKeys({filters: [{field: "namespace", operation: "EQUALS", value: item.id}] as any})
-        return kvs.value = data?.results
+        return data?.results
     }
 
     async function kv(payload: {namespace: string; key: string}) {
@@ -120,12 +110,9 @@ export const useBaseNamespacesStore = () => {
         return data
     }
 
-    async function listSecrets({id, commit: shouldCommit}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
+    async function listSecrets({id}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
         try {
             const data = await SecretsAPI.listSecrets({filters: [{field: "namespace", operation: "EQUALS", value: id}] as any}) as any
-            if (shouldCommit !== false) {
-                secrets.value = data.results
-            }
             return data
         } catch (e: any) {
             if (e.status === 404) return {total: 0, results: [], readOnly: false}
@@ -156,10 +143,6 @@ export const useBaseNamespacesStore = () => {
         // NOOP IN OSS
     }
 
-    async function loadInheritedPluginDefaults(_: {id: string, commit?: boolean}) {
-        // NOOP IN OSS
-    }
-
     async function createDirectory(payload: {namespace: string; path: string}) {
         await FilesAPI.createNamespaceDirectory(payload)
     }
@@ -184,7 +167,8 @@ export const useBaseNamespacesStore = () => {
         DATA.append("fileContent", BLOB)
 
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(payload.path)}`
-        await axios.post(URL, Utils.toFormData(DATA), HEADERS)
+        // Don't set Content-Type - the browser must generate the multipart boundary itself.
+        await axios.post(URL, Utils.toFormData(DATA))
     }
 
     async function fileRevisions(payload: {namespace: string; path: string}): Promise<{revision: number}[]> {
@@ -222,7 +206,8 @@ export const useBaseNamespacesStore = () => {
         DATA.append("fileContent", BLOB)
 
         const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`
-        await axios.post(URL, DATA, HEADERS)
+        // Don't set Content-Type - the browser must generate the multipart boundary itself.
+        await axios.post(URL, DATA)
     }
 
     async function moveFileDirectory(payload: {namespace: string; old: string; new: string}) {
@@ -242,23 +227,19 @@ export const useBaseNamespacesStore = () => {
         const request = await axios.get(URL)
 
         const name = payload.namespace + "_files.zip"
-        Utils.downloadUrl(request.request.responseURL, name)
+        Utils.downloadUrl(request.request?.responseURL ?? "", name)
     }
 
     return {
         autocomplete,
         loadAutocomplete,
         search,
-        total,
         load,
         update,
         loadDependencies,
         existing,
         namespace,
-        namespaces,
-        secrets,
         inheritedSecrets,
-        kvs,
         inheritedKVModalVisible,
         addKvModalVisible,
         kvsList,
@@ -275,7 +256,6 @@ export const useBaseNamespacesStore = () => {
         patchSecret,
         deleteSecrets,
         loadInheritedVariables,
-        loadInheritedPluginDefaults,
         createDirectory,
         readDirectory,
         saveOrCreateFile: createFile,

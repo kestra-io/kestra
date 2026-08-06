@@ -1,5 +1,6 @@
 import type {Component} from "vue"
 import {computed} from "vue"
+import {useRoute} from "vue-router"
 
 import {useI18n} from "vue-i18n"
 
@@ -8,6 +9,8 @@ const {isOnline} = useNetwork()
 
 import ContextNews from "../../components/layout/ContextNews.vue"
 import ContextDocs from "../../components/docs/ContextDocs.vue"
+import CopilotChat from "../../components/ai/copilot/CopilotChat.vue"
+import AiIcon from "../../components/ai/AiIcon.vue"
 import {useApiStore} from "../../stores/api"
 
 import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
@@ -25,12 +28,15 @@ export interface Button {
     hasUnreadMarker?: boolean;
     unread?: {readonly value: boolean};
     hidden?: boolean;
+    /** Opened programmatically as a stripless panel (never a tab), e.g. the notifications bell. */
+    panelOnly?: boolean;
 
     url?: string;
 }
 
 export function useContextButtons() {
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
 
     const apiStore = useApiStore()
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
@@ -44,6 +50,16 @@ export function useContextButtons() {
 
     const buttons: Record<string, Button> = isOnline.value
         ? {
+              ai: {
+                  title: t("contextBar.ai"),
+                  icon: AiIcon,
+
+                  component: CopilotChat,
+                  // The full-page AI Copilot (`/ai`) is the same agent — hide the redundant dock tab there.
+                  get hidden() {
+                      return route.name === "ai"
+                  },
+              },
               news: {
                   title: t("contextBar.news"),
                   icon: MessageOutline,

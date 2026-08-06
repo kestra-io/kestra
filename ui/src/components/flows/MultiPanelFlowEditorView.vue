@@ -20,37 +20,14 @@
             </template>
         </MultiPanelGenericEditorView>
 
-        <Transition name="onboarding-hint-fade">
-            <div
-                v-if="isOnboardingCreate && showExecuteHint"
-                class="onboarding-execute-hint-wrap"
-            >
-                <div class="onboarding-execute-hint">
-                    <div class="onboarding-execute-hint__content">
-                        <h3>{{ $t("welcome_copilot.execute_hint.title") }}</h3>
-                        <p>{{ $t("welcome_copilot.execute_hint.description") }}</p>
-                    </div>
-                    <KsButton
-                        link
-                        class="onboarding-execute-hint__close"
-                        :aria-label="$t('close')"
-                        @click="showExecuteHint = false"
-                    >
-                        <Close />
-                    </KsButton>
-                </div>
-            </div>
-        </Transition>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
-    import Close from "vue-material-design-icons/Close.vue"
     import * as Utils from "../../utils/utils"
     import {usePlaygroundStore} from "../../stores/playground"
-    import {useOnboardingV2Store} from "../../stores/onboardingV2"
 
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import FlowPlayground from "./FlowPlayground.vue"
@@ -78,7 +55,6 @@
 
     const RawNoCode = markRaw(NoCode)
 
-    const onboardingV2Store = useOnboardingV2Store()
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
 
@@ -87,21 +63,13 @@
 
     watch(() => flowStore.isCreating, (isCreating) => {
         if (!isCreating) {
-            if (isGuidedCodeOnly.value && alwaysSaveKey.value) {
-                localStorage.removeItem(alwaysSaveKey.value)
-            } else {
-                editorView.value?.saveState(alwaysSaveKey.value)
-            }
+            editorView.value?.saveState(alwaysSaveKey.value)
         }
     })
 
     const route = useRoute()
     const router = useRouter()
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
-    const showExecuteHint = ref(true)
-    const isOnboardingCreate = computed(() =>
-        route.name === "flows/create" && route.query.onboardingPreset === "true",
-    )
 
     onMounted(async () => {
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
@@ -210,18 +178,7 @@
         source: computed(() => flowStore.flowYaml),
     })
 
-    const isGuidedCodeOnly = computed(
-        () => onboardingV2Store.isGuidedActive && onboardingV2Store.state.editorMode === "code_only",
-    )
-    watch(isGuidedCodeOnly, (guided, wasGuided) => {
-        if (guided && playgroundStore.enabled) {
-            playgroundStore.enabled = false
-        }
-        if (!guided && wasGuided && alwaysSaveKey.value) {
-            localStorage.removeItem(alwaysSaveKey.value)
-        }
-    }, {immediate: true})
-    const tabs = computed(() => (isGuidedCodeOnly.value ? ["code"] : DEFAULT_ACTIVE_TABS))
+    const tabs = computed(() => DEFAULT_ACTIVE_TABS)
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
 
@@ -257,117 +214,5 @@
     .flow-editor-shell {
         position: relative;
         height: 100%;
-    }
-
-    .onboarding-execute-hint-wrap {
-        position: absolute;
-        top: 5rem;
-        right: 1rem;
-        z-index: 20;
-        display: flex;
-        justify-content: flex-end;
-        pointer-events: none;
-    }
-
-    .onboarding-execute-hint {
-        --border-angle: 0turn;
-        --hint-gradient: conic-gradient(
-            from calc(var(--border-angle) + 50.37deg) at 50% 50%,
-            #3991ff 0deg,
-            #8c4bff 124.62deg,
-            #a396ff 205.96deg,
-            #3991ff 299.42deg,
-            #e0e0ff 342.69deg,
-            #3991ff 360deg
-        );
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        width: min(100%, 22.5rem);
-        padding: calc(1.75rem - 1px) calc(1.75rem - 1px) calc(1.5rem - 1px);
-        border: 1px solid transparent;
-        border-radius: 0.75rem;
-        background:
-            linear-gradient(var(--ks-bg-surface), var(--ks-bg-surface)) padding-box,
-            var(--hint-gradient) border-box;
-        box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.06);
-        pointer-events: auto;
-        animation: onboardingHintBorderSpin 3s linear infinite;
-    }
-
-    .onboarding-execute-hint__content {
-        h3 {
-            margin: 0 0 0.75rem;
-            color: var(--ks-text-primary);
-            font-size: var(--ks-font-size-lg);
-            font-weight: 700;
-            line-height: 1.15;
-        }
-
-        p {
-            margin: 0;
-            color: var(--ks-text-secondary);
-            font-size: var(--ks-font-size-sm);
-            line-height: 1.45;
-        }
-    }
-
-    .onboarding-execute-hint__close {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        color: var(--ks-text-dim);
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    @media (max-width: 768px) {
-        .onboarding-execute-hint-wrap {
-            top: 4rem;
-            right: 1rem;
-            right: 1rem;
-        }
-
-        .onboarding-execute-hint {
-            width: 100%;
-            padding: 1.25rem;
-        }
-
-        .onboarding-execute-hint__content {
-            h3 {
-                font-size: var(--ks-font-size-lg);
-            }
-
-            p {
-                font-size: var(--ks-font-size-base);
-            }
-        }
-    }
-
-    .onboarding-hint-fade-enter-active,
-    .onboarding-hint-fade-leave-active {
-        transition: opacity 0.18s ease, transform 0.18s ease;
-    }
-
-    .onboarding-hint-fade-enter-from,
-    .onboarding-hint-fade-leave-to {
-        opacity: 0;
-        transform: translateY(-6px);
-    }
-
-    @keyframes onboardingHintBorderSpin {
-        to {
-            --border-angle: 1turn;
-        }
-    }
-
-    @property --border-angle {
-        syntax: "<angle>";
-        inherits: true;
-        initial-value: 0turn;
     }
 </style>

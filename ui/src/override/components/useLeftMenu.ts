@@ -1,4 +1,4 @@
-import {computed, onMounted, ref} from "vue"
+import {computed} from "vue"
 
 import {useRoute, useRouter} from "vue-router"
 import type {
@@ -8,10 +8,6 @@ import type {
 } from "vue-router"
 
 import {useI18n} from "vue-i18n"
-
-import {useMiscStore} from "override/stores/misc"
-
-import {shouldShowWelcome} from "../../utils/welcomeGuard"
 
 // Main icons
 import AiMenuIcon from "../../components/ai/AiMenuIcon.vue"
@@ -34,6 +30,7 @@ import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
 import Battery40 from "vue-material-design-icons/Battery40.vue"
 import Gauge from "vue-material-design-icons/Gauge.vue"
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue"
+import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue"
 import McpIcon from "../../components/McpIcon.vue"
 
 export type MenuItem = {
@@ -60,21 +57,6 @@ export function useLeftMenu() {
     const $router = useRouter()
 
     const {t} = useI18n({useScope: "global"})
-
-    const configs = useMiscStore().configs
-    const showWelcomeLink = ref(false)
-
-    const loadWelcomeLink = async () => {
-        try {
-            showWelcomeLink.value = await shouldShowWelcome()
-        } catch {
-            showWelcomeLink.value = false
-        }
-    }
-
-    onMounted(() => {
-        void loadWelcomeLink()
-    })
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -126,9 +108,9 @@ export function useLeftMenu() {
                     {
                         id: "ai-flow",
                         title: t("ai.flow.title"),
-                        routes: routeStartWith("welcome"),
+                        routes: routeStartWith("ai"),
                         href: {
-                            name: "welcome",
+                            name: "ai",
                         },
                         icon: {
                             element: AiMenuIcon,
@@ -270,6 +252,20 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        id: "policies",
+                        title: t("demos.policies.label"),
+                        routes: routeStartWith("admin/policies"),
+                        href: {
+                            name: "admin/policies",
+                        },
+                        icon: {
+                            element: ShieldCheckOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
                         id: "kv",
                         title: t("kv.name"),
                         routes: routeStartWith("kv"),
@@ -353,8 +349,7 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: Battery40,
-                        },
-                        hidden: !configs?.isConcurrencyViewEnabled,
+                        }
                     },
                     {
                         id: "iam",

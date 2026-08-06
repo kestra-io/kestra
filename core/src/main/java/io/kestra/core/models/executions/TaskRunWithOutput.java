@@ -6,5 +6,8 @@ import java.util.Map;
  * Utility class to hold a {@link TaskRun} and its outputs.
  * Must only be used as a temporary carrier for methods that must return both.
  */
-public record TaskRunWithOutput(TaskRun taskRun, Map<String, Object> outputs) {
+public record TaskRunWithOutput(TaskRun taskRun, Map<String, Object> outputs, boolean assetEmissionFailed) {
+    public TaskRunWithOutput(TaskRun taskRun, Map<String, Object> outputs) {
+        this(taskRun, outputs, false);
+    }
 }

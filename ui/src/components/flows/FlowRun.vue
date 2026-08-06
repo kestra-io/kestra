@@ -7,6 +7,11 @@
         <KsAlert v-if="flow.draft" type="warning" showIcon :closable="false">
             <strong>{{ $t('draft') }}</strong><br>
             {{ $t('draft_flow_warning') }}
+            <div v-if="canPublishDraft" class="draft-publish-action">
+                <KsButton type="primary" size="small" :loading="publishing" data-test="publish-draft" @click="onPublishDraft">
+                    {{ $t('publish_draft') }}
+                </KsButton>
+            </div>
         </KsAlert>
         <div class="flow-execution-checks-alerts">
             <KsAlert v-for="alert in checks || []" :type="toAlertType(alert.style)" :closable="false" :key="alert.message">
@@ -42,12 +47,6 @@
                         <LabelInput
                             v-model:labels="executionLabels"
                         />
-                        <KsText v-if="haveBadLabels" type="danger" size="small">
-                            {{ $t('wrong labels') }}
-                        </KsText>
-                        <KsText v-if="haveForbiddenSystemLabels" type="danger" size="small">
-                            {{ $t('forbidden system labels') }}
-                        </KsText>
                     </KsFormItem>
                     <KsFormItem
                         :label="$t('scheduleDate')"
@@ -91,22 +90,21 @@
                         </KsButton>
                     </KsFormItem>
                 </div>
-                <div class="right-align" v-if="!hasFormInputs || inputsOnRecap">
-                    <KsFormItem class="submit">
-                        <span data-onboarding-target="flow-execute-confirm-button">
-                            <KsButton
-                                :icon="buttonIcon"
-                                :disabled="!flowCanBeExecuted || hasBlockingChecks"
-                                :data-test="buttonTestId"
-                                class="flow-run-trigger-button"
-                                type="primary"
-                                nativeType="submit"
-                                @click.prevent="() => { onSubmit(); executeClicked = true; }"
-                            >
-                                {{ $t(buttonText) }}
-                            </KsButton>
-                        </span>
-                    </KsFormItem>
+                <div class="right-align execute-row" v-if="!hasFormInputs || inputsOnRecap">
+                    <ValidationMessages :messages="validationMessages" />
+                    <span data-onboarding-target="flow-execute-confirm-button">
+                        <KsButton
+                            :icon="buttonIcon"
+                            :disabled="!flowCanBeExecuted || hasBlockingChecks"
+                            :data-test="buttonTestId"
+                            class="flow-run-trigger-button"
+                            type="primary"
+                            nativeType="submit"
+                            @click.prevent="() => { onSubmit(); executeClicked = true; }"
+                        >
+                            {{ $t(buttonText) }}
+                        </KsButton>
+                    </span>
                 </div>
             </div>
         </KsForm>
@@ -124,6 +122,10 @@
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
+    import {useFlowStore, isSuccessfulFlowSaveOutcome} from "../../stores/flow"
+    import {useAuthStore} from "override/stores/auth"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
     import type {Label, Execution, Check} from "../../stores/executions"
     import type {Flow} from "../../stores/flow"
     import {buildExecutionLabelStrings, hasForbiddenUserSystemLabels} from "../../utils/executionLabels"
@@ -141,6 +143,7 @@
     import WebhookCurl from "./WebhookCurl.vue"
     import InputsForm from "../../components/inputs/InputsForm.vue"
     import LabelInput from "../../components/labels/LabelInput.vue"
+    import ValidationMessages from "./ValidationMessages.vue"
 
     type AlertType = "success" | "warning" | "info" | "error"
     
@@ -197,6 +200,8 @@
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const executionsStore = useExecutionsStore()
+    const flowStore = useFlowStore()
+    const authStore = useAuthStore()
 
     const openTab = ref("inputs")
     const inputs = ref<Record<string, unknown>>({})
@@ -215,9 +220,32 @@
 
     const form = ref<FormInstance | null>(null)
     const inputsFormRef = ref<InstanceType<typeof InputsForm> | null>(null)
+    const publishing = ref(false)
 
     const flow = computed<Flow | undefined>(() => executionsStore.flow as Flow | undefined)
     const execution = computed<Execution | undefined>(() => executionsStore.execution)
+
+    const canPublishDraft = computed(() =>
+        Boolean(flow.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, flow.value.namespace)),
+    )
+
+    async function onPublishDraft() {
+        if (!flow.value) return
+        publishing.value = true
+        try {
+            const {namespace, id} = flow.value
+            const outcome = await flowStore.publishDraft(flow.value)
+            if (isSuccessfulFlowSaveOutcome(outcome)) {
+                await executionsStore.loadFlowForExecution({namespace, flowId: id, store: true})
+            }
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000})
+            }
+        } finally {
+            publishing.value = false
+        }
+    }
 
     // a flow with FORM inputs renders the wizard; the footer Execute is gated on the recap step
     const hasFormInputs = computed(() => (flow.value?.inputs ?? []).some((input: {type?: string}) => input.type === "FORM"))
@@ -229,6 +257,17 @@
     const haveForbiddenSystemLabels = computed(() =>
         hasForbiddenUserSystemLabels(executionLabels.value),
     )
+
+    const validationMessages = computed(() => {
+        const messages: string[] = []
+        if (haveBadLabels.value) {
+            messages.push(t("wrong labels"))
+        }
+        if (haveForbiddenSystemLabels.value) {
+            messages.push(t("forbidden system labels"))
+        }
+        return messages
+    })
 
     const flowCanBeExecuted = computed(() =>
         Boolean(flow.value && !flow.value.disabled && !haveBadLabels.value && !haveForbiddenSystemLabels.value),
@@ -275,6 +314,7 @@
         flowCanBeExecuted,
         hasBlockingChecks,
         showExecuteButton,
+        validationMessages,
         buttonText: props.buttonText,
         buttonIcon: props.buttonIcon,
         buttonTestId: props.buttonTestId,
@@ -347,10 +387,6 @@
 
     function onSubmit() {
         if (form.value && flowCanBeExecuted.value) {
-            apiStore.posthogEvents({
-                type: "FLOW_EXECUTION",
-                action: "submit",
-            })
             checks.value = []
             executeClicked.value = false
             coreStore.message = undefined
@@ -358,6 +394,14 @@
                 if (!valid) {
                     return
                 }
+
+                apiStore.posthogEvents({
+                    type: "FLOW_EXECUTION",
+                    action: "submit",
+                    // Replay-with-inputs bypasses triggerExecution, so it never emits a matching
+                    // `executed`: flagged so it can be excluded from the submit/executed funnel.
+                    is_replay: Boolean(props.replaySubmit),
+                })
 
                 const mergedInputs = props.selectedTrigger?.inputs
                     ? {...props.selectedTrigger.inputs, ...inputsNoDefaults.value}
@@ -377,7 +421,6 @@
                             breakpoints: breakpoints.value,
                         })
                     } else {
-                        const shouldShowOnboardingSuccessAnimation = route.query.onboardingPreset === "true"
                         if (flow.value) {
                             await executeTask(submitor, flow.value, mergedInputs, {
                                 redirect: props.redirect,
@@ -391,10 +434,6 @@
                                     .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
                                     .toISOString(true),
                                 nextStep: true,
-                                query: shouldShowOnboardingSuccessAnimation ? {
-                                    autoExpandGantt: "true",
-                                    onboardingSuccess: "true",
-                                } : undefined,
                                 breakpoints: breakpoints.value,
                             })
                         }
@@ -424,6 +463,10 @@
 <style scoped lang="scss">
     .flow-execution-checks-alerts {
         margin-bottom: 1rem;
+    }
+
+    .draft-publish-action {
+        margin-top: var(--ks-spacing-2);
     }
     :deep(.kel-collapse) {
         border-radius: var(--kel-border-radius-round);
@@ -464,6 +507,14 @@
 
     .right-align{
         text-align: right;
+    }
+
+    .execute-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: var(--ks-spacing-2);
     }
 
     .execution-pane {

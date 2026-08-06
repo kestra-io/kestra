@@ -24,7 +24,8 @@
                 <Metrics :taskRun="taskRun" :execution="execution" />
 
                 <Outputs
-                    :outputs="taskRun.outputs"
+                    :taskRun="taskRun"
+                    :executionId="execution.id"
                     :execution="execution"
                 />
 
@@ -90,7 +91,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute, useRouter} from "vue-router"
+    import {useRoute} from "vue-router"
 
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
     import Copy from "vue-material-design-icons/ContentCopy.vue"
@@ -106,6 +107,7 @@
     import {useCoreStore} from "../../stores/core"
     import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useMiscStore} from "override/stores/misc"
     import Restart from "./overview/components/actions/Restart.vue"
     import Metrics from "./Metrics.vue"
     import ChangeStatus from "./ChangeStatus.vue"
@@ -136,8 +138,8 @@
 
     const {t} = useI18n()
     const route = useRoute()
-    const router = useRouter()
     const toast = useToast()
+    const miscStore = useMiscStore()
     const coreStore = useCoreStore()
     const executionsStore = useExecutionsStore()
     const authStore = useAuthStore()
@@ -226,22 +228,7 @@
             return last?.message ?? ""
         })()
         const prompt = `Fix the task ${props.taskRun.taskId} as it generated the following error:\n${errorLines}`
-        try {
-            window.sessionStorage.setItem("kestra-ai-prompt", prompt)
-        } catch (err) {
-            console.warn("AI prompt not persisted to sessionStorage:", err)
-        }
-
-        router.push({
-            name: "flows/update",
-            params: {
-                namespace: props.execution.namespace,
-                id: props.execution.flowId,
-                tab: "edit",
-                tenant: route.params?.tenant,
-            },
-            query: {ai: "open"},
-        })
+        miscStore.promptCopilot(prompt)
     }
 </script>
 

@@ -3,8 +3,12 @@ import {expect} from "@playwright/test"
 import {BasePage, ExecutionState, Pagination} from "./base.page"
 
 export class ExecutionsPage extends BasePage {
+    /** The "Total N" counter of the pagination bar, scoped to the outermost table. */
+    private get totalLocator() {
+        return this.page.locator(".kel-pagination__total").first()
+    }
+
     async goto() {
-        await this.login()
         await this.page.goto("/ui/executions")
 
         await expect(this.page.getByRole("heading", {name: "Executions"})).toBeVisible()
@@ -33,19 +37,28 @@ export class ExecutionsPage extends BasePage {
         return expect(this.page.getByRole("row")).toHaveCount(expectedCount + 1)
     }
 
-    async expectTotalExecutionsCountToBe(expectedCount: number) {
-        return expect(this.page.locator(".kel-pagination__total").first()).toHaveText(`Total ${expectedCount}`)
+    /**
+     * Same assertion, but for counts that only settle once the server finishes applying an
+     * asynchronous bulk action. The list is fetched on navigation and never polls, so the
+     * page has to be reloaded until the backend catches up.
+     *
+     * Asserts the pagination total rather than the row count: what matters is that the server
+     * finished the action, and a row count would additionally depend on the selected page size.
+     */
+    async expectTotalExecutionsCountToBeAfterRefresh(expectedCount: number) {
+        await expect(async () => {
+            await this.page.reload()
+            // Short per-attempt timeout: the retry above is what waits, not this assertion.
+            await expect(this.totalLocator).toHaveText(`Total ${expectedCount}`, {timeout: 2000})
+        }).toPass({timeout: 60000})
     }
 
-    async getCountOfDisplayedExecutions() {
-        await this.page.waitForTimeout(20) // wait for data load to start
-        await this.page.waitForLoadState("networkidle") // wait for data load to finish
-        const rows = this.page.getByRole("row")
-        return await rows.count() - 1
+    async expectTotalExecutionsCountToBe(expectedCount: number) {
+        return expect(this.totalLocator).toHaveText(`Total ${expectedCount}`)
     }
 
     async getTotalExecutionsCount() {
-        const content = await this.page.locator(".kel-pagination__total").first().textContent()
+        const content = await this.totalLocator.textContent()
         if (!content) {
             throw new Error("Totals not found")
         }
@@ -63,9 +76,13 @@ export class ExecutionsPage extends BasePage {
         const checkbox = this.page.getByRole("row").nth(rowNumber).locator("label.kel-checkbox")
 
         await checkbox.waitFor({state: "visible"})
-        await checkbox.click()
 
-        await expect(checkbox).toContainClass("is-checked")
+        // A background data load can re-render the table and drop the selection, so retry
+        // until it sticks rather than sleeping first and hoping the reload already happened.
+        await expect(async () => {
+            await checkbox.click()
+            await expect(checkbox).toContainClass("is-checked", {timeout: 1000})
+        }).toPass({timeout: 15000})
     }
 
     async clickOnSelectAll() {
@@ -99,27 +116,35 @@ export class ExecutionsPage extends BasePage {
     async setLabelOnSelectedExecutions() {
         await this.page.getByRole("textbox", {name: "Key"}).fill("foo")
         await this.page.getByRole("textbox", {name: "Value"}).fill("baz")
+        const labelsAccepted = this.page.waitForResponse(
+            (response) => response.url().includes("/executions/labels/by-query") && response.request().method() === "POST",
+        )
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
         // Confirm
         await this.page.getByRole("button", {name: "OK", exact: true}).click()
-        await this.page.reload()
-        await this.page.waitForLoadState("networkidle")
+
+        await labelsAccepted
+        await expect(async () => {
+            await this.page.reload()
+            await expect(this.page.getByRole("row")).toHaveCount(1)
+        }).toPass({timeout: 30000})
     }
 
+    /*
+     * Sets the page size through the query param the view derives it from, rather than through
+     * the pagination dropdown, for the same reason the filter helpers above do:
+     *
+     *  - The dropdown handler pushes `size=` onto the route without awaiting it, and that push
+     *    sits behind async router guards. A `reload()` or a `goto()` rebuilt from `page.url()`
+     *    right after the click navigates to the pre-click URL and silently drops the selection,
+     *    leaving the list on its previous size for the rest of the test.
+     *  - Element Plus swallows a click on the size already in effect (`sizes.vue` bails out when
+     *    the clicked value equals the current one), so there is not even an event to wait on in
+     *    that case — the wait would simply time out.
+     *
+     * `page.goto` is awaited end to end, so the size is guaranteed to be in effect on return.
+     */
     async setPaginationTo(size: Pagination) {
-        // The Element-Plus dropdown is not a `select` - click on text
-        await this.page.locator(".kel-pagination .kel-select").click()
-
-        // Wait for the select dropdown to show
-        const dropdowns = this.page.locator(".kel-select-dropdown")
-        const visibleDropdown = dropdowns.filter({has: this.page.locator(":visible")}).last()
-
-        // Wait for the visible dropdown to actually appear
-        await visibleDropdown.waitFor({state: "visible", timeout: 500})
-
-        // Find and click the matching option
-        const option = visibleDropdown.locator(".kel-select-dropdown__item", {hasText: `${size} per page`})
-        await option.waitFor({state: "visible", timeout: 500})
-        await option.click()
+        await this.modifyQueryParam(this.page, {size: String(size)})
     }
 }

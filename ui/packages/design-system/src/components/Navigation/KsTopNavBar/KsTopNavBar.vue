@@ -4,7 +4,7 @@
             v-if="sidebarCollapsed"
             class="icon-btn"
             data-testid="topnav-sidebar-toggle"
-            :ariaLabel="t('topnav_sidebar_toggle')"
+            :ariaLabel="$t('topnav_sidebar_toggle')"
             @click="$emit('sidebar-toggle')"
         >
             <Menu />
@@ -29,7 +29,7 @@
                     v-if="!hideBookmark"
                     class="icon-btn star"
                     :class="{active: isBookmarked}"
-                    :ariaLabel="t('topnav_bookmark')"
+                    :ariaLabel="$t('topnav_bookmark')"
                     @click="$emit('star-click')"
                 >
                     <component :is="isBookmarked ? StarIcon : StarOutlineIcon" />
@@ -62,7 +62,7 @@
                 v-if="showDockToggle"
                 class="icon-btn dock-toggle"
                 :class="{'is-open': isDockOpen}"
-                :ariaLabel="t('topnav_dock_toggle')"
+                :ariaLabel="$t('topnav_dock_toggle')"
                 @click="$emit('dock-toggle')"
             >
                 <DockRight />
@@ -73,7 +73,6 @@
 
 <script setup lang="ts">
     import {type Component} from "vue"
-    import {useI18n} from "vue-i18n"
     import Menu from "vue-material-design-icons/Menu.vue"
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue"
     import StarIcon from "vue-material-design-icons/Star.vue"
@@ -124,7 +123,6 @@
         "panel-toggle"?(): unknown
     }>()
 
-    const {t} = useI18n({useScope: "global"})
 </script>
 
 <style scoped lang="scss">

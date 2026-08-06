@@ -10,12 +10,13 @@
                             :sections="sections"
                             :selectedExpression="selectedBase"
                             @select="selectItem"
+                            @search-change="onSearchChange"
                         />
                     </KsSplitterPanel>
 
                     <!-- Center: tree / raw JSON of the selected value -->
                     <KsSplitterPanel class="variable-explorer__panel variable-explorer__panel--viewer">
-                        <div class="viewer">
+                        <div class="viewer" :class="{'viewer--fill': isRawEditor}">
                             <div class="viewer__header">
                                 <KsSegmented
                                     v-if="isExpandableValue && !fileSelectedOutput"
@@ -34,16 +35,18 @@
                             </div>
 
                             <template v-if="selectedValue === undefined">
-                                <KsNoData :title="$t('variable_explorer.select_prompt')" />
+                                <KsNoData
+                                    :title="$t('variable_explorer.select_prompt')"
+                                    :description="$t('variable_explorer.select_hint')"
+                                />
                             </template>
 
                             <KsEditor
-                                v-else-if="viewMode === 'raw' && isExpandableValue"
+                                v-else-if="isRawEditor"
                                 v-bind="editorBindings"
                                 :readOnly="true"
                                 :inline="true"
                                 :navbar="false"
-                                :options="{fullHeight: true}"
                                 :modelValue="rawValue"
                                 lang="json"
                             />
@@ -56,11 +59,13 @@
                                 />
                             </div>
 
-                            <VariableTreeView
+                            <KsJsonTree
                                 v-else-if="isExpandableValue"
                                 :value="selectedValue"
                                 :basePath="selectedBase"
                                 :selectedPath="expressionPath"
+                                :previewFormatter="treePreviewFormatter"
+                                defaultExpanded
                                 @select="onSelectPath"
                             />
 
@@ -87,8 +92,9 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue"
-    import {useMediaQuery} from "@vueuse/core"
+    import {useDebounceFn, useMediaQuery} from "@vueuse/core"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {
         KsSplitter,
@@ -96,6 +102,7 @@
         KsSegmented,
         KsIconButton,
         KsEditor,
+        KsJsonTree,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
@@ -105,12 +112,13 @@
     import {useEditorBindings} from "../../../composables/useEditorBindings"
 
     import SidebarList, {ExplorerItem, ExplorerSection} from "./SidebarList.vue"
-    import VariableTreeView from "./VariableTreeView.vue"
     import ExpressionDebugger from "./ExpressionDebugger.vue"
+    import {taskOutputLabel} from "./explorerSearch"
     import * as Utils from "../../../utils/utils"
     import FilePreview from "../FilePreview.vue"
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const editorBindings = useEditorBindings()
 
     const executionsStore = useExecutionsStore()
@@ -147,6 +155,18 @@
         return String(value)
     }
 
+    function treePreviewFormatter(_value: unknown, context: {kind: "array" | "object", count: number}): string {
+        if (context.kind === "array") {
+            return context.count === 1
+                ? t("variable_explorer.one_item")
+                : t("variable_explorer.n_items", {count: context.count})
+        }
+
+        return context.count === 1
+            ? t("variable_explorer.one_key")
+            : t("variable_explorer.n_keys", {count: context.count})
+    }
+
     function itemsFromRecord(record: Record<string, unknown> | undefined, prefix: string): ExplorerItem[] {
         if (!record) return []
         return Object.entries(record).map(([label, value]) => ({
@@ -163,16 +183,23 @@
     // is fetched from the /outputs/{executionId} endpoint, then each task's
     // values are lazily loaded from /outputs/{executionId}/{taskRunId}.
 
+    interface TaskOutputMeta {
+        taskId: string;
+        value?: string | null;
+        iteration?: number | null;
+    }
+
     const tasksWithOutputs = ref<string[] | undefined>(undefined)
+    const taskOutputMetaByRunId = ref<Record<string, TaskOutputMeta>>({})
     const taskOutputs = ref<Record<string, Record<string, unknown>>>({})
 
     watch(
         () => execution.value?.id,
         async (id) => {
             tasksWithOutputs.value = undefined
+            taskOutputMetaByRunId.value = {}
             taskOutputs.value = {}
             if (!id) return
-
 
             const data = await OutputsAPI.taskOutputsInformation({
                 executionId: id,
@@ -180,26 +207,75 @@
                 validateStatus: (s: number) => s === 200 || s === 404,
             })
 
-            tasksWithOutputs.value = data
-                .map((task) => task.taskRunId)
-                .filter((taskRunId) => taskRunId !== undefined)
+            const metaByRunId: Record<string, TaskOutputMeta> = {}
+            const taskRunIds = data
+                .map((task) => {
+                    if (task.taskRunId !== undefined) {
+                        metaByRunId[task.taskRunId] = {
+                            taskId: task.taskId ?? "",
+                            value: task.value,
+                            iteration: task.iteration,
+                        }
+                    }
 
+                    return task.taskRunId
+                })
+                .filter((taskRunId): taskRunId is string => taskRunId !== undefined)
+
+            taskOutputMetaByRunId.value = metaByRunId
+            tasksWithOutputs.value = taskRunIds
         },
         {immediate: true},
     )
 
-    async function loadTaskOutputs(item: ExplorerItem) {
+    async function fetchTaskRunOutputs(taskRunId: string) {
         const id = execution.value?.id
-        if (!id || !item.taskRunId || taskOutputs.value[item.taskRunId]) return
+        if (!id) return {}
+
+        const cached = taskOutputs.value[taskRunId]
+        if (cached) {
+            return cached
+        }
 
         const data = await OutputsAPI.taskRunOutputs({
-            taskRunId: item.taskRunId,
+            taskRunId,
             executionId: id,
         }, {
             validateStatus: (s: number) => s === 200 || s === 404,
         })
 
-        taskOutputs.value = {...taskOutputs.value, [item.taskRunId]: data || {}}
+        const outputs = data || {}
+        taskOutputs.value = {...taskOutputs.value, [taskRunId]: outputs}
+        return outputs
+    }
+
+    async function loadTaskOutputs(item: ExplorerItem) {
+        if (!item.taskRunId) return
+
+        await fetchTaskRunOutputs(item.taskRunId)
+    }
+
+    async function prefetchTaskOutputsForSearch() {
+        const taskRunIds = tasksWithOutputs.value ?? []
+        const missingTaskRunIds = taskRunIds.filter((taskRunId) => !taskOutputs.value[taskRunId])
+
+        if (missingTaskRunIds.length === 0) {
+            return
+        }
+
+        await Promise.all(missingTaskRunIds.map((taskRunId) => fetchTaskRunOutputs(taskRunId)))
+    }
+
+    const debouncedPrefetchTaskOutputsForSearch = useDebounceFn(async (query: string) => {
+        if (!query.trim()) {
+            return
+        }
+
+        await prefetchTaskOutputsForSearch()
+    }, 300)
+
+    function onSearchChange(query: string) {
+        void debouncedPrefetchTaskOutputsForSearch(query)
     }
 
     function isOutputTaskAFile(item: any): item is { uri: string } {
@@ -216,14 +292,23 @@
         const taskRunList = execution.value?.taskRunList ?? []
         return taskRunList
             .filter((task) => tasksWithOutputs.value?.includes(task.id))
-            .map((task) => ({
-                label: task.taskId,
-                value: taskOutputs.value[task.id],
-                type: isOutputTaskAFile(taskOutputs.value[task.id]) ? "file" : "object",
-                preview: "",
-                expression: `outputs${formatStep(task.taskId)}`,
-                taskRunId: task.id,
-            }))
+            .map((task) => {
+                const outputs = taskOutputs.value[task.id]
+                const meta = taskOutputMetaByRunId.value[task.id]
+                const iterationValue = meta?.value ?? meta?.iteration
+
+                return {
+                    label: taskOutputLabel(task.taskId, iterationValue),
+                    value: outputs,
+                    type: isOutputTaskAFile(outputs) ? "file" : "object",
+                    preview: outputs ? preview(outputs) : "",
+                    expression: `outputs${formatStep(task.taskId)}`,
+                    taskRunId: task.id,
+                    searchText: [task.taskId, meta?.value, meta?.iteration]
+                        .filter((value) => value !== undefined && value !== null && value !== "")
+                        .join(" "),
+                }
+            })
     })
 
     /* ------------------------------- Sections -------------------------------- */
@@ -241,24 +326,55 @@
 
     /* ------------------------------- Selection ------------------------------- */
 
+    /** `?expression=trigger.body` seeds the debugger with that expression. */
+    function seededExpression() {
+        const seed = route.query.expression?.toString()
+        return seed ? `{{ ${seed} }}` : ""
+    }
+
+    /** `?select=trigger.variables` opens that item in the viewer, once, as soon as it exists. */
+    let selectionApplied = false
+
+    function applySeededSelection(available: ExplorerSection[]) {
+        const target = route.query.select?.toString()
+        if (selectionApplied || !target) {
+            return
+        }
+        const item = available.flatMap((section) => section.items)
+            .find((candidate) => candidate.expression === target)
+        if (!item) {
+            return
+        }
+        selectionApplied = true
+        void selectItem(item).then(() => {
+            // selectItem rewrites the expression, so re-apply the link's own.
+            const seed = seededExpression()
+            if (seed) {
+                expression.value = seed
+            }
+        })
+    }
+
     const selectedValue = ref<unknown>(undefined)
     const selectedBase = ref<string>("")
     const expressionPath = ref<string>("")
-    // Suggested expression handed to the debugger; follows the current selection.
-    const expression = ref<string>("")
+    const previewedValue = ref<unknown>(undefined)
+    const expression = ref<string>(seededExpression())
 
     const isExpandableValue = computed(
         () => selectedValue.value !== null && typeof selectedValue.value === "object",
     )
 
     const fileSelectedOutput = computed(() => {
+        const value = previewedValue.value
+
         // if an input file is selected, show the contents of the file
-        if(typeof selectedValue.value === "string" && Utils.isFile(selectedValue.value)){
-            return selectedValue.value
+        if(typeof value === "string" && Utils.isFile(value)){
+            return value
         }
-        if (!isExpandableValue.value) return undefined
+        if (value === null || typeof value !== "object") return undefined
         try {
-            const fileMetadata = selectedValue.value as {uri?: string}
+            const fileMetadata = value as {uri?: string}
             if (Utils.isFile(fileMetadata.uri)) {
                 return fileMetadata.uri
             }
@@ -283,6 +399,7 @@
         }
         selectedBase.value = item.expression
         expressionPath.value = item.expression
+        previewedValue.value = selectedValue.value
         // if the selectedValue is in the flow Outputs section,
         // it needs the `execution.` prefix to be debuggable.
         const baseExpressionPath = sections.value.find((section) =>
@@ -294,17 +411,23 @@
         // specially useful for files
         if(selectedValue.value && typeof selectedValue.value === "object" && Object.keys(selectedValue.value).length === 1) {
             const onlyKey = Object.keys(selectedValue.value)[0]
-            const fullExpressionPath = `${baseExpressionPath}${formatStep(onlyKey)}`
-            expression.value = `{{ ${fullExpressionPath} }}`
+            const treePath = `${item.expression}${formatStep(onlyKey)}`
+            const debugPath = `${baseExpressionPath}${formatStep(onlyKey)}`
+            expressionPath.value = treePath
+            previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
+            expression.value = `{{ ${debugPath} }}`
         }else {
             expression.value = `{{ ${baseExpressionPath} }}`
         }
     }
 
-    function onSelectPath(path: string) {
+    function onSelectPath(path: string, value: unknown) {
         expressionPath.value = path
         expression.value = `{{ ${path} }}`
+        previewedValue.value = value
     }
+
+    watch(sections, applySeededSelection, {immediate: true})
 
     /* --------------------------------- Viewer -------------------------------- */
 
@@ -313,6 +436,8 @@
         {label: t("variable_explorer.tree"), value: "tree"},
         {label: t("variable_explorer.raw_json"), value: "raw"},
     ])
+
+    const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
     function copyValue() {
         navigator.clipboard?.writeText(rawValue.value)
@@ -368,8 +493,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
-    min-height: 0;
+    min-height: 100%;
     background-color: var(--ks-bg-surface);
 
     &__header {
@@ -379,12 +503,6 @@
         gap: var(--ks-spacing-2);
         padding: var(--ks-spacing-3) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
-    }
-
-    &__body {
-        flex: 1 1 0;
-        min-height: 0;
-        padding: var(--ks-spacing-2) var(--ks-spacing-3);
     }
 
     &__scalar {
@@ -397,6 +515,11 @@
     .file-preview {
         padding: var(--ks-spacing-4);
     }
+}
+
+.viewer--fill {
+    height: 100%;
+    min-height: 0;
 }
 
 .debug {

@@ -1,10 +1,9 @@
 <template>
     <div class="button-top">
-        <ValidationError 
+        <ValidationError
             class="mx-3"
             tooltipPlacement="bottom-start"
             :errors="dashboardStore.errors"
-            :warnings="dashboardStore.warnings"
         />
 
         <KsButton
@@ -32,7 +31,7 @@
 
     const saveButtonType = computed(() => {
         if (dashboardStore.errors) return "danger"
-        return dashboardStore.warnings ? "warning" : "primary"
+        return "primary"
     })
 
     const canSave = computed(() => dashboardStore.haveChange || dashboardStore.isCreating)
@@ -41,5 +40,9 @@
     .button-top {
         background: none;
         border: none;
+        display: flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        padding: var(--ks-spacing-2) var(--ks-spacing-4);
     }
 </style>

@@ -10,7 +10,7 @@
         @page-changed="({page, size}: {page: number; size: number}) => router.push({query: {...route.query, page: String(page), size: String(size)}})"
         @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}})"
         :no-data-text="$t('no_results.kv_pairs')"
-        class="fill-height"
+        :fitHeight="!paneView"
         :showSelection="!paneView"
         :rowKey="(row: any) => `${row.namespace}-${row.key}`"
     >
@@ -47,7 +47,16 @@
                 sortable="custom"
                 :sortOrders="['ascending', 'descending']"
                 :label="$t('namespace')"
-            />
+            >
+                <template #default="scope">
+                    <KsEntityLink
+                        v-if="scope.row.namespace"
+                        entity="namespace"
+                        :value="scope.row.namespace"
+                        :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                    />
+                </template>
+            </KsTableColumn>
             <KsTableColumn
                 v-else-if="colProp === 'key'"
                 prop="key"
@@ -96,7 +105,7 @@
                     v-if="scope.row.key !== undefined"
                     :tooltip="$t('copy_to_clipboard')"
                     placement="left"
-                    @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
+                    @click="copyKey(scope.row.key)"
                 >
                     <ContentCopy />
                 </KsIconButton>
@@ -287,7 +296,8 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue"
     import Eye from "vue-material-design-icons/Eye.vue"
 
-    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
+    import {KsId, KsIconButton, KsEditor, KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import {useEditorBindings} from "../../composables/useEditorBindings"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
     import InheritedKVs from "./InheritedKVs.vue"
@@ -311,7 +321,8 @@
 
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import {useKvStore} from "../../stores/kvs.ts"
+    import {useApiStore} from "../../stores/api"
+    import * as KvAPI from "@kestra-io/kestra-sdk/kv"
 
     import _merge from "lodash/merge"
     const dataTable = useTemplateRef("dataTable")
@@ -333,7 +344,7 @@
 
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
-    const kvStore = useKvStore()
+    const apiStore = useApiStore()
 
     const editorBindings = useEditorBindings()
 
@@ -343,7 +354,7 @@
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         if (!loadInit.value) return
         const activeFilters = routeQueryToQueryFilters(route.query)
-        const kvsResponse = await kvStore.find(loadQuery({
+        const kvsResponse = await KvAPI.listAllKeys(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "name:asc"),
@@ -359,7 +370,7 @@
             const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1)
 
             for (const parentNs of parentNamespaces) {
-                const parentKvsResponse = await kvStore.find(loadQuery({
+                const parentKvsResponse = await KvAPI.listAllKeys(loadQuery({
                     filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 
@@ -588,6 +599,21 @@
         }
         kv.value.update = true
         kv.value.description = entry.description
+
+        if (entry.expirationDate) {
+            const expirationMoment = moment(entry.expirationDate)
+            const now = moment()
+
+            if (expirationMoment.isValid() && expirationMoment.isAfter(now)) {
+                const remainingMilliseconds = Math.round(expirationMoment.diff(now) / 1000) * 1000
+                kv.value.ttl = moment.duration(remainingMilliseconds).toISOString()
+            } else {
+                kv.value.ttl = undefined
+            }
+        } else {
+            kv.value.ttl = undefined
+        }
+
         addKvDrawerVisible.value = true
     }
 
@@ -605,6 +631,11 @@
             description: entry.description,
         }
         viewKvDrawerVisible.value = true
+    }
+
+    async function copyKey(key: string) {
+        await Utils.copy(`{{ kv('${key}') }}`)
+        toast.success(t("copied"))
     }
 
     function removeKv(namespace: string, key: string) {
@@ -679,9 +710,20 @@
                 (payload as any).ttl = ttl
             }
 
+            // update flag is set by updateKvModal(); setKeyValue() is an upsert and can't tell them apart.
+            const wasUpdate = kv.value.update === true
+
             return namespacesStore
                 .createKv(payload)
                 .then(() => {
+                    apiStore.posthogEvents({
+                        type: wasUpdate ? "SECRET_UPDATED" : "SECRET_CREATED",
+                        secret_type: "kv",
+                        namespace,
+                        value_type: type,
+                        has_ttl: Boolean(ttl),
+                    })
+
                     toast.saved(key)
                     addKvDrawerVisible.value = false
                     dataTable.value?.reload()

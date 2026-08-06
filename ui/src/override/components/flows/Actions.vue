@@ -53,10 +53,18 @@
         />
 
         <template #primary>
+            <NavBarAction
+                v-if="isEditTab && editorIsAllowedEdit && !deleted && !flowStore.isCreating && editorIsDraft"
+                type="primary"
+                :label="t('publish')"
+                :disabled="editorHasErrors || editorIsReadOnly"
+                @click="editorPublishDraft"
+            />
+
             <KsDropdown
                 v-if="isEditTab && editorIsAllowedEdit && !deleted"
                 splitButton
-                type="primary"
+                :type="editorIsDraft ? 'default' : 'primary'"
                 :disabled="!editorCanSave || editorIsReadOnly"
                 :buttonProps="{disabled: editorHasErrors}"
                 @click="editorSave"
@@ -103,6 +111,8 @@
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
+    import {routeFamily} from "../../../utils/routeFamily"
+    import {useActiveTab} from "../../../composables/useActiveTab"
     import resource from "../../../models/resource"
     import action from "../../../models/action"
     import {useAuthStore} from "override/stores/auth"
@@ -123,7 +133,7 @@
 
     const flow = computed(() => flowStore.flow)
     const deleted = computed(() => flow.value?.deleted || false)
-    const tab = computed(() => route.params?.tab as string)
+    const tab = useActiveTab()
     const isEditTab = computed(() => tab.value === "edit" || flowStore.isCreating)
 
     const authStore = useAuthStore()
@@ -135,9 +145,11 @@
         hasErrors: editorHasErrors,
         isReadOnly: editorIsReadOnly,
         isAllowedEdit: editorIsAllowedEdit,
+        isDraft: editorIsDraft,
         isPlaygroundAllowed,
         save: editorSave,
         saveAsDraft: editorSaveAsDraft,
+        publishDraft: editorPublishDraft,
         saveAndExecute: editorSaveAndExecute,
         exportYaml: editorExportYaml,
         copyFlow: editorCopyFlow,
@@ -153,7 +165,7 @@
     }
 
     const showDashboards = computed(() =>
-        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(String(route.name)),
+        tab.value === "overview" && ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name)),
     )
 
     const canExecute = computed(() =>
@@ -178,11 +190,10 @@
 
     const editFlow = () => {
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: flow.value?.namespace,
                 id: flow.value?.id,
-                tab: "edit",
                 tenant: route.params.tenant,
             },
         })
@@ -208,6 +219,7 @@
     const restoreFlow = () => {
         flowStore.createFlow({
             flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
+            restore: true,
         }).then(() => {
             unsavedChangesStore.unsavedChange = false
             router.go(0)

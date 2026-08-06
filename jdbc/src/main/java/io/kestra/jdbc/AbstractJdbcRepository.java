@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
@@ -170,8 +171,20 @@ public abstract class AbstractJdbcRepository<T> {
             .set(KEY_FIELD, key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
-            .set(finalFields)
+            .set(excluded(finalFields))
             .execute();
+    }
+
+    /**
+     * Turns a column-to-value map into a column-to-{@code EXCLUDED}/{@code VALUES(...)} map, so the
+     * update clause of an upsert re-references the row already bound by the insert clause instead of
+     * binding the (potentially large) value a second time. jOOQ renders this per-dialect: the
+     * {@code EXCLUDED} pseudo-table on PostgreSQL, {@code VALUES(column)} on MySQL/MariaDB.
+     */
+    protected static Map<Field<Object>, Object> excluded(Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> excluded = HashMap.newHashMap(fields.size());
+        fields.keySet().forEach(field -> excluded.put(field, DSL.excluded(field)));
+        return excluded;
     }
 
     /**
@@ -256,7 +269,7 @@ public abstract class AbstractJdbcRepository<T> {
             .set(KEY_FIELD, key(entity))
             .set(fields)
             .onDuplicateKeyUpdate()
-            .set(fields);
+            .set(excluded(fields));
     }
 
     public int delete(T entity) {
@@ -293,6 +306,15 @@ public abstract class AbstractJdbcRepository<T> {
 
     }
 
+    /**
+     * Reassembles an {@link Instant} from the SQL-extracted date parts (year/month/day/hour/minute)
+     * produced by {@code AbstractJdbcRepository#groupByFields}.
+     * <p>
+     * Those parts are UTC wall-clock values — the date columns hold UTC (H2 and MySQL store UTC
+     * wall-clock directly; Postgres is normalised via {@code groupByTimestampField}) — so they must
+     * be reassembled in UTC. Using the JVM default zone here would shift every bucket by the local
+     * UTC offset on a non-UTC host.
+     */
     public <R extends Record> Instant getDate(R record, String groupByType) {
         List<String> fields = Arrays.stream(record.fields()).map(Field::getName).toList();
         Integer minute = fields.contains("minute") ? record.get("minute", Integer.class) : 0;
@@ -304,20 +326,24 @@ public abstract class AbstractJdbcRepository<T> {
 
         switch (groupByType) {
             case "minute" -> {
-                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "hour" -> {
-                return ZonedDateTime.of(year, month, day, hour, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, hour, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "day" -> {
-                return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "week" -> {
-                LocalDate weekDate = LocalDate.ofYearDay(year, week * 7);
-                return weekDate.atStartOfDay().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant(ZonedDateTime.now().getOffset());
+                // week * 7 can fall outside the 1..365/366 day-of-year range (e.g. week 53 -> 371, or
+                // week 0 returned by some SQL WEEK() modes), which would make ofYearDay throw, so clamp it.
+                int maxDayOfYear = LocalDate.of(year, 12, 31).getDayOfYear();
+                int dayOfYear = Math.min(Math.max(week * 7, 1), maxDayOfYear);
+                LocalDate weekDate = LocalDate.ofYearDay(year, dayOfYear).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                return weekDate.atStartOfDay(ZoneOffset.UTC).toInstant();
             }
             case "month" -> {
-                return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             default -> throw new IllegalArgumentException("Invalid groupByType: " + groupByType);
         }

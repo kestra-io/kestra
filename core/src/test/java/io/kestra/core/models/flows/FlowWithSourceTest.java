@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -132,18 +133,6 @@ class FlowWithSourceTest {
                     Schedule.builder().id("schedule").cron("0 1 9 * * *").build()
                 )
             )
-            .pluginDefaults(
-                List.of(
-                    FlowPluginDefault.builder()
-                        .type(Log.class.getName())
-                        .values(
-                            Map.of(
-                                "message", "Default message"
-                            )
-                        )
-                        .build()
-                )
-            )
             .concurrency(
                 Concurrency.builder()
                     .behavior(Concurrency.Behavior.CANCEL)
@@ -156,5 +145,31 @@ class FlowWithSourceTest {
 
         assertThat(of.equalsWithoutRevision(flow)).isTrue();
         assertThat(of.getSource()).isEqualTo(expectedSource);
+    }
+
+    @Test
+    void toFlowShouldPreserveRevisionAndUpdated() {
+        Instant updated = Instant.parse("2026-08-06T08:55:00.788514407Z");
+        FlowWithSource flowWithSource = FlowWithSource.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .revision(2)
+            .updated(updated)
+            .tasks(
+                List.of(
+                    Log.builder()
+                        .id(IdUtils.create())
+                        .type(Log.class.getName())
+                        .message("Hello World")
+                        .build()
+                )
+            )
+            .source("source")
+            .build();
+
+        Flow flow = flowWithSource.toFlow();
+
+        assertThat(flow.getRevision()).isEqualTo(2);
+        assertThat(flow.getUpdated()).isEqualTo(updated);
     }
 }

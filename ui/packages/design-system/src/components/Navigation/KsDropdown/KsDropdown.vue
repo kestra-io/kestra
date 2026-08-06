@@ -1,5 +1,6 @@
 <template>
     <ElDropdown
+        ref="dropdown"
         :persistent="false"
         :popperOptions="POPPER_OPTIONS"
         v-bind="$attrs"
@@ -14,7 +15,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ElDropdown} from "element-plus"
+    import {ref} from "vue"
+    import {ElDropdown, type DropdownInstance} from "element-plus"
 
     defineOptions({inheritAttrs: false})
 
@@ -29,6 +31,15 @@
         default?(): unknown
         dropdown?(): unknown
     }>()
+
+    // Forward the underlying ElDropdown open/close controls so callers can dismiss the menu
+    // programmatically — needed when the dropdown holds custom content (not KsDropdownItems,
+    // which auto-close on click).
+    const dropdown = ref<DropdownInstance>()
+    defineExpose({
+        handleOpen: () => dropdown.value?.handleOpen(),
+        handleClose: () => dropdown.value?.handleClose(),
+    })
 </script>
 
 <style lang="scss">
@@ -74,6 +85,10 @@
 
             i {
                 margin-right: 0;
+            }
+
+            &:not(.is-disabled) i {
+                color: var(--ks-icon-muted);
             }
 
             &:not(.is-disabled):hover,

@@ -44,8 +44,10 @@ buildSkipTests: clean
 test: clean
 	./gradlew test
 
+# Set SKIP_NPM_CI=true when dependencies are already installed (e.g. the CI
+# workflow ran `npm ci` beforehand) to avoid a redundant reinstall.
 build-frontend:
-	cd ui && npm ci && npm run build
+	cd ui && { [ "${SKIP_NPM_CI}" = "true" ] && [ -d node_modules ] || npm ci; } && npm run build
 
 build-exec: build-frontend
 	./gradlew -q executableJar --no-daemon --priority=normal
@@ -91,6 +93,11 @@ install-plugins:
 
 # Build docker image from Kestra source.
 build-docker: build-exec
+	$(MAKE) build-docker-from-exec
+
+# Build docker image from an existing build/executable (e.g. a CI artifact),
+# skipping the frontend/Gradle build entirely.
+build-docker-from-exec:
 	cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
 	echo "${DOCKER_IMAGE}:${VERSION}"
 	docker build \

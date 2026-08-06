@@ -17,6 +17,7 @@ const meta: Meta<typeof KsExecutionStatus> = {
         glow: {control: "boolean"},
         title: {control: "text"},
         clickable: {control: "boolean"},
+        disabled: {control: "boolean"},
     },
     parameters: {
         docs: {description: {component: "KsExecutionStatus displays an execution status badge with optional icon, color-coded by status."}},
@@ -99,6 +100,30 @@ export const Clickable: Story = {
         template: `
             <div style="padding:24px;display:flex;flex-wrap:wrap;gap:8px">
                 <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon clickable />
+            </div>
+        `,
+    }),
+}
+
+export const GlowClickable: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup() { return {statuses} },
+        template: `
+            <div style="padding:48px;display:flex;flex-wrap:wrap;gap:32px">
+                <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon glow clickable />
+            </div>
+        `,
+    }),
+}
+
+export const Disabled: Story = {
+    render: () => ({
+        components: {KsExecutionStatus},
+        setup() { return {statuses} },
+        template: `
+            <div style="padding:24px;display:flex;flex-wrap:wrap;gap:8px">
+                <ks-execution-status v-for="s in statuses" :key="s" :status="s" icon glow clickable disabled />
             </div>
         `,
     }),

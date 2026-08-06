@@ -64,7 +64,7 @@
     import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
-    import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
+    import {apiUrlWithoutTenants} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth"
     import {shouldShowWelcome} from "../../utils/welcomeGuard"
     import {identifyPosthogUser} from "../../utils/posthog"
@@ -118,25 +118,16 @@
 
     const axios = useClient()
 
-    const validateCredentials = async (auth: string) => {
-        try {
-            document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`
-            await axios.get(`${apiUrl()}/usages/all`, {timeout: 10000, withCredentials: true})
-        } catch(e) {
-            BasicAuth.logout()
-            throw e
-        }
-    }
 
     const checkServerInitialization = async () => {
-        const response = await axios.get(`${apiUrlWithoutTenants()}/configs`, {timeout: 10000, withCredentials: true})
+        const response = await axios.get(`${apiUrlWithoutTenants()}/configs/login`, {timeout: 10000})
         return response.data?.isBasicAuthInitialized
     }
 
     const handleNetworkError = (error: any) => {
         return error.code === "ERR_NETWORK" ||
             error.code === "ECONNREFUSED" ||
-            (!error.response && error.message?.includes("Network Error"))
+            (!error.response && error instanceof TypeError)
     }
 
     const loadAuthConfigErrors = async () => {
@@ -161,17 +152,11 @@
             if (!(await form.value.validate().catch(() => false))) return
 
             isLoading.value = true
-
-            const {username, password} = credentials.value
-            const trimmedUsername = username.trim()
-            const auth = btoa(`${trimmedUsername}:${password}`)
-
-            await validateCredentials(auth)
-
+            
             const isInitialized = await checkServerInitialization()
             if (!isInitialized) { router.push({name: "setup"}); return }
 
-            BasicAuth.signIn(trimmedUsername, password)
+            const {username: trimmedUsername} = await BasicAuth.signIn(credentials.value)
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
 
@@ -182,7 +167,7 @@
             if (shouldShowHelloDialog()) localStorage.setItem("showSurveyDialogAfterLogin", "true")
 
             if (await shouldShowWelcome()) {
-                router.push({name: "welcome"})
+                router.push({name: "ai"})
             } else if (redirectPath.value) {
                 router.push(redirectPath.value)
             } else {

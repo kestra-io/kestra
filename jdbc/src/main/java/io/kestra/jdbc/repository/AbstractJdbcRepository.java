@@ -86,6 +86,16 @@ public abstract class AbstractJdbcRepository {
         return tenantId == null ? TENANT_ID_FIELD.isNull() : TENANT_ID_FIELD.eq(tenantId);
     }
 
+    /**
+     * Null-safe equality condition: {@code field = value} in SQL never matches a NULL value, so a
+     * plain {@code field.eq(value)} silently drops rows when {@code value} is null. Use this whenever
+     * {@code value} models an optional scope that is genuinely persisted as {@code NULL}.
+     */
+    // Used in EE
+    protected <T> Condition eqOrIsNull(Field<T> field, T value) {
+        return value == null ? field.isNull() : field.eq(value);
+    }
+
     public static Field<Object> field(String name) {
         return DSL.field(DSL.quotedName(name));
     }
@@ -106,18 +116,32 @@ public abstract class AbstractJdbcRepository {
         return DSL.week(timestampField);
     }
 
+    /**
+     * The timestamp expression that {@link #groupByFields} extracts date parts from.
+     * <p>
+     * It must yield <em>UTC</em> wall-clock parts, because
+     * {@link io.kestra.jdbc.AbstractJdbcRepository#getDate} reassembles them in UTC. The default is
+     * correct for H2 and MySQL, whose date columns already hold UTC wall-clock values. Postgres
+     * stores {@code TIMESTAMPTZ}, for which a plain cast to {@code timestamp} resolves in the
+     * session timezone, so it overrides this.
+     */
+    protected Field<Timestamp> groupByTimestampField(String dateField) {
+        return DSL.timestamp(field(dateField, Date.class));
+    }
+
     protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField, @Nullable DateUtils.GroupType groupBy) {
         return groupByFields(duration, dateField, groupBy, true);
     }
 
     protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField, @Nullable DateUtils.GroupType groupBy, boolean withAs) {
         String field = dateField != null ? dateField : "timestamp";
-        Field<Integer> month = withAs ? DSL.month(DSL.timestamp(field(field, Date.class))).as("month") : DSL.month(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> year = withAs ? DSL.year(DSL.timestamp(field(field, Date.class))).as("year") : DSL.year(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> day = withAs ? DSL.day(DSL.timestamp(field(field, Date.class))).as("day") : DSL.day(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> week = withAs ? weekFromTimestamp(DSL.timestamp(field(field, Date.class))).as("week") : weekFromTimestamp(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> hour = withAs ? DSL.hour(DSL.timestamp(field(field, Date.class))).as("hour") : DSL.hour(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> minute = withAs ? DSL.minute(DSL.timestamp(field(field, Date.class))).as("minute") : DSL.minute(DSL.timestamp(field(field, Date.class)));
+        Field<Timestamp> timestamp = groupByTimestampField(field);
+        Field<Integer> month = withAs ? DSL.month(timestamp).as("month") : DSL.month(timestamp);
+        Field<Integer> year = withAs ? DSL.year(timestamp).as("year") : DSL.year(timestamp);
+        Field<Integer> day = withAs ? DSL.day(timestamp).as("day") : DSL.day(timestamp);
+        Field<Integer> week = withAs ? weekFromTimestamp(timestamp).as("week") : weekFromTimestamp(timestamp);
+        Field<Integer> hour = withAs ? DSL.hour(timestamp).as("hour") : DSL.hour(timestamp);
+        Field<Integer> minute = withAs ? DSL.minute(timestamp).as("minute") : DSL.minute(timestamp);
 
         if (groupBy == DateUtils.GroupType.MONTH || duration.toDays() > DateUtils.GroupValue.MONTH.getValue()) {
             return List.of(year, month);
@@ -629,19 +653,34 @@ public abstract class AbstractJdbcRepository {
     }
 
     private Condition handleLevelField(Object value, QueryFilter.Op operation) {
-        Level level = value instanceof Level ? (Level) value : Level.valueOf((String) value);
-
         return switch (operation) {
-            case GREATER_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMin(level));
-            case LESS_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMax(level));
+            case GREATER_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMin(toLevel(value)));
+            case LESS_THAN_OR_EQUAL_TO -> levelsCondition(LogEntry.findLevelsByMax(toLevel(value)));
+            case IN -> levelsCondition(toLevelList(value));
+            case NOT_IN -> notLevelsCondition(toLevelList(value));
             default -> throw new InvalidQueryFiltersException(
                 "Unsupported operation for LEVEL: " + operation
             );
         };
     }
 
+    private static Level toLevel(Object value) {
+        return value instanceof Level level ? level : Level.valueOf((String) value);
+    }
+
+    private static List<Level> toLevelList(Object value) {
+        if (value instanceof List<?> list) {
+            return list.stream().map(AbstractJdbcRepository::toLevel).toList();
+        }
+        return List.of(toLevel(value));
+    }
+
     protected Condition levelsCondition(List<Level> levels) {
         return field("level").in(levels.stream().map(level -> level.name()).toList());
+    }
+
+    protected Condition notLevelsCondition(List<Level> levels) {
+        return field("level").notIn(levels.stream().map(level -> level.name()).toList());
     }
 
     protected Condition handleAttemptNumberField(Object value, QueryFilter.Op operation) {

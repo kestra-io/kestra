@@ -39,8 +39,10 @@
         type FilterKeyConfig,
         type FilterValue,
         COMPARATOR_LABELS,
+        RANGE_COMPARATORS,
         TEXT_COMPARATORS,
         KV_COMPARATORS,
+        NULL_COMPARATORS,
     } from "../utils/filterTypes"
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys"
     import FilterText from "./FilterText.vue"
@@ -107,11 +109,11 @@
     )
 
     const isTextOp = computed(() =>
-        TEXT_COMPARATORS.includes(state.selectedComparator) && props.filterKey?.key !== "resources",
+        (TEXT_COMPARATORS.includes(state.selectedComparator) || NULL_COMPARATORS.includes(state.selectedComparator)) && props.filterKey?.key !== "resources",
     )
 
     const isKVPairFilter = computed(() =>
-        props.filterKey?.valueType === "key-value",
+        props.filterKey?.valueType === "key-value" && !isTextOp.value,
     )
 
     const isTimeRange = computed(() =>
@@ -122,6 +124,16 @@
     const supportsServerSideSearch = computed(() =>
         (props.filterKey?.valueProvider?.length ?? 0) > 0,
     )
+
+    // Range/threshold comparators (GTE/LTE/…) always target one bound value.
+    // Other comparators (IN/NOT_IN) are multi-value.
+    const effectiveValueType = computed(() => {
+        const type = props.filterKey?.valueType
+        if (type === "multi-select" && RANGE_COMPARATORS.includes(state.selectedComparator)) {
+            return "select"
+        }
+        return type
+    })
 
     const valueComponent = computed(() => {
         if (isTextOp.value) {
@@ -213,7 +225,7 @@
             },
         }
 
-        const valueType = props.filterKey.valueType === "time-range" ? "select" : props.filterKey.valueType
+        const valueType = props.filterKey.valueType === "time-range" ? "select" : effectiveValueType.value
 
         return (
             componentConfigs[valueType as keyof typeof componentConfigs] || null
@@ -227,7 +239,7 @@
             return t("filter.kv_pair_selected", {count: state.keyValuePair.length})
         }
 
-        switch (props.filterKey?.valueType) {
+        switch (effectiveValueType.value) {
         case "multi-select":
             return `${state.keyValuePair.length} ${props.filterKey?.label} selected`
         case "select":
@@ -277,7 +289,7 @@
             }
         }
 
-        switch (props.filterKey.valueType) {
+        switch (effectiveValueType.value) {
         case "text":
             return {value: state.textValue, label: state.textValue}
         case "select":
@@ -339,7 +351,7 @@
     }
 
     const emptyValueForType = (): AppliedFilter["value"] => {
-        const type = props.filterKey?.valueType
+        const type = effectiveValueType.value
         return type === "multi-select" || type === "key-value" ? [] : ""
     }
 
@@ -401,7 +413,7 @@
             state.endDateValue = null
         }
 
-        const isTextOpLocal = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey?.key !== "resources"
+        const isTextOpLocal = (TEXT_COMPARATORS.includes(filter.comparator) || NULL_COMPARATORS.includes(filter.comparator)) && props.filterKey?.key !== "resources"
         const isKVPair = props.filterKey?.valueType === "key-value" || (props.filterKey?.key === "labels" && KV_COMPARATORS.includes(filter.comparator))
 
         if (isTextOpLocal) {
@@ -413,7 +425,7 @@
                     ? [filter.value]
                     : []
         } else {
-            switch (props.filterKey.valueType) {
+            switch (effectiveValueType.value) {
             case "text":
                 state.textValue = typeof filter.value === "string" ? filter.value : ""
                 break

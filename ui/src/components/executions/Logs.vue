@@ -33,11 +33,10 @@
                 </KsTooltip>
             </div>
             <div class="logs-toolbar__actions">
-                <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" @follow="emit('follow', $event)" />
+                <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" />
                 <LogDisplaySettings />
-                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
-                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
-                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Refresh" :aria-label="t('refresh')" :tooltip="t('refresh')" @click="loadLogs()" />
+                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="downloadContent()" />
+                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs()" />
             </div>
         </div>
 
@@ -50,7 +49,7 @@
             :levelToHighlight="cursorLogLevel"
             @log-cursor="logCursor = $event"
             :logCursor="logCursor"
-            @follow="emit('follow', $event)"
+           
             @opened-taskruns-count="openedTaskrunsCount = $event"
             @log-indices-by-level="Object.entries($event).forEach(([levelName, indices]) => logIndicesByLevel[levelName] = indices)"
             :targetFlow="executionsStore.flow"
@@ -77,7 +76,6 @@
                     <DynamicScrollerItem
                         :item="asLog(item)"
                         :active="active"
-                        :sizeDependencies="[asLog(item).message]"
                         :data-index="asLog(item).index"
                         :key="asLog(item).uid"
                     >
@@ -120,7 +118,6 @@
     import LogLine from "../logs/LogLine.vue"
     import Restart from "./overview/components/actions/Restart.vue"
     import * as LogUtils from "../../utils/logs"
-    import Refresh from "vue-material-design-icons/Refresh.vue"
     import {useExecutionsStore} from "../../stores/executions"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
     import {storageKeys} from "../../utils/constants"
@@ -157,9 +154,6 @@
     const {t} = useI18n()
     const toast = useToast()
 
-    const emit = defineEmits<{
-        follow: [event: unknown]
-    }>()
 
     const props = withDefaults(defineProps<{
         playground?: boolean
@@ -544,11 +538,6 @@
       align-items: center;
       gap: var(--ks-spacing-2);
       margin-left: auto;
-    }
-
-    &__btn {
-      padding: var(--ks-spacing-2);
-      border-radius: var(--ks-radius-base);
     }
 
     &__text-btn {

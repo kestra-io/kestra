@@ -17,13 +17,14 @@ import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.LogStreamingService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
-import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.responses.CursorOrOffsetPagedResults;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -39,6 +40,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -65,22 +67,31 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = { "Logs" }, summary = "Search for logs")
-    public PagedResults<LogEntry> searchLogs(
+    public CursorOrOffsetPagedResults<LogEntry> searchLogs(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
             description = "The sort of current page", examples = {
                 @ExampleObject(name = "Sort by timestamp in ascending order", value = "timestamp:asc")
             }
         ) @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "An opaque cursor token (from a previous response's nextCursor) for cursor-paginated log stores")
+        @Nullable @QueryValue String cursor,
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[flowId][EQUALS]=hello-world`, `filters[timeRange][EQUALS]=P7D`, `filters[level][EQUALS]=DEBUG`",
             in = ParameterIn.QUERY
         ) @Nullable @QueryFilterFormat(Resource.LOG) List<QueryFilter> filters)
         throws HttpStatusException {
-        return PagedResults.of(
+        Pageable offsetPageable = PageableUtils.from(page, size, sort);
+        // A cursor param targets a cursor-paginated store (e.g. an external log store): resume after the
+        // opaque token (the store interprets it). Otherwise use offset pagination (the default for JDBC/Elasticsearch).
+        Pageable pageable = cursor != null
+            ? Pageable.afterCursor(Pageable.Cursor.of(cursor), page, size, offsetPageable.getSort())
+            : offsetPageable;
+
+        return CursorOrOffsetPagedResults.of(
             logRepository.find(
-                PageableUtils.from(page, size, sort),
+                pageable,
                 tenantService.resolveTenant(),
                 QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)
             )

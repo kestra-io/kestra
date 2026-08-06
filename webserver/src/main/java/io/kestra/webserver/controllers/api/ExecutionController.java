@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 import javax.annotation.CheckReturnValue;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
@@ -44,6 +43,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
@@ -64,6 +64,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
+import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
@@ -104,6 +105,7 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.format.Format;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
@@ -131,6 +133,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -150,6 +153,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
+    private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
+
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
@@ -165,6 +170,9 @@ public class ExecutionController {
 
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
 
     @Inject
     private GraphService graphService;
@@ -284,7 +292,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Search for executions")
     public PagedResults<ApiLightExecution> searchExecutions(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
             description = "The sort of current page", examples = {
                 @ExampleObject(name = "Sort by start date in ascending order", value = "state.startDate:asc"),
@@ -320,7 +328,7 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         )
         @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
-        @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) int size) {
+        @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
         if (!QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
             throw new HttpStatusException(
                 HttpStatus.BAD_REQUEST,
@@ -383,7 +391,6 @@ public class ExecutionController {
         } catch (IllegalVariableEvaluationException e) {
             return EvalResult.builder()
                 .error(e.getMessage())
-                .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
     }
@@ -414,7 +421,6 @@ public class ExecutionController {
         } catch (IllegalVariableEvaluationException e) {
             return EvalResult.builder()
                 .error(e.getMessage())
-                .stackTrace(ExceptionUtils.getStackTrace(e))
                 .build();
         }
     }
@@ -444,7 +450,6 @@ public class ExecutionController {
     public static class EvalResult {
         String result;
         String error;
-        String stackTrace;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -550,7 +555,7 @@ public class ExecutionController {
         @Parameter(description = "The flow namespace") @QueryValue String namespace,
         @Parameter(description = "The flow id") @QueryValue String flowId,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size) {
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
         var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size));
         var apiExecution = executions.stream()
             .map(execution -> ApiLightExecution.of(execution))
@@ -653,6 +658,7 @@ public class ExecutionController {
         }
 
         final AbstractWebhookTrigger webhook = maybeWebhook.get();
+        this.onWebhookMatched(flow, webhook);
 
         // Webhook context
         var webhookContext = new WebhookContext(
@@ -683,6 +689,15 @@ public class ExecutionController {
 
             return Mono.just(HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR));
         }
+    }
+
+    /**
+     * Hook invoked once a webhook trigger has been matched against its key, before it is evaluated.
+     * No-op by default; editions may throw to veto the execution creation. Running after key matching
+     * keeps veto details from callers that failed the key check.
+     */
+    protected void onWebhookMatched(Flow flow, AbstractWebhookTrigger webhook) {
+        // no-op
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -772,6 +787,13 @@ public class ExecutionController {
         }
 
         var executionId = IdUtils.create();
+        // Capture the OTel context on the current thread before entering the reactive chain.
+        // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
+        // would return an empty root context since OTel Context is thread-local.
+        final Context otelContext = Context.current();
+        // Same reason for the Micronaut propagated context: it carries the server request and its
+        // authentication, which the CREATE event listeners need to attribute the execution to its author.
+        final PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
             .flatMap(executionInputs ->
             {
@@ -800,13 +822,13 @@ public class ExecutionController {
                     createCommand = createCommand.withStateType(State.Type.FAILED);
                 }
 
-                // inject the traceparent from the current OTel context into the command so it's propagated to the execution
+                // inject the traceparent from the captured OTel context into the command so it's propagated to the execution
                 // TODO see if we can replicate ExecutionTextMapSetter logic
                 Map<String, String> traceCarrier = new HashMap<>();
                 openTelemetry
                     .map(OpenTelemetry::getPropagators)
                     .map(ContextPropagators::getTextMapPropagator)
-                    .ifPresent(propagator -> propagator.inject(Context.current(), traceCarrier, Map::put));
+                    .ifPresent(propagator -> propagator.inject(otelContext, traceCarrier, Map::put));
                 if (traceCarrier.containsKey("traceparent")) {
                     createCommand = createCommand.withTraceParent(traceCarrier.get("traceparent"));
                 }
@@ -817,6 +839,10 @@ public class ExecutionController {
                     operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
                 ).flatMap(res ->
                 {
+                    try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
+                        eventPublisher.publishEvent(CrudEvent.create(res.body()));
+                    }
+
                     var executionUrl = executionUrl(finalCreateCommand.executionFullId());
                     if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
                         return Mono.just(
@@ -850,9 +876,6 @@ public class ExecutionController {
                         .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
                         .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
                 });
-
-                //                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
-
             });
     }
 
@@ -1124,7 +1147,8 @@ public class ExecutionController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
-        @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
+        @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -1170,7 +1194,14 @@ public class ExecutionController {
 
         return submitBatchAction(
             executions,
-            (execution, opId) -> executionCommandQueue.emit(Restart.from(execution, null).withOperationId(opId))
+            (execution, opId) -> {
+                Integer revision = null;
+                if (Boolean.TRUE.equals(latestRevision)) {
+                    Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+                    revision = flow.getRevision();
+                }
+                executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(opId));
+            }
         );
     }
 
@@ -1183,9 +1214,11 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-        return restartExecutionsByIds(ids);
+        return restartExecutionsByIds(ids, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2482,6 +2515,53 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/namespaces/{namespace}/flows/{flowId}/average-duration")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Get the average duration of the recent executions of a flow, used to estimate the progress of a running execution."
+    )
+    public ExecutionAverageDuration getExecutionAverageDuration(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId) {
+        Instant endDate = Instant.now();
+
+        long durationSumMs = 0;
+        long count = 0;
+
+        for (DailyExecutionStatistics statistic : executionStatisticsRepository.statistics(
+            tenantService.resolveTenant(),
+            namespace,
+            flowId,
+            endDate.minus(AVERAGE_DURATION_LOOKBACK),
+            endDate,
+            DateUtils.GroupType.DAY
+        )) {
+            DailyExecutionStatistics.Duration duration = statistic.getDuration();
+            // Buckets without any execution are gap-filled with an all-null duration, so the count
+            // must be checked before reading the sum.
+            if (duration != null && 0 < duration.getCount()) {
+                durationSumMs += duration.getSum().toMillis();
+                count += duration.getCount();
+            }
+        }
+
+        // Weighted by bucket count: averaging the per-bucket averages would over-weight quiet days.
+        return new ExecutionAverageDuration(0 == count ? null : durationSumMs / count, count);
+    }
+
+    /**
+     * The average duration of the recent executions of a flow.
+     *
+     * @param avgDurationMs the average duration in milliseconds, or {@code null} when the flow has no
+     *        terminated execution in the lookback window.
+     * @param count the number of executions the average was computed from.
+     */
+    public record ExecutionAverageDuration(
+        @jakarta.annotation.Nullable Long avgDurationMs,
+        long count) {
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow-dependencies", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(
         tags = { "Executions" },
@@ -2539,7 +2619,7 @@ public class ExecutionController {
 
                 // check if there are already terminated executions so we could end them immediately
                 List<Execution> terminatedExecutions = executionRepository
-                    .find(null, current.getTenantId(), null, null, null, null, null, null, Map.of(CORRELATION_ID, correlationId), null, null)
+                    .find(null, current.getTenantId(), null, null, null, null, null, null, Map.of(CORRELATION_ID, correlationId), null)
                     .mapNotNull(exec ->
                     {
                         if (

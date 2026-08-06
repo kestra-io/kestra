@@ -44,8 +44,8 @@
                             </div>
                             <div class="logs-toolbar__actions">
                                 <LogDisplaySettings />
-                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
-                                <KsButton type="default" size="default" class="logs-toolbar__btn" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
+                                <KsButton square type="default" size="default" :icon="Download" :aria-label="t('download logs')" :tooltip="t('download logs')" @click="openDownload" />
+                                <KsButton square type="default" size="default" :icon="ContentCopy" :aria-label="t('copy logs')" :tooltip="t('copy logs')" @click="copyAllLogs" />
                             </div>
                         </div>
                         <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
@@ -100,6 +100,7 @@
 <script setup lang="ts">
     import {ref, computed, watch, useTemplateRef} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     import {useI18n} from "vue-i18n"
     import _merge from "lodash/merge"
     import moment from "moment"
@@ -191,8 +192,8 @@
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false")
     const dashboardRef = useTemplateRef("dashboard")
 
-    const isFlowEdit = computed(() => route.name === "flows/update")
-    const isNamespaceEdit = computed(() => route.name === "namespaces/update")
+    const isFlowEdit = computed(() => routeFamily(route.name) === "flows/update")
+    const isNamespaceEdit = computed(() => routeFamily(route.name) === "namespaces/update")
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
@@ -291,7 +292,10 @@
     const downloading = ref(false)
 
     const openDownload = () => {
-        downloadLevel.value = effectiveLogLevel.value?.value
+        const level = effectiveLogLevel.value
+        downloadLevel.value = level?.direction === "min" || level?.direction === "max"
+            ? level.value
+            : undefined
         downloadTimeRange.value = selectedTimeRange.value ?? undefined
         downloadOpen.value = true
     }
@@ -468,11 +472,6 @@
             align-items: center;
             margin-left: auto;
             gap: var(--ks-spacing-2);
-        }
-
-        &__btn {
-            padding: var(--ks-spacing-2);
-            border-radius: var(--ks-radius-base);
         }
 
         :deep(.kel-button) {

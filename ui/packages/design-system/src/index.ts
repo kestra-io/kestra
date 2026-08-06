@@ -53,6 +53,8 @@ import KsDropdownItem from "./components/Navigation/KsDropdown/KsDropdownItem.vu
 import KsDropdownMenu from "./components/Navigation/KsDropdown/KsDropdownMenu.vue"
 import KsEmpty from "./components/Data/KsEmpty.vue"
 import KsEmptyState from "./components/Data/KsEmptyState.vue"
+import KsEntityLink from "./components/Data/KsEntityLink/KsEntityLink.vue"
+export type {KsEntityLinkEntity} from "./components/Data/KsEntityLink/KsEntityLink.vue"
 import KsExecutionStatus from "./components/Data/KsExecutionStatus/KsExecutionStatus.vue"
 import KsFilter from "./components/Data/KsDataTable/KsFilter.vue"
 import KsForm from "./components/Form/KsForm/KsForm.vue"
@@ -92,11 +94,11 @@ import KsSteps from "./components/Navigation/KsSteps/KsSteps.vue"
 import KsSwitch from "./components/Form/KsSwitch.vue"
 import KsTabPane from "./components/Navigation/KsTabs/KsTabPane.vue"
 import KsTabs from "./components/Navigation/KsTabs/KsTabs.vue"
-import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
 import KsNoData from "./components/Data/KsNoData.vue"
 import KsTag from "./components/Data/KsTag/KsTag.vue"
+export type {KsTagType} from "./components/Data/KsTag/KsTag.vue"
 import KsText from "./components/Basic/KsText.vue"
 import KsTimeline from "./components/Data/KsTimeline/KsTimeline.vue"
 import KsTimelineItem from "./components/Data/KsTimeline/KsTimelineItem.vue"
@@ -134,13 +136,14 @@ export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
 export {setMomentInstance, setDateFormatter} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
-export type {RouterTab} from "./components/Navigation/KsTabs/KsRouterTab.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
 export {TooltipType, ChartRenderer, ChartFeature} from "./components/Charts/ksChartUtils"
 export {designSystemLocale, setDesignSystemLocale, registerDesignSystemI18n} from "./i18n"
 export type {FilterContext} from "./components/Data/KsDataTable/filter/utils/filterInjectionKeys"
+export {SAVED_FILTER_ANALYTICS_INJECTION_KEY} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
+export type {SavedFilterAction, SavedFilterAnalyticsEvent, SavedFilterAnalyticsTracker} from "./components/Data/KsDataTable/filter/utils/filterAnalytics"
 export {applyDefaultFilters} from "./components/Data/KsDataTable/filter/composables/useDefaultFilter"
 export {useRouteFilterPolicy} from "./components/Data/KsDataTable/filter/composables/useRouteFilterPolicy"
 export {
@@ -168,8 +171,10 @@ export {
     serializeFiltersToString,
     parseFiltersFromString,
     validStructureSignature,
-    routeQueryToQueryFilters,
-    type QueryFilter,
+    parseFilterKey,
+    decodeFilterValue,
+    type ParsedFilterKey,
+    type PrefixSegment,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
 export {pickStarterField} from "./components/Data/KsDataTable/filter/utils/filterChipFactory"
 export {
@@ -250,6 +255,7 @@ const components: Record<string, Component> = {
     KsEditor,
     KsEmpty,
     KsEmptyState,
+    KsEntityLink,
     KsExecutionStatus,
     KsFilter,
     KsForm,
@@ -289,7 +295,6 @@ const components: Record<string, Component> = {
     KsSwitch,
     KsTabPane,
     KsTabs,
-    KsRouterTab,
     KsTable,
     KsTableColumn,
     KsNoData,
@@ -358,6 +363,7 @@ export {
     KsEditor,
     KsEmpty,
     KsEmptyState,
+    KsEntityLink,
     KsExecutionStatus,
     KsFilter,
     KsForm,
@@ -397,7 +403,6 @@ export {
     KsSwitch,
     KsTabPane,
     KsTabs,
-    KsRouterTab,
     KsTable,
     KsTableColumn,
     KsNoData,
@@ -486,6 +491,7 @@ declare module "vue" {
         KsDropdownMenu: typeof KsDropdownMenu
         KsEmpty: typeof KsEmpty
         KsEmptyState: typeof KsEmptyState
+        KsEntityLink: typeof KsEntityLink
         KsExecutionStatus: typeof KsExecutionStatus
         KsFilter: typeof KsFilter
         KsForm: typeof KsForm
@@ -525,7 +531,6 @@ declare module "vue" {
         KsSwitch: typeof KsSwitch
         KsTabPane: typeof KsTabPane
         KsTabs: typeof KsTabs
-        KsRouterTab: typeof KsRouterTab
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
         KsNoData: typeof KsNoData

@@ -1,31 +1,30 @@
-import {computed, nextTick, ref, watch} from "vue"
+import {computed, ref, watch} from "vue"
 import {defineStore} from "pinia"
 
-import type {AxiosRequestConfig, AxiosResponse} from "axios"
+import type {AxiosLikeConfig, AxiosLikeResponse} from "@kestra-io/kestra-sdk"
 
-const response: AxiosRequestConfig = {responseType: "blob" as const}
-const downloadHandler = (res: AxiosResponse, filename: string) => {
+const response: AxiosLikeConfig = {responseType: "blob" as const}
+const validateStatus = (status: number) => status === 200 || status === 404
+const downloadHandler = (res: AxiosLikeResponse, filename: string, extension: string) => {
     const blob = new Blob([res.data], {type: "application/octet-stream"})
     const url = window.URL.createObjectURL(blob)
 
-    Utils.downloadUrl(url, `${filename}.csv`)
+    Utils.downloadUrl(url, `${filename}.${extension}`)
 }
 
 import {apiUrl} from "override/utils/route"
 
 import * as Utils from "../utils/utils"
+import {routeFamily} from "../utils/routeFamily"
 
 import type {Dashboard, Chart} from "../components/dashboard/types.ts"
 import {ChartFiltersOverrides, useClient, type DashboardSettings} from "@kestra-io/kestra-sdk"
 import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
-import * as DashboardsAdminAPI from "@kestra-io/kestra-sdk/dashboards-admin"
 import * as TenantsAPI from "@kestra-io/kestra-sdk/tenants"
 import {removeRefPrefix, usePluginsStore} from "./plugins"
 import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 import _throttle from "lodash/throttle"
-import {useCoreStore} from "./core"
 import {useUnsavedChangesStore} from "./unsavedChanges"
-import {useI18n} from "vue-i18n"
 import {RouteLocation} from "vue-router"
 
 export const DEFAULT_DASHBOARD = {
@@ -40,8 +39,14 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const selectedChart = ref<Chart>()
     const activeDashboard = ref<Dashboard>()
     const defaultDashboards = ref<DashboardSettings>()
+    const defaultDefinitions = ref<{
+        main: string,
+        flow: string,
+        namespace: string,
+    }>()
     const chartErrors = ref<string[]>([])
     const isCreating = ref<boolean>(false)
+    // const readonlyToastShown = ref(false)
 
     const sourceCode = ref("")
     const sourceCodeOrigin = ref("")
@@ -76,15 +81,41 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return {...dashboard, isDefault: isADefaultForThisRoute}
         })
         if(!isThereADefault){
-            const defaultDashboardBundledInUI = {...DEFAULT_DASHBOARD, title: t("dashboards.default"), isDefault: true}
+            const defaultDashboardBundledInUI = {...DEFAULT_DASHBOARD, title: "default", isDefault: true}
             dashboardList.value = [defaultDashboardBundledInUI, ...dashboardList.value]
         }
         return dashboardList.value
     }
 
     async function loadDefaults() {
-        defaultDashboards.value = await DashboardsAdminAPI.defaultDashboards()
+        // "get default dashboards" lives under a different SDK tag per edition (dashboards in OSS,
+        // dashboards-admin in EE) but the same REST path, so go through the raw client to stay
+        // edition-agnostic (same approach as the custom-blueprint reads).
+        const {data} = await axios.get<DashboardSettings>(`${apiUrl()}/dashboards/settings/default-dashboards`)
+        defaultDashboards.value = data
         return defaultDashboards.value
+    }
+
+    async function loadDefaultDefinitions() {
+        if (!defaultDefinitions.value) {
+            const res = await axios.get(`${apiUrl()}/dashboards/defaults/definitions`)
+            defaultDefinitions.value = res.data
+        }
+        return defaultDefinitions.value!
+    }
+
+    // side-effect-free lookups for autocompletion, deliberately not going through
+    // list()/load() which mutate dashboardList/activeDashboard and would clobber
+    // whatever the user is currently viewing/editing elsewhere in the app.
+    async function searchIds(): Promise<{ id: string; title?: string }[]> {
+        const res = await axios.get(`${apiUrl()}/dashboards?size=100`)
+        return (res.data as { results: { id: string; title?: string }[] }).results
+    }
+
+    async function chartsById(id: Dashboard["id"]): Promise<Chart[]> {
+        const res = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus})
+        if (res.status === 404) return []
+        return (res.data as Dashboard).charts ?? []
     }
 
     async function saveDefaults(defaultDashboardsRequest: DashboardSettings) {
@@ -94,7 +125,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         // TenantController is hardcoded to the "main" tenant (this OSS build is single-tenant),
         // and its `id` path param isn't the SDK's auto-filled `tenant` param, so it must be passed
         // explicitly here to match.
-        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboards({id: "main", ...def})
+        defaultDashboards.value = await TenantsAPI.setTenantDefaultDashboard({id: "main", ...def} as Parameters<typeof TenantsAPI.setTenantDefaultDashboard>[0])
     }
 
     const DASHBOARD_ROUTES = ["home", "flows/update", "namespaces/update"]
@@ -107,11 +138,11 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     function getDashboardType(route: RouteLocation) {
-        return KEY_MAP[route.name as string]
+        return KEY_MAP[routeFamily(route.name)]
     }
 
     const getDashboardId = async (route: RouteLocation): Promise<string> => {
-        const routeName = route.name?.toString()
+        const routeName = route.name ? routeFamily(route.name) : undefined
         if(!routeName || !DASHBOARD_ROUTES.includes(routeName)){
             throw new Error("invalid route in getDashboard: "+routeName?.toString())
         }
@@ -140,7 +171,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     function getUserDashboardStorageKey(route: RouteLocation){
         const tenant = route.params["tenant"]
-        const routeName = route.name?.toString()
+        const routeName = route.name ? routeFamily(route.name) : undefined
         if (!tenant) {
             throw new Error("tenant is mandatory in getUserDashboardStorageKey")
         }
@@ -174,10 +205,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return false
     }
 
+    const silent = {showMessageOnError: false} as Parameters<typeof DashboardsAPI.dashboard>[1]
+
     async function load(id: Dashboard["id"]) : Promise<Dashboard | undefined> {
         let data
         try{
-            data = await DashboardsAPI.dashboard({id}) as Dashboard
+            data = await DashboardsAPI.dashboard({id}, silent) as Dashboard
         } catch {
             return undefined
         }
@@ -211,7 +244,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: ChartFiltersOverrides) {
         try {
-            return await DashboardsAPI.dashboardChartData({id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0])
+            return await DashboardsAPI.dashboardChartData(
+                {id, chartId, ...parameters} as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[0],
+                silent as globalThis.Parameters<typeof DashboardsAPI.dashboardChartData>[1],
+            )
         } catch (e: any) {
             if (e.status === 404) return undefined
             throw e
@@ -228,17 +264,17 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return DashboardsAPI.previewChart(request)
     }
 
-    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides) {
+    async function exportDashboard(dashboard: Dashboard, chart: Chart, parameters: ChartFiltersOverrides, format: "CSV" | "ION" = "CSV") {
         const isDefault = dashboard.id === "default"
 
-        const path = isDefault ? "/charts/export/to-csv" : `/${dashboard.id}/charts/${chart.id}/export/to-csv`
+        const path = isDefault ? "/charts/export" : `/${dashboard.id}/charts/${chart.id}/export`
         const payload = isDefault ? {chart: chart.content, globalFilter: parameters} : parameters
 
         const filename = `chart__${chart.id}`
 
         return axios
-            .post(`${apiUrl()}/dashboards${path}`, payload, response)
-            .then((res) => downloadHandler(res, filename))
+            .post(`${apiUrl()}/dashboards${path}?format=${format}`, payload, response)
+            .then((res) => downloadHandler(res, filename, format.toLowerCase()))
     }
 
     const pluginsStore = usePluginsStore()
@@ -316,38 +352,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
     }
 
     const errors = ref<string[] | undefined>()
-    const warnings = ref<string[] | undefined>()
-    const coreStore = useCoreStore()
-
-    const {t} = useI18n()
-
-    watch(sourceCode, _throttle(async () => {
-        const errorsResult = await validateDashboard(sourceCode.value)
-
-        const dbId = activeDashboard.value?.id
-        if (errorsResult.constraints) {
-            errors.value = [errorsResult.constraints]
-        } else {
-            errors.value = undefined
-        }
-
-        if (!isCreating.value && dbId !== undefined && YAML_UTILS.parse(sourceCode.value).id !== dbId) {
-            coreStore.message = {
-                variant: "error",
-                title: t("readonly property"),
-                message: t("dashboards.edition.id readonly"),
-            }
-
-            await nextTick()
-            if(sourceCode.value && dbId){
-                sourceCode.value = YAML_UTILS.replaceBlockWithPath({
-                    source: sourceCode.value,
-                    path: "id",
-                    newContent: dbId,
-                })
-            }
-        }
-    }, 300, {trailing: true, leading: false}))
 
     return {
         activeDashboard,
@@ -360,6 +364,10 @@ export const useDashboardStore = defineStore("dashboard", () => {
         getUserDashboardStorageKey,
         defaultDashboards,
         loadDefaults,
+        defaultDefinitions,
+        loadDefaultDefinitions,
+        searchIds,
+        chartsById,
         saveDefaults,
         create,
         update,
@@ -371,7 +379,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
         export: exportDashboard,
         loadChart,
         errors,
-        warnings,
 
         schema,
         definitions,

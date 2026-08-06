@@ -14,7 +14,7 @@
                         </template>
                     </li>
                 </template>
-                <template v-if="$route.name === 'flows/update'">
+                <template v-if="routeFamily($route.name) === 'flows/update'">
                     <li>
                         <template v-if="isAllowedEdit">
                             <KsButton :icon="Pencil" size="large" @click="editFlow" :disabled="isReadOnly">
@@ -34,15 +34,15 @@
             </ul>
         </template>
     </TopNavBar>
-    <section :class="{'container padding-bottom': topbar}">
+    <section :class="{'full-container': fitHeightResolved}">
         <KsDataTable
             ref="dataTable"
             :loadData="loadData"
             :data="executionsStore.executions"
             :total="executionsStore.total"
-            :currentPage="urlPage"
-            :pageSize="urlSize"
-            @page-changed="({page, size}: {page: number; size: number}) => { if (!props.embed) router.push({query: {...route.query, page: String(page), size: String(size)}}) }"
+            :currentPage="currentPage"
+            :pageSize="currentSize"
+            @page-changed="onPageChanged"
             @sort-change="({prop, order}: {column: any; prop: string | null; order: string | null}) => { if (!props.embed) router.push({query: {...route.query, sort: `${prop}:${order === 'ascending' ? 'asc' : 'desc'}`}}) }"
             @row-dblclick="(row: any) => router.push({name: dblClickRouteName, params: executionParams(row)})"
             :selectionMapper="selectionMapper"
@@ -51,6 +51,7 @@
             :selectable="!hidden?.includes('selection') && canCheck"
             :no-data-text="$t('no_results.executions')"
             :rowKey="(row: any) => row.id"
+            :fitHeight="fitHeightResolved"
         >
             <template #navbar v-if="isDisplayedTop">
                 <KSFilter
@@ -79,7 +80,7 @@
                 <KsButton v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
                     {{ $t("change state") }}
                 </KsButton>
-                <KsButton v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
+                <KsButton v-if="canUpdate" :icon="Restart" @click="isOpenRestartModal = !isOpenRestartModal">
                     {{ $t("restart") }}
                 </KsButton>
                 <KsButton v-if="canReplay" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
@@ -162,7 +163,7 @@
                         }"
                         class="execution-id"
                     >
-                        <KsId :value="scope.row?.id" :shrink="true" />
+                        <KsId :value="scope.row?.id" :shrink="true" placement="right" />
                     </RouterLink>
                 </template>
             </KsTableColumn>
@@ -174,7 +175,6 @@
                 :label="col.label"
                 :class="col.prop === 'flowRevision' ? 'shrink' : ''"
                 :align="col.prop === 'inputs' ? 'center' : undefined"
-                :formatter="col.prop === 'namespace' ? ((_ : any, __: any, cellValue: string) => h(BreakableText, {value: cellValue})) : undefined"
                 :sortable="isColumnSortable(col.prop) ? 'custom' : false"
                 :sortOrders="isColumnSortable(col.prop) ? ['ascending', 'descending'] : []"
             >
@@ -188,16 +188,21 @@
                     <template v-else-if="col.prop === 'state.duration'">
                         <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                     </template>
-                    <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
-                        <span :title="scope.row?.namespace"><BreakableText :value="scope.row?.namespace" /></span>
+                    <template v-else-if="col.prop === 'namespace' && routeFamily($route.name) !== 'flows/update'">
+                        <KsEntityLink
+                            v-if="scope.row?.namespace"
+                            entity="namespace"
+                            :value="scope.row.namespace"
+                            :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                        />
                     </template>
-                    <template v-else-if="col.prop === 'flowId' && $route.name !== 'flows/update'">
-                        <router-link
-                            :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}
-                            }"
-                        >
-                            <BreakableText :value="scope.row?.flowId" />
-                        </router-link>
+                    <template v-else-if="col.prop === 'flowId' && routeFamily($route.name) !== 'flows/update'">
+                        <KsEntityLink
+                            v-if="scope.row?.flowId"
+                            entity="flow"
+                            :value="scope.row.flowId"
+                            :to="{name: 'flows/update', params: {namespace: scope.row?.namespace, id: scope.row?.flowId}}"
+                        />
                     </template>
                     <template v-else-if="col.prop === 'labels'">
                         <Labels :labels="filteredLabels(scope.row?.labels)" @click.prevent.stop />
@@ -361,6 +366,31 @@
             </KsButton>
         </template>
     </KsDialog>
+
+    <KsDialog v-if="isOpenRestartModal" v-model="isOpenRestartModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="changeRestartToast()" />
+        </template>
+
+        <template #footer>
+            <KsButton @click="isOpenRestartModal = false">
+                {{ $t('cancel') }}
+            </KsButton>
+            <KsButton @click="restartExecutions(true)">
+                {{ $t('restart latest revision') }}
+            </KsButton>
+            <KsButton
+                type="primary"
+                @click="restartExecutions(false)"
+            >
+                {{ $t('ok') }}
+            </KsButton>
+        </template>
+    </KsDialog>
 </template>
 
 <script setup lang="ts">
@@ -368,6 +398,7 @@
     import escape from "lodash/escape"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
     import {ref, computed, watch, h, useTemplateRef} from "vue"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {KsSwitch, KsFormItem, KsAlert, KsCheckbox, KsMessageBox} from "@kestra-io/design-system"
@@ -404,10 +435,9 @@
     import TriggerFlow from "../../components/flows/TriggerFlow.vue"
     import TriggerAvatar from "../../components/flows/TriggerAvatar.vue"
 
-    import {filterValidLabels, keepSupportedFilters} from "./utils"
+    import {filterValidLabels, keepSupportedFilters, FILTER_FIELD_PATTERN} from "./utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import BreakableText from "../BreakableText"
     import * as Utils from "../../utils/utils"
     import Duration from "../../components/dashboard/sections/table/columns/Duration.vue"
 
@@ -437,6 +467,7 @@
         embed?: boolean;
         filter?: boolean;
         topbar?: boolean;
+        fitHeight?: boolean;
         id?: string | null;
         statuses?: string[];
         isReadOnly?: boolean;
@@ -450,6 +481,7 @@
         embed: false,
         filter: true,
         topbar: true,
+        fitHeight: undefined,
         id: null,
         statuses: () => [],
         isReadOnly: false,
@@ -460,6 +492,8 @@
         namespace: undefined,
         defaultScopeFilter: false,
     })
+
+    const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
 
     const emit = defineEmits<{
         "state-count": [payload: { runningCount: number; totalCount: number }];
@@ -477,6 +511,7 @@
     const recomputeInterval = ref(false)
     const isOpenLabelsModal = ref(false)
     const isOpenReplayModal = ref(false)
+    const isOpenRestartModal = ref(false)
     const selectedStatus = ref(undefined)
     const lastRefreshDate = ref(new Date())
     const unqueueDialogVisible = ref(false)
@@ -561,7 +596,7 @@
     ])
 
     const storageKey = computed(() =>
-        route.name === "flows/update"
+        routeFamily(route.name) === "flows/update"
             ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS
             : storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
     )
@@ -620,16 +655,30 @@
 
     const filterQueryKey = computed(() => {
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
-        return JSON.stringify(filters)
+        const relevant = props.embed
+            ? Object.fromEntries(Object.entries(filters).filter(([key]) => key === "q" || FILTER_FIELD_PATTERN.test(key)))
+            : filters
+        return JSON.stringify(relevant)
     })
 
     const urlPage = computed(() => Number(route.query.page) || 1)
     const urlSize = computed(() => Number(route.query.size) || 25)
+    const localPage = ref(1)
+    const localSize = ref(25)
+    const currentPage = computed(() => props.embed ? localPage.value : urlPage.value)
+    const currentSize = computed(() => props.embed ? localSize.value : urlSize.value)
+
+    const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        if (props.embed) {
+            localPage.value = page
+            localSize.value = size
+        } else {
+            router.push({query: {...route.query, page: String(page), size: String(size)}})
+        }
+    }
 
     watch(filterQueryKey, () => {
-        if (!props.embed) {
-            dataTable.value?.resetAndReload()
-        }
+        dataTable.value?.resetAndReload()
     })
 
     const routeInfo = computed(() => ({title: t("executions")}))
@@ -641,7 +690,7 @@
 
 
     const displayButtons = computed(() => {
-        return (route.name === "flows/update") || (route.name === "executions/list")
+        return (routeFamily(route.name) === "flows/update") || (route.name === "executions/list")
     })
 
     const canCheck = computed(() => {
@@ -672,10 +721,7 @@
         return authStore.user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.EXECUTE)
     })
 
-    const isDisplayedTop = computed(() => {
-        if (props.visibleCharts) return true
-        else return props.embed === false && props.filter
-    })
+    const isDisplayedTop = computed(() => props.filter || props.visibleCharts)
 
     const states = computed(() => {
         return [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED].map(value => ({
@@ -874,12 +920,14 @@
         )
     }
 
-    const restartExecutions = () => {
-        genericConfirmAction(
-            "bulk restart",
+    const restartExecutions = (latestRevision: boolean) => {
+        isOpenRestartModal.value = false
+
+        genericConfirmCallback(
             "queryRestartExecution",
             "bulkRestartExecution",
             "executions restarted",
+            {latestRevision: latestRevision},
         )
     }
 
@@ -896,6 +944,10 @@
 
     const changeReplayToast = () => {
         return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
+    }
+
+    const changeRestartToast = () => {
+        return t("bulk restart", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length})
     }
 
     const changeStatus = async () => {
@@ -1029,11 +1081,10 @@
 
     const editFlow = () => {
         router.push({
-            name: "flows/update",
+            name: "flows/update/edit",
             params: {
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
-                tab: "edit",
                 tenant: route.params?.tenant,
             },
         })
@@ -1061,12 +1112,18 @@
 </script>
 
 <style scoped lang="scss">
-.shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
+.full-container {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    > * {
+        flex: 1;
+    }
 }
 
-.padding-bottom {
-    padding-bottom: 4rem;
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-shadow-element) !important;
 }
 
 .custom-warning {

@@ -63,7 +63,10 @@
             namespace: props.execution.namespace,
             flowId: props.execution.flowId,
         },
-        query: {"filters[level][EQUALS]": "ERROR"},
+        query: {
+            "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
+            "filters[kind][IN]": props.execution.kind,
+        },
     }
 
     function stripBackticks(message: string): string {
@@ -75,7 +78,10 @@
             const response = await store.loadLogs({
                 store: false,
                 executionId: props.execution.id,
-                params: {minLevel: "ERROR"},
+                params: {
+                    "filters[level][GREATER_THAN_OR_EQUAL_TO]": "ERROR",
+                    "filters[kind][IN]": props.execution.kind,
+                },
                 showMessageOnError: false,
             })
 

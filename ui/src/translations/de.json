@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Diese Datei ist {size}. Es kann eine Weile dauern, sie zu laden, was Ihren Browser blockieren könnte. Möchten Sie sie trotzdem laden?",
-      "load_anyway": "Trotzdem laden"
+      "load_anyway": "Trotzdem laden",
+      "load_error": "Die Dateivorschau konnte nicht geladen werden. Möglicherweise handelt es sich um ein vorübergehendes Problem oder ein Berechtigungsproblem.",
+      "retry": "Erneut versuchen",
+      "html_asset_warning": "Diese Vorschau rendert das HTML in einem isolierten Frame. Lokale Assets wie Bilder und Stylesheets, die über relative Pfade referenziert werden, werden nicht geladen.",
+      "html_preview_title": "Vorschau der HTML-Datei"
     },
     "no_variables": "Keine Variablen verfügbar.",
     "download": "Herunterladen",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Suche in {count}+ Plugins",
+      "search": "Durchsuche {count}+ Plugins",
       "searchTasks": "Suche {count} Tasks",
       "noResults": "Keine Plugins entsprechen Ihrer Suche.",
       "loadError": "Konnte Plugins nicht laden. Bitte versuchen Sie es erneut.",
@@ -1341,9 +1345,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "Beschreiben Sie den gewünschten Arbeitsablauf",
-            "body": "Beschreiben Sie, was Sie automatisieren möchten, und der AI Copilot wird es für Sie entwerfen. Die Tour wird mit einem vorgefertigten Beispiel-flow fortgesetzt, sodass hier nichts eingegeben werden muss.",
-            "next": "Generiere den flow"
+            "title": "Flows können aus einem Prompt entworfen werden",
+            "body": "Die Tour verwendet einen vorgefertigten Beispiel-flow, sodass hier nichts eingegeben werden muss.",
+            "next": "Verwenden Sie den Beispiel flow"
           },
           "flow_generated": {
             "title": "Dies ist ein flow",
@@ -1361,7 +1365,7 @@
             "title": "Flows werden wie Code bearbeitet",
             "body": "Wir haben einen `notify` task für Sie ohne den AI Copilot hinzugefügt, damit Sie sehen können, wie das direkte Bearbeiten der YAML aussieht. Er postet das Endergebnis an Slack.",
             "next": "Zur Task-Dokumentation",
-            "callout": "AI Copilot hat Ihnen den ersten Entwurf geliefert; im Editor können Sie diesen in einer Code- oder No-Code-Editor-Registerkarte überarbeiten. Beide erzeugen dasselbe YAML, sodass Ihr flow als Code erhalten bleibt, unabhängig davon, wie er erstellt wurde."
+            "callout": "Ein erster Entwurf vom AI Copilot ist nur ein Ausgangspunkt; der Editor ist der Ort, an dem Sie ihn in einer Code- oder No-Code-Editor-Registerkarte weiterentwickeln, die beide dieselbe YAML erzeugen, sodass Ihr flow als Code bleibt, unabhängig davon, wie er erstellt wurde."
           },
           "editor_help": {
             "title": "Die Dokumentation befindet sich neben dem flow",
@@ -1428,7 +1432,7 @@
           "takeaways": {
             "copilot": {
               "title": "Aus einfachem Englisch generierte Flows",
-              "body": "Beschreiben Sie, was Sie automatisieren möchten, und ein flow wird vom AI Copilot entworfen. Von dort aus verfeinern Sie ihn im Editor, mit Autovervollständigung und dem <strong>Docs</strong>-Panel. flows werden über die Schaltfläche <strong>Execute</strong> des flow oder einer beliebigen Ausführung ausgeführt."
+              "body": "Beschreiben Sie, was Sie im AI Copilot Chat automatisieren möchten, und eine erste Version des flow wird aus dem Live-flow-Schema generiert. Dasselbe ist von Ihrem Editor oder Terminal aus möglich: Claude Code, Cursor und andere Coding-Agents können flows mit den Kestra Agent Skills generieren."
             },
             "restart": {
               "title": "Wiederholen, anstatt alles erneut auszuführen",
@@ -1449,6 +1453,8 @@
           "start_building": "Mit dem Erstellen beginnen",
           "docs": {
             "title": "Mehr erfahren",
+            "copilot": "KI Copilot",
+            "agentSkills": "Agenten-Fähigkeiten",
             "autocompletion": "Autovervollständigung",
             "execution": "Ausführungen",
             "replay": "Wiederholen",

@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Este arquivo tem {size}. Pode demorar um pouco para carregar, bloqueando seu navegador. Deseja carregá-lo mesmo assim?",
-      "load_anyway": "Carregar mesmo assim"
+      "load_anyway": "Carregar mesmo assim",
+      "load_error": "Falha ao carregar a pré-visualização do ficheiro. Pode tratar-se de um problema temporário ou de permissões.",
+      "retry": "Tentar novamente",
+      "html_asset_warning": "Esta pré-visualização renderiza o HTML num quadro isolado. Recursos locais como imagens e folhas de estilo referenciados por caminhos relativos não serão carregados.",
+      "html_preview_title": "Pré-visualização do ficheiro HTML"
     },
     "no_variables": "Nenhuma variável disponível.",
     "download": "Baixar",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Pesquisar em mais de {count} plugins",
+      "search": "Pesquisar em {count}+ plugins",
       "searchTasks": "Pesquisar {count} tasks",
       "noResults": "Nenhum plugin corresponde à sua pesquisa.",
       "loadError": "Não foi possível carregar os plugins. Por favor, tente novamente.",
@@ -1341,9 +1345,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "Descreva o fluxo de trabalho que você deseja",
-            "body": "Descreva o que você quer automatizar, e o AI Copilot irá rascunhá-lo para você. O tour continua com um example flow pronto, então nada precisa ser digitado aqui.",
-            "next": "Gerar o flow"
+            "title": "Flows podem ser rascunhados a partir de um prompt",
+            "body": "O tour usa um flow de exemplo pronto, portanto nada precisa ser digitado aqui.",
+            "next": "Usar o exemplo de flow"
           },
           "flow_generated": {
             "title": "Isto é um flow",
@@ -1361,7 +1365,7 @@
             "title": "Flows são editados como código",
             "body": "Adicionamos uma task `notify` para você sem o AI Copilot, para que você possa ver como é editar o YAML diretamente. Ele publica o resultado final no Slack.",
             "next": "Ver a documentação da task",
-            "callout": "O AI Copilot forneceu o primeiro rascunho; o editor é onde você pode iterar sobre ele em uma guia do editor de Código ou No-Code, que ambos produzem o mesmo YAML, para que seu flow permaneça como código, independentemente de como foi construído."
+            "callout": "Um primeiro rascunho do AI Copilot é apenas um ponto de partida; o editor é onde você itera sobre ele em uma aba de editor Code ou No-Code, os quais ambos produzem o mesmo YAML, assim, seu flow permanece como código, independentemente de como foi construído."
           },
           "editor_help": {
             "title": "A documentação está ao lado do flow",
@@ -1428,7 +1432,7 @@
           "takeaways": {
             "copilot": {
               "title": "Flows gerados a partir de Inglês simples",
-              "body": "Descreva o que você quer automatizar, e um flow é rascunhado pelo AI Copilot. A partir daí, você o refina no editor, com preenchimento automático e o painel **Docs**. flows são executados a partir do botão **Executar** do flow ou de qualquer execução."
+              "body": "Descreva o que você deseja automatizar no chat do AI Copilot, e uma primeira versão do flow é gerada a partir do esquema do flow em tempo real. O mesmo é possível a partir do seu editor ou terminal: Claude Code, Cursor e outros agentes de codificação podem gerar flows com as habilidades de agente do Kestra."
             },
             "restart": {
               "title": "Repetir em vez de executar tudo novamente",
@@ -1449,6 +1453,8 @@
           "start_building": "Começar a construir",
           "docs": {
             "title": "Ler mais",
+            "copilot": "IA Copiloto",
+            "agentSkills": "Habilidades do Agente",
             "autocompletion": "Autocompletar",
             "execution": "Execuções",
             "replay": "Reproduzir",

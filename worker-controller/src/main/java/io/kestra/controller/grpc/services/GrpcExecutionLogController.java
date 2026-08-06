@@ -2,6 +2,7 @@ package io.kestra.controller.grpc.services;
 
 import java.util.List;
 
+import io.kestra.controller.RequiresControllerServer;
 import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
@@ -11,7 +12,6 @@ import io.kestra.core.runners.ExecutionLogMetaStore;
 import io.kestra.core.worker.models.WorkerInfo;
 
 import io.grpc.stub.StreamObserver;
-import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
+@RequiresControllerServer
 public class GrpcExecutionLogController extends ExecutionLogsServiceGrpc.ExecutionLogsServiceImplBase implements WorkerControllerService {
     private final ExecutionLogMetaStore executionLogMetaStore;
     private final WorkerInfo workerInfo;

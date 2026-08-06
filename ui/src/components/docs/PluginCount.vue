@@ -1,5 +1,5 @@
 <template>
-    <span> {{ totalPlugins }} </span>
+    <span> {{ totalPlugins }}+ </span>
 </template>
 
 <script setup lang="ts">

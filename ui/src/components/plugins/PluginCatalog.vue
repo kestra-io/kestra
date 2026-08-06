@@ -14,7 +14,7 @@
             <div class="filter-toolbar__search">
                 <KsSearch
                     v-model="searchText"
-                    :placeholder="$t('pluginPage.search', {count: baseList.length})"
+                    :placeholder="$t('pluginPage.search', {count: totalPlugins})"
                     clearable
                 />
             </div>
@@ -107,6 +107,7 @@
     import {isEntryAPluginElementPredicate, isPluginMatched, type Plugin, type PluginElement} from "../../utils/pluginUtils"
     import {usePluginsStore} from "../../stores/plugins"
     import {usePluginsEnrichmentStore} from "../../stores/pluginsEnrichment"
+    import {usePluginsCount} from "../../composables/usePluginsCount"
     import {useMiscStore} from "override/stores/misc"
     import useRouteContext from "../../composables/useRouteContext"
     import TopNavBar from "../../components/layout/TopNavBar.vue"
@@ -124,6 +125,7 @@
     const pluginsStore = usePluginsStore()
     const miscStore = useMiscStore()
     const enrichmentStore = usePluginsEnrichmentStore()
+    const {totalPlugins} = usePluginsCount()
 
     const title = computed(() => t("plugins.names"))
     const routeInfo = computed(() => ({title: title.value, breadcrumb: undefined}))

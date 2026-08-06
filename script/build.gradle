@@ -1,3 +1,39 @@
+// The koltp binary is a mandatory embedded resource: it is a single Actually Portable Executable
+// covering Linux/macOS/BSD on amd64 and arm64, pinned by the 'koltpVersion' Gradle property.
+def koltpBinary = file('src/main/resources/koltp/koltp')
+def koltpVersionMarker = file('src/main/resources/koltp/koltp.version')
+
+tasks.register('downloadKoltp') {
+    group = "build"
+    description = "Downloads the koltp release binary into src/main/resources so it is embedded in the jar."
+    def version = koltpVersion
+    inputs.property('koltpVersion', version)
+    outputs.files(koltpBinary, koltpVersionMarker)
+    onlyIf { !(koltpBinary.exists() && koltpVersionMarker.exists() && koltpVersionMarker.text.trim() == version) }
+    doLast {
+        def url = "https://github.com/kestra-io/koltp/releases/download/v${version}/koltp"
+        koltpBinary.parentFile.mkdirs()
+        try {
+            def connection = URI.create(url).toURL().openConnection()
+            connection.connectTimeout = 30_000
+            connection.readTimeout = 300_000
+            if (connection.responseCode != 200) {
+                throw new GradleException("Cannot download the koltp binary from '%s': HTTP %d.".formatted(url, connection.responseCode))
+            }
+            connection.inputStream.withStream { input ->
+                koltpBinary.withOutputStream { output -> input.transferTo(output) }
+            }
+            koltpVersionMarker.text = version
+        } catch (IOException e) {
+            koltpBinary.delete()
+            koltpVersionMarker.delete()
+            throw new GradleException("Cannot download the koltp binary from '%s': %s.".formatted(url, e.getMessage()), e)
+        }
+    }
+}
+processResources.dependsOn downloadKoltp
+tasks.matching { it.name == 'sourcesJar' }.configureEach { dependsOn 'downloadKoltp' }
+
 dependencies {
     // Kestra
     implementation project(':core')

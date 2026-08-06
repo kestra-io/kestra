@@ -95,6 +95,9 @@ public class CommandsWrapper implements TaskCommands {
     @With
     private TargetOS targetOS;
 
+    @With
+    private KoltpOptions koltp;
+
     public CommandsWrapper(RunContext runContext) {
         this.runContext = runContext;
         this.workingDirectory = runContext.workingDir().path();
@@ -126,7 +129,8 @@ public class CommandsWrapper implements TaskCommands {
             outputFiles,
             enableOutputDirectory,
             timeout,
-            targetOS
+            targetOS,
+            koltp
         );
     }
 
@@ -174,6 +178,10 @@ public class CommandsWrapper implements TaskCommands {
             FilesService.inputFiles(runContext, runnerVars, this.inputFiles);
         }
 
+        if (this.isKoltpEnabled()) {
+            KoltpUtils.copyTo(this.workingDirectory.resolve(koltpBinaryName()));
+        }
+
         RunContext taskRunnerRunContext = runContext.cloneForPlugin(taskRunner);
 
         List<String> renderedCommands = this.renderCommands(runContext, commands);
@@ -196,6 +204,23 @@ public class CommandsWrapper implements TaskCommands {
                 renderedCommands,
                 Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
             );
+
+        if (this.isKoltpEnabled()) {
+            String workingDir = String.valueOf(runnerVars.getOrDefault(ScriptService.VAR_WORKING_DIR, this.workingDirectory));
+            List<String> wrapped = new ArrayList<>(finalCommands.size() + 5);
+            if (!this.isWindowsTarget()) {
+                // The koltp APE binary cannot be exec'd directly without kernel binfmt support; its header is a valid shell script that bootstraps it.
+                wrapped.add("/bin/sh");
+            }
+            wrapped.add(workingDir + "/" + koltpBinaryName());
+            if (this.koltp.logDir() != null) {
+                wrapped.add("--log-dir");
+                wrapped.add(this.koltp.logDir());
+            }
+            wrapped.add("--");
+            wrapped.addAll(finalCommands);
+            finalCommands = wrapped;
+        }
 
         this.commands = Property.ofValue(finalCommands);
 
@@ -311,16 +336,26 @@ public class CommandsWrapper implements TaskCommands {
     }
 
     protected List<String> getExitOnErrorCommands() {
-        TargetOS os = this.getTargetOS();
-
-        // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
-        if (
-            os == TargetOS.WINDOWS ||
-                (os == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process)
-        ) {
+        if (this.isWindowsTarget()) {
             return List.of("");
         }
         // errexit option may be unsupported by non-shell interpreter.
         return List.of("set -e");
+    }
+
+    // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
+    private boolean isWindowsTarget() {
+        TargetOS os = this.getTargetOS();
+        return os == TargetOS.WINDOWS ||
+            (os == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process);
+    }
+
+    private boolean isKoltpEnabled() {
+        return this.koltp != null && this.koltp.isEnabled();
+    }
+
+    // koltp is a single portable binary; Windows only needs it renamed with an '.exe' extension.
+    private String koltpBinaryName() {
+        return this.isWindowsTarget() ? KoltpUtils.WINDOWS_BINARY_NAME : KoltpUtils.BINARY_NAME;
     }
 }

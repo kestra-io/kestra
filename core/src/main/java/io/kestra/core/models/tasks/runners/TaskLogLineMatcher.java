@@ -194,7 +194,7 @@ public class TaskLogLineMatcher {
             .forEach(metric ->
             {
                 try {
-                    toKestraMetrics(metric).forEach(runContext::metric);
+                    toKestraMetrics(metric, instant).forEach(runContext::metric);
                 } catch (Exception e) {
                     logger.warn("Invalid OTLP metric '{}'", data, e);
                 }
@@ -249,9 +249,11 @@ public class TaskLogLineMatcher {
      * <p>
      * Gauges and cumulative sums map to a Kestra {@link Gauge} (the last sample wins, so periodic
      * cumulative samples end up as the final total), while delta sums map to a Kestra
-     * {@link Counter} (each sample increments). Data-point attributes become tags.
+     * {@link Counter} (each sample increments). Data-point attributes become tags, and each
+     * data point's {@code timeUnixNano} is forwarded as the metric timestamp, falling back to
+     * {@code instant} when absent.
      */
-    protected List<AbstractMetricEntry<?>> toKestraMetrics(OtlpRecord.Metric metric) {
+    protected List<AbstractMetricEntry<?>> toKestraMetrics(OtlpRecord.Metric metric, Instant instant) {
         List<OtlpRecord.NumberDataPoint> dataPoints;
         boolean isDeltaSum = false;
 
@@ -276,9 +278,10 @@ public class TaskLogLineMatcher {
             }
 
             String[] tags = otlpAttributesToTags(dataPoint.attributes());
+            Instant timestamp = toInstant(dataPoint.timeUnixNano(), instant);
             entries.add(isDeltaSum
-                ? Counter.of(metric.name(), description, value, tags)
-                : Gauge.of(metric.name(), description, value, tags));
+                ? Counter.of(metric.name(), description, value, timestamp, tags)
+                : Gauge.of(metric.name(), description, value, timestamp, tags));
         }
 
         return entries;

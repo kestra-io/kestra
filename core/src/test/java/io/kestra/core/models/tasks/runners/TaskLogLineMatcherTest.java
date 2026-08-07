@@ -194,6 +194,23 @@ class TaskLogLineMatcherTest {
         assertThat(gauge.getName()).isEqualTo("process.memory.usage");
         assertThat(gauge.getValue()).isEqualTo(1048576d);
         assertThat(gauge.getDescription()).isEqualTo("Resident set size (By)");
+        assertThat(gauge.getTimestamp()).isEqualTo(Instant.ofEpochSecond(0, TIME_UNIX_NANO));
+    }
+
+    @Test
+    void shouldFallBackToInstantWhenMetricDataPointHasNoTimestamp() throws IOException {
+        var runContext = runContext();
+
+        matcher.matches(
+            framed(metric("{\"name\":\"process.cpu.utilization\",\"gauge\":{\"dataPoints\":[{\"asDouble\":0.5}]}}")),
+            runContext.logger(),
+            runContext,
+            FALLBACK_INSTANT
+        );
+
+        List<AbstractMetricEntry<?>> metrics = runContext.metrics();
+        assertThat(metrics).hasSize(1);
+        assertThat(metrics.getFirst().getTimestamp()).isEqualTo(FALLBACK_INSTANT);
     }
 
     @Test

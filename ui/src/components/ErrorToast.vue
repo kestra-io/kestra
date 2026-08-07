@@ -5,7 +5,7 @@
 <script setup lang="ts">
     import {KsNotification} from "@kestra-io/design-system"
     import {pageFromRoute} from "../utils/eventsRouter"
-    import {h, onMounted, watch, computed, ref} from "vue"
+    import {h, onUnmounted, watch, computed, ref} from "vue"
     import ErrorToastContainer from "./ErrorToastContainer.vue"
     import {useApiStore} from "../stores/api"
     import {useRoute} from "vue-router"
@@ -59,6 +59,7 @@
     const close = () => {
         if (notifications.value) {
             notifications.value.close()
+            notifications.value = undefined
         }
     }
 
@@ -92,7 +93,9 @@
         close()
     })
 
-    onMounted(() => {
+    const showNotification = () => {
+        close()
+
         const error: ErrorEvent = {
             type: "ERROR",
             error: {
@@ -132,7 +135,11 @@
             dangerouslyUseHTMLString: true,
             customClass: isLargeNotification.value ? "error-notification kel-notification__large" : "error-notification",
         })
-    })
+    }
+
+    watch(() => props.message, showNotification, {immediate: true})
+
+    onUnmounted(() => close())
 </script>
 
 <style lang="scss" scoped>

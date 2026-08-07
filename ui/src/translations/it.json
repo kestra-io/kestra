@@ -1258,6 +1258,12 @@
         "title": "Porta ogni dataset, servizio e dipendenza in vista.",
         "message": "Le risorse collegano la osservabilità, la lineage e i metadati di proprietà in modo che i team della piattaforma possano risolvere i problemi più rapidamente e distribuire con fiducia."
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "Gestisci gli utenti tramite IAM con SSO, SCIM e RBAC",
         "message": "Kestra Enterprise Edition ha funzionalità IAM integrate con single sign-on (SSO), sincronizzazione della directory SCIM e controllo degli accessi basato sui ruoli (RBAC), integrandosi con diversi provider di identità e permettendo di assegnare permessi dettagliati per utenti e account di servizio."
@@ -1897,6 +1903,10 @@
         "title": "Non hai ancora Asset!",
         "content": "Aggiungi asset per tracciare e gestire i tuoi asset di dati, servizi e infrastruttura."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Gestisci i tuoi Token API",
         "content": "I token API vengono utilizzati ogni volta che si desidera concedere l'accesso programmatico all'API di Kestra."
@@ -1986,7 +1996,8 @@
       "kv_pairs": "Nessuna coppia Key-Value trovata",
       "secrets": "Nessun Secret Trovato",
       "templates": "Nessun Template Trovato",
-      "assets": "Nessun asset trovato"
+      "assets": "Nessun asset trovato",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {

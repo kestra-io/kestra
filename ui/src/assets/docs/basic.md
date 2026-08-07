@@ -139,6 +139,7 @@ inputs:
   - id: bird
     type: SELECT
     displayName: Choose your favorite Falco bird
+    autoSelectFirst: true
     values:
       - Kestrel
       - Merlin
@@ -164,7 +165,7 @@ tasks:
   - id: run_if_true
     type: io.kestra.plugin.core.debug.Return
     format: Hello World!
-    when: "{{ inputs.run_task }}"
+    runIf: "{{ inputs.run_task }}"
 
   - id: fallback
     type: io.kestra.plugin.core.debug.Return
@@ -185,15 +186,13 @@ outputs:
     type: STRING
     value: "{{ tasks.run_if_true.state != 'SKIPPED' ? outputs.run_if_true.value : outputs.fallback.value }}"
 
-pluginDefaults:
-  - type: io.kestra.plugin.core.log.Log
-    values:
-      level: TRACE
-
 triggers:
   - id: monthly
     type: io.kestra.plugin.core.trigger.Schedule
     cron: "0 9 1 * *" # 1st of each month at 9am
+    inputs:
+      pokemon: Psyduck
+      user: Kestrel
 ```
 
 You can document flows, tasks, inputs, or triggers with the `description` property. These descriptions are rendered in the UI using [Markdown](https://en.wikipedia.org/wiki/Markdown).

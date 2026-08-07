@@ -120,9 +120,8 @@
             title: title.value || "Error",
             message: h(ErrorToastContainer, {
                 message: {
-                    content:{
-                        message: props.message?.content?.message ?? "",
-                    },
+                    message: props.message?.message,
+                    content: {message: props.message?.content?.message ?? ""},
                 },
                 items: items.value,
                 onClose: () => close(),

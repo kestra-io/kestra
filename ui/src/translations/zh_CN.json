@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "此文件大小为{size}。加载可能需要一些时间，并可能阻塞您的浏览器。您是否仍然要加载它？",
-      "load_anyway": "仍然加载"
+      "load_anyway": "仍然加载",
+      "load_error": "无法加载文件预览。这可能是临时问题或权限问题。",
+      "retry": "重试",
+      "html_asset_warning": "此预览在沙盒化的框架中渲染 HTML。通过相对路径引用的本地资源（如图片和样式表）将不会加载。",
+      "html_preview_title": "HTML 文件预览"
     },
     "no_variables": "没有可用的变量。",
     "download": "下载",
@@ -761,8 +765,8 @@
     "dynamic": "动态",
     "choice": "选择",
     "sequential": "顺序",
-    "can not delete": "无法删除",
-    "can not have less than 1 task": "每个流程必须至少有一个任务。",
+    "can not delete": "无法删除此 task",
+    "can not have less than 1 task": "一个 flow 必须至少有一个 task。在删除此 task 之前，添加另一个 task。",
     "task id already exists": "任务ID已存在",
     "Task Id already exist in the flow": "流程中已存在任务ID {taskId}。",
     "task id": "任务ID",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "在{count}+个插件中搜索",
+      "search": "搜索 {count}+ 插件",
       "searchTasks": "搜索 {count} 个 task",
       "noResults": "没有插件符合您的搜索。",
       "loadError": "无法加载插件。请重试。",
@@ -1254,6 +1258,12 @@
         "title": "将每个数据集、服务和依赖项展示出来。",
         "message": "资产连接可观测性、血缘关系和所有权元数据，使平台团队能够更快地排查问题并自信地部署。"
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "通过IAM使用SSO、SCIM和RBAC管理用户",
         "message": "Kestra 企业版具有内置的 IAM 功能，包括单点登录 (SSO)、SCIM 目录同步和基于角色的访问控制 (RBAC)，可以与多个身份提供商集成，并允许您为用户和服务帐户分配细粒度的权限。"
@@ -1341,9 +1351,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "描述您想要的工作流",
-            "body": "描述您想要自动化的内容，AI Copilot 将为您起草。导览将继续展示一个现成的示例 flow，因此这里无需输入任何内容。",
-            "next": "生成 flow"
+            "title": "Flows 可以从提示生成",
+            "body": "导览使用一个现成的示例 flow，因此这里无需输入任何内容。",
+            "next": "使用示例 flow"
           },
           "flow_generated": {
             "title": "这是一个 flow",
@@ -1361,7 +1371,7 @@
             "title": "flow 像代码一样编辑",
             "body": "我们为您添加了一个 `notify` task，没有使用 AI Copilot，这样您就可以看到直接编辑 YAML 是什么样子。它会将最终结果发布到 Slack。",
             "next": "查看 task 文档",
-            "callout": "AI Copilot 为你生成了初稿；你可以在编辑器中，通过“代码”或“无代码”编辑器选项卡对其进行迭代，这两个选项卡都会生成相同的 YAML，因此你的 flow 无论以何种方式构建，都始终是代码。"
+            "callout": "来自 AI Copilot 的初稿只是一个起点；编辑器是您在 Code 或 No-Code 编辑器选项卡中迭代它的地方，它们都生成相同的 YAML，因此，无论您的 flow 如何构建，它都保持为代码。"
           },
           "editor_help": {
             "title": "文档在 flow 旁边",
@@ -1428,7 +1438,7 @@
           "takeaways": {
             "copilot": {
               "title": "纯英文生成的 Flows",
-              "body": "描述您想要自动化的内容，AI Copilot 会为您草拟一个 flow。然后，您可以在编辑器中通过自动补全和 <strong>Docs</strong> 面板对其进行完善。flow 可以通过 flow 或任何执行的 <strong>Execute</strong> 按钮运行。"
+              "body": "在 AI Copilot 聊天中描述您想要自动化的内容，系统将根据实时 flow schema 生成 flow 的第一个版本。您也可以通过编辑器或终端实现同样的功能：Claude Code、Cursor 和其他编码 agent 可以借助 Kestra agent 技能生成 flows。"
             },
             "restart": {
               "title": "重放而不是重新运行所有内容",
@@ -1449,6 +1459,8 @@
           "start_building": "开始构建",
           "docs": {
             "title": "阅读更多",
+            "copilot": "AI 副驾驶",
+            "agentSkills": "代理技能",
             "autocompletion": "自动补全",
             "execution": "执行",
             "replay": "重放",
@@ -1891,6 +1903,10 @@
         "title": "您还没有资产！",
         "content": "添加资产以跟踪和管理您的数据资产、服务和基础设施。"
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "管理您的API Tokens",
         "content": "API令牌用于在您希望授予程序化访问Kestra API时使用。"
@@ -1980,7 +1996,8 @@
       "kv_pairs": "未找到Key-Value对",
       "secrets": "未找到Secrets",
       "templates": "未找到模板",
-      "assets": "未找到资产"
+      "assets": "未找到资产",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {

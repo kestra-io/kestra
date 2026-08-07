@@ -172,7 +172,12 @@ public class Trigger extends TriggerContext implements HasUID {
 
         if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {
             try {
-                nextDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, lastTrigger);
+                // A Schedulable whose definition just changed has no history under that new definition, so we anchor
+                // the next date on now instead of on the last evaluation date. Anchoring on the last evaluation date
+                // projects the new schedule from a stale point and can yield a date in the past, which the scheduler
+                // then fires straight away as a missed schedule.
+                Optional<Trigger> anchor = abstractTrigger instanceof Schedulable ? Optional.empty() : lastTrigger;
+                nextDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, anchor);
             } catch (InvalidTriggerConfigurationException e) {
                 disabled = true;
             }

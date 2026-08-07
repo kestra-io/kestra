@@ -58,7 +58,7 @@ application {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -84,7 +84,7 @@ allprojects {
 
         java {
             toolchain {
-                languageVersion = JavaLanguageVersion.of(21)
+                languageVersion = JavaLanguageVersion.of(25)
             }
         }
 
@@ -183,7 +183,7 @@ subprojects {subProj ->
 
         java {
             toolchain {
-                languageVersion = JavaLanguageVersion.of(21)
+                languageVersion = JavaLanguageVersion.of(25)
             }
         }
 

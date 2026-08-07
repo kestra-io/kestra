@@ -199,7 +199,8 @@ jobs:
     # docs-only PRs where build-artifacts is skipped (only skip on an actual
     # build failure). Reuse the shared `exe` when build-artifacts produced it,
     # otherwise let the reusable workflow build it from source itself.
-    if: "!cancelled() && needs.build-artifacts.result != 'failure'"
+    # Dependabot runs get a read-only GITHUB_TOKEN so it cannot publish an image : skip the job.
+    if: "!cancelled() && needs.build-artifacts.result != 'failure' && github.actor != 'dependabot[bot]'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
     with:
       java-version: 25

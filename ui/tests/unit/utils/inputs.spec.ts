@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize, normalizeForComponents} from "../../../src/utils/inputs"
+import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "../../../src/utils/inputs"
 import {inputsToFormData} from "../../../src/utils/submitTask"
 
 const momentStub = {
@@ -31,15 +31,6 @@ describe("normalize for BOOL always yields a real boolean", () => {
         for (const value of ["true", "false", true, false, undefined, null, "", "TRUE", 1, 0, {}]) {
             expect(typeof normalize("BOOL", value)).toBe("boolean")
         }
-    })
-
-    // Same rule, second copy of the helper — kept in lockstep so fixing one and not the other
-    // can't reintroduce the bug.
-    it("applies the same coercion in normalizeForComponents", () => {
-        expect(normalizeForComponents("BOOL", "true")).toBe(true)
-        expect(normalizeForComponents("BOOL", "false")).toBe(false)
-        expect(normalizeForComponents("BOOL", true)).toBe(true)
-        expect(normalizeForComponents("BOOL", undefined)).toBe(false)
     })
 
     // BOOLEAN is the retired input type; it uses a radio group with an "undefined" third state,

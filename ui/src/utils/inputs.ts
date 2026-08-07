@@ -191,26 +191,3 @@ export function normalize(type: InputType | undefined, value: any) {
     }
     return res
 }
-
-export function normalizeForComponents(type: InputType | undefined, value: any) {
-    let res = value
-
-    if (value === null) {
-        res = undefined
-    } else if (type === "DATE" || type === "DATETIME") {
-        res = moment(res).toISOString()
-    } else if (type === "TIME") {
-        res = moment().startOf("day").add(res, "seconds").toString()
-    } else if (type === "ARRAY") {
-        res = JSON.stringify(res).toString()
-    } else if (type === "BOOLEAN" && value === undefined) {
-        res = "undefined"
-    } else if (type === "BOOL") {
-        // See normalize(): a BOOL default arrives as the string "true"/"false" and el-switch resets
-        // anything that isn't a real boolean.
-        res = value === true || value === "true"
-    } else if (type === "STRING" && Array.isArray(res)) {
-        res = res.toString()
-    }
-    return res
-}

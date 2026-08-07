@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import io.kestra.controller.discovery.ControllerStorageRegistrar;
 import io.kestra.controller.grpc.WorkerControllerService;
-import io.kestra.controller.grpc.services.GrpcExecutionLogController;
+import io.kestra.controller.grpc.services.GrpcExecutionLogControllerService;
 import io.kestra.controller.grpc.services.GrpcFlowMetaStoreWorkerControllerService;
 import io.kestra.controller.grpc.services.GrpcKVMetadataControllerService;
 import io.kestra.controller.grpc.services.GrpcNSMetadataControllerService;
@@ -41,7 +41,7 @@ class RequiresControllerServerTest {
             GrpcKVMetadataControllerService.class,
             GrpcNSMetadataControllerService.class,
             GrpcFlowMetaStoreWorkerControllerService.class,
-            GrpcExecutionLogController.class
+            GrpcExecutionLogControllerService.class
         };
 
         assertThat(grpcServiceTypes(ServerType.WORKER)).doesNotContain(metadataServices);

@@ -93,8 +93,6 @@
         close()
     })
 
-    // Re-runs on every new message, not just the first one — otherwise a second
-    // error while the first toast is still open would silently never show.
     const showNotification = () => {
         close()
 
@@ -141,9 +139,6 @@
 
     watch(() => props.message, showNotification, {immediate: true})
 
-    // coreStore.message can be reset to falsy elsewhere (e.g. FlowRun.vue),
-    // which unmounts this component via the parent's v-if — make sure the
-    // notification library's own popup closes along with it.
     onUnmounted(() => close())
 </script>
 

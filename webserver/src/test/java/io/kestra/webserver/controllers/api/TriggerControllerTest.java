@@ -13,6 +13,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.tasks.test.PollingTrigger;
@@ -381,6 +382,54 @@ class TriggerControllerTest {
     }
 
     @Test
+    void shouldPreserveNextExecutionDateWhenReEnablingTriggerConfiguredWithLast() {
+        Flow flow = generateFlowWithRecoverMissedSchedules(RecoverMissedSchedules.LAST);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
+        ZonedDateTime nextExecutionDate = ZonedDateTime.now().plusHours(1).withSecond(0).withNano(0);
+        Trigger currentState = createTriggerFromFlow(flow, true).toBuilder()
+            .nextExecutionDate(nextExecutionDate)
+            .date(ZonedDateTime.now().minusHours(1))
+            .build();
+        jdbcTriggerRepository.save(currentState);
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/set-disabled/by-triggers",
+                new TriggerController.SetDisabledRequest(List.of(currentState), false)
+            ),
+            BulkResponse.class
+        );
+
+        Trigger updated = jdbcTriggerRepository.findLast(currentState).orElseThrow();
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isEqualTo(nextExecutionDate);
+    }
+
+    @Test
+    void shouldPreserveNextExecutionDateWhenReEnablingTriggerConfiguredWithAll() {
+        Flow flow = generateFlowWithRecoverMissedSchedules(RecoverMissedSchedules.ALL);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
+        ZonedDateTime nextExecutionDate = ZonedDateTime.now().plusHours(1).withSecond(0).withNano(0);
+        Trigger currentState = createTriggerFromFlow(flow, true).toBuilder()
+            .nextExecutionDate(nextExecutionDate)
+            .date(ZonedDateTime.now().minusHours(1))
+            .build();
+        jdbcTriggerRepository.save(currentState);
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH + "/set-disabled/by-triggers",
+                new TriggerController.SetDisabledRequest(List.of(currentState), false)
+            ),
+            BulkResponse.class
+        );
+
+        Trigger updated = jdbcTriggerRepository.findLast(currentState).orElseThrow();
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isEqualTo(nextExecutionDate);
+    }
+
+    @Test
     void disableByTriggers() {
         String namespace = IdUtils.create();
         Flow flow1 = generateFlowWithTrigger(namespace);
@@ -518,6 +567,33 @@ class TriggerControllerTest {
                         .id(IdUtils.create())
                         .type(Schedule.class.getName())
                         .cron("*/1 * * * *")
+                        .build()
+                )
+            )
+            .build();
+    }
+
+    private Flow generateFlowWithRecoverMissedSchedules(RecoverMissedSchedules recoverMissedSchedules) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(TENANT_ID)
+            .namespace(IdUtils.create())
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id(IdUtils.create())
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .recoverMissedSchedules(recoverMissedSchedules)
                         .build()
                 )
             )

@@ -765,8 +765,8 @@
     "dynamic": "Динамический",
     "choice": "Выбор",
     "sequential": "Последовательный",
-    "can not delete": "Невозможно удалить",
-    "can not have less than 1 task": "Не может быть менее одного задания",
+    "can not delete": "Невозможно удалить эту task",
+    "can not have less than 1 task": "flow должен иметь хотя бы одну task. Добавьте еще одну task перед удалением этой.",
     "task id already exists": "ID задачи уже существует",
     "Task Id already exist in the flow": "Task Id {taskId} уже существует в flow.",
     "task id": "ID задачи",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Поиск среди {count}+ плагинов",
+      "search": "Поиск по {count}+ плагинам",
       "searchTasks": "Искать {count} tasks",
       "noResults": "Нет плагинов, соответствующих вашему запросу.",
       "loadError": "Не удалось загрузить плагины. Пожалуйста, попробуйте снова.",
@@ -1257,6 +1257,12 @@
         "header": "Метаданные и наблюдаемость активов",
         "title": "Приведите каждый набор данных, сервис и зависимость в поле зрения.",
         "message": "Активы связывают метаданные наблюдаемости, происхождения и владения, чтобы команды платформы могли быстрее устранять неполадки и развертывать с уверенностью."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "Управление пользователями через IAM с SSO, SCIM и RBAC",
@@ -1897,6 +1903,10 @@
         "title": "У вас еще нет Assets!",
         "content": "Добавьте assets, чтобы отслеживать и управлять вашими данными, сервисами и инфраструктурой."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Управление вашими API Tokens",
         "content": "Токены API используются всякий раз, когда вы хотите предоставить программный доступ к API Kestra."
@@ -1986,7 +1996,8 @@
       "kv_pairs": "Пары kv store не найдены",
       "secrets": "Секреты не найдены",
       "templates": "Шаблоны не найдены",
-      "assets": "Активы не найдены"
+      "assets": "Активы не найдены",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "dashboards": {

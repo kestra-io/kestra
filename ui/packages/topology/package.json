@@ -43,7 +43,7 @@
     "dependencies": {
         "dagre": "^0.8.5",
         "html-to-image": "^1.11.13",
-        "js-yaml": "^4",
+        "js-yaml": "^5",
         "vue-material-design-icons": "^5.3.1",
         "yaml": "^2"
     },
@@ -71,7 +71,7 @@
         "@vitejs/plugin-vue": "^6.0.7",
         "sass-embedded": "^1.99.0",
         "tsdown": "^0.22.1",
-        "typescript": "^6.0.3",
+        "typescript": "^7.0.2",
         "unrun": "^0.3.1",
         "vite": "^8.0.14",
         "vitest": "^4.1.0",

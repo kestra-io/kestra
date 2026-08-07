@@ -52,9 +52,11 @@
         </router-view>
 
         <!-- Embedded mode, blueprint modal, and pages not yet migrated to child routes:
-             keep the dynamic component path (no URL segment to drive a router-view). -->
+             keep the dynamic component path (no URL segment to drive a router-view).
+             Skipped entirely when the tab has no body: a decorative tab bar (e.g. detail
+             pages passing embedActiveTab) must not emit an empty flex-growing section. -->
         <section
-            v-else-if="activeTab"
+            v-else-if="activeTab && hasTabBody"
             v-bind="attrsWithoutClass"
             :class="[containerClass, {maximized: (activeTab as Tab).maximized, 'no-overflow': (activeTab as Tab).noOverflow}]"
         >
@@ -145,6 +147,13 @@
     const useRouterView = computed(() =>
         !props.vertical && !isEmbedded.value && !selectedBlueprintId.value && isRouterDriven.value,
     )
+
+    /** Whether TabBody would render anything — mirrors the null cases in TabBody's render. */
+    const hasTabBody = computed(() => {
+        if (selectedBlueprintId.value) return true
+        const tab = activeTab.value as Tab | undefined
+        return tab !== undefined && (isEditorActiveTab(tab) || Boolean(tab.component))
+    })
 
     const isEditorActiveTab = (tab: Tab): boolean => {
         const TAB = tab.name

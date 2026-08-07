@@ -24,9 +24,9 @@
              KsMarkdown provides its own copy-to-clipboard control, so no separate copy button. -->
         <KsMarkdown class="copilot-draft-yaml" data-test="copilot-draft-yaml" :content="yamlBlock" />
 
-        <!-- Apply actions. Flows + dashboards can be opened in the editor or applied directly. Apps
-             are EE-only: they can only be opened in the app editor (no direct apply), and only when
-             the EE app path is present — in OSS an app draft never occurs, so no actions show. -->
+        <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps are EE-only —
+             open in the app editor only (no direct apply), and only when the EE app path is present, so
+             OSS shows no actions. -->
         <div v-if="showActions" class="copilot-draft-footer">
             <KsButton size="small" data-test="copilot-draft-open" @click="openInEditor(draft)">
                 {{ $t("ai.copilot.draft.openInEditor") }}
@@ -71,7 +71,9 @@
            width instead of shrinking to its longest line. */
         width: 100%;
         max-width: 90%;
-        border: 1px solid var(--ks-border-subtle);
+        /* --ks-border-default, not -subtle: in light theme -subtle is the same gray as the card's
+           --ks-bg-base, so a -subtle border is invisible (it shows fine in dark). */
+        border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-lg);
         overflow: hidden;
         background: var(--ks-bg-base);

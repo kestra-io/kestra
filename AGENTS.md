@@ -13,6 +13,7 @@ This document provides essential information for AI coding agents working on the
 - **Surgical changes only**: touch **only** what is strictly necessary to achieve the goal.
 - **Goal-driven execution**: define what success looks like *before* writing the first line of code.
 - **Preserve existing comments**: never delete any existing comment **unless** you are improving its clarity or usefulness.
+- **Keep comments short and only where they earn their place**: a comment you write should be **one sentence**, or two at most when the *why* genuinely needs it (a non-obvious constraint, a workaround, a subtle ordering or concurrency requirement). Do **not** comment obvious code — no restating what the next line plainly says (`// increment the counter`), no narrating a self-explanatory getter, loop, or well-named call. If the code is readable, the comment is noise; if it isn't, prefer making the code clearer over explaining it.
 - **Write clear, maintainable, and well-documented code**
 - **Build & test are mandatory**
 
@@ -190,6 +191,7 @@ class ServiceTest {
 - E2E tests with Playwright
 - Storybook component tests
 - Use JSdom environment for DOM testing
+- **Prefer Storybook component tests over Vitest unit tests whenever possible** — components render through their real story setup (props, slots, design-system deps) instead of being stubbed out, catching regressions unit mocks miss. Fall back to a Vitest unit test only when the logic under test isn't component-rendering behavior (e.g. a pure helper/composable) or no story exists and adding one isn't practical.
 
 ## UI Design System
 

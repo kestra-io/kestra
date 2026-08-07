@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -32,6 +33,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.FlakyTest;
@@ -75,6 +78,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.tenants.TenantValidationFilter;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
@@ -86,6 +90,7 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
@@ -299,6 +304,30 @@ class ExecutionControllerRunnerTest {
 
         assertThat(executionResult).isNotNull();
         assertThat(executionResult.get("url")).isEqualTo("http://localhost:8081/ui/main/executions/io.kestra.tests/minimal/" + executionResult.get("id"));
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" })
+    void shouldPublishACreateEventWhenAnExecutionIsCreated() {
+        ExecutionCrudEventListener.reset();
+
+        Map<?, ?> executionResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal", null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Map.class
+        );
+
+        // audit-log feeders are built on this event: without it, creating an execution is never audited
+        List<CrudEvent<Execution>> creations = ExecutionCrudEventListener.events().stream()
+            .filter(event -> CrudEventType.CREATE.equals(event.getType()))
+            .filter(event -> executionResult.get("id").equals(event.getModel().getId()))
+            .toList();
+
+        assertThat(creations).hasSize(1);
+        assertThat(creations.getFirst().getRequest())
+            .as("the event must carry the HTTP request so the execution can be attributed to its author")
+            .isNotNull();
     }
 
     @Test
@@ -3484,5 +3513,30 @@ class ExecutionControllerRunnerTest {
                 () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/" + executionId), Execution.class),
                 predicate
             );
+    }
+
+    /**
+     * Records the execution {@link CrudEvent}s published by the controller, the same way the audit-log
+     * feeders consume them.
+     */
+    @Singleton
+    public static class ExecutionCrudEventListener implements ApplicationEventListener<CrudEvent<Execution>> {
+        private static final List<CrudEvent<Execution>> EVENTS = new CopyOnWriteArrayList<>();
+
+        @Override
+        public void onApplicationEvent(CrudEvent<Execution> event) {
+            // generics are erased, so events for other models reach this listener too
+            if (event.getModel() instanceof Execution) {
+                EVENTS.add(event);
+            }
+        }
+
+        static void reset() {
+            EVENTS.clear();
+        }
+
+        static List<CrudEvent<Execution>> events() {
+            return List.copyOf(EVENTS);
+        }
     }
 }

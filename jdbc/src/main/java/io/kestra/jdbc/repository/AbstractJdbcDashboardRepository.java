@@ -46,6 +46,10 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
 
     @Override
     public Optional<Dashboard> get(String tenantId, String id) {
+        return get(id, this.defaultFilter(tenantId));
+    }
+
+    private Optional<Dashboard> get(String id, Condition filter) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration ->
@@ -58,7 +62,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
                         VALUE_FIELD
                     )
                     .from(jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
+                    .where(filter)
                     .and(field("id", String.class).eq(id));
                 Record2<String, Object> fetched = from.fetchAny();
 
@@ -108,7 +112,15 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
 
     @Override
     public Dashboard delete(String tenantId, String id) {
-        Optional<Dashboard> dashboard = this.get(tenantId, id);
+        return delete(id, this.get(tenantId, id));
+    }
+
+    @Override
+    public Dashboard deleteWithNoAcl(String tenantId, String id) {
+        return delete(id, this.get(id, this.defaultFilterWithNoACL(tenantId)));
+    }
+
+    private Dashboard delete(String id, Optional<Dashboard> dashboard) {
         if (dashboard.isEmpty()) {
             throw new IllegalStateException("Dashboard " + id + " doesn't exists");
         }

@@ -43,6 +43,14 @@ public interface DashboardRepositoryInterface {
 
     Dashboard delete(String tenantId, String id);
 
+    /**
+     * Soft-deletes a dashboard without applying the current user's ACL. Intended for privileged
+     * cascades (e.g. deleting a tenant and all its resources) that run outside a tenant-scoped
+     * request context, where {@link #delete(String, String)}'s ACL check would resolve a null
+     * tenant and fail.
+     */
+    Dashboard deleteWithNoAcl(String tenantId, String id);
+
     <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate,
         ZonedDateTime endDate, Pageable pageable) throws IOException;
 

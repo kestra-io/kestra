@@ -64,11 +64,30 @@ public abstract class AbstractLoaderExtension {
     }
 
     /**
+     * Aborts the test when this extension's context has already been stopped.
+     *
+     * @see ExtensionUtils#abortIfContextStopped(ApplicationContext)
+     */
+    protected void abortIfContextStopped() {
+        ExtensionUtils.abortIfContextStopped(context);
+    }
+
+    /**
+     * Whether beans can still be resolved from this extension's context: it was looked up, and it has not
+     * been stopped since. The context stays null when a fixture failed before finding one, which an
+     * {@code afterEach} hook still runs after.
+     */
+    protected boolean isContextRunning() {
+        return context != null && context.isRunning();
+    }
+
+    /**
      * Ensure the tenant a fixture targets exists before loading resources into it. No-op in OSS;
      * Enterprise replaces {@link TestTenantLifecycle} to actually create the tenant.
      */
     protected void createTenant(ExtensionContext extensionContext, String tenantId) {
         loadApplicationContext(extensionContext);
+        abortIfContextStopped();
         context.getBean(TestTenantLifecycle.class).create(tenantId);
     }
 
@@ -77,7 +96,7 @@ public abstract class AbstractLoaderExtension {
      * No-op in OSS; best-effort in Enterprise (only tenants it created are removed).
      */
     protected void deleteTenant(String tenantId) {
-        if (context == null || !context.isRunning()) {
+        if (!isContextRunning()) {
             return;
         }
         context.getBean(TestTenantLifecycle.class).delete(tenantId);
@@ -86,6 +105,7 @@ public abstract class AbstractLoaderExtension {
     protected void loadFlows(ExtensionContext extensionContext, String tenantId, String[] paths)
         throws IOException, URISyntaxException {
         loadApplicationContext(extensionContext);
+        abortIfContextStopped();
 
         LocalFlowRepositoryLoader repositoryLoader = context.getBean(
             LocalFlowRepositoryLoader.class
@@ -124,8 +144,12 @@ public abstract class AbstractLoaderExtension {
         }
     }
 
+    /**
+     * Delete the flows a fixture loaded. Best-effort: a cleanup hook must not stack a second failure on
+     * top of whatever the test itself reported when the context is missing or already stopped.
+     */
     protected void deleteFlows(String tenantId, String[] paths) throws URISyntaxException, IOException {
-        if (!context.isRunning()) {
+        if (!isContextRunning()) {
             return;
         }
 

@@ -84,7 +84,6 @@
                                     :item="item"
                                     :active="active"
                                     :data-index="index"
-                                    :sizeDependencies="[selectedTaskRuns]"
                                 >
                                     <div class="d-flex flex-column">
                                         <div

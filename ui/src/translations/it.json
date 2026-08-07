@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Questo file è {size}. Potrebbe richiedere del tempo per caricarsi bloccando il tuo browser. Vuoi caricarlo comunque?",
-      "load_anyway": "Carica comunque"
+      "load_anyway": "Carica comunque",
+      "load_error": "Impossibile caricare l'anteprima del file. Potrebbe trattarsi di un problema temporaneo o di autorizzazioni.",
+      "retry": "Riprova",
+      "html_asset_warning": "Questa anteprima visualizza l'HTML in un frame isolato. Le risorse locali come immagini e fogli di stile riferiti tramite percorsi relativi non verranno caricate.",
+      "html_preview_title": "Anteprima file HTML"
     },
     "no_variables": "Nessuna variabile disponibile.",
     "download": "Scarica",
@@ -761,8 +765,8 @@
     "dynamic": "Dinamico",
     "choice": "Scelta",
     "sequential": "Sequenziale",
-    "can not delete": "Impossibile eliminare",
-    "can not have less than 1 task": "Ogni flow deve avere almeno un task.",
+    "can not delete": "Impossibile eliminare questo task",
+    "can not have less than 1 task": "Un flow deve avere almeno un task. Aggiungi un altro task prima di eliminare questo.",
     "task id already exists": "Task Id già esistente",
     "Task Id already exist in the flow": "Task Id {taskId} già esistente nel flow.",
     "task id": "Task ID",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Cerca tra oltre {count} plugin",
+      "search": "Cerca tra {count}+ plugin",
       "searchTasks": "Cerca {count} task",
       "noResults": "Nessun plugin corrisponde alla tua ricerca.",
       "loadError": "Impossibile caricare i plugin. Per favore riprova.",
@@ -1254,6 +1258,12 @@
         "title": "Porta ogni dataset, servizio e dipendenza in vista.",
         "message": "Le risorse collegano la osservabilità, la lineage e i metadati di proprietà in modo che i team della piattaforma possano risolvere i problemi più rapidamente e distribuire con fiducia."
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "Gestisci gli utenti tramite IAM con SSO, SCIM e RBAC",
         "message": "Kestra Enterprise Edition ha funzionalità IAM integrate con single sign-on (SSO), sincronizzazione della directory SCIM e controllo degli accessi basato sui ruoli (RBAC), integrandosi con diversi provider di identità e permettendo di assegnare permessi dettagliati per utenti e account di servizio."
@@ -1341,9 +1351,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "Descrivi il flow che desideri",
-            "body": "Descrivi cosa vuoi automatizzare e l'AI Copilot lo abbozzerà per te. Il tour continua con un example flow già pronto, quindi non è necessario digitare nulla qui.",
-            "next": "Genera il flow"
+            "title": "Flows possono essere abbozzati da un prompt",
+            "body": "Il tour utilizza un flow di esempio già pronto, quindi non è necessario digitare nulla qui.",
+            "next": "Utilizza il flow di esempio"
           },
           "flow_generated": {
             "title": "Questo è un flow",
@@ -1361,7 +1371,7 @@
             "title": "I flow sono modificati come codice",
             "body": "Abbiamo aggiunto un task `notify` per te senza l'AI Copilot, così puoi vedere come appare la modifica diretta del YAML. Pubblica il risultato finale su Slack.",
             "next": "Consulta la documentazione del task",
-            "callout": "AI Copilot ti ha fornito la prima bozza; l'editor è dove puoi iterare su di essa in una tab dell'editor Code o No-Code, entrambi i quali producono lo stesso YAML, così il tuo flow rimane come codice, indipendentemente da come è stato costruito."
+            "callout": "Una prima bozza generata da AI Copilot è solo un punto di partenza; l'editor è il luogo dove la si perfeziona in una scheda editor Code o No-Code, le quali producono entrambe lo stesso YAML, garantendo che il tuo flow rimanga come codice, indipendentemente da come sia stato creato."
           },
           "editor_help": {
             "title": "La documentazione è accanto al flow",
@@ -1428,7 +1438,7 @@
           "takeaways": {
             "copilot": {
               "title": "Flows generati da inglese naturale",
-              "body": "Descrivi cosa vuoi automatizzare, e un flow viene abbozzato dall'AI Copilot. Da lì lo raffini nell'editor, con il completamento automatico e il pannello <strong>Docs</strong>. I flow vengono eseguiti dal pulsante <strong>Execute</strong> del flow o di qualsiasi esecuzione."
+              "body": "Descrivi cosa vuoi automatizzare nella chat dell'AI Copilot, e una prima versione del flow viene generata dallo schema del flow live. Lo stesso è possibile dal tuo editor o terminale: Claude Code, Cursor e altri agenti di codifica possono generare flow con le skill dell'agente Kestra."
             },
             "restart": {
               "title": "Riesegui invece di eseguire tutto di nuovo",
@@ -1449,6 +1459,8 @@
           "start_building": "Inizia a costruire",
           "docs": {
             "title": "Leggi di più",
+            "copilot": "Copilota AI",
+            "agentSkills": "Competenze dell'agente",
             "autocompletion": "Completamento automatico",
             "execution": "Esecuzioni",
             "replay": "Riesegui",
@@ -1891,6 +1903,10 @@
         "title": "Non hai ancora Asset!",
         "content": "Aggiungi asset per tracciare e gestire i tuoi asset di dati, servizi e infrastruttura."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Gestisci i tuoi Token API",
         "content": "I token API vengono utilizzati ogni volta che si desidera concedere l'accesso programmatico all'API di Kestra."
@@ -1980,7 +1996,8 @@
       "kv_pairs": "Nessuna coppia Key-Value trovata",
       "secrets": "Nessun Secret Trovato",
       "templates": "Nessun Template Trovato",
-      "assets": "Nessun asset trovato"
+      "assets": "Nessun asset trovato",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {

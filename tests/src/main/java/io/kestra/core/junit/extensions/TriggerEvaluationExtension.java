@@ -65,6 +65,10 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Trigger not found: " + evaluateTrigger.triggerId()));
 
+        // Re-checked because parsing the flow above is slow enough for a shutdown to land in between, and
+        // evaluating the trigger initialises a run context, which resolves @ConfigurationProperties beans.
+        ExtensionUtils.abortIfContextStopped(context);
+
         return evaluateTrigger(trigger, flow);
     }
 
@@ -85,8 +89,19 @@ public class TriggerEvaluationExtension implements ParameterResolver {
             if (context == null) {
                 throw new IllegalStateException("No ApplicationContext found. Add @KestraTest or @MicronautTest to the test class.");
             }
-            runContextFactory = context.getBean(RunContextFactory.class);
-            runContextInitializer = context.getBean(RunContextInitializer.class);
+        }
+
+        // Checked on every resolution rather than only when the context is first looked up: one instance
+        // serves every invocation of a @TestTemplate and every Optional parameter of a method.
+        ExtensionUtils.abortIfContextStopped(context);
+
+        if (runContextFactory == null || runContextInitializer == null) {
+            // Published together, so failing to resolve the second cannot leave the extension
+            // half-initialised and never retried.
+            RunContextFactory factory = context.getBean(RunContextFactory.class);
+            RunContextInitializer initializer = context.getBean(RunContextInitializer.class);
+            runContextFactory = factory;
+            runContextInitializer = initializer;
         }
     }
 

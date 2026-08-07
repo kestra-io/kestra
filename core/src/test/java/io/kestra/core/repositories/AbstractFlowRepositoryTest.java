@@ -164,6 +164,43 @@ public abstract class AbstractFlowRepositoryTest {
         }
     }
 
+    @Test
+    void shouldSortByUpdatedWhenSortRequested() {
+        // Given: flows created in an order that differs from their id order, so a working
+        // sort on `updated` must reorder them rather than return the default (id) order.
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource first = flowRepository.create(GenericFlow.of(builder(tenant, "sort-flow-c", TEST_FLOW_ID).build()));
+        FlowWithSource second = flowRepository.create(GenericFlow.of(builder(tenant, "sort-flow-a", TEST_FLOW_ID).build()));
+        FlowWithSource third = flowRepository.create(GenericFlow.of(builder(tenant, "sort-flow-b", TEST_FLOW_ID).build()));
+
+        try {
+            // When
+            ArrayListTotal<Flow> ascending = flowRepository.find(
+                Pageable.from(1, 10, Sort.of(Sort.Order.asc("updated"))),
+                tenant,
+                List.of()
+            );
+            ArrayListTotal<Flow> descending = flowRepository.find(
+                Pageable.from(1, 10, Sort.of(Sort.Order.desc("updated"))),
+                tenant,
+                List.of()
+            );
+
+            // Then: both directions return every flow ordered by `updated`. An ignored sort would
+            // yield a single fixed order that cannot be both ascending and descending.
+            assertThat(ascending).hasSize(3);
+            assertThat(descending).hasSize(3);
+            assertThat(ascending).allSatisfy(flow -> assertThat(flow.getUpdated()).isNotNull());
+            assertThat(ascending).isSortedAccordingTo(Comparator.comparing(Flow::getUpdated));
+            assertThat(descending).isSortedAccordingTo(Comparator.comparing(Flow::getUpdated).reversed());
+        } finally {
+            deleteFlow(first);
+            deleteFlow(second);
+            deleteFlow(third);
+        }
+    }
+
     @ParameterizedTest
     @MethodSource("filterCombinations")
     void should_find_all(QueryFilter filter) {

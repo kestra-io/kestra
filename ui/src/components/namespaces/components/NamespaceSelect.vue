@@ -1,8 +1,9 @@
 <template>
     <KsSelect
-        :class="{'fit-text': !fit}"
+        :class="{'fit-text': !fit && !multiple}"
         v-model="modelValue"
         :multiple
+        :singleLineTags="multiple"
 
         :disabled="readOnly"
         :clearable="clearable"
@@ -21,13 +22,13 @@
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
             >
                 <FolderOpenOutline />
-                {{ value }}
+                <span class="tag-label" :title="value">{{ value }}</span>
             </KsTag>
             <KsTooltip v-if="hiddenTags.length > 0" placement="top">
                 <template #content>
                     <div v-for="value in hiddenTags" :key="value">{{ value }}</div>
                 </template>
-                <KsTag>
+                <KsTag class="tag-counter">
                     +{{ hiddenTags.length }}
                 </KsTag>
             </KsTooltip>
@@ -56,11 +57,13 @@
         placeholder?: string | undefined
         fit?: boolean
         autoDefault?: boolean
+        maxVisibleTags?: number
     }>(), {
         multiple: false,
         clearable: true,
         placeholder: undefined,
         autoDefault: true,
+        maxVisibleTags: 3,
     })
 
     const suffixIcon = computed(() => props.readOnly ? Lock : undefined)
@@ -77,9 +80,9 @@
         [modelValue.value].flat().filter(Boolean) as string[],
     )
 
-    const visibleTags = computed(() => validValues.value.slice(0, 3))
+    const visibleTags = computed(() => validValues.value.slice(0, props.maxVisibleTags))
 
-    const hiddenTags = computed(() => validValues.value.slice(3))
+    const hiddenTags = computed(() => validValues.value.slice(props.maxVisibleTags))
 
     const options = computed(() => {
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
@@ -104,3 +107,17 @@
         }
     })
 </script>
+
+<style scoped lang="scss">
+    .tag-label {
+        max-width: 12.5rem;
+        min-width: 5ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .tag-counter {
+        flex-shrink: 0;
+    }
+</style>

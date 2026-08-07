@@ -2,6 +2,7 @@ package io.kestra.controller.grpc.services;
 
 import java.util.List;
 
+import io.kestra.controller.RequiresControllerServer;
 import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
@@ -11,22 +12,20 @@ import io.kestra.core.runners.ExecutionLogMetaStore;
 import io.kestra.core.worker.models.WorkerInfo;
 
 import io.grpc.stub.StreamObserver;
-import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * gRPC service implementation for worker meta store operations.
- * Provides execution logs to workers via gRPC.
+ * gRPC service implementation providing execution logs to workers.
  */
 @Slf4j
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
-public class GrpcExecutionLogController extends ExecutionLogsServiceGrpc.ExecutionLogsServiceImplBase implements WorkerControllerService {
+@RequiresControllerServer
+public class GrpcExecutionLogControllerService extends ExecutionLogsServiceGrpc.ExecutionLogsServiceImplBase implements WorkerControllerService {
     private final ExecutionLogMetaStore executionLogMetaStore;
     private final WorkerInfo workerInfo;
 
-    public GrpcExecutionLogController(ExecutionLogMetaStore executionLogMetaStore, WorkerInfo workerInfo) {
+    public GrpcExecutionLogControllerService(ExecutionLogMetaStore executionLogMetaStore, WorkerInfo workerInfo) {
         this.executionLogMetaStore = executionLogMetaStore;
         this.workerInfo = workerInfo;
     }

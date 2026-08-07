@@ -765,8 +765,8 @@
     "dynamic": "動的",
     "choice": "選択",
     "sequential": "逐次",
-    "can not delete": "削除できません",
-    "can not have less than 1 task": "各flowには少なくとも1つのtaskが必要です。",
+    "can not delete": "この task を削除できません",
+    "can not have less than 1 task": "flowには少なくとも1つのtaskが必要です。これを削除する前に、別のtaskを追加してください。",
     "task id already exists": "Task Idはすでに存在します",
     "Task Id already exist in the flow": "Task Id {taskId}はflow内ですでに存在します。",
     "task id": "Task ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ プラグインを検索",
+      "search": "{count}以上のプラグインを検索",
       "searchTasks": "{count} 件のタスクを検索",
       "noResults": "検索に一致するプラグインがありません。",
       "loadError": "プラグインを読み込めませんでした。もう一度お試しください。",

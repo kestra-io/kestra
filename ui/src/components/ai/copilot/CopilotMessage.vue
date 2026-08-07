@@ -32,9 +32,16 @@
                 <!-- Title via slot so it renders at the same small/secondary treatment as the
                      rest of the transcript (the default collapse header is larger + primary). -->
                 <template #title>
-                    <KsText size="small" class="copilot-tool-label">
-                        {{ $t("ai.copilot.toolCall", {tool: message.toolCall?.tool ?? ""}) }}
-                    </KsText>
+                    <span class="copilot-tool-title">
+                        <!-- Spins only while the tool is still executing (no result yet), so an
+                             in-flight step reads as "in progress" instead of sitting blank. -->
+                        <KsIcon v-if="isRunning" class="copilot-tool-spinner" aria-hidden="true">
+                            <Loading />
+                        </KsIcon>
+                        <KsText size="small" class="copilot-tool-label">
+                            {{ $t("ai.copilot.toolCall", {tool: message.toolCall?.tool ?? ""}) }}
+                        </KsText>
+                    </span>
                 </template>
                 <pre class="copilot-tool-args">{{ argsJson }}</pre>
             </KsCollapseItem>
@@ -87,6 +94,7 @@
     import {ref, computed} from "vue"
     import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline.vue"
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline.vue"
+    import Loading from "vue-material-design-icons/Loading.vue"
     import CopilotArtefactDraft from "./CopilotArtefactDraft.vue"
     import ProposedActionCard from "./ProposedActionCard.vue"
     import type {ProposedActionEvent} from "./types"
@@ -96,6 +104,8 @@
         message: ChatMessage
         /** True when this PROPOSED_ACTION is the active one (shown by CopilotChat's interactive card). */
         isPending?: boolean
+        /** True when this TOOL_CALL is still executing (no result yet) — drives the running spinner. */
+        isRunning?: boolean
     }>()
 
     // Display-only proposal for a historical PROPOSED_ACTION message: the live event carries the full
@@ -223,6 +233,26 @@
        so the whole "tool activity" strip reads uniformly. Status is carried by the icon. */
     .copilot-tool-label {
         --kel-text-color: var(--ks-text-secondary);
+    }
+
+    .copilot-tool-title {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+    }
+
+    /* The running spinner sits at the same neutral weight as the tool label; motion carries the
+       "in progress" meaning (completed/failed states use a coloured check/cross instead). */
+    .copilot-tool-spinner {
+        margin-right: var(--ks-spacing-1);
+        color: var(--ks-icon-default);
+        animation: copilot-tool-spin 1s linear infinite;
+    }
+
+    @keyframes copilot-tool-spin {
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     .copilot-tool-result-row {

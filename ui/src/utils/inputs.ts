@@ -165,8 +165,13 @@ export function normalize(type: InputType | undefined, value: any) {
 
     if (type === "BOOLEAN" && value === undefined) {
         res = "undefined"
-    } else if (type === "BOOL" && value === undefined) {
-        res = false
+    } else if (type === "BOOL") {
+        // `defaults` is a Property, which serialises as its expression string, so `defaults: true`
+        // reaches the form as the string "true". KsSwitch (el-switch) only accepts a real boolean:
+        // given anything else it emits `update:modelValue` = false during setup, which both turns the
+        // toggle off and marks the input as user-edited — so the validate response can no longer
+        // restore the default. Coerce here.
+        res = value === true || value === "true"
     } else if (value === null || value === undefined) {
         res = undefined
     } else if (type === "DATE" || type === "DATETIME") {
@@ -200,8 +205,10 @@ export function normalizeForComponents(type: InputType | undefined, value: any) 
         res = JSON.stringify(res).toString()
     } else if (type === "BOOLEAN" && value === undefined) {
         res = "undefined"
-    } else if (type === "BOOL" && value === undefined) {
-        res = false
+    } else if (type === "BOOL") {
+        // See normalize(): a BOOL default arrives as the string "true"/"false" and el-switch resets
+        // anything that isn't a real boolean.
+        res = value === true || value === "true"
     } else if (type === "STRING" && Array.isArray(res)) {
         res = res.toString()
     }

@@ -100,7 +100,7 @@
         "oxlint": "^1.73.0",
         "patch-package": "^8.0.1",
         "path-browserify": "^1.0.1",
-        "pdfjs-dist": "^6.1.200",
+        "pdfjs-dist": "^6.2.108",
         "pinia": "^3.0.4",
         "playwright": "^1.61.1",
         "posthog-js": "^1.399.1",

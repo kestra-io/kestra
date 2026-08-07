@@ -2,11 +2,11 @@
     <Reorder.Group
         as="div"
         axis="y"
-        :values="orderedItems"
+        :values="visibleItems"
         @update:values="onReorder"
     >
         <Reorder.Item
-            v-for="column in orderedItems"
+            v-for="column in visibleItems"
             :key="column.prop"
             :value="column"
             as="div"
@@ -34,10 +34,12 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue"
+    import {ref, computed, watch} from "vue"
     import {Reorder} from "motion-v"
     import DotsGrid from "vue-material-design-icons/DotsGrid.vue"
     import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns"
+
+    const passesCondition = (column: ColumnConfig) => !column.condition || column.condition()
 
     const props = defineProps<{
         columns: ColumnConfig[];
@@ -69,10 +71,14 @@
         }
     })
 
+    const visibleItems = computed(() => orderedItems.value.filter(passesCondition))
+
     const onReorder = (items: ColumnConfig[]) => {
-        if (items.map(c => c.prop).join() === orderedItems.value.map(c => c.prop).join()) return
-        orderedItems.value = items
-        setColumnOrder(items.map(c => c.prop))
+        if (items.map(c => c.prop).join() === visibleItems.value.map(c => c.prop).join()) return
+        let visibleIndex = 0
+        const rebuilt = orderedItems.value.map(column => passesCondition(column) ? items[visibleIndex++] : column)
+        orderedItems.value = rebuilt
+        setColumnOrder(rebuilt.map(c => c.prop))
         emits("updateColumns", localVisibleColumns.value)
     }
 

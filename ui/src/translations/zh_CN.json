@@ -765,8 +765,8 @@
     "dynamic": "动态",
     "choice": "选择",
     "sequential": "顺序",
-    "can not delete": "无法删除",
-    "can not have less than 1 task": "每个流程必须至少有一个任务。",
+    "can not delete": "无法删除此 task",
+    "can not have less than 1 task": "一个 flow 必须至少有一个 task。在删除此 task 之前，添加另一个 task。",
     "task id already exists": "任务ID已存在",
     "Task Id already exist in the flow": "流程中已存在任务ID {taskId}。",
     "task id": "任务ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "搜索 1400+ 插件",
+      "search": "搜索 {count}+ 插件",
       "searchTasks": "搜索 {count} 个 task",
       "noResults": "没有插件符合您的搜索。",
       "loadError": "无法加载插件。请重试。",
@@ -1257,6 +1257,12 @@
         "header": "资产元数据和可观测性",
         "title": "将每个数据集、服务和依赖项展示出来。",
         "message": "资产连接可观测性、血缘关系和所有权元数据，使平台团队能够更快地排查问题并自信地部署。"
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "通过IAM使用SSO、SCIM和RBAC管理用户",
@@ -1896,6 +1902,10 @@
         "title": "您还没有资产！",
         "content": "添加资产以跟踪和管理您的数据资产、服务和基础设施。"
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "管理您的API Tokens",
         "content": "API令牌用于在您希望授予程序化访问Kestra API时使用。"
@@ -1985,7 +1995,8 @@
       "kv_pairs": "未找到Key-Value对",
       "secrets": "未找到Secrets",
       "templates": "未找到模板",
-      "assets": "未找到资产"
+      "assets": "未找到资产",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {

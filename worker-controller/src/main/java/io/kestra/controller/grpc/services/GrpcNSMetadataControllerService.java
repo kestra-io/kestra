@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.kestra.controller.RequiresControllerServer;
 import io.kestra.controller.grpc.*;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.MessageFormats;
@@ -15,7 +16,6 @@ import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.worker.models.WorkerInfo;
 
 import io.grpc.stub.StreamObserver;
-import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -24,7 +24,7 @@ import jakarta.inject.Singleton;
  * Provides worker-safe namespace file metadata read/write to workers via gRPC.
  */
 @Singleton
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
+@RequiresControllerServer
 public class GrpcNSMetadataControllerService extends NamespaceFileMetadataServiceGrpc.NamespaceFileMetadataServiceImplBase implements WorkerControllerService {
 
     private static final Logger log = LoggerFactory.getLogger(GrpcNSMetadataControllerService.class);

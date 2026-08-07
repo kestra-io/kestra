@@ -191,6 +191,7 @@ class ServiceTest {
 - E2E tests with Playwright
 - Storybook component tests
 - Use JSdom environment for DOM testing
+- **Prefer Storybook component tests over Vitest unit tests whenever possible** — components render through their real story setup (props, slots, design-system deps) instead of being stubbed out, catching regressions unit mocks miss. Fall back to a Vitest unit test only when the logic under test isn't component-rendering behavior (e.g. a pure helper/composable) or no story exists and adding one isn't practical.
 
 ## UI Design System
 

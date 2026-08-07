@@ -765,8 +765,8 @@
     "dynamic": "डायनामिक",
     "choice": "विकल्प",
     "sequential": "अनुक्रमिक",
-    "can not delete": "हटाया नहीं जा सकता",
-    "can not have less than 1 task": "प्रत्येक flow में कम से कम एक Task होना चाहिए।",
+    "can not delete": "यह task हटाया नहीं जा सकता",
+    "can not have less than 1 task": "एक flow में कम से कम एक task होना चाहिए। इसे हटाने से पहले एक और task जोड़ें।",
     "task id already exists": "Task Id पहले से मौजूद है",
     "Task Id already exist in the flow": "Task Id {taskId} पहले से ही flow में मौजूद है।",
     "task id": "Task ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "1400+ plugins भर में खोजें",
+      "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
       "noResults": "आपकी खोज से कोई प्लगइन मेल नहीं खाता।",
       "loadError": "प्लगइन्स लोड नहीं हो सके। कृपया पुनः प्रयास करें।",
@@ -1257,6 +1257,12 @@
         "header": "संपत्तियों का मेटाडेटा और अवलोकनीयता",
         "title": "हर dataset, सेवा, और निर्भरता को दृश्य में लाएं।",
         "message": "एसेट्स अवलोकन, वंशावली, और स्वामित्व मेटाडेटा को जोड़ते हैं ताकि प्लेटफ़ॉर्म टीमें तेजी से समस्या निवारण कर सकें और आत्मविश्वास के साथ परिनियोजन कर सकें।"
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "IAM के माध्यम से SSO, SCIM और RBAC के साथ उपयोगकर्ताओं का प्रबंधन करें।",
@@ -1896,6 +1902,10 @@
         "title": "आपके पास अभी तक कोई Assets नहीं हैं!",
         "content": "अपने डेटा एसेट्स, सेवाओं और इन्फ्रास्ट्रक्चर को ट्रैक और प्रबंधित करने के लिए एसेट्स जोड़ें।"
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "अपने API Tokens प्रबंधित करें",
         "content": "API टोकन का उपयोग तब किया जाता है जब आप Kestra API के लिए प्रोग्रामेटिक एक्सेस प्रदान करना चाहते हैं।"
@@ -1985,7 +1995,8 @@
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
       "secrets": "कोई Secrets नहीं मिले",
       "templates": "कोई टेम्पलेट नहीं मिला",
-      "assets": "कोई Assets नहीं मिले"
+      "assets": "कोई Assets नहीं मिले",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {

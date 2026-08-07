@@ -133,8 +133,7 @@
     import {getAllTaskIds} from "../../utils/flowUtils"
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants"
     import {WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
-    import {normalize, flattenInputs} from "../../utils/inputs"
-    import type {InputType} from "../../utils/inputs"
+    import {flattenInputs} from "../../utils/inputs"
     import get from "lodash/get"
     import type {FormInstance} from "@kestra-io/design-system"
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
@@ -368,11 +367,7 @@
                 if (value === undefined) {
                     return
                 }
-                inputsForm.inputsValues[leaf.id] = normalize(leaf.type as InputType, value)
-                const meta = inputsForm.inputsMetaData.find(m => m.id === leaf.id)
-                if (meta) {
-                    meta.isDefault = false
-                }
+                inputsForm.prefillInputValue(leaf, value)
             })
     }
 

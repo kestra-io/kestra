@@ -4,7 +4,11 @@
         :class="props.disabled ? 'is-disabled' : undefined"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         @change="emit('change', $event)"
-    />
+    >
+        <template v-if="$slots.default" #default="scope">
+            <slot v-bind="scope" />
+        </template>
+    </ElSegmented>
 </template>
 
 <script setup lang="ts">
@@ -35,6 +39,14 @@
 
     .el-segmented__item-selected {
         font-weight: 500;
+    }
+
+    // In light theme --ks-bg-hover-elevated equals --ks-bg-base, so the track
+    // background is invisible against the page; --ks-bg-elevated gives contrast.
+    html:not(.dark) .el-segmented,
+    html:not(.dark) .kel-segmented {
+        --el-fill-color-light: var(--ks-bg-elevated);
+        --kel-fill-color-light: var(--ks-bg-elevated);
     }
 
     .el-segmented.is-disabled .el-segmented__item-selected,

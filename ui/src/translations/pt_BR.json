@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Este arquivo tem {size}. Pode demorar um pouco para carregar, bloqueando seu navegador. Deseja carregá-lo mesmo assim?",
-      "load_anyway": "Carregar mesmo assim"
+      "load_anyway": "Carregar mesmo assim",
+      "load_error": "Falha ao carregar a pré-visualização do arquivo. Pode ser um problema temporário ou de permissões.",
+      "retry": "Tentar novamente",
+      "html_asset_warning": "Esta pré-visualização renderiza o HTML em um quadro isolado. Recursos locais como imagens e folhas de estilo referenciados por caminhos relativos não serão carregados.",
+      "html_preview_title": "Pré-visualização do arquivo HTML"
     },
     "no_variables": "Nenhuma variável disponível.",
     "download": "Baixar",
@@ -761,8 +765,8 @@
     "dynamic": "Dinâmico",
     "choice": "Escolha",
     "sequential": "Sequencial",
-    "can not delete": "Não pode excluir",
-    "can not have less than 1 task": "Cada flow deve ter pelo menos uma task.",
+    "can not delete": "Não é possível excluir esta task",
+    "can not have less than 1 task": "Um flow deve ter pelo menos uma task. Adicione outra task antes de excluir esta.",
     "task id already exists": "Task Id já existe",
     "Task Id already exist in the flow": "Task Id {taskId} já existe no flow.",
     "task id": "Task ID",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Pesquisar em mais de {count} plugins",
+      "search": "Pesquisar em {count}+ plugins",
       "searchTasks": "Pesquisar {count} tasks",
       "noResults": "Nenhum plugin corresponde à sua pesquisa.",
       "loadError": "Não foi possível carregar os plugins. Por favor, tente novamente.",

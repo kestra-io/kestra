@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "此文件大小为{size}。加载可能需要一些时间，并可能阻塞您的浏览器。您是否仍然要加载它？",
-      "load_anyway": "仍然加载"
+      "load_anyway": "仍然加载",
+      "load_error": "无法加载文件预览。这可能是临时问题或权限问题。",
+      "retry": "重试",
+      "html_asset_warning": "此预览在沙盒化的框架中渲染 HTML。通过相对路径引用的本地资源（如图片和样式表）将不会加载。",
+      "html_preview_title": "HTML 文件预览"
     },
     "no_variables": "没有可用的变量。",
     "download": "下载",
@@ -761,8 +765,8 @@
     "dynamic": "动态",
     "choice": "选择",
     "sequential": "顺序",
-    "can not delete": "无法删除",
-    "can not have less than 1 task": "每个流程必须至少有一个任务。",
+    "can not delete": "无法删除此 task",
+    "can not have less than 1 task": "一个 flow 必须至少有一个 task。在删除此 task 之前，添加另一个 task。",
     "task id already exists": "任务ID已存在",
     "Task Id already exist in the flow": "流程中已存在任务ID {taskId}。",
     "task id": "任务ID",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "在{count}+个插件中搜索",
+      "search": "搜索 {count}+ 插件",
       "searchTasks": "搜索 {count} 个 task",
       "noResults": "没有插件符合您的搜索。",
       "loadError": "无法加载插件。请重试。",

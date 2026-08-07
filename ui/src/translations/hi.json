@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "यह फ़ाइल {size} है। इसे लोड करने में कुछ समय लग सकता है जिससे आपका ब्राउज़र ब्लॉक हो सकता है। क्या आप इसे फिर भी लोड करना चाहते हैं?",
-      "load_anyway": "फिर भी लोड करें"
+      "load_anyway": "फिर भी लोड करें",
+      "load_error": "फ़ाइल पूर्वावलोकन लोड करने में विफल। यह एक अस्थायी समस्या या अनुमति संबंधी समस्या हो सकती है।",
+      "retry": "पुनः प्रयास करें",
+      "html_asset_warning": "यह पूर्वावलोकन HTML को एक सैंडबॉक्स्ड फ्रेम में रेंडर करता है। सापेक्ष पथों द्वारा संदर्भित स्थानीय संसाधन जैसे चित्र और स्टाइलशीट लोड नहीं होंगे।",
+      "html_preview_title": "HTML फ़ाइल पूर्वावलोकन"
     },
     "no_variables": "कोई वेरिएबल उपलब्ध नहीं हैं।",
     "download": "डाउनलोड करें",
@@ -761,8 +765,8 @@
     "dynamic": "डायनामिक",
     "choice": "विकल्प",
     "sequential": "अनुक्रमिक",
-    "can not delete": "हटाया नहीं जा सकता",
-    "can not have less than 1 task": "प्रत्येक flow में कम से कम एक Task होना चाहिए।",
+    "can not delete": "यह task हटाया नहीं जा सकता",
+    "can not have less than 1 task": "एक flow में कम से कम एक task होना चाहिए। इसे हटाने से पहले एक और task जोड़ें।",
     "task id already exists": "Task Id पहले से मौजूद है",
     "Task Id already exist in the flow": "Task Id {taskId} पहले से ही flow में मौजूद है।",
     "task id": "Task ID",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ प्लगइन्स में खोजें",
+      "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
       "noResults": "आपकी खोज से कोई प्लगइन मेल नहीं खाता।",
       "loadError": "प्लगइन्स लोड नहीं हो सके। कृपया पुनः प्रयास करें।",

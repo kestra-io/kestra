@@ -11,6 +11,7 @@
         "predev": "node scripts/ensure-sdk.mjs",
         "dev": "vite --host",
         "prebuild": "node scripts/ensure-sdk.mjs",
+        "plugin-count:update": "node --experimental-strip-types ./scripts/update_plugin_catalog_count.ts",
         "build": "vite build --emptyOutDir",
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",

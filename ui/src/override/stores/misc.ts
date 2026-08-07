@@ -18,8 +18,8 @@ export const useMiscStore = defineStore("misc", () => {
     const lastContextTab = ref("ai")
     const theme = ref<SelectedTheme>("syncWithSystem")
     // A prompt to seed into the AI Copilot composer the next time it renders. Set by entry
-    // points ("Fix with AI", the editor shortcut, …) via `promptCopilot`; consumed and cleared
-    // by CopilotChat. `null` means nothing pending.
+    // points ("Fix with AI", "Generate a unit test", the editor shortcut, …) via `promptCopilot`;
+    // consumed and cleared by CopilotChat. `null` means nothing pending.
     const copilotPrompt = ref<string | null>(null)
     // Title for the thread the seeded prompt should start; only used when `copilotNewThread` is set.
     const copilotThreadTitle = ref<string | null>(null)
@@ -27,6 +27,10 @@ export const useMiscStore = defineStore("misc", () => {
     // Never set in OSS: without the EE thread list there is no way back to the previous
     // conversation, so a reset would silently discard it. The EE store override honours it.
     const copilotNewThread = ref(false)
+    // When true, the seeded prompt is sent as a turn straight away instead of being left in the
+    // composer to review. Set by single-purpose entry points ("Generate a unit test") that the
+    // user already committed to by clicking them.
+    const copilotAutoSend = ref(false)
 
     /** Opens the AI Copilot context-dock tab. */
     function openCopilot() {
@@ -34,10 +38,11 @@ export const useMiscStore = defineStore("misc", () => {
         contextInfoBarOpenTab.value = "ai"
     }
 
-    /** Opens the AI Copilot context-dock tab and seeds its composer with `prompt`. */
-    function promptCopilot(prompt: string, options?: {title?: string, newThread?: boolean}) {
+    /** Opens the AI Copilot context-dock tab and hands it `prompt`, seeded or sent right away. */
+    function promptCopilot(prompt: string, options?: {title?: string, newThread?: boolean, autoSend?: boolean}) {
         copilotPrompt.value = prompt
         copilotThreadTitle.value = options?.title ?? null
+        copilotAutoSend.value = options?.autoSend === true
         openCopilot()
     }
 
@@ -112,6 +117,7 @@ export const useMiscStore = defineStore("misc", () => {
         copilotPrompt,
         copilotThreadTitle,
         copilotNewThread,
+        copilotAutoSend,
         openCopilot,
         promptCopilot,
         loadConfigs,

@@ -38,6 +38,7 @@ const miscStore = reactive({
     copilotPrompt: null as string | null,
     copilotThreadTitle: null as string | null,
     copilotNewThread: false,
+    copilotAutoSend: false,
     configs: {isAiApiKeyConfigured: true} as Record<string, any> | undefined,
     openCopilot: vi.fn(),
     promptCopilot: vi.fn(),
@@ -76,6 +77,7 @@ describe("CopilotChat", () => {
         miscStore.copilotPrompt = null
         miscStore.copilotThreadTitle = null
         miscStore.copilotNewThread = false
+        miscStore.copilotAutoSend = false
         miscStore.configs = {isAiApiKeyConfigured: true}
         flowStore.flowYaml = ""
     })
@@ -110,6 +112,54 @@ describe("CopilotChat", () => {
         expect(textarea.value).toBe("Fix this error")
         // Consumed once, so it doesn't re-seed on the next open.
         expect(miscStore.copilotPrompt).toBeNull()
+        // Seeded, not sent — the user reviews and submits it.
+        expect(state.sendChat).not.toHaveBeenCalled()
+    })
+
+    it("sends an autoSend prompt itself instead of seeding the composer", async () => {
+        // "Generate a unit test" and friends: the user already committed by picking the action.
+        miscStore.copilotPrompt = "Generate a unit test for the flow hello"
+        miscStore.copilotAutoSend = true
+        const w = mountChat()
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test for the flow hello"}))
+        const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea.value).toBe("")
+        expect(miscStore.copilotPrompt).toBeNull()
+    })
+
+    it("starts a fresh thread before sending an auto-sent prompt", async () => {
+        // "Generate a unit test" must not inherit whatever the restored conversation was about.
+        state.thread.value = {uid: "t-1"} as any
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
+        miscStore.copilotPrompt = "Generate a unit test for the flow hello"
+        miscStore.copilotAutoSend = true
+        miscStore.copilotNewThread = true
+        mountChat()
+        await flushPromises()
+        expect(state.reset).toHaveBeenCalled()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test for the flow hello"}))
+        // Reset first, then send — never the other way round.
+        expect(state.reset.mock.invocationCallOrder[0]).toBeLessThan(state.sendChat.mock.invocationCallOrder[0])
+    })
+
+    it("does not touch the current conversation for a plain seeded prompt", async () => {
+        miscStore.copilotPrompt = "Fix this error"
+        mountChat()
+        await flushPromises()
+        expect(state.reset).not.toHaveBeenCalled()
+    })
+
+    it("falls back to seeding an autoSend prompt while a turn is in flight", async () => {
+        // Nothing is dropped: the prompt lands in the composer for the user to send when free.
+        state.canSend.value = false
+        miscStore.copilotPrompt = "Generate a unit test"
+        miscStore.copilotAutoSend = true
+        const w = mountChat()
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+        const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea.value).toBe("Generate a unit test")
     })
 
     // kestra-io/kestra-ee#10424: a seeded fix must not stack onto the active conversation.

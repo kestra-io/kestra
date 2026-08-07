@@ -59,6 +59,19 @@ const problem = (detail: string) => ({
 const alreadyExists = problem("A flow with id 'my-flow' already exists in namespace 'company.team'.")
 const dashboardExists = problem("A dashboard with id 'my-dash' already exists.")
 
+// Unit-test drafts are EE-only: OSS delegates to the `override/` actions (a no-op stub there).
+// Mock the override so both the "unsupported in OSS" default and the EE-present path are testable.
+const testSuiteOpenInEditor = vi.fn()
+const testSuiteApply = vi.fn().mockResolvedValue(undefined)
+const testSuiteSupported = {value: false}
+vi.mock("override/components/ai/copilot/testSuiteDraftActions", () => ({
+    useTestSuiteDraftActions: () => ({
+        supported: testSuiteSupported.value,
+        openInEditor: testSuiteOpenInEditor,
+        apply: testSuiteApply,
+    }),
+}))
+
 import {useApplyDraft} from "../../../../../src/components/ai/copilot/useApplyDraft"
 
 const draft = (over = {}) => ({draftId: "d1", kind: "FLOW" as const, yaml: "id: my-flow\nnamespace: company.team", valid: true, constraints: null, ...over})
@@ -79,6 +92,29 @@ describe("useApplyDraft", () => {
     })
 
     const dashboardDraft = (over = {}) => ({draftId: "d9", kind: "DASHBOARD" as const, yaml: "id: my-dash\ntitle: My dash", valid: true, constraints: null, ...over})
+    const testSuiteDraft = (over = {}) => ({draftId: "d10", kind: "TEST_SUITE" as const, yaml: "id: my-tests\nnamespace: company.team\nflowId: my-flow", valid: true, constraints: null, ...over})
+
+    it("reports unit tests unsupported in OSS", () => {
+        testSuiteSupported.value = false
+        expect(useApplyDraft().testSuiteSupported).toBe(false)
+    })
+
+    it("hands a unit-test draft to the EE test actions instead of the flow path", async () => {
+        testSuiteSupported.value = true
+        const {applying, apply, openInEditor} = useApplyDraft()
+
+        openInEditor(testSuiteDraft())
+        expect(testSuiteOpenInEditor).toHaveBeenCalled()
+        expect(push).not.toHaveBeenCalled()
+
+        await apply(testSuiteDraft())
+        expect(testSuiteApply).toHaveBeenCalled()
+        // Never mistaken for a flow — the flow API stays untouched.
+        expect(createFlow).not.toHaveBeenCalled()
+        // The in-flight flag is released once the EE path settles.
+        expect(applying.value).toBe(false)
+        testSuiteSupported.value = false
+    })
 
     it("openInEditor pushes flows/create with the drafted YAML as blueprintSourceYaml", () => {
         useApplyDraft().openInEditor(draft())

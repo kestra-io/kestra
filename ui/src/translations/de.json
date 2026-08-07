@@ -1258,6 +1258,12 @@
         "title": "Bringen Sie jedes Dataset, jeden Service und jede Abhängigkeit in Sicht.",
         "message": "Assets verbinden Observability-, Lineage- und Ownership-Metadaten, damit Plattformteams schneller Probleme beheben und mit Vertrauen bereitstellen können."
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "Benutzer über IAM mit SSO, SCIM und RBAC verwalten",
         "message": "Kestra Enterprise Edition verfügt über integrierte IAM-Funktionen mit Single Sign-On (SSO), SCIM-Verzeichnissynchronisation und rollenbasierter Zugriffskontrolle (RBAC). Es integriert sich mit mehreren Identitätsanbietern und ermöglicht Ihnen, feingranulare Berechtigungen für Benutzer und Dienstkonten zuzuweisen."
@@ -1897,6 +1903,10 @@
         "title": "Sie haben noch keine Assets!",
         "content": "Fügen Sie Assets hinzu, um Ihre Daten-Assets, Dienste und Infrastruktur zu verfolgen und zu verwalten."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Verwalten Sie Ihre API-Tokens",
         "content": "API-Tokens werden verwendet, wenn Sie programmatischen Zugriff auf die Kestra-API gewähren möchten."
@@ -1986,7 +1996,8 @@
       "kv_pairs": "Keine Key-Value-Paare gefunden",
       "secrets": "Keine Secrets gefunden",
       "templates": "Keine Vorlagen gefunden",
-      "assets": "Keine Assets gefunden"
+      "assets": "Keine Assets gefunden",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "dashboards": {

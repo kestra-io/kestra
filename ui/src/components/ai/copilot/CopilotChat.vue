@@ -156,9 +156,9 @@
 
     const mode = ref<AgentMode>(props.initialMode ?? "EDIT")
 
-    // Context-awareness: when the copilot opens on a flow / execution / namespace page, send that
-    // page as `inFocus` so the agent knows what the user is looking at. An explicit `inFocus` prop
-    // (if a parent ever passes one) still wins. Recomputed as the route changes while the drawer is open.
+    // When the copilot opens on a flow / execution / namespace page, send that page as `inFocus` so
+    // the agent knows what the user is looking at; recomputed as the route changes. An explicit
+    // `inFocus` prop still wins.
     const routeInFocus = computed<ScopeBinding | null>(() => props.inFocus ?? scopeFromRoute(route))
 
     // The user can dismiss individual context pills to run a turn without that resource. Dismissals
@@ -182,9 +182,9 @@
         // Once every focused resource is dismissed there's nothing left to show or send.
         return Object.entries(effective).some(([field, value]) => field !== "kind" && value) ? effective : null
     })
-    // Announce focus changes in the transcript (display-only). Navigating to a new resource adds its
-    // primary pill; dismissing a pill removes it. Also re-arms dismissals for the newly-focused
-    // resource. `noteContext` no-ops until a conversation has started, so the empty state stays clean.
+    // Announce focus changes in the transcript (display-only) and re-arm dismissals for the
+    // newly-focused resource. `noteContext` no-ops until a conversation has started, so the empty
+    // state stays clean.
     let previousFocus: ScopeBinding | null = routeInFocus.value
     watch(
         () => JSON.stringify(routeInFocus.value),
@@ -265,11 +265,9 @@
             : null,
     )
 
-    // The working indicator (animated Kestra mark) persists across the whole turn, switching
-    // movement by phase: "thinking" before any output (right after the user's turn or a tool
-    // result), "answering" while tokens stream into the assistant bubble, and a brief "end"
-    // gather when the turn closes. It stays hidden while a tool is running — the tool strip owns
-    // that UI.
+    // The working indicator (animated Kestra mark) persists across the whole turn, switching movement
+    // by phase — "thinking" before any output, "answering" while tokens stream, an "end" gather when
+    // the turn closes. It stays hidden while a tool runs — the tool strip owns that UI.
     const lastMessage = computed(() => messages.value[messages.value.length - 1])
 
     // While a turn streams and the latest message is a tool call, that tool is still executing (its
@@ -338,10 +336,9 @@
         footerComposer.value?.focus()
     }
 
-    // Seeded prompts: an entry point (e.g. "Fix with AI") calls miscStore.promptCopilot(text),
-    // which opens this tab and stashes the text. Prefill the composer with it and focus, then
-    // clear the store so it doesn't re-seed on the next open. Runs on mount (drawer just opened)
-    // and via a watcher (drawer already open / kept alive).
+    // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
+    // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
+    // run on mount (drawer just opened) and via a watcher (already open / kept alive).
     async function consumeSeededPrompt(): Promise<void> {
         const seeded = miscStore.copilotPrompt
         if (!seeded) return

@@ -301,9 +301,9 @@ export function useAiChat() {
         try {
             await streamSse({url, body, signal: abort.signal, onFrame: reduce})
             // The stream closed cleanly but added nothing to the transcript and left no proposal —
-            // e.g. a transient provider hiccup returned only `done`. Surface a notice rather than
-            // leaving the panel silent, so the user knows to retry. A streamed error event already
-            // surfaces its own reason, so don't stack the empty-turn notice on top of it.
+            // e.g. a transient provider hiccup returned only `done`; surface a notice rather than
+            // leaving the panel silent. A streamed error event already surfaces its own reason, so
+            // don't stack the empty-turn notice on top of it.
             if (messages.value.length === countBefore && !pendingConfirmation.value && !errorDetail.value && !error.value) {
                 notice.value = "emptyTurn"
             }
@@ -381,8 +381,8 @@ export function useAiChat() {
     }
 
     /**
-     * Appends a display-only system line noting a context (focus) change. Not a turn — never sent to
-     * the backend or persisted. Suppressed until a conversation has started: before that the context
+     * Appends a display-only system line noting a context (focus) change — never a turn, so never sent
+     * to the backend or persisted. Suppressed until a conversation has started: before that the context
      * pills already convey the focus, so the empty state stays clean.
      */
     function noteContext(notice: ContextNotice): void {

@@ -83,9 +83,9 @@
     const MAX_ARG_LENGTH = 120
 
     /**
-     * The identifying arguments to show under the summary, so the user sees exactly what will run
-     * (e.g. namespace/flowId, executionId). Scalars only — objects/arrays and long values (YAML/source
-     * bodies) are omitted to keep the card compact. Empty for plan cards (no concrete tool call).
+     * The identifying arguments shown under the summary so the user sees exactly what will run (e.g.
+     * namespace/flowId, executionId). Scalars only — objects/arrays and long values (YAML/source bodies)
+     * are omitted to keep the card compact; empty for plan cards (no concrete tool call).
      */
     const argEntries = computed<[string, string][]>(() => {
         if (isPlan.value || !props.action.arguments) return []

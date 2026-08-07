@@ -765,8 +765,8 @@
     "dynamic": "Dynamiczny",
     "choice": "Wybór",
     "sequential": "Sekwencyjny",
-    "can not delete": "Nie można usunąć",
-    "can not have less than 1 task": "Każdy flow musi mieć przynajmniej jeden task.",
+    "can not delete": "Nie można usunąć tego taska",
+    "can not have less than 1 task": "flow musi mieć co najmniej jeden task. Dodaj kolejny task przed usunięciem tego.",
     "task id already exists": "Task Id już istnieje",
     "Task Id already exist in the flow": "Task Id {taskId} już istnieje w flow.",
     "task id": "Task ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Wyszukaj wśród {count}+ wtyczek",
+      "search": "Przeszukaj {count}+ wtyczek",
       "searchTasks": "Wyszukaj {count} tasków",
       "noResults": "Brak wtyczek pasujących do wyszukiwania.",
       "loadError": "Nie można załadować wtyczek. Proszę spróbować ponownie.",

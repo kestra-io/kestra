@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Este arquivo tem {size}. Pode demorar um pouco para carregar, bloqueando seu navegador. Deseja carregá-lo mesmo assim?",
-      "load_anyway": "Carregar mesmo assim"
+      "load_anyway": "Carregar mesmo assim",
+      "load_error": "Falha ao carregar a pré-visualização do arquivo. Pode ser um problema temporário ou de permissões.",
+      "retry": "Tentar novamente",
+      "html_asset_warning": "Esta pré-visualização renderiza o HTML em um quadro isolado. Recursos locais como imagens e folhas de estilo referenciados por caminhos relativos não serão carregados.",
+      "html_preview_title": "Pré-visualização do arquivo HTML"
     },
     "no_variables": "Nenhuma variável disponível.",
     "download": "Baixar",
@@ -761,8 +765,8 @@
     "dynamic": "Dinâmico",
     "choice": "Escolha",
     "sequential": "Sequencial",
-    "can not delete": "Não pode excluir",
-    "can not have less than 1 task": "Cada flow deve ter pelo menos uma task.",
+    "can not delete": "Não é possível excluir esta task",
+    "can not have less than 1 task": "Um flow deve ter pelo menos uma task. Adicione outra task antes de excluir esta.",
     "task id already exists": "Task Id já existe",
     "Task Id already exist in the flow": "Task Id {taskId} já existe no flow.",
     "task id": "Task ID",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Pesquisar em mais de {count} plugins",
+      "search": "Pesquisar em {count}+ plugins",
       "searchTasks": "Pesquisar {count} tasks",
       "noResults": "Nenhum plugin corresponde à sua pesquisa.",
       "loadError": "Não foi possível carregar os plugins. Por favor, tente novamente.",
@@ -1253,6 +1257,12 @@
         "header": "Metadados e Observabilidade de Assets",
         "title": "Traga todos os datasets, serviços e dependências para a visualização.",
         "message": "Ativos conectam metadados de observabilidade, linhagem e propriedade para que as equipes da plataforma possam solucionar problemas mais rapidamente e implantar com confiança."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "Gerencie Usuários através do IAM com SSO, SCIM e RBAC",
@@ -1893,6 +1903,10 @@
         "title": "Você ainda não tem Assets!",
         "content": "Adicione assets para rastrear e gerenciar seus assets de dados, serviços e infraestrutura."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Gerencie seus Tokens de API",
         "content": "Tokens de API são usados sempre que você deseja conceder acesso programático à API do Kestra."
@@ -1982,7 +1996,8 @@
       "kv_pairs": "Nenhum par de Key-Value encontrado",
       "secrets": "Nenhum Secret Encontrado",
       "templates": "Nenhum Template Encontrado",
-      "assets": "Nenhum Asset Encontrado"
+      "assets": "Nenhum Asset Encontrado",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "dashboards": {

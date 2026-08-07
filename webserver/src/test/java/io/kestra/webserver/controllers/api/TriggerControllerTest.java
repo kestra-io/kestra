@@ -14,6 +14,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.tasks.test.PollingTrigger;
@@ -342,8 +343,8 @@ class TriggerControllerTest {
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
 
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
+        saveOrUpdateTriggerState(triggerDisabled);
+        saveOrUpdateTriggerState(triggerNotDisabled);
 
         List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
 
@@ -371,8 +372,8 @@ class TriggerControllerTest {
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
 
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
+        saveOrUpdateTriggerState(triggerDisabled);
+        saveOrUpdateTriggerState(triggerNotDisabled);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
@@ -382,6 +383,58 @@ class TriggerControllerTest {
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
         assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isFalse();
+    }
+
+    @Test
+    void shouldPreserveNextExecutionDateWhenReEnablingTriggerConfiguredWithLast() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = generateFlowWithRecoverMissedSchedules(tenant, RecoverMissedSchedules.LAST);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
+        ZonedDateTime nextExecutionDate = ZonedDateTime.now().plusHours(1).withSecond(0).withNano(0);
+        Trigger currentState = createTriggerFromFlow(flow, true).toBuilder()
+            .nextExecutionDate(nextExecutionDate)
+            .date(ZonedDateTime.now().minusHours(1))
+            .build();
+        saveOrUpdateTriggerState(currentState);
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH.formatted(tenant) + "/set-disabled/by-triggers",
+                new TriggerController.SetDisabledRequest(List.of(currentState), false)
+            ),
+            BulkResponse.class
+        );
+
+        Trigger updated = jdbcTriggerRepository.findLast(currentState).orElseThrow();
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isEqualTo(nextExecutionDate);
+    }
+
+    @Test
+    void shouldPreserveNextExecutionDateWhenReEnablingTriggerConfiguredWithAll() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenant);
+        Flow flow = generateFlowWithRecoverMissedSchedules(tenant, RecoverMissedSchedules.ALL);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
+        ZonedDateTime nextExecutionDate = ZonedDateTime.now().plusHours(1).withSecond(0).withNano(0);
+        Trigger currentState = createTriggerFromFlow(flow, true).toBuilder()
+            .nextExecutionDate(nextExecutionDate)
+            .date(ZonedDateTime.now().minusHours(1))
+            .build();
+        saveOrUpdateTriggerState(currentState);
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST(
+                TRIGGER_PATH.formatted(tenant) + "/set-disabled/by-triggers",
+                new TriggerController.SetDisabledRequest(List.of(currentState), false)
+            ),
+            BulkResponse.class
+        );
+
+        Trigger updated = jdbcTriggerRepository.findLast(currentState).orElseThrow();
+        assertThat(updated.getDisabled()).isFalse();
+        assertThat(updated.getNextExecutionDate()).isEqualTo(nextExecutionDate);
     }
 
     @Test
@@ -398,8 +451,8 @@ class TriggerControllerTest {
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
 
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
+        saveOrUpdateTriggerState(triggerDisabled);
+        saveOrUpdateTriggerState(triggerNotDisabled);
 
         List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
 
@@ -443,8 +496,8 @@ class TriggerControllerTest {
         Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
         Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
 
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
+        saveOrUpdateTriggerState(triggerDisabled);
+        saveOrUpdateTriggerState(triggerNotDisabled);
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(
             HttpRequest.POST(
@@ -536,6 +589,33 @@ class TriggerControllerTest {
             .build();
     }
 
+    private Flow generateFlowWithRecoverMissedSchedules(String tenant, RecoverMissedSchedules recoverMissedSchedules) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .namespace(IdUtils.create())
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id(IdUtils.create())
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .recoverMissedSchedules(recoverMissedSchedules)
+                        .build()
+                )
+            )
+            .build();
+    }
+
     private static Trigger createTriggerFromFlow(Flow flow1, Boolean disabled) {
         return Trigger.builder()
             .flowId(flow1.getId())
@@ -544,6 +624,18 @@ class TriggerControllerTest {
             .triggerId(flow1.getTriggers().getFirst().getId())
             .disabled(disabled)
             .build();
+    }
+
+    private void saveOrUpdateTriggerState(Trigger trigger) {
+        Optional<Trigger> existing = jdbcTriggerRepository.findLast(trigger);
+        if (existing.isPresent()) {
+            jdbcTriggerRepository.update(existing.get().toBuilder()
+                .disabled(trigger.getDisabled())
+                .build());
+            return;
+        }
+
+        jdbcTriggerRepository.save(trigger);
     }
 
     @SuppressWarnings("unchecked")

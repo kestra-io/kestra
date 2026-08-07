@@ -36,6 +36,18 @@ export function isEntryAPluginElementPredicate(key: string, value: any): value i
         value[0]?.cls !== undefined)
 }
 
+export function countUniquePluginElements(plugins: Plugin[]): number {
+    const classes = new Set<string>()
+    for (const plugin of plugins) {
+        for (const [key, value] of Object.entries(plugin)) {
+            if (isEntryAPluginElementPredicate(key, value)) {
+                value.forEach(({cls}) => classes.add(cls))
+            }
+        }
+    }
+    return classes.size
+}
+
 export function extractPluginElements(plugin: Plugin): Record<string, string[]> {
     return Object.fromEntries(
         Object.entries(plugin)

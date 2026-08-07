@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "Diese Datei ist {size}. Es kann eine Weile dauern, sie zu laden, was Ihren Browser blockieren könnte. Möchten Sie sie trotzdem laden?",
-      "load_anyway": "Trotzdem laden"
+      "load_anyway": "Trotzdem laden",
+      "load_error": "Die Dateivorschau konnte nicht geladen werden. Möglicherweise handelt es sich um ein vorübergehendes Problem oder ein Berechtigungsproblem.",
+      "retry": "Erneut versuchen",
+      "html_asset_warning": "Diese Vorschau rendert das HTML in einem isolierten Frame. Lokale Assets wie Bilder und Stylesheets, die über relative Pfade referenziert werden, werden nicht geladen.",
+      "html_preview_title": "Vorschau der HTML-Datei"
     },
     "no_variables": "Keine Variablen verfügbar.",
     "download": "Herunterladen",
@@ -761,8 +765,8 @@
     "dynamic": "Dynamisch",
     "choice": "Wahl",
     "sequential": "Sequenziell",
-    "can not delete": "Kann nicht gelöscht werden",
-    "can not have less than 1 task": "Jeder Flow muss mindestens einen Task haben.",
+    "can not delete": "Kann diese Task nicht löschen",
+    "can not have less than 1 task": "Ein flow muss mindestens eine task haben. Fügen Sie eine weitere task hinzu, bevor Sie diese löschen.",
     "task id already exists": "Task-Id existiert bereits",
     "Task Id already exist in the flow": "Task-Id {taskId} existiert bereits im Flow.",
     "task id": "Task-ID",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Suche in {count}+ Plugins",
+      "search": "Durchsuche {count}+ Plugins",
       "searchTasks": "Suche {count} Tasks",
       "noResults": "Keine Plugins entsprechen Ihrer Suche.",
       "loadError": "Konnte Plugins nicht laden. Bitte versuchen Sie es erneut.",
@@ -1253,6 +1257,12 @@
         "header": "Assets-Metadaten und Observability",
         "title": "Bringen Sie jedes Dataset, jeden Service und jede Abhängigkeit in Sicht.",
         "message": "Assets verbinden Observability-, Lineage- und Ownership-Metadaten, damit Plattformteams schneller Probleme beheben und mit Vertrauen bereitstellen können."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "Benutzer über IAM mit SSO, SCIM und RBAC verwalten",
@@ -1893,6 +1903,10 @@
         "title": "Sie haben noch keine Assets!",
         "content": "Fügen Sie Assets hinzu, um Ihre Daten-Assets, Dienste und Infrastruktur zu verfolgen und zu verwalten."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Verwalten Sie Ihre API-Tokens",
         "content": "API-Tokens werden verwendet, wenn Sie programmatischen Zugriff auf die Kestra-API gewähren möchten."
@@ -1982,7 +1996,8 @@
       "kv_pairs": "Keine Key-Value-Paare gefunden",
       "secrets": "Keine Secrets gefunden",
       "templates": "Keine Vorlagen gefunden",
-      "assets": "Keine Assets gefunden"
+      "assets": "Keine Assets gefunden",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "dashboards": {

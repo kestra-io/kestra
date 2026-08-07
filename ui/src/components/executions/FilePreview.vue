@@ -1,10 +1,10 @@
 <template>
     <FilePreviewForm
-        v-if="isTextFile"
-        v-model:encoding="encodingModel" 
-        v-model:maxRows="maxRows" 
-        v-model:forceEditor="forceEditor" 
-        :truncated="preview?.truncated" 
+        v-if="isTextFile && !isHtmlFile"
+        v-model:encoding="encodingModel"
+        v-model:maxRows="maxRows"
+        v-model:forceEditor="forceEditor"
+        :truncated="preview?.truncated"
     />
     <div class="big-file-warning" v-if="bigFile">
         <KsAlert type="warning" :closable="false">
@@ -13,7 +13,7 @@
         <KsButtonGroup>
             <KsButton
                 type="primary"
-                @click="bigFile = false;loadPreview()"
+                @click="loadAnyway()"
             >
                 {{ $t("file_preview.load_anyway") }}
             </KsButton>
@@ -28,20 +28,41 @@
             </KsButton>
         </KsButtonGroup>
     </div>
-    <div v-else-if="!preview">
-        Loading...
+    <div class="load-error" v-else-if="loadError">
+        <KsAlert type="error" :closable="false">
+            {{ $t("file_preview.load_error") }}
+        </KsAlert>
+        <KsButtonGroup>
+            <KsButton
+                type="primary"
+                @click="loadFile()"
+            >
+                {{ $t("file_preview.retry") }}
+            </KsButton>
+            <KsButton
+                type="primary"
+                tag="a"
+                :href="itemUrl(path)"
+                :icon="Download"
+                rel="noopener noreferrer"
+            >
+                {{ $t('download') }}
+            </KsButton>
+        </KsButtonGroup>
+    </div>
+    <div v-else-if="isHtmlFile ? htmlContent === undefined : !preview">
+        {{ $t("loading") }}
     </div>
     <template v-else>
         <div class="button-bar">
             <KsText>
                 {{ path.split("/").slice(-1)[0] }}
             </KsText>
-            <KsTag>
+            <KsTag v-if="humanSize">
                 {{ humanSize }}
             </KsTag>
             <div style="flex:1"/>
             <KsButton
-                class=""
                 type="primary"
                 tag="a"
                 :href="itemUrl(path)"
@@ -51,7 +72,28 @@
                 {{ $t('download') }}
             </KsButton>
         </div>
-        <RawPreview v-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
+        <template v-if="isHtmlFile">
+            <KsAlert type="info" :closable="false" class="html-asset-note">
+                {{ $t("file_preview.html_asset_warning") }}
+            </KsAlert>
+            <!--
+                The full file is fetched as text (loadContent) and injected via srcdoc,
+                which bypasses the Content-Disposition:attachment header the /file endpoint
+                sets and avoids the row/byte truncation of the /file/preview endpoint.
+                sandbox="allow-scripts" lets inline scripts run (e.g. Plotly charts) but
+                blocks access to the parent page's cookies and storage (no allow-same-origin).
+                Because srcdoc has an about:blank base URL, relative asset references
+                (img, link, script src) cannot resolve — self-contained documents only.
+            -->
+            <iframe
+                :srcdoc="htmlContent"
+                class="html-preview-frame"
+                sandbox="allow-scripts"
+                referrerpolicy="no-referrer"
+                :title="$t('file_preview.html_preview_title')"
+            />
+        </template>
+        <RawPreview v-else-if="isTextFile" v-bind="preview" :type="forceEditor ? 'RAW' : preview?.type ?? 'RAW'" />
     </template>
 </template>
 
@@ -84,8 +126,12 @@
     const encodingModel = ref<EncodingOption["value"]>()
     const forceEditor = ref<boolean>()
     const preview = ref<Preview>()
+    /** full HTML document text, injected into the sandboxed iframe via srcdoc */
+    const htmlContent = ref<string>()
     /** is the file bigger than 10MB */
     const bigFile = ref<boolean>(false)
+    /** true when a metadata or content fetch failed; surfaces the error + retry UI */
+    const loadError = ref<boolean>(false)
     const metadata = ref<FileMetas>()
 
     async function getFileMeta() {
@@ -94,6 +140,13 @@
             path: props.path,
         })
     }
+
+    const isHtmlFile = computed(() => {
+        // Runs during render (used in v-if), so guard against an undefined path —
+        // some callers mount FilePreview without the path prop set yet.
+        const lower = props.path?.toLowerCase() ?? ""
+        return lower.endsWith(".html") || lower.endsWith(".htm")
+    })
 
     const isTextFile = computed(() => {
         return isTextString(preview.value?.content)
@@ -146,27 +199,75 @@
             })
     }
 
-    watch(
-        [maxRows, encodingModel],
-        async ([maxRows, encoding]) => {
-            if(maxRows === undefined || encoding === undefined) return
+    // Loads the complete HTML file (not the truncated preview) for iframe rendering.
+    // The bytes are decoded as UTF-8; the encoding selector is intentionally hidden
+    // for HTML (see FilePreviewForm v-if), so non-UTF-8 documents are not re-decoded.
+    async function loadContent() {
+        htmlContent.value = await executionsStore.fileContent({
+            executionId: props.executionId,
+            path: props.path,
+        })
+    }
+
+    // Fetches the body once size checks have passed: full document for HTML, the
+    // (row/byte-capped) preview for everything else.
+    async function fetchBody() {
+        if(isHtmlFile.value) {
+            await loadContent()
+        } else {
+            await loadPreview()
+        }
+    }
+
+    // Entry point: resolves metadata, applies the empty/big-file guards, then fetches.
+    // Any failure surfaces the error + retry UI rather than an indefinite loading state.
+    async function loadFile() {
+        loadError.value = false
+        try {
             metadata.value = await getFileMeta()
             if(metadata.value.size === 0) {
-                preview.value = {
-                    type: "RAW",
-                    content: "",
-                    truncated: false,
+                if(isHtmlFile.value) {
+                    htmlContent.value = ""
+                } else {
+                    preview.value = {
+                        type: "RAW",
+                        content: "",
+                        truncated: false,
+                    }
                 }
                 return
             }
             bigFile.value = metadata.value.size >= BIG_FILE_THRESHOLD
             if(bigFile.value) {
-                // For big files, we want to signal the user that it can take 
-                // significant time to load the preview, so we set maxRows to 
-                // undefined to disable the limit and load the full file.
+                // For big files, warn the user before loading the full content into
+                // memory (the srcdoc iframe holds the entire document as a string).
+                // "Load anyway" calls loadAnyway() to fetch it explicitly.
                 return
             }
-            await loadPreview()
+            await fetchBody()
+        } catch (e) {
+            loadError.value = true
+        }
+    }
+
+    // Bypasses the big-file guard when the user opts in from the warning.
+    async function loadAnyway() {
+        bigFile.value = false
+        loadError.value = false
+        try {
+            await fetchBody()
+        } catch (e) {
+            loadError.value = true
+        }
+    }
+
+    watch(
+        [maxRows, encodingModel],
+        async ([mRows, encoding]) => {
+            // encoding must be set before any fetch; the RAW/TEXT viewer also needs maxRows.
+            if(encoding === undefined) return
+            if(!isHtmlFile.value && mRows === undefined) return
+            await loadFile()
         },
         {immediate: true},
     )
@@ -184,7 +285,8 @@
 </script>
 
 <style scoped lang="scss">
-    .big-file-warning {
+    .big-file-warning,
+    .load-error {
         display: flex;
         flex-direction: column;
         align-items: end;
@@ -197,5 +299,14 @@
         align-items: center;
         justify-content: space-between;
         margin-block: 1rem;
+    }
+    .html-asset-note {
+        margin-bottom: 1rem;
+    }
+    .html-preview-frame {
+        width: 100%;
+        min-height: 480px;
+        border: 1px solid var(--ks-border-subtle);
+        border-radius: 4px;
     }
 </style>

@@ -58,7 +58,7 @@
                     :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
                         shown: true,
-                        columns: optionalColumns,
+                        columns: allColumns,
                         displayColumns,
                         storageKey: storageKey
                     }"
@@ -143,6 +143,17 @@
                         </KsFormItem>
                     </KsForm>
                 </KsDialog>
+
+                <component
+                    :is="action"
+                    v-for="(action, i) in bulkActionComponents"
+                    :key="i"
+                    :selection="selection"
+                    :queryBulkAction="queryBulkAction"
+                    :namespace="props.namespace"
+                    :loadQuery="loadQuery"
+                    @done="() => {toggleAllUnselected(); dataTable?.resetAndReload()}"
+                />
             </template>
 
             <KsTableColumn
@@ -255,6 +266,9 @@
                             <KsId :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
                         </RouterLink>
                         <span v-else>-</span>
+                    </template>
+                    <template v-else-if="cellComponents[col.prop]">
+                        <component :is="cellComponents[col.prop]" :execution="scope.row" />
                     </template>
                 </template>
                 <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
@@ -451,6 +465,7 @@
     import {useAuthStore} from "override/stores/auth"
     import {useMiscStore} from "override/stores/misc"
     import {Label, useExecutionsStore} from "../../stores/executions"
+    import {getExtraColumns, cellComponents, bulkActionComponents} from "override/components/executions/executionsExtensions"
 
     import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations"
     import {useStateFilter} from "../filter/composables/useStateFilter"
@@ -601,18 +616,27 @@
             : storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
     )
 
+    const allColumns = computed(() => [
+        ...optionalColumns.value,
+        ...getExtraColumns().map(col => ({...col, label: t(col.label)})),
+    ])
+
     const {visibleColumns: displayColumns, updateVisibleColumns: updateDisplayColumns} = useTableColumns({
-        columns: optionalColumns.value,
+        columns: allColumns.value,
         storageKey: storageKey.value,
     })
 
     const visibleColumns = computed(() =>
         displayColumns.value
-            .map(prop => optionalColumns.value.find(c => c.prop === prop))
-            .filter(Boolean) as any[],
+            .map(prop => allColumns.value.find(c => c.prop === prop))
+            .filter(c => {
+                const condition = (c as {condition?: () => boolean})?.condition
+                return c && (!condition || condition())
+            }) as any[],
     )
 
     const isColumnSortable = (prop: string) => {
+        if (prop in cellComponents) return false
         return !["labels", "flowRevision", "inputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop)
     }
 
@@ -781,7 +805,7 @@
             ? executionFilter.value
             : flowExecutionFilter.value
         const fields = (configuration.keys ?? []).flatMap((entry: {key: string}) =>
-            entry.key === "timeRange" ? ["startDate", "endDate"] : [entry.key],
+            entry.key === "timeRange" ? ["timeRange", "startDate", "endDate"] : [entry.key],
         )
         if (configuration.searchPlaceholder) {
             fields.push("q")

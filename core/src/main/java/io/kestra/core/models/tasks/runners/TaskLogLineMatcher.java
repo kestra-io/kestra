@@ -148,7 +148,7 @@ public class TaskLogLineMatcher {
 
                 OtlpRecord record;
                 try {
-                    record = MAPPER.readValue(line, OtlpRecord.class);
+                    record = parseOtlpLine(line);
                 } catch (JsonProcessingException e) {
                     logger.warn("Unable to parse OTLP record '{}'", line, e);
                     continue;
@@ -165,6 +165,21 @@ public class TaskLogLineMatcher {
         }
 
         return records;
+    }
+
+    /**
+     * Parses a single bare OTLP/JSON record — one JSON object per line, without the
+     * {@code ::{...}::} framing — as produced by the
+     * <a href="https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/">OTLP File Exporter</a>.
+     * <p>
+     * Unlike {@link #parseOtlp}, this does not forward the record to a {@link RunContext} — it only
+     * parses it, leaving dispatch (e.g. to an {@link AbstractLogConsumer}) to the caller.
+     *
+     * @param line one line of bare OTLP/JSON
+     * @return the parsed record
+     */
+    public OtlpRecord parseOtlpLine(String line) throws JsonProcessingException {
+        return MAPPER.readValue(line, OtlpRecord.class);
     }
 
     /**
@@ -240,7 +255,7 @@ public class TaskLogLineMatcher {
     /**
      * Converts an OTLP unix-nano timestamp to an {@link Instant}, falling back when it is absent.
      */
-    protected Instant toInstant(Long unixNano, Instant fallback) {
+    public Instant toInstant(Long unixNano, Instant fallback) {
         return unixNano == null || unixNano == 0 ? fallback : Instant.ofEpochSecond(0, unixNano);
     }
 

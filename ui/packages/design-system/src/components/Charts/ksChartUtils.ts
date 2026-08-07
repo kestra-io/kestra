@@ -77,7 +77,7 @@ export function buildDisabledFeaturesOverride(
     if (features.includes(ChartFeature.AXIS)) {
         xAxisProps.show = false
         yAxisProps.show = false
-        overlay.grid = {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
+        overlay.grid = {top: 2, right: 2, bottom: 2, left: 2, outerBoundsMode: "none"}
     }
 
     if (features.includes(ChartFeature.AXIS_SPLITLINE)) {

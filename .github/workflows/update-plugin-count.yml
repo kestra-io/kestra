@@ -1,0 +1,63 @@
+name: Update plugin catalog count and create PR
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Every Monday at 6 AM UTC
+  workflow_dispatch:
+
+concurrency:
+  group: update-plugin-count-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  plugin-count:
+    name: Plugin catalog count
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.repository == 'kestra-io/kestra'
+    steps:
+        - name: Generate GitHub App token
+          id: app-token
+          uses: actions/create-github-app-token@v3
+          with:
+            client-id: ${{ secrets.GH_BOT_APP_ID }}
+            private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+            owner: kestra-io
+            repositories: kestra
+
+        - uses: actions/checkout@v7
+          name: Checkout
+          with:
+            token: ${{ steps.app-token.outputs.token }}
+
+        - name: Set up Node
+          uses: actions/setup-node@v7
+          with:
+            node-version: "24.x"
+
+        # No npm ci needed: the script only uses Node built-ins and a dependency-free src import.
+        - name: Update plugin catalog count baseline
+          run: node --experimental-strip-types ui/scripts/update_plugin_catalog_count.ts
+
+        - name: Commit and create PR
+          env:
+            GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          run: |
+            if git diff --quiet -- ui/src/utils/pluginCatalogCount.ts; then
+              echo "No changes to commit. Exiting with success."
+              exit 0
+            fi
+            git config user.name "kestra-io"
+            git config user.email "hello@kestra.io"
+            BRANCH_NAME="chore/update-plugin-count"
+            git switch -c $BRANCH_NAME
+            git add ui/src/utils/pluginCatalogCount.ts
+            git commit -m "chore(plugins): update the plugin catalog count baseline" -m "Weekly refresh of the offline fallback for the catalog-wide plugin count shown in the Plugins page search placeholder and the in-app documentation."
+            # the chore branch is bot-owned and rebuilt from the default branch on every run
+            git push --force -u origin $BRANCH_NAME
+            if [ -z "$(gh pr list --head $BRANCH_NAME --base ${{ github.ref_name }} --state open --json number --jq '.[].number')" ]; then
+              PR_URL=$(gh pr create --title "chore(plugins): update the plugin catalog count baseline" --body $'This PR was created automatically by [.github/workflows/update-plugin-count.yml](https://github.com/kestra-io/kestra/blob/develop/.github/workflows/update-plugin-count.yml).\n\nIt refreshes the offline fallback for the catalog-wide plugin count (Plugins page search placeholder and in-app docs). Someone from the @kestra-io/plugins team needs to review and merge.' --base ${{ github.ref_name }} --head $BRANCH_NAME)
+              gh pr edit "$PR_URL" --add-reviewer kestra-io/plugins || echo "::warning::Could not request review from kestra-io/plugins; please assign manually."
+            else
+              echo "Open PR for $BRANCH_NAME already exists; the branch update refreshed it."
+            fi

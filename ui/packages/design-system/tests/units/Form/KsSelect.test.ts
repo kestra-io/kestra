@@ -92,6 +92,52 @@ describe("KsSelect", () => {
         expect(wrapper.find(".kel-icon.is-loading").exists()).toBe(false)
     })
 
+    test("colorMap colors the selected value and the dropdown options", async () => {
+        const wrapper = mount(
+            defineComponent({
+                components: {KsSelect, KsOption},
+                data: () => ({value: "A"}),
+                template: `<ks-select v-model="value" :colorMap="{A: '#ef4444', B: 'var(--ks-text-warning)'}" :teleported="false">
+                    <ks-option value="A" label="Option A" />
+                    <ks-option value="B" label="Option B" />
+                </ks-select>`,
+            }),
+            {global: globalConfig},
+        )
+        await nextTick()
+
+        const selected = wrapper.find(".kel-select__placeholder span")
+        expect(selected.text()).toBe("Option A")
+        expect(selected.attributes("style")).toContain("color: rgb(239, 68, 68)")
+
+        const options = wrapper.findAll(".kel-select-dropdown__item span")
+        expect(options).toHaveLength(2)
+        expect(options[0].attributes("style")).toContain("color: rgb(239, 68, 68)")
+        expect(options[1].attributes("style")).toContain("color: var(--ks-text-warning)")
+    })
+
+    test("without colorMap, selected value and options render with no inline color (unaffected)", async () => {
+        const wrapper = mount(
+            defineComponent({
+                components: {KsSelect, KsOption},
+                data: () => ({value: "A"}),
+                template: `<ks-select v-model="value" :teleported="false">
+                    <ks-option value="A" label="Option A" />
+                </ks-select>`,
+            }),
+            {global: globalConfig},
+        )
+        await nextTick()
+
+        const selected = wrapper.find(".kel-select__placeholder span")
+        expect(selected.text()).toBe("Option A")
+        expect(selected.attributes("style")).toBeUndefined()
+
+        const option = wrapper.find(".kel-select-dropdown__item span")
+        expect(option.text()).toBe("Option A")
+        expect(option.attributes("style")).toBeUndefined()
+    })
+
     describe("selectAll", () => {
         // ElSelect teleports dropdown content to document.body — use document.querySelector
         // for anything inside the dropdown (header, options).

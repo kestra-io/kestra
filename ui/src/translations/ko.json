@@ -1258,6 +1258,12 @@
         "title": "모든 데이터셋, 서비스 및 종속성을 한눈에 확인하세요.",
         "message": "자산은 관측 가능성, 계보, 소유권 메타데이터를 연결하여 플랫폼 팀이 더 빠르게 문제를 해결하고 자신 있게 배포할 수 있도록 합니다."
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "IAM을 통해 SSO, SCIM 및 RBAC로 사용자 관리",
         "message": "Kestra Enterprise Edition은 단일 사인온(SSO), SCIM 디렉토리 동기화, 역할 기반 접근 제어(RBAC)와 같은 IAM 기능을 내장하고 있으며, 여러 ID 공급자와 통합하여 사용자 및 서비스 계정에 대해 세분화된 권한을 할당할 수 있습니다."
@@ -1897,6 +1903,10 @@
         "title": "아직 자산이 없습니다!",
         "content": "데이터 자산, 서비스 및 인프라를 추적하고 관리하기 위해 자산을 추가하세요."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "API 토큰 관리",
         "content": "API 토큰은 Kestra API에 대한 프로그래매틱 접근을 허용하고자 할 때 사용됩니다."
@@ -1986,7 +1996,8 @@
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
       "secrets": "비밀 없음",
       "templates": "템플릿을 찾을 수 없음",
-      "assets": "자산을 찾을 수 없음"
+      "assets": "자산을 찾을 수 없음",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "dashboards": {

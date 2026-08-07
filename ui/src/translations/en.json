@@ -1141,6 +1141,15 @@
         "title": "Promote Flows Across Environments",
         "message": "Kestra Enterprise Edition lets you promote flows from one environment to another — such as dev to staging to production — directly from the UI, no Git or CI/CD pipelines required. Review a diff of exactly what will change before promoting, protect sensitive targets with a confirmation gate, spot drift at a glance, and keep a full history of who promoted what, where, and when."
       },
+      "dashboards": {
+        "header": "Custom Dashboards",
+        "title": "Build custom dashboards tailored to your team.",
+        "message": "Custom dashboards in Kestra Enterprise Edition let you create and share your own views on top of executions, logs and metrics, combining time series, KPIs, tables and Markdown charts, with a code and no-code editor, live preview, and per-tenant default dashboards.",
+        "blueprints": {
+          "title": "Start from a dashboard blueprint.",
+          "message": "Dashboard blueprints are ready-made custom dashboards for common monitoring needs. With Kestra Enterprise Edition, you can use any blueprint as a starting point and adapt its charts, KPIs and tables to your team in the dashboard editor."
+        }
+      },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
         "message": "Kestra Enterprise Edition has built-in IAM capabilities with single sign-on (SSO), SCIM directory sync, and role-based access control (RBAC), integrating with multiple identity providers and letting you assign fine-grained permissions for users and service accounts."

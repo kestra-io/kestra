@@ -33,7 +33,7 @@ describe("dashboard sections/Markdown.vue", () => {
         expect(wrapper.text()).toContain("Export check")
     })
 
-    // Regression guard: Dashboard.vue/Editor.vue/PreviewDashboardWrapper.vue all stamp every
+    // Regression guard: Dashboard.vue and the EE editor previews all stamp every
     // loaded chart with `content: <yaml dump of the whole chart>` to support ad-hoc chart
     // preview submission for non-Markdown chart types. A Markdown chart must ignore that
     // stamped `content` and always render its own `source.content`.

@@ -1,5 +1,6 @@
 <template>
     <DemoBlueprints v-if="tab === 'custom'" />
+    <DemoDashboards v-else-if="kind === 'dashboard'" blueprints />
     <template v-else>
         <TopNavBar v-if="!embed" :title="routeInfo.title" />
         <section
@@ -35,6 +36,7 @@
     import BlueprintDetail from "override/components/flows/blueprints/BlueprintDetail.vue"
     import BlueprintsBrowser from "../../../../components/flows/blueprints/BlueprintsBrowser.vue"
     import DemoBlueprints from "../../../../components/demo/Blueprints.vue"
+    import DemoDashboards from "../../../../components/demo/Dashboards.vue"
 
     import useRouteContext from "../../../../composables/useRouteContext"
     import {useRouteTabsStore} from "../../../../stores/routeTabs"
@@ -86,6 +88,7 @@
             name: "dashboard-community",
             title: t("blueprints.dashboards"),
             route: {name: "blueprints", params: {kind: "dashboard", tab: "community"}},
+            locked: true,
         },
     ])
 

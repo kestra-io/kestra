@@ -106,7 +106,7 @@
     import NavBarAction from "../../../components/layout/NavBarAction.vue"
     import FlowPlaygroundToggle from "../../../components/inputs/FlowPlaygroundToggle.vue"
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue"
-    import Dashboards from "../../../components/dashboard/components/selector/Selector.vue"
+    import Dashboards from "override/components/dashboard/Selector.vue"
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards"
     import {routeFamily} from "../../../utils/routeFamily"
     import {useActiveTab} from "../../../composables/useActiveTab"

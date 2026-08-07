@@ -120,6 +120,9 @@ export function setupKestraHttp(
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
         const status = error.status
         if (status === 404) {
+            /** Callers expecting a 404 can pass `showMessageOnError: false`
+             * to handle it locally instead of the global not-found page.
+            */
             if (error.config?.showMessageOnError !== false) {
                 onError("error", error)
             }

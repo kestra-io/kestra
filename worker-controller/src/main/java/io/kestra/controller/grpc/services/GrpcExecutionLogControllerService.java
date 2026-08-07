@@ -16,17 +16,16 @@ import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * gRPC service implementation for worker meta store operations.
- * Provides execution logs to workers via gRPC.
+ * gRPC service implementation providing execution logs to workers.
  */
 @Slf4j
 @Singleton
 @RequiresControllerServer
-public class GrpcExecutionLogController extends ExecutionLogsServiceGrpc.ExecutionLogsServiceImplBase implements WorkerControllerService {
+public class GrpcExecutionLogControllerService extends ExecutionLogsServiceGrpc.ExecutionLogsServiceImplBase implements WorkerControllerService {
     private final ExecutionLogMetaStore executionLogMetaStore;
     private final WorkerInfo workerInfo;
 
-    public GrpcExecutionLogController(ExecutionLogMetaStore executionLogMetaStore, WorkerInfo workerInfo) {
+    public GrpcExecutionLogControllerService(ExecutionLogMetaStore executionLogMetaStore, WorkerInfo workerInfo) {
         this.executionLogMetaStore = executionLogMetaStore;
         this.workerInfo = workerInfo;
     }

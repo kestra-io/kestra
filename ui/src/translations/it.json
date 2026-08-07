@@ -765,8 +765,8 @@
     "dynamic": "Dinamico",
     "choice": "Scelta",
     "sequential": "Sequenziale",
-    "can not delete": "Impossibile eliminare",
-    "can not have less than 1 task": "Ogni flow deve avere almeno un task.",
+    "can not delete": "Impossibile eliminare questo task",
+    "can not have less than 1 task": "Un flow deve avere almeno un task. Aggiungi un altro task prima di eliminare questo.",
     "task id already exists": "Task Id già esistente",
     "Task Id already exist in the flow": "Task Id {taskId} già esistente nel flow.",
     "task id": "Task ID",
@@ -1257,6 +1257,12 @@
         "header": "Metadati e Osservabilità degli Asset",
         "title": "Porta ogni dataset, servizio e dipendenza in vista.",
         "message": "Le risorse collegano la osservabilità, la lineage e i metadati di proprietà in modo che i team della piattaforma possano risolvere i problemi più rapidamente e distribuire con fiducia."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "Gestisci gli utenti tramite IAM con SSO, SCIM e RBAC",
@@ -1897,6 +1903,10 @@
         "title": "Non hai ancora Asset!",
         "content": "Aggiungi asset per tracciare e gestire i tuoi asset di dati, servizi e infrastruttura."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Gestisci i tuoi Token API",
         "content": "I token API vengono utilizzati ogni volta che si desidera concedere l'accesso programmatico all'API di Kestra."
@@ -1986,7 +1996,8 @@
       "kv_pairs": "Nessuna coppia Key-Value trovata",
       "secrets": "Nessun Secret Trovato",
       "templates": "Nessun Template Trovato",
-      "assets": "Nessun asset trovato"
+      "assets": "Nessun asset trovato",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {

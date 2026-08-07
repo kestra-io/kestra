@@ -765,8 +765,8 @@
     "dynamic": "Dynamiczny",
     "choice": "Wybór",
     "sequential": "Sekwencyjny",
-    "can not delete": "Nie można usunąć",
-    "can not have less than 1 task": "Każdy flow musi mieć przynajmniej jeden task.",
+    "can not delete": "Nie można usunąć tego taska",
+    "can not have less than 1 task": "flow musi mieć co najmniej jeden task. Dodaj kolejny task przed usunięciem tego.",
     "task id already exists": "Task Id już istnieje",
     "Task Id already exist in the flow": "Task Id {taskId} już istnieje w flow.",
     "task id": "Task ID",
@@ -1257,6 +1257,12 @@
         "header": "Metadane zasobów i obserwowalność",
         "title": "Przenieś każdy zestaw danych, usługę i zależność do widoku.",
         "message": "Zasoby łączą metadane dotyczące obserwowalności, pochodzenia i własności, aby zespoły platformowe mogły szybciej rozwiązywać problemy i wdrażać z pewnością."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "Zarządzaj użytkownikami przez IAM z SSO, SCIM i RBAC",
@@ -1897,6 +1903,10 @@
         "title": "Nie masz jeszcze zasobów!",
         "content": "Dodaj zasoby, aby śledzić i zarządzać swoimi zasobami danych, usługami i infrastrukturą."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Zarządzaj swoimi tokenami API",
         "content": "Tokeny API są używane za każdym razem, gdy chcesz przyznać programowy dostęp do API Kestra."
@@ -1986,7 +1996,8 @@
       "kv_pairs": "Nie znaleziono par klucz-wartość",
       "secrets": "Nie znaleziono sekretów",
       "templates": "Nie znaleziono szablonów",
-      "assets": "Nie znaleziono zasobów"
+      "assets": "Nie znaleziono zasobów",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" jest zduplikowany, pierwszy klucz zignorowany.",
     "dashboards": {

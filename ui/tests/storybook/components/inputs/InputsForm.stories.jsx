@@ -368,3 +368,177 @@ export const InputSelect = {
         />;
     }
 };
+
+// Replay harness: mirrors FlowRun.fillInputsFromExecution — once the form signals ready, every leaf
+// is prefilled from a previous execution's `inputs` through the component's prefillInputValue.
+const PrefillSut = defineComponent((props) => {
+    const axios = {}
+    axios.post = (uri) => {
+        if (!uri.endsWith("/validate")) {
+            return {data: []}
+        }
+        return Promise.resolve({data: {
+            inputs: props.inputs.map(x => ({input: x, enabled: true, isDefault: false, errors: []})),
+        }})
+    }
+    setMockClient(axios)
+
+    const form = ref(null)
+    const values = ref({})
+    const onReady = () => {
+        for (const input of props.inputs) {
+            const value = props.executionInputs[input.id]
+            if (value !== undefined) {
+                form.value?.prefillInputValue(input, value)
+            }
+        }
+    }
+    return () => (<>
+        <KsForm label-position="top" model={values.value}>
+            <InputsForm ref={form} initialInputs={props.inputs} modelValue={values.value}
+                        flow={{namespace: "ns1", id: "flowid1"}}
+                        onReady={onReady}
+                        onUpdate:modelValue={(value) => values.value = value}
+            />
+        </KsForm>
+        <pre data-testid="test-content">{JSON.stringify(values.value, null, 2)}</pre>
+    </>);
+}, {
+    props: {
+        "inputs": {type: Array, required: true},
+        "executionInputs": {type: Object, required: true}
+    }
+});
+
+/**
+ * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
+ */
+export const PrefillFromExecution = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+
+        // The control itself shows the replayed selection. MULTISELECT binds a different model from
+        // the one the submission reads, so it used to render empty while the value was submitted.
+        await waitFor(function testMultiSelectShowsSelection() {
+            const select = can.getByTestId("input-form-shards");
+            expect(select).toHaveTextContent("Fifth value");
+            expect(select).toHaveTextContent("Seventh value");
+        }, {timeout: 5000, interval: 100});
+
+        // ...and the submission payload carries the same selection, JSON-encoded.
+        await waitFor(function testMultiSelectSubmitted() {
+            expect(can.getByTestId("test-content").textContent)
+                .to.include("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
+        });
+
+        // A SECRET is never prefilled: execution.inputs holds the serialised EncryptedString, so
+        // replaying it would submit "[object Object]" to be re-encrypted as the new secret value.
+        expect(can.getByTestId("input-form-api_key")).toHaveValue("");
+        expect(can.getByTestId("test-content").textContent).not.to.include("aes_encrypted");
+        expect(can.getByTestId("test-content").textContent).not.to.include("[object Object]");
+    },
+    render() {
+        return <PrefillSut
+            inputs={[
+                {
+                    id: "shards",
+                    type: "MULTISELECT",
+                    required: false,
+                    displayName: "Shards to process",
+                    values: ["Fifth value", "Sixth value", "Seventh value"]
+                },
+                {id: "api_key", type: "SECRET", required: false, displayName: "Api key"}
+            ]}
+            executionInputs={{
+                shards: ["Fifth value", "Seventh value"],
+                api_key: {value: "abc123cipher", type: "io.kestra.datatype:aes_encrypted"}
+            }}
+        />;
+    }
+};
+
+// The other two paths that seed MULTISELECT state: a trigger's stored inputs (a real array), and a
+// `defaults` value, which crosses the wire JSON-encoded as a string because Property serialises so.
+const StatePathSut = defineComponent((props) => {
+    const axios = {}
+    axios.post = (uri) => {
+        if (!uri.endsWith("/validate")) {
+            return {data: []}
+        }
+        return Promise.resolve({data: {
+            inputs: props.inputs.map(x => ({
+                input: x,
+                enabled: true,
+                isDefault: x.defaults !== undefined,
+                errors: [],
+            })),
+        }})
+    }
+    setMockClient(axios)
+
+    const values = ref({})
+    return () => (<>
+        <KsForm label-position="top" model={values.value}>
+            <InputsForm initialInputs={props.inputs} modelValue={values.value}
+                        selectedTrigger={props.selectedTrigger}
+                        flow={{namespace: "ns1", id: "flowid1"}}
+                        onUpdate:modelValue={(value) => values.value = value}
+            />
+        </KsForm>
+        <pre data-testid="test-content">{JSON.stringify(values.value, null, 2)}</pre>
+    </>);
+}, {
+    props: {
+        "inputs": {type: Array, required: true},
+        "selectedTrigger": {type: Object, required: false, default: undefined}
+    }
+});
+
+/**
+ * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
+ */
+export const MultiSelectStateSources = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+
+        // A trigger's inputs reach both the control and the payload, and the payload gets the
+        // JSON-encoded form — assigned raw, FormData would flatten the array to "Fifth value,...".
+        await waitFor(function testTriggerPrefill() {
+            const select = can.getByTestId("input-form-shards");
+            expect(select).toHaveTextContent("Fifth value");
+            expect(select).toHaveTextContent("Seventh value");
+        }, {timeout: 5000, interval: 100});
+        await waitFor(function testTriggerSubmitted() {
+            expect(can.getByTestId("test-content").textContent)
+                .to.include("[\\\"Fifth value\\\",\\\"Seventh value\\\"]");
+        });
+
+        // A string `defaults` is parsed before it reaches the control, so it renders as one option
+        // rather than as a single tag reading the raw JSON text.
+        const regions = can.getByTestId("input-form-regions");
+        expect(regions).toHaveTextContent("eu");
+        expect(regions.textContent).not.to.include("[\"eu\"]");
+    },
+    render() {
+        return <StatePathSut
+            inputs={[
+                {
+                    id: "shards",
+                    type: "MULTISELECT",
+                    required: false,
+                    displayName: "Shards to process",
+                    values: ["Fifth value", "Sixth value", "Seventh value"]
+                },
+                {
+                    id: "regions",
+                    type: "MULTISELECT",
+                    required: false,
+                    displayName: "Regions",
+                    defaults: "[\"eu\"]",
+                    values: ["eu", "us", "apac"]
+                }
+            ]}
+            selectedTrigger={{inputs: {shards: ["Fifth value", "Seventh value"]}}}
+        />;
+    }
+};

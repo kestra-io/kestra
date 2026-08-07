@@ -1258,6 +1258,12 @@
         "title": "Traga todos os datasets, serviços e dependências para a visualização.",
         "message": "Ativos conectam metadados de observabilidade, linhagem e propriedade para que as equipes da plataforma possam solucionar problemas mais rapidamente e implantar com confiança."
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "Gerencie Usuários através do IAM com SSO, SCIM e RBAC",
         "message": "A Kestra Enterprise Edition possui capacidades IAM integradas com single sign-on (SSO), sincronização de diretório SCIM e controle de acesso baseado em funções (RBAC), integrando-se com vários provedores de identidade e permitindo que você atribua permissões detalhadas para usuários e contas de serviço."
@@ -1897,6 +1903,10 @@
         "title": "Você ainda não tem Assets!",
         "content": "Adicione assets para rastrear e gerenciar seus assets de dados, serviços e infraestrutura."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Gerencie seus Tokens de API",
         "content": "Tokens de API são usados sempre que você deseja conceder acesso programático à API do Kestra."
@@ -1986,7 +1996,8 @@
       "kv_pairs": "Nenhum par de Key-Value encontrado",
       "secrets": "Nenhum Secret Encontrado",
       "templates": "Nenhum Template Encontrado",
-      "assets": "Nenhum Asset Encontrado"
+      "assets": "Nenhum Asset Encontrado",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "dashboards": {

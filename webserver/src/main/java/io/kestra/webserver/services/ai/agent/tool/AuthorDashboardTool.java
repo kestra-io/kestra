@@ -47,7 +47,7 @@ public class AuthorDashboardTool implements AiAuthoringTool {
 
     @Tool(
         name = "author-dashboard",
-        value = "Draft a Kestra custom dashboard (YAML) from a natural-language description, or revise an existing dashboard when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentDashboardYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply — refer the user to the draft. "
+        value = "Draft a Kestra custom dashboard (YAML) from a natural-language description, or revise an existing dashboard when its current YAML is provided. The draft is validated and shown to the user as an artefact card; nothing is saved. If the draft comes back invalid, call this tool again passing the draft as `currentDashboardYaml` with instructions to fix the reported constraints. Do not paste the full YAML in your reply, and do not tell the user it has been created or saved — point them at the proposal card, which they apply themselves. "
             + "Returns an object { draftId, kind, valid, validationError, yaml }: `draftId` and `yaml` identify the published draft and `valid` reflects validation (`validationError` holds the constraints when invalid). If generation fails, the tool errors with the reason instead of returning."
     )
     public Result authorDashboard(

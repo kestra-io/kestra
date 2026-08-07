@@ -237,7 +237,10 @@
     const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext} = useAiChat()
 
     // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
-    onMounted(() => { restoreThread() })
+    // Kept as a promise so an auto-sent prompt waits for it and continues that thread instead of
+    // racing the restore into a second one.
+    let restored: Promise<void> = Promise.resolve()
+    onMounted(() => { restored = restoreThread() })
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
@@ -332,11 +335,27 @@
     // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
     // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
     // run on mount (drawer just opened) and via a watcher (already open / kept alive).
+    // An `autoSend` entry point ("Generate a unit test") sends the turn itself instead: the user
+    // already committed to it by picking the action, so the agent starts working on open. If a turn
+    // is in flight (`canSend` false) we fall back to seeding rather than dropping the prompt.
+    // A `newChat` entry point drops the restored conversation first, so its turn starts clean
+    // instead of inheriting an unrelated transcript.
     async function consumeSeededPrompt(): Promise<void> {
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
-        composerText.value = seeded
         miscStore.copilotPrompt = null
+
+        // Settle the in-flight restore before acting on either flag: resetting ahead of it would be
+        // undone when it lands, and sending without it would fork a second thread.
+        if (seeded.newChat || seeded.autoSend) await restored
+        if (seeded.newChat) reset()
+
+        if (seeded.autoSend && canSend.value) {
+            onSubmit(seeded.text)
+            return
+        }
+
+        composerText.value = seeded.text
         await nextTick()
         ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
     }

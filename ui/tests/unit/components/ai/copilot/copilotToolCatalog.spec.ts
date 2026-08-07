@@ -42,6 +42,7 @@ const AUTHORING_TOOLS = [
     {tool: "author-flow", kind: "FLOW", title: "Proposed flow"},
     {tool: "author-dashboard", kind: "DASHBOARD", title: "Proposed dashboard"},
     {tool: "author-app", kind: "APP", title: "Proposed app"},
+    {tool: "author-test-suite", kind: "TEST_SUITE", title: "Proposed unit test"},
 ] as const
 
 /** A stream that exercises every tool: each platform tool calls + returns; each authoring tool

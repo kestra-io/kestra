@@ -1258,6 +1258,12 @@
         "title": "すべてのデータセット、サービス、および依存関係を表示します。",
         "message": "アセットは、観測性、系譜、および所有権のメタデータを接続し、プラットフォームチームが迅速にトラブルシューティングを行い、自信を持ってデプロイできるようにします。"
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "IAMを通じてユーザーを管理（SSO、SCIM、RBACを使用）",
         "message": "Kestra Enterprise Editionには、シングルサインオン（SSO）、SCIMディレクトリ同期、ロールベースのアクセス制御（RBAC）を備えた組み込みのIAM機能があり、複数のアイデンティティプロバイダーと統合し、ユーザーおよびサービスアカウントに対して詳細な権限を割り当てることができます。"
@@ -1897,6 +1903,10 @@
         "title": "まだアセットがありません！",
         "content": "データ資産、サービス、インフラストラクチャを追跡および管理するためのアセットを追加します。"
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "APIトークンを管理する",
         "content": "APIトークンは、Kestra APIへのプログラムによるアクセスを許可したいときに使用されます。"
@@ -1986,7 +1996,8 @@
       "kv_pairs": "キー-バリュー ペアが見つかりません",
       "secrets": "シークレットが見つかりません",
       "templates": "テンプレートが見つかりません",
-      "assets": "アセットが見つかりません"
+      "assets": "アセットが見つかりません",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {

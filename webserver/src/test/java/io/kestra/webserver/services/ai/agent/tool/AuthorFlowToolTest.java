@@ -105,6 +105,50 @@ class AuthorFlowToolTest {
     }
 
     @Test
+    void shouldDefaultNamespaceAndReportAssumptionWhenCreatingWithoutNamespace() {
+        // Given — the model returns a well-formed flow; the agent authors WITHOUT a namespace
+        when(aiService.generateFlow(any(), any(), eq(TENANT))).thenReturn(GenerationResult.of(VALID_YAML));
+        ArgumentCaptor<FlowGenerationPrompt> prompt = ArgumentCaptor.forClass(FlowGenerationPrompt.class);
+
+        // When — no namespace, no current YAML (a fresh create) — the case that used to hard-fail and loop
+        AuthorFlowTool.Result result = tool.authorFlow("log hello", null, null, params);
+
+        // Then — the pipeline is handed the default namespace instead of null (which the template rejects)
+        verify(aiService).generateFlow(any(), prompt.capture(), eq(TENANT));
+        assertThat(prompt.getValue().getNamespace()).isEqualTo(AuthorFlowTool.DEFAULT_NAMESPACE);
+        // and the assumption is reported back so the agent can tell the user which namespace was used
+        assertThat(result.assumedNamespace()).isEqualTo(AuthorFlowTool.DEFAULT_NAMESPACE);
+    }
+
+    @Test
+    void shouldDefaultBlankNamespaceButNotReportAssumptionWhenRevising() {
+        // Given — a revision (current YAML provided) with a blank namespace: the real namespace lives in
+        // the YAML and is preserved, so the default is only a placeholder and must NOT be surfaced.
+        when(aiService.generateFlow(any(), any(), eq(TENANT))).thenReturn(GenerationResult.of(VALID_YAML));
+        ArgumentCaptor<FlowGenerationPrompt> prompt = ArgumentCaptor.forClass(FlowGenerationPrompt.class);
+
+        // When
+        AuthorFlowTool.Result result = tool.authorFlow("add a retry", "  ", "id: existing\nnamespace: prod.team\n", params);
+
+        // Then — still non-null for the template, but no assumption is reported to the user
+        verify(aiService).generateFlow(any(), prompt.capture(), eq(TENANT));
+        assertThat(prompt.getValue().getNamespace()).isEqualTo(AuthorFlowTool.DEFAULT_NAMESPACE);
+        assertThat(result.assumedNamespace()).isNull();
+    }
+
+    @Test
+    void shouldNotReportAssumptionWhenNamespaceProvided() {
+        // Given
+        when(aiService.generateFlow(any(), any(), eq(TENANT))).thenReturn(GenerationResult.of(VALID_YAML));
+
+        // When — the caller supplies a namespace
+        AuthorFlowTool.Result result = tool.authorFlow("log hello", "company.team", null, params);
+
+        // Then — nothing was assumed
+        assertThat(result.assumedNamespace()).isNull();
+    }
+
+    @Test
     void shouldReturnInvalidDraftWithConstraintsWhenValidationFails() {
         // Given — the model returns a flow that fails real validation (no tasks)
         when(aiService.generateFlow(any(), any(), eq(TENANT))).thenReturn(GenerationResult.of(INVALID_YAML));

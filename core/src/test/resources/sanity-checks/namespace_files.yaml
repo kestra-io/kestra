@@ -2,14 +2,18 @@ id: namespace_files
 namespace: sanitychecks.core
 
 tasks:
-  - id: download
-    type: io.kestra.plugin.core.http.Download
-    uri: https://raw.githubusercontent.com/kestra-io/scripts/refs/heads/main/automation/list_kestra_repos.py
+  # Kept local on purpose: the check only needs some file to round-trip through namespace files,
+  # and the external URI used before made CI fail whenever the host rate-limited the runner.
+  - id: write_file
+    type: io.kestra.plugin.core.storage.Write
+    content: |
+      print("sanity-check")
+    extension: .py
 
   - id: upload_files
     type: io.kestra.plugin.core.namespace.UploadFiles
-    filesMap: 
-      main.py: "{{ outputs.download.uri }}"
+    filesMap:
+      main.py: "{{ outputs.write_file.uri }}"
     namespace: "{{ flow.namespace }}"
 
   - id: download_files
@@ -21,7 +25,7 @@ tasks:
   - id: assert_upload_download
     type: io.kestra.plugin.core.execution.Assert
     conditions:
-      - "{{ read(outputs.download.uri) == read(outputs.download_files.files['/main.py']) }}"
+      - "{{ read(outputs.write_file.uri) == read(outputs.download_files.files['/main.py']) }}"
 
   - id: delete_files
     type: io.kestra.plugin.core.namespace.DeleteFiles

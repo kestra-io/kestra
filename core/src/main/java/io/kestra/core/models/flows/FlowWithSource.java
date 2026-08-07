@@ -39,6 +39,7 @@ public class FlowWithSource extends Flow {
             .retry(this.retry)
             .sla(this.sla)
             .checks(this.checks)
+            .updated(this.updated)
             .build();
     }
 

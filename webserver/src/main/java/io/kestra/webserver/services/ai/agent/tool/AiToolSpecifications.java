@@ -79,7 +79,7 @@ public final class AiToolSpecifications {
                 if (!isExposedFilterField(field)) {
                     continue;
                 }
-                properties.put(field.name(), fieldFilterSchema(field)); // optional per-field filter
+                properties.put(field.name(), fieldFilterSchema(resource, field)); // optional per-field filter
             }
         }
 
@@ -95,8 +95,8 @@ public final class AiToolSpecifications {
             .build();
     }
 
-    private static JsonObjectSchema fieldFilterSchema(final QueryFilter.Field field) {
-        List<String> operators = field.supportedOp().stream().map(Enum::name).toList();
+    private static JsonObjectSchema fieldFilterSchema(final QueryFilter.Resource resource, final QueryFilter.Field field) {
+        List<String> operators = resource.supportedOp(field).stream().map(Enum::name).toList();
         return JsonObjectSchema.builder()
             .description("Filter by " + field.name())
             .addProperty("operator", JsonEnumSchema.builder().enumValues(operators).build())

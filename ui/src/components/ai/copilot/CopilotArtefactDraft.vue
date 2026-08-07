@@ -33,10 +33,11 @@
         <div v-else-if="applied" class="copilot-draft-footer" data-test="copilot-draft-applied">
             <KsText size="small" class="copilot-draft-status-label">{{ $t("ai.copilot.draft.applied") }}</KsText>
         </div>
-        <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps are EE-only —
-             open in the app editor only (no direct apply), and only when the EE app path is present, so
-             OSS shows no actions. Dismiss is always offered, even when there's nothing else to do with
-             the draft, since it's the only way to decline it. -->
+        <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps and unit
+             tests are EE-only, and only render when the matching EE path is present, so OSS shows no
+             actions. Apps are open-in-editor only (no direct apply); unit tests apply like flows.
+             Dismiss is always offered, even when there's nothing else to do with the draft, since
+             it's the only way to decline it. -->
         <div v-else class="copilot-draft-footer">
             <KsButton
                 text
@@ -85,14 +86,15 @@
         (e: "applied", draftId: string): void
     }>()
 
-    const {applying, appSupported, dashboardSupported, openInEditor, apply} = useApplyDraft()
+    const {applying, appSupported, dashboardSupported, testSuiteSupported, openInEditor, apply} = useApplyDraft()
 
     // Flow drafts always have actions; dashboard drafts only when the backend serves custom
-    // dashboards, app drafts only when the EE app path is present.
+    // dashboards, app and unit-test drafts only when the matching EE path is present.
     const showActions = computed(
         () => props.draft.kind === "FLOW"
             || (props.draft.kind === "DASHBOARD" && dashboardSupported.value)
-            || (props.draft.kind === "APP" && appSupported),
+            || (props.draft.kind === "APP" && appSupported)
+            || (props.draft.kind === "TEST_SUITE" && testSuiteSupported),
     )
 
     async function onApply(): Promise<void> {

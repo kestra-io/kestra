@@ -24,7 +24,7 @@ vi.mock("override/utils/route", () => ({
 
 import FilePreview from "../../../../src/components/executions/FilePreview.vue"
 
-const FULL_HTML = "<html><body><h1>Hi</h1><script>document.title='ok'<\/script></body></html>"
+const FULL_HTML = "<html><body><h1>Hi</h1><script>document.title='ok'</script></body></html>"
 const BIG_SIZE = 11 * 1024 * 1024  // 11 MB — over the 10 MB threshold
 const SMALL_SIZE = 1024             // 1 KB — under threshold
 

@@ -765,8 +765,8 @@
     "dynamic": "동적",
     "choice": "선택",
     "sequential": "순차적",
-    "can not delete": "삭제할 수 없음",
-    "can not have less than 1 task": "각 flow에는 최소한 하나의 task가 있어야 합니다.",
+    "can not delete": "이 task를 삭제할 수 없습니다",
+    "can not have less than 1 task": "flow에는 최소 하나 이상의 task가 있어야 합니다. 이것을 삭제하기 전에 다른 task를 추가하세요.",
     "task id already exists": "Task Id가 이미 존재합니다",
     "Task Id already exist in the flow": "Task Id {taskId}가 flow에 이미 존재합니다.",
     "task id": "Task ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ 플러그인 검색",
+      "search": "{count}+개 플러그인 검색",
       "searchTasks": "{count}개의 task 검색",
       "noResults": "검색어와 일치하는 플러그인이 없습니다.",
       "loadError": "플러그인을 로드할 수 없습니다. 다시 시도해 주세요.",
@@ -1257,6 +1257,12 @@
         "header": "자산 메타데이터 및 관측 가능성",
         "title": "모든 데이터셋, 서비스 및 종속성을 한눈에 확인하세요.",
         "message": "자산은 관측 가능성, 계보, 소유권 메타데이터를 연결하여 플랫폼 팀이 더 빠르게 문제를 해결하고 자신 있게 배포할 수 있도록 합니다."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "IAM을 통해 SSO, SCIM 및 RBAC로 사용자 관리",
@@ -1897,6 +1903,10 @@
         "title": "아직 자산이 없습니다!",
         "content": "데이터 자산, 서비스 및 인프라를 추적하고 관리하기 위해 자산을 추가하세요."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "API 토큰 관리",
         "content": "API 토큰은 Kestra API에 대한 프로그래매틱 접근을 허용하고자 할 때 사용됩니다."
@@ -1986,7 +1996,8 @@
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
       "secrets": "비밀 없음",
       "templates": "템플릿을 찾을 수 없음",
-      "assets": "자산을 찾을 수 없음"
+      "assets": "자산을 찾을 수 없음",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "dashboards": {

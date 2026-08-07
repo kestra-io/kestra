@@ -7,7 +7,7 @@ import {useClient} from "@kestra-io/kestra-sdk"
 const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
 
 export async function logout() {
-    sessionStorage.removeItem(AUTH_FLAG_KEY)
+    localStorage.removeItem(AUTH_FLAG_KEY)
     try {
         await fetch(`${apiUrlWithoutTenants()}/logout`, {
             method: "POST",
@@ -24,12 +24,12 @@ export async function signIn(credentials: {username: string, password: string}) 
     const {username, password} = credentials
     const trimmedUsername = username.trim()
     await validateCredentials(trimmedUsername, password)
-    sessionStorage.setItem(AUTH_FLAG_KEY, "true")
+    localStorage.setItem(AUTH_FLAG_KEY, "true")
     return {username: trimmedUsername}
 }
 
 export function isLoggedIn() {
-    return sessionStorage.getItem(AUTH_FLAG_KEY) === "true"
+    return localStorage.getItem(AUTH_FLAG_KEY) === "true"
 }
 
 async function validateCredentials(username: string, password: string) {

@@ -73,6 +73,15 @@
 
     const editorValue = ref(props.expression ?? "")
 
+    const result = ref<string | undefined>(undefined)
+    const resultLang = ref<"json" | "">("")
+    const error = ref<string | undefined>(undefined)
+
+    function clear() {
+        result.value = undefined
+        error.value = undefined
+    }
+
     // Re-seed the editor whenever the parent suggests a new expression
     // (e.g. when the user selects a different variable).
     watch(
@@ -81,18 +90,10 @@
             editorValue.value = value ?? ""
             clear()
         },
+        {immediate: true, flush: "sync"},
     )
 
-    const result = ref<string | undefined>(undefined)
-    const resultLang = ref<"json" | "">("")
-    const error = ref<string | undefined>(undefined)
-
     const isFileResult = computed(() => result.value !== undefined && Utils.isFile(result.value))
-
-    function clear() {
-        result.value = undefined
-        error.value = undefined
-    }
 
     async function onDebug() {
         const executionId = props.execution?.id

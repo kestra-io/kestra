@@ -320,7 +320,7 @@
             {key: "triggers", label: t("triggers"), items: itemsFromRecord(exec?.trigger as Record<string, unknown> | undefined, "trigger")},
             {key: "inputs", label: t("flow_inputs"), items: itemsFromRecord(exec?.inputs, "inputs")},
             {key: "tasksOutputs", label: t("variable_explorer.tasks_outputs"), items: taskItems.value},
-            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "outputs")},
+            {key: "flowOutputs", label: t("flow_outputs"), items: itemsFromRecord(exec?.outputs, "execution.outputs")},
         ]
     })
 
@@ -400,24 +400,17 @@
         selectedBase.value = item.expression
         expressionPath.value = item.expression
         previewedValue.value = selectedValue.value
-        // if the selectedValue is in the flow Outputs section,
-        // it needs the `execution.` prefix to be debuggable.
-        const baseExpressionPath = sections.value.find((section) =>
-            section.items.some(i => i.expression === item.expression))?.key === "flowOutputs"
-            ? `execution.${item.expression}`
-            : item.expression
 
         // if there is only one item in the tree, select it by default to save users one click
         // specially useful for files
         if(selectedValue.value && typeof selectedValue.value === "object" && Object.keys(selectedValue.value).length === 1) {
             const onlyKey = Object.keys(selectedValue.value)[0]
-            const treePath = `${item.expression}${formatStep(onlyKey)}`
-            const debugPath = `${baseExpressionPath}${formatStep(onlyKey)}`
-            expressionPath.value = treePath
+            const childPath = `${item.expression}${formatStep(onlyKey)}`
+            expressionPath.value = childPath
             previewedValue.value = (selectedValue.value as Record<string, unknown>)[onlyKey]
-            expression.value = `{{ ${debugPath} }}`
-        }else {
-            expression.value = `{{ ${baseExpressionPath} }}`
+            expression.value = `{{ ${childPath} }}`
+        } else {
+            expression.value = `{{ ${item.expression} }}`
         }
     }
 

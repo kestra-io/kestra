@@ -227,6 +227,18 @@
                         <TriggerAvatar :flow="scope.row" />
                     </template>
                 </KsTableColumn>
+
+                <KsTableColumn
+                    v-else-if="colProp === 'updated'"
+                    prop="updated"
+                    sortable="custom"
+                    :sortOrders="['ascending', 'descending']"
+                    :label="$t('last modified')"
+                >
+                    <template #default="scope">
+                        <KsDateAgo v-if="scope.row.updated" :date="scope.row.updated" inverted />
+                    </template>
+                </KsTableColumn>
             </template>
 
             <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
@@ -391,6 +403,12 @@
             prop: "triggers",
             default: true,
             description: t("filter.table_column.flows.triggers"),
+        },
+        {
+            label: t("last modified"),
+            prop: "updated",
+            default: false,
+            description: t("filter.table_column.flows.last modified"),
         },
     ])
 

@@ -4,7 +4,6 @@
             <KsSearch
                 v-model="search"
                 :placeholder="$t('variable_explorer.search_placeholder')"
-                
             />
         </div>
 
@@ -55,6 +54,8 @@
         KsTag,
     } from "@kestra-io/design-system"
 
+    import {matchesExplorerItem} from "./explorerSearch"
+
     export interface ExplorerItem {
         label: string;
         value: unknown;
@@ -62,6 +63,7 @@
         preview: string;
         expression: string;
         taskRunId?: string;
+        searchText?: string;
     }
 
     export interface ExplorerSection {
@@ -76,23 +78,19 @@
         selectedExpression?: string;
     }>()
 
-    defineEmits<{
+    const emit = defineEmits<{
         (e: "select", item: ExplorerItem): void;
+        (e: "search-change", query: string): void;
     }>()
 
     const search = ref("")
 
-    function matches(item: ExplorerItem, query: string): boolean {
-        if (item.label.toLowerCase().includes(query)) return true
-        return JSON.stringify(item.value ?? "").toLowerCase().includes(query)
-    }
-
     const visibleSections = computed<ExplorerSection[]>(() => {
-        const query = search.value.trim().toLowerCase()
+        const query = search.value.trim()
         return props.sections
             .map((section) => ({
                 ...section,
-                items: query ? section.items.filter((item) => matches(item, query)) : section.items,
+                items: query ? section.items.filter((item) => matchesExplorerItem(item, query)) : section.items,
             }))
             .filter((section) => section.items.length > 0)
     })
@@ -105,6 +103,10 @@
         // By default, open all sections.
         openSections.value = newKeys
     }, {immediate: true})
+
+    watch(search, (query) => {
+        emit("search-change", query)
+    })
 </script>
 
 <style scoped lang="scss">

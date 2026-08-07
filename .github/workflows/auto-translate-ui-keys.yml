@@ -14,6 +14,13 @@ on:
         default: "false"
         required: false
 
+# Scheduled runs fire every three hours and each one opens its own timestamped branch. Without a
+# concurrency group two overlapping runs generate the same change and open two PRs for it, leaving
+# the loser with an empty diff once the winner merges — see kestra-io/kestra#17822.
+concurrency:
+  group: auto-translate-ui-keys-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   translations:
     name: Translations

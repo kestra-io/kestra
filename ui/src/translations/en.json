@@ -428,7 +428,11 @@
     },
     "file_preview": {
       "big_file_warning": "This file is {size}. It may take a while to load blocking your browser. Do you want to load it anyway?",
-      "load_anyway": "Load anyway"
+      "load_anyway": "Load anyway",
+      "load_error": "Failed to load the file preview. This may be a temporary issue or a permissions problem.",
+      "retry": "Retry",
+      "html_asset_warning": "This preview renders the HTML in a sandboxed frame. Local assets such as images and stylesheets referenced by relative paths will not load.",
+      "html_preview_title": "HTML file preview"
     },
     "no_variables": "No variables available.",
     "download": "Download",
@@ -761,8 +765,8 @@
     "dynamic": "Dynamic",
     "choice": "Choice",
     "sequential": "Sequential",
-    "can not delete": "Can not delete",
-    "can not have less than 1 task": "Each flow must have at least one task.",
+    "can not delete": "Cannot delete this task",
+    "can not have less than 1 task": "A flow must have at least one task. Add another task before deleting this one.",
     "task id already exists": "Task Id already exists",
     "Task Id already exist in the flow": "Task Id {taskId} already exists in the flow.",
     "task id": "Task ID",
@@ -1054,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Search across 1400+ plugins",
+      "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
       "noResults": "No plugins match your search.",
       "loadError": "Could not load plugins. Please try again.",
@@ -1254,6 +1258,12 @@
         "title": "Bring every dataset, service, and dependency into view.",
         "message": "Assets connect observability, lineage, and ownership metadata so platform teams can troubleshoot faster and deploy with confidence."
       },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
         "message": "Kestra Enterprise Edition has built-in IAM capabilities with single sign-on (SSO), SCIM directory sync, and role-based access control (RBAC), integrating with multiple identity providers and letting you assign fine-grained permissions for users and service accounts."
@@ -1341,9 +1351,9 @@
         },
         "scenes": {
           "copilot": {
-            "title": "Describe the workflow you want",
-            "body": "Describe what you want to automate, and the AI Copilot will draft it for you. The tour continues with a ready-made example flow, so nothing has to be typed here.",
-            "next": "Generate the flow"
+            "title": "Flows can be drafted from a prompt",
+            "body": "The tour uses a ready-made example flow, so nothing has to be typed here.",
+            "next": "Use the example flow"
           },
           "flow_generated": {
             "title": "This is a flow",
@@ -1361,7 +1371,7 @@
             "title": "Flows are edited like code",
             "body": "We added a <code>notify</code> task for you without the AI Copilot, so you can see what editing the YAML directly looks like. It posts the final result to Slack.",
             "next": "See the task docs",
-            "callout": "AI Copilot gave you the first draft; the editor is where you can iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
+            "callout": "A first draft from AI Copilot is only a starting point; the editor is where you iterate on it in a Code or No-Code editor tab, which both produce the same YAML, so your flow stays as code however it was built."
           },
           "editor_help": {
             "title": "The docs are next to the flow",
@@ -1428,7 +1438,7 @@
           "takeaways": {
             "copilot": {
               "title": "Flows generated from plain English",
-              "body": "Describe what you want to automate, and a flow is drafted by the AI Copilot. From there you refine it in the editor, with autocompletion and the <strong>Docs</strong> panel. Flows are run from the <strong>Execute</strong> button of the flow or of any execution."
+              "body": "Describe what you want to automate in the AI Copilot chat, and a first version of the flow is generated from the live flow schema. The same is possible from your editor or terminal: Claude Code, Cursor, and other coding agents can generate flows with the Kestra agent skills."
             },
             "restart": {
               "title": "Replay instead of running everything again",
@@ -1449,6 +1459,8 @@
           "start_building": "Start building",
           "docs": {
             "title": "Read more",
+            "copilot": "AI Copilot",
+            "agentSkills": "Agent skills",
             "autocompletion": "Autocompletion",
             "execution": "Executions",
             "replay": "Replay",
@@ -1891,6 +1903,10 @@
         "title": "You have no Assets yet!",
         "content": "Add assets to track and manage your data assets, services, and infrastructure."
       },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+      },
       "apiTokens": {
         "title": "Manage your API Tokens",
         "content": "API tokens are used anytime you want to grant programmatic access to the Kestra API."
@@ -1980,7 +1996,8 @@
       "kv_pairs": "No Key-Value pairs Found",
       "secrets": "No Secrets Found",
       "templates": "No Templates Found",
-      "assets": "No Assets Found"
+      "assets": "No Assets Found",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {

@@ -49,6 +49,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
@@ -67,6 +68,7 @@ public class ExecutorService {
     private final AssetService assetService;
     private final RunContextInitializer runContextInitializer;
     private final TaskOutputService taskOutputService;
+    private final PausedTaskNotifier pausedTaskNotifier;
 
     @Inject
     public ExecutorService(
@@ -82,7 +84,8 @@ public class ExecutorService {
         RunContextLoggerFactory runContextLoggerFactory,
         AssetService assetService,
         RunContextInitializer runContextInitializer,
-        TaskOutputService taskOutputService) {
+        TaskOutputService taskOutputService,
+        PausedTaskNotifier pausedTaskNotifier) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
         this.flowExecutorInterface = flowExecutorInterface;
@@ -96,6 +99,7 @@ public class ExecutorService {
         this.assetService = assetService;
         this.runContextInitializer = runContextInitializer;
         this.taskOutputService = taskOutputService;
+        this.pausedTaskNotifier = pausedTaskNotifier;
     }
 
     /**
@@ -931,6 +935,19 @@ public class ExecutorService {
             .toList();
 
         if (executor.getExecution().getState().getCurrent() != State.Type.PAUSED) {
+            workerTaskResults
+                .stream()
+                .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
+                .forEach(throwConsumer(workerTaskResult ->
+                {
+                    try {
+                        Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
+                        pausedTaskNotifier.taskPaused(executor.getFlow(), executor.getExecution(), workerTaskResult.getTaskRun(), task);
+                    } catch (Exception e) {
+                        log.warn("Unable to notify paused task '{}' for execution '{}'", workerTaskResult.getTaskRun().getTaskId(), executor.getExecution().getId(), e);
+                    }
+                }));
+
             ExecutorContext updated = executor
                 .withExecution(executor.getExecution().withState(State.Type.PAUSED), "handlePausedDelay")
                 .withWorkerTaskDelays(list, "handlePausedDelay");

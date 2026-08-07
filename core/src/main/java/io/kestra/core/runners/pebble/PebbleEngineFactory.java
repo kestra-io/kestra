@@ -113,24 +113,39 @@ public class PebbleEngineFactory {
     }
 
     public PebbleEngine createWithMaskedFunctions(VariableRenderer renderer, final List<String> functionsToMask) {
+        return createWithMaskedFunctions(renderer, functionsToMask, List.of());
+    }
 
+    /**
+     * Like {@link #createWithMaskedFunctions(VariableRenderer, List)}, but {@code functionsToBlock}
+     * are dropped from the engine entirely rather than masked: masking still invokes the real
+     * function and only hides a successful result, which is safe for a read like {@code secret()} but
+     * not for a function with a real external side effect (e.g. {@code http()}'s outbound request).
+     * A blocked function is unknown to Pebble, so any expression calling it fails to evaluate — the
+     * caller falls back to its own raw-text-on-error handling, matching {@link #createRestricted()}'s
+     * drop semantics.
+     */
+    public PebbleEngine createWithMaskedFunctions(VariableRenderer renderer, final List<String> functionsToMask, final List<String> functionsToBlock) {
         PebbleEngine.Builder builder = newPebbleEngineBuilder();
 
         this.applicationContext.getBeansOfType(Extension.class).stream()
             .map(
                 e -> functionsToMask.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
-                    ? extensionWithMaskedFunctions(renderer, e, functionsToMask)
-                    : e
+                    || functionsToBlock.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
+                        ? extensionWithMaskedFunctions(renderer, e, functionsToMask, functionsToBlock)
+                        : e
             )
             .forEach(builder::extension);
 
         return builder.build();
     }
 
-    private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initial, List<String> maskedFunctions) {
+    private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initial, List<String> maskedFunctions, List<String> blockedFunctions) {
         return wrapExtension(initial, entry ->
         {
-            if (maskedFunctions.contains(entry.getKey())) {
+            if (blockedFunctions.contains(entry.getKey())) {
+                return null;
+            } else if (maskedFunctions.contains(entry.getKey())) {
                 return Map.entry(entry.getKey(), new MaskingFunction(entry.getValue(), "******"));
             } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
                 return Map.entry(entry.getKey(), variableRendererProxy(renderer, entry.getValue()));

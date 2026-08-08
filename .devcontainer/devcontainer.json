@@ -18,28 +18,32 @@
         "editor.tabSize": 4,
         "editor.formatOnSave": true,
         "files.insertFinalNewline": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.defaultFormatter": "oxc.oxc-vscode",
         "telemetry.telemetryLevel": "off",
         "editor.bracketPairColorization.enabled": true,
         "editor.guides.bracketPairs": "active"
       },
       "extensions": [
-        "redhat.vscode-yaml",
-        "dbaeumer.vscode-eslint",
-        "vscode-icons-team.vscode-icons",
-        "eamodio.gitlens",
-        "esbenp.prettier-vscode",
         "aaron-bond.better-comments",
-        "codeandstuff.package-json-upgrade",
         "andys8.jest-snippets",
-        "oderwat.indent-rainbow",
+        "codeandstuff.package-json-upgrade",
+        "dbaeumer.vscode-eslint",
+        "docker.docker",
+        "eamodio.gitlens",
         "evondev.indent-rainbow-palettes",
         "formulahendry.auto-rename-tag",
-        "IronGeek.vscode-env",
-        "yoavbls.pretty-ts-errors",
         "github.vscode-github-actions",
+        "Gruntfuggly.todo-tree",
+        "IronGeek.vscode-env",
+        "ms-azuretools.vscode-containers",
+        "oderwat.indent-rainbow",
+        "oxc.oxc-vscode",
+        "redhat.vscode-yaml",
+        "vitest.explorer",
         "vscjava.vscode-java-pack",
-        "docker.docker"
+        "vscode-icons-team.vscode-icons",
+        "Vue.volar",
+        "yoavbls.pretty-ts-errors"
       ]
     }
   }

@@ -4,14 +4,33 @@ import type {App} from "vue"
 export function setupTenantRouter(router: Router, app: App): void {
     // Auto-inject tenant in route resolution with "main" as default
     const originalResolve = router.resolve
-    router.resolve = function(to: RouteLocationRaw, currentLocation?: RouteLocationNormalized) {
+    router.resolve = function (to: RouteLocationRaw, currentLocation?: RouteLocationNormalized) {
         if (to && typeof to === "object" && "name" in to && to.name && (!to.params || !to.params.tenant)) {
-            to = {...to, params: {tenant: "main", ...to.params}}
+            const tenant = router.currentRoute.value?.params?.tenant || "main"
+            to = {...to, params: {tenant, ...to.params}}
         }
         return originalResolve.call(this, to, currentLocation)
     }
 
-    app.config.globalProperties.$routeTo = function(to: RouteLocationRaw): RouteLocationRaw {
+    const originalPush = router.push
+    router.push = function (to: RouteLocationRaw) {
+        if (to && typeof to === "object" && "name" in to && to.name && (!to.params || !to.params.tenant)) {
+            const tenant = router.currentRoute.value?.params?.tenant || "main"
+            to = {...to, params: {tenant, ...to.params}}
+        }
+        return originalPush.call(this, to)
+    }
+
+    const originalReplace = router.replace
+    router.replace = function (to: RouteLocationRaw) {
+        if (to && typeof to === "object" && "name" in to && to.name && (!to.params || !to.params.tenant)) {
+            const tenant = router.currentRoute.value?.params?.tenant || "main"
+            to = {...to, params: {tenant, ...to.params}}
+        }
+        return originalReplace.call(this, to)
+    }
+
+    app.config.globalProperties.$routeTo = function (to: RouteLocationRaw): RouteLocationRaw {
         if (typeof to === "string") {
             return to
         }

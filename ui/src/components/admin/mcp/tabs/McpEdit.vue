@@ -313,7 +313,7 @@
                 toast.saved(created.id)
                 router.push({
                     name: "admin/mcp-servers/update",
-                    params: {id: created.id, tab: "edit"},
+                    params: {id: created.id, tab: "edit", tenant: route.params.tenant},
                 })
             } catch (e) {
                 submitting.value = false

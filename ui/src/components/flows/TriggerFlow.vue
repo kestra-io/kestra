@@ -318,3 +318,24 @@
         padding-right: 0;
     }
 </style>
+
+<style lang="scss">
+    /* Constrain the execution dialog height so the footer (Execute button)
+       stays visible without scrolling the entire modal. Only the dialog body
+       scrolls; the header and footer remain fixed.  */
+    #execute-flow-dialog {
+        display: flex;
+        flex-direction: column;
+        max-height: 80vh;
+
+        .kel-dialog__body {
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .kel-dialog__footer {
+            flex-shrink: 0;
+        }
+    }
+</style>

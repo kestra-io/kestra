@@ -11,13 +11,13 @@
                 <component :is="taskIconComponent" :cls="cls" :class="taskIconBg" variable="--ks-topology-icon-color" :icons="icons" />
             </div>
             <div class="node-content">
-                <slot name="badge" />
                 <div class="node-title">
                     <div class="task-title" :title="hoverTooltip">
                         <KsTooltip :content="hoverTooltip">
                             {{ displayTitle }}
                         </KsTooltip>
                     </div>
+                    <slot name="badge" />
                     <slot name="title-status" />
                     <slot name="title-actions" />
                 </div>

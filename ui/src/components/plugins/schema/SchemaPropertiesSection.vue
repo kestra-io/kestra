@@ -86,7 +86,7 @@
                             >
                                 <slot
                                     name="markdown"
-                                    :content="property.title || property.description || ''"
+                                    :content="property.description || property.title || ''"
                                 />
                             </div>
                         </div>

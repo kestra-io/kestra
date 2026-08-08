@@ -222,10 +222,6 @@
 </script>
 
 <style scoped lang="scss">
-    .task-duration {
-        padding: .375rem 0;
-    }
-
     .taskrun-header,
     .attempt-header {
         display: flex;
@@ -243,9 +239,18 @@
             font-size: var(--ks-font-size-xs)
         }
 
-        .task-duration small {
-            white-space: nowrap;
-            color: var(--ks-text-secondary);
+        .task-duration {
+            min-width: 70px;
+
+            small {
+                white-space: nowrap;
+                color: var(--ks-text-secondary);
+            }
+        }
+
+        .task-status,
+        .task-duration {
+            flex-shrink: 0;
         }
 
     }

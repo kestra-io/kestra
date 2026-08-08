@@ -324,8 +324,8 @@
 
         return {
             grid: isCompact
-                ? {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
-                : {left: 0, right: 0, bottom: "3%", top: "5%", containLabel: true},
+                ? {top: 2, right: 2, bottom: 2, left: 2, outerBoundsMode: "none"}
+                : {left: 0, right: 0, bottom: "3%", top: "5%", outerBoundsMode: "same"},
             xAxis: {
                 type: "category",
                 data: xAxisData,

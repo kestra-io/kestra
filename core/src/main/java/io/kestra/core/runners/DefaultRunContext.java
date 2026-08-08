@@ -434,20 +434,31 @@ public class DefaultRunContext extends RunContext {
                 return logFileURI;
             } catch (Exception e) {
                 logger().warn("Failed to upload log file to storage", e);
-                if (Thread.currentThread().isInterrupted() || 
-                    e instanceof InterruptedException || 
-                    e.getCause() instanceof InterruptedException || 
-                    "software.amazon.awssdk.core.exception.AbortedException".equals(e.getClass().getName()) || 
-                    "com.amazonaws.AbortedException".equals(e.getClass().getName()) || 
-                    (e.getCause() != null && (
-                        "software.amazon.awssdk.core.exception.AbortedException".equals(e.getCause().getClass().getName()) || 
-                        "com.amazonaws.AbortedException".equals(e.getCause().getClass().getName())
-                    ))) {
+                if (Thread.currentThread().isInterrupted()) {
+                    Thread.currentThread().interrupt();
+                }
+                if (isInterrupted(e)) {
                     Thread.currentThread().interrupt();
                 }
             }
         }
         return null;
+    }
+
+    private static boolean isAbortedException(Throwable t) {
+        if (t == null) {
+            return false;
+        }
+        String className = t.getClass().getName();
+        return "software.amazon.awssdk.core.exception.AbortedException".equals(className) ||
+            "com.amazonaws.AbortedException".equals(className);
+    }
+
+    private static boolean isInterrupted(Throwable e) {
+        return e instanceof InterruptedException ||
+            e.getCause() instanceof InterruptedException ||
+            isAbortedException(e) ||
+            isAbortedException(e.getCause());
     }
 
     /**

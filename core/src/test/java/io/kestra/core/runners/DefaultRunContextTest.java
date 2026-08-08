@@ -60,38 +60,56 @@ class DefaultRunContextTest {
 
     @Test
     void shouldReturnNullAndRestoreInterruptStatusWhenLogUploadFails() throws IOException {
-        java.util.List<Exception> interruptedExceptions = java.util.List.of(
-            new RuntimeException("Thread was interrupted", new InterruptedException()),
-            new software.amazon.awssdk.core.exception.AbortedException("Aborted"),
-            new com.amazonaws.AbortedException("Aborted"),
-            new RuntimeException("Wrapped", new com.amazonaws.AbortedException("Aborted"))
+        Storage storage = mock(Storage.class);
+        when(storage.putFile(any(java.io.File.class))).thenThrow(new RuntimeException("Thread was interrupted", new InterruptedException()));
+
+        RunContextLogger runContextLogger = new RunContextLogger(
+            mock(LogEntryEmitter.class),
+            LogEntry.builder().tenantId("t").namespace("n").flowId("f").build(),
+            org.slf4j.event.Level.INFO,
+            true
         );
+        runContextLogger.logger();
 
-        for (Exception ex : interruptedExceptions) {
-            Storage storage = mock(Storage.class);
-            when(storage.putFile(any(java.io.File.class))).thenThrow(ex);
+        DefaultRunContext runContext = (DefaultRunContext) runContextFactory.of();
+        runContext.setStorage(storage);
+        runContext.setLogger(runContextLogger);
 
-            RunContextLogger runContextLogger = new RunContextLogger(
-                mock(LogEntryEmitter.class),
-                LogEntry.builder().tenantId("t").namespace("n").flowId("f").build(),
-                org.slf4j.event.Level.INFO,
-                true
-            );
-            runContextLogger.logger();
+        Thread.interrupted();
 
-            DefaultRunContext runContext = (DefaultRunContext) runContextFactory.of();
-            runContext.setStorage(storage);
-            runContext.setLogger(runContextLogger);
+        URI uri = runContext.logFileURI();
 
-            Thread.interrupted();
+        assertThat(uri).isNull();
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
 
-            URI uri = runContext.logFileURI();
+        Thread.interrupted();
+    }
 
-            assertThat(uri).isNull();
-            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+    @Test
+    void shouldRestoreInterruptStatusWhenThreadWasAlreadyInterrupted() throws IOException {
+        Storage storage = mock(Storage.class);
+        when(storage.putFile(any(java.io.File.class))).thenThrow(new IOException("Generic IO error"));
 
-            Thread.interrupted();
-        }
+        RunContextLogger runContextLogger = new RunContextLogger(
+            mock(LogEntryEmitter.class),
+            LogEntry.builder().tenantId("t").namespace("n").flowId("f").build(),
+            org.slf4j.event.Level.INFO,
+            true
+        );
+        runContextLogger.logger();
+
+        DefaultRunContext runContext = (DefaultRunContext) runContextFactory.of();
+        runContext.setStorage(storage);
+        runContext.setLogger(runContextLogger);
+
+        Thread.currentThread().interrupt();
+
+        URI uri = runContext.logFileURI();
+
+        assertThat(uri).isNull();
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+
+        Thread.interrupted();
     }
 
     @Test

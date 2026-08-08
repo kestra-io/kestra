@@ -222,15 +222,11 @@
 </script>
 
 <style scoped lang="scss">
-    .task-duration {
-        padding: .375rem 0;
-    }
-
     .taskrun-header,
     .attempt-header {
         display: flex;
         gap: .5rem;
-        padding: 0.5rem 1rem;
+        padding: 0.25rem 1rem;
         border-bottom: 1px solid var(--ks-border-default);
 
         >* {
@@ -243,9 +239,19 @@
             font-size: var(--ks-font-size-xs)
         }
 
-        .task-duration small {
-            white-space: nowrap;
-            color: var(--ks-text-secondary);
+        .task-duration {
+            flex-shrink: 0;
+            min-width: 70px;
+            justify-content: flex-end;
+
+            small {
+                white-space: nowrap;
+                color: var(--ks-text-secondary);
+            }
+        }
+
+        .task-status {
+            flex-shrink: 0;
         }
 
     }
@@ -265,7 +271,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding: .375rem 0;
 
             span span {
                 color: var(--ks-text-primary);

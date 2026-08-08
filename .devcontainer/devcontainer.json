@@ -18,7 +18,7 @@
         "editor.tabSize": 4,
         "editor.formatOnSave": true,
         "files.insertFinalNewline": true,
-        "editor.defaultFormatter": "oxc.oxc-vscode",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
         "telemetry.telemetryLevel": "off",
         "editor.bracketPairColorization.enabled": true,
         "editor.guides.bracketPairs": "active"
@@ -30,6 +30,7 @@
         "dbaeumer.vscode-eslint",
         "docker.docker",
         "eamodio.gitlens",
+        "esbenp.prettier-vscode",
         "evondev.indent-rainbow-palettes",
         "formulahendry.auto-rename-tag",
         "github.vscode-github-actions",

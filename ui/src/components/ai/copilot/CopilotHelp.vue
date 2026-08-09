@@ -48,7 +48,7 @@
         flex-direction: column;
         gap: var(--ks-spacing-2);
         width: 100%;
-        margin-top: var(--ks-spacing-4);
+        margin: var(--ks-spacing-4) 0 var(--ks-spacing-4) 0;
         /* The empty-state hero centers its content; the help section reads better left-aligned. */
         text-align: left;
     }

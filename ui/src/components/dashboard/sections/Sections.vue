@@ -121,6 +121,7 @@
         charts?: Chart[];
         showDefault?: boolean;
         padding?: boolean;
+        baseFilters?: QueryFilter[];
     }>()
 
     const labels = (chart: Chart) => ({
@@ -130,7 +131,7 @@
 
     // Make the overview of flows/dashboard/namespace specific
     const filters = computed<QueryFilter[]>(() => {
-        const baseFilters: QueryFilter[] = []
+        const baseFilters: QueryFilter[] = [...(props.baseFilters ?? [])]
 
         if (routeFamily(route.name) === "flows/update") {
             baseFilters.push({

@@ -49,7 +49,7 @@
             @ready="ready = true"
             :defaultSort="{prop: 'state.startDate', order: 'descending'}"
             :selectable="!hidden?.includes('selection') && canCheck"
-            :no-data-text="$t('no_results.executions')"
+            :no-data-text="noDataText ?? $t('no_results.executions')"
             :rowKey="(row: any) => row.id"
             :fitHeight="fitHeightResolved"
         >
@@ -73,7 +73,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts showDefault class="mb-4" />
+                <Sections ref="dashboardComponent" :dashboard="DEFAULT_DASHBOARD" :charts :baseFilters="lockedFilters" showDefault class="mb-4" />
             </template>
 
             <template #bulk-actions>
@@ -472,6 +472,7 @@
     import {useStateFilter} from "../filter/composables/useStateFilter"
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw"
     import {DEFAULT_DASHBOARD} from "../../stores/dashboard"
+    import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
     const {t} = useI18n()
     const toast = useToast()
@@ -493,6 +494,9 @@
         flowId?: string | undefined;
         namespace?: string | undefined;
         defaultScopeFilter?: boolean;
+        labels?: Record<string, string> | undefined;
+        title?: string | undefined;
+        noDataText?: string | undefined;
     }>(), {
         embed: false,
         filter: true,
@@ -507,6 +511,9 @@
         flowId: undefined,
         namespace: undefined,
         defaultScopeFilter: false,
+        labels: undefined,
+        title: undefined,
+        noDataText: undefined,
     })
 
     const fitHeightResolved = computed(() => props.fitHeight ?? props.topbar)
@@ -706,7 +713,7 @@
         dataTable.value?.resetAndReload()
     })
 
-    const routeInfo = computed(() => ({title: t("executions")}))
+    const routeInfo = computed(() => ({title: props.title ?? t("executions")}))
     useRouteContext(routeInfo, props.embed)
 
     const selection = computed(() => dataTable.value?.selection ?? [])
@@ -768,6 +775,10 @@
         ]
     })
 
+    const lockedFilters = computed<QueryFilter[]>(() =>
+        props.labels ? [{field: "labels", operation: "EQUALS", value: props.labels}] : [],
+    )
+
     const filteredLabels = (labels: any[]) => {
         const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || []
 
@@ -828,6 +839,10 @@
         if (props.flowId) {
             queryFilter["filters[flowId][EQUALS]"] = props.flowId
         }
+
+        Object.entries(props.labels ?? {}).forEach(([key, value]) => {
+            queryFilter[`filters[labels][EQUALS][${key}]`] = value
+        })
 
         const hasStateFilters = Object.keys(queryFilter).some(key => key.startsWith("filters[state]")) || queryFilter.state
         if (!hasStateFilters && props.statuses?.length > 0) {

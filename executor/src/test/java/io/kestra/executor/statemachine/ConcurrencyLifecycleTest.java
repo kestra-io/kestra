@@ -458,7 +458,7 @@ class ConcurrencyLifecycleTest {
     }
 
     private Optional<Execution> release(ExecutorContext terminated) {
-        return harness.concurrencySlotReleaseProcessor().release(terminated);
+        return harness.concurrencySlotReleaseProcessor().release(terminated, true);
     }
 
     private static ExecutorContext terminated(FlowWithSource flow, Execution running) {

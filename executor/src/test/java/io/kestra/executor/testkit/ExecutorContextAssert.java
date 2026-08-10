@@ -6,7 +6,6 @@ import java.util.function.Consumer;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
 
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.executor.ExecutorContext;
@@ -41,17 +40,9 @@ public class ExecutorContextAssert extends AbstractAssert<ExecutorContextAssert,
         return this;
     }
 
-    public ExecutorContextAssert hasNexts(String... taskIds) {
-        isNotNull();
-        Assertions.assertThat(actual.getNexts())
-            .extracting(TaskRun::getTaskId)
-            .containsExactly(taskIds);
-        return this;
-    }
-
     public ExecutorContextAssert hasNoNexts() {
         isNotNull();
-        Assertions.assertThat(actual.getNexts()).isEmpty();
+        Assertions.assertThat(actual.getNextCount()).isZero();
         return this;
     }
 

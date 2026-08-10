@@ -1,5 +1,6 @@
 package io.kestra.executor.statemachine;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutionRunning;
+import io.kestra.core.runners.ScopedConcurrencyLimit;
 import io.kestra.executor.testkit.Executions;
 import io.kestra.executor.testkit.ExecutorTestHarness;
 import io.kestra.executor.testkit.Flows;
@@ -44,7 +46,7 @@ class ConcurrencyDecisionTest {
         ExecutionRunning executionRunning = executionRunning(flow);
 
         // When
-        ExecutionRunning decided = harness.executorService().processExecutionRunning(flow, 2, executionRunning);
+        ExecutionRunning decided = harness.executorService().processExecutionRunning(List.of(ScopedConcurrencyLimit.ofFlow(flow)), List.of(2), executionRunning);
 
         // Then
         assertThat(decided.getExecution().getState().getCurrent()).isEqualTo(expectedState);
@@ -59,7 +61,7 @@ class ConcurrencyDecisionTest {
         ExecutionRunning executionRunning = executionRunning(flow);
 
         // When
-        ExecutionRunning decided = harness.executorService().processExecutionRunning(flow, 5, executionRunning);
+        ExecutionRunning decided = harness.executorService().processExecutionRunning(List.of(ScopedConcurrencyLimit.ofFlow(flow)), List.of(5), executionRunning);
 
         // Then
         assertThat(decided.getExecution().getState().getCurrent()).isEqualTo(expectedState);
@@ -73,7 +75,7 @@ class ConcurrencyDecisionTest {
         ExecutionRunning executionRunning = executionRunning(flow);
 
         // When
-        ExecutionRunning decided = harness.executorService().processExecutionRunning(flow, 1, executionRunning);
+        ExecutionRunning decided = harness.executorService().processExecutionRunning(List.of(ScopedConcurrencyLimit.ofFlow(flow)), List.of(1), executionRunning);
 
         // Then
         assertThat(decided.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);
@@ -87,7 +89,7 @@ class ConcurrencyDecisionTest {
         ExecutionRunning executionRunning = executionRunning(flow);
 
         // When
-        ExecutionRunning decided = harness.executorService().processExecutionRunning(flow, 100, executionRunning);
+        ExecutionRunning decided = harness.executorService().processExecutionRunning(List.of(), List.of(), executionRunning);
 
         // Then
         assertThat(decided.getExecution().getState().getCurrent()).isEqualTo(State.Type.RUNNING);

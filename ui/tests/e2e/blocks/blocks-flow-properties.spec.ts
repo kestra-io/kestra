@@ -56,13 +56,14 @@ test.describe("Block editor — flow properties panel", () => {
     })
 
     test("id and namespace are locked when editing an existing flow", async ({page}) => {
-        // Both render as locked inputs — readonly (white, with a lock icon), not
-        // the greyed disabled look — so there is no way to type into them.
+        // Both carry the same locked treatment — the greyed disabled look with a
+        // lock icon — so there is no way to type into either of them.
         const idField = field(page, "id")
         const nsField = field(page, "namespace")
         await expect(idField.locator("input, .monaco-editor, [class*=disabled]").first()).toBeVisible()
         expect(await idField.locator("input:not([disabled]):not([readonly])").count()).toBe(0)
         expect(await nsField.locator("input:not([disabled]):not([readonly])").count()).toBe(0)
+        await expect(idField.locator(".kel-input.is-disabled").first()).toBeVisible()
     })
 
     test("edits the description and persists it", async ({page, request, baseURL}) => {

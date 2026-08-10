@@ -22,7 +22,7 @@
         <InputText
             v-if="disabled"
             :modelValue="String(modelValue ?? '')"
-            readonly
+            disabled
             class="w-100 disabled-field"
         />
         <KsEditor

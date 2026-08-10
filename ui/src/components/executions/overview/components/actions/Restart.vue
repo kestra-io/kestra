@@ -74,6 +74,7 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
+        scrollable
     >
         <template #header>
             <div class="modal-header m-0">
@@ -158,6 +159,7 @@
         v-model="isReplayWithInputsOpen"
         destroyOnClose
         :appendToBody="true"
+        scrollable
     >
         <template #header>
             <span

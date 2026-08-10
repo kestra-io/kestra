@@ -7,6 +7,7 @@
         :closeOnPressEscape="true"
         @close="handleClose"
         customClass="hello-survey-dialog"
+        scrollable
     >
         <div class="survey-content">
             <div class="question-section">

@@ -1868,7 +1868,6 @@
     "learn_more": "Aprender más",
     "watch_video": "Ver Video",
     "runners": "Corredores",
-    "select": "Seleccione su {{section}}",
     "for flow": "para flow",
     "forbidden system labels": "Solo system.correlationId puede usarse como label del sistema",
     "confirm": "Confirmar",
@@ -2153,11 +2152,11 @@
         "context": {
           "app": "Aplicación: {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Panel de control: {{dashboard}}",
+          "dashboard": "Panel de control: {dashboard}",
           "execution": "Ejecución: {id}",
           "flow": "Flow: {flow}",
           "namespace": "Namespace: {namespace}",
-          "plugin": "Plugin: {{plugin}}",
+          "plugin": "Plugin: {plugin}",
           "test": "Prueba: {test}"
         },
         "contextAdded": "Añadido {type} {id} al contexto.",
@@ -2174,9 +2173,9 @@
         "contextRemoved": "Eliminado {type} {id} del contexto.",
         "toolResult": {
           "detail": "Detalles",
-          "error": "El {{tool}} falló",
+          "error": "El {tool} falló",
           "ok": "{tool} completado",
-          "rejected": "{{tool}} rechazado"
+          "rejected": "{tool} rechazado"
         },
         "confirm": {
           "planTitle": "Plan propuesto",
@@ -2448,7 +2447,7 @@
     },
     "mcp": {
       "your_servers": "Sus Servidores",
-      "servers_count": "{{count}} Servidores MCP",
+      "servers_count": "{count} Servidores MCP",
       "managed_by_kestra": "Gestionado por Kestra",
       "servers": "Servidores MCP",
       "server": "Servidor MCP",

@@ -75,7 +75,8 @@
 </template>
 
 <script lang="ts">
-    import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+    import * as monaco from "monaco-editor/editor/editor.api"
+    import {typescriptDefaults, ScriptTarget} from "monaco-editor/languages/features/typescript/register"
 
     function isOffsetInPebbleBlock(text: string, offset: number): boolean {
         if (offset < 2) return false
@@ -186,23 +187,22 @@
         monaco.editor.defineTheme(themeKey, themeData)
     })
 
-    if (monaco.languages.typescript) {
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-            target: monaco.languages.typescript.ScriptTarget.ES2020,
-            lib: ["es2020"],
-            allowNonTsExtensions: true,
-        })
-    }
+    typescriptDefaults.setCompilerOptions({
+        target: ScriptTarget.ES2020,
+        lib: ["es2020"],
+        allowNonTsExtensions: true,
+    })
 </script>
 
 <script setup lang="ts">
-    import "monaco-editor/esm/vs/editor/editor.all"
-    import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens"
-    import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
-    import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
-    import "monaco-editor/esm/vs/language/json/monaco.contribution"
-    import "monaco-editor/esm/vs/language/typescript/monaco.contribution"
-    import "monaco-editor/esm/vs/basic-languages/monaco.contribution"
+    // monaco-editor 0.56 dropped editor.all in favor of the tree-shakeable features/register.all entry point
+    import "monaco-editor/features/register.all"
+    import "monaco-editor/editor/standalone/browser/inspectTokens/inspectTokens"
+    import "monaco-editor/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
+    import "monaco-editor/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
+    import "monaco-editor/language/json/monaco.contribution"
+    import "monaco-editor/language/typescript/monaco.contribution"
+    import "monaco-editor/basic-languages/monaco.contribution"
 
     import type {VNode} from "vue"
     import {computed, h, onBeforeUnmount, onMounted, ref, render, shallowRef, watch} from "vue"
@@ -212,8 +212,8 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
     // @ts-expect-error tab focus path lacks types
-    import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus"
-    import {editor as monacoEditorNs} from "monaco-editor/esm/vs/editor/editor.api"
+    import {TabFocus} from "monaco-editor/editor/browser/config/tabFocus"
+    import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
     import moment from "moment"
     import type {Moment} from "moment"
     import debounce from "lodash/debounce"

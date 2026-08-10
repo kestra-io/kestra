@@ -1,0 +1,10 @@
+diff --git a/node_modules/monaco-worker-manager/worker.js b/node_modules/monaco-worker-manager/worker.js
+index 8fe26e5..c3c3851 100644
+--- a/node_modules/monaco-worker-manager/worker.js
++++ b/node_modules/monaco-worker-manager/worker.js
+@@ -1,4 +1,4 @@
+-import { initialize as initializeWorker } from 'monaco-editor/esm/vs/editor/editor.worker.js';
++import { initialize as initializeWorker } from 'monaco-editor/editor/editor.worker.js';
+ /**
+  * Create a web worker proxy.
+  *

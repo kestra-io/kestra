@@ -22,18 +22,11 @@
     "show more details": "자세한 정보 보기",
     "skipped": "건너뜀",
     "revision": "수정본",
-    "Language": "언어",
-    "Set default page": "기본 페이지 설정",
     "theme": "테마",
     "flows": "Flows",
     "flow": "Flow",
-    "invalid source": "잘못된 소스 코드",
     "invalid duration": "유효하지 않은 기간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해주세요.",
-    "missingSource": "소스 누락",
     "update": "업데이트",
-    "update ok": "업데이트됨",
-    "delete ok": "삭제됨",
-    "Default page": "기본 페이지",
     "confirmation": "확인",
     "common": {
       "back": "뒤로",
@@ -75,13 +68,10 @@
     "delete": "삭제",
     "deleted": "성공적으로 삭제됨",
     "deleted confirm": "<em>{name}</em>이(가) 성공적으로 삭제되었습니다!",
-    "Add flow": "Flow 추가",
     "add": "추가",
     "add_new_item": "새 항목 추가",
     "copy": "복사",
     "copy_to_clipboard": "클립보드에 복사",
-    "copy_and_close": "복사하고 닫기",
-    "Per page": "페이지당",
     "new": "새로 만들기",
     "edit": "편집",
     "back": "뒤로",
@@ -92,7 +82,6 @@
     "executions": "실행",
     "execution": "실행",
     "execution id": "실행 Id",
-    "recent_executions": "최근 실행",
     "details": "세부 정보",
     "overview": "개요",
     "gantt": "간트",
@@ -100,7 +89,6 @@
     "gantt_no_tasks_match_filters": "검색, 상태 또는 log-level 필터를 조정해 보세요.",
     "gantt_no_tasks_match_filters_title": "선택한 필터와 일치하는 task가 없습니다.",
     "logs": "Logs",
-    "no_logs_data": "데이터 없음",
     "no_logs_data_description": "필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_logs_data_title": "선택한 필터에 대한 로그가 없습니다.",
     "duration": "지속 시간",
@@ -113,10 +101,7 @@
       "noBaseline": "이력 데이터가 없어 남은 시간을 추정할 수 없습니다",
       "pastEstimate": "평소보다 오래 실행되고 있습니다"
     },
-    "choose file": "파일을 선택하거나 여기에 드롭하세요...",
     "launch execution": "실행",
-    "warning flow with triggers": "이 flow는 triggers를 포함하고 있으며, 이 flow가 trigger expressions에 의존하는 경우 수동 실행이 실패합니다. 해당 Flow는 Trigger를 포함하고 있으며,  Trigger Expression을 의존하는 경우 수동 실행이 실패할 수 있습니다. ",
-    "triggered": "Trigger 실행",
     "triggered done": "<em>{name}</em>이(가) 성공적으로 Trigger 되었습니다.",
     "topology": "토폴로지",
     "date": "날짜",
@@ -182,11 +167,8 @@
     },
     "created date": "생성 날짜",
     "latest_update": "최신 업데이트",
-    "updated date": "업데이트 날짜",
     "expiration date": "만료 날짜",
-    "started date": "시작 날짜",
     "healthcheck date": "HealthCheck 날짜",
-    "next execution date": "다음 실행 날짜",
     "last execution status": "마지막 실행 상태",
     "jump to...": "이동...",
     "contextBar": {
@@ -203,62 +185,31 @@
     "home": "홈",
     "create": "생성",
     "create_flow": "Flow 생성",
-    "add flow": "Flow 추가",
     "from": "시작",
     "to": "종료",
-    "search filters": {
-      "saved": "저장된 필터",
-      "manage": "검색 필터 관리",
-      "manage desc": "저장된 검색 필터 관리",
-      "save filter": "필터 저장",
-      "filter name": "필터 이름",
-      "filters": "필터"
-    },
     "steps": "단계",
     "state": "상태",
-    "state_history": "상태 기록",
-    "search term in message": "메시지에서 검색어 찾기",
     "search": "검색",
-    "search blueprint": "Blueprints 검색",
-    "all tags": "모든 태그",
     "source search": "소스 검색",
-    "filter by log level": "Log 레벨로 필터링",
     "selected": "선택됨",
     "task": "Task",
-    "task logs": "Task Logs",
-    "display flow {id} executions": "Flow {id} 실행 표시",
     "actions": "작업",
-    "select datetime": "날짜 선택",
     "select view": "보기 선택",
-    "invalid field": "잘못된 필드: {name}",
-    "required field": "필수 필드",
     "is required": "{field}는 필수 항목입니다.",
     "error": "오류",
     "form": "양식",
-    "form error": "양식 오류",
-    "display topology for flow": "Flow의 토폴로지 표시",
-    "cannot create topology": "Flow의 토폴로지를 생성할 수 없습니다.",
     "start date": "시작 날짜",
     "end date": "종료 날짜",
-    "creation": "생성",
-    "flow creation": "Flow 생성",
-    "start datetime": "시작 날짜 및 시간",
-    "end datetime": "종료 날짜 및 시간",
     "restart": "재시작",
     "restart latest revision": "최신 수정본으로 재시작",
     "restart tooltip": "<code>{state}</code> Task에서 실행을 재시작합니다.",
     "restarted": "실행이 재시작되었습니다.",
     "restart confirm": "<code>{id}</code> 실행을 재시작하시겠습니까?",
-    "restart change revision": "선택하시는 수정본으로 재실행 할 수 있습니다.",
     "replay": "재실행",
     "replay from task tooltip": "<code>{taskId}</code> Task에서 재실행",
     "replay from beginning tooltip": "처음부터 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
     "replayed": "실행이 재생되었습니다.",
-    "replay confirm": "재실행 하시겠습니까?",
-    "replay with inputs": "입력과 함께 재실행",
-    "reuse_original_inputs": "원래 input 재사용",
-    "modify_inputs": "입력 수정",
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
     "prefill inputs": "미리 채우기",
     "current": "현재",
@@ -269,29 +220,7 @@
     "yes": "네",
     "change state done": "작업 상태가 업데이트되었습니다",
     "change state confirm": "----------\n                \n정말로 실행 <code>{id}</code>에서 <code>{task}</code> task의 상태를 변경하시겠습니까?",
-    "change queue confirm": "큐 상태를 실행 <code>{id}</code>에 대해 변경하시겠습니까?<br/>",
     "change state current state": "현재 상태는:",
-    "change state hint": {
-      "WARNING": [
-        "Flow가 WARNING으로 표시됩니다.",
-        "다음 tasks가 실행됩니다.",
-        "오류 tasks가 실행됩니다."
-      ],
-      "FAILED": [
-        "Flow가 FAILED로 표시됩니다.",
-        "다른 task는 실행되지 않습니다.",
-        "오류 task가 실행됩니다."
-      ],
-      "SUCCESS": [
-        "이 task가 성공했기 때문에 flow가 재시작됩니다.",
-        "모든 차단된 task가 실행됩니다.",
-        "모든 task 실행이 성공하면 flow는 SUCCESS 상태가 됩니다."
-      ],
-      "RUNNING": [
-        "flow가 재시작되고 모든 다음 task가 실행됩니다.",
-        "모든 차단된 task가 실행됩니다."
-      ]
-    },
     "replay execution title": "실행 다시 실행",
     "restart execution title": "실행 재시작",
     "replay execution description": "선택한 실행을 기반으로 새 실행을 생성합니다.",
@@ -304,8 +233,6 @@
     "modify inputs": "입력 수정",
     "replay inputs new required": "이 수정본에는 input이 있습니다. 입력하라는 메시지가 표시됩니다.",
     "replay select taskrun": "어떤 task run을 재생할지 선택하십시오:",
-    "change state tooltip": "실행 상태 변경",
-    "change execution state confirm": "실행 <code>{id}</code>의 상태를 변경하시겠습니까?",
     "change execution state done": "실행 상태가 업데이트되었습니다",
     "mark as": "<code>{status}</code>로 표시",
     "unqueue as": "<code>{status}</code>로 대기열에서 제거",
@@ -318,7 +245,7 @@
     "resumed title": "실행 <code>{id}</code> 재개",
     "resumed confirm": "실행 <code>{id}</code>을(를) 재개하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
-    "resume from breakpoint title": "`{{id}}` 실행을 중단점에서 재개",
+    "resume from breakpoint title": "`{id}` 실행을 중단점에서 재개",
     "resume from breakpoint done": "실행이 중단점부터 재개되었습니다",
     "breakpoints": "중단점",
     "pause": "일시 중지",
@@ -328,16 +255,12 @@
     "unqueue": "대기열에서 제거",
     "unqueue title": "실행 <code>{id}</code>을(를) 대기열에서 제거합니다.<br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
     "unqueue title multiple": "<code>{count}</code>개의 실행을 대기열에서 제거하시겠습니까?<br/><br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
-    "unqueue confirm": "실행 <code>{id}</code>의 대기열을 해제하시겠습니까?",
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "force run": "강제 실행",
     "force run title": "실행 <code>{id}</code> 강제 실행.",
-    "force run tooltip": "실행을 강제로 수행합니다. 이는 중복된 task 실행을 생성할 수 있으며, 가능하다면 다른 작업을 사용하십시오.",
     "force run confirm": "실행 <code>{id}</code>을(를) 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동합니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
     "force run done": "실행이 강제 실행됩니다.",
-    "toggle output": "출력 전환",
     "metrics": "메트릭",
-    "no data current task": "현재 task에 대한 데이터가 없습니다.",
     "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
     "no outputs available": "이 task 실행에 대한 output이 없습니다.",
     "outputs": "Outputs",
@@ -346,23 +269,15 @@
     "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "디버그 표현식",
-      "render": "식 렌더링",
-      "tooltip": "모든 Pebble 표현식을 렌더링하고 실행 컨텍스트를 검사합니다.",
       "preview": "미리보기",
       "expression": "표현식"
     },
     "attempt": "시도",
-    "toggle output display": "출력 표시 전환",
     "name": "이름",
     "key": "Key",
     "value": "Value",
-    "each value": "반복 값",
-    "current execution": "현재 실행",
     "parent execution": "부모 실행",
     "original execution": "원래 실행",
-    "automatic refresh": "자동 새로 고침",
-    "toggle periodic refresh each x seconds": "주기적인 새로 고침을 {interval}초마다 전환",
-    "trigger refresh": "새로 고침 trigger",
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
     "refresh": "새로 고침",
     "filter by status": "{status} 상태로 실행 필터링",
@@ -379,13 +294,8 @@
     "show task condition": "작업 상태 표시",
     "show task outputs": "Task Outputs 보기",
     "show task source": "Task 소스 보기",
-    "specific task": "특정 task",
-    "display output for specific task": "특정 task의 출력 표시",
-    "display metric for specific task": "특정 task의 메트릭 표시",
-    "display direct sub tasks count": "직접 subtask 수 표시",
     "stream": "스트림",
     "execution statistics": "실행 통계",
-    "stats": "통계",
     "concurrency limits": "동시성 제한",
     "system overview": "시스템 개요",
     "usage": "사용량",
@@ -393,23 +303,12 @@
     "tasks": "Tasks",
     "executions duration (in minutes)": "총 실행 시간 (분 단위)",
     "last 48 hours": "지난 48시간",
-    "configure basic auth": "기본 인증 구성",
     "email": "이메일",
     "password": "비밀번호",
     "confirm password": "비밀번호 확인",
-    "email length constraint": "이메일은 256자를 초과할 수 없습니다.",
-    "password length constraint": "비밀번호는 256자를 초과할 수 없습니다.",
-    "password empty constraint": "잘못된 사용자 이름 또는 비밀번호",
-    "passwords do not match": "비밀번호가 일치하지 않습니다.",
-    "avg duration": "평균 실행 시간",
-    "neutral trend": "안정적",
-    "up trend": "증가 중",
-    "down trend": "감소 중",
-    "update aborted": "업데이트 중단됨",
     "invalid flow": "잘못된 Flow",
     "invalid yaml": "잘못된 YAML",
     "inputs": "Inputs",
-    "no_inputs": "입력값이 없습니다.",
     "input": "Input",
     "variables": "변수",
     "variable_explorer": {
@@ -434,7 +333,6 @@
       "html_asset_warning": "이 미리보기는 HTML을 샌드박스 프레임에서 렌더링합니다. 상대 경로로 참조된 이미지 및 스타일시트와 같은 로컬 자산은 로드되지 않습니다.",
       "html_preview_title": "HTML 파일 미리보기"
     },
-    "no_variables": "사용 가능한 변수가 없습니다.",
     "download": "다운로드",
     "jsonl": "JSONL",
     "concurrency_limit": {
@@ -449,8 +347,7 @@
       }
     },
     "documentation": {
-      "documentation": "문서",
-      "github": "GitHub 이슈 열기"
+      "documentation": "문서"
     },
     "blueprints": {
       "all": "모두",
@@ -521,36 +418,23 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow 문서",
-      "name": "플러그인",
       "names": "플러그인들",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
       "nav_overview": "개요",
       "nav_properties": "Properties",
       "non_dynamic": "비동적",
-      "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요.",
       "release": "릴리스 노트",
       "required": "필수"
     },
     "last execution date": "마지막 실행 날짜",
-    "last execution state": "마지막 상태",
-    "last X days count": "지난 {days}일 동안 {count}",
-    "date range count": "{startDate}와 {endDate} 사이에 {count}",
-    "date count": "{date}에 {count}",
     "revisions": "수정본들",
     "no revisions found": "이 flow에 대한 수정본이 하나만 존재합니다.",
     "no revisions": "리비전 없음",
-    "see full revision": "전체 수정본 보기",
     "side-by-side": "나란히",
     "line-by-line": "줄별로",
     "template": "템플릿",
-    "template creation": "템플릿 생성",
-    "templates": "템플릿들",
-    "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates?utm_source=app&utm_medium=referral&utm_campaign=template-inlinedoc\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
-    "no result": "결과가 없습니다.",
-    "empty search": "검색 결과가 없습니다",
     "trigger": "Trigger",
-    "no_trigger": "사용 가능한 trigger가 없습니다.",
     "triggers": "Triggers",
     "test_event": {
       "title": "테스트 이벤트 보내기",
@@ -564,7 +448,6 @@
       "failed": "웹훅이 {status}로 응답했습니다. flow가 저장되었고 trigger가 활성화되었는지 확인하세요.",
       "button": "테스트 이벤트 보내기"
     },
-    "triggers_header_description": "트리거를 찾아보고 추가하고 관리하여 flow를 자동화하세요. flow를 AI 도구로 노출하거나, 스케줄링, webhook trigger 추가, 외부 앱의 변경 사항 폴링, 실시간 이벤트 리스너 중에서 선택하세요.",
     "triggers_tabs_add": "추가",
     "triggers_tabs_manage": "관리",
     "triggers_add_search_placeholder": "트리거 검색...",
@@ -574,10 +457,7 @@
     "triggers_add_filter_app": "앱",
     "triggers_add_empty_title": "트리거를 찾을 수 없음",
     "triggers_add_ee_tooltip": "이 trigger는 Enterprise Edition이 필요합니다.",
-    "triggers_add_category_empty": "이 카테고리에 trigger가 없습니다.",
-    "triggers_add_card_add_to_flow": "flow에 추가",
     "triggers_add_card_add": "추가",
-    "triggers_add_modal_title": "{name}",
     "triggers_add_modal_tab_form": "폼",
     "triggers_add_modal_tab_source": "출처",
     "triggers_add_modal_tab_documentation": "문서",
@@ -586,13 +466,11 @@
     "triggers_add_modal_trigger_id": "트리거 ID",
     "triggers_add_modal_trigger_id_placeholder": "이 trigger의 고유 식별자",
     "triggers_add_modal_properties_hint": "트리거를 추가한 후 flow 편집기에서 트리거 속성을 구성합니다.",
-    "triggers_add_modal_ee_notice": "이 trigger는 Enterprise Edition이 필요합니다.",
     "triggers_add_modal_add_button": "Flow에 Trigger 추가",
     "trigger details": "Trigger 세부 정보",
     "triggerflow disabled": "Flow 정의에서 trigger가 비활성화되었습니다.",
     "last trigger date": "마지막 trigger 날짜",
     "trigger_states": "상태",
-    "context updated date": "컨텍스트 업데이트 날짜",
     "state updated date": "상태 업데이트 날짜",
     "next evaluation date": "다음 평가 날짜",
     "last evaluation date": "마지막 평가 날짜",
@@ -603,11 +481,8 @@
     "conditions": "조건",
     "triggerId": "트리거 ID",
     "tenantId": "테넌트 ID",
-    "codeDisabled": "Flow에서 비활성화됨",
     "paused": "일시 중지됨",
     "running": "실행 중",
-    "Fold auto": "편집기: 다중 라인 자동 접기",
-    "Hover description": "편집기: key 또는 value에 마우스를 올리면 필드 설명 표시",
     "Fold content lines": "다중 라인 문자열 접기",
     "Unfold content lines": "다중 라인 문자열 펼치기",
     "Total": "총계",
@@ -617,20 +492,14 @@
     "open in same tab": "동일한 탭에서",
     "open in new tab": "새 탭에서",
     "execute the flow": "Flow <code>{id}</code> 실행",
-    "execute flow now ?": "이 flow를 실행하시겠습니까?",
     "discard execution confirmation": "저장되지 않은 input이 있습니다. 이 실행을 취소하시겠습니까?",
     "discard changes confirmation": "저장되지 않은 변경 사항이 있습니다. 정말로 취소하시겠습니까?",
-    "Default namespace": "기본 namespace",
-    "Default log level": "기본 log 레벨",
     "unsaved changed ?": "저장되지 않은 변경 사항이 있습니다. 이 페이지를 떠나시겠습니까?",
     "unsaved changes": "저장되지 않은 변경 사항",
     "unsaved changes warning": "저장되지 않은 변경 사항이 있습니다. 이 페이지를 떠나면 변경 사항이 사라집니다.",
     "leave page": "페이지 나가기",
     "open full page": "전체 페이지 열기",
     "drill down preview": "미리보기",
-    "Editor theme": "편집기 테마",
-    "Editor fontsize": "편집기 글꼴 크기",
-    "Editor fontfamily": "편집기 글꼴 패밀리",
     "errors": {
       "401": {
         "title": "인증되지 않았습니다.",
@@ -654,18 +523,15 @@
     "delete logs": "Logs 삭제",
     "delete_all_logs": "모든 logs를 삭제하시겠습니까?",
     "delete_log": "로그를 삭제하시겠습니까?",
-    "toggle fullscreen": "전체 화면 전환",
     "copied": "복사됨",
     "tags": "태그들",
     "disabled flow title": "이 flow는 비활성화되었습니다.",
     "disabled flow desc": "이 flow는 비활성화되어 있습니다. 실행하려면 활성화하세요.",
     "label": "Label",
     "labels": "라벨",
-    "label filter placeholder": "'key:value'로 라벨 지정",
     "execution labels": "실행 라벨",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
     "feeds": {
-      "title": "Kestra의 새로운 기능",
       "heading": "Kestra의 모든 것.",
       "subheading": "최신 업데이트, 가이드 및 스토리"
     },
@@ -677,18 +543,12 @@
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "bulk resume": "<code>{executionCount}</code> 개의 실행을 재개하시겠습니까?",
     "bulk pause": "<code>{executionCount}</code> 실행을 일시 중지하시겠습니까?",
-    "bulk unqueue": "<code>{executionCount}</code> 실행을 대기열에서 제거하시겠습니까?",
     "bulk force run": "<code>{executionCount}</code> 실행을 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동됩니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
     "bulk restart": "<code>{executionCount}</code> 개의 실행을 재시작하시겠습니까?",
     "bulk kill": "<code>{executionCount}</code> 개의 실행을 강제 종료하시겠습니까?",
-    "selection": {
-      "selected": "<strong>{count}</strong> 개 선택됨",
-      "all": "모두 선택 ({count})"
-    },
     "cancel": "취소",
     "errorLogs": "오류 logs",
     "welcome_page": {
-      "welcome": "Kestra에 오신 것을 환영합니다",
       "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?"
     },
     "product_tour": "제품 둘러보기",
@@ -711,79 +571,46 @@
     "invalid bulk delete": "실행을 삭제할 수 없습니다",
     "execution not found": "{executionId} 실행을 찾을 수 없습니다.",
     "execution not in state PAUSED": "실행 <code>{executionId}</code>이(가) PAUSED 상태가 아닙니다",
-    "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
-    "restore revision": "리비전 <code>{revision}</code>을(를) 복원하시겠습니까?",
     "seeing old revision": "이전 리비전을 보고 있습니다: {revision}",
     "export": "내보내기",
     "exports": "내보내기 목록",
     "export_csv": "CSV로 내보내기",
-    "template export": "<code>{templateCount}</code> 개의 템플릿을 내보내시겠습니까?",
-    "templates exported": "템플릿이 내보내졌습니다",
-    "export all templates": "모든 템플릿 내보내기",
     "flow_export": "flow 내보내기",
     "flow export": "<code>{flowCount}</code> 개의 flow를 내보내시겠습니까?",
     "flows exported": "<code>{count}</code> Flow(s) 내보내기 완료",
-    "export all flows": "모든 flow 내보내기",
     "import": "가져오기",
     "disable": "비활성화",
     "enable": "활성화",
     "enabled": "활성화됨",
-    "template delete": "<code>{templateCount}</code> 개의 템플릿을 삭제하시겠습니까?",
     "flow delete": "<code>{flowCount}</code> 개의 flow를 삭제하시겠습니까?",
-    "templates deleted": "<code>{count}</code> 개의 템플릿이 삭제되었습니다",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
     "flow disable": "<code>{flowCount}</code> 개의 flow를 비활성화하시겠습니까?",
     "flow enable": "<code>{flowCount}</code> 개의 flow를 활성화하시겠습니까?",
     "flows disabled": "<code>{count}</code> 개의 flow가 비활성화되었습니다",
     "flows enabled": "<code>{count}</code> 개의 flow가 활성화되었습니다",
-    "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
-    "flow-dependencies": "종속성",
-    "read-more": "자세히 알아보기",
-    "in-our-documentation": "우리의 문서에서.",
     "dependencies": "종속성",
-    "see dependencies": "종속성 보기",
     "see timeline": "타임라인 보기",
     "run timeline": "실행 타임라인",
-    "dependencies missing acls": "이 flow에 대한 권한이 없습니다",
     "dependencies delete flow": "이 flow는 종속성을 가지고 있습니다. 삭제하면 종속성이 실행되지 않습니다.<br /><br /> 영향을 받는 flow 목록은 다음과 같습니다:",
-    "expand dependencies": "종속성 확장",
     "reset": "재시작",
-    "show task documentation": "task 문서 보기",
-    "hide task documentation": "task 문서 숨기기",
-    "show task documentation in editor": "편집기에서 task 문서 보기",
-    "show documentation": "문서 보기",
-    "focus task": "문서를 보려면 요소를 클릭하세요.",
     "validate": "유효성 검사",
     "add error handler": "오류 처리기 추가",
     "taskDefaults": "Task 기본값",
     "disabled": "비활성화됨",
     "before": "이전",
     "after": "이후",
-    "add at position": "{position} <code>{task}</code> 추가",
-    "create first task": "첫 번째 task 만들기",
     "dynamic": "동적",
     "choice": "선택",
     "sequential": "순차적",
     "can not delete": "이 task를 삭제할 수 없습니다",
     "can not have less than 1 task": "flow에는 최소 하나 이상의 task가 있어야 합니다. 이것을 삭제하기 전에 다른 task를 추가하세요.",
-    "task id already exists": "Task Id가 이미 존재합니다",
-    "Task Id already exist in the flow": "Task Id {taskId}가 flow에 이미 존재합니다.",
     "task id": "Task ID",
     "taskid column details": "마지막으로 실행된 task 및 시도 횟수.",
-    "flow already exists": "Flow가 이미 존재합니다",
     "flow already exists message": "namespace <code>{namespace}</code>에 flow <code>{id}</code>가 이미 존재합니다. 새로운 리비전을 생성하시겠습니까?",
-    "namespace not allowed": "Namespace가 허용되지 않습니다",
-    "switch-view": "보기 전환",
-    "source and topology": "소스 및 토폴로지",
-    "source and doc": "소스 및 문서",
-    "source and blueprints": "소스 및 blueprints",
     "editor": "편집기",
-    "error in editor": "편집기에서 오류가 발견되었습니다",
     "delete task confirm": "task <code>{taskId}</code>을(를) 삭제하시겠습니까?",
-    "can not save": "저장할 수 없음",
     "flow must not be empty": "flow는 비어 있을 수 없습니다",
-    "flow must have id and namespace": "Flow에는 id와 namespace가 있어야 합니다.",
     "flow creation denied in namespace": "`{namespace}` namespace에서 flow를 생성할 권한이 없습니다.",
     "readonly property": "읽기 전용 속성",
     "namespace and id readonly": "`namespace`와 `id` 속성은 변경할 수 없습니다 — 초기 값으로 설정되었습니다. flow의 이름을 변경하거나 namespace를 변경하려면 새 flow를 만들고 기존 flow를 삭제하세요.",
@@ -795,17 +622,8 @@
     "line": "라인",
     "metric": "메트릭",
     "aggregation": "집계",
-    "chart type": "차트 유형",
     "metric choice": "이 flow에 대한 사용 가능한 메트릭이 없습니다.",
     "of": "의",
-    "see_all_states": "모든 상태 보기",
-    "save draft": {
-      "message": "초안 저장됨",
-      "retrieval": {
-        "creation": "Flow 초안이 저장되었습니다. flow 편집을 계속하시겠습니까?",
-        "existing": "<code>{flowFullName}</code> Flow 초안이 저장되었습니다. flow 편집을 계속하시겠습니까?"
-      }
-    },
     "title": "제목",
     "api": "API",
     "expand error": "실패한 task만 확장",
@@ -813,14 +631,12 @@
     "collapse all": "모두 축소",
     "expand": "확장",
     "collapse": "축소",
-    "filter by this value": "Filter by this value",
     "filter_for": "Filter for",
     "filter_out": "Filter out",
     "copy_value": "Copy value",
     "open_page": "Open page",
     "logs_copied": "Logs copied to your clipboard",
     "expand_by_default": "Expand structured logs by default",
-    "show raw": "Show raw",
     "similar lines": "similar lines",
     "download_logs_description": "Choose which logs to export. Filters default to your current view.",
     "display_settings": "Display settings",
@@ -831,45 +647,24 @@
     "pretty_json": "Pretty JSON",
     "body_line_clamp": "Limit line height",
     "font size": "Font size",
-    "log expand setting": "기본 Log 표시",
     "environment": "환경",
-    "environment name setting": "환경 이름",
-    "environment color setting": "환경 색상",
-    "slack support": "Slack을 통해 질문하기",
-    "join community": "커뮤니티에 참여하기",
     "join_slack": "Slack 참여",
     "kestra": "Kestra",
-    "reach us": "문의하기",
-    "new version": "새 버전 {version} 사용 가능!",
     "error detected": "오류가 감지되었습니다.",
     "warning detected": "경고 감지됨",
     "informative notice": "노트(s)",
-    "cannot swap tasks": "task를 교환할 수 없음",
     "open": "열기",
     "dependency task": "Task {taskId}가 다른 task의 종속성입니다",
-    "administration": "관리",
     "admin": "관리자",
     "main_configuration": "주요 설정",
     "commit_id": "커밋 id",
-    "evaluation lock date": "평가 잠금 날짜",
     "unlock trigger": {
-      "tooltip": {
-        "execution": "이 trigger에 대한 실행이 진행 중입니다",
-        "evaluation": "trigger가 현재 평가 중입니다"
-      },
-      "confirmation": "trigger를 잠금 해제하시겠습니까?",
-      "warning": "이는 동일한 trigger에 대해 동시 실행을 초래할 수 있으며 최후의 수단으로 고려해야 합니다.",
-      "button": "trigger 잠금 해제",
       "success": "Trigger가 잠금 해제되었습니다"
-    },
-    "restart trigger": {
-      "button": "Trigger 재시작",
-      "tooltip": "트리거 재시작"
     },
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
     "trigger enable dialog": {
       "title": "trigger 활성화",
-      "bulk title": "{{count}}개의 triggers 활성화",
+      "bulk title": "{count}개의 triggers 활성화",
       "description": "이 trigger는 비활성화된 동안 스케줄이 누락되었을 수 있습니다.",
       "bulk description": "선택된 trigger는 비활성화된 동안 스케줄을 놓쳤을 수 있습니다.",
       "strategy": "사용할 전략을 선택하세요:",
@@ -879,22 +674,14 @@
       }
     },
     "flow source not found": "Flow source를 찾을 수 없음",
-    "date format": "날짜 형식",
     "timezone": "시간대",
     "add task": "task 추가",
     "unable to generate graph": "그래프 생성 중 문제가 발생하여 토폴로지를 표시할 수 없습니다.",
     "attempts": "시도 횟수",
-    "flow deleted, you can restore it": "Flow가 삭제되었으며 읽기 전용 보기입니다. 여전히 복원할 수 있습니다.",
-    "workers": "Workers",
-    "worker group": "Worker 그룹",
-    "worker group key": "워크 그룹 key",
-    "worker group fallback": "작업자 그룹 대체",
     "version": "버전",
     "services": "서비스",
-    "server type": "서버 유형",
     "hostname": "호스트 이름",
     "port": "포트",
-    "management port": "관리 포트",
     "file preview truncated": "표시된 내용이 잘렸습니다",
     "file unavailable": "파일을 사용할 수 없음",
     "file unavailable description": "이 파일은 더 이상 사용할 수 없습니다 — 삭제되었거나 만료되었을 수 있습니다.",
@@ -902,32 +689,16 @@
     "encoding": "인코딩",
     "show": "보기",
     "advanced configuration": "다른 속성",
-    "all executions": "모든 실행",
-    "trigger execution id": "Trigger Execution Id",
     "execution_status": "실행 상태:",
     "no_tasks_running": "아직 실행 중인 task가 없습니다.",
     "execution_starts_progress": "실행이 시작되면, 여기에서 진행 상황 업데이트를 볼 수 있습니다.",
-    "triggers_state": {
-      "state": "상태",
-      "options": {
-        "enabled": "활성화됨",
-        "disabled": "비활성화됨"
-      }
-    },
     "trigger filter": {
-      "title": "자식 실행 필터링",
       "options": {
-        "ALL": "모든 실행",
         "CHILD": "자식 실행",
         "MAIN": "부모 실행"
       }
     },
-    "show chart": "차트 보기",
     "namespace files": {
-      "toggle": {
-        "show": "namespace 파일 보기",
-        "hide": "namespace 파일 숨기기"
-      },
       "filter": "필터",
       "new_file": "새 파일",
       "read_only": "이 namespace의 파일을 관리할 권한이 없습니다",
@@ -938,10 +709,6 @@
       "no_selection": {
         "heading": "선택된 파일 없음",
         "description": "내용을 보려면 트리에서 파일을 선택하세요."
-      },
-      "tree": {
-        "expand": "모든 폴더 확장",
-        "collapse": "모든 폴더 축소"
       },
       "create": {
         "label": "생성",
@@ -969,7 +736,6 @@
         "folders": "{count}개의 선택된 폴더 삭제"
       },
       "import": {
-        "import": "가져오기",
         "files": "파일 가져오기",
         "folder": "폴더 가져오기",
         "success": "파일이 성공적으로 가져와졌습니다",
@@ -1013,50 +779,22 @@
     "pause backfills": "backfill 일시 중지",
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
-    "backfill paused": "백필 일시 중지됨",
-    "backfill running": "백필 실행 중",
     "relative": "상대적",
     "relative start date": "상대적 시작 날짜",
-    "relative end date": "상대적 종료 날짜",
     "now": "지금",
     "absolute": "절대적",
     "backfill": "Backfill",
-    "Set labels tooltip": "실행에 라벨 설정",
     "Set labels": "라벨 설정",
     "manage labels": "label 관리",
     "Set labels to execution": "실행 <code>{id}</code>의 라벨 추가 또는 업데이트",
     "Set labels done": "실행의 라벨이 성공적으로 설정되었습니다",
     "bulk set labels": "<code>{executionCount}</code> 개의 실행에 라벨을 설정하시겠습니까?",
-    "dependencies loaded": "종속성이 로드되었습니다",
-    "loaded x dependencies": "{count} 개의 종속성이 로드되었습니다",
-    "security_advice": {
-      "title": "인스턴스 보호",
-      "content": "인스턴스를 보호하려면 기본 인증을 활성화하세요.",
-      "switch_text": "다시 표시하지 않기",
-      "enable": "인증 활성화"
-    },
     "true": "True",
     "false": "False",
     "undefined": "Undefined",
     "execution-include-non-terminated": "종료되지 않은 실행을 포함하시겠습니까?",
     "execution-warn-title": "중요한 WARNING!",
     "execution-warn-deleting-still-running": "이 작업을 취소하고 진행 중인 실행을 먼저 중지할 것을 강력히 권장합니다. 종료되지 않은 실행을 삭제하면 concurrency 문제, flow 종속성 관리 불일치, 인스턴스에서의 좀비 프로세스가 발생할 수 있으며, 이는 시스템 성능을 저하시킬 수 있습니다. 삭제를 진행하기 전에 이러한 위험을 충분히 이해했는지 확인하십시오.",
-    "originalCreatedDate": "원래 생성 날짜",
-    "welcome": {
-      "menu": "Welcome",
-      "tour": {
-        "title": "제품 투어 시작하기",
-        "text": "사용 사례를 선택하고 단계별 가이드를 따라 Kestra의 기능과 역량을 배워보세요. ❤️"
-      },
-      "tutorial": {
-        "title": "튜토리얼",
-        "text": "* <a href=\"https://kestra.io/tutorial-videos/all?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">비디오 튜토리얼</a>  \n* <a href=\"https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">문서</a>  \n* <a href=\"https://kestra.io/blueprints?utm_source=app&utm_medium=referral&utm_campaign=welcome-tutorial\" target=\"_blank\">Blueprints</a>"
-      },
-      "help": {
-        "title": "도움이 필요하신가요?",
-        "text": "Slack 커뮤니티에서 질문을 하세요. 문제가 생기면 저희가 도와드리겠습니다. ✋"
-      }
-    },
     "pluginPage": {
       "search": "{count}+개 플러그인 검색",
       "searchTasks": "{count}개의 task 검색",
@@ -1120,7 +858,6 @@
             "editor_type": "기본 편집기 유형",
             "execute_flow": "Flow 실행",
             "execute_default_tab": "기본 실행 탭",
-            "multi_panel_editor": "멀티 패널 편집기",
             "flow_default_tab": "기본 Flow 탭",
             "triggers_default_tab": "기본 Trigger 탭",
             "playground": "플레이그라운드",
@@ -1143,11 +880,6 @@
           "label": "테마 설정",
           "fields": {
             "app_font_size": "앱 글꼴 크기",
-            "chart_color_scheme": {
-              "label": "차트 색상 구성표",
-              "classic": "클래식",
-              "kestra": "Kestra"
-            },
             "color_mode": "색상 모드",
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",
             "editor_font_family": "편집기 글꼴 패밀리",
@@ -1156,8 +888,7 @@
             "environment_color": "환경 색상",
             "environment_name": "환경 이름",
             "environment_name_tooltip": "이 환경 이름은 config에서 설정되었지만 변경할 수 있습니다.",
-            "logs_font_size": "로그 글꼴 크기",
-            "theme": "테마"
+            "logs_font_size": "로그 글꼴 크기"
           },
           "color_modes": {
             "dark_2": "다크 2.0",
@@ -1188,7 +919,6 @@
         },
         "localization": {
           "label": "언어 및 지역",
-          "note": "이 설정은 UI에서 날짜 및 시간 속성을 표시하는 데 사용됩니다. UTC와 다른 시간대에 flow를 예약하려면 flow 코드 또는 플러그인 기본값에서 Schedule trigger의 시간대 속성을 설정하세요.",
           "fields": {
             "time_zone": "시간대",
             "date_format": "날짜 형식"
@@ -1199,20 +929,6 @@
             "date_format": "대시보드 전반에 걸쳐 날짜를 표시하는 데 사용되는 형식."
           }
         },
-        "export": {
-          "label": "내보내기",
-          "fields": {
-            "flows": "모든 Flow 내보내기",
-            "templates": "모든 템플릿 내보내기"
-          }
-        },
-        "save": {
-          "label": "환경 설정 저장",
-          "discard": "버리기",
-          "unsaved_title": "저장되지 않은 변경 사항",
-          "unsaved_warning": "저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?"
-        },
-        "reset_section_to_defaults": "이 섹션의 기본 값을 복원",
         "sidebar": {
           "label": "사이드바",
           "fields": {
@@ -1229,12 +945,9 @@
       "enterprise_edition": "엔터프라이즈 에디션",
       "get_a_demo_button": "데모 받기",
       "contact_sales": "영업팀에 문의하세요",
-      "watch_the_video": "비디오 보기",
       "secrets": {
         "title": "비밀 관리 업그레이드",
         "message": "Enterprise Edition (EE)는 UI에서 비밀을 직접 추가, 편집 또는 삭제할 수 있게 해줍니다. 인스턴스를 재시작할 필요가 없습니다. 비밀을 namespace별로 세분화된 RBAC 권한으로 구성하고, 상위 namespace에서 하위 namespace로 상속할 수 있습니다. EE는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, Elasticsearch와 같은 비밀 관리자와 통합됩니다. namespace, tenant, 인스턴스별로 전용 백엔드를 설정하여 팀 간 비밀을 격리하거나 외부 vault에 저장된 읽기 전용 비밀을 활성화할 수 있습니다. 비밀은 저장 중 및 전송 중에 암호화된 상태로 유지됩니다. 선택적 캐싱은 API 호출을 줄이고, 감사 추적은 모든 접근을 log합니다.",
-        "detected_env": "다음은 인스턴스 시작 시 식별된 secret-type 환경 변수입니다:",
-        "empty_env": "아직 환경에 Secrets가 없습니다.",
         "add_env": {
           "intro": "새 Secret을 생성하려면:",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",
@@ -1492,7 +1205,6 @@
         }
       }
     },
-    "enable concurrency": "동시성 활성화",
     "auditlogs": "감사 Logs",
     "quotas": "할당량",
     "iam": "IAM",
@@ -1500,11 +1212,6 @@
       "name": "테넌트",
       "names": "테넌트"
     },
-    "ee-tooltip": {
-      "features-blocked": "이 기능은 Enterprise Edition이 필요합니다.",
-      "button": "문의하기"
-    },
-    "flow_only": "Flow 탭에서만 사용 가능합니다.",
     "bulk action async warning": "잠시 시간이 걸릴 수 있습니다.",
     "bulk unpause backfills": "{count} backfill 재개",
     "bulk pause backfills": "{count} backfill 일시 중지",
@@ -1531,7 +1238,6 @@
       "update": "비밀 '{name}' 업데이트",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",
-      "inherited": "상속된 비밀",
       "key": "이름",
       "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
       "name": "비밀 value",
@@ -1554,23 +1260,9 @@
       "inherited": "상속된 KV 쌍"
     },
     "expiration": "만료",
-    "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "page": {
       "previous": "이전 페이지",
       "next": "다음 페이지"
-    },
-    "namespace_editor": {
-      "empty": {
-        "title": "현재 열린 탭이 없습니다",
-        "create_message": "namespace 파일을 생성하거나 가져올 수 있습니다.",
-        "video_message": "편집기 소개 비디오를 확인할 수 있습니다."
-      },
-      "close": {
-        "tab": "탭 닫기",
-        "all": "모든 탭 닫기",
-        "other": "다른 탭 닫기",
-        "right": "오른쪽 닫기"
-      }
     },
     "curl": {
       "command": "cURL 명령어",
@@ -1595,7 +1287,6 @@
       "storage": "내부 저장소 파일 삭제"
     },
     "scope_filter": {
-      "all": "모든 {label}",
       "user": "사용자 {label}",
       "system": "시스템 {label}",
       "user_description": "일반 사용자에 의해 시작된 {label}",
@@ -1615,9 +1306,8 @@
       "title": "자동화를 시작하세요",
       "sub_title": "실행 버튼을 클릭하여 첫 번째 workflow 실행을 시작하세요.",
       "namespace_sub_title": "이 대시보드를 채우기 위해 이 namespace에서 하나 이상의 flow를 실행하십시오.",
-      "guidance_desc": "당신의 flow를 실행하는 데 도움이 필요하신가요?",
       "namespace_guidance_desc": "네임스페이스를 관리하는 데 도움이 필요하신가요?",
-      "guidance_sub_desc": "문서를 참조하여 필요한 모든 정보를 확인하세요."
+      "need_help": "도움이 필요하신가요?"
     },
     "execution_guide": {
       "get_started": {
@@ -1637,18 +1327,14 @@
         "text": "비디오 튜토리얼로 시작하세요."
       }
     },
-    "open sidebar": "사이드바 열기",
-    "close sidebar": "사이드바 닫기",
     "customize sidebar": "사이드바 사용자 정의",
     "reset to defaults": "기본값으로 재설정",
     "drop items here": "여기에 항목을 드롭하세요",
     "files": "파일",
     "optional": "선택 사항",
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
-    "bookmark": "북마크",
     "remove_bookmark": "이 북마크를 제거하시겠습니까?",
     "showLess": "덜 보기",
-    "showMore": "더 보기",
     "documentationMenu": "문서 메뉴",
     "item": "항목",
     "items": "항목",
@@ -1657,81 +1343,8 @@
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",
     "last error was": "마지막 오류는",
-    "execution restarted": "이 실행은 {nbRestart}번 다시 시작되었습니다.",
-    "execution replay": "이 실행은 다음의 재실행입니다:",
-    "execution replayed": "이 실행은 재실행되었습니다.",
-    "task run id": "TaskRun ID",
     "active": "활성화됨",
     "flows imported": "Flow가 가져왔습니다.",
-    "flow not imported": "일부 flow를 가져올 수 없습니다.",
-    "plugin defaults exported": "플러그인 기본값 내보내기 완료",
-    "failed to export plugin defaults": "플러그인 기본값 내보내기에 실패했습니다.",
-    "plugin defaults imported": "플러그인 기본값이 가져왔습니다.",
-    "plugin defaults not imported": "일부 플러그인 기본값을 가져올 수 없습니다.",
-    "failed to import plugin defaults": "플러그인 기본값 가져오기에 실패했습니다",
-    "filters": {
-      "label": "필터 선택",
-      "empty": "데이터가 없습니다.",
-      "format": "'key:value'로 매개변수 입력",
-      "text_search": "이 텍스트 검색",
-      "options": {
-        "namespace": "네임스페이스",
-        "flow": "플로우",
-        "state": "상태",
-        "scope": "범위",
-        "child": "자식",
-        "level": "로그 레벨",
-        "task": "작업",
-        "metric": "메트릭",
-        "user": "사용자",
-        "type": "유형",
-        "service_type": "유형",
-        "permission": "권한",
-        "action": "동작",
-        "status": "상태",
-        "details": "세부사항",
-        "aggregation": "집계",
-        "relative_date": "상대 날짜",
-        "absolute_date": "절대 날짜",
-        "labels": "레이블",
-        "text": "텍스트",
-        "startDate": "시작 날짜",
-        "endDate": "종료 날짜"
-      },
-      "comparators": {
-        "is": "입니다",
-        "is_one_of": "중 하나입니다.",
-        "is_not": "아님",
-        "not_in": "에 없음",
-        "contains": "포함합니다",
-        "not_contains": "포함하지 않음",
-        "in": "안에",
-        "between": "사이에",
-        "starts_with": "로 시작합니다",
-        "greater_than": "보다 큼",
-        "greater_than_or_equal_to": "크거나 같음",
-        "less_than": "보다 작음",
-        "less_than_or_equal_to": "작거나 같음",
-        "ends_with": "끝남"
-      },
-      "save": {
-        "label": "저장된 검색",
-        "remove": "제거",
-        "empty": "아직 검색을 저장하지 않았습니다.",
-        "tooltip": "빈 검색 기준을 저장할 수 없습니다.",
-        "name_already_used": "이미 사용 중인 label입니다.",
-        "dialog": {
-          "heading": "현재 검색 저장",
-          "placeholder": "레이블",
-          "hint": "이 검색 기준에 어떤 label을 지정하시겠습니까?",
-          "confirmation": "검색 기준 <code>{name}</code>"
-        }
-      },
-      "settings": {
-        "label": "페이지 설정",
-        "show_chart": "주요 차트 표시"
-      }
-    },
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "chart preview": "차트 미리보기",
@@ -1745,9 +1358,7 @@
       "clearSelection": "선택 해제",
       "labels": {
         "yaml": "YAML 편집기",
-        "no_code": "코드 없는 편집기",
-        "label": "레이블",
-        "variable": "변수"
+        "no_code": "코드 없는 편집기"
       },
       "sections": {
         "deprecated": "사용되지 않는 속성",
@@ -1812,12 +1423,6 @@
         "cases": "이 케이스를 제거하십시오"
       }
     },
-    "properties": {
-      "label": "속성",
-      "hint": "열 표시 선택",
-      "shown": "표에 표시됨",
-      "hidden": "테이블에 숨김"
-    },
     "editor_shortcuts": {
       "label": "키보드 단축키",
       "trigger_autocompletion": "자동 완성 트리거",
@@ -1847,8 +1452,6 @@
     },
     "debug": "디버그",
     "default": "기본값",
-    "data_not_protected": "귀하의 데이터는 보호되지 않습니다. 잃어버리지 마세요. <b>무료 보안 기능을 활성화하거나 유료 서비스를 시도해 보세요.</b>",
-    "activate_basic_auth": "기본 인증 활성화",
     "dark_version": "다크 버전",
     "use_dark_background": "어두운 배경에서 작업할 때는 이 버전을 사용하여 우리의 이름이 읽기 쉽게 유지되도록 하세요.",
     "light_version": "라이트 버전",
@@ -1857,18 +1460,9 @@
     "wordmark_colors": "워드마크 색상은 배경에 따라 조정되며, 아이콘은 어두운 배경에 놓였을 때 배경 없이 유지됩니다.",
     "download_logos": "로고 팩 다운로드",
     "this_task_has": "이 task는",
-    "about_this_blueprint": "이 blueprint 정보",
     "deleted_label": "삭제됨",
     "fold_all_multi_lines": "모든 다중 라인 접기",
-    "task_id_exists": "Task ID가 이미 존재합니다.",
-    "task_id_message": "Flow에 Task Id ${existingTask}가 이미 존재합니다.",
-    "trigger_id_exists": "트리거 ID가 이미 존재합니다.",
-    "trigger_id_message": "Flow에 Trigger Id ${existingTrigger}가 이미 존재합니다.",
     "watch": "시청",
-    "learn_more": "자세히 알아보기",
-    "watch_video": "비디오 보기",
-    "runners": "러너",
-    "select": "{{section}}을 선택하세요",
     "for flow": "flow용",
     "forbidden system labels": "system label로는 system.correlationId만 사용할 수 있습니다",
     "confirm": "확인",
@@ -1988,16 +1582,12 @@
     "worker information": "작업자 정보",
     "test-badge-text": "테스트",
     "test-badge-tooltip": "이 실행은 테스트에 의해 생성되었습니다.",
-    "total_executions": "총 실행 횟수",
     "no_results": {
       "executions": "실행을 찾을 수 없음",
       "triggers": "트리거를 찾을 수 없음",
       "flows": "flow를 찾을 수 없음",
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
-      "secrets": "비밀 없음",
-      "templates": "템플릿을 찾을 수 없음",
-      "assets": "자산을 찾을 수 없음",
-      "cases": "No Cases Found"
+      "secrets": "비밀 없음"
     },
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "dashboards": {
@@ -2048,7 +1638,6 @@
       "troubleshooting": "비밀번호를 잊으셨습니까?",
       "steps": {
         "user": "관리자 사용자 생성",
-        "config": "구성 유효성 검사",
         "survey": "자세히 알려주세요",
         "complete": "Kestra UI 시작"
       },
@@ -2057,17 +1646,10 @@
         "survey": "Kestra OSS 개선에 도움을 주세요"
       },
       "subtitles": {
-        "user": "인스턴스를 보호하여 시작하세요.",
-        "config": "여기 귀하의 구성 세부 정보가 있습니다",
-        "survey": "죄송하지만 번역할 텍스트가 제공되지 않았습니다. 번역할 텍스트를 제공해 주시면 감사하겠습니다.",
-        "complete": "설정이 성공적으로 완료되었습니다!"
+        "user": "인스턴스를 보호하여 시작하세요."
       },
       "form": {
-        "email": "이메일",
-        "firstName": "이름",
-        "lastName": "성씨",
         "password": "비밀번호",
-        "password_requirements": "최소 8자 이상, 대문자 1개 및 숫자 1개 포함.",
         "username": "사용자 이름",
         "username_hint": "유효한 이메일 주소여야 합니다."
       },
@@ -2075,24 +1657,12 @@
         "email_required": "이메일이 필요합니다",
         "email_invalid": "유효하지 않은 이메일",
         "email_temporary_not_allowed": "임시 또는 일회용 이메일 주소는 허용되지 않습니다",
-        "firstName_required": "이름이 필요합니다",
-        "lastName_required": "성을 입력해야 합니다",
-        "password_invalid": "잘못된 비밀번호",
         "password_required": "비밀번호는 필수입니다",
         "incorrect_creds": "잘못된 사용자 이름 또는 비밀번호입니다. 자격 증명이 올바른지 확인하세요.",
         "config_message": "구성 설정을 업데이트하여 이 오류 메시지를 수정하십시오."
       },
-      "config": {
-        "repository": "데이터베이스",
-        "queue": "큐",
-        "storage": "내부 저장소",
-        "basicauth": "기본 인증"
-      },
       "confirm": {
-        "confirm": "관리자 사용자 생성",
-        "config_title": "구성이 유효한지 확인하십시오",
-        "not_valid": "아니요, 유효하지 않습니다",
-        "valid": "네, 유효합니다"
+        "confirm": "관리자 사용자 생성"
       },
       "survey": {
         "skip": "건너뛰기",
@@ -2120,22 +1690,7 @@
     },
     "ai": {
       "flow": {
-        "title": "AI 에이전트",
-        "prompt_placeholder": "Kestra flow를 생성하기 위한 지침을 입력하세요. 예시 프롬프트: 매주 월요일 오전 9시에 실행되는 flow를 생성하세요.",
-        "select_provider": "공급자 선택",
-        "generating": {
-          "flow": "Flow YAML을 생성 중입니다...",
-          "dashboard": "대시보드 YAML을 생성 중입니다...",
-          "app": "앱 YAML을 생성 중입니다...",
-          "test": "테스트 YAML을 생성 중입니다..."
-        },
-        "enable_instructions": {
-          "header": "<b>AI Copilot이 아직 구성되지 않았습니다.</b>\n\nAI Copilot을 활성화하려면, 다음 코드 조각을 Kestra 인스턴스 구성 파일(예: <code>application.yml</code>)에 추가하고 <code>geminiApiKey</code>를 실제 key로 교체하십시오:",
-          "footer": "참고: 현재 오픈 소스 에디션에서는 AI 제공자로 Gemini만 지원됩니다. 엔터프라이즈 에디션의 경우, 다른 모델 제공자 구성을 위해 AI Copilot 문서를 참조하십시오.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오."
-        }
-      },
-      "dashboard": {
-        "prompt_placeholder": "데이터에 대해 질문하세요. 예시 프롬프트: 지난 7일 동안 내 flows의 성공률을 보여줘."
+        "title": "AI 에이전트"
       },
       "copilot": {
         "title": "AI 코파일럿",
@@ -2153,10 +1708,10 @@
         "context": {
           "app": "앱: {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "대시보드: {{dashboard}}",
-          "execution": "실행: {{id}}",
+          "dashboard": "대시보드: {dashboard}",
+          "execution": "실행: {id}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {{namespace}}",
+          "namespace": "Namespace: {namespace}",
           "plugin": "플러그인: {plugin}",
           "test": "테스트: {test}"
         },
@@ -2184,7 +1739,6 @@
           "approve": "승인",
           "approveExecute": "승인 및 실행",
           "reject": "거부",
-          "reasonPlaceholder": "수정하려면 회신하세요…",
           "pending": "승인 대기 중",
           "revise": "수정하려면 답장"
         },
@@ -2216,7 +1770,6 @@
           "detail": "AI 공급자가 구성되어 있지 않습니다. 관리자에게 설정해 달라고 요청한 다음 다시 시도하세요.",
           "retry": "다시 시도"
         },
-        "thinking": "처리 중...",
         "thinkingWords": [
           "오케스트레이션",
           "스케줄링",
@@ -2244,8 +1797,6 @@
           "수렴 중"
         ],
         "newChat": "새 채팅",
-        "recents": "최근",
-        "recentsEmpty": "아직 최근 대화가 없습니다.",
         "draft": {
           "openInEditor": "에디터에서 열기",
           "apply": "적용",
@@ -2262,9 +1813,7 @@
             "app": "제안된 앱"
           },
           "valid": "유효",
-          "invalid": "수정 필요",
-          "copy": "YAML 복사",
-          "copied": "복사됨"
+          "invalid": "수정 필요"
         }
       }
     },
@@ -2283,17 +1832,11 @@
       "tooltip_persistence": "Playground를 끄고 다시 켜면, 페이지에 머무르는 동안 정보가 유지됩니다."
     },
     "submit": "제출",
-    "to toggle": "전환하기",
     "accept": "수락",
     "reject": "거부",
     "draft_available": "편집기에서 초안 변경을 사용할 수 있습니다.",
     "last modified": "마지막 수정",
     "run task in playground": "플레이그라운드에서 task 실행",
-    "task is running": "Task가 RUNNING 중입니다.",
-    "task was successful": "Task가 성공했습니다",
-    "task failed": "작업 실패",
-    "task was skipped": "Task가 건너뛰어졌습니다",
-    "task sent a warning": "Task에서 경고를 보냈습니다.",
     "defaultsToNamespaceFile": "기본값은 namespace 파일: <code>{name}</code>",
     "no_file_choosen": "파일이 선택되지 않음",
     "dependency": {
@@ -2323,16 +1866,9 @@
       "force-editor": "편집기 보기 강제 적용",
       "auto-view": "자동 보기",
       "view": "보기",
-      "rows_truncated": "{total}개의 행 중 {shown}개를 표시 중입니다. 모든 데이터를 보려면 파일을 다운로드하세요.",
-      "pagination_info": "{total}개 중 {start}-{end} 행 표시 중.",
-      "showing_rows": "{total}개 중 {start}-{end} 행 표시",
       "expand": "확장",
-      "collapse": "접기",
-      "previous": "이전",
-      "next": "다음",
-      "page_of": "{total} 중 {current} 페이지"
+      "collapse": "접기"
     },
-    "delete trigger": "트리거 삭제",
     "delete triggers": "트리거 삭제",
     "bulk delete triggers": "{count}개의 trigger를 삭제하시겠습니까?",
     "bulk success delete triggers": "{count} triggers가 성공적으로 삭제되었습니다",
@@ -2347,26 +1883,9 @@
     "save_and_execute": "저장 및 실행",
     "welcome_copilot": {
       "button_cta": "새 flow 생성",
-      "create_manually": {
-        "title": "수동으로 생성",
-        "description": "편집기를 사용하여 처음부터 빌드하기"
-      },
-      "docs": {
-        "title": "문서 읽기",
-        "description": "공식 문서에서 자세히 알아보기"
-      },
-      "title": "아이디어를 workflow로 전환하세요",
       "need_help": "도움이 필요하신가요?",
-      "placeholder_prompt": "매일 오전 9시에 인사 메시지를 보내주세요.",
-      "show_more": "더 많은 프롬프트 보기",
-      "show_less": "더 적은 프롬프트 표시",
-      "remaining_quota": "{count}개의 AI 생성이 남아 있습니다. 제한은 매일 자정 UTC에 초기화됩니다.",
       "success_page": {
         "items": {
-          "tutorial": {
-            "title": "튜토리얼 시작",
-            "description": "Kestra 기능의 대화형 안내"
-          },
           "blueprints": {
             "title": "블루프린트",
             "description": "일반적인 사용 사례를 위한 사전 구축된 워크플로우 템플릿"
@@ -2384,66 +1903,6 @@
             "description": "Kestra Enterprise Edition을 개인 맞춤형 데모로 탐색하세요."
           }
         }
-      },
-      "help": {
-        "tutorial": {
-          "title": "튜토리얼 시작",
-          "description": "가이드 단계와 함께 첫 번째 flow를 생성하고 실행하는 방법을 배우세요."
-        },
-        "blueprints": {
-          "title": "블루프린트",
-          "description": "일반적인 워크플로 패턴을 위한 사용 가능한 예제와 템플릿을 탐색하세요."
-        },
-        "slack": {
-          "title": "Slack 커뮤니티",
-          "description": "아이디어와 모범 사례를 공유하고, 기술적인 질문에 대한 도움을 받으세요."
-        }
-      },
-      "flows": {
-        "ordersRevenueToSlack": {
-          "label": "파이썬으로 주문 요약",
-          "prompt": "API에서 주문을 가져오고 Python으로 수익을 요약"
-        },
-        "jsonApiToDuckdb": {
-          "label": "DuckDB로의 JSON API",
-          "prompt": "공용 API에서 JSON 파일을 다운로드하고 Python 스크립트로 변환한 후 DuckDB Queries task로 처리하는 flow를 생성하세요."
-        },
-        "installNginxViaAnsible": {
-          "label": "Ansible를 통해 Nginx 설치",
-          "prompt": "Ansible을 사용하여 대상 머신에 Nginx를 설치하고 설치된 버전을 확인하는 Kestra flow를 생성합니다."
-        },
-        "buildDbtPipeline": {
-          "label": "dbt 파이프라인 구축",
-          "prompt": "Kestra flow를 생성하여 dbt 프로젝트 저장소를 복제하고 DuckDB 프로필로 dbt build를 실행합니다."
-        },
-        "etlWorkflow": {
-          "label": "ETL 워크플로우",
-          "prompt": "JSON 데이터를 다운로드하고 Python으로 처리한 후 DuckDB로 변환된 결과를 쿼리하는 ETL flow를 생성합니다."
-        },
-        "microservicesApis": {
-          "label": "마이크로서비스 & API",
-          "prompt": "웹사이트 API 응답을 확인하고 상태 코드가 성공적이지 않을 때 Slack 알림을 보내는 flow를 생성합니다."
-        },
-        "buildDockerImageAndRunIt": {
-          "label": "Docker 이미지를 빌드하고 실행하기",
-          "prompt": "인라인 Dockerfile에서 Docker 이미지를 빌드하고 결과 컨테이너를 실행하는 Kestra flow를 생성합니다."
-        },
-        "manualApproval": {
-          "label": "수동 승인",
-          "prompt": "승인 후 초기 처리 단계, 수동 승인 일시 중지, 최종 배포 단계가 포함된 flow를 생성합니다."
-        },
-        "convertCsvToExcel": {
-          "label": "CSV를 Excel로 변환",
-          "prompt": "CSV 파일을 다운로드하고 Ion으로 변환한 후 결과를 Excel 파일로 내보내는 flow를 생성합니다."
-        },
-        "scheduledPdfReports": {
-          "label": "예약된 PDF 보고서",
-          "prompt": "보고서가 준비되면 PDF 보고서를 다운로드하고 Slack 알림을 보내는 예약된 flow를 생성합니다."
-        },
-        "weeklySalesKpisToSlack": {
-          "label": "주간 판매 KPI를 Slack으로 보내기",
-          "prompt": "DuckDB를 사용하여 판매 KPI를 계산하고 요약을 Slack에 게시하는 주간 예약 flow를 생성합니다."
-        }
       }
     },
     "mcp": {
@@ -2451,16 +1910,10 @@
       "servers_count": "{count} MCP 서버",
       "managed_by_kestra": "Kestra에서 관리",
       "servers": "MCP 서버",
-      "server": "MCP 서버",
       "client_setup": "클라이언트 설정",
       "page_description": "Kestra flow를 MCP 호환 AI 에이전트의 도구로 노출하십시오.",
       "create": "서버 생성",
-      "save": "변경 사항 저장",
-      "connect": "연결",
-      "copy_url": "URL 복사",
-      "url_copied": "URL이 복사되었습니다!",
       "instructions": "지침",
-      "server_type": "서버 유형",
       "auth_type": "인증",
       "private": "비공개",
       "private_server": "프라이빗 서버",
@@ -2488,7 +1941,6 @@
       "tab_edit": "편집",
       "tab_connect": "연결",
       "tab_tool_flows": "도구 Flows",
-      "tab_tool_flows_placeholder": "도구 flow 관리가 곧 제공됩니다.",
       "tools": {
         "no_tools": "검색 조건에 맞는 tool flow가 없습니다.",
         "create_tool_flow": "도구 flow 생성",
@@ -2507,7 +1959,6 @@
       },
       "connect_tab": {
         "server_url": "서버 URL",
-        "client_picker_label": "AI 클라이언트 선택",
         "claude_desktop": "클로드 데스크톱",
         "claude_desktop_hint": "다음 내용을 claude_desktop_config.json 파일에 추가하십시오:",
         "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",

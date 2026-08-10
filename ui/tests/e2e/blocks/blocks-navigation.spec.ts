@@ -1,4 +1,4 @@
-import {expect, test} from "@playwright/test"
+import {expect, test} from "./blocks.fixture"
 import {FlowsApi} from "../api/flows.api"
 import {backToCanvas, expectRing, login, openBlockEditor, ringId, walkTo} from "./blocks.helpers"
 

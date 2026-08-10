@@ -1,4 +1,5 @@
-import {expect, test, type Page} from "@playwright/test"
+import type {Page} from "@playwright/test"
+import {expect, test} from "./blocks.fixture"
 import {FlowsApi} from "../api/flows.api"
 import {backToCanvas, fetchFlowSource, login, openBlockEditor, replaceMonacoContent, saveFlow, walkTo, waitForMonacoStable} from "./blocks.helpers"
 

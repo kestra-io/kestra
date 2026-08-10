@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 
 import io.kestra.core.metrics.MetricRegistry;
@@ -190,26 +192,17 @@ class ConcurrencySlotReleaseProcessorTest {
     @ParameterizedTest
     @EnumSource(value = State.Type.class, names = { "FAILED", "CANCELLED" })
     void shouldReleaseSlotWhenFormerlyQueuedExecutionTerminatesInError(State.Type errorState) {
-        // Given: an execution that was queued, popped, and now holds the slot — its histories
-        // are CREATED → QUEUED → RUNNING, one step away from the short-circuit shape
-        // (CREATED → FAILED/CANCELLED) that must NOT release
-        FlowWithSource flow = queueFlow(1);
-        harness.registerFlow(flow);
-        ExecutorContext started = startExecution(flow);
-        Execution second = Executions.created(flow);
-        harness.executionStateStore().save(second);
-        handleEvent(second);
-        Execution popped = processor.release(terminated(flow, started.getExecution(), State.Type.SUCCESS)).orElseThrow();
+        // Given: an execution that was queued, then popped (stamping its claim) and now holds the
+        // slot — its history is CREATED → QUEUED → RUNNING, one step away from the short-circuit
+        // shape (CREATED → FAILED/CANCELLED) that must not release
+        Execution running = stamped(created().withState(State.Type.QUEUED).withState(State.Type.RUNNING));
 
         // When: it terminates in error during its actual run
-        Optional<Execution> next = processor.release(
-            new ExecutorContext(popped, flow).withExecution(popped.withState(errorState), "test")
-        );
+        processor.release(cycle(running, running.withState(errorState)), true);
 
         // Then: a genuine run failure releases the slot like any termination — the short-circuit
         // guard only holds when the error state follows CREATED directly
-        assertThat(next).isEmpty();
-        assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(0);
+        verifyReleased();
     }
 
     @Test

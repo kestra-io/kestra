@@ -24,6 +24,7 @@ import io.kestra.core.namespace.NamespaceFileMetadataStateStore;
 import io.kestra.core.runners.DisabledReusableInputsExpander;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FollowExecutionEvent;
+import io.kestra.core.runners.PausedTaskNotifier;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLoggerFactory;
 import io.kestra.core.runners.SubflowExecutionResult;
@@ -118,6 +119,7 @@ public final class ExecutorTestHarness {
     private final KillSwitchService killSwitchService;
     private final KillSwitchActionService killSwitchActionService;
     private final WorkerTaskResultListener workerTaskResultListener;
+    private final ConcurrencyLimitResolver concurrencyLimitResolver;
     private final QuotaService quotaService;
     private final AsyncOperationService asyncOperationService;
     private final FlowTriggerService flowTriggerService;
@@ -213,6 +215,8 @@ public final class ExecutorTestHarness {
         );
         this.killSwitchActionService = Mockito.mock(KillSwitchActionService.class);
         this.workerTaskResultListener = Mockito.mock(WorkerTaskResultListener.class);
+        // a spy so tests can stub namespace/tenant limits while the OSS flow-scope default stays real
+        this.concurrencyLimitResolver = Mockito.spy(new ConcurrencyLimitResolver());
         this.quotaService = Mockito.mock(QuotaService.class);
         this.asyncOperationService = Mockito.mock(AsyncOperationService.class);
         this.flowTriggerService = Mockito.mock(FlowTriggerService.class);
@@ -231,7 +235,8 @@ public final class ExecutorTestHarness {
             runContextLoggerFactory,
             new AssetService.NoopAssetService(),
             Mockito.mock(RunContextInitializer.class),
-            taskOutputService
+            taskOutputService,
+            new PausedTaskNotifier.NoopPausedTaskNotifier()
         );
 
         this.executionEventMessageHandler = new ExecutionEventMessageHandler(
@@ -240,6 +245,7 @@ public final class ExecutorTestHarness {
             executionDelayStateStore,
             slaMonitorStateStore,
             concurrencyLimitStateStore,
+            concurrencyLimitResolver,
             executorService,
             workerQueueService,
             quotaService,
@@ -325,7 +331,7 @@ public final class ExecutorTestHarness {
         );
         this.concurrencySlotReleaseProcessor = new ConcurrencySlotReleaseProcessor(
             concurrencyLimitStateStore,
-            new ConcurrencyLimitResolver(),
+            concurrencyLimitResolver,
             executionQueuedStateStore,
             flowMetaStore,
             metricRegistry
@@ -396,16 +402,16 @@ public final class ExecutorTestHarness {
     }
 
     /**
-     * One production message cycle: fresh context, {@code process()}, then {@code onNexts()}.
+     * One production message cycle: fresh context, {@code process()}, then {@code onNext()}.
      */
     private ExecutorContext cycle(FlowWithSource flow, Execution execution) {
         ExecutorContext context = new ExecutorContext(execution, flow);
         context = executorService.process(context);
 
-        if (!context.getNexts().isEmpty()) {
+        if (context.getNextCount() > 0) {
             context.withExecution(
-                executorService.onNexts(context.getExecution(), context.getNexts()),
-                "onNexts"
+                executorService.onNext(context.getExecution(), context.getNextCount()),
+                "onNext"
             );
         }
 
@@ -532,6 +538,10 @@ public final class ExecutorTestHarness {
 
     public WorkerTaskResultListener workerTaskResultListener() {
         return workerTaskResultListener;
+    }
+
+    public ConcurrencyLimitResolver concurrencyLimitResolver() {
+        return concurrencyLimitResolver;
     }
 
     public QuotaService quotaService() {

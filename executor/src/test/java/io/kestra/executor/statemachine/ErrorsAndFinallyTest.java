@@ -211,33 +211,23 @@ class ErrorsAndFinallyTest {
             .updatedFrom("onEnd")
             // note: production audit string carries a trailing space (ExecutorService#handleAfterExecution)
             .updatedFrom("handleAfterExecution ")
-            // the afterExecution taskrun exists AFTER the terminal transition, still to be run
-            .hasTaskRunInState(AFTER_TASK, State.Type.CREATED)
-            // no worker task in the terminal cycle itself: the taskrun is only materialized by
-            // onNexts at the end of the cycle, so the emission needs a follow-up event
-            .hasNoWorkerTasks();
+            // a new taskrun is merged into the execution as it is produced, so the afterExecution
+            // worker task is dispatched in the terminal cycle itself — no follow-up event needed
+            .hasWorkerTaskFor(AFTER_TASK);
         List<String> from = cycle2.getFrom();
         Assertions.assertThat(from.indexOf("onEnd"))
             .as("terminal transition (onEnd) must precede afterExecution resolution (from: %s)", from)
             .isLessThan(from.indexOf("handleAfterExecution "));
 
-        // When: the terminal execution is re-processed (production re-emits the execution message)
-        ExecutorContext cycle3 = harness.process(flow, cycle2.getExecution());
-
-        // Then: only now is the afterExecution worker task emitted, on an already-SUCCESS execution
-        assertThat(cycle3)
-            .hasWorkerTaskFor(AFTER_TASK)
-            .executionInState(State.Type.SUCCESS);
-
         // When: the afterExecution task completes
-        ExecutorContext cycle4 = harness.processResult(
+        ExecutorContext cycle3 = harness.processResult(
             flow,
-            cycle3,
-            Results.success(cycle3.getWorkerTasks().getFirst(), ATTEMPT_END.plusSeconds(60))
+            cycle2,
+            Results.success(cycle2.getWorkerTasks().getFirst(), ATTEMPT_END.plusSeconds(60))
         );
 
         // Then: the execution state is untouched by the afterExecution outcome
-        assertThat(cycle4)
+        assertThat(cycle3)
             .hasTaskRunInState(AFTER_TASK, State.Type.SUCCESS)
             .executionInState(State.Type.SUCCESS)
             .hasNoWorkerTasks();

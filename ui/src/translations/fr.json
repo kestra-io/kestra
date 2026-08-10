@@ -1306,7 +1306,8 @@
       "title": "Commencez à automatiser avec",
       "sub_title": "Cliquez sur le bouton Exécuter pour démarrer l'exécution de votre premier workflow.",
       "namespace_sub_title": "Exécutez un ou plusieurs flows de ce namespace pour remplir ce tableau de bord.",
-      "namespace_guidance_desc": "Besoin de conseils pour gérer votre Namespace ?"
+      "namespace_guidance_desc": "Besoin de conseils pour gérer votre Namespace ?",
+      "need_help": "Besoin d'aide ?"
     },
     "execution_guide": {
       "get_started": {

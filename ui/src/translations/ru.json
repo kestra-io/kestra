@@ -1306,7 +1306,8 @@
       "title": "Начните автоматизацию с",
       "sub_title": "Нажмите на кнопку Execute, чтобы начать выполнение вашего первого workflow.",
       "namespace_sub_title": "Выполните один или несколько flow из этого namespace, чтобы заполнить эту панель.",
-      "namespace_guidance_desc": "Нужна помощь в управлении вашим Namespace?"
+      "namespace_guidance_desc": "Нужна помощь в управлении вашим Namespace?",
+      "need_help": "Нужна помощь?"
     },
     "execution_guide": {
       "get_started": {

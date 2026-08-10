@@ -1306,7 +1306,8 @@
       "title": "自動化を開始",
       "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
       "namespace_sub_title": "このダッシュボードを埋めるために、このnamespaceから1つ以上のflowを実行します。",
-      "namespace_guidance_desc": "Namespaceを管理するためのガイダンスが必要ですか？"
+      "namespace_guidance_desc": "Namespaceを管理するためのガイダンスが必要ですか？",
+      "need_help": "お困りですか？"
     },
     "execution_guide": {
       "get_started": {

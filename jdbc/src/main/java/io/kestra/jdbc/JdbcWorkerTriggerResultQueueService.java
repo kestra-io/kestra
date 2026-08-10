@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.WorkerTriggerResult;
 import io.kestra.core.utils.Either;
@@ -50,13 +52,38 @@ public class JdbcWorkerTriggerResultQueueService implements Closeable {
                     }
                 } else {
                     WorkerTriggerResult workerTriggerResult = either.getLeft();
-                    workerJobRunningStateStore.deleteByKey(workerTriggerResult.getTriggerContext().uid());
+                    if (isTerminalTriggerResult(workerTriggerResult)) {
+                        workerJobRunningStateStore.deleteByKey(workerTriggerResult.getTriggerContext().uid());
+                    }
                 }
                 consumer.accept(either);
             });
         }));
 
         return disposable.get();
+    }
+
+    /**
+     * Checks whether a result means the trigger is done running on the worker, and its
+     * {@link io.kestra.core.runners.WorkerJobRunning} entry can be released.
+     *
+     * <p>
+     * A polling trigger is evaluated once, so its single result is always terminal. A realtime trigger
+     * sends one result per emitted execution while it keeps running; those must not release the entry,
+     * which the liveness coordinator relies on to resubmit the trigger when its worker dies. Only a
+     * terminal result does — a FAILED evaluation, or an error reported without an execution.
+     *
+     * @param result the {@link WorkerTriggerResult} to check.
+     * @return {@code true} if the entry can be released.
+     */
+    static boolean isTerminalTriggerResult(final WorkerTriggerResult result) {
+        if (!(result.getTrigger() instanceof RealtimeTriggerInterface)) {
+            return true;
+        }
+
+        return result.getExecution()
+            .map(execution -> State.Type.FAILED.equals(execution.getState().getCurrent()))
+            .orElse(true);
     }
 
     /**

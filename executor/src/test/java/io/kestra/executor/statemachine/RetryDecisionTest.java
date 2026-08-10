@@ -2,20 +2,25 @@ package io.kestra.executor.statemachine;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.runners.ExecutionDelay;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.testkit.Executions;
 import io.kestra.executor.testkit.ExecutorTestHarness;
 import io.kestra.executor.testkit.Flows;
 import io.kestra.executor.testkit.Results;
+import io.kestra.plugin.core.flow.AllowFailure;
 import io.kestra.plugin.core.log.Log;
 
 import static io.kestra.executor.testkit.ExecutorContextAssert.assertThat;
@@ -269,7 +274,80 @@ class RetryDecisionTest {
             .executionInState(State.Type.FAILED);
     }
 
+    // --- retry owned by a flowable with an errors branch (the branch gates the timer)
+
+    @Test
+    void shouldHoldRetryTimerUntilParentErrorsBranchCompletes() throws Exception {
+        // Given: a child failing under an AllowFailure parent that owns both the retry and an
+        // errors branch — the branch's side effects must be visible before the retry re-runs
+        AllowFailure parent = AllowFailure.builder()
+            .id("parent")
+            .type(AllowFailure.class.getName())
+            .tasks(List.of(Log.builder().id(TASK_ID).type(Log.class.getName()).message("boom").build()))
+            .errors(List.of(Log.builder().id("on-error").type(Log.class.getName()).message("handling").build()))
+            .retry(
+                Constant.builder()
+                    .interval(INTERVAL)
+                    .maxAttempts(3)
+                    .behavior(AbstractRetry.Behavior.RETRY_FAILED_TASK)
+                    .build()
+            )
+            .build();
+        FlowWithSource flow = Flows.of(parent);
+        harness.registerFlow(flow);
+        ExecutorContext cycle1 = harness.process(flow, Executions.created(flow));
+        ExecutorContext cycle2 = startFlowable(flow, cycle1, "parent");
+        assertThat(cycle2).hasWorkerTaskFor(TASK_ID);
+
+        // When: the child fails — the parent's errors branch is resolved in the SAME executor
+        // pass, so the pending check must see the just-resolved (not yet persisted) sibling
+        ExecutorContext cycle3 = harness.processResult(
+            flow,
+            cycle2,
+            Results.failed(emittedWorkerTask(cycle2, TASK_ID), ATTEMPT_END)
+        );
+
+        // Then: the retry timer is NOT armed while the errors branch is pending — the error
+        // task is dispatched instead and the failed child stays FAILED, not RETRYING
+        assertThat(cycle3)
+            .hasNoExecutionDelays()
+            .hasWorkerTaskFor("on-error")
+            .hasTaskRunInState(TASK_ID, State.Type.FAILED);
+
+        // When: the errors branch terminates
+        ExecutorContext cycle4 = harness.processResult(
+            flow,
+            cycle3,
+            Results.success(emittedWorkerTask(cycle3, "on-error"), ATTEMPT_END.plusSeconds(30))
+        );
+
+        // Then: only now is the task retry scheduled
+        assertThat(cycle4)
+            .hasSingleExecutionDelay(
+                delay -> Assertions.assertThat(delay.getDelayType()).isEqualTo(ExecutionDelay.DelayType.RESTART_FAILED_TASK)
+            )
+            .hasTaskRunInState(TASK_ID, State.Type.RETRYING);
+    }
+
     // --- fixtures
+
+    /** Flowable parents are emitted as pseudo worker tasks; the event handler flips them RUNNING. */
+    private ExecutorContext startFlowable(FlowWithSource flow, ExecutorContext previous, String taskId) throws Exception {
+        TaskRun created = emittedWorkerTask(previous, taskId).workerTask().getTaskRun();
+        TaskRun running = created
+            .withAttempts(
+                List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build())
+            )
+            .withState(State.Type.RUNNING);
+        return harness.processResult(flow, previous, new WorkerTaskResult(running));
+    }
+
+    private static ExecutorContext.ExecutorWorkerTask emittedWorkerTask(ExecutorContext context, String taskId) {
+        return context.getWorkerTasks().stream()
+            .filter(workerTask -> taskId.equals(workerTask.workerTask().getTaskRun().getTaskId()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("no worker task emitted for <" + taskId + ">"));
+    }
 
     private FlowWithSource flowWithTaskRetry(AbstractRetry.Behavior behavior, int maxAttempts) {
         FlowWithSource flow = Flows.of(

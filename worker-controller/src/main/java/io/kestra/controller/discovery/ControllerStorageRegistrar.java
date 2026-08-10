@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.controller.RequiresControllerServer;
 import io.kestra.controller.config.ControllerAdvertiseConfiguration;
 import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.core.serializers.JacksonMapper;
@@ -44,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Singleton
 @Slf4j
-@Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
+@RequiresControllerServer
 @Requires(property = "kestra.controller.advertise.enabled", value = "true", defaultValue = "false")
 public class ControllerStorageRegistrar implements ServiceLivenessListener, Closeable {
 

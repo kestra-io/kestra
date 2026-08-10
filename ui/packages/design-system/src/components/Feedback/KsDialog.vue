@@ -7,7 +7,10 @@
         @close="emit('close')"
     >
         <template v-if="$slots.default" #default>
-            <slot />
+            <KsScrollbar v-if="scrollable" class="kel-dialog__scrollable-body" maxHeight="65vh">
+                <slot />
+            </KsScrollbar>
+            <slot v-else />
         </template>
         <template v-if="$slots.header" #header>
             <slot name="header" />
@@ -21,6 +24,7 @@
 <script setup lang="ts">
     import {computed} from "vue"
     import {ElDialog} from "element-plus"
+    import KsScrollbar from "../Basic/KsScrollbar.vue"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
@@ -40,6 +44,7 @@
         formLayout?: boolean
         /** Cap the dialog to the viewport so its own body scrolls instead of the overlay dragging the whole dialog around. */
         fill?: boolean
+        scrollable?: boolean
         top?: string
         beforeClose?: (done: () => void) => void
     }>(), {
@@ -52,6 +57,7 @@
         large: false,
         formLayout: false,
         fill: false,
+        scrollable: false,
         top: undefined,
         beforeClose: undefined,
     })
@@ -68,7 +74,7 @@
         footer?(): unknown
     }>()
 
-    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout", "fill"])
+    const filteredProps = useFilteredProps(props, ["width", "large", "formLayout", "fill", "scrollable"])
 </script>
 
 <style lang="scss">
@@ -105,6 +111,15 @@
 
         .kel-dialog__body {
             padding-bottom: var(--kel-dialog-padding-primary);
+        }
+
+        .kel-dialog__scrollable-body {
+            margin-right: calc(var(--kel-dialog-padding-primary) * -1);
+            padding-right: var(--kel-dialog-padding-primary);
+
+            .kel-scrollbar__view {
+                overflow-x: hidden;
+            }
         }
 
         .kel-dialog__footer {

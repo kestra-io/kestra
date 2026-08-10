@@ -765,8 +765,8 @@
     "dynamic": "Dynamiczny",
     "choice": "Wybór",
     "sequential": "Sekwencyjny",
-    "can not delete": "Nie można usunąć",
-    "can not have less than 1 task": "Każdy flow musi mieć przynajmniej jeden task.",
+    "can not delete": "Nie można usunąć tego taska",
+    "can not have less than 1 task": "flow musi mieć co najmniej jeden task. Dodaj kolejny task przed usunięciem tego.",
     "task id already exists": "Task Id już istnieje",
     "Task Id already exist in the flow": "Task Id {taskId} już istnieje w flow.",
     "task id": "Task ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Wyszukaj wśród {count}+ wtyczek",
+      "search": "Przeszukaj {count}+ wtyczek",
       "searchTasks": "Wyszukaj {count} tasków",
       "noResults": "Brak wtyczek pasujących do wyszukiwania.",
       "loadError": "Nie można załadować wtyczek. Proszę spróbować ponownie.",
@@ -1263,6 +1263,12 @@
         "header": "Metadane zasobów i obserwowalność",
         "title": "Przenieś każdy zestaw danych, usługę i zależność do widoku.",
         "message": "Zasoby łączą metadane dotyczące obserwowalności, pochodzenia i własności, aby zespoły platformowe mogły szybciej rozwiązywać problemy i wdrażać z pewnością."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "Zarządzaj użytkownikami przez IAM z SSO, SCIM i RBAC",
@@ -1890,7 +1896,6 @@
     "learn_more": "Dowiedz się więcej",
     "watch_video": "Obejrzyj wideo",
     "runners": "Biegacze",
-    "select": "Wybierz swoją {{section}}",
     "for flow": "dla flow",
     "forbidden system labels": "Tylko system.correlationId może być użyty jako system label",
     "confirm": "Potwierdź",
@@ -1924,6 +1929,10 @@
       "assets": {
         "title": "Nie masz jeszcze zasobów!",
         "content": "Dodaj zasoby, aby śledzić i zarządzać swoimi zasobami danych, usługami i infrastrukturą."
+      },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
       },
       "apiTokens": {
         "title": "Zarządzaj swoimi tokenami API",
@@ -2017,7 +2026,8 @@
       "kv_pairs": "Nie znaleziono par klucz-wartość",
       "secrets": "Nie znaleziono sekretów",
       "templates": "Nie znaleziono szablonów",
-      "assets": "Nie znaleziono zasobów"
+      "assets": "Nie znaleziono zasobów",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" jest zduplikowany, pierwszy klucz zignorowany.",
     "dashboards": {
@@ -2173,10 +2183,10 @@
         "context": {
           "app": "Aplikacja: {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Pulpit nawigacyjny: {{dashboard}}",
+          "dashboard": "Pulpit nawigacyjny: {dashboard}",
           "execution": "Wykonanie: {id}",
-          "flow": "Flow: {{flow}}",
-          "namespace": "Namespace: {{namespace}}",
+          "flow": "Flow: {flow}",
+          "namespace": "Namespace: {namespace}",
           "plugin": "Wtyczka: {plugin}",
           "test": "Test: {test}"
         },
@@ -2194,9 +2204,9 @@
         "contextRemoved": "Usunięto {type} {id} z kontekstu.",
         "toolResult": {
           "detail": "Szczegóły",
-          "error": "{{tool}} nie powiodło się",
+          "error": "{tool} nie powiodło się",
           "ok": "{tool} zakończono",
-          "rejected": "{{tool}} odrzucony"
+          "rejected": "{tool} odrzucony"
         },
         "confirm": {
           "planTitle": "Proponowany plan",
@@ -2468,7 +2478,7 @@
     },
     "mcp": {
       "your_servers": "Twoje Serwery",
-      "servers_count": "{{count}} Serwerów MCP",
+      "servers_count": "{count} Serwerów MCP",
       "managed_by_kestra": "Zarządzane przez Kestra",
       "servers": "Serwery MCP",
       "server": "Serwer MCP",

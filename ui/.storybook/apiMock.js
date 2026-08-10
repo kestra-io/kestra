@@ -79,10 +79,30 @@ const HANDLERS = {
  * Patterned route keys (those containing a `:param` or trailing `*`), pre-split into segments.
  * Sorted with the most segments first so the most specific pattern wins.
  */
-const PATTERNS = Object.keys(HANDLERS)
-    .filter((key) => key.includes("/:") || key.endsWith("*"))
-    .map((key) => ({key, segments: key.split("/")}))
-    .sort((a, b) => b.segments.length - a.segments.length)
+function buildPatterns(handlers) {
+    return Object.keys(handlers)
+        .filter((key) => key.includes("/:") || key.endsWith("*"))
+        .map((key) => ({key, segments: key.split("/")}))
+        .sort((a, b) => b.segments.length - a.segments.length)
+}
+
+const PATTERNS = buildPatterns(HANDLERS)
+
+// Handlers registered by the CURRENT story; cleared by beginStoryScope so nothing leaks across stories.
+let storyHandlers = {}
+let storyPatterns = []
+
+/**
+ * Register handlers for the current story only, taking precedence over the global map — same
+ * key/payload contract as {@link HANDLERS}. Call it from a story file's `beforeEach` (which runs
+ * after the preview-level `beforeEach` has reset the previous story's registration). This is the
+ * story-side mock the warning below refers to: `vi.mock()` cannot intercept the pre-bundled SDK in
+ * a story file, so per-story data has to come in at the fetch layer, here.
+ */
+export function mockStoryApiRoutes(handlers) {
+    Object.assign(storyHandlers, handlers)
+    storyPatterns = buildPatterns(storyHandlers)
+}
 
 function matchesPattern(segments, requestSegments) {
     for (let i = 0; i < segments.length; i++) {
@@ -148,6 +168,8 @@ function reportUnmocked(key, rawUrl) {
 export function beginStoryScope(label) {
     currentStory = label ?? ""
     reported.clear()
+    storyHandlers = {}
+    storyPatterns = []
 }
 
 /**
@@ -158,17 +180,21 @@ export function resolveApiRequest(method, rawUrl, context = {}) {
     const path = apiPath(rawUrl) ?? rawUrl
     const upperMethod = method.toUpperCase()
     const key = `${upperMethod} ${path}`
-
-    if (key in HANDLERS) {
-        const handler = HANDLERS[key]
-        return {status: 200, data: typeof handler === "function" ? handler(context) : handler}
-    }
-
     const requestSegments = key.split("/")
-    const pattern = PATTERNS.find(({segments}) => matchesPattern(segments, requestSegments))
-    if (pattern) {
-        const handler = HANDLERS[pattern.key]
-        return {status: 200, data: typeof handler === "function" ? handler(context) : handler}
+
+    // Story-scoped handlers win over the global map; within a scope an exact key wins over a pattern.
+    const scopes = [
+        {handlers: storyHandlers, patterns: storyPatterns},
+        {handlers: HANDLERS, patterns: PATTERNS},
+    ]
+    for (const {handlers, patterns} of scopes) {
+        const matched = key in handlers
+            ? key
+            : patterns.find(({segments}) => matchesPattern(segments, requestSegments))?.key
+        if (matched !== undefined) {
+            const handler = handlers[matched]
+            return {status: 200, data: typeof handler === "function" ? handler(context) : handler}
+        }
     }
 
     reportUnmocked(key, rawUrl)

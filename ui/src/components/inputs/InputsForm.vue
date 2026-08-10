@@ -350,6 +350,8 @@
         inputs?: Record<string, unknown>;
     }
 
+    type PrefillInput = Pick<InputMetaData, "id"> & {type?: InputType | string}
+
     const modelValue = defineModel<Record<string, unknown>>()
 
     const props = withDefaults(defineProps<{
@@ -499,7 +501,16 @@
             const valueOrDefault = value ?? defaults
             if (inputsValues[id] === undefined || inputsValues[id] === null || input.isDefault) {
                 if (type === "MULTISELECT") {
-                    multiSelectInputs[id] = valueOrDefault
+                    // Materialise a value only once there is one: writing "[]" for an untouched input
+                    // would make the guard above skip the real value when the validate response lands.
+                    if (valueOrDefault == null) {
+                        continue
+                    }
+                    // `defaults` crosses the wire as a JSON string (Property serialises as one), while
+                    // a rendered `value` arrives as an array; the select needs an array either way.
+                    const values = multiSelectComponentValue(valueOrDefault)
+                    multiSelectInputs[id] = values
+                    inputsValues[id] = normalize(type as InputType, values)
                 } else if (type === "JSON" && value == undefined && input.isDefault) {
                     inputsValues[id] = normalize(type as InputType, normalizeJSON(input.defaults as string))
                 } else {
@@ -534,6 +545,43 @@
     function onMultiSelectChange(input: InputMetaData, e: unknown[]): void {
         inputsValues[input.id] = JSON.stringify(e)
         onChange(input)
+    }
+
+    function multiSelectComponentValue(value: unknown): unknown[] {
+        if (Array.isArray(value)) {
+            return value
+        }
+        if (typeof value === "string") {
+            try {
+                const parsed = JSON.parse(value)
+                return Array.isArray(parsed) ? parsed : []
+            } catch {
+                return []
+            }
+        }
+        return []
+    }
+
+    function prefillInputValue(input: PrefillInput, value: unknown): void {
+        // A replayed SECRET arrives as the serialised EncryptedString ({value, type}), never plaintext.
+        // There is nothing safe to prefill: submitting it would re-encrypt "[object Object]" as the
+        // new secret. Leave the field empty so the user re-enters it.
+        if (input.type === "SECRET") {
+            return
+        }
+
+        if (input.type === "MULTISELECT") {
+            const values = multiSelectComponentValue(value)
+            multiSelectInputs[input.id] = values
+            inputsValues[input.id] = normalize(input.type as InputType, values)
+        } else {
+            inputsValues[input.id] = normalize(input.type as InputType, value)
+        }
+
+        const meta = inputsMetaData.value.find(m => m.id === input.id)
+        if (meta) {
+            meta.isDefault = false
+        }
     }
 
     function onFileChange(input: InputMetaData, e: Event): void {
@@ -849,8 +897,12 @@
     inputsMetaData.value = JSON.parse(JSON.stringify(flattenInputs(props.initialInputs)))
         .filter((input: InputMetaData) => (input.type as string) !== "REUSABLE_INPUTS")
 
+    // Routed through prefillInputValue rather than assigned raw: a trigger's MULTISELECT value is an
+    // array, which the select needs as-is but the submission needs JSON-encoded.
     if (props.selectedTrigger?.inputs) {
-        Object.assign(inputsValues, toRaw(props.selectedTrigger.inputs))
+        for (const [id, value] of Object.entries(toRaw(props.selectedTrigger.inputs))) {
+            prefillInputValue({id, type: inputsMetaData.value.find(m => m.id === id)?.type}, value)
+        }
     }
 
     restorePersistedValues()
@@ -925,6 +977,7 @@
     defineExpose({
         validateInputs,
         inputsValues,
+        multiSelectInputs,
         inputsMetaData,
         inputsValidated,
         isComputingValues,
@@ -934,6 +987,7 @@
         onChange,
         copyInputRef,
         onInputDragStart,
+        prefillInputValue,
     })
 </script>
 

@@ -192,6 +192,15 @@ export function setupKestraHttp(
             pendingRoute = false
         }
     })
+    // A thrown guard error or failed async-component import rejects the navigation
+    // without ever calling afterEach, leaving requestsTotal permanently ahead and the
+    // loading bar stuck - settle the counter here too, same as afterEach does.
+    router?.onError(() => {
+        if (pendingRoute) {
+            increaseProgress()
+            pendingRoute = false
+        }
+    })
 
     return client
 }

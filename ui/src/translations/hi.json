@@ -534,9 +534,9 @@
     },
     "last execution date": "अंतिम निष्पादन तिथि",
     "last execution state": "अंतिम स्थिति",
-    "last X days count": "{दिनों} दिनों में {गिनती}",
-    "date range count": "{startDate} और {endDate} के बीच {गिनती}",
-    "date count": "{तारीख} पर {गिनती}",
+    "last X days count": "{count} पिछले {days} दिनों में",
+    "date range count": "{startDate} और {endDate} के बीच {count}",
+    "date count": "{count} {date} को",
     "revisions": "पुनरीक्षण",
     "no revisions found": "इस flow के लिए केवल एक पुनरीक्षण मौजूद है",
     "no revisions": "कोई संशोधन नहीं",
@@ -765,8 +765,8 @@
     "dynamic": "डायनामिक",
     "choice": "विकल्प",
     "sequential": "अनुक्रमिक",
-    "can not delete": "हटाया नहीं जा सकता",
-    "can not have less than 1 task": "प्रत्येक flow में कम से कम एक Task होना चाहिए।",
+    "can not delete": "यह task हटाया नहीं जा सकता",
+    "can not have less than 1 task": "एक flow में कम से कम एक task होना चाहिए। इसे हटाने से पहले एक और task जोड़ें।",
     "task id already exists": "Task Id पहले से मौजूद है",
     "Task Id already exist in the flow": "Task Id {taskId} पहले से ही flow में मौजूद है।",
     "task id": "Task ID",
@@ -875,7 +875,7 @@
       "strategy": "उपयोग करने के लिए रणनीति चुनें:",
       "options": {
         "skip": "छूटी हुई अनुसूचियां पुनर्प्राप्त न करें",
-        "follow": "trigger के गुणधर्म कॉन्फ़िगरेशन का पालन करें"
+        "follow": "trigger के {property} कॉन्फ़िगरेशन का पालन करें"
       }
     },
     "flow source not found": "Flow source नहीं मिला",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "{count}+ प्लगइन्स में खोजें",
+      "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
       "noResults": "आपकी खोज से कोई प्लगइन मेल नहीं खाता।",
       "loadError": "प्लगइन्स लोड नहीं हो सके। कृपया पुनः प्रयास करें।",
@@ -1263,6 +1263,12 @@
         "header": "संपत्तियों का मेटाडेटा और अवलोकनीयता",
         "title": "हर dataset, सेवा, और निर्भरता को दृश्य में लाएं।",
         "message": "एसेट्स अवलोकन, वंशावली, और स्वामित्व मेटाडेटा को जोड़ते हैं ताकि प्लेटफ़ॉर्म टीमें तेजी से समस्या निवारण कर सकें और आत्मविश्वास के साथ परिनियोजन कर सकें।"
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "IAM के माध्यम से SSO, SCIM और RBAC के साथ उपयोगकर्ताओं का प्रबंधन करें।",
@@ -1890,7 +1896,6 @@
     "learn_more": "और जानें",
     "watch_video": "वीडियो देखें",
     "runners": "धावक",
-    "select": "अपने {{section}} का चयन करें",
     "for flow": "फ्लो के लिए",
     "forbidden system labels": "सिर्फ़ system.correlationId को system label के रूप में उपयोग किया जा सकता है",
     "confirm": "पुष्टि करें",
@@ -1924,6 +1929,10 @@
       "assets": {
         "title": "आपके पास अभी तक कोई Assets नहीं हैं!",
         "content": "अपने डेटा एसेट्स, सेवाओं और इन्फ्रास्ट्रक्चर को ट्रैक और प्रबंधित करने के लिए एसेट्स जोड़ें।"
+      },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
       },
       "apiTokens": {
         "title": "अपने API Tokens प्रबंधित करें",
@@ -2017,7 +2026,8 @@
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
       "secrets": "कोई Secrets नहीं मिले",
       "templates": "कोई टेम्पलेट नहीं मिला",
-      "assets": "कोई Assets नहीं मिले"
+      "assets": "कोई Assets नहीं मिले",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {
@@ -2172,7 +2182,7 @@
         "toolCall": "{tool} चल रहा है",
         "context": {
           "app": "एप्लिकेशन: {app}",
-          "blueprint": "Blueprint: {{blueprint}}",
+          "blueprint": "Blueprint: {blueprint}",
           "dashboard": "डैशबोर्ड: {dashboard}",
           "execution": "निष्पादन: {id}",
           "flow": "Flow: {flow}",
@@ -2195,8 +2205,8 @@
         "toolResult": {
           "detail": "विवरण",
           "error": "{tool} विफल रहा",
-          "ok": "{{tool}} पूरा हुआ",
-          "rejected": "{{tool}} अस्वीकृत"
+          "ok": "{tool} पूरा हुआ",
+          "rejected": "{tool} अस्वीकृत"
         },
         "confirm": {
           "planTitle": "प्रस्तावित योजना",
@@ -2270,8 +2280,8 @@
           "openInEditor": "संपादक में खोलें",
           "apply": "लागू करें",
           "applyTitle": "flow लागू करें",
-          "applyConfirm": "flow {{namespace}}.{{id}} को लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
-          "applyConfirmDashboard": "डैशबोर्ड {{id}} लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
+          "applyConfirm": "flow {namespace}.{id} को लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
+          "applyConfirmDashboard": "डैशबोर्ड {id} लागू करें? इसे बनाया जाएगा, या यदि यह पहले से मौजूद है तो अधिलेखित किया जाएगा।",
           "applyError": "flow लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
           "applyErrorDashboard": "डैशबोर्ड लागू नहीं किया जा सका। कृपया पुनः प्रयास करें।",
           "applyNoTarget": "इस ड्राफ्ट में लागू करने के लिए कोई namespace या id नहीं है।",
@@ -2468,7 +2478,7 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{{count}} MCP Servers",
+      "servers_count": "{count} MCP Servers",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "server": "MCP सर्वर",

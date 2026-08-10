@@ -180,6 +180,12 @@ export const HeaderStripDoesNotOpenTheControl: Story = {
         const canvas = within(canvasElement);
         const header = canvasElement.querySelector(".kel-form-item__label") as HTMLElement;
 
+        // Poppers teleport to body and earlier stories leave theirs behind hidden, so
+        // count only the open one — the mere presence of a popper node proves nothing.
+        const openPoppers = () =>
+            [...canvasElement.ownerDocument.querySelectorAll<HTMLElement>(".kel-select__popper")]
+                .filter(popper => popper.style.display !== "none");
+
         expect(header.tagName).toBe("DIV");
         expect(header.getAttribute("for")).toBe("");
 
@@ -187,9 +193,9 @@ export const HeaderStripDoesNotOpenTheControl: Story = {
         expect(width).toBeGreaterThan(200);
 
         fireEvent.click(header, {clientX: width - 20, clientY: height / 2});
-        expect(canvasElement.ownerDocument.querySelector(".kel-select__popper")).toBeNull();
+        expect(openPoppers()).toHaveLength(0);
 
         fireEvent.click(await canvas.findByRole("combobox"));
-        await waitFor(() => expect(canvasElement.ownerDocument.querySelector(".kel-select__popper")).not.toBeNull());
+        await waitFor(() => expect(openPoppers().length).toBeGreaterThan(0));
     },
 };

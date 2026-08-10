@@ -137,6 +137,28 @@ describe("Duration", () => {
         expect(wrapper.findAll("[data-test='state-history-item']")).toHaveLength(3)
     })
 
+    it("should not display an attempt count when the caller provides none, even if RETRYING transitions are present", async () => {
+        const wrapper = mountDuration([
+            {date: 0, state: "CREATED"},
+            {date: 100, state: "RUNNING"},
+            {date: 1_100, state: "FAILED"},
+            {date: 3_100, state: "RETRYING"},
+            {date: 3_200, state: "RUNNING"},
+            {date: 4_200, state: "SUCCESS"},
+        ])
+
+        // No authoritative attemptCount was supplied (e.g. the execution-level call site, which
+        // has no "attempts" concept at all): the derived RETRYING count must never leak into the
+        // displayed label, even though it is perfectly usable to group the state history below.
+        expect(wrapper.find(".duration-total-note").exists()).toBe(false)
+
+        await openStateHistory(wrapper)
+
+        expect(wrapper.find(".state-history-date").text()).toBe("1970-01-01")
+        expect(wrapper.findAll("[data-test='state-history-attempt-header']")).toHaveLength(2)
+        expect(wrapper.findAll("[data-test='state-history-item']")).toHaveLength(6)
+    })
+
     it("should not show a state history button when there is no history to show", () => {
         const wrapper = mountDuration([])
 

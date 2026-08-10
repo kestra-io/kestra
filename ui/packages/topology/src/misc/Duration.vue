@@ -35,7 +35,7 @@
                     <template v-else>
                         {{ formatDuration(breakdown.total, " ") }}
                         <span v-if="waitingToStart" class="duration-total-note">{{ $t('state_history.waiting_to_start') }}</span>
-                        <span v-else-if="attemptCount > 1" class="duration-total-note">{{ attemptCount }} {{ $t('attempts') }}</span>
+                        <span v-else-if="displayedAttemptCount" class="duration-total-note">{{ displayedAttemptCount }} {{ $t('attempts') }}</span>
                     </template>
                 </div>
                 <template v-if="!neverRan">
@@ -206,11 +206,14 @@
         return boundaries + 1
     })
 
-    // The authoritative count (when known) is what gets displayed, so a task's warning icon and
-    // its duration card never disagree on how many attempts it had. Grouping in the state history
-    // stays derived from RETRYING transitions regardless: it needs to know *where* attempts split,
-    // not just how many there were, and the two can legitimately disagree (e.g. truncated history).
-    const attemptCount = computed(() => props.attemptCount ?? derivedAttemptGroupCount.value)
+    // The attempt count is only ever displayed when the caller supplies an authoritative value
+    // (e.g. taskRun.attempts.length). Deriving it from RETRYING transitions instead would leak a
+    // child task's retry count onto surfaces with no "attempts" concept at all, such as an
+    // execution-level total. Grouping in the state history still uses the derived boundaries
+    // below: it needs to know *where* attempts split, not whether to display a count.
+    const displayedAttemptCount = computed(() => {
+        return props.attemptCount && props.attemptCount > 1 ? props.attemptCount : undefined
+    })
 
     function paint() {
         now.value = Date.now()
@@ -298,7 +301,7 @@
     const headerDate = computed(() => {
         if (!hasHistory.value) return ""
         const date = formatInTimezone(filteredHistories.value[0].date, "YYYY-MM-DD")
-        return attemptCount.value > 1 ? `${date} · ${attemptCount.value} ${t("attempts")}` : date
+        return displayedAttemptCount.value ? `${date} · ${displayedAttemptCount.value} ${t("attempts")}` : date
     })
 
     interface TimelineRow {

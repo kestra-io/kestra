@@ -4,6 +4,9 @@ export type BlockSection = "tasks" | "triggers" | "errors" | "finally" | "afterE
 
 const FLOWABLE_BRANCH_KEYS = ["tasks", "then", "else", "errors", "finally", "defaults", "cases"] as const
 
+// Ids are unique flow-wide, so collecting them must also reach the sections that only exist at the root.
+const ID_BEARING_KEYS = [...FLOWABLE_BRANCH_KEYS, "triggers", "afterExecution"] as const
+
 export const FLOWABLE_SUFFIXES = [
     "If", "Switch", "Parallel", "Sequential", "ForEach",
     "EachSequential", "Dag", "WaitFor", "ForEachItem",
@@ -250,7 +253,7 @@ function walkIds(node: unknown, ids: Set<string>): void {
     }
     const obj = node as Record<string, unknown>
     if ("id" in obj && typeof obj.id === "string") ids.add(obj.id)
-    for (const key of FLOWABLE_BRANCH_KEYS) {
+    for (const key of ID_BEARING_KEYS) {
         const val = obj[key]
         if (Array.isArray(val)) {
             for (const item of val) walkIds(item, ids)

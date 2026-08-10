@@ -4,6 +4,7 @@ import {
     addBlock,
     addBlockAtPath,
     buildMinimalTask,
+    collectAllIds,
     deleteBlock,
     deleteBlockAtPath,
     displayTaskOf,
@@ -1057,6 +1058,47 @@ tasks:
         })
     })
 
+    describe("collectAllIds", () => {
+        it("collects the ids of every root section, not only the task tree", () => {
+            // Given
+            const flow = `
+id: my_flow
+namespace: company.team
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+errors:
+  - id: on_error
+    type: io.kestra.plugin.core.log.Log
+finally:
+  - id: cleanup
+    type: io.kestra.plugin.core.log.Log
+afterExecution:
+  - id: notify
+    type: io.kestra.plugin.core.log.Log
+`.trim()
+
+            // When
+            const ids = collectAllIds(flow)
+
+            // Then
+            expect(ids).toEqual(new Set(["my_flow", "schedule", "log", "on_error", "cleanup", "notify"]))
+        })
+
+        it("collects the ids nested inside a flowable branch", () => {
+            // Given
+
+            // When
+            const ids = collectAllIds(FLOW_WITH_SWITCH)
+
+            // Then
+            expect(ids).toEqual(new Set(["my_flow", "sw", "prod_log", "dev_log", "default_log"]))
+        })
+    })
+
     describe("buildMinimalTask", () => {
         it("produces an object with the given type", () => {
             // Given
@@ -1126,6 +1168,36 @@ tasks:
             const parsed = flowYamlUtils.parse(result)
             const ids = parsed.tasks.map((t: Record<string, unknown>) => String(t.id))
             expect(new Set(ids).size).toBe(ids.length)
+        })
+
+        it("does not reuse an id already taken by another root section", () => {
+            // Given — the same task type already sits in afterExecution
+            const flow = `
+id: my_flow
+namespace: company.team
+tasks:
+  - id: task_a
+    type: io.kestra.plugin.core.log.Log
+afterExecution:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+`.trim()
+
+            // When
+            const task = buildMinimalTask("io.kestra.plugin.core.log.Log", collectAllIds(flow))
+
+            // Then
+            expect(task.id).toBe("log_1")
+        })
+
+        it("does not reuse an id already taken by another trigger", () => {
+            // Given
+
+            // When
+            const trigger = buildMinimalTask("io.kestra.plugin.core.trigger.Webhook", collectAllIds(FLOW_WITH_TRIGGERS))
+
+            // Then
+            expect(trigger.id).toBe("webhook_1")
         })
     })
 

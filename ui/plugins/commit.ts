@@ -1,7 +1,7 @@
 import type {Plugin} from "vite"
-import {execSync} from "child_process"
+import {execFileSync} from "child_process"
 
-const getInfo = (formats: string[]): string[] => formats.map(format => execSync(`git log -1 --format=${format}`).toString().trim())
+const getInfo = (formats: string[]): string[] => formats.map(format => execFileSync("git", ["log", "-1", `--format=${format}`]).toString().trim())
 
 const comment = (message: string, author: string, date: string): string => `
 <!--

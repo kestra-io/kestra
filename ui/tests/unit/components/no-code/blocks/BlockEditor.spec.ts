@@ -804,6 +804,41 @@ describe("BlockEditor", () => {
             expect(parsed.tasks[1].then).toHaveLength(2)
         })
 
+        function createBlockInList(wrapper: ReturnType<typeof mount>) {
+            const provides = (wrapper.vm.$ as unknown as {provides: Record<symbol, unknown>}).provides
+            const key = Object.getOwnPropertySymbols(provides)
+                .find(symbol => symbol.description === "creating-function-injection-key")!
+            return provides[key] as (parentPath: string, blockSchemaPath: string, refPath?: number) => void
+        }
+
+        it("opens the picker when a lane of tasks asks for a new block", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            createBlockInList(wrapper)("tasks[0].then", "schema/then/items", -1)
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const vm = wrapper.vm as unknown as {picker: {taskPickerVisible: {value: boolean}}}
+            expect(vm.picker.taskPickerVisible.value).toBe(true)
+            expect(wrapper.emitted("createTask")).toBeFalsy()
+        })
+
+        it("hands a non-task list to the schema-driven creation form instead of the picker", async () => {
+            // Given — regression: flow inputs used to open the task picker and add nothing
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            createBlockInList(wrapper)("inputs", "schema/inputs/items", -1)
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const vm = wrapper.vm as unknown as {picker: {taskPickerVisible: {value: boolean}}}
+            expect(vm.picker.taskPickerVisible.value).toBe(false)
+            expect(wrapper.emitted("createTask")).toEqual([["inputs", "schema/inputs/items", -1, "after"]])
+        })
+
         function pickerNames() {
             const picker = document.body.querySelector("[data-test='block-editor-picker']")
             return [...(picker?.querySelectorAll(".block-editor-picker-name") ?? [])].map(n => n.textContent)

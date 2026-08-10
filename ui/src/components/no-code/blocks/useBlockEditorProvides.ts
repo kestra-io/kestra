@@ -32,7 +32,7 @@ export interface BlockEditorProvideContext {
     flowYaml: ComputedRef<string>
     validationIssuesByTask: ComputedRef<Map<string, string[]>>
     inlineEditPanel: Ref<unknown>
-    createTask: (parentPath: string, refPath: number | undefined, anchorEl?: HTMLElement) => void
+    createTask: (parentPath: string, blockSchemaPath: string, refPath: number | undefined, anchorEl?: HTMLElement) => void
     editTask: (parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean) => void
     closeTask: () => void
     updateYaml: (yaml: string) => void
@@ -58,8 +58,8 @@ export function useBlockEditorProvides(ctx: BlockEditorProvideContext) {
     provide(FULL_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowSchema ?? {}))
     provide(ROOT_SCHEMA_INJECTION_KEY, computed(() => pluginsStore.flowRootSchema ?? {}))
     provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => pluginsStore.flowDefinitions ?? {}))
-    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, _blockSchemaPath, refPath, anchorEl) => {
-        ctx.createTask(parentPath, refPath, anchorEl)
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, anchorEl) => {
+        ctx.createTask(parentPath, blockSchemaPath, refPath, anchorEl)
     })
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
         ctx.editTask(parentPath, blockSchemaPath, refPath, split)

@@ -46,6 +46,14 @@ export function laneDisplayLabelFromPath(t: Translate, parentPath: string): stri
     return laneName.toUpperCase()
 }
 
+const TASK_LIST_LANE_KEYS = new Set([...ALL_SECTIONS, ...NESTED_BLOCK_KEYS])
+
+/** Tells a lane holding tasks apart from any other array a schema-driven form renders, such as the flow inputs. */
+export function isTaskListPath(parentPath: string): boolean {
+    if (/\.cases[.[]/.test(parentPath)) return true
+    return TASK_LIST_LANE_KEYS.has(parentPath.split(".").pop() ?? "")
+}
+
 export function sectionFromParentPath(parentPath: string): BlockSection {
     const lane = parentPath.split(".").pop() ?? ""
     if (lane === "errors") return "errors"

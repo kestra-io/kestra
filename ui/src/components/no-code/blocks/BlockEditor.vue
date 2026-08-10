@@ -174,6 +174,7 @@
     import {buildCommandMenuContextLabel, buildCommandMenuItems, type BlockCommandMenuContext} from "./blockCommandMenu"
     import {useBlockEditorKeyboard} from "./useBlockEditorKeyboard"
     import {
+        isTaskListPath,
         laneDisplayLabelFromPath as laneDisplayLabelFor,
         parentPathFromLaneSentinel,
         sectionDisplayLabel as sectionDisplayLabelFor,
@@ -227,12 +228,23 @@
 
     const inlineEditPanel = ref()
 
+    // Only a lane of tasks can be filled from the task picker; every other list needs its own schema-driven form.
+    function onCreateBlockInList(parentPath: string, blockSchemaPath: string, refPath: number | undefined, anchorEl?: HTMLElement) {
+        if (isTaskListPath(parentPath)) {
+            openTaskPickerAtPath(parentPath, refPath ?? -1, undefined, "after", anchorEl)
+            return
+        }
+        flowModalOpen.value = false
+        editingFlow.value = false
+        emit("createTask", parentPath, blockSchemaPath, refPath, "after")
+    }
+
     useBlockEditorProvides({
         props,
         flowYaml,
         validationIssuesByTask,
         inlineEditPanel,
-        createTask: (parentPath, refPath, anchorEl) => openTaskPickerAtPath(parentPath, refPath ?? -1, undefined, "after", anchorEl),
+        createTask: onCreateBlockInList,
         editTask: (parentPath, blockSchemaPath, refPath, split) => emit("editTask", parentPath, blockSchemaPath, refPath, split),
         closeTask: () => emit("closeTask"),
         updateYaml: (yaml: string) => applyYaml(yaml),

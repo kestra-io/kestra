@@ -1,12 +1,22 @@
 name: "E2E tests scheduling"
 
 on:
+  # Every push to develop runs the suite, so the scheduled run only has to cover quiet
+  # periods: it re-tests an unchanged commit to surface flakiness, and catches external
+  # drift (base images, plugin downloads) on days when nothing is merged.
   schedule:
-    - cron: "0 9-21/2 * * 1-5" # Every 2 hours from 9 AM to 9 PM, Monday to Friday
+    - cron: "0 3 * * *" # Runs at 03:00 UTC (05:00 CEST) every day
   push:
     branches:
-      - main
+      - develop
   workflow_dispatch:
+
+# The scheduled and push runs share a group, since both target the same ref: a new merge
+# supersedes an in-flight run of an older commit rather than stacking a second full
+# build-from-source on top of it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   e2e:

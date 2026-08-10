@@ -168,7 +168,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             );
         }
 
-        result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE, logEntry));
+        result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.DEBUG, logEntry));
 
         return result;
     }

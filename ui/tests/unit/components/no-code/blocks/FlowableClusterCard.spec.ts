@@ -22,11 +22,31 @@ const sequentialBlock = {
     tasks: [{id: "leaf", type: "io.kestra.plugin.core.log.Log", message: "hi"}],
 }
 
+const switchBlock = {
+    id: "router",
+    type: "io.kestra.plugin.core.flow.Switch",
+    value: "{{ inputs.mode }}",
+    cases: {
+        fast: [{id: "case_fast", type: "io.kestra.plugin.core.log.Log", message: "fast"}],
+    },
+}
+
 function mountAt(depth: number) {
     return mount(FlowableClusterCard, {
         global: globalConfig,
         props: {block: sequentialBlock, path: "tasks[0]", depth},
     })
+}
+
+function mountSwitch() {
+    return mount(FlowableClusterCard, {
+        global: globalConfig,
+        props: {block: switchBlock, path: "tasks[0]", depth: 0},
+    })
+}
+
+async function typeCaseKey(wrapper: ReturnType<typeof mountSwitch>, key: string) {
+    await wrapper.find("[data-test='flowable-add-case-input']").setValue(key)
 }
 
 describe("FlowableClusterCard", () => {
@@ -55,5 +75,32 @@ describe("FlowableClusterCard", () => {
         const wrapper = mountAt(0)
         await wrapper.find(".flowable-cluster-header").trigger("click")
         expect(wrapper.find(".flowable-cluster-body").exists()).toBe(false)
+    })
+
+    test("adds a switch case for a key that is free", async () => {
+        const wrapper = mountSwitch()
+        await typeCaseKey(wrapper, "slow")
+
+        expect(wrapper.find("[data-test='flowable-add-case-btn']").attributes("disabled")).toBeUndefined()
+        await wrapper.find("[data-test='flowable-add-case-btn']").trigger("click")
+
+        expect(wrapper.emitted("add-at-path")?.[0]?.[0]).toBe("tasks[0].cases.slow")
+    })
+
+    test("refuses a case key the switch already uses instead of retargeting that case", async () => {
+        const wrapper = mountSwitch()
+        await typeCaseKey(wrapper, "fast")
+
+        expect(wrapper.find("[data-test='flowable-add-case-btn']").attributes("disabled")).toBeDefined()
+        expect(wrapper.find("[data-test='flowable-add-case-taken']").exists()).toBe(true)
+    })
+
+    test("frees the button again once the duplicate key is edited away", async () => {
+        const wrapper = mountSwitch()
+        await typeCaseKey(wrapper, "fast")
+        await typeCaseKey(wrapper, "fast_2")
+
+        expect(wrapper.find("[data-test='flowable-add-case-btn']").attributes("disabled")).toBeUndefined()
+        expect(wrapper.find("[data-test='flowable-add-case-taken']").exists()).toBe(false)
     })
 })

@@ -2715,6 +2715,7 @@
       "split_into": "{count}-Spalten-Ansicht",
       "split_view": "Geteilte Ansicht",
       "switch_case_key_placeholder": "Neuer Fallschlüssel",
+      "switch_case_key_taken": "Fall {key} existiert bereits",
       "tab_apps": "Nach App",
       "tab_recent": "Zuletzt",
       "tab_suggested": "Vorgeschlagen",

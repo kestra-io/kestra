@@ -2715,6 +2715,7 @@
       "split_into": "{count}-स्तंभ दृश्य",
       "split_view": "विभाजित दृश्य",
       "switch_case_key_placeholder": "नई केस की",
+      "switch_case_key_taken": "केस {key} पहले से मौजूद है",
       "tab_apps": "ऐप अनुसार",
       "tab_recent": "हाल की",
       "tab_suggested": "सुझाई गई",

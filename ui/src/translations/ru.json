@@ -2715,6 +2715,7 @@
       "split_into": "Вид в {count} столбца",
       "split_view": "Разделённый вид",
       "switch_case_key_placeholder": "Новый ключ случая",
+      "switch_case_key_taken": "Случай {key} уже существует",
       "tab_apps": "По приложению",
       "tab_recent": "Недавние",
       "tab_suggested": "Рекомендуемые",

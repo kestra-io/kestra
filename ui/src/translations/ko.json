@@ -2715,6 +2715,7 @@
       "split_into": "{count}열 보기",
       "split_view": "분할 보기",
       "switch_case_key_placeholder": "새 케이스 키",
+      "switch_case_key_taken": "케이스 {key}이(가) 이미 존재합니다",
       "tab_apps": "앱별",
       "tab_recent": "최근",
       "tab_suggested": "추천",

@@ -2715,6 +2715,7 @@
       "split_into": "{count} 列视图",
       "split_view": "分屏视图",
       "switch_case_key_placeholder": "新分支键",
+      "switch_case_key_taken": "分支 {key} 已存在",
       "tab_apps": "按应用",
       "tab_recent": "最近",
       "tab_suggested": "推荐",

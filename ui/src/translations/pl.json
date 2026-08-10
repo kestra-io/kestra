@@ -2715,6 +2715,7 @@
       "split_into": "Widok {count} kolumn",
       "split_view": "Widok podzielony",
       "switch_case_key_placeholder": "Nowy klucz przypadku",
+      "switch_case_key_taken": "Przypadek {key} już istnieje",
       "tab_apps": "Wg aplikacji",
       "tab_recent": "Ostatnie",
       "tab_suggested": "Sugerowane",

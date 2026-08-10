@@ -110,13 +110,17 @@
                 <button
                     class="flowable-cluster-add-case-btn"
                     type="button"
-                    :disabled="!newCaseKey.trim()"
+                    :disabled="!newCaseKey.trim() || isCaseKeyTaken"
+                    :title="isCaseKeyTaken ? t('block_editor.switch_case_key_taken', {key: newCaseKey.trim()}) : undefined"
                     data-test="flowable-add-case-btn"
                     @click="addCase"
                 >
                     <PlusCircleOutline class="flowable-cluster-add-icon" />
                     {{ t("block_editor.add_switch_case") }}
                 </button>
+                <span v-if="isCaseKeyTaken" class="flowable-cluster-case-taken" data-test="flowable-add-case-taken">
+                    {{ t("block_editor.switch_case_key_taken", {key: newCaseKey.trim()}) }}
+                </span>
             </div>
         </div>
     </div>
@@ -279,9 +283,18 @@
 
     const newCaseKey = ref("")
 
+    const existingCaseKeys = computed<string[]>(() => {
+        const casesObj = displayBlock.value.cases
+        return casesObj && typeof casesObj === "object" && !Array.isArray(casesObj)
+            ? Object.keys(casesObj as Record<string, unknown>)
+            : []
+    })
+
+    const isCaseKeyTaken = computed(() => existingCaseKeys.value.includes(newCaseKey.value.trim()))
+
     function addCase(evt?: Event) {
         const key = newCaseKey.value.trim()
-        if (!key) return
+        if (!key || isCaseKeyTaken.value) return
         emit("add-at-path", flowYamlUtils.appendKeyToPath(`${props.path}.cases`, key), -1, evt)
         newCaseKey.value = ""
     }
@@ -411,6 +424,11 @@
     .flowable-cluster-case-input {
         flex: 1;
         max-width: 200px;
+    }
+
+    .flowable-cluster-case-taken {
+        font-size: var(--ks-font-size-xs);
+        color: var(--ks-text-error);
     }
 
     .flowable-cluster-add-case-btn {

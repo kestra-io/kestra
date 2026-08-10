@@ -2715,6 +2715,7 @@
       "split_into": "{count}列表示",
       "split_view": "分割表示",
       "switch_case_key_placeholder": "新しいケースキー",
+      "switch_case_key_taken": "ケース{key}はすでに存在します",
       "tab_apps": "アプリ別",
       "tab_recent": "最近",
       "tab_suggested": "おすすめ",

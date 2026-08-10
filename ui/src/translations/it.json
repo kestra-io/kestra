@@ -2715,6 +2715,7 @@
       "split_into": "Vista a {count} colonne",
       "split_view": "Vista divisa",
       "switch_case_key_placeholder": "Nuova chiave caso",
+      "switch_case_key_taken": "Il caso {key} esiste già",
       "tab_apps": "Per app",
       "tab_recent": "Recenti",
       "tab_suggested": "Suggerite",

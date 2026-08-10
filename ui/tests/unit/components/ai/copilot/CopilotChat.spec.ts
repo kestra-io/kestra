@@ -285,4 +285,24 @@ describe("CopilotChat", () => {
         state.notice.value = "emptyTurn"
         expect(mountChat().find("[data-test=\"copilot-notice\"]").attributes("role")).toBe("status")
     })
+
+    it("spins the in-flight tool call while streaming, and stops once its result arrives", async () => {
+        state.messages.value = [
+            {id: "u1", role: "USER", type: "TEXT", content: "make a flow"},
+            {id: "t1", role: "TOOL", type: "TOOL_CALL", toolCall: {tool: "author-flow", family: "AUTHOR", arguments: {}}},
+        ]
+        state.streaming.value = true
+        const w = mountChat()
+        await flushPromises()
+        // Last message is the tool call and the turn is streaming → the step shows its spinner.
+        expect(w.find(".copilot-tool-spinner").exists()).toBe(true)
+
+        // Its result arrives → the tool call is no longer the last message, so the spinner clears.
+        state.messages.value = [
+            ...state.messages.value,
+            {id: "r1", role: "TOOL", type: "TOOL_RESULT", toolResult: {tool: "author-flow", outcome: "ok"}},
+        ]
+        await flushPromises()
+        expect(w.find(".copilot-tool-spinner").exists()).toBe(false)
+    })
 })

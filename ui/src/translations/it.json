@@ -765,8 +765,8 @@
     "dynamic": "Dinamico",
     "choice": "Scelta",
     "sequential": "Sequenziale",
-    "can not delete": "Impossibile eliminare",
-    "can not have less than 1 task": "Ogni flow deve avere almeno un task.",
+    "can not delete": "Impossibile eliminare questo task",
+    "can not have less than 1 task": "Un flow deve avere almeno un task. Aggiungi un altro task prima di eliminare questo.",
     "task id already exists": "Task Id già esistente",
     "Task Id already exist in the flow": "Task Id {taskId} già esistente nel flow.",
     "task id": "Task ID",
@@ -1058,7 +1058,7 @@
       }
     },
     "pluginPage": {
-      "search": "Cerca tra oltre {count} plugin",
+      "search": "Cerca tra {count}+ plugin",
       "searchTasks": "Cerca {count} task",
       "noResults": "Nessun plugin corrisponde alla tua ricerca.",
       "loadError": "Impossibile caricare i plugin. Per favore riprova.",
@@ -1257,6 +1257,12 @@
         "header": "Metadati e Osservabilità degli Asset",
         "title": "Porta ogni dataset, servizio e dipendenza in vista.",
         "message": "Le risorse collegano la osservabilità, la lineage e i metadati di proprietà in modo che i team della piattaforma possano risolvere i problemi più rapidamente e distribuire con fiducia."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "Gestisci gli utenti tramite IAM con SSO, SCIM e RBAC",
@@ -1862,7 +1868,6 @@
     "learn_more": "Scopri di più",
     "watch_video": "Guarda Video",
     "runners": "Corridori",
-    "select": "Seleziona il tuo {{section}}",
     "for flow": "per flow",
     "forbidden system labels": "Solo system.correlationId può essere usato come label di sistema",
     "confirm": "Conferma",
@@ -1896,6 +1901,10 @@
       "assets": {
         "title": "Non hai ancora Asset!",
         "content": "Aggiungi asset per tracciare e gestire i tuoi asset di dati, servizi e infrastruttura."
+      },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
       },
       "apiTokens": {
         "title": "Gestisci i tuoi Token API",
@@ -1986,7 +1995,8 @@
       "kv_pairs": "Nessuna coppia Key-Value trovata",
       "secrets": "Nessun Secret Trovato",
       "templates": "Nessun Template Trovato",
-      "assets": "Nessun asset trovato"
+      "assets": "Nessun asset trovato",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {
@@ -2138,15 +2148,15 @@
         "empty": {
           "title": "Trasforma la tua idea in un flusso di lavoro"
         },
-        "toolCall": "{{tool}} in esecuzione",
+        "toolCall": "{tool} in esecuzione",
         "context": {
           "app": "App: {app}",
           "blueprint": "Blueprint: {blueprint}",
           "dashboard": "Cruscotto: {dashboard}",
           "execution": "Esecuzione: {id}",
-          "flow": "Flow: {{flow}}",
+          "flow": "Flow: {flow}",
           "namespace": "Namespace: {namespace}",
-          "plugin": "Plugin: {{plugin}}",
+          "plugin": "Plugin: {plugin}",
           "test": "Test: {test}"
         },
         "contextAdded": "Aggiunto {type} {id} al contesto.",
@@ -2163,7 +2173,7 @@
         "contextRemoved": "Rimosso {type} {id} dal contesto.",
         "toolResult": {
           "detail": "Dettagli",
-          "error": "{{tool}} fallito",
+          "error": "{tool} fallito",
           "ok": "{tool} completato",
           "rejected": "{tool} rifiutato"
         },
@@ -2239,7 +2249,7 @@
           "openInEditor": "Apri nell'editor",
           "apply": "Applica",
           "applyTitle": "Applica flow",
-          "applyConfirm": "Applica il flow {{namespace}}.{{id}}? Verrà creato, o sovrascritto se esiste già.",
+          "applyConfirm": "Applica il flow {namespace}.{id}? Verrà creato, o sovrascritto se esiste già.",
           "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
           "applyError": "Impossibile applicare il flow. Riprova.",
           "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",
@@ -2437,7 +2447,7 @@
     },
     "mcp": {
       "your_servers": "I tuoi server",
-      "servers_count": "{{count}} Server MCP",
+      "servers_count": "{count} Server MCP",
       "managed_by_kestra": "Gestito da Kestra",
       "servers": "Server MCP",
       "server": "Server MCP",

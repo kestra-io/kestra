@@ -1,9 +1,9 @@
 <template>
     <!--
-        Full-page host for the v2 AI Copilot. Reuses the very same CopilotChat as the right-side
-        dock (same agent, composer, transcript, thread controls) in the "page" layout — this is the
-        #7909 onboarding cutover, making the copilot a discoverable full-width home. The legacy
-        one-shot generator (`../AiCopilot.vue` + onboarding WelcomeCopilot) is retired by this change.
+        Full-page host for the v2 AI Copilot — reuses the same CopilotChat as the right-side dock in the
+        "page" layout (the #7909 onboarding cutover, making the copilot a discoverable full-width home).
+        The legacy one-shot generator (`../AiCopilot.vue` + onboarding WelcomeCopilot) is retired by this
+        change.
     -->
     <!-- Hidden for a user without the COPILOT permission; the watcher redirects them to dashboards. -->
     <div v-if="!denied" class="copilot-page-root">
@@ -52,11 +52,11 @@
     const authStore = useAuthStore()
     const canCreateFlow = computed(() => authStore.user?.hasAnyActionOnAnyNamespace(resource.FLOW, action.CREATE))
 
-    // The copilot is gated by the backend's `@HasAnyResource(COPILOT)`, and `/ai` is also the
-    // post-login landing — so a user without that permission can arrive here directly (redirect,
-    // typed URL, refresh). Send them to their dashboards rather than strand them on a surface they
-    // can't use. Reactive (not a router guard) so it fires once the user/permissions finish loading,
-    // and never misfires while they're still loading. A no-op in OSS, where auth is permissive.
+    // The copilot is gated by the backend's `@HasAnyResource(COPILOT)` and `/ai` is the post-login
+    // landing, so a permission-less user can arrive here directly (redirect, typed URL, refresh) —
+    // send them to their dashboards rather than strand them. Reactive (not a router guard) so it fires
+    // once permissions finish loading and never misfires while loading; a no-op in OSS, where auth is
+    // permissive.
     const denied = computed(() => !!authStore.user && !authStore.user.hasAny(resource.COPILOT))
     watch(
         denied,

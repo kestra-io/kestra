@@ -1,8 +1,5 @@
 export default {
     "en": {
-        "years": "Years",
-        "months": "Months",
-        "weeks": "Weeks",
         "days": "Days",
         "hours": "Hours",
         "minutes": "Minutes",
@@ -13,9 +10,6 @@ export default {
         },
     },
     "de": {
-        "years": "Jahre",
-        "months": "Monate",
-        "weeks": "Wochen",
         "days": "Tage",
         "hours": "Stunden",
         "minutes": "Minuten",
@@ -26,9 +20,6 @@ export default {
         },
     },
     "es": {
-        "years": "Años",
-        "months": "Meses",
-        "weeks": "Semanas",
         "days": "Días",
         "hours": "Horas",
         "minutes": "Minutos",
@@ -39,9 +30,6 @@ export default {
         },
     },
     "fr": {
-        "years": "Années",
-        "months": "Mois",
-        "weeks": "Semaines",
         "days": "Jours",
         "hours": "Heures",
         "minutes": "Minutes",
@@ -52,9 +40,6 @@ export default {
         },
     },
     "hi": {
-        "years": "वर्ष",
-        "months": "महीने",
-        "weeks": "सप्ताह",
         "days": "दिन",
         "hours": "घंटे",
         "minutes": "मिनट्स",
@@ -65,9 +50,6 @@ export default {
         },
     },
     "it": {
-        "years": "Anni",
-        "months": "Mesi",
-        "weeks": "Settimane",
         "days": "Giorni",
         "hours": "Ore",
         "minutes": "Minuti",
@@ -78,9 +60,6 @@ export default {
         },
     },
     "ja": {
-        "years": "年",
-        "months": "月",
-        "weeks": "週間",
         "days": "日数",
         "hours": "営業時間",
         "minutes": "分",
@@ -91,9 +70,6 @@ export default {
         },
     },
     "ko": {
-        "years": "연도",
-        "months": "개월",
-        "weeks": "주",
         "days": "일",
         "hours": "운영 시간",
         "minutes": "분",
@@ -104,9 +80,6 @@ export default {
         },
     },
     "pl": {
-        "years": "Lata",
-        "months": "Miesiące",
-        "weeks": "Tygodnie",
         "days": "Dni",
         "hours": "Godziny",
         "minutes": "Minuty",
@@ -117,9 +90,6 @@ export default {
         },
     },
     "pt": {
-        "years": "Anos",
-        "months": "Meses",
-        "weeks": "Semanas",
         "days": "Dias",
         "hours": "Horas",
         "minutes": "Minutos",
@@ -130,9 +100,6 @@ export default {
         },
     },
     "pt_BR": {
-        "years": "Anos",
-        "months": "Meses",
-        "weeks": "Semanas",
         "days": "Dias",
         "hours": "Horas",
         "minutes": "Minutos",
@@ -143,9 +110,6 @@ export default {
         },
     },
     "ru": {
-        "years": "Годы",
-        "months": "Месяцы",
-        "weeks": "Недели",
         "days": "Дни",
         "hours": "Часы",
         "minutes": "Минуты",
@@ -156,9 +120,6 @@ export default {
         },
     },
     "zh_CN": {
-        "years": "年",
-        "months": "月份",
-        "weeks": "周",
         "days": "天数",
         "hours": "小时",
         "minutes": "分钟",

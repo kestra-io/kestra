@@ -1,5 +1,5 @@
 <template>
-    <KsDialog v-model="open" destroyOnClose :appendToBody="true" width="560px">
+    <KsDialog v-model="open" destroyOnClose :appendToBody="true" width="560px" scrollable>
         <template #header>
             <span>{{ t("test_event.title") }}</span>
         </template>

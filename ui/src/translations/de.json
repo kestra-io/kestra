@@ -1719,7 +1719,7 @@
         "remove": "Entfernen",
         "empty": "Sie haben noch keine Suche gespeichert.",
         "tooltip": "Sie können keine leeren Suchkriterien speichern.",
-        "name_already_used": "Suchbegriff {label} bereits verwendet.",
+        "name_already_used": "Suchlabel bereits verwendet.",
         "dialog": {
           "heading": "Aktuelle Suche speichern",
           "placeholder": "Label",
@@ -1868,7 +1868,6 @@
     "learn_more": "Erfahren Sie mehr",
     "watch_video": "Video ansehen",
     "runners": "Läufer",
-    "select": "Wählen Sie Ihren {{section}} aus",
     "for flow": "für Flow",
     "forbidden system labels": "Nur system.correlationId kann als System-Label verwendet werden",
     "confirm": "Bestätigen",
@@ -2151,14 +2150,14 @@
         },
         "toolCall": "Wird ausgeführt {tool}",
         "context": {
-          "app": "App: {{app}}",
+          "app": "App: {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Dashboard: {{dashboard}}",
-          "execution": "Ausführung: {{id}}",
+          "dashboard": "Dashboard: {dashboard}",
+          "execution": "Ausführung: {id}",
           "flow": "Flow: {flow}",
-          "namespace": "Namespace: {{namespace}}",
+          "namespace": "Namespace: {namespace}",
           "plugin": "Plugin: {plugin}",
-          "test": "Test: {{test}}"
+          "test": "Test: {test}"
         },
         "contextAdded": "Hinzugefügt {type} {id} zum Kontext.",
         "contextNoun": {
@@ -2174,9 +2173,9 @@
         "contextRemoved": "Entfernt {type} {id} aus dem Kontext.",
         "toolResult": {
           "detail": "Details",
-          "error": "{{tool}} fehlgeschlagen",
+          "error": "{tool} fehlgeschlagen",
           "ok": "{tool} abgeschlossen",
-          "rejected": "{{tool}} abgelehnt"
+          "rejected": "{tool} abgelehnt"
         },
         "confirm": {
           "planTitle": "Planentwurf",
@@ -2250,7 +2249,7 @@
           "openInEditor": "Im Editor öffnen",
           "apply": "Anwenden",
           "applyTitle": "flow anwenden",
-          "applyConfirm": "Den flow {{namespace}}.{{id}} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
+          "applyConfirm": "Den flow {namespace}.{id} anwenden? Er wird erstellt oder überschrieben, falls er bereits existiert.",
           "applyConfirmDashboard": "Das Dashboard {id} anwenden? Es wird erstellt oder überschrieben, falls es bereits existiert.",
           "applyError": "Der flow konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",
           "applyErrorDashboard": "Das Dashboard konnte nicht angewendet werden. Bitte versuchen Sie es erneut.",

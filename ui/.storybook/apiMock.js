@@ -283,16 +283,6 @@ function installFetchMock() {
 const MONACO_STACK = /monaco-editor[/\\]esm[/\\]vs|[/\\]monaco[/\\](esm|min)[/\\]vs/
 
 /**
- * monaco-yaml's own findLinks/getCodeAction link and code-action providers call into its worker
- * on a debounce; if a story's editor gets torn down (or the worker hasn't finished its handshake
- * yet) before that debounced call resolves, the worker-side `$fmr` rejects with this exact
- * message. Same teardown/timing race as the "Canceled: Canceled" class above — matched by message
- * rather than stack, since the rejection is reconstructed on the main thread after crossing the
- * worker postMessage boundary and may not carry a worker-side stack.
- */
-const MONACO_MISSING_REQUEST_HANDLER = /Missing requestHandler or method:/
-
-/**
  * Print what a rejection actually was. Vitest reports an unhandled rejection by logging the event
  * object, which for a `PromiseRejectionEvent` prints as `{isTrusted: true}` — no message, no stack,
  * no way to tell which call failed. This adds the reason (and, for DOM-Event reasons, the element
@@ -306,10 +296,6 @@ function installRejectionReporter() {
     window.addEventListener("unhandledrejection", (event) => {
         const reason = event?.reason
         if (typeof reason?.stack === "string" && MONACO_STACK.test(reason.stack)) {
-            event.preventDefault()
-            return
-        }
-        if (typeof reason?.message === "string" && MONACO_MISSING_REQUEST_HANDLER.test(reason.message)) {
             event.preventDefault()
             return
         }

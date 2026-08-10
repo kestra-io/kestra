@@ -72,7 +72,6 @@
     "add_new_item": "添加新项目",
     "copy": "复制",
     "copy_to_clipboard": "复制到剪贴板",
-    "copy_and_close": "复制并关闭",
     "new": "新建",
     "edit": "编辑",
     "back": "返回",
@@ -168,10 +167,8 @@
     },
     "created date": "创建日期",
     "latest_update": "最新更新",
-    "updated date": "更新日期",
     "expiration date": "过期日期",
     "healthcheck date": "健康检查日期",
-    "next execution date": "下次执行日期",
     "last execution status": "上次执行状态",
     "jump to...": "跳转到...",
     "contextBar": {
@@ -193,7 +190,6 @@
     "steps": "步骤",
     "state": "状态",
     "search": "搜索",
-    "all tags": "所有标签",
     "source search": "源搜索",
     "selected": "已选择",
     "task": "任务",
@@ -273,7 +269,6 @@
     "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "调试表达式",
-      "render": "渲染表达式",
       "preview": "预览",
       "expression": "表达式"
     },
@@ -281,7 +276,6 @@
     "name": "名称",
     "key": "键",
     "value": "值",
-    "current execution": "当前执行",
     "parent execution": "父执行",
     "original execution": "原始执行",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
@@ -440,8 +434,6 @@
     "side-by-side": "并排",
     "line-by-line": "逐行",
     "template": "模板",
-    "templates": "模板",
-    "no result": "没有结果显示。",
     "trigger": "触发器",
     "triggers": "触发器",
     "test_event": {
@@ -666,19 +658,8 @@
     "admin": "管理员",
     "main_configuration": "主配置",
     "commit_id": "提交 id",
-    "evaluation lock date": "评估锁定日期",
     "unlock trigger": {
-      "tooltip": {
-        "execution": "此触发器正在执行",
-        "evaluation": "此触发器当前正在评估"
-      },
-      "confirmation": "确定要解锁触发器吗？",
-      "warning": "这可能会导致同一触发器的并发执行，应作为最后的选择。",
-      "button": "解锁触发器",
       "success": "触发器已解锁"
-    },
-    "restart trigger": {
-      "tooltip": "重新启动trigger"
     },
     "trigger disabled": "在Flow源中触发器已禁用",
     "trigger enable dialog": {
@@ -697,10 +678,8 @@
     "add task": "添加任务",
     "unable to generate graph": "生成图表时发生问题，无法显示拓扑。",
     "attempts": "尝试",
-    "workers": "工作者",
     "version": "版本",
     "services": "服务",
-    "server type": "服务器类型",
     "hostname": "主机名",
     "port": "端口",
     "file preview truncated": "显示的内容已被截断",
@@ -800,8 +779,6 @@
     "pause backfills": "暂停回填",
     "backfill executions": "回填执行",
     "execute backfill": "执行回填",
-    "backfill paused": "补数据已暂停",
-    "backfill running": "正在运行Backfill",
     "relative": "相对",
     "relative start date": "相对开始日期",
     "now": "现在",
@@ -1261,7 +1238,6 @@
       "update": "更新密钥 '{name}'",
       "isReadOnly": "Secret 是只读的",
       "names": "秘密",
-      "inherited": "继承的秘密",
       "key": "名称",
       "keyPlaceholder": "用于引用此密钥的名称，例如 MY_API_TOKEN",
       "name": "秘密值",
@@ -1366,14 +1342,8 @@
     "execution_started": "执行已开始！",
     "execution_failed": "执行失败！",
     "last error was": "上次错误是",
-    "task run id": "任务运行 ID",
     "active": "活动",
     "flows imported": "Flow已导入",
-    "filters": {
-      "options": {
-        "scope": "范围"
-      }
-    },
     "custom value": "自定义值",
     "chart": "图表",
     "chart preview": "图表预览",
@@ -1492,7 +1462,6 @@
     "deleted_label": "已删除",
     "fold_all_multi_lines": "折叠所有多行",
     "watch": "监视",
-    "learn_more": "了解更多",
     "for flow": "用于 flow",
     "forbidden system labels": "只有 system.correlationId 可以用作系统 label",
     "confirm": "确认",
@@ -1617,9 +1586,7 @@
       "triggers": "未找到Triggers",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
-      "secrets": "未找到Secrets",
-      "assets": "未找到资产",
-      "cases": "No Cases Found"
+      "secrets": "未找到Secrets"
     },
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {
@@ -1829,7 +1796,6 @@
           "汇聚"
         ],
         "newChat": "新建聊天",
-        "recents": "最近",
         "draft": {
           "openInEditor": "在编辑器中打开",
           "apply": "应用",

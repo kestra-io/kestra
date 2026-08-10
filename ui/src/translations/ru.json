@@ -72,7 +72,6 @@
     "add_new_item": "Добавить новый элемент",
     "copy": "Копировать",
     "copy_to_clipboard": "Копировать в буфер обмена",
-    "copy_and_close": "Копировать и закрыть",
     "new": "Новый",
     "edit": "Редактировать",
     "back": "Назад",
@@ -168,10 +167,8 @@
     },
     "created date": "Дата создания",
     "latest_update": "Последнее обновление",
-    "updated date": "Дата обновления",
     "expiration date": "Дата истечения",
     "healthcheck date": "HealthCheck Дата",
-    "next execution date": "Дата следующего выполнения",
     "last execution status": "Последний статус выполнения",
     "jump to...": "Перейти к...",
     "contextBar": {
@@ -193,7 +190,6 @@
     "steps": "Шаги",
     "state": "Состояние",
     "search": "Поиск",
-    "all tags": "Все теги",
     "source search": "Поиск по источнику",
     "selected": "Выбрано",
     "task": "Задача",
@@ -273,7 +269,6 @@
     "flow_outputs": "Выходы Flow",
     "eval": {
       "title": "Отладка выражения",
-      "render": "Отобразить выражение",
       "preview": "Предварительный просмотр",
       "expression": "Выражение"
     },
@@ -281,7 +276,6 @@
     "name": "Имя",
     "key": "Ключ",
     "value": "Значение",
-    "current execution": "Текущее выполнение",
     "parent execution": "Родительское выполнение",
     "original execution": "Оригинальное выполнение",
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
@@ -440,8 +434,6 @@
     "side-by-side": "бок о бок",
     "line-by-line": "построчно",
     "template": "Шаблон",
-    "templates": "Шаблоны",
-    "no result": "Нет результатов для отображения.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "test_event": {
@@ -666,19 +658,8 @@
     "admin": "Администратор",
     "main_configuration": "Основная конфигурация",
     "commit_id": "Идентификатор коммита",
-    "evaluation lock date": "Дата блокировки оценки",
     "unlock trigger": {
-      "tooltip": {
-        "execution": "Выполнение запущено для этого trigger",
-        "evaluation": "Trigger в настоящее время оценивается"
-      },
-      "confirmation": "Вы уверены, что хотите разблокировать trigger?",
-      "warning": "Это может привести к параллельным выполнениям для одного и того же trigger и должно рассматриваться как крайняя мера.",
-      "button": "Разблокировать trigger",
       "success": "Trigger разблокирован"
-    },
-    "restart trigger": {
-      "tooltip": "Перезапустить trigger"
     },
     "trigger disabled": "Триггер отключен в источнике Flow",
     "trigger enable dialog": {
@@ -697,10 +678,8 @@
     "add task": "Добавить задачу",
     "unable to generate graph": "Произошла ошибка при генерации графа, что препятствует отображению топологии.",
     "attempts": "Попытка(и)",
-    "workers": "Workers",
     "version": "Версия",
     "services": "Сервисы",
-    "server type": "Тип сервера",
     "hostname": "Имя хоста",
     "port": "Порт",
     "file preview truncated": "Отображаемое содержимое было усечено",
@@ -800,8 +779,6 @@
     "pause backfills": "Приостановить заполнения",
     "backfill executions": "Выполнения заполнение",
     "execute backfill": "Выполнить заполнение",
-    "backfill paused": "Заполнение приостановлено",
-    "backfill running": "Запуск Backfill",
     "relative": "Относительный",
     "relative start date": "Относительная дата начала",
     "now": "Сейчас",
@@ -1261,7 +1238,6 @@
       "update": "Обновить секрет '{name}'",
       "isReadOnly": "Секрет доступен только для чтения",
       "names": "Cекреты",
-      "inherited": "Унаследованные секреты",
       "key": "Имя",
       "keyPlaceholder": "Имя, используемое для ссылки на этот секрет, например, MY_API_TOKEN",
       "name": "Секретное значение",
@@ -1366,14 +1342,8 @@
     "execution_started": "Выполнение началось!",
     "execution_failed": "Выполнение не удалось!",
     "last error was": "Последняя ошибка была",
-    "task run id": "ID выполнения задачи",
     "active": "Активно",
     "flows imported": "Потоки импортированы",
-    "filters": {
-      "options": {
-        "scope": "Область применения"
-      }
-    },
     "custom value": "Пользовательское значение",
     "chart": "График",
     "chart preview": "Предварительный просмотр диаграммы",
@@ -1492,7 +1462,6 @@
     "deleted_label": "Удалено",
     "fold_all_multi_lines": "Свернуть все многострочные строки",
     "watch": "Наблюдение",
-    "learn_more": "Узнать больше",
     "for flow": "для flow",
     "forbidden system labels": "Только system.correlationId можно использовать как system label",
     "confirm": "Подтвердить",
@@ -1617,9 +1586,7 @@
       "triggers": "Триггеры не найдены",
       "flows": "Потоки не найдены",
       "kv_pairs": "Пары kv store не найдены",
-      "secrets": "Секреты не найдены",
-      "assets": "Активы не найдены",
-      "cases": "No Cases Found"
+      "secrets": "Секреты не найдены"
     },
     "duplicate-pair": "{label} \"{key}\" дублируется, первый ключ игнорируется.",
     "dashboards": {
@@ -1829,7 +1796,6 @@
           "Конвергирует"
         ],
         "newChat": "Новый чат",
-        "recents": "Недавние",
         "draft": {
           "openInEditor": "Открыть в редакторе",
           "apply": "Применить",

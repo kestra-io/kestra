@@ -72,7 +72,6 @@
     "add_new_item": "新しいアイテムを追加",
     "copy": "コピー",
     "copy_to_clipboard": "クリップボードにコピー",
-    "copy_and_close": "コピーして閉じる",
     "new": "新規",
     "edit": "編集",
     "back": "戻る",
@@ -168,10 +167,8 @@
     },
     "created date": "作成日",
     "latest_update": "最新の更新",
-    "updated date": "更新日",
     "expiration date": "有効期限",
     "healthcheck date": "HealthCheck日",
-    "next execution date": "次の実行日",
     "last execution status": "最後の実行ステータス",
     "jump to...": "ジャンプ先...",
     "contextBar": {
@@ -193,7 +190,6 @@
     "steps": "ステップ",
     "state": "状態",
     "search": "検索",
-    "all tags": "すべてのタグ",
     "source search": "ソース検索",
     "selected": "選択済み",
     "task": "Task",
@@ -273,7 +269,6 @@
     "flow_outputs": "フロー出力",
     "eval": {
       "title": "デバッグ式",
-      "render": "式をレンダリング",
       "preview": "プレビュー",
       "expression": "式"
     },
@@ -281,7 +276,6 @@
     "name": "名前",
     "key": "Key",
     "value": "Value",
-    "current execution": "現在の実行",
     "parent execution": "親実行",
     "original execution": "元の実行",
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
@@ -440,8 +434,6 @@
     "side-by-side": "並列表示",
     "line-by-line": "行ごと表示",
     "template": "テンプレート",
-    "templates": "テンプレート",
-    "no result": "表示する結果がありません。",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "test_event": {
@@ -666,19 +658,8 @@
     "admin": "管理者",
     "main_configuration": "メイン設定",
     "commit_id": "コミット id",
-    "evaluation lock date": "評価ロック日",
     "unlock trigger": {
-      "tooltip": {
-        "execution": "このtriggerに対して実行が進行中です",
-        "evaluation": "triggerは現在評価中です"
-      },
-      "confirmation": "triggerのロックを解除してもよろしいですか？",
-      "warning": "これは同じtriggerに対する並行実行につながる可能性があり、最後の手段として考慮されるべきです。",
-      "button": "triggerのロックを解除",
       "success": "triggerのロックが解除されました"
-    },
-    "restart trigger": {
-      "tooltip": "トリガーを再起動する"
     },
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
     "trigger enable dialog": {
@@ -697,10 +678,8 @@
     "add task": "taskを追加",
     "unable to generate graph": "グラフの生成中に問題が発生し、トポロジーが表示されません。",
     "attempts": "試行回数",
-    "workers": "Workers",
     "version": "バージョン",
     "services": "サービス",
-    "server type": "サーバータイプ",
     "hostname": "ホスト名",
     "port": "ポート",
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
@@ -800,8 +779,6 @@
     "pause backfills": "backfillを一時停止",
     "backfill executions": "backfill実行",
     "execute backfill": "backfillを実行",
-    "backfill paused": "バックフィル PAUSED",
-    "backfill running": "バックフィル実行中",
     "relative": "相対",
     "relative start date": "相対開始日",
     "now": "現在",
@@ -1261,7 +1238,6 @@
       "update": "シークレット '{name}' を更新",
       "isReadOnly": "シークレットは読み取り専用です",
       "names": "Secrets",
-      "inherited": "継承されたsecrets",
       "key": "名前",
       "keyPlaceholder": "このシークレットを参照するために使用される名前。例: MY_API_TOKEN",
       "name": "秘密の値",
@@ -1366,14 +1342,8 @@
     "execution_started": "実行が開始されました！",
     "execution_failed": "実行が失敗しました！",
     "last error was": "最後のエラーは",
-    "task run id": "タスクランID",
     "active": "アクティブ",
     "flows imported": "フローがインポートされました",
-    "filters": {
-      "options": {
-        "scope": "スコープ"
-      }
-    },
     "custom value": "カスタム value",
     "chart": "チャート",
     "chart preview": "チャートプレビュー",
@@ -1492,7 +1462,6 @@
     "deleted_label": "削除されました",
     "fold_all_multi_lines": "すべての複数行を折りたたむ",
     "watch": "ウォッチ",
-    "learn_more": "詳細を確認",
     "for flow": "フロー用",
     "forbidden system labels": "system label として使用できるのは system.correlationId のみです",
     "confirm": "確認",
@@ -1617,9 +1586,7 @@
       "triggers": "トリガーが見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",
-      "secrets": "シークレットが見つかりません",
-      "assets": "アセットが見つかりません",
-      "cases": "No Cases Found"
+      "secrets": "シークレットが見つかりません"
     },
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {
@@ -1829,7 +1796,6 @@
           "収束中"
         ],
         "newChat": "新規チャット",
-        "recents": "最近",
         "draft": {
           "openInEditor": "エディターで開く",
           "apply": "適用",

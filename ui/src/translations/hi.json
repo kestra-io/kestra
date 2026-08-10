@@ -72,7 +72,6 @@
     "add_new_item": "नया आइटम जोड़ें",
     "copy": "कॉपी करें",
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
-    "copy_and_close": "कॉपी करें और बंद करें",
     "new": "नया",
     "edit": "संपादित करें",
     "back": "वापस",
@@ -168,10 +167,8 @@
     },
     "created date": "निर्माण तिथि",
     "latest_update": "नवीनतम अपडेट",
-    "updated date": "अपडेट तिथि",
     "expiration date": "समाप्ति तिथि",
     "healthcheck date": "HealthCheck तिथि",
-    "next execution date": "अगली निष्पादन तिथि",
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to...": "कूदें...",
     "contextBar": {
@@ -193,7 +190,6 @@
     "steps": "चरण",
     "state": "स्थिति",
     "search": "खोजें",
-    "all tags": "सभी टैग",
     "source search": "स्रोत खोज",
     "selected": "चयनित",
     "task": "Task",
@@ -273,7 +269,6 @@
     "flow_outputs": "फ्लो Outputs",
     "eval": {
       "title": "डिबग अभिव्यक्ति",
-      "render": "एक्सप्रेशन रेंडर करें",
       "preview": "पूर्वावलोकन",
       "expression": "अभिव्यक्ति"
     },
@@ -281,7 +276,6 @@
     "name": "नाम",
     "key": "Key",
     "value": "Value",
-    "current execution": "वर्तमान निष्पादन",
     "parent execution": "मूल निष्पादन",
     "original execution": "मूल निष्पादन",
     "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
@@ -440,8 +434,6 @@
     "side-by-side": "साइड-बाय-साइड",
     "line-by-line": "लाइन-बाय-लाइन",
     "template": "template",
-    "templates": "templates",
-    "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "test_event": {
@@ -666,19 +658,8 @@
     "admin": "प्रशासनिक",
     "main_configuration": "मुख्य कॉन्फ़िगरेशन",
     "commit_id": "कमिट id",
-    "evaluation lock date": "मूल्यांकन लॉक तिथि",
     "unlock trigger": {
-      "tooltip": {
-        "execution": "इस Trigger के लिए एक निष्पादन चल रहा है",
-        "evaluation": "Trigger वर्तमान में मूल्यांकन में है"
-      },
-      "confirmation": "क्या आप वाकई Trigger को अनलॉक करना चाहते हैं?",
-      "warning": "यह एक ही Trigger के लिए concurrent निष्पादन का कारण बन सकता है और इसे अंतिम उपाय के रूप में माना जाना चाहिए।",
-      "button": "Trigger अनलॉक करें",
       "success": "Trigger अनलॉक किया गया"
-    },
-    "restart trigger": {
-      "tooltip": "ट्रिगर को पुनः प्रारंभ करें"
     },
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
     "trigger enable dialog": {
@@ -697,10 +678,8 @@
     "add task": "एक Task जोड़ें",
     "unable to generate graph": "ग्राफ़ उत्पन्न करते समय एक समस्या उत्पन्न हुई जिससे टोपोलॉजी प्रदर्शित नहीं हो सकी।",
     "attempts": "प्रयास",
-    "workers": "Workers",
     "version": "संस्करण",
     "services": "सेवाएँ",
-    "server type": "सर्वर प्रकार",
     "hostname": "होस्टनाम",
     "port": "पोर्ट",
     "file preview truncated": "प्रदर्शित सामग्री को संक्षिप्त किया गया है",
@@ -800,8 +779,6 @@
     "pause backfills": "Backfills को रोकें",
     "backfill executions": "Backfill निष्पादन",
     "execute backfill": "Backfill निष्पादित करें",
-    "backfill paused": "Backfill PAUSED",
-    "backfill running": "Backfill चल रहा है",
     "relative": "सापेक्ष",
     "relative start date": "सापेक्ष प्रारंभ तिथि",
     "now": "अब",
@@ -1261,7 +1238,6 @@
       "update": "गुप्त जानकारी '{name}' अपडेट करें",
       "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
       "names": "Secrets",
-      "inherited": "Inherited secrets",
       "key": "नाम",
       "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
       "name": "गुप्त मान",
@@ -1366,14 +1342,8 @@
     "execution_started": "निष्पादन शुरू हो गया है!",
     "execution_failed": "निष्पादन FAILED!",
     "last error was": "अंतिम त्रुटि थी",
-    "task run id": "टास्करन ID",
     "active": "सक्रिय",
     "flows imported": "फ़्लोज़ आयात किए गए",
-    "filters": {
-      "options": {
-        "scope": "स्कोप"
-      }
-    },
     "custom value": "कस्टम value",
     "chart": "चार्ट",
     "chart preview": "चार्ट पूर्वावलोकन",
@@ -1492,7 +1462,6 @@
     "deleted_label": "हटाया गया",
     "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
     "watch": "देखें",
-    "learn_more": "और जानें",
     "for flow": "फ्लो के लिए",
     "forbidden system labels": "सिर्फ़ system.correlationId को system label के रूप में उपयोग किया जा सकता है",
     "confirm": "पुष्टि करें",
@@ -1617,9 +1586,7 @@
       "triggers": "कोई Triggers नहीं मिले",
       "flows": "कोई Flows नहीं मिला",
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
-      "secrets": "कोई Secrets नहीं मिले",
-      "assets": "कोई Assets नहीं मिले",
-      "cases": "No Cases Found"
+      "secrets": "कोई Secrets नहीं मिले"
     },
     "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "dashboards": {
@@ -1829,7 +1796,6 @@
           "अभिसरण हो रहा है"
         ],
         "newChat": "नया चैट",
-        "recents": "हाल के",
         "draft": {
           "openInEditor": "संपादक में खोलें",
           "apply": "लागू करें",

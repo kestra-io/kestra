@@ -72,7 +72,6 @@
     "add_new_item": "Adicionar novo item",
     "copy": "Copiar",
     "copy_to_clipboard": "Copiar para a área de transferência",
-    "copy_and_close": "Copiar e fechar",
     "new": "Novo",
     "edit": "Editar",
     "back": "Voltar",
@@ -168,10 +167,8 @@
     },
     "created date": "Data de criação",
     "latest_update": "Última atualização",
-    "updated date": "Data de atualização",
     "expiration date": "Data de expiração",
     "healthcheck date": "Data do HealthCheck",
-    "next execution date": "Próxima data de execução",
     "last execution status": "Último status de execução",
     "jump to...": "Ir para...",
     "contextBar": {
@@ -193,7 +190,6 @@
     "steps": "Passos",
     "state": "Estado",
     "search": "Buscar",
-    "all tags": "Todas as tags",
     "source search": "Busca de fonte",
     "selected": "Selecionado",
     "task": "Task",
@@ -273,7 +269,6 @@
     "flow_outputs": "Saídas do Flow",
     "eval": {
       "title": "Expressão de Depuração",
-      "render": "Expressão de Renderização",
       "preview": "Pré-visualização",
       "expression": "Expressão"
     },
@@ -281,7 +276,6 @@
     "name": "Nome",
     "key": "Key",
     "value": "Value",
-    "current execution": "Execução atual",
     "parent execution": "Execução pai",
     "original execution": "Execução original",
     "add-trigger-in-editor": "Adicione um Trigger ao seu Flow primeiro",
@@ -440,8 +434,6 @@
     "side-by-side": "lado a lado",
     "line-by-line": "linha por linha",
     "template": "Template",
-    "templates": "Templates",
-    "no result": "Não há resultados para serem exibidos.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "test_event": {
@@ -666,19 +658,8 @@
     "admin": "Administração",
     "main_configuration": "Configuração Principal",
     "commit_id": "ID do commit",
-    "evaluation lock date": "Data de bloqueio da avaliação",
     "unlock trigger": {
-      "tooltip": {
-        "execution": "Há uma execução em andamento para este trigger",
-        "evaluation": "O trigger está atualmente em avaliação"
-      },
-      "confirmation": "Tem certeza de que deseja desbloquear o trigger?",
-      "warning": "Isso pode levar a execuções concorrentes para o mesmo trigger e deve ser considerado como uma última opção.",
-      "button": "Desbloquear trigger",
       "success": "Trigger desbloqueado"
-    },
-    "restart trigger": {
-      "tooltip": "Reiniciar o trigger"
     },
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
     "trigger enable dialog": {
@@ -697,10 +678,8 @@
     "add task": "Adicionar uma task",
     "unable to generate graph": "Ocorreu um problema ao gerar o gráfico, o que impede a exibição da topologia.",
     "attempts": "Tentativa(s)",
-    "workers": "Workers",
     "version": "Versão",
     "services": "Serviços",
-    "server type": "Tipo de servidor",
     "hostname": "Nome do host",
     "port": "Port",
     "file preview truncated": "Conteúdo exibido foi truncado",
@@ -800,8 +779,6 @@
     "pause backfills": "Pausar backfills",
     "backfill executions": "Execuções de backfill",
     "execute backfill": "Executar backfill",
-    "backfill paused": "Preenchimento retroativo pausado",
-    "backfill running": "Backfill em execução",
     "relative": "Relativo",
     "relative start date": "Data de início relativa",
     "now": "Agora",
@@ -1261,7 +1238,6 @@
       "update": "Atualizar segredo '{name}'",
       "isReadOnly": "O segredo é somente leitura",
       "names": "Segredos",
-      "inherited": "Segredos herdados",
       "key": "Nome",
       "keyPlaceholder": "Nome usado para referenciar este segredo, por exemplo, MY_API_TOKEN",
       "name": "Valor secreto",
@@ -1366,14 +1342,8 @@
     "execution_started": "A execução foi iniciada!",
     "execution_failed": "Execução FAILED!",
     "last error was": "O último erro foi",
-    "task run id": "ID do TaskRun",
     "active": "Ativo",
     "flows imported": "Fluxos importados",
-    "filters": {
-      "options": {
-        "scope": "Escopo"
-      }
-    },
     "custom value": "Valor personalizado",
     "chart": "Gráfico",
     "chart preview": "Pré-visualização do gráfico",
@@ -1492,7 +1462,6 @@
     "deleted_label": "Deletado",
     "fold_all_multi_lines": "Recolher Todas as Linhas Múltiplas",
     "watch": "Assistir",
-    "learn_more": "Saiba mais",
     "for flow": "para flow",
     "forbidden system labels": "Apenas system.correlationId pode ser usado como label do sistema",
     "confirm": "Confirmar",
@@ -1617,9 +1586,7 @@
       "triggers": "Nenhum Trigger Encontrado",
       "flows": "Nenhum Flow Encontrado",
       "kv_pairs": "Nenhum par de Key-Value encontrado",
-      "secrets": "Nenhum Secret Encontrado",
-      "assets": "Nenhum Asset Encontrado",
-      "cases": "No Cases Found"
+      "secrets": "Nenhum Secret Encontrado"
     },
     "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "dashboards": {
@@ -1829,7 +1796,6 @@
           "Convergindo"
         ],
         "newChat": "Novo chat",
-        "recents": "Recentes",
         "draft": {
           "openInEditor": "Abrir no editor",
           "apply": "Aplicar",

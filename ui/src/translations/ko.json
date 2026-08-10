@@ -72,7 +72,6 @@
     "add_new_item": "새 항목 추가",
     "copy": "복사",
     "copy_to_clipboard": "클립보드에 복사",
-    "copy_and_close": "복사하고 닫기",
     "new": "새로 만들기",
     "edit": "편집",
     "back": "뒤로",
@@ -168,10 +167,8 @@
     },
     "created date": "생성 날짜",
     "latest_update": "최신 업데이트",
-    "updated date": "업데이트 날짜",
     "expiration date": "만료 날짜",
     "healthcheck date": "HealthCheck 날짜",
-    "next execution date": "다음 실행 날짜",
     "last execution status": "마지막 실행 상태",
     "jump to...": "이동...",
     "contextBar": {
@@ -193,7 +190,6 @@
     "steps": "단계",
     "state": "상태",
     "search": "검색",
-    "all tags": "모든 태그",
     "source search": "소스 검색",
     "selected": "선택됨",
     "task": "Task",
@@ -273,7 +269,6 @@
     "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "디버그 표현식",
-      "render": "식 렌더링",
       "preview": "미리보기",
       "expression": "표현식"
     },
@@ -281,7 +276,6 @@
     "name": "이름",
     "key": "Key",
     "value": "Value",
-    "current execution": "현재 실행",
     "parent execution": "부모 실행",
     "original execution": "원래 실행",
     "add-trigger-in-editor": "먼저 Flow에 Trigger를 추가하세요.",
@@ -440,8 +434,6 @@
     "side-by-side": "나란히",
     "line-by-line": "줄별로",
     "template": "템플릿",
-    "templates": "템플릿들",
-    "no result": "결과가 없습니다.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "test_event": {
@@ -666,19 +658,8 @@
     "admin": "관리자",
     "main_configuration": "주요 설정",
     "commit_id": "커밋 id",
-    "evaluation lock date": "평가 잠금 날짜",
     "unlock trigger": {
-      "tooltip": {
-        "execution": "이 trigger에 대한 실행이 진행 중입니다",
-        "evaluation": "trigger가 현재 평가 중입니다"
-      },
-      "confirmation": "trigger를 잠금 해제하시겠습니까?",
-      "warning": "이는 동일한 trigger에 대해 동시 실행을 초래할 수 있으며 최후의 수단으로 고려해야 합니다.",
-      "button": "trigger 잠금 해제",
       "success": "Trigger가 잠금 해제되었습니다"
-    },
-    "restart trigger": {
-      "tooltip": "트리거 재시작"
     },
     "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
     "trigger enable dialog": {
@@ -697,10 +678,8 @@
     "add task": "task 추가",
     "unable to generate graph": "그래프 생성 중 문제가 발생하여 토폴로지를 표시할 수 없습니다.",
     "attempts": "시도 횟수",
-    "workers": "Workers",
     "version": "버전",
     "services": "서비스",
-    "server type": "서버 유형",
     "hostname": "호스트 이름",
     "port": "포트",
     "file preview truncated": "표시된 내용이 잘렸습니다",
@@ -800,8 +779,6 @@
     "pause backfills": "backfill 일시 중지",
     "backfill executions": "backfill 실행",
     "execute backfill": "backfill 실행",
-    "backfill paused": "백필 일시 중지됨",
-    "backfill running": "백필 실행 중",
     "relative": "상대적",
     "relative start date": "상대적 시작 날짜",
     "now": "지금",
@@ -1261,7 +1238,6 @@
       "update": "비밀 '{name}' 업데이트",
       "isReadOnly": "비밀은 읽기 전용입니다",
       "names": "비밀",
-      "inherited": "상속된 비밀",
       "key": "이름",
       "keyPlaceholder": "이 시크릿을 참조하는 데 사용되는 이름, 예: MY_API_TOKEN",
       "name": "비밀 value",
@@ -1366,14 +1342,8 @@
     "execution_started": "실행이 시작되었습니다!",
     "execution_failed": "실행 실패!",
     "last error was": "마지막 오류는",
-    "task run id": "TaskRun ID",
     "active": "활성화됨",
     "flows imported": "Flow가 가져왔습니다.",
-    "filters": {
-      "options": {
-        "scope": "범위"
-      }
-    },
     "custom value": "사용자 정의 value",
     "chart": "차트",
     "chart preview": "차트 미리보기",
@@ -1492,7 +1462,6 @@
     "deleted_label": "삭제됨",
     "fold_all_multi_lines": "모든 다중 라인 접기",
     "watch": "시청",
-    "learn_more": "자세히 알아보기",
     "for flow": "flow용",
     "forbidden system labels": "system label로는 system.correlationId만 사용할 수 있습니다",
     "confirm": "확인",
@@ -1617,9 +1586,7 @@
       "triggers": "트리거를 찾을 수 없음",
       "flows": "flow를 찾을 수 없음",
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
-      "secrets": "비밀 없음",
-      "assets": "자산을 찾을 수 없음",
-      "cases": "No Cases Found"
+      "secrets": "비밀 없음"
     },
     "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "dashboards": {
@@ -1829,7 +1796,6 @@
           "수렴 중"
         ],
         "newChat": "새 채팅",
-        "recents": "최근",
         "draft": {
           "openInEditor": "에디터에서 열기",
           "apply": "적용",

@@ -72,7 +72,6 @@
     "add_new_item": "Add new item",
     "copy": "Copy",
     "copy_to_clipboard": "Copy to clipboard",
-    "copy_and_close": "Copy and close",
     "new": "New",
     "edit": "Edit",
     "back": "Back",
@@ -168,10 +167,8 @@
     },
     "created date": "Created date",
     "latest_update": "Latest update",
-    "updated date": "Updated date",
     "expiration date": "Expiration date",
     "healthcheck date": "HealthCheck Date",
-    "next execution date": "Next execution date",
     "last execution status": "Last execution status",
     "jump to...": "Jump to...",
     "contextBar": {
@@ -193,7 +190,6 @@
     "steps": "Steps",
     "state": "State",
     "search": "Search",
-    "all tags": "All tags",
     "source search": "Source search",
     "selected": "Selected",
     "task": "Task",
@@ -273,7 +269,6 @@
     "flow_outputs": "Flow Outputs",
     "eval": {
       "title": "Debug Expression",
-      "render": "Render",
       "preview": "Preview",
       "expression": "Expression"
     },
@@ -281,7 +276,6 @@
     "name": "Name",
     "key": "Key",
     "value": "Value",
-    "current execution": "Current execution",
     "parent execution": "Parent execution",
     "original execution": "Original execution",
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
@@ -440,8 +434,6 @@
     "side-by-side": "side-by-side",
     "line-by-line": "line-by-line",
     "template": "Template",
-    "templates": "Templates",
-    "no result": "There are no results to be shown.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "test_event": {
@@ -666,19 +658,8 @@
     "admin": "Admin",
     "main_configuration": "Main Configuration",
     "commit_id": "Commit id",
-    "evaluation lock date": "Evaluation lock date",
     "unlock trigger": {
-      "tooltip": {
-        "execution": "There is an execution running for this trigger",
-        "evaluation": "The trigger is currently in evaluation"
-      },
-      "confirmation": "Are you sure you want to unlock the trigger?",
-      "warning": "It could lead to concurrent executions for the same trigger and should be considered as a last resort option.",
-      "button": "Unlock trigger",
       "success": "Trigger is unlocked"
-    },
-    "restart trigger": {
-      "tooltip": "Restart the trigger"
     },
     "trigger disabled": "Trigger is disabled within Flow source",
     "trigger enable dialog": {
@@ -697,10 +678,8 @@
     "add task": "Add a task",
     "unable to generate graph": "An issue occurred while generating the graph, which prevents the topology from displaying.",
     "attempts": "Attempt(s)",
-    "workers": "Workers",
     "version": "Version",
     "services": "Services",
-    "server type": "Server type",
     "hostname": "Hostname",
     "port": "Port",
     "file preview truncated": "Displayed content has been truncated",
@@ -800,8 +779,6 @@
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
-    "backfill paused": "Backfill paused",
-    "backfill running": "Backfill running",
     "relative": "Relative",
     "relative start date": "Relative start date",
     "now": "Now",
@@ -1261,7 +1238,6 @@
       "update": "Update secret '{name}'",
       "isReadOnly": "Secret is read-only",
       "names": "Secrets",
-      "inherited": "Inherited secrets",
       "key": "Name",
       "keyPlaceholder": "Name used to reference this secret, e.g. MY_API_TOKEN",
       "name": "Secret value",
@@ -1366,14 +1342,8 @@
     "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!",
     "last error was": "Last error was",
-    "task run id": "TaskRun ID",
     "active": "Active",
     "flows imported": "Flows imported",
-    "filters": {
-      "options": {
-        "scope": "Scope"
-      }
-    },
     "custom value": "Custom value",
     "chart": "Chart",
     "chart preview": "Chart preview",
@@ -1492,7 +1462,6 @@
     "deleted_label": "Deleted",
     "fold_all_multi_lines": "Fold All Multi Lines",
     "watch": "Watch",
-    "learn_more": "Learn more",
     "for flow": "for flow",
     "forbidden system labels": "Only system.correlationId can be used as a system label",
     "confirm": "Confirm",
@@ -1617,9 +1586,7 @@
       "triggers": "No Triggers Found",
       "flows": "No Flows Found",
       "kv_pairs": "No Key-Value pairs Found",
-      "secrets": "No Secrets Found",
-      "assets": "No Assets Found",
-      "cases": "No Cases Found"
+      "secrets": "No Secrets Found"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
@@ -1829,7 +1796,6 @@
           "Converging"
         ],
         "newChat": "New chat",
-        "recents": "Recents",
         "draft": {
           "openInEditor": "Open in editor",
           "apply": "Apply",

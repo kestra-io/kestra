@@ -8,7 +8,7 @@
             @click="toggle(item.label)"
         >
             <span :style="swatchStyle(item.color)" />
-            {{ displayLabel(item.label) }} {{ item.count }}
+            {{ displayLabel(item.label) }} ({{ item.count }})
         </span>
 
         <KsTooltip v-if="hidden.length" placement="top">

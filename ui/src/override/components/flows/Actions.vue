@@ -4,7 +4,7 @@
     />
     <template v-if="showDashboards">
         <Dashboards @dashboard="onSelectDashboard" />
-        <span class="action-group-divider" />
+        <KsDivider direction="vertical" />
     </template>
     <NavBarActions>
         <NavBarAction
@@ -234,11 +234,3 @@
         })
     }
 </script>
-
-<style scoped lang="scss">
-    .action-group-divider {
-        width: 1px;
-        height: var(--ks-spacing-5);
-        background: var(--ks-border-default);
-    }
-</style>

@@ -18,17 +18,24 @@
                     :execution="execution"
                 />
 
-                <!-- A tab with its own more specific action (Audit Logs exporting to CSV in the
-                     Enterprise Edition) contributes it here; every other tab gets the action that
-                     matches the execution's state. -->
+                <!--
+                    A tab with its own more specific action (Audit Logs exporting to CSV in the
+                    Enterprise Edition) contributes it here; every other tab falls back to the
+                    action that matches the execution's state.
+
+                    Callers MUST gate the `<template #secondary>` declaration itself, e.g.
+                    `<template #secondary v-if="activeTab === 'audit-logs'">`. Putting the `v-if`
+                    on the content inside the slot instead would keep the slot declared on every
+                    tab and blank the secondary, losing Replay / Restart / Pause / Resume.
+                -->
                 <template #secondary>
-                    <slot v-if="$slots.secondary" name="secondary" />
-                    <component
-                        v-else
-                        :is="ACTIONS[secondaryKey].component"
-                        v-bind="ACTIONS[secondaryKey].props ?? {}"
-                        :execution="execution"
-                    />
+                    <slot name="secondary">
+                        <component
+                            :is="ACTIONS[secondaryKey].component"
+                            v-bind="ACTIONS[secondaryKey].props ?? {}"
+                            :execution="execution"
+                        />
+                    </slot>
                 </template>
 
                 <template #primary>

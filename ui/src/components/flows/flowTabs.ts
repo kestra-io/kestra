@@ -68,6 +68,13 @@ export const FLOW_TAB_ROUTES: RouteRecordRaw[] = [
         meta: {tab: "edit", title: "edit", maximized: true},
     },
     {
+        name: `${FLOW_PARENT_ROUTE}/promote`,
+        path: "promote",
+        component: () => import("../demo/Promote.vue"),
+        props: {embed: true},
+        meta: {tab: "promote", title: "promote.label", locked: true},
+    },
+    {
         name: `${FLOW_PARENT_ROUTE}/revisions`,
         path: "revisions",
         component: () => import("./FlowRevisions.vue"),

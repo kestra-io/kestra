@@ -63,7 +63,7 @@ class OutputControllerTest {
         taskOutputRepository.save(taskOutput);
 
         String response = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executionId/" + taskRunId),
+            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/executionId/" + taskRunId),
             String.class
         );
 
@@ -77,7 +77,7 @@ class OutputControllerTest {
 
         assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executionId/" + taskRunId),
+                HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/executionId/" + taskRunId),
                 TaskOutput.class
             )
         );
@@ -103,7 +103,7 @@ class OutputControllerTest {
         taskOutputRepository.save(taskOutput);
 
         List<OutputController.TaskOutputInformation> response = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executionId"),
+            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/executionId"),
             Argument.listOf(OutputController.TaskOutputInformation.class)
         );
 
@@ -118,7 +118,7 @@ class OutputControllerTest {
 
         assertThrows(
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/" + tenantId + "/outputs/not-found"),
+                HttpRequest.GET("/api/v1/" + tenantId + "/outputs/tasks/not-found"),
                 Argument.listOf(OutputController.TaskOutputInformation.class)
             )
         );
@@ -139,7 +139,7 @@ class OutputControllerTest {
         executionRepository.save(execution);
         executionOutputService.saveOutputs(execution, Map.of("some", "output"));
 
-        // When - the literal 'executions' segment must win over the {executionId}/{taskRunId} route
+        // When - every route now has a literal second segment ('executions' or 'tasks'), so there is no ambiguity
         Map<String, Object> response = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executions/" + executionId),
             Argument.mapOf(String.class, Object.class)

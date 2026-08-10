@@ -7853,7 +7853,7 @@ export type GetTaskOutputsInformationData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}';
 };
 
 export type GetTaskOutputsInformationResponses = {
@@ -7879,7 +7879,7 @@ export type GetTaskRunOutputsData = {
         tenant: string;
     };
     query?: never;
-    url: '/api/v1/{tenant}/outputs/{executionId}/{taskRunId}';
+    url: '/api/v1/{tenant}/outputs/tasks/{executionId}/{taskRunId}';
 };
 
 export type GetTaskRunOutputsResponses = {

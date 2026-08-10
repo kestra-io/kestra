@@ -1,3 +1,5 @@
+/* fake change */
+
 import {createApp} from "vue"
 import type {Router} from "vue-router"
 
@@ -39,7 +41,7 @@ const handleAuthError = (to: {fullPath: string}, error: unknown) => {
         BasicAuth.logout()
         const fromPath = to.fullPath !== "/ui/login" ? to.fullPath : undefined
         return {name: "login", query: fromPath ? {from: fromPath} : {}}
-    } 
+    }
     console.error("Error during authentication check:", error)
     return
 }

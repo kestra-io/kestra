@@ -28,7 +28,7 @@ jobs:
   publish-docker:
     name: Publish Docker
     if: startsWith(github.ref, 'refs/tags/v')
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@feat/depot
     with:
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
@@ -44,13 +44,13 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: kestra-io/actions/.github/workflows/kestra-oss-helm-release.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-helm-release.yml@feat/depot
     with:
       dry-run: ${{ inputs.dry-run }}
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     if: always()
     needs: [ publish-docker, helm-release ]
     env:

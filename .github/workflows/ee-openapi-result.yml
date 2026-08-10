@@ -11,7 +11,7 @@ concurrency:
 jobs:
   comment:
     name: Update OSS PR comment with EE OpenAPI spec result
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     if: github.repository == 'kestra-io/kestra'
     permissions:
       pull-requests: write

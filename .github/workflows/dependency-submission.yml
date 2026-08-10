@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   dependency-submission:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7

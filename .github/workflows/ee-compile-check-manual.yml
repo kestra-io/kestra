@@ -20,7 +20,7 @@ concurrency:
 jobs:
   ee-compile:
     name: EE compile check
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     if: github.repository == 'kestra-io/kestra'
     steps:
       - uses: actions/checkout@v7

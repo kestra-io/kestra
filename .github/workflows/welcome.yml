@@ -13,7 +13,7 @@ jobs:
   welcome:
     # GitHub already resolves the author's relationship to the repository, so internal contributors are filtered out without an API lookup.
     if: ${{ github.event.pull_request.user.type != 'Bot' && !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) && (github.event.action == 'opened' || github.event.pull_request.merged) }}
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     permissions:
       contents: read # reading the author's commit history
       issues: read # reading the author's issues and pull requests

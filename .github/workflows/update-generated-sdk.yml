@@ -13,7 +13,7 @@ concurrency:
 jobs:
   update-generated-sdk:
     name: Update Generated SDK
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     if: github.repository == 'kestra-io/kestra'
     steps:
       - uses: kestra-io/actions/composite/checkout-and-auth@main

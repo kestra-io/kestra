@@ -34,7 +34,7 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     defaults:
       run:
         working-directory: ui
@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -81,7 +81,7 @@ jobs:
       - name: Read new version
         id: version
         # Read the new version from the package.json and set it as an output for later steps
-        run: echo "value=$(npm pkg get version --workspace @kestra-io/${{ inputs.package }} | jq -r '."@kestra-io/${{ inputs.package }}"')" >> $GITHUB_OUTPUT 
+        run: echo "value=$(npm pkg get version --workspace @kestra-io/${{ inputs.package }} | jq -r '."@kestra-io/${{ inputs.package }}"')" >> $GITHUB_OUTPUT
 
       - name: Commit and tag
         working-directory: .
@@ -101,6 +101,6 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --workspace @kestra-io/${{ inputs.package }} --access public
-      
+
       - name: Create release tarball
         run: npm pack --workspace @kestra-io/${{ inputs.package }} --pack-destination packages/${{ inputs.package }}

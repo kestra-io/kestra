@@ -22,7 +22,7 @@ on:
 jobs:
   build-and-push:
     name: Build and Push kestra-base (${{ matrix.variant.cache-tag }})
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     strategy:
       matrix:
         variant:

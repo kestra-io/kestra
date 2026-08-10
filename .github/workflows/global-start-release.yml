@@ -16,7 +16,7 @@ env:
 jobs:
   release:
     name: Release Kestra
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
       - name: Parse and Check Inputs
         id: parse-and-check-inputs

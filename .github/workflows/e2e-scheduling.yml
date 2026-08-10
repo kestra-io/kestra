@@ -20,13 +20,13 @@ concurrency:
 
 jobs:
   e2e:
-    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@feat/depot
     with:
       java-version: 25
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     if: always()
     needs: [ e2e ]
     env:

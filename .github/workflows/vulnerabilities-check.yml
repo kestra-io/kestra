@@ -14,7 +14,7 @@ permissions:
 jobs:
   dependency-check:
     name: Dependency Check
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     steps:
       # Checkout
       - uses: actions/checkout@v7
@@ -52,7 +52,7 @@ jobs:
 
   develop-image-check:
     name: Image Check (develop)
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     permissions:
       contents: read
       security-events: write
@@ -90,7 +90,7 @@ jobs:
 
   latest-image-check:
     name: Image Check (latest)
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     permissions:
       contents: read
       security-events: write

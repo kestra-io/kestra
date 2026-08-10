@@ -14,7 +14,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
 
     strategy:
       fail-fast: false

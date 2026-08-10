@@ -11,7 +11,7 @@ jobs:
   # When an OSS PR opens, run the kestra-ee compile check for its ref (via a
   # Kestra webhook) and trigger the EE OpenAPI spec check.
   trigger-ee:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     # The `secrets` context is not allowed in `if:` conditions, so expose the
     # app-id as a job-level env var (the `env` context IS allowed in `if:`) and
     # gate the steps on that instead.
@@ -116,7 +116,7 @@ jobs:
   file-changes:
     if: ${{ github.event.pull_request.draft == false }}
     name: File changes detection
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     timeout-minutes: 60
     outputs:
       ui: ${{ steps.changes.outputs.ui }}
@@ -140,7 +140,7 @@ jobs:
     name: Frontend - Tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@feat/depot
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -149,7 +149,7 @@ jobs:
     name: Frontend - Design System tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui-design-system == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@feat/depot
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -157,13 +157,14 @@ jobs:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@feat/depot
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
     with:
       java-version: 25
 
@@ -177,7 +178,7 @@ jobs:
     # share artifacts (their runs hold no repo write token), so they keep
     # the E2E build-from-source fallback below.
     if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@feat/depot
     with:
       java-version: 25
 
@@ -187,7 +188,7 @@ jobs:
     # Runs when build-artifacts succeeded (prebuilt exe) or was skipped for a
     # fork (falls back to building from source); not when the build failed.
     if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true')"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@feat/depot
     with:
       java-version: 25
       exe-artifact: ${{ needs.build-artifacts.result == 'success' && 'exe' || '' }}
@@ -201,14 +202,16 @@ jobs:
     # otherwise let the reusable workflow build it from source itself.
     # Dependabot runs get a read-only GITHUB_TOKEN so it cannot publish an image : skip the job.
     if: "!cancelled() && needs.build-artifacts.result != 'failure' && github.actor != 'dependabot[bot]'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@feat/depot
     with:
       java-version: 25
       skip-build: ${{ needs.build-artifacts.result == 'success' }}
+    secrets:
+      DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     if: always()
     needs: [ trigger-ee, file-changes, frontend, design-system-frontend, backend, build-artifacts, e2e-tests, generate-pull-request-docker-image ]
     env:

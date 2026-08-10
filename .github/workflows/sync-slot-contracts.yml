@@ -11,7 +11,7 @@ on:
 jobs:
   sync:
     name: Sync contracts to kestra-io/artifact-sdk
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     timeout-minutes: 10
     steps:
       - name: Checkout kestra

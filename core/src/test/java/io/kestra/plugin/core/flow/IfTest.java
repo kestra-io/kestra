@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
@@ -29,6 +30,9 @@ class IfTest {
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private MetricRegistry metricRegistry;
 
     @Test
     @LoadFlows(value = { "flows/valids/if-condition.yaml" }, tenantId = "iftruthy")
@@ -169,5 +173,33 @@ class IfTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    // https://github.com/kestra-io/kestra/issues/9008: the Executor used to call resolveNexts() on a
+    // running If for every executor cycle, most of them resolving to nothing. Pin the number of
+    // resolutions so a regression shows up here rather than only in a profiler.
+    @Test
+    @LoadFlows(value = { "flows/valids/if-condition.yaml" }, tenantId = "ifflowablecount")
+    void shouldResolveFlowableOnlyWhenItCanProgress() throws TimeoutException, QueueException {
+        // Given
+        double before = flowableExecutionCount();
+
+        // When
+        Execution execution = runnerUtils.runOne(
+            "ifflowablecount", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", true), Duration.ofSeconds(120)
+        );
+
+        // Then
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(flowableExecutionCount() - before).isEqualTo(2d);
+    }
+
+    private double flowableExecutionCount() {
+        return metricRegistry.counter(
+            MetricRegistry.METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT,
+            MetricRegistry.METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT_DESCRIPTION,
+            MetricRegistry.TAG_TASK_TYPE, If.class.getName()
+        ).count();
     }
 }

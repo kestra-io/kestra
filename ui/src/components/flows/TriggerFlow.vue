@@ -29,6 +29,8 @@
             :showClose="true"
             :beforeClose="beforeClose"
             :appendToBody="true"
+            scrollable
+            large
         >
             <template #header>
                 <span v-html="t('execute the flow', {id: flowId})" />
@@ -44,6 +46,8 @@
             destroyOnClose
             :beforeClose="beforeSelectFlowClose"
             :appendToBody="true"
+            scrollable
+            large
         >
             <KsForm
                 labelPosition="top"

@@ -1306,7 +1306,8 @@
       "title": "Start automating with Kestra",
       "sub_title": "Click on the Execute button to start your first workflow execution.",
       "namespace_sub_title": "Execute one or more flows from this namespace to populate this dashboard.",
-      "namespace_guidance_desc": "Need guidance to manage your Namespace?"
+      "namespace_guidance_desc": "Need guidance to manage your Namespace?",
+      "need_help": "Need Help?"
     },
     "execution_guide": {
       "get_started": {

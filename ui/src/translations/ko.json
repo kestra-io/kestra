@@ -1306,7 +1306,8 @@
       "title": "자동화를 시작하세요",
       "sub_title": "실행 버튼을 클릭하여 첫 번째 workflow 실행을 시작하세요.",
       "namespace_sub_title": "이 대시보드를 채우기 위해 이 namespace에서 하나 이상의 flow를 실행하십시오.",
-      "namespace_guidance_desc": "네임스페이스를 관리하는 데 도움이 필요하신가요?"
+      "namespace_guidance_desc": "네임스페이스를 관리하는 데 도움이 필요하신가요?",
+      "need_help": "도움이 필요하신가요?"
     },
     "execution_guide": {
       "get_started": {

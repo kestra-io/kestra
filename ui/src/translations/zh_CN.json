@@ -1306,7 +1306,8 @@
       "title": "开始自动化使用",
       "sub_title": "单击Execute按钮以开始您的第一个工作流执行。",
       "namespace_sub_title": "从此namespace执行一个或多个flow以填充此仪表板。",
-      "namespace_guidance_desc": "需要指导来管理您的Namespace吗？"
+      "namespace_guidance_desc": "需要指导来管理您的Namespace吗？",
+      "need_help": "需要帮助？"
     },
     "execution_guide": {
       "get_started": {

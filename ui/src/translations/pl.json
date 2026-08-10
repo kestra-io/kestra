@@ -1306,7 +1306,8 @@
       "title": "Zacznij automatyzację z",
       "sub_title": "Kliknij przycisk Wykonaj, aby rozpocząć pierwsze wykonanie workflow.",
       "namespace_sub_title": "Wykonaj jeden lub więcej flow z tego namespace, aby wypełnić ten dashboard.",
-      "namespace_guidance_desc": "Potrzebujesz wskazówek, jak zarządzać swoim Namespace?"
+      "namespace_guidance_desc": "Potrzebujesz wskazówek, jak zarządzać swoim Namespace?",
+      "need_help": "Potrzebujesz pomocy?"
     },
     "execution_guide": {
       "get_started": {

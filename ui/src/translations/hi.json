@@ -1306,7 +1306,8 @@
       "title": "स्वचालन शुरू करें साथ में",
       "sub_title": "अपने पहले workflow execution को शुरू करने के लिए Execute बटन पर क्लिक करें।",
       "namespace_sub_title": "इस डैशबोर्ड को भरने के लिए इस namespace से एक या अधिक flows निष्पादित करें।",
-      "namespace_guidance_desc": "क्या आपको अपने Namespace को प्रबंधित करने के लिए मार्गदर्शन चाहिए?"
+      "namespace_guidance_desc": "क्या आपको अपने Namespace को प्रबंधित करने के लिए मार्गदर्शन चाहिए?",
+      "need_help": "मदद चाहिए?"
     },
     "execution_guide": {
       "get_started": {

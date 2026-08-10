@@ -1306,7 +1306,8 @@
       "title": "Beginnen Sie mit der Automatisierung mit",
       "sub_title": "Klicken Sie auf die Ausführen-Schaltfläche, um die erste Workflow-Ausführung zu starten.",
       "namespace_sub_title": "Führen Sie einen oder mehrere flows aus diesem namespace aus, um dieses Dashboard zu füllen.",
-      "namespace_guidance_desc": "Brauchen Sie Unterstützung bei der Verwaltung Ihres Namespace?"
+      "namespace_guidance_desc": "Brauchen Sie Unterstützung bei der Verwaltung Ihres Namespace?",
+      "need_help": "Brauchen Sie Hilfe?"
     },
     "execution_guide": {
       "get_started": {

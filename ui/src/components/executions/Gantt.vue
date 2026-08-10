@@ -137,7 +137,7 @@
                                             </div>
                                             <div class="task-duration d-none d-md-inline-block">
                                                 <small>
-                                                    <Duration :histories="item.task.state.histories" />
+                                                    <Duration :histories="item.task.state.histories" :attemptCount="item.attempts" />
                                                 </small>
                                             </div>
                                             <div class="task-actions" @click.stop>

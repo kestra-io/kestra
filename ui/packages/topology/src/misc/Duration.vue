@@ -158,9 +158,13 @@
             state: string;
         }[];
         interval?: number;
+        /** Authoritative attempt count (e.g. `taskRun.attempts.length`). Falls back to a count
+         *  derived from RETRYING transitions in `histories` when not provided. */
+        attemptCount?: number;
     }>(), {
         histories: undefined,
         interval: 100,
+        attemptCount: undefined,
     })
 
     const {t} = useI18n()
@@ -196,11 +200,17 @@
     const waitingToStart = computed(() => breakdown.value.isRunning && breakdown.value.running === 0)
     const neverRan = computed(() => hasHistory.value && !breakdown.value.isRunning && breakdown.value.total === 0)
 
-    const attemptCount = computed(() => {
+    const derivedAttemptGroupCount = computed(() => {
         if (!hasHistory.value) return 0
         const boundaries = filteredHistories.value.filter((h, i) => i > 0 && h.state === "RETRYING").length
         return boundaries + 1
     })
+
+    // The authoritative count (when known) is what gets displayed, so a task's warning icon and
+    // its duration card never disagree on how many attempts it had. Grouping in the state history
+    // stays derived from RETRYING transitions regardless: it needs to know *where* attempts split,
+    // not just how many there were, and the two can legitimately disagree (e.g. truncated history).
+    const attemptCount = computed(() => props.attemptCount ?? derivedAttemptGroupCount.value)
 
     function paint() {
         now.value = Date.now()
@@ -302,7 +312,10 @@
     const timelineRows = computed<TimelineRow[]>(() => {
         const entries = filteredHistories.value
         const rows: TimelineRow[] = []
-        const showAttempts = attemptCount.value > 1
+        // Grouping reflects the RETRYING boundaries actually found in this history, independent
+        // of the authoritative attemptCount: the two can disagree (e.g. a truncated history), and
+        // there is nothing meaningful to group when no boundary exists.
+        const showAttempts = derivedAttemptGroupCount.value > 1
         let previousDay: string | null = null
         let groupIndex = 1
 

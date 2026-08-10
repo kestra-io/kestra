@@ -12,9 +12,9 @@ const i18n = createI18n({
     fallbackWarn: false,
 })
 
-function mountDuration(histories: {date: string | number; state: string}[]) {
+function mountDuration(histories: {date: string | number; state: string}[], attemptCount?: number) {
     return mount(Duration, {
-        props: {histories},
+        props: {histories, attemptCount},
         global: {
             plugins: [i18n],
             stubs: {
@@ -114,6 +114,27 @@ describe("Duration", () => {
         const separators = wrapper.findAll("[data-test='state-history-day-separator']")
         expect(separators).toHaveLength(1)
         expect(separators[0].text()).toBe("2026-01-02")
+    })
+
+    it("should prefer the authoritative attempt count over the derived group count when they disagree", async () => {
+        const wrapper = mountDuration(
+            [
+                {date: "2026-08-07T15:36:15.804Z", state: "CREATED"},
+                {date: "2026-08-07T15:36:16.054Z", state: "RUNNING"},
+                {date: "2026-08-07T15:37:27.776Z", state: "SUCCESS"},
+            ],
+            3,
+        )
+
+        expect(wrapper.find(".duration-total-note").text()).toContain("3")
+
+        await openStateHistory(wrapper)
+
+        expect(wrapper.find(".state-history-date").text()).toContain("3")
+        // No RETRYING boundary exists in this history, so there is nothing to group by: rendering
+        // must degrade to a flat list rather than fabricate attempt groups.
+        expect(wrapper.findAll("[data-test='state-history-attempt-header']")).toHaveLength(0)
+        expect(wrapper.findAll("[data-test='state-history-item']")).toHaveLength(3)
     })
 
     it("should not show a state history button when there is no history to show", () => {

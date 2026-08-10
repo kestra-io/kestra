@@ -968,6 +968,10 @@
         "files": "Delete {count} selected files",
         "folders": "Delete {count} selected folders"
       },
+      "move": {
+        "bulk_success": "Selected files moved successfully.",
+        "bulk_error": "Failed to move {count} of the selected item(s)."
+      },
       "import": {
         "import": "Import",
         "files": "Import files",

@@ -4,8 +4,6 @@ import {useClient} from "@kestra-io/kestra-sdk"
 
 // The BASIC_AUTH cookie itself is HttpOnly and issued by the server (see MiscController#login/#logout).
 // The server also issues this non-HttpOnly cookie in lockstep, mirroring whether BASIC_AUTH is set;
-// it carries no credentials, so isLoggedIn() can read the real session state instead of a client-side flag
-// that could drift from it (e.g. on network failure during logout, or across tabs/browser restarts).
 const AUTH_FLAG_COOKIE_NAME = "kestraBasicAuthenticated"
 
 export async function logout() {

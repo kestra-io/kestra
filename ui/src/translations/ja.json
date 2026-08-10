@@ -2609,6 +2609,7 @@
         "group_flow": "Flow",
         "group_goto": "移動",
         "group_insert": "挿入",
+        "group_types": "taskタイプ",
         "insert_after": "{name}の後にtaskを挿入",
         "insert_at_end": "Tasksの末尾にtaskを挿入",
         "insert_before": "{name}の前にtaskを挿入",

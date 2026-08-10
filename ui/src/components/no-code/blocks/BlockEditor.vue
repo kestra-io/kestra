@@ -510,6 +510,11 @@
         openTaskPickerRelativeToFocused("before")
     }
 
+    function openCommandMenu() {
+        picker.ensurePluginData()
+        commandMenuOpen.value = true
+    }
+
     function isAnyOverlayOpen(): boolean {
         return shortcutsOpen.value || taskPickerVisible.value || commandMenuOpen.value || confirmDialogOpen.value
     }
@@ -540,7 +545,7 @@
             return
         }
         if (id === "command-menu") {
-            commandMenuOpen.value = true
+            openCommandMenu()
             return
         }
         if (id === "clear") {
@@ -555,7 +560,7 @@
         if (isAnyOverlayOpen()) return
 
         if (id === "quick-insert") {
-            commandMenuOpen.value = true
+            openCommandMenu()
         } else if (id === "move") {
             moveFocus(event.key === "ArrowDown" || event.key === "j" ? 1 : -1)
         } else if (id === "step-into") {
@@ -661,6 +666,8 @@
             focusCanvasCard(list.length ? String(list[0].id ?? 0) : sectionSentinelId(section))
         },
         saveFlow: saveFlowWithPendingEdits,
+        taskEntries: picker.focusedContextEntries.value,
+        insertTaskType: picker.insertTaskInFocusedContext,
     }))
 
     const commandMenuContextLabel = computed(() => buildCommandMenuContextLabel(commandMenuContext.value))

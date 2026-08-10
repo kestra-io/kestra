@@ -4,8 +4,10 @@ import ContentSave from "vue-material-design-icons/ContentSave.vue"
 import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue"
 import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 import PlusCircleOutline from "vue-material-design-icons/PlusCircleOutline.vue"
+import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue"
 import type {BlockCommandMenuItem} from "./BlockCommandMenu.vue"
 import {parentPathFromLaneSentinel, sectionFromSentinel} from "./blockSections"
+import type {PickerEntry} from "./taskPickerCatalog"
 import type {BlockSection} from "../../../utils/flowableBlockOps"
 
 type Translate = (key: string, named?: Record<string, unknown>) => string
@@ -27,6 +29,8 @@ export interface BlockCommandMenuContext {
     deleteFocused: () => void
     goToSection: (section: BlockSection) => void
     saveFlow: () => void
+    taskEntries: PickerEntry[]
+    insertTaskType: (fqcn: string) => void
 }
 
 function focusedSubject(ctx: BlockCommandMenuContext) {
@@ -144,6 +148,18 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
         shortcut: "⌘S",
         run: then(ctx.saveFlow),
     })
+
+    for (const entry of ctx.taskEntries) {
+        items.push({
+            id: `type-${entry.fqcn}`,
+            group: t("block_editor.command_menu.group_types"),
+            title: entry.label,
+            subtitle: entry.fqcn,
+            icon: PuzzleOutline,
+            searchOnly: true,
+            run: then(() => ctx.insertTaskType(entry.fqcn)),
+        })
+    }
 
     return items
 }

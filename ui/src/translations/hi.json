@@ -2609,6 +2609,7 @@
         "group_flow": "Flow",
         "group_goto": "यहां जाएं",
         "group_insert": "जोड़ें",
+        "group_types": "task प्रकार",
         "insert_after": "{name} के बाद task जोड़ें",
         "insert_at_end": "Tasks के अंत में task जोड़ें",
         "insert_before": "{name} से पहले task जोड़ें",

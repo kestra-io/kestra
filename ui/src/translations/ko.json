@@ -2609,6 +2609,7 @@
         "group_flow": "Flow",
         "group_goto": "이동",
         "group_insert": "삽입",
+        "group_types": "task 유형",
         "insert_after": "{name} 뒤에 task 삽입",
         "insert_at_end": "Tasks 끝에 task 삽입",
         "insert_before": "{name} 앞에 task 삽입",

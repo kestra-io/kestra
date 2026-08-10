@@ -1758,5 +1758,37 @@ tasks:
             const titles = (menu.props("items") as {title: string}[]).map(i => i.title)
             expect(titles).toContain("Insert task in Triggers")
         })
+
+        it("offers the task types from the plugin catalogue", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            const menu = await openCommandMenu()
+
+            // Then
+            const items = menu.props("items") as {subtitle?: string; searchOnly?: boolean}[]
+            const types = items.filter(item => item.searchOnly).map(item => item.subtitle)
+            expect(types).toEqual(["io.kestra.plugin.core.log.Log", "io.kestra.plugin.core.flow.If"])
+        })
+
+        it("inserts the picked task type into the focused context", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            const vm = wrapper.vm as unknown as {focusedId?: string}
+            vm.focusedId = "log_task"
+            const menu = await openCommandMenu()
+            const items = menu.props("items") as {subtitle?: string; run: () => void}[]
+
+            // When
+            items.find(item => item.subtitle === "io.kestra.plugin.core.flow.If")!.run()
+            await flushPromises()
+
+            // Then
+            const {flowYamlUtils} = await import("@kestra-io/topology")
+            const parsed = flowYamlUtils.parse(mockFlowYaml.value) as {tasks: {type: string}[]}
+            expect(parsed.tasks).toHaveLength(3)
+            expect(parsed.tasks[1].type).toBe("io.kestra.plugin.core.flow.If")
+        })
     })
 })

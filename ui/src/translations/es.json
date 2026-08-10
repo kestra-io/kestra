@@ -2609,6 +2609,7 @@
         "group_flow": "Flow",
         "group_goto": "Ir a",
         "group_insert": "Insertar",
+        "group_types": "Tipos de task",
         "insert_after": "Insertar task después de {name}",
         "insert_at_end": "Insertar task al final de Tasks",
         "insert_before": "Insertar task antes de {name}",

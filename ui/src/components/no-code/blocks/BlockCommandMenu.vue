@@ -82,8 +82,12 @@
         subtitle?: string
         icon?: Component
         shortcut?: string
+        /** Kept out of the idle list so the hundreds of task types only surface once the user types. */
+        searchOnly?: boolean
         run: () => void
     }
+
+    const SEARCH_ONLY_MAX_RESULTS = 20
 
     const props = defineProps<{
         items: BlockCommandMenuItem[]
@@ -102,10 +106,14 @@
 
     const filteredItems = computed<BlockCommandMenuItem[]>(() => {
         const search = query.value.trim().toLowerCase()
-        if (!search) return props.items
-        return props.items.filter(item =>
+        if (!search) return props.items.filter(item => !item.searchOnly)
+        const matches = props.items.filter(item =>
             `${item.title} ${item.subtitle ?? ""}`.toLowerCase().includes(search),
         )
+        return [
+            ...matches.filter(item => !item.searchOnly),
+            ...matches.filter(item => item.searchOnly).slice(0, SEARCH_ONLY_MAX_RESULTS),
+        ]
     })
 
     watch(filteredItems, (items) => {

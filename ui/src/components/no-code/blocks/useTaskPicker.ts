@@ -225,6 +225,26 @@ export function useTaskPicker(deps: TaskPickerDeps) {
         openTaskPickerAtPath(match[1], parseInt(match[2], 10), undefined, position)
     }
 
+    function focusedInsertSection(): BlockSection {
+        const sentinelSection = sectionFromSentinel(deps.focusedId.value)
+        if (sentinelSection) return sentinelSection
+        const laneParentPath = parentPathFromLaneSentinel(deps.focusedId.value)
+        if (laneParentPath) return sectionFromParentPath(laneParentPath)
+        const path = deps.focusedBlockPath()
+        const match = path?.match(/^(.*)\[(\d+)\]$/)
+        return match ? sectionFromParentPath(match[1]) : "tasks"
+    }
+
+    const focusedContextEntries = computed<PickerEntry[]>(() =>
+        buildPickerEntries(deps.pluginsStore.plugins, focusedInsertSection() === "triggers" ? "triggers" : "tasks"),
+    )
+
+    // Insertion needs the picker's own target state, so reuse it instead of duplicating the resolution rules.
+    function insertTaskInFocusedContext(fqcn: string) {
+        openTaskPickerRelativeToFocused("after")
+        insertTask(fqcn)
+    }
+
     const anchorRect = ref<AnchorRect | null>(null)
 
     function syncAnchorRect() {
@@ -320,8 +340,11 @@ export function useTaskPicker(deps: TaskPickerDeps) {
         displayedEntries,
         sectionLabel,
         pickerStyle,
+        focusedContextEntries,
+        ensurePluginData,
         setPickerTab,
         insertTask,
+        insertTaskInFocusedContext,
         onPickerKeydown,
         openTaskPicker,
         openTaskPickerAtPath,

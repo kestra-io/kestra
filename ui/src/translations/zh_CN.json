@@ -2609,6 +2609,7 @@
         "group_flow": "Flow",
         "group_goto": "转到",
         "group_insert": "插入",
+        "group_types": "task 类型",
         "insert_after": "在{name}之后插入task",
         "insert_at_end": "在Tasks末尾插入task",
         "insert_before": "在{name}之前插入task",

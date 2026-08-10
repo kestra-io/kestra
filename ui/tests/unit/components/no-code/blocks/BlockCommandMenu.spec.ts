@@ -167,6 +167,43 @@ describe("BlockCommandMenu", () => {
         expect(wrapper.emitted("close")).toBeTruthy()
     })
 
+    it("hides the search-only items until something is typed", async () => {
+        // Given — task types are search-only so they do not flood the idle list
+        const items: BlockCommandMenuItem[] = [
+            ...makeItems(vi.fn()),
+            {id: "type-log", group: "Task types", title: "Log", subtitle: "io.kestra.plugin.core.log.Log", searchOnly: true, run: vi.fn()},
+        ]
+        const {body} = mountMenu(items)
+
+        // When
+        const idle = body.findAll("[data-test='block-command-menu-item']")
+
+        // Then
+        expect(idle).toHaveLength(3)
+        expect(body.text()).not.toContain("io.kestra.plugin.core.log.Log")
+    })
+
+    it("surfaces a search-only item matched on its title", async () => {
+        // Given
+        const run = vi.fn()
+        const items: BlockCommandMenuItem[] = [
+            ...makeItems(vi.fn()),
+            {id: "type-log", group: "Task types", title: "Log", subtitle: "io.kestra.plugin.core.log.Log", searchOnly: true, run},
+        ]
+        const {body} = mountMenu(items)
+
+        // When
+        await body.find("input").setValue("log")
+        const rendered = body.findAll("[data-test='block-command-menu-item']")
+
+        // Then
+        expect(rendered.map(item => item.text())).toContain("Logio.kestra.plugin.core.log.Log")
+
+        // And it runs when picked
+        await rendered[rendered.length - 1].trigger("click")
+        expect(run).toHaveBeenCalled()
+    })
+
     it("shows the context label when provided", () => {
         // Given
         const items = makeItems(vi.fn())

@@ -39,6 +39,7 @@
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@google/genai": "^2.11.0",
+        "@hey-api/openapi-ts": "0.97.0",
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
         "@kestra-io/kestra-sdk": "*",
@@ -53,7 +54,6 @@
         "@storybook/vue3-vite": "^10.4.6",
         "@types/bootstrap": "^5.2.11",
         "@types/humanize-duration": "^3.27.4",
-        "@types/js-yaml": "^4.0.9",
         "@types/moment": "^2.13.0",
         "@types/node": "^26.1.1",
         "@types/nprogress": "^0.2.3",
@@ -159,5 +159,22 @@
             "oxlint --fix",
             "eslint --fix"
         ]
+    },
+    "allowScripts": {
+        "@google/genai@2.11.0": true,
+        "@parcel/watcher@2.5.6": true,
+        "@scarf/scarf@1.4.0": true,
+        "@tree-sitter-grammars/tree-sitter-yaml@0.7.1": true,
+        "tree-sitter@0.22.4": true,
+        "tree-sitter@0.21.1": true,
+        "vue-demi@0.14.10": true,
+        "core-js@3.49.0": true,
+        "core-js-pure@3.49.0": true,
+        "es5-ext@0.10.64": true,
+        "esbuild@0.28.1": true,
+        "fsevents@2.3.2": true,
+        "fsevents@2.3.3": true,
+        "protobufjs@7.6.5": true,
+        "tree-sitter-json@0.24.8": true
     }
 }

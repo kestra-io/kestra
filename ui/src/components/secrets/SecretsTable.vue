@@ -139,6 +139,7 @@
             :title="secretModalTitle"
             :beforeClose="beforeSecretClose"
             formLayout
+            scrollable
         >
             <KsForm labelPosition="left" :model="secret" :rules="rules" ref="form">
                 <KsFormItem

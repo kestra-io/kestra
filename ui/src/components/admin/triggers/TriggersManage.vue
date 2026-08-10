@@ -273,7 +273,7 @@
             <Vars :data="detailsData" />
         </KsDrawer>
 
-        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose">
+        <KsDialog v-model="isBackfillOpen" destroyOnClose :appendToBody="true" :beforeClose="beforeBackfillClose" scrollable>
             <template #header>
                 <span v-html="$t('backfill executions')" />
             </template>

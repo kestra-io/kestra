@@ -1868,7 +1868,6 @@
     "learn_more": "Узнать больше",
     "watch_video": "Смотреть видео",
     "runners": "Запуски",
-    "select": "Выберите ваш {{section}}",
     "for flow": "для flow",
     "forbidden system labels": "Только system.correlationId можно использовать как system label",
     "confirm": "Подтвердить",
@@ -2151,11 +2150,11 @@
         },
         "toolCall": "Запущено {tool}",
         "context": {
-          "app": "Приложение: {{app}}",
+          "app": "Приложение: {app}",
           "blueprint": "Blueprint: {blueprint}",
           "dashboard": "Дашборд: {dashboard}",
           "execution": "Выполнение: {id}",
-          "flow": "Flow: {{flow}}",
+          "flow": "Flow: {flow}",
           "namespace": "Пространство имён: {namespace}",
           "plugin": "Плагин: {plugin}",
           "test": "Тест: {test}"
@@ -2174,7 +2173,7 @@
         "contextRemoved": "Удалено {type} {id} из контекста.",
         "toolResult": {
           "detail": "Подробности",
-          "error": "{{tool}} FAILED",
+          "error": "{tool} FAILED",
           "ok": "{tool} завершено",
           "rejected": "{tool} отклонено"
         },

@@ -180,4 +180,61 @@ class ExecutionStreamingServiceTest {
 
         assertThat(completed.get(5, TimeUnit.SECONDS)).isNull();
     }
+
+    /**
+     * A subscriber can register before the execution has been persisted at all: in a distributed installation the
+     * executor is a separate process, so the create command it consumes may not have been applied yet. The catch-up
+     * guard has to wait for the execution instead of giving up on the first miss, otherwise an execution that
+     * terminated before registration never completes the {@link Flux} — no further event is coming.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldCompleteFluxWhenTheExecutionIsOnlyPersistedAfterTheSubscriberRegisters() throws Exception {
+        // Given — an already terminal execution that is not readable yet, then becomes readable
+        var flow = Flow.builder()
+            .tenantId(null)
+            .namespace("io.kestra.tests")
+            .id(IdUtils.create())
+            .tasks(Collections.singletonList(Log.builder().id("log").type(Log.class.getName()).message("test").build()))
+            .build();
+
+        var terminalExecution = Execution.newExecution(flow, Collections.emptyList()).withState(State.Type.SUCCESS);
+
+        var executionRepository = mock(ExecutionRepositoryInterface.class);
+        when(executionRepository.findByIdWithoutAcl(flow.getTenantId(), terminalExecution.getId()))
+            .thenReturn(Optional.empty()) // the executor has not persisted it yet
+            .thenReturn(Optional.empty())
+            .thenReturn(Optional.of(terminalExecution)); // it now has
+
+        var executionService = mock(ExecutionService.class);
+        when(executionService.isTerminated(any(), any())).thenAnswer(invocation ->
+            ((Execution) invocation.getArgument(1)).getState().isTerminated());
+
+        var queueSubscriber = mock(QueueSubscriber.class);
+        doAnswer(invocation -> queueSubscriber).when(queueSubscriber).subscribe(any());
+
+        var executionQueue = mock(BroadcastQueueInterface.class);
+        when(executionQueue.subscriber()).thenReturn(queueSubscriber);
+
+        var executionStreamingService = new ExecutionStreamingService(executionQueue, executionService, executionRepository);
+        executionStreamingService.startQueueConsumer();
+
+        var subscriberId = IdUtils.create();
+        CompletableFuture<Void> completed = new CompletableFuture<>();
+
+        // When — a subscriber registers while the execution is still unreadable
+        Flux.<Event<Execution>> create(
+            sink -> executionStreamingService.registerSubscriber(terminalExecution.getId(), subscriberId, sink, flow)
+        )
+            .timeout(java.time.Duration.ofSeconds(10))
+            .doFinally(sig -> executionStreamingService.unregisterSubscriber(terminalExecution.getId(), subscriberId))
+            .subscribe(
+                event -> { /* progress events — not relevant here */ },
+                completed::completeExceptionally,
+                () -> completed.complete(null)
+            );
+
+        // Then — the stream completes off the catch-up alone; no follow event is ever delivered
+        assertThat(completed.get(10, TimeUnit.SECONDS)).isNull();
+    }
 }

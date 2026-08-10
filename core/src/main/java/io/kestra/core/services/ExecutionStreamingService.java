@@ -1,10 +1,13 @@
 package io.kestra.core.services;
 
+import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.awaitility.core.ConditionTimeoutException;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -12,6 +15,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FollowExecutionEvent;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 
@@ -34,6 +38,9 @@ import reactor.core.publisher.FluxSink;
 @Slf4j
 @Singleton
 public class ExecutionStreamingService {
+    private static final Duration EXECUTION_LOOKUP_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration EXECUTION_LOOKUP_POLL_INTERVAL = Duration.ofMillis(500);
+
     private final Map<String, Map<String, Pair<FluxSink<Event<Execution>>, Flow>>> subscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();
 
@@ -129,14 +136,43 @@ public class ExecutionStreamingService {
         // FluxSink is thread-safe: duplicate complete() calls are no-ops, and next()
         // after complete() is silently dropped, so double-delivery is harmless.
         // Uses the no-ACL lookup: registerSubscriber's caller thread varies, so the ACL-enforcing findById would always
-        // deny authorization in EE
-        executionRepository.findByIdWithoutAcl(flow.getTenantId(), executionId).ifPresent(execution ->
-        {
-            if (isStopFollow(flow, execution)) {
-                sink.next(Event.of(execution).id("end"));
-                sink.complete();
-            }
-        });
+        // deny authorization in EE.
+        // The lookup waits rather than giving up on a first miss: a subscriber can register before the execution has
+        // been persisted at all, since the executor is a separate process in a distributed installation and may not
+        // have applied the create command yet. Reading empty there would silently skip this guard in exactly the case
+        // it exists for.
+        Optional<Execution> execution = awaitExecution(flow.getTenantId(), executionId);
+        if (execution.isEmpty()) {
+            log.warn(
+                "Execution {} was still not readable after {}, cannot determine whether it already terminated; the stream now depends on a later event",
+                executionId,
+                EXECUTION_LOOKUP_TIMEOUT
+            );
+            return;
+        }
+
+        if (isStopFollow(flow, execution.get())) {
+            sink.next(Event.of(execution.get()).id("end"));
+            sink.complete();
+        }
+    }
+
+    /**
+     * Reads an execution, waiting up to {@link #EXECUTION_LOOKUP_TIMEOUT} for it to exist.
+     *
+     * @return the execution, or empty if it never became readable
+     */
+    private Optional<Execution> awaitExecution(String tenantId, String executionId) {
+        try {
+            return Optional.ofNullable(
+                Await.await()
+                    .atMost(EXECUTION_LOOKUP_TIMEOUT)
+                    .pollInterval(EXECUTION_LOOKUP_POLL_INTERVAL)
+                    .until(() -> executionRepository.findByIdWithoutAcl(tenantId, executionId).orElse(null), Objects::nonNull)
+            );
+        } catch (ConditionTimeoutException e) {
+            return Optional.empty();
+        }
     }
 
     /**

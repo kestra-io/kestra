@@ -22,9 +22,11 @@
     import type {BlockSection} from "../../../utils/flowableBlockOps"
     import {
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
+        POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
     } from "../injectionKeys"
 
@@ -38,6 +40,8 @@
         parentPath: string
         refPath?: number
         blockSchemaPath: string
+        /** Builds a new entry at parentPath instead of editing the one already there. */
+        creating?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -48,7 +52,9 @@
 
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath)
     provide(REF_PATH_INJECTION_KEY, props.refPath)
-    provide(EDITING_TASK_INJECTION_KEY, true)
+    provide(EDITING_TASK_INJECTION_KEY, !props.creating)
+    provide(CREATING_TASK_INJECTION_KEY, Boolean(props.creating))
+    provide(POSITION_INJECTION_KEY, "after")
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath))
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
         emit("select-nested", parentPath, blockSchemaPath, refPath, split)

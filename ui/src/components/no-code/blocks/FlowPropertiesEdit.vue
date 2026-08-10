@@ -7,7 +7,40 @@
             <span class="flow-properties-title">{{ t("no_code.sections.flow") }}</span>
         </header>
 
-        <div class="flow-properties-body">
+        <div v-if="createTarget" class="flow-properties-body" data-test="flow-properties-create">
+            <FieldNavBreadcrumb
+                class="flow-properties-crumb"
+                :frames="[{path: createTarget.parentPath, label: createTarget.label}]"
+                :rootLabel="t('no_code.sections.flow')"
+                @navigate="closeCreate"
+                @back="closeCreate"
+            />
+            <FlowPropertyCreate
+                v-if="!createTarget.created"
+                :key="createTarget.editorKey"
+                :parentPath="createTarget.parentPath"
+                :refPath="createTarget.refPath"
+                :blockSchemaPath="createTarget.blockSchemaPath"
+                @created="onCreated"
+                @close="closeCreate"
+            />
+            <TaskEditModalForm
+                v-else
+                :key="`${createTarget.editorKey}:edit`"
+                section="tasks"
+                :flowId="flowId"
+                :namespace="namespace"
+                :editorKey="`${createTarget.editorKey}:edit`"
+                :parentPath="createTarget.created.parentPath"
+                :refPath="createTarget.created.refPath"
+                :blockSchemaPath="createTarget.created.blockSchemaPath"
+                :taskRaw="createdRaw"
+                @update:task="onCreatedEdited"
+                @close="closeCreate"
+            />
+        </div>
+
+        <div v-else class="flow-properties-body">
             <KsForm labelPosition="top">
                 <Wrapper
                     v-for="field in fields"
@@ -27,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue"
+    import {computed, inject, provide, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {KsForm, KsIconButton} from "@kestra-io/design-system"
@@ -35,11 +68,20 @@
 
     import Wrapper from "../components/tasks/Wrapper.vue"
     import TaskObjectField from "../components/tasks/TaskObjectField.vue"
+    import FieldNavBreadcrumb from "../components/FieldNavBreadcrumb.vue"
+    import FlowPropertyCreate from "./FlowPropertyCreate.vue"
+    import TaskEditModalForm from "./TaskEditModalForm.vue"
+    import {useFlowStore} from "../../../stores/flow"
     import {useFlowFields} from "../utils/useFlowFields"
     import {removeNullAndUndefined} from "../utils/cleanUp"
-    import {FULL_SOURCE_INJECTION_KEY, UPDATE_YAML_FUNCTION_INJECTION_KEY} from "../injectionKeys"
+    import {
+        CREATE_TASK_FUNCTION_INJECTION_KEY,
+        FULL_SOURCE_INJECTION_KEY,
+        UPDATE_YAML_FUNCTION_INJECTION_KEY,
+    } from "../injectionKeys"
 
     const {t} = useI18n()
+    const flowStore = useFlowStore()
 
     defineProps<{hideHeader?: boolean}>()
 
@@ -63,6 +105,69 @@
 
     const flowYaml = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
     const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
+
+    const flowId = computed(() => flowStore.flow?.id ?? "")
+    const namespace = computed(() => flowStore.flow?.namespace ?? "")
+
+    interface CreatedTarget {
+        parentPath: string
+        blockSchemaPath: string
+        refPath?: number
+    }
+
+    interface CreateTarget {
+        parentPath: string
+        blockSchemaPath: string
+        refPath?: number
+        label: string
+        editorKey: string
+        /** Set once the entry exists in the flow, so the form switches from building it to editing it. */
+        created?: CreatedTarget
+    }
+
+    const createTarget = ref<CreateTarget>()
+
+    const createdPath = computed(() => {
+        const created = createTarget.value?.created
+        if (!created) return undefined
+        return created.refPath !== undefined ? `${created.parentPath}[${created.refPath}]` : created.parentPath
+    })
+
+    const createdRaw = computed(() =>
+        createdPath.value
+            ? YAML_UTILS.extractBlockWithPath({source: flowYaml.value, path: createdPath.value}) ?? undefined
+            : undefined,
+    )
+
+    function onCreated(parentPath: string, blockSchemaPath: string, refPath: number | undefined) {
+        if (!createTarget.value) return
+        createTarget.value = {...createTarget.value, created: {parentPath, blockSchemaPath, refPath}}
+    }
+
+    function onCreatedEdited(newContent: string) {
+        if (!createdPath.value) return
+        updateYaml(YAML_UTILS.replaceBlockWithPath({
+            source: flowYaml.value,
+            path: createdPath.value,
+            newContent,
+        }))
+    }
+
+    // A list here holds flow-level entries (inputs, outputs, sla…), never tasks, so the
+    // creation form belongs in this panel behind a crumb — not in a tab that loses the flow.
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
+        createTarget.value = {
+            parentPath,
+            blockSchemaPath,
+            refPath,
+            label: parentPath.split(".").pop() ?? parentPath,
+            editorKey: `flow-properties-create:${parentPath}:${Date.now()}`,
+        }
+    })
+
+    function closeCreate() {
+        createTarget.value = undefined
+    }
 
     const {fieldsFromSchemaTop, fieldsFromSchemaRest} = useFlowFields(computed(() => flowYaml.value))
 
@@ -117,7 +222,12 @@
 
 .flow-properties-body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: var(--ks-spacing-4);
+}
+
+.flow-properties-crumb {
+    margin-bottom: var(--ks-spacing-3);
 }
 </style>

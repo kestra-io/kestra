@@ -11,7 +11,6 @@
                 prop="id"
                 required
                 labelPosition="left"
-                labelWidth="auto"
                 class="id-row"
                 :rules="idRules"
             >
@@ -238,7 +237,7 @@
     const idDisabled = computed(() => isUpdate.value || readOnly.value)
 
     const idRules = computed(() => [
-        {required: true, message: `${t("id")} ${t("required")}`, trigger: "blur"},
+        {required: true, message: t("is required", {field: t("id")}), trigger: "blur"},
         {pattern: /^[a-z0-9][a-z0-9_-]*$/, message: t("mcp.id_invalid"), trigger: "blur"},
     ])
 
@@ -313,7 +312,7 @@
                 toast.saved(created.id)
                 router.push({
                     name: "admin/mcp-servers/update",
-                    params: {id: created.id, tab: "edit"},
+                    params: {id: created.id, tab: "edit", tenant: route.params.tenant},
                 })
             } catch (e) {
                 submitting.value = false

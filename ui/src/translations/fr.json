@@ -1868,7 +1868,6 @@
     "learn_more": "En savoir plus",
     "watch_video": "Regarder la vidéo",
     "runners": "Coureurs",
-    "select": "Sélectionnez votre {{section}}",
     "for flow": "pour flow",
     "forbidden system labels": "Seul system.correlationId peut être utilisé comme system label",
     "confirm": "Confirmer",
@@ -2151,10 +2150,10 @@
         },
         "toolCall": "Exécution de {tool}",
         "context": {
-          "app": "Application : {{app}}",
+          "app": "Application : {app}",
           "blueprint": "Blueprint: {blueprint}",
-          "dashboard": "Tableau de bord : {{dashboard}}",
-          "execution": "Exécution : {{id}}",
+          "dashboard": "Tableau de bord : {dashboard}",
+          "execution": "Exécution : {id}",
           "flow": "Flux : {flow}",
           "namespace": "Namespace : {namespace}",
           "plugin": "Extension : {plugin}",
@@ -2174,7 +2173,7 @@
         "contextRemoved": "Retiré {type} {id} du contexte.",
         "toolResult": {
           "detail": "Détails",
-          "error": "{{tool}} a échoué",
+          "error": "{tool} a échoué",
           "ok": "{tool} terminé",
           "rejected": "{tool} rejeté"
         },

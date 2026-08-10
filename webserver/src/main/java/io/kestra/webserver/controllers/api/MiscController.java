@@ -242,7 +242,7 @@ public class MiscController {
     @Post("/logout")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Misc" }, summary = "Clear the basic auth session cookie.")
-    public MutableHttpResponse<?> logout(HttpRequest<?> request) {
+    public MutableHttpResponse<?> logout() {
         Cookie cookie = Cookie.of(BasicAuthService.BASIC_AUTH_COOKIE_NAME, "")
             .path("/")
             .httpOnly(true)
@@ -252,7 +252,6 @@ public class MiscController {
         Cookie flagCookie = Cookie.of(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME, "")
             .path("/")
             .httpOnly(false)
-            .secure(request.isSecure())
             .sameSite(SameSite.Strict)
             .maxAge(0);
 

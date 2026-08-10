@@ -766,8 +766,8 @@
     "dynamic": "Dynamic",
     "choice": "Choice",
     "sequential": "Sequential",
-    "can not delete": "Can not delete",
-    "can not have less than 1 task": "Each flow must have at least one task.",
+    "can not delete": "Cannot delete this task",
+    "can not have less than 1 task": "A flow must have at least one task. Add another task before deleting this one.",
     "task id already exists": "Task Id already exists",
     "Task Id already exist in the flow": "Task Id {taskId} already exists in the flow.",
     "task id": "Task ID",
@@ -1059,7 +1059,7 @@
       }
     },
     "pluginPage": {
-      "search": "Search across 1400+ plugins",
+      "search": "Search across {count}+ plugins",
       "searchTasks": "Search {count} tasks",
       "noResults": "No plugins match your search.",
       "loadError": "Could not load plugins. Please try again.",
@@ -1258,6 +1258,12 @@
         "header": "Assets Metadata and Observability",
         "title": "Bring every dataset, service, and dependency into view.",
         "message": "Assets connect observability, lineage, and ownership metadata so platform teams can troubleshoot faster and deploy with confidence."
+      },
+      "cases": {
+        "label": "Cases",
+        "header": "Incident Management",
+        "title": "Triage and resolve incidents without leaving Kestra.",
+        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
@@ -1863,7 +1869,6 @@
     "learn_more": "Learn more",
     "watch_video": "Watch Video",
     "runners": "Runners",
-    "select": "Select your {{section}}",
     "for flow": "for flow",
     "forbidden system labels": "Only system.correlationId can be used as a system label",
     "confirm": "Confirm",
@@ -1897,6 +1902,10 @@
       "assets": {
         "title": "You have no Assets yet!",
         "content": "Add assets to track and manage your data assets, services, and infrastructure."
+      },
+      "cases": {
+        "title": "You have no Cases yet!",
+        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
       },
       "apiTokens": {
         "title": "Manage your API Tokens",
@@ -1987,7 +1996,8 @@
       "kv_pairs": "No Key-Value pairs Found",
       "secrets": "No Secrets Found",
       "templates": "No Templates Found",
-      "assets": "No Assets Found"
+      "assets": "No Assets Found",
+      "cases": "No Cases Found"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {

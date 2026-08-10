@@ -276,17 +276,20 @@ export function flowHaveTasks(source: string): boolean {
 
     // Phase 1: locate the root-level `tasks:` block — its start line, and its
     // end, i.e. the next root-level key (a line starting with a non-space
-    // character) or the end of the source. Bounded, single-pass, no backtracking.
-    const tasksLineIndex = lines.findIndex((line) => /^tasks\s*:\s*$/.test(line))
-    if (tasksLineIndex === -1) return false
-
+    // character) or the end of the source. Single pass, bounded, no backtracking.
+    let tasksLineIndex = -1
     let blockEndIndex = lines.length
-    for (let i = tasksLineIndex + 1; i < lines.length; i++) {
-        if (/^\S/.test(lines[i])) {
+    for (let i = 0; i < lines.length; i++) {
+        if (tasksLineIndex === -1) {
+            if (/^tasks\s*:\s*$/.test(lines[i])) {
+                tasksLineIndex = i
+            }
+        } else if (/^\S/.test(lines[i])) {
             blockEndIndex = i
             break
         }
     }
+    if (tasksLineIndex === -1) return false
 
     // Phase 2: within that block, a task item starts with "- " (dash-space) and
     // must contain at least one `id:`/`id :` line — either right after the dash

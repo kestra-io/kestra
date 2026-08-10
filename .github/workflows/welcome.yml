@@ -21,6 +21,8 @@ jobs:
           GH_PAT_READ_ORG: ${{ secrets.GH_READ_ORG_TOKEN }}
         with:
           skip-internal-contributors: true
+          # The action defaults to false, which turns a broken GH_READ_ORG_TOKEN into a green job that silently welcomes nobody.
+          fail-on-error: true
           pr-opened-msg: |
             ### Hey @{fc-author} :wave: 
 

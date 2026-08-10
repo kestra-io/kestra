@@ -1,10 +1,45 @@
 import {describe, expect, it} from "vitest"
-import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps} from "../../../src/utils/inputs"
+import {flattenInputs, unflattenToForms, formChildName, buildWizardSteps, normalize} from "../../../src/utils/inputs"
 import {inputsToFormData} from "../../../src/utils/submitTask"
 
 const momentStub = {
     $moment: (_d: any) => ({toISOString: () => "iso", format: (_f: string) => "fmt"}),
 }
+
+// Regression guard, fixed more than once: `defaults` is a Property, so it crosses the wire as its
+// expression STRING — a `defaults: true` BOOL arrives as "true". el-switch only accepts a real
+// boolean; anything else makes it emit `update:modelValue` = false during setup, which turns the
+// toggle off AND marks the input as user-edited so the default can never come back.
+// See https://github.com/kestra-io/kestra-ee/issues/9772 (and /8978 before it).
+describe("normalize for BOOL always yields a real boolean", () => {
+    it("coerces the string form of a default", () => {
+        expect(normalize("BOOL", "true")).toBe(true)
+        expect(normalize("BOOL", "false")).toBe(false)
+    })
+
+    it("passes real booleans through", () => {
+        expect(normalize("BOOL", true)).toBe(true)
+        expect(normalize("BOOL", false)).toBe(false)
+    })
+
+    it("falls back to false when there is no value at all", () => {
+        expect(normalize("BOOL", undefined)).toBe(false)
+        expect(normalize("BOOL", null)).toBe(false)
+    })
+
+    it("never yields a non-boolean, whatever the input", () => {
+        for (const value of ["true", "false", true, false, undefined, null, "", "TRUE", 1, 0, {}]) {
+            expect(typeof normalize("BOOL", value)).toBe("boolean")
+        }
+    })
+
+    // BOOLEAN is the retired input type; it uses a radio group with an "undefined" third state,
+    // so it must NOT be swept into the boolean coercion.
+    it("leaves the retired BOOLEAN type's tri-state alone", () => {
+        expect(normalize("BOOLEAN", undefined)).toBe("undefined")
+        expect(normalize("BOOLEAN", "true")).toBe("true")
+    })
+})
 
 describe("flattenInputs", () => {
     it("returns [] for undefined", () => {

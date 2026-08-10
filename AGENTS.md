@@ -409,7 +409,7 @@ A clean run reports `No missing keys. No extra keys.` for every language. Any li
 3. Follow these translation rules (mirroring `generate_translations.ts`):
    - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
    - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
-   - **Preserve `{{placeholder}}` variables** exactly — do not translate the word inside the braces.
+   - **Preserve `{placeholder}` variables** exactly — vue-i18n uses a **single** pair of braces. Do not translate the name inside the braces, do not rename it, and never write `{{placeholder}}`: double braces are a compile error (`Not allowed nest placeholder`) and make `t()` throw at render time. Each translation must carry exactly the same placeholders as the English source — no invented ones, none dropped.
    - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).
 4. Insert the translated keys into the correct position in the target language JSON, keeping `sort_keys=True` order (alphabetical within each object).
 5. Re-run `npm run translations:check` to confirm everything is clean before committing.

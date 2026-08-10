@@ -260,6 +260,8 @@
             v-model="showRunModal"
             destroyOnClose
             appendToBody
+            scrollable
+            large
         >
             <template #header>
                 <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />

@@ -66,7 +66,9 @@
     const schemaAtBlockPathInjected = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPathInjected.value))
 
     const blockSchemaPath = computed(() => {
-        const rootParts = props.root ? props.root.split(".") : []
+        const allParts = props.root ? props.root.split(".") : []
+        const lastIndexedPart = allParts.findLastIndex(part => /\[\d+\]$/.test(part))
+        const rootParts = allParts.slice(lastIndexedPart + 1)
         if(rootParts.length > 1){
             // if second part is a property not defined in properties,
             // it can only be defined by additionalProperties

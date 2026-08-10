@@ -271,9 +271,34 @@ export function cleanGraph(vueflowId: string) {
 
 export function flowHaveTasks(source: string): boolean {
     if (!source) return false
-    // Check if the root-level `tasks` key exists and has at least one list item
-    const match = source.match(/^tasks\s*:\s*\r?\n([\s\S]*?)(?=^\S|$(?![\r\n]))/m)
-    return match != null && /^\s+-/m.test(match[1] ?? "")
+
+    const lines = source.split(/\r?\n/)
+
+    // Phase 1: find the line starting the root-level `tasks:` block, then scan
+    // forward line-by-line (bounded, no backtracking) until the next root-level
+    // key or the end of the source to isolate the block containing the tasks.
+    const tasksLineIndex = lines.findIndex((line) => /^tasks\s*:\s*$/.test(line))
+    if (tasksLineIndex === -1) return false
+
+    // Phase 2: within that block, a task item starts with "- " (dash-space) and
+    // must contain at least one `id:`/`id :` line before the next item or key —
+    // either right after the dash on the same line, or on a line below it.
+    let sawTaskItem = false
+    for (let i = tasksLineIndex + 1; i < lines.length; i++) {
+        const line = lines[i]
+        if (/^\S/.test(line)) break
+
+        const dashMatch = /^\s+-\s*(.*)$/.exec(line)
+        if (dashMatch) {
+            sawTaskItem = true
+            if (/^id\s*:/.test(dashMatch[1])) {
+                return true
+            }
+        } else if (sawTaskItem && /^\s*id\s*:/.test(line)) {
+            return true
+        }
+    }
+    return false
 }
 
 export function nodeColor(node: MinimalNode, collapsed: Set<string>) {

@@ -24,7 +24,6 @@ function readStoredPages(): Page[] {
 export const useBookmarksStore = defineStore("bookmarks", () => {
     const pages = ref<Page[]>(readStoredPages())
 
-    // Keep in-memory state in sync when another tab updates localStorage.
     if (typeof window !== "undefined") {
         window.addEventListener("storage", (event) => {
             if (event.key === LOCAL_STORAGE_KEY || event.key === null) {
@@ -34,8 +33,6 @@ export const useBookmarksStore = defineStore("bookmarks", () => {
     }
 
     function add(page: Page) {
-        // Always merge against the latest persisted list so concurrent tabs
-        // don't overwrite each other's bookmarks.
         const currentPages = readStoredPages()
         if (!currentPages.find(p => p.path === page.path)) {
             currentPages.push(page)

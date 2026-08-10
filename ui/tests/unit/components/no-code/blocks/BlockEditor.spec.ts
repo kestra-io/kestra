@@ -297,10 +297,10 @@ const messages = {
                 group_flow: "Flow",
                 group_goto: "Go to",
                 group_insert: "Insert",
-                insert_after: "Insert task after {name}",
-                insert_at_end: "Insert task at end of Tasks",
-                insert_before: "Insert task before {name}",
-                insert_in_section: "Insert task in {section}",
+                insert_after: "Insert after {name}",
+                insert_at_end: "Insert at end of Tasks",
+                insert_before: "Insert before {name}",
+                insert_in_section: "Insert in {section}",
                 insert_kind: "Insert {kind}",
                 no_match: "No match",
                 open: "Open {name}",
@@ -1814,7 +1814,7 @@ tasks:
             // Then
             expect(menu.props("contextLabel")).toBe("context: flow")
             const titles = (menu.props("items") as {title: string}[]).map(i => i.title)
-            expect(titles).toContain("Insert task at end of Tasks")
+            expect(titles).toContain("Insert at end of Tasks")
         })
 
         it("describes the focused block and targets it for insertion", async () => {
@@ -1829,7 +1829,7 @@ tasks:
             // Then
             expect(menu.props("contextLabel")).toBe("context: log_task")
             const titles = (menu.props("items") as {title: string}[]).map(i => i.title)
-            expect(titles).toContain("Insert task after log_task")
+            expect(titles).toContain("Insert after log_task")
         })
 
         it("describes an empty section by its label when its sentinel is focused", async () => {
@@ -1844,7 +1844,7 @@ tasks:
             // Then
             expect(menu.props("contextLabel")).toBe("context: Triggers")
             const titles = (menu.props("items") as {title: string}[]).map(i => i.title)
-            expect(titles).toContain("Insert task in Triggers")
+            expect(titles).toContain("Insert in Triggers")
         })
 
         it("offers the task types from the plugin catalogue", async () => {

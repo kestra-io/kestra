@@ -1868,7 +1868,6 @@
     "learn_more": "Scopri di più",
     "watch_video": "Guarda Video",
     "runners": "Corridori",
-    "select": "Seleziona il tuo {{section}}",
     "for flow": "per flow",
     "forbidden system labels": "Solo system.correlationId può essere usato come label di sistema",
     "confirm": "Conferma",
@@ -2149,15 +2148,15 @@
         "empty": {
           "title": "Trasforma la tua idea in un flusso di lavoro"
         },
-        "toolCall": "{{tool}} in esecuzione",
+        "toolCall": "{tool} in esecuzione",
         "context": {
           "app": "App: {app}",
           "blueprint": "Blueprint: {blueprint}",
           "dashboard": "Cruscotto: {dashboard}",
           "execution": "Esecuzione: {id}",
-          "flow": "Flow: {{flow}}",
+          "flow": "Flow: {flow}",
           "namespace": "Namespace: {namespace}",
-          "plugin": "Plugin: {{plugin}}",
+          "plugin": "Plugin: {plugin}",
           "test": "Test: {test}"
         },
         "contextAdded": "Aggiunto {type} {id} al contesto.",
@@ -2174,7 +2173,7 @@
         "contextRemoved": "Rimosso {type} {id} dal contesto.",
         "toolResult": {
           "detail": "Dettagli",
-          "error": "{{tool}} fallito",
+          "error": "{tool} fallito",
           "ok": "{tool} completato",
           "rejected": "{tool} rifiutato"
         },
@@ -2250,7 +2249,7 @@
           "openInEditor": "Apri nell'editor",
           "apply": "Applica",
           "applyTitle": "Applica flow",
-          "applyConfirm": "Applica il flow {{namespace}}.{{id}}? Verrà creato, o sovrascritto se esiste già.",
+          "applyConfirm": "Applica il flow {namespace}.{id}? Verrà creato, o sovrascritto se esiste già.",
           "applyConfirmDashboard": "Applicare la dashboard {id}? Verrà creata o sovrascritta se esiste già.",
           "applyError": "Impossibile applicare il flow. Riprova.",
           "applyErrorDashboard": "Impossibile applicare la dashboard. Riprova.",
@@ -2448,7 +2447,7 @@
     },
     "mcp": {
       "your_servers": "I tuoi server",
-      "servers_count": "{{count}} Server MCP",
+      "servers_count": "{count} Server MCP",
       "managed_by_kestra": "Gestito da Kestra",
       "servers": "Server MCP",
       "server": "Server MCP",

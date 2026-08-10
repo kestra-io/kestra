@@ -601,7 +601,7 @@ public class FlowService {
 
         if (pebbleExpressionService != null && flow.getSource() != null) {
             Map<String, PebbleFunction> deprecatedFunctions = pebbleExpressionService.functions().stream()
-                .filter(PebbleFunction::deprecated)
+                .filter(fn -> fn.getClass().isAnnotationPresent(Deprecated.class))
                 .collect(Collectors.toMap(PebbleFunction::name, f -> f));
             if (!deprecatedFunctions.isEmpty()) {
                 PebbleUtil.replaceInBlock(flow.getSource(), block -> {

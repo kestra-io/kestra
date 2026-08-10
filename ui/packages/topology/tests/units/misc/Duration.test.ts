@@ -7,7 +7,10 @@ import {TIMEZONE_STORAGE_KEY} from "../../../src/utils/utils"
 const i18n = createI18n({
     legacy: false,
     locale: "en",
-    messages: {en: {}},
+    // Every other key intentionally has no message so tests can assert on the raw key as fallback
+    // text. aria_open_for is the exception: it needs real interpolation to prove two different
+    // subjects produce two different aria-labels.
+    messages: {en: {state_history: {aria_open_for: "Show the state history for {subject}"}}},
     missingWarn: false,
     fallbackWarn: false,
 })
@@ -33,6 +36,15 @@ function openStateHistory(wrapper: ReturnType<typeof mountDuration>) {
     const openButton = wrapper.findAll("button").find((btn) => btn.text() === "state_history.open")
     return openButton!.trigger("click")
 }
+
+const RETRIED_HISTORY = [
+    {date: 0, state: "CREATED"},
+    {date: 100, state: "RUNNING"},
+    {date: 1_100, state: "FAILED"},
+    {date: 3_100, state: "RETRYING"},
+    {date: 3_200, state: "RUNNING"},
+    {date: 4_200, state: "SUCCESS"},
+]
 
 describe("Duration", () => {
     beforeEach(() => {
@@ -140,15 +152,6 @@ describe("Duration", () => {
         expect(wrapper.findAll("[data-test='state-history-item']")).toHaveLength(3)
     })
 
-    const RETRIED_HISTORY = [
-        {date: 0, state: "CREATED"},
-        {date: 100, state: "RUNNING"},
-        {date: 1_100, state: "FAILED"},
-        {date: 3_100, state: "RETRYING"},
-        {date: 3_200, state: "RUNNING"},
-        {date: 4_200, state: "SUCCESS"},
-    ]
-
     it("should not display an attempt count when the caller provides none, even if RETRYING transitions are present", async () => {
         const wrapper = mountDuration(RETRIED_HISTORY)
 
@@ -204,7 +207,21 @@ describe("Duration", () => {
             [{date: "2026-08-07T15:36:15.804Z", state: "SUCCESS"}],
             {subject: "extract"},
         )
-        expect(withSubject.find("button.ks-duration-value").attributes("aria-label")).toBe("state_history.aria_open_for")
+        expect(withSubject.find("button.ks-duration-value").attributes("aria-label")).toBe("Show the state history for extract")
+    })
+
+    it("should disambiguate a task's attempt-level trigger from its aggregate row via the subject", () => {
+        // Mirrors TaskRunLine.vue, which renders one Duration for the taskRun's aggregate history
+        // and another per selected attempt: both must announce a distinct aria-label.
+        const aggregate = mountDuration(RETRIED_HISTORY, {subject: "flaky"})
+        const attempt = mountDuration(RETRIED_HISTORY, {subject: "flaky, Attempt 2"})
+
+        const aggregateLabel = aggregate.find("button.ks-duration-value").attributes("aria-label")
+        const attemptLabel = attempt.find("button.ks-duration-value").attributes("aria-label")
+
+        expect(aggregateLabel).toBe("Show the state history for flaky")
+        expect(attemptLabel).toBe("Show the state history for flaky, Attempt 2")
+        expect(attemptLabel).not.toBe(aggregateLabel)
     })
 
     it("should not show a state history button when there is no history to show", () => {

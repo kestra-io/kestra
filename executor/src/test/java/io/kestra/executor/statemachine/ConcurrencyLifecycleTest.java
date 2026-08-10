@@ -11,6 +11,8 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.Concurrency;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.sla.SLA;
+import io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.executor.ExecutorContext;
@@ -437,6 +439,84 @@ class ConcurrencyLifecycleTest {
         Assertions.assertThat(harness.executionQueuedStateStore().queued())
             .singleElement()
             .satisfies(queued -> Assertions.assertThat(queued.getExecution().getId()).isEqualTo(restarted.getId()));
+    }
+
+    // --- terminal release edge cases (the kestra-ee#9200 / #16579 slot-leak family)
+
+    @Test
+    void shouldReleaseSlotWhenAdmittedExecutionIsFailedBySlaInTheAdmissionPass() {
+        // Given: a single-slot flow whose execution-changed SLA always fails — the handler
+        // admits the execution (stamping the claimed scopes) and then fails it in the very
+        // same pass, while it is still CREATED
+        FlowWithSource flow = Flows.of(
+            Flows.builder(logTask())
+                .concurrency(Concurrency.builder().behavior(Concurrency.Behavior.QUEUE).limit(1).build())
+                .sla(
+                    List.of(
+                        ExecutionAssertionSLA.builder()
+                            .id("always-fails")
+                            .behavior(SLA.Behavior.FAIL)
+                            ._assert("false")
+                            .build()
+                    )
+                )
+                .build()
+        );
+        harness.registerFlow(flow);
+
+        // When
+        ExecutorContext admitted = startExecution(flow);
+
+        // Then: failed straight out of CREATED, but carrying the claim stamp — its state
+        // history is indistinguishable from a gate rejection
+        Assertions.assertThat(admitted.getExecution().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        Assertions.assertThat(admitted.getExecution().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        Assertions.assertThat(admitted.getExecution().getMetadata().getConcurrencyScopes()).isNotEmpty();
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(1);
+
+        // When: the terminal cycle releases
+        Optional<Execution> popped = harness.concurrencySlotReleaseProcessor().release(admitted, true);
+
+        // Then: the stamp — not the CREATED→FAILED history heuristic — proves the slot was
+        // claimed, and it is returned instead of leaking forever
+        Assertions.assertThat(popped).isEmpty();
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(0);
+
+        // And the next execution is admitted instead of queueing behind a phantom holder
+        // (it fails to the same SLA, but it RAN)
+        ExecutorContext next = startExecution(flow);
+        Assertions.assertThat(next.getExecution().getMetadata().getConcurrencyScopes()).isNotEmpty();
+    }
+
+    @Test
+    void shouldNotReleaseOrPopAgainWhenATerminalCycleIsRedelivered() {
+        // Given: the slot holder terminated and its release already popped the first of two
+        // queued executions
+        FlowWithSource flow = queueFlow(1);
+        harness.registerFlow(flow);
+        ExecutorContext first = startExecution(flow);
+        Execution second = Executions.created(flow);
+        harness.executionStateStore().save(second);
+        handleEvent(second);
+        Execution third = Executions.created(flow);
+        harness.executionStateStore().save(third);
+        handleEvent(third);
+        Execution terminal = first.getExecution().withState(State.Type.SUCCESS);
+        Optional<Execution> popped = release(new ExecutorContext(first.getExecution(), flow).withExecution(terminal, "test"));
+        Assertions.assertThat(popped).map(Execution::getId).hasValue(second.getId());
+
+        // When: the terminal execution is redelivered — a cycle that already entered terminal
+        // is not the one that terminated it, so DefaultExecutor passes terminatedByThisCycle=false
+        Optional<Execution> redelivered = harness.concurrencySlotReleaseProcessor()
+            .release(new ExecutorContext(terminal, flow).withExecution(terminal, "test"), false);
+
+        // Then: no double release — the successor's slot is still counted and the last queued
+        // execution is not over-admitted (#16579)
+        Assertions.assertThat(redelivered).isEmpty();
+        Assertions.assertThat(harness.concurrencyLimitStateStore().running(flow)).isEqualTo(1);
+        Assertions.assertThat(harness.executionQueuedStateStore().queued())
+            .extracting(queued -> queued.getExecution().getId())
+            .containsExactly(third.getId());
     }
 
     // --- fixtures

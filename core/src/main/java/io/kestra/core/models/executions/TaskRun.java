@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.assets.AssetsInOut;
@@ -55,9 +57,13 @@ public class TaskRun implements TenantInterface {
     @With
     List<TaskRunAttempt> attempts;
 
+    // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own
+    // lineage event downstream. This is the single source of truth for a taskRun's assets. The pre-existing
+    // single `assets` object is folded in here via the deprecated setAssets bridge below.
     @With
     @Nullable
-    AssetsInOut assets;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    List<AssetsInOut> assetEmits;
 
     @NotNull
     State state;
@@ -91,6 +97,36 @@ public class TaskRun implements TenantInterface {
         return this;
     }
 
+    /**
+     * Backward-compatibility bridge for the pre-existing single `assets` bundle. Executions serialized
+     * before `assetEmits` existed carry a single `assets` object; this folds it into `assetEmits` on
+     * deserialization so old executions still load. New code should use {@link #getAssetEmits()}.
+     *
+     * @deprecated use {@code assetEmits}. Kept only so historical executions deserialize.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonSetter("assets")
+    public void setAssets(@Nullable AssetsInOut assets) {
+        if (assets == null) {
+            return;
+        }
+        if (!(this.assetEmits instanceof ArrayList)) {
+            this.assetEmits = this.assetEmits == null ? new ArrayList<>() : new ArrayList<>(this.assetEmits);
+        }
+        this.assetEmits.add(assets);
+    }
+
+    /**
+     * @deprecated use {@link #getAssetEmits()}. Returns the first bundle so callers still expecting a
+     *             single `assets` (e.g. the API layer) keep working. Not serialized.
+     */
+    @Deprecated(forRemoval = true, since = "2.0.0")
+    @JsonIgnore
+    @Nullable
+    public AssetsInOut getAssets() {
+        return this.assetEmits == null || this.assetEmits.isEmpty() ? null : this.assetEmits.getFirst();
+    }
+
     public TaskRun withState(State.Type state) {
         return new TaskRun(
             this.tenantId,
@@ -102,7 +138,7 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             this.attempts,
-            this.assets,
+            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -131,7 +167,7 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.assets,
+            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -157,7 +193,7 @@ public class TaskRun implements TenantInterface {
             this.parentTaskRunId,
             this.value,
             newAttempts,
-            this.assets,
+            this.assetEmits,
             this.state.withState(State.Type.FAILED),
             this.iteration,
             this.dynamic,
@@ -180,7 +216,7 @@ public class TaskRun implements TenantInterface {
             .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.getOrDefault(this.getParentTaskRunId(), this.getParentTaskRunId()) : null)
             .value(this.getValue())
             .attempts(this.getAttempts())
-            .assets(this.getAssets())
+            .assetEmits(this.assetEmits)
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
             .build();

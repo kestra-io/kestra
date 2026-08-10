@@ -9,8 +9,15 @@ const i18n = createI18n({
     messages: {
         en: {
             source_search: {
+                cannot_select_read_only: "Cannot select — you lack edit permission on {namespace} / {id}",
                 match_count: "{count} match | {count} matches",
                 open_flow: "Open flow",
+                read_only: "Read-only",
+                read_only_tooltip: "You have read access but not edit access on this namespace",
+                replace_all_in_flow: "Replace all in flow",
+                replace_this_match: "Replace this match",
+                select_all_in_flow: "Select all matches in {namespace} / {id}",
+                select_match: "Select match on line {line}",
             },
         },
     },
@@ -32,31 +39,48 @@ export default meta
 
 const singleResult = [
     {
-        model: {namespace: "company.data", id: "daily-etl"},
-        fragments: [
-            "tasks:\n  - id: [mark]extract[/mark]\n    type: io.kestra.plugin.core.log.Log",
+        namespace: "company.data",
+        id: "daily-etl",
+        editable: true,
+        matches: [
+            {line: 4, column: 8, snippet: "  - id: [mark]extract[/mark]"},
         ],
     },
 ]
 
 const multipleResults = [
     {
-        model: {namespace: "company.data", id: "daily-etl"},
-        fragments: [
-            "tasks:\n  - id: [mark]extract[/mark]\n    type: io.kestra.plugin.core.log.Log",
-            "  - id: load\n    script: [mark]extract[/mark]Data()",
+        namespace: "company.data",
+        id: "daily-etl",
+        editable: true,
+        matches: [
+            {line: 4, column: 8, snippet: "  - id: [mark]extract[/mark]"},
+            {line: 12, column: 12, snippet: "    script: [mark]extract[/mark]Data()"},
         ],
     },
     {
-        model: {namespace: "company.analytics", id: "weekly-report"},
-        fragments: [
-            "description: Weekly [mark]extract[/mark] and summarize",
+        namespace: "company.analytics",
+        id: "weekly-report",
+        editable: true,
+        matches: [
+            {line: 3, column: 20, snippet: "description: Weekly [mark]extract[/mark] and summarize"},
         ],
     },
     {
-        model: {namespace: "system", id: "health-check"},
-        fragments: [
-            "id: [mark]health[/mark]-check\nnamespace: system",
+        namespace: "company.data",
+        id: "warehouse-sync",
+        editable: true,
+        matches: [
+            {line: 30, column: 0, snippet: "    type: io.kestra.plugin.gcp.bigquery.Query"},
+            {line: 34, column: 0, snippet: "    serviceAccount: secret('GCP_SERVICE_ACCOUNT')"},
+        ],
+    },
+    {
+        namespace: "prod.payments",
+        id: "reconcile-ledger",
+        editable: false,
+        matches: [
+            {line: 9, column: 15, snippet: "    projectId: [mark]analytics[/mark]-prod"},
         ],
     },
 ]
@@ -66,8 +90,10 @@ export const Empty: StoryObj<typeof SourceSearchResults> = {
         setup() {
             return () => (
                 <SourceSearchResults
-                    results={undefined}
+                    results={[]}
                     selectedKey={null}
+                    replaceMode={false}
+                    selectedMatchKeys={new Set()}
                 />
             )
         },
@@ -81,6 +107,8 @@ export const SingleGroup: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={singleResult}
                     selectedKey={null}
+                    replaceMode={false}
+                    selectedMatchKeys={new Set()}
                 />
             )
         },
@@ -94,6 +122,8 @@ export const ManyGroups: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={multipleResults}
                     selectedKey={null}
+                    replaceMode={false}
+                    selectedMatchKeys={new Set()}
                 />
             )
         },
@@ -106,35 +136,62 @@ export const WithSelectedGroup: StoryObj<typeof SourceSearchResults> = {
             return () => (
                 <SourceSearchResults
                     results={multipleResults}
-                    selectedKey="company.data.daily-etl#0"
+                    selectedKey="company.data.daily-etl#4"
+                    replaceMode={false}
+                    selectedMatchKeys={new Set()}
                 />
             )
         },
     }),
 }
 
-export const WithSelectedFragment: StoryObj<typeof SourceSearchResults> = {
+export const WithSelectedMatch: StoryObj<typeof SourceSearchResults> = {
     render: () => ({
         setup() {
             return () => (
                 <SourceSearchResults
                     results={multipleResults}
-                    selectedKey="company.data.daily-etl#1"
+                    selectedKey="company.data.daily-etl#12"
+                    replaceMode={false}
+                    selectedMatchKeys={new Set()}
                 />
             )
         },
     }),
 }
 
-export const LongFragments: StoryObj<typeof SourceSearchResults> = {
+export const ReplaceModeWithSelection: StoryObj<typeof SourceSearchResults> = {
+    render: () => ({
+        setup() {
+            const selectedMatchKeys = new Set([
+                "company.data.daily-etl#4",
+                "company.data.daily-etl#12",
+                "company.analytics.weekly-report#3",
+                "company.data.warehouse-sync#30",
+            ])
+            return () => (
+                <SourceSearchResults
+                    results={multipleResults}
+                    selectedKey="company.data.daily-etl#4"
+                    replaceMode={true}
+                    selectedMatchKeys={selectedMatchKeys}
+                />
+            )
+        },
+    }),
+}
+
+export const LongContent: StoryObj<typeof SourceSearchResults> = {
     render: () => ({
         setup() {
             const longResults = [
                 {
-                    model: {namespace: "very.long.namespace.with.many.parts", id: "a-very-long-flow-identifier-that-goes-on-and-on"},
-                    fragments: [
-                        "This is a very long fragment that contains the [mark]search term[/mark] somewhere in the middle of a very long line that should demonstrate text wrapping behavior in the UI",
-                        "Another long fragment with [mark]search term[/mark] at the start and then continues with a lot more content",
+                    namespace: "very.long.namespace.with.many.parts",
+                    id: "a-very-long-flow-identifier-that-goes-on-and-on",
+                    editable: true,
+                    matches: [
+                        {line: 42, column: 43, snippet: "This is a very long line that contains the [mark]search term[/mark] somewhere in the middle of a very long line that should demonstrate text wrapping behavior in the UI"},
+                        {line: 87, column: 23, snippet: "Another long line with [mark]search term[/mark] at the start and then continues with a lot more content"},
                     ],
                 },
             ]
@@ -142,6 +199,8 @@ export const LongFragments: StoryObj<typeof SourceSearchResults> = {
                 <SourceSearchResults
                     results={longResults}
                     selectedKey={null}
+                    replaceMode={false}
+                    selectedMatchKeys={new Set()}
                 />
             )
         },
@@ -154,7 +213,9 @@ export const DarkMode: StoryObj<typeof SourceSearchResults> = {
             return () => (
                 <SourceSearchResults
                     results={multipleResults}
-                    selectedKey="company.analytics.weekly-report#0"
+                    selectedKey="company.analytics.weekly-report#3"
+                    replaceMode={true}
+                    selectedMatchKeys={new Set(["company.analytics.weekly-report#3"])}
                 />
             )
         },

@@ -105,7 +105,7 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
         InMemoryExecutionQueuedStateStore queuedStore = (InMemoryExecutionQueuedStateStore) executionQueuedStateStore;
         ScopedConcurrencyLimit widest = widestScope(scopes);
         List<ExecutionQueued> candidates = queuedStore.queued().stream()
-            .filter(queued -> widest.covers(queued.getTenantId(), queued.getNamespace(), queued.getFlowId()))
+            .filter(queued -> covers(widest, queued.getTenantId(), queued.getNamespace(), queued.getFlowId()))
             .sorted(Comparator.comparing(ExecutionQueued::getDate))
             .toList();
 
@@ -150,6 +150,18 @@ public class InMemoryConcurrencyLimitStateStore implements ConcurrencyLimitState
             scope.uid(),
             (key, limit) -> (limit == null ? emptyLimit(scope) : limit).withRunning(Math.max(0, running(limit) - 1))
         );
+    }
+
+    // mirrors the scope check the production stores express in SQL/queries (was ScopedConcurrencyLimit#covers)
+    private static boolean covers(ScopedConcurrencyLimit limit, String tenantId, String namespace, String flowId) {
+        if (!Objects.equals(limit.tenantId(), tenantId)) {
+            return false;
+        }
+        return switch (limit.scope()) {
+            case FLOW -> Objects.equals(limit.namespace(), namespace) && Objects.equals(limit.flowId(), flowId);
+            case NAMESPACE -> Objects.equals(limit.namespace(), namespace) || (namespace != null && namespace.startsWith(limit.namespace() + "."));
+            case TENANT -> true;
+        };
     }
 
     private static ScopedConcurrencyLimit widestScope(List<ScopedConcurrencyLimit> scopes) {

@@ -11,7 +11,7 @@ export const executionOutputs = (parameters: Omit<Parameters<typeof _5A13D0D0>[0
 }, options?: Omit<Parameters<typeof _5A13D0D0>[1], 'throwOnError'>) => getDataOrThrow(_5A13D0D0(addTenantToParameters(parameters), options));
 
 /**
- * Get task run outputs
+ * List the task runs of an execution having outputs
  */
 export const taskOutputsInformation = (parameters: Omit<Parameters<typeof _02Fb2086b>[0], 'tenant'> & {
     tenant?: string;

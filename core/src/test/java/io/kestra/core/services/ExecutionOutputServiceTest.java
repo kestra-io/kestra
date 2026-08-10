@@ -77,11 +77,11 @@ class ExecutionOutputServiceTest {
 
         // Then
         assertThat(executionOutputRepository.findById(tenant, execution.getId())).isEmpty();
-        assertThat(executionOutputService.getOutputs(execution)).isEmpty();
+        assertThat(executionOutputService.getOutputs(execution)).isNull();
     }
 
     @Test
-    void shouldReturnEmptyMapWhenNotFound() throws InternalException {
+    void shouldReturnNullWhenNotFound() throws InternalException {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
@@ -89,11 +89,11 @@ class ExecutionOutputServiceTest {
         Map<String, Object> outputs = executionOutputService.getOutputs(execution(tenant, State.Type.SUCCESS));
 
         // Then
-        assertThat(outputs).isEmpty();
+        assertThat(outputs).isNull();
     }
 
     @Test
-    void shouldReturnEmptyMapWhenExecutionIsNotTerminated() throws InternalException {
+    void shouldReturnNullWhenExecutionIsNotTerminated() throws InternalException {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution execution = execution(tenant, State.Type.SUCCESS);
@@ -103,7 +103,7 @@ class ExecutionOutputServiceTest {
         Map<String, Object> outputs = executionOutputService.getOutputs(execution.withState(State.Type.RUNNING));
 
         // Then
-        assertThat(outputs).isEmpty();
+        assertThat(outputs).isNull();
     }
 
     @SuppressWarnings("deprecation")

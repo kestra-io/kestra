@@ -182,8 +182,8 @@
 
     /* ------------------------- Task outputs sourcing ------------------------- */
     // Sourced exactly like Wrapper.vue: the list of task runs that have outputs
-    // is fetched from the /outputs/{executionId} endpoint, then each task's
-    // values are lazily loaded from /outputs/{executionId}/{taskRunId}.
+    // is fetched from the /outputs/tasks/{executionId} endpoint, then each task's
+    // values are lazily loaded from /outputs/tasks/{executionId}/{taskRunId}.
 
     interface TaskOutputMeta {
         taskId: string;

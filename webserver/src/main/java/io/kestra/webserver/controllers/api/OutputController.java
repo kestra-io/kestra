@@ -55,7 +55,7 @@ public class OutputController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{executionId}/{taskRunId}")
+    @Get(uri = "tasks/{executionId}/{taskRunId}")
     @Operation(tags = { "Outputs" }, summary = "Get task run outputs")
     @ApiResponse(
         responseCode = "200", description = "The task run outputs as a map of output names to their values",
@@ -70,8 +70,8 @@ public class OutputController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{executionId}")
-    @Operation(tags = { "Outputs" }, summary = "Get task run outputs")
+    @Get(uri = "tasks/{executionId}")
+    @Operation(tags = { "Outputs" }, summary = "List the task runs of an execution having outputs")
     public List<TaskOutputInformation> getTaskOutputsInformation(@Parameter(description = "The execution id") @PathVariable String executionId) throws InternalException {
         var execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(NotFoundException::new);
         return taskOutputRepository.findByExecution(execution).stream()

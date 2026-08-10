@@ -152,7 +152,8 @@
         "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
         "@codecov/vite-plugin": {
             "vite": "$vite"
-        }
+        },
+        "dompurify": "^3.4.13"
     },
     "lint-staged": {
         "**/*.{js,mjs,cjs,ts,vue}": [

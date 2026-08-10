@@ -430,6 +430,10 @@
 
         return {
             tabSize: 2,
+            // monaco-editor 0.56 defaults to the native EditContext API instead of a hidden textarea for
+            // text input; that surface isn't a real <textarea>/[contenteditable], which breaks Playwright's
+            // .fill() and other tooling that expects the old input model. Opt back into it explicitly.
+            editContext: false,
             fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
             fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",

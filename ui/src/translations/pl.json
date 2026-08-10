@@ -22,12 +22,10 @@
     "show more details": "Pokaż więcej szczegółów",
     "skipped": "Pominięto",
     "revision": "Wersja",
-    "Language": "Język",
     "theme": "Motyw",
     "flows": "Flows",
     "flow": "Flow",
     "invalid duration": "Nieprawidłowy format czasu trwania. Proszę użyć ISO 8601 (np. PT30M, P1D).",
-    "missingSource": "Brak źródła",
     "update": "Aktualizuj",
     "confirmation": "Potwierdzenie",
     "common": {
@@ -92,7 +90,6 @@
     "gantt_no_tasks_match_filters": "Spróbuj dostosować filtry wyszukiwania, stanu lub poziomu logów.",
     "gantt_no_tasks_match_filters_title": "Brak zadań pasujących do wybranych filtrów.",
     "logs": "Logs",
-    "no_logs_data": "Brak danych",
     "no_logs_data_description": "Spróbuj dostosować filtry, zmienić zakres czasu lub sprawdź, czy flow został ostatnio wykonany.",
     "no_logs_data_title": "Nie znaleziono logów dla wybranych filtrów.",
     "duration": "Czas trwania",
@@ -106,7 +103,6 @@
       "pastEstimate": "Wykonanie trwa dłużej niż zwykle"
     },
     "launch execution": "Wykonaj",
-    "triggered": "Execution trigger",
     "triggered done": "Wykonanie <em>{name}</em> zostało pomyślnie uruchomione",
     "topology": "Topologia",
     "date": "Data",
@@ -201,19 +197,13 @@
     "source search": "Wyszukaj źródło",
     "selected": "Wybrane",
     "task": "Task",
-    "task logs": "Task logs",
     "actions": "Akcje",
     "select view": "Wybierz widok",
-    "required field": "Wymagane pole",
     "is required": "Pole {field} jest wymagane",
     "error": "Błąd",
     "form": "Formularz",
     "start date": "Data rozpoczęcia",
     "end date": "Data zakończenia",
-    "creation": "Utworzenie",
-    "flow creation": "Utworzenie flow",
-    "start datetime": "Data i godzina rozpoczęcia",
-    "end datetime": "Data i godzina zakończenia",
     "restart": "Uruchom ponownie",
     "restart latest revision": "Uruchom ponownie najnowszą wersję",
     "restart tooltip": "Uruchom ponownie wykonanie od task <code>{state}</code>",
@@ -310,10 +300,8 @@
     "show task condition": "Pokaż warunek taska",
     "show task outputs": "Pokaż task outputs",
     "show task source": "Pokaż źródło task",
-    "specific task": "Specyficzny task",
     "stream": "Strumień",
     "execution statistics": "Statystyki wykonania",
-    "stats": "Statystyki",
     "concurrency limits": "Limity Równoczesności",
     "system overview": "Przegląd Systemu",
     "usage": "Użycie",
@@ -436,7 +424,6 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Dokumentacja flow",
-      "name": "Plugin",
       "names": "Plugins",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
@@ -456,7 +443,6 @@
     "templates": "Szablony",
     "no result": "Nie ma wyników do wyświetlenia.",
     "trigger": "Trigger",
-    "no_trigger": "Brak dostępnego triggera.",
     "triggers": "Triggers",
     "test_event": {
       "title": "Wyślij testowe zdarzenie",
@@ -473,6 +459,10 @@
     "triggers_tabs_add": "Dodaj",
     "triggers_tabs_manage": "Zarządzaj",
     "triggers_add_search_placeholder": "Szukaj triggerów...",
+    "triggers_add_filter_core": "Rdzeń",
+    "triggers_add_filter_realtime": "Rzeczywisty czas",
+    "triggers_add_filter_all": "Wszystko",
+    "triggers_add_filter_app": "Aplikacja",
     "triggers_add_empty_title": "Nie znaleziono triggerów",
     "triggers_add_ee_tooltip": "Ten trigger wymaga Enterprise Edition.",
     "triggers_add_card_add": "Dodaj",
@@ -489,7 +479,6 @@
     "triggerflow disabled": "Trigger jest wyłączony w definicji flow",
     "last trigger date": "Data ostatniego triggera",
     "trigger_states": "Stany",
-    "context updated date": "Data aktualizacji kontekstu",
     "state updated date": "Data aktualizacji stanu",
     "next evaluation date": "Data następnej oceny",
     "last evaluation date": "Data ostatniej oceny",
@@ -500,7 +489,6 @@
     "conditions": "Warunki",
     "triggerId": "Identyfikator Trigger",
     "tenantId": "Identyfikator Mandanta",
-    "codeDisabled": "Wyłączone w flow",
     "paused": "Wstrzymano",
     "running": "RUNNING",
     "Fold content lines": "Złóż wieloliniowe ciągi",
@@ -509,6 +497,8 @@
     "sub flow": "Subflow",
     "execute": "Wykonaj",
     "execute flow behaviour": "Wykonaj flow",
+    "open in same tab": "W tej samej zakładce",
+    "open in new tab": "W nowej zakładce",
     "execute the flow": "Wykonaj flow <code>{id}</code>",
     "discard execution confirmation": "Masz niezapisane inputy. Czy na pewno chcesz odrzucić tę wykonanie?",
     "discard changes confirmation": "Masz niezapisane zmiany. Czy na pewno chcesz je odrzucić?",
@@ -625,7 +615,6 @@
     "can not have less than 1 task": "flow musi mieć co najmniej jeden task. Dodaj kolejny task przed usunięciem tego.",
     "task id": "Task ID",
     "taskid column details": "Ostatni task wykonywany i liczba jego prób.",
-    "flow already exists": "Flow już istnieje",
     "flow already exists message": "Flow <code>{id}</code> już istnieje w namespace <code>{namespace}</code>. Czy chcesz utworzyć nową wersję?",
     "editor": "Edytor",
     "delete task confirm": "Czy chcesz usunąć task <code>{taskId}</code>?",
@@ -641,7 +630,6 @@
     "line": "Linia",
     "metric": "Metryka",
     "aggregation": "Agregacja",
-    "chart type": "Typ wykresu",
     "metric choice": "Brak dostępnych metryk dla tego flow",
     "of": "z",
     "title": "Tytuł",
@@ -675,7 +663,6 @@
     "informative notice": "Notatka(i)",
     "open": "Otwórz",
     "dependency task": "Task {taskId} jest zależnością innego task",
-    "administration": "Administracja",
     "admin": "Administrator",
     "main_configuration": "Główna konfiguracja",
     "commit_id": "Id commit",
@@ -711,7 +698,6 @@
     "unable to generate graph": "Wystąpił problem podczas generowania grafu, co uniemożliwia wyświetlenie topologii.",
     "attempts": "Próba(y)",
     "workers": "Workers",
-    "worker group": "Grupa Worker",
     "version": "Wersja",
     "services": "Usługi",
     "server type": "Typ serwera",
@@ -724,7 +710,6 @@
     "encoding": "Kodowanie",
     "show": "Pokaż",
     "advanced configuration": "Inne właściwości",
-    "all executions": "Wszystkie wykonania",
     "execution_status": "Wykonanie jest:",
     "no_tasks_running": "Jeszcze nie ma uruchomionych tasków.",
     "execution_starts_progress": "Gdy tylko rozpocznie się wykonanie, zobaczysz tutaj aktualizacje postępu.",
@@ -734,12 +719,7 @@
         "MAIN": "Wykonania rodziców"
       }
     },
-    "show chart": "Pokaż Wykres",
     "namespace files": {
-      "toggle": {
-        "show": "Pokaż pliki namespace",
-        "hide": "Ukryj pliki namespace"
-      },
       "filter": "Filtr",
       "new_file": "Nowy plik",
       "read_only": "Nie masz uprawnień do zarządzania plikami w tym namespace",
@@ -750,10 +730,6 @@
       "no_selection": {
         "heading": "Nie wybrano plików",
         "description": "Wybierz plik z drzewa, aby wyświetlić jego zawartość."
-      },
-      "tree": {
-        "expand": "Rozwiń wszystkie foldery",
-        "collapse": "Zwiń wszystkie foldery"
       },
       "create": {
         "label": "Stwórz",
@@ -781,7 +757,6 @@
         "folders": "Usuń {count} wybrane foldery"
       },
       "import": {
-        "import": "Importuj",
         "files": "Importuj pliki",
         "folder": "Importuj folder",
         "success": "Plik(i) pomyślnie zaimportowane",
@@ -843,7 +818,6 @@
     "execution-include-non-terminated": "Uwzględnić nieukończone wykonania?",
     "execution-warn-title": "Ważne Ostrzeżenie!",
     "execution-warn-deleting-still-running": "Zalecamy anulowanie tej akcji i zakończenie wszystkich trwających executions. Usunięcie nieukończonych executions może prowadzić do problemów z concurrency, niespójności w zarządzaniu zależnościami flow oraz procesów zombie na Twojej instancji, co może pogorszyć wydajność systemu. Upewnij się, że w pełni rozumiesz te ryzyka przed kontynuowaniem usuwania.",
-    "originalCreatedDate": "Oryginalna data utworzenia",
     "pluginPage": {
       "search": "Przeszukaj {count}+ wtyczek",
       "searchTasks": "Wyszukaj {count} tasków",
@@ -994,12 +968,9 @@
       "enterprise_edition": "Enterprise Edition",
       "get_a_demo_button": "Uzyskaj Demo",
       "contact_sales": "Skontaktuj się z działem sprzedaży",
-      "watch_the_video": "Obejrzyj wideo",
       "secrets": {
         "title": "Ulepsz swoje zarządzanie Secrets Management",
         "message": "Edycja Enterprise (EE) pozwala na dodawanie, edytowanie lub usuwanie sekretów bezpośrednio w UI — bez potrzeby ponownego uruchamiania instancji. Organizuj sekrety według namespace z precyzyjnymi uprawnieniami RBAC i dziedzicz je z namespace nadrzędnych do podrzędnych. EE integruje się z menedżerami sekretów, takimi jak HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager i Elasticsearch. Skonfiguruj dedykowane backendy dla każdego namespace, mandanta lub instancji, aby izolować sekrety w zespołach, lub włącz sekrety tylko do odczytu przechowywane w zewnętrznych vaultach. Sekrety pozostają zaszyfrowane w spoczynku i podczas przesyłania. Opcjonalne buforowanie zmniejsza liczbę wywołań API, a ścieżki audytu logują cały dostęp.",
-        "detected_env": "Oto zmienne środowiskowe typu secret zidentyfikowane podczas uruchamiania instancji:",
-        "empty_env": "Nie masz jeszcze żadnych Secrets w swoim środowisku.",
         "add_env": {
           "intro": "Aby utworzyć nowy Secret:",
           "first": "Zakoduj <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">wartość secret w Base64</a>",
@@ -1385,7 +1356,6 @@
     "files": "Pliki",
     "optional": "Opcjonalne",
     "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
-    "bookmark": "Zakładki",
     "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?",
     "showLess": "Pokaż mniej",
     "documentationMenu": "Menu dokumentacji",
@@ -1400,7 +1370,6 @@
     "active": "Aktywny",
     "flows imported": "Zaimportowane flows",
     "filters": {
-      "label": "Wybierz filtry",
       "options": {
         "scope": "Zakres"
       }
@@ -1418,9 +1387,7 @@
       "clearSelection": "Wyczyść zaznaczenie",
       "labels": {
         "yaml": "Edytor YAML",
-        "no_code": "Edytor No Code",
-        "label": "Etykieta",
-        "variable": "Zmienna"
+        "no_code": "Edytor No Code"
       },
       "sections": {
         "deprecated": "Właściwości przestarzałe",
@@ -1485,9 +1452,6 @@
         "cases": "Usuń ten przypadek"
       }
     },
-    "properties": {
-      "label": "Właściwości"
-    },
     "editor_shortcuts": {
       "label": "Skróty klawiaturowe",
       "trigger_autocompletion": "Wyzwól autouzupełnianie",
@@ -1529,7 +1493,6 @@
     "fold_all_multi_lines": "Zwiń wszystkie linie wielokrotne",
     "watch": "Oglądaj",
     "learn_more": "Dowiedz się więcej",
-    "runners": "Biegacze",
     "for flow": "dla flow",
     "forbidden system labels": "Tylko system.correlationId może być użyty jako system label",
     "confirm": "Potwierdź",
@@ -1649,7 +1612,6 @@
     "worker information": "Informacje o Workerze",
     "test-badge-text": "Test",
     "test-badge-tooltip": "To wykonanie zostało utworzone przez Test.",
-    "total_executions": "Całkowita liczba wykonanych",
     "no_results": {
       "executions": "Nie znaleziono wykonania",
       "triggers": "Nie znaleziono Triggerów",
@@ -1760,22 +1722,7 @@
     },
     "ai": {
       "flow": {
-        "title": "Agent AI",
-        "prompt_placeholder": "Wprowadź instrukcje, aby utworzyć swój flow w Kestra. Przykładowa podpowiedź: Utwórz flow, który uruchamia się w każdy poniedziałek o 9:00.",
-        "select_provider": "Wybierz dostawcę",
-        "generating": {
-          "flow": "Generowanie YAML dla flow...",
-          "dashboard": "Generowanie Dashboard YAML dla Ciebie...",
-          "app": "Generowanie pliku YAML aplikacji dla Ciebie...",
-          "test": "Generowanie Test YAML dla Ciebie..."
-        },
-        "enable_instructions": {
-          "header": "<b>AI Copilot nie został jeszcze skonfigurowany.</b>\n\nAby włączyć AI Copilot, dodaj poniższy fragment do pliku konfiguracyjnego instancji Kestra (np. <code>application.yml</code>), zastępując <code>geminiApiKey</code> swoim rzeczywistym kluczem:",
-          "footer": "Uwaga: Obecnie tylko Gemini jest obsługiwany jako dostawca AI dla Open Source Edition. W przypadku Enterprise Edition zapoznaj się z dokumentacją AI Copilot dotyczącą konfiguracji innych dostawców modeli.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji."
-        }
-      },
-      "dashboard": {
-        "prompt_placeholder": "Zadaj pytanie dotyczące swoich danych. Przykładowa podpowiedź: Pokaż mi wskaźnik sukcesu moich flows z ostatnich 7 dni."
+        "title": "Agent AI"
       },
       "copilot": {
         "title": "Asystent SI",
@@ -1824,7 +1771,6 @@
           "approve": "Zatwierdź",
           "approveExecute": "Zatwierdź i wykonaj",
           "reject": "Odrzuć",
-          "reasonPlaceholder": "Odpowiedz, aby poprawić…",
           "pending": "Oczekuje na zatwierdzenie",
           "revise": "Odpowiedz, aby poprawić"
         },
@@ -1856,7 +1802,6 @@
           "detail": "Żaden dostawca AI nie jest skonfigurowany. Poproś administratora o jego konfigurację, a następnie spróbuj ponownie.",
           "retry": "Spróbuj ponownie"
         },
-        "thinking": "Przetwarzanie",
         "thinkingWords": [
           "Orchestrowanie",
           "Harmonogramowanie",
@@ -1885,7 +1830,6 @@
         ],
         "newChat": "Nowy czat",
         "recents": "Ostatnie",
-        "recentsEmpty": "Brak ostatnich rozmów jeszcze",
         "draft": {
           "openInEditor": "Otwórz w edytorze",
           "apply": "Zastosuj",
@@ -1902,9 +1846,7 @@
             "app": "Proponowana aplikacja"
           },
           "valid": "Prawidłowy",
-          "invalid": "Wymaga zmian",
-          "copy": "Kopiuj YAML",
-          "copied": "Skopiowano"
+          "invalid": "Wymaga zmian"
         }
       }
     },
@@ -1960,7 +1902,6 @@
       "expand": "Rozwiń",
       "collapse": "Zwiń"
     },
-    "delete trigger": "Usuń trigger",
     "delete triggers": "Usuń triggery",
     "bulk delete triggers": "Czy na pewno chcesz usunąć {count} triggerów?",
     "bulk success delete triggers": "Pomyślnie usunięto {count} triggerów",
@@ -2002,16 +1943,10 @@
       "servers_count": "{count} Serwerów MCP",
       "managed_by_kestra": "Zarządzane przez Kestra",
       "servers": "Serwery MCP",
-      "server": "Serwer MCP",
       "client_setup": "Konfiguracja klienta",
       "page_description": "Udostępnij swoje flow Kestra jako narzędzia dla agentów AI zgodnych z MCP",
       "create": "Utwórz Serwer",
-      "save": "Zapisz zmiany",
-      "connect": "Połącz",
-      "copy_url": "Skopiuj URL",
-      "url_copied": "URL skopiowany!",
       "instructions": "Instrukcje",
-      "server_type": "Typ serwera",
       "auth_type": "Uwierzytelnianie",
       "private": "Prywatne",
       "private_server": "Serwer prywatny",
@@ -2039,7 +1974,6 @@
       "tab_edit": "Edytuj",
       "tab_connect": "Połącz",
       "tab_tool_flows": "Narzędzia Flow",
-      "tab_tool_flows_placeholder": "Zarządzanie flow narzędziami wkrótce dostępne.",
       "tools": {
         "no_tools": "Żadne flow narzędzi nie pasują do Twojego wyszukiwania.",
         "create_tool_flow": "Utwórz flow narzędzia",
@@ -2058,7 +1992,6 @@
       },
       "connect_tab": {
         "server_url": "URL serwera",
-        "client_picker_label": "Wybierz klienta AI",
         "claude_desktop": "Claude Desktop",
         "claude_desktop_hint": "Dodaj następujące elementy do pliku claude_desktop_config.json:",
         "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",

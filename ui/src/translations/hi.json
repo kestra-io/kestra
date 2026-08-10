@@ -22,12 +22,10 @@
     "show more details": "अधिक विवरण दिखाएं",
     "skipped": "छोड़ा गया",
     "revision": "संशोधन",
-    "Language": "भाषा",
     "theme": "थीम",
     "flows": "Flows",
     "flow": "Flow",
     "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
-    "missingSource": "स्रोत अनुपलब्ध",
     "update": "अपडेट करें",
     "confirmation": "पुष्टि",
     "common": {
@@ -92,7 +90,6 @@
     "gantt_no_tasks_match_filters": "खोज, स्थिति, या log-level फ़िल्टर को समायोजित करने का प्रयास करें।",
     "gantt_no_tasks_match_filters_title": "कोई task चयनित फ़िल्टर से मेल नहीं खाता।",
     "logs": "Logs",
-    "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
     "no_logs_data_title": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले।",
     "duration": "अवधि",
@@ -106,7 +103,6 @@
       "pastEstimate": "सामान्य से अधिक समय ले रहा है"
     },
     "launch execution": "निष्पादित करें",
-    "triggered": "निष्पादन trigger",
     "triggered done": "निष्पादन <em>{name}</em> सफलतापूर्वक ट्रिगर किया गया है",
     "topology": "टोपोलॉजी",
     "date": "दिनांक",
@@ -201,19 +197,13 @@
     "source search": "स्रोत खोज",
     "selected": "चयनित",
     "task": "Task",
-    "task logs": "Task Logs",
     "actions": "क्रियाएँ",
     "select view": "दृश्य चुनें",
-    "required field": "आवश्यक फ़ील्ड",
     "is required": "{field} आवश्यक है",
     "error": "त्रुटि",
     "form": "फ़ॉर्म",
     "start date": "प्रारंभ तिथि",
     "end date": "समाप्ति तिथि",
-    "creation": "निर्माण",
-    "flow creation": "Flow निर्माण",
-    "start datetime": "प्रारंभ दिनांक और समय",
-    "end datetime": "समाप्ति दिनांक और समय",
     "restart": "पुनः प्रारंभ करें",
     "restart latest revision": "नवीनतम पुनरीक्षण पुनः प्रारंभ करें",
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
@@ -310,10 +300,8 @@
     "show task condition": "कार्य की स्थिति दिखाएं",
     "show task outputs": "Task आउटपुट दिखाएं",
     "show task source": "Task स्रोत दिखाएं",
-    "specific task": "विशिष्ट task",
     "stream": "स्ट्रीम",
     "execution statistics": "निष्पादन सांख्यिकी",
-    "stats": "आँकड़े",
     "concurrency limits": "समानांतरता सीमाएँ",
     "system overview": "सिस्टम अवलोकन",
     "usage": "उपयोग",
@@ -436,7 +424,6 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow डॉक्यूमेंटेशन",
-      "name": "plugin",
       "names": "plugins",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
@@ -456,7 +443,6 @@
     "templates": "templates",
     "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
     "trigger": "Trigger",
-    "no_trigger": "कोई trigger उपलब्ध नहीं है।",
     "triggers": "Triggers",
     "test_event": {
       "title": "एक परीक्षण इवेंट भेजें",
@@ -473,6 +459,10 @@
     "triggers_tabs_add": "जोड़ें",
     "triggers_tabs_manage": "प्रबंधित करें",
     "triggers_add_search_placeholder": "ट्रिगर्स खोजें...",
+    "triggers_add_filter_core": "कोर",
+    "triggers_add_filter_realtime": "रियलटाइम",
+    "triggers_add_filter_all": "सभी",
+    "triggers_add_filter_app": "ऐप",
     "triggers_add_empty_title": "कोई triggers नहीं मिले",
     "triggers_add_ee_tooltip": "यह trigger के लिए Enterprise Edition आवश्यक है।",
     "triggers_add_card_add": "जोड़ें",
@@ -489,7 +479,6 @@
     "triggerflow disabled": "Flow परिभाषा से Trigger अक्षम है",
     "last trigger date": "अंतिम ट्रिगर की तारीख",
     "trigger_states": "राज्य",
-    "context updated date": "संदर्भ अद्यतन तिथि",
     "state updated date": "स्थिति अद्यतन तिथि",
     "next evaluation date": "अगली मूल्यांकन तिथि",
     "last evaluation date": "अंतिम मूल्यांकन तिथि",
@@ -500,7 +489,6 @@
     "conditions": "शर्तें",
     "triggerId": "ट्रिगर ID",
     "tenantId": "टेनेंट ID",
-    "codeDisabled": "Flow में अक्षम",
     "paused": "PAUSED",
     "running": "RUNNING",
     "Fold content lines": "मल्टीलाइन स्ट्रिंग्स फोल्ड करें",
@@ -509,6 +497,8 @@
     "sub flow": "Subflow",
     "execute": "निष्पादित करें",
     "execute flow behaviour": "Flow निष्पादित करें",
+    "open in same tab": "उसी टैब में",
+    "open in new tab": "एक नए टैब में",
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "discard execution confirmation": "आपके पास बिना सहेजे गए input हैं। क्या आप वाकई इस execution को छोड़ना चाहते हैं?",
     "discard changes confirmation": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप वाकई उन्हें छोड़ना चाहते हैं?",
@@ -625,7 +615,6 @@
     "can not have less than 1 task": "एक flow में कम से कम एक task होना चाहिए। इसे हटाने से पहले एक और task जोड़ें।",
     "task id": "Task ID",
     "taskid column details": "निष्पादित होने वाला अंतिम Task और इसके प्रयासों की संख्या।",
-    "flow already exists": "Flow पहले से मौजूद है",
     "flow already exists message": "Flow <code>{id}</code> पहले से ही namespace <code>{namespace}</code> में मौजूद है। क्या आप एक नया संशोधन बनाना चाहते हैं?",
     "editor": "संपादक",
     "delete task confirm": "क्या आप वाकई Task <code>{taskId}</code> को हटाना चाहते हैं?",
@@ -641,7 +630,6 @@
     "line": "रेखा",
     "metric": "मेट्रिक",
     "aggregation": "एकत्रीकरण",
-    "chart type": "चार्ट प्रकार",
     "metric choice": "इस flow के लिए कोई मेट्रिक्स उपलब्ध नहीं है",
     "of": "का",
     "title": "शीर्षक",
@@ -675,7 +663,6 @@
     "informative notice": "नोट(s)",
     "open": "खोलें",
     "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
-    "administration": "प्रशासन",
     "admin": "प्रशासनिक",
     "main_configuration": "मुख्य कॉन्फ़िगरेशन",
     "commit_id": "कमिट id",
@@ -711,7 +698,6 @@
     "unable to generate graph": "ग्राफ़ उत्पन्न करते समय एक समस्या उत्पन्न हुई जिससे टोपोलॉजी प्रदर्शित नहीं हो सकी।",
     "attempts": "प्रयास",
     "workers": "Workers",
-    "worker group": "Worker समूह",
     "version": "संस्करण",
     "services": "सेवाएँ",
     "server type": "सर्वर प्रकार",
@@ -724,7 +710,6 @@
     "encoding": "एन्कोडिंग",
     "show": "दिखाएं",
     "advanced configuration": "अन्य गुण",
-    "all executions": "सभी निष्पादन",
     "execution_status": "Execution है:",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "execution_starts_progress": "जैसे ही execution शुरू होता है, आपको यहाँ प्रगति अपडेट दिखाई देंगे।",
@@ -734,12 +719,7 @@
         "MAIN": "मूल निष्पादन"
       }
     },
-    "show chart": "चार्ट दिखाएं",
     "namespace files": {
-      "toggle": {
-        "show": "Namespace फ़ाइलें दिखाएं",
-        "hide": "Namespace फ़ाइलें छिपाएं"
-      },
       "filter": "फ़िल्टर",
       "new_file": "नई फ़ाइल",
       "read_only": "आपके पास इस namespace में फ़ाइलें प्रबंधित करने की अनुमति नहीं है",
@@ -750,10 +730,6 @@
       "no_selection": {
         "heading": "कोई फ़ाइल चयनित नहीं",
         "description": "इसकी सामग्री देखने के लिए ट्री से एक फ़ाइल चुनें।"
-      },
-      "tree": {
-        "expand": "सभी फ़ोल्डर्स विस्तारित करें",
-        "collapse": "सभी फ़ोल्डर्स संक्षिप्त करें"
       },
       "create": {
         "label": "बनाएँ",
@@ -781,7 +757,6 @@
         "folders": "{count} चयनित फ़ोल्डर हटाएं"
       },
       "import": {
-        "import": "आयात करें",
         "files": "फ़ाइलें आयात करें",
         "folder": "फ़ोल्डर आयात करें",
         "success": "फ़ाइलें सफलतापूर्वक आयात की गईं",
@@ -843,7 +818,6 @@
     "execution-include-non-terminated": "गैर-समाप्त निष्पादन शामिल करें?",
     "execution-warn-title": "महत्वपूर्ण WARNING!",
     "execution-warn-deleting-still-running": "हम दृढ़ता से अनुशंसा करते हैं कि आप इस क्रिया को रद्द करें और पहले किसी भी चल रही executions को समाप्त करें। गैर-समाप्त executions को हटाने से concurrency समस्याएँ, flow निर्भरता प्रबंधन असंगतताएँ, और आपके instance पर zombie प्रक्रियाएँ हो सकती हैं, जो सिस्टम प्रदर्शन को खराब कर सकती हैं। सुनिश्चित करें कि आप इन जोखिमों को पूरी तरह से समझते हैं, इससे पहले कि आप deletion के साथ आगे बढ़ें।",
-    "originalCreatedDate": "मूल निर्माण तिथि",
     "pluginPage": {
       "search": "खोजें {count}+ प्लगइन्स भर में",
       "searchTasks": "{count} tasks खोजें",
@@ -994,12 +968,9 @@
       "enterprise_edition": "एंटरप्राइज एडिशन",
       "get_a_demo_button": "डेमो प्राप्त करें",
       "contact_sales": "सेल्स से संपर्क करें",
-      "watch_the_video": "वीडियो देखें",
       "secrets": {
         "title": "अपने Secrets Management को अपग्रेड करें",
         "message": "एंटरप्राइज एडिशन (EE) आपको UI में सीधे secrets जोड़ने, संपादित करने या हटाने की अनुमति देता है—कोई instance पुनरारंभ की आवश्यकता नहीं है। secrets को namespace द्वारा संगठित करें, जिसमें सूक्ष्म RBAC अनुमतियाँ हों, और उन्हें parent से child namespaces में विरासत में लें। EE HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, और Elasticsearch जैसे secrets प्रबंधकों के साथ एकीकृत होता है। टीमों के बीच secrets को अलग करने के लिए namespace, tenant, या instance के अनुसार समर्पित बैकएंड सेट करें, या बाहरी vaults में संग्रहीत read-only secrets को सक्षम करें। secrets को आराम और ट्रांजिट में एन्क्रिप्टेड रखा जाता है। वैकल्पिक caching API कॉल्स को कम करता है, और audit trails सभी एक्सेस को log करते हैं।",
-        "detected_env": "यहाँ instance start-time पर पहचाने गए secret-type environment variables हैं:",
-        "empty_env": "आपके वातावरण में अभी तक कोई Secrets नहीं हैं।",
         "add_env": {
           "intro": "नया Secret बनाने के लिए:",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",
@@ -1385,7 +1356,6 @@
     "files": "फ़ाइलें",
     "optional": "वैकल्पिक",
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
-    "bookmark": "बुकमार्क्स",
     "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?",
     "showLess": "कम दिखाएं",
     "documentationMenu": "डॉक्यूमेंटेशन मेनू",
@@ -1400,7 +1370,6 @@
     "active": "सक्रिय",
     "flows imported": "फ़्लोज़ आयात किए गए",
     "filters": {
-      "label": "फिल्टर चुनें",
       "options": {
         "scope": "स्कोप"
       }
@@ -1418,9 +1387,7 @@
       "clearSelection": "चयन साफ़ करें",
       "labels": {
         "yaml": "YAML संपादक",
-        "no_code": "कोड संपादक नहीं",
-        "label": "लेबल",
-        "variable": "वेरिएबल"
+        "no_code": "कोड संपादक नहीं"
       },
       "sections": {
         "deprecated": "अप्रचलित गुण",
@@ -1485,9 +1452,6 @@
         "cases": "इस केस को हटाएं"
       }
     },
-    "properties": {
-      "label": "गुणधर्म"
-    },
     "editor_shortcuts": {
       "label": "कीबोर्ड शॉर्टकट्स",
       "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन",
@@ -1529,7 +1493,6 @@
     "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
     "watch": "देखें",
     "learn_more": "और जानें",
-    "runners": "धावक",
     "for flow": "फ्लो के लिए",
     "forbidden system labels": "सिर्फ़ system.correlationId को system label के रूप में उपयोग किया जा सकता है",
     "confirm": "पुष्टि करें",
@@ -1649,7 +1612,6 @@
     "worker information": "वर्कर जानकारी",
     "test-badge-text": "परीक्षण",
     "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
-    "total_executions": "कुल Executions",
     "no_results": {
       "executions": "कोई Executions नहीं मिला",
       "triggers": "कोई Triggers नहीं मिले",
@@ -1760,22 +1722,7 @@
     },
     "ai": {
       "flow": {
-        "title": "एआई एजेंट",
-        "prompt_placeholder": "अपने Kestra flow बनाने के लिए निर्देश दर्ज करें। उदाहरण प्रॉम्प्ट: एक flow बनाएं जो हर सोमवार को सुबह 9 बजे चलता है।",
-        "select_provider": "प्रदाता चुनें",
-        "generating": {
-          "flow": "आपके लिए Flow YAML उत्पन्न किया जा रहा है...",
-          "dashboard": "आपके लिए Dashboard YAML तैयार किया जा रहा है...",
-          "app": "आपके लिए App YAML तैयार किया जा रहा है...",
-          "test": "आपके लिए टेस्ट YAML उत्पन्न किया जा रहा है..."
-        },
-        "enable_instructions": {
-          "header": "<b>AI Copilot अभी तक कॉन्फ़िगर नहीं किया गया है।</b>\n\nAI Copilot को सक्षम करने के लिए, अपने Kestra instance configuration file (जैसे <code>application.yml</code>) में निम्नलिखित स्निपेट जोड़ें, <code>geminiApiKey</code> को अपनी वास्तविक key से बदलें:",
-          "footer": "ध्यान दें: इस समय, केवल Gemini को Open Source Edition के लिए AI प्रदाता के रूप में समर्थन दिया जाता है। Enterprise Edition के लिए, कृपया अन्य मॉडल प्रदाता कॉन्फ़िगरेशन के लिए AI Copilot दस्तावेज़ देखें।\n\nकॉन्फ़िगरेशन सहेजने के बाद अपनी Kestra instance को पुनः प्रारंभ करें।"
-        }
-      },
-      "dashboard": {
-        "prompt_placeholder": "अपने डेटा के बारे में एक प्रश्न पूछें। उदाहरण प्रॉम्प्ट: पिछले 7 दिनों में मेरे flows की सफलता दर दिखाएं।"
+        "title": "एआई एजेंट"
       },
       "copilot": {
         "title": "एआई सहपायलट",
@@ -1824,7 +1771,6 @@
           "approve": "स्वीकृत करें",
           "approveExecute": "स्वीकृत करें और निष्पादित करें",
           "reject": "अस्वीकार करें",
-          "reasonPlaceholder": "संशोधन के लिए उत्तर दें…",
           "pending": "अनुमोदन लंबित",
           "revise": "संशोधन के लिए जवाब दें"
         },
@@ -1856,7 +1802,6 @@
           "detail": "कोई AI प्रदाता कॉन्फ़िगर नहीं किया गया है। किसी व्यवस्थापक से इसे सेट अप करने के लिए पूछें, फिर से प्रयास करें।",
           "retry": "फिर से प्रयास करें"
         },
-        "thinking": "सोच रहा है",
         "thinkingWords": [
           "ऑर्केस्ट्रेशन",
           "शेड्यूलिंग",
@@ -1885,7 +1830,6 @@
         ],
         "newChat": "नया चैट",
         "recents": "हाल के",
-        "recentsEmpty": "अभी तक कोई हालिया बातचीत नहीं।",
         "draft": {
           "openInEditor": "संपादक में खोलें",
           "apply": "लागू करें",
@@ -1902,9 +1846,7 @@
             "app": "प्रस्तावित ऐप"
           },
           "valid": "वैध",
-          "invalid": "बदलाव की आवश्यकता है",
-          "copy": "YAML कॉपी करें",
-          "copied": "कॉपी किया गया"
+          "invalid": "बदलाव की आवश्यकता है"
         }
       }
     },
@@ -1960,7 +1902,6 @@
       "expand": "विस्तार करें",
       "collapse": "संक्षिप्त करें"
     },
-    "delete trigger": "ट्रिगर हटाएं",
     "delete triggers": "ट्रिगर्स हटाएं",
     "bulk delete triggers": "क्या आप वाकई {count} triggers को हटाना चाहते हैं?",
     "bulk success delete triggers": "{count} triggers सफलतापूर्वक हटा दिए गए हैं",
@@ -2002,16 +1943,10 @@
       "servers_count": "{count} MCP Servers",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
-      "server": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",
       "page_description": "अपने Kestra flows को MCP-संगत AI एजेंट्स के लिए उपकरण के रूप में प्रस्तुत करें",
       "create": "सर्वर बनाएं",
-      "save": "परिवर्तनों को सहेजें",
-      "connect": "कनेक्ट करें",
-      "copy_url": "URL कॉपी करें",
-      "url_copied": "URL कॉपी हो गया!",
       "instructions": "निर्देश",
-      "server_type": "सर्वर प्रकार",
       "auth_type": "प्रमाणीकरण",
       "private": "निजी",
       "private_server": "निजी सर्वर",
@@ -2039,7 +1974,6 @@
       "tab_edit": "संपादित करें",
       "tab_connect": "कनेक्ट करें",
       "tab_tool_flows": "टूल Flows",
-      "tab_tool_flows_placeholder": "टूल flows प्रबंधन जल्द ही आ रहा है।",
       "tools": {
         "no_tools": "आपकी खोज से मेल खाने वाले कोई टूल flows नहीं हैं।",
         "create_tool_flow": "एक टूल flow बनाएँ",
@@ -2058,7 +1992,6 @@
       },
       "connect_tab": {
         "server_url": "सर्वर URL",
-        "client_picker_label": "अपना AI क्लाइंट चुनें",
         "claude_desktop": "क्लॉड डेस्कटॉप",
         "claude_desktop_hint": "अपने claude_desktop_config.json फ़ाइल में निम्नलिखित जोड़ें:",
         "claude_desktop_mac": "macOS: ~/Library/Application Support/Claude/claude_desktop_config.json",

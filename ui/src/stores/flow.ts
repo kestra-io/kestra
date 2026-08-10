@@ -134,10 +134,6 @@ export const useFlowStore = defineStore("flow", () => {
             return "no_op"
         }
 
-        if (flowErrors.value?.length && !isDraft) {
-            return "blocked"
-        }
-
         if (!flow.value) return "blocked"
         const source = flowYaml.value
         const validation = await onEdit({source})
@@ -177,10 +173,6 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     async function save(draft: boolean = false): Promise<FlowSaveOutcome> {
-        if (flowErrors.value?.length && !draft) {
-            return "blocked"
-        }
-
         const source = flowYaml.value
 
         if (source) {

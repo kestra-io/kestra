@@ -61,6 +61,7 @@
             :title="taskModalCtx.title ?? taskModalCtx.task?.id ?? 'Task details'"
             :destroyOnClose="true"
             :appendToBody="true"
+            scrollable
         >
             <TopologyTaskModalRemote v-bind="(taskModalCtx as any)" />
         </KsDialog>

@@ -405,7 +405,7 @@
         align-items: center;
         gap: var(--ks-spacing-2);
         padding-top: var(--ks-spacing-2);
-        border-top: 1px dashed var(--ks-border-default);
+        border-top: 1px dashed var(--ks-border-strong);
     }
 
     .flowable-cluster-case-input {

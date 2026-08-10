@@ -122,25 +122,18 @@
                                                 </KsTooltip>
                                             </div>
                                             <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                                <KsTooltip placement="top">
-                                                    <template #content>
-                                                        <span style="white-space: pre-wrap;">
-                                                            {{ item.tooltip }}
-                                                        </span>
-                                                    </template>
-                                                    <div :style="taskBarStyle(item)" class="task-progress">
-                                                        <KsProgress
-                                                            :left="Math.min(item.left, 90)"
-                                                            :percentage="Math.max(100 - item.left, 10)"
-                                                            :color="item.color"
-                                                            :stroke-width="7"
-                                                            :radius="81"
-                                                            :striped="item.running"
-                                                            :stripedFlow="item.running"
-                                                            :showText="false"
-                                                        />
-                                                    </div>
-                                                </KsTooltip>
+                                                <div :style="taskBarStyle(item)" class="task-progress">
+                                                    <KsProgress
+                                                        :left="Math.min(item.left, 90)"
+                                                        :percentage="Math.max(100 - item.left, 10)"
+                                                        :color="item.color"
+                                                        :stroke-width="7"
+                                                        :radius="81"
+                                                        :striped="item.running"
+                                                        :stripedFlow="item.running"
+                                                        :showText="false"
+                                                    />
+                                                </div>
                                             </div>
                                             <div class="task-duration d-none d-md-inline-block">
                                                 <small>
@@ -204,7 +197,6 @@
     import {
         State,
         Comparators,
-        durationUtils,
         useRouteFilterPolicy,
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
@@ -260,7 +252,6 @@
         start: number;
         width: number;
         left: number;
-        tooltip: string;
         color: string;
         running: boolean;
         task: TaskRun;
@@ -504,16 +495,6 @@
                 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100)
                 : 0
 
-            const taskDelta = stopTs - startTs
-
-            let tooltip = `${t("duration")} : ${durationUtils.humanDuration(taskDelta / 1000)}`
-
-            if (runningState.length > 0) {
-                tooltip += `\n${t("queued duration")} : ${durationUtils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`
-                tooltip += `\n${t("running duration")} : ${durationUtils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`
-            }
-
-
             const barPercents = barPercentsById[task.id]
             let width = barPercents.width
             if (State.isRunning(task.state.current)) {
@@ -526,7 +507,6 @@
                 start: barPercents.start,
                 width,
                 left,
-                tooltip,
                 color: COLORS[task.state.current],
                 running: Boolean(State.isRunning(task.state.current)),
                 task,

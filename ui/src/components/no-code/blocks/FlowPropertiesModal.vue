@@ -24,7 +24,7 @@
         </template>
 
         <div class="flow-properties-modal-body">
-            <FlowPropertiesEdit hideHeader @close="emit('close')" />
+            <FlowPropertiesEdit hideHeader hostedInModal @close="emit('close')" />
         </div>
     </KsDialog>
 </template>

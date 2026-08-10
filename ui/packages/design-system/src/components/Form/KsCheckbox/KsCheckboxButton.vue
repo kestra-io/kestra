@@ -36,4 +36,16 @@
 <style lang="scss">
     @use '../../../assets/styles/el-ns';
     @use 'element-plus/theme-chalk/src/checkbox-button';
+
+    .kel-checkbox-button:not(.is-checked):not(.is-disabled):hover .kel-checkbox-button__inner {
+        color: var(--ks-text-link);
+        border-color: var(--ks-text-link);
+    }
+
+    .kel-checkbox-button__original:focus-visible + .kel-checkbox-button__inner {
+        outline: 2px solid var(--ks-border-focus);
+        outline-offset: -2px;
+        position: relative;
+        z-index: 1;
+    }
 </style>

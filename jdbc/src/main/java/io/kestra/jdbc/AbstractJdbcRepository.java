@@ -11,9 +11,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
@@ -385,36 +383,6 @@ public abstract class AbstractJdbcRepository<T> {
                     .asTable("page")
             )
             .where(DSL.noCondition());
-    }
-
-    @SneakyThrows
-    public List<String> fragments(String query, String yaml) {
-        List<String> split = Arrays.asList(StringUtils.split(yaml, "\n"));
-
-        int first = IntStream.range(0, split.size())
-            .filter(index -> StringUtils.indexOfIgnoreCase(split.get(index), query) >= 0)
-            .findFirst()
-            .orElse(0);
-
-        int min = Math.max(0, first - 1);
-        int max = Math.min(split.size(), min + 4);
-
-        List<String> fragments = split
-            .subList(min, max)
-            .stream()
-            .map(r ->
-            {
-                int i = StringUtils.indexOfIgnoreCase(r, query);
-
-                if (i < 0) {
-                    return r;
-                } else {
-                    return r.substring(0, i) + "[mark]" + r.substring(i, i + query.length()) + "[/mark]" + r.substring(i + query.length());
-                }
-            })
-            .toList();
-
-        return Collections.singletonList(String.join("\n", fragments));
     }
 
     public <R extends Record> SelectConditionStep<R> sort(SelectConditionStep<R> select, Pageable pageable) {

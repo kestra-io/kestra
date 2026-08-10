@@ -16,7 +16,7 @@ export { createMcp, deleteMcp, listMcps, listTools, mcp, toggleMcp, updateMcp } 
 export { aggregateMetricsFromFlow, aggregateMetricsFromTask, listFlowMetrics, listTaskMetrics, listTasksWithMetrics, searchByExecution } from './sdk/Metrics.gen';
 export { basicAuthConfigErrors, configuration, createBasicAuth, expressionFilters, expressionFunctions, login, loginConfiguration, logout, usages } from './sdk/Misc.gen';
 export { autocompleteNamespaces, inheritedSecrets, loadNamespace, searchNamespaces } from './sdk/Namespaces.gen';
-export { taskOutputsInformation, taskRunOutputs } from './sdk/Outputs.gen';
+export { executionOutputs, taskOutputsInformation, taskRunOutputs } from './sdk/Outputs.gen';
 export { allInputTypes, listPlugins, listTriggerPlugins, pluginBySubgroups, pluginDocumentation, pluginDocumentationFromVersion, pluginGroupIcons, pluginIcon, pluginIcons, pluginIconSvg, pluginUi, pluginUiManifest, pluginVersions, propertiesFromType, schemaFromInputType, schemasFromType } from './sdk/Plugins.gen';
 export { listSecrets } from './sdk/Secrets.gen';
 export { metrics, service } from './sdk/Services.gen';

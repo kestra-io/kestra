@@ -88,9 +88,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
     @Schema(implementation = Object.class)
     Map<String, Object> inputs;
 
+    /**
+     * @deprecated should only be used inside the pre-2.0 compatibility layer.
+     */
     @With
+    @Hidden
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Schema(implementation = Object.class)
+    @Deprecated(forRemoval = true, since = "2.0.0")
     Map<String, Object> outputs;
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
@@ -404,7 +409,8 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.flowRevision,
             taskRunList,
             this.inputs,
-            this.outputs,
+            // outputs are not copied: they are recomputed when the child execution ends.
+            null,
             this.labels,
             this.variables,
             state,
@@ -436,7 +442,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             this.flowRevision,
             null,
             null, // we don't copy inputs to reduce the size, the RunVariables must get them from the parent execution
-            this.outputs,
+            null, // same for the outputs, the RunVariables get them from the parent execution
             this.labels,
             this.variables,
             this.state,

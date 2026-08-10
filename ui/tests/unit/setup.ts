@@ -61,10 +61,20 @@ if (typeof Element !== "undefined" && typeof Element.prototype.scrollIntoView !=
 // clipboard workaround binds click/keydown handlers on document.body that call
 // `navigator.clipboard.write([new ClipboardItem(...)])`, so any event bubbling to
 // body in an attached mount otherwise throws "ClipboardItem is not defined".
+// That workaround also hands the ClipboardItem ctor a pending promise which the next
+// event cancels; the real ctor consumes it, so the stub has to do the same or the
+// cancellation surfaces as an unhandled rejection and fails the whole run.
 if (typeof globalThis.ClipboardItem === "undefined") {
     (globalThis as any).ClipboardItem = class ClipboardItem {
         items: Record<string, unknown>
-        constructor(items: Record<string, unknown>) { this.items = items }
+        constructor(items: Record<string, unknown>) {
+            this.items = items
+            for (const value of Object.values(items ?? {})) {
+                if (value && typeof (value as Promise<unknown>).then === "function") {
+                    (value as Promise<unknown>).catch(() => {})
+                }
+            }
+        }
     }
 }
 if (typeof navigator !== "undefined" && !navigator.clipboard) {

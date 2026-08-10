@@ -1824,9 +1824,13 @@ tasks:
             const menu = await openCommandMenu()
 
             // Then
-            const items = menu.props("items") as {subtitle?: string; searchOnly?: boolean}[]
-            const types = items.filter(item => item.searchOnly).map(item => item.subtitle)
-            expect(types).toEqual(["io.kestra.plugin.core.log.Log", "io.kestra.plugin.core.flow.If"])
+            const items = menu.props("items") as {title: string; keywords?: string; searchOnly?: boolean}[]
+            const types = items.filter(item => item.searchOnly)
+            expect(types.map(item => item.title)).toEqual(["Log", "If"])
+            expect(types.map(item => item.keywords)).toEqual([
+                "io.kestra.plugin.core.log.Log Core",
+                "io.kestra.plugin.core.flow.If Core",
+            ])
         })
 
         it("inserts the picked task type into the focused context", async () => {
@@ -1835,10 +1839,10 @@ tasks:
             const vm = wrapper.vm as unknown as {focusedId?: string}
             vm.focusedId = "log_task"
             const menu = await openCommandMenu()
-            const items = menu.props("items") as {subtitle?: string; run: () => void}[]
+            const items = menu.props("items") as {keywords?: string; run: () => void}[]
 
             // When
-            items.find(item => item.subtitle === "io.kestra.plugin.core.flow.If")!.run()
+            items.find(item => item.keywords?.startsWith("io.kestra.plugin.core.flow.If"))!.run()
             await flushPromises()
 
             // Then

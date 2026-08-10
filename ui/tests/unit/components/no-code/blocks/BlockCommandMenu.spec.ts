@@ -24,6 +24,18 @@ function makeItems(run: (id: string) => void): BlockCommandMenuItem[] {
     ]
 }
 
+function taskType(run: () => void): BlockCommandMenuItem {
+    return {
+        id: "type-log",
+        group: "Task types",
+        title: "Log",
+        subtitle: "Emit log entries from a flow.",
+        keywords: "io.kestra.plugin.core.log.Log Core",
+        searchOnly: true,
+        run,
+    }
+}
+
 // BlockCommandMenu teleports its content to document.body, so assertions
 // query the real DOM (via DOMWrapper) instead of the component's own subtree.
 function mountMenu(items: BlockCommandMenuItem[], contextLabel?: string) {
@@ -169,10 +181,7 @@ describe("BlockCommandMenu", () => {
 
     it("hides the search-only items until something is typed", async () => {
         // Given — task types are search-only so they do not flood the idle list
-        const items: BlockCommandMenuItem[] = [
-            ...makeItems(vi.fn()),
-            {id: "type-log", group: "Task types", title: "Log", subtitle: "io.kestra.plugin.core.log.Log", searchOnly: true, run: vi.fn()},
-        ]
+        const items: BlockCommandMenuItem[] = [...makeItems(vi.fn()), taskType(vi.fn())]
         const {body} = mountMenu(items)
 
         // When
@@ -180,16 +189,13 @@ describe("BlockCommandMenu", () => {
 
         // Then
         expect(idle).toHaveLength(3)
-        expect(body.text()).not.toContain("io.kestra.plugin.core.log.Log")
+        expect(body.text()).not.toContain("Emit log entries from a flow.")
     })
 
     it("surfaces a search-only item matched on its title", async () => {
         // Given
         const run = vi.fn()
-        const items: BlockCommandMenuItem[] = [
-            ...makeItems(vi.fn()),
-            {id: "type-log", group: "Task types", title: "Log", subtitle: "io.kestra.plugin.core.log.Log", searchOnly: true, run},
-        ]
+        const items: BlockCommandMenuItem[] = [...makeItems(vi.fn()), taskType(run)]
         const {body} = mountMenu(items)
 
         // When
@@ -197,11 +203,25 @@ describe("BlockCommandMenu", () => {
         const rendered = body.findAll("[data-test='block-command-menu-item']")
 
         // Then
-        expect(rendered.map(item => item.text())).toContain("Logio.kestra.plugin.core.log.Log")
+        expect(rendered.map(item => item.text())).toContain("LogEmit log entries from a flow.")
 
         // And it runs when picked
         await rendered[rendered.length - 1].trigger("click")
         expect(run).toHaveBeenCalled()
+    })
+
+    it("matches a search-only item on keywords it never displays", async () => {
+        // Given
+        const items: BlockCommandMenuItem[] = [...makeItems(vi.fn()), taskType(vi.fn())]
+        const {body} = mountMenu(items)
+
+        // When
+        await body.find("input").setValue("io.kestra.plugin.core")
+
+        // Then
+        const rendered = body.findAll("[data-test='block-command-menu-item']")
+        expect(rendered).toHaveLength(1)
+        expect(rendered[0].text()).toBe("LogEmit log entries from a flow.")
     })
 
     it("shows the context label when provided", () => {

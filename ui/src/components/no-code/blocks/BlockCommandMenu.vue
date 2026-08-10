@@ -82,6 +82,8 @@
         subtitle?: string
         icon?: Component
         shortcut?: string
+        /** Matched by the search but never displayed, for the fully qualified name of a task type. */
+        keywords?: string
         /** Kept out of the idle list so the hundreds of task types only surface once the user types. */
         searchOnly?: boolean
         run: () => void
@@ -108,7 +110,7 @@
         const search = query.value.trim().toLowerCase()
         if (!search) return props.items.filter(item => !item.searchOnly)
         const matches = props.items.filter(item =>
-            `${item.title} ${item.subtitle ?? ""}`.toLowerCase().includes(search),
+            `${item.title} ${item.subtitle ?? ""} ${item.keywords ?? ""}`.toLowerCase().includes(search),
         )
         return [
             ...matches.filter(item => !item.searchOnly),

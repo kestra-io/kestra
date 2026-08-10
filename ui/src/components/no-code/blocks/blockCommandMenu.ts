@@ -153,8 +153,9 @@ export function buildCommandMenuItems(ctx: BlockCommandMenuContext): BlockComman
         items.push({
             id: `type-${entry.fqcn}`,
             group: t("block_editor.command_menu.group_types"),
-            title: entry.label,
-            subtitle: entry.fqcn,
+            title: entry.name,
+            subtitle: entry.label,
+            keywords: `${entry.fqcn} ${entry.group}`,
             icon: PuzzleOutline,
             searchOnly: true,
             run: then(() => ctx.insertTaskType(entry.fqcn)),

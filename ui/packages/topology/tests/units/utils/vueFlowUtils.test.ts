@@ -117,6 +117,93 @@ describe("VueFlowUtils", () => {
         currentGraph.nodes[1].task.outputFiles = ["file1-modified.txt", "file4.txt"]
         expect(VueFlowUtils.areTasksIdenticalInGraphUntilTask(previousGraph, currentGraph, "task4")).toBeFalsy()
     })
+
+    test("flowHaveTasks should return false for an empty source", () => {
+        expect(VueFlowUtils.flowHaveTasks("")).toBeFalsy()
+    })
+
+    test("flowHaveTasks should return false when there is no root-level tasks key", () => {
+        const source = `
+id: flow
+namespace: io.kestra.tests
+`
+        expect(VueFlowUtils.flowHaveTasks(source)).toBeFalsy()
+    })
+
+    test("flowHaveTasks should return false when the tasks key is not flush at the root", () => {
+        // Matches the LowCodeEditor storybook fixture: an indented `tasks:` is not a root-level key.
+        const source = `
+id: flow
+namespace: io.kestra.tests
+  tasks:
+    - id: task1
+      type: io.kestra.plugin.core.log.Log
+`
+        expect(VueFlowUtils.flowHaveTasks(source)).toBeFalsy()
+    })
+
+    test("flowHaveTasks should return false when the tasks block has no task item", () => {
+        const source = `
+id: flow
+namespace: io.kestra.tests
+tasks:
+description: no tasks here
+`
+        expect(VueFlowUtils.flowHaveTasks(source)).toBeFalsy()
+    })
+
+    test("flowHaveTasks should return false when a task item has no id line", () => {
+        const source = `
+id: flow
+namespace: io.kestra.tests
+tasks:
+  - type: io.kestra.plugin.core.log.Log
+`
+        expect(VueFlowUtils.flowHaveTasks(source)).toBeFalsy()
+    })
+
+    test("flowHaveTasks should return true when a task item has an id line", () => {
+        const source = `
+id: flow
+namespace: io.kestra.tests
+tasks:
+  - id: task1
+    type: io.kestra.plugin.core.log.Log
+`
+        expect(VueFlowUtils.flowHaveTasks(source)).toBeTruthy()
+    })
+
+    test("flowHaveTasks should return true when the id line uses a space before the colon", () => {
+        const source = `
+id: flow
+namespace: io.kestra.tests
+tasks:
+  - id : task1
+    type: io.kestra.plugin.core.log.Log
+`
+        expect(VueFlowUtils.flowHaveTasks(source)).toBeTruthy()
+    })
+
+    test("flowHaveTasks should stop at the next root-level key and return true when found before it", () => {
+        const source = `
+id: flow
+namespace: io.kestra.tests
+tasks:
+  - id: task1
+    type: io.kestra.plugin.core.log.Log
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+`
+        expect(VueFlowUtils.flowHaveTasks(source)).toBeTruthy()
+    })
+
+    test("flowHaveTasks should not hang or blow up on a large adversarial source", () => {
+        const source = "tasks:\n" + "  no-dash-line-with-lots-of-content-to-scan-through\n".repeat(50000)
+        const start = performance.now()
+        expect(VueFlowUtils.flowHaveTasks(source)).toBeFalsy()
+        expect(performance.now() - start).toBeLessThan(1000)
+    })
 })
 
 describe("generateGraph CHOICE edge labels", () => {

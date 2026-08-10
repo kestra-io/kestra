@@ -302,6 +302,7 @@
       "title": "Statusverlauf",
       "open": "Statusverlauf",
       "aria_open": "Statusverlauf für diesen Task-Lauf anzeigen",
+      "aria_open_for": "Statusverlauf für {subject} anzeigen",
       "started_at": "Gestartet {time}",
       "failed_at": "Fehlgeschlagen um {time}",
       "skipped_at": "Übersprungen um {time}",

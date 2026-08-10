@@ -36,7 +36,7 @@
                 <component :is="statusStyle.icon" class="status-tag__icon" />
                 <span v-if="statusStyle.label" class="status-tag__text">{{ $t(statusStyle.label) }}</span>
                 <span v-else class="status-tag__text">
-                    <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" />
+                    <Duration :histories="histories" :interval="100" :attemptCount="taskRuns[0]?.attempts?.length" :subject="taskId" />
                 </span>
             </span>
         </template>

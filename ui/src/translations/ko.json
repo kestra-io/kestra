@@ -302,6 +302,7 @@
       "title": "상태 기록",
       "open": "상태 기록",
       "aria_open": "이 태스크 실행의 상태 기록 표시",
+      "aria_open_for": "{subject}의 상태 기록 표시",
       "started_at": "{time}에 시작됨",
       "failed_at": "{time}에 실패함",
       "skipped_at": "{time}에 건너뜀",

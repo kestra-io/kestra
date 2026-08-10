@@ -302,6 +302,7 @@
       "title": "Historia stanu",
       "open": "Historia stanu",
       "aria_open": "Pokaż historię stanu tego uruchomienia zadania",
+      "aria_open_for": "Pokaż historię stanu dla {subject}",
       "started_at": "Rozpoczęto {time}",
       "failed_at": "Niepowodzenie o {time}",
       "skipped_at": "Pominięto o {time}",

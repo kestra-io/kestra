@@ -302,6 +302,7 @@
       "title": "Historique des états",
       "open": "Historique des états",
       "aria_open": "Afficher l'historique des états de cette exécution de tâche",
+      "aria_open_for": "Afficher l'historique des états de {subject}",
       "started_at": "Démarré à {time}",
       "failed_at": "Échoué à {time}",
       "skipped_at": "Ignoré à {time}",

@@ -302,6 +302,7 @@
       "title": "状態履歴",
       "open": "状態履歴",
       "aria_open": "このタスク実行の状態履歴を表示",
+      "aria_open_for": "{subject} の状態履歴を表示",
       "started_at": "{time} に開始",
       "failed_at": "{time} に失敗",
       "skipped_at": "{time} にスキップ",

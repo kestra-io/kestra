@@ -16,7 +16,7 @@
                 type="button"
                 class="ks-duration-value"
                 :disabled="!hasHistory"
-                :aria-label="hasHistory ? $t('state_history.aria_open') : $t('no_history')"
+                :aria-label="ariaLabel"
             >
                 {{ triggerLabel }}
             </button>
@@ -33,7 +33,7 @@
                         <span class="duration-total-note">{{ $t('state_history.did_not_run') }}</span>
                     </template>
                     <template v-else>
-                        {{ formatDuration(breakdown.total, " ") }}
+                        {{ formatCardTotal(breakdown.total) }}
                         <span v-if="waitingToStart" class="duration-total-note">{{ $t('state_history.waiting_to_start') }}</span>
                         <span v-else-if="displayedAttemptCount" class="duration-total-note">{{ displayedAttemptCount }} {{ $t('attempts') }}</span>
                     </template>
@@ -104,7 +104,7 @@
                 </KsScrollbar>
                 <div class="state-history-foot">
                     <span class="state-history-total">
-                        {{ $t('total_duration') }} <b>{{ formatDuration(breakdown.total, " ") }}</b>
+                        {{ $t('total_duration') }} <b>{{ formatCardTotal(breakdown.total) }}</b>
                     </span>
                     <KsButton link :icon="copied ? Check : ContentCopy" :tooltip="$t('state_history.copy')" @click="copyHistory">
                         {{ $t('copy') }}
@@ -161,10 +161,14 @@
         /** Authoritative attempt count (e.g. `taskRun.attempts.length`). Falls back to a count
          *  derived from RETRYING transitions in `histories` when not provided. */
         attemptCount?: number;
+        /** What this duration belongs to (e.g. a task id), used to disambiguate the trigger's
+         *  aria-label when several are rendered on the same page (e.g. the Logs tab). */
+        subject?: string;
     }>(), {
         histories: undefined,
         interval: 100,
         attemptCount: undefined,
+        subject: undefined,
     })
 
     const {t} = useI18n()
@@ -215,6 +219,13 @@
         return props.attemptCount && props.attemptCount > 1 ? props.attemptCount : undefined
     })
 
+    const ariaLabel = computed(() => {
+        if (!hasHistory.value) return t("no_history")
+        return props.subject
+            ? t("state_history.aria_open_for", {subject: props.subject})
+            : t("state_history.aria_open")
+    })
+
     function paint() {
         now.value = Date.now()
         if (!refreshHandler && breakdown.value.isRunning) {
@@ -258,6 +269,17 @@
             return Utils.humanDuration(ms / 1000, {maxDecimalPoints: 0, units: ["ms"]})
         }
         return Utils.humanDuration(ms / 1000, {maxDecimalPoints: 2, units: ["h", "m", "s"], delimiter: " "})
+    }
+
+    // The card's own headline, unlike triggerLabel (the persistent chip/column value, left
+    // untouched to avoid reflowing the topology node or the Gantt duration column): a sub-second
+    // total reads as "no time at all" in "h"/"m"/"s" units right next to a millisecond-precision
+    // breakdown row, so it switches to plain milliseconds below 1s.
+    function formatCardTotal(ms: number): string {
+        if (ms > 0 && ms < 1000) {
+            return Utils.humanDuration(ms / 1000, {maxDecimalPoints: 0, units: ["ms"]})
+        }
+        return formatDuration(ms, " ")
     }
 
     const triggerLabel = computed(() => {
@@ -319,18 +341,22 @@
         // of the authoritative attemptCount: the two can disagree (e.g. a truncated history), and
         // there is nothing meaningful to group when no boundary exists.
         const showAttempts = derivedAttemptGroupCount.value > 1
+        // "Attempt N" is only ever a label the caller can back up with an authoritative count
+        // (see displayedAttemptCount): without one, the boundary still separates the groups
+        // visually, just with no unowned "Attempt" claim attached to it.
+        const showAttemptLabels = displayedAttemptCount.value !== undefined
         let previousDay: string | null = null
         let groupIndex = 1
 
         if (showAttempts) {
-            rows.push({key: "attempt-1", type: "attempt", label: t("state_history.attempt_n", {index: 1})})
+            rows.push({key: "attempt-1", type: "attempt", label: showAttemptLabels ? t("state_history.attempt_n", {index: 1}) : undefined})
         }
 
         entries.forEach((entry, i) => {
             const isBoundary = showAttempts && i > 0 && entry.state === "RETRYING"
             if (isBoundary) {
                 groupIndex++
-                rows.push({key: `attempt-${groupIndex}`, type: "attempt", label: t("state_history.attempt_n", {index: groupIndex})})
+                rows.push({key: `attempt-${groupIndex}`, type: "attempt", label: showAttemptLabels ? t("state_history.attempt_n", {index: groupIndex}) : undefined})
             }
 
             const day = formatInTimezone(entry.date, "YYYY-MM-DD")

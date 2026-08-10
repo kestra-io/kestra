@@ -302,6 +302,7 @@
         "title": "State history",
         "open": "State history",
         "aria_open": "Show the state history for this task run",
+        "aria_open_for": "Show the state history for {subject}",
         "started_at": "Started {time}",
         "failed_at": "Failed at {time}",
         "skipped_at": "Skipped at {time}",

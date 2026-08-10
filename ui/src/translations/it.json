@@ -302,6 +302,7 @@
       "title": "Cronologia stato",
       "open": "Cronologia stato",
       "aria_open": "Mostra la cronologia dello stato per questa esecuzione del task",
+      "aria_open_for": "Mostra la cronologia dello stato di {subject}",
       "started_at": "Avviato alle {time}",
       "failed_at": "Fallito alle {time}",
       "skipped_at": "Saltato alle {time}",

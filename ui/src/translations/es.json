@@ -302,6 +302,7 @@
       "title": "Historial de estado",
       "open": "Historial de estado",
       "aria_open": "Mostrar el historial de estado de esta ejecución de tarea",
+      "aria_open_for": "Mostrar el historial de estado de {subject}",
       "started_at": "Iniciado {time}",
       "failed_at": "Fallido a las {time}",
       "skipped_at": "Omitido a las {time}",

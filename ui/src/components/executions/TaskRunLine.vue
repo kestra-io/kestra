@@ -52,7 +52,7 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <Duration :histories="currentTaskRun.state.histories" :attemptCount="currentTaskRun.attempts?.length" />
+                <Duration :histories="currentTaskRun.state.histories" :attemptCount="currentTaskRun.attempts?.length" :subject="currentTaskRun.taskId" />
             </small>
         </div>
 

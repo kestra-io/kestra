@@ -12,9 +12,12 @@ const i18n = createI18n({
     fallbackWarn: false,
 })
 
-function mountDuration(histories: {date: string | number; state: string}[], attemptCount?: number) {
+function mountDuration(
+    histories: {date: string | number; state: string}[],
+    extraProps: {attemptCount?: number; subject?: string} = {},
+) {
     return mount(Duration, {
-        props: {histories, attemptCount},
+        props: {histories, ...extraProps},
         global: {
             plugins: [i18n],
             stubs: {
@@ -123,7 +126,7 @@ describe("Duration", () => {
                 {date: "2026-08-07T15:36:16.054Z", state: "RUNNING"},
                 {date: "2026-08-07T15:37:27.776Z", state: "SUCCESS"},
             ],
-            3,
+            {attemptCount: 3},
         )
 
         expect(wrapper.find(".duration-total-note").text()).toContain("3")
@@ -137,15 +140,17 @@ describe("Duration", () => {
         expect(wrapper.findAll("[data-test='state-history-item']")).toHaveLength(3)
     })
 
+    const RETRIED_HISTORY = [
+        {date: 0, state: "CREATED"},
+        {date: 100, state: "RUNNING"},
+        {date: 1_100, state: "FAILED"},
+        {date: 3_100, state: "RETRYING"},
+        {date: 3_200, state: "RUNNING"},
+        {date: 4_200, state: "SUCCESS"},
+    ]
+
     it("should not display an attempt count when the caller provides none, even if RETRYING transitions are present", async () => {
-        const wrapper = mountDuration([
-            {date: 0, state: "CREATED"},
-            {date: 100, state: "RUNNING"},
-            {date: 1_100, state: "FAILED"},
-            {date: 3_100, state: "RETRYING"},
-            {date: 3_200, state: "RUNNING"},
-            {date: 4_200, state: "SUCCESS"},
-        ])
+        const wrapper = mountDuration(RETRIED_HISTORY)
 
         // No authoritative attemptCount was supplied (e.g. the execution-level call site, which
         // has no "attempts" concept at all): the derived RETRYING count must never leak into the
@@ -155,8 +160,51 @@ describe("Duration", () => {
         await openStateHistory(wrapper)
 
         expect(wrapper.find(".state-history-date").text()).toBe("1970-01-01")
-        expect(wrapper.findAll("[data-test='state-history-attempt-header']")).toHaveLength(2)
+        const attemptHeaders = wrapper.findAll("[data-test='state-history-attempt-header']")
+        // The boundaries still visually separate the groups, but carry no unowned "Attempt" claim.
+        expect(attemptHeaders).toHaveLength(2)
+        attemptHeaders.forEach((header) => expect(header.text()).toBe(""))
+        expect(wrapper.text()).not.toContain("Attempt")
         expect(wrapper.findAll("[data-test='state-history-item']")).toHaveLength(6)
+    })
+
+    it("should render the attempt labels when the caller provides an authoritative count", async () => {
+        const wrapper = mountDuration(RETRIED_HISTORY, {attemptCount: 2})
+
+        await openStateHistory(wrapper)
+
+        const attemptHeaders = wrapper.findAll("[data-test='state-history-attempt-header']")
+        expect(attemptHeaders).toHaveLength(2)
+        attemptHeaders.forEach((header) => expect(header.text()).not.toBe(""))
+    })
+
+    it("should show sub-second card totals in milliseconds, and leave the trigger label alone", () => {
+        const oneMillisecond = mountDuration([
+            {date: 0, state: "CREATED"},
+            {date: 1, state: "SUCCESS"},
+        ])
+        expect(oneMillisecond.find(".duration-total").text()).toContain("1ms")
+        expect(oneMillisecond.find("button.ks-duration-value").text()).not.toContain("1ms")
+
+        const overOneSecond = mountDuration([
+            {date: 0, state: "CREATED"},
+            {date: 13_558, state: "SUCCESS"},
+        ])
+        expect(overOneSecond.find(".duration-total").text()).toContain("13.55s")
+        expect(overOneSecond.find("button.ks-duration-value").text()).toContain("13.55s")
+    })
+
+    it("should use a generic aria-label by default and a subject-specific one when provided", () => {
+        const withoutSubject = mountDuration([
+            {date: "2026-08-07T15:36:15.804Z", state: "SUCCESS"},
+        ])
+        expect(withoutSubject.find("button.ks-duration-value").attributes("aria-label")).toBe("state_history.aria_open")
+
+        const withSubject = mountDuration(
+            [{date: "2026-08-07T15:36:15.804Z", state: "SUCCESS"}],
+            {subject: "extract"},
+        )
+        expect(withSubject.find("button.ks-duration-value").attributes("aria-label")).toBe("state_history.aria_open_for")
     })
 
     it("should not show a state history button when there is no history to show", () => {

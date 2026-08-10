@@ -274,19 +274,26 @@ export function flowHaveTasks(source: string): boolean {
 
     const lines = source.split(/\r?\n/)
 
-    // Phase 1: find the line starting the root-level `tasks:` block, then scan
-    // forward line-by-line (bounded, no backtracking) until the next root-level
-    // key or the end of the source to isolate the block containing the tasks.
+    // Phase 1: locate the root-level `tasks:` block — its start line, and its
+    // end, i.e. the next root-level key (a line starting with a non-space
+    // character) or the end of the source. Bounded, single-pass, no backtracking.
     const tasksLineIndex = lines.findIndex((line) => /^tasks\s*:\s*$/.test(line))
     if (tasksLineIndex === -1) return false
 
-    // Phase 2: within that block, a task item starts with "- " (dash-space) and
-    // must contain at least one `id:`/`id :` line before the next item or key —
-    // either right after the dash on the same line, or on a line below it.
-    let sawTaskItem = false
+    let blockEndIndex = lines.length
     for (let i = tasksLineIndex + 1; i < lines.length; i++) {
+        if (/^\S/.test(lines[i])) {
+            blockEndIndex = i
+            break
+        }
+    }
+
+    // Phase 2: within that block, a task item starts with "- " (dash-space) and
+    // must contain at least one `id:`/`id :` line — either right after the dash
+    // on the same line, or on a line below it.
+    let sawTaskItem = false
+    for (let i = tasksLineIndex + 1; i < blockEndIndex; i++) {
         const line = lines[i]
-        if (/^\S/.test(line)) break
 
         const dashMatch = /^\s+-\s*(.*)$/.exec(line)
         if (dashMatch) {

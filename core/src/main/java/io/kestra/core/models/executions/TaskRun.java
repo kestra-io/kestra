@@ -80,7 +80,7 @@ public class TaskRun implements TenantInterface {
     @Nullable
     @Schema(implementation = Object.class)
     @Deprecated(forRemoval = true, since = "2.0.0")
-    Variables outputs;
+    Map<String, Object> outputs;
 
     /**
      * @deprecated should only be used inside the pre-2.0 compatibility layer.

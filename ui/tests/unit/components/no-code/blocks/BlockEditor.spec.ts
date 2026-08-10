@@ -177,6 +177,14 @@ vi.mock("../../../../../src/components/no-code/blocks/FlowableClusterCard.vue", 
     },
 }))
 
+vi.mock("../../../../../src/components/no-code/blocks/FlowPropertiesModal.vue", () => ({
+    default: {
+        name: "FlowPropertiesModal",
+        emits: ["close"],
+        template: "<div data-test='flow-properties-modal' />",
+    },
+}))
+
 vi.mock("../../../../../src/components/no-code/blocks/BranchLane.vue", () => ({
     default: {
         name: "BranchLane",
@@ -1672,6 +1680,55 @@ tasks:
             expect(parsed.tasks).toHaveLength(3)
             expect(parsed.tasks[2].type).toBe("io.kestra.plugin.core.flow.If")
             expect(pickerEl()).toBeNull()
+        })
+    })
+
+    describe("escape overlay layering", () => {
+        function escape() {
+            window.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}))
+        }
+
+        function editorVm() {
+            return wrapper!.vm as unknown as {
+                flowModalOpen: boolean
+                picker: {openTaskPicker: (section: string) => void; taskPickerVisible: {value: boolean}}
+            }
+        }
+
+        it("dismisses only the picker when it sits above the flow properties dialog", async () => {
+            // Given — the Configure dialog is open with the picker on top of it
+            wrapper = mount(BlockEditor, makeConfig())
+            await wrapper.find("[data-test='block-editor-configure-flow']").trigger("click")
+            const vm = editorVm()
+            vm.picker.openTaskPicker("tasks")
+            await wrapper.vm.$nextTick()
+            expect(wrapper.find("[data-test='flow-properties-modal']").exists()).toBe(true)
+
+            // When
+            escape()
+            await wrapper.vm.$nextTick()
+
+            // Then — the dialog survives the press that closed the picker
+            expect(vm.picker.taskPickerVisible.value).toBe(false)
+            expect(wrapper.find("[data-test='flow-properties-modal']").exists()).toBe(true)
+        })
+
+        it("dismisses the flow properties dialog on the next press", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            await wrapper.find("[data-test='block-editor-configure-flow']").trigger("click")
+            const vm = editorVm()
+            vm.picker.openTaskPicker("tasks")
+            await wrapper.vm.$nextTick()
+
+            // When
+            escape()
+            await wrapper.vm.$nextTick()
+            escape()
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(wrapper.find("[data-test='flow-properties-modal']").exists()).toBe(false)
         })
     })
 

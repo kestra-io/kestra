@@ -4,6 +4,7 @@
         width="min(1100px, 92vw)"
         top="4vh"
         :showClose="false"
+        :closeOnPressEscape="false"
         appendToBody
         @close="emit('close')"
     >

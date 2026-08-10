@@ -516,9 +516,11 @@
     }
 
     function isAnyOverlayOpen(): boolean {
-        return shortcutsOpen.value || taskPickerVisible.value || commandMenuOpen.value || confirmDialogOpen.value
+        return shortcutsOpen.value || taskPickerVisible.value || commandMenuOpen.value
+            || confirmDialogOpen.value || flowModalOpen.value
     }
 
+    // The dialogs delegate Escape here (closeOnPressEscape is off) so one press only dismisses the topmost layer.
     function closeTopOverlay(): boolean {
         if (commandMenuOpen.value) {
             commandMenuOpen.value = false
@@ -530,6 +532,14 @@
         }
         if (taskPickerVisible.value) {
             taskPickerVisible.value = false
+            return true
+        }
+        if (flowModalOpen.value) {
+            flowModalOpen.value = false
+            return true
+        }
+        if (modalTarget.value) {
+            closeModal()
             return true
         }
         return false

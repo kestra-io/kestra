@@ -5,6 +5,7 @@
         top="4vh"
         fill
         :showClose="false"
+        :closeOnPressEscape="false"
         appendToBody
         @close="emit('close')"
     >

@@ -1,6 +1,16 @@
 <template>
+    <BlockCreateForm
+        v-if="props.creatingTask && !props.editingTask"
+        class="block-editor-inline-edit"
+        :parentPath="props.parentPath ?? ''"
+        :refPath="props.refPath"
+        :blockSchemaPath="props.blockSchemaPath ?? ''"
+        data-test="block-editor-create"
+        @created="onInlineTaskCreated"
+        @close="emit('closeTask')"
+    />
     <TaskEdit
-        v-if="props.editingTask || props.creatingTask"
+        v-else-if="props.editingTask || props.creatingTask"
         ref="inlineTaskEditRef"
         class="block-editor-inline-edit"
         :task="editingTaskData"
@@ -154,6 +164,7 @@
         type BlockSection,
     } from "../../../utils/flowableBlockOps"
     import BlockSectionCard from "./BlockSectionCard.vue"
+    import BlockCreateForm from "./BlockCreateForm.vue"
     import FlowPropertiesEdit from "./FlowPropertiesEdit.vue"
     import FlowPropertiesModal from "./FlowPropertiesModal.vue"
     import BlockCommandMenu, {type BlockCommandMenuItem} from "./BlockCommandMenu.vue"
@@ -303,6 +314,11 @@
     function onInlineTaskEdited(newContent: string) {
         if (!editingPath.value) return
         applyYaml(updateBlockAtPath(flowYaml.value, editingPath.value, newContent))
+    }
+
+    // The entry now exists, so hand the tab over to the edit surface pointed at it.
+    function onInlineTaskCreated(parentPath: string, blockSchemaPath: string, refPath: number | undefined) {
+        emit("editTask", parentPath, blockSchemaPath, refPath)
     }
 
     const modalItemPath = computed<string>(() => {

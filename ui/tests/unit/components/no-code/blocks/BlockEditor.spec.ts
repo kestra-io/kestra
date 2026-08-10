@@ -1714,6 +1714,47 @@ tasks:
         })
     })
 
+    describe("creating a block", () => {
+        it("renders the surface that inserts, not the one that only replaces", async () => {
+            // Given — regression: creating rendered TaskEdit, which updates a block already
+            // at a path. With no block there yet, a create tab could never add the entry.
+            wrapper = mount(BlockEditor, {
+                ...makeConfig(),
+                props: {creatingTask: true, parentPath: "inputs", refPath: 1, blockSchemaPath: "schema/inputs/items"},
+            })
+
+            // When / Then
+            expect(wrapper.findComponent({name: "BlockCreateForm"}).exists()).toBe(true)
+            expect(wrapper.find("[data-test='block-editor-task-edit']").exists()).toBe(false)
+        })
+
+        it("hands the tab to the edit surface once the entry exists", async () => {
+            // Given
+            wrapper = mount(BlockEditor, {
+                ...makeConfig(),
+                props: {creatingTask: true, parentPath: "inputs", refPath: 1, blockSchemaPath: "schema/inputs/items"},
+            })
+
+            // When — the create surface reports where it inserted
+            await wrapper.findComponent({name: "BlockCreateForm"}).vm.$emit("created", "inputs", "schema/inputs/items", 2)
+
+            // Then
+            expect(wrapper.emitted("editTask")).toEqual([["inputs", "schema/inputs/items", 2]])
+        })
+
+        it("still edits in place when editing rather than creating", async () => {
+            // Given
+            wrapper = mount(BlockEditor, {
+                ...makeConfig(),
+                props: {editingTask: true, parentPath: "tasks", refPath: 0, blockSchemaPath: "schema/tasks/items"},
+            })
+
+            // When / Then
+            expect(wrapper.findComponent({name: "BlockCreateForm"}).exists()).toBe(false)
+            expect(wrapper.find("[data-test='block-editor-task-edit']").exists()).toBe(true)
+        })
+    })
+
     describe("escape overlay layering", () => {
         function escape() {
             window.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", bubbles: true, cancelable: true}))

@@ -15,7 +15,7 @@
                 @navigate="closeCreate"
                 @back="closeCreate"
             />
-            <FlowPropertyCreate
+            <BlockCreateForm
                 v-if="!createTarget.created"
                 :key="createTarget.editorKey"
                 :parentPath="createTarget.parentPath"
@@ -69,7 +69,7 @@
     import Wrapper from "../components/tasks/Wrapper.vue"
     import TaskObjectField from "../components/tasks/TaskObjectField.vue"
     import FieldNavBreadcrumb from "../components/FieldNavBreadcrumb.vue"
-    import FlowPropertyCreate from "./FlowPropertyCreate.vue"
+    import BlockCreateForm from "./BlockCreateForm.vue"
     import TaskEditModalForm from "./TaskEditModalForm.vue"
     import {useFlowStore} from "../../../stores/flow"
     import {useFlowFields} from "../utils/useFlowFields"

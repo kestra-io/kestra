@@ -53,7 +53,18 @@
                     @navigate="(index) => emit('navigate', index + 1)"
                     @back="emit('navigate', crumbs.length - 2)"
                 />
+                <BlockCreateForm
+                    v-if="creating"
+                    :key="`${editorKey}:create`"
+                    :parentPath="parentPath"
+                    :refPath="refPath"
+                    :blockSchemaPath="blockSchemaPath"
+                    data-test="task-edit-modal-create"
+                    @created="(...args) => emit('created', ...args)"
+                    @close="emit('close')"
+                />
                 <TaskEditModalForm
+                    v-else
                     :key="editorKey"
                     :task="task"
                     :taskRaw="taskRaw"
@@ -111,6 +122,7 @@
     import DockWindow from "vue-material-design-icons/DockWindow.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import TaskEditModalForm from "./TaskEditModalForm.vue"
+    import BlockCreateForm from "./BlockCreateForm.vue"
     import FieldNavBreadcrumb from "../components/FieldNavBreadcrumb.vue"
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue"
     import {usePluginsStore, type PluginComponent} from "../../../stores/plugins"
@@ -129,6 +141,7 @@
         refPath?: number
         blockSchemaPath: string
         crumbs: Crumb[]
+        creating?: boolean
     }>()
 
     const emit = defineEmits<{
@@ -137,6 +150,7 @@
         (e: "open-in-tabs"): void
         (e: "navigate", index: number): void
         (e: "select-nested", parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean): void
+        (e: "created", parentPath: string, blockSchemaPath: string, refPath: number | undefined): void
     }>()
 
     const {t} = useI18n()
@@ -150,6 +164,10 @@
     }
 
     const title = computed(() => {
+        // while creating there is nothing at the path yet, so name the list being added to
+        if (props.creating) {
+            return t("block_editor.adding_to", {section: props.parentPath.split(".").pop() ?? props.parentPath})
+        }
         const id = (props.task?.id as string) ?? ""
         const type = (props.task?.type as string) ?? ""
         return type ? `${id} · ${type}` : id

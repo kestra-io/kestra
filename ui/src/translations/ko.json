@@ -2039,6 +2039,7 @@
     "block_editor": {
       "add_error_task": "에러 task 추가",
       "add_switch_case": "케이스 추가",
+      "adding_to": "{section}의 새 항목",
       "add_task": "task 추가",
       "add_to_lane": "{lane}에 추가",
       "add_trigger": "trigger 추가",

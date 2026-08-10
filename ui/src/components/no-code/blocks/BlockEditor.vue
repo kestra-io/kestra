@@ -132,11 +132,13 @@
         :refPath="modalTarget.refPath"
         :blockSchemaPath="modalTarget.blockSchemaPath"
         :crumbs="modalCrumbs"
+        :creating="modalTarget.creating"
         @update:task="onModalTaskEdited"
         @close="closeModal"
         @open-in-tabs="onModalOpenInTabs"
         @navigate="popModalTo"
         @select-nested="onModalSelectNested"
+        @created="resolveCreatedTarget"
     />
 
     <FlowPropertiesModal
@@ -239,10 +241,16 @@
 
     const inlineEditPanel = ref()
 
-    // Only a lane of tasks can be filled from the task picker; every other list needs its own schema-driven form.
+    // Only a lane of tasks can be filled from the task picker; every other list needs its own
+    // schema-driven form, which opens exactly where editing a task would — modal or tab.
     function onCreateBlockInList(parentPath: string, blockSchemaPath: string, refPath: number | undefined, anchorEl?: HTMLElement) {
         if (isTaskListPath(parentPath)) {
             openTaskPickerAtPath(parentPath, refPath ?? -1, undefined, "after", anchorEl)
+            return
+        }
+        if (opensInModalByDefault()) {
+            // stacked over whatever opened it, so closing this one reveals it again
+            pushModalTarget({parentPath, blockSchemaPath, refPath, creating: true})
             return
         }
         flowModalOpen.value = false
@@ -443,6 +451,7 @@
         openNestedEdit,
         deselectIfCurrent,
         pushModalTarget,
+        resolveCreatedTarget,
         popModalTo,
         closeModal,
     } = useBlockSelection({
@@ -551,12 +560,13 @@
             taskPickerVisible.value = false
             return true
         }
-        if (flowModalOpen.value) {
-            flowModalOpen.value = false
-            return true
-        }
+        // the task modal can sit on top of the flow one, so it goes first
         if (modalTarget.value) {
             closeModal()
+            return true
+        }
+        if (flowModalOpen.value) {
+            flowModalOpen.value = false
             return true
         }
         return false

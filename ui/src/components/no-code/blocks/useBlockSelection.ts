@@ -8,6 +8,8 @@ export interface ModalTarget {
     parentPath: string
     blockSchemaPath: string
     refPath?: number
+    /** Builds a new entry at parentPath; cleared once it exists and the modal edits it. */
+    creating?: boolean
 }
 
 export function modalItemPathOf(target: ModalTarget): string {
@@ -65,6 +67,15 @@ export function useBlockSelection(ctx: BlockSelectionContext) {
         modalStack.value = [...modalStack.value, target]
     }
 
+    /** The entry now exists, so the top of the stack stops building it and starts editing it. */
+    function resolveCreatedTarget(parentPath: string, blockSchemaPath: string, refPath: number | undefined) {
+        if (!modalStack.value.length) return
+        modalStack.value = [
+            ...modalStack.value.slice(0, -1),
+            {parentPath, blockSchemaPath, refPath},
+        ]
+    }
+
     function popModalTo(index: number) {
         modalStack.value = modalStack.value.slice(0, index + 1)
     }
@@ -117,6 +128,7 @@ export function useBlockSelection(ctx: BlockSelectionContext) {
         openNestedEdit,
         deselectIfCurrent,
         pushModalTarget,
+        resolveCreatedTarget,
         popModalTo,
         closeModal,
     }

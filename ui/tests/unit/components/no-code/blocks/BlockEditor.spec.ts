@@ -864,7 +864,7 @@ describe("BlockEditor", () => {
             expect(wrapper.emitted("createTask")).toBeFalsy()
         })
 
-        it("hands a non-task list to the schema-driven creation form instead of the picker", async () => {
+        it("opens a non-task list where editing a task opens — the modal, by default", async () => {
             // Given — regression: flow inputs used to open the task picker and add nothing
             wrapper = mount(BlockEditor, makeConfig())
 
@@ -872,9 +872,28 @@ describe("BlockEditor", () => {
             createBlockInList(wrapper)("inputs", "schema/inputs/items", -1)
             await wrapper.vm.$nextTick()
 
-            // Then
-            const vm = wrapper.vm as unknown as {picker: {taskPickerVisible: {value: boolean}}}
+            // Then — same surface as task editing, carrying the creating flag
+            const vm = wrapper.vm as unknown as {
+                picker: {taskPickerVisible: {value: boolean}}
+                modalTarget?: {parentPath: string; creating?: boolean}
+            }
             expect(vm.picker.taskPickerVisible.value).toBe(false)
+            expect(vm.modalTarget).toMatchObject({parentPath: "inputs", creating: true})
+            expect(wrapper.emitted("createTask")).toBeFalsy()
+        })
+
+        it("opens a non-task list in a tab when tabs are the task-edit default", async () => {
+            // Given
+            localStorage.setItem(storageKeys.TASK_EDIT_DEFAULT_MODE, taskEditDefaultModes.TAB)
+            wrapper = mount(BlockEditor, makeConfig())
+
+            // When
+            createBlockInList(wrapper)("inputs", "schema/inputs/items", -1)
+            await wrapper.vm.$nextTick()
+
+            // Then
+            const vm = wrapper.vm as unknown as {modalTarget?: unknown}
+            expect(vm.modalTarget).toBeUndefined()
             expect(wrapper.emitted("createTask")).toEqual([["inputs", "schema/inputs/items", -1, "after"]])
         })
 

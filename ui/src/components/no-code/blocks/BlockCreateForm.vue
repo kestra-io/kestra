@@ -1,5 +1,7 @@
 <template>
-    <Task />
+    <div class="block-create-form">
+        <Task />
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -42,3 +44,12 @@
     })
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => emit("close"))
 </script>
+
+<style scoped lang="scss">
+    .block-create-form {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+    }
+</style>

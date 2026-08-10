@@ -2039,6 +2039,7 @@
     "block_editor": {
       "add_error_task": "エラーtaskを追加",
       "add_switch_case": "ケースを追加",
+      "adding_to": "{section}の新規エントリ",
       "add_task": "taskを追加",
       "add_to_lane": "{lane}に追加",
       "add_trigger": "triggerを追加",

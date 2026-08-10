@@ -2039,6 +2039,7 @@
     "block_editor": {
       "add_error_task": "Agregar task de error",
       "add_switch_case": "Agregar caso",
+      "adding_to": "Nueva entrada en {section}",
       "add_task": "Agregar task",
       "add_to_lane": "Agregar a {lane}",
       "add_trigger": "Agregar trigger",

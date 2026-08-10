@@ -2039,6 +2039,7 @@
     "block_editor": {
       "add_error_task": "添加错误task",
       "add_switch_case": "添加分支",
+      "adding_to": "{section} 中的新条目",
       "add_task": "添加task",
       "add_to_lane": "添加到 {lane}",
       "add_trigger": "添加trigger",

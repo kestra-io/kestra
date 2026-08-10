@@ -2039,6 +2039,7 @@
     "block_editor": {
       "add_error_task": "Добавить task ошибки",
       "add_switch_case": "Добавить случай",
+      "adding_to": "Новая запись в {section}",
       "add_task": "Добавить task",
       "add_to_lane": "Добавить в {lane}",
       "add_trigger": "Добавить trigger",

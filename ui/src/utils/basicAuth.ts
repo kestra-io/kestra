@@ -2,12 +2,13 @@ import {apiUrlWithoutTenants} from "override/utils/route"
 import {getCsrfToken} from "./csrf"
 import {useClient} from "@kestra-io/kestra-sdk"
 
-// The BASIC_AUTH cookie itself is HttpOnly and issued by the server (see MiscController#login/#logout);
-// this flag never carries credentials, it only mirrors client-side whether a login round-trip succeeded.
-const AUTH_FLAG_KEY = "kestraBasicAuthenticated"
+// The BASIC_AUTH cookie itself is HttpOnly and issued by the server (see MiscController#login/#logout).
+// The server also issues this non-HttpOnly cookie in lockstep, mirroring whether BASIC_AUTH is set;
+// it carries no credentials, so isLoggedIn() can read the real session state instead of a client-side flag
+// that could drift from it (e.g. on network failure during logout, or across tabs/browser restarts).
+const AUTH_FLAG_COOKIE_NAME = "kestraBasicAuthenticated"
 
 export async function logout() {
-    sessionStorage.removeItem(AUTH_FLAG_KEY)
     try {
         await fetch(`${apiUrlWithoutTenants()}/logout`, {
             method: "POST",
@@ -15,7 +16,7 @@ export async function logout() {
             headers: {"X-CSRF-TOKEN": getCsrfToken() ?? ""},
         })
     } catch {
-        // best-effort: the local flag is already cleared, next API call will 401 if the cookie is still valid server-side
+        // best-effort: if this fails, the cookies (and thus isLoggedIn()) remain as the server last set them
     }
     return true
 }
@@ -24,12 +25,13 @@ export async function signIn(credentials: {username: string, password: string}) 
     const {username, password} = credentials
     const trimmedUsername = username.trim()
     await validateCredentials(trimmedUsername, password)
-    sessionStorage.setItem(AUTH_FLAG_KEY, "true")
     return {username: trimmedUsername}
 }
 
 export function isLoggedIn() {
-    return sessionStorage.getItem(AUTH_FLAG_KEY) === "true"
+    return document.cookie
+        .split("; ")
+        .includes(`${AUTH_FLAG_COOKIE_NAME}=true`)
 }
 
 async function validateCredentials(username: string, password: string) {

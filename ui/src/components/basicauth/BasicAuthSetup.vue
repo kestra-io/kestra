@@ -167,7 +167,6 @@
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
-    import * as BasicAuth from "../../utils/basicAuth"
 
     interface UserFormData {
         username: string
@@ -312,12 +311,8 @@
                 password: userFormData.value.password,
             })
 
-            BasicAuth.signIn({
-                username: normalizedEmail,
-                password: userFormData.value.password,
-            })
-
-            // addBasicAuth() above already loaded the full (now-authenticated) configuration.
+            // addBasicAuth() above already logged the user in (it sets the auth cookies on the
+            // server response) and loaded the full (now-authenticated) configuration.
             await identifyPosthogUser(miscStore.configs, {email: normalizedEmail})
 
             trackSetupEvent("setup_flow:account_created", {

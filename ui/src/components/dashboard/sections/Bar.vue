@@ -163,8 +163,8 @@
 
         return {
             grid: props.short
-                ? {top: 2, right: 2, bottom: 2, left: 2, containLabel: false}
-                : {left: "0", right: "4%", top: "5%", bottom: "3%", containLabel: true},
+                ? {top: 2, right: 2, bottom: 2, left: 2, outerBoundsMode: "none"}
+                : {left: "0", right: "4%", top: "5%", bottom: "3%", outerBoundsMode: "same"},
             xAxis: {
                 type: "value",
                 show: showAxes,

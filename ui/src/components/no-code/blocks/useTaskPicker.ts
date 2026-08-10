@@ -21,7 +21,7 @@ import {
     pushRecentFqcn,
     type PickerEntry,
 } from "./taskPickerCatalog"
-import {parentPathFromLaneSentinel, sectionFromParentPath, sectionFromSentinel} from "./blockSections"
+import {isRootSectionPath, parentPathFromLaneSentinel, sectionFromParentPath, sectionFromSentinel} from "./blockSections"
 import {computePickerPosition, type AnchorRect} from "./taskPickerPosition"
 
 export type PickerTab = "suggested" | "apps" | "recent"
@@ -42,6 +42,7 @@ export interface TaskPickerDeps {
     focusCanvasCard: (id: string | undefined) => void
     sectionList: (section: BlockSection) => Record<string, unknown>[]
     sectionDisplayLabel: (section: BlockSection) => string
+    laneDisplayLabel: (parentPath: string) => string
     flowYaml: Ref<string>
     applyYaml: (yaml: string) => void
 }
@@ -124,7 +125,14 @@ export function useTaskPicker(deps: TaskPickerDeps) {
         return []
     })
 
-    const sectionLabel = computed(() => deps.sectionDisplayLabel(taskPickerSection.value))
+    // A nested lane (then, else, a switch case) has no section of its own, so name the lane itself
+    // rather than falling back to Tasks and telling the user the wrong destination.
+    const sectionLabel = computed(() => {
+        const parentPath = taskPickerParentPath.value
+        return parentPath && !isRootSectionPath(parentPath)
+            ? deps.laneDisplayLabel(parentPath)
+            : deps.sectionDisplayLabel(taskPickerSection.value)
+    })
 
     function setPickerTab(tab: PickerTab) {
         pickerTab.value = tab

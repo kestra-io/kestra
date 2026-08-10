@@ -1,6 +1,6 @@
 import {describe, it, expect} from "vitest"
 
-import {isTaskListPath, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
+import {isRootSectionPath, isTaskListPath, sectionFromParentPath} from "../../../../../src/components/no-code/blocks/blockSections"
 
 describe("blockSections", () => {
     describe("isTaskListPath", () => {
@@ -54,6 +54,26 @@ describe("blockSections", () => {
 
             // Then
             expect(result).toBe(false)
+        })
+    })
+
+    describe("isRootSectionPath", () => {
+        it("accepts a bare root section", () => {
+            // Given
+
+            // When / Then
+            expect(isRootSectionPath("tasks")).toBe(true)
+            expect(isRootSectionPath("triggers")).toBe(true)
+            expect(isRootSectionPath("afterExecution")).toBe(true)
+        })
+
+        it("rejects a nested lane, which names itself rather than its section", () => {
+            // Given
+
+            // When / Then
+            expect(isRootSectionPath("tasks[0].then")).toBe(false)
+            expect(isRootSectionPath("tasks[0].cases.fast")).toBe(false)
+            expect(isRootSectionPath("tasks[0].defaults")).toBe(false)
         })
     })
 

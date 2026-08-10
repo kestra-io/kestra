@@ -462,6 +462,7 @@
         focusCanvasCard,
         sectionList,
         sectionDisplayLabel,
+        laneDisplayLabel: laneDisplayLabelFromPath,
         flowYaml,
         applyYaml,
     })

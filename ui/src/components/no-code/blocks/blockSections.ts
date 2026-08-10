@@ -48,6 +48,11 @@ export function laneDisplayLabelFromPath(t: Translate, parentPath: string): stri
 
 const TASK_LIST_LANE_KEYS = new Set([...ALL_SECTIONS, ...NESTED_BLOCK_KEYS])
 
+/** True for a bare root section such as `tasks`, false for a nested lane such as `tasks[0].then`. */
+export function isRootSectionPath(parentPath: string): boolean {
+    return (ALL_SECTIONS as string[]).includes(parentPath)
+}
+
 /** Tells a lane holding tasks apart from any other array a schema-driven form renders, such as the flow inputs. */
 export function isTaskListPath(parentPath: string): boolean {
     if (/\.cases[.[]/.test(parentPath)) return true

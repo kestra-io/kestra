@@ -819,6 +819,37 @@ describe("BlockEditor", () => {
             return provides[key] as (parentPath: string, blockSchemaPath: string, refPath?: number) => void
         }
 
+        it("names the lane it inserts into, not the section that lane sits under", async () => {
+            // Given — regression: every nested lane announced itself as "Tasks"
+            mockFlowYaml.value = YAML_WITH_SWITCH
+            wrapper = mount(BlockEditor, makeConfig())
+            const vm = wrapper.vm as unknown as {
+                picker: {openTaskPickerAtPath: (p: string, i: number) => void; sectionLabel: {value: string}}
+            }
+
+            // When
+            vm.picker.openTaskPickerAtPath("tasks[0].cases.prod", -1)
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(vm.picker.sectionLabel.value).toBe("Case: prod")
+        })
+
+        it("keeps naming the section when the target is a root lane", async () => {
+            // Given
+            wrapper = mount(BlockEditor, makeConfig())
+            const vm = wrapper.vm as unknown as {
+                picker: {openTaskPicker: (s: string) => void; sectionLabel: {value: string}}
+            }
+
+            // When
+            vm.picker.openTaskPicker("triggers")
+            await wrapper.vm.$nextTick()
+
+            // Then
+            expect(vm.picker.sectionLabel.value).toBe("Triggers")
+        })
+
         it("opens the picker when a lane of tasks asks for a new block", async () => {
             // Given
             wrapper = mount(BlockEditor, makeConfig())

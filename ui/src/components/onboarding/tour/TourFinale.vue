@@ -3,6 +3,7 @@
         v-model="isOpen"
         appendToBody
         width="min(660px, 92vw)"
+        scrollable
     >
         <template #header>
             <p class="tour-kicker">

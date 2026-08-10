@@ -102,7 +102,6 @@ export type Execution = Omit<Optional<SDKExecution, "deleted">, "taskRunList"> &
     tenantId?: string;
     taskRunList?: Optional<TaskRun, "namespace" | "executionId" | "flowId">[];
     inputs?: Record<string, any>;
-    outputs?: Record<string, any>;
     variables?: Record<string, any>;
 }
 

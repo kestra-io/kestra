@@ -25,6 +25,7 @@ import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.ProcessedFlow;
 import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
@@ -51,13 +52,15 @@ class FlowTriggerServiceTest {
     private ConditionService conditionService;
     @Inject
     private FlowService flowService;
+    @Inject
+    private ExecutionOutputService executionOutputService;
     private FlowMetaStoreInterface flowMetaStore;
     private FlowTriggerService flowTriggerService;
 
     @BeforeEach
     void setUp() {
         flowMetaStore = mock(FlowMetaStoreInterface.class);
-        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore);
+        flowTriggerService = new FlowTriggerService(conditionService, runContextFactory, flowService, flowMetaStore, executionOutputService);
     }
 
     @Test

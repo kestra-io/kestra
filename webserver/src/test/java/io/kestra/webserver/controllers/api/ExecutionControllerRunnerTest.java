@@ -425,7 +425,7 @@ class ExecutionControllerRunnerTest {
         Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "inputs-small-files", requestBody, true);
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat((String) execution.getOutputs().get("o")).startsWith("kestra://");
+        assertThat((String) executionOutputs(tenantId, execution.getId()).get("o")).startsWith("kestra://");
     }
 
     @Test
@@ -2868,6 +2868,11 @@ class ExecutionControllerRunnerTest {
                 .contentType(MediaType.TEXT_PLAIN_TYPE),
             Argument.of(ExecutionController.EvalResult.class)
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> executionOutputs(String tenantId, String executionId) {
+        return client.toBlocking().retrieve(HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executions/" + executionId), Map.class);
     }
 
     private Execution triggerExecutionExecution(String tenantId, String namespace, String flowId, MultipartBody requestBody, Boolean wait) {

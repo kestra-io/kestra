@@ -3923,6 +3923,21 @@ export const _06C163B2c = <ThrowOnError extends boolean = true>(parameters: {
 };
 
 /**
+ * Get the flow-level outputs of an execution
+ */
+export const _5A13D0D0 = <ThrowOnError extends boolean = true>(parameters: {
+    executionId: string;
+    tenant: string;
+}, options?: Options<never, ThrowOnError>): RequestResult<GetExecutionOutputsResponses, unknown, ThrowOnError> => {
+    const params = buildClientParams([parameters], [{ args: [{ in: 'path', key: 'executionId' }, { in: 'path', key: 'tenant' }] }]);
+    return (options?.client ?? client).get<GetExecutionOutputsResponses, unknown, ThrowOnError>({
+        url: '/api/v1/{tenant}/outputs/executions/{executionId}',
+        ...options,
+        ...params
+    });
+};
+
+/**
  * Get task run outputs
  */
 export const _02Fb2086b = <ThrowOnError extends boolean = true>(parameters: {

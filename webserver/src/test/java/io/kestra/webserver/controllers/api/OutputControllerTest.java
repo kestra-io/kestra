@@ -2,9 +2,11 @@ package io.kestra.webserver.controllers.api;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskOutput;
@@ -12,7 +14,9 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TaskOutputRepositoryInterface;
+import io.kestra.core.services.ExecutionOutputService;
 import io.kestra.core.tenant.TenantService;
+import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -35,6 +39,9 @@ class OutputControllerTest {
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private ExecutionOutputService executionOutputService;
 
     @Test
     void getTaskOutput() {
@@ -113,6 +120,66 @@ class OutputControllerTest {
             HttpClientResponseException.class, () -> client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/" + tenantId + "/outputs/not-found"),
                 Argument.listOf(OutputController.TaskOutputInformation.class)
+            )
+        );
+    }
+
+    @Test
+    void getExecutionOutputs() throws InternalException {
+        // Given
+        String tenantId = TenantService.MAIN_TENANT;
+        String executionId = IdUtils.create();
+        var execution = Execution.builder()
+            .tenantId(tenantId)
+            .id(executionId)
+            .namespace("namespace")
+            .flowId("flowId")
+            .state(new State(State.Type.SUCCESS))
+            .build();
+        executionRepository.save(execution);
+        executionOutputService.saveOutputs(execution, Map.of("some", "output"));
+
+        // When - the literal 'executions' segment must win over the {executionId}/{taskRunId} route
+        Map<String, Object> response = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executions/" + executionId),
+            Argument.mapOf(String.class, Object.class)
+        );
+
+        // Then
+        assertThat(response).containsExactlyInAnyOrderEntriesOf(Map.of("some", "output"));
+    }
+
+    @Test
+    void getExecutionOutputsShouldThrowNotFoundWhenExecutionBelongsToAnotherTenant() throws InternalException {
+        // Given
+        String executionId = IdUtils.create();
+        var execution = Execution.builder()
+            .tenantId("another-tenant")
+            .id(executionId)
+            .namespace("namespace")
+            .flowId("flowId")
+            .state(new State(State.Type.SUCCESS))
+            .build();
+        executionRepository.save(execution);
+        executionOutputService.saveOutputs(execution, Map.of("some", "output"));
+
+        // When / Then - the request is resolved on the MAIN tenant, so it must not see another tenant's outputs
+        assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/" + TenantService.MAIN_TENANT + "/outputs/executions/" + executionId),
+                Argument.mapOf(String.class, Object.class)
+            )
+        );
+    }
+
+    @Test
+    void getExecutionOutputsShouldThrowNotFoundWhenExecutionNotFound() {
+        String tenantId = TenantService.MAIN_TENANT;
+
+        assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/" + tenantId + "/outputs/executions/not-found"),
+                Argument.mapOf(String.class, Object.class)
             )
         );
     }

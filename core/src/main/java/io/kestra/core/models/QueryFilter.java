@@ -313,7 +313,19 @@ public record QueryFilter(
         STATUS("status") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        SEVERITY("severity") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        ASSIGNEE("assignee") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.IS_NULL);
             }
         },
         @JsonProperty("email")
@@ -638,6 +650,13 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.EMAIL, Field.STATUS, Field.EXPIRED_AT, Field.SUPER_ADMIN);
             }
+
+            @Override
+            public List<Op> supportedOp(Field field) {
+                // STATUS is virtual here (ACCEPTED/PENDING map to the status column, EXPIRED is
+                // computed from expired_at), so it can't translate to a single-column SQL IN/NOT_IN.
+                return field == Field.STATUS ? List.of(Op.EQUALS, Op.NOT_EQUALS) : super.supportedOp(field);
+            }
         },
         GROUP {
             @Override
@@ -816,9 +835,41 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.NAMESPACE, Field.POLICY_SCOPE, Field.ENFORCEMENT);
             }
+        },
+        CASE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE,
+                    Field.STATUS,
+                    Field.SEVERITY,
+                    Field.ASSIGNEE,
+                    Field.START_DATE,
+                    Field.END_DATE,
+                    Field.CREATED,
+                    Field.UPDATED
+                );
+            }
+        },
+        CASE_TEMPLATE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.NAME);
+            }
         };
 
         public abstract List<Field> supportedField();
+
+        /**
+         * Operations {@code field} supports for this resource. Defaults to the field's own list;
+         * override when a resource's backing store can't honor an op the field allows for other
+         * resources (a {@code Field}'s {@code supportedOp()} is shared across every resource that
+         * declares it, so widening it for one resource widens it for all of them unless overridden here).
+         */
+        public List<Op> supportedOp(Field field) {
+            return field.supportedOp();
+        }
 
         /**
          * Converts {@code Resource} enums to a list of {@code ResourceField},
@@ -861,11 +912,11 @@ public record QueryFilter(
             filter.children().forEach(child -> collectValidationErrors(child, resource, errors));
             return;
         }
-        if (!filter.field().supportedOp().contains(filter.operation())) {
+        if (!resource.supportedOp(filter.field()).contains(filter.operation())) {
             errors.add(
                 "Operation %s is not supported for field %s. Supported operations are %s".formatted(
                     filter.operation(), filter.field().name(),
-                    filter.field().supportedOp().stream().map(Op::name).collect(Collectors.joining(", "))
+                    resource.supportedOp(filter.field()).stream().map(Op::name).collect(Collectors.joining(", "))
                 )
             );
         }

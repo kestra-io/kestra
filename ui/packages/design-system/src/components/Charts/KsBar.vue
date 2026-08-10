@@ -75,7 +75,7 @@
 
     const mergedOption = computed(() => {
         const base: Record<string, unknown> = {
-            grid: {left: "3%", right: "4%", bottom: "3%", containLabel: true},
+            grid: {left: "3%", right: "4%", bottom: "3%", outerBoundsMode: "same"},
             xAxis: {type: "category", data: props.categories},
             yAxis: {type: "value"},
             tooltip: {trigger: "axis", confine: true, axisPointer: {type: "shadow"}},

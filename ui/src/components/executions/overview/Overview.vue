@@ -9,6 +9,7 @@
                 :execution
             />
         </div>
+        <component :is="executionOverviewPanel" v-if="executionOverviewPanel" :execution="execution" />
         <Topology
             class="topology"
             :horizontalDefault="!verticalLayout"
@@ -40,6 +41,7 @@
     import ErrorAlert from "./components/main/ErrorAlert.vue"
     import PrevNext from "./components/main/PrevNext.vue"
     import Topology from "../Topology.vue"
+    import {executionOverviewPanel} from "override/components/executions/overview/OverviewExtensions"
 
     const execution = computed(() => store.execution)
 

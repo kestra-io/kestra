@@ -63,6 +63,8 @@
     import ColumnToggleRow from "./ColumnToggleRow.vue"
     import {useTableColumns, type ColumnConfig} from "./composables/useTableColumns"
 
+    const passesCondition = (column: ColumnConfig) => !column.condition || column.condition()
+
     const props = defineProps<{
         columns: ColumnConfig[];
         visibleColumns: string[];
@@ -89,15 +91,17 @@
     const query = computed(() => (props.search ?? "").trim().toLowerCase())
     const isSearching = computed(() => query.value.length > 0)
 
+    const availableColumns = computed(() => orderedColumns.value.filter(passesCondition))
+
     const filteredColumns = computed(() =>
-        orderedColumns.value.filter(c => c.label.toLowerCase().includes(query.value)),
+        availableColumns.value.filter(c => c.label.toLowerCase().includes(query.value)),
     )
 
-    const ungroupedColumns = computed(() => orderedColumns.value.filter(c => !c.group))
+    const ungroupedColumns = computed(() => availableColumns.value.filter(c => !c.group))
 
     const groups = computed(() => {
         const byName = new Map<string, ColumnConfig[]>()
-        for (const column of orderedColumns.value) {
+        for (const column of availableColumns.value) {
             if (!column.group) continue
             if (!byName.has(column.group)) byName.set(column.group, [])
             byName.get(column.group)!.push(column)
@@ -122,11 +126,15 @@
         expandedGroups.value[name] = !expandedGroups.value[name]
     }
 
+    const isDraggable = (column: ColumnConfig) => !column.group && passesCondition(column)
+
     const onReorder = (items: ColumnConfig[]) => {
         if (items.map(c => c.prop).join() === ungroupedItems.value.map(c => c.prop).join()) return
         ungroupedItems.value = items
-        const groupedProps = orderedColumns.value.filter(c => c.group).map(c => c.prop)
-        setColumnOrder([...items.map(c => c.prop), ...groupedProps])
+        // Rebuild in place so grouped and condition-hidden columns keep their slot in the stored order.
+        let index = 0
+        const rebuilt = orderedColumns.value.map(column => isDraggable(column) ? items[index++] : column)
+        setColumnOrder(rebuilt.map(c => c.prop))
         emits("updateColumns", localVisibleColumns.value)
     }
 

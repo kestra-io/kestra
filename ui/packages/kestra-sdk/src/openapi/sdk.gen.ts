@@ -42,7 +42,7 @@ export const _475D2A03 = <ThrowOnError extends boolean = true>(options?: Options
 /**
  * Authenticate with basic auth credentials.
  *
- * On success, issues an HttpOnly session cookie; the credentials never need to be readable by client-side JavaScript.
+ * On success, issues an HttpOnly session cookie holding the credentials, plus a non-HttpOnly flag cookie the UI reads to know it is logged in.
  */
 export const _625Ef69 = <ThrowOnError extends boolean = true>(parameters: {
     miscControllerLoginRequest: MiscControllerLoginRequest;

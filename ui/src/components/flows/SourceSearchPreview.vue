@@ -156,7 +156,7 @@
     import {useFlowStore} from "../../stores/flow"
     import type {SourceSearchReplacePreviewResponse} from "@kestra-io/kestra-sdk"
     import {buildDiffHunks, type SelectionSummary, type SourceSearchDiffMatch} from "../../utils/sourceSearchDiff"
-    import {buildHighlightHtml, buildPathSegments, type CrossSearchSelection} from "../../utils/crossResourceSearch"
+    import {buildHighlightHtml, buildTermHighlightHtml, buildPathSegments, type CrossSearchSelection} from "../../utils/crossResourceSearch"
     import type {KvMatchEntry} from "../../stores/crossResourceSearch"
     import type {KsEditorExposes} from "@kestra-io/design-system"
     import _escape from "lodash/escape"
@@ -300,7 +300,9 @@
                 .join("")
         }
         if (props.selection.type === "kv" || props.selection.type === "secrets") {
-            return buildHighlightHtml(props.selection.key, props.query, props.caseSensitive)
+            return props.selection.type === "kv"
+                ? buildTermHighlightHtml(props.selection.key, props.query, props.caseSensitive)
+                : buildHighlightHtml(props.selection.key, props.query, props.caseSensitive)
         }
         return ""
     })

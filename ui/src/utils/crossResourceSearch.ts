@@ -60,6 +60,54 @@ export function buildHighlightHtml(text: string, query: string, caseSensitive = 
         .join("")
 }
 
+/**
+ * The KV and namespace-file endpoints split the query into terms and require every term to occur as
+ * a substring, in any order — so a query like `landing.bucket` matches `landing-bucket-us-east-1`
+ * even though that literal string never appears. Highlighting the whole query would then mark
+ * nothing and leave the row looking like an unexplained result.
+ */
+export function splitQueryTerms(query: string): string[] {
+    return query.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+}
+
+export function buildTermHighlightSegments(text: string, query: string, caseSensitive = false): HighlightSegment[] {
+    // When the query does occur verbatim, mark it as one span — splitting it would fragment a match
+    // the user can already read. Per-term marking is the fallback for the rows only the term model found.
+    if (matchesLiteral(text, query, caseSensitive)) return buildHighlightSegments(text, query, caseSensitive)
+
+    const terms = splitQueryTerms(query)
+    if (terms.length === 0) return [{text, matched: false}]
+
+    const haystack = caseSensitive ? text : text.toLowerCase()
+    const matched = new Array<boolean>(text.length).fill(false)
+
+    for (const term of terms) {
+        const needle = caseSensitive ? term : term.toLowerCase()
+        let index = haystack.indexOf(needle)
+        while (index !== -1) {
+            for (let i = index; i < index + needle.length; i++) matched[i] = true
+            index = haystack.indexOf(needle, index + 1)
+        }
+    }
+
+    const segments: HighlightSegment[] = []
+    let start = 0
+    for (let i = 1; i <= text.length; i++) {
+        if (i === text.length || matched[i] !== matched[start]) {
+            segments.push({text: text.slice(start, i), matched: matched[start]})
+            start = i
+        }
+    }
+
+    return segments.length > 0 ? segments : [{text, matched: false}]
+}
+
+export function buildTermHighlightHtml(text: string, query: string, caseSensitive = false): string {
+    return buildTermHighlightSegments(text, query, caseSensitive)
+        .map((segment) => segment.matched ? `<mark>${_escape(segment.text)}</mark>` : _escape(segment.text))
+        .join("")
+}
+
 export interface PathSegment extends HighlightSegment {
     dim: boolean;
 }
@@ -71,15 +119,15 @@ export interface PathSegment extends HighlightSegment {
 export function buildPathSegments(path: string, query: string, caseSensitive = false): PathSegment[] {
     const lastSlash = path.lastIndexOf("/")
     if (lastSlash === -1) {
-        return buildHighlightSegments(path, query, caseSensitive).map((segment) => ({...segment, dim: false}))
+        return buildTermHighlightSegments(path, query, caseSensitive).map((segment) => ({...segment, dim: false}))
     }
 
     const directory = path.slice(0, lastSlash + 1)
     const fileName = path.slice(lastSlash + 1)
 
     return [
-        ...buildHighlightSegments(directory, query, caseSensitive).map((segment) => ({...segment, dim: true})),
-        ...buildHighlightSegments(fileName, query, caseSensitive).map((segment) => ({...segment, dim: false})),
+        ...buildTermHighlightSegments(directory, query, caseSensitive).map((segment) => ({...segment, dim: true})),
+        ...buildTermHighlightSegments(fileName, query, caseSensitive).map((segment) => ({...segment, dim: false})),
     ]
 }
 

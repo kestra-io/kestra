@@ -248,7 +248,7 @@
                                 @keydown.enter="emit('select', {type: 'kv', namespace: group.namespace, key: entry.key})"
                             >
                                 <span class="result-row-icon"><DatabaseOutline /></span>
-                                <span class="result-key" v-html="renderHighlighted(entry.key)" />
+                                <span class="result-key" v-html="renderTermHighlighted(entry.key)" />
                                 <span v-if="entry.updateDate" class="result-row-meta">
                                     <KsDateAgo :date="entry.updateDate" />
                                 </span>
@@ -325,6 +325,7 @@
         SEARCH_RESOURCE_TYPES,
         buildPathSegments,
         buildHighlightHtml,
+        buildTermHighlightHtml,
         crossSearchResultKey,
         type CrossSearchSelection,
         type SearchResourceType,
@@ -449,6 +450,11 @@
 
     function renderHighlighted(text: string) {
         return buildHighlightHtml(text, props.query, props.caseSensitive)
+    }
+
+    // KV matches on query terms server-side, so highlight per term or a legitimate row renders unmarked.
+    function renderTermHighlighted(text: string) {
+        return buildTermHighlightHtml(text, props.query, props.caseSensitive)
     }
 
     watch(

@@ -1,5 +1,8 @@
 import {describe, expect, it} from "vitest"
 import {
+    buildTermHighlightHtml,
+    buildTermHighlightSegments,
+    splitQueryTerms,
     buildHighlightHtml,
     buildHighlightSegments,
     buildPathSegments,
@@ -133,5 +136,45 @@ describe("buildHighlightHtml", () => {
 
     it("returns the escaped text unmarked when there is no query", () => {
         expect(buildHighlightHtml("<b>hello</b>", "")).toBe("&lt;b&gt;hello&lt;/b&gt;")
+    })
+})
+
+describe("term highlighting (KV and namespace files)", () => {
+    it("splits a query into terms on any non-alphanumeric separator", () => {
+        expect(splitQueryTerms("landing.bucket")).toEqual(["landing", "bucket"])
+        expect(splitQueryTerms("us-east-1")).toEqual(["us", "east", "1"])
+        expect(splitQueryTerms("  spaced   out ")).toEqual(["spaced", "out"])
+    })
+
+    it("marks a row the server matched on terms, which whole-query highlighting leaves unmarked", () => {
+        const key = "landing-bucket-us-east-1"
+
+        // What the user sees today: the literal query never occurs, so nothing is highlighted.
+        expect(buildTermHighlightHtml(key, "landing.bucket"))
+            .toBe("<mark>landing</mark>-<mark>bucket</mark>-us-east-1")
+    })
+
+    it("merges overlapping and adjacent term matches into one segment", () => {
+        expect(buildTermHighlightSegments("abcdef", "abc bcd")).toEqual([
+            {text: "abcd", matched: true},
+            {text: "ef", matched: false},
+        ])
+    })
+
+    it("highlights every occurrence of each term", () => {
+        expect(buildTermHighlightHtml("log-a-log", "log")).toBe("<mark>log</mark>-a-<mark>log</mark>")
+    })
+
+    it("honours case sensitivity", () => {
+        expect(buildTermHighlightHtml("LANDING_BUCKET", "landing")).toBe("<mark>LANDING</mark>_BUCKET")
+        expect(buildTermHighlightHtml("LANDING_BUCKET", "landing", true)).toBe("LANDING_BUCKET")
+    })
+
+    it("escapes the text it marks", () => {
+        expect(buildTermHighlightHtml("<b>x</b>", "b")).toBe("&lt;<mark>b</mark>&gt;x&lt;/<mark>b</mark>&gt;")
+    })
+
+    it("leaves text untouched when the query has no terms", () => {
+        expect(buildTermHighlightHtml("anything", "---")).toBe("anything")
     })
 })

@@ -28,6 +28,10 @@ import lombok.extern.slf4j.Slf4j;
  * Does not implement {@link io.kestra.core.runners.Worker} on purpose so it
  * does not collide with the regular {@link io.kestra.worker.WorkerAgent}
  * singleton in STANDALONE mode where both run in the same JVM.
+ * <p>
+ * Registers as {@link ServiceType#SYSTEM_WORKER} rather than {@link ServiceType#WORKER}: the
+ * {@link io.kestra.core.server.ServiceRegistry} is keyed by service type, so sharing the type with
+ * the {@link io.kestra.worker.WorkerAgent} would make one evict the other in STANDALONE mode.
  */
 @Singleton
 @Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
@@ -44,7 +48,7 @@ public class SystemWorker extends AbstractWorker {
         MetricRegistry metricRegistry,
         ServerConfig serverConfig) {
         super(
-            ServiceType.WORKER,
+            ServiceType.SYSTEM_WORKER,
             eventPublisher,
             workerJobExecutor,
             directQueueJobFetcher,

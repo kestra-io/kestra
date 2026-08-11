@@ -57,7 +57,12 @@ jobs:
           run: |
             BRANCH_NAME="chore/update-translations-$(date +%s)"
             git checkout -b $BRANCH_NAME
-            git add ui/src/translations/*.json
+            # The fingerprints record what each translation was generated from; committing the
+            # languages without them would leave every regenerated key looking stale forever, so the
+            # next run would translate it again and open the same PR in a loop. The design-system
+            # locale files are phase 2 of the same generator and were never committed at all.
+            git add ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
+            git add ':(glob)ui/packages/design-system/**/*.locale.ts'
             if git diff --cached --quiet; then
               echo "No changes to commit. Exiting with success."
               exit 0

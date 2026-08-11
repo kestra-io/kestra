@@ -1,6 +1,6 @@
 import {computed} from "vue"
 import {useStorage} from "@vueuse/core"
-import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../utils/appFontSize"
+import {APP_FONT_SIZE_KEY, MONO_BASE_PX, type AppFontSizeMode} from "../utils/appFontSize"
 
 export type LogDensity = "compact" | "normal" | "expanded";
 
@@ -10,9 +10,8 @@ export const DENSITY_PADDING = {
     expanded: "12px",
 } as const
 
-const MIGRATION_FLAG = "_fontMigratedV2"
+const MIGRATION_FLAG = "_fontMigratedV3"
 const LEGACY_LOGS_DEFAULT = 14
-const LEGACY_EDITOR_DEFAULT = 12
 
 function runMigrationOnce() {
     if (localStorage.getItem(MIGRATION_FLAG)) return
@@ -21,12 +20,6 @@ function runMigrationOnce() {
     if (rawLogs !== null) {
         const n = Number(rawLogs)
         if (n === LEGACY_LOGS_DEFAULT) localStorage.removeItem("logsFontSize")
-    }
-
-    const rawEditor = localStorage.getItem("editorFontSize")
-    if (rawEditor !== null) {
-        const n = Number(rawEditor)
-        if (n === LEGACY_EDITOR_DEFAULT) localStorage.removeItem("editorFontSize")
     }
 
     localStorage.setItem(MIGRATION_FLAG, "1")
@@ -59,12 +52,12 @@ export const editorFontSizeOverride = useStorage<number | null>("editorFontSize"
 })
 
 export const logsFontSize = computed({
-    get: () => logsFontSizeOverride.value ?? BASE_PX[appFontSizeMode.value],
+    get: () => logsFontSizeOverride.value ?? MONO_BASE_PX[appFontSizeMode.value],
     set: (v: number) => { logsFontSizeOverride.value = v },
 })
 
 export const effectiveEditorFontSize = computed(
-    () => editorFontSizeOverride.value ?? BASE_PX[appFontSizeMode.value],
+    () => editorFontSizeOverride.value ?? MONO_BASE_PX[appFontSizeMode.value],
 )
 
 export const logsDensity = useStorage<LogDensity>("logsDensity", "normal")

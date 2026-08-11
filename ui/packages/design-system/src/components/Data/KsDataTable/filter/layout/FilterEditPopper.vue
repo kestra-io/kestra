@@ -518,6 +518,7 @@
         () => state.selectValue,
         () => state.keyValuePair,
         () => state.radioValue,
+        () => state.dateValue,
         () => state.selectedComparator,
         () => state.startDateValue,
         () => state.endDateValue,

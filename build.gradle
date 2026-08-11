@@ -25,7 +25,7 @@ plugins {
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.58.0"
+    id "com.github.ben-manes.versions" version "0.60.0"
 
     // release
     id 'net.researchgate.release' version '3.1.0'
@@ -680,7 +680,7 @@ subprojects {subProject ->
         }
 
         //These modules should not be published
-        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver", "worker", "scheduler", "worker-controller", "executor"]
         if (subProject.name in unpublishedModules){
             return
         }

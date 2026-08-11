@@ -109,9 +109,9 @@
     "next_execution": "अगली निष्पादन",
     "datepicker": {
       "invalid duration": "अमान्य अवधि प्रारूप। कृपया ISO 8601 का उपयोग करें (उदाहरण के लिए, PT30M, P1D)।",
-      "leave empty for infinite": "अनंत अवधि के लिए खाली छोड़ दें या एक ISO 8601 अवधि टाइप करें (उदाहरण: 'P1DT1H1M1S)'",
+      "leave empty for infinite": "अनंत अवधि के लिए खाली छोड़ दें या ISO 8601 अवधि टाइप करें (उदाहरण के लिए, 'P1DT1H1M1S')",
       "duration example": "उदाहरण: 'P1DT1H1M1S'",
-      "error": "अमान्य अवधि प्रारूप, एक ISO 8601 अवधि होनी चाहिए (उदाहरण के लिए P1DT1H1M1S)",
+      "error": "अमान्य अवधि प्रारूप, ISO 8601 अवधि होनी चाहिए (उदाहरण के लिए, P1DT1H1M1S)",
       "custom": "कस्टम",
       "last5minutes": "पिछले 5 मिनट",
       "last15minutes": "पिछले 15 मिनट",
@@ -168,7 +168,7 @@
     "created date": "निर्माण तिथि",
     "latest_update": "नवीनतम अपडेट",
     "expiration date": "समाप्ति तिथि",
-    "healthcheck date": "HealthCheck तिथि",
+    "healthcheck date": "HealthCheck दिनांक",
     "last execution status": "अंतिम निष्पादन स्थिति",
     "jump to...": "कूदें...",
     "contextBar": {
@@ -203,13 +203,13 @@
     "restart": "पुनः प्रारंभ करें",
     "restart latest revision": "नवीनतम पुनरीक्षण पुनः प्रारंभ करें",
     "restart tooltip": "<code>{state}</code> task से निष्पादन पुनः प्रारंभ करें",
-    "restarted": "निष्पादन पुनः आरंभ किया गया है",
-    "restart confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः प्रारंभ करना चाहते हैं?",
+    "restarted": "Execution पुनः आरंभ हो गया है",
+    "restart confirm": "क्या आप वाकई execution <code>{id}</code> को पुनरारंभ करना चाहते हैं?",
     "replay": "पुनः चलाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
-    "replayed": "निष्पादन को पुनः चलाया गया है",
+    "replayed": "Execution को Replay किया गया है",
     "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
     "prefill inputs": "पूर्व-भरण",
     "current": "वर्तमान",
@@ -219,7 +219,7 @@
     "are you sure change state": "क्या आप वाकई स्थिति बदलना चाहते हैं?",
     "yes": "हाँ",
     "change state done": "कार्य की स्थिति को अपडेट किया गया है",
-    "change state confirm": "क्या आप सुनिश्चित हैं कि आप execution <code>{id}</code> में <code>{task}</code> task का run state बदलना चाहते हैं?",
+    "change state confirm": "क्या आप execution <code>{id}</code> में <code>{task}</code> task के लिए task run state बदलना चाहते हैं?<br/>यह अगली task से execution को फिर से शुरू करेगा और यदि कोई हो तो पैरेंट execution को फिर से शुरू करेगा।",
     "change state current state": "वर्तमान स्थिति है:",
     "replay execution title": "प्रदर्शन पुनः चलाएं",
     "restart execution title": "निष्पादन पुनः प्रारंभ करें",
@@ -239,27 +239,27 @@
     "kill": "समाप्त करें",
     "kill parents and subflow": "वर्तमान और subflows को समाप्त करें",
     "kill only parents": "केवल वर्तमान को समाप्त करें",
-    "killed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को समाप्त करना चाहते हैं?",
+    "killed confirm": "क्या आप वाकई execution <code>{id}</code> को बंद करना चाहते हैं?",
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "resume": "पुनः आरंभ करें",
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
-    "resumed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः आरंभ करना चाहते हैं?",
+    "resumed confirm": "क्या आप वाकई execution <code>{id}</code> को फिर से शुरू करना चाहते हैं?",
     "resumed done": "निष्पादन पुनः आरंभ किया गया है",
     "resume from breakpoint title": "ब्रेकपॉइंट से निष्पादन `<code>{id}</code>` को पुनः शुरू करें",
     "resume from breakpoint done": "निष्पादन विराम बिंदु से फिर से शुरू किया गया है",
     "breakpoints": "ब्रेकपॉइंट्स",
     "pause": "रोकें",
-    "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
-    "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
+    "pause title": "एक्सेक्यूशन <code>{id}</code> को रोकें।<br/>ध्यान दें कि वर्तमान में चल रहे task अभी भी प्रोसेस किए जाएंगे, और एक्सेक्यूशन को मैन्युअल रूप से फिर से शुरू करना होगा।",
+    "pause confirm": "क्या आप वाकई execution <code>{id}</code> को रोकना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "unqueue": "अनक्यू करें",
-    "unqueue title": "प्रक्रिया <code>{id}</code> को कतार से बाहर करें।<br/>ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक प्रक्रियाएँ चल रही हो सकती हैं।",
+    "unqueue title": "क्या आप वाकई execution <code>{id}</code> को Unqueue करना चाहते हैं?<br/><br/>ध्यान दें कि यह flow concurrency limit का पालन नहीं करेगा, इसलिए allowed limit से अधिक executions चल सकते हैं।",
     "unqueue title multiple": "क्या आप वाकई <code>{count}</code> executions को Unqueue करना चाहते हैं?<br/><br/>ध्यान दें कि यह flow concurrency सीमा का पालन नहीं करेगा, इसलिए अनुमत सीमा से अधिक executions चल सकती हैं।",
     "unqueue done": "निष्पादन कतार से बाहर है",
     "force run": "फोर्स रन",
     "force run title": "<code>{id}</code> का निष्पादन जबरन चलाएँ।",
-    "force run confirm": "क्या आप सुनिश्चित हैं कि आप निष्पादन <code>{id}</code> को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: निष्पादन को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task निष्पादन बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को पुनः शुरू किया जाएगा।</li></ul>",
-    "force run done": "निष्पादन को मजबूरन चलाया गया है",
+    "force run confirm": "क्या आप वाकई execution <code>{id}</code> को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task runs बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queue किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "force run done": "Execution को जबरन चलाया गया",
     "metrics": "मेट्रिक्स",
     "no metrics available": "इस task रन के लिए कोई मेट्रिक्स रिकॉर्ड नहीं किया गया है।",
     "no outputs available": "इस task run के लिए कोई outputs उपलब्ध नहीं हैं।",
@@ -363,7 +363,7 @@
         },
         "alt": "ब्लूप्रिंट्स आइकन"
       },
-      "custom": "कस्टम blueprints",
+      "custom": "कस्टम Blueprints",
       "flows": "फ्लो Blueprints",
       "apps": "ऐप Blueprints",
       "dashboards": "डैशबोर्ड Blueprints",
@@ -476,11 +476,11 @@
     "last evaluation date": "अंतिम मूल्यांकन तिथि",
     "last trigger date tooltip": "ट्रिगर ने आखिरी बार कब निष्पादित किया था। जब एक backfill चल रहा हो तो यह अतीत में हो सकता है।",
     "context updated date tooltip": "ट्रिगर के संदर्भ को आखिरी बार कब अपडेट किया गया था। यह तब होता है जब execution ट्रिगर होता है, समाप्त होता है (लॉक रिलीज़ होता है), या एक मूल्यांकन के बाद (भले ही कोई execution न हो)।",
-    "next evaluation date tooltip": "ट्रिगर का अगला मूल्यांकन कब होगा, यह उसके अंतराल पर आधारित है। यदि शर्तें पूरी नहीं होती हैं, तो यह हमेशा अगले निष्पादन तिथि के समान नहीं होता।",
+    "next evaluation date tooltip": "जब शेड्यूलर इस trigger का अगली बार मूल्यांकन करेगा, उसके interval के आधार पर। एक मूल्यांकन केवल तभी एक execution उत्पन्न करता है जब trigger की शर्तें पूरी होती हैं।",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "conditions": "शर्तें",
     "triggerId": "ट्रिगर ID",
-    "tenantId": "टेनेंट ID",
+    "tenantId": "tenant ID",
     "paused": "PAUSED",
     "running": "RUNNING",
     "Fold content lines": "मल्टीलाइन स्ट्रिंग्स फोल्ड करें",
@@ -537,13 +537,13 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">यह निष्पादन अभी भी RUNNING है, इसे हटाने से यह बंद नहीं होगा।<br />इसे बंद करने के लिए आपको निष्पादन को kill करना होगा।</div>",
     "restore": "पुनर्स्थापित करें",
-    "restore confirm": "क्या आप वाकई संशोधन <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
+    "restore confirm": "क्या आप वाकई रिविज़न <code>{revision}</code> को पुनर्स्थापित करना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
     "bulk replay": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः चलाना चाहते हैं?",
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk pause": "क्या आप वाकई <code>{executionCount}</code> execution(s) को PAUSE करना चाहते हैं?",
-    "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरदस्ती चलाना चाहते हैं?<br/><br/>WARNING: किसी execution को जबरदस्ती चलाना सुनिश्चित नहीं है और यह डुप्लिकेट task executions बना सकता है।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को RUNNING स्थिति में ले जाया जाएगा।</li><li>RUNNING tasks को पुनः सबमिट किया जाएगा।</li><li>QUEUED tasks को अन-queued किया जाएगा।</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
+    "bulk force run": "क्या आप वाकई <code>{executionCount}</code> execution(s) को जबरन चलाना चाहते हैं?<br/><br/>चेतावनी: किसी execution को जबरन चलाने की गारंटी नहीं है और इससे duplicate task executions बन सकते हैं।<br/><br/>निम्नलिखित परिवर्तन किए जाएंगे:<br/><ul><li>CREATED tasks को running state में ले जाया जाएगा।</li><li>RUNNING tasks को फिर से सबमिट किया जाएगा।</li><li>QUEUED tasks को un-queued किया जाएगा</li><li>PAUSED tasks को फिर से शुरू किया जाएगा।</li></ul>",
     "bulk restart": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को पुनः प्रारंभ करना चाहते हैं?",
     "bulk kill": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को kill करना चाहते हैं?",
     "cancel": "रद्द करें",
@@ -613,7 +613,7 @@
     "flow must not be empty": "Flow खाली नहीं होना चाहिए",
     "flow creation denied in namespace": "आपके पास namespace `{namespace}` में flows बनाने की अनुमति नहीं है।",
     "readonly property": "केवल-पढ़ने की संपत्ति",
-    "namespace and id readonly": "गुण `namespace` और `id` को बदला नहीं जा सकता — वे अब अपनी प्रारंभिक मानों पर सेट हैं। यदि आप किसी flow का नाम बदलना चाहते हैं या उसका namespace बदलना चाहते हैं, तो आप एक नया flow बना सकते हैं और पुराने को हटा सकते हैं।",
+    "namespace and id readonly": "`namespace` और `id` प्रॉपर्टीज़ को बदला नहीं जा सकता — वे अब अपने प्रारंभिक मानों पर सेट हैं। यदि आप किसी flow का नाम बदलना चाहते हैं या उसका namespace बदलना चाहते हैं, तो आप एक नया flow बना सकते हैं और पुराने को हटा सकते हैं।",
     "avg": "औसत",
     "sum": "योग",
     "min": "न्यूनतम",
@@ -676,7 +676,7 @@
     "flow source not found": "Flow source नहीं मिला",
     "timezone": "समय क्षेत्र",
     "add task": "एक Task जोड़ें",
-    "unable to generate graph": "ग्राफ़ उत्पन्न करते समय एक समस्या उत्पन्न हुई जिससे टोपोलॉजी प्रदर्शित नहीं हो सकी।",
+    "unable to generate graph": "ग्राफ़ जनरेट करते समय कोई समस्या हुई, जो टोपोलॉजी को प्रदर्शित होने से रोकती है।",
     "attempts": "प्रयास",
     "version": "संस्करण",
     "services": "सेवाएँ",
@@ -788,7 +788,7 @@
     "manage labels": "labels प्रबंधित करें",
     "Set labels to execution": "निष्पादन <code>{id}</code> के लेबल्स जोड़ें या अपडेट करें",
     "Set labels done": "निष्पादन के लेबल्स सफलतापूर्वक सेट किए गए",
-    "bulk set labels": "क्या आप वाकई <code>{executionCount}</code> निष्पादन के लिए लेबल्स सेट करना चाहते हैं?",
+    "bulk set labels": "क्या आप वाकई <code>{executionCount}</code> execution(s) पर label सेट करना चाहते हैं?",
     "true": "सत्य",
     "false": "असत्य",
     "undefined": "अपरिभाषित",
@@ -877,11 +877,11 @@
           }
         },
         "theme": {
-          "label": "थीम प्राथमिकताएँ",
+          "label": "दिखावट",
           "fields": {
             "app_font_size": "ऐप फ़ॉन्ट आकार",
             "color_mode": "रंग मोड",
-            "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
+            "editor_folding_stratgy": "एडिटर में स्वचालित कोड फोल्डिंग",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
             "editor_hover_description": "प्रॉपर्टी पर होवर करें विवरण देखने के लिए",
@@ -947,12 +947,12 @@
       "contact_sales": "सेल्स से संपर्क करें",
       "secrets": {
         "title": "अपने Secrets Management को अपग्रेड करें",
-        "message": "एंटरप्राइज एडिशन (EE) आपको UI में सीधे secrets जोड़ने, संपादित करने या हटाने की अनुमति देता है—कोई instance पुनरारंभ की आवश्यकता नहीं है। secrets को namespace द्वारा संगठित करें, जिसमें सूक्ष्म RBAC अनुमतियाँ हों, और उन्हें parent से child namespaces में विरासत में लें। EE HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, और Elasticsearch जैसे secrets प्रबंधकों के साथ एकीकृत होता है। टीमों के बीच secrets को अलग करने के लिए namespace, tenant, या instance के अनुसार समर्पित बैकएंड सेट करें, या बाहरी vaults में संग्रहीत read-only secrets को सक्षम करें। secrets को आराम और ट्रांजिट में एन्क्रिप्टेड रखा जाता है। वैकल्पिक caching API कॉल्स को कम करता है, और audit trails सभी एक्सेस को log करते हैं।",
+        "message": "एंटरप्राइज़ एडिशन (EE) आपको सीधे UI में सीक्रेट्स जोड़ने, संपादित करने या हटाने की सुविधा देता है - किसी इंस्टेंस रीस्टार्ट की आवश्यकता नहीं है। ग्रेन्युलर RBAC परमिशन के साथ namespace द्वारा सीक्रेट्स को व्यवस्थित करें, और उन्हें पैरेंट से चाइल्ड namespaces में इनहेरिट करें। EE HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, और Elasticsearch जैसे सीक्रेट्स मैनेजर के साथ इंटीग्रेट होता है। टीमों में सीक्रेट्स को अलग करने के लिए प्रति namespace, tenant, या इंस्टेंस के लिए डेडिकेटेड बैकएंड सेट करें, या बाहरी वॉल्ट में संग्रहीत रीड-ओनली सीक्रेट्स को सक्षम करें। सीक्रेट्स रेस्ट और ट्रांजिट में एन्क्रिप्टेड रहते हैं। वैकल्पिक कैशिंग API कॉल को कम करती है, और ऑडिट ट्रेल सभी एक्सेस को लॉग करते हैं।",
         "add_env": {
-          "intro": "नया Secret बनाने के लिए:",
+          "intro": "एक नया Secret बनाएँ",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",
-          "second": "'<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' नामक एक environment variable जोड़ें उपरोक्त value के साथ",
-          "third": "अपने Kestra instance को पुनः प्रारंभ करें"
+          "second": "एन्कोडेड मान के साथ <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> नामक एक एनवायरनमेंट variable सेट करें।",
+          "third": "अपने Kestra इंस्टेंस को रीस्टार्ट करें ताकि secret लोड हो जाए।"
         }
       },
       "apps": {
@@ -979,7 +979,7 @@
       },
       "IAM": {
         "title": "IAM के माध्यम से SSO, SCIM और RBAC के साथ उपयोगकर्ताओं का प्रबंधन करें।",
-        "message": "Kestra एंटरप्राइज एडिशन में IAM क्षमताएँ अंतर्निहित हैं, जिसमें सिंगल साइन-ऑन (SSO), SCIM डायरेक्टरी सिंक और रोल-आधारित एक्सेस कंट्रोल (RBAC) शामिल हैं। यह कई पहचान प्रदाताओं के साथ एकीकृत होता है और आपको उपयोगकर्ताओं और सेवा खातों के लिए सूक्ष्म अनुमतियाँ असाइन करने की अनुमति देता है।"
+        "message": "Kestra Enterprise Edition में सिंगल साइन-ऑन (SSO), SCIM डायरेक्टरी सिंक और रोल-बेस्ड एक्सेस कंट्रोल (RBAC) के साथ इन-बिल्ट IAM क्षमताएं हैं, जो कई आइडेंटिटी प्रोवाइडर के साथ इंटीग्रेट होती हैं और आपको यूज़र और सर्विस अकाउंट के लिए फाइन-ग्रेन्ड परमिशन असाइन करने देती हैं।"
       },
       "tenants": {
         "title": "अलग-अलग Tenants में Workflows प्रबंधित करें",
@@ -1004,17 +1004,17 @@
       "policies": {
         "header": "शासन नीतियाँ",
         "label": "नीतियाँ",
-        "message": "नीतियां प्लेटफ़ॉर्म टीमों को सभी flows में नियमों को केंद्रीय रूप से प्रबंधित और लागू करने में सक्षम बनाती हैं — जैसे साझा डिफ़ॉल्ट इंजेक्ट करना, प्लगइन्स को ब्लॉक करना, प्रॉपर्टी मानों को सीमित करना, और अनुपालन labels की आवश्यकता करना। नियम tenant या namespace स्तर पर चरणबद्ध रोलआउट के साथ लागू होते हैं, और हर इंजेक्ट किया गया या बदला गया value flow लेखकों को दिखाई देता है।",
+        "message": "पॉलिसीज़ प्लेटफ़ॉर्म टीमों को सभी flows में नियमों को केंद्रीय रूप से प्रबंधित और लागू करने देती हैं — साझा डिफ़ॉल्ट इंजेक्ट करें, प्लगइन्स ब्लॉक करें, प्रॉपर्टी वैल्यूज़ को बाउंड करें, और कंप्लायंस labels की आवश्यकता करें। नियम staged rollout के साथ tenant या namespace स्तर पर लागू होते हैं, और हर इंजेक्ट किया गया या बदला गया value flow लेखकों को दिखाई देता है।",
         "title": "नीतियों के साथ हर flow का नियमन करें"
       },
       "namespace": {
         "edit": {
           "title": "अपने Namespace प्रबंधन को अपग्रेड करें",
-          "message": "Kestra एंटरप्राइज एडिशन में, namespaces बड़े पैमाने पर secrets, variables और plugin डिफ़ॉल्ट्स के उन्नत अलगाव और शासन प्रदान करते हैं। प्रशासक कस्टम secrets प्रबंधकों, अलग storage बैकएंड्स, समर्पित worker समूहों, और प्रति-namespace आधार पर सूक्ष्म अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और plugin कॉन्फ़िगरेशन विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
+          "message": "Kestra Enterprise Edition में, namespaces बड़े पैमाने पर secrets, variables और plugin defaults का उन्नत अलगाव और शासन प्रदान करते हैं। व्यवस्थापक प्रति-namespace आधार पर कस्टम secrets managers, अलग-थलग storage backends, समर्पित worker groups और बारीक अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और plugin कॉन्फ़िगरेशन विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।"
         },
         "secrets": {
           "title": "सुरक्षित तरीके से Secrets प्रबंधित करें",
-          "message": "Kestra एंटरप्राइज एडिशन में, आप secrets को namespace स्तर पर संग्रहीत और नियंत्रित कर सकते हैं, जिससे जोखिम कम होता है और प्रत्येक टीम की credentials अलग रहती हैं। nested hierarchy के कारण, आप एक parent namespace में credentials को कॉन्फ़िगर कर सकते हैं और वे सभी child namespaces द्वारा विरासत में प्राप्त हो जाएंगे। समर्पित secrets managers और सूक्ष्म namespace-स्तरीय अनुमति सेटिंग्स के लिए समर्थन सुरक्षा और अनुपालन को और मजबूत करता है।"
+          "message": "Kestra Enterprise Edition में, आप namespace स्तर पर secrets को स्टोर और कंट्रोल कर सकते हैं, जिससे जोखिम कम होता है और यह सुनिश्चित होता है कि प्रत्येक टीम के क्रेडेंशियल अलग-थलग रहें। नेस्टेड पदानुक्रम के कारण, आप पैरेंट namespace में भी क्रेडेंशियल कॉन्फ़िगर कर सकते हैं, और वे सभी चाइल्ड namespaces द्वारा इनहेरिट किए जाएंगे। समर्पित secrets managers और फाइन-ग्रेन्ड namespace-स्तर की अनुमति सेटिंग्स के लिए समर्थन सुरक्षा और अनुपालन को और मजबूत करता है।"
         },
         "assets": {
           "title": "संपत्ति प्रबंधन को केंद्रीकृत करें",
@@ -1209,8 +1209,8 @@
     "quotas": "कोटा",
     "iam": "IAM",
     "tenant": {
-      "name": "मंडल",
-      "names": "मंडल"
+      "name": "Tenant",
+      "names": "Tenants"
     },
     "bulk action async warning": "यह कुछ क्षणों का समय ले सकता है।",
     "bulk unpause backfills": "{count} backfill को अनपॉज़ करें",
@@ -1266,7 +1266,7 @@
     },
     "curl": {
       "command": "cURL कमांड",
-      "note": "कृपया ध्यान दें कि SECRET और FILE इनपुट प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
+      "note": "ध्यान दें कि SECRET और FILE input प्रकार के लिए, कमांड को वास्तविक मानों से मेल खाने के लिए समायोजित किया जाना चाहिए।"
     },
     "webhook": {
       "curl_command": "Webhook cURL कमांड",
@@ -1277,7 +1277,7 @@
     },
     "logs_view": {
       "raw": "Temporal दृश्य",
-      "raw_details": "कच्चे timestamp-क्रमबद्ध प्रारूप में पूर्ण task logs और flow logs दिखाएं",
+      "raw_details": "सभी task logs और flow logs को कच्चे, टाइमस्टैम्प-क्रमबद्ध फ़ॉर्मैट में दिखाएँ",
       "compact": "पूर्व-निर्धारित दृश्य",
       "compact_details": "प्रत्येक task द्वारा समूहीकृत कॉम्पैक्ट दृश्य में task logs दिखाएं"
     },
@@ -1303,7 +1303,7 @@
     "behavior": "व्यवहार",
     "concurrency": "समानांतरता",
     "no-executions-view": {
-      "title": "स्वचालन शुरू करें साथ में",
+      "title": "Kestra के साथ ऑटोमेशन शुरू करें",
       "sub_title": "अपने पहले workflow execution को शुरू करने के लिए Execute बटन पर क्लिक करें।",
       "namespace_sub_title": "इस डैशबोर्ड को भरने के लिए इस namespace से एक या अधिक flows निष्पादित करें।",
       "namespace_guidance_desc": "क्या आपको अपने Namespace को प्रबंधित करने के लिए मार्गदर्शन चाहिए?",
@@ -1311,7 +1311,7 @@
     },
     "execution_guide": {
       "get_started": {
-        "title": "शुरू करें ⚡",
+        "title": "शुरू करें",
         "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।"
       },
       "namespaces": {
@@ -1330,12 +1330,12 @@
     "customize sidebar": "साइडबार को अनुकूलित करें",
     "reset to defaults": "डिफ़ॉल्ट पर रीसेट करें",
     "drop items here": "यहाँ आइटम्स ड्रॉप करें",
-    "files": "फ़ाइलें",
+    "files": "namespace फ़ाइलें",
     "optional": "वैकल्पिक",
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
     "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?",
     "showLess": "कम दिखाएं",
-    "documentationMenu": "डॉक्यूमेंटेशन मेनू",
+    "documentationMenu": "दस्तावेज़ मेनू",
     "item": "आइटम",
     "items": "आइटम्स",
     "iterations": "पुनरावृत्तियाँ",
@@ -1478,7 +1478,7 @@
         "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें"
       },
       "announcements": {
-        "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!",
+        "title": "आपके पास अभी तक कोई घोषणा नहीं है!",
         "content": "घोषणाएँ आपको अपने उपयोगकर्ताओं को किसी भी परिवर्तन के बारे में सूचित करने या नियोजित रखरखाव डाउनटाइम के बारे में जानकारी देने की अनुमति देती हैं। बस घोषणा का प्रकार चुनें, वह तारीख सीमा चुनें जिसके लिए इसे प्रदर्शित किया जाना चाहिए, और घोषणा संदेश लिखें।"
       },
       "kill_switches": {
@@ -1490,8 +1490,8 @@
         "content": "बाहरी दुनिया से Kestra के साथ इंटरैक्ट करने के लिए Apps बनाना शुरू करें।"
       },
       "testSuites": {
-        "title": "आपके पास अभी तक कोई Test suites नहीं हैं!",
-        "content": "अपने Flows का परीक्षण करने के लिए Test suites बनाना शुरू करें।"
+        "title": "आपके पास अभी तक कोई टेस्ट नहीं है!",
+        "content": "अपने flows में गुणवत्ता को मान्य करने और प्रतिगमन से बचने के लिए परीक्षण जोड़ें।"
       },
       "assets": {
         "title": "आपके पास अभी तक कोई Assets नहीं हैं!",
@@ -1527,7 +1527,7 @@
       },
       "groups": {
         "title": "आपके पास अभी तक कोई समूह नहीं है!",
-        "content": "समूह आपको उपयोगकर्ताओं को एक साथ जोड़ने की अनुमति देते हैं ताकि आप अपने tenant में अनुमतियों और भूमिका बाइंडिंग को सामूहिक रूप से प्रबंधित कर सकें।"
+        "content": "ग्रुप आपको उपयोगकर्ताओं को एक साथ बंडल करने देते हैं ताकि आप अपने tenant में अनुमतियों और भूमिका बाइंडिंग को सामूहिक रूप से प्रबंधित कर सकें।"
       },
       "dependencies": {
         "FLOW": {
@@ -1617,7 +1617,7 @@
       "others": "अन्य",
       "viewAll": "सभी देखें",
       "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
-      "export": "CSV में निर्यात करें",
+      "export": "एक्सपोर्ट करें",
       "exportTo": {
         "csv": "CSV में निर्यात करें",
         "ion": "ION को निर्यात करें"
@@ -1633,9 +1633,9 @@
     },
     "setup": {
       "login": "लॉगिन",
-      "login_title": "साइन इन करें",
+      "login_title": "Kestra में साइन इन करें",
       "logout": "लॉगआउट",
-      "troubleshooting": "पासवर्ड भूल गए?",
+      "troubleshooting": "साइन इन करने में समस्या आ रही है?",
       "steps": {
         "user": "एडमिन उपयोगकर्ता बनाएं",
         "survey": "हमें और बताएं",
@@ -1674,7 +1674,7 @@
         "company_personal": "अन्य",
         "use_case": "आप इसे किस उद्देश्य के लिए उपयोग करने की योजना बना रहे हैं?",
         "use_case_infrastructure": "इन्फ्रास्ट्रक्चर ऑटोमेशन",
-        "use_case_business": "व्यवसाय वर्कफ़्लोज़",
+        "use_case_business": "बिजनेस workflows",
         "use_case_data": "डेटा वर्कफ्लोज़",
         "use_case_ml": "एमएल पाइपलाइन्स",
         "use_case_scheduling": "शेड्यूलिंग और आवर्ती जॉब्स",
@@ -1690,7 +1690,7 @@
     },
     "ai": {
       "flow": {
-        "title": "एआई एजेंट"
+        "title": "AI Copilot"
       },
       "copilot": {
         "title": "एआई सहपायलट",
@@ -1822,7 +1822,7 @@
       "run_task_info": "Flow Code संपादक में किसी भी task पर होवर करें और अपने task का परीक्षण करने के लिए \"Run task\" बटन पर क्लिक करें।",
       "play_icon_info": "आप No-Code या Topology दृश्य में Play आइकन पर भी क्लिक कर सकते हैं।",
       "toggle": "प्लेग्राउंड",
-      "run_task": "टास्क चलाएं",
+      "run_task": "Task चलाएँ",
       "run_this_task": "इस task को चलाएं",
       "run_task_and_downstream": "टास्क चलाएं और डाउनस्ट्रीम",
       "run_all_tasks": "सभी Tasks चलाएं",
@@ -1895,8 +1895,8 @@
             "description": "अन्य उपयोगकर्ताओं के साथ जुड़ें और समुदाय से सहायता प्राप्त करें"
           },
           "videos": {
-            "title": "वीडियो ट्यूटोरियल्स",
-            "description": "उन्नत विशेषताओं के लिए चरण-दर-चरण वीडियो गाइड्स"
+            "title": "वीडियो ट्यूटोरियल",
+            "description": "स्टेप-बाय-स्टेप वीडियो गाइड"
           },
           "demo": {
             "title": "डेमो प्राप्त करें",
@@ -1912,7 +1912,7 @@
       "servers": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",
       "page_description": "अपने Kestra flows को MCP-संगत AI एजेंट्स के लिए उपकरण के रूप में प्रस्तुत करें",
-      "create": "सर्वर बनाएं",
+      "create": "एक सर्वर बनाएँ",
       "instructions": "निर्देश",
       "auth_type": "प्रमाणीकरण",
       "private": "निजी",
@@ -1981,7 +1981,7 @@
         "tooltip": "flow संशोधन देखें"
       },
       "dependencies": {
-        "suffix": "निर्भरताएं",
+        "suffix": "डिपेंडेंसी",
         "tooltip": "flow निर्भरता देखें"
       },
       "apps": {

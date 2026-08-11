@@ -406,7 +406,7 @@ A clean run reports `No missing keys. No extra keys.` for every language. Any li
 
 1. Identify gaps by running `npm run translations:check` (or by diffing the flattened `en.json` keys against each language file).
 2. Translate only the missing keys — do **not** re-translate keys that already have a value.
-3. Follow these translation rules (mirroring `generate_translations.ts`):
+3. Follow these translation rules (mirroring `ui/scripts/translations/generateTranslations.ts`, the generator shared by OSS and EE):
    - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
    - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
    - **Preserve `{placeholder}` variables** exactly — vue-i18n uses a **single** pair of braces. Do not translate the name inside the braces, do not rename it, and never write `{{placeholder}}`: double braces are a compile error (`Not allowed nest placeholder`) and make `t()` throw at render time. Each translation must carry exactly the same placeholders as the English source — no invented ones, none dropped.

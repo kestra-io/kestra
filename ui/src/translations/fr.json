@@ -32,7 +32,7 @@
       "back": "Retour",
       "openInNewTab": "Ouvrir dans un nouvel onglet"
     },
-    "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
+    "delete confirm": "Voulez-vous vraiment supprimer <code>{name}</code> ?",
     "outdated revision save confirmation": {
       "confirm": "Êtes-vous sûr de vouloir l'écraser ?",
       "update": {
@@ -109,9 +109,9 @@
     "next_execution": "Prochaine exécution",
     "datepicker": {
       "invalid duration": "Format de durée invalide. Veuillez utiliser ISO 8601 (par ex., PT30M, P1D).",
-      "leave empty for infinite": "Laisser vide pour une durée infinie ou entrer une durée ISO 8601 (exemple: 'P1DT1H1M1S)'",
+      "leave empty for infinite": "Laisser vide pour une durée infinie ou saisir une durée ISO 8601 (par exemple, 'P1DT1H1M1S')",
       "duration example": "Exemple: 'P1DT1H1M1S'",
-      "error": "Format de durée invalide, un format ISO 8601 est attendu (ex: P1DT1H1M1S)",
+      "error": "Format de durée invalide, doit être une durée ISO 8601 (par exemple, P1DT1H1M1S)",
       "custom": "Personnalisé",
       "last5minutes": "5 dernières minutes",
       "last15minutes": "15 dernières minutes",
@@ -168,7 +168,7 @@
     "created date": "Date de création",
     "latest_update": "Dernière mise à jour",
     "expiration date": "Date d'expiration",
-    "healthcheck date": "Dernier Healthcheck",
+    "healthcheck date": "Date du HealthCheck",
     "last execution status": "Statut de la dernière exécution",
     "jump to...": "Aller à...",
     "contextBar": {
@@ -204,7 +204,7 @@
     "restart latest revision": "Relancer avec la dernière révision",
     "restart tooltip": "Relancer l'exécution depuis la tâche dans l'état <code>{state}</code>",
     "restarted": "L'exécution est redémarrée",
-    "restart confirm": "Êtes-vous sur de vouloir relancer <code>{id}</code> ?",
+    "restart confirm": "Voulez-vous vraiment redémarrer l'exécution <code>{id}</code> ?",
     "replay": "Rejouer",
     "replay from task tooltip": "Créer une nouvelle exécution similaire démarrant de la tâche <code>{taskId}</code>",
     "replay from beginning tooltip": "Créer une nouvelle exécution similaire depuis le début",
@@ -219,7 +219,7 @@
     "are you sure change state": "Êtes-vous sûr de vouloir changer l'état ?",
     "yes": "Oui",
     "change state done": "L'état de la task a été mis à jour",
-    "change state confirm": "Êtes-vous sûr de vouloir changer l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?",
+    "change state confirm": "Voulez-vous vraiment modifier l'état d'exécution de la tâche <code>{task}</code> dans l'exécution <code>{id}</code> ?<br/>Cela redémarrera l'exécution à partir de la tâche suivante et redémarrera l'exécution parente, le cas échéant.",
     "change state current state": "Statut actuel :",
     "replay execution title": "Rejouer l'exécution",
     "restart execution title": "Redémarrer l'exécution",
@@ -239,27 +239,27 @@
     "kill": "Arrêter",
     "kill parents and subflow": "Tuer le flow actuel et les subflows",
     "kill only parents": "Tuer uniquement le courant",
-    "killed confirm": "Êtes-vous sur de vouloir arrêter l'exécution <code>{id}</code> ?",
+    "killed confirm": "Voulez-vous vraiment tuer l'exécution <code>{id}</code> ?",
     "killed done": "L'exécution est en attente d'arrêt",
     "resume": "Reprendre",
     "resumed title": "Reprendre l'exécution <code>{id}</code>",
-    "resumed confirm": "Êtes-vous sur de vouloir reprendre l'exécution <code>{id}</code>?",
+    "resumed confirm": "Voulez-vous vraiment reprendre l'exécution <code>{id}</code> ?",
     "resumed done": "L'exécution est reprise",
     "resume from breakpoint title": "Reprendre l'exécution <code>{id}</code> depuis le point d'arrêt",
     "resume from breakpoint done": "L'exécution est reprise depuis le point d'arrêt",
     "breakpoints": "Points d'arrêt",
     "pause": "Pause",
-    "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement.",
-    "pause confirm": "Êtes-vous sûr de vouloir mettre en pause l'exécution <code>{id}</code> ?",
+    "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tâches en cours d'exécution seront toujours traitées et que l'exécution devra être reprise manuellement.",
+    "pause confirm": "Voulez-vous vraiment mettre en pause l'exécution <code>{id}</code> ?",
     "pause done": "L'exécution est en PAUSE",
     "unqueue": "Défilement",
-    "unqueue title": "Défilér l'exécution <code>{id}</code>.<br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
+    "unqueue title": "Voulez-vous vraiment défiler l'exécution <code>{id}</code> ?<br/><br/>Notez qu'elle ne respectera pas la limite de concurrence du flow, ce qui pourrait entraîner un nombre d'exécutions supérieur à la limite autorisée.",
     "unqueue title multiple": "Êtes-vous sûr de vouloir désenfiler <code>{count}</code> exécutions ?<br/><br/>Notez que cela ne respectera pas la limite de concurrence du flow, donc plus d'exécutions pourraient être en cours que la limite autorisée.",
     "unqueue done": "L'exécution est retirée de la file d'attente",
     "force run": "Forcer l'exécution",
     "force run title": "Forcer l'exécution de l'exécution <code>{id}</code>.",
-    "force run confirm": "Êtes-vous sûr de vouloir forcer l'exécution <code>{id}</code>?<br/><br/>WARNING : forcer l'exécution n'est pas garanti et peut créer des exécutions de tâche en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tâches CREATED seront déplacées à l'état RUNNING.</li><li>Les tâches RUNNING seront soumises à nouveau.</li><li>Les tâches QUEUED seront retirées de la file d'attente.</li><li>Les tâches PAUSED seront reprises.</li></ul>",
-    "force run done": "L'exécution est forcée d'exécuter",
+    "force run confirm": "Voulez-vous vraiment forcer l'exécution <code>{id}</code> ?<br/><br/>AVERTISSEMENT : forcer l'exécution n'est pas garanti et peut créer des exécutions de task en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tasks CREATED passeront à l'état RUNNING.</li><li>Les tasks RUNNING seront soumises à nouveau.</li><li>Les tasks QUEUED seront dé-mises en file d'attente.</li><li>Les tasks PAUSED seront reprises.</li></ul>",
+    "force run done": "L'exécution est forcée",
     "metrics": "Mesures",
     "no metrics available": "Aucune métrique enregistrée pour cette exécution de task.",
     "no outputs available": "Aucune sortie disponible pour cette exécution de task.",
@@ -363,7 +363,7 @@
         },
         "alt": "Icône des Blueprints"
       },
-      "custom": "Plans personnalisés",
+      "custom": "Blueprints personnalisés",
       "flows": "Plans de Flow",
       "apps": "Plans d'application",
       "dashboards": "Tableaux de bord Blueprints",
@@ -476,11 +476,11 @@
     "last evaluation date": "Date de la dernière évaluation",
     "last trigger date tooltip": "Dernière exécution du trigger. Peut être dans le passé lors de l'exécution d'un backfill.",
     "context updated date tooltip": "Dernière mise à jour du contexte du trigger. Cela se produit lorsque l'exécution est déclenchée, se termine (verrou libéré), ou après une évaluation (même si aucune exécution n'a lieu).",
-    "next evaluation date tooltip": "Quand le trigger sera évalué la prochaine fois, en fonction de son intervalle. Pas toujours identique à la prochaine date d'exécution si les conditions ne sont pas remplies.",
+    "next evaluation date tooltip": "Quand le planificateur évaluera ce trigger la prochaine fois, en fonction de son intervalle. Une évaluation ne produit une exécution que si les conditions du trigger sont remplies.",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "conditions": "Conditions",
     "triggerId": "ID de trigger",
-    "tenantId": "ID du mandant",
+    "tenantId": "ID du tenant",
     "paused": "PAUSED",
     "running": "RUNNING",
     "Fold content lines": "Replier les multilignes",
@@ -537,13 +537,13 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "restore": "Restaurer",
-    "restore confirm": "Êtes vous sûr de vouloir restaurer la révision <code>{revision}</code>?",
+    "restore confirm": "Voulez-vous vraiment restaurer la révision <code>{revision}</code> ?",
     "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> exécution(s) ?",
     "bulk replay": "Êtes-vous sur de vouloir rejouer <code>{executionCount}</code> exécution(s)?",
     "bulk change state": "Êtes-vous sûr de vouloir changer l'état de <code>{executionCount}</code> exécution(s) ?",
     "bulk resume": "Êtes-vous sur de vouloir reprendre <code>{executionCount}</code> exécution(s)?",
     "bulk pause": "Êtes-vous sûr de vouloir mettre en pause l'exécution de <code>{executionCount}</code> ?",
-    "bulk force run": "Êtes-vous sûr de vouloir forcer l'exécution de <code>{executionCount}</code> exécution(s) ?<br/><br/>WARNING : forcer l'exécution n'est pas garanti et peut créer des exécutions de tâches en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tâches CREATED seront déplacées à l'état RUNNING.</li><li>Les tâches RUNNING seront soumises à nouveau.</li><li>Les tâches QUEUED seront désenfilées.</li><li>Les tâches PAUSED seront reprises.</li></ul>",
+    "bulk force run": "Voulez-vous vraiment forcer l'exécution de <code>{executionCount}</code> exécution(s) ?<br/><br/>AVERTISSEMENT : forcer l'exécution n'est pas garanti et peut créer des exécutions de task en double.<br/><br/>Les transitions suivantes seront effectuées :<br/><ul><li>Les tasks CREATED passeront à l'état RUNNING.</li><li>Les tasks RUNNING seront soumises à nouveau.</li><li>Les tasks QUEUED seront retirées de la file d'attente.</li><li>Les tasks PAUSED seront reprises.</li></ul>",
     "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> exécution(s) ?",
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> exécution(s) ?",
     "cancel": "Annuler",
@@ -613,7 +613,7 @@
     "flow must not be empty": "Le flow ne doit pas être vide",
     "flow creation denied in namespace": "Vous n'avez pas la permission de créer des flows dans le namespace `{namespace}`.",
     "readonly property": "Propriété non modifiable",
-    "namespace and id readonly": "Le namespace et l'id ne sont pas modifiables. Ils ont été réinitialisés à leur valeur initiale.",
+    "namespace and id readonly": "Les propriétés `namespace` et `id` ne peuvent pas être modifiées — elles sont maintenant définies sur leurs valeurs initiales. Si vous souhaitez renommer un flow ou modifier son namespace, vous pouvez créer un nouveau flow et supprimer l'ancien.",
     "avg": "Moyenne",
     "sum": "Somme",
     "min": "Minimum",
@@ -676,7 +676,7 @@
     "flow source not found": "Source du flow introuvable",
     "timezone": "Fuseau horaire",
     "add task": "Ajouter une tâche",
-    "unable to generate graph": "Une erreur est survenue lors de la génération du graphe empêchant l'affichage de la topologie.",
+    "unable to generate graph": "Un problème est survenu lors de la génération du graphique, ce qui empêche l'affichage de la topologie.",
     "attempts": "Tentative(s)",
     "version": "Version",
     "services": "Services",
@@ -788,7 +788,7 @@
     "manage labels": "Gérer les labels",
     "Set labels to execution": "Ajouter ou mettre à jour des labels à l'exécution <code>{id}</code>",
     "Set labels done": "Labels ajoutés avec succès à l'exécution",
-    "bulk set labels": "Êtes-vous sûr de vouloir ajouter des labels à <code>{executionCount}</code>  exécutions(s)?",
+    "bulk set labels": "Voulez-vous vraiment définir des labels pour <code>{executionCount}</code> exécution(s) ?",
     "true": "Vrai",
     "false": "Faux",
     "undefined": "Non défini",
@@ -877,11 +877,11 @@
           }
         },
         "theme": {
-          "label": "Préférences de thème",
+          "label": "Apparence",
           "fields": {
             "app_font_size": "Taille de police de l'application",
             "color_mode": "Mode couleur",
-            "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",
+            "editor_folding_stratgy": "Repliement automatique du code dans l'éditeur",
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_font_size": "Taille de Police de l'éditeur",
             "editor_hover_description": "Survolez la propriété pour voir la description",
@@ -947,12 +947,12 @@
       "contact_sales": "Contactez les ventes",
       "secrets": {
         "title": "Améliorez votre gestion des Secrets",
-        "message": "L'Enterprise Edition (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'UI, sans redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des coffres externes. Les secrets restent chiffrés au repos et en transit. Un cache optionnel réduit les appels API, et les pistes d'audit loguent tous les accès.",
+        "message": "L'édition Enterprise (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'interface utilisateur, sans nécessiter de redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. L'EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des vaults externes. Les secrets restent chiffrés au repos et en transit. La mise en cache optionnelle réduit les appels d'API, et les pistes d'audit enregistrent tous les accès.",
         "add_env": {
-          "intro": "Pour créer un nouveau Secret :",
+          "intro": "Créer un nouveau Secret",
           "first": "Encodez la <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valeur secrète en Base64</a>",
-          "second": "Ajoutez une variable d'environnement nommée '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' avec la valeur ci-dessus.",
-          "third": "Redémarrez votre instance Kestra"
+          "second": "Définissez une variable d'environnement nommée <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> avec la valeur encodée.",
+          "third": "Redémarrez votre instance Kestra pour que le secret soit chargé."
         }
       },
       "apps": {
@@ -979,7 +979,7 @@
       },
       "IAM": {
         "title": "Gérer les utilisateurs via IAM avec SSO, SCIM et RBAC",
-        "message": "L'édition Kestra Enterprise dispose de capacités IAM intégrées avec une authentification unique (SSO), une synchronisation de répertoire SCIM et un contrôle d'accès basé sur les rôles (RBAC), s'intégrant avec plusieurs fournisseurs d'identité et vous permettant d'attribuer des permissions détaillées aux utilisateurs et aux comptes de service."
+        "message": "Kestra Enterprise Edition intègre des capacités IAM avec l'authentification unique (SSO), la synchronisation d'annuaire SCIM et le contrôle d'accès basé sur les rôles (RBAC), s'intégrant à plusieurs fournisseurs d'identité et vous permettant d'attribuer des autorisations granulaires aux utilisateurs et aux comptes de service."
       },
       "tenants": {
         "title": "Gérer les flux de travail dans des tenants isolés",
@@ -1004,17 +1004,17 @@
       "policies": {
         "header": "Politiques de gouvernance",
         "label": "Politiques",
-        "message": "Les politiques permettent aux équipes plateforme de gérer et d'appliquer des règles de manière centralisée sur tous les flows — injecter des valeurs par défaut partagées, bloquer les plugins, limiter les valeurs de propriété et exiger des labels de conformité. Les règles s'appliquent au niveau du tenant ou du namespace avec un déploiement progressif, et chaque valeur injectée ou remplacée reste visible pour les auteurs de flow.",
+        "message": "Les politiques permettent aux équipes de plateforme de gérer et d'appliquer de manière centralisée des règles à tous les flows — injecter des valeurs par défaut partagées, bloquer des plugins, limiter les valeurs de propriétés et exiger des labels de conformité. Les règles s'appliquent au niveau du tenant ou du namespace avec un déploiement progressif, et chaque valeur injectée ou remplacée reste visible pour les auteurs de flow.",
         "title": "Gérer tous les flows avec des politiques"
       },
       "namespace": {
         "edit": {
           "title": "Améliorez la Gestion de votre Namespace",
-          "message": "Dans l'édition Kestra Enterprise, les namespaces offrent une isolation avancée et une gouvernance des secrets, variables et paramètres par défaut des plugins à grande échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des stockages backends isolés, des groupes de workers dédiés, et des permissions fines par namespace. Cela garantit que les secrets, variables et configurations de plugins restent sécurisés et faciles à maintenir à travers différentes équipes et projets."
+          "message": "Dans Kestra Enterprise Edition, les namespaces offrent une isolation avancée et une gouvernance des secrets, des variables et des valeurs par défaut des plugins à l'échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des backends de stockage isolés, des groupes de workers dédiés et des permissions granulaires par namespace. Cela garantit que les secrets, les variables et les configurations de plugins restent sécurisés et faciles à maintenir entre les différentes équipes et projets."
         },
         "secrets": {
           "title": "Gérer les secrets de manière sécurisée",
-          "message": "Dans Kestra Enterprise Edition, vous pouvez stocker et contrôler les secrets au niveau du namespace, minimisant ainsi les risques et garantissant que les identifiants de chaque équipe restent isolés. Grâce à la hiérarchie imbriquée, vous pouvez également configurer des identifiants dans un namespace parent et ils seront hérités par tous les namespaces enfants. Le support pour les gestionnaires de secrets dédiés et les paramètres de permission au niveau du namespace renforcent encore la sécurité et la conformité."
+          "message": "Dans Kestra Enterprise Edition, vous pouvez stocker et contrôler les secrets au niveau du namespace, minimisant les risques et garantissant que les identifiants de chaque équipe restent isolés. Grâce à la hiérarchie imbriquée, vous pouvez également configurer les identifiants dans un namespace parent, et ils seront hérités par tous les namespaces enfants. La prise en charge de gestionnaires de secrets dédiés et de paramètres d'autorisation granulaires au niveau du namespace renforce davantage la sécurité et la conformité."
         },
         "assets": {
           "title": "Centraliser la gestion des actifs",
@@ -1209,8 +1209,8 @@
     "quotas": "Quotas",
     "iam": "IAM",
     "tenant": {
-      "name": "Mandant",
-      "names": "Mandants"
+      "name": "Tenant",
+      "names": "Tenants"
     },
     "bulk action async warning": "Cela peut prendre quelques instants.",
     "bulk unpause backfills": "Reprendre {count} backfill",
@@ -1277,7 +1277,7 @@
     },
     "logs_view": {
       "raw": "Vue temporelle",
-      "raw_details": "Affiche les logs des tâches et du flow dans un format brut ordonné par horodatage",
+      "raw_details": "Afficher les logs complets des tasks et des flows dans un format brut, trié par horodatage",
       "compact": "Vue par défaut",
       "compact_details": "Affiche les logs dans un format compacte regroupé par tâche"
     },
@@ -1303,7 +1303,7 @@
     "behavior": "Comportement",
     "concurrency": "Concurrence",
     "no-executions-view": {
-      "title": "Commencez à automatiser avec",
+      "title": "Commencez à automatiser avec Kestra",
       "sub_title": "Cliquez sur le bouton Exécuter pour démarrer l'exécution de votre premier workflow.",
       "namespace_sub_title": "Exécutez un ou plusieurs flows de ce namespace pour remplir ce tableau de bord.",
       "namespace_guidance_desc": "Besoin de conseils pour gérer votre Namespace ?",
@@ -1311,7 +1311,7 @@
     },
     "execution_guide": {
       "get_started": {
-        "title": "Commencer ⚡",
+        "title": "Démarrer",
         "text": "Suivez le Guide de démarrage rapide pour installer Kestra et commencer à créer vos premiers workflows."
       },
       "namespaces": {
@@ -1330,12 +1330,12 @@
     "customize sidebar": "Personnaliser la barre latérale",
     "reset to defaults": "Réinitialiser aux valeurs par défaut",
     "drop items here": "Déposez les éléments ici",
-    "files": "Fichiers",
+    "files": "Fichiers du namespace",
     "optional": "Optionnel",
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",
     "remove_bookmark": "Êtes-vous sûr de vouloir supprimer ce signet ?",
     "showLess": "Afficher moins",
-    "documentationMenu": "Menu de documentation",
+    "documentationMenu": "Menu Docs",
     "item": "élément",
     "items": "éléments",
     "iterations": "Itérations",
@@ -1490,8 +1490,8 @@
         "content": "Commencez à créer des Apps pour interagir avec Kestra depuis le monde extérieur."
       },
       "testSuites": {
-        "title": "Vous n'avez pas encore de Test suites !",
-        "content": "Commencez à créer des suites de test pour tester vos Flows."
+        "title": "Vous n'avez pas encore de Tests !",
+        "content": "Ajoutez des tests pour valider la qualité et éviter les régressions dans vos flows."
       },
       "assets": {
         "title": "Vous n'avez pas encore d'Assets !",
@@ -1527,7 +1527,7 @@
       },
       "groups": {
         "title": "Vous n'avez pas encore de groupes !",
-        "content": "Les groupes vous permettent de regrouper des utilisateurs afin de gérer les autorisations et les liaisons de rôles collectivement dans votre locataire."
+        "content": "Les groupes vous permettent de regrouper des utilisateurs afin de gérer collectivement les permissions et les attributions de rôles au sein de votre tenant."
       },
       "dependencies": {
         "FLOW": {
@@ -1633,9 +1633,9 @@
     },
     "setup": {
       "login": "Connexion",
-      "login_title": "Se connecter",
+      "login_title": "Connectez-vous à Kestra",
       "logout": "Déconnexion",
-      "troubleshooting": "Mot de passe oublié ?",
+      "troubleshooting": "Problème de connexion ?",
       "steps": {
         "user": "Créer un utilisateur admin",
         "survey": "Dites-nous en plus",
@@ -1674,7 +1674,7 @@
         "company_personal": "Autre",
         "use_case": "Pour quoi prévoyez-vous de l'utiliser ?",
         "use_case_infrastructure": "Automatisation de l'infrastructure",
-        "use_case_business": "Flux de travail métier",
+        "use_case_business": "Workflows métier",
         "use_case_data": "Flux de données",
         "use_case_ml": "Pipelines ML",
         "use_case_scheduling": "Planification et tâches récurrentes",
@@ -1690,7 +1690,7 @@
     },
     "ai": {
       "flow": {
-        "title": "Agent IA"
+        "title": "Copilote IA"
       },
       "copilot": {
         "title": "Copilot IA",
@@ -1822,7 +1822,7 @@
       "run_task_info": "Survolez n'importe quelle task dans l'éditeur de Flow Code et cliquez sur le bouton \"Run task\" pour tester votre task.",
       "play_icon_info": "Vous pouvez également cliquer sur l'icône Play dans les vues No-Code ou Topology.",
       "toggle": "Terrain de jeu",
-      "run_task": "Exécuter la Task",
+      "run_task": "Exécuter la task",
       "run_this_task": "Exécuter cette task",
       "run_task_and_downstream": "Exécuter la task et en aval",
       "run_all_tasks": "Exécuter toutes les tasks",
@@ -1895,8 +1895,8 @@
             "description": "Connectez-vous avec d'autres utilisateurs et obtenez de l'aide de la communauté"
           },
           "videos": {
-            "title": "Tutoriels Vidéo",
-            "description": "Guides vidéo étape par étape pour les fonctionnalités avancées"
+            "title": "Tutoriels vidéo",
+            "description": "Guides vidéo étape par étape"
           },
           "demo": {
             "title": "Obtenez une démo",

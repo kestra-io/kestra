@@ -32,7 +32,7 @@
       "back": "戻る",
       "openInNewTab": "新しいタブで開く"
     },
-    "delete confirm": "<code>{name}</code>を削除してもよろしいですか？",
+    "delete confirm": "<code>{name}</code> を削除してもよろしいですか？",
     "outdated revision save confirmation": {
       "confirm": "上書きしますか？",
       "update": {
@@ -109,9 +109,9 @@
     "next_execution": "次回の実行",
     "datepicker": {
       "invalid duration": "無効な期間形式です。ISO 8601形式（例：PT30M、P1D）を使用してください。",
-      "leave empty for infinite": "無限の期間にするには空白のままにするか、ISO 8601期間を入力してください（例：'P1DT1H1M1S'）",
+      "leave empty for infinite": "無期限にする場合は空欄にするか、ISO 8601期間（例：'P1DT1H1M1S'）を入力してください",
       "duration example": "例：'P1DT1H1M1S'",
-      "error": "無効な期間形式です。ISO 8601期間である必要があります（例：P1DT1H1M1S）",
+      "error": "期間の形式が無効です。ISO 8601期間形式（例：P1DT1H1M1S）である必要があります。",
       "custom": "カスタム",
       "last5minutes": "過去5分",
       "last15minutes": "過去15分",
@@ -168,7 +168,7 @@
     "created date": "作成日",
     "latest_update": "最新の更新",
     "expiration date": "有効期限",
-    "healthcheck date": "HealthCheck日",
+    "healthcheck date": "HealthCheck 日付",
     "last execution status": "最後の実行ステータス",
     "jump to...": "ジャンプ先...",
     "contextBar": {
@@ -204,12 +204,12 @@
     "restart latest revision": "最新のリビジョンを再起動",
     "restart tooltip": "<code>{state}</code>タスクから実行を再起動",
     "restarted": "実行が再開されました",
-    "restart confirm": "実行<code>{id}</code>を再起動してもよろしいですか？",
+    "restart confirm": "実行 <code>{id}</code> を再起動してもよろしいですか？",
     "replay": "リプレイ",
     "replay from task tooltip": "Task <code>{taskId}</code>から開始する同様の実行を作成",
     "replay from beginning tooltip": "最初から開始する同様の実行を作成",
     "replay latest revision": "最新のリビジョンを使用してリプレイ",
-    "replayed": "実行が再生されました",
+    "replayed": "実行がリプレイされました",
     "replay the execution": "フロー<code>{flowId}</code>の実行<code>{executionId}</code>を再実行する",
     "prefill inputs": "自動入力",
     "current": "現在",
@@ -219,7 +219,7 @@
     "are you sure change state": "状態を変更してもよろしいですか？",
     "yes": "はい",
     "change state done": "タスクの状態が更新されました",
-    "change state confirm": "タスク <code>{task}</code> の実行 <code>{id}</code> のタスク実行状態を変更してもよろしいですか？",
+    "change state confirm": "実行 <code>{id}</code> の <code>{task}</code> タスクのタスク実行状態を変更してもよろしいですか？<br/>これにより、次のタスクから実行が再開され、親実行がある場合は親実行も再開されます。",
     "change state current state": "現在のステータスは:",
     "replay execution title": "実行の再実行",
     "restart execution title": "実行の再起動",
@@ -239,27 +239,27 @@
     "kill": "キル",
     "kill parents and subflow": "現在のflowとsubflowを終了",
     "kill only parents": "現在のもののみを終了",
-    "killed confirm": "実行<code>{id}</code>をキルしてもよろしいですか？",
+    "killed confirm": "実行 <code>{id}</code> を強制終了してもよろしいですか？",
     "killed done": "実行はキルのためにキューに入れられました",
     "resume": "再開",
     "resumed title": "実行<code>{id}</code>を再開",
-    "resumed confirm": "実行<code>{id}</code>を再開してもよろしいですか？",
+    "resumed confirm": "実行 <code>{id}</code> を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
     "resume from breakpoint title": "ブレークポイントから実行 <code>{id}</code> を再開します",
     "resume from breakpoint done": "ブレークポイントから実行が再開されました",
     "breakpoints": "ブレークポイント",
     "pause": "一時停止",
-    "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
+    "pause title": "実行 <code>{id}</code> を一時停止します。<br/>現在実行中のタスクは引き続き処理され、実行は手動で再開する必要があることに注意してください。",
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "unqueue": "キューから削除",
-    "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>ただし、flowの並行性制限には従わないため、許可された制限を超えて実行が行われる可能性があります。",
+    "unqueue title": "実行 <code>{id}</code> のキュー解除をしますか？<br/><br/>これはflowの同時実行制限に従わないため、許可された制限よりも多くの実行が実行される可能性があることに注意してください。",
     "unqueue title multiple": "<code>{count}</code>件の実行をキューから外してもよろしいですか？<br/><br/>flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
     "unqueue done": "実行はキューから外されました",
     "force run": "強制実行",
     "force run title": "実行 <code>{id}</code> を強制的に実行します。",
-    "force run confirm": "実行 <code>{id}</code> を強制的に実行しますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
-    "force run done": "実行は強制的にRUNNINGです。",
+    "force run confirm": "実行 <code>{id}</code> を強制的に実行してもよろしいですか？<br/><br/>警告: 実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATED タスクは実行状態に移行します。</li><li>RUNNING タスクは再提出されます。</li><li>QUEUED タスクはキューから削除されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "force run done": "実行は強制的に実行されました",
     "metrics": "メトリクス",
     "no metrics available": "このタスク実行には記録されたメトリクスがありません。",
     "no outputs available": "このタスク実行には利用可能なoutputがありません。",
@@ -363,7 +363,7 @@
         },
         "alt": "ブループリントアイコン"
       },
-      "custom": "カスタムblueprint",
+      "custom": "カスタムBlueprint",
       "flows": "フローBlueprints",
       "apps": "アプリケーション Blueprints",
       "dashboards": "ダッシュボード Blueprints",
@@ -476,11 +476,11 @@
     "last evaluation date": "最終評価日",
     "last trigger date tooltip": "トリガーが最後に実行された時刻。バックフィルを実行している場合、過去の時刻になることがあります。",
     "context updated date tooltip": "トリガーのコンテキストが最後に更新された時刻。これは、実行がトリガーされたとき、終了したとき（ロックが解除されたとき）、または評価後（実行が発生しない場合でも）に発生します。",
-    "next evaluation date tooltip": "トリガーが次に評価されるタイミングは、その間隔に基づきます。条件が満たされない場合、次の実行日と常に同じとは限りません。",
+    "next evaluation date tooltip": "スケジューラーが、その間隔に基づいてこのtriggerを次に評価する日時。評価は、triggerの条件が満たされた場合にのみ実行を生成します。",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "conditions": "条件",
     "triggerId": "トリガーID",
-    "tenantId": "テナントID",
+    "tenantId": "tenant ID",
     "paused": "一時停止中",
     "running": "RUNNING",
     "Fold content lines": "複数行文字列を折りたたむ",
@@ -537,13 +537,13 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
     "restore": "復元",
-    "restore confirm": "リビジョン<code>{revision}</code>を復元してもよろしいですか？",
+    "restore confirm": "リビジョン <code>{revision}</code> を復元してもよろしいですか？",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk replay": "<code>{executionCount}</code>件の実行を再実行してもよろしいですか？",
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk pause": "<code>{executionCount}</code> 実行を一時停止してもよろしいですか？",
-    "bulk force run": "実行を強制的に実行しますか <code>{executionCount}</code> 回の実行を行いますか？<br/><br/>WARNING: 実行を強制的に実行することは保証されておらず、重複したタスクの実行が発生する可能性があります。<br/><br/>以下の遷移が行われます:<br/><ul><li>CREATED タスクは RUNNING 状態に移行します。</li><li>RUNNING タスクは再送信されます。</li><li>QUEUED タスクはキューから外されます。</li><li>PAUSED タスクは再開されます。</li></ul>",
+    "bulk force run": "<code>{executionCount}</code>件の実行を強制的に実行してもよろしいですか？<br/><br/>警告：実行の強制実行は保証されておらず、重複するタスク実行が作成される可能性があります。<br/><br/>以下の遷移が行われます。<br/><ul><li>CREATEDタスクは実行状態に移行します。</li><li>RUNNINGタスクは再提出されます。</li><li>QUEUEDタスクはキューから削除されます。</li><li>PAUSEDタスクは再開されます。</li></ul>",
     "bulk restart": "<code>{executionCount}</code>件の実行を再起動してもよろしいですか？",
     "bulk kill": "<code>{executionCount}</code>件の実行をkillしてもよろしいですか？",
     "cancel": "キャンセル",
@@ -613,7 +613,7 @@
     "flow must not be empty": "フローは空であってはなりません",
     "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "readonly property": "読み取り専用プロパティ",
-    "namespace and id readonly": "プロパティ`namespace`と`id`は変更できません — 初期値に設定されています。flowの名前を変更したりnamespaceを変更したい場合は、新しいflowを作成して古いものを削除してください。",
+    "namespace and id readonly": "プロパティの`namespace`と`id`は変更できません。これらは初期値に設定されています。flowの名前を変更したり、namespaceを変更したい場合は、新しいflowを作成して古いflowを削除してください。",
     "avg": "平均",
     "sum": "合計",
     "min": "Min",
@@ -676,7 +676,7 @@
     "flow source not found": "フローソースが見つかりません",
     "timezone": "タイムゾーン",
     "add task": "taskを追加",
-    "unable to generate graph": "グラフの生成中に問題が発生し、トポロジーが表示されません。",
+    "unable to generate graph": "グラフの生成中に問題が発生したため、トポロジーを表示できません。",
     "attempts": "試行回数",
     "version": "バージョン",
     "services": "サービス",
@@ -788,7 +788,7 @@
     "manage labels": "ラベルを管理",
     "Set labels to execution": "実行<code>{id}</code>のラベルを追加または更新",
     "Set labels done": "実行のラベルが正常に設定されました",
-    "bulk set labels": "<code>{executionCount}</code>件の実行にラベルを設定してもよろしいですか？",
+    "bulk set labels": "<code>{executionCount}</code>件の実行にlabelを設定してもよろしいですか？",
     "true": "True",
     "false": "False",
     "undefined": "未定義",
@@ -877,11 +877,11 @@
           }
         },
         "theme": {
-          "label": "テーマ設定",
+          "label": "外観",
           "fields": {
             "app_font_size": "アプリのフォントサイズ",
             "color_mode": "カラーモード",
-            "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
+            "editor_folding_stratgy": "エディターでのコードの自動折りたたみ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_font_size": "エディタフォントサイズ",
             "editor_hover_description": "プロパティにカーソルを合わせると説明が表示されます",
@@ -947,12 +947,12 @@
       "contact_sales": "営業に問い合わせる",
       "secrets": {
         "title": "シークレット管理をアップグレード",
-        "message": "エンタープライズエディション (EE) では、UIで直接シークレットを追加、編集、または削除できます。インスタンスの再起動は不要です。シークレットをnamespaceごとに整理し、詳細なRBAC権限を設定し、親namespaceから子namespaceに継承します。EEは、HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearchなどのシークレットマネージャーと統合します。namespace、テナント、またはインスタンスごとに専用のバックエンドを設定して、チーム間でシークレットを分離するか、外部のvaultに保存された読み取り専用のシークレットを有効にします。シークレットは、保存時および転送時に暗号化されたままです。オプションのキャッシュによりAPIコールが削減され、監査証跡がすべてのアクセスをログに記録します。",
+        "message": "Enterprise Edition (EE) では、UI で直接シークレットを追加、編集、削除できます。インスタンスの再起動は不要です。きめ細かな RBAC 権限で namespace ごとにシークレットを整理し、親 namespace から子 namespace に継承できます。EE は HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearch などのシークレットマネージャーと統合します。namespace、tenant、またはインスタンスごとに専用のバックエンドを設定してチーム間でシークレットを分離したり、外部 vault に保存されている読み取り専用シークレットを有効にしたりできます。シークレットは保存時も転送時も暗号化されたままです。オプションのキャッシュにより API 呼び出しが削減され、監査証跡によりすべてのアクセスがログに記録されます。",
         "add_env": {
-          "intro": "新しいSecretを作成するには：",
+          "intro": "新しいSecretを作成",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a>",
-          "second": "`<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>`という名前の環境変数を上記の値で追加してください。",
-          "third": "Kestraインスタンスを再起動する"
+          "second": "エンコードされた値を持つ <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> という名前の環境変数を設定します。",
+          "third": "シークレットをロードするためにKestraインスタンスを再起動してください。"
         }
       },
       "apps": {
@@ -979,7 +979,7 @@
       },
       "IAM": {
         "title": "IAMを通じてユーザーを管理（SSO、SCIM、RBACを使用）",
-        "message": "Kestra Enterprise Editionには、シングルサインオン（SSO）、SCIMディレクトリ同期、ロールベースのアクセス制御（RBAC）を備えた組み込みのIAM機能があり、複数のアイデンティティプロバイダーと統合し、ユーザーおよびサービスアカウントに対して詳細な権限を割り当てることができます。"
+        "message": "Kestra Enterprise Editionは、シングルサインオン（SSO）、SCIMディレクトリ同期、ロールベースアクセス制御（RBAC）を備えたIAM機能を内蔵しており、複数のIDプロバイダーと統合し、ユーザーおよびサービスアカウントにきめ細かな権限を割り当てることができます。"
       },
       "tenants": {
         "title": "隔離されたTenantでWorkflowを管理する",
@@ -1004,17 +1004,17 @@
       "policies": {
         "header": "ガバナンスポリシー",
         "label": "ポリシー",
-        "message": "ポリシーにより、プラットフォームチームはすべての flow にわたってルールを一元的に管理および適用できます。これには、共有のデフォルト値の注入、プラグインのブロック、プロパティ値の制限、コンプライアンス label の要求などが含まれます。ルールはテナントまたは namespace レベルで段階的なロールアウトとともに適用され、注入または置換されたすべての値は flow の作成者から常に可視です。",
+        "message": "ポリシーを使用すると、プラットフォームチームはすべてのflowにわたってルールを一元的に管理および適用できます。共有のデフォルトを挿入したり、プラグインをブロックしたり、プロパティ値を制限したり、コンプライアンスlabelを要求したりできます。ルールは、段階的なロールアウトでtenantまたはnamespaceレベルで適用され、挿入または置換されたすべての値はflow作成者に表示されたままになります。",
         "title": "すべての Flow をポリシーで統制"
       },
       "namespace": {
         "edit": {
           "title": "名前空間管理をアップグレードする",
-          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルトの高度な分離とガバナンスを提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、および詳細な権限をnamespaceごとに設定できます。これにより、シークレット、変数、およびプラグインの設定が異なるチームやプロジェクト間で安全かつ簡単に管理されることが保証されます。"
+          "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルト設定を大規模に分離し、ガバナンスを強化します。管理者は、カスタムのシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、およびnamespaceごとのきめ細かな権限を設定できます。これにより、シークレット、変数、プラグインの設定が、異なるチームやプロジェクト間で安全かつ簡単に維持されます。"
         },
         "secrets": {
           "title": "秘密を安全に管理する方法",
-          "message": "Kestra Enterprise Editionでは、namespaceレベルでシークレットを保存および管理することができ、リスクを最小限に抑え、各チームの認証情報を分離して保持します。ネストされた階層のおかげで、親namespaceで認証情報を設定すると、すべての子namespaceに継承されます。専用のシークレットマネージャーのサポートと詳細なnamespaceレベルの権限設定により、セキュリティとコンプライアンスがさらに強化されます。"
+          "message": "Kestra Enterprise Editionでは、namespaceレベルでシークレットを保存および制御できるため、リスクを最小限に抑え、各チームの認証情報が分離された状態を保てます。ネストされた階層により、親namespaceで認証情報を設定すると、すべての子namespaceに継承されます。専用のシークレットマネージャーと詳細なnamespaceレベルの権限設定のサポートにより、セキュリティとコンプライアンスがさらに強化されます。"
         },
         "assets": {
           "title": "資産管理の集中化",
@@ -1209,8 +1209,8 @@
     "quotas": "クォータ",
     "iam": "IAM",
     "tenant": {
-      "name": "テナント",
-      "names": "テナント"
+      "name": "Tenant",
+      "names": "Tenants"
     },
     "bulk action async warning": "少々お待ちください。",
     "bulk unpause backfills": "{count}個のbackfillを再開",
@@ -1266,7 +1266,7 @@
     },
     "curl": {
       "command": "cURLコマンド",
-      "note": "SECRETおよびFILEのinputタイプの場合、コマンドは実際の値に合わせて調整する必要があります。"
+      "note": "SECRETおよびFILE入力タイプの場合、コマンドは実際の値に合わせて調整する必要があることに注意してください。"
     },
     "webhook": {
       "curl_command": "Webhook cURL コマンド",
@@ -1277,7 +1277,7 @@
     },
     "logs_view": {
       "raw": "Temporalビュー",
-      "raw_details": "タスクログとフローのログをタイムスタンプ順に生の形式で表示",
+      "raw_details": "Task logsとflow logsを、タイムスタンプ順の生の形式で表示します",
       "compact": "デフォルトビュー",
       "compact_details": "タスクログを各タスクごとにグループ化してコンパクトビューで表示"
     },
@@ -1303,7 +1303,7 @@
     "behavior": "動作",
     "concurrency": "並行性",
     "no-executions-view": {
-      "title": "自動化を開始",
+      "title": "Kestraで自動化を始めましょう",
       "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
       "namespace_sub_title": "このダッシュボードを埋めるために、このnamespaceから1つ以上のflowを実行します。",
       "namespace_guidance_desc": "Namespaceを管理するためのガイダンスが必要ですか？",
@@ -1311,7 +1311,7 @@
     },
     "execution_guide": {
       "get_started": {
-        "title": "はじめに ⚡",
+        "title": "開始する",
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。"
       },
       "namespaces": {
@@ -1330,12 +1330,12 @@
     "customize sidebar": "サイドバーをカスタマイズ",
     "reset to defaults": "デフォルトにリセット",
     "drop items here": "ここにアイテムをドロップしてください",
-    "files": "ファイル",
+    "files": "Namespaceファイル",
     "optional": "オプション",
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "remove_bookmark": "このブックマークを削除してもよろしいですか？",
     "showLess": "表示を減らす",
-    "documentationMenu": "ドキュメントメニュー",
+    "documentationMenu": "Docsメニュー",
     "item": "アイテム",
     "items": "アイテム",
     "iterations": "イテレーション",
@@ -1478,7 +1478,7 @@
         "content": "namespaceファイルは、このnamespaceのプロジェクトフォルダのように機能します。Python、SQL、dbt、Terraformのコードを保存し、flow内の任意のファイルを次の方法で参照できます"
       },
       "announcements": {
-        "title": "お知らせはまだありません！",
+        "title": "まだお知らせはありません！",
         "content": "お知らせを使用すると、ユーザーに変更を通知したり、計画されたメンテナンスのダウンタイムについて知らせたりすることができます。お知らせの種類、表示する日付範囲を選択し、お知らせメッセージを作成してください。"
       },
       "kill_switches": {
@@ -1490,8 +1490,8 @@
         "content": "外部からKestraと連携するアプリを作成し始めましょう。"
       },
       "testSuites": {
-        "title": "テストスイートがまだありません！",
-        "content": "テストスイートを作成して、flowをテストし始めましょう。"
+        "title": "まだテストがありません！",
+        "content": "flowの品質を検証し、リグレッションを回避するためにテストを追加します。"
       },
       "assets": {
         "title": "まだアセットがありません！",
@@ -1527,7 +1527,7 @@
       },
       "groups": {
         "title": "まだグループがありません！",
-        "content": "グループを使用すると、ユーザーをまとめてバンドルし、テナント全体で権限とロールバインディングを一括管理できます。"
+        "content": "グループを使用すると、ユーザーをまとめてバンドルし、tenant全体で権限とロールバインディングをまとめて管理できます。"
       },
       "dependencies": {
         "FLOW": {
@@ -1617,7 +1617,7 @@
       "others": "その他",
       "viewAll": "すべて表示",
       "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
-      "export": "CSVにエクスポート",
+      "export": "エクスポート",
       "exportTo": {
         "csv": "CSVにエクスポート",
         "ion": "ION にエクスポート"
@@ -1633,9 +1633,9 @@
     },
     "setup": {
       "login": "ログイン",
-      "login_title": "サインイン",
+      "login_title": "Kestraにサインイン",
       "logout": "ログアウト",
-      "troubleshooting": "パスワードをお忘れですか？",
+      "troubleshooting": "サインインでお困りですか？",
       "steps": {
         "user": "管理者ユーザーを作成",
         "survey": "詳細を教えてください",
@@ -1690,7 +1690,7 @@
     },
     "ai": {
       "flow": {
-        "title": "AIエージェント"
+        "title": "AI Copilot"
       },
       "copilot": {
         "title": "AI Copilot",
@@ -1896,7 +1896,7 @@
           },
           "videos": {
             "title": "ビデオチュートリアル",
-            "description": "高度な機能のためのステップバイステップのビデオガイド"
+            "description": "ステップバイステップのビデオガイド"
           },
           "demo": {
             "title": "デモを取得",

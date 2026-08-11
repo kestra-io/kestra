@@ -1,8 +1,9 @@
+import {createHash} from "crypto"
 import fs from "fs"
 import path from "path"
 import {baseCompile} from "@intlify/message-compiler"
 
-const DEFAULT_LANGUAGES = ["de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "pt_BR", "ru", "zh_CN"]
+export const DEFAULT_LANGUAGES = ["de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "pt_BR", "ru", "zh_CN"]
 
 const readJSON = (filePath: string): Record<string, unknown> => JSON.parse(fs.readFileSync(filePath, "utf-8"))
 
@@ -16,6 +17,25 @@ const getNestedStrings = (obj: Record<string, unknown>, prefix = ""): Record<str
         }
         return strings
     }, {})
+
+/**
+ * Flattens exactly the way `generateTranslations.ts` does — `|` separator, descending into arrays
+ * via their numeric indices — so fingerprints written by the generator can be looked up here.
+ *
+ * Deliberately not `getNestedStrings`, which joins with `.` for human-readable reporting and skips
+ * arrays altogether. Reusing that one silently missed every fingerprint.
+ */
+const flattenLikeGenerator = (value: unknown, prefix = ""): Record<string, string> => {
+    if (typeof value === "string") {
+        return {[prefix]: value}
+    }
+    if (value === null || typeof value !== "object") {
+        return {}
+    }
+    return Object.entries(value).reduce((out: Record<string, string>, [key, child]) => {
+        return Object.assign(out, flattenLikeGenerator(child, prefix ? `${prefix}|${key}` : key))
+    }, {})
+}
 
 /**
  * Runs a message through vue-i18n's own compiler and returns its errors. This is the ground truth for
@@ -56,16 +76,38 @@ const getNestedKeys = (obj: Record<string, unknown>, prefix = ""): string[] =>
  * caller passes the directory that holds its own language JSON files, which is what repoints the
  * check at EE.
  *
- * @param translationsDir absolute path to the folder containing `en.json` and the locale files
- * @param languages       language codes to check (defaults to all shipped locales)
+ * Also reports *stale* keys: ones whose English source has changed since the translations were
+ * generated from it. Key parity alone never caught those — the translation is present, just of
+ * text that no longer exists — which is how, for example, an EE rename of "SuperAdmin" to
+ * "Superadmin" sat un-propagated in eleven locales for a year (kestra-io/kestra#10656).
+ *
+ * @param translationsDir  absolute path to the folder containing `en.json` and the locale files
+ * @param languages        language codes to check (defaults to all shipped locales)
+ * @param fingerprintsFile absolute path to the generator's fingerprints file; omit to skip the
+ *                         staleness check
  */
-export function compareTranslations(translationsDir: string, languages: string[] = DEFAULT_LANGUAGES): void {
+export function compareTranslations(
+    translationsDir: string,
+    languages: string[] = DEFAULT_LANGUAGES,
+    fingerprintsFile?: string,
+): void {
     const getPath = (lang: string): string => path.resolve(translationsDir, `${lang}.json`)
 
     // Use English as a base language
     const englishRoot = readJSON(getPath("en"))["en"] as Record<string, unknown>
     const content = getNestedKeys(englishRoot)
     const englishStrings = getNestedStrings(englishRoot)
+
+    // A key is stale when the English text no longer hashes to what it did when the translations
+    // were last generated. Same hash the generator writes — see `generateTranslations.ts`.
+    const stale: string[] = []
+    if (fingerprintsFile && fs.existsSync(fingerprintsFile)) {
+        const fingerprints = JSON.parse(fs.readFileSync(fingerprintsFile, "utf-8")) as Record<string, string>
+        for (const [key, message] of Object.entries(flattenLikeGenerator(englishRoot))) {
+            const expected = createHash("sha256").update(message).digest("hex").slice(0, 12)
+            if (fingerprints[key] !== expected) stale.push(key)
+        }
+    }
 
     const globalMissing: Record<string, string[]> = {}
     const globalExtra: Record<string, string[]> = {}
@@ -85,6 +127,7 @@ export function compareTranslations(translationsDir: string, languages: string[]
     const englishBroken = checkCompiles("en", englishStrings)
     console.warn("---\n\x1b[34mComparison with EN\x1b[0m  \n")
     console.warn(englishBroken.length ? `Uncompilable messages: \x1b[31m${englishBroken.join("\n  ")}\x1b[0m` : "No uncompilable messages.")
+    console.warn(stale.length ? `Stale keys (English changed since translating): \x1b[31m${stale.join(", ")}\x1b[0m` : "No stale keys.")
     console.warn("---\n")
 
     languages.forEach((lang) => {
@@ -133,6 +176,10 @@ export function compareTranslations(translationsDir: string, languages: string[]
 
     if (Object.keys(globalPlaceholderDrift).length) {
         errorString += "\nPlaceholder mismatches in translations (each translation must interpolate exactly the placeholders its English source does)"
+    }
+
+    if (stale.length) {
+        errorString += `\nStale translations: the English source of ${stale.length} key(s) changed after they were translated. Run \`npm run translations:generate\` to bring the other languages back in line.`
     }
 
     if (errorString.length) {

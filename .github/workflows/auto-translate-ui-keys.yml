@@ -42,7 +42,7 @@ jobs:
           working-directory: ui
 
         - name: Generate translations
-          run: node --experimental-strip-types ui/scripts/generate_translations.ts ${{ github.event.inputs.retranslate_modified_keys }}
+          run: node --experimental-strip-types ui/scripts/translations/generate.ts ${{ github.event.inputs.retranslate_modified_keys }}
           env:
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 

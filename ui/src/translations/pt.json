@@ -32,7 +32,7 @@
       "back": "Voltar",
       "openInNewTab": "Abrir em nova aba"
     },
-    "delete confirm": "Tem certeza de que deseja deletar <code>{name}</code>?",
+    "delete confirm": "Tem certeza de que deseja excluir <code>{name}</code>?",
     "outdated revision save confirmation": {
       "confirm": "Deseja sobrescrever?",
       "update": {
@@ -109,9 +109,9 @@
     "next_execution": "Próxima execução",
     "datepicker": {
       "invalid duration": "Formato de duração inválido. Por favor, use ISO 8601 (ex: PT30M, P1D).",
-      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (exemplo: 'P1DT1H1M1S)'",
+      "leave empty for infinite": "Deixe vazio para duração infinita ou digite uma duração ISO 8601 (por exemplo, 'P1DT1H1M1S')",
       "duration example": "Exemplo: 'P1DT1H1M1S'",
-      "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (P1DT1H1M1S por ex.)",
+      "error": "Formato de duração inválido, deve ser uma duração ISO 8601 (ex: P1DT1H1M1S)",
       "custom": "Personalizado",
       "last5minutes": "Últimos 5 minutos",
       "last15minutes": "Últimos 15 minutos",
@@ -203,13 +203,13 @@
     "restart": "Reiniciar",
     "restart latest revision": "Reiniciar última revisão",
     "restart tooltip": "Reiniciar a execução a partir da task <code>{state}</code>",
-    "restarted": "A Execução é Reiniciada",
+    "restarted": "A execução foi reiniciada",
     "restart confirm": "Tem certeza de que deseja reiniciar a execução <code>{id}</code>?",
     "replay": "Repetir",
     "replay from task tooltip": "Criar uma execução similar começando da task <code>{taskId}</code>",
     "replay from beginning tooltip": "Criar uma execução similar começando do início",
     "replay latest revision": "Repetir usando a última revisão",
-    "replayed": "A execução é Reproduzida",
+    "replayed": "A Execução Foi Reproduzida",
     "replay the execution": "Reproduzir a execução <code>{executionId}</code> para o flow <code>{flowId}</code>",
     "prefill inputs": "Preencher automaticamente",
     "current": "atual",
@@ -219,7 +219,7 @@
     "are you sure change state": "Tem certeza de que deseja alterar o estado?",
     "yes": "Sim",
     "change state done": "O estado da task foi atualizado",
-    "change state confirm": "Tem certeza de que deseja alterar o estado de execução da task <code>{task}</code> na execução <code>{id}</code>?",
+    "change state confirm": "Tem certeza de que deseja alterar o estado de execução da task para a task <code>{task}</code> na execução <code>{id}</code>?<br/>Isso reiniciará a execução a partir da próxima task e reiniciará a execução pai, se houver.",
     "change state current state": "Status atual é:",
     "replay execution title": "Repetir execução",
     "restart execution title": "Reiniciar execução",
@@ -239,7 +239,7 @@
     "kill": "Matar",
     "kill parents and subflow": "Matar o flow atual e subflows",
     "kill only parents": "Matar apenas o atual",
-    "killed confirm": "Tem certeza de que deseja matar a execução <code>{id}</code>?",
+    "killed confirm": "Tem certeza de que deseja encerrar a execução <code>{id}</code>?",
     "killed done": "Execução está na fila para ser morta",
     "resume": "Retomar",
     "resumed title": "Retomar execução <code>{id}</code>",
@@ -249,17 +249,17 @@
     "resume from breakpoint done": "Execução é retomada do breakpoint",
     "breakpoints": "Pontos de interrupção",
     "pause": "Pausar",
-    "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
+    "pause title": "Pausar a execução <code>{id}</code>.<br/>Observe que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "unqueue": "Desenfileirar",
-    "unqueue title": "Desenfileirar execução <code>{id}</code>.<br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
+    "unqueue title": "Tem certeza de que deseja desenfileirar a execução <code>{id}</code>?<br/><br/>Observe que ela não obedecerá ao limite de concorrência do flow, então mais execuções podem estar sendo executadas do que o limite permitido.",
     "unqueue title multiple": "Tem certeza de que deseja Desenfileirar <code>{count}</code> execuções?<br/><br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
     "unqueue done": "A execução está fora da fila",
     "force run": "Executar forçadamente",
     "force run title": "Forçar a execução da execução <code>{id}</code>.",
-    "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefa duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
-    "force run done": "A execução é forçada a correr",
+    "force run confirm": "Tem certeza de que deseja forçar a execução <code>{id}</code>?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
+    "force run done": "A execução foi forçada",
     "metrics": "Métricas",
     "no metrics available": "Nenhuma métrica registrada para esta execução de task.",
     "no outputs available": "Nenhuma saída disponível para esta execução de task.",
@@ -363,7 +363,7 @@
         },
         "alt": "Ícone de Blueprints"
       },
-      "custom": "Blueprints personalizados",
+      "custom": "Blueprints Personalizados",
       "flows": "Blueprints de Flow",
       "apps": "Blueprints do Aplicativo",
       "dashboards": "Blueprints do Dashboard",
@@ -476,11 +476,11 @@
     "last evaluation date": "Data da última avaliação",
     "last trigger date tooltip": "Quando o trigger foi executado pela última vez. Pode estar no passado ao executar um backfill.",
     "context updated date tooltip": "Quando o contexto do trigger foi atualizado pela última vez. Isso ocorre quando a execução é acionada, termina (bloqueio liberado) ou após uma avaliação (mesmo que nenhuma execução ocorra).",
-    "next evaluation date tooltip": "Quando o trigger será avaliado novamente, com base em seu intervalo. Nem sempre é o mesmo que a próxima data de execução se as condições não forem atendidas.",
+    "next evaluation date tooltip": "Quando o agendador avaliará este trigger, com base no seu intervalo. Uma avaliação só produz uma execução se as condições do trigger forem cumpridas.",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "conditions": "Condições",
     "triggerId": "ID do Trigger",
-    "tenantId": "ID do Mandante",
+    "tenantId": "ID do tenant",
     "paused": "PAUSED",
     "running": "RUNNING",
     "Fold content lines": "Dobrar strings multilinhas",
@@ -543,7 +543,7 @@
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk resume": "Tem certeza de que deseja retomar <code>{executionCount}</code> execução(ões)?",
     "bulk pause": "Tem certeza de que deseja pausar a(s) execução(ões) <code>{executionCount}</code>?",
-    "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução de uma execução não é garantido e pode criar execuções de tarefas duplicadas.<br/><br/>As seguintes transições serão realizadas:<br/><ul><li>Tarefas CREATED serão movidas para o estado RUNNING.</li><li>Tarefas RUNNING serão re-submetidas.</li><li>Tarefas QUEUED serão removidas da fila.</li><li>Tarefas PAUSED serão retomadas.</li></ul>",
+    "bulk force run": "Tem certeza de que deseja forçar a execução de <code>{executionCount}</code> execução(ões)?<br/><br/>AVISO: forçar a execução não é garantido e pode criar execuções de task duplicadas.<br/><br/>As seguintes transições serão feitas:<br/><ul><li>Tasks CREATED serão movidas para o estado RUNNING.</li><li>Tasks RUNNING serão reenviadas.</li><li>Tasks QUEUED serão removidas da fila.</li><li>Tasks PAUSED serão retomadas.</li></ul>",
     "bulk restart": "Tem certeza de que deseja reiniciar <code>{executionCount}</code> execução(ões)?",
     "bulk kill": "Tem certeza de que deseja matar <code>{executionCount}</code> execução(ões)?",
     "cancel": "Cancelar",
@@ -613,7 +613,7 @@
     "flow must not be empty": "O flow não deve estar vazio",
     "flow creation denied in namespace": "Você não tem permissão para criar flows no namespace `{namespace}`.",
     "readonly property": "Propriedade somente leitura",
-    "namespace and id readonly": "As propriedades `namespace` e `id` não podem ser alteradas — elas estão definidas para seus valores iniciais. Se você quiser renomear um flow ou alterar seu namespace, você pode criar um novo flow e remover o antigo.",
+    "namespace and id readonly": "As propriedades `namespace` e `id` não podem ser alteradas — elas agora estão definidas para seus valores iniciais. Se você deseja renomear um flow ou alterar seu namespace, você pode criar um novo flow e remover o antigo.",
     "avg": "Média",
     "sum": "Soma",
     "min": "Min",
@@ -788,7 +788,7 @@
     "manage labels": "Gerenciar labels",
     "Set labels to execution": "Adicionar ou atualizar os labels da execução <code>{id}</code>",
     "Set labels done": "Labels da execução definidos com sucesso",
-    "bulk set labels": "Tem certeza de que deseja definir labels para <code>{executionCount}</code> execução(ões)?",
+    "bulk set labels": "Tem certeza de que deseja definir labels para {executionCount} execução(ões)?",
     "true": "Verdadeiro",
     "false": "Falso",
     "undefined": "Indefinido",
@@ -877,7 +877,7 @@
           }
         },
         "theme": {
-          "label": "Preferências de Tema",
+          "label": "Aparência",
           "fields": {
             "app_font_size": "Tamanho da fonte da aplicação",
             "color_mode": "Modo de cor",
@@ -947,12 +947,12 @@
       "contact_sales": "Contatar Vendas",
       "secrets": {
         "title": "Atualize seu Gerenciamento de Secrets",
-        "message": "A Enterprise Edition (EE) permite adicionar, editar ou excluir segredos diretamente na UI—sem necessidade de reiniciar a instância. Organize segredos por namespace com permissões RBAC granulares e herde-os de namespaces pai para filho. A EE integra-se com gerenciadores de segredos como HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager e Elasticsearch. Configure backends dedicados por namespace, tenant ou instância para isolar segredos entre equipes, ou habilite segredos somente leitura armazenados em cofres externos. Os segredos permanecem criptografados em repouso e em trânsito. O cache opcional reduz chamadas de API, e trilhas de auditoria registram todo o acesso.",
+        "message": "A Enterprise Edition (EE) permite adicionar, editar ou excluir secrets diretamente na UI — sem a necessidade de reiniciar a instância. Organize secrets por namespace com permissões RBAC granulares e herde-os de namespaces pai para filho. A EE se integra com gerenciadores de secrets como HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager e Elasticsearch. Configure backends dedicados por namespace, tenant ou instância para isolar secrets entre equipes, ou habilite secrets somente leitura armazenados em vaults externos. Os secrets permanecem criptografados em repouso e em trânsito. O cache opcional reduz as chamadas de API, e os logs de auditoria registram todo o acesso.",
         "add_env": {
-          "intro": "Para criar um novo Secret:",
+          "intro": "Criar um Novo Secret",
           "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
-          "second": "Adicione uma variável de ambiente chamada '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' com o valor acima",
-          "third": "Reinicie sua instância do Kestra"
+          "second": "Defina uma variável de ambiente chamada <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> com o valor codificado.",
+          "third": "Reinicie sua instância Kestra para que o segredo seja carregado."
         }
       },
       "apps": {
@@ -979,7 +979,7 @@
       },
       "IAM": {
         "title": "Gerencie Usuários através do IAM com SSO, SCIM e RBAC",
-        "message": "A Kestra Enterprise Edition possui capacidades IAM integradas com single sign-on (SSO), sincronização de diretório SCIM e controle de acesso baseado em funções (RBAC), integrando-se com vários provedores de identidade e permitindo que você atribua permissões detalhadas para usuários e contas de serviço."
+        "message": "Kestra Enterprise Edition possui recursos IAM integrados com single sign-on (SSO), sincronização de diretório SCIM e controle de acesso baseado em função (RBAC), integrando-se com vários provedores de identidade e permitindo atribuir permissões granulares para usuários e contas de serviço."
       },
       "tenants": {
         "title": "Gerenciar Fluxos de Trabalho em Tenants Isolados",
@@ -1004,17 +1004,17 @@
       "policies": {
         "header": "Políticas de Governança",
         "label": "Políticas",
-        "message": "As políticas permitem que as equipes de plataforma gerenciem e apliquem regras centralizadamente em todos os flows — injetar padrões compartilhados, bloquear plugins, limitar valores de propriedades e exigir labels de conformidade. As regras se aplicam no nível do tenant ou do namespace com lançamento faseado, e cada valor injetado ou substituído permanece visível para os autores do flow.",
+        "message": "As políticas permitem que as equipes de plataforma gerenciem e apliquem regras centralmente em todos os flows — injetar padrões compartilhados, bloquear plugins, limitar valores de propriedade e exigir labels de conformidade. As regras se aplicam no nível do tenant ou namespace com rollout em fases, e cada valor injetado ou substituído permanece visível para os autores do flow.",
         "title": "Governe Todos os Flow com Políticas"
       },
       "namespace": {
         "edit": {
           "title": "Atualize o Gerenciamento do seu Namespace",
-          "message": "Na Kestra Enterprise Edition, os namespaces oferecem isolamento avançado e governança de segredos, variáveis e padrões de plugins em escala. Os administradores podem configurar gerenciadores de segredos personalizados, backends de armazenamento isolados, grupos de worker dedicados e permissões detalhadas por namespace. Isso garante que segredos, variáveis e configurações de plugins permaneçam seguros e fáceis de manter em diferentes equipes e projetos."
+          "message": "Na Kestra Enterprise Edition, os namespaces fornecem isolamento avançado e governança de segredos, variáveis e padrões de plugins em escala. Os administradores podem configurar gerenciadores de segredos personalizados, backends de armazenamento isolados, grupos de worker dedicados e permissões granulares por namespace. Isso garante que segredos, variáveis e configurações de plugins permaneçam seguros e fáceis de manter em diferentes equipes e projetos."
         },
         "secrets": {
           "title": "Gerenciar Segredos de Forma Segura",
-          "message": "Na Kestra Enterprise Edition, você pode armazenar e controlar segredos no nível de namespace, minimizando riscos e garantindo que as credenciais de cada equipe permaneçam isoladas. Graças à hierarquia aninhada, você também pode configurar credenciais em um namespace pai e elas serão herdadas por todos os namespaces filhos. O suporte para gerenciadores de segredos dedicados e configurações de permissão detalhadas no nível de namespace fortalece ainda mais a segurança e a conformidade."
+          "message": "Na Kestra Enterprise Edition, você pode armazenar e controlar segredos no nível do namespace, minimizando riscos e garantindo que as credenciais de cada equipe permaneçam isoladas. Graças à hierarquia aninhada, você também pode configurar credenciais em um namespace pai, e elas serão herdadas por todos os namespaces filhos. O suporte para gerenciadores de segredos dedicados e configurações de permissão granulares no nível do namespace fortalece ainda mais a segurança e a conformidade."
         },
         "assets": {
           "title": "Centralizar Gestão de Ativos",
@@ -1209,8 +1209,8 @@
     "quotas": "Cotas",
     "iam": "IAM",
     "tenant": {
-      "name": "Mandante",
-      "names": "Mandantes"
+      "name": "Tenant",
+      "names": "Tenants"
     },
     "bulk action async warning": "Isso pode levar alguns instantes.",
     "bulk unpause backfills": "Despausar {count} backfill",
@@ -1266,7 +1266,7 @@
     },
     "curl": {
       "command": "Comando cURL",
-      "note": "Observe que, para o tipo de input SECRET e FILE, o comando deve ser ajustado para corresponder aos valores reais."
+      "note": "Observe que para os tipos de input SECRET e FILE, o comando deve ser ajustado para corresponder aos valores reais."
     },
     "webhook": {
       "curl_command": "Comando cURL do Webhook",
@@ -1277,7 +1277,7 @@
     },
     "logs_view": {
       "raw": "Visualização temporal",
-      "raw_details": "Mostrar logs completos de task e flow em formato bruto ordenado por timestamp",
+      "raw_details": "Mostrar logs de task e logs de flow completos em um formato bruto e ordenado por timestamp",
       "compact": "Visualização padrão",
       "compact_details": "Mostrar logs de task em uma visualização compacta agrupada por cada task"
     },
@@ -1303,7 +1303,7 @@
     "behavior": "Comportamento",
     "concurrency": "Concorrência",
     "no-executions-view": {
-      "title": "Comece a automatizar com",
+      "title": "Comece a automatizar com o Kestra",
       "sub_title": "Clique no botão Executar para iniciar a execução do seu primeiro fluxo de trabalho.",
       "namespace_sub_title": "Execute um ou mais flows deste namespace para preencher este dashboard.",
       "namespace_guidance_desc": "Precisa de orientação para gerenciar seu Namespace?",
@@ -1311,7 +1311,7 @@
     },
     "execution_guide": {
       "get_started": {
-        "title": "Começar ⚡",
+        "title": "Começar",
         "text": "Siga o Guia de Início Rápido para instalar o Kestra e começar a criar seus primeiros workflows."
       },
       "namespaces": {
@@ -1330,12 +1330,12 @@
     "customize sidebar": "Personalizar barra lateral",
     "reset to defaults": "Redefinir para padrões",
     "drop items here": "Solte os itens aqui",
-    "files": "Arquivos",
+    "files": "Ficheiros do namespace",
     "optional": "Opcional",
     "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",
     "remove_bookmark": "Tem certeza de que deseja remover este marcador?",
     "showLess": "Mostrar menos",
-    "documentationMenu": "Menu de documentação",
+    "documentationMenu": "Menu de Documentação",
     "item": "item",
     "items": "itens",
     "iterations": "Iterações",
@@ -1478,7 +1478,7 @@
         "content": "Os ficheiros do namespace funcionam como uma pasta de projeto para este namespace. Armazene código Python, SQL, dbt ou Terraform e, em seguida, referencie qualquer ficheiro nos seus flows com"
       },
       "announcements": {
-        "title": "Você ainda não tem anúncios!",
+        "title": "Você não tem nenhum anúncio ainda!",
         "content": "Os anúncios permitem que você notifique seus usuários sobre quaisquer alterações ou informe-os sobre o tempo de inatividade planejado para manutenção. Basta selecionar o tipo de anúncio, o intervalo de datas em que ele deve ser exibido e escrever a mensagem do anúncio."
       },
       "kill_switches": {
@@ -1490,8 +1490,8 @@
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo."
       },
       "testSuites": {
-        "title": "Você ainda não tem Test suites!",
-        "content": "Comece a criar suítes de Teste para testar seus Flows."
+        "title": "Você ainda não tem Testes!",
+        "content": "Adicione testes para validar a qualidade e evitar regressões nos seus flows."
       },
       "assets": {
         "title": "Você ainda não tem Assets!",
@@ -1527,7 +1527,7 @@
       },
       "groups": {
         "title": "Você ainda não tem grupos!",
-        "content": "Grupos permitem que você agrupe usuários para gerenciar permissões e vinculações de funções coletivamente em todo o seu mandante."
+        "content": "Grupos permitem agrupar usuários para que você possa gerenciar permissões e vinculações de função coletivamente em seu tenant."
       },
       "dependencies": {
         "FLOW": {
@@ -1617,7 +1617,7 @@
       "others": "Outros",
       "viewAll": "Ver tudo",
       "chart_preview": "Clique no código-fonte de um gráfico para ver sua pré-visualização",
-      "export": "Exportar para CSV",
+      "export": "Exportar",
       "exportTo": {
         "csv": "Exportar para CSV",
         "ion": "Exportar para ION"
@@ -1633,9 +1633,9 @@
     },
     "setup": {
       "login": "Login",
-      "login_title": "Entrar",
+      "login_title": "Entrar no Kestra",
       "logout": "Sair",
-      "troubleshooting": "Esqueceu a Senha?",
+      "troubleshooting": "Problemas para iniciar sessão?",
       "steps": {
         "user": "Criar usuário admin",
         "survey": "Conte-nos mais",
@@ -1674,7 +1674,7 @@
         "company_personal": "Outros",
         "use_case": "Para que você planeja usá-lo?",
         "use_case_infrastructure": "Automação de infraestrutura",
-        "use_case_business": "Fluxos de trabalho empresariais",
+        "use_case_business": "fluxos de trabalho de negócios",
         "use_case_data": "Fluxos de trabalho de dados",
         "use_case_ml": "Pipelines de ML",
         "use_case_scheduling": "Agendamento e trabalhos recorrentes",
@@ -1690,7 +1690,7 @@
     },
     "ai": {
       "flow": {
-        "title": "Agente de IA"
+        "title": "Copiloto de IA"
       },
       "copilot": {
         "title": "AI Copiloto",
@@ -1822,7 +1822,7 @@
       "run_task_info": "Passe o cursor sobre qualquer task no editor de Flow Code e clique no botão \"Run task\" para testar sua task.",
       "play_icon_info": "Você também pode clicar no ícone de Play nas visualizações No-Code ou Topology.",
       "toggle": "Playground",
-      "run_task": "Executar Task",
+      "run_task": "Executar task",
       "run_this_task": "Execute esta task",
       "run_task_and_downstream": "Executar task & downstream",
       "run_all_tasks": "Executar Todas as Tasks",
@@ -1895,8 +1895,8 @@
             "description": "Conecte-se com outros usuários e obtenha ajuda da comunidade"
           },
           "videos": {
-            "title": "Tutoriais em Vídeo",
-            "description": "Guias em vídeo passo a passo para recursos avançados"
+            "title": "Tutoriais em vídeo",
+            "description": "Guias em vídeo passo a passo"
           },
           "demo": {
             "title": "Solicitar uma Demonstração",
@@ -1912,7 +1912,7 @@
       "servers": "Servidores MCP",
       "client_setup": "Configuração do Cliente",
       "page_description": "Exponha seus flows do Kestra como ferramentas para agentes de IA compatíveis com MCP",
-      "create": "Criar Servidor",
+      "create": "Criar um Servidor",
       "instructions": "Instruções",
       "auth_type": "Autenticação",
       "private": "Privado",

@@ -17,7 +17,7 @@
     "close": "닫기",
     "namespace": "Namespace",
     "description": "설명",
-    "show description": "설명을 표시",
+    "show description": "설명 표시",
     "show details": "세부 정보 표시",
     "show more details": "자세한 정보 보기",
     "skipped": "건너뜀",
@@ -109,9 +109,9 @@
     "next_execution": "다음 실행",
     "datepicker": {
       "invalid duration": "잘못된 지속 시간 형식입니다. ISO 8601 형식(예: PT30M, P1D)을 사용해 주세요.",
-      "leave empty for infinite": "무제한 지속 시간을 원하시면 비워 두거나 ISO 8601 형식의 지속 시간을 입력하세요 (예: 'P1DT1H1M1S').",
+      "leave empty for infinite": "무한 지속 시간을 위해 비워두거나 ISO 8601 지속 시간(예: 'P1DT1H1M1S')을 입력하세요.",
       "duration example": "예: 'P1DT1H1M1S'",
-      "error": "잘못된 형식입니다. 지속 시간은 ISO 8601 형식이어야 합니다.(예: P1DT1H1M1S)",
+      "error": "잘못된 기간 형식입니다. ISO 8601 기간 형식(예: P1DT1H1M1S)이어야 합니다.",
       "custom": "사용자 정의",
       "last5minutes": "지난 5분",
       "last15minutes": "지난 15분",
@@ -203,13 +203,13 @@
     "restart": "재시작",
     "restart latest revision": "최신 수정본으로 재시작",
     "restart tooltip": "<code>{state}</code> Task에서 실행을 재시작합니다.",
-    "restarted": "실행이 재시작되었습니다.",
-    "restart confirm": "<code>{id}</code> 실행을 재시작하시겠습니까?",
+    "restarted": "실행이 다시 시작되었습니다.",
+    "restart confirm": "실행 <code>{id}</code>를 다시 시작하시겠습니까?",
     "replay": "재실행",
     "replay from task tooltip": "<code>{taskId}</code> Task에서 재실행",
     "replay from beginning tooltip": "처음부터 재실행",
     "replay latest revision": "최신 수정본을 사용하여 재실행",
-    "replayed": "실행이 재생되었습니다.",
+    "replayed": "실행이 다시 재생됩니다.",
     "replay the execution": "flow <code>{flowId}</code>의 실행 <code>{executionId}</code>을(를) 다시 실행합니다.",
     "prefill inputs": "미리 채우기",
     "current": "현재",
@@ -219,7 +219,7 @@
     "are you sure change state": "상태를 변경하시겠습니까?",
     "yes": "네",
     "change state done": "작업 상태가 업데이트되었습니다",
-    "change state confirm": "----------\n                \n정말로 실행 <code>{id}</code>에서 <code>{task}</code> task의 상태를 변경하시겠습니까?",
+    "change state confirm": "실행 <code>{id}</code>의 <code>{task}</code> task에 대한 task 실행 상태를 변경하시겠습니까?<br/>그러면 다음 task부터 실행이 다시 시작되고, 상위 실행이 있는 경우 상위 실행도 다시 시작됩니다.",
     "change state current state": "현재 상태는:",
     "replay execution title": "실행 다시 실행",
     "restart execution title": "실행 재시작",
@@ -239,27 +239,27 @@
     "kill": "종료",
     "kill parents and subflow": "현재 및 subflow 종료",
     "kill only parents": "현재 것만 종료",
-    "killed confirm": "실행 <code>{id}</code>을(를) 종료하시겠습니까?",
+    "killed confirm": "실행 <code>{id}</code>를 종료하시겠습니까?",
     "killed done": "종료 중입니다.",
     "resume": "재개",
     "resumed title": "실행 <code>{id}</code> 재개",
-    "resumed confirm": "실행 <code>{id}</code>을(를) 재개하시겠습니까?",
+    "resumed confirm": "실행 <code>{id}</code>을(를) 다시 시작하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resume from breakpoint title": "`{id}` 실행을 중단점에서 재개",
     "resume from breakpoint done": "실행이 중단점부터 재개되었습니다",
     "breakpoints": "중단점",
     "pause": "일시 중지",
-    "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
-    "pause confirm": "실행 <code>{id}</code>을(를) 일시 중지하시겠습니까?",
+    "pause title": "실행 <code>{id}</code>를 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 재개해야 합니다.",
+    "pause confirm": "실행 <code>{id}</code>를 일시 중지하시겠습니까?",
     "pause done": "실행이 PAUSED 상태입니다.",
     "unqueue": "대기열에서 제거",
-    "unqueue title": "실행 <code>{id}</code>을(를) 대기열에서 제거합니다.<br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
+    "unqueue title": "실행 <code>{id}</code>의 대기열에서 제거하시겠습니까?<br/><br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 실행될 수 있습니다.",
     "unqueue title multiple": "<code>{count}</code>개의 실행을 대기열에서 제거하시겠습니까?<br/><br/>이 작업은 flow 동시성 제한을 따르지 않으므로 허용된 제한보다 더 많은 실행이 진행될 수 있습니다.",
     "unqueue done": "실행이 대기열에서 제거되었습니다.",
     "force run": "강제 실행",
     "force run title": "실행 <code>{id}</code> 강제 실행.",
-    "force run confirm": "실행 <code>{id}</code>을(를) 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동합니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
-    "force run done": "실행이 강제 실행됩니다.",
+    "force run confirm": "실행 <code>{id}</code>를 강제로 실행하시겠습니까?<br/><br/>경고: 실행 강제 실행은 보장되지 않으며 중복 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED task는 실행 중 상태로 이동됩니다.</li><li>RUNNING task는 다시 제출됩니다.</li><li>QUEUED task는 대기열에서 제거됩니다.</li><li>PAUSED task는 재개됩니다.</li></ul>",
+    "force run done": "실행이 강제로 실행됨",
     "metrics": "메트릭",
     "no metrics available": "이 task 실행에 대한 메트릭이 기록되지 않았습니다.",
     "no outputs available": "이 task 실행에 대한 output이 없습니다.",
@@ -363,7 +363,7 @@
         },
         "alt": "블루프린트 아이콘"
       },
-      "custom": "사용자 정의 blueprints",
+      "custom": "사용자 지정 Blueprint",
       "flows": "플로우 Blueprints",
       "apps": "앱 Blueprints",
       "dashboards": "대시보드 Blueprints",
@@ -476,11 +476,11 @@
     "last evaluation date": "마지막 평가 날짜",
     "last trigger date tooltip": "트리거가 마지막으로 실행된 시점입니다. 백필을 실행할 때 과거일 수 있습니다.",
     "context updated date tooltip": "트리거의 컨텍스트가 마지막으로 업데이트된 시점입니다. 이는 실행이 트리거되거나, 완료되었을 때(잠금 해제), 또는 평가 후(실행이 발생하지 않더라도) 발생합니다.",
-    "next evaluation date tooltip": "트리거가 다음으로 평가될 시점은 간격을 기준으로 합니다. 조건이 충족되지 않으면 다음 실행 날짜와 항상 같지 않을 수 있습니다.",
+    "next evaluation date tooltip": "스케줄러가 간격에 따라 이 trigger를 다음에 평가할 시점입니다. 평가는 trigger의 조건이 충족될 경우에만 실행을 생성합니다.",
     "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
     "conditions": "조건",
     "triggerId": "트리거 ID",
-    "tenantId": "테넌트 ID",
+    "tenantId": "tenant ID",
     "paused": "일시 중지됨",
     "running": "실행 중",
     "Fold content lines": "다중 라인 문자열 접기",
@@ -543,7 +543,7 @@
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "bulk resume": "<code>{executionCount}</code> 개의 실행을 재개하시겠습니까?",
     "bulk pause": "<code>{executionCount}</code> 실행을 일시 중지하시겠습니까?",
-    "bulk force run": "<code>{executionCount}</code> 실행을 강제로 실행하시겠습니까?<br/><br/>WARNING: 실행을 강제로 실행하는 것은 보장되지 않으며 중복된 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED tasks는 RUNNING 상태로 이동됩니다.</li><li>RUNNING tasks는 다시 제출됩니다.</li><li>QUEUED tasks는 대기열에서 제거됩니다.</li><li>PAUSED tasks는 재개됩니다.</li></ul>",
+    "bulk force run": "<code>{executionCount}</code>개의 실행을 강제로 실행하시겠습니까?<br/><br/>경고: 실행 강제 실행은 보장되지 않으며 중복 task 실행을 생성할 수 있습니다.<br/><br/>다음 전환이 수행됩니다:<br/><ul><li>CREATED task는 실행 중 상태로 이동됩니다.</li><li>RUNNING task는 다시 제출됩니다.</li><li>QUEUED task는 대기열에서 제거됩니다.</li><li>PAUSED task는 재개됩니다.</li></ul>",
     "bulk restart": "<code>{executionCount}</code> 개의 실행을 재시작하시겠습니까?",
     "bulk kill": "<code>{executionCount}</code> 개의 실행을 강제 종료하시겠습니까?",
     "cancel": "취소",
@@ -613,7 +613,7 @@
     "flow must not be empty": "flow는 비어 있을 수 없습니다",
     "flow creation denied in namespace": "`{namespace}` namespace에서 flow를 생성할 권한이 없습니다.",
     "readonly property": "읽기 전용 속성",
-    "namespace and id readonly": "`namespace`와 `id` 속성은 변경할 수 없습니다 — 초기 값으로 설정되었습니다. flow의 이름을 변경하거나 namespace를 변경하려면 새 flow를 만들고 기존 flow를 삭제하세요.",
+    "namespace and id readonly": "`namespace` 및 `id` 속성은 변경할 수 없습니다. 이제 초기 값으로 설정됩니다. flow 이름을 바꾸거나 namespace를 변경하려면 새 flow를 만들고 이전 flow를 제거할 수 있습니다.",
     "avg": "평균",
     "sum": "합계",
     "min": "Min",
@@ -788,7 +788,7 @@
     "manage labels": "label 관리",
     "Set labels to execution": "실행 <code>{id}</code>의 라벨 추가 또는 업데이트",
     "Set labels done": "실행의 라벨이 성공적으로 설정되었습니다",
-    "bulk set labels": "<code>{executionCount}</code> 개의 실행에 라벨을 설정하시겠습니까?",
+    "bulk set labels": "<code>{executionCount}</code>개의 실행에 label을 설정하시겠습니까?",
     "true": "True",
     "false": "False",
     "undefined": "Undefined",
@@ -877,11 +877,11 @@
           }
         },
         "theme": {
-          "label": "테마 설정",
+          "label": "모양",
           "fields": {
             "app_font_size": "앱 글꼴 크기",
             "color_mode": "색상 모드",
-            "editor_folding_stratgy": "편집기에서 자동 코드 접기",
+            "editor_folding_stratgy": "에디터에서 코드 자동 접기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_font_size": "편집기 글꼴 크기",
             "editor_hover_description": "속성을 가리키면 설명이 표시됩니다.",
@@ -947,12 +947,12 @@
       "contact_sales": "영업팀에 문의하세요",
       "secrets": {
         "title": "비밀 관리 업그레이드",
-        "message": "Enterprise Edition (EE)는 UI에서 비밀을 직접 추가, 편집 또는 삭제할 수 있게 해줍니다. 인스턴스를 재시작할 필요가 없습니다. 비밀을 namespace별로 세분화된 RBAC 권한으로 구성하고, 상위 namespace에서 하위 namespace로 상속할 수 있습니다. EE는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, Elasticsearch와 같은 비밀 관리자와 통합됩니다. namespace, tenant, 인스턴스별로 전용 백엔드를 설정하여 팀 간 비밀을 격리하거나 외부 vault에 저장된 읽기 전용 비밀을 활성화할 수 있습니다. 비밀은 저장 중 및 전송 중에 암호화된 상태로 유지됩니다. 선택적 캐싱은 API 호출을 줄이고, 감사 추적은 모든 접근을 log합니다.",
+        "message": "Enterprise Edition(EE)을 사용하면 UI에서 직접 시크릿을 추가, 편집 또는 삭제할 수 있으며 인스턴스를 다시 시작할 필요가 없습니다. 세분화된 RBAC 권한으로 namespace별로 시크릿을 구성하고, 부모 namespace에서 자식 namespace로 시크릿을 상속할 수 있습니다. EE는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, Elasticsearch와 같은 시크릿 관리자와 통합됩니다. 팀 간에 시크릿을 격리하기 위해 namespace, tenant 또는 인스턴스별로 전용 백엔드를 설정하거나 외부 볼트에 저장된 읽기 전용 시크릿을 활성화할 수 있습니다. 시크릿은 저장 중 및 전송 중에 암호화된 상태로 유지됩니다. 선택적 캐싱은 API 호출을 줄이고, 감사 추적은 모든 액세스를 기록합니다.",
         "add_env": {
-          "intro": "새 Secret을 생성하려면:",
+          "intro": "새 Secret 생성",
           "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",
-          "second": "위의 값을 사용하여 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>'라는 환경 변수를 추가하세요.",
-          "third": "Kestra 인스턴스를 재시작하십시오"
+          "second": "인코딩된 값을 사용하여 <code>SECRET_&lt;MY_SECRET_KEY&gt;</code>라는 환경 변수를 설정합니다.",
+          "third": "비밀이 로드되도록 Kestra 인스턴스를 다시 시작하세요."
         }
       },
       "apps": {
@@ -979,7 +979,7 @@
       },
       "IAM": {
         "title": "IAM을 통해 SSO, SCIM 및 RBAC로 사용자 관리",
-        "message": "Kestra Enterprise Edition은 단일 사인온(SSO), SCIM 디렉토리 동기화, 역할 기반 접근 제어(RBAC)와 같은 IAM 기능을 내장하고 있으며, 여러 ID 공급자와 통합하여 사용자 및 서비스 계정에 대해 세분화된 권한을 할당할 수 있습니다."
+        "message": "Kestra Enterprise Edition은 SSO(Single Sign-On), SCIM 디렉터리 동기화 및 RBAC(역할 기반 접근 제어)를 포함한 내장 IAM 기능을 제공하여 여러 ID 공급자와 통합하고 사용자 및 서비스 계정에 세분화된 권한을 할당할 수 있습니다."
       },
       "tenants": {
         "title": "격리된 Tenant에서 Workflow 관리",
@@ -1004,17 +1004,17 @@
       "policies": {
         "header": "거버넌스 정책",
         "label": "정책",
-        "message": "정책을 통해 플랫폼 팀은 모든 flow에 걸쳐 규칙을 중앙에서 관리하고 적용할 수 있습니다. — 공유 기본값을 주입하고, 플러그인을 차단하며, 속성 값의 범위를 지정하고, 규정 준수 label을 요구합니다. 규칙은 단계적 배포를 통해 테넌트 또는 namespace 수준에서 적용되며, 주입되거나 대체된 모든 value는 flow 작성자에게 계속 표시됩니다.",
+        "message": "정책을 통해 플랫폼 팀은 모든 flow에 걸쳐 규칙을 중앙에서 관리하고 적용할 수 있습니다. 공유 기본값을 주입하고, 플러그인을 차단하고, 속성 값을 제한하고, 규정 준수 label을 요구할 수 있습니다. 규칙은 단계별 롤아웃을 통해 tenant 또는 namespace 수준에서 적용되며, 주입되거나 교체된 모든 값은 flow 작성자에게 계속 표시됩니다.",
         "title": "정책으로 모든 flow 관리"
       },
       "namespace": {
         "edit": {
           "title": "네임스페이스 관리 업그레이드",
-          "message": "Kestra Enterprise Edition에서는 namespace가 비밀, 변수 및 플러그인 기본값의 고급 격리 및 관리를 제공합니다. 관리자는 사용자 정의 비밀 관리자, 격리된 저장소 백엔드, 전용 worker 그룹 및 세부적인 권한을 namespace별로 구성할 수 있습니다. 이를 통해 비밀, 변수 및 플러그인 구성이 다양한 팀과 프로젝트 전반에 걸쳐 안전하고 쉽게 유지될 수 있습니다."
+          "message": "Kestra Enterprise Edition에서 namespace는 대규모로 secrets, variables 및 플러그인 기본값에 대한 고급 격리 및 거버넌스를 제공합니다. 관리자는 namespace별로 사용자 지정 secrets manager, 격리된 스토리지 백엔드, 전용 worker 그룹 및 세분화된 권한을 구성할 수 있습니다. 이를 통해 secrets, variables 및 플러그인 구성이 여러 팀과 프로젝트에서 안전하고 쉽게 유지 관리됩니다."
         },
         "secrets": {
           "title": "비밀을 안전하게 관리하기",
-          "message": "Kestra Enterprise Edition에서는 namespace 수준에서 비밀을 저장하고 제어할 수 있어 위험을 최소화하고 각 팀의 자격 증명이 격리된 상태로 유지됩니다. 중첩된 계층 구조 덕분에 상위 namespace에서 자격 증명을 구성하면 모든 하위 namespace에서 이를 상속받을 수 있습니다. 전용 비밀 관리자 지원 및 세분화된 namespace 수준의 권한 설정은 보안과 규정을 더욱 강화합니다."
+          "message": "Kestra Enterprise Edition에서는 namespace 수준에서 보안 비밀을 저장하고 제어하여 위험을 최소화하고 각 팀의 자격 증명이 격리되도록 할 수 있습니다. 중첩된 계층 구조 덕분에 상위 namespace에서 자격 증명을 구성할 수도 있으며, 모든 하위 namespace에서 상속됩니다. 전용 보안 비밀 관리자 및 세분화된 namespace 수준 권한 설정 지원은 보안 및 규정 준수를 더욱 강화합니다."
         },
         "assets": {
           "title": "자산 관리 중앙화",
@@ -1209,8 +1209,8 @@
     "quotas": "할당량",
     "iam": "IAM",
     "tenant": {
-      "name": "테넌트",
-      "names": "테넌트"
+      "name": "tenant",
+      "names": "tenant"
     },
     "bulk action async warning": "잠시 시간이 걸릴 수 있습니다.",
     "bulk unpause backfills": "{count} backfill 재개",
@@ -1266,7 +1266,7 @@
     },
     "curl": {
       "command": "cURL 명령어",
-      "note": "SECRET 및 FILE 입력 유형의 경우, 명령어는 실제 값에 맞게 조정되어야 합니다."
+      "note": "SECRET 및 FILE input 유형의 경우, 실제 값과 일치하도록 명령을 조정해야 합니다."
     },
     "webhook": {
       "curl_command": "Webhook cURL 명령어",
@@ -1277,7 +1277,7 @@
     },
     "logs_view": {
       "raw": "Temporal 보기",
-      "raw_details": "전체 task logs 및 flow logs를 원시 타임스탬프 순서로 표시",
+      "raw_details": "원시 타임스탬프 순서 형식으로 전체 task log 및 flow log를 표시합니다.",
       "compact": "기본 보기",
       "compact_details": "각 task별로 그룹화된 간결한 보기로 task logs 표시"
     },
@@ -1303,7 +1303,7 @@
     "behavior": "동작",
     "concurrency": "동시성",
     "no-executions-view": {
-      "title": "자동화를 시작하세요",
+      "title": "Kestra로 자동화를 시작하세요",
       "sub_title": "실행 버튼을 클릭하여 첫 번째 workflow 실행을 시작하세요.",
       "namespace_sub_title": "이 대시보드를 채우기 위해 이 namespace에서 하나 이상의 flow를 실행하십시오.",
       "namespace_guidance_desc": "네임스페이스를 관리하는 데 도움이 필요하신가요?",
@@ -1311,7 +1311,7 @@
     },
     "execution_guide": {
       "get_started": {
-        "title": "시작하기 ⚡",
+        "title": "시작하기",
         "text": "Quickstart Guide를 따라 Kestra를 설치하고 첫 번째 workflow를 구축하세요."
       },
       "namespaces": {
@@ -1330,7 +1330,7 @@
     "customize sidebar": "사이드바 사용자 정의",
     "reset to defaults": "기본값으로 재설정",
     "drop items here": "여기에 항목을 드롭하세요",
-    "files": "파일",
+    "files": "namespace 파일",
     "optional": "선택 사항",
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "remove_bookmark": "이 북마크를 제거하시겠습니까?",
@@ -1478,7 +1478,7 @@
         "content": "namespace 파일은 이 namespace의 프로젝트 폴더처럼 작동합니다. Python, SQL, dbt 또는 Terraform 코드를 저장한 다음, flow에서 다음을 사용하여 모든 파일을 참조하세요"
       },
       "announcements": {
-        "title": "아직 공지가 없습니다!",
+        "title": "아직 공지사항이 없습니다!",
         "content": "공지사항을 통해 사용자에게 변경 사항을 알리거나 계획된 유지보수 중단에 대해 알릴 수 있습니다. 공지사항 유형을 선택하고, 표시할 날짜 범위를 설정한 후 공지사항 메시지를 작성하세요."
       },
       "kill_switches": {
@@ -1490,8 +1490,8 @@
         "content": "Kestra와 외부 세계를 상호작용하는 앱을 만들기 시작하세요."
       },
       "testSuites": {
-        "title": "아직 Test suite가 없습니다!",
-        "content": "테스트 스위트를 생성하여 flow를 테스트하기 시작하세요."
+        "title": "아직 테스트가 없습니다!",
+        "content": "flow의 품질을 검증하고 회귀를 방지하기 위해 테스트를 추가하세요."
       },
       "assets": {
         "title": "아직 자산이 없습니다!",
@@ -1527,7 +1527,7 @@
       },
       "groups": {
         "title": "아직 그룹이 없습니다!",
-        "content": "그룹은 사용자를 함께 묶어 권한 및 역할 바인딩을 테넌트 전체에서 집합적으로 관리할 수 있도록 합니다."
+        "content": "그룹을 사용하면 사용자를 함께 묶어 tenant 전체에서 권한 및 역할 바인딩을 일괄적으로 관리할 수 있습니다."
       },
       "dependencies": {
         "FLOW": {
@@ -1617,7 +1617,7 @@
       "others": "기타",
       "viewAll": "전체 보기",
       "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
-      "export": "CSV로 내보내기",
+      "export": "내보내기",
       "exportTo": {
         "csv": "CSV로 내보내기",
         "ion": "ION으로 내보내기"
@@ -1633,9 +1633,9 @@
     },
     "setup": {
       "login": "로그인",
-      "login_title": "로그인",
+      "login_title": "Kestra에 로그인",
       "logout": "로그아웃",
-      "troubleshooting": "비밀번호를 잊으셨습니까?",
+      "troubleshooting": "로그인에 문제가 있으신가요?",
       "steps": {
         "user": "관리자 사용자 생성",
         "survey": "자세히 알려주세요",
@@ -1690,7 +1690,7 @@
     },
     "ai": {
       "flow": {
-        "title": "AI 에이전트"
+        "title": "AI Copilot"
       },
       "copilot": {
         "title": "AI 코파일럿",
@@ -1822,7 +1822,7 @@
       "run_task_info": "Flow Code 편집기에서 어떤 task 위에 마우스를 올리고 \"Run task\" 버튼을 클릭하여 task를 테스트하세요.",
       "play_icon_info": "또한 No-Code 또는 Topology 보기에서 Play 아이콘을 클릭할 수 있습니다.",
       "toggle": "플레이그라운드",
-      "run_task": "작업 실행",
+      "run_task": "Task 실행",
       "run_this_task": "이 task 실행",
       "run_task_and_downstream": "Task 및 다운스트림 실행",
       "run_all_tasks": "모든 Task 실행",
@@ -1896,7 +1896,7 @@
           },
           "videos": {
             "title": "비디오 튜토리얼",
-            "description": "고급 기능을 위한 단계별 비디오 가이드"
+            "description": "단계별 비디오 가이드"
           },
           "demo": {
             "title": "데모 받기",

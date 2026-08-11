@@ -45,13 +45,19 @@ export function compareTranslations(
     fingerprintsFile?: string,
 ): void {
     // Locale codes are interpolated into a path, so they are constrained to the shape a locale
-    // actually has. Callers pass a fixed list today, but validating here means a future caller
-    // reading codes from a directory listing or an argument cannot walk out of `translationsDir`.
+    // actually has, and the resolved path is then asserted to sit directly inside the base
+    // directory. Callers pass a fixed list today; the two guards mean a future caller reading codes
+    // from a directory listing or an argument cannot escape `translationsDir` whatever it passes.
+    const baseDir = path.resolve(translationsDir)
     const getPath = (lang: string): string => {
         if (!/^[a-z]{2}(_[A-Z]{2})?$/.test(lang)) {
             throw new Error(`"${lang}" is not a valid locale code.`)
         }
-        return path.resolve(translationsDir, `${lang}.json`)
+        const resolved = path.resolve(baseDir, `${lang}.json`)
+        if (path.dirname(resolved) !== baseDir) {
+            throw new Error(`Refusing to read "${resolved}": it is outside "${baseDir}".`)
+        }
+        return resolved
     }
 
     // Use English as a base language

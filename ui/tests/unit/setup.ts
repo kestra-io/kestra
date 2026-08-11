@@ -1,5 +1,6 @@
 import {afterEach, vi} from "vitest"
 import {config, disableAutoUnmount, enableAutoUnmount} from "@vue/test-utils"
+import {installMonacoCssEscapePolyfill} from "./monacoCssEscapePolyfill"
 
 // Required by `isolate: false` (vitest.config.unit.js): workers reuse one module registry, so a
 // module cached while another file's vi.mock was active keeps that mock. Setup files run before
@@ -71,3 +72,4 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
         dispatchEvent: () => false,
     })
 }
+installMonacoCssEscapePolyfill()

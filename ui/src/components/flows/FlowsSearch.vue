@@ -145,13 +145,13 @@
                     class="source-search__summary"
                 >
                     <template #matches>
-                        <strong>{{ summaryMatchCount }}</strong>
+                        <strong>{{ t('source_search.match_count', summaryMatchCount) }}</strong>
                     </template>
                     <template #resources>
-                        <strong>{{ summaryResourceCount }}</strong>
+                        <strong>{{ t('source_search.count_resources', summaryResourceCount) }}</strong>
                     </template>
                     <template #types>
-                        <strong>{{ summaryActiveTypeCount }}</strong>
+                        <strong>{{ t('source_search.count_types', summaryActiveTypeCount) }}</strong>
                     </template>
                 </i18n-t>
 

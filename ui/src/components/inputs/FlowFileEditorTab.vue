@@ -64,7 +64,7 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {apiUrl} from "override/utils/route"
-    import type * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+    import type * as monaco from "monaco-editor/editor/editor.api"
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"

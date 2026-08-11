@@ -297,20 +297,22 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         return HttpResponse.of(responseCode, body, responseContentType);
     }
 
-    /**
-     * Expose the request body on the trigger output: a text body as {@code body}, a binary body as {@code body}
-     * base64-encoded, and a {@code multipart/form-data} body as {@code parts} and {@code formFields}.
-     * Bytes are base64-encoded because trigger variables carry text, not binary.
-     * <p>
-     * A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
-     * under, which is exposed as {@code uri}.
-     *
-     * @param output        the output being built
-     * @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
-     *                      stored rather than read
-     * @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
-     * @return the output builder, for chaining
-     */
+    // JavaDoc is not working as annotation processor didn't run before JavaDoc so this is a regular comment
+    // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
+    //
+    // Expose the request body on the trigger output: a text body as {@code body}, a binary body as {@code body}
+    // base64-encoded, and a {@code multipart/form-data} body as {@code parts} and {@code formFields}.
+    // Bytes are base64-encoded because trigger variables carry text, not binary.
+    // <p>
+    // A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
+    // under, which is exposed as {@code uri}.
+    //
+    // @param output        the output being built
+    // @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
+    // stored rather than read
+    // @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
+    // @return the output builder, for chaining
+    //
     private static Output.OutputBuilder withBody(Output.OutputBuilder output, HttpRequest.RequestBody requestBody, URI storedBodyUri) {
         if (storedBodyUri != null) {
             return output.uri(storedBodyUri.toString());

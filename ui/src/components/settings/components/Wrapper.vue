@@ -1,19 +1,16 @@
 <template>
-    <el-row class="my-5 settings-wrapper">
-        <el-col
-            :xs="layout(24, 0)"
-            :sm="layout(20, 2)"
-            :md="layout(18, 3)"
-            :lg="layout(16, 4)"
-            :xl="layout(14, 5)"
-        >
-            <slot />
-        </el-col>
-    </el-row>
+    <div class="settings-wrapper">
+        <slot />
+    </div>
 </template>
 
-<script setup lang="ts">
-    const layout = (span: number, offset: number) => {
-        return {span, offset};
-    };
-</script>
+<style scoped lang="scss">
+    .settings-wrapper {
+        width: min(600px, 100% - var(--ks-spacing-6));
+        margin: 0 auto;
+        padding-block: var(--ks-spacing-6) var(--ks-spacing-10);
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-10);
+    }
+</style>

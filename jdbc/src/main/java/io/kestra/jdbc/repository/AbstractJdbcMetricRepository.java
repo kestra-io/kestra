@@ -1,10 +1,26 @@
 package io.kestra.jdbc.repository;
 
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
@@ -14,32 +30,17 @@ import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Metrics;
+
 import io.micrometer.common.lang.Nullable;
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 
-import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface {
-    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull();
-    protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
+public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepository<MetricEntry> implements MetricRepositoryInterface {
+    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository,
-                                        JdbcFilterService filterService) {
-        this.jdbcRepository = jdbcRepository;
+        JdbcFilterService filterService) {
+        super(jdbcRepository);
 
         this.filterService = filterService;
     }
@@ -52,7 +53,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         Metrics.Fields.NAMESPACE, "namespace",
         Metrics.Fields.FLOW_ID, "flow_id",
         Metrics.Fields.TASK_ID, "task_id",
-        Metrics.Fields.EXECUTION_ID, "execution_d",
+        Metrics.Fields.EXECUTION_ID, "execution_id",
         Metrics.Fields.TASK_RUN_ID, "taskrun_id",
         Metrics.Fields.NAME, "metric_name",
         Metrics.Fields.VALUE, "metric_value",
@@ -71,60 +72,38 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-            , pageable
         );
     }
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-                .and(field("task_id").eq(taskId)),
-            pageable
+                .and(field("task_id").eq(taskId))
         );
     }
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-                .and(field("taskrun_id").eq(taskRunId)),
-            pageable
+                .and(field("taskrun_id").eq(taskRunId))
         );
-    }
-
-    @Override
-    public Flux<MetricEntry> findAllAsync(@io.micronaut.core.annotation.Nullable String tenantId) {
-        return Flux.create(emitter -> this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
-                    stream.map((Record record) -> jdbcRepository.map(record))
-                        .forEach(emitter::next);
-                } finally {
-                    emitter.complete();
-                }
-            }), FluxSink.OverflowStrategy.BUFFER);
     }
 
     @Override
     public List<String> flowMetrics(
         String tenantId,
         String namespace,
-        String flowId
-    ) {
+        String flowId) {
         return this.queryDistinct(
             tenantId,
             field("flow_id").eq(flowId)
@@ -139,8 +118,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         String tenantId,
         String namespace,
         String flowId,
-        String taskId
-    ) {
+        String taskId) {
         return this.queryDistinct(
             tenantId,
             field("flow_id").eq(flowId)
@@ -155,8 +133,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     public List<String> tasksWithMetrics(
         String tenantId,
         String namespace,
-        String flowId
-    ) {
+        String flowId) {
         return this.queryDistinct(
             tenantId,
             field("flow_id").eq(flowId)
@@ -175,8 +152,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         String metric,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        String aggregation
-    ) {
+        String aggregation) {
         Condition conditions = field("flow_id").eq(flowId)
             .and(field("namespace").eq(namespace))
             .and(field("metric_name").eq(metric))
@@ -193,48 +169,37 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                     startDate,
                     endDate,
                     aggregation
-                ))
+                )
+            )
             .groupBy(DateUtils.groupByType(Duration.between(startDate, endDate)).val())
             .build();
     }
 
     @Override
-    public MetricEntry save(MetricEntry metric) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(metric);
-        this.jdbcRepository.persist(metric, fields);
-
-        return metric;
-    }
-
-    @Override
-    public int saveBatch(List<MetricEntry> items) {
-        if (ListUtils.isEmpty(items)) {
-            return 0;
-        }
-
-        return this.jdbcRepository.persistBatch(items);
-    }
-
-    @Override
     public Integer purge(Execution execution) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
+        return purge(DSL.noCondition(), field("execution_id", String.class).eq(execution.getId()));
+    }
 
-                return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).eq(execution.getId()))
-                    .execute();
-            });
+    @Override
+    public Integer purge(List<Execution> executions) {
+        return purge(DSL.noCondition(), field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()));
+    }
+
+    @Override
+    protected Condition defaultFilter(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter() {
+        return DSL.trueCondition();
     }
 
     private List<String> queryDistinct(String tenantId, Condition condition, String field) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
                 SelectConditionStep<Record1<Object>> select = context
                     .selectDistinct(field(field))
@@ -247,33 +212,17 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             });
     }
 
-    private ArrayListTotal<MetricEntry> query(String tenantId, Condition condition, Pageable pageable) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                select = select.and(condition);
-
-                return this.jdbcRepository.fetchPage(context, select, pageable);
-            });
-    }
-
     private List<MetricAggregation> aggregate(
         String tenantId,
         Condition condition,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        String aggregation
-    ) {
+        String aggregation) {
         List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate), true));
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 var select = DSL
                     .using(configuration)
                     .select(dateFields)
@@ -322,41 +271,49 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     private List<MetricAggregation> fillDate(List<MetricAggregation> result, ZonedDateTime startDate, ZonedDateTime endDate) {
         DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
 
-        if (groupByType.equals(DateUtils.GroupType.MONTH)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM");
-        } else if (groupByType.equals(DateUtils.GroupType.WEEK)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww");
-        } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD");
-        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
-            return fillDate(result, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH");
-        } else {
-            return fillDate(result, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm");
-        }
+        return switch (groupByType) {
+            case MONTH -> fillDate(result, startDate, endDate, ChronoUnit.MONTHS);
+            case WEEK -> fillDate(result, startDate, endDate, ChronoUnit.WEEKS);
+            case DAY -> fillDate(result, startDate, endDate, ChronoUnit.DAYS);
+            case HOUR -> fillDate(result, startDate, endDate, ChronoUnit.HOURS);
+            case MINUTE -> fillDate(result, startDate, endDate, ChronoUnit.MINUTES);
+        };
     }
 
     private List<MetricAggregation> fillDate(
         List<MetricAggregation> result,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        ChronoUnit unit,
-        String format
-    ) {
+        ChronoUnit unit) {
         List<MetricAggregation> filledResult = new ArrayList<>();
-        ZonedDateTime currentDate = startDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+        // Floored to the bucket boundary so the generated buckets line up with the calendar-floored
+        // instants AbstractJdbcRepository#getDate reassembles from the SQL year/month/week/day parts;
+        // otherwise the last bucket walked from an unfloored startDate can fall short of endDate and
+        // silently drop the most recent data point.
+        ZonedDateTime currentDate = truncateToBucket(startDate, unit);
         while (currentDate.isBefore(endDate)) {
-            String finalCurrentDate = currentDate.format(formatter);
+            Instant bucketInstant = currentDate.toInstant();
             MetricAggregation metricStat = result.stream()
-                .filter(metric -> formatter.format(metric.date).equals(finalCurrentDate))
+                .filter(metric -> metric.date.equals(bucketInstant))
                 .findFirst()
-                .orElse(MetricAggregation.builder().date(currentDate.toInstant()).value(0.0).build());
+                .orElse(MetricAggregation.builder().date(bucketInstant).value(0.0).build());
 
             filledResult.add(metricStat);
             currentDate = currentDate.plus(1, unit);
         }
 
         return filledResult;
+    }
+
+    private static ZonedDateTime truncateToBucket(ZonedDateTime date, ChronoUnit unit) {
+        ZonedDateTime utc = date.withZoneSameInstant(ZoneOffset.UTC);
+        // MONTHS/WEEKS aren't supported by truncatedTo, and must match AbstractJdbcRepository#getDate's
+        // calendar-floored buckets (first-of-month, Monday-of-week).
+        return switch (unit) {
+            case MONTHS -> utc.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+            case WEEKS -> utc.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
+            default -> utc.truncatedTo(unit);
+        };
     }
 
     @Override
@@ -375,11 +332,12 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return mapper::get;
     }
 
-    public Double fetchValue(String tenantId, DataFilterKPI<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+    public Double fetchValue(String tenantId, DataFilterKPI<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<Metrics.Fields> columnDescriptor = dataFilter.getColumns();
-            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
                 field = filterService.buildAggregation(field, columnDescriptor.getAgg());
@@ -400,7 +358,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 filterService,
                 filters,
                 getFieldsMapping()
-            );
+            ).and(NORMAL_KIND_CONDITION);
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {
@@ -411,18 +369,17 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         });
     }
 
-
     @Override
     public ArrayListTotal<Map<String, Object>> fetchData(
         String tenantId,
         DataFilter<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> descriptors,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        Pageable pageable
-    ) {
+        Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 Map<String, ? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
@@ -446,7 +403,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping)
+                    .and(NORMAL_KIND_CONDITION);
 
                 List<? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)

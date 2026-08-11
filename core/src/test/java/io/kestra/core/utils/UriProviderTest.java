@@ -1,16 +1,18 @@
 package io.kestra.core.utils;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
+
+import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class UriProviderTest {
     @Inject
     UriProvider uriProvider;

@@ -1,15 +1,17 @@
 package io.kestra.core.docs;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.ArrayUtils;
+
 import com.google.common.base.CaseFormat;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("this-escape")
 @Getter
@@ -27,10 +29,6 @@ public abstract class AbstractClassDocumentation<T> {
     protected Map<String, Object> defs = new TreeMap<>();
     protected Map<String, Object> inputs = new TreeMap<>();
     protected Map<String, Object> propertiesSchema;
-    private final List<String> defsExclusions = List.of(
-        "io.kestra.core.models.conditions.Condition",
-        "io.kestra.core.models.conditions.ScheduleCondition"
-    );
 
     @SuppressWarnings("unchecked")
     protected AbstractClassDocumentation(JsonSchemaGenerator jsonSchemaGenerator, Class<? extends T> cls, Class<T> baseCls) {
@@ -41,7 +39,6 @@ public abstract class AbstractClassDocumentation<T> {
 
         if (this.propertiesSchema.containsKey("$defs")) {
             this.defs.putAll((Map<String, Object>) this.propertiesSchema.get("$defs"));
-            defsExclusions.forEach(this.defs::remove);
             this.propertiesSchema.remove("$defs");
         }
 
@@ -54,7 +51,8 @@ public abstract class AbstractClassDocumentation<T> {
             .filter(entry -> !entry.getKey().equals("io.kestra.core.models.tasks.Task"))
             // Remove definitions of all Input subtypes if base class is null
             .filter(entry -> (baseCls == null) || !entry.getKey().startsWith("io.kestra.core.models.flows.input."))
-            .map(entry -> {
+            .map(entry ->
+            {
                 Map<String, Object> value = (Map<String, Object>) entry.getValue();
                 value.put("properties", flatten(properties(value), required(value), null));
 
@@ -75,16 +73,21 @@ public abstract class AbstractClassDocumentation<T> {
 
             this.docExamples = examples
                 .stream()
-                .map(r -> new ExampleDoc(
-                    (String) r.get("title"),
-                    String.join("\n", ArrayUtils.addAll(
-                        ((Boolean) r.get("full") ? new ArrayList<String>() : Arrays.asList(
-                            "id: \"" + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, cls.getSimpleName()) + "\"",
-                            "type: \"" + cls.getName() + "\""
-                        )).toArray(new String[0]),
-                        (String) r.get("code")
-                    ))
-                ))
+                .map(
+                    r -> new ExampleDoc(
+                        (String) r.get("title"),
+                        String.join(
+                            "\n", ArrayUtils.addAll(
+                                ((Boolean) r.get("full") ? new ArrayList<String>()
+                                    : Arrays.asList(
+                                        "id: \"" + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, cls.getSimpleName()) + "\"",
+                                        "type: \"" + cls.getName() + "\""
+                                    )).toArray(new String[0]),
+                                (String) r.get("code")
+                            )
+                        )
+                    )
+                )
                 .toList();
         }
 
@@ -100,7 +103,8 @@ public abstract class AbstractClassDocumentation<T> {
 
     @SuppressWarnings("unchecked")
     protected static Map<String, Object> flatten(Map<String, Object> map, List<String> required, String parentName) {
-        Map<String, Object> result = new TreeMap<>((key1, key2) -> {
+        Map<String, Object> result = new TreeMap<>((key1, key2) ->
+        {
             boolean key1Required = required.contains(key1);
             boolean key2Required = required.contains(key2);
             if (key1Required == key2Required) {

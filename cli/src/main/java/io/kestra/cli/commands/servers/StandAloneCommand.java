@@ -1,25 +1,28 @@
 package io.kestra.cli.commands.servers;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.cli.services.FileChangedEventListener;
-import io.kestra.cli.services.TenantIdSelectorService;
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.models.ServerType;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.cli.StandAloneRunner;
-import io.kestra.core.services.SkipExecutionService;
-import io.kestra.core.services.StartExecutorService;
-import io.kestra.core.utils.Await;
-import io.micronaut.context.ApplicationContext;
-import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
-import picocli.CommandLine;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.cli.StandAloneRunner;
+import io.kestra.cli.services.FileChangedEventListener;
+import io.kestra.cli.services.TenantIdSelectorService;
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.models.ServerType;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.Worker;
+import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.Await;
+
+import jakarta.annotation.Nullable;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 @CommandLine.Command(
     name = "standalone",
@@ -30,53 +33,55 @@ public class StandAloneCommand extends AbstractServerCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
 
     @Inject
-    private SkipExecutionService skipExecutionService;
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
 
     @Inject
-    private StartExecutorService startExecutorService;
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
+
+    @Inject
+    private Provider<StandAloneRunner> standAloneRunnerProvider;
 
     @Inject
     @Nullable
     private FileChangedEventListener fileWatcher;
 
-    @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
+    @Option(names = { "-f", "--flow-path" }, description = "Tenant identifier required to load flows from the specified path")
     private File flowPath;
 
-    @CommandLine.Option(names = "--tenant", description = "Tenant identifier, Required to load flows from path with the enterprise edition")
+    @Option(names = "--tenant", description = "Tenant identifier, Required to load flows from path with the enterprise edition")
     private String tenantId;
 
-    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to eight times the number of available processors. Set it to 0 to avoid starting a worker.")
-    private int workerThread = defaultWorkerThread();
+    @Option(names = { "--worker-thread" }, description = "the number of worker threads, defaults to eight times the number of available processors. Set it to 0 to avoid starting a worker.")
+    private int workerThread = Worker.defaultNumThreads();
+    @Option(names = { "--ignore-executions" }, split = ",", description = "a list of execution identifiers to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreExecutions = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipExecutions = Collections.emptyList();
+    @Option(names = { "--ignore-flows" }, split = ",", description = "a list of flow identifiers (namespace.flowId) to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreFlows = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "a list of flow identifiers (namespace.flowId) to skip, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipFlows = Collections.emptyList();
+    @Option(names = { "--ignore-namespaces" }, split = ",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting only")
+    private List<String> ignoreNamespaces = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipNamespaces = Collections.emptyList();
+    @Option(names = { "--ignore-tenants" }, split = ",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreTenants = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-tenants"}, split=",", description = "a list of tenants to skip, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipTenants = Collections.emptyList();
+    @Option(names = { "--ignore-indexer-records" }, split = ",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreIndexerRecords = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "a list of indexer record keys, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipIndexerRecords = Collections.emptyList();
+    @Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
 
-    @CommandLine.Option(names = {"--no-tutorials"}, description = "Flag to disable auto-loading of tutorial flows.")
+    @Option(names = { "--no-tutorials" }, description = "Flag to disable auto-loading of tutorial flows.")
     boolean tutorialsDisabled = false;
 
-    @CommandLine.Option(names = {"--start-executors"}, split=",", description = "a list of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
-    private List<String> startExecutors = Collections.emptyList();
-
-    @CommandLine.Option(names = {"--not-start-executors"}, split=",", description = "a list of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
-    private List<String> notStartExecutors = Collections.emptyList();
-
-    @CommandLine.Option(names = {"--no-indexer"}, description = "Flag to disable starting an embedded indexer.")
+    @Option(names = { "--no-indexer" }, description = "Flag to disable starting an embedded indexer.")
     boolean indexerDisabled = false;
+
+    @Option(names = { "--no-controller" }, description = "Flag to disable starting an embedded controller.")
+    boolean controllerDisabled = false;
 
     @Override
     public boolean isFlowAutoLoadEnabled() {
@@ -92,33 +97,39 @@ public class StandAloneCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.skipExecutionService.setSkipExecutions(skipExecutions);
-        this.skipExecutionService.setSkipFlows(skipFlows);
-        this.skipExecutionService.setSkipNamespaces(skipNamespaces);
-        this.skipExecutionService.setSkipTenants(skipTenants);
-        this.skipExecutionService.setSkipIndexerRecords(skipIndexerRecords);
-        this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+        this.ignoreExecutionService.get().setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
+        this.ignoreExecutionService.get().setIgnoredIndexerRecords(ignoreIndexerRecords);
+        this.ignoreExecutionService.get().setIgnoredQueueRecords(ignoreQueueRecords);
 
-        KestraContext.getContext().injectWorkerConfigs(workerThread, null);
+        KestraContext.getContext().injectWorkerConfigs(workerThread);
 
-        super.call();
+        if (tenantId != null) {
+            tenantIdSelectorService.get().createTenant(tenantId);
+        }
 
         if (flowPath != null) {
             try {
-                LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                TenantIdSelectorService tenantIdSelectorService = applicationContext.getBean(TenantIdSelectorService.class);
-                localFlowRepositoryLoader.load(tenantIdSelectorService.getTenantId(this.tenantId), this.flowPath);
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }
         }
 
-        try (StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class)) {
+        super.call();
+
+        try (StandAloneRunner standAloneRunner = standAloneRunnerProvider.get()) {
 
             if (this.workerThread == 0) {
                 standAloneRunner.setWorkerEnabled(false);
             } else {
                 standAloneRunner.setWorkerThread(this.workerThread);
+            }
+
+            if (this.controllerDisabled) {
+                standAloneRunner.setControllerEnabled(false);
             }
 
             if (this.indexerDisabled) {
@@ -131,7 +142,9 @@ public class StandAloneCommand extends AbstractServerCommand {
                 fileWatcher.startListeningFromConfig();
             }
 
-            Await.until(() -> !this.applicationContext.isRunning());
+            embeddedServer.ifPresent(server -> System.out.println("\n✅ Kestra is ready! Open the UI at: " + server.getURL()));
+
+            Await.await().forever().until(() -> !this.applicationContext.isRunning());
         }
 
         return 0;

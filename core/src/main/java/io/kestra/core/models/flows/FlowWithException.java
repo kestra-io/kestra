@@ -1,23 +1,24 @@
 package io.kestra.core.models.flows;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.core.annotation.Introspected;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
 
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
 @ToString
 @EqualsAndHashCode
 public class FlowWithException extends FlowWithSource {
@@ -30,6 +31,7 @@ public class FlowWithException extends FlowWithSource {
             .namespace(flow.getNamespace())
             .revision(flow.getRevision())
             .deleted(flow.isDeleted())
+            .disabled(flow.isDisabled())
             .exception(exception.getMessage())
             .tasks(List.of())
             .source(flow.getSource())
@@ -68,6 +70,7 @@ public class FlowWithException extends FlowWithSource {
                 .namespace(jsonNode.get("namespace").asText())
                 .revision(jsonNode.hasNonNull("revision") ? jsonNode.get("revision").asInt() : 1)
                 .deleted(jsonNode.hasNonNull("deleted") && jsonNode.get("deleted").asBoolean())
+                .disabled(jsonNode.hasNonNull("disabled") && jsonNode.get("disabled").asBoolean())
                 .exception(exception.getMessage())
                 .tasks(List.of())
                 .source(jsonNode.hasNonNull("source") ? jsonNode.get("source").asText() : null)

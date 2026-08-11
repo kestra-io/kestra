@@ -1,51 +1,59 @@
 <template>
     <section v-if="data" id="markdown">
-        <Markdown :source="data" />
+        <KsMarkdown :content="data" />
     </section>
 
-    <NoData v-else :text="EMPTY_TEXT" />
+    <KsNoData
+        v-else-if="isFlowDescription"
+        :icon="FileDocumentOutline"
+        :title="$t('dashboards.no_description')"
+        :description="$t('dashboards.no_description_hint')"
+    />
+
+    <KsNoData v-else />
 </template>
 
 <script setup lang="ts">
-    import {PropType, watch, ref} from "vue";
+    import {PropType, watch, ref, computed} from "vue"
 
-    import type {RouteLocation} from "vue-router";
+    import type {Chart} from "../composables/useDashboards"
+    import {getPropertyValue, useChartGenerator} from "../composables/useDashboards"
 
-    import type {Chart} from "../composables/useDashboards";
-    import {getDashboard, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
-
-    import Markdown from "../../layout/Markdown.vue";
-    import NoData from "../../layout/NoData.vue";
-    import {FilterObject} from "../../../utils/filters";
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue"
 
     const props = defineProps({
+        dashboardId: {type: String, required: false, default: undefined},
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
+        filters: {type: Array as PropType<QueryFilter[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
-    });
+    })
 
-    const data = ref();
-    const {EMPTY_TEXT, generate} = useChartGenerator(props, false);
+    const data = ref()
 
-    import {useRoute} from "vue-router";
-    const route = useRoute();
+    import {useRoute} from "vue-router"
+    import {QueryFilter} from "@kestra-io/kestra-sdk"
 
-    const getData = async (ID: string) => {
-        if (props.chart.source?.type === "FlowDescription") data.value = getPropertyValue(await generate(ID), "description") ?? EMPTY_TEXT;
-        else data.value = props.chart.content ?? props.chart.source?.content;
-    };
+    const route = useRoute()
+    const {generate} = useChartGenerator(props.dashboardId, props, false)
 
-    const dashboardID = (route: RouteLocation) => getDashboard(route, "id")!;
+    const isFlowDescription = computed(() => props.chart.source?.type === "FlowDescription")
+
+    const getData = async () => {
+        if (isFlowDescription.value) data.value = getPropertyValue(await generate(), "description") || null
+        else data.value = props.chart.source?.content
+    }
+
 
     function refresh() {
-        return getData(dashboardID(route));
+        return getData()
     }
 
     defineExpose({
-        refresh
-    });
+        refresh,
+    })
 
     watch(() => route.params.filters, () => {
-        refresh();
-    }, {deep: true, immediate: true});
+        refresh()
+    }, {deep: true, immediate: true})
 </script>

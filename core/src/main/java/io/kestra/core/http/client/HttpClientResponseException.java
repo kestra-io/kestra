@@ -1,21 +1,22 @@
 package io.kestra.core.http.client;
 
+import java.io.Serial;
+
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
+
 import jakarta.annotation.Nullable;
 import lombok.Getter;
-
-import java.io.Serial;
 
 @Getter
 public class HttpClientResponseException extends HttpClientException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    protected final HttpRequest request;
+    protected transient final HttpRequest request;
 
     @Nullable
-    protected HttpResponse<?> response;
+    protected transient HttpResponse<?> response;
 
     public HttpClientResponseException(String message, HttpResponse<?> response) {
         super(message);

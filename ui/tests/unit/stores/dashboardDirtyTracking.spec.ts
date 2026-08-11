@@ -1,0 +1,120 @@
+import {describe, it, expect, vi, beforeEach} from "vitest"
+import {setActivePinia, createPinia} from "pinia"
+import {nextTick} from "vue"
+
+// Avoid pulling in the full design-system (monaco-editor) on cold import.
+// Provide minimal stubs for the symbols `@kestra-io/topology` reads at module
+// top level (`utils/utils.ts` reads stringUtils/durationUtils; `index.ts`
+// re-exports State).
+vi.mock("@kestra-io/design-system", () => ({
+    stringUtils: {afterLastDot: (s: string) => s?.split(".").pop() ?? s},
+    durationUtils: {humanDuration: () => "", duration: () => 0},
+    State: {},
+}))
+
+vi.mock("nprogress", () => ({
+    start: vi.fn(),
+    done: vi.fn(),
+    set: vi.fn(),
+    inc: vi.fn(),
+}))
+
+vi.mock("vue-router", () => ({
+    useRouter: () => ({
+        beforeEach: vi.fn(),
+        afterEach: vi.fn(),
+        replace: vi.fn(),
+        push: vi.fn(),
+    }),
+}))
+
+vi.mock("vue-i18n", () => ({
+    useI18n: () => ({t: (key: string) => key}),
+}))
+
+const dashboardFn = vi.fn()
+const updateDashboardFn = vi.fn().mockResolvedValue({})
+
+vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
+    dashboard: (...args: any[]) => dashboardFn(...args),
+    updateDashboard: (...args: any[]) => updateDashboardFn(...args),
+}))
+
+// Each `it` re-imports the dashboard store after `vi.resetModules()` (see
+// beforeEach). The first cold import under full-suite contention can exceed
+// the 5s default, so allow extra headroom.
+const TEST_TIMEOUT_MS = 20_000
+
+describe("dashboard store dirty tracking", () => {
+    beforeEach(() => {
+        vi.resetModules()
+        dashboardFn.mockReset()
+        updateDashboardFn.mockReset().mockResolvedValue({})
+        setActivePinia(createPinia())
+    })
+
+    it("haveChange is false when source matches origin", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const dashboardStore = useDashboardStore()
+
+        expect(dashboardStore.haveChange).toBe(false)
+
+        dashboardStore.sourceCode = "id: foo"
+        dashboardStore.sourceCodeOrigin = "id: foo"
+
+        expect(dashboardStore.haveChange).toBe(false)
+    })
+
+    it("haveChange is true when source diverges from origin", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const dashboardStore = useDashboardStore()
+
+        dashboardStore.sourceCodeOrigin = "id: foo"
+        dashboardStore.sourceCode = "id: bar"
+
+        expect(dashboardStore.haveChange).toBe(true)
+    })
+
+    it("syncs unsavedChange to unsavedChangesStore when source changes", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const {useUnsavedChangesStore} = await import("../../../src/stores/unsavedChanges")
+        const dashboardStore = useDashboardStore()
+        const unsavedChangesStore = useUnsavedChangesStore()
+
+        expect(unsavedChangesStore.unsavedChange).toBe(false)
+
+        dashboardStore.sourceCode = "id: foo"
+        await nextTick()
+        expect(unsavedChangesStore.unsavedChange).toBe(true)
+
+        dashboardStore.sourceCodeOrigin = dashboardStore.sourceCode
+        await nextTick()
+        expect(unsavedChangesStore.unsavedChange).toBe(false)
+    })
+
+    it("load seeds sourceCodeOrigin so haveChange stays false after fetch", {timeout: TEST_TIMEOUT_MS}, async () => {
+        dashboardFn.mockResolvedValueOnce({id: "d1", sourceCode: "id: d1"})
+
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const dashboardStore = useDashboardStore()
+
+        await dashboardStore.load("d1")
+
+        expect(dashboardStore.sourceCode).toBe("id: d1")
+        expect(dashboardStore.sourceCodeOrigin).toBe("id: d1")
+        expect(dashboardStore.haveChange).toBe(false)
+    })
+
+    it("update resets sourceCodeOrigin so haveChange clears post-save", {timeout: TEST_TIMEOUT_MS}, async () => {
+        const {useDashboardStore} = await import("../../../src/stores/dashboard")
+        const dashboardStore = useDashboardStore()
+
+        dashboardStore.sourceCodeOrigin = "id: d1"
+        dashboardStore.sourceCode = "id: d1\ntitle: edited"
+        expect(dashboardStore.haveChange).toBe(true)
+
+        await dashboardStore.update({id: "d1", source: dashboardStore.sourceCode})
+
+        expect(dashboardStore.haveChange).toBe(false)
+    })
+})

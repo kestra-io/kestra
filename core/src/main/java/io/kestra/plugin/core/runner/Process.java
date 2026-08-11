@@ -1,22 +1,6 @@
 package io.kestra.plugin.core.runner;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.runners.*;
-import io.kestra.core.runners.RunContext;
-import io.micronaut.core.annotation.Introspected;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -24,25 +8,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
 
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.tasks.runners.*;
+import io.kestra.core.runners.RunContext;
 
-@Introspected
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Task runner that executes a task as a subprocess on the Kestra host.",
+    title = "Run tasks as local subprocesses on the worker.",
     description = """
-        To access the task's working directory, use the `{{workingDir}}` Pebble expression or the `WORKING_DIR` environment variable. Input files and namespace files will be available in this directory.
+        Executes task commands using the host OS process APIs. The working directory is exposed as the `{{workingDir}}` template variable and the `WORKING_DIR` environment variable; input files and namespace files are materialized there before execution, and `outputFiles` must be written there to be captured.
 
-        To generate output files you can either use the `outputFiles` task's property and create a file with the same name in the task's working directory, or create any file in the output directory which can be accessed by the `{{outputDir}}` Pebble expression or the `OUTPUT_DIR` environment variables.
+        When a task enables output directory support, the `{{outputDir}}` template variable and `OUTPUT_DIR` environment variable are also available as a dedicated location for output files — this is a separate mechanism from `outputFiles`.
 
-        Note that:
-
-        - This task runner is independent of any Operating System. You can use it equally on Linux, Mac, or Windows without any additional configuration.
-        - When the Kestra Worker running this task is shut down, the process will be interrupted and re-created as soon as the worker is restarted."""
+        Platform-agnostic (Linux/macOS/Windows). If the worker is interrupted, the process and all its descendants are killed. Kestra will re-queue the task execution when the worker restarts."""
 )
 @Plugin(
     examples = {
@@ -64,31 +56,31 @@ import java.util.Map;
         @Example(
             title = "Install custom Python packages before executing a Python script. Note how we use the `--break-system-packages` flag to avoid conflicts with the system packages. Make sure to use this flag if you see errors similar to `error: externally-managed-environment`.",
             code = """
-id: before_commands_example
-namespace: company.team
+                id: before_commands_example
+                namespace: company.team
 
-inputs:
-  - id: url
-    type: URI
-    defaults: https://jsonplaceholder.typicode.com/todos/1
+                inputs:
+                  - id: url
+                    type: URI
+                    defaults: https://jsonplaceholder.typicode.com/todos/1
 
-tasks:
-  - id: transform
-    type: io.kestra.plugin.scripts.python.Script
-    taskRunner:
-      type: io.kestra.plugin.core.runner.Process
-    beforeCommands:
-      - pip install kestra requests --break-system-packages
-    script: |
-      import requests
-      from kestra import Kestra
+                tasks:
+                  - id: transform
+                    type: io.kestra.plugin.scripts.python.Script
+                    taskRunner:
+                      type: io.kestra.plugin.core.runner.Process
+                    beforeCommands:
+                      - pip install kestra requests --break-system-packages
+                    script: |
+                      import requests
+                      from kestra import Kestra
 
-      url = "{{ inputs.url }}"
+                      url = "{{ inputs.url }}"
 
-      response = requests.get(url)
-      print('Status Code:', response.status_code)
-      Kestra.outputs(response.json())
-""",
+                      response = requests.get(url)
+                      print('Status Code:', response.status_code)
+                      Kestra.outputs(response.json())
+                """,
             full = true
         ),
         @Example(
@@ -150,7 +142,6 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
         Thread stdOut = Thread.startVirtualThread(stdOutRunnable);
         Thread stdErr = Thread.startVirtualThread(stdErrRunnable);
 
-
         try {
             int exitCode = process.waitFor();
 
@@ -188,7 +179,8 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
     }
 
     private void killDescendantsOf(ProcessHandle process, Logger logger) {
-        process.descendants().forEach(processHandle -> {
+        process.descendants().forEach(processHandle ->
+        {
             if (!processHandle.destroy()) {
                 logger.warn("Descendant process {} of {} couldn't be killed", processHandle.pid(), process.pid());
             }

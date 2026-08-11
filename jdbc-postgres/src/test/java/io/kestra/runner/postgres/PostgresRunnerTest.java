@@ -1,7 +1,7 @@
 package io.kestra.runner.postgres;
 
-import io.kestra.jdbc.runner.JdbcRunnerTest;
+import io.kestra.core.runners.AbstractRunnerTest;
 
-public class PostgresRunnerTest extends JdbcRunnerTest {
+public class PostgresRunnerTest extends AbstractRunnerTest {
 
 }

@@ -2,6 +2,7 @@ package io.kestra.plugin.core.dashboard.chart.timeseries;
 
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.GraphStyle;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

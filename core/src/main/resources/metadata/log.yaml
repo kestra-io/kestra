@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.log
+name: "log"
+title: "Log"
+description: "Tasks that write, fetch, or purge Kestra logs."
+body: "Emit structured log messages, retrieve stored logs, or clean up log storage; provide message content or log query filters and consider namespace or execution scoping when purging."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

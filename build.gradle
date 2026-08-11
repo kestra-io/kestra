@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath "net.e175.klaus:zip-prefixer:0.3.1"
+        classpath "net.e175.klaus:zip-prefixer:0.4.0"
     }
 }
 
@@ -16,28 +16,28 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "8.3.9"
+    id "com.gradleup.shadow" version "9.6.1"
     id "application"
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "6.3.1.5724"
+    id "org.sonarqube" version "7.3.1.8318"
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.53.0"
-
-    // front
-    id 'com.github.node-gradle.node' version '7.1.0'
+    id "com.github.ben-manes.versions" version "0.60.0"
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.3"
+    id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.34.0"
+    id "com.vanniktech.maven.publish" version "0.37.0"
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.1.5" apply false
+    id "org.owasp.dependencycheck" version "12.2.2" apply false
+
+    // Formatting
+    id "io.kestra.gradle.spotless-conventions" version "1.2.6"
 }
 
 idea {
@@ -50,16 +50,16 @@ idea {
 /**********************************************************************************************************************\
  * Main
  **********************************************************************************************************************/
-final mainClassName = "io.kestra.cli.App"
-final targetJavaVersion = JavaVersion.VERSION_21
+final mainClassName = "io.kestra.cli.Kestra"
 
 application {
     mainClass = mainClassName
 }
 
 java {
-    sourceCompatibility = targetJavaVersion
-    targetCompatibility = targetJavaVersion
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 dependencies {
@@ -79,13 +79,18 @@ allprojects {
     if (it.name != 'platform') {
         group = "io.kestra"
 
+        // Formatting
+        apply plugin: "io.kestra.gradle.spotless-conventions"
+
         java {
-            sourceCompatibility = targetJavaVersion
-            targetCompatibility = targetJavaVersion
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(25)
+            }
         }
 
         repositories {
             mavenCentral()
+            mavenLocal()
         }
 
         // micronaut
@@ -132,35 +137,36 @@ allprojects {
             implementation "org.slf4j:slf4j-api"
             implementation "ch.qos.logback:logback-classic"
             implementation "org.codehaus.janino:janino"
-            implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j'
-            implementation group: 'org.slf4j', name: 'jul-to-slf4j'
-            implementation group: 'org.slf4j', name: 'jcl-over-slf4j'
-            implementation group: 'org.fusesource.jansi', name: 'jansi'
+            implementation "org.apache.logging.log4j:log4j-to-slf4j"
+            implementation "org.slf4j:jul-to-slf4j"
+            implementation "org.slf4j:jcl-over-slf4j"
+            implementation "org.fusesource.jansi:jansi"
 
             // OTEL
             implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
             // jackson
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core'
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'
-            implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations'
-            implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml'
-            implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names'
-            implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
-            implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
-            implementation group: 'com.fasterxml.uuid', name: 'java-uuid-generator'
+            implementation "com.fasterxml.jackson.core:jackson-core"
+            implementation "com.fasterxml.jackson.core:jackson-databind"
+            implementation "com.fasterxml.jackson.core:jackson-annotations"
+            implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"
+            implementation "com.fasterxml.jackson.module:jackson-module-parameter-names"
+            implementation "com.fasterxml.jackson.datatype:jackson-datatype-guava"
+            implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+            implementation "com.fasterxml.uuid:java-uuid-generator"
 
             // kestra
-            implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
-            implementation (group: 'net.thisptr', name: 'jackson-jq') {
+            implementation "com.devskiller.friendly-id:friendly-id"
+            implementation ("net.thisptr:jackson-jq") {
                 exclude group: 'com.fasterxml.jackson.core'
             }
 
             // exposed utils
-            api group: 'com.google.guava', name: 'guava'
-            api group: 'commons-io', name: 'commons-io'
-            api group: 'org.apache.commons', name: 'commons-lang3'
+            api "com.google.guava:guava"
+            api "commons-io:commons-io"
+            api "org.apache.commons:commons-lang3"
             api "io.swagger.core.v3:swagger-annotations"
+            api "com.google.code.findbugs:jsr305" // brings @CheckReturnValue and already in path in core
         }
     }
 }
@@ -171,11 +177,30 @@ allprojects {
 subprojects {subProj ->
 
     if (subProj.name != 'platform' && subProj.name != 'jmh-benchmarks') {
+
         apply plugin: "com.adarshr.test-logger"
+        apply plugin: 'jacoco'
 
         java {
-            sourceCompatibility = targetJavaVersion
-            targetCompatibility = targetJavaVersion
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(25)
+            }
+        }
+
+        configurations {
+            mockitoAgent
+            // Exposes this project's compiled test classes/resources to other projects, replacing the
+            // Gradle 9.5-incompatible `project(':x').sourceSets.test.output` cross-project script access.
+            testArtifacts {
+                canBeConsumed = true
+                canBeResolved = false
+            }
+        }
+
+        artifacts {
+            sourceSets.test.output.files.each { dir ->
+                testArtifacts(dir) { builtBy tasks.named('testClasses') }
+            }
         }
 
         dependencies {
@@ -196,6 +221,9 @@ subprojects {subProj ->
             testImplementation "org.junit.jupiter:junit-jupiter-params"
             testImplementation "org.junit-pioneer:junit-pioneer"
             testImplementation 'org.mockito:mockito-junit-jupiter'
+            mockitoAgent("org.mockito:mockito-core:5.23.0") {
+                transitive = false // just the core
+            }
 
             // hamcrest
             testImplementation 'org.hamcrest:hamcrest'
@@ -204,41 +232,133 @@ subprojects {subProj ->
 
             //assertj
             testImplementation 'org.assertj:assertj-core'
+
+            // awaitility
+            testImplementation 'org.awaitility:awaitility'
+
         }
 
-        test {
-            useJUnitPlatform()
+        def commonTestConfig = { Test t ->
+            t.timeout = java.time.Duration.ofMinutes(
+                (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
+            )
+            t.finalizedBy jacocoTestReport
+            t.doFirst {
+                logger.lifecycle("[TASK START] ${t.path}")
+            }
+            t.doLast {
+                logger.lifecycle("[TASK END]   ${t.path}")
+            }
+
+            // set Xmx for test workers
+            t.maxHeapSize = '4g'
+
+            // configure en_US default locale for tests
+            t.systemProperty 'user.language', 'en'
+            t.systemProperty 'user.country', 'US'
+
+            t.environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
+            t.environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
+            t.environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
+            t.environment 'SECRET_NON_B64_SECRET', "some secret value"
+            t.environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
+            t.environment 'ENV_TEST1', "true"
+            t.environment 'ENV_TEST2', "Pass by env"
+        }
+
+        tasks.register('integrationTest', Test) { Test t ->
+            description = 'Runs integration tests'
+            group = 'verification'
+
+            useJUnitPlatform {
+                includeTags 'integration'
+            }
+
+            testClassesDirs = sourceSets.test.output.classesDirs
+            classpath = sourceSets.test.runtimeClasspath
+
             reports {
                 junitXml.required = true
                 junitXml.outputPerTestCase = true
                 junitXml.mergeReruns = true
-                junitXml.includeSystemErrLog = true;
+                junitXml.includeSystemErrLog = true
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
 
-            // set Xmx for test workers
-            maxHeapSize = '4g'
+            // Integration tests typically not parallel (but you can enable)
+            maxParallelForks = 1
+            commonTestConfig(t)
+        }
 
-            // configure en_US default locale for tests
-            systemProperty 'user.language', 'en'
-            systemProperty 'user.country', 'US'
+        tasks.register('unitTest', Test) { Test t ->
+            description = 'Runs unit tests'
+            group = 'verification'
 
-            environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
-            environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
-            environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
-            environment 'SECRET_NON_B64_SECRET', "some secret value"
-            environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
-            environment 'ENV_TEST1', "true"
-            environment 'ENV_TEST2', "Pass by env"
-
-
-            if (subProj.name == 'core' || subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
-                // JUnit 5 parallel settings
-                systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
-                systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
-                systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
-                systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
+            useJUnitPlatform {
+                excludeTags 'flaky', 'integration'
             }
+
+            testClassesDirs = sourceSets.test.output.classesDirs
+            classpath = sourceSets.test.runtimeClasspath
+
+            reports {
+                junitXml.required = true
+                junitXml.outputPerTestCase = true
+                junitXml.mergeReruns = true
+                junitXml.includeSystemErrLog = true
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
+            }
+
+            commonTestConfig(t)
+        }
+
+        tasks.register('flakyTest', Test) { Test t ->
+            group = 'verification'
+            description = 'Runs tests tagged @Flaky but does not fail the build.'
+
+            useJUnitPlatform {
+                includeTags 'flaky'
+            }
+
+            testClassesDirs = sourceSets.test.output.classesDirs
+            classpath = sourceSets.test.runtimeClasspath
+
+            reports {
+                junitXml.required = true
+                junitXml.outputPerTestCase = true
+                junitXml.mergeReruns = true
+                junitXml.includeSystemErrLog = true
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
+            }
+            commonTestConfig(t)
+            t.ignoreFailures = true
+            t.filter { failOnNoMatchingTests = false }
+            t.outputs.doNotCacheIf("Flaky tests are non-deterministic") { true }
+            t.mustRunAfter(tasks.named('test'))
+        }
+
+        // test task (default)
+        tasks.named('test', Test) { Test t ->
+            group = 'verification'
+            description = 'Runs all non-flaky tests.'
+
+            useJUnitPlatform {
+                excludeTags 'flaky'
+            }
+            reports {
+                junitXml.required = true
+                junitXml.outputPerTestCase = true
+                junitXml.mergeReruns = true
+                junitXml.includeSystemErrLog = true
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
+            }
+            commonTestConfig(t)
+            jvmArgs "-javaagent:${configurations.mockitoAgent.singleFile}"
+        }
+
+        tasks.named('check') {
+            dependsOn(tasks.named('test'))// default behaviour
+            dependsOn(tasks.named('flakyTest'))
         }
 
         testlogger {
@@ -254,88 +374,108 @@ subprojects {subProj ->
     }
 }
 
-/**********************************************************************************************************************\
- * End-to-End Tests
- **********************************************************************************************************************/
-def e2eTestsCheck = tasks.register('e2eTestsCheck') {
+// Collect test task outcomes as they execute (for test-metadata.json)
+def testTaskOutcomes = new java.util.concurrent.ConcurrentHashMap<String, String>()
+gradle.taskGraph.afterTask { Task task ->
+    if (task instanceof Test) {
+        def state = task.state
+        String outcome
+        if (state.noSource) {
+            outcome = 'NO_SOURCE'
+        } else if (state.failure != null) {
+            outcome = 'FAILED'
+        } else if (state.didWork) {
+            outcome = 'SUCCESS'
+        } else if (state.upToDate) {
+            outcome = 'UP_TO_DATE'
+        } else if (state.skipped) {
+            outcome = 'SKIPPED'
+        } else {
+            outcome = 'FROM_CACHE'
+        }
+        testTaskOutcomes.put(task.project.name + ':' + task.name, outcome)
+    }
+}
+
+// Workaround for https://github.com/gradle/gradle/issues/36699
+// Gradle's test task `timeout` kills the JVM hard, so JUnit XML reports are never
+// generated for timed-out modules. This task captures per-module task states so that
+// kestra-devtools can detect missing results and report them in PR comments.
+// Remove this task once Gradle supports graceful test task timeouts.
+tasks.register('generateTestMetadata') {
     group = 'verification'
-    description = "Runs the 'check' task for all e2e-tests modules"
-    doFirst {
-        project.ext.set("e2e-tests", true)
+    description = 'Generates build/test-metadata.json with per-module test task states for CI reporting.'
+    mustRunAfter(subprojects.collectMany { it.tasks.withType(Test) })
+    def outputFile = layout.buildDirectory.file('test-metadata.json')
+    outputs.file(outputFile)
+    outputs.upToDateWhen { false }
+    doLast {
+        def timeoutMin = (System.getenv('GRADLE_TEST_TIMEOUT_MIN') ?: '30').toInteger()
+        def modules = new LinkedHashMap<String, Object>()
+        subprojects.each { sub ->
+            def hasTestSources = sub.file('src/test/java').isDirectory() &&
+                sub.fileTree('src/test/java').files.size() > 0
+            if (!hasTestSources && sub.file('src/test/kotlin').isDirectory()) {
+                hasTestSources = sub.fileTree('src/test/kotlin').files.size() > 0
+            }
+            def xmlDir = sub.file("build/test-results/test")
+            def hasXmlResults = xmlDir.isDirectory() &&
+                sub.fileTree(dir: xmlDir, includes: ['TEST-*.xml']).files.size() > 0
+            def state = testTaskOutcomes.getOrDefault(sub.name + ':test', 'NOT_RUN')
+
+            modules.put(sub.name, [
+                state: state,
+                hasTestSources: hasTestSources,
+                hasXmlResults: hasXmlResults
+            ])
+        }
+        def metadata = [
+            modules: modules,
+            timeoutMinutes: timeoutMin
+        ]
+        def json = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+        outputFile.get().asFile.parentFile.mkdirs()
+        outputFile.get().asFile.text = json
+        logger.lifecycle("Test metadata written to ${outputFile.get().asFile.path}")
     }
 }
 
+// Finalize every Test task (not just `check`) with generateTestMetadata. When a module's
+// test task exceeds its timeout, Gradle aborts the build before `check` runs, so a finalizer
+// of `check` is skipped and the metadata file is never written — leaving kestra-devtools to
+// silently report success for the timed-out module. A finalizer of the Test task itself still
+// runs on timeout (same as jacocoTestReport above), guaranteeing test-metadata.json is written.
 subprojects {
-    // Add e2e-tests modules check tasks to e2eTestsCheck
-    if (project.name.startsWith("e2e-tests")) {
-        test {
-            onlyIf {
-                project.hasProperty("e2e-tests")
-            }
-        }
-    }
-
-    afterEvaluate {
-        // Add e2e-tests modules check tasks to e2eTestsCheck
-        if (project.name.startsWith("e2e-tests")) {
-            e2eTestsCheck.configure {
-                finalizedBy(check)
-            }
-        }
-    }
-}
-
-/**********************************************************************************************************************\
- * Allure Reports
- **********************************************************************************************************************/
-subprojects {
-    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
-        dependencies {
-            testImplementation platform("io.qameta.allure:allure-bom")
-            testImplementation "io.qameta.allure:allure-junit5"
-        }
-
-        configurations {
-            agent {
-                canBeResolved = true
-                canBeConsumed = true
-            }
-        }
-
-        dependencies {
-            agent "org.aspectj:aspectjweaver:1.9.24"
-        }
-
-        test {
-            jvmArgs = ["-javaagent:${configurations.agent.singleFile}"]
-        }
-    }
-}
-
-/**********************************************************************************************************************\
- * Jacoco
- **********************************************************************************************************************/
-subprojects {
-    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
-        apply plugin: 'jacoco'
-
-        test {
-            finalizedBy jacocoTestReport
-        }
-
-        jacocoTestReport {
-            dependsOn test
-        }
+    tasks.withType(Test).configureEach {
+        finalizedBy rootProject.tasks.named('generateTestMetadata')
     }
 }
 
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    dependsOn(tasks.named('flakyTest'))
+    finalizedBy jacocoTestReport
+    finalizedBy tasks.named('generateTestMetadata')
+}
+
+tasks.register('unitTest') {
+    // No jacocoTestReport here, because it depends by default on :test,
+    // and that would make :test being run twice in our CI.
+    // In practice the report will be generated later in the CI by :check.
+}
+
+tasks.register('integrationTest') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
+}
+
+tasks.register('flakyTest') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
 }
 
 tasks.named('testCodeCoverageReport') {
     dependsOn ':core:copyGradleProperties'
-    dependsOn ':ui:assembleFrontend'
 }
 
 /**********************************************************************************************************************\
@@ -344,7 +484,7 @@ tasks.named('testCodeCoverageReport') {
 subprojects {
     sonar {
         properties {
-            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
+            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml,$projectDir.parentFile.path/build/reports/jacoco/test/testCodeCoverageReport.xml"
         }
     }
 }
@@ -406,7 +546,10 @@ run.jvmArgs(
     "-noverify",
     "-XX:TieredStopAtLevel=1",
     "-Dcom.sun.management.jmxremote",
-    '-Dmicronaut.environments=dev,override'
+    '-Dmicronaut.environments=dev,override',
+    // Silence the sun.misc.Unsafe memory-access startup warning (JEP 498) triggered by
+    // com.google.protobuf.UnsafeUtil (pulled in by gRPC), see https://github.com/kestra-io/kestra/issues/16513
+    '--sun-misc-unsafe-memory-access=allow'
 )
 
 /**********************************************************************************************************************\
@@ -426,6 +569,7 @@ jar {
 
 shadowJar {
     archiveClassifier.set(null)
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     mergeServiceFiles()
     zip64 = true
 }
@@ -434,7 +578,6 @@ distZip.dependsOn shadowJar
 distTar.dependsOn shadowJar
 startScripts.dependsOn shadowJar
 startShadowScripts.dependsOn jar
-shadowJar.dependsOn 'ui:assembleFrontend'
 shadowJar.dependsOn jar
 
 /**********************************************************************************************************************\
@@ -485,22 +628,16 @@ tasks.register('executableJar', Zip) {
 /**********************************************************************************************************************\
  * Standalone
  **********************************************************************************************************************/
-tasks.register('runLocal', JavaExec) {
+tasks.register('runLocal') {
     group = "application"
     description = "Run Kestra as server local"
-    classpath = project(":cli").sourceSets.main.runtimeClasspath
-    mainClass = mainClassName
-    environment 'MICRONAUT_ENVIRONMENTS', 'override'
-    args 'server', 'local', '--plugins', 'local/plugins'
+    dependsOn ':cli:runLocal'
 }
 
-tasks.register('runStandalone', JavaExec) {
+tasks.register('runStandalone') {
     group = "application"
-    description = "Run Kestra as server local"
-    classpath = project(":cli").sourceSets.main.runtimeClasspath
-    mainClass = mainClassName
-    environment 'MICRONAUT_ENVIRONMENTS', 'override'
-    args 'server', 'standalone', '--plugins', 'local/plugins'
+    description = "Run Kestra as server standalone"
+    dependsOn ':cli:runStandalone'
 }
 
 /**********************************************************************************************************************\
@@ -522,12 +659,10 @@ subprojects {subProject ->
 
         tasks.register('sourcesJar', Jar) {
             dependsOn = [':core:copyGradleProperties']
-            dependsOn = [':ui:assembleFrontend']
             archiveClassifier.set('sources')
             from sourceSets.main.allSource
         }
         sourcesJar.dependsOn ':core:copyGradleProperties'
-        sourcesJar.dependsOn ':ui:assembleFrontend'
 
         tasks.register('javadocJar', Jar) {
             archiveClassifier.set('javadoc')
@@ -545,7 +680,7 @@ subprojects {subProject ->
         }
 
         //These modules should not be published
-        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver"]
+        def unpublishedModules = ["jdbc-mysql", "jdbc-postgres", "webserver", "worker", "scheduler", "worker-controller", "executor"]
         if (subProject.name in unpublishedModules){
             return
         }

@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.execution
+name: "execution"
+title: "Execution"
+description: "Tasks that manage the lifecycle and context of a running execution."
+body: "Use these tasks to assert expectations, set or unset variables, add labels, fail, exit, resume, or purge executions; supply required properties such as variable maps, label key/values, or retention rules before altering execution state."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

@@ -1,182 +1,161 @@
 <template>
-    <el-dropdown trigger="click" hideOnClick placement="bottom-end">
-        <el-button :icon="Menu">
-            <span class="text-truncate">
-                {{ selected ?? t("dashboards.default") }}
-            </span>
-        </el-button>
-
+    <template v-if="asItem">
+        <KsDropdownItem :icon="ChartLineVariant" @click="isOpen = true">
+            {{ selected?.title ?? $t("dashboards.default") }}
+        </KsDropdownItem>
+        <KsDialog
+            v-model="isOpen"
+            destroyOnClose
+            appendToBody
+        >
+            <template #header>
+                <h5 class="mb-0">
+                    {{ $t("dashboards.switch") }}
+                </h5>
+            </template>
+            <Content
+                :dashboards="dashboards"
+                :selected="selected"
+                :query="query"
+                @select="onSelect"
+                @set-default="setAsTenantDefault"
+                @edit="edit"
+                @remove="remove"
+            />
+        </KsDialog>
+    </template>
+    <KsDropdown v-else trigger="click" hideOnClick :placement>
+        <slot>
+            <KsButton :icon="ChartLineVariant" class="selected">
+                <span v-if="!verticalLayout" class="text-truncate">
+                    {{ selected?.title ?? $t('dashboards.default') }}
+                </span>
+            </KsButton>
+        </slot>
         <template #dropdown>
-            <el-dropdown-menu class="p-3 dropdown">
-                <el-button
-                    type="primary"
-                    :icon="Plus"
-                    tag="router-link"
-                    :to="{name: 'dashboards/create', query}"
-                    class="w-100"
-                >
-                    <small>{{ t("dashboards.creation.label") }}</small>
-                </el-button>
-
-                <Item
-                    :dashboard="{
-                        id: filtered.filter(d => d.title === selected)?.[0]?.id ?? 'default',
-                        title: selected ?? t('dashboards.default')
-                    }"
-                    :edit="edit"
-                    class="mt-3"
+            <KsDropdownMenu class="p-2 dropdown">
+                <Content
+                    :dashboards="dashboards"
+                    :selected="selected"
+                    :query="query"
+                    @select="onSelect"
+                    @set-default="setAsTenantDefault"
+                    @edit="edit"
+                    @remove="remove"
                 />
-
-                <hr class="my-2">
-
-                <el-input
-                    v-model="search"
-                    :placeholder="t('search')"
-                    :prefixIcon="Magnify"
-                    clearable
-                    class="my-1 mb-3 search"
-                />
-
-                <div class="overflow-x-auto items">
-                    <Item
-                        v-for="(dashboard, index) in filtered"
-                        :key="index"
-                        :dashboard
-                        :edit="edit"
-                        :remove="remove"
-                        @click="select(dashboard)"
-                    />
-                    <span v-if="!filtered.length" class="empty">
-                        {{ t("dashboards.empty") }}
-                    </span>
-                </div>
-            </el-dropdown-menu>
+            </KsDropdownMenu>
         </template>
-    </el-dropdown>
+    </KsDropdown>
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, computed, watch} from "vue";
+    import {ref, computed, inject, watch} from "vue"
 
-    import {useRoute, useRouter} from "vue-router";
-    const route = useRoute();
-    const router = useRouter();
+    import {useRoute, useRouter} from "vue-router"
+    import Content from "./Content.vue"
+    import {asItemKey} from "../../../layout/navBarActionsContext"
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    const asItem = inject(asItemKey, false)
 
-    import {useToast} from "../../../../utils/toast";
-    const toast = useToast();
+    const route = useRoute()
+    const router = useRouter()
+    import {useActiveTab} from "../../../../composables/useActiveTab"
+    const activeTab = useActiveTab()
+    const isRouterDriven = computed(() => route.meta?.tab !== undefined)
 
-    import {useDashboardStore} from "../../../../stores/dashboard";
-    const dashboardStore = useDashboardStore();
+    import {useI18n} from "vue-i18n"
+    const {t} = useI18n({useScope: "global"})
 
-    import {getDashboard} from "../../composables/useDashboards";
+    import {useToast} from "../../../../utils/toast"
+    const toast = useToast()
 
-    import Item from "./Item.vue";
+    import {useDashboardStore} from "../../../../stores/dashboard"
+    const dashboardStore = useDashboardStore()
 
-    import Menu from "vue-material-design-icons/Menu.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
 
-    const emits = defineEmits(["dashboard"]);
+    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue"
 
+    withDefaults(defineProps<{placement?: string}>(), {placement: "bottom-end"})
+
+    const emits = defineEmits<{dashboard: [id: string]}>()
+
+    const isOpen = ref(false)
+
+    const rootName = computed(() => {
+        const name = String(route.name ?? "")
+        if (name.startsWith("flows/update")) return "flows/update"
+        if (name.startsWith("namespaces/update")) return "namespaces/update"
+        return "home"
+    })
+    // Pages migrated to router children (e.g. flows/update) no longer carry the
+    // active tab in route.params, so re-derive it via useActiveTab and bake it into
+    // the target route name directly rather than a `tab` param (which would be
+    // silently discarded before the parent route's redirect runs).
     const query = computed(() => {
+        const {tab: _tab, ...restParams} = route.params as Record<string, unknown>
+        const name = rootName.value === "home" || !isRouterDriven.value
+            ? rootName.value
+            : `${rootName.value}/${activeTab.value}`
+        const params = rootName.value === "home" || isRouterDriven.value
+            ? restParams
+            : {...restParams, tab: activeTab.value}
         return {
-            name: ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home",
-            params: JSON.stringify({...route.params, dashboard: undefined}),
-        };
-    });
+            name,
+            params: JSON.stringify({...params, dashboard: undefined}),
+        }
+    })
 
-    const search = ref("");
-    const dashboards = ref<{ id: string; title: string }[]>([]);
-    const filtered = computed(() => {
-        const DEFAULT = {id: "default", title: t("dashboards.default")};
+    const dashboards = ref<{id: string; title: string; isDefault: boolean}[]>([])
 
-        return [DEFAULT, ...dashboards.value].filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()));
-    });
+    const selected = computed(() => dashboardStore.activeDashboard
+        ? {id: dashboardStore.activeDashboard.id, title: dashboardStore.activeDashboard.title ?? dashboardStore.activeDashboard.id}
+        : undefined)
 
-    const ID = getDashboard(route, "id") as string;
+    const onSelect = (id: string) => {
+        emits("dashboard", id)
+        isOpen.value = false
+    }
 
-    const selected = ref(null);
-    const select = (dashboard: any) => {
-        selected.value = dashboard?.title;
-
-        if (dashboard?.id) localStorage.setItem(ID, dashboard.id)
-        else localStorage.removeItem(ID);
-
-        emits("dashboard", dashboard.id);
-    };
+    const setAsTenantDefault = async (id: string) => {
+        switch (rootName.value){
+        case "flows/update": await dashboardStore.saveDefaults({defaultFlowOverviewDashboard: id}); break
+        case "namespaces/update": await dashboardStore.saveDefaults({defaultNamespaceOverviewDashboard: id}); break
+        default: await dashboardStore.saveDefaults({defaultHomeDashboard: id})
+        }
+        await fetchDashboards()
+    }
 
     const edit = (id: string) => {
-        router.push({name: "dashboards/update", params: {dashboard: id}});
-    };
+        router.push({name: "dashboards/update", params: {dashboard: id}})
+    }
 
-    const remove = (dashboard: any) => {
+    const remove = (dashboard: {title: string, id: string}) => {
         toast.confirm(t("dashboards.deletion.confirmation", {title: dashboard.title}), () => {
             return dashboardStore.delete(dashboard.id).then(() => {
-                dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
-                toast.deleted(dashboard.title);
-            });
-        });
-    };
+                dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id)
+                toast.deleted(dashboard.title)
+            })
+        })
+    }
 
-    const fetchLast = () => localStorage.getItem(ID);
-    const fetchDashboards = () => {
-        dashboardStore
-            .list({})
-            .then((response: { results: { id: string; title: string }[] }) => {
-                dashboards.value = response.results;
+    const fetchDashboards = async () => {
+        dashboards.value = await dashboardStore.list({}, route)
+    }
 
-                const creation = Boolean(route.query.created);
-                const lastSelected = creation ? (route.params?.dashboard ?? fetchLast()) : (fetchLast() ?? route.params?.dashboard);
+    fetchDashboards()
+    watch(() => route.params.tenant, fetchDashboards)
 
-                if (lastSelected) {
-                    const dashboard = dashboards.value.find((d) => d.id === lastSelected);
-
-                    if (dashboard) select(dashboard);                    
-                    else {
-                        selected.value = null;
-                        emits("dashboard", "default");
-                    }
-                }
-            });
-    };
-
-    onBeforeMount(() => fetchDashboards());
-
-    const tenant = ref(route.params.tenant);
-    watch(route, (r) => {
-              if (tenant.value !== r.params.tenant) {
-                  fetchDashboards();
-                  tenant.value = r.params.tenant;
-              }
-          },
-          {deep: true},
-    );
 </script>
 
 <style scoped lang="scss">
-.dropdown {
-    width: 300px;
-
-    .search {
-        font-size: revert;
-    }
-
-    :deep(li.el-dropdown-menu__item) {
-        &:hover,
-        &:focus {
-            background: var(--ks-select-hover);
-        }
+.selected {
+    span{
+        font-size: var(--ks-font-size-sm);
     }
 }
-
-.items {
-    max-height: 193.4px !important; // 5 visible items
-
-    :deep(li.el-dropdown-menu__item) {
-        border-radius: unset;
-    }
+.dropdown {
+    width: 18rem;
 }
 </style>

@@ -1,38 +1,42 @@
 package io.kestra.jdbc;
 
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.IdUtils;
+
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.Sort.Order;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAdjusters;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.IntStream;
+import static io.kestra.core.utils.CaseUtils.camelToSnake;
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.*;
 
 public abstract class AbstractJdbcRepository<T> {
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
-
-    protected final QueueService queueService;
 
     protected final Class<T> cls;
 
@@ -48,10 +52,8 @@ public abstract class AbstractJdbcRepository<T> {
     @SuppressWarnings("unchecked")
     public AbstractJdbcRepository(
         JdbcTableConfig tableConfig,
-        QueueService queueService,
         JooqDSLContextWrapper dslContextWrapper) {
         this.cls = (Class<T>) tableConfig.cls();
-        this.queueService = queueService;
         this.dslContextWrapper = dslContextWrapper;
         this.table = DSL.table(tableConfig.table());
     }
@@ -59,7 +61,7 @@ public abstract class AbstractJdbcRepository<T> {
     abstract public Condition fullTextCondition(List<String> fields, String query);
 
     public String key(T entity) {
-        String key = queueService.key(entity);
+        String key = entity instanceof HasUID hasUID ? hasUID.uid() : null;
 
         if (key != null) {
             return key;
@@ -70,65 +72,207 @@ public abstract class AbstractJdbcRepository<T> {
 
     @SneakyThrows
     public Map<Field<Object>, Object> persistFields(T entity) {
-        return new HashMap<>(ImmutableMap
-            .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), MAPPER.writeValueAsString(entity))
-        );
+        Map<Field<Object>, Object> fields = HashMap.newHashMap(1);
+        fields.put(VALUE_FIELD, MAPPER.writeValueAsString(entity));
+        return fields;
     }
-    
+
+    /**
+     * Fetches an entity using {@code fetcher}, or inserts a default one (via {@code defaultEntity}) if absent, then re-fetches.
+     * The {@code fetcher} should use {@code FOR UPDATE} so the returned entity is locked within the caller's transaction.
+     */
+    public T getOrInsert(DSLContext dslContext, Supplier<Optional<T>> fetcher, Supplier<T> defaultEntity) {
+        // Note: ideally, we should emit an INSERT IGNORE or ON CONFLICT DO NOTHING but H2 didn't support it.
+        // So to avoid the case where no record exists and two threads insert concurrently, in H2, we select/insert and if the insert fails, select again.
+        // Anyway, this would only occur once in a record lifecycle, so even if it's not elegant, it should work.
+        // But as this pattern didn't work with Postgres, we emit INSERT IGNORE in Postgres and MySQL, so we're sure it works there also, and it's better than relying on exception.
+        return fetcher.get().orElseGet(() ->
+        {
+            try {
+                T entity = defaultEntity.get();
+                Map<Field<Object>, Object> fields = this.persistFields(entity);
+                var insert = dslContext
+                    .insertInto(this.getTable())
+                    .set(KEY_FIELD, this.key(entity))
+                    .set(fields);
+                if (dslContext.configuration().dialect().supports(SQLDialect.POSTGRES) || dslContext.configuration().dialect().supports(SQLDialect.MYSQL)) {
+                    insert.onDuplicateKeyIgnore().execute();
+                } else {
+                    insert.execute();
+                }
+            } catch (DataAccessException e) {
+                // we ignore any constraint violation
+            }
+            // refetch to have a lock on it
+            // at this point we are sure the record is inserted so it should never throw
+            return fetcher.get().orElseThrow();
+        });
+    }
+
     public int count(Condition condition) {
         return getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .selectCount()
-                .from(getTable())
-                .where(condition)
-                .fetchOne(0, Integer.class)
+            .transactionResult(
+                configuration -> DSL
+                    .using(configuration)
+                    .selectCount()
+                    .from(getTable())
+                    .where(condition)
+                    .fetchOne(0, Integer.class)
             );
     }
-    
+
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T, Map)
+     * @see #persist(T, DSLContext, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity) {
         this.persist(entity, null);
     }
 
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T)
+     * @see #persist(T, DSLContext, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity, Map<Field<Object>, Object> fields) {
-        dslContextWrapper.transaction(configuration ->
-            this.persist(entity, DSL.using(configuration), fields)
+        dslContextWrapper.transaction(
+            configuration -> this.persist(entity, DSL.using(configuration), fields)
         );
     }
 
+    /**
+     * Do an insert or update on the table (upsert).
+     * This is convenient to be fault-tolerant of possible conflict but is less performant than an UPDATE is we're sure the entity exists.
+     *
+     * @see #persist(T)
+     * @see #persist(T, Map)
+     * @see #update(T)
+     * @see #update(T, Map)
+     * @see #update(T, DSLContext, Map)
+     */
     public void persist(T entity, DSLContext dslContext, Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
         dslContext
             .insertInto(table)
-            .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(entity))
+            .set(KEY_FIELD, key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
+            .set(excluded(finalFields))
+            .execute();
+    }
+
+    /**
+     * Turns a column-to-value map into a column-to-{@code EXCLUDED}/{@code VALUES(...)} map, so the
+     * update clause of an upsert re-references the row already bound by the insert clause instead of
+     * binding the (potentially large) value a second time. jOOQ renders this per-dialect: the
+     * {@code EXCLUDED} pseudo-table on PostgreSQL, {@code VALUES(column)} on MySQL/MariaDB.
+     */
+    protected static Map<Field<Object>, Object> excluded(Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> excluded = HashMap.newHashMap(fields.size());
+        fields.keySet().forEach(field -> excluded.put(field, DSL.excluded(field)));
+        return excluded;
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object, Map)
+     * @see #update(Object, DSLContext, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity) {
+        this.persist(entity, null);
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object)
+     * @see #update(Object, DSLContext, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity, Map<Field<Object>, Object> fields) {
+        dslContextWrapper.transaction(
+            configuration -> this.persist(entity, DSL.using(configuration), fields)
+        );
+    }
+
+    /**
+     * Update the entity.
+     * For a safer upsert approach see the corresponding <code>persist()</code> methods
+     *
+     * @see #update(Object)
+     * @see #update(Object, Map)
+     * @see #persist(Object)
+     * @see #persist(Object, Map)
+     * @see #persist(Object, DSLContext, Map)
+     */
+    public void update(T entity, DSLContext dslContext, Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
+
+        dslContext
+            .update(table)
             .set(finalFields)
+            .where(KEY_FIELD.eq(key(entity)))
             .execute();
     }
 
     public int persistBatch(List<T> items) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             DSLContext dslContext = DSL.using(configuration);
-            var inserts = items.stream().map(item -> {
-                    Map<Field<Object>, Object> finalFields = this.persistFields(item);
-
-                    return dslContext
-                        .insertInto(table)
-                        .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(item))
-                        .set(finalFields)
-                        .onDuplicateKeyUpdate()
-                        .set(finalFields);
-                })
+            var inserts = items.stream()
+                .map(item -> buildInsertRequest(item, this.persistFields(item), dslContext))
                 .toList();
 
             return Arrays.stream(dslContext.batch(inserts).execute()).sum();
         });
     }
 
+    public int persistBatch(Map<T, Map<Field<Object>, Object>> itemWithFields) {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
+            DSLContext dslContext = DSL.using(configuration);
+            var inserts = itemWithFields.entrySet()
+                .stream().map(entry -> buildInsertRequest(entry.getKey(), entry.getValue(), dslContext))
+                .toList();
+
+            return Arrays.stream(dslContext.batch(inserts).execute()).sum();
+        });
+    }
+
+    protected InsertOnDuplicateSetMoreStep<Record> buildInsertRequest(T entity, Map<Field<Object>, Object> fields,
+        DSLContext dslContext) {
+
+        return dslContext
+            .insertInto(table)
+            .set(KEY_FIELD, key(entity))
+            .set(fields)
+            .onDuplicateKeyUpdate()
+            .set(excluded(fields));
+    }
+
     public int delete(T entity) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             return this.delete(DSL.using(configuration), entity);
         });
     }
@@ -136,7 +280,7 @@ public abstract class AbstractJdbcRepository<T> {
     public int delete(DSLContext dslContext, T entity) {
         DeleteConditionStep<Record> key = dslContext
             .delete(table)
-            .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key").eq(key(entity)));
+            .where(KEY_FIELD.eq(key(entity)));
 
         return key.execute();
     }
@@ -160,6 +304,15 @@ public abstract class AbstractJdbcRepository<T> {
 
     }
 
+    /**
+     * Reassembles an {@link Instant} from the SQL-extracted date parts (year/month/day/hour/minute)
+     * produced by {@code AbstractJdbcRepository#groupByFields}.
+     * <p>
+     * Those parts are UTC wall-clock values — the date columns hold UTC (H2 and MySQL store UTC
+     * wall-clock directly; Postgres is normalised via {@code groupByTimestampField}) — so they must
+     * be reassembled in UTC. Using the JVM default zone here would shift every bucket by the local
+     * UTC offset on a non-UTC host.
+     */
     public <R extends Record> Instant getDate(R record, String groupByType) {
         List<String> fields = Arrays.stream(record.fields()).map(Field::getName).toList();
         Integer minute = fields.contains("minute") ? record.get("minute", Integer.class) : 0;
@@ -171,20 +324,24 @@ public abstract class AbstractJdbcRepository<T> {
 
         switch (groupByType) {
             case "minute" -> {
-                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "hour" -> {
-                return ZonedDateTime.of(year, month, day, hour, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, hour, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "day" -> {
-                return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, day, 0, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             case "week" -> {
-                LocalDate weekDate = LocalDate.ofYearDay(year, week * 7);
-                return weekDate.atStartOfDay().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toInstant(ZonedDateTime.now().getOffset());
+                // week * 7 can fall outside the 1..365/366 day-of-year range (e.g. week 53 -> 371, or
+                // week 0 returned by some SQL WEEK() modes), which would make ofYearDay throw, so clamp it.
+                int maxDayOfYear = LocalDate.of(year, 12, 31).getDayOfYear();
+                int dayOfYear = Math.min(Math.max(week * 7, 1), maxDayOfYear);
+                LocalDate weekDate = LocalDate.ofYearDay(year, dayOfYear).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                return weekDate.atStartOfDay(ZoneOffset.UTC).toInstant();
             }
             case "month" -> {
-                return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, TimeZone.getDefault().toZoneId()).toInstant();
+                return ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, ZoneOffset.UTC).toInstant();
             }
             default -> throw new IllegalArgumentException("Invalid groupByType: " + groupByType);
         }
@@ -218,42 +375,14 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public <R extends Record> Select<R> buildQuery(DSLContext context, SelectConditionStep<R> select, String orderField){
+    public <R extends Record> Select<R> buildQuery(DSLContext context, SelectConditionStep<R> select, String orderField) {
         return (Select<R>) context.select(DSL.asterisk())
-            .from(this
-                .sort(select, Pageable.from(Sort.of(Order.asc(orderField))))
-                .asTable("page")
+            .from(
+                this
+                    .sort(select, Pageable.from(Sort.of(Order.asc(orderField))))
+                    .asTable("page")
             )
-            .where(DSL.trueCondition());
-    }
-
-    @SneakyThrows
-    public List<String> fragments(String query, String yaml) {
-        List<String> split = Arrays.asList(StringUtils.split(yaml, "\n"));
-
-        int first = IntStream.range(0, split.size())
-            .filter(index -> StringUtils.indexOfIgnoreCase(split.get(index), query) >= 0)
-            .findFirst()
-            .orElse(0);
-
-        int min = Math.max(0, first - 1);
-        int max = Math.min(split.size(), min + 4);
-
-        List<String> fragments = split
-            .subList(min, max)
-            .stream()
-            .map(r -> {
-                int i = StringUtils.indexOfIgnoreCase(r, query);
-
-                if (i < 0) {
-                    return r;
-                } else {
-                    return r.substring(0, i) + "[mark]" + r.substring(i, i + query.length()) + "[/mark]" + r.substring(i + query.length());
-                }
-            })
-            .toList();
-
-        return Collections.singletonList(String.join("\n", fragments));
+            .where(DSL.noCondition());
     }
 
     public <R extends Record> SelectConditionStep<R> sort(SelectConditionStep<R> select, Pageable pageable) {
@@ -261,10 +390,16 @@ public abstract class AbstractJdbcRepository<T> {
             pageable
                 .getSort()
                 .getOrderBy()
-                .forEach(order -> {
-                    Field<Object> field = io.kestra.jdbc.repository.AbstractJdbcRepository.field(order.getProperty());
+                .forEach(order ->
+                {
+                    String property = order.getProperty();
+                    if (property == null || property.isBlank()) {
+                        throw new IllegalArgumentException("Invalid sort field");
+                    }
+                    String column = camelToSnake(property);
+                    Field<Object> field = DSL.field(DSL.name(column));
 
-                    select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc() : field.desc());
+                    select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());
                 });
         }
 

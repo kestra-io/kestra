@@ -2,188 +2,195 @@
     <TopNavBar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #title>
             {{ routeInfo?.title }}
-            <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
+            <Badge
+                v-if="isATestExecution"
+                :label="$t('test-badge-text')"
+                :tooltip="$t('test-badge-tooltip')"
+            />
         </template>
-        <template #additional-right v-if="canDelete || isAllowedTrigger || isAllowedEdit">
-            <ul id="list">
-                <li v-if="isAllowedEdit">
-                    <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
-                        <el-button :icon="Api">
-                            {{ $t("api") }}
-                        </el-button>
-                    </a>
-                </li>
-                <li v-if="canDelete">
-                    <el-button :icon="Delete" @click="deleteExecution">
-                        {{ $t("delete") }}
-                    </el-button>
-                </li>
-                <li v-if="isAllowedEdit">
-                    <el-button :icon="Pencil" @click="editFlow">
-                        {{ $t("edit flow") }}
-                    </el-button>
-                </li>
-                <li v-if="isAllowedTrigger">
-                    <TriggerFlow type="primary" :flowId="$route.params.flowId" :namespace="$route.params.namespace" />
-                </li>
-            </ul>
+        <template #actions>
+            <slot name="actions" />
+            <div
+                v-if="hasVisibleActions && activeTab !== 'audit-logs'"
+                class="d-flex align-items-center gap-2"
+            >
+                <ul v-if="!isOverviewTab" class="d-none d-xl-flex align-items-center">
+                    <li v-if="isAllowedEdit" data-onboarding-target="execution-edit-flow-button">
+                        <KsButton
+                            class="execution-edit-flow-button"
+                            :icon="Pencil"
+                            @click="editFlow"
+                        >
+                            {{ $t("edit flow") }}
+                        </KsButton>
+                    </li>
+                </ul>
+
+                <KsDropdown v-if="!isOverviewTab" class="d-flex d-xl-none align-items-center">
+                    <KsButton>
+                        <KsIcon><DotsVertical /></KsIcon>
+                        <span class="d-none d-lg-inline-block">{{ $t("more_actions") }}</span>
+                    </KsButton>
+                    <template #dropdown>
+                        <KsDropdownMenu>
+                            <KsDropdownItem v-if="isAllowedEdit" @click="editFlow">
+                                <KsIcon><Pencil /></KsIcon>
+                                {{ $t("edit flow") }}
+                            </KsDropdownItem>
+                        </KsDropdownMenu>
+                    </template>
+                </KsDropdown>
+
+                <ExecutionActions
+                    v-if="execution && isOverviewTab && overviewActions.length"
+                    :actions="overviewActions"
+                    :execution="execution"
+                />
+
+                <div
+                    v-if="primaryAction || fallbackToExecute"
+                    class="d-flex align-items-center gap-2"
+                >
+                    <component
+                        v-if="primaryAction"
+                        :is="primaryAction.component"
+                        v-bind="primaryAction.props"
+                        :execution="execution"
+                        type="primary"
+                    />
+
+                    <TriggerFlow
+                        v-else-if="fallbackToExecute"
+                        type="primary"
+                        :flowId="$route.params.flowId as string"
+                        :namespace="$route.params.namespace as string"
+                    />
+                </div>
+            </div>
         </template>
     </TopNavBar>
 </template>
 
-<script setup>
-    import Api from "vue-material-design-icons/Api.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import Pencil from "vue-material-design-icons/Pencil.vue";
-    import Badge from "../global/Badge.vue";
-</script>
+<script setup lang="ts">
+    import {computed} from "vue"
+    import {useRoute, useRouter} from "vue-router"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
+    import Pencil from "vue-material-design-icons/Pencil.vue"
+    import {State} from "@kestra-io/design-system"
 
-<script>
-    import {h, ref} from "vue"
-    import {ElCheckbox, ElMessageBox} from "element-plus"
-    import {mapStores} from "pinia";
-
-    import TriggerFlow from "../flows/TriggerFlow.vue";
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
-    import {apiUrl} from "override/utils/route";
-    import {useExecutionsStore} from "../../stores/executions";
+    import Badge from "../global/Badge.vue"
+    import TopNavBar from "../layout/TopNavBar.vue"
+    import TriggerFlow from "../flows/TriggerFlow.vue"
+    import ExecutionActions from "./ExecutionActions.vue"
+    import Api from "./overview/components/actions/Api.vue"
+    import Delete from "./overview/components/actions/Delete.vue"
+    import ForceRun from "./overview/components/actions/ForceRun.vue"
+    import Kill from "./overview/components/actions/Kill.vue"
+    import Pause from "./overview/components/actions/Pause.vue"
+    import Restart from "./overview/components/actions/Restart.vue"
+    import Resume from "./overview/components/actions/Resume.vue"
+    import ResumeFromBreakpoint from "./overview/components/actions/ResumeFromBreakpoint.vue"
+    import Unqueue from "./overview/components/actions/Unqueue.vue"
+    import action from "../../models/action"
+    import resource from "../../models/resource"
+    import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useActiveTab} from "../../composables/useActiveTab"
 
-    export default {
-        components: {
-            TriggerFlow,
-            TopNavBar
-        },
-        props: {
-            routeInfo: {
-                type: Object,
-                required: true
-            }
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            execution() {
-                return this.executionsStore.execution;
-            },
-            finalApiUrl() {
-                return apiUrl();
-            },
-            canDelete() {
-                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
-            },
-            isAllowedEdit() {
-                return this.execution && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
-            },
-            isAllowedTrigger() {
-                return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
-            },
-            isATestExecution() {
-                return this.execution && this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");
-            }
-        },
-        methods: {
-            editFlow() {
-                this.$router.push({
-                    name: "flows/update", params: {
-                        namespace: this.$route.params.namespace,
-                        id: this.$route.params.flowId,
-                        tab: "edit",
-                        tenant: this.$route.params.tenant
-                    }
-                })
-            },
-            deleteExecution() {
-                if (this.execution) {
-                    const item = this.execution;
+    defineProps<{
+        // FIXME: any - routeInfo shape varies across usage
+        routeInfo: any // FIXME: any
+    }>()
 
-                    let message = this.$t("delete confirm", {name: item.id});
-                    if (State.isRunning(this.execution.state.current)) {
-                        message += this.$t("delete execution running");
-                    }
+    const router = useRouter()
+    const route = useRoute()
+    const activeTab = useActiveTab()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
 
-                    const deleteLogs = ref(true);
-                    const deleteMetrics = ref(true);
-                    const deleteStorage = ref(true);
+    const execution = computed(() => executionsStore.execution)
 
-                    ElMessageBox({
-                        boxType: "confirm",
-                        title: this.$t("confirmation"),
-                        showCancelButton: true,
-                        customStyle: "min-width: 600px",
-                        callback: (value) => {
-                            if(value === "confirm") {
-                                return this.executionsStore
-                                    .deleteExecution({
-                                        ...item,
-                                        deleteLogs: deleteLogs.value,
-                                        deleteMetrics: deleteMetrics.value,
-                                        deleteStorage: deleteStorage.value
-                                    })
-                                    .then(() => {
-                                        return this.$router.push({
-                                            name: "executions/list",
-                                            tenant: this.$route.params.tenant
-                                        });
-                                    })
-                                    .then(() => {
-                                        this.$toast().deleted(item.id);
-                                    })
-                            }
-                        },
-                        message: () => h("div", null, [
-                            h("p", {class: "pb-3"}, [h("span", {innerHTML: message})]),
-                            h(ElCheckbox, {
-                                modelValue: deleteLogs.value,
-                                label: this.$t("execution_deletion.logs"),
-                                "onUpdate:modelValue": (val) => (deleteLogs.value = val),
-                            }),
-                            h(ElCheckbox, {
-                                modelValue: deleteMetrics.value,
-                                label: this.$t("execution_deletion.metrics"),
-                                "onUpdate:modelValue": (val) => (deleteMetrics.value = val),
-                            }),
-                            h(ElCheckbox, {
-                                modelValue: deleteStorage.value,
-                                label: this.$t("execution_deletion.storage"),
-                                "onUpdate:modelValue": (val) => (deleteStorage.value = val),
-                            }),
-                        ])
-                    })
+    const isAllowedEdit = computed(() =>
+        execution.value && authStore.user?.isAllowed(resource.FLOW, action.UPDATE, execution.value.namespace),
+    )
 
-                    return;
-                }
-            },
+    const isAllowedTrigger = computed(() =>
+        execution.value && authStore.user?.isAllowed(resource.FLOW, action.EXECUTE, execution.value.namespace),
+    )
+
+    const primaryAction = computed(() => {
+        if (!execution.value?.state) {
+            return null
         }
-    };
+
+        if (execution.value.state.current === "BREAKPOINT") {
+            return {component: ResumeFromBreakpoint, props: {}}
+        }
+
+        if (State.isPaused(execution.value.state.current)) {
+            return {component: Resume, props: {}}
+        }
+
+        if (State.isRunning(execution.value.state.current)) {
+            return {component: Pause, props: {}}
+        }
+
+        if (execution.value.state.current === State.FAILED) {
+            return {component: Restart, props: {}}
+        }
+
+        if (State.getTerminatedStates().includes(execution.value.state.current)) {
+            return {component: Restart, props: {isReplay: true}}
+        }
+
+        return null
+    })
+
+    const fallbackToExecute = computed(() =>
+        execution.value && isAllowedTrigger.value && !primaryAction.value,
+    )
+
+    const isOverviewTab = computed(() =>
+        !activeTab.value || activeTab.value === "overview",
+    )
+
+    const overviewActions = computed(() => {
+        if (!execution.value?.state) return []
+        return [
+            {component: Restart},
+            {component: Restart, props: {isReplay: true}},
+            {component: Kill},
+            execution.value.state.current !== "PAUSED"
+                ? {component: Pause}
+                : {component: Resume},
+            {component: ResumeFromBreakpoint},
+            {component: Unqueue},
+            {component: ForceRun},
+            {component: Api},
+            {component: Delete},
+        ]
+    })
+
+    const hasVisibleActions = computed(() =>
+        isAllowedEdit.value ||
+        primaryAction.value ||
+        fallbackToExecute.value ||
+        (isOverviewTab.value && overviewActions.value.length > 0),
+    )
+
+    const isATestExecution = computed(() =>
+        execution.value?.labels?.some(
+            (label: {key: string; value: string}) => label.key === "system.test" && label.value === "true",
+        ) ?? false,
+    )
+
+    function editFlow() {
+        router.push({
+            name: "flows/update/edit", params: {
+                namespace: route.params.namespace as string,
+                id: route.params.flowId as string,
+                tenant: route.params.tenant as string,
+            },
+        })
+    }
 </script>
-<style>
-@media (max-width: 768px) {
-
-
-           #list {
-                display:contents;
-                background-color: blue;
-            }
-            #list  li:first-child {
-                grid-row:1;
-                grid-column:1;
-            }
-
-            #list  li:nth-child(2){
-                grid-row:1;
-                grid-column:2;
-            }
-            #list  li:nth-child(3){
-                grid-row:1;
-                grid-column:3;
-            }
-            #list li:nth-child(4){
-                grid-row:2;
-                grid-column:1;
-            }
-        }
-
-</style>

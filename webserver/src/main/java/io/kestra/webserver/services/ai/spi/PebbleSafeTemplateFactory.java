@@ -1,12 +1,12 @@
 package io.kestra.webserver.services.ai.spi;
 
-import dev.langchain4j.spi.prompt.PromptTemplateFactory;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import dev.langchain4j.spi.prompt.PromptTemplateFactory;
 
 import static dev.langchain4j.internal.Exceptions.illegalArgument;
 import static dev.langchain4j.internal.ValidationUtils.ensureNotBlank;
@@ -33,7 +33,7 @@ public class PebbleSafeTemplateFactory implements PromptTemplateFactory {
          * This pattern is used to match and extract variables from a template string for further processing,
          * such as replacing these placeholders with their corresponding values.
          */
-        @SuppressWarnings({"RegExpRedundantEscape"})
+        @SuppressWarnings({ "RegExpRedundantEscape" })
         private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{_\\{\\s*(.+?)\\s*}_}");
 
         private final String template;

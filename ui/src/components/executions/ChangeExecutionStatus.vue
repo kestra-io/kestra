@@ -1,191 +1,211 @@
 <template>
-    <el-tooltip
-        effect="light"
-        :persistent="false"
-        transition=""
-        :hideAfter="0"
-        :content="$t('change state tooltip')"
-        rawContent
-        :placement="tooltipPosition"
+    <KsPopover
+        v-model:visible="visible"
+        :disabled="!enabled"
+        trigger="click"
+        placement="bottom-start"
+        :width="376"
+        :showArrow="false"
+        popperClass="change-state-popover"
+        :popperStyle="POPPER_STYLE"
     >
-        <component
-            :is="component"
-            :icon="StateMachine"
-            @click="visible = !visible"
-            :disabled="!enabled"
-            class="ms-0 me-1"
-        >
-            {{ $t('change state') }}
-        </component>
-    </el-tooltip>
-
-    <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
-        <template #header>
-            <h5>{{ $t("confirmation") }}</h5>
+        <template #reference>
+            <slot name="trigger" :visible="visible" :enabled="enabled">
+                <KsButton :disabled="!enabled" :icon="SwapHorizontal">
+                    {{ $t('change state') }}
+                </KsButton>
+            </slot>
         </template>
 
-        <template #default>
-            <p v-html="$t('change execution state confirm', {id: execution.id})" />
+        <div class="change-state">
+            <div class="change-state__header">
+                <span class="change-state__title">{{ $t("change state") }}</span>
+                <KsIconButton :tooltip="$t('close')" placement="top" @click="visible = false">
+                    <Close />
+                </KsIconButton>
+            </div>
 
-            <p>
-                {{ $t("change state current state") }} <Status size="small" class="me-1" :status="execution.state.current" />
-            </p>
+            <div class="change-state__body">
+                <div class="change-state__row">
+                    <span class="change-state__label">{{ $t("actual state") }}</span>
+                    <KsExecutionStatus :status="execution.state.current" />
+                </div>
 
-            <el-select
-                :required="true"
-                v-model="selectedStatus"
-                :persistent="false"
-            >
-                <el-option
-                    v-for="item in states"
-                    :key="item.code"
-                    :value="item.code"
-                    :disabled="item.disabled"
-                >
-                    <template #default>
-                        <Status size="small" :label="true" class="me-1" :status="item.code" />
-                        <span v-html="item.label" />
-                    </template>
-                </el-option>
-            </el-select>
-        </template>
+                <div class="change-state__row">
+                    <span class="change-state__label">{{ $t("select a state") }}</span>
+                    <KsSelect
+                        v-model="selectedStatus"
+                        :required="true"
+                        :teleported="false"
+                        class="change-state__select"
+                    >
+                        <template #label="{value}">
+                            <KsExecutionStatus size="small" :status="value" tabindex="-1" />
+                        </template>
+                        <KsOption
+                            v-for="state in states"
+                            :key="state"
+                            :value="state"
+                            :label="state"
+                        >
+                            <KsExecutionStatus size="small" :status="state" tabindex="-1" />
+                        </KsOption>
+                    </KsSelect>
+                </div>
+            </div>
 
-        <template #footer>
-            <el-button @click="visible = false">
-                {{ $t('cancel') }}
-            </el-button>
-            <el-button
-                type="primary"
-                @click="changeStatus()"
-                :disabled="selectedStatus === execution.state.current || selectedStatus === null"
-            >
-                {{ $t('ok') }}
-            </el-button>
-        </template>
-    </el-dialog>
+            <div class="change-state__footer">
+                <span class="change-state__question">{{ $t("are you sure change state") }}</span>
+                <div class="change-state__actions">
+                    <KsButton @click="visible = false">
+                        {{ $t('cancel') }}
+                    </KsButton>
+                    <KsButton
+                        type="primary"
+                        @click="changeStatus()"
+                        :disabled="!selectedStatus || selectedStatus === execution.state.current"
+                    >
+                        {{ $t('yes') }}
+                    </KsButton>
+                </div>
+            </div>
+        </div>
+    </KsPopover>
 </template>
 
-<script setup>
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
-</script>
+<script setup lang="ts">
+    import {computed, ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import Close from "vue-material-design-icons/Close.vue"
+    import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue"
+    import {State} from "@kestra-io/design-system"
 
-<script>
-    import {mapStores} from "pinia";
-    import {useExecutionsStore} from "../../stores/executions";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
-    import Status from "../../components/Status.vue";
-    import * as ExecutionUtils from "../../utils/executionUtils";
+    import action from "../../models/action"
+    import resource from "../../models/resource"
+    import {Execution, useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../utils/toast"
 
-    export default {
-        components: {StateMachine, Status},
-        props: {
-            component: {
-                type: String,
-                default: "el-button"
-            },
-            execution: {
-                type: Object,
-                required: true
-            },
-            tooltipPosition: {
-                type: String,
-                default: "bottom"
-            }
-        },
-        emits: ["follow"],
-        methods: {
-            changeStatus() {
-                this.visible = false;
+    const props = defineProps<{ execution: Execution }>()
 
-                this.executionsStore
-                    .changeExecutionStatus({
-                        executionId: this.execution.id,
-                        state: this.selectedStatus
-                    })
-                    .then(response => {
-                        if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(this.$http, response.data);
-                        } else {
-                            return response.data;
-                        }
-                    })
-                    .then((execution) => {
-                        this.executionsStore.execution = execution;
-                        if (execution.id === this.execution.id) {
-                            this.$emit("follow")
-                        } else {
-                            this.$router.push({
-                                name: "executions/update",
-                                params: {
-                                    namespace: execution.namespace,
-                                    flowId: execution.flowId,
-                                    id: execution.id,
-                                    tab: "gantt",
-                                    tenant: this.$route.params.tenant
-                                }
-                            });
-                        }
+    const {t} = useI18n({useScope: "global"})
+    const toast = useToast()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
 
-                        this.$toast().success(this.$t("change execution state done"));
-                    })
-            },
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            uuid() {
-                return "changestatus-" + this.execution.id;
-            },
-            states() {
-                return (this.execution.state.current === "PAUSED" ?
-                    [
-                        State.FAILED,
-                        State.RUNNING,
-                        State.CANCELLED,
-                    ] :
-                    [
-                        State.FAILED,
-                        State.SUCCESS,
-                        State.WARNING,
-                        State.CANCELLED,
-                    ]
-                )
-                    .filter(value => value !== this.execution.state.current)
-                    .map(value => {
-                        return {
-                            code: value,
-                            label: this.$t("mark as", {status: value}),
-                            disabled: value === this.execution.state.current
-                        };
-                    })
-            },
-            enabled() {
-                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
-                }
+    const DEFAULT_STATES = [State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED]
+    const CHANGEABLE_FROM_STATES: string[] = [State.FAILED, State.WARNING, State.SUCCESS, State.CANCELLED, State.RETRIED, State.SKIPPED]
 
-                if (State.isRunning(this.execution.state.current)) {
-                    return false;
-                }
-                return true;
-            }
-        },
-        data() {
-            return {
-                selectedStatus: undefined,
-                visible: false
-            };
-        },
-    };
+    const POPPER_STYLE = {
+        padding: "0",
+        borderRadius: "0.875rem",
+        background: "var(--ks-bg-elevated)",
+        boxShadow: "0px 8px 24px 0px var(--ks-shadow-elevated)",
+    }
+
+    const selectedStatus = ref<string>()
+    const visible = ref(false)
+
+    const states = computed(() =>
+        DEFAULT_STATES.filter(state => state !== props.execution.state.current),
+    )
+
+    const enabled = computed(() =>
+        !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace) &&
+        CHANGEABLE_FROM_STATES.includes(props.execution.state.current),
+    )
+
+    watch(visible, (open) => {
+        if (open) selectedStatus.value = states.value[0]
+    })
+
+    const changeStatus = async () => {
+        visible.value = false
+
+        await executionsStore.changeExecutionStatus({
+            executionId: props.execution.id,
+            state: selectedStatus.value!,
+        })
+
+        const execution = await executionsStore.waitForStateChange(props.execution) as Execution
+
+        executionsStore.execution = execution
+        // Re-subscribe to the execution SSE stream directly via the store
+        // instead of bubbling a `follow` event up to the route component.
+        executionsStore.followExecution({id: props.execution.id}, t)
+        toast.success(t("change execution state done"))
+    }
 </script>
 
-<style lang="scss">
-.alert-status-change {
-    ul {
-        margin-bottom: 0;
-        padding-left: 10px;
+<style lang="scss" scoped>
+    .change-state {
+        display: flex;
+        flex-direction: column;
+
+        &__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-4);
+            padding: var(--ks-spacing-5) var(--ks-spacing-4);
+            padding-bottom: var(--ks-spacing-4);
+        }
+
+        &__title {
+            font-weight: 600;
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-lg);
+        }
+
+        &__body {
+            display: flex;
+            flex-direction: column;
+            gap: var(--ks-spacing-3);
+            padding: var(--ks-spacing-3) var(--ks-spacing-6);
+        }
+
+        &__row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-4);
+        }
+
+        &__label {
+            font-weight: 600;
+            color: var(--ks-text-primary);
+        }
+
+        &__select {
+            width: 120px;
+            flex-shrink: 0;
+
+            :deep(.kel-select__wrapper) {
+                padding: 4px 8px 5px 4px;
+            }
+        }
+
+        &__footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--ks-spacing-4);
+            padding: var(--ks-spacing-3) var(--ks-spacing-4);
+            border-top: 1px solid var(--ks-border-default);
+            border-bottom-left-radius: 0.875rem;
+            border-bottom-right-radius: 0.875rem;
+            background: var(--ks-bg-base);
+        }
+
+        &__question {
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-sm);
+        }
+
+        &__actions {
+            display: flex;
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
     }
-}
 </style>

@@ -1,10 +1,10 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
+import io.kestra.plugin.core.flow.WorkingDirectory;
+
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
@@ -12,7 +12,6 @@ import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
 @Singleton
-@Introspected
 public class WorkingDirectoryTaskValidator implements ConstraintValidator<WorkingDirectoryTaskValidation, WorkingDirectory> {
     @Override
     public boolean isValid(
@@ -37,9 +36,9 @@ public class WorkingDirectoryTaskValidator implements ConstraintValidator<Workin
             return false;
         }
 
-        if (value.getTasks().stream().anyMatch(task -> task.getWorkerGroup() != null)) {
+        if (value.getTasks().stream().anyMatch(task -> task.getWorkerSelector() != null)) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level")
+            context.buildConstraintViolationWithTemplate("Cannot set routing requirements (workerSelector) on WorkingDirectory sub-tasks, only the WorkingDirectory itself can carry them")
                 .addConstraintViolation();
             return false;
         }

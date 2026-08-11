@@ -1,8 +1,14 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+
 import io.kestra.core.serializers.JacksonMapper;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -12,17 +18,18 @@ import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 public class JqFilter implements Filter {
-    private final Scope scope;
+    // Load Scope once as static to avoid repeated initialization
+    // This improves performance by loading builtin functions only once when the class loads
+    private static final Scope SCOPE;
     private final List<String> argumentNames = new ArrayList<>();
 
+    static {
+        SCOPE = Scope.newEmptyScope();
+        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, SCOPE);
+    }
+
     public JqFilter() {
-        scope = Scope.newEmptyScope();
-        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
         this.argumentNames.add("expression");
     }
 
@@ -43,10 +50,7 @@ public class JqFilter implements Filter {
 
         String pattern = (String) args.get("expression");
 
-        Scope rootScope = Scope.newEmptyScope();
-        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
         try {
-
             JsonQuery q = JsonQuery.compile(pattern, Versions.JQ_1_6);
 
             JsonNode in;
@@ -59,7 +63,8 @@ public class JqFilter implements Filter {
             final List<Object> out = new ArrayList<>();
 
             try {
-                q.apply(scope, in, v -> {
+                q.apply(Scope.newChildScope(SCOPE), in, v ->
+                {
                     if (v instanceof TextNode) {
                         out.add(v.textValue());
                     } else if (v instanceof NullNode) {

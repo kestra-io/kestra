@@ -1,0 +1,10 @@
+id: flow-trigger-mixed-conditions-flow-a
+namespace: io.kestra.tests.trigger.mixed.conditions
+
+labels:
+  some: label
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parents: {{execution.id}}"

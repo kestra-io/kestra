@@ -1,7 +1,7 @@
 package io.kestra.runner.postgres;
 
-import io.kestra.jdbc.runner.JdbcRunnerRetryTest;
+import io.kestra.core.runners.AbstractRunnerRetryTest;
 
-public class PostgresRunnerRetryTest extends JdbcRunnerRetryTest {
+public class PostgresRunnerRetryTest extends AbstractRunnerRetryTest {
 
 }

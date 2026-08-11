@@ -1,1 +1,0 @@
-CREATE INDEX IF NOT EXISTS triggers_next_execution_date ON triggers (next_execution_date);

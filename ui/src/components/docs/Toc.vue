@@ -1,5 +1,5 @@
 <template>
-    <el-autocomplete
+    <KsAutocomplete
         ref="search"
         class="flex-shrink-0"
         v-model="query"
@@ -11,15 +11,15 @@
             <Magnify />
         </template>
         <template #default="{item}">
-            <router-link
+            <RouterLink
                 :to="{path: '/' + item.parsedUrl}"
                 class="d-flex gap-2"
             >
                 {{ item.title }}
                 <ArrowRight class="is-justify-end" />
-            </router-link>
+            </RouterLink>
         </template>
-    </el-autocomplete>
+    </KsAutocomplete>
     <ul class="list-unstyled d-flex flex-column gap-3">
         <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
             <span class="text-secondary">
@@ -30,98 +30,112 @@
     </ul>
 </template>
 
-<script setup>
-    import {mapStores} from "pinia";
-    import {useDocStore} from "../../stores/doc";
-    import RecursiveToc from "./RecursiveToc.vue";
-    import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
-</script>
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import RecursiveToc from "./RecursiveToc.vue"
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
+    import Magnify from "vue-material-design-icons/Magnify.vue"
 
-<script>
-    export default {
-        data() {
-            return {
-                sections: {
-                    "Get Started with Kestra": [
-                        "Getting Started",
-                        "Tutorial",
-                        "Architecture",
-                        "Installation Guide",
-                        "User Interface"
-                    ],
-                    "Build with Kestra": [
-                        "Concepts",
-                        "Workflow Components",
-                        "Expressions",
-                        "Version Control & CI/CD",
-                        "Plugin Developer Guide",
-                        "How-to Guides"
-                    ],
-                    "Scale with Kestra": [
-                        "Enterprise Edition",
-                        "Task Runners",
-                        "Best Practices"
-                    ],
-                    "Manage Kestra": [
-                        "Administrator Guide",
-                        "Configuration Guide",
-                        "Migration Guide",
-                        "Terraform Provider",
-                        "API Reference"
-                    ]
-                },
-                rawStructure: undefined,
-                query: undefined
-            }
-        },
-        computed: {
-            ...mapStores(useDocStore),
-            toc() {
-                if (this.rawStructure === undefined) {
-                    return undefined;
-                }
+    interface TocItem {
+        title: string;
+        sidebarTitle?: string;
+        path: string;
+        hideSidebar?: boolean;
+        children?: TocItem[];
+    }
 
-                let childrenWithMetadata = JSON.parse(JSON.stringify(this.rawStructure));
-                childrenWithMetadata = Object.fromEntries(Object.entries(childrenWithMetadata)
-                    .filter(([_, {hideSidebar}]) => !hideSidebar)
-                    .map(([url, metadata]) => [url, {
-                        ...metadata,
-                        path: url
-                    }]));
-                Object.entries(childrenWithMetadata)
-                    .forEach(([url, metadata]) => {
-                        const split = url.split("/");
-                        const parentUrl = split.slice(0, split.length - 1).join("/");
-                        const parent = childrenWithMetadata[parentUrl];
-                        if (parent !== undefined) {
-                            parent.children = [...(parent.children ?? []), metadata];
-                        }
-                    });
+    interface SearchResult {
+        parsedUrl: string;
+        title: string;
+    }
 
-                return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
-            },
-            sectionsWithChildren() {
-                if (this.toc === undefined) {
-                    return undefined;
-                }
+    const docStore = useDocStore()
 
-                return Object.entries(this.sections).map(([section, childrenTitles]) => [section, this.toc.filter(({title}) => childrenTitles.includes(title))]);
-            }
-        },
-        async mounted() {
-            this.rawStructure = await this.docStore.children();
-        },
-        methods: {
-            async search(query, cb) {
-                cb(await this.docStore.search({q: query}));
-            }
+    const sections = {
+        "Get Started with Kestra": [
+            "Getting Started",
+            "Tutorial",
+            "Architecture",
+            "Installation Guide",
+            "User Interface",
+        ],
+        "Build with Kestra": [
+            "Concepts",
+            "Workflow Components",
+            "Expressions",
+            "Version Control & CI/CD",
+            "Plugin Developer Guide",
+            "How-to Guides",
+        ],
+        "Scale with Kestra": [
+            "Enterprise Edition",
+            "Task Runners",
+            "Best Practices",
+        ],
+        "Manage Kestra": [
+            "Administrator Guide",
+            "Configuration Guide",
+            "Migration Guide",
+            "Terraform Provider",
+            "API Reference",
+        ],
+    }
+
+    const rawStructure = ref<any>(undefined)
+    const query = ref<string>("")
+
+    const toc = computed((): TocItem[] | undefined => {
+        if (rawStructure.value === undefined) {
+            return undefined
         }
-    };
+
+        let childrenWithMetadata: Record<string, TocItem> = Object.fromEntries(Object.entries(rawStructure.value)
+            .filter(([_, metadata]: [string, any]) => !metadata.hideSidebar)
+            .map(([url, metadata]: [string, any]) => [url, {
+                ...metadata,
+                path: url,
+            } as TocItem]))
+        Object.entries(childrenWithMetadata)
+            .forEach(([url, metadata]: [string, any]) => {
+                const split = url.split("/")
+                const parentUrl = split.slice(0, split.length - 1).join("/")
+                const parent = childrenWithMetadata[parentUrl]
+                if (parent !== undefined) {
+                    parent.children = [...(parent.children ?? []), metadata]
+                }
+            })
+
+        return Object.values(childrenWithMetadata)
+    })
+
+    const sectionsWithChildren = computed((): [string, TocItem[]][] | undefined => {
+        if (toc.value === undefined) {
+            return undefined
+        }
+
+        return Object.entries(sections).map(([section, childrenTitles]) => [
+            section,
+            toc.value!.filter(({title, sidebarTitle}) => childrenTitles.includes(sidebarTitle ?? "") || childrenTitles.includes(title)),
+        ])
+    })
+
+    watch(
+        () => docStore.resourceUrlTemplate,
+        async (resourceUrlTemplate) => {
+            if (!resourceUrlTemplate) return
+            rawStructure.value = await docStore.children()
+        },
+        {immediate: true},
+    )
+
+    const search = async (q: string, cb: (results: SearchResult[]) => void) => {
+        cb(await docStore.search({q}))
+    }
 </script>
 
 <style lang="scss" scoped>
     ul > li > span:first-child {
-        font-size: 12px;
+        font-size: var(--ks-font-size-xs);
     }
 </style>

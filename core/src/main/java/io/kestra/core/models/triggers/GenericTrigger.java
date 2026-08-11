@@ -1,28 +1,30 @@
 package io.kestra.core.models.triggers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.kestra.core.models.tasks.WorkerGroup;
+
+import io.kestra.core.models.tasks.WorkerSelector;
+
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @JsonDeserialize
-public class GenericTrigger implements TriggerInterface{
+public class GenericTrigger implements TriggerInterface {
 
     private String version;
     private String id;
     private String type;
-    private WorkerGroup workerGroup;
+    private WorkerSelector workerSelector;
 
     @JsonIgnore
     @Builder.Default

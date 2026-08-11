@@ -3,11 +3,11 @@
         v-if="simpleType === 'list'"
         ref="taskComponent"
         :is="type"
-        v-bind="{...componentProps}"
+        v-bind="componentProps"
         :disabled
         class="mt-1 mb-2 wrapper"
     />
-    <el-form-item v-else-if="fieldKey" :required="isRequired">
+    <KsFormItem v-else-if="fieldKey" :required="isRequired">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -22,130 +22,130 @@
 
                     <ClearButton
                         v-if="isAnyOf && !isRequired && hasSelectedASchema"
-                        @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
+                        @click="modelValue = undefined; taskComponent?.resetSelectType?.();"
                     />
                 </div>
-                <el-tag
+                <KsTag
                     v-if="!isAnyOf"
                     disableTransitions
                     size="small"
                     class="type-tag"
                 >
                     {{ simpleType }}
-                </el-tag>
-                <el-tooltip
+                </KsTag>
+                <KsTooltip
                     v-if="!isAnyOf && hasTooltip"
-                    :persistent="false"
-                    :hideAfter="0"
-                    effect="light"
                     placement="left-start"
                     :showArrow="false"
                     popperClass="singleton-tooltip"
                 >
                     <template #content>
-                        <Markdown
+                        <KsMarkdown
                             class="markdown-tooltip"
-                            :source="helpText"
+                            :content="helpText"
                         />
                     </template>
                     <Help />
-                </el-tooltip>
+                </KsTooltip>
             </div>
         </template>
         <component
             v-if="!isBoolean"
             ref="taskComponent"
             :is="type"
-            v-bind="{...componentProps}"
+            v-bind="componentProps"
             :disabled
             class="mt-1 mb-2 wrapper"
         />
-    </el-form-item>
+    </KsFormItem>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, useTemplateRef} from "vue";
-    import Help from "vue-material-design-icons/Information.vue";
-    import Markdown from "../../../layout/Markdown.vue";
-    import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
-    import ClearButton from "./ClearButton.vue";
-    import getTaskComponent from "./getTaskComponent";
+    import {computed, ref, useTemplateRef} from "vue"
+    import {useBlockComponent} from "./useBlockComponent"
+
+    import ClearButton from "./ClearButton.vue"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import Help from "vue-material-design-icons/Information.vue"
+    import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue"
+
+
+    const modelValue = defineModel<any>()
 
     const props = defineProps<{
         schema: any;
-        definitions: any;
         root?: string;
         fieldKey: string;
         task: any;
-        modelValue?: Record<string, any> | string | number | boolean | Array<any>,
         required?: string[];
         disabled?: boolean;
+        siblingKeys?: string[];
     }>()
 
-    const emit = defineEmits<{
-        (e: "update:modelValue", value?: Record<string, any> | string | number | boolean | Array<any>): void;
-    }>();
-
-    const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent");
+    const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent")
 
     const isRequired = computed(() => {
-        return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;
+        return !props.disabled && props.required?.includes(props.fieldKey)// && props.schema.$required;
     })
 
     const hasSelectedASchema = ref(false)
 
+
     const componentProps = computed(() => {
         return {
-            modelValue: props.modelValue,
+            modelValue: modelValue.value,
             "onUpdate:modelValue": (value: Record<string, any> | string | number | boolean | Array<any>) => {
-                emit("update:modelValue", value);
+                modelValue.value = value
             },
             "onUpdate:selectedSchema": (value: any) => {
-                hasSelectedASchema.value = value !== undefined;
+                hasSelectedASchema.value = value !== undefined
             },
             task: props.task,
             root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,
             schema: props.schema,
             required: isRequired.value,
-            definitions: props.definitions
         }
     })
 
     const hasTooltip = computed(() => {
-        return props.schema.title || props.schema.description;
+        return props.schema?.title || props.schema?.description
     })
 
     const helpText = computed(() => {
-        const schema = props.schema;
+        const schema = props.schema
+        if (!schema) return ""
+
         return (
             (schema.title ? "**" + schema.title + "**" : "") +
             (schema.title && schema.description ? "\n" : "") +
             (schema.description ? schema.description : "")
-        );
+        )
     })
 
     const isAnyOf = computed(() => {
-        return Boolean(props.schema?.anyOf);
+        return Boolean(props.schema?.anyOf)
     })
 
     const isBoolean = computed(() => {
-        return type.value === "boolean";
+        return type.value === "boolean"
     })
 
     const simpleType = computed(() => {
-        return type.value.ksTaskName;
+        return type.value.ksTaskName
     })
 
+    const {getBlockComponent} = useBlockComponent()
+
     const type = computed(() => {
-        return getTaskComponent(props.schema, props.fieldKey, props.definitions)
+        return getBlockComponent.value(props.schema ?? {}, props.fieldKey, props.siblingKeys)
     })
 </script>
 
-<style lang="scss" scoped>
-.el-form-item {
+<style scoped lang="scss">
+.kel-form-item {
     width: 100%;
 
-    > :deep(.el-form-item__label) {
+    > :deep(.kel-form-item__label) {
         width: 100%;
         display: flex;
         align-items: center;
@@ -169,13 +169,14 @@
     }
 
     .label {
-        font-family: var(--bs-font-monospace);
-        color: var(--ks-content-primary);
+        font-family: var(--kel-font-family-monospace);
+        color: var(--ks-text-primary);
         min-width: 0;
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 0.875rem;
+        white-space: nowrap;
+        font-size: var(--ks-font-size-sm);
     }
 
     .label-anyof{
@@ -183,18 +184,16 @@
     }
 
     .type-tag {
-        background-color: var(--ks-tag-background-active);
-        color: var(--ks-tag-content);
-        font-size: 12px;
-        line-height: 20px;
-        padding: 0 8px;
-        padding-bottom: 2px;
-        border-radius: 8px;
+        background-color: var(--ks-bg-active);
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-xs);
+        padding: 0 var(--ks-spacing-2);
+        border-radius: var(--ks-radius-sm);
         text-transform: capitalize;
     }
 
     .information-icon {
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
         cursor: pointer;
     }
 }

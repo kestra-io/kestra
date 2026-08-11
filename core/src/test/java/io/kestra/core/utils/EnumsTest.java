@@ -1,16 +1,16 @@
 package io.kestra.core.utils;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.util.List;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class EnumsTest {
 
@@ -28,7 +28,8 @@ class EnumsTest {
 
     @Test
     void shouldThrowExceptionGivenInvalidString() {
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () ->
+        {
             Enums.getForNameIgnoreCase("invalid", TestEnum.class);
         });
     }
@@ -45,6 +46,7 @@ class EnumsTest {
         // THEN
         Assertions.assertEquals(TestEnumWithValue.ENUM1, result);
     }
+
     @Test
     void testFromStringInvalidValue() {
         // Arrange
@@ -52,13 +54,13 @@ class EnumsTest {
         String invalidValue = "invalidValue";
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-            Enums.fromString(invalidValue, mapping, "TestEnumWithValue")
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class, () -> Enums.fromString(invalidValue, mapping, "TestEnumWithValue")
         );
     }
 
     @Test
-    void should_get_from_list(){
+    void should_get_from_list() {
         assertThat(Enums.fromList(List.of(TestEnum.ENUM1, TestEnum.ENUM2), TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1, TestEnum.ENUM2));
         assertThat(Enums.fromList(List.of("ENUM1", "ENUM2"), TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1, TestEnum.ENUM2));
         assertThat(Enums.fromList(TestEnum.ENUM1, TestEnum.class)).isEqualTo(List.of(TestEnum.ENUM1));
@@ -69,8 +71,10 @@ class EnumsTest {
     }
 
     enum TestEnum {
-        ENUM1, ENUM2
+        ENUM1,
+        ENUM2
     }
+
     enum TestEnumWithValue {
         ENUM1("enum1"),
         ENUM2("enum2");

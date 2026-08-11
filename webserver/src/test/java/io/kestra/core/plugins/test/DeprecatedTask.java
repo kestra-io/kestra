@@ -1,13 +1,13 @@
 package io.kestra.core.plugins.test;
 
 import io.kestra.core.models.annotations.PluginProperty;
+
+import jakarta.validation.constraints.NotBlank;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotBlank;
 
 @SuperBuilder
 @ToString

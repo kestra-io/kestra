@@ -1,15 +1,16 @@
 package io.kestra.plugin.core.storage;
 
-import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.junit.annotations.KestraTest;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.util.Random;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.StorageInterface;
 
 import jakarta.inject.Inject;
 

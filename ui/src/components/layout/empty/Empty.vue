@@ -1,56 +1,90 @@
 <template>
     <section class="row empty">
         <div class="col-sm-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
-            <div class="d-flex flex-column align-items-center gap-2 px-2">
-                <img :src>
-
-                <h2>{{ t(`empty.${props.type}.title`) }}</h2>
-                <p v-html="t(`empty.${props.type}.content`)" />
-
-                <slot name="button" />
-            </div>
+            <KsEmptyState
+                :title="resolvedTitle"
+                :description="resolvedDescription"
+                :image="artwork"
+                :video="resolvedVideo"
+                :learnMore="resolvedLearnMore"
+            >
+                <template v-if="$slots.description || $slots.message" #description>
+                    <slot name="description">
+                        <slot name="message" />
+                    </slot>
+                </template>
+                <template v-if="$slots.button || demoCta" #action>
+                    <slot name="button">
+                        <KsButton
+                            v-if="demoCta"
+                            type="primary"
+                            tag="a"
+                            target="_blank"
+                            :href="contactSalesUrl"
+                        >
+                            {{ $t("demos.contact_sales") }}
+                        </KsButton>
+                    </slot>
+                </template>
+            </KsEmptyState>
             <slot name="content" />
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {KsButton, KsEmptyState} from "@kestra-io/design-system"
 
-    const props = defineProps({type: {type: String, required: true}});
+    import artwork from "../../../assets/empty_visuals/generic.svg"
+    import {links} from "./links"
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
+    const props = withDefaults(
+        defineProps<{
+            type: string;
+            title?: string;
+            description?: string;
+            video?: string;
+            learnMore?: string;
+            demoCta?: boolean;
+        }>(),
+        {
+            demoCta: false,
+        },
+    )
 
-    import {images} from "./images";
-    const src = computed((): string => images[props.type]);
+    const {t, te} = useI18n()
+
+    const typeLinks = computed(() => links[props.type])
+
+    const resolvedTitle = computed(() => {
+        if (props.title) return props.title
+        const key = `empty.${props.type}.title`
+        return te(key) ? t(key) : undefined
+    })
+
+    const resolvedDescription = computed(() => {
+        if (props.description) return props.description
+        const key = `empty.${props.type}.content`
+        return te(key) ? t(key) : undefined
+    })
+
+    const resolvedVideo = computed(() => props.video ?? typeLinks.value?.video)
+
+    const resolvedLearnMore = computed(() => {
+        if (props.learnMore !== undefined) {
+            return props.learnMore
+        } else if (typeLinks.value?.learnMore) {
+            return typeLinks.value.learnMore
+        } else if (props.demoCta) {
+            return "#"
+        } else {
+            return undefined
+        }
+    })
+
+    const contactSalesUrl = computed(
+        () => `https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=demo-${props.type}`,
+    )
 </script>
-
-<style scoped lang="scss">
-.empty {
-    width: 100%;
-    height: 100%;
-    padding: 3rem 0;
-    text-align: center;
-    background: top center / auto no-repeat
-        url("./assets/background/light.svg#file");
-
-    html.dark & {
-        background-image: url("./assets/background/dark.svg#file");
-    }
-
-    h2 {
-        font-size: 1.5rem;
-        color: var(--ks-content-primary);
-        font-weight: 600;
-    }
-
-    p {
-        width: 100%;
-        max-width: 553px;
-        font-size: 1rem;
-        color: var(--ks-content-secondary);
-        line-height: 1.5rem;
-    }
-}
-</style>

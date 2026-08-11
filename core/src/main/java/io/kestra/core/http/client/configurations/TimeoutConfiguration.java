@@ -1,11 +1,12 @@
 package io.kestra.core.http.client.configurations;
 
+import java.time.Duration;
+
 import io.kestra.core.models.property.Property;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.Duration;
 
 @Builder(toBuilder = true)
 @Getter

@@ -1,10 +1,11 @@
 package io.kestra.core.models;
 
-import io.kestra.core.models.annotations.Plugin;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
+import io.kestra.core.models.annotations.Plugin;
 
 class PluginTest {
 

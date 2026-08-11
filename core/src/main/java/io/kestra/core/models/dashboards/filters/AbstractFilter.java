@@ -1,39 +1,51 @@
 package io.kestra.core.models.dashboards.filters;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.micronaut.core.annotation.Introspected;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = Contains.class, name = "CONTAINS"),
-    @JsonSubTypes.Type(value = EndsWith.class, name = "ENDS_WITH"),
-    @JsonSubTypes.Type(value = EqualTo.class, name = "EQUAL_TO"),
-    @JsonSubTypes.Type(value = GreaterThan.class, name = "GREATER_THAN"),
-    @JsonSubTypes.Type(value = GreaterThanOrEqualTo.class, name = "GREATER_THAN_OR_EQUAL_TO"),
-    @JsonSubTypes.Type(value = In.class, name = "IN"),
-    @JsonSubTypes.Type(value = IsFalse.class, name = "IS_FALSE"),
-    @JsonSubTypes.Type(value = IsNotNull.class, name = "IS_NOT_NULL"),
-    @JsonSubTypes.Type(value = IsNull.class, name = "IS_NULL"),
-    @JsonSubTypes.Type(value = IsTrue.class, name = "IS_TRUE"),
-    @JsonSubTypes.Type(value = LessThan.class, name = "LESS_THAN"),
-    @JsonSubTypes.Type(value = LessThanOrEqualTo.class, name = "LESS_THAN_OR_EQUAL_TO"),
-    @JsonSubTypes.Type(value = NotEqualTo.class, name = "NOT_EQUAL_TO"),
-    @JsonSubTypes.Type(value = NotIn.class, name = "NOT_IN"),
-    @JsonSubTypes.Type(value = Or.class, name = "OR"),
-    @JsonSubTypes.Type(value = Regex.class, name = "REGEX"),
-    @JsonSubTypes.Type(value = StartsWith.class, name = "STARTS_WITH"),
-})
+@JsonSubTypes(
+    {
+        @JsonSubTypes.Type(value = Contains.class, name = "CONTAINS"),
+        @JsonSubTypes.Type(value = EndsWith.class, name = "ENDS_WITH"),
+        @JsonSubTypes.Type(value = EqualTo.class, name = "EQUAL_TO"),
+        @JsonSubTypes.Type(value = GreaterThan.class, name = "GREATER_THAN"),
+        @JsonSubTypes.Type(value = GreaterThanOrEqualTo.class, name = "GREATER_THAN_OR_EQUAL_TO"),
+        @JsonSubTypes.Type(value = In.class, name = "IN"),
+        @JsonSubTypes.Type(value = IsFalse.class, name = "IS_FALSE"),
+        @JsonSubTypes.Type(value = IsNotNull.class, name = "IS_NOT_NULL"),
+        @JsonSubTypes.Type(value = IsNull.class, name = "IS_NULL"),
+        @JsonSubTypes.Type(value = IsTrue.class, name = "IS_TRUE"),
+        @JsonSubTypes.Type(value = LessThan.class, name = "LESS_THAN"),
+        @JsonSubTypes.Type(value = LessThanOrEqualTo.class, name = "LESS_THAN_OR_EQUAL_TO"),
+        @JsonSubTypes.Type(value = NotContains.class, name = "NOT_CONTAINS"),
+        @JsonSubTypes.Type(value = NotEqualTo.class, name = "NOT_EQUAL_TO"),
+        @JsonSubTypes.Type(value = NotIn.class, name = "NOT_IN"),
+        @JsonSubTypes.Type(value = Or.class, name = "OR"),
+        @JsonSubTypes.Type(value = Regex.class, name = "REGEX"),
+        @JsonSubTypes.Type(value = StartsWith.class, name = "STARTS_WITH"),
+        @JsonSubTypes.Type(value = Prefix.class, name = "PREFIX"),
+    }
+)
 @Getter
 @NoArgsConstructor
 @SuperBuilder
-@Introspected
 public abstract class AbstractFilter<F extends Enum<F>> {
+    @NotNull
+    @JsonProperty(value = "field", required = true)
+    @Valid
     private F field;
-    private String labelKey;
+    // `labelKey` is the legacy name (Executions LABELS); kept as a read alias for backward compatibility.
+    @JsonAlias("labelKey")
+    private String key;
 
     abstract public FilterType getType();
 
@@ -62,10 +74,12 @@ public abstract class AbstractFilter<F extends Enum<F>> {
         IS_TRUE,
         LESS_THAN,
         LESS_THAN_OR_EQUAL_TO,
+        NOT_CONTAINS,
         NOT_EQUAL_TO,
         NOT_IN,
         OR,
         REGEX,
-        STARTS_WITH
+        STARTS_WITH,
+        PREFIX
     }
 }

@@ -1,8 +1,10 @@
 package io.kestra.core.validations;
 
-import io.kestra.core.validations.validator.JsonStringValidator;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+
+import io.kestra.core.validations.validator.JsonStringValidator;
+
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
@@ -10,6 +12,8 @@ import jakarta.validation.Payload;
 @Constraint(validatedBy = JsonStringValidator.class)
 public @interface JsonString {
     String message() default "invalid json ({validatedValue})";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }

@@ -1,0 +1,16 @@
+id: replay-sequential-with-error-handler
+namespace: io.kestra.tests
+
+tasks:
+  - id: before
+    type: io.kestra.plugin.core.debug.Return
+    format: "before"
+  - id: sequential
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: failing-task
+        type: io.kestra.plugin.core.execution.Fail
+    errors:
+      - id: error-handler
+        type: io.kestra.plugin.core.debug.Return
+        format: "error handled"

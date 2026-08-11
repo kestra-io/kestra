@@ -1,5 +1,10 @@
 package io.kestra.plugin.core.log;
 
+import java.util.Collection;
+
+import org.slf4j.Logger;
+import org.slf4j.event.Level;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -8,14 +13,11 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-import org.slf4j.event.Level;
-
-import java.util.Collection;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -25,15 +27,27 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Log a message to the console."
+    title = "Emit log entries from a flow.",
+    description = """
+        Render one or many messages (strings or arrays) and write them to the task log at a specified level.
+
+        Uses the same templating engine as other tasks, so you can interpolate variables or secrets. The `level` property sets the severity of the emitted entry; the flow-level `logLevel` setting still controls which entries are persisted, so align both when troubleshooting missing logs."""
 )
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "level: DEBUG",
-                "message: \"{{ task.id }} > {{ taskrun.startDate }}\""
-            }
+            title = "Log a DEBUG level message containing expressions.",
+            full = true,
+            code = """
+                id: send_logs
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    level: DEBUG
+                    message: "{{ task.id }} started at {{ taskrun.startDate }}"
+                """
         ),
         @Example(
             title = "Log one or more messages to the console.",
@@ -49,8 +63,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                       - Kestra team wishes you a great day 👋
                       - If you need some help, reach out via Slack"""
         ),
-    },
-    aliases = "io.kestra.core.tasks.log.Log"
+    }
 )
 public class Log extends Task implements RunnableTask<VoidOutput> {
     @Schema(
@@ -78,12 +91,13 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
 
         var renderedLevel = runContext.render(this.level).as(Level.class).orElseThrow();
 
-        if(this.message instanceof String stringValue) {
+        if (this.message instanceof String stringValue) {
             String render = runContext.render(stringValue);
             this.log(logger, renderedLevel, render);
         } else if (this.message instanceof Collection<?> collectionValue) {
             Collection<String> messages = (Collection<String>) collectionValue;
-            messages.forEach(throwConsumer(message -> {
+            messages.forEach(throwConsumer(message ->
+            {
                 String render;
                 render = runContext.render(message);
                 this.log(logger, renderedLevel, render);
@@ -117,5 +131,3 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
         }
     }
 }
-
-

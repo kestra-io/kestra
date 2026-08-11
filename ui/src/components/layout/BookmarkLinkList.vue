@@ -1,8 +1,8 @@
 <template>
-    <BookmarkLink v-for="p in pages" :key="p.path" :href="p.path" :title="p.label" />
+    <BookmarkLink v-for="p in pages" :key="p.path" :href="p.path" :title="p.label ?? p.path" />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import BookmarkLink from "./BookmarkLink.vue"
 
     defineProps<{

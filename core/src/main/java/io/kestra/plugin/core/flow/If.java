@@ -1,6 +1,12 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -11,7 +17,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -19,16 +24,15 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -36,8 +40,11 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process tasks conditionally depending on a contextual value.",
-    description = "Allow some workflow based on context variables, for example, branch a flow based on a previous task."
+    title = "Branch tasks based on a rendered condition.",
+    description = """
+        Renders `condition` and coerces it to boolean (empty string/0/null is false, everything else true). Executes `then` when true, `else` when false, with optional `errors`/`finally` blocks.
+
+        Frequently used after previous task results to drive control flow."""
 )
 @Plugin(
     examples = {
@@ -66,8 +73,7 @@ import java.util.stream.Stream;
                         message: "Condition was false"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.If"
+    }
 )
 public class If extends Task implements FlowableTask<If.Output> {
     @Schema(
@@ -77,6 +83,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     // Note: we can't use Property<String> here because of the cache of the property evaluation which causes issue when using If in a ForEach with concurrencyLimit > 1!
     // See https://github.com/kestra-io/kestra/issues/8697
     // At some point, if we need it, we should allow bypassing (or clearing) the property evaluation cache
+    @NotNull
     @PluginProperty(dynamic = true)
     private String condition;
 
@@ -152,15 +159,16 @@ public class If extends Task implements FlowableTask<If.Output> {
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        // We need to evaluate the condition once, so if the condition is impacted during the processing or a branch, the same branch is always taken.
+        // We need to evaluate the condition once, so if the condition is impacted during the processing of a branch, the same branch is always taken.
         // This can exist for ex if the condition is based on a KV and the KV is changed in the branch.
         // For this, we evaluate the condition in the outputs() method and get it from the outputs.
         // But unfortunately, the output may not have yet been computed in some cases, like if the task is inside a flowable, in this case we compute the result anyway.
+        Map<String, Object> outputs = runContext.currentOutput();
         Boolean evaluationResult;
-        if (parentTaskRun.getOutputs() == null || parentTaskRun.getOutputs().get("evaluationResult") == null) {
+        if (MapUtils.isEmpty(outputs) || outputs.get("evaluationResult") == null) {
             evaluationResult = isTrue(runContext);
         } else {
-            evaluationResult = (Boolean) parentTaskRun.getOutputs().get("evaluationResult");
+            evaluationResult = (Boolean) outputs.get("evaluationResult");
         }
 
         if (Boolean.TRUE.equals(evaluationResult)) {

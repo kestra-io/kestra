@@ -7,11 +7,6 @@ labels:
 inputs:
 - id: string
   type: STRING
-- id: enum
-  type: ENUM
-  values:
-    - ENUM_VALUE
-    - OTHER_ONE
 - id: optional
   type: STRING
   required: false
@@ -41,7 +36,10 @@ inputs:
 - id: instantDefaults
   type: DATETIME
   defaults: "2013-08-09T14:19:00Z"
-- id: json
+- id: json1
+  type: JSON
+  required: false
+- id: json2
   type: JSON
   required: false
 - id: uri
@@ -90,12 +88,12 @@ inputs:
   after: "01:00:00"
   before: "11:59:59"
   required: false
-- name: secret
+- id: secret
   type: SECRET
-- name: array
+- id: array
   type: ARRAY
   itemType: INT
-- name: yaml
+- id: yaml1
   type: YAML
   defaults:
     property: something
@@ -104,8 +102,17 @@ inputs:
       value: value1
     - key: key2
       value: value2
+- id: yaml2
+  type: YAML
+  defaults:
+    property: something
+    list:
+      - key: key1
+        value: value1
+      - key: key2
+        value: value2
 # required true and an empty default value will only work if we correctly serialize default values which is what this input is about to test.
-- name: empty
+- id: empty
   type: STRING
   defaults: ''
   required: true
@@ -133,19 +140,25 @@ tasks:
   type: io.kestra.plugin.core.debug.Return
   format: "{{inputs.secret}}"
 - id: array
-  type: io.kestra.plugin.core.flow.ForEach
+  type: io.kestra.plugin.core.flow.Loop
   values: "{{inputs.array}}"
   tasks:
     - id: log
       type: io.kestra.plugin.core.debug.Return
-      format: "{{taskrun.value}}"
+      format: "{{item.value}}"
 
-- id: json
+- id: json1
   type: io.kestra.plugin.core.debug.Return
-  format: "{{inputs.json}}"
+  format: "{{inputs.json1}}"
+- id: json2
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{inputs.json2}}"
 - id: jsonOutput
   type: io.kestra.plugin.core.debug.Return
-  format: "{{outputs.json.value}}"
-- id: yamlOutput
+  format: "{{outputs.json1.value}}"
+- id: yamlOutput1
   type: io.kestra.plugin.core.debug.Return
-  format: "{{inputs.yaml}}"
+  format: "{{inputs.yaml1}}"
+- id: yamlOutput2
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{inputs.yaml2}}"

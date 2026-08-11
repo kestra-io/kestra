@@ -1,17 +1,19 @@
 package io.kestra.core.validations;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.models.validations.ModelValidator;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,7 +24,7 @@ class NoSystemLabelValidationTest {
 
     @Test
     void shouldReportAViolation() {
-        var sla =  MaxDurationSLA.builder()
+        var sla = MaxDurationSLA.builder()
             .duration(Duration.ofSeconds(1))
             .id("id")
             .behavior(SLA.Behavior.CANCEL)
@@ -38,7 +40,7 @@ class NoSystemLabelValidationTest {
 
     @Test
     void shouldSuccess() {
-        var sla =  MaxDurationSLA.builder()
+        var sla = MaxDurationSLA.builder()
             .duration(Duration.ofSeconds(1))
             .id("id")
             .behavior(SLA.Behavior.CANCEL)

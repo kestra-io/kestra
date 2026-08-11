@@ -1,67 +1,88 @@
 <template>
-    <el-select
-        class="fit-text"
+    <KsSelect
+        :class="{'fit-text': !fit && !multiple}"
         v-model="modelValue"
         :multiple
-        collapseTags
+        :singleLineTags="multiple"
+
         :disabled="readOnly"
         :clearable="clearable"
         :allowCreate="taggable"
         filterable
-        remote
-        remoteShowSuffix
-        :remoteMethod="onSearch"
-        :placeholder="t('namespaces')"
-        :suffixIcon="readOnly ? Lock : undefined"
+        :fit="fit"
+        :placeholder="placeholder ?? $t('namespaces')"
+        :suffixIcon="suffixIcon"
     >
         <template #tag>
-            <el-tag
-                v-for="(value, index) in validValues"
-                :key="index"
-                class="namespace-tag"
+            <KsTag
+                v-for="value in visibleTags"
+                :key="value"
                 closable
+                type="info"
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
             >
-                <DotsSquare class="tag-icon" />
-                {{ value }}
-            </el-tag>
+                <FolderOpenOutline />
+                <span class="tag-label" :title="value">{{ value }}</span>
+            </KsTag>
+            <KsTooltip v-if="hiddenTags.length > 0" placement="top">
+                <template #content>
+                    <div v-for="value in hiddenTags" :key="value">{{ value }}</div>
+                </template>
+                <KsTag class="tag-counter">
+                    +{{ hiddenTags.length }}
+                </KsTag>
+            </KsTooltip>
         </template>
-        <el-option
+        <KsOption
             v-for="item in options"
             :key="item.id"
             :label="item.label"
             :value="item.id"
         />
-    </el-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">
     import {computed, onMounted} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue"
-    import Lock from "vue-material-design-icons/Lock.vue";
-    import {defaultNamespace} from "../../../composables/useNamespaces";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue"
+    import Lock from "vue-material-design-icons/Lock.vue"
+    import {defaultNamespace} from "../../../composables/useNamespaces"
 
-    const {t} = useI18n();
-
-    withDefaults(defineProps<{
+    const props = withDefaults(defineProps<{
         multiple?: boolean,
         readOnly?: boolean,
         clearable?: boolean,
         taggable?: boolean
+        placeholder?: string | undefined
+        fit?: boolean
+        autoDefault?: boolean
+        maxVisibleTags?: number
     }>(), {
         multiple: false,
-        clearable: true
-    });
+        clearable: true,
+        placeholder: undefined,
+        autoDefault: true,
+        maxVisibleTags: 3,
+    })
 
-    const modelValue = defineModel<string | string[]>();
+    const suffixIcon = computed(() => props.readOnly ? Lock : undefined)
 
-    const namespacesStore = useNamespacesStore();
+    defineOptions({
+        inheritAttrs: false,
+    })
+
+    const modelValue = defineModel<string | string[]>()
+
+    const namespacesStore = useNamespacesStore()
 
     const validValues = computed(() =>
-        [modelValue.value].flat().filter(Boolean)
+        [modelValue.value].flat().filter(Boolean) as string[],
     )
+
+    const visibleTags = computed(() => validValues.value.slice(0, props.maxVisibleTags))
+
+    const hiddenTags = computed(() => validValues.value.slice(props.maxVisibleTags))
 
     const options = computed(() => {
         return namespacesStore.autocomplete === undefined ? [] : namespacesStore.autocomplete
@@ -70,46 +91,33 @@
             })
     })
 
-    const onSearch = (search: string) => {
-        namespacesStore.loadAutocomplete({
-            q: search,
-            ids: modelValue.value as string[] ?? [],
-        })
-    }
-
     onMounted(() => {
-        if (modelValue.value === undefined || modelValue.value.length === 0) {
-            const defaultNamespaceVal = defaultNamespace();
+        const ids = [modelValue.value].flat().filter(Boolean) as string[]
+        namespacesStore.loadAutocomplete({ids})
+
+        if (props.autoDefault && (modelValue.value === undefined || modelValue.value.length === 0)) {
+            const defaultNamespaceVal = defaultNamespace()
             if (Array.isArray(modelValue.value)) {
                 if (defaultNamespaceVal != null) {
-                    modelValue.value = [defaultNamespaceVal];
+                    modelValue.value = [defaultNamespaceVal]
                 }
             } else {
-                modelValue.value = defaultNamespaceVal ?? modelValue.value;
+                modelValue.value = defaultNamespaceVal ?? modelValue.value
             }
         }
     })
 </script>
 
-<style lang="scss" scoped>
-    .namespace-tag {
-        background-color: var(--ks-log-background-debug) !important;
-        color: var(--ks-log-content-debug);
-        border: 1px solid var(--ks-log-border-debug);
-        padding: 0 6px;
+<style scoped lang="scss">
+    .tag-label {
+        max-width: 12.5rem;
+        min-width: 5ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-        :deep(.el-tag__content) {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        :deep(.el-tag__close) {
-            color: var(--ks-log-content-debug);
-
-            &:hover {
-                background-color: transparent;
-            }
-        }
+    .tag-counter {
+        flex-shrink: 0;
     }
 </style>

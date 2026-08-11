@@ -19,7 +19,9 @@ tasks:
     type: io.kestra.plugin.core.kv.PurgeKV
     namespaces:
       - sanitychecks.core
-    expiredOnly: false
+    behavior:
+      type: key
+      expiredOnly: false
     keyPattern: KV_*
 
   - id: kv_getkeys

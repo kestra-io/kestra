@@ -1,17 +1,18 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.tasks.FileExistComportment;
-import io.kestra.core.utils.IdUtils;
 import java.io.ByteArrayInputStream;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.models.tasks.FileExistComportment;
+import io.kestra.core.utils.IdUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -73,7 +74,8 @@ class LocalWorkingDirTest {
         TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
 
         workingDirectory.createFile("folder/file.txt", "1".getBytes(StandardCharsets.UTF_8));
-        Assertions.assertThrows(FileAlreadyExistsException.class, () -> {
+        Assertions.assertThrows(FileAlreadyExistsException.class, () ->
+        {
             workingDirectory.createFile("folder/file.txt", "2".getBytes(StandardCharsets.UTF_8));
         });
     }

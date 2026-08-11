@@ -1,36 +1,33 @@
-import Utils from "./utils";
-import {getCurrentInstance} from "vue";
-import {storageKeys} from "../utils/constants";
-import moment from "moment-timezone";
+import * as Utils from "./utils"
+import {storageKeys} from "../utils/constants"
+import moment from "moment-timezone"
+import {durationUtils} from "@kestra-io/design-system"
 
-export function invisibleSpace (value:string) {
-        return value.replace(/\./g, "\u200B" + ".");
-}
 export function humanizeDuration (value:string, options?:any) {
-    return Utils.humanDuration(value, options);
+    return durationUtils.humanDuration(value, options)
 }
 export function humanizeNumber (value:string) {
-    return parseInt(value).toLocaleString(Utils.getLang());
+    return parseInt(value).toLocaleString(Utils.getLang())
 }
 export function cap (value:string) {
-    return value ? value.toString().capitalize() : "";
+    return value ? value.toString().capitalize() : ""
 }
 export function lower (value:string) {
-    return value ? value.toString().toLowerCase() : "";
+    return value ? value.toString().toLowerCase() : ""
 }
 export function date (dateString:string, format?:string) {
-    const currentLocale = getCurrentInstance()?.appContext.config.globalProperties.$moment().locale();
-    const momentInstance = getCurrentInstance()?.appContext.config.globalProperties.$moment(dateString).locale(currentLocale);
-    let f;
+    const currentLocale = moment().locale()
+    const momentInstance = moment(dateString).locale(currentLocale)
+    let f
     if (format === "iso") {
-        f = "YYYY-MM-DD HH:mm:ss.SSS";
+        f = "YYYY-MM-DD HH:mm:ss.SSS"
     } else {
-        f = format ?? localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll";
+        f = format ?? localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll"
     }
     // Apply timezone and format using the correct locale
     return momentInstance
         .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-        .format(f);
+        .format(f)
 }
 
 export interface FilterObject{
@@ -40,12 +37,11 @@ export interface FilterObject{
 }
 
 export default {
-    invisibleSpace,
     humanizeDuration,
     humanizeNumber,
     cap,
     lower,
-    date
+    date,
 }
 
 

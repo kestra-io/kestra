@@ -1,13 +1,13 @@
 package io.kestra.core.storages.kv;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode
@@ -19,18 +19,18 @@ public class KVMetadata {
         if (ttl != null && ttl.isNegative()) {
             throw new IllegalArgumentException("ttl cannot be negative");
         }
-        
+
         this.description = description;
         if (ttl != null) {
             this.expirationDate = Instant.now().plus(ttl);
         }
     }
-    
+
     public KVMetadata(String description, Instant expirationDate) {
         this.description = description;
         this.expirationDate = expirationDate;
     }
-    
+
     public KVMetadata(Map<String, String> metadata) {
         if (metadata == null) {
             return;
@@ -52,7 +52,7 @@ public class KVMetadata {
         }
         return map;
     }
-    
+
     @Override
     public String toString() {
         return "[description=" + description + ", expirationDate=" + expirationDate + "]";

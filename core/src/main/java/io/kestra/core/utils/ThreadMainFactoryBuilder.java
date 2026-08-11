@@ -1,20 +1,20 @@
 package io.kestra.core.utils;
 
+import java.util.concurrent.ThreadFactory;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.util.concurrent.ThreadFactory;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+public final class ThreadMainFactoryBuilder {
 
-@Singleton
-public class ThreadMainFactoryBuilder {
-    @Inject
-    private Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
+    private ThreadMainFactoryBuilder() {
+        // utility class pattern
+    }
 
-    public ThreadFactory build(String name) {
+    public static ThreadFactory build(String name) {
         return new ThreadFactoryBuilder()
             .setNameFormat(name)
-            .setUncaughtExceptionHandler(this.uncaughtExceptionHandler)
+            // a new handler per factory: it captures the KestraContext current at build time
+            .setUncaughtExceptionHandler(new ThreadUncaughtExceptionHandler())
             .build();
     }
 }

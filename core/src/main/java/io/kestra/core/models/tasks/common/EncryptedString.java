@@ -1,10 +1,11 @@
 package io.kestra.core.models.tasks.common;
 
+import java.security.GeneralSecurityException;
+
 import io.kestra.core.runners.RunContext;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-
-import java.security.GeneralSecurityException;
 
 @Getter
 @Schema(hidden = true)

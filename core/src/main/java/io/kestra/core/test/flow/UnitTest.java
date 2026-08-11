@@ -1,5 +1,9 @@
 package io.kestra.core.test.flow;
 
+import java.util.List;
+
+import io.kestra.core.models.flows.State;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -7,8 +11,6 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Getter
 @Builder
@@ -33,4 +35,7 @@ public class UnitTest {
     @NotNull
     @Valid
     private List<Assertion> assertions;
+
+    @Builder.Default
+    private State.Type expectedState = State.Type.SUCCESS;
 }

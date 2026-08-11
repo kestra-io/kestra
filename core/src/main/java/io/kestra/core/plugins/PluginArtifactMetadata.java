@@ -5,11 +5,11 @@ import java.net.URI;
 /**
  * Metadata for a specific plugin artifact file.
  *
- * @param uri              The URI of the plugin artifact.
- * @param name             The name of the plugin artifact.
- * @param size             The size of the plugin artifact.
+ * @param uri The URI of the plugin artifact.
+ * @param name The name of the plugin artifact.
+ * @param size The size of the plugin artifact.
  * @param lastModifiedTime The last modified time of the plugin artifact.
- * @param creationTime     The creation time of the plugin artifact.
+ * @param creationTime The creation time of the plugin artifact.
  */
 public record PluginArtifactMetadata(
     URI uri,

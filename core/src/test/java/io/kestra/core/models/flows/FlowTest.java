@@ -1,24 +1,23 @@
 package io.kestra.core.models.flows;
 
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.serializers.YamlParser;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.debug.Return;
-import io.kestra.plugin.core.log.Log;
-import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.input.FormInput;
+import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.log.Log;
+
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,7 +35,7 @@ class FlowTest {
         assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage()).contains("Duplicate task id with name [date, listen]");
+        assertThat(validate.get().getMessage()).contains("Duplicate task id with name [date]");
         assertThat(validate.get().getMessage()).contains("Duplicate trigger id with name [trigger]");
     }
 
@@ -74,7 +73,6 @@ class FlowTest {
         assertThat(validate.get().getMessage()).contains("Illegal flow id update");
     }
 
-
     @Test
     void switchTaskInvalid() {
         Flow flow = this.parse("flows/invalids/switch-invalid.yaml");
@@ -109,22 +107,6 @@ class FlowTest {
     }
 
     @Test
-    void updateTask() throws InternalException {
-        Flow flow = this.parse("flows/valids/each-sequential-nested.yaml");
-
-        Flow updated = flow.updateTask("1-2-2_return", Return.builder()
-            .id("1-2-2_return")
-            .type(Return.class.getName())
-            .format(Property.ofExpression("{{task.id}}"))
-            .build()
-        );
-
-        Task findUpdated = updated.findTaskByTaskId("1-2-2_return");
-
-        assertThat(((Return) findUpdated).getFormat().toString()).isEqualTo("{{task.id}}");
-    }
-
-    @Test
     void allTasksWithChildsAndTriggerIds() {
         Flow flow = this.parse("flows/valids/trigger-flow-listener-no-inputs.yaml");
         List<String> all = flow.allTasksWithChildsAndTriggerIds();
@@ -138,10 +120,17 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(9);
 
         assertThat(validate.get().getMessage()).contains("file: inputs of type 'FILE' only support `defaults` as local files using a file URI");
-        assertThat(validate.get().getMessage()).contains("array: `itemType` cannot be `ARRAY");
+        assertThat(validate.get().getMessage()).contains("array1: `itemType` cannot be ARRAY");
+        assertThat(validate.get().getMessage()).contains("array2: `itemType` cannot be SECRET");
+        assertThat(validate.get().getMessage()).contains("array3: `itemType` cannot be MULTISELECT");
+        assertThat(validate.get().getMessage()).contains("array4: `itemType` cannot be SELECT");
+        assertThat(validate.get().getMessage()).contains("multiselect1: `itemType` cannot be ARRAY");
+        assertThat(validate.get().getMessage()).contains("multiselect2: `itemType` cannot be SECRET");
+        assertThat(validate.get().getMessage()).contains("multiselect3: `itemType` cannot be MULTISELECT");
+        assertThat(validate.get().getMessage()).contains("multiselect4: `itemType` cannot be SELECT");
     }
 
     // This test is done to ensure the equals is checking the right fields and also make sure the Maps orders don't negate the equality even if they are not the same.
@@ -184,5 +173,59 @@ class FlowTest {
         File file = new File(resource.getFile());
 
         return YamlParser.parse(file, Flow.class);
+    }
+
+    @Test
+    void resolvableInputsExpandsFormsToDottedLeaves() {
+        // A flow whose FORM 'environment' groups 'region', plus an ungrouped top-level input.
+        Flow flow = Flow.builder()
+            .id("a")
+            .namespace("a")
+            .inputs(
+                List.of(
+                    FormInput.builder()
+                        .id("environment")
+                        .type(Type.FORM)
+                        .inputs(List.of(StringInput.builder().id("region").type(Type.STRING).build()))
+                        .build(),
+                    StringInput.builder().id("api_key").type(Type.STRING).build()
+                )
+            )
+            .build();
+
+        // resolvableInputs() must flatten the FORM into a dotted leaf and leave the ungrouped input untouched;
+        // no FORM node survives, and the leaf keeps its concrete subtype (downstream casts depend on it).
+        List<Input<?>> resolved = flow.resolvableInputs();
+
+        assertThat(resolved).hasSize(2);
+        assertThat(resolved).noneMatch(input -> input instanceof FormInput);
+        assertThat(resolved.getFirst()).isInstanceOf(StringInput.class);
+        assertThat(resolved.stream().map(Input::getId)).containsExactly("environment.region", "api_key");
+    }
+
+    @Test
+    void resolvableInputsEmptyWhenNoInputs() {
+        // The accessor must never return null even when the flow declares no inputs, so every caller can stream it.
+        Flow flow = Flow.builder().id("a").namespace("a").build();
+
+        assertThat(flow.resolvableInputs()).isEmpty();
+    }
+
+    @Test
+    void illegalNamespaceUpdate() {
+        Flow original = Flow.builder()
+            .id("my-flow")
+            .namespace("io.kestra.prod")
+            .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
+            .build();
+
+        Flow updated = original.toBuilder()
+            .namespace("io.kestra.dev")
+            .build();
+
+        Optional<ConstraintViolationException> validate = original.validateUpdate(updated);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage()).contains("Illegal namespace update");
     }
 }

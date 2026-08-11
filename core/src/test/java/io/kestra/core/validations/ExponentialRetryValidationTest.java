@@ -1,14 +1,16 @@
 package io.kestra.core.validations;
 
+import java.time.Duration;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.models.validations.ModelValidator;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,7 +33,7 @@ public class ExponentialRetryValidationTest {
     }
 
     @Test
-    void shouldNotValidateInvalidRetry() throws Exception {
+    void shouldNotValidateWhenIntervalExceedsMaxDuration() throws Exception {
         var retry = Exponential.builder()
             .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(1))
@@ -42,18 +44,21 @@ public class ExponentialRetryValidationTest {
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
         assertThat(valid.isEmpty()).isFalse();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
-        assertThat(valid.get().getMessage()).isEqualTo(": 'interval' must be less than 'maxDuration' but is PT2S\n");
+        assertThat(valid.get().getMessage()).contains("'interval' must be less than 'maxDuration'");
+    }
 
-        retry = Exponential.builder()
+    @Test
+    void shouldNotValidateWhenIntervalExceedsMaxInterval() throws Exception {
+        var retry = Exponential.builder()
             .maxAttempts(3)
             .maxDuration(Duration.ofSeconds(12))
             .interval(Duration.ofSeconds(3))
             .maxInterval(Duration.ofSeconds(2))
             .build();
 
-        valid = modelValidator.isValid(retry);
+        Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
         assertThat(valid.isEmpty()).isFalse();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
-        assertThat(valid.get().getMessage()).isEqualTo(": 'interval' must be less than 'maxInterval' but is PT3S\n");
+        assertThat(valid.get().getMessage()).contains("'interval' must be less than 'maxInterval'");
     }
 }

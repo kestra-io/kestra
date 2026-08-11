@@ -1,14 +1,15 @@
 package io.kestra.core.encryption;
 
-import com.google.common.primitives.Bytes;
-
-import javax.crypto.*;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
+
+import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import com.google.common.primitives.Bytes;
 
 /**
  * Service for encryption and decryption of secrets.
@@ -52,7 +53,7 @@ public class EncryptionService {
         SecretKey secretKey = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
         Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
         byte[] iv = generateIv();
-        GCMParameterSpec ivParameter= new GCMParameterSpec(AUTH_TAG_LENGTH, iv);
+        GCMParameterSpec ivParameter = new GCMParameterSpec(AUTH_TAG_LENGTH, iv);
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameter);
         byte[] encrypted = cipher.doFinal(plainText);
         return Bytes.concat(iv, encrypted);
@@ -92,9 +93,9 @@ public class EncryptionService {
         byte[] keyBytes = Base64.getDecoder().decode(key);
         SecretKey secretKey = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
         byte[] iv = Arrays.copyOf(cipherText, IV_LENGTH);
-        byte[] encrypted =Arrays.copyOfRange(cipherText, IV_LENGTH, cipherText.length);
+        byte[] encrypted = Arrays.copyOfRange(cipherText, IV_LENGTH, cipherText.length);
         Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-        GCMParameterSpec ivParameter= new GCMParameterSpec(AUTH_TAG_LENGTH, iv);
+        GCMParameterSpec ivParameter = new GCMParameterSpec(AUTH_TAG_LENGTH, iv);
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameter);
         return cipher.doFinal(encrypted);
     }

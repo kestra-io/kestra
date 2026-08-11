@@ -1,6 +1,9 @@
 package io.kestra.core.runners.pebble;
 
+import java.util.*;
+
 import io.kestra.core.runners.pebble.filters.ReplaceFilter;
+
 import io.pebbletemplates.pebble.attributes.AttributeResolver;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.extension.Extension;
@@ -8,8 +11,6 @@ import io.pebbletemplates.pebble.extension.core.NumberFormatFilter;
 import io.pebbletemplates.pebble.operator.BinaryOperator;
 import io.pebbletemplates.pebble.operator.UnaryOperator;
 import io.pebbletemplates.pebble.tokenParser.*;
-
-import java.util.*;
 
 public class ExtensionCustomizer extends io.pebbletemplates.pebble.extension.ExtensionCustomizer {
     public ExtensionCustomizer(Extension ext) {

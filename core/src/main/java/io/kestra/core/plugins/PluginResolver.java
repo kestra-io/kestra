@@ -1,19 +1,15 @@
 package io.kestra.core.plugins;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.zip.CRC32;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class PluginResolver {
@@ -49,10 +45,12 @@ public class PluginResolver {
         ) {
             for (Path path : paths) {
                 final List<URL> resources = resolveUrlsForPluginPath(path);
-                plugins.add(new ExternalPlugin(
-                    path.toUri().toURL(),
-                    resources.toArray(new URL[0])
-                ));
+                plugins.add(
+                    new ExternalPlugin(
+                        path.toUri().toURL(),
+                        resources.toArray(new URL[0])
+                    )
+                );
             }
         } catch (final InvalidPathException | MalformedURLException e) {
             log.error("Invalid plugin path '{}', path ignored.", pluginPath, e);
@@ -112,8 +110,11 @@ public class PluginResolver {
             if (archives.isEmpty()) {
                 return Collections.singletonList(path.toUri().toURL());
             }
-            log.error("Plugin path '{}' contains both java class files and JARs, " +
-                "class files will be ignored and only archives will be scanned.", path);
+            log.error(
+                "Plugin path '{}' contains both java class files and JARs, " +
+                    "class files will be ignored and only archives will be scanned.",
+                path
+            );
         }
 
         List<URL> urls = new ArrayList<>(archives.size());

@@ -1,0 +1,18 @@
+id: loop-expression-context
+namespace: io.kestra.tests
+
+tasks:
+  - id: before
+    type: io.kestra.plugin.core.debug.Return
+    format: "I'm before the loop"
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2", "value 3"]
+    tasks:
+      - id: canAccessBefore
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{outputs.before.value}}"
+      - id: contextIsFromParent
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{execution.id}}"
+

@@ -1,8 +1,8 @@
 package io.kestra.core.services;
 
-import io.kestra.core.models.hierarchies.*;
-
 import java.net.URISyntaxException;
+
+import io.kestra.core.models.hierarchies.*;
 
 public class Graph2DotService {
     public static String dot(Graph<AbstractGraph, Relation> graph) throws URISyntaxException {
@@ -32,7 +32,7 @@ public class Graph2DotService {
     private static String nodeAndEdges(Graph<AbstractGraph, Relation> graph, int level, String uid) {
         StringBuilder sb = new StringBuilder();
 
-        for(AbstractGraph node : graph.nodes()) {
+        for (AbstractGraph node : graph.nodes()) {
             if (node instanceof GraphCluster subGraph) {
                 if (uid == null || !uid.equals(subGraph.getUid())) {
                     sb.append(subgraph(subGraph, level + 1));
@@ -42,7 +42,7 @@ public class Graph2DotService {
             }
         }
 
-        for(Graph.Edge<AbstractGraph, Relation> e : graph.edges()) {
+        for (Graph.Edge<AbstractGraph, Relation> e : graph.edges()) {
             sb.append(indent(level))
                 .append("  ")
                 .append(nodeName(e.getSource()))
@@ -60,7 +60,7 @@ public class Graph2DotService {
     }
 
     private static String node(AbstractGraph node) {
-        return name(node) +  label(node);
+        return name(node) + label(node);
     }
 
     private static String label(AbstractGraph node) {

@@ -1,15 +1,15 @@
 package io.kestra.core.serializers.ion;
 
-import com.amazon.ion.IonWriter;
-import com.amazon.ion.Timestamp;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.io.IOContext;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Date;
+
+import com.amazon.ion.IonWriter;
+import com.amazon.ion.Timestamp;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.io.IOContext;
 
 public class IonGenerator extends com.fasterxml.jackson.dataformat.ion.IonGenerator {
     public IonGenerator(int jsonFeatures, int ionFeatures, ObjectCodec codec, IonWriter ion, boolean ionWriterIsManaged, IOContext ctxt, Closeable dst) {

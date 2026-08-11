@@ -9,7 +9,7 @@ public class MathUtils {
      *
      * @param value The double value to be rounded.
      * @param decimalPlaces The number of decimal places to round to.
-     * Must be a non-negative integer.
+     *        Must be a non-negative integer.
      * @return The rounded double value.
      * @throws IllegalArgumentException If decimalPlaces is negative.
      */

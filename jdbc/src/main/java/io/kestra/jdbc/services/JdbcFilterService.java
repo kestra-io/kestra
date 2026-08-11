@@ -1,22 +1,33 @@
 package io.kestra.jdbc.services;
 
-import io.kestra.core.models.dashboards.AggregationType;
-import io.kestra.core.models.dashboards.filters.*;
-import io.kestra.core.services.AbstractFilterService;
-import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
-import io.micronaut.context.annotation.Requires;
-import jakarta.inject.Singleton;
+import java.util.Map;
+
 import org.jooq.*;
 import org.jooq.Record;
 
-import java.util.Map;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.AggregationType;
+import io.kestra.core.models.dashboards.filters.*;
+import io.kestra.core.services.AbstractFilterService;
+import io.kestra.core.utils.Either;
+import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
+import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 
-import static org.jooq.impl.DSL.*;
+import io.micronaut.context.annotation.Requires;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
+import static org.jooq.impl.DSL.*;
 
 @Singleton
 @Requires(bean = AbstractJdbcDashboardRepository.class)
 public class JdbcFilterService extends AbstractFilterService<SelectConditionStep<Record>> {
+    @Inject
+    private Provider<AbstractJdbcExecutionRepository> executionRepositoryInterface;
+
     public AggregateFunction<?> buildAggregation(Field<?> field, AggregationType agg) {
 
         return switch (agg) {
@@ -42,11 +53,13 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
             case IS_TRUE -> isTrueCondition(fieldsMapping.get(filter.getField()), (IsTrue<F>) filter);
             case LESS_THAN -> lessThanCondition(fieldsMapping.get(filter.getField()), (LessThan<F>) filter);
             case LESS_THAN_OR_EQUAL_TO -> lessThanOrEqualToCondition(fieldsMapping.get(filter.getField()), (LessThanOrEqualTo<F>) filter);
+            case NOT_CONTAINS -> notContainsCondition(fieldsMapping.get(filter.getField()), (NotContains<F>) filter);
             case NOT_EQUAL_TO -> notEqualToCondition(fieldsMapping.get(filter.getField()), (NotEqualTo<F>) filter);
             case NOT_IN -> notInCondition(fieldsMapping.get(filter.getField()), (NotIn<F>) filter);
             case OR -> orCondition(fieldsMapping, (Or<F>) filter);
             case REGEX -> regexCondition(fieldsMapping.get(filter.getField()), (Regex<F>) filter);
             case STARTS_WITH -> startsWithCondition(fieldsMapping.get(filter.getField()), (StartsWith<F>) filter);
+            case PREFIX -> prefixCondition(fieldsMapping.get(filter.getField()), (Prefix<F>) filter);
         };
     }
 
@@ -116,6 +129,11 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     @Override
+    protected <F extends Enum<F>> SelectConditionStep<Record> notContains(SelectConditionStep<Record> query, String field, NotContains<F> filter) {
+        return query.and(field(field).contains(filter.getValue().toString()).not());
+    }
+
+    @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> notIn(SelectConditionStep<Record> query, String field, NotIn<F> filter) {
         return query.and(field(field).notIn(filter.getValues()));
     }
@@ -131,7 +149,7 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
 
     @Override
     protected <F extends Enum<F>> SelectConditionStep<Record> regex(SelectConditionStep<Record> query, String field, Regex<F> filter) {
-        return query.and(field(field).likeRegex(filter.getValue()));
+        return query.and(regexCondition(field, filter));
     }
 
     @Override
@@ -139,7 +157,16 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
         return query.and(field(field).startsWith(filter.getValue()));
     }
 
+    @Override
+    protected <F extends Enum<F>> SelectConditionStep<Record> prefix(SelectConditionStep<Record> query, String field, Prefix<F> filter) {
+        return query.and(prefixCondition(field, filter));
+    }
+
     private <F extends Enum<F>> org.jooq.Condition containsCondition(String field, Contains<F> filter) {
+        if (filter.getKey() != null) {
+            return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getKey(), filter.getValue())), QueryFilter.Op.EQUALS);
+        }
+
         return field(field).contains(filter.getValue().toString());
     }
 
@@ -159,8 +186,20 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
         return field(field).ge(filter.getValue());
     }
 
+    private boolean isLabelField(String field) {
+        return "labels".equals(field);
+    }
+
     private <F extends Enum<F>> org.jooq.Condition inCondition(String field, In<F> filter) {
-        return field(field).in(filter.getValues());
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValues())),
+                    QueryFilter.Op.NOT_IN
+                );
+        }
+
+        return field(field).notIn(filter.getValues());
     }
 
     private <F extends Enum<F>> org.jooq.Condition isFalseCondition(String field, IsFalse<F> filter) {
@@ -168,10 +207,26 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition isNotNullCondition(String field, IsNotNull<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.right(filter.getKey()),
+                    QueryFilter.Op.IS_NOT_NULL
+                );
+        }
+
         return field(field).isNotNull();
     }
 
     private <F extends Enum<F>> org.jooq.Condition isNullCondition(String field, IsNull<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.right(filter.getKey()),
+                    QueryFilter.Op.IS_NULL
+                );
+        }
+
         return field(field).isNull();
     }
 
@@ -191,7 +246,27 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
         return field(field).ne(filter.getValue());
     }
 
+    private <F extends Enum<F>> org.jooq.Condition notContainsCondition(String field, NotContains<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValue())),
+                    QueryFilter.Op.NOT_EQUALS
+                );
+                
+        }
+        return field(field).ne(filter.getValue());
+    }
+
     private <F extends Enum<F>> org.jooq.Condition notInCondition(String field, NotIn<F> filter) {
+        if (isLabelField(field)) {
+            return executionRepositoryInterface.get()
+                .findLabelCondition(
+                    Either.left(Map.of(filter.getKey(), filter.getValues())),
+                    QueryFilter.Op.NOT_IN
+                );
+        }
+
         return field(field).notIn(filter.getValues());
     }
 
@@ -204,11 +279,19 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition regexCondition(String field, Regex<F> filter) {
+        if (filter.getValue() == null) {
+            throw new InvalidQueryFiltersException("REGEX operation requires a non-null value");
+        }
         return field(field).likeRegex(filter.getValue());
     }
 
     private <F extends Enum<F>> org.jooq.Condition startsWithCondition(String field, StartsWith<F> filter) {
         return field(field).startsWith(filter.getValue());
+    }
+
+    private <F extends Enum<F>> org.jooq.Condition prefixCondition(String field, Prefix<F> filter) {
+        return field(field).eq(filter.getValue())
+            .or(field(field).startsWith(filter.getValue() + "."));
     }
 
 }

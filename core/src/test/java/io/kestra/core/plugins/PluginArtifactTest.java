@@ -1,14 +1,13 @@
 package io.kestra.core.plugins;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 class PluginArtifactTest {
 
     @Test
-    void shouldParseGivenValidFilenameWithoutClassifier(){
+    void shouldParseGivenValidFilenameWithoutClassifier() {
         String fileName = "io_kestra_plugin__plugin-serdes__0_20_0.jar";
         PluginArtifact artifact = PluginArtifact.fromFileName(fileName);
 

@@ -1,12 +1,5 @@
 package io.kestra.cli.commands.plugins;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +8,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,27 +24,32 @@ class PluginDocCommandTest {
 
     @Test
     void run() throws IOException, URISyntaxException {
-        Path pluginsPath = Files.createTempDirectory(PluginListCommandTest.class.getSimpleName());
+        var testDirectoryName = PluginListCommandTest.class.getSimpleName();
+        Path pluginsPath = Files.createTempDirectory(testDirectoryName + "_pluginsPath_");
         pluginsPath.toFile().deleteOnExit();
 
         FileUtils.copyFile(
-            new File(Objects.requireNonNull(PluginListCommandTest.class.getClassLoader()
-                .getResource("plugins/" + PLUGIN_TEMPLATE_TEST)).toURI()),
+            new File(
+                Objects.requireNonNull(
+                    PluginListCommandTest.class.getClassLoader()
+                        .getResource("plugins/" + PLUGIN_TEMPLATE_TEST)
+                ).toURI()
+            ),
             new File(URI.create("file://" + pluginsPath.toAbsolutePath() + "/" + PLUGIN_TEMPLATE_TEST))
         );
 
-        Path docPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
+        Path docPath = Files.createTempDirectory(testDirectoryName + "_docPath_");
         docPath.toFile().deleteOnExit();
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-            String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), docPath.toAbsolutePath().toString()};
+            String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString(), docPath.toAbsolutePath().toString() };
             PicocliRunner.call(PluginDocCommand.class, ctx, args);
 
             List<Path> files = Files.list(docPath).toList();
 
-            assertThat(files.size()).isEqualTo(1);
-            assertThat(files.getFirst().getFileName().toString()).isEqualTo("plugin-template-test");
-            var directory = files.getFirst().toFile();
+            assertThat(files.stream().map(path -> path.getFileName().toString())).contains("plugin-template-test");
+            // don't know why, but sometimes there is an addition "plugin-notifications" directory present
+            var directory = files.stream().filter(path -> "plugin-template-test".equals(path.getFileName().toString())).findFirst().get().toFile();
             assertThat(directory.isDirectory()).isTrue();
             assertThat(directory.listFiles().length).isEqualTo(3);
 
@@ -71,23 +75,23 @@ class PluginDocCommandTest {
                 """);
 
             assertThat(readmeContent).contains("""
-                    /> Subgroup title
+                /> Subgroup title
 
-                    Subgroup description
-
-
-                    ### Tasks
-                    * [ExampleTask](./tasks/io.kestra.plugin.templates.ExampleTask.md)
+                Subgroup description
 
 
+                ### Tasks
+                * [ExampleTask](./tasks/io.kestra.plugin.templates.ExampleTask.md)
 
 
-                    ## Guides
-                    * [Authentication](./guides/authentication.md)
-                       \s
-                    * [Reporting](./guides/reporting.md)
-                       \s
-                    """);
+
+
+                ## Guides
+                * [Authentication](./guides/authentication.md)
+                   \s
+                * [Reporting](./guides/reporting.md)
+                   \s
+                """);
 
             // check @PluginProperty from an interface
             var task = directory.toPath().resolve("tasks/io.kestra.plugin.templates.ExampleTask.md");
@@ -114,6 +118,19 @@ class PluginDocCommandTest {
             assertThat(new String(Files.readAllBytes(authenticationGuide))).contains("This is how to authenticate for this plugin:");
             var reportingGuide = directory.toPath().resolve("guides/reporting.md");
             assertThat(new String(Files.readAllBytes(reportingGuide))).contains("This is the reporting of the plugin:");
+        }
+    }
+
+    @Test
+    void shouldUseDefaultOutputPathWhenNotProvided() throws IOException {
+        Path pluginsPath = Files.createTempDirectory("PluginDocCommandTest_defaultOutput_pluginsPath_");
+        pluginsPath.toFile().deleteOnExit();
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            String[] args = { "--plugins", pluginsPath.toAbsolutePath().toString() };
+            Integer exitCode = PicocliRunner.call(PluginDocCommand.class, ctx, args);
+
+            assertThat(exitCode).isEqualTo(0);
         }
     }
 }

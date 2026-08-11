@@ -1,14 +1,13 @@
 package io.kestra.core.annotations;
 
+import java.lang.annotation.*;
+
 import io.micronaut.aop.Around;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.retry.annotation.DefaultRetryPredicate;
 import io.micronaut.retry.annotation.RetryPredicate;
 import io.micronaut.retry.intercept.OverrideRetryInterceptor;
-
-import java.lang.annotation.*;
-
 import jakarta.validation.constraints.Digits;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -16,7 +15,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Inherited
 @Documented
 @Retention(RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Target({ ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE })
 @Around
 @Type(OverrideRetryInterceptor.class)
 public @interface Retryable {
@@ -62,7 +61,7 @@ public @interface Retryable {
 
     /**
      * @return The retry predicate class to use instead of {@link io.micronaut.retry.annotation.Retryable#includes} and {@link io.micronaut.retry.annotation.Retryable#excludes}
-     * (defaults to none)
+     *         (defaults to none)
      */
     Class<? extends RetryPredicate> predicate() default DefaultRetryPredicate.class;
 }

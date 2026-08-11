@@ -1,16 +1,17 @@
 package io.kestra.core.server;
 
-import io.kestra.core.contexts.KestraContext;
-import io.kestra.core.models.ServerType;
-import io.kestra.core.utils.Network;
-import io.micronaut.context.env.Environment;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.models.ServerType;
+import io.kestra.core.utils.Network;
+
+import io.micronaut.context.env.Environment;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Default factory service for constructing {@link ServiceInstance} objects.
@@ -24,7 +25,7 @@ public class ServerInstanceFactory {
 
     @Inject
     public ServerInstanceFactory(final KestraContext context,
-                                 final Environment environment) {
+        final Environment environment) {
         this.context = Objects.requireNonNull(context, "KestraContext cannot be null");
         this.environment = environment;
     }
@@ -48,9 +49,7 @@ public class ServerInstanceFactory {
     }
 
     private ServerInstance.Type getInstanceType() {
-        return getServerType() == ServerType.STANDALONE ?
-            ServerInstance.Type.STANDALONE :
-            ServerInstance.Type.SERVER;
+        return getServerType() == ServerType.STANDALONE ? ServerInstance.Type.STANDALONE : ServerInstance.Type.SERVER;
     }
 
     private ServerType getServerType() {

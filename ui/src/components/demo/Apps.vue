@@ -1,29 +1,26 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
-    <Layout
+    <Empty
+        type="apps"
+        demoCta
         :title="t(`demos.apps.title`)"
-        :image="{source: sourceImg, alt: t(`demos.apps.title`)}"
-        :video="{
-            source: 'https://www.youtube.com/embed/KwBO8mcS3kk',
-        }"
     >
-        <template #message>
+        <template #description>
             {{ $t(`demos.apps.message`) }}
         </template>
-    </Layout>
+    </Empty>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import Layout from "./Layout.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import sourceImg from "../../assets/demo/apps.png";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {computed} from "vue"
+    import {useI18n} from "vue-i18n"
+    import Empty from "../layout/empty/Empty.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue"
+    import useRouteContext from "../../composables/useRouteContext"
 
-    const {t} = useI18n();
+    const {t} = useI18n()
 
-    const routeInfo = computed(() => ({title: t("demos.apps.title")}));
+    const routeInfo = computed(() => ({title: t("demos.apps.title")}))
 
-    useRouteContext(routeInfo);
+    useRouteContext(routeInfo)
 </script>

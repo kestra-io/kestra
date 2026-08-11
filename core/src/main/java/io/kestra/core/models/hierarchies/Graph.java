@@ -1,13 +1,14 @@
 package io.kestra.core.models.hierarchies;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("UnstableApiUsage")
 public class Graph<T, V> {

@@ -1,11 +1,10 @@
 package io.kestra.core.models.validations;
 
 import io.micronaut.core.annotation.NonNull;
-import lombok.Getter;
-
 import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.ElementKind;
 import jakarta.validation.Path;
+import lombok.Getter;
 
 @Getter
 public class ManualPropertyNode implements Path.PropertyNode {
@@ -22,8 +21,7 @@ public class ManualPropertyNode implements Path.PropertyNode {
         @Nullable Integer index,
         @Nullable Object key,
         @NonNull ElementKind kind,
-        boolean inIterable
-    ) {
+        boolean inIterable) {
         this.containerClass = containerClass;
         this.name = name;
         this.index = index;
@@ -34,8 +32,7 @@ public class ManualPropertyNode implements Path.PropertyNode {
 
     private ManualPropertyNode(
         @NonNull String name,
-        @NonNull ManualPropertyNode parent
-    ) {
+        @NonNull ManualPropertyNode parent) {
         this(name, parent.containerClass, parent.getIndex(), parent.getKey(), ElementKind.CONTAINER_ELEMENT, parent.isInIterable());
     }
 

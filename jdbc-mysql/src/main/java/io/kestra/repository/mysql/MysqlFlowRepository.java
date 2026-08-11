@@ -1,25 +1,32 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
-import io.kestra.jdbc.services.JdbcFilterService;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import org.jooq.Condition;
-
 import java.util.Map;
 
-@Singleton
+import org.jooq.Condition;
+
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.repositories.RepositoryBean;
+import io.kestra.core.services.FlowParsingService;
+import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
+import io.kestra.jdbc.services.JdbcFilterService;
+
+import io.micronaut.context.event.ApplicationEventPublisher;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+
+@RepositoryBean
 @MysqlRepositoryEnabled
 public class MysqlFlowRepository extends AbstractJdbcFlowRepository {
     @Inject
     public MysqlFlowRepository(@Named("flows") MysqlRepository<FlowInterface> repository,
-                               ApplicationContext applicationContext,
-                               JdbcFilterService filterService) {
-        super(repository, applicationContext, filterService);
+        ModelValidator modelValidator,
+        ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher,
+        FlowParsingService flowParsingService,
+        JdbcFilterService filterService) {
+        super(repository, modelValidator, eventPublisher, flowParsingService, filterService);
     }
 
     @Override
@@ -35,5 +42,10 @@ public class MysqlFlowRepository extends AbstractJdbcFlowRepository {
     @Override
     protected Condition findSourceCodeCondition(String query) {
         return MysqlFlowRepositoryService.findSourceCodeCondition(this.jdbcRepository, query);
+    }
+
+    @Override
+    protected Condition findTriggerClassCondition(Class<? extends io.kestra.core.models.triggers.AbstractTrigger> triggerClass) {
+        return MysqlFlowRepositoryService.findTriggerClassCondition(triggerClass);
     }
 }

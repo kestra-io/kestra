@@ -1,11 +1,12 @@
 package io.kestra.core.validations;
 
-import io.kestra.core.validations.validator.TestSuiteAssertionValidator;
-import jakarta.validation.Constraint;
-import jakarta.validation.Payload;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+
+import io.kestra.core.validations.validator.TestSuiteAssertionValidator;
+
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = TestSuiteAssertionValidator.class)

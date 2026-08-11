@@ -1,25 +1,21 @@
 <template>
-    <span data-component="FILENAME_PLACEHOLDER">
+    <span>
         {{ humanReadableCron }}
     </span>
 </template>
 
-<script>
-    import Utils from "../../utils/utils";
-    import cronstrue from "cronstrue";
-    import "cronstrue/locales/fr";
+<script lang="ts" setup>
+    import * as Utils from "../../utils/utils"
+    import cronstrue from "cronstrue"
+    import "cronstrue/locales/fr"
+    import {computed} from "vue"
 
-    export default {
-        props: {
-            cronExpression: {
-                type: String,
-                default: undefined
-            }
-        },
-        computed: {
-            humanReadableCron() {
-                return cronstrue.toString(this.cronExpression, {locale: Utils.getLang()});
-            }
-        }
-    }
+    const props =defineProps<{
+        cronExpression:string;
+    }>()
+
+    const humanReadableCron = computed(() => {
+        return cronstrue.toString(props.cronExpression, {locale: Utils.getLang()})
+    })
+
 </script>

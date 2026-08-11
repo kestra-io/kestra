@@ -1,11 +1,12 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.tasks.FileExistComportment;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.util.List;
+
+import io.kestra.core.models.tasks.FileExistComportment;
 
 /**
  * Service interface for accessing a specific working directory.
@@ -87,7 +88,7 @@ public interface WorkingDir {
     /**
      * Creates a new temporary file in the working directory with the given content and extension.
      *
-     * @param content   The file content - may be {@code null}.
+     * @param content The file content - may be {@code null}.
      * @param extension The file extension - may be {@code null}, in which case ".tmp" is used.
      * @return The {@link Path} of created file.
      * @throws IOException if an error happens while creating the file.
@@ -100,9 +101,9 @@ public interface WorkingDir {
      * This method will throw an exception if a file already exists for the given filename.
      *
      * @param filename The file name.
-     * @throws IOException                if an error happens while creating the file.
+     * @throws IOException if an error happens while creating the file.
      * @throws FileAlreadyExistsException – If a file of that name already exists (optional specific
-     * @throws IllegalArgumentException   if the given filename is {@code null} or empty.
+     * @throws IllegalArgumentException if the given filename is {@code null} or empty.
      */
     Path createFile(String filename) throws IOException;
 
@@ -112,8 +113,8 @@ public interface WorkingDir {
      * This method will throw an exception if a file already exists for the given filename.
      *
      * @param filename The file name.
-     * @param content  The file content - may be {@code null}.
-     * @throws IOException              if an error happens while creating the file.
+     * @param content The file content - may be {@code null}.
+     * @throws IOException if an error happens while creating the file.
      * @throws IllegalArgumentException if the given filename is {@code null} or empty.
      */
     Path createFile(String filename, byte[] content) throws IOException;
@@ -124,8 +125,8 @@ public interface WorkingDir {
      * This method will throw an exception if a file already exists for the given filename.
      *
      * @param filename The file name.
-     * @param content  The file content - may be {@code null}.
-     * @throws IOException              if an error happens while creating the file.
+     * @param content The file content - may be {@code null}.
+     * @throws IOException if an error happens while creating the file.
      * @throws IllegalArgumentException if the given filename is {@code null} or empty.
      */
     Path createFile(String filename, InputStream content) throws IOException;
@@ -133,9 +134,9 @@ public interface WorkingDir {
     /**
      * Creates a new file or replaces an existing one with the given content.
      *
-     * @param path        The path of the file.
-     * @param content     The file content - may be {@code null}.
-     * @throws IOException              if an error happens while creating the file.
+     * @param path The path of the file.
+     * @param content The file content - may be {@code null}.
+     * @throws IOException if an error happens while creating the file.
      * @throws IllegalArgumentException if the given path is {@code null}.
      */
     Path putFile(Path path, InputStream content) throws IOException;
@@ -143,16 +144,16 @@ public interface WorkingDir {
     /**
      * Creates a new file or replaces an existing one with the given content.
      *
-     * @param path        The path of the file.
-     * @param content     The file content - may be {@code null}.
+     * @param path The path of the file.
+     * @param content The file content - may be {@code null}.
      * @param comportment How to react if the file already exist in the working directory
-     * @throws IOException              if an error happens while creating the file.
+     * @throws IOException if an error happens while creating the file.
      * @throws IllegalArgumentException if the given path is {@code null}.
      */
     Path putFile(Path path, InputStream content, FileExistComportment comportment) throws IOException;
 
     /**
-     * Finds all files  in the working directory that matches one of the given patterns.
+     * Finds all files in the working directory that matches one of the given patterns.
      *
      * @param patterns the patterns to match.
      * @return The list of matched files.

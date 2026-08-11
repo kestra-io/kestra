@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+// Common request and response header
+message RequestOrResponseHeader {
+  // The client ID string. 
+  string clientId = 1;
+  // The client version.
+  string clientVersion = 2;
+  // The correlation ID of this request.
+  string correlationId = 3;
+  // The format of the message
+  string messageFormat = 4;
+}
+
+message EmptyRequest {
+  RequestOrResponseHeader header = 1;
+}
+
+message BooleanResponse {
+  RequestOrResponseHeader header = 1;
+  bool value = 2;
+}
+
+message OpaqueData {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}

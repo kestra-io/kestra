@@ -1,50 +1,80 @@
 package io.kestra.cli.commands.servers;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.ServerType;
-import io.kestra.core.runners.ExecutorInterface;
-import io.kestra.core.services.SkipExecutionService;
-import io.kestra.core.services.StartExecutorService;
-import io.kestra.core.utils.Await;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import picocli.CommandLine;
-
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.cli.services.TenantIdSelectorService;
+import io.kestra.core.models.ServerType;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.Executor;
+import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.worker.systemworker.SystemWorker;
+
+import io.micronaut.context.BeanProvider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "executor",
     description = "Start the Kestra executor"
 )
+@Slf4j
 public class ExecutorCommand extends AbstractServerCommand {
-    @Inject
-    private ApplicationContext applicationContext;
+    private ExecutorService poolExecutor;
+
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private SkipExecutionService skipExecutionService;
+    private ExecutorsUtils executorsUtils;
 
     @Inject
-    private StartExecutorService startExecutorService;
+    private Provider<IgnoreExecutionService> ignoreExecutionService;
 
-    @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "The list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipExecutions = Collections.emptyList();
+    @Inject
+    private Provider<LocalFlowRepositoryLoader> localFlowRepositoryLoader;
 
-    @CommandLine.Option(names = {"--skip-flows"}, split=",", description = "The list of flow identifiers (tenant|namespace|flowId) to skip, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipFlows = Collections.emptyList();
+    @Inject
+    private Provider<TenantIdSelectorService> tenantIdSelectorService;
 
-    @CommandLine.Option(names = {"--skip-namespaces"}, split=",", description = "The list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipNamespaces = Collections.emptyList();
+    @Inject
+    private Provider<Executor> executorService;
 
-    @CommandLine.Option(names = {"--skip-tenants"}, split=",", description = "The list of tenants to skip, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipTenants = Collections.emptyList();
+    @Inject
+    private BeanProvider<SystemWorker> systemWorker;
 
-    @CommandLine.Option(names = {"--start-executors"}, split=",", description = "The list of Kafka Stream executors to start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
-    private List<String> startExecutors = Collections.emptyList();
+    @CommandLine.Option(names = { "-f", "--flow-path" }, description = "Tenant identifier required to load flows from the specified path")
+    private File flowPath;
 
-    @CommandLine.Option(names = {"--not-start-executors"}, split=",", description = "The list of Kafka Stream executors to not start, separated by a command. Use it only with the Kafka queue, for debugging purpose.")
-    private List<String> notStartExecutors = Collections.emptyList();
+    @CommandLine.Option(names = "--tenant", description = "Tenant identifier, Required to load flows from path")
+    private String tenantId;
+
+    @CommandLine.Option(names = { "--ignore-executions" }, split = ",", description = "a list of execution identifiers to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreExecutions = Collections.emptyList();
+
+    @CommandLine.Option(names = { "--ignore-flows" }, split = ",", description = "a list of flow identifiers (namespace.flowId) to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreFlows = Collections.emptyList();
+
+    @CommandLine.Option(
+        names = { "--ignore-namespaces" }, split = ",", description = "a list of namespace identifiers (tenant|namespace) to skip, separated by a coma; for troubleshooting only"
+    )
+    private List<String> ignoreNamespaces = Collections.emptyList();
+
+    @CommandLine.Option(names = { "--ignore-tenants" }, split = ",", description = "a list of tenants to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreTenants = Collections.emptyList();
+
+    @CommandLine.Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
@@ -55,19 +85,31 @@ public class ExecutorCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.skipExecutionService.setSkipExecutions(skipExecutions);
-        this.skipExecutionService.setSkipFlows(skipFlows);
-        this.skipExecutionService.setSkipNamespaces(skipNamespaces);
-        this.skipExecutionService.setSkipTenants(skipTenants);
-
-        this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+        this.ignoreExecutionService.get().setIgnoredExecutions(ignoreExecutions);
+        this.ignoreExecutionService.get().setIgnoredFlows(ignoreFlows);
+        this.ignoreExecutionService.get().setIgnoredNamespaces(ignoreNamespaces);
+        this.ignoreExecutionService.get().setIgnoredTenants(ignoreTenants);
 
         super.call();
 
-        ExecutorInterface executorService = applicationContext.getBean(ExecutorInterface.class);
-        executorService.run();
+        if (flowPath != null) {
+            try {
+                localFlowRepositoryLoader.get().load(tenantIdSelectorService.get().getTenantId(this.tenantId), this.flowPath);
+            } catch (IOException e) {
+                throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
+            }
+        }
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        executorService.get().run();
+
+        // start the embedded SystemWorker (always present in EXECUTOR mode)
+        poolExecutor = executorsUtils.cachedThreadPool("embedded-services");
+        log.info("Starting the embedded SystemWorker.");
+        poolExecutor.execute(systemWorker.get()::start);
+
+        shutdownHook(true, () -> poolExecutor.shutdown());
+
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

@@ -1,0 +1,386 @@
+<template>
+    <ElSelect ref="elSelectRef" v-model="model" v-bind="({...filteredProps(), ...$attrs} as any)" :suffixIcon="resolvedSuffixIcon" :class="{'kel-select--fit': fit, 'kel-select--single-line-tags': singleLineTags}" @change="emit('change', $event)">
+        <template v-if="$slots.default" #default>
+            <slot />
+        </template>
+        <template v-if="$slots.prefix" #prefix>
+            <slot name="prefix" />
+        </template>
+        <template v-if="showSelectAll || $slots.header" #header>
+            <button
+                v-if="showSelectAll"
+                type="button"
+                class="kel-select-all-btn"
+                role="checkbox"
+                :aria-checked="allVisibleSelected ? 'true' : (someVisibleSelected ? 'mixed' : 'false')"
+                @click="toggleSelectAll()"
+            >
+                {{ $t('filter.select all') }}
+            </button>
+            <slot v-if="$slots.header" name="header" />
+        </template>
+        <template v-if="$slots.footer" #footer>
+            <slot name="footer" />
+        </template>
+        <template v-if="$slots.label" #label="p">
+            <slot name="label" v-bind="p" />
+        </template>
+        <template v-else-if="colorMap" #label="p">
+            <span v-if="colorMap[p.value]" class="kel-select-color-option" :style="{color: colorMap[p.value]}">{{ p.label }}</span>
+            <span v-else>{{ p.label }}</span>
+        </template>
+        <template v-if="$slots.tag" #tag="tagScope">
+            <slot name="tag" v-bind="tagScope" />
+        </template>
+    </ElSelect>
+</template>
+
+<script setup lang="ts">
+    import {type Component, computed, h, markRaw, provide, ref, toRef} from "vue"
+    import {ElSelect} from "element-plus"
+    import Loading from "vue-material-design-icons/Loading.vue"
+    import KsIcon from "../../Basic/KsIcon.vue"
+    import {useFilteredProps} from "../../../utils/filteredProps"
+    import {type KsSelectColorMap, KsSelectColorMapKey} from "./colorMap"
+
+    defineOptions({inheritAttrs: false})
+
+    const model = defineModel<any>()
+
+    const props = withDefaults(defineProps<{
+        placeholder?: string
+        disabled?: boolean
+        size?: "small" | "default" | "large"
+        filterable?: boolean
+        clearable?: boolean
+        allowCreate?: boolean
+        remote?: boolean
+        remoteMethod?: (query: string) => void
+        remoteShowSuffix?: boolean
+        multiple?: boolean
+        collapseTags?: boolean
+        required?: boolean
+        valueKey?: string
+        placement?: string
+        popperOffset?: number
+        popperClass?: string
+        showArrow?: boolean
+        suffixIcon?: Component | string
+        loading?: boolean
+        fit?: boolean
+        /** Value -> CSS color (hex, rgb(), var(--token), ...) applied to both the dropdown options and the selected value. */
+        colorMap?: KsSelectColorMap
+        selectAll?: boolean
+        singleLineTags?: boolean
+    }>(), {
+        placeholder: undefined,
+        size: undefined,
+        clearable: undefined,
+        remoteMethod: undefined,
+        valueKey: undefined,
+        placement: undefined,
+        popperOffset: undefined,
+        popperClass: undefined,
+        suffixIcon: undefined,
+        loading: undefined,
+        colorMap: undefined,
+    })
+
+    const emit = defineEmits<{
+        change: [value: any]
+    }>()
+
+    const elSelectRef = ref<InstanceType<typeof ElSelect>>()
+
+    // Options passing ElSelect's own filter. `optionsArray` is exposed as a ComputedRef in the
+    // Element Plus types but unwrapped on the instance proxy, hence the cast.
+    const visibleOptions = computed<Array<{visible: boolean; value: any}>>(() =>
+        ((elSelectRef.value as any)?.optionsArray ?? []).filter((o: {visible: boolean}) => o.visible),
+    )
+
+    // Selecting nothing is meaningless, so the action stays hidden until there is something to select.
+    const showSelectAll = computed(() => Boolean(props.selectAll && props.multiple && visibleOptions.value.length))
+
+    const selectedValues = computed(() => new Set(Array.isArray(model.value) ? model.value : []))
+
+    const allVisibleSelected = computed(() =>
+        visibleOptions.value.length > 0 && visibleOptions.value.every(o => selectedValues.value.has(o.value)),
+    )
+
+    const someVisibleSelected = computed(() =>
+        !allVisibleSelected.value && visibleOptions.value.some(o => selectedValues.value.has(o.value)),
+    )
+
+    const toggleSelectAll = (): void => {
+        const values = visibleOptions.value.map(o => o.value)
+        model.value = allVisibleSelected.value
+            ? [...selectedValues.value].filter(v => !values.includes(v))
+            : [...new Set([...selectedValues.value, ...values])]
+        // Closing also clears the filter query, so the next open starts from the full list.
+        elSelectRef.value?.blur()
+    }
+
+    defineSlots<{
+        default?(): unknown
+        prefix?(): unknown
+        header?(): unknown
+        footer?(): unknown
+        label?(props: { value: any; label: string }): any
+        tag?(): unknown
+    }>()
+
+    const filteredProps = useFilteredProps(props, ["fit", "suffixIcon", "loading", "colorMap", "selectAll", "singleLineTags"])
+
+    provide(KsSelectColorMapKey, toRef(props, "colorMap"))
+
+    // `loading` is intentionally NOT forwarded to ElSelect: ElSelect v-shows its option
+    // list on `!loading`, so forwarding would hide still-valid options while they
+    // recompute. We only surface a spinning suffix icon, leaving the dropdown usable.
+    const LoadingSpinner = markRaw({
+        render: () => h(KsIcon, {class: "is-loading"}, () => h(Loading)),
+    }) as Component
+
+    const resolvedSuffixIcon = computed<Component | string | undefined>(
+        () => props.loading ? LoadingSpinner : props.suffixIcon,
+    )
+</script>
+
+<style lang="scss">
+    @use '../../../assets/styles/el-ns';
+    @use 'element-plus/theme-chalk/src/select';
+    @use 'element-plus/theme-chalk/src/select-dropdown';
+
+    @keyframes kel-select-loading-rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .kel-select {
+        --kel-disabled-text-color: var(--ks-text-inactive);
+
+        &.fit-text .kel-select__input {
+            width: fit-content !important;
+        }
+
+        &.kel-select--single-line-tags {
+            .kel-select__selection {
+                flex-wrap: nowrap;
+                overflow: clip;
+
+                .kel-tag {
+                    min-width: 0;
+
+                    .kel-tag__content {
+                        min-width: 0;
+                        overflow: hidden;
+                    }
+
+                    .kel-tag__close,
+                    [class*="kel-icon"],
+                    .material-design-icon {
+                        flex-shrink: 0;
+                    }
+                }
+            }
+
+            .kel-select__input-wrapper {
+                min-width: 2rem;
+                overflow: hidden;
+            }
+        }
+
+        &.kel-select--fit {
+            width: fit-content;
+
+            .kel-select__wrapper {
+                width: fit-content;
+            }
+
+            .kel-select__placeholder {
+                position: static;
+                transform: none;
+                top: auto;
+            }
+
+            .kel-select__input-wrapper {
+                position: absolute;
+            }
+
+            &:focus-within:has(input:not([readonly])) {
+                .kel-select__placeholder {
+                    position: absolute;
+                }
+
+                .kel-select__input-wrapper {
+                    position: relative;
+                }
+
+                .kel-select__input {
+                    width: fit-content;
+                    min-width: 120px;
+                }
+            }
+        }
+
+
+        &:not(.kel-select--small),
+        &:not(.kel-select--large) {
+            font-size: var(--ks-font-size-xs);
+        }
+
+        .kel-select__placeholder.is-transparent {
+            color: var(--ks-text-inactive);
+            font-size: var(--ks-font-size-xs);
+            font-weight: var(--ks-font-weight-regular);
+        }
+
+        .kel-select__wrapper {
+            .kel-tag.kel-tag--default.kel-tag--light {
+                --kel-tag-text-color: var(--ks-text-primary);
+                --kel-tag-bg-color: var(--ks-bg-tag);
+            }
+
+            &.is-focused {
+                box-shadow: 0 0 0 2px var(--ks-border-focus) inset;
+            }
+
+            &.is-hovering:not(.is-focused):not(.is-disabled) {
+                box-shadow: 0 0 0 1px var(--ks-border-focus) inset;
+            }
+        }
+
+        .kel-select__caret {
+            color: var(--kel-input-icon-color, var(--kel-text-color-placeholder));
+        }
+
+        .kel-icon.is-loading svg {
+            animation: kel-select-loading-rotate 2s linear infinite;
+        }
+
+        .kel-select__wrapper {
+            background-color: var(--ks-bg-input);
+            min-height: 30px;
+            font-size: var(--ks-font-size-xs);
+            box-shadow: inset 0 0 0 1px var(--ks-border-strong), 0 1px 2px var(--ks-shadow-element);
+
+            &:not(.is-disabled):hover {
+                background-color: var(--ks-bg-hover);
+            }
+
+            &.is-disabled {
+                background-color: var(--ks-bg-inactive);
+
+                .kel-select__suffix {
+                    .kel-select__caret {
+                        color: var(--ks-icon-inactive);
+                    }
+                }
+            }
+        }
+    }
+
+    .kel-select__popper {
+        --kel-popper-border-radius: var(--ks-radius-base);
+
+        background: var(--ks-bg-elevated);
+        border: 1px solid var(--ks-border-strong);
+        box-shadow: 0px 8px 24px 0px var(--ks-shadow-elevated);
+
+        .kel-select-dropdown {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .kel-select-dropdown__header {
+            padding: var(--ks-spacing-1);
+            border-bottom: 1px solid var(--ks-border-default);
+        }
+
+        .kel-select-all-btn {
+            display: block;
+            position: relative;
+            width: 100%;
+            background: none;
+            border: none;
+            border-radius: var(--ks-radius-xs);
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+            font-size: var(--ks-font-size-xs);
+            color: var(--ks-text-primary);
+            /* Mirrors the Element Plus option metrics — including the gutter kept free for the
+               check icon — so the row lines up with the list below. */
+            padding: 0 2rem 0 1.25rem;
+            height: 2.125rem;
+
+            &:hover {
+                background-color: var(--ks-bg-hover-elevated);
+            }
+        }
+
+        .kel-select-dropdown__list {
+            padding: var(--ks-spacing-1);
+
+            .kel-select-dropdown__item + .kel-select-dropdown__item {
+                margin-top: var(--ks-spacing-1);
+            }
+        }
+
+        .kel-select-dropdown__empty {
+            padding: var(--ks-spacing-3) var(--ks-spacing-4);
+        }
+
+        .kel-select-dropdown__item {
+            border-radius: var(--ks-radius-xs);
+            position: relative;
+            font-size: var(--ks-font-size-xs);
+            height: auto;
+
+            &.is-selected {
+                background-color: transparent;
+                color: var(--ks-text-primary);
+                font-weight: normal;
+            }
+
+            &.is-hovering {
+                background-color: var(--ks-bg-hover-elevated);
+            }
+        }
+
+        .kel-select-dropdown .kel-select-dropdown__item.is-selected::after,
+        .kel-select-dropdown .kel-select-all-btn[aria-checked="true"]::after {
+            content: "";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            background-color: var(--ks-icon-active);
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z'/%3E%3C/svg%3E") no-repeat center / contain;
+            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z'/%3E%3C/svg%3E") no-repeat center / contain;
+        }
+    }
+
+    .kel-icon.kel-select__caret.kel-select__icon {
+        font-size: var(--ks-font-size-md);
+    }
+
+    // Rendered for colorMap entries, in both the closed label and the (teleported) dropdown options.
+    .kel-select-color-option {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        font-weight: var(--ks-font-weight-semibold);
+
+        &::before {
+            content: "";
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 2px;
+            background: currentColor;
+            flex-shrink: 0;
+        }
+    }
+</style>

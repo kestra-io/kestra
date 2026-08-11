@@ -1,14 +1,16 @@
 package io.kestra.core.docs;
 
-import io.kestra.core.models.annotations.PluginSubGroup;
-import io.kestra.core.plugins.RegisteredPlugin;
-import io.micronaut.core.annotation.Nullable;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import io.kestra.core.models.annotations.PluginSubGroup;
+import io.kestra.core.plugins.RegisteredPlugin;
+
+import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import static java.util.function.Predicate.not;
 
@@ -27,7 +29,6 @@ public class Plugin {
     private List<String> aliases;
     private List<PluginElementMetadata> tasks;
     private List<PluginElementMetadata> triggers;
-    private List<PluginElementMetadata> conditions;
     private List<PluginElementMetadata> controllers;
     private List<PluginElementMetadata> storages;
     private List<PluginElementMetadata> secrets;
@@ -68,14 +69,15 @@ public class Plugin {
             .getMainAttributes()
             .entrySet()
             .stream()
-            .map(e -> new AbstractMap.SimpleEntry<>(
-                e.getKey().toString(),
-                e.getValue().toString()
-            ))
+            .map(
+                e -> new AbstractMap.SimpleEntry<>(
+                    e.getKey().toString(),
+                    e.getValue().toString()
+                )
+            )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        plugin.categories = subGroupInfos != null ?
-            Arrays.stream(subGroupInfos.categories()).toList() :
-            registeredPlugin
+        plugin.categories = subGroupInfos != null ? Arrays.stream(subGroupInfos.categories()).toList()
+            : registeredPlugin
                 .allClass()
                 .stream()
                 .map(clazz -> clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class))
@@ -89,7 +91,6 @@ public class Plugin {
         Predicate<Class<?>> packagePredicate = c -> subgroup == null || c.getPackageName().equals(subgroup);
         plugin.tasks = filterAndGetTypeWithMetadata(registeredPlugin.getTasks(), packagePredicate);
         plugin.triggers = filterAndGetTypeWithMetadata(registeredPlugin.getTriggers(), packagePredicate);
-        plugin.conditions = filterAndGetTypeWithMetadata(registeredPlugin.getConditions(), packagePredicate);
         plugin.storages = filterAndGetTypeWithMetadata(registeredPlugin.getStorages(), packagePredicate);
         plugin.secrets = filterAndGetTypeWithMetadata(registeredPlugin.getSecrets(), packagePredicate);
         plugin.taskRunners = filterAndGetTypeWithMetadata(registeredPlugin.getTaskRunners(), packagePredicate);
@@ -108,7 +109,7 @@ public class Plugin {
      * Filters the given list of class all internal Plugin, as well as, all legacy org.kestra classes.
      * Those classes are only filtered from the documentation to ensure backward compatibility.
      *
-     * @param list              The list of classes?
+     * @param list The list of classes?
      * @return a filtered streams.
      */
     private static List<PluginElementMetadata> filterAndGetTypeWithMetadata(final List<? extends Class<?>> list, Predicate<Class<?>> clazzFilter) {
@@ -117,10 +118,19 @@ public class Plugin {
             .filter(not(io.kestra.core.models.Plugin::isInternal))
             .filter(clazzFilter)
             .filter(c -> !c.getName().startsWith("org.kestra."))
-            .map(c -> new PluginElementMetadata(c.getName(), io.kestra.core.models.Plugin.isDeprecated(c) ? true : null))
+            .map(c ->
+            {
+                Schema schema = c.getAnnotation(Schema.class);
+
+                var title = Optional.ofNullable(schema).map(Schema::title).filter(t -> !t.isEmpty()).orElse(null);
+                var description = Optional.ofNullable(schema).map(Schema::description).filter(d -> !d.isEmpty()).orElse(null);
+                var deprecated = io.kestra.core.models.Plugin.isDeprecated(c) ? true : null;
+
+                return new PluginElementMetadata(c.getName(), deprecated, title, description);
+            })
             .toList();
     }
 
-    public record PluginElementMetadata(String cls, Boolean deprecated) {
+    public record PluginElementMetadata(String cls, Boolean deprecated, String title, String description) {
     }
 }

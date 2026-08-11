@@ -1,106 +1,152 @@
-<script>
-    import {ElNotification} from "element-plus";
-    import {pageFromRoute} from "../utils/eventsRouter";
-    import {h} from "vue"
-    import ErrorToastContainer from "./ErrorToastContainer.vue";
-    import {mapStores} from "pinia";
-    import {useApiStore} from "../stores/api";
+<template>
+    <span class="d-none" />
+</template>
 
-    export default {
-        name: "ErrorToast",
-        props: {
-            message: {
-                type: Object,
-                required: true
-            },
-            noAutoHide: {
-                type: Boolean,
-                default: false
-            }
-        },
-        notifications: undefined,
-        watch: {
-            $route() {
-                this.close();
-            },
-        },
-        computed: {
-            ...mapStores(useApiStore),
-            title () {
-                if (this.message.title) {
-                    return this.message.title;
-                }
+<script setup lang="ts">
+    import {KsNotification} from "@kestra-io/design-system"
+    import {pageFromRoute} from "../utils/eventsRouter"
+    import {h, onUnmounted, watch, computed, ref} from "vue"
+    import ErrorToastContainer from "./ErrorToastContainer.vue"
+    import {useApiStore} from "../stores/api"
+    import {useRoute} from "vue-router"
 
-                if (this.message.response.status === 503) {
-                    return "503 Service Unavailable";
-                }
+    export interface Message {
+        title?: string;
+        message?: string;
+        content?: {
+            message?: string;
+            _embedded?: {
+                errors?: any[];
+            };
+        };
+        response?: {
+            status: number;
+            config: {
+                url?: string;
+                method?: string;
+            };
+        };
+        variant?: "success" | "warning" | "info" | "error" | "primary";
+    }
 
-                if (this.message.content && this.message.content.message && this.message.content.message.indexOf(":") > 0) {
-                    return this.message.content.message.substring(0, this.message.content.message.indexOf(":"));
-                }
+    interface ErrorEvent {
+        type: string;
+        error: {
+            message: string;
+            errors: any[];
+            response?: {
+                status?: number;
+            };
+            request?: {
+                url: string;
+                method: string;
+            };
+        };
+        page: any;
+    }
 
-                return "Error"
-            },
-            items() {
-                const messages = this.message.content && this.message.content._embedded && this.message.content._embedded.errors ? this.message.content._embedded.errors : []
-                return Array.isArray(messages) ? messages : [messages]
-            },
-        },
-        methods: {
-            close() {
-                if (this.notifications) {
-                    this.notifications.close();
-                }
-            },
-        },
-        render() {
-            this.$nextTick(async () => {
-                this.close();
+    const props = withDefaults(defineProps<{
+        message: Message;
+        noAutoHide?: boolean;
+    }>(), {
+        noAutoHide: false,
+    })
 
-                const error =  {
-                    type: "ERROR",
-                    error: {
-                        message: this.title,
-                        errors: this.items,
-                    },
-                    page: pageFromRoute(this.$route)
-                };
+    const route = useRoute()
+    const apiStore = useApiStore()
+    const notifications = ref<any>()
 
-                if (this.message.response) {
-                    error.error.response = {};
-                    error.error.request = {};
-
-                    if (this.message.response.status) {
-                        error.error.response.status = this.message.response.status;
-                    }
-
-                    error.error.request.url = this.message.response.config.url;
-                    error.error.request.method = this.message.response.config.method;
-                }
-
-                this.apiStore.events(error);
-
-                this.notifications = ElNotification({
-                    title: this.title || "Error",
-                    message: h(ErrorToastContainer, {message: this.message, items: this.items}),
-                    position: "bottom-right",
-                    type: this.message.variant,
-                    duration: 0,
-                    dangerouslyUseHTMLString: true,
-                    customClass: "error-notification large"
-                });
-            });
-
-            return "";
+    const close = () => {
+        if (notifications.value) {
+            notifications.value.close()
+            notifications.value = undefined
         }
-    };
+    }
+
+    const title = computed(() => {
+        if (props.message.title) {
+            return props.message.title
+        }
+
+        if (props.message.response?.status === 503) {
+            return "503 Service Unavailable"
+        }
+
+        if (props.message.content?.message && props.message.content.message.indexOf(":") > 0) {
+            return props.message.content.message.substring(0, props.message.content.message.indexOf(":"))
+        }
+
+        return "Error"
+    })
+
+    const items = computed(() => {
+        // oxlint-disable-next-line no-underscore-dangle
+        const messages = props.message.content?._embedded?.errors || []
+        return Array.isArray(messages) ? messages : [messages]
+    })
+
+    const isLargeNotification = computed(() => {
+        return items.value.length > 0 || (props.message.content?.message?.length ?? 0) > 100
+    })
+
+    watch(route, () => {
+        close()
+    })
+
+    const showNotification = () => {
+        close()
+
+        const error: ErrorEvent = {
+            type: "ERROR",
+            error: {
+                message: title.value,
+                errors: items.value,
+            },
+            page: pageFromRoute(route),
+        }
+
+        if (props.message.response) {
+            error.error.response = {}
+            error.error.request = {
+                method: props.message.response.config.method ?? "GET",
+                url: props.message.response.config.url ?? "unknown url",
+            }
+
+            if (props.message.response.status) {
+                error.error.response.status = props.message.response.status
+            }
+        }
+
+        apiStore.events(error)
+
+        notifications.value = KsNotification({
+            title: title.value || "Error",
+            message: h(ErrorToastContainer, {
+                message: {
+                    message: props.message?.message,
+                    content: {message: props.message?.content?.message ?? ""},
+                },
+                items: items.value,
+                onClose: () => close(),
+            }),
+            position: "bottom-right",
+            type: props.message.variant || "error",
+            duration: 0,
+            dangerouslyUseHTMLString: true,
+            customClass: isLargeNotification.value ? "error-notification kel-notification__large" : "error-notification",
+        })
+    }
+
+    watch(() => props.message, showNotification, {immediate: true})
+
+    onUnmounted(() => close())
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
     .error-notification {
         max-height: 90svh;
 
-        .el-notification__title {
+        .kel-notification__title {
             max-width: calc(100% - 15ch);
         }
 
@@ -111,7 +157,7 @@
             gap: .5rem;
         }
 
-        .el-notification__content {
+        .kel-notification__content {
             overflow-y: auto;
             max-height: 100%;
         }

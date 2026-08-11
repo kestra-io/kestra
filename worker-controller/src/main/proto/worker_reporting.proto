@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+import "request.proto";
+
+// Service for workers to forward server events reports to the controller.
+// The controller then relays them to api.kestra.io.
+service WorkerReportingService {
+  // [Unary] Forward a server events report from a worker to the controller.
+  rpc sendReport(WorkerReportRequest) returns (WorkerReportResponse);
+}
+
+message WorkerReportRequest {
+  RequestOrResponseHeader header = 1;
+  // The event type name (matches io.kestra.core.reporter.Type.name())
+  string event_type = 2;
+  // JSON-serialized ServerEvent payload
+  bytes payload = 3;
+}
+
+message WorkerReportResponse {
+  RequestOrResponseHeader header = 1;
+  bool success = 2;
+}

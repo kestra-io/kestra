@@ -1,0 +1,125 @@
+<template>
+    <div class="onboarding-resource-list">
+        <component
+            :is="item.href ? 'a' : 'router-link'"
+            v-for="item in items"
+            :key="item.titleKey"
+            class="onboarding-resource-item"
+            :href="item.href"
+            :to="item.to"
+            :target="item.href ? '_blank' : undefined"
+            :rel="item.href ? 'noreferrer' : undefined"
+        >
+            <div class="onboarding-resource-item__icon" :class="item.iconClass">
+                <component :is="item.icon" />
+            </div>
+
+            <div class="onboarding-resource-item__content">
+                <h3>{{ $t(item.titleKey) }}</h3>
+                <p>{{ $t(item.descriptionKey) }}</p>
+            </div>
+
+            <ArrowRight class="onboarding-resource-item__arrow" />
+        </component>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import ArrowRight from "vue-material-design-icons/ArrowRight.vue"
+
+    export interface OnboardingResourceItem {
+        titleKey: string;
+        descriptionKey: string;
+        icon: any;
+        iconClass: string;
+        to?: any;
+        href?: string;
+    }
+
+    defineProps<{
+        items: OnboardingResourceItem[];
+    }>()
+</script>
+
+<style scoped lang="scss">
+
+    .onboarding-resource-list {
+        overflow: hidden;
+        border: 1px solid var(--ks-border-default);
+        border-radius: var(--ks-radius-base);
+        background: var(--ks-bg-surface);
+    }
+
+    .onboarding-resource-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        color: inherit;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.15s ease;
+
+        &:not(:last-child) {
+            border-bottom: 1px solid var(--ks-border-subtle);
+        }
+
+        &:hover {
+            background: var(--ks-btn-secondary-bg-hover);
+            text-decoration: none;
+        }
+    }
+
+    .onboarding-resource-item__icon {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+
+        &:deep(svg) {
+            width: 22px;
+            height: 22px;
+        }
+
+        &.is-blueprints {
+            color: var(--ks-status-info);
+        }
+
+        &.is-slack {
+            color: var(--ks-status-success);
+        }
+
+        &.is-videos {
+            color: var(--ks-status-error);
+        }
+
+        &.is-demo {
+            color: var(--ks-status-warning);
+        }
+    }
+
+    .onboarding-resource-item__content {
+        flex: 1;
+        min-width: 0;
+
+        h3 {
+            margin: 0 0 0.25rem;
+            color: var(--ks-text-primary);
+            font-size: var(--ks-font-size-sm);
+            font-weight: 600;
+        }
+
+        p {
+            margin: 0;
+            color: var(--ks-text-secondary);
+            font-size: var(--ks-font-size-sm);
+            line-height: 1.4;
+        }
+    }
+
+    .onboarding-resource-item__arrow {
+        color: var(--ks-text-dim);
+        flex-shrink: 0;
+    }
+</style>

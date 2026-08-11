@@ -1,7 +1,5 @@
 package io.kestra.core.plugins;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -10,6 +8,8 @@ import java.security.PrivilegedAction;
 import java.util.Enumeration;
 import java.util.Objects;
 import java.util.regex.Pattern;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Default ClassLoader for loading plugins using a 'child-first strategy'. In other words, this ClassLoader
@@ -26,28 +26,30 @@ public class PluginClassLoader extends URLClassLoader {
     // IMPORTANT - This list must contain system and common libraries to delegate loading to parent classloader to:
     // - protect from impersonation of system classes (e.g: java.*)
     // - avoid experiencing java.lang.LinkageError: loader constraint violation.
-    private static final Pattern EXCLUDES = Pattern.compile("^(?:"
-        + "java"
-        + "|javax"
-        + "|jakarta"
-        + "|io.kestra.core"
-        + "|io.kestra.plugin.core"
-        + "|org.slf4j"
-        + "|ch.qos.logback"
-        + "|io.swagger"
-        + "|com.fasterxml.jackson.core"
-        + "|com.fasterxml.jackson.annotation"
-        + "|com.fasterxml.jackson.module"
-        + "|com.fasterxml.jackson.databind"
-        + "|com.fasterxml.jackson.dataformat.ion"
-        + "|com.fasterxml.jackson.dataformat.yaml"
-        + "|com.fasterxml.jackson.dataformat.xml"
-        + "|org.reactivestreams"
-        + "|dev.failsafe"
-        + "|reactor"
-        + "|io.opentelemetry"
-        + "|io.netty"
-        + ")\\..*$");
+    private static final Pattern EXCLUDES = Pattern.compile(
+        "^(?:"
+            + "java"
+            + "|javax"
+            + "|jakarta"
+            + "|io.kestra.core"
+            + "|io.kestra.plugin.core"
+            + "|org.slf4j"
+            + "|ch.qos.logback"
+            + "|io.swagger"
+            + "|com.fasterxml.jackson.core"
+            + "|com.fasterxml.jackson.annotation"
+            + "|com.fasterxml.jackson.module"
+            + "|com.fasterxml.jackson.databind"
+            + "|com.fasterxml.jackson.dataformat.ion"
+            + "|com.fasterxml.jackson.dataformat.yaml"
+            + "|com.fasterxml.jackson.dataformat.xml"
+            + "|org.reactivestreams"
+            + "|dev.failsafe"
+            + "|reactor"
+            + "|io.opentelemetry"
+            + "|io.netty"
+            + ")\\..*$"
+    );
 
     private final ClassLoader parent;
 
@@ -97,8 +99,7 @@ public class PluginClassLoader extends URLClassLoader {
             if (loadedClass == null && shouldLoadFromUrls(name)) {
                 try {
                     loadedClass = findClass(name);
-                }
-                catch (final ClassNotFoundException e) {
+                } catch (final ClassNotFoundException e) {
                     log.debug(
                         "Class '{}' not found on '{}' for plugin '{}', delegating to parent '{}'",
                         name,
@@ -106,7 +107,7 @@ public class PluginClassLoader extends URLClassLoader {
                         pluginLocation,
                         this.parent.getName()
                     );
-                } catch (LinkageError e){
+                } catch (LinkageError e) {
                     log.debug(
                         "Class '{}'already in classpath for plugin '{}', delegating to parent '{}'",
                         name,

@@ -1,11 +1,12 @@
 package io.kestra.webserver.models.events;
 
+import java.time.Instant;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.time.Instant;
 
 @Getter
 @AllArgsConstructor

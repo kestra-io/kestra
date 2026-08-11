@@ -1,5 +1,14 @@
 package io.kestra.plugin.core.namespace;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -7,15 +16,8 @@ import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,7 +36,7 @@ public class DownloadFilesTest {
             .id(DownloadFiles.class.getSimpleName())
             .type(DownloadFiles.class.getName())
             .files(List.of("**test1.txt"))
-            .namespace(new Property<>("{{ inputs.namespace }}"))
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, Map.of("namespace", namespaceId));

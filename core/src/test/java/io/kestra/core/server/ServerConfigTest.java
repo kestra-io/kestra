@@ -1,11 +1,13 @@
 package io.kestra.core.server;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
+import java.time.Duration;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
+import io.kestra.core.junit.annotations.KestraTest;
+
+import jakarta.inject.Inject;
 
 @KestraTest
 class ServerConfigTest {

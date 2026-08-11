@@ -1,24 +1,23 @@
 package io.kestra.plugin.core.execution;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -29,18 +28,19 @@ public class AssertTest {
     RunContextFactory runContextFactory;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
+    private DispatchQueueInterface<LogEntry> logQueue;
 
     @Test
     void success() throws Exception {
         Assert task = Assert.builder()
             .id(IdUtils.create())
             .type(Assert.class.getName())
-            .conditions(List.of(
-                "{{ inputs.key == 'value' }}",
-                "{{ 42 == 42 }}"
-            ))
+            .conditions(
+                List.of(
+                    "{{ inputs.key == 'value' }}",
+                    "{{ 42 == 42 }}"
+                )
+            )
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of("key", "value"));
@@ -53,19 +53,20 @@ public class AssertTest {
     @Test
     void failed() {
         List<LogEntry> logs = new ArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
-
+        logQueue.addListener(logs::add);
 
         Assert task = Assert.builder()
             .id(IdUtils.create())
             .type(Assert.class.getName())
-            .conditions(List.of(
-                "{{ 42 == 42 }}",
-                "{{ inputs.key == 'value1' }}",
-                "{{ 42 == 42 }}",
-                "{{ inputs.key == 'value2' }}",
-                "{{ 42 == 42 }}"
-            ))
+            .conditions(
+                List.of(
+                    "{{ 42 == 42 }}",
+                    "{{ inputs.key == 'value1' }}",
+                    "{{ 42 == 42 }}",
+                    "{{ inputs.key == 'value2' }}",
+                    "{{ 42 == 42 }}"
+                )
+            )
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of("key", "value"));
@@ -75,8 +76,6 @@ public class AssertTest {
         assertThat(exception.getMessage()).contains("2 assertions failed");
 
         List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 2);
-        receive.blockLast();
-
 
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value1'")).count()).isEqualTo(1L);
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value2'")).count()).isEqualTo(1L);

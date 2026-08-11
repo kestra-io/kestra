@@ -1,0 +1,311 @@
+package io.kestra.core.services;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
+
+import io.kestra.core.async.AsyncOperationProcessedEvent;
+import io.kestra.core.async.AsyncOperationsConfiguration;
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.Label;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionId;
+import io.kestra.core.models.executions.ExecutionTrigger;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.runners.FlowInputOutput;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.UriProvider;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
+import io.kestra.plugin.core.trigger.WebhookContext;
+import io.kestra.plugin.core.trigger.WebhookInputRenderException;
+import io.kestra.plugin.core.trigger.WebhookResponse;
+
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.http.sse.Event;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import static io.kestra.core.models.Label.CORRELATION_ID;
+
+@Slf4j
+@Singleton
+public class WebhookService {
+    public static final String TEST_EVENT_HEADER = "X-Kestra-Test-Event";
+
+    private static final String FROM_TRIGGER = "trigger";
+    private static final String FROM_TEST_EVENT = "testEvent";
+
+    @Inject
+    private RunContextFactory runContextFactory;
+
+    @Inject
+    private ConditionService conditionService;
+
+    @Inject
+    private FlowInputOutput flowInputOutput;
+
+    @Inject
+    private ExecutionStreamingService streamingService;
+
+    @Inject
+    private UriProvider uriProvider;
+
+    @Inject
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
+
+    @Inject
+    private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
+
+    @Inject
+    private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private AsyncOperationWaiter asyncOperationWaiter;
+
+    @Inject
+    private AsyncOperationsConfiguration asyncOperationsConfiguration;
+
+    /**
+     * Parse query parameters from the webhook request URI.
+     *
+     * @param context The webhook context containing the request
+     * @return A map of query parameter names to their list of values
+     */
+    public Map<String, List<String>> parseParameters(WebhookContext context) {
+        URIBuilder uriBuilder = new URIBuilder(context.request().getUri());
+
+        return uriBuilder.getQueryParams()
+            .stream()
+            .collect(
+                Collectors.groupingBy(
+                    NameValuePair::getName,
+                    Collectors.mapping(NameValuePair::getValue, Collectors.toList())
+                )
+            );
+    }
+
+    private static boolean isTestEvent(WebhookContext context) {
+        if (context.request() == null || context.request().getHeaders() == null) {
+            return false;
+        }
+
+        return context.request().getHeaders()
+            .firstValue(TEST_EVENT_HEADER)
+            .map(Boolean::parseBoolean)
+            .orElse(false);
+    }
+
+    /**
+     * Prepare the execution checking conditions, and injecting inputs.
+     *
+     * @param context The webhook context containing request, path, flow, and services
+     * @param trigger The webhook trigger
+     * @param output The trigger output to attach to the execution
+     * @return The prepared execution, or empty if the trigger conditions are not met
+     * @throws WebhookInputRenderException if the trigger inputs cannot be rendered or processed
+     */
+    public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
+        Execution execution = Execution.builder()
+            // The caller mints the id before reading the request so that files stored for the call already live
+            // under this execution; it is only null for a context built without one.
+            .id(Optional.ofNullable(context.executionId()).orElseGet(IdUtils::create))
+            .tenantId(context.flow().getTenantId())
+            .namespace(context.flow().getNamespace())
+            .flowId(context.flow().getId())
+            .flowRevision(context.flow().getRevision())
+            .inputs(trigger.getInputs())
+            .variables(context.flow().getVariables())
+            .state(new State())
+            .trigger(ExecutionTrigger.of(trigger, output))
+            .build();
+
+        var runContext = runContext(flow, execution);
+
+        // Add labels
+        List<Label> labels = new ArrayList<>();
+        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : FROM_TRIGGER));
+        // The trigger's own labels, as the other trigger types get them through TriggerService
+        labels.addAll(LabelService.fromTrigger(runContext, flow, trigger, Map.of()));
+        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
+            labels.add(new Label(CORRELATION_ID, execution.getId()));
+        }
+
+        execution = execution.withLabels(labels);
+
+        // Check conditions
+        if (!conditionService.isValid(trigger, flow, runContext)) {
+            deleteStoredFiles(runContext, execution);
+            return Optional.empty(); // Conditions not met
+        }
+
+        // Inject trigger inputs
+        if (trigger.getInputs() != null) {
+            try {
+                Map<String, Object> renderedInputs = runContext.render(trigger.getInputs());
+                renderedInputs = readExecutionInputs(flow, execution, renderedInputs);
+                execution = execution.withInputs(renderedInputs);
+            } catch (Exception e) {
+                // Distinct from "conditions not met": a rendering failure is a real error and must
+                // not be silently turned into a 204, so we surface it to the caller.
+                log.warn("Unable to render the webhook inputs", e);
+                deleteStoredFiles(runContext, execution);
+                throw new WebhookInputRenderException("Unable to render the webhook inputs", e);
+            }
+        }
+
+        return Optional.of(execution);
+    }
+
+    /**
+     * Delete the files the request was stored under, for a call that ends without creating an execution.
+     * Nothing would ever purge them otherwise, as the execution they are scoped to will not exist.
+     */
+    private void deleteStoredFiles(RunContext runContext, Execution execution) {
+        try {
+            runContext.storage().deleteExecutionFiles();
+        } catch (IOException e) {
+            log.warn("Unable to delete the files stored for the webhook execution {}", execution.getId(), e);
+        }
+    }
+
+    /**
+     * Start the execution by injecting trace context, emitting a {@link Create} command to the
+     * execution queue tagged with an {@code operationId}, and waiting asynchronously for the
+     * executor to confirm processing via {@link AsyncOperationProcessedEvent}.
+     *
+     * @param execution The execution to start
+     * @return a {@link Mono} that completes with the processed event once the executor confirms,
+     *         or signals a {@link java.util.concurrent.TimeoutException} if no confirmation
+     *         arrives within the configured timeout
+     */
+    public Mono<AsyncOperationProcessedEvent> startExecution(Execution execution) {
+        Optional<String> traceParent = openTelemetry
+            .map(OpenTelemetry::getPropagators)
+            .map(ContextPropagators::getTextMapPropagator)
+            .map(propagator ->
+            {
+                Map<String, String> carrier = new HashMap<>();
+                propagator.inject(Context.current(), carrier, Map::put);
+                return carrier.get("traceparent");
+            });
+
+        Create command = Create.of(new ExecutionId(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), execution.getFlowRevision()))
+            .withKind(execution.getKind())
+            .withTrigger(execution.getTrigger())
+            .withLabels(execution.getLabels())
+            .withInputs(execution.getInputs())
+            .withTraceParent(traceParent.orElse(null));
+
+        return asyncOperationWaiter.submit(
+            execution.getId(),
+            operationId ->
+            {
+                try {
+                    executionCommandQueue.emit(command.withOperationId(operationId));
+                    eventPublisher.publishEvent(CrudEvent.create(execution));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            },
+            asyncOperationsConfiguration.waitTimeout()
+        );
+    }
+
+    /**
+     * Follow the execution events as a Flux stream.
+     *
+     * @param execution The execution to follow
+     * @param flow The flow associated with the execution
+     * @return A Flux stream of execution events
+     */
+    public Flux<Event<Execution>> followExecution(Execution execution, Flow flow) {
+        var subscriberId = UUID.randomUUID().toString();
+        var executionId = execution.getId();
+
+        return Flux.<Event<Execution>> create(emitter ->
+        {
+            streamingService.registerSubscriber(
+                executionId,
+                subscriberId,
+                emitter,
+                flow
+            );
+        })
+            .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
+    }
+
+    /**
+     * Create a WebhookResponse from the execution.
+     *
+     * @param execution The execution to create the response from
+     * @return The WebhookResponse
+     */
+    public WebhookResponse executionResponse(Execution execution) {
+        return WebhookResponse.fromExecution(
+            execution,
+            uriProvider.executionUrl(execution)
+        );
+    }
+
+    /**
+     * Create a RunContext for the given flow and trigger.
+     *
+     * @param flow The flow
+     * @param trigger The trigger
+     * @return The RunContext
+     */
+    public RunContext runContext(Flow flow, AbstractTrigger trigger) {
+        return runContextFactory.of(flow, trigger);
+    }
+
+    /**
+     * Create a RunContext for the given flow and execution.
+     *
+     * @param flow The flow
+     * @param execution The execution
+     * @return The RunContext
+     */
+    public RunContext runContext(Flow flow, Execution execution) {
+        return runContextFactory.of(flow, execution);
+    }
+
+    /**
+     * Read and process execution inputs using FlowInputOutput service.
+     *
+     * @param flow The flow
+     * @param execution The execution
+     * @param renderedInputs The rendered inputs
+     * @return The processed execution inputs
+     */
+    public Map<String, Object> readExecutionInputs(Flow flow, Execution execution, Map<String, Object> renderedInputs) {
+        return flowInputOutput.readExecutionInputs(flow, execution, renderedInputs);
+    }
+
+    /**
+     * Generate the webhook URL for the given flow and trigger.
+     *
+     * @param flow The flow
+     * @param trigger The webhook trigger
+     * @return The webhook URL
+     */
+    public URI url(Flow flow, AbstractWebhookTrigger trigger) {
+        return uriProvider.webhookUrl(flow, trigger);
+    }
+}

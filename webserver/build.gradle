@@ -1,9 +1,3 @@
-if (rootProject.name == "kestra") {
-    processResources {
-        dependsOn(':ui:assembleFrontend')
-    }
-}
-
 configurations {
     implementation.extendsFrom(micronaut)
 }
@@ -16,32 +10,79 @@ dependencies {
     annotationProcessor project(':processor')
     implementation project(":core")
 
+    implementation "io.kestra.libs:copilot"
+
     implementation "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
+    // See https://github.com/netty-contrib/codec-multipart/pull/25
+    // See https://github.com/kestra-io/kestra/issues/9743
+    // There is an issue on Netty multipart content decoding that is fixed in 5.x, this library will bring the same fix for 4.x
+    implementation("io.netty.contrib:netty-codec-multipart-vintage:1.0.0.Final")
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
+
+    implementation "io.micronaut.security:micronaut-security-csrf"
 
     implementation("com.posthog.java:posthog:1.2.0")
 
     // ai
     implementation("dev.langchain4j:langchain4j")
+    implementation("dev.langchain4j:langchain4j-mcp")
     implementation("dev.langchain4j:langchain4j-google-ai-gemini")
+    implementation("dev.langchain4j:langchain4j-http-client-jdk")
+    implementation('org.bouncycastle:bcpkix-jdk18on')
+
+    // mcp
+    api 'io.modelcontextprotocol.sdk:mcp'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 
     implementation("de.siegmar:fastcsv")
 
     // test
     testAnnotationProcessor project(':processor')
-    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
     testImplementation project(':storage-local')
     testImplementation project(':worker')
+    testImplementation project(':indexer')
     testImplementation "org.wiremock:wiremock-jetty12"
     testImplementation "org.awaitility:awaitility"
+    testImplementation "io.opentelemetry:opentelemetry-sdk-testing"
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')
-    testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(path: ':jdbc', configuration: 'testArtifacts')
+    testImplementation project(path: ':queue', configuration: 'testArtifacts')
     testImplementation project(':jdbc-h2')
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+        "-Amicronaut.openapi.expand.version=${project.version}"
+    ]
+}
+tasks.register('generateOpenapiSpec') {
+    dependsOn tasks.named('compileJava')
+    def openapiSpecPath = project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml")
+    def outputFile = file("${project.getParent().projectDir}/openapi.yml")
+
+    inputs.file(openapiSpecPath)
+    outputs.file(outputFile)
+
+    doLast {
+        outputFile.bytes = openapiSpecPath.get().asFile.bytes
+    }
+}
+
+tasks.named('jar', Jar) {
+    exclude '**/spring-configuration-metadata.json'
+}
+
+tasks.named('compileJava') {
+    outputs.file(project.layout.buildDirectory.file("classes/java/main/META-INF/swagger/kestra.yml"))
+}
+
+tasks.withType(Test).configureEach { Test t ->
+    maxHeapSize = '5g'
+}

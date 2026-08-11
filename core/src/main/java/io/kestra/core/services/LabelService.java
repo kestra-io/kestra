@@ -1,24 +1,30 @@
 package io.kestra.core.services;
 
+import java.util.*;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
+
 import jakarta.annotation.Nullable;
 
-import java.util.*;
-
-
 public final class LabelService {
-    private LabelService() {}
+    private LabelService() {
+    }
 
     /**
-     * Return flow labels excluding system labels.
+     * Return labels after excluding system labels.
+     * This method is used generally for any labels list
+     * When labels list is null it handles it implicitly to prevent unnecessary null checks at the callers
      */
-    public static List<Label> labelsExcludingSystem(FlowInterface flow) {
-        return ListUtils.emptyOnNull(flow.getLabels()).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
+    public static List<Label> labelsExcludingSystem(List<Label> labels) {
+        return ListUtils.emptyOnNull(labels)
+            .stream()
+            .filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX))
+            .toList();
     }
 
     /**
@@ -27,28 +33,26 @@ public final class LabelService {
      * Trigger labels will be rendered via the run context but not flow labels.
      * In case rendering is not possible, the label will be omitted.
      */
-    public static List<Label> fromTrigger(RunContext runContext, FlowInterface flow, AbstractTrigger trigger) {
-        final List<Label> labels = new ArrayList<>();
+    public static List<Label> fromTrigger(RunContext runContext, FlowInterface flow, AbstractTrigger trigger, Map<String, Object> variables) {
 
-        if (flow.getLabels() != null) {
-            labels.addAll(LabelService.labelsExcludingSystem(flow)); // no need for rendering
-        }
+        final List<Label> labels = new ArrayList<>(labelsExcludingSystem(flow.getLabels())); // no need for rendering
 
-        if (trigger.getLabels() != null) {
-            for (Label label : trigger.getLabels()) {
-                final var value = renderLabelValue(runContext, label);
-                if (value != null) {
-                    labels.add(new Label(label.key(), value));
-                }
+        // It is better to remove system labels before rendering
+        List<Label> triggerLabels = labelsExcludingSystem(trigger.getLabels());
+        for (Label label : triggerLabels) {
+            final var value = renderLabelValue(runContext, label, variables);
+            if (value != null) {
+                labels.add(new Label(label.key(), value));
             }
         }
 
         return labels;
     }
 
-    private static String renderLabelValue(RunContext runContext, Label label) {
+    private static String renderLabelValue(RunContext runContext, Label label, Map<String, Object> variables) {
         try {
-            return runContext.render(label.value());
+            String value = runContext.render(label.value(), variables);
+            return (value != null && !value.isEmpty()) ? value : null;
         } catch (IllegalVariableEvaluationException e) {
             runContext.logger().warn("Failed to render label '{}', it will be omitted", label.key(), e);
             return null;
@@ -56,7 +60,7 @@ public final class LabelService {
     }
 
     public static boolean containsAll(@Nullable List<Label> labelsContainer, @Nullable List<Label> labelsThatMustBeIncluded) {
-        Map<String, String> labelsContainerMap = ListUtils.emptyOnNull(labelsContainer).stream().collect(HashMap::new, (m, label)-> m.put(label.key(), label.value()), HashMap::putAll);
+        Map<String, String> labelsContainerMap = ListUtils.emptyOnNull(labelsContainer).stream().collect(HashMap::new, (m, label) -> m.put(label.key(), label.value()), HashMap::putAll);
 
         return ListUtils.emptyOnNull(labelsThatMustBeIncluded).stream().allMatch(label -> Objects.equals(labelsContainerMap.get(label.key()), label.value()));
     }

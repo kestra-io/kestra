@@ -1,21 +1,23 @@
 package io.kestra.plugin.core.debug;
 
-import io.kestra.core.models.annotations.Metric;
-import io.kestra.core.models.property.Property;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import java.time.Duration;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+
 import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Metric;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
-import org.slf4j.Logger;
 
-import java.time.Duration;
-import java.util.Optional;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -24,8 +26,10 @@ import java.util.Optional;
 @NoArgsConstructor
 @Schema(
     title = "Return a value for debugging purposes.",
-    description = "This task is mostly useful for troubleshooting.\n\n" +
-        "It allows you to return some templated functions, inputs or outputs. In some cases you might want to trim all white spaces from the rendered values so downstream tasks can use them properly"
+    description = """
+        Render a templated string and return it so you can quickly inspect or reuse values during a flow.
+
+        Handy for troubleshooting (the rendered value is logged) or for generating small payloads such as headers or tokens that downstream tasks expect. Combine with template filters to control whitespace or formatting before the value is passed along."""
 )
 @Plugin(
     examples = {
@@ -42,23 +46,43 @@ import java.util.Optional;
                 """
         ),
         @Example(
+            full = true,
             code = """
-                id: compute_header
-                type: io.kestra.plugin.core.debug.Return
-                format: >-
-                    {%- if inputs.token is not empty -%}
-                    Bearer {{ inputs.token }}
-                    {%- elseif inputs.username is not empty and inputs.password is not empty -%}
-                    Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
-                    {%- endif -%}
+                id: return
+                namespace: company.team
+
+                inputs:
+                  - id: token
+                    type: STRING
+                    required: false
+                    displayName: "API Token"
+
+                  - id: username
+                    type: STRING
+                    displayName: "Username"
+                    required: false
+
+                  - id: password
+                    type: STRING
+                    displayName: "Password"
+                    required: false
+
+                tasks:
+                  - id: compute_header
+                    type: io.kestra.plugin.core.debug.Return
+                    format: >-
+                      {%- if inputs.token is not empty -%}
+                      Bearer {{ inputs.token }}
+                      {%- elseif inputs.username is not empty and inputs.password is not empty -%}
+                      Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
+                      {%- endif -%}
                 """
         )
     },
     metrics = {
         @Metric(name = "length", type = Counter.TYPE),
         @Metric(name = "duration", type = Timer.TYPE)
-    },
-    aliases = "io.kestra.core.tasks.debugs.Return"
+    }
 )
 public class Return extends Task implements RunnableTask<Return.Output> {
     @Schema(

@@ -1,7 +1,7 @@
 package io.kestra.runner.mysql;
 
-import io.kestra.jdbc.runner.JdbcRunnerTest;
+import io.kestra.core.runners.AbstractRunnerTest;
 
-public class MysqlRunnerTest extends JdbcRunnerTest {
+public class MysqlRunnerTest extends AbstractRunnerTest {
 
 }

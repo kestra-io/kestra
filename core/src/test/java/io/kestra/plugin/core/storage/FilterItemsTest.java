@@ -1,27 +1,25 @@
 package io.kestra.plugin.core.storage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
+import jakarta.inject.Inject;
 
 @KestraTest
 class FilterItemsTest {
@@ -181,20 +179,12 @@ class FilterItemsTest {
     }
 
     private static <T> void assertFile(final RunContext runContext,
-                                       final FilterItems.Output output,
-                                       final List<T> expected,
-                                       final Class<T> type) throws IOException {
-        try (InputStream resource = runContext.storage().getFile(output.getUri());
-             InputStreamReader inputStreamReader = new InputStreamReader(resource, StandardCharsets.UTF_8);
-             BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
-            List<T> list = bufferedReader.lines()
-                .map(line -> {
-                    try {
-                        return JacksonMapper.ofIon().readValue(line, type);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).toList();
+        final FilterItems.Output output,
+        final List<T> expected,
+        final Class<T> type) throws IOException {
+        try (InputStream resource = new java.io.BufferedInputStream(runContext.storage().getFile(output.getUri()), io.kestra.core.serializers.FileSerde.BUFFER_SIZE)) {
+            List<T> list = new java.util.ArrayList<>();
+            io.kestra.core.serializers.FileSerde.read(resource, row -> list.add(JacksonMapper.ofIon().convertValue(row, type)));
             Assertions.assertEquals(expected, list);
         }
     }
@@ -202,7 +192,8 @@ class FilterItemsTest {
     private URI generateKeyValueFile(final List<?> items, RunContext runContext) throws IOException {
         Path path = runContext.workingDir().createTempFile(".ion");
         try (final BufferedWriter writer = Files.newBufferedWriter(path)) {
-            items.forEach(object -> {
+            items.forEach(object ->
+            {
                 try {
                     writer.write(JacksonMapper.ofIon().writeValueAsString(object));
                     writer.newLine();
@@ -214,5 +205,62 @@ class FilterItemsTest {
         return runContext.storage().putFile(path.toFile());
     }
 
-    record KeyValue(String key, Object value) { }
+    private URI generateBinaryKeyValueFile(final List<?> items, RunContext runContext) throws IOException {
+        Path path = runContext.workingDir().createTempFile(".ion");
+        try (var output = new java.io.BufferedOutputStream(new java.io.FileOutputStream(path.toFile()), io.kestra.core.serializers.FileSerde.BUFFER_SIZE)) {
+            for (Object item : items) {
+                io.kestra.core.serializers.FileSerde.write(output, item);
+            }
+        }
+        return runContext.storage().putFile(path.toFile());
+    }
+
+    @Test
+    void shouldFilterBinaryIonGivenValidBooleanExpressionForInclude() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        FilterItems task = FilterItems
+            .builder()
+            .from(Property.ofValue(generateBinaryKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
+            .filterCondition(" {{ value % 2 == 0 }} ")
+            .filterType(Property.ofValue(FilterItems.FilterType.INCLUDE))
+            .build();
+
+        // When
+        FilterItems.Output output = task.run(runContext);
+
+        // Then
+        Assertions.assertNotNull(output);
+        Assertions.assertNotNull(output.getUri());
+        Assertions.assertEquals(2, output.getDroppedItemsTotal());
+        Assertions.assertEquals(4, output.getProcessedItemsTotal());
+        assertFile(runContext, output, List.of(new KeyValue("k2", 2), new KeyValue("k4", 4)), KeyValue.class);
+    }
+
+    @Test
+    void shouldFilterBinaryIonGivenValidBooleanExpressionForExclude() throws Exception {
+        // Given
+        RunContext runContext = runContextFactory.of();
+
+        FilterItems task = FilterItems
+            .builder()
+            .from(Property.ofValue(generateBinaryKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
+            .filterCondition(" {{ value % 2 == 0 }} ")
+            .filterType(Property.ofValue(FilterItems.FilterType.EXCLUDE))
+            .build();
+
+        // When
+        FilterItems.Output output = task.run(runContext);
+
+        // Then
+        Assertions.assertNotNull(output);
+        Assertions.assertNotNull(output.getUri());
+        Assertions.assertEquals(2, output.getDroppedItemsTotal());
+        Assertions.assertEquals(4, output.getProcessedItemsTotal());
+        assertFile(runContext, output, List.of(new KeyValue("k1", 1), new KeyValue("k3", 3)), KeyValue.class);
+    }
+
+    record KeyValue(String key, Object value) {
+    }
 }

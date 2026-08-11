@@ -1,8 +1,7 @@
 package io.kestra.cli.commands.migrations;
 
-import io.kestra.cli.AbstractCommand;
-import io.kestra.cli.App;
-import io.micronaut.configuration.picocli.PicocliRunner;
+import io.kestra.cli.Kestra;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -12,18 +11,19 @@ import picocli.CommandLine;
     description = "handle migrations",
     mixinStandardHelpOptions = true,
     subcommands = {
-        TenantMigrationCommand.class,
+        RunMigrationCommand.class,
+        PlanMigrationCommand.class,
+        RepairMigrationCommand.class,
+        UnlockMigrationCommand.class
     }
 )
 @Slf4j
-public class MigrationCommand extends AbstractCommand {
+public class MigrationCommand extends AbstractMigrationCommand {
     @SneakyThrows
     @Override
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "migrate",  "--help");
-
-        return 0;
+        return Kestra.runCli(new String[] { "migrate", "--help" });
     }
 }

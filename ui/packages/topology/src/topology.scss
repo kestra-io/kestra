@@ -1,0 +1,178 @@
+@use "@kestra-io/design-system/src/assets/styles/color-palette" as *;
+
+$node-default: #7081b9;
+
+$node-colors: (
+    "success": $base-green-500,
+    "primary": $base-primary-500,
+    "danger":  $base-red-500,
+    "blue":    $base-blue-500,
+    "default": $node-default,
+    "warning": $base-orange-300,
+);
+
+$statusList: created, restarted, success, running, killing, killed, warning, failed, paused, cancelled, skipped, queued, retrying, retried, breakpoint;
+
+:root {
+    --ks-topology-icon-color: #{$base-gray-neutral-800};
+    --ks-topology-icon-bg: #{$base-gray-neutral-white};
+    --ks-border-radius-pill: 50rem;
+
+    @each $name, $color in $node-colors {
+        --ks-node-#{$name}: #{$color};
+    }
+}
+
+html.dark {
+    --ks-node-default: #{$base-gray-neutral-400};
+}
+
+.text-danger { color: $base-red-500; }
+
+.button-icon { font-size: var(--ks-font-size-2xs); }
+
+.circle-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    margin-left: 0.25rem;
+    border-radius: 1rem;
+    z-index: 2000;
+    cursor: pointer;
+}
+
+.vue-flow {
+    background-color: var(--ks-bg-base);
+}
+
+.vue-flow .material-design-icon {
+    width: 1em;
+    height: 1em;
+
+    > .material-design-icon__svg {
+        width: 1em;
+        height: 1em;
+        bottom: 0;
+    }
+}
+
+.vue-flow__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--ks-spacing-1);
+    background-color: var(--ks-bg-surface);
+    border: 1px solid var(--ks-border-default);
+    border-radius: var(--ks-radius-sm);
+    box-shadow: 0 1px 2px var(--ks-shadow-element);
+}
+
+.vue-flow .vue-flow__controls-button {
+    padding: var(--ks-spacing-1);
+    border: none;
+    border-radius: var(--ks-radius-xs);
+    background: transparent;
+    color: var(--ks-text-primary);
+
+    &:hover,
+    &.active {
+        background-color: var(--ks-bg-hover);
+    }
+
+    .material-design-icon,
+    .material-design-icon__svg {
+        width: 1rem;
+        height: 1rem;
+        max-width: none;
+        max-height: none;
+    }
+
+    .material-design-icon__svg {
+        fill: var(--ks-icon-muted);
+    }
+
+    &:hover .material-design-icon__svg,
+    &.active .material-design-icon__svg {
+        fill: var(--ks-icon-default);
+    }
+}
+
+.node-action-button {
+    .material-design-icon__svg {
+        fill: var(--ks-icon-muted);
+    }
+
+    &:hover .material-design-icon__svg,
+    &.active .material-design-icon__svg {
+        fill: var(--ks-icon-default);
+    }
+}
+
+.vue-flow__container {
+    .vue-flow__node.topology-node-hovered {
+        outline: none !important;
+    }
+
+    .vue-flow__node.topology-node-hovered .node-wrapper {
+        border-color: var(--ks-border-default) !important;
+    }
+
+    .top-button-div {
+        position: absolute;
+        top: -0.5rem;
+        right: -0.5rem;
+        display: flex;
+        justify-content: center;
+        padding-right: 3px;
+        color: white;
+    }
+    .vue-flow__node-cluster { pointer-events: none !important; }
+    .vue-flow__handle       { opacity: 0 !important; }
+
+    .vue-flow__edge-path {
+        stroke: var(--ks-topology-dash);
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        fill: none;
+    }
+
+    @each $type in (triggers, subflow, flowable-task, errors) {
+        .ks-topology-#{$type}-border {
+            background-color: var(--ks-topology-bg-#{$type});
+            border: 1px solid var(--ks-topology-border-#{$type});
+        }
+    }
+}
+
+.is-exporting {
+    .vue-flow__controls,
+    .vue-flow__controls-button,
+    .vue-flow__handle,
+    .top-button-div,
+    .circle-button,
+    .node-action-button {
+        display: none !important;
+    }
+}
+
+.ks-duration-tt {
+    text-align: left;
+    white-space: nowrap;
+    max-width: none;
+
+    .ks-duration-tt-square {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+        border-radius: 50%;
+    }
+
+    @each $value in $statusList {
+        .ks-duration-tt-square-#{$value} {
+            background-color: var(--ks-status-#{$value});
+        }
+    }
+}

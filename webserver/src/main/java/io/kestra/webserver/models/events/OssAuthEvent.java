@@ -1,15 +1,13 @@
 package io.kestra.webserver.models.events;
 
-import io.micronaut.core.annotation.Introspected;
+import java.time.Instant;
+import java.util.Optional;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.Instant;
-import java.util.Optional;
-
 @Getter
-@Introspected
 public class OssAuthEvent extends Event {
     private final OssAuth ossAuth;
 

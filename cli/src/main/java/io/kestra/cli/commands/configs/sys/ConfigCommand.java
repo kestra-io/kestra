@@ -1,9 +1,9 @@
 package io.kestra.cli.commands.configs.sys;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
-import io.kestra.cli.App;
+import io.kestra.cli.Kestra;
+
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -12,6 +12,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         ConfigPropertiesCommand.class,
+        ConfigValidateCommand.class,
     }
 )
 @Slf4j
@@ -20,8 +21,6 @@ public class ConfigCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "configs",  "--help");
-
-        return 0;
+        return Kestra.runCli(new String[] { "configs", "--help" });
     }
 }

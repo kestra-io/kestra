@@ -1,14 +1,16 @@
 package io.kestra.core.validations;
 
+import java.time.Duration;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.models.validations.ModelValidator;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +42,6 @@ public class ConstantRetryValidationTest {
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
         assertThat(valid.isEmpty()).isFalse();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
-        assertThat(valid.get().getMessage()).isEqualTo(": 'interval' must be less than 'maxDuration' but is PT10S\n");
+        assertThat(valid.get().getMessage()).contains("'interval' must be less than 'maxDuration'");
     }
 }

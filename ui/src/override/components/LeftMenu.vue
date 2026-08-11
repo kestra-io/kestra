@@ -1,40 +1,69 @@
 <template>
-    <SideBar v-if="menu" :menu :showLink="showLink" @menu-collapse="onCollapse">
+    <SideBar
+        v-if="menu"
+        :menu
+        :showLink
+        :collapsed
+        @menu-collapse="onCollapse"
+        :class="{overlay: verticalLayout}"
+    >
         <template #footer>
-            <Auth />    
+            <div class="left-menu-footer">
+                <ProductTourItem v-if="!collapsed" />
+                <AdminItem :tabs="adminTabs" />
+                <Environment />
+                <Auth />
+            </div>
         </template>
     </SideBar>
 </template>
 
-<script setup>
-    import {useLeftMenu} from "override/components/useLeftMenu";
-    import SideBar from "../../components/layout/SideBar.vue";
-    import Auth from "../../override/components/auth/Auth.vue";
+<script setup lang="ts">
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core"
 
-    defineProps({showLink: {type: Boolean, default: true}})
+    import SideBar from "../../components/layout/SideBar.vue"
+    import AdminItem from "../../components/admin/AdminItem.vue"
+    import ProductTourItem from "../../components/onboarding/tour/ProductTourItem.vue"
+    import Auth from "override/components/auth/Auth.vue"
+    import Environment from "../../components/layout/Environment.vue"
 
-    const $emit = defineEmits(["menu-collapse"])
 
-    function onCollapse(folded) {
-        $emit("menu-collapse", folded);
+    import {useLeftMenu} from "override/components/useLeftMenu"
+    import {useAdminTabs} from "../../composables/useAdminTabs"
+
+    withDefaults(defineProps<{
+        showLink?: boolean
+        collapsed?: boolean
+    }>(), {
+        showLink: true,
+        collapsed: false,
+    })
+
+    const emit = defineEmits<{
+        (e: "menu-collapse", folded: boolean): void
+    }>()
+
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm")
+    const {menu} = useLeftMenu()
+    const {adminTabs} = useAdminTabs()
+
+    function onCollapse(folded: boolean) {
+        emit("menu-collapse", folded)
     }
-
-    const {menu} = useLeftMenu();
 </script>
 
-<style lang="scss" scoped>
-#side-menu {
-    .el-select {
-        padding: 0 30px;
-        padding-bottom: 15px;
-        transition: all 0.2s ease;
-        background-color: transparent;
-    }
-    &.vsm_collapsed {
-        .el-select {
-            padding-left: 5px;
-            padding-right: 5px;
+<style scoped lang="scss">
+    #side-menu {
+        .kel-select {
+            transition: all 0.2s ease;
+            background-color: transparent;
         }
     }
-}
+
+    .left-menu-footer {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-4);
+    }
 </style>

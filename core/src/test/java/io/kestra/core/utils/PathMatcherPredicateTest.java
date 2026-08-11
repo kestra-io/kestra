@@ -1,14 +1,13 @@
 package io.kestra.core.utils;
 
-import org.junit.jupiter.api.Test;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PathMatcherPredicateTest {
@@ -39,11 +38,13 @@ class PathMatcherPredicateTest {
 
     @Test
     void shouldAddBasePathForExpressionWithNoPrefix() {
-        assertEquals(List.of("glob:/sub/dir/**/*"),
+        assertEquals(
+            List.of("glob:/sub/dir/**/*"),
             PathMatcherPredicate.matches(Path.of("/sub/dir"), List.of("**/*")).syntaxAndPatterns()
         );
 
-        assertEquals(List.of("glob:/sub/dir/**/*"),
+        assertEquals(
+            List.of("glob:/sub/dir/**/*"),
             PathMatcherPredicate.matches(Path.of("/sub/dir"), List.of("/**/*")).syntaxAndPatterns()
         );
     }

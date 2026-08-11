@@ -1,0 +1,10 @@
+id: if-without-condition
+namespace: io.kestra.tests
+
+tasks:
+  - id: if
+    type: io.kestra.plugin.core.flow.If
+    then:
+      - id: when_true
+        type: io.kestra.plugin.core.log.Log
+        message: "Condition was true"

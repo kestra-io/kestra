@@ -1,27 +1,27 @@
 package io.kestra.core.runners;
 
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.queues.QueueException;
+import io.kestra.core.services.TaskOutputService;
+
 import jakarta.inject.Inject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +32,9 @@ public class TaskCacheTest {
     @Inject
     private TestRunnerUtils runnerUtils;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @BeforeEach
     void resetCounter() {
         COUNTER.set(0);
@@ -39,27 +42,27 @@ public class TaskCacheTest {
 
     @Test
     @LoadFlows("flows/valids/cache.yaml")
-    void shouldCacheTaskRunOutput() throws QueueException, TimeoutException {
+    void shouldCacheTaskRunOutput() throws Exception {
         Execution execution = runnerUtils.runOne("main", "io.kestra.tests", "cache");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("counter")).isEqualTo(1);
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("counter")).isEqualTo(1);
 
         // as the task is cached, it should return the same result
         Execution cached = runnerUtils.runOne("main", "io.kestra.tests", "cache");
         assertThat(cached.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(cached.getTaskRunList().size()).isEqualTo(1);
-        assertThat(cached.getTaskRunList().getFirst().getOutputs().get("counter")).isEqualTo(1);
+        assertThat(taskOutputService.getOutputs(cached.getTaskRunList().getFirst()).get("counter")).isEqualTo(1);
     }
 
     @Test
     @LoadFlows("flows/valids/cache.yaml")
     @Disabled("Expiration didn't work on CI for an unknown reason")
-    void shouldExpireCacheTaskRunOutputAfterTtl() throws QueueException, TimeoutException, InterruptedException {
+    void shouldExpireCacheTaskRunOutputAfterTtl() throws Exception {
         Execution execution = runnerUtils.runOne("main", "io.kestra.tests", "cache");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("counter")).isEqualTo(1);
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("counter")).isEqualTo(1);
 
         // Wait for the cache TTL expiration
         Thread.sleep(1100);
@@ -68,7 +71,7 @@ public class TaskCacheTest {
         Execution notCached = runnerUtils.runOne("main", "io.kestra.tests", "cache");
         assertThat(notCached.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(notCached.getTaskRunList().size()).isEqualTo(1);
-        assertThat(notCached.getTaskRunList().getFirst().getOutputs().get("counter")).isEqualTo(2);
+        assertThat(taskOutputService.getOutputs(notCached.getTaskRunList().getFirst()).get("counter")).isEqualTo(2);
     }
 
     @SuperBuilder

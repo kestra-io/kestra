@@ -1,48 +1,41 @@
 package io.kestra.cli;
 
-import ch.qos.logback.classic.LoggerContext;
-import com.google.common.collect.ImmutableMap;
-import io.kestra.cli.commands.servers.ServerCommandInterface;
-import io.kestra.cli.services.StartupHookInterface;
-import io.kestra.core.plugins.PluginManager;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.webserver.services.FlowAutoLoaderService;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
-import io.micronaut.core.annotation.Introspected;
-import io.micronaut.http.uri.UriBuilder;
-import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
-import io.micronaut.runtime.server.EmbeddedServer;
-import jakarta.inject.Provider;
-import lombok.extern.slf4j.Slf4j;
-import io.kestra.core.utils.Rethrow;
-import picocli.CommandLine;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.MessageFormat;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.cli.commands.servers.ServerCommandInterface;
+import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.core.plugins.PluginManager;
+import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.services.FlowAutoLoader;
+import io.kestra.core.utils.Rethrow;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.BeanProvider;
+import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
+import io.micronaut.http.uri.UriBuilder;
+import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
+import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command(
-    versionProvider = VersionProvider.class,
-    mixinStandardHelpOptions = true,
-    showDefaultValues = true
-)
 @Slf4j
-@Introspected
-public abstract class AbstractCommand implements Callable<Integer> {
+public abstract class AbstractCommand extends BaseCommand implements Callable<Integer> {
     @Inject
-    private ApplicationContext applicationContext;
+    protected ApplicationContext applicationContext;
 
     @Inject
     private EndpointDefaultConfiguration endpointConfiguration;
@@ -54,58 +47,52 @@ public abstract class AbstractCommand implements Callable<Integer> {
     private io.kestra.core.utils.VersionProvider versionProvider;
 
     @Inject
+    protected Optional<EmbeddedServer> embeddedServer;
+
+    @Inject
+    private BeanProvider<FlowAutoLoader> flowAutoLoaderService;
+
+    @Inject
     protected Provider<PluginRegistry> pluginRegistryProvider;
 
     @Inject
     protected Provider<PluginManager> pluginManagerProvider;
 
-    private PluginRegistry pluginRegistry;
+    protected PluginRegistry pluginRegistry;
 
-    @Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
-    private boolean[] verbose = new boolean[0];
-
-    @Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES})")
-    private LogLevel logLevel = LogLevel.INFO;
-
-    @Option(names = {"--internal-log"}, description = "Change also log level for internal log")
-    private boolean internalLog = false;
-
-    @Option(names = {"-c", "--config"}, description = "Path to a configuration file")
+    @Option(names = { "-c", "--config" }, description = "Path to a configuration file")
     private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
 
-    @Option(names = {"-p", "--plugins"}, description = "Path to plugins directory")
+    @Option(names = { "-p", "--plugins" }, description = "Path to plugins directory")
     protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
-
-    public enum LogLevel {
-        TRACE,
-        DEBUG,
-        INFO,
-        WARN,
-        ERROR
-    }
 
     @Override
     public Integer call() throws Exception {
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(Command.class).name());
-        startLogger();
+        initLogger();
         sendServerLog();
+        maybeInitPlugins();
         if (this.startupHook != null) {
             this.startupHook.start(this);
         }
+        maybeStartWebserver();
+        return 0;
+    }
 
+    /**
+     * Initializes the plugin registry.
+     */
+    protected void maybeInitPlugins() {
         if (pluginRegistryProvider != null && this.pluginsPath != null && loadExternalPlugins()) {
             pluginRegistry = pluginRegistryProvider.get();
             pluginRegistry.registerIfAbsent(pluginsPath);
 
-            // PluginManager mus only be initialized if a registry is also instantiated
+            // PluginManager must only be initialized if a registry is also instantiated
             if (isPluginManagerEnabled()) {
                 PluginManager manager = pluginManagerProvider.get();
                 manager.start();
             }
         }
-
-        startWebserver();
-        return 0;
     }
 
     /**
@@ -129,28 +116,8 @@ public abstract class AbstractCommand implements Callable<Integer> {
         return true;
     }
 
-    private static String message(String message, Object... format) {
-        return CommandLine.Help.Ansi.AUTO.string(
-            format.length == 0 ? message : MessageFormat.format(message, format)
-        );
-    }
-
-    protected static void stdOut(String message, Object... format) {
-        System.out.println(message(message, format));
-    }
-
-    protected static void stdErr(String message, Object... format) {
-        System.err.println(message(message, format));
-    }
-
-    private void startLogger() {
-        if (this.verbose.length == 1) {
-            this.logLevel = LogLevel.DEBUG;
-        } else if (this.verbose.length > 1) {
-            this.logLevel = LogLevel.TRACE;
-        }
-
-
+    @Override
+    protected void initLogger() {
         if (this instanceof ServerCommandInterface) {
             String buildInfo = "";
             if (versionProvider.getRevision() != null) {
@@ -170,20 +137,7 @@ public abstract class AbstractCommand implements Callable<Integer> {
                 buildInfo
             );
         }
-
-        ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
-            .getLoggerList()
-            .stream()
-            .filter(logger ->
-                (
-                    this.internalLog && (
-                        logger.getName().startsWith("io.kestra") &&
-                            !logger.getName().startsWith("io.kestra.ee.runner.kafka.services"))
-                )
-            )
-            .forEach(
-                logger -> logger.setLevel(ch.qos.logback.classic.Level.valueOf(this.logLevel.name()))
-            );
+        super.initLogger();
     }
 
     private void sendServerLog() {
@@ -192,35 +146,33 @@ public abstract class AbstractCommand implements Callable<Integer> {
         }
     }
 
-    private void startWebserver() {
+    private void maybeStartWebserver() {
         if (!(this instanceof ServerCommandInterface)) {
             return;
         }
 
-        applicationContext
-            .findBean(EmbeddedServer.class)
-            .ifPresent(server -> {
+        embeddedServer
+            .ifPresent(server ->
+            {
                 server.start();
 
                 if (this.endpointConfiguration.getPort().isPresent()) {
-                    URI endpoint = null;
+                    URI managementEndpoint = null;
+                    URI healthEndpoint = null;
                     try {
-                        endpoint = UriBuilder.of(server.getURL().toURI())
+                        managementEndpoint = UriBuilder.of(server.getURL().toURI())
                             .port(this.endpointConfiguration.getPort().get())
-                            .path("/health")
                             .build();
+                        healthEndpoint = managementEndpoint.resolve("./health");
                     } catch (URISyntaxException e) {
                         e.printStackTrace();
                     }
-                    log.info("Server Running: {}, Management server on port {}", server.getURL(), endpoint);
-                } else {
-                    log.info("Server Running: {}", server.getURL());
+                    log.info("Management server running at {}", managementEndpoint);
+                    log.info("Health endpoint is available at {}", healthEndpoint);
                 }
 
                 if (isFlowAutoLoadEnabled()) {
-                    applicationContext
-                        .findBean(FlowAutoLoaderService.class)
-                        .ifPresent(FlowAutoLoaderService::load);
+                    flowAutoLoaderService.ifPresent(FlowAutoLoader::load);
                 }
             });
     }
@@ -230,22 +182,29 @@ public abstract class AbstractCommand implements Callable<Integer> {
     }
 
     protected void shutdownHook(boolean logShutdown, Rethrow.RunnableChecked<Exception> run) {
-        Runtime.getRuntime().addShutdownHook(new Thread(
-            () -> {
-                if (logShutdown) {
-                    log.warn("Receiving shutdown ! Try to graceful exit");
-                }
-                try {
-                    run.run();
-                } catch (Exception e) {
-                    log.error("Failed to close gracefully!", e);
-                }
-            },
-            "command-shutdown"
-        ));
+        Runtime.getRuntime().addShutdownHook(
+            new Thread(
+                () ->
+                {
+                    if (logShutdown) {
+                        log.warn("Shutdown signal received. Initiating graceful shutdown.");
+                    }
+                    try {
+                        run.run();
+                    } catch (Exception e) {
+                        log.error("Failed to complete graceful shutdown", e);
+                    }
+                },
+                "command-shutdown"
+            )
+        );
     }
 
-    @SuppressWarnings({"unused"})
+    void setConfig(Path config) {
+        this.config = config;
+    }
+
+    @SuppressWarnings({ "unused" })
     public Map<String, Object> propertiesFromConfig() {
         if (this.config.toFile().exists()) {
             YamlPropertySourceLoader yamlPropertySourceLoader = new YamlPropertySourceLoader();

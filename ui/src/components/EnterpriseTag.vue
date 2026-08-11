@@ -1,0 +1,103 @@
+<template>
+    <div class="enterprise-tag">
+        <div class="flare" />
+        <slot />
+    </div>
+</template>
+
+<script setup lang="ts">
+</script>
+
+<style scoped lang="scss">
+
+    @keyframes move-border {
+        0%{background-position: 0% 0%}
+        50%{background-position: 100% 100%}
+        100%{background-position: 0% 0%}
+    }
+
+    .enterprise-tag::before,
+    .enterprise-tag::after{
+        content: "";
+        display: block;
+        position: absolute;
+        border-radius: 1rem;
+    }
+
+    .enterprise-tag::before{
+        z-index: -2;
+        background-image: linear-gradient(138.8deg, #CCE8FE 0%, #CDA0FF 27.03%, #8489F5 41.02%, #CDF1FF 68.68%, #B591E9 94%, #CCE8FE 100%);
+        background-size: 200% 200%;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        animation: move-border 3s linear infinite;
+    }
+
+    .enterprise-tag::after{
+        z-index: -1;
+        background: var(--ks-bg-tag);
+        top: 1px;
+        left: 1px;
+        bottom: 1px;
+        right: 1px;
+        html.dark & {
+            background: var(--ks-border-default);
+        }
+    }
+
+    .enterprise-tag{
+        position: relative;
+        background: var(--ks-bg-tag-hover);
+        padding: .125rem 0.5rem !important;
+        border-radius: 1rem;
+        display: inline-block;
+        z-index: 2;
+        margin: 0 auto;
+        font-size: var(--ks-font-size-xs) !important;
+        html.dark &{
+            background: #FBFBFB26;
+        }
+        .flare{
+            display: none;
+            position: absolute;
+            content: "";
+            height: 2rem;
+            width: 2rem;
+            z-index: 12;
+            top: -1.1rem;
+            right: 0;
+            background-image:
+                // vertical flare
+                linear-gradient(0deg, rgba(#cfd3d6, 0) 0%, var(--ks-bg-tag-hover) 50%, rgba(#cfd3d6, 0) 100%),
+                // horizontal flare
+                linear-gradient(90deg, rgba(#cfd3d6, 0) 0%, var(--ks-bg-tag-hover) 50%, rgba(#cfd3d6, 0) 100%),
+                // flare effect
+                radial-gradient(circle, var(--ks-bg-tag-hover) 0%, rgba(#cfd3d6, .1) 50%,rgba(#cfd3d6, 0) 70%);
+            background-size:  1px 100%, 100% 1px, 40% 40%;
+            background-repeat: no-repeat;
+            background-position: center, center, center;
+            transform:rotate(-13deg);
+            &::before{
+                content: "";
+                display: block;
+                position: absolute;
+                height: 2rem;
+                width: 2rem;
+                background-image:
+                    // vertical flare
+                    linear-gradient(0deg, rgba(#cfd3d6, 0) 0%, rgba(#cfd3d6, .7) 50%, rgba(#cfd3d6, 0) 100%),
+                    // horizontal flare
+                    linear-gradient(90deg, rgba(#cfd3d6, 0) 0%, rgba(#cfd3d6, .7) 50%, rgba(#cfd3d6, 0) 100%);
+                background-size:  1px 50%, 50% 1px;
+                background-repeat: no-repeat;
+                background-position: center, center, center;
+                transform: rotate(45deg);
+            }
+            html.dark &{
+                display: block;
+            }
+        }
+    }
+</style>

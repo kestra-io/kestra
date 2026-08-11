@@ -1,59 +1,56 @@
 <template>
     <span ref="rootContainer">
         <!-- Valid -->
-        <el-button v-if="!errors && !warnings &&!infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
-            <CheckBoldIcon class="text-success" />
-        </el-button>
+        <KsCodeStatus
+            v-if="!errors && !warnings && !infos"
+            status="valid"
+            :iconOnly="iconOnly"
+            :label="$t('valid')"
+        />
 
         <!-- Errors -->
-        <el-tooltip
-            effect="light"
+        <KsTooltip
             v-if="errors"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
-                        <AlertCircle class="align-middle text-danger" />
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
+                        <AlertCircle class="align-middle error" />
                         <span class="align-middle">
-                            {{ t("error detected") }}
+                            {{ $t("error detected") }}
                         </span>
-                    </el-header>
-                    <el-main v-for="error in errors" :key="error">{{ error }}</el-main>
-                </el-container>
+                    </KsHeader>
+                    <KsMain v-for="error in errors" :key="error">{{ error }}</KsMain>
+                </KsContainer>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="error square">
-                <AlertCircle class="text-danger" />
-            </el-button>
-        </el-tooltip>
+            <KsCodeStatus
+                status="error"
+                :iconOnly="iconOnly"
+                :label="$t('flow_editor_stats.errors.label', {count: errors.length})"
+            />
+        </KsTooltip>
 
         <!-- Warnings -->
-        <el-tooltip
-            effect="light"
+        <KsTooltip
             v-if="warnings"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
-                        <Alert class="align-middle text-warning" />
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
+                        <Alert class="align-middle warning" />
                         <span class="align-middle">
-                            {{ t("warning detected") }}
+                            {{ $t("warning detected") }}
                         </span>
-                    </el-header>
-                    <el-main>
+                    </KsHeader>
+                    <KsMain>
                         <span v-for="(warning, index) in warnings" :key="index">
                             {{ warning }}<br v-if="index < warnings.length - 1">
                         </span>
@@ -61,53 +58,48 @@
                         <span v-for="(info, index) in infos" :key="index">
                             {{ info }}<br v-if="index < (infos?.length ?? 0) - 1">
                         </span>
-                    </el-main>
-                </el-container>
+                    </KsMain>
+                </KsContainer>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="warning square">
-                <Alert class="text-warning" />
-            </el-button>
-        </el-tooltip>
+            <KsCodeStatus
+                status="warning"
+                :iconOnly="iconOnly"
+                :label="$t('warning detected')"
+            />
+        </KsTooltip>
 
         <!-- Infos -->
-        <el-tooltip
-            effect="light"
+        <KsTooltip
             v-if="infos && !warnings"
             popperClass="p-0 bg-transparent"
             :placement="tooltipPlacement"
             :showArrow="false"
             rawContent
-            transition=""
-            :persistent="true"
-            :hideAfter="0"
         >
             <template #content>
-                <el-container class="validation-tooltip">
-                    <el-header>
-                        <Alert class="align-middle text-info" />
+                <KsContainer class="validation-tooltip">
+                    <KsHeader>
+                        <Alert class="align-middle info" />
                         <span class="align-middle">
-                            {{ t("informative notice") }}
+                            {{ $t("informative notice") }}
                         </span>
-                    </el-header>
-                    <el-main>{{ infos.join("<\n") }}</el-main>
-                </el-container>
+                    </KsHeader>
+                    <KsMain>{{ infos.join("<\n") }}</KsMain>
+                </KsContainer>
             </template>
-            <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
-                <Alert class="text-info" />
-                <span class="text-info label">{{ t("informative notice") }}</span>
-            </el-button>
-        </el-tooltip>
+            <KsCodeStatus
+                status="info"
+                :iconOnly="iconOnly"
+                :label="$t('informative notice')"
+            />
+        </KsTooltip>
     </span>
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref} from "vue";
-    import CheckBoldIcon from "vue-material-design-icons/CheckBold.vue";
-    import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
-    import Alert from "vue-material-design-icons/Alert.vue";
-    import {useI18n} from "vue-i18n";
-
-    const {t} = useI18n();
+    import {nextTick, ref} from "vue"
+    import AlertCircle from "vue-material-design-icons/AlertCircle.vue"
+    import Alert from "vue-material-design-icons/Alert.vue"
 
     defineOptions({
         inheritAttrs: false,
@@ -120,105 +112,82 @@
         link?: boolean;
         size?: "default" | "small";
         tooltipPlacement?: string;
+        iconOnly?: boolean;
     }>()
 
     const rootContainer = ref<HTMLSpanElement>()
 
     function onResize(maxWidth: number) {
         if(rootContainer.value === undefined) {
-            return;
+            return
         }
-        const buttonLabels = rootContainer.value.querySelectorAll(".el-button span.label");
+        const buttonLabels = rootContainer.value.querySelectorAll(".kel-button span.label")
 
         buttonLabels.forEach(el => el.classList.remove("d-none"))
         nextTick(() => {
             if(rootContainer.value && rootContainer.value.offsetLeft + rootContainer.value.offsetWidth > maxWidth) {
                 buttonLabels.forEach(el => el.classList.add("d-none"))
             }
-        });
+        })
     }
 
     defineExpose({
-        onResize
+        onResize,
     })
-
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
-
-    .el-button.el-button--default {
-        transition: none;
-
-        &.el-button--small {
-            padding: 5px;
-            height: fit-content;
-        }
-
-        &:hover, &:focus {
-            background-color: var(--ks-button-background-secondary);
-        }
-
-        &.success {
-            border-color: var(--ks-border-success);
-        }
-
-        &:not(.success) span:not(.material-design-icon) {
-            margin-left: .5rem;
-            font-size: $font-size-sm;
-        }
-
-        &.warning {
-            border-color: var(--ks-border-warning);
-        }
-
-        &.error {
-            border-color: var(--ks-border-error);
-        }
-    }
-
     .validation-tooltip {
         padding: 0;
         width: fit-content;
         min-width: 20vw;
         max-width: 50vw;
         max-height: 500px;
-        border-radius: $border-radius-lg;
-        color: var(--ks-content-primary);
+        border-radius: 0.5rem;
+        color: var(--ks-text-primary);
         overflow-y: auto;
+        display:flex;
+        flex-direction: column;
 
         > * {
             height: fit-content;
             margin: 0;
         }
 
-        .el-header {
-            padding: $spacer;
-            background-color: var(--ks-background-table-header);
-            border-radius: $border-radius-lg $border-radius-lg 0 0;
-            font-size: $font-size-sm;
-            font-weight: $font-weight-bold;
+        .kel-header {
+            padding: 1rem;
+            background-color: var(--ks-bg-surface);
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-size: var(--ks-font-size-sm);
+            font-weight: 700;
 
             .material-design-icon {
-                font-size: 1.5rem;
+                font-size: var(--ks-font-size-xl);
                 margin-right: .5rem;
             }
         }
 
-        .el-main {
+        .kel-main {
             padding: 1.5rem 1rem !important;
-            font-family: $font-family-monospace;
-            background-color: var(--ks-background-card);
-            white-space: normal;
-            border-top: 1px solid var(--ks-border-primary);
-            text-wrap: wrap;
+            font-family: "JetBrains Mono", monospace;
+            background-color: var(--ks-bg-surface);
+            white-space: pre-wrap;
+            border-top: 1px solid var(--ks-border-default);
+            word-break: break-word;
             min-height: fit-content;
-            color: var(--ks-content-primary);
+            color: var(--ks-text-primary);
         }
     }
 
-    .square {
-        width: 32px;
-        height: 32px;
+    .warning {
+        color: var(--ks-status-warning);
+    }
+
+    .error {
+        color: var(--ks-status-error);
+    }
+
+    .info {
+        color: var(--ks-status-info);
     }
 </style>

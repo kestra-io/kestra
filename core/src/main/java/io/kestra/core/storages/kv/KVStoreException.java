@@ -1,8 +1,8 @@
 package io.kestra.core.storages.kv;
 
-import io.kestra.core.exceptions.KestraRuntimeException;
-
 import java.io.Serial;
+
+import io.kestra.core.exceptions.KestraRuntimeException;
 
 /**
  * The base class for all other KVStore exceptions.

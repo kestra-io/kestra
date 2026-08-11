@@ -1,54 +1,65 @@
 <template>
-    <el-dropdown-item
-        :icon="LocationExit"
-        :disabled="!outputs || outputs.length === 0"
-        @click="isOpen = !isOpen"
-    >
-        {{ $t('outputs') }}
-    </el-dropdown-item>
+    <KsDropdownItem :disabled :icon="LocationExit" @click="isOpen = !isOpen">
+        {{ $t("outputs") }}
+    </KsDropdownItem>
 
-    <Drawer
-        data-component="FILENAME_PLACEHOLDER"
-        v-if="isOpen"
-        v-model="isOpen"
-        :title="$t('outputs')"
-    >
-        <Vars
-            :execution="execution"
-            class="table-unrounded mt-1"
-            :data="outputs"
-        />
-    </Drawer>
+    <KsDrawer v-if="isOpen" v-model="isOpen" :title="$t('outputs')">
+        <div v-ks-loading="isLoading">
+            <Vars
+                :execution="props.execution"
+                class="table-unrounded mt-1"
+                :data="outputs"
+            />
+        </div>
+    </KsDrawer>
 </template>
 
-<script setup>
-    import LocationExit from "vue-material-design-icons/LocationExit.vue";
-</script>
+<script setup lang="ts">
+    import {computed, ref, watch, type PropType} from "vue"
+    import {vKsLoading} from "@kestra-io/design-system"
 
-<script>
-    import Vars from "../executions/Vars.vue";
-    import Drawer from "../Drawer.vue";
+    import Vars from "../executions/Vars.vue"
 
-    export default {
-        components: {
-            Vars,
-            Drawer,
+    import {useHasTaskRunOutputs, loadTaskRunOutputs} from "../../composables/useTaskRunOutputs"
+
+    import LocationExit from "vue-material-design-icons/LocationExit.vue"
+
+    const props = defineProps({
+        taskRun: {
+            type: Object as PropType<{id: string; state: {current: string}}>,
+            required: true,
         },
-        props: {
-            outputs: {
-                type: Object,
-                required: false,
-                default: () => {}
-            },
-            execution: {
-                type: Object,
-                required: true
-            }
+        executionId: {
+            type: String,
+            required: true,
         },
-        data() {
-            return {
-                isOpen: false,
-            };
+        execution: {
+            type: Object as PropType<object>,
+            required: true,
         },
-    };
+    })
+
+    const isOpen = ref(false)
+    const outputs = ref<Record<string, unknown>>({})
+    const isLoading = ref(false)
+
+    const hasOutputs = useHasTaskRunOutputs(
+        computed(() => props.executionId),
+        computed(() => props.taskRun.id),
+        computed(() => props.taskRun.state?.current),
+    )
+
+    const disabled = computed(() => !hasOutputs.value)
+
+    watch(isOpen, async (open) => {
+        if (!open || Object.keys(outputs.value).length > 0) {
+            return
+        }
+        isLoading.value = true
+        try {
+            outputs.value = await loadTaskRunOutputs(props.executionId, props.taskRun.id)
+        } finally {
+            isLoading.value = false
+        }
+    })
 </script>

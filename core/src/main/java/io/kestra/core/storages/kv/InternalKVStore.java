@@ -1,23 +1,23 @@
 package io.kestra.core.storages.kv;
 
-import io.kestra.core.exceptions.ResourceExpiredException;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.FileAttributes;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.storages.StorageObject;
-import jakarta.annotation.Nullable;
-
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
+
+import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.runners.KVMetadataStateStore;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.StorageObject;
+
+import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -25,6 +25,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * The default {@link KVStore} implementation.
  *
  */
+@Slf4j
 public class InternalKVStore implements KVStore {
 
     private static final Pattern DURATION_PATTERN = Pattern.compile("^P(?=[^T]|T.)(?:\\d*D)?(?:T(?=.)(?:\\d*H)?(?:\\d*M)?(?:\\d*S)?)?$");
@@ -32,18 +33,24 @@ public class InternalKVStore implements KVStore {
     private final String namespace;
     private final String tenant;
     private final StorageInterface storage;
+    private final KVMetadataStateStore kvMetadataStateStore;
 
     /**
      * Creates a new {@link InternalKVStore} instance.
      *
-     * @param namespace The namespace
-     * @param tenant    The tenant.
-     * @param storage   The storage.
+     * @param tenant The tenant.
+     * @param namespace The namespace.
+     * @param storage The storage.
+     * @param kvMetadataStateStore The KV metadata state store (used for worker-safe operations).
      */
-    public InternalKVStore(@Nullable final String tenant, final String namespace, final StorageInterface storage) {
-        this.namespace = Objects.requireNonNull(namespace, "namespace cannot be null");
+    public InternalKVStore(@Nullable final String tenant,
+        @Nullable final String namespace,
+        final StorageInterface storage,
+        final KVMetadataStateStore kvMetadataStateStore) {
+        this.namespace = namespace;
         this.storage = Objects.requireNonNull(storage, "storage cannot be null");
         this.tenant = tenant;
+        this.kvMetadataStateStore = kvMetadataStateStore;
     }
 
     /**
@@ -62,16 +69,62 @@ public class InternalKVStore implements KVStore {
         KVStore.validateKey(key);
 
         if (!overwrite && exists(key)) {
-            throw new KVStoreException(String.format(
-                "Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.", key));
+            throw new KVStoreException(
+                String.format(
+                    "Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.", key
+                )
+            );
         }
 
-        byte[] serialized = JacksonMapper.ofIon().writeValueAsBytes(value.value());
+        Object actualValue = value.value();
+        byte[] serialized = actualValue instanceof Duration ? actualValue.toString().getBytes(StandardCharsets.UTF_8) : JacksonMapper.ofIon().writeValueAsBytes(actualValue);
 
-        this.storage.put(this.tenant, this.namespace, this.storageUri(key), new StorageObject(
-            value.metadataAsMap(),
-            new ByteArrayInputStream(serialized)
-        ));
+        PersistedKvMetadata saved = this.kvMetadataStateStore.save(
+            PersistedKvMetadata.builder()
+                .tenantId(this.tenant)
+                .namespace(this.namespace)
+                .name(key)
+                .description(Optional.ofNullable(value.metadata()).map(KVMetadata::getDescription).orElse(null))
+                .expirationDate(Optional.ofNullable(value.metadata()).map(KVMetadata::getExpirationDate).orElse(null))
+                .deleted(false)
+                .build()
+        );
+        this.storage.put(
+            this.tenant, this.namespace, this.storageUri(key, saved.getRevision()), new StorageObject(
+                value.metadataAsMap(),
+                new ByteArrayInputStream(serialized)
+            )
+        );
+    }
+
+    /**
+     * Puts a KV entry using an already-serialized (raw) value, bypassing ION serialization.
+     * This is intended for backup/restore where the value is already in its stored ION format.
+     *
+     * @param key The key.
+     * @param metadata The metadata (nullable).
+     * @param rawValue The raw ION-serialized value bytes.
+     */
+    public void putRaw(String key, @Nullable KVMetadata metadata, byte[] rawValue) throws IOException {
+        KVStore.validateKey(key);
+
+        PersistedKvMetadata saved = this.kvMetadataStateStore.save(
+            PersistedKvMetadata.builder()
+                .tenantId(this.tenant)
+                .namespace(this.namespace)
+                .name(key)
+                .description(Optional.ofNullable(metadata).map(KVMetadata::getDescription).orElse(null))
+                .expirationDate(Optional.ofNullable(metadata).map(KVMetadata::getExpirationDate).orElse(null))
+                .deleted(false)
+                .build()
+        );
+        KVValueAndMetadata wrapper = new KVValueAndMetadata(metadata, null);
+        this.storage.put(
+            this.tenant, this.namespace, this.storageUri(key, saved.getRevision()), new StorageObject(
+                wrapper.metadataAsMap(),
+                new ByteArrayInputStream(rawValue)
+            )
+        );
     }
 
     /**
@@ -79,7 +132,8 @@ public class InternalKVStore implements KVStore {
      */
     @Override
     public Optional<KVValue> getValue(String key) throws IOException, ResourceExpiredException {
-        return this.getRawValue(key).map(throwFunction(raw -> {
+        return this.getRawValue(key).map(throwFunction(raw ->
+        {
             Object value = JacksonMapper.ofIon().readValue(raw, Object.class);
             if (value instanceof String valueStr && DURATION_PATTERN.matcher(valueStr).matches()) {
                 return new KVValue(Duration.parse(valueStr));
@@ -91,20 +145,30 @@ public class InternalKVStore implements KVStore {
     public Optional<String> getRawValue(String key) throws IOException, ResourceExpiredException {
         KVStore.validateKey(key);
 
+        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(this.tenant, this.namespace, key);
+
+        int revision = maybeMetadata.map(PersistedKvMetadata::getRevision).orElse(1);
+        if (maybeMetadata.isPresent()) {
+            PersistedKvMetadata metadata = maybeMetadata.get();
+            if (metadata.isDeleted()) {
+                return Optional.empty();
+            }
+
+            if (Optional.ofNullable(metadata.getExpirationDate()).map(Instant.now()::isAfter).orElse(false)) {
+                this.delete(key);
+                throw new ResourceExpiredException("The requested value has expired");
+            }
+        }
+
         StorageObject withMetadata;
         try {
-            withMetadata = this.storage.getWithMetadata(this.tenant, this.namespace, this.storageUri(key));
+            withMetadata = this.storage.getWithMetadata(this.tenant, this.namespace, this.storageUri(key, revision));
         } catch (FileNotFoundException e) {
             return Optional.empty();
         }
         KVValueAndMetadata kvStoreValueWrapper = KVValueAndMetadata.from(withMetadata);
 
-        Instant expirationDate = kvStoreValueWrapper.metadata().getExpirationDate();
-        if (expirationDate != null && Instant.now().isAfter(expirationDate)) {
-            this.delete(key);
-            throw new ResourceExpiredException("The requested value has expired");
-        }
-        return Optional.of((String)(kvStoreValueWrapper.value()));
+        return Optional.of((String) (kvStoreValueWrapper.value()));
     }
 
     /**
@@ -113,45 +177,27 @@ public class InternalKVStore implements KVStore {
     @Override
     public boolean delete(String key) throws IOException {
         KVStore.validateKey(key);
-        URI uri = this.storageUri(key);
-        boolean deleted = this.storage.delete(this.tenant, this.namespace, uri);
-        URI metadataURI = URI.create(uri.getPath() + ".metadata");
-        if (this.storage.exists(this.tenant, this.namespace, metadataURI)){
-            this.storage.delete(this.tenant, this.namespace, metadataURI);
+        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(this.tenant, this.namespace, key);
+        if (maybeMetadata.map(PersistedKvMetadata::isDeleted).orElse(true)) {
+            return false;
         }
-        return deleted;
+
+        this.kvMetadataStateStore.delete(maybeMetadata.get());
+        return true;
 
     }
 
     /**
      * {@inheritDoc}
+     * <p>
+     * This implementation uses the {@link KVMetadataStateStore} and is safe to call from workers.
      */
     @Override
     public List<KVEntry> list() throws IOException {
-        List<FileAttributes> list = listAllFromStorage();
-        return list.stream()
-            .map(throwFunction(KVEntry::from))
-            .filter(kvEntry -> Optional.ofNullable(kvEntry.expirationDate()).map(expirationDate -> Instant.now().isBefore(expirationDate)).orElse(true))
-            .toList();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<KVEntry> listAll() throws IOException {
-        List<FileAttributes> list = listAllFromStorage();
-        return list.stream()
+        return this.kvMetadataStateStore.find(this.tenant, this.namespace)
+            .stream()
             .map(throwFunction(KVEntry::from))
             .toList();
-    }
-
-    private List<FileAttributes> listAllFromStorage() throws IOException {
-        try {
-            return this.storage.list(this.tenant, this.namespace, this.storageUri(null));
-        } catch (FileNotFoundException e) {
-            return Collections.emptyList();
-        }
     }
 
     /**
@@ -161,15 +207,11 @@ public class InternalKVStore implements KVStore {
     public Optional<KVEntry> get(final String key) throws IOException {
         KVStore.validateKey(key);
 
-        try {
-            KVEntry entry = KVEntry.from(this.storage.getAttributes(this.tenant, this.namespace, this.storageUri(key)));
-            if (entry.expirationDate() != null && Instant.now().isAfter(entry.expirationDate())) {
-                this.delete(key);
-                return Optional.empty();
-            }
-            return Optional.of(entry);
-        } catch (FileNotFoundException e) {
+        Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataStateStore.findByName(this.tenant, this.namespace, key);
+        if (maybeMetadata.isEmpty() || maybeMetadata.get().isDeleted()) {
             return Optional.empty();
         }
+
+        return Optional.of(KVEntry.from(maybeMetadata.get()));
     }
 }

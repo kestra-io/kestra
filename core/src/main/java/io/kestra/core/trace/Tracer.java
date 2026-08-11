@@ -3,6 +3,7 @@ package io.kestra.core.trace;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Rethrow;
+
 import io.opentelemetry.api.common.Attributes;
 
 /**
@@ -74,7 +75,8 @@ public interface Tracer {
     }
 
     static <R, E extends Exception> Callable<R> throwCallable(Rethrow.CallableChecked<R, E> runnable) throws E {
-        return () -> {
+        return () ->
+        {
             try {
                 return runnable.call();
             } catch (Exception exception) {

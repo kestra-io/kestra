@@ -1,10 +1,17 @@
 package io.kestra.cli.commands.namespaces.kv;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.TypeConverter;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
@@ -13,10 +20,6 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Duration;
 
 @CommandLine.Command(
     name = "update",
@@ -32,16 +35,21 @@ public class KvUpdateCommand extends AbstractApiCommand {
     @CommandLine.Parameters(index = "1", description = "The key to update")
     public String key;
 
-    @CommandLine.Parameters(index = "2", description = "The value to assign to the key. If the value is an object, it must be in JSON format. If the value must be read from file, use -f parameter.")
+    @CommandLine.Parameters(
+        index = "2", description = "The value to assign to the key. If the value is an object, it must be in JSON format. If the value must be read from file, use -f parameter."
+    )
     public String value;
 
-    @Option(names = {"-e", "--expiration"}, description = "The duration after which the key should expire.")
+    @Option(names = { "-e", "--expiration" }, description = "The duration after which the key should expire.")
     public String expiration;
 
-    @Option(names = {"-t", "--type"}, description = "The type of the value. Optional and useful to override the deduced type (eg. numbers, booleans or JSON as full string). Valid values: ${COMPLETION-CANDIDATES}.")
+    @Option(
+        names = { "-t", "--type" },
+        description = "The type of the value. Optional and useful to override the deduced type (eg. numbers, booleans or JSON as full string). Valid values: ${COMPLETION-CANDIDATES}."
+    )
     public Type type;
 
-    @Option(names = {"-f", "--file-value"}, description = "The file from which to read the value to set. If this is provided, it will take precedence over any specified value.")
+    @Option(names = { "-f", "--file-value" }, description = "The file from which to read the value to set. If this is provided, it will take precedence over any specified value.")
     public Path fileValue;
 
     @Inject
@@ -59,10 +67,10 @@ public class KvUpdateCommand extends AbstractApiCommand {
             value = wrapAsJsonLiteral(value);
         }
 
-        Duration ttl = expiration == null ? null : Duration.parse(expiration);
+        Duration ttl = TypeConverter.toDuration(expiration);
         MutableHttpRequest<String> request = HttpRequest
             .PUT(apiUri("/namespaces/", tenantService.getTenantId(tenantId)) + namespace + "/kv/" + key, value)
-            .contentType(MediaType.APPLICATION_JSON_TYPE);
+            .contentType(MediaType.TEXT_PLAIN);
 
         if (ttl != null) {
             request.header("ttl", ttl.toString());
@@ -90,6 +98,12 @@ public class KvUpdateCommand extends AbstractApiCommand {
     }
 
     enum Type {
-        STRING, NUMBER, BOOLEAN, DATETIME, DATE, DURATION, JSON;
+        STRING,
+        NUMBER,
+        BOOLEAN,
+        DATETIME,
+        DATE,
+        DURATION,
+        JSON;
     }
 }

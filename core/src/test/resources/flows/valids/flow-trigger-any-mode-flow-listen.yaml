@@ -1,0 +1,19 @@
+id: flow-trigger-any-mode-flow-listen
+namespace: io.kestra.tests.trigger.any.mode
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    mode: ANY
+    dependsOn:
+      - namespace: io.kestra.tests.trigger.any.mode
+        flowId: flow-trigger-any-mode-flow-a
+        states: [SUCCESS]
+      - namespace: io.kestra.tests.trigger.any.mode
+        flowId: flow-trigger-any-mode-flow-b
+        states: [SUCCESS]
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

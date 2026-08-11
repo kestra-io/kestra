@@ -1,9 +1,8 @@
 package io.kestra.core.exceptions;
 
-import lombok.Getter;
-
-import java.io.IOException;
 import java.io.Serial;
+
+import lombok.Getter;
 
 @Getter
 public class MigrationRequiredException extends RuntimeException {

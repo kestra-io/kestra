@@ -1,0 +1,462 @@
+<template>
+    <div class="revision" v-if="revisions && revisions.length > 1">
+        <div class="d-flex justify-content-end">
+            <KsSelect v-model="sideBySide" class="mb-3 display-select">
+                <KsOption
+                    v-for="item in displayTypes"
+                    :key="String(item.value)"
+                    :label="item.text"
+                    :value="item.value"
+                />
+            </KsSelect>
+        </div>
+        <div class="revision-grid mb-2">
+            <div class="revision-grid-col" v-if="revisionLeftIndex !== undefined">
+                <div class="revision-select-row">
+                    <div class="revision-select">
+                        <KsSelect v-model="revisionLeftIndex" @change="addQuery">
+                            <KsOption
+                                v-for="item in leftOptions"
+                                :key="item.value"
+                                :label="$t('revision') + ' '+ item.text"
+                                :value="item.value"
+                                class="revision-option"
+                            >
+                                <div class="revision-label">
+                                    <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <KsTag v-if="item.isDraft" size="small">
+                                        <CircleOpacity />
+                                        {{ $t('draft') }}
+                                    </KsTag>
+                                    <span class="revision-timestamp">{{ item.timestamp }}</span>
+                                </div>
+                                <TrashCanOutline
+                                    @mousedown.stop.prevent
+                                    @click.stop.prevent="onDelete(item.value)"
+                                    v-if="canDelete && item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                />
+                            </KsOption>
+                        </KsSelect>
+                        <KsButtonGroup>
+                            <KsButton
+                                :icon="Restore"
+                                :disabled="revisionLeftText === currentRevisionWithSource.source"
+                                @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
+                                data-testid="restore-left"
+                            >
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
+                            </KsButton>
+                        </KsButtonGroup>
+                    </div>
+                    <div class="revision-crud-info">
+                        <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
+                    </div>
+                </div>
+            </div>
+            <div class="revision-grid-col" v-if="revisionRightIndex !== undefined">
+                <div class="revision-select-row">
+                    <div class="revision-select">
+                        <KsSelect v-model="revisionRightIndex" @change="addQuery">
+                            <KsOption
+                                v-for="item in rightOptions"
+                                :key="item.value"
+                                :label="$t('revision') + ' '+ item.text"
+                                :value="item.value"
+                                class="revision-option"
+                            >
+                                <div class="revision-label">
+                                    <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <KsTag v-if="item.isDraft" size="small">
+                                        <CircleOpacity />
+                                        {{ $t('draft') }}
+                                    </KsTag>
+                                    <span class="revision-timestamp">{{ item.timestamp }}</span>
+                                </div>
+                                <TrashCanOutline
+                                    @mousedown.stop.prevent
+                                    @click.stop.prevent="onDelete(item.value)"
+                                    v-if="canDelete && item.value !== undefined && currentRevision !== revisionNumber(item.value)"
+                                />
+                            </KsOption>
+                        </KsSelect>
+                        <KsButtonGroup>
+                            <KsButton
+                                :icon="Restore"
+                                :disabled="revisionRightText === currentRevisionWithSource.source"
+                                @click="restoreRevision(revisionRightIndex, revisionRightText)"
+                                data-testid="restore-right"
+                            >
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
+                            </KsButton>
+                        </KsButtonGroup>
+                    </div>
+                    <div class="revision-crud-info">
+                        <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <KsEditor
+            v-bind="editorBindings"
+            class="mt-1"
+            v-if="revisionLeftText !== undefined && revisionRightText !== undefined && !isLoadingRevisions"
+            :options="{diffSideBySide: sideBySide}"
+            @editorMounted="revealHighlight"
+            :modelValue="revisionRightText"
+            :original="revisionLeftText"
+            readOnly
+            :lang
+            :showDoc="false"
+        />
+
+        <div v-if="isLoadingRevisions" class="text-center p-4">
+            <span class="ml-2">Loading revisions...</span>
+        </div>
+    </div>
+    <KsNoData
+        v-else
+        :icon="History"
+        :title="$t('no revisions')"
+        :description="$t('no revisions found')"
+    />
+</template>
+
+<script setup lang="ts">
+    import {computed, ref, watch} from "vue"
+    import {useI18n} from "vue-i18n"
+    import {useRoute, useRouter} from "vue-router"
+    import History from "vue-material-design-icons/History.vue"
+    import Restore from "vue-material-design-icons/Restore.vue"
+    import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue"
+    import CircleOpacity from "vue-material-design-icons/CircleOpacity.vue"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {useEditorBindings} from "../../composables/useEditorBindings"
+    import moment from "moment"
+
+    import {useToast} from "../../utils/toast"
+    import {useFlowStore} from "../../stores/flow"
+
+    const flowStore = useFlowStore()
+
+    const editorBindings = useEditorBindings()
+
+    export interface Revision {
+        revision: number;
+        updated?: string;  // ISO datetime string
+        source?: string;
+        draft?: boolean;
+    }
+
+    const {t} = useI18n()
+    const route = useRoute()
+    const router = useRouter()
+    const toast = useToast()
+
+    const revisionLeftIndex = ref()
+    const revisionRightIndex = ref()
+    const revisionLeftText = ref()
+    const revisionRightText = ref()
+    const sideBySide = ref(true)
+    const isLoadingRevisions = ref(false)
+    const displayTypes = [
+        {value: true, text: t("side-by-side")},
+        {value: false, text: t("line-by-line")},
+    ]
+
+    const emit = defineEmits<{
+        restore: [source: string],
+        deleted: [revision: number]
+    }>()
+
+    const props = withDefaults(defineProps<{
+        lang: string,
+        revisions: Revision[],
+        revisionSource: (revisionNumber: number) => Promise<string | undefined>,
+        editRouteQuery?: boolean,
+        // Whether per-revision delete is available. Flows support it (default); consumers without a
+        // delete-by-revision backend (e.g. reusable inputs) pass false to hide the delete control.
+        canDelete?: boolean,
+        // Text to scroll the diff to, so a linked change is not left off screen.
+        highlight?: string
+    }>(), {editRouteQuery: true, canDelete: true})
+
+    const revealHighlight =(editor: any) => {
+        if (!props.highlight) return
+
+        const modified = editor?.getModifiedEditor?.() ?? editor
+        const lines: string[] | undefined = modified?.getModel?.()?.getLinesContent?.()
+        if (!lines) return
+
+        const index = lines.findIndex(line => line.includes(props.highlight!))
+        if (index >= 0) modified.revealLineNearTop(index + 1)
+    }
+
+    const sortedRevisions = computed(() => {
+        return props.revisions.toSorted((a, b) => a.revision - b.revision)
+    })
+
+    const currentRevisionWithSource = computed(() => {
+        return sortedRevisions.value[sortedRevisions.value.length - 1]
+    })
+
+    function load() {
+        const currentRevision = currentRevisionWithSource.value?.revision ?? 1
+
+        if (route.query.revisionRight) {
+            revisionRightIndex.value = revisionIndex(
+                route.query.revisionRight.toString(),
+            )
+            if (
+                !route.query.revisionLeft &&
+                revisionRightIndex.value !== undefined &&
+                revisionRightIndex.value > 0
+            ) {
+                revisionLeftIndex.value = revisionRightIndex.value - 1
+            }
+        } else if (currentRevision && currentRevision > 0) {
+            revisionRightIndex.value = revisionIndex(currentRevision.toString())
+        }
+
+        if (route.query.revisionLeft) {
+            revisionLeftIndex.value = revisionIndex(
+                route.query.revisionLeft.toString(),
+            )
+        } else if (revisionRightIndex.value !== undefined && revisionRightIndex.value > 0) {
+            revisionLeftIndex.value = revisionRightIndex.value - 1
+        }
+    }
+
+    function revisionIndex(revision: string) {
+        const revisionInt = parseInt(revision)
+        const idx = sortedRevisions.value.findIndex(rev => rev.revision === revisionInt)
+        return idx === -1 ? undefined : idx
+    }
+
+    function revisionNumber(index: number) {
+        return sortedRevisions.value[index].revision
+    }
+
+    function restoreRevision(index: number, revisionSource: string) {
+        toast.confirm(t("restore confirm", {revision: revisionNumber(index)}), () => {
+            emit("restore", revisionSource)
+            return Promise.resolve()
+        })
+    }
+
+    function addQuery() {
+        if (isLoadingRevisions.value) {
+            return
+        }
+
+        if (props.editRouteQuery) {
+            router.push({
+                query: {
+                    ...route.query,
+                    revisionLeft: sortedRevisions.value[revisionLeftIndex.value].revision,
+                    revisionRight: sortedRevisions.value[revisionRightIndex.value].revision,
+                },
+            })
+        }
+    }
+
+    function formatTimestamp(updatedDate?: string): string {
+        if (!updatedDate) return ""
+
+        return moment(updatedDate).format("YYYY-MM-DD HH:mm")
+    }
+
+    function formatRevisionText(revision: number): string {
+        let text = revision.toString()
+
+        if (currentRevisionWithSource.value.revision === revision) {
+            text += ` (${t("current")})`
+        }
+
+        return text
+    }
+
+    function options(excludeRevisionIndex: number | undefined) {
+        return sortedRevisions.value
+            .filter((_, index) => index !== excludeRevisionIndex)
+            .map(({revision, updated, draft}) => {
+                const isCurrent = currentRevisionWithSource.value.revision === revision
+                return {
+                    value: revisionIndex(revision.toString()),
+                    revision: revision,
+                    timestamp: formatTimestamp(updated),
+                    isCurrent: isCurrent,
+                    isDraft: draft === true,
+                    text: formatRevisionText(revision),
+                }
+            })
+    }
+
+    const leftOptions = computed(() => {
+        return options(revisionRightIndex.value)
+    })
+
+    const rightOptions = computed(() => {
+        return options(revisionLeftIndex.value)
+    })
+
+    const currentRevision = computed(() => {
+        return currentRevisionWithSource.value?.revision ?? 1
+    })
+
+    async function loadRevisionContent(index: number | undefined) {
+        if (index === undefined) {
+            return undefined
+        }
+
+        const revisionObject = sortedRevisions.value[index]
+        let source = revisionObject.source
+
+        if (!source) {
+            source = await props.revisionSource(revisionObject.revision)
+            revisionObject.source = source
+        }
+
+        return source
+    }
+
+    async function onDelete(index: number) {
+        const revisionToDelete = revisionNumber(index)
+        toast.confirm(t("delete revision confirm", {revision: revisionToDelete}), async () => {
+            try {
+                await flowStore.deleteRevision({
+                    namespace: route.params.namespace?.toString() || "",
+                    id: route.params.id?.toString() || "",
+                    revision: revisionToDelete.toString(),
+                })
+                toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}))
+                emit("deleted", revisionToDelete)
+                load()
+            } catch (error: any) {
+                toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}))
+            }
+        })
+    };
+
+    watch(revisionLeftIndex, async (newValue) => {
+        isLoadingRevisions.value = true
+        try {
+            revisionLeftText.value = await loadRevisionContent(newValue)
+        } finally {
+            isLoadingRevisions.value = false
+        }
+    })
+
+    watch(revisionRightIndex, async (newValue) => {
+        isLoadingRevisions.value = true
+        try {
+            revisionRightText.value = await loadRevisionContent(newValue)
+        } finally {
+            isLoadingRevisions.value = false
+        }
+    })
+
+    watch(() => route.query.revisionLeft, async (newValue) => {
+        if (newValue) {
+            const newLeftIndex = revisionIndex(newValue.toString())
+            if (newLeftIndex !== revisionLeftIndex.value) {
+                revisionLeftIndex.value = newLeftIndex
+            }
+        }
+    })
+
+    watch(() => route.query.revisionRight, async (newValue) => {
+        if (newValue) {
+            const newRightIndex = revisionIndex(newValue.toString())
+            if (newRightIndex !== revisionRightIndex.value) {
+                revisionRightIndex.value = newRightIndex
+            }
+        }
+    })
+
+    watch(() => currentRevisionWithSource.value.revision, (newRevision, oldRevision) => {
+        if (revisionNumber(revisionRightIndex.value) === oldRevision) {
+            revisionRightIndex.value = revisionIndex(newRevision.toString())
+        }
+    })
+
+    load()
+</script>
+
+<style scoped lang="scss">
+
+    .revision {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .ks-editor {
+        flex: 1;
+        padding-bottom: 1rem;
+    }
+
+    .revision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-right: var(--ks-spacing-6);
+    }
+
+    .revision-grid-col {
+        min-width: 0;
+    }
+
+    .revision-select-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.5rem;
+    }
+
+    .revision-select {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-shrink: 0;
+
+        > div {
+            &:first-child {
+                min-width: 150px;
+                width: 100%
+            }
+        }
+    }
+
+    .revision-crud-info {
+        width: calc(100% - var(--ks-spacing-4));
+        margin-right: var(--ks-spacing-4);
+    }
+
+
+    .revision-option {
+        min-width: 350px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .revision-label {
+            display: flex;
+            gap: var(--ks-spacing-2);
+        }
+    }
+
+    .revision-number {
+        font-weight: 500;
+    }
+
+    .display-select {
+        width: 10%;
+    }
+
+    .revision-timestamp {
+        color: var(--ks-text-muted);
+        font-size: var(--ks-font-size-sm);
+        text-align: right;
+        flex-shrink: 0;
+    }
+</style>

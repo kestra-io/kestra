@@ -1,30 +1,27 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.models.HasUID;
-import io.kestra.core.models.Label;
-import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.tasks.GenericTask;
-import io.kestra.core.models.triggers.GenericTrigger;
-import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
-import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
-import io.kestra.core.serializers.YamlParser;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.HasUID;
+import io.kestra.core.models.flows.quota.Quota;
+import io.kestra.core.models.flows.sla.SLA;
+import io.kestra.core.models.tasks.GenericTask;
+import io.kestra.core.models.triggers.GenericTrigger;
+import io.kestra.core.serializers.YamlParser;
+
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 /**
  * Represents an un-typed {@link FlowInterface} implementation for which
@@ -44,6 +41,8 @@ public class GenericFlow extends AbstractFlow implements HasUID {
     private List<SLA> sla;
 
     private Concurrency concurrency;
+
+    private List<Quota> quotas;
 
     private List<GenericTask> tasks;
 
@@ -95,5 +94,10 @@ public class GenericFlow extends AbstractFlow implements HasUID {
 
     public List<GenericTrigger> getTriggers() {
         return Optional.ofNullable(triggers).orElse(List.of());
+    }
+
+    @Override
+    public FlowInterface toDeleted() {
+        throw new UnsupportedOperationException("Can't delete a GenericFlow");
     }
 }

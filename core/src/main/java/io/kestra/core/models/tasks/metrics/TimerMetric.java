@@ -1,17 +1,18 @@
 package io.kestra.core.models.tasks.metrics;
 
+import java.time.Duration;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.Duration;
-import java.util.Map;
-import java.util.stream.Stream;
 
 @ToString
 @EqualsAndHashCode

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+import "request.proto";
+
+// SERVICE
+service LivenessControllerService {
+  // [Unary]
+  rpc heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
+  // [Unary]
+  rpc getMaintenanceMode(EmptyRequest) returns (GetMaintenanceResponse);
+}
+
+// MESSAGES
+message HeartbeatRequest {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+message HeartbeatResponse {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}
+
+message GetMaintenanceResponse {
+  RequestOrResponseHeader header = 1;
+  bool maintenance = 2;
+}

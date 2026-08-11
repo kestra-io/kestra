@@ -1,0 +1,70 @@
+package io.kestra.plugin.core.kv;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.services.KVStoreService;
+import io.kestra.core.storages.kv.KVEntry;
+import io.kestra.core.utils.TypeConverter;
+import io.kestra.core.validations.KvVersionBehaviorValidation;
+
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+@SuperBuilder
+@Getter
+@NoArgsConstructor
+@KvVersionBehaviorValidation
+public class Version extends KvPurgeBehavior {
+    @NotNull
+    @JsonInclude
+    @Builder.Default
+    protected String type = "version";
+
+    @Schema(
+        title = "The date before which versions should be purged.",
+        description = "Using this filter will never delete the last version of a KV to avoid accidental full data loss."
+    )
+    private String before;
+
+    @Schema(
+        title = "How much versions should be kept for each matching KV.",
+        description = "By default, every matching version is eligible for purge; set `keepAmount` to retain the most recent N per key."
+    )
+    private Integer keepAmount;
+
+    @Override
+    protected List<KVEntry> entriesToPurge(String tenant, String namespace, KVStoreService service) throws IOException {
+        List<KVEntry> entries = service.list(
+            Pageable.UNPAGED.withSort(Sort.of(Sort.Order.desc("version"))),
+            tenant,
+            namespace,
+            before == null
+                ? Collections.emptyList()
+                : List.of(QueryFilter.builder().field(QueryFilter.Field.UPDATED).operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO).value(TypeConverter.toZonedDateTime(before)).build()),
+            true,
+            true,
+            before == null ? FetchVersion.ALL : FetchVersion.OLD
+        );
+
+        if (keepAmount != null) {
+            return entries.stream()
+                .collect(Collectors.groupingBy(KVEntry::key)).values().stream()
+                .flatMap(entriesForAKey -> entriesForAKey.stream().skip(keepAmount)).toList();
+        }
+
+        return entries;
+    }
+}

@@ -1,11 +1,11 @@
 package io.kestra.core.runners.pebble;
 
+import java.util.List;
+import java.util.Map;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractIndent {
     public List<String> getArgumentNames() {
@@ -66,7 +66,7 @@ public abstract class AbstractIndent {
             // nindent filter adds a newline to the string and indents each line by defined amount of spaces
             return (newLine + input).replace(newLine, newLine + prefix.repeat(amount));
         }
-        throw new PebbleException(null, String.format("Unknow indent type '%s'.", indentType), lineNumber, self.getName());
+        throw new PebbleException(null, String.format("Unknown indent type '%s'.", indentType), lineNumber, self.getName());
 
     }
 }

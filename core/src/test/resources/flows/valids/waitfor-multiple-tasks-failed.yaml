@@ -14,4 +14,4 @@ tasks:
         values:
           count: "{{ outputs.waitfor.iterationCount + 1 }}"
       - id: fail
-        type: io.kestra.core.tasks.executions.Fail
+        type: io.kestra.plugin.core.execution.Fail

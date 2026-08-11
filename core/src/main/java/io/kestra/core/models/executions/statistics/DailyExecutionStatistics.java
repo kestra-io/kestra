@@ -1,16 +1,18 @@
 package io.kestra.core.models.executions.statistics;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.flows.State;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Value;
-
-import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.models.flows.State;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Value;
 
 @Data
 @Builder
@@ -21,21 +23,24 @@ public class DailyExecutionStatistics {
     @NotNull
     private Duration duration;
 
+    private Duration taskRunsDuration;
+
     @Builder.Default
     @JsonInclude
-    private Map<State.Type, Long> executionCounts = new HashMap<>(ImmutableMap.<State.Type, Long>builder()
-        .put(State.Type.CREATED, 0L)
-        .put(State.Type.RUNNING, 0L)
-        .put(State.Type.RESTARTED, 0L)
-        .put(State.Type.KILLING, 0L)
-        .put(State.Type.SUCCESS, 0L)
-        .put(State.Type.WARNING, 0L)
-        .put(State.Type.FAILED, 0L)
-        .put(State.Type.KILLED, 0L)
-        .put(State.Type.PAUSED, 0L)
-        .put(State.Type.QUEUED, 0L)
-        .put(State.Type.CANCELLED, 0L)
-        .build()
+    private Map<State.Type, Long> executionCounts = new HashMap<>(
+        ImmutableMap.<State.Type, Long> builder()
+            .put(State.Type.CREATED, 0L)
+            .put(State.Type.RUNNING, 0L)
+            .put(State.Type.RESTARTED, 0L)
+            .put(State.Type.KILLING, 0L)
+            .put(State.Type.SUCCESS, 0L)
+            .put(State.Type.WARNING, 0L)
+            .put(State.Type.FAILED, 0L)
+            .put(State.Type.KILLED, 0L)
+            .put(State.Type.PAUSED, 0L)
+            .put(State.Type.QUEUED, 0L)
+            .put(State.Type.CANCELLED, 0L)
+            .build()
     );
 
     private String groupBy;

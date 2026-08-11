@@ -1,6 +1,5 @@
 package io.kestra.core.utils;
 
-
 /**
  * Utility method for manipulating Exception.
  */

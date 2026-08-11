@@ -1,5 +1,11 @@
 package io.kestra.core.serializers.ion;
 
+import java.io.IOException;
+import java.io.Serial;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.function.Function;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.json.PackageVersion;
@@ -8,13 +14,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
-import java.io.IOException;
-import java.io.Serial;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.function.Function;
-
-@SuppressWarnings({"serial", "this-escape"})
+@SuppressWarnings({ "serial", "this-escape" })
 public class IonModule extends SimpleModule {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -51,7 +51,7 @@ public class IonModule extends SimpleModule {
         super.setupModule(context);
     }
 
-    public static class StringTypedSerializer <T> extends StdScalarSerializer<T> {
+    public static class StringTypedSerializer<T> extends StdScalarSerializer<T> {
         @Serial
         private static final long serialVersionUID = 1L;
 

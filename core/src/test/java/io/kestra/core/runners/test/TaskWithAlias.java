@@ -1,15 +1,17 @@
 package io.kestra.core.runners.test;
 
+import org.slf4j.Logger;
+
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
 
 @SuperBuilder
 @ToString
@@ -25,7 +27,6 @@ public class TaskWithAlias extends Task implements RunnableTask<VoidOutput> {
     @PluginProperty(dynamic = true)
     private String message;
 
-
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
@@ -35,5 +36,3 @@ public class TaskWithAlias extends Task implements RunnableTask<VoidOutput> {
         return null;
     }
 }
-
-

@@ -1,13 +1,14 @@
 package io.kestra.core.models;
 
-import io.kestra.core.models.annotations.Plugin.Id;
-import jakarta.validation.constraints.NotNull;
-
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import io.kestra.core.models.annotations.Plugin.Id;
+
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Top-level interface for the Kestra plugins.

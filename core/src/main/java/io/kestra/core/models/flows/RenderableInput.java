@@ -1,8 +1,8 @@
 package io.kestra.core.models.flows;
 
-import jakarta.validation.constraints.NotNull;
-
 import java.util.function.Function;
+
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Represents an {@link Input} having properties that can be rendered.
@@ -21,14 +21,13 @@ public interface RenderableInput {
      * Static helper method that will render an input only if it implements
      * the {@link RenderableInput} interface.
      *
-     * @param input    The input.
+     * @param input The input.
      * @param renderer The function to be used for rendering expression.
      * @return the rendered input.
      */
     static Input<?> mayRenderInput(
         @NotNull final Input<?> input,
-        @NotNull final Function<String, Object> renderer
-    ) {
+        @NotNull final Function<String, Object> renderer) {
         return input instanceof RenderableInput renderableInput ? renderableInput.render(renderer) : input;
     }
 

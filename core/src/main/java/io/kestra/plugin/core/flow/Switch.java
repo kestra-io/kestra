@@ -1,7 +1,15 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -20,20 +28,12 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.SwitchTaskValidation;
-import io.micronaut.core.annotation.Introspected;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -43,11 +43,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks conditionally based on a given value.",
-    description = "This task runs a set of tasks based on a given value.\n" +
-        "The value is evaluated at runtime and compared to the list of cases.\n" +
-        "If the value matches a case, the corresponding tasks are executed.\n" +
-        "If the value does not match any case, the default tasks are executed."
+    title = "Route to task groups based on a value.",
+    description = """
+        Renders `value` and matches it against `cases` keys; executes the corresponding task list or `defaults` if no match. Supports `errors` and `finally` blocks.
+
+        Useful for branching on categorical inputs without nesting multiple Ifs."""
 )
 @Plugin(
     examples = {
@@ -85,10 +85,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                         format: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Switch"
+    }
 )
-@Introspected
 @SwitchTaskValidation
 public class Switch extends Task implements FlowableTask<Switch.Output> {
     @NotNull
@@ -102,7 +100,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Schema(
         title = "The map of keys and a list of tasks to be executed if the conditional `value` matches the key"
     )
-    @PluginProperty
+    @PluginProperty(additionalProperties = Task[].class)
     private Map<String, List<Task>> cases;
 
     @Valid
@@ -123,7 +121,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     }
 
     private String rendererValue(RunContext runContext) throws IllegalVariableEvaluationException {
-        return runContext.render(this.value).as(String.class).orElseThrow();
+        return runContext.render(this.value).skipCache().as(String.class).orElseThrow();
     }
 
     @Override
@@ -204,10 +202,11 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     public Switch.Output outputs(RunContext runContext) throws IllegalVariableEvaluationException {
         return Output.builder()
             .value(rendererValue(runContext))
-            .defaults(cases
-                .entrySet()
-                .stream()
-                .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
+            .defaults(
+                cases
+                    .entrySet()
+                    .stream()
+                    .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
             )
             .build();
     }
@@ -215,7 +214,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        private String value;
         private boolean defaults;
+        private String value;
     }
 }

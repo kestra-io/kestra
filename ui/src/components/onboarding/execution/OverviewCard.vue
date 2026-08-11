@@ -1,111 +1,100 @@
 <template>
-    <el-card class="box-card">
-        <div>
-            <div class="overview-title">
-                <div>
-                    <h5 class="overview_cat_title">
-                        {{ title }}
-                    </h5>
-                    <div>
-                        <Markdown :source="$t(`execution_guide.${category}.text`)" />
-                    </div>
-                    <el-link underline="never" :href="getLink()" target="_blank">
-                        {{ category === 'videos_tutorials' ? $t('watch') : $t('learn_more') }}
-                        <el-icon class="el-icon--right">
-                            <OpenInNew />
-                        </el-icon>
-                    </el-link>
-                </div>
-            </div>
+    <component
+        :is="to ? RouterLink : link ? 'a' : 'div'"
+        :to="to"
+        :href="link || undefined"
+        :target="link ? '_blank' : undefined"
+        :rel="link ? 'noopener noreferrer' : undefined"
+        class="card"
+    >
+        <KsIcon class="icon">
+            <component :is="icon" />
+        </KsIcon>
+        <div class="text">
+            <h5 class="title">
+                {{ title }}
+            </h5>
+            <p class="desc">
+                {{ description }}
+            </p>
         </div>
-    </el-card>
+        <KsIcon v-if="link || to" class="open">
+            <OpenInNew v-if="link" />
+            <ChevronRight v-else />
+        </KsIcon>
+    </component>
 </template>
 
-<script setup>
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-</script>
+<script setup lang="ts">
+    import type {Component} from "vue"
+    import {RouterLink, type RouteLocationRaw} from "vue-router"
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
 
-<script>
-    import Markdown from "../../layout/Markdown.vue";
-
-    export default {
-        name: "OverviewCard",
-        components: {Markdown},
-        props: {
-            title: {
-                type: String,
-                required: true,
-            },
-            category: {
-                type: String,
-                required: true,
-            },
-        },
-        methods: {
-            getLink() {
-                const links = {
-                    videos_tutorials: "https://www.youtube.com/watch?v=6TqWWz9difM",
-                    workflow_components: "https://kestra.io/docs/workflow-components",
-                    get_started: "https://kestra.io/docs/getting-started/quickstart",
-                };
-                return links[this.category] || "#"; // Default to "#" if no link is found
-            },
-        },
-    };
+    defineProps<{
+        title: string;
+        description: string;
+        link?: string;
+        to?: RouteLocationRaw;
+        icon?: Component;
+    }>()
 </script>
 
 <style scoped lang="scss">
-.el-card {
-	background-color: var(--ks-background-card);
-	border-color: var(--ks-border-primary);
-	box-shadow: var(--el-box-shadow);
-	position: relative;
-	width: 100px;
-	height: 180px;
-	min-width: 200px;
-	flex: 1;
-	cursor: pointer;
+.card {
+    display: flex;
+    align-items: center;
+    gap: var(--ks-spacing-4);
+    width: 100%;
+    padding: var(--ks-spacing-4) var(--ks-spacing-5);
+    background-color: var(--ks-bg-surface);
+    text-align: left;
+    text-decoration: none;
 
-	&:deep(.el-card__header) {
-		padding: 0;
-	}
+    &:hover {
+        background-color: var(--ks-bg-hover);
 
-	&:deep(.el-link) {
-		position: absolute;
-		bottom: 15px;
-		font-size: 12px;
-		border: 1px solid var(--ks-border-primary);
-		padding: 3px 10px;
-		border-radius: 5px;
+        .icon {
+            color: var(--ks-icon-hover);
+        }
+    }
 
-		&:hover {
-			color: var(--bs-gray-900-lighten-7);
-		}
-	}
+    .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--ks-icon-size-xl);
+        height: var(--ks-icon-size-lg);
+        color: var(--ks-icon-muted);
+
+        :deep(svg) {
+            width: var(--ks-icon-size-lg);
+            height: var(--ks-icon-size-lg);
+        }
+    }
+
+    .text {
+        flex: 1;
+
+        .title {
+            margin: 0;
+            font-size: var(--ks-font-size-md);
+            font-weight: var(--ks-font-weight-semibold);
+            color: var(--ks-text-primary);
+        }
+
+        .desc {
+            margin: 0;
+            font-size: var(--ks-font-size-sm);
+            font-weight: var(--ks-font-weight-regular);
+            line-height: var(--ks-line-height-base);
+            color: var(--ks-text-secondary);
+        }
+    }
+
+    .open {
+        color: var(--ks-text-secondary);
+        font-size: var(--ks-font-size-base);
+    }
 }
-
-.box-card {
-	.card-header {
-		position: absolute;
-		top: 5px;
-		right: 5px;
-	}
-
-	.overview_cat_title {
-		width: 100%;
-		margin: 3px 0 10px;
-		font-weight: 600;
-		font-size: var(--el-font-size-small);
-	}
-}
-
-.overview-title {
-	display: inline-flex;
-}
-
-:deep(.markdown) {
-	font-size: var(--el-font-size-extra-small) !important;
-	color: var(--ks-content-tertiary);
-}
-
 </style>

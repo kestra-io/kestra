@@ -1,22 +1,44 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.Scheduler;
+import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
+import io.kestra.core.scheduler.vnodes.VNodes;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
-import io.kestra.webserver.responses.BulkResponse;
+import io.kestra.webserver.models.api.ApiAsyncOperationResponse;
+import io.kestra.webserver.models.api.ApiTriggerAndState;
+import io.kestra.webserver.models.api.ApiTriggerState;
 import io.kestra.webserver.responses.PagedResults;
+
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -25,14 +47,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
@@ -42,409 +56,782 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TriggerControllerTest {
 
     public static final String TENANT_ID = "main";
-    public static final String NAMESPACE = "io.kestra.unittest";
     public static final String TRIGGER_PATH = "/api/v1/main/triggers";
+
     @Inject
     @Client("/")
     ReactorHttpClient client;
 
     @Inject
-    AbstractJdbcFlowRepository jdbcFlowRepository;
+    FlowService flowService;
 
     @Inject
     AbstractJdbcTriggerRepository jdbcTriggerRepository;
 
     @Inject
-    private JdbcTestUtils jdbcTestUtils;
+    JdbcTestUtils jdbcTestUtils;
+
+    @Inject
+    Scheduler scheduler;
+
+    @Inject
+    SchedulerConfiguration schedulerConfiguration;
 
     @BeforeEach
     protected void setup() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> scheduler.isActive());
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    void search() {
-        String triggerFlowId = "schedule-trigger-search";
-        String triggerNamespace = "io.kestra.tests.schedule";
+    void shouldFindTriggersGivenQueryOnIdPrefix() throws FlowProcessingException, QueueException {
+        // GIVEN
+        Flow flow = generateFlow();
+        flowService.create(GenericFlow.of(flow));
+        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
-        Flow flow = generateFlow(triggerFlowId);
-        jdbcFlowRepository.create(GenericFlow.of(flow));
-
-        Trigger trigger = Trigger.builder()
-            .flowId(triggerFlowId)
-            .namespace(triggerNamespace)
-            .tenantId(TENANT_ID)
-            .triggerId("trigger-nextexec-schedule")
-            .date(ZonedDateTime.now())
-            .build();
-
-        jdbcTriggerRepository.save(trigger);
-        jdbcTriggerRepository.save(trigger.toBuilder().triggerId("trigger-nextexec-polling").build());
-
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
-            HttpRequest.GET(TRIGGER_PATH
-                + "/search?filters[q][EQUALS]=schedule-trigger-search&filters[namespace][STARTS_WITH]=io.kestra.tests&sort=triggerId:asc"),
-            Argument.of(PagedResults.class, TriggerController.Triggers.class)
+        // WHEN
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
+            HttpRequest.GET(
+                TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"
+            ), Argument.of(PagedResults.class, ApiTriggerAndState.class)
         );
-        assertThat(triggers.getTotal()).isGreaterThanOrEqualTo(2L);
 
-        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+        // THEN
+        assertThat(triggers.getResults()).hasSize(2);
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
             .extracting(
-                TriggerContext::getTriggerId,
-                TriggerContext::getNamespace,
-                TriggerContext::getFlowId
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
             )
             .containsExactlyInAnyOrder(
-                tuple("trigger-nextexec-schedule", triggerNamespace, triggerFlowId),
-                tuple("trigger-nextexec-polling", triggerNamespace, triggerFlowId)
+                tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
+                tuple("trigger-nextexec-schedule", flow.getNamespace(), flow.getId())
             );
-        PagedResults<TriggerController.Triggers> triggers_oldParameters = client.toBlocking().retrieve(
-            HttpRequest.GET(TRIGGER_PATH
-                + "/search?q=schedule-trigger-search&namespace=io.kestra.tests&sort=triggerId:asc"),
-            Argument.of(PagedResults.class, TriggerController.Triggers.class)
-        );
-        assertThat(triggers_oldParameters.getTotal()).isGreaterThanOrEqualTo(2L);
+    }
 
-        assertThat(triggers_oldParameters.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldFindTriggersGivenQueryOnNamespace() throws FlowProcessingException, QueueException {
+        // GIVEN
+        Flow flow = generateFlow();
+        flowService.create(GenericFlow.of(flow));
+        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+
+        // WHEN
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
+            HttpRequest.GET(
+                TRIGGER_PATH + "/search?filters[q][EQUALS]=%s".formatted(flow.getNamespace())
+            ), Argument.of(PagedResults.class, ApiTriggerAndState.class)
+        );
+
+        // THEN
+        assertThat(triggers.getResults()).hasSize(2);
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
             .extracting(
-                TriggerContext::getTriggerId,
-                TriggerContext::getNamespace,
-                TriggerContext::getFlowId
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
             )
             .containsExactlyInAnyOrder(
-                tuple("trigger-nextexec-schedule", triggerNamespace, triggerFlowId),
-                tuple("trigger-nextexec-polling", triggerNamespace, triggerFlowId)
+                tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
+                tuple("trigger-nextexec-schedule", flow.getNamespace(), flow.getId())
+            );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void shouldFindTriggersGivenFilterOnNamespace() throws FlowProcessingException, QueueException {
+        // GIVEN
+        Flow flow = generateFlow();
+        flowService.create(GenericFlow.of(flow));
+        List<TriggerState> states = createTriggersFromFlow(flow);
+        states.forEach(jdbcTriggerRepository::save);
+
+        // WHEN
+        PagedResults<ApiTriggerAndState> triggers = client.toBlocking().retrieve(
+            HttpRequest.GET(
+                TRIGGER_PATH
+                    + "/search?filters[namespace][STARTS_WITH]=%s&sort=triggerId:asc".formatted(flow.getNamespace())
+            ),
+            Argument.of(PagedResults.class, ApiTriggerAndState.class)
+        );
+
+        //THEN
+        assertThat(triggers.getTotal()).isGreaterThanOrEqualTo(2L);
+        assertThat(triggers.getResults().stream().map(ApiTriggerAndState::state).toList())
+            .extracting(
+                ApiTriggerState::triggerId,
+                ApiTriggerState::namespace,
+                ApiTriggerState::flowId
+            )
+            .containsExactlyInAnyOrder(
+                tuple("trigger-nextexec-polling", flow.getNamespace(), flow.getId()),
+                tuple("trigger-nextexec-schedule", flow.getNamespace(), flow.getId())
             );
     }
 
     @Test
-    void unlockTrigger() {
-        Trigger trigger = Trigger.builder()
-            .flowId(IdUtils.create())
-            .namespace(NAMESPACE)
-            .tenantId(TENANT_ID)
-            .triggerId(IdUtils.create())
-            .executionId(IdUtils.create())
-            .build();
+    void shouldUnlockTriggerWhenLocked() throws FlowProcessingException, QueueException {
+        // GIVEN
+        TriggerState trigger = newLockedFlowBackedTrigger();
 
-        jdbcTriggerRepository.save(trigger);
-
-        trigger = client.toBlocking().retrieve(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
-            trigger.getNamespace(),
-            trigger.getFlowId(),
-            trigger.getTriggerId()
-        ), null), Trigger.class);
-
-        assertThat(trigger.getExecutionId()).isNull();
-        assertThat(trigger.getEvaluateRunningDate()).isNull();
-
-        Trigger unlockedTrigger = jdbcTriggerRepository.findLast(trigger).orElseThrow();
-
-        assertThat(unlockedTrigger.getExecutionId()).isNull();
-        assertThat(unlockedTrigger.getEvaluateRunningDate()).isNull();
-
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
-                unlockedTrigger.getNamespace(),
-                unlockedTrigger.getFlowId(),
-                unlockedTrigger.getTriggerId()
-            ), null)));
-
-        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
-        assertThat(e.getMessage()).isEqualTo("Illegal state: Trigger is not locked");
-
-        e = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
-                "bad.namespace",
-                "some-flow-id",
-                "some-trigger-id"
-            ), null))
+        // WHEN
+        HttpResponse<ApiTriggerState> exchange = client.toBlocking().exchange(
+            HttpRequest.POST(
+                (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                    trigger.getNamespace(),
+                    trigger.getFlowId(),
+                    trigger.getTriggerId()
+                ), null
+            ),
+            ApiTriggerState.class
         );
 
+        // THEN
+        assertThat(exchange.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(exchange.body()).isNotNull();
+        assertThat(exchange.body().triggerId()).isEqualTo(trigger.getTriggerId());
+    }
+
+    @Test
+    void shouldReturnConflictWhenUnlockingTriggerAlreadyUnlocked() {
+        // GIVEN
+        TriggerState trigger = newRandomTriggerState()
+            .locked(Clock.systemDefaultZone(), false);
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                        trigger.getNamespace(),
+                        trigger.getFlowId(),
+                        trigger.getTriggerId()
+                    ), null
+                )
+            )
+        );
+
+        // THEN
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).isEqualTo(
+            "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is already unlocked"
+                .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
+        );
+    }
+
+    @Test
+    void shouldReturnConflictWhenUnlockingRealtimeTrigger() {
+        // GIVEN — locked is the normal running state of a realtime trigger
+        TriggerState trigger = newRandomTriggerState(TriggerType.REALTIME).locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                        trigger.getNamespace(),
+                        trigger.getFlowId(),
+                        trigger.getTriggerId()
+                    ), null
+                )
+            )
+        );
+
+        // THEN
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).isEqualTo(
+            "Conflict: trigger [tenant=%s, namespace=%s, flow=%s, trigger=%s] is a realtime trigger, reset it to kill and restart it"
+                .formatted(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
+        );
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenUnlockingMissingTrigger() {
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                        "???",
+                        "???",
+                        "???"
+                    ), null
+                )
+            )
+        );
+        // THEN
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(e.getMessage()).isEqualTo("Not Found");
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenUnlockingOrphanedTrigger() {
+        // GIVEN — a locked trigger row whose flow doesn't exist (e.g. deleted after the trigger was
+        // locked, before orphan-GC caught up). Unlocking it must fail fast instead of racing that GC.
+        TriggerState trigger = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/unlock").formatted(
+                        trigger.getNamespace(),
+                        trigger.getFlowId(),
+                        trigger.getTriggerId()
+                    ), null
+                )
+            )
+        );
+
+        // THEN
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test
-    void updated() {
-        Flow flow = generateFlow("flow-with-triggers-updated");
-        jdbcFlowRepository.create(GenericFlow.of(flow));
+    void shouldRestartTriggerWhenExists() throws FlowProcessingException, QueueException {
+        // GIVEN — a real, flow-backed trigger: restarting a flow-less trigger would race the
+        // scheduler's orphan-GC the same way unlocking one does (see newLockedFlowBackedTrigger javadoc).
+        TriggerState trigger = newLockedFlowBackedTrigger();
 
-        Trigger trigger = Trigger.builder()
-            .flowId(flow.getId())
-            .namespace(flow.getNamespace())
-            .tenantId(TENANT_ID)
-            .triggerId("trigger-nextexec-schedule")
-            .executionId(IdUtils.create())
-            .disabled(true)
-            .build();
+        // WHEN
+        HttpResponse<ApiTriggerState> restarted = client.toBlocking().exchange(
+            HttpRequest.POST(
+                (TRIGGER_PATH
+                    + "/%s/%s/%s/restart".formatted(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())),
+                null
+            ),
+            ApiTriggerState.class
+        );
 
-        jdbcTriggerRepository.create(trigger);
-
-        Trigger updatedBad = trigger
-            .toBuilder()
-            .executionId("hello")
-            .disabled(false)
-            .tenantId(null)
-            .build();
-
-        Trigger afterUpdated = client.toBlocking().retrieve(HttpRequest.PUT(TRIGGER_PATH, updatedBad), Trigger.class);
-
-        // Assert that executionId cannot be edited
-        assertThat(afterUpdated.getExecutionId()).isNotEqualTo("hello");
-        // Assert that disabled can be edited
-        assertThat(afterUpdated.getDisabled()).isFalse();
-    }
-
-    @Test
-    void restartTrigger() {
-        Flow flow = generateFlow("flow-with-triggers");
-        jdbcFlowRepository.create(GenericFlow.of(flow));
-
-        Trigger trigger = Trigger.builder()
-            .flowId(flow.getId())
-            .namespace(flow.getNamespace())
-            .tenantId(TENANT_ID)
-            .triggerId("trigger-to-restart")
-            .executionId(IdUtils.create())
-            .disabled(true)
-            .build();
-
-        jdbcTriggerRepository.create(trigger);
-
-        HttpResponse<?> restarted = client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH
-            + "/io.kestra.tests.schedule/flow-with-triggers/trigger-to-restart/restart"), null));
+        // THEN
         assertThat(restarted.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-
-        assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST((
-            TRIGGER_PATH + "/notfound/notfound/notfound/restart"), null)));
+        assertThat(restarted.body()).isNotNull();
+        assertThat(restarted.body().triggerId()).isEqualTo(trigger.getTriggerId());
     }
 
     @Test
-    void unlockTriggerByTriggers() {
-        Trigger triggerLock = Trigger.builder()
-            .flowId(IdUtils.create())
-            .namespace(NAMESPACE)
-            .tenantId(TENANT_ID)
-            .triggerId(IdUtils.create())
-            .executionId(IdUtils.create())
-            .build();
+    void shouldReturnNotFoundWhenRestartingMissingTrigger() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST((TRIGGER_PATH + "/???/???/???/restart"), null))
+        );
 
-        Trigger triggerNotLock = Trigger.builder()
-            .flowId(IdUtils.create())
-            .namespace(NAMESPACE)
-            .tenantId(TENANT_ID)
-            .triggerId(IdUtils.create())
-            .build();
-
-        jdbcTriggerRepository.save(triggerLock);
-        jdbcTriggerRepository.save(triggerNotLock);
-
-        List<Trigger> triggers = List.of(triggerLock, triggerNotLock);
-
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/unlock/by-triggers", triggers), BulkResponse.class);
-
-        assertThat(bulkResponse.getCount()).isEqualTo(1);
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test
-    void unlockTriggerByQuery() {
-        Trigger triggerLock = Trigger.builder()
-            .flowId(IdUtils.create())
-            .namespace(NAMESPACE)
-            .tenantId(TENANT_ID)
-            .triggerId(IdUtils.create())
-            .executionId(IdUtils.create())
-            .build();
+    void shouldReturnNotFoundWhenRestartingOrphanedTrigger() {
+        // GIVEN — a locked trigger row whose flow doesn't exist (e.g. deleted after the trigger was
+        // locked, before orphan-GC caught up). Restarting it must fail fast instead of racing that GC.
+        TriggerState trigger = newRandomTriggerState().locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(trigger);
 
-        Trigger triggerNotLock = Trigger.builder()
-            .flowId(IdUtils.create())
-            .namespace(NAMESPACE)
-            .tenantId(TENANT_ID)
-            .triggerId(IdUtils.create())
-            .build();
-
-        jdbcTriggerRepository.save(triggerLock);
-        jdbcTriggerRepository.save(triggerNotLock);
-
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/unlock/by-query?namespace=io.kestra.unittest", null), BulkResponse.class);
-
-        assertThat(bulkResponse.getCount()).isEqualTo(1);
-    }
-
-    @Test
-    void enableByTriggers() {
-        String namespace = IdUtils.create();
-        Flow flow1 = generateFlowWithTrigger(namespace);
-        Flow flow2 = generateFlowWithTrigger(namespace);
-        
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
-        
-        Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
-        Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
-
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
-
-        List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
-
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
-
-        assertThat(bulkResponse.getCount()).isEqualTo(2);
-        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isFalse();
-    }
-    
-    @Test
-    void enableByQuery() {
-        String namespace = IdUtils.create();
-        Flow flow1 = generateFlowWithTrigger(namespace);
-        Flow flow2 = generateFlowWithTrigger(namespace);
-        
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
-        
-        Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
-        Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
-
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
-
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-query?namespace=%s&disabled=false".formatted(namespace), null), BulkResponse.class);
-
-        assertThat(bulkResponse.getCount()).isEqualTo(2);
-        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isFalse();
-    }
-
-    @Test
-    void disableByTriggers() {
-        String namespace = IdUtils.create();
-        Flow flow1 = generateFlowWithTrigger(namespace);
-        Flow flow2 = generateFlowWithTrigger(namespace);
-        
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
-        
-        Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
-        Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
-        
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
-
-        List<Trigger> triggers = List.of(triggerDisabled, triggerNotDisabled);
-
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
-
-        assertThat(bulkResponse.getCount()).isEqualTo(2);
-        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isTrue();
-    }
-
-    @Test
-    void disableByTriggersBadRequest() {
+        // WHEN
         HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.POST(
-                    TRIGGER_PATH + "/set-disabled/by-triggers", new SetDisabledRequest(null, null)),
-                BulkResponse.class));
+            HttpClientResponseException.class, () -> client.toBlocking().exchange(
+                HttpRequest.POST(
+                    (TRIGGER_PATH + "/%s/%s/%s/restart").formatted(
+                        trigger.getNamespace(),
+                        trigger.getFlowId(),
+                        trigger.getTriggerId()
+                    ), null
+                )
+            )
+        );
 
+        // THEN
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
+    void shouldAcceptDeleteTriggersByIdsWhenExist() {
+        // GIVEN
+        TriggerState trigger1 = jdbcTriggerRepository.save(newRandomTriggerState());
+        TriggerState trigger2 = jdbcTriggerRepository.save(newRandomTriggerState());
+
+        List<TriggerController.ApiTriggerId> triggers = Stream.of(trigger1, trigger2)
+            .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
+            .toList();
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.DELETE(TRIGGER_PATH + "/delete/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldDeleteTriggerWhenExists() throws FlowProcessingException, QueueException {
+        // GIVEN
+        Flow flow1 = generateFlowWithTrigger(IdUtils.create().toLowerCase());
+        TriggerState state = createTriggerFromFlow(flow1, true);
+        flowService.create(GenericFlow.of(flow1));
+
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).until(() -> jdbcTriggerRepository.findById(state).isPresent());
+
+        // WHEN
+        HttpResponse<Void> response = client.toBlocking()
+            .exchange(
+                HttpRequest.DELETE(TRIGGER_PATH + "/" + state.getNamespace() + "/" + state.getFlowId() + "/" + state.getTriggerId()),
+                Void.class
+            );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(state).isEmpty());
+    }
+
+    @Test
+    void shouldAcceptUnlockByIdsWhenLocked() throws FlowProcessingException, QueueException {
+        // GIVEN
+        TriggerState state = newLockedFlowBackedTrigger();
+
+        // WHEN
+        List<TriggerController.ApiTriggerId> triggers = List.of(new TriggerController.ApiTriggerId(state.getNamespace(), state.getFlowId(), state.getTriggerId()));
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().operationId()).isNotBlank();
+        assertThat(response.body().totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldAcceptUnlockByIdsWithZeroItemsWhenUnlocked() {
+        // GIVEN
+        TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), false);
+        jdbcTriggerRepository.save(state);
+
+        // WHEN
+        List<TriggerController.ApiTriggerId> triggers = List.of(new TriggerController.ApiTriggerId(state.getNamespace(), state.getFlowId(), state.getTriggerId()));
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldAcceptUnlockByIdsWithZeroItemsWhenRealtime() {
+        // GIVEN
+        TriggerState state = newRandomTriggerState(TriggerType.REALTIME).locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(state);
+
+        // WHEN
+        List<TriggerController.ApiTriggerId> triggers = List.of(new TriggerController.ApiTriggerId(state.getNamespace(), state.getFlowId(), state.getTriggerId()));
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-triggers", triggers),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldAcceptUnlockByQueryWhenLocked() throws FlowProcessingException, QueueException {
+        // GIVEN
+        TriggerState state = newLockedFlowBackedTrigger();
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldAcceptUnlockByQueryWithZeroItemsWhenRealtime() {
+        // GIVEN
+        TriggerState state = newRandomTriggerState(TriggerType.REALTIME).locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(state);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldAcceptUnlockByQueryWithZeroItemsWhenUnlocked() {
+        // GIVEN
+        TriggerState state = newRandomTriggerState().locked(Clock.systemDefaultZone(), false);
+
+        jdbcTriggerRepository.save(state);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/unlock/by-query?filters[namespace][EQUALS]=" + state.getNamespace(), null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByIdsWhenFalse() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow1 = generateFlowWithTrigger(namespace);
+        Flow flow2 = generateFlowWithTrigger(namespace);
+
+        flowService.create(GenericFlow.of(flow1));
+        flowService.create(GenericFlow.of(flow2));
+
+        final TriggerState triggerDisabled = createTriggerFromFlow(flow1, true);
+        final TriggerState triggerNotDisabled = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerDisabled).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerNotDisabled).isPresent());
+
+        List<TriggerController.ApiTriggerId> triggers = Stream.of(
+            jdbcTriggerRepository.save(triggerDisabled),
+            jdbcTriggerRepository.save(triggerNotDisabled)
+        )
+            .map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
+            .toList();
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
+        try {
+            Await.until(() -> !jdbcTriggerRepository.findById(triggerDisabled).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be disabled");
+        }
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByIdsWhenTrue() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow1 = generateFlowWithTrigger(namespace);
+        Flow flow2 = generateFlowWithTrigger(namespace);
+
+        flowService.create(GenericFlow.of(flow1));
+        flowService.create(GenericFlow.of(flow2));
+
+        final TriggerState triggerDisabled = createTriggerFromFlow(flow1, true);
+        final TriggerState triggerToDisable = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerDisabled).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(triggerToDisable).isPresent());
+
+        // WHEN
+        List<TriggerController.ApiTriggerId> triggers = Stream.of(
+            jdbcTriggerRepository.save(triggerDisabled),
+            jdbcTriggerRepository.save(triggerToDisable)
+        ).map(it -> new TriggerController.ApiTriggerId(it.getNamespace(), it.getFlowId(), it.getTriggerId()))
+            .toList();
+
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
+
+        try {
+            Await.until(() -> jdbcTriggerRepository.findById(triggerToDisable).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(10));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be disabled");
+        }
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByQueryWhenTrue() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow1 = generateFlowWithTrigger(namespace);
+        Flow flow2 = generateFlowWithTrigger(namespace);
+
+        flowService.create(GenericFlow.of(flow1));
+        flowService.create(GenericFlow.of(flow2));
+
+        TriggerState trigger1 = createTriggerFromFlow(flow1, true);
+        final TriggerState toDisable = createTriggerFromFlow(flow2, false);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger1).isPresent());
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(toDisable).isPresent());
+        jdbcTriggerRepository.save(trigger1);
+        jdbcTriggerRepository.save(toDisable);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-query?filters[namespace][EQUALS]=%s&disabled=true".formatted(namespace), null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(2);
+        try {
+            Await.until(() -> jdbcTriggerRepository.findById(toDisable).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be disabled");
+        }
+    }
+
+    @Test
+    void shouldAcceptSetDisabledWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpResponse<ApiTriggerState> response = client.toBlocking().exchange(
+            HttpRequest.PUT(
+                TRIGGER_PATH + "/set-disabled",
+                new TriggerController.ApiDisableTriggerRequest(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), false, true)
+            ),
+            ApiTriggerState.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.body().disabled()).isFalse();
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByIdsWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        List<TriggerController.ApiTriggerId> triggers = List.of(
+            new TriggerController.ApiTriggerId(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId())
+        );
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false, true)),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        try {
+            Await.until(() -> !jdbcTriggerRepository.findById(trigger).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be enabled");
+        }
+    }
+
+    @Test
+    void shouldAcceptSetDisabledByQueryWhenRecoverMissedSchedulesProvided() throws FlowProcessingException, QueueException {
+        // GIVEN
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
+        Flow flow = generateFlowWithTrigger(namespace);
+        flowService.create(GenericFlow.of(flow));
+
+        final TriggerState trigger = createTriggerFromFlow(flow, true);
+        // Wait for the scheduler to initialize trigger states before updating them
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(trigger).isPresent());
+        jdbcTriggerRepository.save(trigger);
+
+        // WHEN
+        HttpResponse<ApiAsyncOperationResponse> response = client.toBlocking().exchange(
+            HttpRequest.POST(TRIGGER_PATH + "/set-disabled/by-query?filters[namespace][EQUALS]=%s&disabled=false&recoverMissedSchedules=true".formatted(namespace), null),
+            ApiAsyncOperationResponse.class
+        );
+
+        // THEN
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(response.body().totalItems()).isEqualTo(1);
+        try {
+            Await.until(() -> !jdbcTriggerRepository.findById(trigger).get().isDisabled(), Duration.ofSeconds(1), Duration.ofSeconds(30));
+        } catch (TimeoutException e) {
+            Assertions.fail("Timeout waiting for trigger to be enabled");
+        }
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenDisableByTriggersMissingBody() {
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST(
+                    TRIGGER_PATH + "/set-disabled/by-triggers", new SetDisabledRequest(null, null)
+                ),
+                ApiAsyncOperationResponse.class
+            )
+        );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
-    @Test
-    void disableByQuery() {
-        String namespace = IdUtils.create();
-        Flow flow1 = generateFlowWithTrigger(namespace);
-        Flow flow2 = generateFlowWithTrigger(namespace);
-        
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
-        
-        Trigger triggerDisabled = createTriggerFromFlow(flow1, true);
-        Trigger triggerNotDisabled = createTriggerFromFlow(flow2, false);
-
-        jdbcTriggerRepository.save(triggerDisabled);
-        jdbcTriggerRepository.save(triggerNotDisabled);
-
-        BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST(
-            TRIGGER_PATH + "/set-disabled/by-query?namespace=%s&disabled=true".formatted(namespace), null), BulkResponse.class);
-
-        assertThat(bulkResponse.getCount()).isEqualTo(2);
-        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isTrue();
-    }
-
-    @Test
-    void nextExecutionDate() throws TimeoutException {
-        Flow flow = generateFlow("flow-with-triggers");
-        jdbcFlowRepository.create(GenericFlow.of(flow));
-        Await.until(
-            () -> client.toBlocking().retrieve(HttpRequest.GET(
-                TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
-            Duration.ofMillis(100),
-            Duration.ofSeconds(20)
-        );
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET(
-            TRIGGER_PATH + "/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
-        assertThat(triggers.getResults().getFirst().getTriggerContext().getNextExecutionDate()).isNotNull();
-        assertThat(triggers.getResults().get(1).getTriggerContext().getNextExecutionDate()).isNotNull();
-    }
-
-    private Flow generateFlow(String flowId) {
+    private Flow generateFlow() {
         return Flow.builder()
-            .id(flowId)
-            .namespace("io.kestra.tests.schedule")
             .tenantId(TENANT_ID)
-            .tasks(Collections.singletonList(Return.builder()
-                .id("task")
-                .type(Return.class.getName())
-                .format(Property.ofValue("return data"))
-                .build()))
-            .triggers(List.of(
-                Schedule.builder()
-                    .id("trigger-nextexec-schedule")
-                    .type(Schedule.class.getName())
-                    .cron("*/1 * * * *")
-                    .build(),
-                PollingTrigger.builder()
-                    .id("trigger-nextexec-polling")
-                    .type(PollingTrigger.class.getName())
-                    .build()
-            ))
+            .namespace("ns-" + IdUtils.create().toLowerCase())
+            .id(IdUtils.create())
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id("trigger-nextexec-schedule")
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .build(),
+                    PollingTrigger.builder()
+                        .id("trigger-nextexec-polling")
+                        .type(PollingTrigger.class.getName())
+                        .build()
+                )
+            )
             .build();
     }
-    
+
+    private TriggerState newRandomTriggerState() {
+        return newRandomTriggerState(null);
+    }
+
+    private TriggerState newRandomTriggerState(TriggerType type) {
+        String random = IdUtils.create();
+        // Set a far-future nextEvaluationDate so the scheduler never considers this trigger
+        // eligible for evaluation and does not delete it as an orphan (trigger has no associated flow).
+        return TriggerState.builder()
+            .tenantId(TENANT_ID)
+            .namespace(random)
+            .flowId(random)
+            .triggerId(random)
+            .nextEvaluationDate(Instant.now().plus(Duration.ofDays(36500L)))
+            .type(type)
+            .vnode(VNodes.computeVNodeFromFlow(FlowId.of(TENANT_ID, random, random, null), schedulerConfiguration.vnodes()))
+            .build();
+    }
+
+    private TriggerState newLockedFlowBackedTrigger() throws FlowProcessingException, QueueException {
+        Flow flow = generateFlowWithTrigger(IdUtils.create().toLowerCase());
+        TriggerState fixture = createTriggerFromFlow(flow, false);
+        flowService.create(GenericFlow.of(flow));
+
+        // The flow's own trigger creation asynchronously seeds a TriggerState row; wait for it
+        // instead of racing it with our own save(), then lock that row.
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100))
+            .until(() -> jdbcTriggerRepository.findById(fixture).isPresent());
+        TriggerState trigger = jdbcTriggerRepository.findById(fixture).orElseThrow()
+            .locked(Clock.systemDefaultZone(), true);
+        jdbcTriggerRepository.save(trigger);
+        return trigger;
+    }
+
     private Flow generateFlowWithTrigger(String namespace) {
         return Flow.builder()
             .id(IdUtils.create())
             .tenantId(TENANT_ID)
             .namespace(namespace)
-            .tasks(Collections.singletonList(Return.builder()
-                .id("task")
-                .type(Return.class.getName())
-                .format(Property.ofValue("return data"))
-                .build()))
-            .triggers(List.of(Schedule.builder()
-                .id(IdUtils.create())
-                .type(Schedule.class.getName())
-                .cron("*/1 * * * *")
-                .build()
-            ))
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id("task")
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("return data"))
+                        .build()
+                )
+            )
+            .triggers(
+                List.of(
+                    Schedule.builder()
+                        .id(IdUtils.create())
+                        .type(Schedule.class.getName())
+                        .cron("*/1 * * * *")
+                        .build()
+                )
+            )
             .build();
     }
-    
-    
-    private static Trigger createTriggerFromFlow(Flow flow1, Boolean disabled) {
-        return Trigger.builder()
-            .flowId(flow1.getId())
-            .tenantId(flow1.getTenantId())
-            .namespace(flow1.getNamespace())
-            .triggerId(flow1.getTriggers().getFirst().getId())
+
+    private List<TriggerState> createTriggersFromFlow(Flow flow) {
+        return flow.getTriggers().stream().map(
+            it -> TriggerState.builder()
+                .flowId(flow.getId())
+                .tenantId(flow.getTenantId())
+                .namespace(flow.getNamespace())
+                .triggerId(it.getId())
+                .vnode(VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()))
+                .build()
+        ).toList();
+    }
+
+    private TriggerState createTriggerFromFlow(Flow flow, Boolean disabled) {
+        return TriggerState.builder()
+            .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .triggerId(flow.getTriggers().getFirst().getId())
             .disabled(disabled)
+            .vnode(VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()))
             .build();
     }
 }

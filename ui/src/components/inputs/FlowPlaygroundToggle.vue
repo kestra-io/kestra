@@ -1,23 +1,23 @@
 <template>
-    <el-tooltip placement="bottom" :content="t('playground.tooltip_persistence')">
-        <el-switch v-model="playgroundStore.enabled" :activeText="t('playground.toggle')" class="toggle" :class="{'is-active': playgroundStore.enabled}" />
-    </el-tooltip>
+    <KsTooltip placement="bottom" :content="$t('playground.tooltip_persistence')">
+        <KsSwitch v-model="playgroundStore.enabled" :activeText="$t('playground.toggle')" class="toggle" :class="{'is-active': playgroundStore.enabled}" />
+    </KsTooltip>
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
-    import {usePlaygroundStore} from "../../stores/playground";
+    import {usePlaygroundStore} from "../../stores/playground"
 
-    const {t} = useI18n();
-    const playgroundStore = usePlaygroundStore();
-
+    const playgroundStore = usePlaygroundStore()
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .toggle{
     margin-right: 1rem;
-    &.is-active ::v-deep(.el-switch__label){
-        color: white;
+    &.is-active{
+        --kel-switch-border-color: var(--ks-border-active);
+        ::v-deep(.kel-switch__label){
+            color: var(--ks-text-primary);
+        }
     }
 }
 </style>

@@ -5,16 +5,17 @@ configurations {
 dependencies {
     annotationProcessor project(':processor')
     implementation project(":core")
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 
     // test
     testAnnotationProcessor project(':processor')
-    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
     testImplementation project(':storage-local')
     testImplementation project(':worker')
 
     testImplementation project(':tests')
     testImplementation project(':jdbc')
-    testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(path: ':jdbc', configuration: 'testArtifacts')
     testImplementation project(':jdbc-h2')
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }

@@ -1,37 +1,63 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.plugin.core.dashboard.data.Triggers;
-import io.micronaut.data.model.Pageable;
-import jakarta.annotation.Nullable;
-import reactor.core.publisher.Flux;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.plugin.core.dashboard.data.Triggers;
+
+import io.micronaut.data.model.Pageable;
+import jakarta.annotation.Nullable;
+import reactor.core.publisher.Flux;
+
+/**
+ * Repository interface for searching for trigger states.
+ */
 public interface TriggerRepositoryInterface extends QueryBuilderInterface<Triggers.Fields> {
-    Optional<Trigger> findLast(TriggerContext trigger);
+    /**
+     * Finds the trigger state for the given identifier.
+     *
+     * @param trigger the identifier.
+     * @return an optional {@link TriggerState}.
+     */
+    Optional<TriggerState> findById(TriggerId trigger);
 
-    Optional<Trigger> findByExecution(Execution execution);
+    /**
+     * Finds all trigger states for the given tenant id
+     *
+     * @param tenantId the tenant identifier - cannot be {@code null}
+     * @return the list of trigger states.
+     */
+    List<TriggerState> findAll(String tenantId);
 
-    List<Trigger> findAll(String tenantId);
+    /**
+     * Finds all trigger states across all tenants.
+     *
+     * @return the list of trigger states.
+     */
+    List<TriggerState> findAllForAllTenants();
 
-    List<Trigger> findAllForAllTenants();
+    /**
+     * Searches for all trigger states matching the given criterion.
+     *
+     * @param from the pageable.
+     * @param tenantId the tenant identifier - cannot be {@code null}
+     * @return the list of matching trigger states.
+     */
+    ArrayListTotal<TriggerState> find(Pageable from, String query, String tenantId, String namespace, String flowId, String workerId);
 
-    Trigger save(Trigger trigger);
-
-    void delete(Trigger trigger);
-
-    Trigger update(Trigger trigger);
-
-    Trigger lock(String triggerUid, Function<Trigger, Trigger> function);
-
-    ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace, String flowId, String workerId);
-    ArrayListTotal<Trigger> find(Pageable from, String tenantId, List<QueryFilter> filters);
+    /**
+     * Searches for all trigger states matching the given tenant and filters.
+     *
+     * @param from the pageable.
+     * @param tenantId the tenant identifier - cannot be {@code null}
+     * @param filters the query filters.
+     * @return the list of matching trigger states.
+     */
+    ArrayListTotal<TriggerState> find(Pageable from, String tenantId, List<QueryFilter> filters);
 
     /**
      * Counts the total number of triggers.
@@ -39,16 +65,14 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
      * @param tenantId the tenant of the triggers
      * @return The count.
      */
-    int count(@Nullable String tenantId);
+    long countAll(@Nullable String tenantId);
 
     /**
      * Find all triggers that match the query, return a flux of triggers
-     * as the search is not paginated
      */
-    Flux<Trigger> find(String tenantId, List<QueryFilter> filters);
+    Flux<TriggerState> find(String tenantId, List<QueryFilter> filters);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();
     }
 }
-

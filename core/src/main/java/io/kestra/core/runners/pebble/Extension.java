@@ -1,11 +1,15 @@
 package io.kestra.core.runners.pebble;
 
-import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
-import io.kestra.core.runners.pebble.expression.UndefinedCoalescingExpression;
-import io.kestra.core.runners.pebble.expression.InExpression;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import io.kestra.core.runners.pebble.expression.*;
 import io.kestra.core.runners.pebble.filters.*;
 import io.kestra.core.runners.pebble.functions.*;
 import io.kestra.core.runners.pebble.tests.JsonTest;
+
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.extension.*;
 import io.pebbletemplates.pebble.operator.Associativity;
@@ -15,11 +19,6 @@ import io.pebbletemplates.pebble.operator.UnaryOperator;
 import io.pebbletemplates.pebble.tokenParser.TokenParser;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static io.pebbletemplates.pebble.operator.BinaryOperatorType.NORMAL;
 
@@ -61,6 +60,10 @@ public class Extension extends AbstractExtension {
     @Inject
     private HttpFunction httpFunction;
 
+    @Inject
+    @Nullable
+    private SubflowFunction subflowFunction;
+
     @Override
     public List<TokenParser> getTokenParsers() {
         return null;
@@ -75,14 +78,17 @@ public class Extension extends AbstractExtension {
     public List<BinaryOperator> getBinaryOperators() {
         List<BinaryOperator> operators = new ArrayList<>();
 
-        operators.add(new BinaryOperatorImpl("??", 120, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl("???", 120, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
-        operators.add(new BinaryOperatorImpl("isIn", 120, InExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("??", 30, NullCoalescingExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("???", 30, UndefinedCoalescingExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("isIn", 30, InExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl(">", 30, GreaterThanExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl(">=", 30, GreaterThanEqualsExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("<", 30, LessThanExpression::new, NORMAL, Associativity.LEFT));
+        operators.add(new BinaryOperatorImpl("<=", 30, LessThanEqualsExpression::new, NORMAL, Associativity.LEFT));
 
         return operators;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public Map<String, Filter> getFilters() {
         Map<String, Filter> filters = new HashMap<>();
@@ -97,7 +103,6 @@ public class Extension extends AbstractExtension {
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
         filters.put("escapeChar", new EscapeCharFilter());
-        filters.put("json", new JsonFilter());
         filters.put("toJson", new ToJsonFilter());
         filters.put("distinct", new DistinctFilter());
         filters.put("keys", new KeysFilter());
@@ -120,6 +125,9 @@ public class Extension extends AbstractExtension {
         filters.put("sha512", new Sha512Filter());
         filters.put("md5", new Md5Filter());
         filters.put("string", new StringFilter());
+        filters.put(RegexMatchFilter.NAME, new RegexMatchFilter());
+        filters.put(RegexReplaceFilter.NAME, new RegexReplaceFilter());
+        filters.put(RegexExtractFilter.NAME, new RegexExtractFilter());
         return filters;
     }
 
@@ -137,40 +145,51 @@ public class Extension extends AbstractExtension {
     public Map<String, Function> getFunctions() {
         Map<String, Function> functions = new HashMap<>();
 
-        functions.put("now", new NowFunction());
-        functions.put("json", new JsonFunction());
-        functions.put("fromJson", new FromJsonFunction());
-        functions.put("currentEachOutput", new CurrentEachOutputFunction());
+        functions.put(NowFunction.NAME, new NowFunction());
+        functions.put(FromJsonFunction.NAME, new FromJsonFunction());
+        functions.put(EnvFunction.NAME, new EnvFunction());
         functions.put(SecretFunction.NAME, secretFunction);
-        functions.put("kv", kvFunction);
-        functions.put("read", readFileFunction);
-        functions.put("fileURI", fileURIFunction);
+        functions.put(KvFunction.NAME, kvFunction);
+        functions.put(ReadFileFunction.NAME, readFileFunction);
+        functions.put(FileURIFunction.NAME, fileURIFunction);
         if (renderFunction != null) {
-            functions.put(renderFunction.functionName(), renderFunction);
+            functions.put(RenderFunction.NAME, renderFunction);
         }
         if (renderOnceFunction != null) {
-            functions.put(renderOnceFunction.functionName(), renderOnceFunction);
+            functions.put(RenderOnceFunction.NAME, renderOnceFunction);
         }
-        functions.put("encrypt", new EncryptFunction());
-        functions.put("decrypt", new DecryptFunction());
-        functions.put("yaml", new YamlFunction());
-        functions.put("printContext", new FetchContextFunction());
-        functions.put("fetchContext", new FetchContextFunction());
-        functions.put("uuid", new UUIDFunction());
-        functions.put("id", new IDFunction());
-        functions.put("ksuid", new KSUIDFunction());
-        functions.put("fromIon", new FromIonFunction());
-        functions.put("fileSize", fileSizeFunction);
+        functions.put(EncryptFunction.NAME, new EncryptFunction());
+        functions.put(DecryptFunction.NAME, new DecryptFunction());
+        functions.put(YamlFunction.NAME, new YamlFunction());
+        functions.put(FetchContextFunction.ALIAS, new FetchContextFunction());
+        functions.put(FetchContextFunction.NAME, new FetchContextFunction());
+        functions.put(UUIDFunction.NAME, new UUIDFunction());
+        functions.put(IDFunction.NAME, new IDFunction());
+        functions.put(KSUIDFunction.NAME, new KSUIDFunction());
+        functions.put(FromIonFunction.NAME, new FromIonFunction());
+        functions.put(FileSizeFunction.NAME, fileSizeFunction);
         if (this.errorLogsFunction != null) {
-            functions.put("errorLogs", errorLogsFunction);
+            functions.put(ErrorLogsFunction.NAME, errorLogsFunction);
         }
-        functions.put("randomInt", new RandomIntFunction());
-        functions.put("randomPort", new RandomPortFunction());
-        functions.put("fileExists", fileExistsFunction);
-        functions.put("isFileEmpty", isFileEmptyFunction);
-        functions.put("nanoId", new NanoIDFunction());
-        functions.put("tasksWithState", new TasksWithStateFunction());
+        functions.put(RandomIntFunction.NAME, new RandomIntFunction());
+        functions.put(RandomPortFunction.NAME, new RandomPortFunction());
+        functions.put(FileExistsFunction.NAME, fileExistsFunction);
+        functions.put(IsFileEmptyFunction.NAME, isFileEmptyFunction);
+        functions.put(NanoIDFunction.NAME, new NanoIDFunction());
+        functions.put(TasksWithStateFunction.NAME, new TasksWithStateFunction());
         functions.put(HttpFunction.NAME, httpFunction);
+        if (subflowFunction != null) {
+            functions.put(SubflowFunction.NAME, subflowFunction);
+        }
+        functions.put(IsPublicHolidayFunction.NAME, new IsPublicHolidayFunction());
+        functions.put(IsDayWeekInMonthFunction.NAME, new IsDayWeekInMonthFunction());
+        functions.put(IsWeekendFunction.NAME, new IsWeekendFunction());
+        functions.put(IsLastWorkingDayFunction.NAME, new IsLastWorkingDayFunction());
+        functions.put(DayOfWeekFunction.NAME, new DayOfWeekFunction());
+        functions.put(HourOfDayFunction.NAME, new HourOfDayFunction());
+        functions.put(DayOfMonthFunction.NAME, new DayOfMonthFunction());
+        functions.put(MonthOfYearFunction.NAME, new MonthOfYearFunction());
+        functions.put(LoopOutputsFunction.NAME, new LoopOutputsFunction());
         return functions;
     }
 
@@ -184,5 +203,3 @@ public class Extension extends AbstractExtension {
         return null;
     }
 }
-
-

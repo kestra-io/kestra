@@ -6,20 +6,13 @@ datasources:
     password: k3str4
     dialect: POSTGRES
 
-flyway:
-  datasources:
-    postgres:
-      enabled: true
-      locations:
-        - classpath:migrations/postgres
-      # We must ignore missing migrations as a V6 wrong migration was created and replaced by the V11
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-
 kestra:
   server-type: STANDALONE
   queue:
     type: postgres
+    message-protection:
+      enabled: true
+      limit: 1048576
   repository:
     type: postgres
   storage:
@@ -31,17 +24,33 @@ kestra:
       min-poll-interval: 10ms
       max-poll-interval: 100ms
       poll-switch-interval: 5s
-      message-protection:
-        enabled: true
-        limit: 1048576
   tasks:
     subflow:
       allow-parameter-outputs: true
   server:
     liveness:
       enabled: false
+    termination-grace-period: 5s
     service:
       purge:
         initial-delay: 1h
         fixed-delay: 1d
         retention: 30d
+  grpc:
+    maxRetryAttempts: 1
+    shutdownTimeout: 3s
+  controller:
+    port: ${random.int[20000,32000]} # keep out of the ephemeral port range (32768-60999): an outbound socket could steal a random.port between config resolution and the controller bind
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: ${kestra.controller.port}
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false

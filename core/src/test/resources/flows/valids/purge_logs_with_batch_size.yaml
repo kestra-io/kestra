@@ -1,0 +1,8 @@
+id: purge_logs_with_batch_size
+namespace: io.kestra.tests
+
+tasks:
+  - id: purge_logs
+    type: io.kestra.plugin.core.log.PurgeLogs
+    endDate: "{{ now() | dateAdd(2, 'HOURS') }}"
+    batchSize: 2

@@ -1,14 +1,14 @@
 package io.kestra.core.server;
 
-import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import jakarta.validation.constraints.NotNull;
-
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import jakarta.annotation.Nullable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Default factory service for constructing {@link ServiceInstance} objects.
@@ -21,7 +21,7 @@ public class LocalServiceStateFactory {
 
     @Inject
     public LocalServiceStateFactory(final ServerConfig serverConfig,
-                                    final ServerInstanceFactory serverInstanceFactory) {
+        final ServerInstanceFactory serverInstanceFactory) {
         this.serverConfig = serverConfig;
         this.serverInstanceFactory = serverInstanceFactory;
     }
@@ -33,7 +33,7 @@ public class LocalServiceStateFactory {
      * @return a new {@link ServiceInstance}.
      */
     public LocalServiceState newLocalServiceState(@NotNull final Service service,
-                                                  @Nullable final Map<String, Object> properties) {
+        @Nullable final Map<String, Object> properties) {
         Objects.requireNonNull(service, "Cannot create ServiceInstance for null service");
 
         final Instant now = Instant.now();

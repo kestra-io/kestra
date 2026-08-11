@@ -10,8 +10,4 @@ tasks:
         message: Hello World
       - id: pause
         type: io.kestra.plugin.core.flow.Pause
-        delay: PT5S
-        tasks:
-          - id: log-pause
-            type: io.kestra.plugin.core.log.Log
-            message: Hello World
+        pauseDuration: PT5S

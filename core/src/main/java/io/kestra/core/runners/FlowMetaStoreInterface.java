@@ -1,13 +1,25 @@
 package io.kestra.core.runners;
 
+import java.util.Collection;
+import java.util.Optional;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 
-import java.util.Collection;
-import java.util.Optional;
-
 public interface FlowMetaStoreInterface {
+
+    /**
+     * Checks whether a given namespace exists.
+     * <p>
+     * A namespace is considered existing if at least one Flow is within the namespace or a parent namespace.
+     *
+     * @param tenant The tenant ID
+     * @param namespace The namespace - cannot be null.
+     * @return {@code true} if the namespace exist. Otherwise {@link false}.
+     */
+    boolean isNamespaceExists(String tenant, String namespace);
+
     /**
      * Find all flows.
      * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
@@ -19,11 +31,6 @@ public interface FlowMetaStoreInterface {
      * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
      */
     Optional<FlowInterface> findById(String tenantId, String namespace, String id, Optional<Integer> revision);
-
-    /**
-     * Whether the FlowExecutorInterface is ready to be used.
-     */
-    Boolean isReady();
 
     /**
      * Find a flow.
@@ -49,4 +56,6 @@ public interface FlowMetaStoreInterface {
             Optional.of(execution.getFlowRevision())
         );
     }
+
+    Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution);
 }

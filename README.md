@@ -5,11 +5,11 @@
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Event-Driven Declarative Orchestration Platform
+    Open-source orchestration platform for data, AI, and infrastructure workflows
 </h1>
 
 <div align="center">
- <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?color=blueviolet" alt="Last Version" /></a>
+ <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/v/tag/kestra-io/kestra.svg?sort=semver&include_prereleases&color=blueviolet" alt="Last Version" /></a>
   <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?color=blueviolet" alt="License" /></a>
   <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra?color=blueviolet&logo=github" alt="Github star" /></a> <br>
 <a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?color=blueviolet" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
@@ -19,9 +19,12 @@
 <br />
 
 <p align="center">
-    <a href="https://x.com/kestra_io"><img height="25" src="https://kestra.io/twitter.svg" alt="X(formerly Twitter)" /></a> &nbsp;
-    <a href="https://www.linkedin.com/company/kestra/"><img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" /></a> &nbsp;
-<a href="https://www.youtube.com/@kestra-io"><img height="25" src="https://kestra.io/youtube.svg" alt="youtube" /></a> &nbsp;
+  <a href="https://x.com/kestra_io" style="margin: 0 10px;">
+        <img height="25" src="https://kestra.io/twitter.svg" alt="twitter" width="35" height="25" /></a>
+  <a href="https://www.linkedin.com/company/kestra/" style="margin: 0 10px;">
+        <img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" width="35" height="25" /></a> 
+  <a href="https://www.youtube.com/@kestra-io" style="margin: 0 10px;">
+        <img height="25" src="https://kestra.io/youtube.svg" alt="youtube" width="35" height="25" /></a>
 </p>
 
 <p align="center">
@@ -41,7 +44,21 @@
 
 ## 🌟 What is Kestra?
 
-Kestra is an open-source, event-driven orchestration platform that makes both **scheduled** and **event-driven** workflows easy. By bringing **Infrastructure as Code** best practices to data, process, and microservice orchestration, you can build reliable [workflows](https://kestra.io/docs/getting-started) directly from the UI in just a few lines of YAML.
+Kestra is an open-source, event-driven orchestration platform for data, AI, and infrastructure workflows. It unifies **scheduled** and **event-driven** automation behind a declarative, language-agnostic interface. By bringing **Infrastructure as Code** best practices to your data, process, and microservice pipelines, you can build reliable [workflows](https://kestra.io/docs/quickstart) directly from the UI in just a few lines of YAML.
+
+## 📖 Table of Contents
+
+- [🚀 Quick Start](#-quick-start)
+- [🧩 Plugin Ecosystem](#-plugin-ecosystem)
+- [📚 Key Concepts](#-key-concepts)
+- [🎨 Build Workflows Visually](#-build-workflows-visually)
+- [🔧 Extensible and Developer-Friendly](#-extensible-and-developer-friendly)
+- [🌐 Join the Community](#-join-the-community)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [⭐️ Stay Updated](#️-stay-updated)
+
+
 
 **Key Features:**
 - **Everything as Code and from the UI:** keep **workflows as code** with a **Git Version Control** integration, even when building them from the UI.
@@ -56,14 +73,19 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 
 🧑‍💻 The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is **always managed declaratively in code**, even if you modify your workflows in other ways (UI, CI/CD, Terraform, API calls).
 
-
-<p align="center">
-  <img src="https://kestra.io/adding-tasks.gif" alt="Adding new tasks in the UI">
-</p>
-
 ---
 
 ## 🚀 Quick Start
+
+### Launch on AWS (CloudFormation)
+
+Deploy Kestra on AWS using our CloudFormation template:
+
+[![Launch Stack](https://cdn.jsdelivr.net/gh/buildkite/cloudformation-launch-stack-button-svg@master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kestra-deployment-templates.s3.eu-west-3.amazonaws.com/aws/cloudformation/ec2-rds-s3/kestra-oss.yaml&stackName=kestra-oss)
+
+### Launch on Google Cloud (Terraform deployment)
+
+Deploy Kestra on Google Cloud Infrastructure Manager using [our Terraform module](https://github.com/kestra-io/deployment-templates/tree/main/gcp/terraform/infrastructure-manager/vm-sql-gcs).
 
 ### Get Started Locally in 5 Minutes
 
@@ -72,30 +94,42 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 Make sure that Docker is running. Then, start Kestra in a single command:
 
 ```bash
-docker run --pull=always --rm -it -p 8080:8080 --user=root \
+docker run --pull=always -it -p 8080:8080 --user=root \
+  --name kestra --restart=always \
+  -v kestra_data:/app/storage \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /tmp:/tmp kestra/kestra:latest server local
+  -v /tmp:/tmp \
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use PowerShell:
 ```powershell
-docker run --pull=always --rm -it -p 8080:8080 --user=root `
-    -v "/var/run/docker.sock:/var/run/docker.sock" `
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root `
+  --name kestra --restart=always `
+  -v "kestra_data:/app/storage" `
+  -v "/var/run/docker.sock:/var/run/docker.sock" `
+  -v "C:/Temp:/tmp" `
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use Command Prompt (CMD):
 ```cmd
-docker run --pull=always --rm -it -p 8080:8080 --user=root ^
-    -v "/var/run/docker.sock:/var/run/docker.sock" ^
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root ^
+  --name kestra --restart=always ^
+  -v "kestra_data:/app/storage" ^
+  -v "/var/run/docker.sock:/var/run/docker.sock" ^
+  -v "C:/Temp:/tmp" ^
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use WSL (Linux-based environment in Windows):
 ```bash
-docker run --pull=always --rm -it -p 8080:8080 --user=root \
-    -v "/var/run/docker.sock:/var/run/docker.sock" \
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root \
+  --name kestra --restart=always \
+  -v kestra_data:/app/storage \
+  -v "/var/run/docker.sock:/var/run/docker.sock" \
+  -v "/mnt/c/Temp:/tmp" \
+  kestra/kestra:latest server local
 ```
 
 Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
@@ -202,7 +236,7 @@ Stay connected and get support:
 We welcome contributions of all kinds!
 
 - **Report Issues:** Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/kestra-io/kestra/issues).
-- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contributing) for beginner-friendly tasks to tackle first.
+- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/contribute-to-kestra) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contributing) for beginner-friendly tasks to tackle first.
 - **Develop Plugins:** Build and share plugins using our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/).
 - **Contribute to our Docs:** Contribute edits or updates to keep our [documentation](https://github.com/kestra-io/docs) top-notch.
 
@@ -223,4 +257,3 @@ Give our repository a star to stay informed about the latest features and update
 ---
 
 Thank you for considering Kestra for your workflow orchestration needs. We can't wait to see what you'll build!
-

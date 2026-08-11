@@ -1,21 +1,24 @@
 package io.kestra.core.utils;
 
-import io.micronaut.context.annotation.Value;
-import org.apache.commons.lang3.StringUtils;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-
 import java.net.URI;
-import io.micronaut.core.annotation.Nullable;
+
+import org.apache.commons.lang3.StringUtils;
+
+import io.kestra.core.contexts.configuration.KestraConfiguration;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
+
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class UriProvider {
-    @Nullable
-    @Value("${kestra.url:}")
-    String uri;
+    @Inject
+    KestraConfiguration kestraConfiguration;
 
     protected URI build(String url) {
+        String uri = kestraConfiguration.url();
         if (uri == null || uri.isEmpty()) {
             return null;
         }
@@ -28,27 +31,48 @@ public class UriProvider {
     }
 
     public URI executionUrl(Execution execution) {
-        return this.build("/ui/" +
-            (execution.getTenantId() != null ? execution.getTenantId() + "/" : "") +
-            "executions/" +
-            execution.getNamespace() + "/" +
-            execution.getFlowId() + "/" +
-            execution.getId());
+        return executionUrl(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId());
+    }
+
+    public URI executionUrl(String tenantId, String namespace, String flowId, String id) {
+        return this.build(
+            "/ui/" +
+                (tenantId != null ? tenantId + "/" : "") +
+                "executions/" +
+                namespace + "/" +
+                flowId + "/" +
+                id
+        );
     }
 
     public URI flowUrl(Execution execution) {
-        return this.build("/ui/" +
-            (execution.getTenantId() != null ? execution.getTenantId() + "/" : "") +
-            "flows/" +
-            execution.getNamespace() + "/" +
-            execution.getFlowId());
+        return this.build(
+            "/ui/" +
+                (execution.getTenantId() != null ? execution.getTenantId() + "/" : "") +
+                "flows/" +
+                execution.getNamespace() + "/" +
+                execution.getFlowId()
+        );
     }
 
-    public URI flowUrl(Flow flow) {
-        return this.build("/ui/" +
-            (flow.getTenantId() != null ? flow.getTenantId() + "/" : "") +
-            "flows/" +
-            flow.getNamespace() + "/" +
-            flow.getId());
+    public URI flowUrl(FlowInterface flow) {
+        return this.build(
+            "/ui/" +
+                (flow.getTenantId() != null ? flow.getTenantId() + "/" : "") +
+                "flows/" +
+                flow.getNamespace() + "/" +
+                flow.getId()
+        );
+    }
+
+    public URI webhookUrl(FlowInterface flow, AbstractWebhookTrigger trigger) {
+        return this.build(
+            "/api/v1/" +
+                (flow.getTenantId() != null ? flow.getTenantId() + "/" : "") +
+                "executions/webhook/" +
+                flow.getNamespace() + "/" +
+                flow.getId() + "/" +
+                trigger.getKey()
+        );
     }
 }

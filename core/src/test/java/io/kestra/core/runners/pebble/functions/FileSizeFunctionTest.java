@@ -1,35 +1,39 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.annotation.Property;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+
+import io.micronaut.context.annotation.Property;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.error.PebbleException;
+import jakarta.inject.Inject;
+
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hibernate.validator.internal.util.Contracts.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest(rebuildContext = true)
+@MicronautTest(rebuildContext = true)
 @Execution(ExecutionMode.SAME_THREAD)
 public class FileSizeFunctionTest {
-
-    private static final String NAMESPACE = "my.namespace";
     private static final String FLOW = "flow";
     private static final String FILE_TEXT = "Hello from a task output";
     private static final String FILE_SIZE = "24";
@@ -40,18 +44,23 @@ public class FileSizeFunctionTest {
     @Inject
     VariableRenderer variableRenderer;
 
+    @Inject
+    NamespaceFactory namespaceFactory;
+
     @Test
     void returnsCorrectSize_givenStringUri_andCurrentExecution() throws IOException, IllegalVariableEvaluationException {
+        String namespace = TestsUtils.randomNamespace();
         String executionId = IdUtils.create();
-        URI internalStorageURI = getInternalStorageURI(executionId);
+        URI internalStorageURI = getInternalStorageURI(namespace, executionId);
         URI internalStorageFile = getInternalStorageFile(internalStorageURI);
 
         // test for an authorized execution
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", FLOW,
-                "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", executionId)
         );
 
@@ -60,31 +69,32 @@ public class FileSizeFunctionTest {
     }
 
     @Test
-    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
-        String namespace = "io.kestra.tests";
-        String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream(FILE_TEXT.getBytes()));
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        URI file = createNsFile(namespace, false, FILE_TEXT);
 
-        String render = variableRenderer.render("{{ fileSize('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT)));
+        String render = variableRenderer
+            .render("{{ fileSize('" + file.getPath() + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT)));
         assertThat(render).isEqualTo(FILE_SIZE);
     }
 
     @Test
     void returnsCorrectSize_givenStringUri_andParentExecution() throws IOException, IllegalVariableEvaluationException {
+        String namespace = TestsUtils.randomNamespace();
         String executionId = IdUtils.create();
-        URI internalStorageURI = getInternalStorageURI(executionId);
+        URI internalStorageURI = getInternalStorageURI(namespace, executionId);
         URI internalStorageFile = getInternalStorageFile(internalStorageURI);
 
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", FLOW,
-                "namespace", NAMESPACE,
+                "namespace", namespace,
                 "executionId", executionId,
                 "tenantId", MAIN_TENANT
             )
@@ -96,15 +106,17 @@ public class FileSizeFunctionTest {
 
     @Test
     void shouldReadFromAnotherExecution() throws IOException, IllegalVariableEvaluationException {
+        String namespace = TestsUtils.randomNamespace();
         String executionId = IdUtils.create();
-        URI internalStorageURI = getInternalStorageURI(executionId);
+        URI internalStorageURI = getInternalStorageURI(namespace, executionId);
         URI internalStorageFile = getInternalStorageFile(internalStorageURI);
 
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", IdUtils.create())
         );
 
@@ -113,44 +125,19 @@ public class FileSizeFunctionTest {
     }
 
     @Test
-    void shouldThrowIllegalArgumentException_givenTrigger_andParentExecution_andMissingNamespace() throws IOException {
-        String executionId = IdUtils.create();
-        URI internalStorageURI = getInternalStorageURI(executionId);
-        URI internalStorageFile = getInternalStorageFile(internalStorageURI);
-
-        Map<String, Object> variables = Map.of(
-            "flow", Map.of(
-                "id", "subflow",
-                "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
-            "execution", Map.of("id", IdUtils.create()),
-            "trigger", Map.of(
-                "flowId", FLOW,
-                "executionId", executionId,
-                "tenantId", MAIN_TENANT
-            )
-        );
-
-        Exception ex = assertThrows(
-            IllegalArgumentException.class,
-            () -> variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables)
-        );
-
-        assertTrue(ex.getMessage().startsWith("Unable to read the file"), "Exception message doesn't match expected one");
-    }
-
-    @Test
     void returnsCorrectSize_givenUri_andCurrentExecution() throws IOException, IllegalVariableEvaluationException {
+        String namespace = TestsUtils.randomNamespace();
         String executionId = IdUtils.create();
-        URI internalStorageURI = getInternalStorageURI(executionId);
+        URI internalStorageURI = getInternalStorageURI(namespace, executionId);
         URI internalStorageFile = getInternalStorageFile(internalStorageURI);
 
         // test for an authorized execution
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", FLOW,
-                "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", executionId),
             "file", internalStorageFile
         );
@@ -161,19 +148,21 @@ public class FileSizeFunctionTest {
 
     @Test
     void returnsCorrectSize_givenUri_andParentExecution() throws IOException, IllegalVariableEvaluationException {
+        String namespace = TestsUtils.randomNamespace();
         String executionId = IdUtils.create();
-        URI internalStorageURI = getInternalStorageURI(executionId);
+        URI internalStorageURI = getInternalStorageURI(namespace, executionId);
         URI internalStorageFile = getInternalStorageFile(internalStorageURI);
 
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", FLOW,
-                "namespace", NAMESPACE,
+                "namespace", namespace,
                 "executionId", executionId,
                 "tenantId", MAIN_TENANT
             ),
@@ -190,11 +179,14 @@ public class FileSizeFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme")
         );
 
-        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ fileSize('unsupported://path-to/file.txt') }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileSize('unsupported://path-to/file.txt') }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).contains("Cannot process the URI unsupported://path-to/file.txt: scheme not supported.");
     }
 
     @Test
@@ -204,12 +196,14 @@ public class FileSizeFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
 
-        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ fileSize(file) }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileSize(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
     @Test
@@ -220,7 +214,8 @@ public class FileSizeFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
@@ -237,23 +232,26 @@ public class FileSizeFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
 
-        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ fileSize(file) }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fileSize(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
-
     @Test
-    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException {
-        URI file = createNsFile(false);
+    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        URI file = createNsFile(namespace, false, "Hello World");
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "flow",
-                "namespace", "io.kestra.tests",
-                "tenantId", MAIN_TENANT),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
         );
@@ -262,13 +260,15 @@ public class FileSizeFunctionTest {
     }
 
     @Test
-    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException {
-        URI file = createNsFile(true);
+    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        URI file = createNsFile(namespace, true, "Hello World");
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "flow",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
         );
@@ -276,22 +276,21 @@ public class FileSizeFunctionTest {
         assertThat(variableRenderer.render("{{ fileSize(nsfile) }}", variables)).isEqualTo("11");
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
-        String namespace = "io.kestra.tests";
+    private URI createNsFile(String namespace, boolean nsInAuthority, String value) throws IOException, URISyntaxException {
         String filePath = "%sfile.txt".formatted(IdUtils.create());
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("%sfile".formatted(IdUtils.create()), ".txt");
+        File tempFile = Files.createTempFile(Path.of("/tmp"), "%sfile".formatted(IdUtils.create()), ".txt").toFile();
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }
 
-    private URI getInternalStorageURI(String executionId) {
-        return URI.create("/" + NAMESPACE.replace(".", "/") + "/" + FLOW + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
+    private URI getInternalStorageURI(String namespace, String executionId) {
+        return URI.create("/" + namespace.replace(".", "/") + "/" + FLOW + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
     }
 
     private URI getInternalStorageFile(URI internalStorageURI) throws IOException {

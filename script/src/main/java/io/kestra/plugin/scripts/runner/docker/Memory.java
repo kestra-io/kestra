@@ -1,6 +1,7 @@
 package io.kestra.plugin.scripts.runner.docker;
 
 import io.kestra.core.models.property.Property;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

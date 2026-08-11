@@ -1,19 +1,19 @@
 package io.kestra.core.models.executions;
 
-import io.micronaut.core.annotation.Introspected;
-import lombok.Builder;
-import lombok.Value;
-import io.kestra.core.models.tasks.Output;
-import io.kestra.core.models.triggers.AbstractTrigger;
-
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+
+import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.triggers.AbstractTrigger;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Value;
 
 @Value
-@Builder
-@Introspected
+@Builder(toBuilder = true)
 public class ExecutionTrigger {
     @NotNull
     String id;
@@ -21,6 +21,7 @@ public class ExecutionTrigger {
     @NotNull
     String type;
 
+    @Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
     Map<String, Object> variables;
 
     URI logFile;

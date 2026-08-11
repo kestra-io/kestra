@@ -1,5 +1,16 @@
 package io.kestra.jdbc.repository;
 
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
+import io.kestra.core.contexts.configuration.SystemFlowsConfiguration;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -9,65 +20,38 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.executions.statistics.ExecutionCount;
-import io.kestra.core.models.executions.statistics.ExecutionStatistics;
-import io.kestra.core.models.executions.statistics.Flow;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.ExecutorState;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
+import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.NamespaceUtils;
-import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
-import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
+import io.kestra.executor.ExecutionStateStore;
+import io.kestra.executor.ExecutorContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
-import io.micronaut.context.ApplicationContext;
+
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.*;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.Comparator;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcQueueIndexerInterface<Execution> {
+public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRepository<Execution> implements ExecutionRepositoryInterface, ExecutionStateStore {
     private static final int FETCH_SIZE = 100;
     private static final Field<String> STATE_CURRENT_FIELD = field("state_current", String.class);
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     private static final Field<Object> START_DATE_FIELD = field("start_date");
-    private static final Condition NORMAL_KIND_CONDITION = field("kind").isNull();
+    private static final Condition NORMAL_KIND_CONDITION = field("kind").isNull().or(field("kind").eq(ExecutionKind.NORMAL.name()));
 
-    protected final io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository;
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
-    private final ApplicationContext applicationContext;
-    protected final AbstractJdbcExecutorStateStorage executorStateStorage;
-
-    private QueueInterface<Execution> executionQueue;
-    private final NamespaceUtils namespaceUtils;
+    private final SystemFlowsConfiguration systemFlowsConfiguration;
 
     private final JdbcFilterService filterService;
 
@@ -97,28 +81,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @SuppressWarnings("unchecked")
     public AbstractJdbcExecutionRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository,
-        ApplicationContext applicationContext,
-        AbstractJdbcExecutorStateStorage executorStateStorage,
-        JdbcFilterService filterService
-    ) {
-        this.jdbcRepository = jdbcRepository;
-        this.executorStateStorage = executorStateStorage;
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-        this.namespaceUtils = applicationContext.getBean(NamespaceUtils.class);
-
-        // we inject ApplicationContext in order to get the ExecutionQueue lazy to avoid StackOverflowError
-        this.applicationContext = applicationContext;
-
+        ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher,
+        SystemFlowsConfiguration systemFlowsConfiguration,
+        JdbcFilterService filterService) {
+        super(jdbcRepository);
+        this.eventPublisher = eventPublisher;
+        this.systemFlowsConfiguration = systemFlowsConfiguration;
         this.filterService = filterService;
-    }
-
-    @SuppressWarnings("unchecked")
-    private QueueInterface<Execution> executionQueue() {
-        if (this.executionQueue == null) {
-            this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
-        }
-
-        return this.executionQueue;
     }
 
     /**
@@ -126,28 +95,18 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
      **/
     @Override
     public Flux<Execution> findAllByTriggerExecutionId(String tenantId,
-                                                       String triggerExecutionId) {
-        return Flux.create(
-            emitter -> this.jdbcRepository
-                .getDslContextWrapper()
-                .transaction(configuration -> {
-                    SelectConditionStep<Record1<Object>> select = DSL
-                        .using(configuration)
-                        .select(field("value"))
-                        .from(this.jdbcRepository.getTable())
-                        .where(this.defaultFilter(tenantId))
-                        .and(field("trigger_execution_id").eq(triggerExecutionId));
+        String triggerExecutionId) {
+        var condition = field("trigger_execution_id").eq(triggerExecutionId);
+        return findAsync(tenantId, condition);
+    }
 
-                    // fetchSize will fetch rows 100 by 100 even for databases where the driver loads all in memory
-                    // using a stream will fetch lazily, otherwise all fetches would be done before starting emitting the items
-                    try (var stream = select.fetchSize(FETCH_SIZE).stream()) {
-                        stream.map(this.jdbcRepository::map).forEach(emitter::next);
-                    } finally {
-                        emitter.complete();
-                    }
-                }),
-            FluxSink.OverflowStrategy.BUFFER
-        );
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Flux<Execution> findAllByTrigger(TriggerId trigger) {
+        var condition = field("trigger_id").eq(trigger.uid());
+        return findAsync(trigger.getTenantId(), condition);
     }
 
     /**
@@ -155,20 +114,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
      **/
     @Override
     public Optional<Execution> findLatestForStates(String tenantId, String namespace, String flowId, List<State.Type> states) {
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                Select<Record1<Object>> from = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId, false))
-                    .and(field("namespace").eq(namespace))
-                    .and(field("flow_id").eq(flowId))
-                    .and(statesFilter(states))
-                    .orderBy(field("start_date").desc());
-                return this.jdbcRepository.fetchOne(from);
-            });
+        var condition = field("namespace").eq(namespace)
+            .and(field("flow_id").eq(flowId))
+            .and(this.statesFilter(states));
+        return findOne(tenantId, condition, field("start_date").desc());
+    }
+
+    @Override
+    public List<String> findDistinctFieldValues(String tenantId, QueryFilter.Field field, List<QueryFilter> filters, Pageable pageable) {
+        return findDistinctFieldValues(tenantId, field, filters, pageable, QueryFilter.Resource.EXECUTION);
     }
 
     @Override
@@ -181,18 +135,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return findById(tenantId, id, false, false);
     }
 
+    @Override
+    public Execution findById(String id) {
+        return findOne(DSL.noCondition(), KEY_FIELD.eq(id)).orElse(null);
+    }
+
     public Optional<Execution> findById(String tenantId, String id, boolean allowDeleted, boolean withAccessControl) {
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                Select<Record1<Object>> from = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(withAccessControl ? this.defaultFilter(tenantId, allowDeleted) : this.defaultFilterWithNoACL(tenantId, allowDeleted))
-                    .and(field("key").eq(id));
-                return this.jdbcRepository.fetchOne(from);
-            });
+        Condition defaultFilter = withAccessControl ? this.defaultFilter(tenantId, allowDeleted) : this.defaultFilterWithNoACL(tenantId, allowDeleted);
+        Condition condition = KEY_FIELD.eq(id);
+        return findOne(defaultFilter, condition);
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);
@@ -201,12 +152,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return findCondition(query, Map.of());
     }
 
-    abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
-
-    @Override
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return findCondition(value, operation);
-    }
+    abstract public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation);
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
@@ -220,20 +166,16 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable List<QueryFilter> filters
 
     ) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, null));
+    }
 
-                SelectConditionStep<Record1<Object>> select = this.findSelect(
-                    context,
-                    tenantId,
-                    filters
-
-                );
-
-                return this.jdbcRepository.fetchPage(context, select, pageable);
-            });
+    @Override
+    public ArrayListTotal<Execution> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters,
+        @Nullable DateFilter dateFilter) {
+        return findPage(pageable, tenantId, this.computeFindCondition(filters, dateFilter));
     }
 
     @Override
@@ -248,13 +190,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter,
-        boolean deleted
-    ) {
+        boolean deleted) {
         return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()
-                .transaction(configuration -> {
+                .transaction(configuration ->
+                {
                     DSLContext context = DSL.using(configuration);
 
                     SelectConditionStep<Record1<Object>> select = this.findSelect(
@@ -269,7 +210,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         state,
                         labels,
                         triggerExecutionId,
-                        childFilter,
                         deleted
                     );
 
@@ -285,23 +225,46 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         );
     }
 
-    private SelectConditionStep<Record1<Object>> findSelect(
-        DSLContext context,
-        @Nullable String tenantId,
-        @Nullable List<QueryFilter> filters
-    ) {
+    private Condition computeFindCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
+        boolean hasKindFilter = filters != null && filters.stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
+        Condition dateFilterCondition = buildDateFilterCondition(filters, dateFilter);
+        return hasKindFilter ? dateFilterCondition : dateFilterCondition.and(NORMAL_KIND_CONDITION);
+    }
 
-        SelectConditionStep<Record1<Object>> select = context
-            .select(
-                field("value")
-            )
-            .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter(tenantId, false))
-            .and(NORMAL_KIND_CONDITION);
+    private static boolean containsLeafForKind(QueryFilter filter) {
+        if (filter.isLeaf()) {
+            return filter.field() == QueryFilter.Field.KIND;
+        }
+        return filter.children().stream().anyMatch(AbstractJdbcExecutionRepository::containsLeafForKind);
+    }
 
-        select = select.and(this.filter(filters, "start_date", Resource.EXECUTION));
+    @Override
+    protected Name getColumnName(QueryFilter.Field field) {
+        if (field == QueryFilter.Field.TASK_ID) {
+            return DSL.quotedName("loop_run_task_id");
+        }
+        return super.getColumnName(field);
+    }
 
-        return select;
+    private Condition buildDateFilterCondition(@Nullable List<QueryFilter> filters, @Nullable DateFilter dateFilter) {
+        if (dateFilter == DateFilter.START_OR_END_DATE && filters != null) {
+            List<QueryFilter> dateBoundaryFilters = filters.stream()
+                .filter(f -> f.field() == QueryFilter.Field.START_DATE || f.field() == QueryFilter.Field.END_DATE)
+                .toList();
+            List<QueryFilter> otherFilters = filters.stream()
+                .filter(f -> f.field() != QueryFilter.Field.START_DATE && f.field() != QueryFilter.Field.END_DATE)
+                .toList();
+
+            Condition onStartDate = this.filter(dateBoundaryFilters, fieldsMapping.get(Executions.Fields.START_DATE), Resource.EXECUTION);
+            Condition onEndDate = this.filter(dateBoundaryFilters, fieldsMapping.get(Executions.Fields.END_DATE), Resource.EXECUTION);
+            Condition dateOrCondition = dateBoundaryFilters.isEmpty() ? DSL.noCondition() : onStartDate.or(onEndDate);
+            return dateOrCondition.and(this.filter(otherFilters, fieldsMapping.get(Executions.Fields.START_DATE), Resource.EXECUTION));
+        }
+
+        String dateColumn = dateFilter == DateFilter.END_DATE
+            ? fieldsMapping.get(Executions.Fields.END_DATE)
+            : fieldsMapping.get(dateFilterField());
+        return this.filter(filters, dateColumn, Resource.EXECUTION);
     }
 
     private SelectConditionStep<Record1<Object>> findSelect(
@@ -316,17 +279,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter,
-        boolean deleted
-    ) {
-        SelectConditionStep<Record1<Object>> select = context
+        boolean deleted) {
+        var select = context
             .select(
-                field("value")
+                VALUE_FIELD
             )
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, deleted));
 
-        select = filteringQuery(select, scope, namespace, flowId, null, query, labels, triggerExecutionId, childFilter);
+        select = filteringQuery(select, scope, namespace, flowId, null, query, labels, triggerExecutionId);
 
         if (startDate != null) {
             select = select.and(START_DATE_FIELD.greaterOrEqual(startDate.toOffsetDateTime()));
@@ -344,254 +305,18 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public Flux<Execution> findAllAsync(@Nullable String tenantId) {
-        return Flux.create(emitter -> this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()) {
-                    stream.map((Record record) -> jdbcRepository.map(record))
-                        .forEach(emitter::next);
-                } finally {
-                    emitter.complete();
-                }
-            }), FluxSink.OverflowStrategy.BUFFER);
-    }
-
-    @Override
     public ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(field("namespace").eq(namespace))
-                    .and(field("flow_id").eq(id));
-
-                return this.jdbcRepository.fetchPage(context, select, pageable);
-            });
+        var condition = field("namespace").eq(namespace).and(field("flow_id").eq(id));
+        return findPage(pageable, tenantId, condition);
     }
 
     @Override
-    public List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
-        @Nullable String query,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy
-    ) {
-        ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
-        ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
-
-        Results results = dailyStatisticsQueryForAllTenants(
-            List.of(
-                STATE_CURRENT_FIELD
-            ),
-            query,
-            namespace,
-            flowId,
-            null,
-            finalStartDate,
-            finalEndDate,
-            groupBy,
-            null
-        );
-
-        return dailyStatisticsQueryMapRecord(
-            results.resultsOrRows()
-                .getFirst()
-                .result(),
-            finalStartDate,
-            finalEndDate,
-            groupBy
-        );
-    }
-
-    @Override
-    public List<DailyExecutionStatistics> dailyStatistics(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> states
-    ) {
-        ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
-        ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
-
-        Results results = dailyStatisticsQuery(
-            List.of(
-                STATE_CURRENT_FIELD
-            ),
-            query,
-            tenantId,
-            scope,
-            namespace,
-            flowId,
-            null,
-            finalStartDate,
-            finalEndDate,
-            groupBy,
-            states
-        );
-
-        return dailyStatisticsQueryMapRecord(
-            results.resultsOrRows()
-                .getFirst()
-                .result(),
-            finalStartDate,
-            finalEndDate,
-            groupBy
-        );
-    }
-
-    private List<DailyExecutionStatistics> dailyStatisticsQueryMapRecord(
-        Result<Record> records,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupType
-    ) {
-        DateUtils.GroupType groupByType = groupType != null ? groupType : DateUtils.groupByType(Duration.between(startDate, endDate));
-
-        return fillDate(records
-            .stream()
-            .map(record ->
-                ExecutionStatistics.builder()
-                    .date(this.jdbcRepository.getDate(record, groupByType.val()))
-                    .durationMax(record.get("duration_max", Long.class))
-                    .durationMin(record.get("duration_min", Long.class))
-                    .durationSum(record.get("duration_sum", Long.class))
-                    .stateCurrent(record.get("state_current", String.class))
-                    .count(record.get("count", Long.class))
-                    .build()
-            )
-            .collect(Collectors.groupingBy(ExecutionStatistics::getDate))
-            .entrySet()
-            .stream()
-            .map(dateResultEntry -> dailyExecutionStatisticsMap(dateResultEntry.getKey(), dateResultEntry.getValue(), groupByType.val()))
-            .sorted(Comparator.comparing(DailyExecutionStatistics::getStartDate))
-            .toList(), startDate, endDate);
-    }
-
-    private Results dailyStatisticsQueryForAllTenants(
-        List<Field<?>> fields,
-        @Nullable String query,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        List<FlowFilter> flows,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state
-    ) {
-        return dailyStatisticsQuery(
-            this.defaultFilter(),
-            fields,
-            query,
-            null,
-            namespace,
-            flowId,
-            flows,
-            startDate,
-            endDate,
-            groupBy,
-            state
-        );
-    }
-
-    private Results dailyStatisticsQuery(
-        List<Field<?>> fields,
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        List<FlowFilter> flows,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state
-    ) {
-        return dailyStatisticsQuery(
-            this.defaultFilter(tenantId),
-            fields,
-            query,
-            scope,
-            namespace,
-            flowId,
-            flows,
-            startDate,
-            endDate,
-            groupBy,
-            state
-        );
-    }
-
-    private Results dailyStatisticsQuery(
-        Condition defaultFilter,
-        List<Field<?>> fields,
-        @Nullable String query,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        List<FlowFilter> flows,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy,
-        @Nullable List<State.Type> state
-    ) {
-        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate), "start_date", groupBy));
-        List<Field<?>> selectFields = new ArrayList<>(fields);
-        selectFields.addAll(List.of(
-            DSL.count().as("count"),
-            DSL.min(field("state_duration", Long.class)).as("duration_min"),
-            DSL.max(field("state_duration", Long.class)).as("duration_max"),
-            DSL.sum(field("state_duration", Long.class)).as("duration_sum")
-        ));
-        selectFields.addAll(groupByFields(Duration.between(startDate, endDate), "start_date", groupBy, true));
-
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<?> select = context
-                    .select(selectFields)
-                    .from(this.jdbcRepository.getTable())
-                    .where(defaultFilter)
-                    .and(NORMAL_KIND_CONDITION)
-                    .and(START_DATE_FIELD.greaterOrEqual(startDate.toOffsetDateTime()))
-                    .and(START_DATE_FIELD.lessOrEqual(endDate.toOffsetDateTime()));
-
-                select = filteringQuery(select, scope, namespace, flowId, flows, query, null, null, null);
-
-                if (state != null) {
-                    select = select.and(this.statesFilter(state));
-                }
-
-                List<Field<?>> groupFields = new ArrayList<>(fields);
-
-                groupFields.addAll(dateFields);
-
-                SelectHavingStep<?> finalQuery = select
-                    .groupBy(groupFields);
-
-                return finalQuery.fetchMany();
-            });
+    public Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return findAllAsync(tenantId);
+        }
+        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION);
+        return findAsync(defaultFilter(tenantId), condition);
     }
 
     private <T extends Record> SelectConditionStep<T> filteringQuery(
@@ -602,14 +327,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable List<FlowFilter> flows,
         @Nullable String query,
         @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter
-    ) {
+        @Nullable String triggerExecutionId) {
         if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
             if (scope.contains(FlowScope.USER)) {
-                select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
+                select = select.and(field("namespace").ne(systemFlowsConfiguration.namespace()));
             } else if (scope.contains(FlowScope.SYSTEM)) {
-                select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
+                select = select.and(field("namespace").eq(systemFlowsConfiguration.namespace()));
             }
         }
 
@@ -617,7 +340,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             if (flowId != null) {
                 select = select.and(field("namespace").eq(namespace));
             } else {
-                select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+                select = select.and(DSL.or(field("namespace").eq(namespace), field("namespace").startsWith(namespace + ".")));
             }
         }
 
@@ -633,251 +356,59 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             select = select.and(field("trigger_execution_id").eq(triggerExecutionId));
         }
 
-        if (childFilter != null) {
-            if (childFilter.equals(ChildFilter.CHILD)) {
-                select = select.and(field("trigger_execution_id").isNotNull());
-            } else if (childFilter.equals(ChildFilter.MAIN)) {
-                select = select.and(field("trigger_execution_id").isNull());
-            }
-        }
-
         if (flows != null) {
-            select = select.and(DSL.or(
-                flows
-                    .stream()
-                    .map(e -> field("namespace").eq(e.getNamespace())
-                        .and(field("flow_id").eq(e.getId()))
-                    )
-                    .toList()
-            ));
+            select = select.and(
+                DSL.or(
+                    flows
+                        .stream()
+                        .map(
+                            e -> field("namespace").eq(e.getNamespace())
+                                .and(field("flow_id").eq(e.getId()))
+                        )
+                        .toList()
+                )
+            );
         }
 
         return select;
     }
 
-    private static List<DailyExecutionStatistics> fillDate(List<DailyExecutionStatistics> results, ZonedDateTime startDate, ZonedDateTime endDate) {
-        DateUtils.GroupType groupByType = DateUtils.groupByType(Duration.between(startDate, endDate));
-
-        if (groupByType.equals(DateUtils.GroupType.MONTH)) {
-            return fillDate(results, startDate, endDate, ChronoUnit.MONTHS, "YYYY-MM", groupByType.val());
-        } else if (groupByType.equals(DateUtils.GroupType.WEEK)) {
-            return fillDate(results, startDate, endDate, ChronoUnit.WEEKS, "YYYY-ww", groupByType.val());
-        } else if (groupByType.equals(DateUtils.GroupType.DAY)) {
-            return fillDate(results, startDate, endDate, ChronoUnit.DAYS, "YYYY-MM-DD", groupByType.val());
-        } else if (groupByType.equals(DateUtils.GroupType.HOUR)) {
-            return fillDate(results, startDate, endDate, ChronoUnit.HOURS, "YYYY-MM-DD HH", groupByType.val());
-        } else {
-            return fillDate(results, startDate, endDate, ChronoUnit.MINUTES, "YYYY-MM-DD HH:mm", groupByType.val());
-        }
-    }
-
-    private static List<DailyExecutionStatistics> fillDate(
-        List<DailyExecutionStatistics> results,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        ChronoUnit unit,
-        String format,
-        String groupByType
-    ) {
-        List<DailyExecutionStatistics> filledResult = new ArrayList<>();
-        ZonedDateTime currentDate = startDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
-
-        // Add one to the end date to include last intervals in the result
-        String formattedEndDate = endDate.plus(1, unit).format(formatter);
-
-        // Comparing date string formatted with only valuable part of the date
-        // allow to avoid cases where latest interval was not included in the result
-        // i.e if endDate is 18:15 and startDate 17:30, when reaching 18:30 it will not handle the 18th hours
-        while (!currentDate.format(formatter).equals(formattedEndDate)) {
-            String finalCurrentDate = currentDate.format(formatter);
-            DailyExecutionStatistics dailyExecutionStatistics = results
-                .stream()
-                .filter(e -> formatter.format(e.getStartDate()).equals(finalCurrentDate))
-                .findFirst()
-                .orElse(DailyExecutionStatistics.builder()
-                    .startDate(currentDate.toInstant())
-                    .groupBy(groupByType)
-                    .duration(DailyExecutionStatistics.Duration.builder().build())
-                    .build()
-                );
-
-            filledResult.add(dailyExecutionStatistics);
-            currentDate = currentDate.plus(1, unit);
-        }
-
-        return filledResult;
-    }
-
-    private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics> result, String groupByType) {
-        long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value).sum();
-        long count = result.stream().map(ExecutionStatistics::getCount).mapToLong(value -> value).sum();
-
-        DailyExecutionStatistics build = DailyExecutionStatistics.builder()
-            .startDate(date)
-            .groupBy(groupByType)
-            .duration(DailyExecutionStatistics.Duration.builder()
-                .avg(Duration.ofMillis(durationSum / count))
-                .min(result.stream().map(ExecutionStatistics::getDurationMin).min(Long::compare).map(Duration::ofMillis).orElse(null))
-                .max(result.stream().map(ExecutionStatistics::getDurationMax).max(Long::compare).map(Duration::ofMillis).orElse(null))
-                .sum(Duration.ofMillis(durationSum))
-                .count(count)
-                .build()
-            )
-            .build();
-
-        result.forEach(record -> build.getExecutionCounts()
-            .compute(
-                State.Type.valueOf(record.getStateCurrent()),
-                (type, current) -> record.getCount()
-            ));
-
-        return build;
-    }
-
-    @Override
-    public List<ExecutionCount> executionCounts(
-        @Nullable String tenantId,
-        List<Flow> flows,
-        @Nullable List<State.Type> states,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable List<String> namespaces) {
-        ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
-        ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
-
-        List<ExecutionCount> result = this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext dslContext = DSL.using(configuration);
-
-                SelectConditionStep<?> select = dslContext
-                    .select(List.of(
-                        field("namespace"),
-                        field("flow_id"),
-                        DSL.count().as("count")
-                    ))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(NORMAL_KIND_CONDITION);
-
-                select = select.and(START_DATE_FIELD.greaterOrEqual(finalStartDate.toOffsetDateTime()));
-                select = select.and(START_DATE_FIELD.lessOrEqual(finalEndDate.toOffsetDateTime()));
-
-                if (!ListUtils.isEmpty(states)) {
-                    select = select.and(this.statesFilter(states));
-                }
-
-                List<Condition> orConditions = new ArrayList<>();
-                orConditions.addAll(ListUtils.emptyOnNull(flows)
-                    .stream()
-                    .map(flow -> DSL.and(
-                        field("namespace").eq(flow.getNamespace()),
-                        field("flow_id").eq(flow.getFlowId())
-                    ))
-                    .toList());
-
-                orConditions.addAll(
-                    ListUtils.emptyOnNull(namespaces)
-                        .stream()
-                        .map(np -> field("namespace").eq(np))
-                        .toList()
-                );
-
-                // add flows filters
-                select = select.and(DSL.or(orConditions));
-
-                // map result to flow
-                return select
-                    .groupBy(List.of(
-                        field("namespace"),
-                        field("flow_id")
-                    ))
-                    .fetchMany()
-                    .resultsOrRows()
-                    .getFirst()
-                    .result()
-                    .stream()
-                    .map(record -> new ExecutionCount(
-                        record.getValue("namespace", String.class),
-                        record.getValue("flow_id", String.class),
-                        record.getValue("count", Long.class)
-                    ))
-                    .toList();
-            });
-
-        List<ExecutionCount> counts = new ArrayList<>();
-        // fill missing with count at 0
-        if (!ListUtils.isEmpty(flows)) {
-            counts.addAll(flows
-                .stream()
-                .map(flow -> result
-                    .stream()
-                    .filter(executionCount -> executionCount.getNamespace().equals(flow.getNamespace()) &&
-                        executionCount.getFlowId().equals(flow.getFlowId())
-                    )
-                    .findFirst()
-                    .orElse(new ExecutionCount(
-                        flow.getNamespace(),
-                        flow.getFlowId(),
-                        0L
-                    ))
-                )
-                .toList());
-        }
-
-        if (!ListUtils.isEmpty(namespaces)) {
-            Map<String, Long> groupedByNamespace = result.stream()
-                .collect(Collectors.groupingBy(
-                    ExecutionCount::getNamespace,
-                    Collectors.summingLong(ExecutionCount::getCount)
-                ));
-
-            counts.addAll(groupedByNamespace.entrySet()
-                .stream()
-                .map(entry -> new ExecutionCount(entry.getKey(), null, entry.getValue()))
-                .toList());
-        }
-
-        return counts;
-    }
-
     @Override
     public List<Execution> lastExecutions(
         String tenantId,
-        @Nullable List<FlowFilter> flows
-    ) {
+        @Nullable List<FlowFilter> flows) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 Select<Record2<Object, Integer>> subquery = context
                     .select(
-                        field("value"),
+                        VALUE_FIELD,
                         DSL.rowNumber().over(
                             DSL.partitionBy(
                                 field("namespace"),
                                 field("flow_id")
-                            ).orderBy(field("end_date").desc())
+                            ).orderBy(DSL.coalesce(field("end_date"), field("start_date")).desc())
                         ).as("row_num")
                     )
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION)
-                    .and(field("end_date").isNotNull())
-                    .and(DSL.or(
-                        ListUtils.emptyOnNull(flows).isEmpty() ?
-                            DSL.trueCondition()
-                        :
-                            DSL.or(
-                                flows.stream()
-                                    .map(flow -> DSL.and(
-                                        field("namespace").eq(flow.getNamespace()),
-                                        field("flow_id").eq(flow.getId())
-                                    ))
-                                    .toList()
-                            )
+                    .and(
+                        DSL.or(
+                            ListUtils.emptyOnNull(flows).isEmpty() ? DSL.noCondition()
+                                : DSL.or(
+                                    flows.stream()
+                                        .map(
+                                            flow -> DSL.and(
+                                                field("namespace").eq(flow.getNamespace()),
+                                                field("flow_id").eq(flow.getId())
+                                            )
+                                        )
+                                        .toList()
+                                )
                         )
                     );
 
@@ -888,47 +419,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .from(cte)
                     .where(field("row_num").eq(1));
                 return mainQuery.fetch().map(this.jdbcRepository::map);
-            });
-    }
-
-
-    @Override
-    public Execution save(Execution execution) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(execution);
-        this.jdbcRepository.persist(execution, fields);
-
-        return execution;
-    }
-
-    @Override
-    public Execution save(DSLContext dslContext, Execution execution) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(execution);
-        this.jdbcRepository.persist(execution, dslContext, fields);
-
-        return execution;
-    }
-
-    @Override
-    public int saveBatch(List<Execution> items) {
-        if (ListUtils.isEmpty(items)) {
-            return 0;
-        }
-
-        return this.jdbcRepository.persistBatch(items);
-    }
-
-    @Override
-    public Execution update(Execution execution) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSL.using(configuration)
-                    .update(this.jdbcRepository.getTable())
-                    .set(this.jdbcRepository.persistFields((execution)))
-                    .where(field("key").eq(execution.getId()))
-                    .execute();
-
-                return execution;
             });
     }
 
@@ -945,30 +435,47 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
         this.jdbcRepository.persist(deleted, fields);
 
-        executionQueue().emit(deleted);
-
         eventPublisher.publishEvent(CrudEvent.delete(deleted));
 
         return deleted;
     }
 
     @Override
-    public Integer purge(Execution execution) {
-        int delete = this.jdbcRepository.delete(execution);
+    public boolean purge(Execution execution) {
+        boolean deleted = this.jdbcRepository.delete(execution) > 0;
         eventPublisher.publishEvent(CrudEvent.delete(execution));
-        return delete;
+        return deleted;
     }
 
-    public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {
+    @Override
+    public Integer purge(List<Execution> executions) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
+                DSLContext context = DSL.using(configuration);
+
+                // we send the event before to be sure that if sending the event crash, we would not delete the exec
+                executions.forEach(execution -> eventPublisher.publishEvent(CrudEvent.delete(execution)));
+
+                return context.delete(this.jdbcRepository.getTable())
+                    .where(KEY_FIELD.in(executions.stream().map(Execution::getId).toList()))
+                    .execute();
+            });
+    }
+
+    @Override
+    public Optional<ExecutorContext> lock(String executionId, Function<Execution, ExecutorContext> function) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 SelectForUpdateOfStep<Record1<Object>> from = context
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
-                    .where(field("key").eq(executionId))
+                    .where(KEY_FIELD.eq(executionId))
                     .and(this.defaultFilter())
                     .forUpdate();
 
@@ -976,20 +483,23 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 // not ready for now, skip and wait for a first state
                 if (execution.isEmpty()) {
-                    return null;
+                    return Optional.empty();
                 }
 
-                ExecutorState executorState = executorStateStorage.get(context, execution.get());
-                Pair<Executor, ExecutorState> pair = function.apply(Pair.of(execution.get(), executorState));
+                ExecutorContext executor = function.apply(execution.get());
 
-                if (pair != null) {
-                    this.jdbcRepository.persist(pair.getKey().getExecution(), context, null);
-                    this.executorStateStorage.save(context, pair.getRight());
-
-                    return pair.getKey();
+                if (executor != null) {
+                    if (executor.getExecution().getId().equals(executionId)) {
+                        // same execution: we use UPDATE as it's more performant than persist/upsert
+                        this.jdbcRepository.update(executor.getExecution(), context, null);
+                    } else {
+                        // different execution ID: this is possible for ex for replay, we must INSERT via persist/upsert
+                        this.jdbcRepository.persist(executor.getExecution(), context, null);
+                    }
+                    return Optional.of(executor);
                 }
 
-                return null;
+                return Optional.empty();
             });
     }
 
@@ -997,12 +507,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Function<String, String> sortMapping() throws IllegalArgumentException {
         Map<String, String> mapper = Map.of(
             "id", "id",
-            "state.startDate", "start_date",
-            "state.endDate", "end_date",
+            Execution.STATE_START_DATE_FIELD, "start_date",
+            Execution.STATE_END_DATE_FIELD, "end_date",
             "state.duration", "state_duration",
             "namespace", "namespace",
             "flowId", "flow_id",
-            "state.current", "state_current"
+            "state.current", "state_current",
+            "loopRunIndex", "loop_run_index"
         );
 
         return mapper::get;
@@ -1014,11 +525,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         DataFilter<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> descriptors,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        Pageable pageable
-    ) {
+        Pageable pageable) {
         return this.jdbcRepository
             .getDslContextWrapper()
-            .transactionResult(configuration -> {
+            .transactionResult(configuration ->
+            {
                 DSLContext context = DSL.using(configuration);
 
                 Map<String, ? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
@@ -1042,7 +553,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping)
+                    .and(NORMAL_KIND_CONDITION);
 
                 List<? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)
@@ -1064,8 +576,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             });
     }
 
-    public Double fetchValue(String tenantId, DataFilterKPI<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
-        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+    public Double fetchValue(String tenantId, DataFilterKPI<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration ->
+        {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<Executions.Fields> columnDescriptor = dataFilter.getColumns();
             String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
@@ -1089,7 +603,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 filterService,
                 filters,
                 getFieldsMapping()
-            );
+            ).and(NORMAL_KIND_CONDITION);
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {
@@ -1120,35 +634,41 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     @SuppressWarnings("unchecked")
-    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters, Map<F, String> fieldsMapping) {
+    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
+        Map<F, String> fieldsMapping) {
         if (!ListUtils.isEmpty(filters)) {
             // Check if descriptors contain a filter of type Executions.Fields.STATE and apply the custom filter "statesFilter" if present
             selectConditionStep = applyStateFilters(filters, selectConditionStep);
 
-            // Check if descriptors contain a filter of type EXECUTIONS.Fields.LABELS and apply the findCondition() method if present
-            List<Contains<Executions.Fields>> labelFilters = filters.stream()
-                .filter(descriptor -> descriptor.getField().equals(Executions.Fields.LABELS) && descriptor instanceof Contains<F>)
-                .map(descriptor -> (Contains<Executions.Fields>) descriptor)
+            // Check if descriptors contain a filter of type EXECUTIONS.Fields.LABELS and apply the label JSON condition if present
+            List<AbstractFilter<Executions.Fields>> labelFilters = filters.stream()
+                .filter(descriptor -> Executions.Fields.LABELS.equals(descriptor.getField()))
+                .map(descriptor -> (AbstractFilter<Executions.Fields>) descriptor)
                 .toList();
 
             if (!labelFilters.isEmpty()) {
-                Map<String, String> mergedMap = new HashMap<>();
-
-                labelFilters.forEach(labelFilter -> {
-                    Map<String, String> currentMap =
-                        labelFilter.getValue() instanceof String stringLabel ?
-                            Label.from(stringLabel)
-                            : (Map<String, String>) labelFilter.getValue();
-                    mergedMap.putAll(currentMap);
-                });
-
-                selectConditionStep = selectConditionStep.and(findCondition(null, mergedMap));
+                for (AbstractFilter<Executions.Fields> labelFilter : labelFilters) {
+                    selectConditionStep = selectConditionStep.and(toLabelCondition(labelFilter));
+                }
             }
 
-            // Remove the state filters from descriptors
+            // Handle SCOPE filters — translate to namespace-based conditions
+            List<AbstractFilter<F>> scopeFilters = filters.stream()
+                .filter(descriptor -> descriptor.getField().equals(Executions.Fields.SCOPE))
+                .toList();
+
+            if (!scopeFilters.isEmpty()) {
+                String systemNamespace = systemFlowsConfiguration.namespace();
+                for (AbstractFilter<F> scopeFilter : scopeFilters) {
+                    selectConditionStep = selectConditionStep.and(toScopeCondition(scopeFilter, systemNamespace));
+                }
+            }
+
+            // Remove the state, label, and scope filters from descriptors
             List<AbstractFilter<F>> remainingFilters = filters.stream()
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.STATE)) // Filter state
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.LABELS) || !(descriptor instanceof Contains<F>)) // Filter labels
+                .filter(descriptor -> !Executions.Fields.STATE.equals(descriptor.getField())) // Filter state
+                .filter(descriptor -> !Executions.Fields.LABELS.equals(descriptor.getField())) // Filter labels
+                .filter(descriptor -> !Executions.Fields.SCOPE.equals(descriptor.getField())) // Filter scope
                 .toList();
 
             // Use the generic method addFilters with the remaining filters
@@ -1158,13 +678,91 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private <F extends Enum<F>> SelectConditionStep<Record>  applyStateFilters(
+    private Condition toLabelCondition(AbstractFilter<Executions.Fields> filter) {
+        return switch (filter.getType()) {
+            case CONTAINS -> toLabelContainsCondition((Contains<Executions.Fields>) filter, QueryFilter.Op.CONTAINS);
+            case EQUAL_TO -> findLabelCondition(toLabelInput(filter.getKey(), ((EqualTo<Executions.Fields>) filter).getValue()), QueryFilter.Op.EQUALS);
+            case IN -> toLabelInCondition((In<Executions.Fields>) filter);
+            case IS_NOT_NULL -> findLabelCondition(Either.right(filter.getKey()), QueryFilter.Op.IS_NOT_NULL);
+            case IS_NULL -> findLabelCondition(Either.right(filter.getKey()), QueryFilter.Op.IS_NULL);
+            case NOT_CONTAINS -> toLabelContainsCondition((NotContains<Executions.Fields>) filter, QueryFilter.Op.NOT_CONTAINS);
+            case NOT_EQUAL_TO -> findLabelCondition(toLabelInput(filter.getKey(), ((NotEqualTo<Executions.Fields>) filter).getValue()), QueryFilter.Op.NOT_EQUALS);
+            case NOT_IN -> toLabelNotInCondition((NotIn<Executions.Fields>) filter);
+            case OR -> toLabelOrCondition((Or<Executions.Fields>) filter);
+            default -> throw new UnsupportedOperationException("Unsupported dashboard label filter type: %s.".formatted(filter.getType()));
+        };
+    }
+
+    private Condition toLabelContainsCondition(AbstractFilter<Executions.Fields> filter, QueryFilter.Op operation) {
+        Object value = switch (filter) {
+            case Contains<Executions.Fields> contains -> contains.getValue();
+            case NotContains<Executions.Fields> notContains -> notContains.getValue();
+            default -> throw new UnsupportedOperationException("Unsupported dashboard label contains filter type: %s.".formatted(filter.getType()));
+        };
+
+        if (filter.getKey() != null) {
+            return findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), operation);
+        }
+
+        if (value instanceof String stringLabel) {
+            return findLabelCondition(Either.right(stringLabel), operation);
+        }
+
+        return findLabelCondition(Either.left((Map<?, ?>) value), operation);
+    }
+
+    private Condition toLabelInCondition(In<Executions.Fields> filter) {
+        if (filter.getKey() == null) {
+            return findLabelCondition(Either.left(labelsFromValues(filter.getValues())), QueryFilter.Op.IN);
+        }
+
+        return filter.getValues().stream()
+            .map(value -> findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), QueryFilter.Op.EQUALS))
+            .reduce(DSL.falseCondition(), Condition::or);
+    }
+
+    private Condition toLabelNotInCondition(NotIn<Executions.Fields> filter) {
+        if (filter.getKey() == null) {
+            return findLabelCondition(Either.left(labelsFromValues(filter.getValues())), QueryFilter.Op.NOT_IN);
+        }
+
+        return filter.getValues().stream()
+            .map(value -> findLabelCondition(Either.left(Collections.singletonMap(filter.getKey(), value.toString())), QueryFilter.Op.NOT_EQUALS))
+            .reduce(DSL.trueCondition(), Condition::and);
+    }
+
+    private Condition toLabelOrCondition(Or<Executions.Fields> filter) {
+        return filter.getValues().stream()
+            .map(this::toLabelCondition)
+            .reduce(DSL.falseCondition(), Condition::or);
+    }
+
+    private Either<Map<?, ?>, String> toLabelInput(String key, Object value) {
+        if (key != null) {
+            return Either.left(Collections.singletonMap(key, value.toString()));
+        }
+
+        if (value instanceof String stringLabel) {
+            return Either.left(Label.from(stringLabel));
+        }
+
+        return Either.left((Map<?, ?>) value);
+    }
+
+    private Map<?, ?> labelsFromValues(List<Object> values) {
+        Map<String, String> labels = new HashMap<>();
+        values.forEach(value -> labels.putAll(Label.from(value.toString())));
+        return labels;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private <F extends Enum<F>> SelectConditionStep<Record> applyStateFilters(
         List<AbstractFilter<F>> filters,
-        SelectConditionStep<Record>  selectConditionStep) {
+        SelectConditionStep<Record> selectConditionStep) {
 
         List<String> stateFilters = filters.stream()
-            .flatMap(descriptor -> {
+            .flatMap(descriptor ->
+            {
                 if (descriptor.getField().equals(Executions.Fields.STATE)) {
                     if (descriptor instanceof In inFilter) {
                         return inFilter.getValues().stream();
@@ -1178,14 +776,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         if (!stateFilters.isEmpty()) {
             selectConditionStep = selectConditionStep.and(
-                statesFilter(stateFilters.stream()
-                    .map(State.Type::valueOf)
-                    .toList())
+                statesFilter(
+                    stateFilters.stream()
+                        .map(State.Type::valueOf)
+                        .toList()
+                )
             );
         }
 
         List<String> stateNotFilters = filters.stream()
-            .flatMap(descriptor -> {
+            .flatMap(descriptor ->
+            {
                 if (descriptor.getField().equals(Executions.Fields.STATE)) {
                     if (descriptor instanceof NotIn notInFilter) {
                         return notInFilter.getValues().stream();
@@ -1199,12 +800,53 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         if (!stateNotFilters.isEmpty()) {
             selectConditionStep = selectConditionStep.and(
-                DSL.not(statesFilter(stateNotFilters.stream()
-                    .map(State.Type::valueOf)
-                    .toList()))
+                DSL.not(
+                    statesFilter(
+                        stateNotFilters.stream()
+                            .map(State.Type::valueOf)
+                            .toList()
+                    )
+                )
             );
         }
         return selectConditionStep;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <F extends Enum<F>> Condition toScopeCondition(AbstractFilter<F> filter, String systemNamespace) {
+        return switch (filter) {
+            case EqualTo<F> f -> {
+                FlowScope scope = Enums.fromList(f.getValue(), FlowScope.class).getFirst();
+                yield FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
+            }
+            case NotEqualTo<F> f -> {
+                FlowScope scope = Enums.fromList(f.getValue(), FlowScope.class).getFirst();
+                yield FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
+            }
+            case In<F> f -> {
+                List<FlowScope> scopes = Enums.fromList(f.getValues(), FlowScope.class);
+                boolean includesUser = scopes.contains(FlowScope.USER);
+                boolean includesSystem = scopes.contains(FlowScope.SYSTEM);
+                if (includesUser && includesSystem)
+                    yield DSL.noCondition();
+                else if (includesUser)
+                    yield field("namespace").ne(systemNamespace);
+                else
+                    yield field("namespace").eq(systemNamespace);
+            }
+            case NotIn<F> f -> {
+                List<FlowScope> scopes = Enums.fromList(f.getValues(), FlowScope.class);
+                boolean excludesUser = scopes.contains(FlowScope.USER);
+                boolean excludesSystem = scopes.contains(FlowScope.SYSTEM);
+                if (excludesUser && excludesSystem)
+                    yield DSL.falseCondition();
+                else if (excludesUser)
+                    yield field("namespace").eq(systemNamespace);
+                else
+                    yield field("namespace").ne(systemNamespace);
+            }
+            default -> throw new IllegalArgumentException("Unsupported SCOPE filter type: " + filter.getClass().getSimpleName());
+        };
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);

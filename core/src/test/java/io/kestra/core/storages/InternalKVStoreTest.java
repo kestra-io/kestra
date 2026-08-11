@@ -1,56 +1,58 @@
 package io.kestra.core.storages;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.runners.KVMetadataStateStore;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.storages.kv.KVValue;
+import io.kestra.core.storages.kv.KVValueAndMetadata;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.storage.local.LocalStorage;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@MicronautTest
 class InternalKVStoreTest {
     private static final Instant date = Instant.now().truncatedTo(ChronoUnit.MILLIS);
     private static final Map<String, Object> complexValue = Map.of("some", "complex", "object", Map.of("with", "nested", "values", date));
     static final String TEST_KV_KEY = "my-key";
 
-    LocalStorage storageInterface;
+    @Inject
+    private StorageInterface storageInterface;
 
-    @BeforeEach
-    public void setUp() throws IOException {
-        Path basePath = Files.createTempDirectory("unit");
-        storageInterface = new LocalStorage();
-        storageInterface.setBasePath(basePath);
-        storageInterface.init();
-    }
+    @Inject
+    private KVMetadataStateStore kvMetadataStateStore;
+
+    @Inject
+    private KVStoreService storeService;
 
     @Test
-    void list() throws IOException {
+    void list() throws IOException, InterruptedException {
         Instant now = Instant.now();
         InternalKVStore kv = kv();
 
@@ -60,13 +62,14 @@ class InternalKVStoreTest {
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(description, Duration.ofMinutes(5)), complexValue));
         kv.put("my-second-key", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(10)), complexValue));
         kv.put("expired-key", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMillis(1)), complexValue));
-
+        Thread.sleep(2);
         List<KVEntry> list = kv.list();
         assertThat(list.size()).isEqualTo(2);
 
-        list.forEach(kvEntry -> {
-            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
+        list.forEach(kvEntry ->
+        {
+            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit.SECONDS));
+            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit.SECONDS));
         });
 
         Map<String, KVEntry> map = list.stream().collect(Collectors.toMap(KVEntry::key, Function.identity()));
@@ -74,38 +77,18 @@ class InternalKVStoreTest {
         assertThat(map.size()).isEqualTo(2);
 
         KVEntry myKeyValue = map.get(TEST_KV_KEY);
-        assertThat(myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
-            myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())).isTrue();
+        assertThat(
+            myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
+                myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())
+        ).isTrue();
         assertThat(myKeyValue.description()).isEqualTo(description);
 
         KVEntry mySecondKeyValue = map.get("my-second-key");
-        assertThat(mySecondKeyValue.creationDate().plus(Duration.ofMinutes(9)).isBefore(mySecondKeyValue.expirationDate()) &&
-            mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())).isTrue();
+        assertThat(
+            mySecondKeyValue.creationDate().plus(Duration.ofMinutes(9)).isBefore(mySecondKeyValue.expirationDate()) &&
+                mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())
+        ).isTrue();
         assertThat(mySecondKeyValue.description()).isNull();
-    }
-
-    @Test
-    void listAll() throws IOException {
-        Instant now = Instant.now();
-        InternalKVStore kv = kv();
-
-        assertThat(kv.list().size()).isZero();
-
-        String description = "myDescription";
-        kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(description, Duration.ofMinutes(5)), complexValue));
-        kv.put("key-without-expiration", new KVValueAndMetadata(new KVMetadata(null, (Duration) null), complexValue));
-        kv.put("expired-key", new KVValueAndMetadata(new KVMetadata(null, Duration.ofMillis(1)), complexValue));
-
-        List<KVEntry> list = kv.listAll();
-        assertThat(list.size()).isEqualTo(3);
-
-        list.forEach(kvEntry -> {
-            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
-        });
-
-        List<String> keys = list.stream().map(KVEntry::key).toList();
-        assertThat(keys).containsExactlyInAnyOrder(TEST_KV_KEY, "key-without-expiration", "expired-key");
     }
 
     @Test
@@ -130,7 +113,7 @@ class InternalKVStoreTest {
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(10)), "some-value"));
 
         // Then
-        withMetadata = storageInterface.getWithMetadata(MAIN_TENANT, kv.namespace(), URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
+        withMetadata = storageInterface.getWithMetadata(MAIN_TENANT, kv.namespace(), URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion.v2"));
         valueFile = new String(withMetadata.inputStream().readAllBytes());
         expirationDate = Instant.parse(withMetadata.metadata().get("expirationDate"));
         assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(9))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(11)))).isTrue();
@@ -149,8 +132,9 @@ class InternalKVStoreTest {
 
         boolean deleted = kv.delete(TEST_KV_KEY);
         assertTrue(deleted);
-        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isFalse();
-        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), metadataURI)).isFalse();
+        // We keep files to be able to restore them later (version will be kept in metadata and to actually delete files a purge should be done)
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isTrue();
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), metadataURI)).isTrue();
     }
 
     @Test
@@ -165,7 +149,7 @@ class InternalKVStoreTest {
 
         boolean deleted = kv.delete(TEST_KV_KEY);
         assertTrue(deleted);
-        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isFalse();
+        assertThat(storageInterface.exists(MAIN_TENANT, kv.namespace(), uri)).isTrue();
     }
 
     @Test
@@ -215,21 +199,44 @@ class InternalKVStoreTest {
         // When
         Assertions.assertThrows(ResourceExpiredException.class, () -> kv.getValue(TEST_KV_KEY));
     }
-    
+
     @Test
     void shouldGetKVValueAndMetadata() throws IOException {
         // Given
         final InternalKVStore kv = kv();
         KVValueAndMetadata val = new KVValueAndMetadata(new KVMetadata(null, Duration.ofMinutes(5)), complexValue);
         kv.put(TEST_KV_KEY, val);
-        
+
         // When
         Optional<KVValueAndMetadata> result = kv.findMetadataAndValue(TEST_KV_KEY);
-        
+
         // Then
         Assertions.assertEquals(val.value(), result.get().value());
         Assertions.assertEquals(val.metadata().getDescription(), result.get().metadata().getDescription());
         Assertions.assertEquals(val.metadata().getExpirationDate().truncatedTo(ChronoUnit.MILLIS), result.get().metadata().getExpirationDate().truncatedTo(ChronoUnit.MILLIS));
+    }
+
+    @Test
+    void getShouldStillWorkWithoutMetadata() throws IOException, ResourceExpiredException {
+        // Given
+        InternalKVStore kv = kv();
+        String key = IdUtils.create();
+        URI kvStorageUri = URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(kv.namespace()) + "/" + key + ".ion");
+        String value = "someValue";
+        KVValueAndMetadata kvValueAndMetadata = new KVValueAndMetadata(new KVMetadata("some description", Instant.now().plus(Duration.ofMinutes(5))), value);
+        storageInterface.put(
+            TenantService.MAIN_TENANT, kv.namespace(), kvStorageUri, new StorageObject(
+                kvValueAndMetadata.metadataAsMap(),
+                new ByteArrayInputStream(JacksonMapper.ofIon().writeValueAsBytes(kvValueAndMetadata.value()))
+            )
+        );
+
+        // When
+        Optional<KVValue> result = kv.getValue(key);
+
+        // Then
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().value()).isEqualTo(value);
     }
 
     @Test
@@ -249,8 +256,63 @@ class InternalKVStoreTest {
         Assertions.assertDoesNotThrow(() -> KVStore.validateKey("AN_UPPER.CASE-key"));
     }
 
+    @Test
+    void putRawShouldPreserveStringValue() throws IOException, ResourceExpiredException {
+        // Given - simulate backup/restore: put a value, read it raw, then putRaw into a new store
+        InternalKVStore source = kv();
+        InternalKVStore target = kv();
+
+        String stringValue = "/in";
+        source.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata("desc", Duration.ofMinutes(5)), stringValue));
+
+        // When - simulate backup read + restore write
+        String rawValue = source.getRawValue(TEST_KV_KEY).orElseThrow();
+        target.putRaw(TEST_KV_KEY, new KVMetadata("desc", Duration.ofMinutes(5)), rawValue.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        // Then - value should be identical after roundtrip
+        Optional<KVValue> result = target.getValue(TEST_KV_KEY);
+        assertThat(result).isPresent();
+        assertThat(result.get().value()).isEqualTo(stringValue);
+    }
+
+    @Test
+    void putRawShouldPreserveComplexValue() throws IOException, ResourceExpiredException {
+        // Given
+        InternalKVStore source = kv();
+        InternalKVStore target = kv();
+
+        source.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, (Duration) null), complexValue));
+
+        // When
+        String rawValue = source.getRawValue(TEST_KV_KEY).orElseThrow();
+        target.putRaw(TEST_KV_KEY, new KVMetadata(null, (Duration) null), rawValue.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        // Then
+        Optional<KVValue> result = target.getValue(TEST_KV_KEY);
+        assertThat(result).isPresent();
+        assertThat(result.get().value()).isEqualTo(complexValue);
+    }
+
+    @Test
+    void putRawShouldPreserveNumericValue() throws IOException, ResourceExpiredException {
+        // Given
+        InternalKVStore source = kv();
+        InternalKVStore target = kv();
+
+        source.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(null, (Duration) null), 42));
+
+        // When
+        String rawValue = source.getRawValue(TEST_KV_KEY).orElseThrow();
+        target.putRaw(TEST_KV_KEY, new KVMetadata(null, (Duration) null), rawValue.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        // Then
+        Optional<KVValue> result = target.getValue(TEST_KV_KEY);
+        assertThat(result).isPresent();
+        assertThat(result.get().value()).isEqualTo(42);
+    }
+
     private InternalKVStore kv() {
         final String namespaceId = "io.kestra." + IdUtils.create();
-        return new InternalKVStore(MAIN_TENANT, namespaceId, storageInterface);
+        return new InternalKVStore(MAIN_TENANT, namespaceId, storageInterface, kvMetadataStateStore);
     }
 }

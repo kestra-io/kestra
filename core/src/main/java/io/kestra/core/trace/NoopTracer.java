@@ -2,6 +2,7 @@ package io.kestra.core.trace;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.RunContext;
+
 import io.opentelemetry.api.common.Attributes;
 
 class NoopTracer implements Tracer {

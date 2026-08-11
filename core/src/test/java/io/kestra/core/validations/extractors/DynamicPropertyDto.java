@@ -1,6 +1,7 @@
 package io.kestra.core.validations.extractors;
 
 import io.kestra.core.models.property.Property;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 

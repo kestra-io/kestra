@@ -1,53 +1,71 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER" v-if="name" id="environment">
-        <strong>{{ name }}</strong>
+    <div v-if="name" id="environment">
+        <span class="dot" />
+        <span class="name" :title="name">{{ name }}</span>
+        <span class="label">{{ $t("environment") }}</span>
     </div>
 </template>
 
-<script>
-    import {mapStores} from "pinia";
-    import {cssVariable} from "@kestra-io/ui-libs";
-    import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "override/stores/misc";
+<script setup lang="ts">
+    import {cssVar} from "@kestra-io/design-system"
+    import {useLayoutStore} from "../../stores/layout"
+    import {useMiscStore} from "override/stores/misc"
+    import {computed} from "vue"
 
-    export default {
-        computed: {
-            ...mapStores(useLayoutStore, useMiscStore),
-            name() {
-                return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
-            },
-            color() {
-                if (this.layoutStore.envColor) {
-                    return this.layoutStore.envColor;
-                }
+    const layoutStore = useLayoutStore()
+    const miscStore = useMiscStore()
 
-                if (this.miscStore.configs?.environment?.color) {
-                    return this.miscStore.configs.environment.color;
-                }
+    const name = computed(() => {
+        return layoutStore.envName || miscStore.configs?.environment?.name
+    })
 
-                return cssVariable("--bs-info");
-            }
+    const color = computed(() => {
+        if (layoutStore.envColor) {
+            return layoutStore.envColor
         }
-    }
+
+        if (miscStore.configs?.environment?.color) {
+            return miscStore.configs.environment.color
+        }
+
+        return cssVar("--ks-status-info")
+    })
+
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 #environment {
-    margin-bottom: 1.5rem;
-    text-align: center;
-    margin-top: -1.25rem;
+    display: flex;
+    align-items: baseline;
+    gap: var(--ks-spacing-1);
+    border: 1px solid v-bind('color');
+    border-radius: var(--ks-radius-sm);
+    padding: 0.125rem var(--ks-spacing-2);
 
-    strong {
-        border: 1px solid v-bind('color');
-        border-radius: var(--bs-border-radius);
-        color: var(--ks-content-primary);
-        padding: 0.125rem 0.25rem;
-        font-size: var(--font-size-sm);
+    .dot {
+        align-self: center;
+        flex-shrink: 0;
+        width: 0.25rem;
+        height: 0.25rem;
+        border-radius: 50%;
+        background-color: v-bind('color');
+    }
+
+    .name {
+        flex: 1;
+        min-width: 0;
+        color: var(--ks-text-primary);
+        font-size: var(--ks-font-size-xs);
         white-space: nowrap;
-        text-overflow: ellipsis;
         overflow: hidden;
-        max-width: 90%;
-        display: inline-block;
+        text-overflow: ellipsis;
+    }
+
+    .label {
+        flex-shrink: 0;
+        color: var(--ks-text-inactive);
+        font-size: var(--ks-font-size-2xs);
+        white-space: nowrap;
     }
 }
 </style>

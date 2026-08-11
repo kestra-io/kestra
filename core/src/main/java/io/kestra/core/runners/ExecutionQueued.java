@@ -1,14 +1,15 @@
 package io.kestra.core.runners;
 
+import java.time.Instant;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.utils.IdUtils;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
-
-import java.time.Instant;
-import jakarta.validation.constraints.NotNull;
 
 @Value
 @AllArgsConstructor

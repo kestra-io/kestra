@@ -12,7 +12,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Inherited
 @Retention(RUNTIME)
-@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Target({ ElementType.TYPE, ElementType.ANNOTATION_TYPE })
 @Repeatable(Metrics.class)
 public @interface Metric {
     /**

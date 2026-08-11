@@ -1,14 +1,5 @@
 package io.kestra.core.storages;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.utils.Hashing;
-import io.kestra.core.utils.Slugify;
-import jakarta.annotation.Nullable;
-import lombok.Getter;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -17,6 +8,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.utils.Hashing;
+import io.kestra.core.utils.Slugify;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 
 /**
  * Context used for storing and retrieving data from Kestra's internal storage.
@@ -27,6 +30,12 @@ public class StorageContext {
     public static final String KESTRA_SCHEME = "kestra";
     public static final String KESTRA_PROTOCOL = KESTRA_SCHEME + "://";
     public static final String PREFIX_MESSAGES = "/_messages";
+
+    /** Per-flow subdir that holds execution storage. */
+    public static final String EXECUTIONS_DIR_NAME = "executions";
+
+    /** Prefix of namespace-level metadata directories ({@code _files}, {@code _kv}, …). */
+    public static final String RESERVED_NAMESPACE_DIR_PREFIX = "_";
 
     // /{namespace}/_files
     static final String PREFIX_FORMAT_NAMESPACE_FILE = "/%s/_files";
@@ -48,6 +57,29 @@ public class StorageContext {
     static final String PREFIX_FORMAT_CACHE = "/%s/%s/%s/cache/cache.zip";
 
     /**
+     * {@code kestra:///<namespace-as-path>/} — namespace root, flow dirs as direct children.
+     */
+    public static URI namespaceRootUri(@NotNull String namespace) {
+        return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/");
+    }
+
+    /**
+     * {@code kestra:///<namespace-as-path>/<flow-slug>/executions/} — a flow's executions subdir.
+     */
+    public static URI executionsRootUri(@NotNull String namespace, @NotNull String flowId) {
+        Objects.requireNonNull(flowId, "flowId");
+        return URI.create(KESTRA_PROTOCOL + "/" + namespaceAsPath(namespace) + "/" + Slugify.of(flowId) + "/" + EXECUTIONS_DIR_NAME + "/");
+    }
+
+    /**
+     * Static counterpart of {@link #getNamespaceAsPath()}.
+     */
+    public static String namespaceAsPath(@NotNull String namespace) {
+        Objects.requireNonNull(namespace, "namespace");
+        return namespace.replace(".", "/");
+    }
+
+    /**
      * Factory method for constructing a new {@link StorageContext} scoped to a given {@link TaskRun}.
      */
     public static StorageContext forTask(TaskRun taskRun) {
@@ -63,9 +95,9 @@ public class StorageContext {
     }
 
     /**
-     * Factory method for constructing a new {@link StorageContext} scoped to a given {@link Flow}.
+     * Factory method for constructing a new {@link StorageContext} scoped to a given {@link FlowId}.
      */
-    public static StorageContext forFlow(Flow flow) {
+    public static StorageContext forFlow(FlowId flow) {
         return new StorageContext(flow.getTenantId(), flow.getNamespace(), flow.getId());
     }
 
@@ -80,9 +112,9 @@ public class StorageContext {
      * Factory method for constructing a new {@link StorageContext} scoped to a given Execution.
      */
     public static StorageContext forExecution(@Nullable String tenantId,
-                                              String namespace,
-                                              String flowId,
-                                              String executionId) {
+        String namespace,
+        String flowId,
+        String executionId) {
         return new StorageContext(tenantId, namespace, flowId, executionId);
     }
 
@@ -90,8 +122,8 @@ public class StorageContext {
      * Factory method for constructing a new {@link StorageContext} scoped to a given {@link Execution} and input.
      */
     public static StorageContext.Input forInput(Execution execution,
-                                                String inputName,
-                                                String fileName) {
+        String inputName,
+        String fileName) {
         return new StorageContext.Input(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId(), inputName, fileName);
     }
 
@@ -99,12 +131,12 @@ public class StorageContext {
      * Factory method for constructing a new {@link StorageContext} scoped to a given Task.
      */
     public static StorageContext.Task forTask(@Nullable String tenantId,
-                                              String namespace,
-                                              String flowId,
-                                              String executionId,
-                                              String taskId,
-                                              String taskRunId,
-                                              @Nullable String taskRunValue) {
+        String namespace,
+        String flowId,
+        String executionId,
+        String taskId,
+        String taskRunId,
+        @Nullable String taskRunValue) {
         return new StorageContext.Task(tenantId, namespace, flowId, executionId, taskId, taskRunId, taskRunValue);
     }
 
@@ -112,10 +144,10 @@ public class StorageContext {
      * Factory method for constructing a new {@link StorageContext} scoped to a given Trigger.
      */
     public static StorageContext.Trigger forTrigger(@Nullable String tenantId,
-                                                    String namespace,
-                                                    String flowId,
-                                                    String executionId,
-                                                    String triggerId) {
+        String namespace,
+        String flowId,
+        String executionId,
+        String triggerId) {
         return new StorageContext.Trigger(tenantId, namespace, flowId, executionId, triggerId);
     }
 
@@ -133,8 +165,8 @@ public class StorageContext {
     }
 
     private StorageContext(final @Nullable String tenantId,
-                           final String namespace,
-                           final String flowId) {
+        final String namespace,
+        final String flowId) {
         this.tenantId = tenantId;
         this.namespace = Objects.requireNonNull(namespace, "namespace cannot be null");
         this.flowId = Objects.requireNonNull(flowId, "flowId cannot be null");
@@ -142,9 +174,9 @@ public class StorageContext {
     }
 
     private StorageContext(final @Nullable String tenantId,
-                           final String namespace,
-                           final String flowId,
-                           final String executionId) {
+        final String namespace,
+        final String flowId,
+        final String executionId) {
         this.tenantId = tenantId;
         this.namespace = Objects.requireNonNull(namespace, "namespace cannot be null");
         this.flowId = Objects.requireNonNull(flowId, "flowId cannot be null");
@@ -165,7 +197,7 @@ public class StorageContext {
     /**
      * Gets the storage URI of the given cacheID, and optionally the given objectID.
      *
-     * @param cacheId  the ID of the cache.
+     * @param cacheId the ID of the cache.
      * @param objectId the ID object cached object (optional).
      * @return the URI
      */
@@ -200,9 +232,9 @@ public class StorageContext {
     /**
      * Gets the storage prefix for the given state store ID.
      *
-     * @param id          the primary ID of the state.
+     * @param id the primary ID of the state.
      * @param isNamespace specify whether the state is on namespace or flow level.
-     * @param value       the secondary ID (e.g., the runTaskValue).
+     * @param value the secondary ID (e.g., the runTaskValue).
      * @return the storage prefix.
      */
     public String getStateStorePrefix(String id, Boolean isNamespace, String value) {
@@ -226,7 +258,7 @@ public class StorageContext {
     }
 
     /**
-     * Gets the base storage URI for the current {@link io.kestra.core.models.flows.Flow}.
+     * Gets the base storage URI for the current {@link FlowId}.
      *
      * @return the {@link URI}.
      */
@@ -260,7 +292,8 @@ public class StorageContext {
                 .map(s -> s.endsWith("://") ? s : s + "://")
                 .orElse("//");
 
-            var prefix = String.format(PREFIX_FORMAT_EXECUTIONS,
+            var prefix = String.format(
+                PREFIX_FORMAT_EXECUTIONS,
                 getNamespaceAsPath(),
                 Slugify.of(flowId),
                 executionId
@@ -288,11 +321,9 @@ public class StorageContext {
         return "StorageContext::Execution";
     }
 
-
     public static String namespaceFilePrefix(String namespace) {
         return String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespace.replace(".", "/"));
     }
-
 
     public static String kvPrefix(String namespace) {
         return String.format(PREFIX_FORMAT_KV, namespace.replace(".", "/"));
@@ -309,12 +340,12 @@ public class StorageContext {
         private final String taskRunValue;
 
         private Task(final String tenantId,
-                     final String namespace,
-                     final String flowId,
-                     final String executionId,
-                     final String taskId,
-                     final String taskRunId,
-                     @Nullable final String taskRunValue) {
+            final String namespace,
+            final String flowId,
+            final String executionId,
+            final String taskId,
+            final String taskRunId,
+            @Nullable final String taskRunValue) {
             super(tenantId, namespace, flowId, executionId);
             this.taskId = Objects.requireNonNull(taskId, "taskID cannot be null");
             this.taskRunId = Objects.requireNonNull(taskRunId, "taskRunID cannot be null");
@@ -356,14 +387,13 @@ public class StorageContext {
     @Getter
     public static class Trigger extends StorageContext {
 
-
         private final String triggerId;
 
         private Trigger(final String tenantId,
-                        final String namespace,
-                        final String flowId,
-                        final String executionId,
-                        final String triggerId) {
+            final String namespace,
+            final String flowId,
+            final String executionId,
+            final String triggerId) {
             super(tenantId, namespace, flowId, executionId);
             this.triggerId = Objects.requireNonNull(triggerId, "triggerId cannot be null");
         }
@@ -374,7 +404,8 @@ public class StorageContext {
         @Override
         public URI getContextStorageURI() {
             try {
-                String prefix = String.format(PREFIX_FORMAT_TRIGGER,
+                String prefix = String.format(
+                    PREFIX_FORMAT_TRIGGER,
                     getNamespaceAsPath(),
                     Slugify.of(getFlowId()),
                     getExecutionId(),
@@ -405,11 +436,11 @@ public class StorageContext {
         private final String fileName;
 
         private Input(final String tenantId,
-                      final String namespace,
-                      final String flowId,
-                      final String executionId,
-                      final String inputName,
-                      final String fileName) {
+            final String namespace,
+            final String flowId,
+            final String executionId,
+            final String inputName,
+            final String fileName) {
             super(tenantId, namespace, flowId, executionId);
             this.inputName = Objects.requireNonNull(inputName, "inputName cannot be null");
             this.fileName = Objects.requireNonNull(fileName, "fileName cannot be null");

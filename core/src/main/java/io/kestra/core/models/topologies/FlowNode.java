@@ -1,16 +1,16 @@
 package io.kestra.core.models.topologies;
 
+import java.util.Objects;
+
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.FlowInterface;
+
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-
-import java.util.Objects;
 
 @Getter
 @AllArgsConstructor
@@ -29,7 +29,8 @@ public class FlowNode implements TenantInterface {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass())
+            return false;
         FlowNode flowNode = (FlowNode) o;
         return Objects.equals(uid, flowNode.uid);
     }

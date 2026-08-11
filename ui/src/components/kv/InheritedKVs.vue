@@ -1,40 +1,57 @@
 <template>
-    <el-table :data="store.inheritedKVs" tableLayout="auto">
-        <el-table-column prop="key" :label="$t('key')">
+    <KsTable :data="store.inheritedKVs" tableLayout="auto">
+        <KsTableColumn prop="namespace" :label="$t('namespace')">
+            <template #default="scope">
+                <KsEntityLink
+                    v-if="scope.row.namespace"
+                    entity="namespace"
+                    :value="scope.row.namespace"
+                    :to="{name: 'namespaces/update', params: {id: scope.row.namespace}}"
+                />
+            </template>
+        </KsTableColumn>
+
+        <KsTableColumn prop="key" :label="$t('key')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column prop="description" :label="$t('description')">
+        <KsTableColumn prop="description" :label="$t('description')">
             <template #default="scope">
                 <span>{{ scope.row.description }}</span>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column prop="updateDate" :label="$t('last modified')">
+        <KsTableColumn prop="updateDate" :label="$t('last modified')">
             <template #default="scope">
                 <span>{{ scope.row.updateDate }}</span>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column prop="creationDate" :label="$t('created date')">
+        <KsTableColumn prop="creationDate" :label="$t('created date')">
             <template #default="scope">
                 <span>{{ scope.row.creationDate }}</span>
             </template>
-        </el-table-column>
-    </el-table>
+        </KsTableColumn>
+    </KsTable>
 </template>
 
-<script setup>
-    import {onMounted} from "vue";
+<script setup lang="ts">
+    import {onMounted} from "vue"
 
-    import {useNamespacesStore} from "override/stores/namespaces";
+    import {useNamespacesStore} from "override/stores/namespaces"
 
-    const props = defineProps({namespace: {type: String, required: true}});
+    interface Props {
+        namespace: string;
+    }
 
-    const store = useNamespacesStore();
+    const props = defineProps<Props>()
 
-    const loadItem = () => store.loadInheritedKVs(props.namespace);
-    onMounted(() => loadItem());
+    const store = useNamespacesStore()
+
+    const loadItem = (): void => {
+        store.loadInheritedKVs(props.namespace)
+    }
+    onMounted(() => loadItem())
 </script>

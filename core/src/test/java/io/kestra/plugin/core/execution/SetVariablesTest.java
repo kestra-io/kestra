@@ -1,24 +1,30 @@
 package io.kestra.plugin.core.execution;
 
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import org.junit.jupiter.api.Test;
+import io.kestra.core.services.TaskOutputService;
 
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class SetVariablesTest {
+    @Inject
+    private TaskOutputService taskOutputService;
 
     @ExecuteFlow("flows/valids/set-variables.yaml")
     @Test
-    void shouldUpdateExecution(Execution execution) {
+    void shouldUpdateExecution(Execution execution) throws io.kestra.core.exceptions.InternalException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);
-        assertThat(((Map<String, Object>) execution.getTaskRunList().get(1).getOutputs().get("values"))).containsEntry("message", "Hello Loïc");
+        assertThat(((Map<String, Object>) taskOutputService.getOutputs(execution.getTaskRunList().get(1)).get("values"))).containsEntry("message", "Hello Loïc");
     }
 
     @ExecuteFlow("flows/valids/set-variables-duplicate.yaml")

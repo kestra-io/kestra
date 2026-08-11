@@ -1,6 +1,9 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,11 +11,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.flows.check.Check;
+import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
@@ -21,7 +26,7 @@ import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
-import io.micronaut.core.annotation.Introspected;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -29,10 +34,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A serializable flow with no source.
@@ -42,25 +43,28 @@ import java.util.stream.Stream;
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
 @ToString
 @EqualsAndHashCode
 @FlowValidation
 public class Flow extends AbstractFlow implements HasUID {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
         .copy()
-        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+        .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
 
     private static final ObjectMapper WITHOUT_REVISION_OBJECT_MAPPER = NON_DEFAULT_OBJECT_MAPPER.copy()
         .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
             public boolean hasIgnoreMarker(final AnnotatedMember m) {
-                List<String> exclusions = Arrays.asList("revision", "deleted", "source");
+                List<String> exclusions = Arrays.asList("revision", "deleted", "source", "updated");
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
         });
 
+    @Schema(
+        type = "object",
+        additionalProperties = Schema.AdditionalPropertiesValue.FALSE
+    )
     Map<String, Object> variables;
 
     @Valid
@@ -81,31 +85,17 @@ public class Flow extends AbstractFlow implements HasUID {
     }
 
     @Valid
-    @Deprecated
-    List<Listener> listeners;
-
-    @Valid
     List<Task> afterExecution;
 
     @Valid
     List<AbstractTrigger> triggers;
 
-    @Valid
-    List<PluginDefault> pluginDefaults;
-
-    @Valid
-    List<PluginDefault> taskDefaults;
-
-    @Deprecated
-    public void setTaskDefaults(List<PluginDefault> taskDefaults) {
-        this.pluginDefaults = taskDefaults;
-        this.taskDefaults = taskDefaults;
-    }
-
-    @Deprecated
-    public List<PluginDefault> getTaskDefaults() {
-        return this.taskDefaults;
-    }
+    @Schema(
+        title = "References to governance policies (Enterprise Edition).",
+        description = "Identifiers of `enforcement: REFERENCE` policies to attach to this flow, resolved within the flow's tenant/namespace scope chain. Enterprise Edition only; parsed but ignored in the open-source edition."
+    )
+    @PluginProperty
+    List<String> policyRefs;
 
     @Valid
     Concurrency concurrency;
@@ -118,6 +108,14 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     List<Output> outputs;
 
+    // implementation = Object.class prevents the Micronaut OpenAPI annotation processor from following
+    // the @JsonSubTypes on AbstractRetry, which causes a PostponeToNextRoundException at compile time
+    // due to the Micronaut constraint validators on the concrete retry subtypes (Constant, Exponential, Random).
+    @Schema(
+        title = "Retry",
+        description = "Retry policy applied when the flow fails.",
+        implementation = Object.class
+    )
     @Valid
     AbstractRetry retry;
 
@@ -125,22 +123,39 @@ public class Flow extends AbstractFlow implements HasUID {
     @PluginProperty
     List<SLA> sla;
 
+    @Schema(
+        title = "Conditions evaluated before the flow is executed.",
+        description = "A list of conditions that are evaluated before the flow is executed.  If no checks are defined, the flow executes normally."
+    )
+    @Valid
+    @PluginProperty
+    List<Check> checks;
+
+    @Schema(
+        title = "Quotas evaluated before the flow is executed (EE only).",
+        description = """
+            A list of quotas that are evaluated before the flow is executed. If no quotas are defined, the flow executes normally.
+            Quotas can also be defined at the namespace and tenant level."""
+    )
+    @Valid
+    @PluginProperty
+    List<Quota> quotas;
+
     public Stream<String> allTypes() {
         return Stream.of(
-                Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
-                allTasks().map(Task::getType),
-                Optional.ofNullable(pluginDefaults).orElse(Collections.emptyList()).stream().map(PluginDefault::getType)
-            ).reduce(Stream::concat).orElse(Stream.empty())
+            Optional.ofNullable(triggers).orElse(Collections.emptyList()).stream().map(AbstractTrigger::getType),
+            allTasks().map(Task::getType)
+        ).reduce(Stream::concat).orElse(Stream.empty())
             .distinct();
     }
 
     public Stream<Task> allTasks() {
         return Stream.of(
-                this.tasks != null ? this.tasks : Collections.<Task>emptyList(),
-                this.errors != null ? this.errors : Collections.<Task>emptyList(),
-                this._finally != null ? this._finally : Collections.<Task>emptyList(),
-                this.afterExecutionTasks()
-            )
+            this.tasks != null ? this.tasks : Collections.<Task> emptyList(),
+            this.errors != null ? this.errors : Collections.<Task> emptyList(),
+            this._finally != null ? this._finally : Collections.<Task> emptyList(),
+            this.afterExecution != null ? this.afterExecution : Collections.<Task> emptyList()
+        )
             .flatMap(Collection::stream);
     }
 
@@ -240,55 +255,6 @@ public class Flow extends AbstractFlow implements HasUID {
             .orElse(null);
     }
 
-    /**
-     * @deprecated should not be used
-     */
-    @Deprecated(forRemoval = true, since = "0.21.0")
-    public Flow updateTask(String taskId, Task newValue) throws InternalException {
-        Task task = this.findTaskByTaskId(taskId);
-        Flow flow = this instanceof FlowWithSource flowWithSource ? flowWithSource.toFlow() : this;
-
-        Map<String, Object> map = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
-
-        return NON_DEFAULT_OBJECT_MAPPER.convertValue(
-            recursiveUpdate(map, task, newValue),
-            Flow.class
-        );
-    }
-
-    private static Object recursiveUpdate(Object object, Task previous, Task newValue) {
-        if (object instanceof Map<?, ?> value) {
-            if (value.containsKey("id") && value.get("id").equals(previous.getId()) &&
-                value.containsKey("type") && value.get("type").equals(previous.getType())
-            ) {
-                return NON_DEFAULT_OBJECT_MAPPER.convertValue(newValue, JacksonMapper.MAP_TYPE_REFERENCE);
-            } else {
-                return value
-                    .entrySet()
-                    .stream()
-                    .map(e -> new AbstractMap.SimpleEntry<>(
-                        e.getKey(),
-                        recursiveUpdate(e.getValue(), previous, newValue)
-                    ))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            }
-        } else if (object instanceof Collection<?> value) {
-            return value
-                .stream()
-                .map(r -> recursiveUpdate(r, previous, newValue))
-                .toList();
-        } else {
-            return object;
-        }
-    }
-
-    private List<Task> afterExecutionTasks() {
-        return ListUtils.concat(
-            ListUtils.emptyOnNull(this.getListeners()).stream().flatMap(listener -> listener.getTasks().stream()).toList(),
-            this.getAfterExecution()
-        );
-    }
-
     public boolean equalsWithoutRevision(FlowInterface o) {
         try {
             return WITHOUT_REVISION_OBJECT_MAPPER.writeValueAsString(this).equals(WITHOUT_REVISION_OBJECT_MAPPER.writeValueAsString(o));
@@ -302,24 +268,28 @@ public class Flow extends AbstractFlow implements HasUID {
 
         // change flow id
         if (!updated.getId().equals(this.getId())) {
-            violations.add(ManualConstraintViolation.of(
-                "Illegal flow id update",
-                updated,
-                Flow.class,
-                "flow.id",
-                updated.getId()
-            ));
+            violations.add(
+                ManualConstraintViolation.of(
+                    "Illegal flow id update",
+                    updated,
+                    Flow.class,
+                    "flow.id",
+                    updated.getId()
+                )
+            );
         }
 
         // change flow namespace
         if (!updated.getNamespace().equals(this.getNamespace())) {
-            violations.add(ManualConstraintViolation.of(
-                "Illegal namespace update",
-                updated,
-                Flow.class,
-                "flow.namespace",
-                updated.getNamespace()
-            ));
+            violations.add(
+                ManualConstraintViolation.of(
+                    "Illegal namespace update",
+                    updated,
+                    Flow.class,
+                    "flow.namespace",
+                    updated.getNamespace()
+                )
+            );
         }
 
         if (!violations.isEmpty()) {
@@ -329,6 +299,7 @@ public class Flow extends AbstractFlow implements HasUID {
         }
     }
 
+    @Override
     public Flow toDeleted() {
         return this.toBuilder()
             .revision(this.revision + 1)
@@ -341,7 +312,7 @@ public class Flow extends AbstractFlow implements HasUID {
      * To be conservative a flow MUST not return any source.
      */
     @Override
-    @JsonIgnore
+    @Schema(hidden = true)
     public String getSource() {
         return null;
     }

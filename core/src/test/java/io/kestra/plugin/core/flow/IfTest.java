@@ -1,49 +1,68 @@
 package io.kestra.plugin.core.flow;
 
-import io.kestra.core.junit.annotations.ExecuteFlow;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.TestRunnerUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.TestRunnerUtils;
+
+import jakarta.inject.Inject;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class IfTest {
 
-    private static final String TENANT_ID = "true";
-
     @Inject
     private TestRunnerUtils runnerUtils;
 
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private MetricRegistry metricRegistry;
+
     @Test
-    @LoadFlows(value = {"flows/valids/if-condition.yaml"}, tenantId = TENANT_ID)
+    @LoadFlows(value = { "flows/valids/if-condition.yaml" }, tenantId = "iftruthy")
     void ifTruthy() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
-            (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
+        Execution execution = runnerUtils.runOne(
+            "iftruthy", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", true), Duration.ofSeconds(120)
+        );
+        List<TaskRunAttempt> flowableAttempts = execution.findTaskRunsByTaskId("if").getFirst().getAttempts();
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
-            (f, e) -> Map.of("param", "true") , Duration.ofSeconds(120));
+        assertThat(flowableAttempts).isNotNull();
+        assertThat(flowableAttempts.getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        execution = runnerUtils.runOne(
+            "iftruthy", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", "true"), Duration.ofSeconds(120)
+        );
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
-            (f, e) -> Map.of("param", 1) , Duration.ofSeconds(120));
+        execution = runnerUtils.runOne(
+            "iftruthy", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", 1), Duration.ofSeconds(120)
+        );
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -51,31 +70,39 @@ class IfTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/if-condition.yaml"})
+    @LoadFlows(value = { "flows/valids/if-condition.yaml" }, tenantId = "iffalsy")
     void ifFalsy() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
-            (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
+        Execution execution = runnerUtils.runOne(
+            "iffalsy", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", false), Duration.ofSeconds(120)
+        );
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
-            (f, e) -> Map.of("param", "false") , Duration.ofSeconds(120));
+        execution = runnerUtils.runOne(
+            "iffalsy", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", "false"), Duration.ofSeconds(120)
+        );
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
-            (f, e) -> Map.of("param", 0) , Duration.ofSeconds(120));
+        execution = runnerUtils.runOne(
+            "iffalsy", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", 0), Duration.ofSeconds(120)
+        );
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
-            (f, e) -> Map.of("param", -0) , Duration.ofSeconds(120));
+        execution = runnerUtils.runOne(
+            "iffalsy", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", -0), Duration.ofSeconds(120)
+        );
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -85,35 +112,44 @@ class IfTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/if-without-else.yaml"})
+    @LoadFlows(value = { "flows/valids/if-without-else.yaml" }, tenantId = "ifwithoutelse")
     void ifWithoutElse() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-without-else", null,
-            (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
+        Execution execution = runnerUtils.runOne(
+            "ifwithoutelse", "io.kestra.tests", "if-without-else", null,
+            (f, e) -> Map.of("param", true), Duration.ofSeconds(120)
+        );
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-without-else", null,
-            (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
+        execution = runnerUtils.runOne(
+            "ifwithoutelse", "io.kestra.tests", "if-without-else", null,
+            (f, e) -> Map.of("param", false), Duration.ofSeconds(120)
+        );
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.findTaskRunsByTaskId("when-true").isEmpty()).isTrue();
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
-    @LoadFlows({"flows/valids/if-in-flowable.yaml"})
+    @LoadFlows(value = { "flows/valids/if-in-flowable.yaml" }, tenantId = "ifinflowable")
     void ifInFlowable() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-in-flowable", null,
-            (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
+        Execution execution = runnerUtils.runOne(
+            "ifinflowable", "io.kestra.tests", "if-in-flowable", null,
+            (f, e) -> Map.of("param", true), Duration.ofSeconds(120)
+        );
 
-        assertThat(execution.getTaskRunList()).hasSize(8);
-        assertThat(execution.findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
+        assertThat(subExecutions.size()).isEqualTo(3);
+        assertThat(subExecutions.get(1).findTaskRunsByTaskId("after_if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(subExecutions.getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
-    @ExecuteFlow("flows/valids/if-with-only-disabled-tasks.yaml")
+    @ExecuteFlow(value = "flows/valids/if-with-only-disabled-tasks.yaml", tenantId = "ifwithonlydisabledtasks")
     void ifWithOnlyDisabledTasks(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.findTaskRunsByTaskId("if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -121,9 +157,49 @@ class IfTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/if-in-parallel.yaml")
+    @ExecuteFlow(value = "flows/valids/if-in-parallel.yaml", tenantId = "ifonparallelbranch")
     void ifOnParallelBranch(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(9);
+        assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        var subExecutions = executionRepository.findLoopSubExecutions(execution.getTenantId(), execution.getId(), null);
+        assertThat(subExecutions.size()).isEqualTo(3);
+    }
+
+    @Test
+    @ExecuteFlow(value = "flows/valids/if-condition-fail.yaml", tenantId = "ifconditionfail")
+    void ifConditionFail(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    // https://github.com/kestra-io/kestra/issues/9008: the Executor used to call resolveNexts() on a
+    // running If for every executor cycle, most of them resolving to nothing. Pin the number of
+    // resolutions so a regression shows up here rather than only in a profiler.
+    @Test
+    @LoadFlows(value = { "flows/valids/if-condition.yaml" }, tenantId = "ifflowablecount")
+    void shouldResolveFlowableOnlyWhenItCanProgress() throws TimeoutException, QueueException {
+        // Given
+        double before = flowableExecutionCount();
+
+        // When
+        Execution execution = runnerUtils.runOne(
+            "ifflowablecount", "io.kestra.tests", "if-condition", null,
+            (f, e) -> Map.of("param", true), Duration.ofSeconds(120)
+        );
+
+        // Then
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(flowableExecutionCount() - before).isEqualTo(2d);
+    }
+
+    private double flowableExecutionCount() {
+        return metricRegistry.counter(
+            MetricRegistry.METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT,
+            MetricRegistry.METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT_DESCRIPTION,
+            MetricRegistry.TAG_TASK_TYPE, If.class.getName()
+        ).count();
     }
 }

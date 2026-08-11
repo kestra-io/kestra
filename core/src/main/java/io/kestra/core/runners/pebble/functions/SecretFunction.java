@@ -1,46 +1,54 @@
 package io.kestra.core.runners.pebble.functions;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.runners.RunVariables;
-import io.kestra.core.secret.SecretException;
-import io.kestra.core.secret.SecretNotFoundException;
-import io.kestra.core.secret.SecretService;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.FlowService;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.kestra.core.runners.RunVariables;
+import io.kestra.core.secret.SecretException;
+import io.kestra.core.secret.SecretNotFoundException;
+import io.kestra.core.secret.SecretObject;
+import io.kestra.core.secret.SecretService;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.NamespaceService;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Singleton
-public class SecretFunction implements Function {
+public class SecretFunction implements KestraFunction {
     public static final String NAME = "secret";
 
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofJson();
     private static final String SUBKEY_ARG = "subkey";
     private static final String NAMESPACE_ARG = "namespace";
     private static final String KEY_ARG = "key";
+    private static final String FULL_ARG = "full";
+    private static final String VALUE_KEY = "value";
+    private static final String METADATA_KEY = "metadata";
 
     @Inject
-    private SecretService secretService;
+    private Provider<SecretService> secretService;
 
     @Inject
-    private FlowService flowService;
+    private Provider<NamespaceService> namespaceService;
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of(KEY_ARG, NAMESPACE_ARG, SUBKEY_ARG);
+        return List.of(KEY_ARG, NAMESPACE_ARG, SUBKEY_ARG, FULL_ARG);
     }
 
     @SuppressWarnings("unchecked")
@@ -56,13 +64,32 @@ public class SecretFunction implements Function {
         if (namespace == null) {
             namespace = flowNamespace;
         } else {
-            flowService.checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
+            namespaceService.get().checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
+        }
+
+        final String subkey = (String) args.get(SUBKEY_ARG);
+        final boolean full = Boolean.TRUE.equals(args.get(FULL_ARG));
+
+        if (full && subkey != null && !subkey.isEmpty()) {
+            throw new PebbleException(null, "The 'secret' function cannot be called with both 'subkey' and 'full' arguments.", lineNumber, self.getName());
         }
 
         try {
-            String secret = secretService.findSecret(flowTenantId, namespace, key);
+            if (full) {
+                SecretObject secretObject = secretService.get().findSecretObject(flowTenantId, namespace, key);
+                consumeSecret(context, secretObject.value());
 
-            final String subkey = (String) args.get(SUBKEY_ARG);
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put(VALUE_KEY, secretObject.value());
+                if (!secretObject.metadata().isEmpty()) {
+                    secretObject.metadata().values().forEach(value -> consumeSecret(context, value));
+                    result.put(METADATA_KEY, secretObject.metadata());
+                }
+                return result;
+            }
+
+            String secret = secretService.get().findSecret(flowTenantId, namespace, key);
+
             if (subkey != null && !subkey.isEmpty()) {
                 try {
                     JsonNode subkeys = OBJECT_MAPPER.readTree(secret);
@@ -73,25 +100,41 @@ public class SecretFunction implements Function {
                         secret = jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString();
                     }
                 } catch (JsonProcessingException e) {
-                    throw new SecretException(String.format(
-                        "Failed to read secret sub-key '%s' from secret '%s'. Ensure the secret contains valid JSON value.",
-                        subkey,
-                        key
-                    ));
+                    throw new SecretException(
+                        String.format(
+                            "Failed to read secret sub-key '%s' from secret '%s'. Ensure the secret contains valid JSON value.",
+                            subkey,
+                            key
+                        )
+                    );
                 }
             }
 
-            try {
-                Consumer<String> addSecretConsumer = (Consumer<String>) context.getVariable(RunVariables.SECRET_CONSUMER_VARIABLE_NAME);
-                addSecretConsumer.accept(secret);
-            } catch (Exception e) {
-                log.warn("Unable to get secret consumer", e);
-            }
-
+            consumeSecret(context, secret);
             return secret;
         } catch (SecretException | IOException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void consumeSecret(EvaluationContext context, String value) {
+        try {
+            Consumer<String> addSecretConsumer = (Consumer<String>) context.getVariable(RunVariables.SECRET_CONSUMER_VARIABLE_NAME);
+            addSecretConsumer.accept(value);
+        } catch (Exception e) {
+            log.warn("Unable to get secret consumer", e);
+        }
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(KEY_ARG, "'MY_SECRET'");
+        defaults.put(NAMESPACE_ARG, "flow.namespace");
+        defaults.put(SUBKEY_ARG, null);
+        defaults.put(FULL_ARG, null);
+        return defaults;
     }
 
     protected String getSecretKey(Map<String, Object> args, PebbleTemplate self, int lineNumber) {

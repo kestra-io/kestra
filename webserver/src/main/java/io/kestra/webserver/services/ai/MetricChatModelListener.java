@@ -1,5 +1,8 @@
 package io.kestra.webserver.services.ai;
 
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
@@ -12,9 +15,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 @Singleton
 @Slf4j
 public class MetricChatModelListener implements ChatModelListener {
@@ -26,7 +26,7 @@ public class MetricChatModelListener implements ChatModelListener {
         ChatRequest request = responseContext.chatRequest();
         ChatResponse response = responseContext.chatResponse();
 
-        String[] tags = new String[]{
+        String[] tags = new String[] {
             "messages_count", String.valueOf(request.messages().size()),
             "model", request.modelName(),
             "finish_reasons", response.finishReason().toString()
@@ -60,7 +60,7 @@ public class MetricChatModelListener implements ChatModelListener {
     public void onError(ChatModelErrorContext errorContext) {
         ChatRequest request = errorContext.chatRequest();
 
-        String[] tags = new String[]{
+        String[] tags = new String[] {
             "messages_count", String.valueOf(request.messages().size()),
             "model", request.modelName(),
             "finish_reasons", "ERROR",

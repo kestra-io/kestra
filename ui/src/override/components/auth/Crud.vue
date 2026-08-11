@@ -1,19 +1,19 @@
 <template>
     <span />
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     defineProps({
         permission: {
             type: String,
-            required: true
+            required: true,
         },
         type: {
             type: String,
-            default: undefined
+            default: undefined,
         },
         detail: {
             type: Object,
-            required: true
+            required: true,
         },
-    });
+    })
 </script>

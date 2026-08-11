@@ -1,0 +1,10 @@
+id: loop-failed
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2", "value 3"]
+    tasks:
+      - id: fail
+        type: io.kestra.plugin.core.execution.Fail

@@ -1,15 +1,25 @@
 package io.kestra.core.models.tasks.runners;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.apache.commons.lang3.SystemUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.KilledException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.PluginVersioning;
 import io.kestra.core.models.WorkerJobLifecycle;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.runner.Process;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
@@ -17,14 +27,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.lang3.SystemUtils;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
-
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 
 /**
@@ -37,10 +41,10 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Plugin, PluginVersioning, WorkerJobLifecycle {
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     protected String type;
 
-    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    @PluginProperty(hidden = true, group = "advanced")
     protected String version;
 
     @JsonIgnore
@@ -64,7 +68,8 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
     /**
      * This method will be called by the script plugin to run a script on a task runner.
      * Task runners may be local or remote.
-     * For local task runner (like in process or in a local Docker engine), <code>filesToUpload</code> and <code>filesToDownload</code> may be ignored as they are using the task working directory.
+     * For local task runner (like in process or in a local Docker engine), <code>filesToUpload</code> and <code>filesToDownload</code> may be ignored as they are using the task working
+     * directory.
      * For remote task runner (like Kubernetes or in a cloud provider), <code>filesToUpload</code> must be used to upload input and namespace files to the runner,
      * and <code>filesToDownload</code> must be used to download output files from the runner.
      */
@@ -126,7 +131,7 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
         }
         // Case Target is Windows
         if (targetOS.equals(TargetOS.WINDOWS) ||
-            // Case Target is AUTO and System is Windows while using Process runner
+        // Case Target is AUTO and System is Windows while using Process runner
             targetOS.equals(TargetOS.AUTO) && SystemUtils.IS_OS_WINDOWS && this instanceof Process
         ) {
 
@@ -155,5 +160,26 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
      */
     protected void onKill(final Runnable runnable) {
         this.killable.set(runnable);
+    }
+
+    /**
+     * Throws a {@link KilledException} if this task runner was killed.
+     */
+    protected void checkKilled() {
+        if (isKilled.get()) {
+            throw new KilledException();
+        }
+    }
+
+    /**
+     * Throws a {@link KilledException} with contextual phase information
+     * if this task runner was killed.
+     *
+     * @param message the error message.
+     */
+    protected void checkKilled(String message) {
+        if (isKilled.get()) {
+            throw new KilledException(message);
+        }
     }
 }

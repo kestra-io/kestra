@@ -1,0 +1,11 @@
+kestra:
+  jdbc:
+    cleaner:
+      initial-delay: 1h
+      fixed-delay: 1h
+      retention: 0s
+      types:
+        - type: io.kestra.core.models.executions.LogEntry
+          retention: 0s
+        - type: io.kestra.core.models.executions.MetricEntry
+          retention: 0s

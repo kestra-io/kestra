@@ -1,102 +1,110 @@
-import {computed, nextTick, onMounted, ref} from "vue";
-import {useRoute, useRouter} from "vue-router";
-import {defaultNamespace} from "./useNamespaces";
+/**
+ * Persists a page's URL query (filters, sort, pagination, etc.) to sessionStorage
+ * so it can be restored when the user navigates back to that page with no query.
+ *
+ * Auto-saves on every same-path query change and auto-restores on mount when the
+ * URL has no query but a saved state exists. Exposes `loadInit` so consumers can
+ * gate their initial data fetch and avoid racing the in-flight restore navigation.
+ */
+import {computed, onMounted, ref, watch} from "vue"
+import {RouteLocation, useRoute, useRouter} from "vue-router"
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
-    isDefaultNamespaceAllow?: boolean;
+}
+
+function getLocalStorageName(route: RouteLocation): string {
+    const tenant = route.params.tenant
+    return `${route.name?.toString().replace("/", "_")}${route.params.tab ? "_" + route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`
+}
+
+function getRestoredUrlValue(route: RouteLocation) {
+    const raw = window.sessionStorage.getItem(getLocalStorageName(route))
+    return raw ? JSON.parse(raw) : null
+}
+
+export function getRestoredQuery(route: RouteLocation) {
+    const localStorageValue = getRestoredUrlValue(route)
+    if (localStorageValue === null) {
+        return {query: route.query, change: false, localStorageValue}
+    }
+
+    const query = {...route.query}
+    let change = false
+
+    for (const key in localStorageValue) {
+        const value = localStorageValue[key]
+        if (query[key] || !value) continue
+        // empty array breaks the application
+        if (Array.isArray(value) && value.length === 0) continue
+        query[key] = value
+        change = true
+    }
+
+    return {query, change, localStorageValue}
 }
 
 export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
-    const {
-        restoreUrl = true,
-        isDefaultNamespaceAllow = false
-    } = options;
+    const {restoreUrl = true} = options
 
-    const route = useRoute();
-    const router = useRouter();
-    const loadInit = ref(true);
+    const route = useRoute()
+    const router = useRouter()
 
-    const localStorageName = computed(() => {
-        const tenant = route.params.tenant;
-        return `${route.name?.toString().replace("/", "_")}${route.params.tab ? "_" + route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`;
-    });
+    const loadInit = ref(true)
+
+    const localStorageName = computed(() => getLocalStorageName(route))
 
     const localStorageValue = computed(() => {
-        if (window.sessionStorage.getItem(localStorageName.value)) {
-            return JSON.parse(window.sessionStorage.getItem(localStorageName.value)!);
-        } else {
-            return null;
-        }
-    });
+        const raw = window.sessionStorage.getItem(localStorageName.value)
+        return raw ? JSON.parse(raw) : null
+    })
 
     const saveRestoreUrl = () => {
-        if (!restoreUrl) {
-            return;
+        if (!restoreUrl || route.query.noRestore) return
+        if (Object.keys(route.query).length === 0) {
+            window.sessionStorage.removeItem(localStorageName.value)
+        } else {
+            window.sessionStorage.setItem(localStorageName.value, JSON.stringify(route.query))
         }
-
-        if (Object.keys(route.query).length > 0 || (localStorageValue.value !== null && Object.keys(localStorageValue.value).length > 0)) {
-            if (Object.keys(route.query).length === 0) {
-                window.sessionStorage.removeItem(localStorageName.value);
-            } else {
-                window.sessionStorage.setItem(
-                    localStorageName.value,
-                    JSON.stringify(route.query)
-                );
-            }
-        }
-    };
+    }
 
     const goToRestoreUrl = () => {
-        if (!restoreUrl) {
-            return;
-        }
+        const {query, change} = getRestoredQuery(route)
 
-        const localExist = localStorageValue.value !== null;
-        const query = {...route.query};
-        const local = localStorageValue.value === null ? {} : {...localStorageValue.value};
-
-        let change = false;
-
-        if (!localExist && isDefaultNamespaceAllow && defaultNamespace()) {
-            local["namespace"] = defaultNamespace();
-        }
-
-        for (const key in local) {
-            if (!query[key] && local[key]) {
-                // empty array break the application
-                if (local[key] instanceof Array && local[key].length === 0) {
-                    continue;
-                }
-
-                query[key] = local[key];
-                change = true;
-            }
-        }
+        // Unblock loadData synchronously — the consumer's route.query watcher
+        // fires before router.replace's .then, and that reload must see loadInit=true.
+        loadInit.value = true
 
         if (change) {
-            // wait for the router to be ready
-            nextTick(() => {
-                router.replace({query: query});
-            });
-        } else {
-            loadInit.value = true;
+            router.replace({query})
         }
-    };
+    }
 
-    // Automatically call goToRestoreUrl on mount if needed (equivalent to created() hook)
-    onMounted(() => {
-        if (Object.keys(route.query).length === 0 && restoreUrl) {
-            loadInit.value = false;
-            goToRestoreUrl();
+    // Settle loadInit in setup so children can gate their first load and avoid
+    // racing the in-flight restore navigation.
+    if (restoreUrl && localStorageValue.value && Object.keys(route.query).length === 0) {
+        const {change} = getRestoredQuery(route)
+        if (change) {
+            loadInit.value = false
         }
-    });
+    }
+
+    onMounted(() => {
+        if (!loadInit.value) goToRestoreUrl()
+    })
+
+    // Skip cross-route navigations so leaving a page doesn't clobber another
+    // route's saved state with the new route's empty query.
+    watch(() => route.fullPath, (newPath, oldPath) => {
+        if (oldPath && newPath.split("?")[0] !== oldPath.split("?")[0]) return
+        saveRestoreUrl()
+    })
 
     return {
         loadInit,
         localStorageName,
         localStorageValue,
         saveRestoreUrl,
-        goToRestoreUrl
-    };
+        goToRestoreUrl,
+    }
 }

@@ -1,14 +1,15 @@
 package io.kestra.cli.listeners;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.context.env.MapPropertySource;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.MapPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

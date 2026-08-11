@@ -1,5 +1,18 @@
 package io.kestra.webserver.controllers.api;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import org.apache.commons.io.IOUtils;
+import org.reactivestreams.Publisher;
+
+import io.kestra.webserver.configuration.WebserverConfiguration;
+
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.publisher.Publishers;
@@ -8,43 +21,41 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Filter;
+import io.micronaut.http.cookie.Cookie;
+import io.micronaut.http.cookie.SameSite;
 import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.server.types.files.SystemFile;
-import org.apache.commons.io.IOUtils;
-import org.reactivestreams.Publisher;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
+import io.micronaut.security.csrf.CsrfConfiguration;
+import io.micronaut.security.csrf.generator.CsrfTokenGenerator;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Filter("/ui/**")
+@Requires(property = "kestra.webserver.ui.enabled", notEquals = "false", defaultValue = "true")
 public class StaticFilter implements HttpServerFilter {
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
 
-    @Nullable
-    @Value("${kestra.webserver.google-analytics}")
-    protected String googleAnalytics;
+    @Inject
+    protected WebserverConfiguration webserverConfiguration;
 
-    @Nullable
-    @Value("${kestra.webserver.html-title}")
-    protected String htmlTitle;
+    @Inject
+    protected Optional<CsrfConfiguration> csrfConfiguration;
 
-    @Nullable
-    @Value("${kestra.webserver.html-head}")
-    protected String htmlHead;
+    @Inject
+    protected Optional<CsrfTokenGenerator<HttpRequest<?>>> csrfTokenGenerator;
+
+    private static final Pattern HTML_PATTERN = Pattern.compile("<html.*?>", Pattern.CASE_INSENSITIVE);
 
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         return Publishers
-            .map(chain.proceed(request), (MutableHttpResponse<?> response) -> {
+            .map(chain.proceed(request), (MutableHttpResponse<?> response) ->
+            {
                 try {
                     Optional<? extends MutableHttpResponse<?>> alteredResponse = Stream
                         .of(
@@ -55,14 +66,19 @@ public class StaticFilter implements HttpServerFilter {
                             // debug mode
                             response.getBody(SystemFile.class)
                                 .filter(n -> n.getFile().getAbsoluteFile().toString().endsWith("ui/index.html"))
-                                .map(throwFunction(n -> IOUtils.toString(
-                                    Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
-                                    StandardCharsets.UTF_8
-                                )))
+                                .map(
+                                    throwFunction(
+                                        n -> IOUtils.toString(
+                                            Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
+                                            StandardCharsets.UTF_8
+                                        )
+                                    )
+                                )
                         )
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .map(s -> {
+                        .map(s ->
+                        {
                             String finalBody = replace(s);
 
                             return (MutableHttpResponse<?>) HttpResponse
@@ -73,11 +89,46 @@ public class StaticFilter implements HttpServerFilter {
                         })
                         .findFirst();
 
-                    return alteredResponse.isPresent() ? alteredResponse.get() : response;
+                    MutableHttpResponse<?> finalResponse = alteredResponse.isPresent() ? alteredResponse.get() : response;
+                    return addCsrfToken(request, finalResponse);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
+    }
+
+    protected MutableHttpResponse<?> addCsrfToken(HttpRequest<?> request, MutableHttpResponse<?> response) {
+        if (csrfTokenGenerator.isEmpty() || csrfConfiguration.isEmpty()) {
+            return response;
+        }
+
+        String html = response.getBody(String.class).orElse("");
+        if (html.isEmpty() || (!HTML_PATTERN.matcher(html).find() && !html.startsWith("<!DOCTYPE html>"))) {
+            return response;
+        }
+
+        // Reuse the existing cookie token so multiple tabs and BFCache-restored pages
+        // all share one stable token. Generate only when the cookie is absent.
+        String csrfToken = request.getCookies()
+            .findCookie(csrfConfiguration.get().getCookieName())
+            .map(Cookie::getValue)
+            .orElseGet(() -> csrfTokenGenerator.get().generateCsrfToken(request));
+        if (csrfToken == null) {
+            return response;
+        }
+
+        String escaped = csrfToken.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
+        String metaTag = "<meta name=\"csrf-token\" content=\"" + escaped + "\">";
+        html = html.replaceFirst("<head>", "<head>\n" + metaTag);
+        response = response.body(html);
+        response.cookie(
+            Cookie.of(csrfConfiguration.get().getCookieName(), csrfToken)
+                .httpOnly(true)
+                .secure(request.isSecure())
+                .sameSite(SameSite.Strict)
+                .path("/")
+        );
+        return response;
     }
 
     private String replace(String line) {
@@ -87,15 +138,15 @@ public class StaticFilter implements HttpServerFilter {
 
         line = line.replace("./", (basePath != null ? basePath : "") + "/ui/");
 
-        if (googleAnalytics != null) {
-            line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + this.googleAnalytics + "';");
+        if (webserverConfiguration.googleAnalytics() != null) {
+            line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + webserverConfiguration.googleAnalytics() + "';");
         }
 
-        if (htmlTitle != null) {
-            line = line.replaceFirst("<title>(.*)</title>", "<title>" + this.htmlTitle + "</title>");
+        if (webserverConfiguration.htmlTitle() != null) {
+            line = line.replaceFirst("<title>(.*)</title>", "<title>" + webserverConfiguration.htmlTitle() + "</title>");
         }
 
-        line = line.replace("<meta name=\"html-head\" content=\"replace\">", this.htmlHead == null ? "" : this.htmlHead);
+        line = line.replace("<meta name=\"html-head\" content=\"replace\">", webserverConfiguration.htmlHead() == null ? "" : webserverConfiguration.htmlHead());
 
         return line;
     }

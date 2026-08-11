@@ -1,0 +1,14 @@
+id: loop-map
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values:
+      key1: value 1
+      key2: value 2
+      key3: value 3
+    tasks:
+      - id: item
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{item.key}} - {{item.value}}"

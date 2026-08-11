@@ -1,5 +1,8 @@
 package io.kestra.webserver.controllers.api;
 
+import java.net.URI;
+
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -8,10 +11,9 @@ import io.micronaut.http.annotation.Get;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.URI;
-
 @Slf4j
 @Controller
+@Requires(property = "kestra.webserver.ui.enabled", notEquals = "false", defaultValue = "true")
 public class RedirectController {
     @Nullable
     @Value("${micronaut.server.context-path}")

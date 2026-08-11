@@ -1,5 +1,16 @@
 package io.kestra.plugin.core.kv;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
@@ -13,16 +24,8 @@ import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,18 +41,20 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .kvDescription(new Property<>("{{ inputs.description }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .kvDescription(Property.ofExpression("{{ inputs.description }}"))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
         String description = "myDescription";
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Map.of(
-            "key", "no_ns_key",
-            "value", value,
-            "description", description
-        ));
+        final RunContext runContext = TestsUtils.mockRunContext(
+            this.runContextFactory, set, Map.of(
+                "key", "no_ns_key",
+                "value", value,
+                "description", description
+            )
+        );
 
         // When
         set.run(runContext);
@@ -68,19 +73,21 @@ class SetTest {
     @Test
     void shouldSetKVGivenSameNamespace() throws Exception {
         // Given
-        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
-            "inputs", Map.of(
-                "key", "same_ns_key",
-                "value", "test-value"
+        RunContext runContext = this.runContextFactory.of(
+            "io.kestra.test", Map.of(
+                "inputs", Map.of(
+                    "key", "same_ns_key",
+                    "value", "test-value"
+                )
             )
-        ));
+        );
 
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("io.kestra.test"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("io.kestra.test"))
             .build();
 
         // When
@@ -95,19 +102,21 @@ class SetTest {
     @Test
     void shouldSetKVGivenChildNamespace() throws Exception {
         // Given
-        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
-            "inputs", Map.of(
-                "key", "child_ns_key",
-                "value", "test-value"
+        RunContext runContext = this.runContextFactory.of(
+            "io.kestra.test", Map.of(
+                "inputs", Map.of(
+                    "key", "child_ns_key",
+                    "value", "test-value"
+                )
             )
-        ));
+        );
 
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("io.kestra"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("io.kestra"))
             .build();
         // When
         set.run(runContext);
@@ -121,19 +130,21 @@ class SetTest {
     @Test
     void shouldFailGivenNonExistingNamespace() {
         // Given
-        RunContext runContext = this.runContextFactory.of("io.kestra.test", Map.of(
-            "inputs", Map.of(
-                "key", "non_existing_ns_key",
-                "value", "test-value"
+        RunContext runContext = this.runContextFactory.of(
+            "io.kestra.test", Map.of(
+                "inputs", Map.of(
+                    "key", "non_existing_ns_key",
+                    "value", "test-value"
+                )
             )
-        ));
+        );
 
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("not-found"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("not-found"))
             .build();
 
         // When - Then
@@ -146,16 +157,18 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .ttl(Property.ofValue(Duration.ofMinutes(5)))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Map.of(
-            "key", "ttl_key",
-            "value", value
-        ));
+        final RunContext runContext = TestsUtils.mockRunContext(
+            this.runContextFactory, set, Map.of(
+                "key", "ttl_key",
+                "value", value
+            )
+        );
 
         // When
         set.run(runContext);
@@ -174,28 +187,32 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .overwrite(Property.ofValue(false))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
-        final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, set, Map.of(
-            "key", key,
-            "value", value
-        ));
+        final RunContext runContext = TestsUtils.mockRunContext(
+            this.runContextFactory, set, Map.of(
+                "key", key,
+                "value", value
+            )
+        );
 
         // When - Then
         //set key a first:
-        runContext.namespaceKv(runContext.flowInfo().namespace()).put(key, new KVValueAndMetadata(new KVMetadata("unused", (Instant)null), value));
+        runContext.namespaceKv(runContext.flowInfo().namespace()).put(key, new KVValueAndMetadata(new KVMetadata("unused", (Instant) null), value));
         //fail because key is already set
-        KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> Set.builder()
-            .id(Set.class.getSimpleName())
-            .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .overwrite(Property.ofValue(false))
-            .build().run(runContext));
+        KVStoreException exception = Assertions.assertThrows(
+            KVStoreException.class, () -> Set.builder()
+                .id(Set.class.getSimpleName())
+                .type(Set.class.getName())
+                .key(Property.ofExpression("{{ inputs.key }}"))
+                .value(Property.ofExpression("{{ inputs.value }}"))
+                .overwrite(Property.ofValue(false))
+                .build().run(runContext)
+        );
         assertThat(exception.getMessage()).isEqualTo("Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.".formatted(key));
     }
 
@@ -211,9 +228,15 @@ class SetTest {
         kv = createAndPerformSetTask(key, "2023-05-02T01:02:03Z", KVType.DATETIME);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Instant.parse("2023-05-02T01:02:03Z"));
 
+        kv = createAndPerformSetTask(key, "2023-05-02", KVType.DATE);
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(LocalDate.parse("2023-05-02"));
+
+        // a full ISO instant with DATE type is also accepted and truncated to its UTC date
+        kv = createAndPerformSetTask(key, "2023-05-02T01:02:03Z", KVType.DATE);
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(LocalDate.parse("2023-05-02"));
+
         kv = createAndPerformSetTask(key, "P1DT5S", KVType.DURATION);
-        // TODO Hack meanwhile we handle duration serialization as currently they are stored as bigint...
-        assertThat((long) Double.parseDouble(kv.getValue(key).orElseThrow().value().toString())).isEqualTo(Duration.ofDays(1).plus(Duration.ofSeconds(5)).toSeconds());
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Duration.ofDays(1).plus(Duration.ofSeconds(5)));
 
         kv = createAndPerformSetTask(key, "[{\"some\":\"value\"},{\"another\":\"value\"}]", KVType.JSON);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(List.of(Map.of("some", "value"), Map.of("another", "value")));

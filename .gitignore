@@ -32,12 +32,20 @@ ui/node_modules
 ui/.env.local
 ui/.env.*.local
 webserver/src/main/resources/ui
-yarn.lock
+webserver/src/main/resources/views
 ui/coverage
+ui/.vitest-reports
 ui/stats.html
 ui/.frontend-gradle-plugin
-ui/utils/CHANGELOG.md
 ui/test-report.junit.xml
+ui/test-report.storybook.junit.xml
+ui/frontend.*
+*storybook.log
+storybook-static
+ui-design-system/node_modules
+ui-design-system/dist
+ui-design-system/coverage
+ui-design-system/*.tsbuildinfo
 
 ### Docker
 /.env
@@ -57,6 +65,14 @@ core/src/main/resources/gradle.properties
 # Allure Reports
 **/allure-results/*
 
-*storybook.log
-storybook-static
 /jmh-benchmarks/src/main/resources/gradle.properties
+
+# Helm chart dependencies (downloaded at build time, not committed)
+charts/kestra/charts/
+charts/kestra-starter/charts/
+.claude/settings.local.json
+.gstack/
+
+# Generated OpenAPI spec (produced by :webserver:generateOpenapiSpec; the committed SDK under
+# ui/packages/kestra-sdk/src/openapi is the source of truth, not this transient spec file).
+/openapi.yml

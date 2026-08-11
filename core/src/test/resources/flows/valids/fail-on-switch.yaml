@@ -13,12 +13,12 @@ tasks:
     cases:
       case1:
         - id: case1
-          type: io.kestra.plugin.core.debug.Echo
-          format: Case 1
+          type: io.kestra.plugin.core.log.Log
+          message: Case 1
       case2:
         - id: case2
-          type: io.kestra.plugin.core.debug.Echo
-          format: Case 2
+          type: io.kestra.plugin.core.log.Log
+          message: Case 2
       notexist:
         - id: fail
           type: io.kestra.plugin.core.execution.Fail

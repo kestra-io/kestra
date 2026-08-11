@@ -1,0 +1,24 @@
+id: webhook-plugin
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.core.tasks.test.Encrypted
+    format: "Hello World"
+  - id: return
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{outputs.hello.value}}"
+  - id: out
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      encrypted: "{{ trigger.encryptedString }}"
+
+triggers:
+  - id: webhook1
+    type: io.kestra.plugin.core.trigger.WebhookTestPlugin
+    key: case1
+
+  - id: webhook2
+    type: io.kestra.plugin.core.trigger.WebhookTestPlugin
+    key: case2
+

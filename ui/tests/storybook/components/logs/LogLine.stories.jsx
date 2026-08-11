@@ -7,7 +7,6 @@ import {
     waitFor
 } from "storybook/test";
 import LogLine from "../../../../src/components/logs/LogLine.vue";
-import {ElCard} from "element-plus";
 
 const ALLOWED_LEVELS = [
     "TRACE",
@@ -125,21 +124,21 @@ export const WithFilter = {
         return {
             setup(){
                 const values = ref("filterable");
-                return () => <el-card>
-                    <el-form label-position="top">
-                        <el-form-item label="Filter">
-                            <el-input v-model={values.value} type="search" placeholder="Filter"/>
-                        </el-form-item>
+                return () => <ks-card>
+                    <ks-form label-position="top">
+                        <ks-form-item label="Filter">
+                            <ks-input v-model={values.value} type="search" placeholder="Filter"/>
+                        </ks-form-item>
                         <hr style={{margin: ".5rem 0"}}/>
                         <LogLine {...argsDefaults("INFO", "This is a filterable message")} filter={values.value} />
-                    </el-form>
-                </el-card>
+                    </ks-form>
+                </ks-card>
             }
         }
     }
 }
 
-// check if when the filter changes, the message disapears
+// check if when the filter changes, the message disappears
 WithFilter.play = async ({canvasElement}) => {
     const can = within(canvasElement);
     const input = can.getByLabelText("Filter");
@@ -153,10 +152,10 @@ WithRouterLinkInMarkdown.args = argsDefaults("INFO", "Created new execution [[li
 // check that the proper links were created from the message
 WithRouterLinkInMarkdown.play = async ({canvasElement}) => {
     const can = within(canvasElement);
-    await waitFor(() => expect(can.getAllByRole("link")).toHaveLength(5));
+    await waitFor(() => expect(can.getAllByRole("link")).toHaveLength(2));
     const links = can.getAllByRole("link");
-    expect(links[3]).toHaveTextContent("4Q9z27FJ26FRIhdv037HtF");
-    expect(links[4]).toHaveTextContent("company.team.child");
+    expect(links[0]).toHaveTextContent("4Q9z27FJ26FRIhdv037HtF");
+    expect(links[1]).toHaveTextContent("company.team.child");
 }
 
 export const WithExcludedMetas = Template.bind({});
@@ -178,21 +177,21 @@ WithExcludedMetas.args = {
 
 export const MultipleLogLinesWithAllLevels = () => {
     return (
-        <ElCard>
+        <ks-card>
             {
                 ALLOWED_LEVELS.map((level, index) => {
                     return <LogLine {...Info.args} cursor={false} level={level} log={{...Info.args.log, level}} style={{borderTop: index===0 ? "none" : "1px solid var(--ks-border-primary)"}} />
                 })
             }
-        </ElCard>
+        </ks-card>
     );
 };
 
 // reproduction of https://github.com/kestra-io/kestra/pull/7133
 export const ShortLogWithoutContext = () => {
     return (
-        <ElCard>
+        <ks-card>
             <LogLine log={{level: "INFO", message: "test"}} level="INFO" />
-        </ElCard>
+        </ks-card>
     );
 }

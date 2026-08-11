@@ -1,0 +1,64 @@
+name: EE OpenAPI result - comment on OSS PR
+
+on:
+  repository_dispatch:
+    types: [ee-openapi-result]
+
+concurrency:
+  group: ee-openapi-result-${{ github.event.client_payload.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  comment:
+    name: Update OSS PR comment with EE OpenAPI spec result
+    runs-on: ubuntu-latest
+    if: github.repository == 'kestra-io/kestra'
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Build comment body
+        id: body
+        env:
+          GENERATE_OUTCOME: ${{ github.event.client_payload.generate_outcome }}
+          CHANGED:          ${{ github.event.client_payload.changed }}
+          EE_BRANCH:        ${{ github.event.client_payload.ee_branch }}
+          DIFF:             ${{ github.event.client_payload.diff }}
+          FAILURE_LOG:      ${{ github.event.client_payload.failure_log }}
+        shell: bash
+        run: |
+          if [ "$GENERATE_OUTCOME" = "failure" ]; then
+            {
+              echo "body<<BODY_EOF"
+              echo ":x: Failed to generate EE OpenAPI spec (EE branch: \`$EE_BRANCH\`)."
+              echo '```'
+              echo "$FAILURE_LOG"
+              echo '```'
+              echo "BODY_EOF"
+            } >> "$GITHUB_OUTPUT"
+          elif [ "$CHANGED" = "true" ]; then
+            {
+              echo "body<<BODY_EOF"
+              echo "Spec generated with EE branch \`$EE_BRANCH\`. Diff vs [client-sdk](https://github.com/kestra-io/client-sdk/blob/main/kestra-ee.yml):"
+              echo '```diff'
+              echo "$DIFF"
+              echo '```'
+              echo "BODY_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update PR comment
+        if: steps.body.outputs.body != ''
+        uses: kestra-io/actions/actions/comment-update@main
+        env:
+          BODY: ${{ steps.body.outputs.body }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          owner: kestra-io
+          repo: kestra
+          issue-number: ${{ github.event.client_payload.pr_number }}
+          title: "📄 OpenAPI Spec Changes"
+          template: |
+            {% raw %}
+            ${{ env.BODY }}
+            {% endraw %}

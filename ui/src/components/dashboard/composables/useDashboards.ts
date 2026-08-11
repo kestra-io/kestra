@@ -1,161 +1,82 @@
-import {onMounted, computed, ref} from "vue";
+import {onMounted, onBeforeUnmount, computed, ref} from "vue"
 
-import {useRoute} from "vue-router";
-import type {RouteParams, RouteLocation} from "vue-router";
+import {useRoute} from "vue-router"
 
-import {useDashboardStore} from "../../../stores/dashboard";
+import {useDashboardStore} from "../../../stores/dashboard"
 
-import {useI18n} from "vue-i18n";
+import {useI18n} from "vue-i18n"
 
-import {decodeSearchParams} from "../../filter/utils/helpers";
+import {decodeSearchParams} from "@kestra-io/design-system"
 
-export type Dashboard = {
-    id: string;
-    charts: Chart[];
-    title?: string;
-    sourceCode?: string;
-    [key: string]: unknown;
-};
+import {Chart} from "../types.ts"
+import {ChartFiltersOverrides, QueryFilter} from "@kestra-io/kestra-sdk"
 
-export type Chart = {
-    id: string;
-    type: string;
-    chartOptions?: {
-        displayName?: string;
-        description?: string;
-        width?: number;
-        pagination?: {
-            enabled?: boolean;
-            [key: string]: unknown;
-        };
-        legend?:{
-            enabled?: boolean;
-        };
-        column: string;
-        [key: string]: unknown;
-    };
-    data?: {
-        columns?: {
-            [key: string]: Record<string, any>;
-        };
-        [key: string]: unknown;
-    };
-    content?: string;
-    source?: {
-        type?: string;
-        content?: string;
-        [key: string]: unknown;
-    };
 
-    [key: string]: unknown;
-};
 
-export type Request = {
-    chart: Chart["content"];
-    globalFilter?: Parameters;
-};
+export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI"
 
-export type Parameters = {
-    pageNumber?: number;
-    pageSize?: number;
-    startDate?: Date;
-    endDate?: Date;
-    namespace?: string;
-    labels?: Record<string, string>;
-    filters?: Record<string, any>;
-};
+export const isMarkdownChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Markdown"
 
-export const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"];
+export const isExportableChart = (type: string): boolean => !isMarkdownChart(type)
 
-export const STORAGE_KEYS = (params: RouteParams) => {
-    const suffix = params.tenant ? `_${params.tenant}` : "";
+export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id
 
-    return {
-        DASHBOARD_MAIN: `dashboard_main${suffix}`,
-        DASHBOARD_FLOW: `dashboard_flow${suffix}`,
-        DASHBOARD_NAMESPACE: `dashboard_namespace${suffix}`,
-    };
-};
+export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property]
 
-const KEY_MAP: Record<string, keyof ReturnType<typeof STORAGE_KEYS>> = {
-    home: "DASHBOARD_MAIN",
-    "flows/update": "DASHBOARD_FLOW",
-    "namespaces/update": "DASHBOARD_NAMESPACE"
-};
+export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false
 
-export function getDashboard(route: RouteLocation, type: "key" | "id"): string | undefined {
-    if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;
+export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow)
 
-    const key = KEY_MAP[route.name as string];
+export const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"]
 
-    if (!key) return;
+export function useChartGenerator(dashboardId: string | undefined, props: {chart: Chart; filters: QueryFilter[]; showDefault: boolean;}, includeHooks: boolean = true) {
+    const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE")
 
-    const storageKey = STORAGE_KEYS(route.params)[key];
+    const route = useRoute()
 
-    return type === "key" ? storageKey : localStorage.getItem(storageKey) || "default";
-};
+    const dashboardStore = useDashboardStore()
 
-import Bar from "../sections/Bar.vue";
-import KPI from "../sections/KPI.vue";
-import Markdown from "../sections/Markdown.vue";
-import Pie from "../sections/Pie.vue";
-import Table from "../sections/Table.vue";
-import TimeSeries from "../sections/TimeSeries.vue";
-import {FilterObject} from "../../../utils/filters";
+    const {t} = useI18n({useScope: "global"})
+    const EMPTY_TEXT = t("dashboards.empty")
 
-export const TYPES: Record<string, any> = {
-    "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
-    "io.kestra.plugin.core.dashboard.chart.KPI": KPI,
-    "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
-    "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
-    "io.kestra.plugin.core.dashboard.chart.Table": Table,
-    "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
-};
+    const data = ref()
+    let isMounted = true
+    onBeforeUnmount(() => {
+        isMounted = false
+    })
 
-export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI";
+    async function generate(pagination?: { pageNumber: number; pageSize: number }, customFilters?: QueryFilter[], appendFilters?: QueryFilter[]) {
+        const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) as QueryFilter[] ?? [])
+        const allFilters = (appendFilters?.length ? [...filters, ...appendFilters] : filters)
+        const parameters: ChartFiltersOverrides = {...pagination, filters: (allFilters ?? {})}
 
-export const isTableChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.Table";
-
-export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;
-
-export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property];
-
-export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false;
-
-export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow);
-
-export function useChartGenerator(props: {chart: Chart; filters: FilterObject[]; showDefault: boolean;}, includeHooks: boolean = true) {
-    const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
-
-    const route = useRoute();
-
-    const dashboardStore = useDashboardStore();
-
-    const {t} = useI18n({useScope: "global"});
-    const EMPTY_TEXT = t("dashboards.empty");
-
-    const data = ref();
-    async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }) {
-        const filters = props.filters.concat(decodeSearchParams(route.query) ?? []);
-        const parameters: Parameters = {...pagination, filters: (filters ?? {})};
-
+        let result
         if (!props.showDefault) {
-            data.value = await dashboardStore.generate(id, props.chart.id, parameters);
+            if(!dashboardId){
+                throw new Error("to generate charts from backend we need a dashboard id")
+            }
+            result = await dashboardStore.generate(dashboardId, props.chart.id, parameters)
         } else {
             if (!props.chart.content){
-                throw new Error("Chart content must exist for preview.");
+                throw new Error("Chart content must exist for preview.")
             }
 
-            const request: Request = {chart: props.chart.content, globalFilter: parameters};
-            data.value = await dashboardStore.chartPreview(request);
+            result = await dashboardStore.chartPreview({
+                chart: props.chart.content,
+                globalFilter: parameters,
+            })
         }
 
-        return data.value;
+        if (!isMounted) return
+        data.value = result
+        return data.value
     };
 
     onMounted(async () => {
-        if (includeHooks) await generate(getDashboard(route, "id") as string);
-    });
+        if (includeHooks) await generate()
+    })
 
-    return {percentageShown, EMPTY_TEXT, data, generate};
+    return {percentageShown, EMPTY_TEXT, data, generate}
 }
+
+export * from "../types"

@@ -1,14 +1,15 @@
 package io.kestra.cli.logger;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.contrib.json.classic.JsonLayout;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Data;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.contrib.json.classic.JsonLayout;
+import lombok.Data;
 
 @SuppressWarnings("this-escape")
 @Data

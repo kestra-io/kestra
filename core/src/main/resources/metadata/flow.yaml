@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.flow
+name: "flow"
+title: "Flow"
+description: "Tasks that orchestrate control flow within a Kestra pipeline."
+body: "Sequence, branch, loop, parallelize, or nest subflows/templates using these primitives; define embedded task lists, values for switches, iteration collections, working directories, and loop exit criteria to structure complex workflows cleanly."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

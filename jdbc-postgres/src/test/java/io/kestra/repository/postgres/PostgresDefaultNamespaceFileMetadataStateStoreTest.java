@@ -1,0 +1,6 @@
+package io.kestra.repository.postgres;
+
+import io.kestra.core.namespace.AbstractDefaultNamespaceFileMetadataStateStoreTest;
+
+public class PostgresDefaultNamespaceFileMetadataStateStoreTest extends AbstractDefaultNamespaceFileMetadataStateStoreTest {
+}

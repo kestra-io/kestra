@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 tasks:
   - id: parallel
-    type: io.kestra.plugin.core.flow.ForEach
+    type: io.kestra.plugin.core.flow.Loop
     concurrencyLimit: 0
     values: ["1"]
     tasks:

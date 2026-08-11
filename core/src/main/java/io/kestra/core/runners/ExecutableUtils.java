@@ -1,7 +1,13 @@
 package io.kestra.core.runners;
 
+import java.time.ZonedDateTime;
+import java.util.*;
+
+import org.apache.commons.lang3.stream.Streams;
+
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
@@ -11,22 +17,16 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.storages.Storage;
-import io.kestra.core.trace.TracerFactory;
+import io.kestra.core.services.TaskOutputService;
+import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
-import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
+
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.stream.Streams;
-
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.trace.Tracer.throwCallable;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -34,17 +34,17 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Slf4j
 public final class ExecutableUtils {
 
-    public static final String TASK_VARIABLE_ITERATIONS = "iterations";
-    public static final String TASK_VARIABLE_NUMBER_OF_BATCHES = "numberOfBatches";
-    public static final String TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI = "subflowOutputsBaseUri";
+    public static final String SUBFLOW_TRIGGER_TYPE = "io.kestra.plugin.core.flow.Subflow";
 
     private ExecutableUtils() {
         // prevent initialization
     }
 
     public static State.Type guessState(Execution execution, boolean transmitFailed, boolean allowedFailure, boolean allowWarning) {
-        if (transmitFailed &&
-            (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.WARNING)
+        if (
+            transmitFailed &&
+                (execution.getState().isFailed() || execution.getState().isPaused() || execution.getState().getCurrent() == State.Type.KILLED
+                    || execution.getState().getCurrent() == State.Type.WARNING)
         ) {
             State.Type finalState = (allowedFailure && execution.getState().isFailed()) ? State.Type.WARNING : execution.getState().getCurrent();
             return finalState.equals(State.Type.WARNING) && allowWarning ? State.Type.SUCCESS : finalState;
@@ -53,96 +53,127 @@ public final class ExecutableUtils {
         }
     }
 
-    public static SubflowExecutionResult subflowExecutionResult(TaskRun parentTaskrun, Execution execution) {
-        List<TaskRunAttempt> attempts = parentTaskrun.getAttempts() == null ? new ArrayList<>() : new ArrayList<>(parentTaskrun.getAttempts());
-        attempts.add(TaskRunAttempt.builder().state(parentTaskrun.getState()).build());
+    public static SubflowExecutionResult subflowExecutionResult(TaskRun parentTaskrun, Map<String, Object> outputs, Execution execution) {
         return SubflowExecutionResult.builder()
             .executionId(execution.getId())
             .state(parentTaskrun.getState().getCurrent())
-            .parentTaskRun(parentTaskrun.withAttempts(attempts))
+            .parentTaskRun(parentTaskrun.addAttempt(TaskRunAttempt.builder().state(parentTaskrun.getState()).build()))
+            .outputs(outputs)
             .build();
     }
 
     public static <T extends Task & ExecutableTask<?>> Optional<SubflowExecution<?>> subflowExecution(
         RunContext runContext,
-        FlowMetaStoreInterface flowExecutorInterface,
+        FlowMetaStoreInterface flowMetaStore,
         Execution currentExecution,
-        Flow currentFlow,
+        FlowInterface currentFlow,
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
         List<Label> labels,
         boolean inheritLabels,
-        Property<ZonedDateTime> scheduleDate
-    ) throws IllegalVariableEvaluationException {
+        Property<ZonedDateTime> scheduleDate) throws InternalException {
 
         // extract a trace context for propagation
-        final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).getApplicationContext()
-            .findBean(OpenTelemetry.class)
+        final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).services().tracerFactory()
+            .getOpenTelemetry()
             .map(OpenTelemetry::getPropagators)
             .map(ContextPropagators::getTextMapPropagator);
 
-        var tracerFactory = ((DefaultRunContext) runContext).getApplicationContext().getBean(TracerFactory.class);
+        var tracerFactory = ((DefaultRunContext) runContext).services().tracerFactory();
         var tracer = tracerFactory.getTracer(currentTask.getClass(), "EXECUTOR");
 
         return tracer.inNewContext(
             currentExecution,
             currentTask.getType(),
-            throwCallable(() -> {
-            // If we are in a flow that is restarted, we search for existing run of the task to restart them
-            if (currentExecution.getLabels() != null && currentExecution.getLabels().contains(new Label(Label.RESTARTED, "true"))
-                && currentTask.getRestartBehavior() == ExecutableTask.RestartBehavior.RETRY_FAILED) {
-                ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionRepositoryInterface.class);
+            throwCallable(() ->
+            {
+                // If we are in a flow that is restarted, we search for existing run of the task to restart them
+                if (
+                    currentExecution.getLabels() != null && currentExecution.getLabels().contains(new Label(Label.RESTARTED, "true"))
+                        && currentTask.getRestartBehavior() == ExecutableTask.RestartBehavior.RETRY_FAILED
+                ) {
+                    ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).services().additionalService(ExecutionRepositoryInterface.class);
+                    TaskOutputService taskOutputService = ((DefaultRunContext) runContext).services().additionalService(TaskOutputService.class);
 
-                Optional<Execution> existingSubflowExecution = Optional.empty();
-                if (currentTaskRun.getOutputs() != null && currentTaskRun.getOutputs().containsKey("executionId")) {
-                    // we know which execution to restart; this should be the case for Subflow tasks
-                    existingSubflowExecution = executionRepository.findById(currentExecution.getTenantId(), (String) currentTaskRun.getOutputs().get("executionId"));
-                }
+                    Map<String, Object> previousOutputs = taskOutputService.getOutputs(currentTaskRun);
 
-                if (existingSubflowExecution.isEmpty()) {
-                    // otherwise, we try to find the correct one; this should be the case for ForEachItem tasks
-                    List<Execution> childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
-                        .filter(e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId()) && e.getTrigger().getId().equals(currentTask.getId()))
-                        .filter(e -> Objects.equals(e.getTrigger().getVariables().get("taskRunId"), currentTaskRun.getId()) && Objects.equals(e.getTrigger().getVariables().get("taskRunValue"), currentTaskRun.getValue()) && Objects.equals(e.getTrigger().getVariables().get("taskRunIteration"), currentTaskRun.getIteration()))
-                        .collectList()
-                        .block();
+                    Optional<Execution> existingSubflowExecution = Optional.empty();
+                    if (!MapUtils.isEmpty(previousOutputs) && previousOutputs.containsKey("executionId")) {
+                        // we know which execution to restart; this should be the case for Subflow tasks
+                        existingSubflowExecution = executionRepository.findById(currentExecution.getTenantId(), (String) previousOutputs.get("executionId"));
+                    }
 
-                    if (childExecutions != null && childExecutions.size() == 1) {
-                        // if there are more than one, we ignore the results and create a new one
-                        existingSubflowExecution = Optional.of(childExecutions.getFirst());
+                    if (existingSubflowExecution.isEmpty()) {
+                        List<Execution> childExecutions = executionRepository.findAllByTriggerExecutionId(currentExecution.getTenantId(), currentExecution.getId())
+                            .filter(
+                                e -> e.getNamespace().equals(currentTask.subflowId().namespace()) && e.getFlowId().equals(currentTask.subflowId().flowId())
+                                    && e.getTrigger().getId().equals(currentTask.getId())
+                            )
+                            .filter(
+                                e -> Objects.equals(e.getTrigger().getVariables().get("taskRunId"), currentTaskRun.getId())
+                                    && Objects.equals(e.getTrigger().getVariables().get("taskRunValue"), currentTaskRun.getValue())
+                                    && Objects.equals(e.getTrigger().getVariables().get("taskRunIteration"), currentTaskRun.getIteration())
+                            )
+                            .collectList()
+                            .block();
+
+                        if (childExecutions != null && childExecutions.size() == 1) {
+                            // if there are more than one, we ignore the results and create a new one
+                            existingSubflowExecution = Optional.of(childExecutions.getFirst());
+                        }
+                    }
+
+                    if (existingSubflowExecution.isPresent()) {
+                        Execution subflowExecution = existingSubflowExecution.get();
+                        if (!subflowExecution.getState().isFailed()) {
+                            // don't restart it as it's terminated successfully
+                            return Optional.empty();
+                        }
+                        ExecutionService executionService = ((DefaultRunContext) runContext).services().additionalService(ExecutionService.class);
+                        try {
+                            Flow flow = flowMetaStore.findByExecutionThenInjectDefaults(subflowExecution).orElseThrow(() -> new FlowNotFoundException(subflowExecution));
+                            Execution restartedChild = executionService.restart(subflowExecution, flow, null);
+
+                            // In a loop context, the restarted child execution still has trigger variables
+                            // pointing to the old loop execution (from its original creation). Update them
+                            // to the current loop execution so SubflowExecutionEnd routes correctly and
+                            // does not re-process the old (already terminated) loop execution.
+                            if (restartedChild.getTrigger() != null && currentExecution.getLoopRun() != null) {
+                                Map<String, Object> existingVars = restartedChild.getTrigger().getVariables();
+                                Map<String, Object> updatedVars = existingVars != null ? new HashMap<>(existingVars) : new HashMap<>();
+                                updatedVars.put("executionId", currentExecution.getId());
+                                updatedVars.put("taskRunId", currentTaskRun.getId());
+                                restartedChild = restartedChild.withTrigger(
+                                    restartedChild.getTrigger().toBuilder()
+                                        .variables(updatedVars)
+                                        .build()
+                                );
+                            }
+
+                            // inject the traceparent into the new execution
+                            final Execution restarted = restartedChild;
+                            propagator.ifPresent(pg -> pg.inject(Context.current(), restarted, ExecutionTextMapSetter.INSTANCE));
+
+                            return Optional.of(
+                                SubflowExecution.builder()
+                                    .parentTask(currentTask)
+                                    .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
+                                    .execution(restarted)
+                                    .outputs(previousOutputs)
+                                    .build()
+                            );
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
 
-                if (existingSubflowExecution.isPresent()) {
-                    Execution subflowExecution = existingSubflowExecution.get();
-                    if (!subflowExecution.getState().isFailed()) {
-                        // don't restart it as it's terminated successfully
-                        return Optional.empty();
-                    }
-                    ExecutionService executionService = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionService.class);
-                    try {
-                        Execution restarted = executionService.restart(subflowExecution, null);
+                String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
+                String subflowId = runContext.render(currentTask.subflowId().flowId());
+                Optional<Integer> subflowRevision = currentTask.subflowId().revision();
 
-                        // inject the traceparent into the new execution
-                        propagator.ifPresent(pg -> pg.inject(Context.current(), restarted, ExecutionTextMapSetter.INSTANCE));
-
-                        return Optional.of(SubflowExecution.builder()
-                            .parentTask(currentTask)
-                            .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
-                            .execution(restarted)
-                            .build());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            String subflowNamespace = runContext.render(currentTask.subflowId().namespace());
-            String subflowId = runContext.render(currentTask.subflowId().flowId());
-            Optional<Integer> subflowRevision = currentTask.subflowId().revision();
-
-            FlowInterface flow = flowExecutorInterface.findByIdFromTask(
+                FlowInterface flow = flowMetaStore.findByIdFromTask(
                     currentExecution.getTenantId(),
                     subflowNamespace,
                     subflowId,
@@ -151,64 +182,74 @@ public final class ExecutableUtils {
                     currentFlow.getNamespace(),
                     currentFlow.getId()
                 )
-                .orElseThrow(() -> {
-                    String msg = "Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision '" + subflowRevision.orElse(0) + "'";
+                    .orElseThrow(() ->
+                    {
+                        String msg = "Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision '" + subflowRevision.orElse(0) + "'";
+                        runContext.logger().error(msg);
+                        return new IllegalStateException(msg);
+                    });
+
+                if (flow.isDisabled()) {
+                    String msg = "Cannot execute a flow which is disabled";
                     runContext.logger().error(msg);
-                    return new IllegalStateException(msg);
-                });
+                    throw new IllegalStateException(msg);
+                }
 
-            if (flow.isDisabled()) {
-                String msg = "Cannot execute a flow which is disabled";
-                runContext.logger().error(msg);
-                throw new IllegalStateException(msg);
-            }
+                if (flow instanceof FlowWithException fwe) {
+                    String msg = "Cannot execute an invalid flow: " + fwe.getException();
+                    runContext.logger().error(msg);
+                    throw new IllegalStateException(msg);
+                }
 
-            if (flow instanceof FlowWithException fwe) {
-                String msg = "Cannot execute an invalid flow: " + fwe.getException();
-                runContext.logger().error(msg);
-                throw new IllegalStateException(msg);
-            }
+                List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
+                if (labels != null) {
+                    labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
+                }
 
-            List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
-            if (labels != null) {
-                labels.forEach(throwConsumer(label -> newLabels.add(new Label(runContext.render(label.key()), runContext.render(label.value())))));
-            }
+                var variables = ImmutableMap.<String, Object> builder().putAll(
+                    Map.of(
+                        "executionId", currentExecution.getId(),
+                        "namespace", currentFlow.getNamespace(),
+                        "flowId", currentFlow.getId(),
+                        "flowRevision", currentFlow.getRevision(),
+                        "taskRunId", currentTaskRun.getId(),
+                        "taskId", currentTaskRun.getTaskId()
+                    )
+                );
+                if (currentTaskRun.getValue() != null) {
+                    variables.put("taskRunValue", currentTaskRun.getValue());
+                }
+                if (currentTaskRun.getIteration() != null) {
+                    variables.put("taskRunIteration", currentTaskRun.getIteration());
+                }
+                if (currentExecution.getLoopRun() != null) {
+                    // Store stable loop iteration identifiers so that restarted executions can find this
+                    // subflow even after the loopExecution is recreated with a new ID.
+                    variables.put("loopTaskRunId", currentExecution.getLoopRun().taskRunId());
+                    variables.put("loopIndex", currentExecution.getLoopRun().index());
+                }
 
-            var variables = ImmutableMap.<String, Object>builder().putAll(Map.of(
-                "executionId", currentExecution.getId(),
-                "namespace", currentFlow.getNamespace(),
-                "flowId", currentFlow.getId(),
-                "flowRevision", currentFlow.getRevision(),
-                "taskRunId", currentTaskRun.getId(),
-                "taskId", currentTaskRun.getTaskId()
-            ));
-            if (currentTaskRun.getOutputs() != null) {
-                variables.put("taskRunOutputs", currentTaskRun.getOutputs());
-            }
-            if (currentTaskRun.getValue() != null) {
-                variables.put("taskRunValue", currentTaskRun.getValue());
-            }
-            if (currentTaskRun.getIteration() != null) {
-                variables.put("taskRunIteration", currentTaskRun.getIteration());
-            }
+                // Subflow executions are independent executions — never LOOP kind
+                // (LOOP is only for virtual loop-iteration executions, not subflow children)
+                ExecutionKind subflowKind = currentExecution.getKind() == ExecutionKind.LOOP ? currentExecution.getLoopRun().parent().getKind() : currentExecution.getKind();
+                Execution execution = Execution
+                    .newExecution(
+                        flow,
+                        (f, e) -> runContext.inputAndOutput().readInputs(f, e, inputs),
+                        newLabels,
+                        runContext.render(scheduleDate).as(ZonedDateTime.class),
+                        subflowKind
+                    )
+                    .withTrigger(
+                        ExecutionTrigger.builder()
+                            .id(currentTask.getId())
+                            .type(currentTask.getType())
+                            .variables(variables.build())
+                            .build()
+                    );
 
-            FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
-            Instant scheduleOnDate = runContext.render(scheduleDate).as(ZonedDateTime.class).map(date -> date.toInstant()).orElse(null);
-            Execution execution = Execution
-                .newExecution(
-                    flow,
-                    (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs),
-                    newLabels,
-                    Optional.empty())
-                .withTrigger(ExecutionTrigger.builder()
-                    .id(currentTask.getId())
-                    .type(currentTask.getType())
-                    .variables(variables.build())
-                    .build()
-                )
-                .withScheduleDate(scheduleOnDate);
-                if(execution.getInputs().size()<inputs.size()) {
-                    Map<String,Object>resolvedInputs=execution.getInputs();
+                if (execution.getInputs().size() < inputs.size()) {
+                    Map<String, Object> resolvedInputs = execution.getInputs();
                     for (var inputKey : inputs.keySet()) {
                         if (!resolvedInputs.containsKey(inputKey)) {
                             runContext.logger().warn(
@@ -221,15 +262,19 @@ public final class ExecutableUtils {
                         }
                     }
                 }
-            // inject the traceparent into the new execution
-            propagator.ifPresent(pg -> pg.inject(Context.current(), execution, ExecutionTextMapSetter.INSTANCE));
 
-            return Optional.of(SubflowExecution.builder()
-                .parentTask(currentTask)
-                .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
-                .execution(execution)
-                .build());
-        }));
+                // inject the traceparent into the new execution
+                propagator.ifPresent(pg -> pg.inject(Context.current(), execution, ExecutionTextMapSetter.INSTANCE));
+
+                return Optional.of(
+                    SubflowExecution.builder()
+                        .parentTask(currentTask)
+                        .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
+                        .execution(execution)
+                        .build()
+                );
+            })
+        );
     }
 
     private static List<Label> filterLabels(List<Label> labels, FlowInterface flow) {
@@ -248,86 +293,11 @@ public final class ExecutableUtils {
             .toList();
     }
 
-    @SuppressWarnings("unchecked")
-    public static TaskRun manageIterations(Storage storage, TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure, boolean allowWarning) throws InternalException {
-        Integer numberOfBatches = (Integer) taskRun.getOutputs().get(TASK_VARIABLE_NUMBER_OF_BATCHES);
-        var previousTaskRun = execution.findTaskRunByTaskRunId(taskRun.getId());
-        if (previousTaskRun == null) {
-            throw new IllegalStateException("Should never happen");
-        }
-
-        State.Type currentState = taskRun.getState().getCurrent();
-        Optional<State.Type> previousState = taskRun.getState().getHistories().size() > 1 ?
-            Optional.of(taskRun.getState().getHistories().get(taskRun.getState().getHistories().size() - 2).getState()) :
-            Optional.empty();
-
-        // search for the previous iterations, if not found, we init it with an empty map
-        Map<String, Integer> iterations = !MapUtils.isEmpty(previousTaskRun.getOutputs()) ?
-            (Map<String, Integer>) previousTaskRun.getOutputs().get(TASK_VARIABLE_ITERATIONS) :
-            new HashMap<>();
-
-        int currentStateIteration = iterations.getOrDefault(currentState.toString(), 0);
-        iterations.put(currentState.toString(), currentStateIteration + 1);
-        if (previousState.isPresent() && previousState.get() != currentState) {
-            int previousStateIterations = iterations.getOrDefault(previousState.get().toString(), numberOfBatches);
-            iterations.put(previousState.get().toString(), previousStateIterations - 1);
-
-            if (previousState.get() == State.Type.RESTARTED) {
-                // if we are in a restart, we need to reset the failed executions
-                iterations.put(State.Type.FAILED.toString(), 0);
-            }
-        }
-
-        // update the state to success if terminatedIterations == numberOfBatches
-        int terminatedIterations = iterations.getOrDefault(State.Type.SUCCESS.toString(), 0) +
-            iterations.getOrDefault(State.Type.FAILED.toString(), 0) +
-            iterations.getOrDefault(State.Type.KILLED.toString(), 0) +
-            iterations.getOrDefault(State.Type.WARNING.toString(), 0) +
-            iterations.getOrDefault(State.Type.CANCELLED.toString(), 0);
-
-        if (terminatedIterations == numberOfBatches) {
-            State.Type state = transmitFailed ? findTerminalState(iterations, allowFailure, allowWarning) : State.Type.SUCCESS;
-            final Map<String, Object> outputs = new HashMap<>();
-            outputs.put(TASK_VARIABLE_ITERATIONS, iterations);
-            outputs.put(TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches);
-            outputs.put(TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI, storage.getContextBaseURI().getPath());
-
-            return previousTaskRun
-                .withIteration(taskRun.getIteration())
-                .withOutputs(Variables.inMemory(outputs))
-                .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                .withState(state);
-        }
-
-        // else we update the previous taskRun as it's the same taskRun that is still running
-        return previousTaskRun
-            .withIteration(taskRun.getIteration())
-            .withOutputs(Variables.inMemory(Map.of(
-                TASK_VARIABLE_ITERATIONS, iterations,
-                TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches
-            )));
-    }
-
-    private static State.Type findTerminalState(Map<String, Integer> iterations, boolean allowFailure, boolean allowWarning) {
-        if (iterations.getOrDefault(State.Type.FAILED.toString(), 0) > 0) {
-            return allowFailure ? allowWarning ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
-        }
-        if (iterations.getOrDefault(State.Type.KILLED.toString(), 0) > 0) {
-            return State.Type.KILLED;
-        }
-        if (iterations.getOrDefault(State.Type.WARNING.toString(), 0) > 0) {
-            if (allowWarning) {
-                return State.Type.SUCCESS;
-            }
-            return State.Type.WARNING;
-        }
-        return State.Type.SUCCESS;
-    }
-
-    public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, FlowInterface flow, Execution execution, ExecutableTask<?> executableTask, TaskRun taskRun) {
+    public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, FlowInterface flow, Execution execution, ExecutableTask<?> executableTask,
+        TaskRun taskRun) {
         try {
             return executableTask
-                .createSubflowExecutionResult(runContext, taskRun, flow, execution)
+                .createSubflowExecutionResult(runContext, taskRun, flow, execution, null)
                 .orElse(null);
         } catch (Exception e) {
             log.error("Unable to create the Subflow Execution Result", e);
@@ -341,12 +311,6 @@ public final class ExecutableUtils {
     }
 
     public static boolean isSubflow(Execution execution) {
-        return execution.getTrigger() != null && (
-            "io.kestra.plugin.core.flow.Subflow".equals(execution.getTrigger().getType()) ||
-                "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable".equals(execution.getTrigger().getType()) ||
-                "io.kestra.core.tasks.flows.Subflow".equals(execution.getTrigger().getType()) ||
-                "io.kestra.core.tasks.flows.Flow".equals(execution.getTrigger().getType()) ||
-                "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable".equals(execution.getTrigger().getType())
-        );
+        return execution.getTrigger() != null && SUBFLOW_TRIGGER_TYPE.equals(execution.getTrigger().getType());
     }
 }

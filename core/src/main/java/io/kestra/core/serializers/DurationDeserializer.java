@@ -1,15 +1,15 @@
 package io.kestra.core.serializers;
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.core.io.NumberInput;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.datatype.jsr310.DecimalUtils;
-
 import java.io.IOException;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.DateTimeException;
 import java.time.Duration;
+
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.io.NumberInput;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.datatype.jsr310.DecimalUtils;
 
 public class DurationDeserializer extends com.fasterxml.jackson.datatype.jsr310.deser.DurationDeserializer {
     @Serial
@@ -28,8 +28,10 @@ public class DurationDeserializer extends com.fasterxml.jackson.datatype.jsr310.
         }
         // 30-Sep-2020: Should allow use of "Timestamp as String" for
         //     some textual formats
-        if (ctxt.isEnabled(StreamReadCapability.UNTYPED_SCALARS)
-            && _isValidTimestampString(value)) {
+        if (
+            ctxt.isEnabled(StreamReadCapability.UNTYPED_SCALARS)
+                && _isValidTimestampString(value)
+        ) {
             return _fromTimestamp(ctxt, NumberInput.parseLong(value));
         }
 

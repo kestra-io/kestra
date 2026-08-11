@@ -1,12 +1,14 @@
 package io.kestra.core.http.client.configurations;
 
+import java.net.Proxy;
+
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
-
-import java.net.Proxy;
 
 @Getter
 @Builder(toBuilder = true)
@@ -26,5 +28,6 @@ public class ProxyConfiguration {
     private final Property<String> username;
 
     @Schema(title = "The password for proxy authentication.")
+    @PluginProperty(secret = true)
     private final Property<String> password;
 }

@@ -6,34 +6,34 @@
             @click="() => executionsStore.execution = execution"
             :class="{active: executionsStore.execution?.id === execution.id}"
         >
-            <p>{{ date(execution.state.startDate) }}</p>
+            <p>{{ date(execution.state.startDate ?? "") }}</p>
             <p class="playground-duration">
-                {{ humanizeDuration(execution.state.duration) }}
+                {{ humanizeDuration(execution.state.duration ?? "") }}
             </p>
             <div class="playground-status">
-                <Status :status="execution.state.current" size="small" />
+                <KsExecutionStatus :status="execution.state.current" size="small" />
             </div>
         </button>
     </div>
 </template>
 
 <script setup lang="ts">
-    import Status from "../../Status.vue";
-    import {date, humanizeDuration} from "../../../utils/filters";
-    import {Execution, useExecutionsStore} from "../../../stores/executions";
+    import {KsExecutionStatus} from "@kestra-io/design-system"
+    import {date, humanizeDuration} from "../../../utils/filters"
+    import {Execution, useExecutionsStore} from "../../../stores/executions"
 
-    const executionsStore = useExecutionsStore();
+    const executionsStore = useExecutionsStore()
 
     defineProps<{
         executions: Execution[];
-    }>();
+    }>()
 
     defineEmits<{
         (e: "click", executionId: string): void;
-    }>();
+    }>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .playground-log{
         display: flex;
         flex-direction: column;
@@ -45,10 +45,10 @@
         display: grid;
         border: none;
         width: 284px;
-        background-color: var(--ks-background-panel);
+        background-color: var(--ks-bg-surface);
         text-align: left;
         padding: .3rem .5rem;
-        font-size: 0.8rem;
+        font-size: var(--ks-font-size-sm);
         border-radius: 5px;
         grid-template-columns: 1fr 80px;
         grid-template-rows: 1fr 1fr;
@@ -60,7 +60,7 @@
             padding: 0;
         }
         &.active{
-            background-color: var(--ks-background-card-hover);
+            background-color: var(--ks-bg-hover-elevated);
         }
     }
     .playground-status {
@@ -72,6 +72,6 @@
     }
     .playground-duration {
         grid-area: duration;
-        color: var(--ks-content-secondary);
+        color: var(--ks-text-secondary);
     }
 </style>

@@ -1,228 +1,289 @@
 <template>
     <div class="docsMenuWrapper">
-        <el-button @click="menuOpen = !menuOpen" class="menuOpener">
-            {{ t("documentationMenu") }} <MenuDown class="expandIcon" />
-        </el-button>
-        <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
-            <template v-if="rawStructure">
-                <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName" :class="{'active-section': isCurrentSection(sectionName)}">
-                    <span class="text-secondary">
-                        {{ sectionName.toUpperCase() }}
-                    </span>
-                    <RecursiveToc :parent="{children}">
-                        <template #default="{path, title}">
-                            <ContextDocsLink
-                                :href="path.slice(5)"
-                                useRaw
-                                :class="{'active-page': isCurrentPage(path)}"
-                                @click="menuOpen = false"
-                            >
-                                {{ title.capitalize() }}
-                            </ContextDocsLink>
-                        </template>
-                    </RecursiveToc>
+        <KsButton
+            @click="menuOpen = !menuOpen"
+            class="menuOpener"
+            :class="{'is-open': menuOpen}"
+        >
+            <Menu class="menuIcon" />
+            {{ $t("documentationMenu") }}
+        </KsButton>
+        <div v-if="menuOpen" class="docsMenuContainer">
+            <ul class="docsMenu list-unstyled d-flex flex-column m-0">
+                <template v-if="rawStructure">
+                    <li
+                        v-for="{section, children} in sectionsWithChildren"
+                        :key="section"
+                        :class="{'active-section': isCurrentSection(section)}"
+                    >
+                        <span class="text-secondary">
+                            {{ section.toUpperCase() }}
+                        </span>
+                        <RecursiveToc :parent="{children: children ?? []}">
+                            <template #default="{path, sidebarTitle, title, class: childClass}">
+                                <ContextDocsLink
+                                    :href="path"
+                                    useRaw
+                                    :class="[{'active-page': isCurrentPage(path)}, childClass]"
+                                    @click="menuOpen = false"
+                                >
+                                    {{ (sidebarTitle ?? title).capitalize() }}
+                                </ContextDocsLink>
+                            </template>
+                        </RecursiveToc>
+                    </li>
+                </template>
+                <li v-else>
+                    Loading Menu...
                 </li>
-            </template>
-            <li v-else>
-                Loading Menu...
-            </li>
-        </ul>
+            </ul>
+        </div>
     </div>
 </template>
 
-<script lang="ts" setup>
-    import {ref, computed, watch} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import {useI18n} from "vue-i18n";
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import {SECTIONS} from "./docsUtils"
 
-    const {t} = useI18n({useScope: "global"});
+    import Menu from "vue-material-design-icons/Menu.vue"
 
-    import MenuDown from "vue-material-design-icons/MenuDown.vue";
+    import RecursiveToc from "./RecursiveToc.vue"
+    import ContextDocsLink from "./ContextDocsLink.vue"
 
-    import RecursiveToc from "./RecursiveToc.vue";
-    import ContextDocsLink from "./ContextDocsLink.vue";
+    const docStore = useDocStore()
 
-    const docStore = useDocStore();
+    const menuOpen = ref(false)
 
-    const menuOpen = ref(false);
-
-    const SECTIONS = {
-        "Get Started with Kestra": [
-            "Getting Started",
-            "Tutorial",
-            "Architecture",
-            "Installation Guide",
-            "User Interface"
-        ],
-        "Build with Kestra": [
-            "Concepts",
-            "Workflow Components",
-            "Multi-Language Script Tasks",
-            "Version Control & CI/CD",
-            "Plugin Developer Guide",
-            "How-to Guides"
-        ],
-        "Scale with Kestra": [
-            "Cloud & Enterprise Edition",
-            "Task Runners",
-            "Best Practices"
-        ],
-        "Manage Kestra": [
-            "Administrator Guide",
-            "Migration Guide"
-        ],
-        "Reference Docs": [
-            "Configuration",
-            "Expressions",
-            "API Reference",
-            "Terraform Provider",
-        ]
-    }
-
-    const rawStructure = ref<Record<string, any> | undefined>();
-    const currentDocPath = computed(() => docStore.docPath);
+    const rawStructure = ref<Record<string, any> | undefined>()
+    const currentDocPath = computed(() => docStore.docPath)
 
     const normalizePath = (path: string) => {
-        if (!path) return "";
-        return path.replace(/^docs\//, "").replace(/^\/+|\/+$/g, "");
-    };
+        if (!path) return ""
+        return path.replace(/^docs\//, "").replace(/^\/+|\/+$/g, "")
+    }
 
     const isCurrentPage = (path: string) => {
-        if (!currentDocPath.value || !path) return false;
-        const normalizedCurrent = normalizePath(currentDocPath.value);
-        const normalizedPath = normalizePath(path);
+        if (!currentDocPath.value || !path) return false
+        const normalizedCurrent = normalizePath(currentDocPath.value)
+        const normalizedPath = normalizePath(path)
 
-        if (normalizedCurrent === normalizedPath) return true;
+        if (normalizedCurrent === normalizedPath) return true
 
-        if (normalizedCurrent.startsWith(normalizedPath + "/")) return true;
+        if (normalizedCurrent.startsWith(normalizedPath + "/")) return true
 
-        return false;
-    };
+        return false
+    }
 
     const isCurrentSection = (sectionName: string) => {
-        if (!currentDocPath.value) return false;
-        const sectionChildren = sectionsWithChildren.value?.find(([name]) => name === sectionName)?.[1] || [];
-        return sectionChildren.some((child: { path: string }) => isCurrentPage(child.path));
-    };
+        if (!currentDocPath.value) return false
+        const sectionChildren = sectionsWithChildren.value?.find(({section}) => section === sectionName)?.children || []
+        return sectionChildren.some(child => isCurrentPage(child.path))
+    }
 
     watch(menuOpen, async (val) => {
-        if(!val || rawStructure.value !== undefined) return;
-        rawStructure.value = await docStore.children();
-    });
+        if(!val || rawStructure.value !== undefined) return
+        rawStructure.value = await docStore.children()
+    })
 
-    const toc = computed<{title: string}[]>(() => {
+    const toc = computed(() => {
         if (rawStructure.value === undefined) {
-            return undefined;
+            return undefined
         }
 
         const childrenWithMetadata = Object.entries(rawStructure.value)
+            .filter(([p]) => p.startsWith("docs/") && !p.endsWith(".png") && !p.endsWith(".svg"))
             .reduce((acc: Record<string, any>, [url, metadata]) => {
                 if(!metadata || metadata.hideSidebar){
-                    return acc;
+                    return acc
                 }
 
-                acc[url] = {
+                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "")
+
+                acc[cleanUrl] = {
                     ...metadata,
-                    path: url
-                };
+                    path: cleanUrl,
+                }
 
                 return acc
-            }, {});
+            }, {})
 
         for(const url in childrenWithMetadata){
-            const metadata = childrenWithMetadata[url];
-            const split = url.split("/");
-            const parentUrl = split.slice(0, split.length - 1).join("/");
-            const parent = childrenWithMetadata[parentUrl];
+            const metadata = childrenWithMetadata[url]
+            const split = url.split("/")
+            const parentUrl = split.slice(0, split.length - 1).join("/")
+            const parent = childrenWithMetadata[parentUrl]
             if (parent !== undefined) {
-                parent.children = [...(parent.children ?? []), metadata];
+                parent.children = [...(parent.children ?? []), metadata]
             }
         }
 
-        return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
+        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[]
     })
 
-    const sectionsWithChildren = computed(() => {
-        if (toc.value === undefined) {
-            return undefined;
-        }
+    const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
+        .map(([section, childrenTitles]) =>({
 
-        return Object.entries(SECTIONS).map(([section, childrenTitles]) => [section, toc.value.filter(({title}) => childrenTitles.includes(title))] as [string, {title: string, path: string}[]]);
-    });
+            section,
+            children: childrenTitles
+                .map(name => toc.value?.find(({title, sidebarTitle, path}) =>
+                    path.split("/").length === 2 && (sidebarTitle === name || title === name),
+                ))
+                .filter((item): item is NonNullable<typeof item> => !!item),
+        })),
+    )
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     ul > li > span:first-child {
-        font-size: 12px;
+        font-size: var(--ks-font-size-xs);
     }
 
-    .docsMenu{
+    $scrollbar-width: 6px;
+    $link-radius: 6px;
+
+    @mixin custom-scrollbar {
+        &::-webkit-scrollbar {
+            width: $scrollbar-width;
+        }
+        &::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: $link-radius;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: transparent;
+            border-radius: $link-radius;
+        }
+        &:hover::-webkit-scrollbar-thumb {
+            background-color: var(--ks-border-default);
+        }
+    }
+
+    .docsMenuWrapper {
+        display: flex;
+        flex-shrink: 0;
+        z-index: 3;
+    }
+
+    .menuOpener {
+        height: 32px;
+        margin: 0;
+        gap: 4px;
+        padding: 4px 8px;
+        white-space: nowrap;
+        border-radius: 8px;
+        border: 0.5px solid var(--ks-btn-secondary-border-default);
+        background: var(--ks-btn-secondary-bg-default);
+        box-shadow: 0px 1px 4px 0px var(--ks-shadow-element);
+        font-weight: 600;
+        transition: all 0.2s ease;
+
+        &.is-open {
+            position: relative;
+            z-index: 1001;
+        }
+    }
+
+    .menuIcon {
+        display: inline-flex;
+        margin-right: 4px;
+        color: var(--ks-icon-muted);
+        font-size: var(--ks-font-size-sm);
+    }
+
+    .docsMenuContainer {
         position: absolute;
         z-index: 1000;
-        padding: .5rem;
-        left: 26px;
+        padding: 1rem 0.25rem 1rem 0.5rem;
+        left: 28px;
+        right: 28px;
         top: 100%;
-        right: 26px;
-        background-color: var(--ks-background-card);
-        border-radius: 6px;
+        background-color: var(--ks-bg-surface);
+        border-radius: 8px;
+        border: 1px solid var(--ks-border-default);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        margin-top: 4px;
+    }
 
-        a {
-            color: var(--ks-content-primary);
+    .docsMenu {
+        list-style: none;
+        padding-left: 0;
+        max-height: calc(100vh - 210px);
+        overflow-y: auto;
+        padding-right: 0.25rem;
+
+        @include custom-scrollbar;
+
+        a, :deep(span[class*="depth-"]) {
+            color: var(--ks-text-primary);
             text-decoration: none;
             display: block;
-            padding: .25rem .5rem;
-            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            border-radius: $link-radius;
+            transition: all 0.2s ease;
+            margin-bottom: 2px;
+            cursor: pointer;
+            width: 100%;
+
+            @for $i from 0 through 5 {
+                $base-pad: 0.5rem + ($i * 1rem);
+
+                &.depth-#{$i} {
+                    padding-left: $base-pad;
+                    @if $i == 0 {
+                        font-weight: 500;
+                    } @else if $i == 1 {
+                        font-size: var(--ks-font-size-base);
+                        color: var(--ks-text-secondary);
+                    } @else {
+                        font-size: var(--ks-font-size-xs);
+                        color: var(--ks-text-secondary);
+                        opacity: max(0.6, 0.9 - ($i - 2) * 0.1);
+                    }
+                }
+
+                &.active-page.depth-#{$i} {
+                    padding-left: calc(#{$base-pad} - 3px);
+                }
+            }
 
             &:hover {
                 color: var(--ks-primary);
-                background-color: var(--ks-select-hover);
+                background-color: var(--ks-btn-secondary-bg-hover);
             }
 
             &.active-page {
-                color: var(--ks-content-link);
-                font-weight: 600;
+                color: var(--ks-text-link) !important;
+                font-weight: var(--ks-font-weight-semibold);
+                opacity: 1 !important;
+                background-color: var(--ks-btn-secondary-bg-hover);
             }
         }
 
         li {
+            margin-bottom: 0.5rem;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+
             > span {
                 display: block;
-                padding: .25rem .5rem;
-                margin-bottom: .25rem;
-                border-radius: 4px;
+                padding: 0.25rem 0.5rem;
+                margin-bottom: 0.15rem;
+                font-size: var(--ks-font-size-xs);
+                font-weight: var(--ks-font-weight-regular);
+                letter-spacing: 0.05em;
+                color: var(--ks-text-secondary);
+                text-transform: uppercase;
+                border-radius: $link-radius;
             }
 
             &.active-section {
                 > span {
-                    color: var(--ks-content-link);
-                    font-weight: 600;
-                }
-            }
-
-            &:hover {
-                > span {
-                    background-color: var(--ks-select-hover);
+                    color: var(--ks-text-link);
                 }
             }
         }
-    }
-
-    .docsMenuWrapper{
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding-left: 27px;
-        padding-right: 27px;
-    }
-
-    .menuOpener{
-        flex: 1;
-        margin: 0;
-        width: 100%;
-    }
-
-    .expandIcon{
-        margin-left: 1rem;
     }
 </style>

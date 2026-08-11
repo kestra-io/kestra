@@ -1,12 +1,13 @@
 package io.kestra.core.runners;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +21,9 @@ class TaskWithRunIfTest {
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.findTaskRunsByTaskId("executed").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("notexecuted").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("notexecuted").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
         assertThat(execution.findTaskRunsByTaskId("notexecutedflowable").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("notexecutedflowable").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
         assertThat(execution.findTaskRunsByTaskId("willfailedtheflow").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
@@ -31,6 +34,22 @@ class TaskWithRunIfTest {
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.findTaskRunsByTaskId("log_orders").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("log_test").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("log_test").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/task-runif-taskswithstate.yml")
+    void runIfWithTasksWithStateFunction(Execution execution) {
+        // Pylon #1984: tasksWithState() must work in runIf (rendered executor-side, enum state).
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("will_fail").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // runIf {{ tasksWithState('FAILED') is not empty }} -> a failure exists -> must RUN
+        assertThat(execution.findTaskRunsByTaskId("write_execution_context").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getVariables()).containsEntry("hadFailure", List.of("yes"));
+
+        // runIf {{ tasksWithState('FAILED') is empty }} -> a failure exists -> must be SKIPPED
+        assertThat(execution.findTaskRunsByTaskId("skipped_when_failures_exist").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
     }
 
     @Test
@@ -39,7 +58,9 @@ class TaskWithRunIfTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.findTaskRunsByTaskId("skipSetVariables").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("skipSetVariables").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
         assertThat(execution.findTaskRunsByTaskId("skipUnsetVariables").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("skipUnsetVariables").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
         assertThat(execution.findTaskRunsByTaskId("unsetVariables").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("setVariables").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getVariables()).containsEntry("list", List.of(42));

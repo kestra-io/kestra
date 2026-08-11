@@ -1,0 +1,15 @@
+id: loop-until-restart
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop_test
+    type: io.kestra.plugin.core.flow.LoopUntil
+    condition: "{{ false }}"
+    failOnMaxReached: true
+    checkFrequency:
+      interval: PT1S
+      maxDuration: PT3S
+    tasks:
+      - id: return_test
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{outputs.loop_test.iterationCount}}"

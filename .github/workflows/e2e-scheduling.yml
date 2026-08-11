@@ -1,0 +1,44 @@
+name: "E2E tests scheduling"
+
+on:
+  # Every push to develop runs the suite, so the scheduled run only has to cover quiet
+  # periods: it re-tests an unchanged commit to surface flakiness, and catches external
+  # drift (base images, plugin downloads) on days when nothing is merged.
+  schedule:
+    - cron: "0 3 * * *" # Runs at 03:00 UTC (05:00 CEST) every day
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+# The scheduled and push runs share a group, since both target the same ref: a new merge
+# supersedes an in-flight run of an older commit rather than stacking a second full
+# build-from-source on top of it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    with:
+      java-version: 25
+
+  otel-export-trace:
+    name: OpenTelemetry - Export Trace
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [ e2e ]
+    env:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+    steps:
+      - name: OpenTelemetry - Export trace
+        uses: kestra-io/actions/actions/otel-collect@main
+        if: ${{ env.OTLP_ENDPOINT != '' }}
+        with:
+          mode: export-all
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          otlp-endpoint: ${{ secrets.OTLP_ENDPOINT }}
+          otlp-headers: "${{ secrets.OTLP_HEADERS }}"
+          logs-enabled: 'true'
+          service-name: "Github Actions - ${{ github.repository }} - ${{ github.workflow }}"

@@ -1,19 +1,5 @@
 package io.kestra.core.models.tasks.runners;
 
-import io.kestra.core.context.TestRunContextFactory;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.utils.IdUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -23,20 +9,38 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.inject.Inject;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
 class ScriptServiceTest {
     public static final Pattern COMMAND_PATTERN_CAPTURE_LOCAL_PATH = Pattern.compile("my command with an internal storage file: (.*)");
-    @Inject private TestRunContextFactory runContextFactory;
+    @Inject
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void replaceInternalStorage() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
-        var command  = ScriptService.replaceInternalStorage(runContext, null, false);
+        var command = ScriptService.replaceInternalStorage(runContext, null, false);
         assertThat(command).isEqualTo("");
 
         command = ScriptService.replaceInternalStorage(runContext, "my command", false);
@@ -91,6 +95,27 @@ class ScriptServiceTest {
     }
 
     @Test
+    void shouldAcceptOutputFileWithEmoji() throws IOException {
+        ScriptService.validateStoragePath("file🐸name.txt");
+    }
+
+    @Test
+    void shouldRejectOutputFileWithUnsupportedChars() {
+        assertThatThrownBy(() -> ScriptService.validateStoragePath("file name.txt"))
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("unsupported characters");
+    }
+
+    @Test
+    void shouldAcceptOutputFileWithSupportedSpecialChars() throws IOException {
+        ScriptService.validateStoragePath("file,name.txt");
+        ScriptService.validateStoragePath("file:name.txt");
+        ScriptService.validateStoragePath("file;name.txt");
+        ScriptService.validateStoragePath("path/to/file.txt");
+        ScriptService.validateStoragePath("file-name_v2.txt");
+    }
+
+    @Test
     void uploadInputFiles() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
@@ -133,6 +158,45 @@ class ScriptServiceTest {
         } finally {
             filesToDelete.forEach(File::delete);
             path.toFile().delete();
+        }
+    }
+
+    @Test
+    void shouldReplaceInternalStorageWithSpecialChars() throws IOException {
+        String tenant = IdUtils.create();
+        var runContext = runContextFactory.of("id", "namespace", tenant);
+
+        // Colon (:) is also supported by the regex but can't be tested here:
+        // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
+        // which is consistent between read/write in production but breaks test files created directly on disk.
+        Map<String, String> specialCharFiles = Map.of(
+            "file,name", "kestra://some/file,name.txt",
+            "file;name", "kestra://some/file;name.txt"
+        );
+
+        for (var entry : specialCharFiles.entrySet()) {
+            Path path = createFile(tenant, entry.getKey());
+            File localFile = null;
+            try {
+                var command = ScriptService.replaceInternalStorage(
+                    runContext,
+                    "my command with an internal storage file: " + entry.getValue(),
+                    false
+                );
+
+                Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
+                assertThat(matcher.matches())
+                    .as("URI with special char should be matched: " + entry.getValue())
+                    .isTrue();
+                Path absoluteLocalFilePath = Path.of(matcher.group(1));
+                localFile = absoluteLocalFilePath.toFile();
+                assertThat(localFile.exists()).isTrue();
+            } finally {
+                if (localFile != null) {
+                    localFile.delete();
+                }
+                path.toFile().delete();
+            }
         }
     }
 
@@ -185,19 +249,50 @@ class ScriptServiceTest {
         var runContext = runContext(runContextFactory, "namespace");
         String jobName = ScriptService.jobName(runContext);
         assertThat(jobName).startsWith("namespace-flowid-task-");
-        assertThat(jobName.length()).isEqualTo(27);
+        // base name "namespace-flowid-task" is 21 chars. Plus 1 hyphen and 8 char suffix.
+        assertThat(jobName.length()).isEqualTo(30);
+        assertThat(jobName.substring(jobName.lastIndexOf('-') + 1).length()).isEqualTo(8);
 
         runContext = runContext(runContextFactory, "very.very.very.very.very.very.very.very.very.very.very.very.long.namespace");
         jobName = ScriptService.jobName(runContext);
-        assertThat(jobName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylongnames-");
+
+        // Assert total length is max 63
         assertThat(jobName.length()).isEqualTo(63);
+
+        // Assert the suffix is 8 chars long
+        String suffix = jobName.substring(jobName.lastIndexOf("-") + 1);
+        assertThat(suffix.length()).isEqualTo(8);
+
+        // Assert the base name part is 54 chars long (63 total - 8 suffix - 1 hyphen)
+        String baseName = jobName.substring(0, jobName.lastIndexOf("-"));
+        assertThat(baseName.length()).isEqualTo(54);
+
+        // Assert the truncated prefix is correct
+        assertThat(baseName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylong");
+
+        // A 43-char namespace yields a 55-char base name ("<43 chars>-flowid-task"), which is
+        // exactly one over the 54-char budget (63 total - 8 suffix - 1 hyphen). Assert it is
+        // still truncated so the total stays within the 63-char Kubernetes limit.
+        runContext = runContext(runContextFactory, "a".repeat(43));
+        jobName = ScriptService.jobName(runContext);
+        assertThat(jobName.length()).isEqualTo(63);
+        assertThat(jobName.substring(jobName.lastIndexOf('-') + 1).length()).isEqualTo(8);
     }
 
     @Test
     void normalize() {
         assertThat(ScriptService.normalize(null)).isNull();
         assertThat(ScriptService.normalize("a-normal-string")).isEqualTo("a-normal-string");
-        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace")).isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
+        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace"))
+            .isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
+
+        // new tests for the fix
+        assertThat(ScriptService.normalize("abc-_")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc.-")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc_-")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc-._")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc---")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("a-b-c-")).isEqualTo("a-b-c");
     }
 
     private RunContext runContext(RunContextFactory runContextFactory, String namespace) {
@@ -229,7 +324,7 @@ class ScriptServiceTest {
     private static Path createFile(String tenant, String fileName) throws IOException {
         Path path = Path.of("/tmp/unittest/%s/%s.txt".formatted(tenant, fileName));
         if (!path.toFile().exists()) {
-            Files.createDirectory(Path.of("/tmp/unittest/%s".formatted(tenant)));
+            Files.createDirectories(Path.of("/tmp/unittest/%s".formatted(tenant)));
             Files.createFile(path);
         }
         return path;

@@ -1,11 +1,11 @@
 package io.kestra.core.models.tasks;
 
-import io.kestra.core.models.flows.State;
-import io.kestra.core.serializers.JacksonMapper;
-
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
+
+import io.kestra.core.models.flows.State;
+import io.kestra.core.serializers.JacksonMapper;
 
 public interface Output {
     default Optional<State.Type> finalState() {

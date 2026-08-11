@@ -1,0 +1,12 @@
+id: webhook-failed
+namespace: io.kestra.tests
+
+tasks:
+  - id: out
+    type: io.kestra.plugin.core.execution.Fail
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: "{{ flow.id }}"
+    wait: true

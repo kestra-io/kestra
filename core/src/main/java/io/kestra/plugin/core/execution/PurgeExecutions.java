@@ -1,22 +1,23 @@
 package io.kestra.plugin.core.execution;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.SystemTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.FlowService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.time.ZonedDateTime;
-import java.util.List;
 
 @SuperBuilder
 @ToString
@@ -25,25 +26,33 @@ import java.util.List;
 @NoArgsConstructor
 @Schema(
     title = "Purge executions, logs, metrics, and storage files.",
-    description = "This task can be used to purge flow executions data for all flows, for a specific namespace, or for a specific flow."
+    description = """
+        Deletes historical execution data by namespace/flow, bounded by `startDate`/`endDate`, and optionally filtered by states. Each category can be toggled (`purgeExecution`, `purgeLog`, `purgeMetric`, `purgeStorage`).
+
+        Respects Namespace authorization checks (there must be purge rights on the target namespace); default batch size is 100. Irreversible — use carefully in production."""
 )
 @Plugin(
     examples = {
         @Example(
             title = "Purge all flow execution data for flows that ended more than one month ago.",
-            code = {
-                "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
-                "states: ",
-                " - KILLED",
-                " - FAILED",
-                " - WARNING",
-                " - SUCCESS"
-            }
+            code = """
+                id: purge_exections
+                namespace: system
+
+                tasks:
+                  - id: purge
+                    type: io.kestra.plugin.core.execution.PurgeExecutions
+                    endDate: "{{ now() | dateAdd(-1, 'MONTHS') }}"
+                    states:
+                      - KILLED
+                      - FAILED
+                      - WARNING
+                      - SUCCESS
+                """
         )
-    },
-    aliases = {"io.kestra.core.tasks.storages.Purge", "io.kestra.plugin.core.storage.Purge"}
+    }
 )
-public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output> {
+public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output>, SystemTask {
     @Schema(
         title = "Namespace whose flows need to be purged, or namespace of the flow that needs to be purged",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
@@ -102,18 +111,25 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
     @Builder.Default
     private Property<Boolean> purgeStorage = Property.ofValue(true);
 
+    @Schema(
+        title = "The size of the bulk delete",
+        description = "Deletion is done in batches of this many executions (default 100). If executions have a large number of logs, use `PurgeLogs` instead to control how many log rows are deleted per transaction."
+    )
+    @Builder.Default
+    @NotNull
+    private Property<Integer> batchSize = Property.ofValue(100);
+
     @Override
     public PurgeExecutions.Output run(RunContext runContext) throws Exception {
-        ExecutionService executionService = ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionService.class);
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
+        ExecutionService executionService = ((DefaultRunContext) runContext).services().additionalService(ExecutionService.class);
 
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
-        if (renderedNamespace == null){
-            flowService.checkAllowedAllNamespaces(flowInfo.tenantId(), flowInfo.tenantId(), flowInfo.namespace());
+        if (renderedNamespace == null) {
+            runContext.acl().allowAllNamespaces().check();
         } else if (!renderedNamespace.equals(flowInfo.namespace())) {
-            flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
+            runContext.acl().allowNamespace(renderedNamespace).check();
         }
 
         ExecutionService.PurgeResult purgeResult = executionService.purge(
@@ -124,13 +140,15 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
             flowInfo.tenantId(),
             renderedNamespace,
             runContext.render(flowId).as(String.class).orElse(null),
-            startDate != null ? ZonedDateTime.parse(runContext.render(startDate).as(String.class).orElseThrow()) : null,
+            runContext.render(startDate).as(String.class).map(ZonedDateTime::parse).orElse(null),
             ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
-            this.states == null ? null : runContext.render(this.states).asList(State.Type.class)
+            this.states == null ? null : runContext.render(this.states).asList(State.Type.class),
+            runContext.render(this.batchSize).as(Integer.class).orElseThrow()
         );
 
         return Output.builder()
             .executionsCount(purgeResult.getExecutionsCount())
+            .taskOutputsCount(purgeResult.getTaskOutputsCount())
             .logsCount(purgeResult.getLogsCount())
             .storagesCount(purgeResult.getStoragesCount())
             .metricsCount(purgeResult.getMetricsCount())
@@ -144,6 +162,11 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
             title = "The count of deleted executions"
         )
         private int executionsCount;
+
+        @Schema(
+            title = "The count of deleted task outputs"
+        )
+        private int taskOutputsCount;
 
         @Schema(
             title = "The count of deleted logs"

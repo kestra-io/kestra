@@ -1,1 +1,0 @@
-ALTER TABLE triggers ADD COLUMN "next_execution_date" TIMESTAMP GENERATED ALWAYS AS (PARSEDATETIME(JQ_STRING("value", '.nextExecutionDate'), 'yyyy-MM-dd''T''HH:mm:ss.SSSXXX'));

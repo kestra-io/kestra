@@ -1,11 +1,13 @@
 package io.kestra.core.reporter;
 
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import io.kestra.core.models.ServerType;
-import lombok.Builder;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
+import io.kestra.core.models.ServerType;
+
+import lombok.Builder;
 
 /**
  * Represents a Kestra Server Event.
@@ -19,13 +21,11 @@ public record ServerEvent(
     ZoneId zoneId,
     Object payload,
     String uuid,
-    ZonedDateTime reportedAt
-) {
-    
+    ZonedDateTime reportedAt) {
+
     @JsonUnwrapped
     public Object payload() {
         return payload;
     }
-    
-}
 
+}

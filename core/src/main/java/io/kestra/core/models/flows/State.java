@@ -1,16 +1,5 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.kestra.core.models.tasks.Task;
-import io.micronaut.core.annotation.Introspected;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DurationFormatUtils;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,14 +8,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.kestra.core.models.tasks.Task;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+
 @Value
 @Slf4j
-@Introspected
 public class State {
     @NotNull
     @JsonInclude
     Type current;
 
+    @NotNull
     @Valid
     List<History> histories;
 
@@ -84,16 +86,54 @@ public class State {
         );
     }
 
+    /**
+     * non-terminated execution duration is hard to provide in SQL, so we set it to null when endDate is empty
+     */
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    public Duration getDuration() {
-        return Duration.between(
-            this.histories.getFirst().getDate(),
-            this.histories.size() > 1 ? this.histories.get(this.histories.size() - 1).getDate() : Instant.now()
-        );
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Optional<Duration> getDuration() {
+        if (this.getEndDate().isPresent()) {
+            return Optional.of(Duration.between(this.getStartDate(), this.getEndDate().get()));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * @return either the Duration persisted in database, or calculate it on the fly for non-terminated executions
+     */
+    @JsonIgnore
+    public Duration getDurationOrComputeIt() {
+        return this.getDuration().orElseGet(() -> Duration.between(this.getStartDate(), Instant.now()));
+    }
+
+    /**
+     * Duration from the most recent {@link Type#RUNNING} transition to the terminal date — how long the last
+     * attempt actually ran. Empty if it never entered RUNNING or hasn't ended. Unlike {@link #getDuration()}
+     * (start → end), this excludes pre-RUNNING time and earlier retry attempts.
+     */
+    @JsonIgnore
+    public Optional<Duration> lastRunningDuration() {
+        Optional<Instant> end = this.getEndDate();
+        if (end.isEmpty()) {
+            return Optional.empty();
+        }
+        Instant runningAt = null;
+        for (History history : this.histories) {
+            if (history.getState() == Type.RUNNING) {
+                runningAt = history.getDate();
+            }
+        }
+        return runningAt == null ? Optional.empty() : Optional.of(Duration.between(runningAt, end.get()));
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Instant getStartDate() {
+        // this specifically might happen for dynamic task runs
+        if (this.histories.isEmpty()) {
+            return null;
+        }
+
         return this.histories.getFirst().getDate();
     }
 
@@ -104,12 +144,16 @@ public class State {
             return Optional.empty();
         }
 
-        return Optional.of(this.histories.get(this.histories.size() - 1).getDate());
+        if (this.histories.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(this.histories.getLast().getDate());
     }
 
     public String humanDuration() {
         try {
-            return DurationFormatUtils.formatDurationHMS(getDuration().toMillis());
+            return DurationFormatUtils.formatDurationHMS(getDurationOrComputeIt().toMillis());
         } catch (Throwable e) {
             return getDuration().toString();
         }
@@ -120,7 +164,7 @@ public class State {
             return Instant.now();
         }
 
-        return this.histories.get(this.histories.size() - 1).getDate();
+        return this.histories.getLast().getDate();
     }
 
     public Instant minDate() {
@@ -134,6 +178,16 @@ public class State {
     @JsonIgnore
     public boolean isTerminated() {
         return this.current.isTerminated();
+    }
+
+    @JsonIgnore
+    public boolean canBeRestarted() {
+        return this.current.isFailed() || this.current.isPaused();
+    }
+
+    @JsonIgnore
+    public boolean canChangeStatus() {
+        return this.current.isTerminated() && !this.current.isKilled();
     }
 
     @JsonIgnore
@@ -152,6 +206,7 @@ public class State {
     }
 
     @JsonIgnore
+    // Used in EE
     public static Type[] runningTypes() {
         return Arrays.stream(Type.values())
             .filter(type -> type.isRunning() || type.isCreated())
@@ -188,21 +243,12 @@ public class State {
         return this.current.isSuccess();
     }
 
-    @JsonIgnore
-    public boolean isRestartable() {
-        return this.current.isFailed() || this.isPaused();
-    }
-
-    @JsonIgnore
-    public boolean isResumable() {
-        return this.current.isPaused() || this.current.isRetrying() || this.current.isCreated();
-    }
-
     /**
      * Checks whether the state is restarted after being paused.
      *
      * @return {@code true} if resuming. Otherwise {@code false}.
      */
+    // Used in EE
     @JsonIgnore
     public boolean isResumingAfterPause() {
         if (!this.current.equals(Type.RESTARTED) || this.histories.size() < 2) {
@@ -216,12 +262,12 @@ public class State {
      * This is to disambiguate between a RESTARTED after PAUSED and RESTARTED after FAILED state.
      */
     public boolean failedThenRestarted() {
-       return this.current ==  Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
+        return this.current == Type.RESTARTED && this.histories.get(this.histories.size() - 2).state.isFailed();
     }
 
-    @Introspected
     public enum Type {
         CREATED,
+        SUBMITTED,
         RUNNING,
         PAUSED,
         RESTARTED,
@@ -235,14 +281,20 @@ public class State {
         RETRYING,
         RETRIED,
         SKIPPED,
-        BREAKPOINT;
+        BREAKPOINT,
+        RESUBMITTED;
 
         public boolean isTerminated() {
-            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.CANCELLED || this == Type.RETRIED || this == Type.SKIPPED;
+            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.CANCELLED || this == Type.RETRIED || this == Type.SKIPPED
+                || this == Type.RESUBMITTED;
         }
 
         public boolean isTerminatedNoFail() {
-            return this == Type.WARNING || this == Type.SUCCESS || this == Type.RETRIED || this == Type.SKIPPED;
+            return this == Type.WARNING || this == Type.SUCCESS || this == Type.RETRIED || this == Type.SKIPPED || this == Type.RESUBMITTED;
+        }
+
+        public boolean isTerminatedInError() {
+            return this == Type.FAILED || this == Type.KILLED || this == Type.CANCELLED;
         }
 
         public boolean isCreated() {
@@ -251,6 +303,10 @@ public class State {
 
         public boolean isRunning() {
             return this == Type.RUNNING || this == Type.KILLING;
+        }
+
+        public boolean onlyRunning() {
+            return this == Type.RUNNING;
         }
 
         public boolean isFailed() {
@@ -273,11 +329,11 @@ public class State {
             return this == Type.SUCCESS;
         }
 
-        public boolean isKilled(){
+        public boolean isKilled() {
             return this == Type.KILLED;
         }
 
-        public boolean isQueued(){
+        public boolean isQueued() {
             return this == Type.QUEUED;
         }
 

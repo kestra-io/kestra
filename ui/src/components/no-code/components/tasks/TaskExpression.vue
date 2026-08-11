@@ -1,65 +1,63 @@
 <template>
-    <Editor
+    <KsEditor
+        v-bind="editorBindings"
         :modelValue="localEditorValue"
         :navbar="false"
-        :fullHeight="false"
-        :input="true"
+        :options="{fullHeight: false, largeSuggestions: false}"
+        :inline="true"
         lang="yaml"
         :placeholder="`Your ${root || 'value'} here...`"
         @update:model-value="editorInput"
-        :largeSuggestions="false"
     />
 </template>
-<script lang="ts" setup>
-    import {collapseEmptyValues} from "./MixinTask";
-    import Editor from "../../../../components/inputs/Editor.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {computed, ref} from "vue";
+<script setup lang="ts">
+    import {collapseEmptyValues} from "./MixinTask"
+    import {KsEditor} from "@kestra-io/design-system"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
+    import {useEditorBindings} from "../../../../composables/useEditorBindings"
+    import {computed, ref} from "vue"
+
+    const editorBindings = useEditorBindings()
 
     const props = defineProps({
         modelValue: {
             type: [String, Object],
-            default: undefined
+            default: undefined,
         },
         root: {
             type: String,
-            default: undefined
-        }
-    });
+            default: undefined,
+        },
+    })
 
     function editorInput(value: string) {
-        localEditorValue.value = value;
-        onInput(parseValue(value));
+        localEditorValue.value = value
+        onInput(parseValue(value))
     }
-    const emit = defineEmits(["update:modelValue"]);
+    const emit = defineEmits(["update:modelValue"])
 
     function onInput(value: any) {
-        emit("update:modelValue", collapseEmptyValues(value));
+        emit("update:modelValue", collapseEmptyValues(value))
     }
 
     const editorValue = computed(() => {
         if (typeof props.modelValue === "string") {
-            return props.modelValue;
+            return props.modelValue
         }
 
         return props.modelValue !== undefined && props.modelValue !== null
             ? YAML_UTILS.stringify(props.modelValue)
-            : "";
+            : ""
     })
 
     const localEditorValue = ref(editorValue.value)
 
     function parseValue(value: string) {
         if(value.match(/^\s*{{/)) {
-            return value;
+            return value
         }
 
-        return YAML_UTILS.parse(value);
+        return YAML_UTILS.parse(value)
     }
 </script>
 
-<style lang="scss" scoped>
-:deep(.placeholder) {
-    top: -7px !important;
-}
-</style>

@@ -1,13 +1,14 @@
 package io.kestra.core.models.tasks.common;
 
-import io.kestra.core.models.tasks.Output;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+
+import io.kestra.core.models.tasks.Output;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Getter;
 
 /**
  * This output can be used as a result of a task that fetched data.

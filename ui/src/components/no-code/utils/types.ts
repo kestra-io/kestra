@@ -1,5 +1,5 @@
-import {defineComponent} from "vue";
-import type {RouteRecordName, RouteParams} from "vue-router";
+import {defineComponent} from "vue"
+import type {RouteRecordName, RouteParams} from "vue-router"
 
 export type Schemas = {
     $ref?: string;

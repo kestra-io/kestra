@@ -1,8 +1,10 @@
 package io.kestra.core.models.dashboards.charts;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ChartOption;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +13,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -26,7 +30,7 @@ public abstract class Chart<P extends ChartOption> implements io.kestra.core.mod
 
     @NotNull
     @NotBlank
-    @Pattern(regexp = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     protected String type;
 
     @Valid

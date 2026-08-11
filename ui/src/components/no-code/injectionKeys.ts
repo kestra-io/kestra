@@ -1,6 +1,6 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
-import {TopologyClickParams} from "./utils/types"
-import {Panel} from "../MultiPanelTabs.vue"
+import {NoCodeElement, TopologyClickParams} from "./utils/types"
+import {Panel} from "../../utils/multiPanelTypes"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
 /**
@@ -12,7 +12,7 @@ export const FULL_SOURCE_INJECTION_KEY = Symbol("flow-injection-key") as Injecti
  */
 export const PARENT_PATH_INJECTION_KEY = Symbol("parent-path-injection-key") as InjectionKey<string>
 /**
- * Current task ID (When a task is edited) or target task ID (When a task is created) or task type (when a pluginDefaults is edited)
+ * Current task ID (When a task is edited) or target task ID (When a task is created)
  */
 export const REF_PATH_INJECTION_KEY = Symbol("ref-path-injection-key") as InjectionKey<number | undefined>
 /**
@@ -24,6 +24,7 @@ export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as Inject
  * NOTE: different from the `isCreating` flag coming from the store. `isCreating` refers to the Complete flow being in creation
  */
 export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<boolean>
+export const CREATING_FLOW_INJECTION_KEY = Symbol("creating-flow-injection-key") as InjectionKey<boolean>
 /**
  * When creating anew task, allows to specify a field where the new task should be injected.
  * @example
@@ -51,9 +52,9 @@ export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-
  */
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
 /**
- * We call this function when a task is changed, as soon as the first click or type is done
+ * Call this function to update the full Yaml content
  */
-export const UPDATE_TASK_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
+export const UPDATE_YAML_FUNCTION_INJECTION_KEY = Symbol("update-function-injection-key") as InjectionKey<(yaml: string) => void>
 /**
  * Set this to override the contents of the no-code editor with a component of your choice
  * This is used to display the metadata edition inputs
@@ -77,7 +78,7 @@ export const EDITOR_CURSOR_INJECTION_KEY = Symbol("editor-cursor-injection-key")
 */
 export const EDITOR_HIGHLIGHT_INJECTION_KEY = Symbol("editor-highlight-injection-key") as InjectionKey<Ref<number | undefined>>
 /**
-* Indicates if the Monaco editor is being used within EditorWrapper context for flow editing
+* Indicates if the Monaco editor is being used within FlowFileEditorTab context for flow editing
 */
 export const EDITOR_WRAPPER_INJECTION_KEY = Symbol("editor-wrapper-injection-key") as InjectionKey<boolean>
 
@@ -89,3 +90,11 @@ export const FULL_SCHEMA_INJECTION_KEY = Symbol("full-schema-injection-key") as 
         }>>
 
 export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, any>>>
+
+export const DATA_TYPES_MAP_INJECTION_KEY = Symbol("data-types-injection-key") as InjectionKey<ComputedRef<Record<string, string[] | undefined>>>
+
+export const ON_TASK_EDITOR_CLICK_INJECTION_KEY = Symbol("on-task-editor-click-injection-key") as InjectionKey<(elt?: Partial<NoCodeElement>) => void>
+
+export const DEFAULT_NAMESPACE_INJECTION_KEY = Symbol("default-namespace-injection-key") as InjectionKey<ComputedRef<string>>
+
+export const TENANTS_INJECTION_KEY = Symbol("tenants-injection-key") as InjectionKey<ComputedRef<{id: string; name?: string}[]>>

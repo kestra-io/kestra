@@ -1,5 +1,12 @@
 package io.kestra.core.junit.extensions;
 
+import java.net.URL;
+import java.nio.file.Paths;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
+import org.junit.jupiter.api.extension.*;
+
 import io.kestra.core.junit.annotations.EvaluateTrigger;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -8,31 +15,23 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.serializers.YamlParser;
-import io.micronaut.context.ApplicationContext;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.extension.*;
 
-import java.net.URL;
-import java.nio.file.Paths;
-import java.time.ZonedDateTime;
-import java.util.Objects;
-import java.util.Optional;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
+import lombok.SneakyThrows;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 /**
  * JUnit 5 extension to evaluate triggers and inject its Optional<Execution>.
  */
 public class TriggerEvaluationExtension implements ParameterResolver {
-    private static final ExtensionContext.Namespace NAMESPACE =
-        ExtensionContext.Namespace.create(KestraTestExtension.class);
-
     ApplicationContext context;
 
-
     RunContextFactory runContextFactory;
-
 
     RunContextInitializer runContextInitializer;
 
@@ -57,61 +56,89 @@ public class TriggerEvaluationExtension implements ParameterResolver {
 
         Flow flow = YamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
 
+        if (flow.getTenantId() == null) {
+            flow = flow.toBuilder().tenantId(MAIN_TENANT).build();
+        }
 
-        AbstractTrigger trigger =  flow.getTriggers().stream()
+        AbstractTrigger trigger = flow.getTriggers().stream()
             .filter(t -> t.getId().equals(evaluateTrigger.triggerId()))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Trigger not found: " + evaluateTrigger.triggerId()));
 
+        // Re-checked because parsing the flow above is slow enough for a shutdown to land in between, and
+        // evaluating the trigger initialises a run context, which resolves @ConfigurationProperties beans.
+        ExtensionUtils.abortIfContextStopped(context);
 
-    return evaluateTrigger(trigger,flow);
+        return evaluateTrigger(trigger, flow);
     }
 
     private void ensureContext(ExtensionContext extensionContext) {
         if (context == null) {
+            // Try KestraTestExtension namespace (used by @KestraTest)
             context = extensionContext.getRoot()
-                .getStore(NAMESPACE)
+                .getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get()))
                 .get(ApplicationContext.class, ApplicationContext.class);
 
+            // Fallback to MicronautJunit5Extension namespace (used by @MicronautTest)
             if (context == null) {
-                throw new IllegalStateException("No ApplicationContext found. Add @KestraTest to the test class.");
+                context = extensionContext.getRoot()
+                    .getStore(ExtensionContext.Namespace.create(MicronautJunit5Extension.class))
+                    .get(ApplicationContext.class, ApplicationContext.class);
             }
-            runContextFactory = context.getBean(RunContextFactory.class);
-            runContextInitializer = context.getBean(RunContextInitializer.class);
+
+            if (context == null) {
+                throw new IllegalStateException("No ApplicationContext found. Add @KestraTest or @MicronautTest to the test class.");
+            }
+        }
+
+        // Checked on every resolution rather than only when the context is first looked up: one instance
+        // serves every invocation of a @TestTemplate and every Optional parameter of a method.
+        ExtensionUtils.abortIfContextStopped(context);
+
+        if (runContextFactory == null || runContextInitializer == null) {
+            // Published together, so failing to resolve the second cannot leave the extension
+            // half-initialised and never retried.
+            RunContextFactory factory = context.getBean(RunContextFactory.class);
+            RunContextInitializer initializer = context.getBean(RunContextInitializer.class);
+            runContextFactory = factory;
+            runContextInitializer = initializer;
         }
     }
-    private Optional<Execution> evaluateTrigger(AbstractTrigger trigger,Flow flow) throws Exception {
 
-        if(trigger instanceof PollingTriggerInterface pollingTrigger){
+    private Optional<Execution> evaluateTrigger(AbstractTrigger trigger, Flow flow) throws Exception {
+
+        if (trigger instanceof PollingTriggerInterface pollingTrigger) {
             TriggerContext triggerContext = triggerContext(trigger, flow);
             ConditionContext conditionContext = conditionContext(trigger, flow);
 
-            return pollingTrigger.evaluate(conditionContext, triggerContext);
-        }
-        else {
+            return pollingTrigger.eval(conditionContext, triggerContext).map(eval -> eval.toExecution(triggerContext));
+        } else {
             throw new IllegalArgumentException("Unsupported trigger type: " + trigger.getClass());
         }
     }
+
     private ConditionContext conditionContext(AbstractTrigger trigger, Flow flow) {
 
-        TriggerContext triggerContext=triggerContext(trigger,flow);
+        TriggerContext triggerContext = triggerContext(trigger, flow);
 
         return ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler(
-                (DefaultRunContext) runContextFactory.of(), triggerContext, trigger
-            ))
+            .runContext(
+                runContextInitializer.forScheduler(
+                    (DefaultRunContext) runContextFactory.of(flow, trigger), triggerContext, trigger
+                )
+            )
             .flow(flow)
             .build();
     }
-    private TriggerContext triggerContext(AbstractTrigger trigger,Flow flow)
-    {
+
+    private TriggerContext triggerContext(AbstractTrigger trigger, Flow flow) {
         return TriggerContext.builder()
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .triggerId(trigger.getId())
             .date(ZonedDateTime.now())
+            .tenantId(flow.getTenantId())
             .build();
     }
-
 
 }

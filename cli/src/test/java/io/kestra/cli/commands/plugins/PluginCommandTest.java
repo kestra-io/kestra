@@ -1,12 +1,13 @@
 package io.kestra.cli.commands.plugins;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,8 +24,7 @@ class PluginCommandTest {
             assertThat(out.toString()).contains("Usage: kestra plugins");
         }
     }
-    
-    
+
     // Additional Coverage:
     @Test
     void shouldListSubcommandsInHelp() throws Exception {

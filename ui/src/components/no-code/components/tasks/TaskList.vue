@@ -1,14 +1,18 @@
 <template>
     <div class="tasks-wrapper">
-        <el-collapse v-model="expanded" class="collapse">
-            <el-collapse-item
-                :name="sectionName"
-                :title="`${sectionName}${elements ? ` (${elements.length})` : ''}`"
+        <KsCollapse v-model="expanded" class="collapse">
+            <KsCollapseItem
+                :name="section"
+                :disabled="merge"
+                :class="{merge}"
             >
+                <template #title>
+                    <span :class="{required}">{{ `${section}${elements ? ` (${elements.length})` : ''}` }}</span>
+                </template>
                 <template #icon>
                     <Creation
-                        :parentPathComplete="parentPathComplete"
-                        :refPath="elements?.length ? elements.length - 1 : undefined"
+                        :parentPathComplete
+                        :refPath="elements?.length ? elements.length - 1 : -1"
                         :blockSchemaPath
                     />
                 </template>
@@ -16,10 +20,10 @@
                 <Element
                     v-for="(element, elementIndex) in filteredElements"
                     :key="elementIndex"
-                    :section="sectionName"
-                    :parentPathComplete="parentPathComplete"
+                    :section
+                    :parentPathComplete
                     :element
-                    :elementIndex="elementIndex"
+                    :elementIndex
                     :moved="elementIndex == movedIndex"
                     :blockSchemaPath
                     :typeFieldSchema
@@ -34,80 +38,104 @@
                             )
                     "
                 />
-            </el-collapse-item>
-        </el-collapse>
+            </KsCollapseItem>
+        </KsCollapse>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue";
-    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
-    import {useFlowStore} from "../../../../stores/flow";
-    import Creation from "./taskList/buttons/Creation.vue";
-    import Element from "./taskList/Element.vue";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {computed, inject, ref} from "vue"
+    import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys"
+    import Creation from "./taskList/buttons/Creation.vue"
+    import Element from "./taskList/Element.vue"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
-    import {CollapseItem} from "../../utils/types";
+    import {CollapseItem} from "../../utils/types"
 
     import {
         CREATING_TASK_INJECTION_KEY, FULL_SCHEMA_INJECTION_KEY, FULL_SOURCE_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY,
-    } from "../../injectionKeys";
-    import {SECTIONS_MAP} from "../../../../utils/constants";
-    import {getValueAtJsonPath} from "../../../../utils/utils";
+        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY, UPDATE_YAML_FUNCTION_INJECTION_KEY,
+    } from "../../injectionKeys"
+    import {SECTIONS_MAP} from "../../../../utils/constants"
+    import {getValueAtJsonPath} from "../../../../utils/utils"
+    import {useI18n} from "vue-i18n"
+
 
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
-    const blockSchemaPath = computed(() => [blockSchemaPathInjected.value, "properties", props.root, "items"].join("/"));
+
+    const schemaAtBlockPathInjected = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPathInjected.value))
+
+    const blockSchemaPath = computed(() => {
+        const allParts = props.root ? props.root.split(".") : []
+        const lastIndexedPart = allParts.findLastIndex(part => /\[\d+\]$/.test(part))
+        const rootParts = allParts.slice(lastIndexedPart + 1)
+        if(rootParts.length > 1){
+            // if second part is a property not defined in properties,
+            // it can only be defined by additionalProperties
+            const s = schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]
+            if(s && s.properties?.[rootParts[1]] === undefined && s.additionalProperties){
+                rootParts[1] = "additionalProperties"
+            } else {
+                rootParts.splice(1, 0, "properties")
+            }
+        }
+        return [blockSchemaPathInjected.value, "properties", ...rootParts, "items"].join("/")
+    })
 
     defineOptions({
-        inheritAttrs: false
-    });
-
-    const flowStore = useFlowStore();
+        inheritAttrs: false,
+    })
 
     interface Task {
         id:string,
         type:string
     }
 
-    const emits = defineEmits(["update:modelValue"]);
+    const emits = defineEmits(["update:modelValue"])
     const props = withDefaults(defineProps<{
         modelValue?: Task[],
         root?: string;
+        merge?: boolean;
+        required?: boolean;
     }>(), {
         modelValue: () => [],
-        root: undefined
-    });
+        root: undefined,
+        merge: false,
+        required: false,
+    })
 
     const elements = computed(() =>
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
-    );
+    )
 
     function removeElement(index: number){
         if(elements.value.length <= 1){
-            emits("update:modelValue", undefined);
+            emits("update:modelValue", undefined)
             return
         }
         let localItems = [...elements.value]
         localItems.splice(index, 1)
 
-        emits("update:modelValue", localItems);
+        emits("update:modelValue", localItems)
     };
 
-    const sectionName = computed(() => {
-        return props.root ?? "tasks";
-    });
+    const {t} = useI18n()
 
+    const section = computed(() => {
+        if(props.merge){
+            return t("tasks")
+        }
+        return props.root ?? t("tasks")
+    })
 
+    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""))
 
-    const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
+    const filteredElements = computed(() => elements.value?.filter(Boolean) ?? [])
+    const expanded = props.merge ? computed(() => section.value) : ref<CollapseItem["title"]>(props.root ?? "tasks")
 
-    const filteredElements = computed(() => elements.value?.filter(Boolean) ?? []);
-    const expanded = ref<CollapseItem["title"]>(props.root ?? "tasks");
-
-    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
-    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined)
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false)
 
     const parentPathComplete = computed(() => {
         return `${[
@@ -119,11 +147,13 @@
                         ? `[${refPath}]`
                         : undefined,
             ].filter(Boolean).join(""),
-            sectionName.value
-        ].filter(p => p.length).join(".")}`;
-    });
+            section.value,
+        ].filter(p => p.length).join(".")}`
+    })
 
-    const movedIndex = ref(-1);
+    const movedIndex = ref(-1)
+
+    const updateYaml = inject(UPDATE_YAML_FUNCTION_INJECTION_KEY, () => {})
 
     const moveElement = (
         items: Record<string, any>[] | undefined,
@@ -131,50 +161,67 @@
         index: number,
         direction: "up" | "down",
     ) => {
-        const keyName = sectionName.value === "Plugin Defaults" ? "type" : "id";
-        if (!items || !flow) return;
+        const keyName = section.value === "Plugin Defaults" ? "type" : "id"
+        if (!items || !flow) return
         if (
             (direction === "up" && index === 0) ||
             (direction === "down" && index === items.length - 1)
         )
-            return;
+            return
 
-        const newIndex = direction === "up" ? index - 1 : index + 1;
+        const newIndex = direction === "up" ? index - 1 : index + 1
 
-        movedIndex.value = newIndex;
+        movedIndex.value = newIndex
         setTimeout(() => {
-            movedIndex.value = -1;
-        }, 200);
+            movedIndex.value = -1
+        }, 200)
 
-        flowStore.flowYaml =
-            YAML_UTILS.swapBlocks({
-                source:flow.value,
-                section: SECTIONS_MAP[sectionName.value.toLowerCase() as keyof typeof SECTIONS_MAP],
-                key1:elementID,
-                key2:items[newIndex][keyName],
-                keyName,
-            })
-    };
+        const newYaml = YAML_UTILS.swapBlocks({
+            source: flow.value,
+            section: (SECTIONS_MAP[section.value.toLowerCase() as keyof typeof SECTIONS_MAP] ?? section.value) as string,
+            key1: elementID,
+            key2: items[newIndex][keyName],
+            keyName,
+        })
 
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
+        updateYaml(newYaml)
+    }
+
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
+
+    const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {})
 
     // resolve parentPathComplete field schema from pluginsStore
-    const typeFieldSchema = computed(() => {
-        const blockSchema = getValueAtJsonPath(fullSchema.value, blockSchemaPath.value)?.properties;
-        return blockSchema?.type ? "type" : blockSchema?.on ? "on" : "type";
-    });
+    const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type")
 </script>
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
 
+.list-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 1rem;
+}
 .tasks-wrapper {
     width: 100%;
+}
+
+.required::after {
+    content: "*";
+    color: var(--ks-text-error);
+    margin-left: var(--ks-spacing-1);
 }
 
 .disabled {
     opacity: 0.5;
     pointer-events: none;
     cursor: not-allowed;
+}
+
+.merge :deep(.kel-collapse-item__header){
+    cursor: default;
 }
 </style>

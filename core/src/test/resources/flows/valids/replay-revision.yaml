@@ -1,0 +1,10 @@
+id: replay-revision
+namespace: io.kestra.tests
+
+variables:
+  greeting: "{{ this_is_undefined }}"
+
+tasks:
+  - id: print
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ render(vars.greeting) }}"

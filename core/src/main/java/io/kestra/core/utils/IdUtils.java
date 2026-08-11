@@ -1,14 +1,14 @@
 package io.kestra.core.utils;
 
-import com.devskiller.friendly_id.FriendlyId;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
-
 import java.util.StringJoiner;
 import java.util.UUID;
 
-@SuppressWarnings({"deprecation"})
+import com.devskiller.friendly_id.FriendlyId;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+
+@SuppressWarnings({ "deprecation" })
 abstract public class IdUtils {
     private static final HashFunction HASH_FUNCTION = Hashing.md5();
     private static final char ID_SEPARATOR = '_';

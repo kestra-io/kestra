@@ -1,43 +1,81 @@
 <template>
-    <div class="d-flex full-height">
-        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="{collapsed}" class="sidebar d-flex flex-column gap-3">
-            <!--
-            <div class="d-flex gap-2 align-items-center">
-                <el-button @click="collapsed = !collapsed">
-                    <chevron-right v-if="collapsed" />
-                    <chevron-left v-else />
-                </el-button>
-                <span class="toggle-btn text-body-tertiary">{{ $t((collapsed ? 'open' : 'close') + ' sidebar').toUpperCase() }}</span>
-            </div>
-            -->
-            <div v-if="!collapsed" class="d-flex flex-column gap-3">
+    <div class="d-flex docs-layout-container" :class="hasMenu ? 'full-height' : 'embedded'">
+        <div
+            v-if="mobileMenuOpen && $slots.menu"
+            class="mobile-backdrop"
+            @click="mobileMenuOpen = false"
+        />
+
+        <div v-if="$slots.menu" :style="{flex: collapsed ? '0 1 0px' : '0 0 306px'}" :class="[{collapsed}, {'mobile-open': mobileMenuOpen}]" class="sidebar d-flex flex-column gap-3">
+            <KsButton
+                v-if="isPluginsRoute"
+                :class="['mobile-close-toggle']"
+                @click="mobileMenuOpen = false"
+                :icon="Close"
+                :aria-label="'Close menu'"
+                link
+            />
+            <div v-if="!collapsed" class="menu-slot-wrapper">
                 <slot name="menu" />
             </div>
         </div>
-        <div class="container main-container">
-            <div class="content">
-                <slot name="content" />
+        <div class="main-content-wrapper">
+            <div v-if="$slots['secondary-header']" class="secondary-header">
+                <KsButton
+                    v-if="$slots.menu && isPluginsRoute"
+                    :class="['mobile-menu-toggle']"
+                    @click="mobileMenuOpen = !mobileMenuOpen"
+                    :icon="Menu"
+                    :aria-label="'Open menu'"
+                    link
+                />
+                <slot name="secondary-header" />
+            </div>
+            <div class="main-container">
+                <div class="content">
+                    <slot name="content" />
+                </div>
             </div>
         </div>
     </div>
 </template>
 
-<script lang="ts" setup>
-    import {ref} from "vue"
+<script setup lang="ts">
+    import {ref, computed, watch, useSlots} from "vue"
+    import {useRoute} from "vue-router"
 
-    const collapsed = ref(false);
+    const slots = useSlots()
+    const hasMenu = computed(() => !!slots.menu)
+    import {useScrollMemory} from "../../composables/useScrollMemory"
+    import Menu from "vue-material-design-icons/Menu.vue"
+    import Close from "vue-material-design-icons/Close.vue"
+
+    const collapsed = ref(false)
+    const mobileMenuOpen = ref(false)
+    const route = useRoute()
+    const scrollKey = computed(() => `docs:${route.fullPath}`)
+
+    const isPluginsRoute = computed(() => {
+        return route.path.startsWith("/main/plugins") ||
+            (typeof route.name === "string" && route.name.startsWith("plugins/"))
+    })
+
+    useScrollMemory(scrollKey, undefined, true)
+
+    watch(() => route.fullPath, () => {
+        mobileMenuOpen.value = false
+    })
 
 </script>
 
-<style lang="scss" scoped>
-    @import "@kestra-io/ui-libs/src/scss/variables";
+<style scoped lang="scss">
+    @use '../../styles/responsive' as *;
 
     .sidebar {
-        background: var(--ks-background-card);
+        background: var(--ks-bg-surface);
         padding: 2rem;
-        height: calc(100vh - 80px);
-        top: 80px;
-        position: sticky;
+        height: 100%;
+        position: relative;
         overflow-y: auto;
 
         &.collapsed {
@@ -47,181 +85,265 @@
 
         .toggle-btn {
             white-space:nowrap;
-            font-size: 12px;
+            font-size: var(--ks-font-size-xs);
         }
 
         > div > ul > li > span:first-child {
-            font-size: 12px;
+            font-size: var(--ks-font-size-xs);
+        }
+    }
+
+    .menu-slot-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+    }
+
+    .main-content-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .secondary-header {
+        background-color: var(--ks-bg-surface);
+        display: flex;
+        align-items: center;
+        min-height: 64px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+
+        .mobile-menu-toggle {
+            display: none;
         }
     }
 
     .main-container {
-        max-width: 100%;
+        flex: 1;
+        background-color: var(--ks-bg-surface);
+        position: relative;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .embedded {
+        height: auto;
+
+        .main-content-wrapper,
+        .main-container {
+            height: auto;
+            min-height: 0;
+            overflow: visible;
+        }
     }
 
     .content {
-        margin: $spacer;
+        margin: 0;
+        padding: 1rem;
+        background-color: var(--ks-bg-surface);
 
         h1 {
-            margin-bottom: $spacer;
+            margin-bottom: 0.5rem;
         }
+    }
 
-        #{--bs-link-color}: #8405FF;
-        #{--bs-link-color-rgb}: to-rgb(#8405FF);
+    .mobile-menu-toggle {
+        display: none;
+    }
 
-        html.dark & {
-            #{--bs-link-color}: #BBBBFF;
-            #{--bs-link-color-rgb}: to-rgb(#BBBBFF);
-        }
+    .mobile-close-toggle {
+        display: none;
+    }
 
-        :deep(h2) {
-            font-weight: 600;
-            border-top: 1px solid var(--ks-border-primary);
-            margin-bottom: 2rem;
-            margin-top: 4.12rem;
-            padding-top: 3.125rem;
+    .mobile-backdrop {
+        display: none;
+    }
 
-            > a {
-                border-left: 5px solid #9ca1de;
-                font-size: 1.87rem;
-                padding-left: .6rem;
+
+    @media (max-width: 991px) {
+        .secondary-header {
+            border-bottom: 1px solid var(--ks-border-default);
+
+            .mobile-menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 44px;
+                height: 44px;
+                padding: 0;
+                padding-left: 1rem;
+                flex-shrink: 0;
+                transition: transform 0.2s ease;
+
+                &:hover {
+                    transform: scale(1.1);
+                }
+
+                &:active {
+                    transform: scale(0.95);
+                }
+
+                :deep(.material-design-icon) {
+                    width: 24px;
+                    height: 24px;
+                }
             }
         }
 
-        :deep(h3) {
-            padding-top: 1.25rem;
-        }
+        .mobile-close-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1001;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            transition: transform 0.2s ease;
 
-        :deep(.btn:hover span) {
-            color: var(--ks-content-primary);
-        }
+            &:hover {
+                transform: scale(1.1);
+            }
 
-        :deep(a[target=_blank]:after) {
-            background-color: currentcolor;
-            content: "";
-            display: inline-block;
-            height: 15px;
-            margin-left: 1px;
-            -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' aria-hidden='true' focusable='false' x='0px' y='0px' viewBox='0 0 100 100' width='15' height='15' class='icon outbound'><path fill='currentColor' d='M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z'></path> <polygon fill='currentColor' points='45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9'></polygon></svg>");
-            mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' aria-hidden='true' focusable='false' x='0px' y='0px' viewBox='0 0 100 100' width='15' height='15' class='icon outbound'><path fill='currentColor' d='M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z'></path> <polygon fill='currentColor' points='45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9'></polygon></svg>");
-            vertical-align: baseline;
-            width: 15px;
-        }
+            &:active {
+                transform: scale(0.95);
+            }
 
-        :deep(.code-block) {
-            .language {
-                color: var(--ks-content-tertiary);
+            :deep(.material-design-icon) {
+                width: 24px;
+                height: 24px;
             }
         }
 
-        :deep(code) {
-            white-space: break-spaces;
-
-            &:not(.shiki code) {
-                font-weight: 700;
-                background: var(--ks-background-body);
-                color: var(--ks-content-primary);
-                border: 1px solid var(--border-killing)
-            }
+        .mobile-backdrop {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 999;
+            animation: fadeIn 0.3s ease;
         }
 
-        :deep(p > a) {
-            text-decoration: underline;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        :deep(blockquote) {
-            border-left: 4px solid #8997bd;
-            font-size: 1rem;
-            padding-left: 1rem;
-
-            > p {
-                color: var(--ks-content-primary);
-            }
-        }
-
-        :deep(.card-group) {
-            justify-content: space-around;
-        }
-
-        :deep(.card-group > a), :deep(h2 > a), :deep(h3 > a) {
-            color: var(--ks-content-primary);
-        }
-
-        :deep(li > a) {
-            text-decoration: none !important;
-        }
-
-        :deep(.video-container) {
-            position: relative;
-            margin-top: 2rem;
-            margin-bottom: -1rem;
-            padding-top: 56.75%;
-            overflow: hidden;
-            background-color: var(--ks-background-body);
-            border-radius: calc($spacer / 2);
-            border: 1px solid var(--ks-border-secondary);
-
-            iframe {
-                position: absolute;
-                top: 0;
-                left: 0;
-                margin: auto;
-                width: 100%;
-                height: 100%;
-                max-width: 100%;
-                max-height: 100%;
-            }
-        }
-
-        :deep(.card) {
-            --bs-card-spacer-y: 1rem;
-            --bs-card-spacer-x: 1rem;
-            border: 1px solid var(--ks-border-primary);
-            color: var(--ks-content-primary);
+        .sidebar {
+            position: fixed;
+            left: -100%;
+            top: 0;
+            height: 100vh;
+            width: calc(100vw - 44px);
+            max-width: 100vw;
+            z-index: 1000;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+            padding: 1rem;
+            padding-top: 3.5rem;
+            padding-right: 0.5rem;
             display: flex;
             flex-direction: column;
-            min-width: 0;
-            position: relative;
-            word-wrap: break-word;
-            background-clip: border-box;
-            background-color: var(--ks-background-card);
-            border-radius: var(--bs-border-radius-lg);
+            overflow: hidden;
 
-            .card-body {
-                color: var(--ks-content-primary);
-                flex: 1 1 auto;
-                padding: 1rem;
-                gap: 1rem;
+            &.mobile-open {
+                left: 0;
+            }
+
+            > div {
+                flex: 1;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
             }
         }
 
-        :deep(hr) {
-            &:has(+ .card-group), &:has(+ .alert) {
-                opacity: 0;
+        .main-container {
+            width: 100%;
+            padding: 0;
+            overflow-y: auto;
+        }
+
+        .content {
+            margin: 0;
+            padding: 0.75rem;
+            background-color: var(--ks-bg-surface);
+        }
+    }
+
+    @media (min-width: 576px) and (max-width: 991px) {
+        .sidebar {
+            width: 90vw;
+            max-width: 450px;
+            top: 65px;
+        }
+    }
+
+    @include res(md) {
+        .mobile-menu-toggle {
+            display: none;
+        }
+
+        .mobile-close-toggle {
+            display: none;
+        }
+
+        .mobile-backdrop {
+            display: none;
+        }
+
+        .sidebar {
+            position: sticky;
+            left: auto;
+            top: 0;
+            height: 100vh;
+            width: auto;
+            box-shadow: none;
+            padding: 2rem;
+
+            &.mobile-open {
+                left: auto;
             }
+        }
 
-            &:has(+ h2)  {
-                display: none;
+        .main-content-wrapper {
+            overflow-y: auto;
+        }
+
+        .secondary-header {
+            border-bottom: none;
+        }
+
+        .content {
+            padding: 1rem;
+
+            h1 {
+                margin-bottom: 0.75rem;
             }
         }
+    }
 
-        :deep(p) {
-            line-height: 1.75rem;
-        }
+    @include res(lg) {
+        .content {
+            padding: 2rem;
+            padding-top: 1rem;
 
-        :deep(.material-design-icon) {
-            bottom: -0.125em;
-        }
-
-        :deep(.show-button) > .material-design-icon.icon-2x {
-            &, & > .material-design-icon__svg {
-                height: 1em;
-                width: 1em;
+            h1 {
+                margin-bottom: 1rem;
             }
-        }
-
-        :deep(.doc-alert) {
-            padding-bottom: 1px !important;
         }
     }
 </style>

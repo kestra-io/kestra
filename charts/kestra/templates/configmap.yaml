@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kestra.fullname" . }}-config
+  labels:
+    {{- include "kestra.labels" . | nindent 4 }}
+data:
+  "_default.yml": |
+{{ .Values.configurations.application | toYaml | indent 4}}

@@ -1,9 +1,11 @@
 package io.kestra.core.runners;
 
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.core.serializers.JacksonMapper;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,21 +39,8 @@ class WorkerTaskRunningTest {
                 "type": "io.kestra.plugin.core.log.Log",
                 "message": "Row: {{trigger.row}}"
               },
-              "runContext": {
-                "storageOutputPrefix": "/io/kestra/tests/trigger-polling-6/executions/1cBacTDmTNHmqFTGkDc5qe/tasks/log/3RpDLNAPLhaiqkH5JSuIYw",
+              "data": {
                 "variables": {
-                  "envs": {
-                    "plugins_path": "/home/loic/dev/kestra-plugins"
-                  },
-                  "task": {
-                    "id": "log",
-                    "type": "io.kestra.plugin.core.log.Log"
-                  },
-                  "taskrun": {
-                    "id": "3RpDLNAPLhaiqkH5JSuIYw",
-                    "startDate": "2023-06-22T09:50:27.719269008Z",
-                    "attemptsCount": 0
-                  },
                   "flow": {
                     "id": "trigger-polling-6",
                     "namespace": "io.kestra.tests",
@@ -68,7 +57,9 @@ class WorkerTaskRunningTest {
                     },
                     "size": 1
                   }
-                }
+                },
+                "secretInputs": null,
+                "traceParent": null
               },
               "workerInstance": {
                 "workerUuid": "99146a76-1f21-49ad-bef4-92af0bd1df3c",

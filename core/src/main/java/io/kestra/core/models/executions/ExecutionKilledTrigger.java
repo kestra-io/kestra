@@ -1,11 +1,14 @@
 package io.kestra.core.models.executions;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.TenantInterface;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.utils.IdUtils;
-import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.utils.IdUtils;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -29,11 +32,11 @@ public class ExecutionKilledTrigger extends ExecutionKilled implements TenantInt
 
     String triggerId;
 
-    public boolean isEqual(TriggerContext triggerContext) {
-        return (triggerContext.getTenantId() == null || Objects.equals(triggerContext.getTenantId(), this.tenantId)) &&
-            triggerContext.getNamespace().equals(this.namespace) &&
-            triggerContext.getFlowId().equals(this.flowId) &&
-            triggerContext.getTriggerId().equals(this.triggerId);
+    public boolean isEqual(TriggerId triggerId) {
+        return (triggerId.getTenantId() == null || Objects.equals(triggerId.getTenantId(), this.tenantId)) &&
+            triggerId.getNamespace().equals(this.namespace) &&
+            triggerId.getFlowId().equals(this.flowId) &&
+            triggerId.getTriggerId().equals(this.triggerId);
     }
 
     @Override

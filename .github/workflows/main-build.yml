@@ -1,0 +1,177 @@
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - releases/*
+      - develop
+
+  workflow_dispatch:
+    inputs:
+      skip-test:
+        description: 'Skip test'
+        type: choice
+        required: true
+        default: 'false'
+        options:
+          - "true"
+          - "false"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-main
+  cancel-in-progress: true
+
+jobs:
+  # On develop push: fire the full EE CI cross-check async (oss-updated) AND run a
+  # synchronous EE compile gate via the Kestra webhook.
+  trigger-ee:
+    runs-on: ubuntu-latest
+    steps:
+      # Targeting develop branch from develop — async, fire-and-forget full EE CI
+      - name: Trigger EE Workflow (develop push, no payload)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: kestra-io/actions/composite/repository-dispatch@main
+        with:
+          gh-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-app-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          repository: kestra-io/kestra-ee
+          event-type: "oss-updated"
+          client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}"}'
+
+      - name: Checkout  # required to resolve the local composite action below
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: actions/checkout@v7
+
+      # Synchronous EE compileJava gate: fails this job (and the run) on compile
+      # failure and posts a compile status on the develop commit.
+      - name: EE compile check (via Kestra webhook)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+        uses: ./.github/actions/ee-compile-check
+        with:
+          webhook-url: ${{ secrets.KESTRA_CI_EEBUILD_WEBHOOK_URL }}
+          ref: ${{ github.ref_name }}
+          commit-sha: ${{ github.sha }}
+          pr-repo: ${{ github.repository }}
+
+  backend-tests:
+    name: Backend tests
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+    with:
+      java-version: 25
+
+  frontend-tests:
+    name: Frontend tests
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  design-system-frontend-tests:
+    name: Design System Frontend tests
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-develop-docker:
+    name: Publish Docker
+    needs: [backend-tests, frontend-tests, design-system-frontend-tests]
+    if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
+    with:
+      java-version: 25
+      notify-in-slack-release-channel: false
+      use-kestra-base-images: true
+    secrets: inherit
+
+
+  publish-develop-maven:
+    name: Publish develop Maven
+    needs: [ backend-tests, frontend-tests ]
+    if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
+    secrets:
+      SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
+      SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
+      SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
+    with:
+      java-version: 25
+
+  generate-configuration-schema:
+    name: Generate Configuration Schema
+    needs: [publish-develop-docker]
+    if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v8
+        with:
+          name: exe
+          path: build/executable
+
+      - name: Prepare executable
+        run: cp build/executable/* build/executable/kestra && chmod +x build/executable/kestra
+
+      - name: Generate and publish schema
+        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
+        with:
+          kestra-version: develop
+          executable-path: build/executable/kestra
+          output-path: oss.json
+          gcs-destination: kestra-api-storage_prd/configuration-schema/develop/
+          gcp-credentials-json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Slack - Schema generation failure
+        if: failure()
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+
+  end:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, publish-develop-docker, publish-develop-maven]
+    if: "always() && github.repository == 'kestra-io/kestra'"
+    steps:
+      - run: echo "end CI of failed or success"
+
+      # Slack
+      - run: echo "mark job as failure to forward error to Slack action" && exit 1
+        if: ${{ contains(needs.*.result, 'failure') }}
+      - name: Slack - Notification
+        if: ${{ always() && contains(needs.*.result, 'failure') }}
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+          users-map: ${{ vars.GH_TO_SLACK_MAP }}
+
+  otel-export-trace:
+    name: OpenTelemetry - Export Trace
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [ trigger-ee, backend-tests, frontend-tests, design-system-frontend-tests, publish-develop-docker, publish-develop-maven, generate-configuration-schema, end ]
+    env:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+    steps:
+      - name: OpenTelemetry - Export trace
+        uses: kestra-io/actions/actions/otel-collect@main
+        if: ${{ env.OTLP_ENDPOINT != '' }}
+        with:
+          mode: export-all
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          otlp-endpoint: ${{ secrets.OTLP_ENDPOINT }}
+          otlp-headers: "${{ secrets.OTLP_HEADERS }}"
+          logs-enabled: 'true'
+          service-name: "Github Actions - ${{ github.repository }} - ${{ github.workflow }}"

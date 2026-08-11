@@ -1,13 +1,5 @@
 package io.kestra.core.http;
 
-import jakarta.annotation.Nullable;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Delegate;
-import org.apache.hc.core5.http.*;
-import org.apache.hc.core5.http.HttpRequest;
-import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -16,6 +8,15 @@ import java.net.http.HttpHeaders;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.Collectors;
+
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+
+import jakarta.annotation.Nullable;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Delegate;
 
 public abstract class HttpService {
     public static URI safeURI(HttpRequest request) {
@@ -33,7 +34,8 @@ public abstract class HttpService {
 
         return HttpHeaders.of(
             Arrays.stream(headers)
-                .collect(Collectors.groupingBy(
+                .collect(
+                    Collectors.groupingBy(
                         (header) -> header.getName().toLowerCase(Locale.ROOT),
                         Collectors.mapping(NameValuePair::getValue, Collectors.toList())
                     )

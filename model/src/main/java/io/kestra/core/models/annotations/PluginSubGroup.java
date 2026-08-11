@@ -8,27 +8,42 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Inherited
 @Retention(RUNTIME)
-@Target({ElementType.PACKAGE})
+@Target({ ElementType.PACKAGE })
 public @interface PluginSubGroup {
     String title() default "";
+
     String description() default "";
 
-    PluginCategory[] categories() default {OTHER};
+    PluginCategory[] categories() default { OTHER };
 
     enum PluginCategory {
+        @Deprecated
         DATABASE,
+        @Deprecated
         MESSAGING,
+        @Deprecated
         SCRIPT,
+        @Deprecated
         TRANSFORMATION,
+        @Deprecated
         BATCH,
+        @Deprecated
         ALERTING,
         CLOUD,
+        @Deprecated
         STORAGE,
+        @Deprecated
         OTHER,
+        @Deprecated
         TOOL,
         AI,
         CORE,
+        @Deprecated
         INGESTION,
-        BI
+        @Deprecated
+        BI,
+        BUSINESS,
+        DATA,
+        INFRASTRUCTURE,
     }
 }

@@ -1,13 +1,13 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.contexts.MavenPluginRepositoryConfig;
-import io.kestra.core.exceptions.KestraRuntimeException;
-import io.kestra.core.utils.Version;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.core.annotation.Nullable;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -16,6 +16,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -25,26 +26,31 @@ import org.eclipse.aether.resolution.VersionRangeResolutionException;
 import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.KestraRuntimeException;
+import io.kestra.core.plugins.configuration.PluginsConfiguration;
+import io.kestra.core.utils.Version;
+
+import io.micronaut.core.annotation.Nullable;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for resolving plugins from a Maven repository.
  */
 @Singleton
+@Slf4j
 public class MavenPluginDownloader implements Closeable {
-
-    private static final Logger log = LoggerFactory.getLogger(MavenPluginDownloader.class);
     private static final String DEFAULT_LOCAL_REPOSITORY_PREFIX = "kestra-plugins-m2-repository";
     private static final String DEFAULT_REPOSITORY_TYPE = "default";
+    private static final String HTTP_PROXY_HOST = System.getProperty("http.proxyHost");
+    private static final String HTTP_PROXY_PORT = System.getProperty("http.proxyPort");
+    private static final String HTTPS_PROXY_HOST = System.getProperty("https.proxyHost");
+    private static final String HTTPS_PROXY_PORT = System.getProperty("https.proxyPort");
+
     public static final String LATEST = "latest";
 
     private final List<MavenPluginRepositoryConfig> repositoryConfigs;
@@ -53,10 +59,10 @@ public class MavenPluginDownloader implements Closeable {
 
     @Inject
     public MavenPluginDownloader(List<MavenPluginRepositoryConfig> repositoryConfigs,
-                                 @Nullable @Value("${kestra.plugins.local-repository-path}") String localRepositoryPath) {
+        @Nullable PluginsConfiguration pluginsConfiguration) {
         this.repositoryConfigs = repositoryConfigs;
         this.system = new RepositorySystemSupplier().get();
-        this.session = repositorySystemSession(system, localRepositoryPath);
+        this.session = repositorySystemSession(system, pluginsConfiguration != null ? pluginsConfiguration.localRepositoryPath() : null);
     }
 
     /**
@@ -91,11 +97,10 @@ public class MavenPluginDownloader implements Closeable {
         }
     }
 
-
     /**
      * Resolves the given dependencies given the additional repositories.
      *
-     * @param dependency   The dependency to resolve.
+     * @param dependency The dependency to resolve.
      * @param repositories The Maven repositories.
      * @return the local {@link Path} of the resolved dependency.
      */
@@ -115,7 +120,8 @@ public class MavenPluginDownloader implements Closeable {
 
     public List<PluginResolutionResult> resolveVersions(final List<PluginArtifact> artifacts) {
         return artifacts.stream()
-            .map(artifact -> {
+            .map(artifact ->
+            {
                 List<String> versions = listAllVersions(artifact.toCoordinates());
 
                 final List<Version> parsedVersions = versions.stream().map(Version::of).sorted().toList();
@@ -129,9 +135,8 @@ public class MavenPluginDownloader implements Closeable {
                     return new PluginResolutionResult(artifact, Version.getLatest(parsedVersions).toString(), sortedVersions, true);
                 }
 
-                return versions.contains(artifact.version()) ?
-                    new PluginResolutionResult(artifact, artifact.version(), versions, true) :
-                    new PluginResolutionResult(artifact, null, sortedVersions, false);
+                return versions.contains(artifact.version()) ? new PluginResolutionResult(artifact, artifact.version(), versions, true)
+                    : new PluginResolutionResult(artifact, null, sortedVersions, false);
             })
             .toList();
     }
@@ -139,7 +144,8 @@ public class MavenPluginDownloader implements Closeable {
     private static List<RemoteRepository> buildRemoteRepositories(List<MavenPluginRepositoryConfig> repositoryConfigs) {
         return repositoryConfigs
             .stream()
-            .map(repositoryConfig -> {
+            .map(repositoryConfig ->
+            {
                 var build = new RemoteRepository.Builder(
                     repositoryConfig.id(),
                     DEFAULT_REPOSITORY_TYPE,
@@ -151,6 +157,16 @@ public class MavenPluginDownloader implements Closeable {
                     authenticationBuilder.addUsername(repositoryConfig.basicAuth().username());
                     authenticationBuilder.addPassword(repositoryConfig.basicAuth().password());
                     build.setAuthentication(authenticationBuilder.build());
+                }
+
+                // Honor JDK proxy settings
+                if (repositoryConfig.url().startsWith("http") && HTTP_PROXY_HOST != null) {
+                    Proxy proxy = new Proxy(Proxy.TYPE_HTTP, HTTP_PROXY_HOST, HTTP_PROXY_PORT != null ? Integer.parseInt(HTTP_PROXY_PORT) : 80);
+                    build.setProxy(proxy);
+                }
+                if (repositoryConfig.url().startsWith("https") && HTTPS_PROXY_HOST != null) {
+                    Proxy proxy = new Proxy(Proxy.TYPE_HTTPS, HTTPS_PROXY_HOST, HTTPS_PROXY_PORT != null ? Integer.parseInt(HTTPS_PROXY_PORT) : 443);
+                    build.setProxy(proxy);
                 }
 
                 return build.build();
@@ -167,7 +183,8 @@ public class MavenPluginDownloader implements Closeable {
 
                 localRepositoryPath = tmpDir;
 
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                Runtime.getRuntime().addShutdownHook(new Thread(() ->
+                {
                     try {
                         FileUtils.deleteDirectory(new File(tmpDir));
                     } catch (IOException e) {
@@ -205,7 +222,7 @@ public class MavenPluginDownloader implements Closeable {
                 // Use the version from ArtifactRequest and not the one from the ArtifactResult.
                 // Otherwise, SNAPSHOT version will result in a timestamped version string.
                 highestVersion.endsWith("-SNAPSHOT") ? highestVersion : result.getArtifact().getVersion(),
-                result.getArtifact().getFile().toPath().toUri()
+                result.getArtifact().getPath().toUri()
             );
         } catch (VersionRangeResolutionException | ArtifactResolutionException e) {
             throw new KestraRuntimeException("Failed to resolve dependency: '" + dependency + "'", e);

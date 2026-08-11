@@ -4,7 +4,7 @@
     </a>
     <RouterLink
         v-else
-        :to="{name:'docs/view', params: {path: finalHref.replace(/^\//, '')}}"
+        :to="{name:'docs/view', params: {path: finalHref?.replace(/^\//, '')}}"
         custom
         v-slot="{href:linkHref}"
     >
@@ -19,30 +19,44 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, toRef} from "vue";
-    import {useDocStore} from "../../stores/doc";
-    import {useDocsLink} from "./useDocsLink";
+    import {computed, toRef} from "vue"
+    import {useDocStore} from "../../stores/doc"
+    import {useDocsLink} from "./useDocsLink"
 
-    const docStore = useDocStore();
+    const docStore = useDocStore()
 
     const emit = defineEmits<{
         click: []
-    }>();
+    }>()
 
     const props = withDefaults(defineProps<{
         href?: string;
         useRaw?: boolean;
-        class?: string | Record<string, boolean> | Array<string | Record<string, boolean>>;
+        class?: string | Record<string, boolean> | Array<undefined | string | Record<string, boolean>>;
     }>(), {
         href: undefined,
         useRaw: false,
-        class: undefined
-    });
+        class: undefined,
+    })
 
-    const {href, isRemote} = useDocsLink(toRef(() => props.href ?? ""), computed(() => (docStore.docPath ?? "")));
-    const finalHref = computed(() => props.useRaw ? `/${props.href}` : href.value);
+    const {href, isRemote} = useDocsLink(toRef(() => props.href ?? ""), computed(() => (docStore.docPath ?? "")))
+    const finalHref = computed(() => props.useRaw ? props.href : href.value)
 
     const navigateInVuex = () => {
-        docStore.docPath = finalHref.value;
-    };
+        docStore.docPath = finalHref.value
+    }
 </script>
+
+<style lang="scss" scoped>
+    .docsMenu {
+        .depth-0 {
+            padding-left: var(--ks-font-size-lg);
+        }
+        .depth-1 {
+            padding-left: var(--ks-font-size-lg);
+        }
+        .depth-2 {
+            padding-left: 30px;
+        }
+    }
+</style>

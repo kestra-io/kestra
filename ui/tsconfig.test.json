@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "incremental": true,
+    "noEmit": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["vitest"]
+  },
+  "references": [
+    {"path": "./tsconfig.app.json"}
+  ],
+  "include": [
+    ".storybook/preview.*",
+    "scripts/**/*.ts",
+    "src/translations/check.ts",
+    "src/translations/compareTranslations.ts",
+    "tests/fixtures/**/*.ts",
+    "tests/unit/**/*.ts",
+    "tests/unit/**/*.tsx",
+    "tests/unit/**/*.jsx",
+    "tests/unit/**/*.vue",
+    "tests/storybook/**/*.ts",
+    "tests/storybook/**/*.tsx",
+    "tests/storybook/**/*.jsx",
+    "tests/storybook/**/*.vue",
+    "src/utils/global.ts",
+    "src/*.d.ts",
+    "packages/design-system/src/env.d.ts",
+    "packages/topology/src/env.d.ts"
+  ]
+}

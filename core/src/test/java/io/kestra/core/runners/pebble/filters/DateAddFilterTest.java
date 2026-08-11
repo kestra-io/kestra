@@ -1,19 +1,22 @@
 package io.kestra.core.runners.pebble.filters;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 public class DateAddFilterTest {
@@ -29,7 +32,8 @@ public class DateAddFilterTest {
         );
         String render = variableRenderer.render(
             "{{ \"2013-09-08T16:19:00+02\" | dateAdd(day, \"DAYS\") | date(\"yyyy-MM-dd HH:mm:ss z\", timeZone=render(timezone)) }}",
-            vars);
+            vars
+        );
 
         assertThat(render).isEqualTo("2013-09-09 22:19:00 AWST");
     }
@@ -40,9 +44,12 @@ public class DateAddFilterTest {
             "day", "invalid",
             "timezone", "Australia/Perth"
         );
-        assertThrows(IllegalVariableEvaluationException.class, () ->variableRenderer.render(
-            "{{ \"2013-09-08T16:19:00+02\" | dateAdd(day, \"DAYS\") | date(\"yyyy-MM-dd HH:mm:ss z\", timeZone=render(timezone)) }}",
-            vars));
+        assertThrows(
+            IllegalVariableEvaluationException.class, () -> variableRenderer.render(
+                "{{ \"2013-09-08T16:19:00+02\" | dateAdd(day, \"DAYS\") | date(\"yyyy-MM-dd HH:mm:ss z\", timeZone=render(timezone)) }}",
+                vars
+            )
+        );
     }
 
     @Test
@@ -53,17 +60,18 @@ public class DateAddFilterTest {
         );
         String render = variableRenderer.render(
             "{{ null | dateAdd(day, \"DAYS\") | date(\"yyyy-MM-dd HH:mm:ss z\", timeZone=render(timezone)) }}",
-            vars);
+            vars
+        );
         assertThat(render).isEmpty();
     }
 
     @MethodSource("longInput")
     @ParameterizedTest
-    void should_get_as_long(InputWrapper wrapper){
+    void should_get_as_long(InputWrapper wrapper) {
         assertThat(DateAddFilter.getAsLong(wrapper.value, 0, null)).isEqualTo(1L);
     }
 
-    static Stream<InputWrapper> longInput(){
+    static Stream<InputWrapper> longInput() {
         return Stream.of(
             new InputWrapper(1L),
             new InputWrapper(1),
@@ -74,11 +82,11 @@ public class DateAddFilterTest {
 
     @MethodSource("invalidInput")
     @ParameterizedTest
-    void should_get_not_get_as_long(InputWrapper wrapper){
+    void should_get_not_get_as_long(InputWrapper wrapper) {
         assertThrows(PebbleException.class, () -> DateAddFilter.getAsLong(wrapper.value, 0, null));
     }
 
-    static Stream<InputWrapper> invalidInput(){
+    static Stream<InputWrapper> invalidInput() {
         return Stream.of(
             new InputWrapper(null),
             new InputWrapper("invalidString")
@@ -86,5 +94,6 @@ public class DateAddFilterTest {
     }
 
     //Parametrized test doesn't like Object as method parameter
-    record InputWrapper(Object value) {}
+    record InputWrapper(Object value) {
+    }
 }

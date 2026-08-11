@@ -1,19 +1,29 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.encryption.EncryptionService;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 
-public class DecryptFunction implements Function {
+import io.kestra.core.encryption.EncryptionService;
+
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+
+public class DecryptFunction implements KestraFunction {
+    public static final String NAME = "decrypt";
+
     @Override
     public List<String> getArgumentNames() {
         return List.of("key", "encrypted");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        return Map.of(
+            "key", SecretFunction.NAME + "('encryption_key')",
+            "encrypted", "outputs.request.encryptedBody"
+        );
     }
 
     @Override
@@ -26,8 +36,7 @@ public class DecryptFunction implements Function {
         String encrypted = (String) args.get("encrypted");
         try {
             return EncryptionService.decrypt(key, encrypted);
-        }
-        catch (GeneralSecurityException e) {
+        } catch (GeneralSecurityException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
     }

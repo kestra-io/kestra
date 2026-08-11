@@ -1,49 +1,38 @@
 <template>
-    <el-select
+    <KsSelect
         :modelValue="value"
-        @update:model-value="onInput"
+        @update:model-value="emit('update:modelValue', $event)"
         filterable
-        :persistent="false"
+        :fit="fit"
         :placeholder="$t('revisions')"
     >
-        <el-option
-            v-for="item in levelOptions"
+        <KsOption
+            v-for="item in LEVELS"
             :key="item"
             :label="item"
             :value="item"
         >
             {{ item }}
-        </el-option>
-    </el-select>
+        </KsOption>
+    </KsSelect>
 </template>
-<script>
-    export default {
-        emits: ["update:modelValue"],
-        data() {
-            return {
-                levelOptions: [
-                    "TRACE",
-                    "DEBUG",
-                    "INFO",
-                    "WARN",
-                    "ERROR",
-                ],
-            };
-        },
-        props: {
-            router: {
-                type: Boolean,
-                default: true
-            },
-            value: {
-                type: String,
-                default: "INFO"
-            }
-        },
-        methods: {
-            onInput(value) {
-                this.$emit("update:modelValue", value);
-            },
-        },
-    };
+<script setup lang="ts">
+    const emit = defineEmits<{(e: "update:modelValue", value: string): void;}>()
+
+    withDefaults(defineProps<{
+        value?: string,
+        router?: boolean,
+        fit?: boolean
+    }>(), {
+        value: "INFO",
+        router: true,
+    })
+
+    const LEVELS = [
+        "TRACE",
+        "DEBUG",
+        "INFO",
+        "WARN",
+        "ERROR",
+    ]
 </script>

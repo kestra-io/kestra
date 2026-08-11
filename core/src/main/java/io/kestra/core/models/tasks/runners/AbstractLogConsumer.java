@@ -1,12 +1,12 @@
 package io.kestra.core.models.tasks.runners;
 
-import lombok.Getter;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+
+import lombok.Getter;
 
 /**
  * Base class for script engine log consumer.

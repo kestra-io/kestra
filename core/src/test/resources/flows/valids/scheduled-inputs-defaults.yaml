@@ -1,0 +1,17 @@
+id: scheduled_inputs_defaults
+namespace: io.kestra.tests
+
+inputs:
+  - id: user
+    type: STRING
+    defaults: John
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: hey there {{ inputs.user }}! 👋
+
+triggers:
+  - id: every_minute
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/1 * * * *"

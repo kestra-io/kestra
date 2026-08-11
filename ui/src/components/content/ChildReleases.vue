@@ -14,41 +14,50 @@
     </div>
 </template>
 
-<script setup>
-    import {useRoute} from "vue-router";
-    import {useDocStore} from "../../stores/doc";
+<script setup lang="ts">
+    import {useRoute} from "vue-router"
+    import {useDocStore} from "../../stores/doc"
 
-    const props = defineProps({
-        pageUrl: {
-            type: String,
-            default: undefined
-        },
-    });
-
-    const docStore = useDocStore();
-    const route = useRoute();
-
-    let currentPage;
-
-    if (props.pageUrl) {
-        currentPage = props.pageUrl;
-    } else {
-        currentPage = route.path;
+    interface ReleaseMetadata {
+        release: string;
+        title: string;
+        description?: string;
     }
 
-    currentPage = currentPage.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
+    interface ResourcesWithMetadata {
+        [key: string]: ReleaseMetadata;
+    }
 
-    const resourcesWithMetadata = await docStore.children(currentPage);
+    const props = withDefaults(defineProps<{
+        pageUrl?: string;
+    }>(), {
+        pageUrl: undefined,
+    })
+
+    const docStore = useDocStore()
+    const route = useRoute()
+
+    let currentPage: string
+
+    if (props.pageUrl) {
+        currentPage = props.pageUrl
+    } else {
+        currentPage = route.path
+    }
+
+    currentPage = currentPage.endsWith("/") ? currentPage.slice(0, -1) : currentPage
+
+    const resourcesWithMetadata = await docStore.children(currentPage) as ResourcesWithMetadata
 
     const navigation = Object.entries(resourcesWithMetadata)
         .filter(([_, metadata]) => metadata.release !== undefined)
         .sort(([_, {release: release1}], [__, {release: release2}]) => {
             if (release1 < release2) {
-                return -1;
+                return -1
             }
             if (release1 > release2) {
-                return 1;
+                return 1
             }
-            return 0;
-        });
+            return 0
+        })
 </script>

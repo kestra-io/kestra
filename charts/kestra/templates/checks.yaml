@@ -1,0 +1,30 @@
+{{- if and (hasKey .Values "postgresql") .Values.postgresql.enabled }}
+{{ fail "postgresql: true is not authorized anymore, please read migration process." }}
+{{- end }}
+
+{{- if and (hasKey .Values "minio") .Values.minio.enabled }}
+{{ fail "minio: true is not authorized anymore, please read migration process." }}
+{{- end }}
+
+{{- if and (hasKey .Values "kafka") .Values.kafka.enabled }}
+{{ fail "kafka: true is not authorized anymore, please read migration process." }}
+{{- end }}
+
+{{- if and (hasKey .Values "elasticsearch") .Values.elasticsearch.enabled }}
+{{ fail "elasticsearch: true is not authorized anymore, please read migration process." }}
+{{- end }}
+
+{{- if hasKey .Values "configuration" }}
+{{ fail "configuration is not authorized anymore, please read migration process." }}
+{{- end }}
+
+{{- if and
+      (or (not .Values.configurations.application) (eq (len .Values.configurations.application) 0))
+      (or (not .Values.configurations.configmaps)  (eq (len .Values.configurations.configmaps) 0))
+      (or (not .Values.configurations.secrets)     (eq (len .Values.configurations.secrets) 0)) }}
+{{ fail "At least one of .Values.configurations.application, .Values.configurations.configmaps, or .Values.configurations.secrets must be defined and non-empty" }}
+{{- end }}
+
+{{- if and .Values.dind.enabled (not (has .Values.dind.mode (list "rootless" "insecure"))) }}
+{{ fail (printf "Invalid dind.mode '%s'. Allowed values are: rootless, insecure" .Values.dind.mode) }}
+{{- end }}

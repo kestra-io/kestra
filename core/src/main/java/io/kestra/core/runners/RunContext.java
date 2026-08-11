@@ -1,23 +1,26 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.encryption.EncryptionService;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.AbstractMetricEntry;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.property.PropertyContext;
-import io.kestra.core.storages.StateStore;
-import io.kestra.core.storages.Storage;
-import io.kestra.core.storages.kv.KVStore;
-import org.slf4j.Logger;
-
 import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.kestra.core.encryption.EncryptionService;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Plugin;
+import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.property.PropertyContext;
+import io.kestra.core.storages.Storage;
+import io.kestra.core.storages.kv.KVStore;
 
 public abstract class RunContext implements PropertyContext {
 
@@ -43,6 +46,14 @@ public abstract class RunContext implements PropertyContext {
      */
     @JsonInclude
     public abstract List<String> getSecretInputs();
+
+    /**
+     * Returns the plaintext values of SECRET-typed flow outputs decrypted while building this context's
+     * variables (e.g. a subflow's SECRET output consumed by this task), so they can be re-registered for
+     * log masking once this context is re-hydrated (e.g. on the worker).
+     */
+    @JsonInclude
+    public abstract List<String> getSecretOutputs();
 
     /**
      * OpenTelemetry trace parent
@@ -97,16 +108,37 @@ public abstract class RunContext implements PropertyContext {
     public abstract Logger logger();
 
     /**
+     * Reports a lifecycle step of a multi-step task (e.g. a batch job or a runner that launches
+     * an external resource) so UIs following the execution live can track progress. Emitted as a
+     * regular INFO log line carrying a typed {@code step} token, so it rides the existing log
+     * queue and follow-logs SSE — no separate channel or endpoint needed. {@code step} is an
+     * opaque, plugin-defined identifier (e.g. {@code "pod.created"}); {@code message} is the
+     * human-readable text shown in the log console.
+     */
+    public void emitProgress(String step, String message) {
+        logger().atInfo().addKeyValue(RunContextLogger.PROGRESS_KEY, step).log(message);
+    }
+
+    /**
+     * Same as {@link #emitProgress(String, String)}, but backdates the log entry to a real
+     * event time known only after the fact (e.g. a Kubernetes condition's {@code lastTransitionTime})
+     * instead of the moment this method is called, using the same override {@code RunContextLogger}
+     * already applies for {@link io.kestra.core.models.tasks.runners.TaskLogLineMatcher}.
+     */
+    public void emitProgress(String step, String message, Instant timestamp) {
+        logger().atInfo()
+            .addKeyValue(RunContextLogger.PROGRESS_KEY, step)
+            .addKeyValue(RunContextLogger.ORIGINAL_TIMESTAMP_KEY, timestamp)
+            .log(message);
+    }
+
+    /**
      * Gets the log file URI inside the internal storage.
      * Only populated if the task or trigger is configured to log o a file.<br>
      *
      * Warning: this method can be called only once for an attempt.
      */
     public abstract URI logFileURI();
-
-    // for serialization backward-compatibility
-    @JsonIgnore
-    public abstract URI getStorageOutputPrefix();
 
     /**
      * Gets access to the Kestra's internal storage.
@@ -124,6 +156,22 @@ public abstract class RunContext implements PropertyContext {
     public abstract List<WorkerTaskResult> dynamicWorkerResults();
 
     /**
+     * Registers a dynamically-generated taskrun together with the log lines to attach to it, in a
+     * single call — the way plugins surface logs under the sub-taskruns they create at runtime
+     * (these taskruns are synthesized after their underlying work has finished, so their logs are
+     * already available at registration time).
+     * <p>
+     * The logs ride with the taskrun being registered, so they can only ever target that taskrun;
+     * their execution, tenant, namespace, flow and attempt are taken from this context (a plugin
+     * cannot target another execution or tenant) and secrets are masked. The default registers the
+     * taskrun and drops the logs, so runtimes that don't support per-taskrun logs (and older ones)
+     * still show the taskrun rather than failing the task.
+     */
+    public void dynamicWorkerResult(WorkerTaskResult workerTaskResult, List<DynamicTaskRunLog> logs) {
+        this.dynamicWorkerResult(List.of(workerTaskResult));
+    }
+
+    /**
      * Gets access to the working directory.
      *
      * @return The {@link WorkingDir}.
@@ -136,11 +184,7 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract void cleanup();
 
-    /**
-     * @deprecated use flowInfo().tenantId() instead
-     */
-    @Deprecated(forRemoval = true)
-    public abstract String tenantId();
+    public abstract TaskRunInfo taskRunInfo();
 
     public abstract FlowInfo flowInfo();
 
@@ -149,7 +193,7 @@ public abstract class RunContext implements PropertyContext {
      * associated to the current task or trigger.
      *
      * @param name the configuration property name.
-     * @param <T>  the type of the configuration property value.
+     * @param <T> the type of the configuration property value.
      * @return the {@link Optional} configuration property value.
      */
     public abstract <T> Optional<T> pluginConfiguration(String name);
@@ -176,17 +220,58 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract KVStore namespaceKv(String namespace);
 
-    public StateStore stateStore() {
-        return new StateStore(this, true);
-    }
-
     /**
      * Get access to local paths of the host machine.
      */
     public abstract LocalPath localPath();
 
-    public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+    public record TaskRunInfo(String executionId, String taskId, String taskRunId, Object value) {
     }
 
-    public abstract boolean isInitialized();
+    public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+        public static FlowInfo from(Map<String, Object> flowInfoMap) {
+            return new FlowInfo(
+                (String) flowInfoMap.get("tenantId"),
+                (String) flowInfoMap.get("namespace"),
+                (String) flowInfoMap.get("id"),
+                (Integer) flowInfoMap.get("revision")
+            );
+        }
+    }
+
+    /**
+     * Get access to the ACL checker.
+     * Plugins are responsible for using the ACL checker when they access restricted resources, for example,
+     * when Namespace ACLs are used (EE).
+     */
+    public abstract AclChecker acl();
+
+    /**
+     * Get access to the Assets handler.
+     */
+    public abstract AssetEmitter assets() throws IllegalVariableEvaluationException;
+
+    /**
+     * Clone this run context for a specific plugin.
+     * 
+     * @return a new run context with the plugin configuration of the given plugin.
+     */
+    public abstract RunContext cloneForPlugin(Plugin plugin);
+
+    /**
+     * @return an InputAndOutput that can be used to work with inputs and outputs.
+     */
+    public abstract InputAndOutput inputAndOutput();
+
+    /**
+     * Get access to the SDK handler which allows interacting easily with the Kestra API via the SDK.
+     */
+    public abstract SDK sdk();
+
+    /**
+     * Retrieves the current task run output.
+     * WARNING: as the run context is created before running a task, this is not available for most task run.
+     * This is available only for flowable tasks as they are called multiple times, and for retried tasks (attempt > 1)
+     */
+    public abstract Map<String, Object> currentOutput();
 }

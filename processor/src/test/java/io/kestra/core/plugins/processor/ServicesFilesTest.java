@@ -1,16 +1,16 @@
 package io.kestra.core.plugins.processor;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import javax.annotation.processing.Processor;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
+
+import javax.annotation.processing.Processor;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 class ServicesFilesTest {
 
@@ -37,23 +37,24 @@ class ServicesFilesTest {
     @Test
     void testReadServiceFileWithCommentsAndWhitespace() throws IOException {
         String content = """
-        # comment
-        com.example.ServiceA
+            # comment
+            com.example.ServiceA
 
-        com.example.ServiceB   # inline comment
-        """;
+            com.example.ServiceB   # inline comment
+            """;
         ByteArrayInputStream in = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
         Set<String> read = ServicesFiles.readServiceFile(in);
 
         Assertions.assertEquals(Set.of("com.example.ServiceA", "com.example.ServiceB"), read);
     }
+
     @Test
     void testReadServiceFileWithDuplicates() throws IOException {
         String content = """
-        com.example.ServiceA
-        com.example.ServiceA
-        com.example.ServiceB
-        """;
+            com.example.ServiceA
+            com.example.ServiceA
+            com.example.ServiceB
+            """;
         ByteArrayInputStream in = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
         Set<String> read = ServicesFiles.readServiceFile(in);
 

@@ -1,6 +1,7 @@
 package io.kestra.core.docs;
 
 import io.kestra.core.models.flows.Input;
+
 import lombok.*;
 
 @SuppressWarnings("rawtypes")

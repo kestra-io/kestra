@@ -1,25 +1,21 @@
 <template>
     <div>
-        <a class="el-button el-button--large el-button--primary" target="_blank" :href="getADemoUrl.href">
+        <KsButton
+            type="primary"
+            size="large"
+            tag="a"
+            target="_blank"
+            :href="`https://kestra.io/demo?utm_source=app&utm_medium=referral&utm_campaign=demo-${type}`"
+        >
             {{ $t("demos.get_a_demo_button") }}
-        </a>
+        </KsButton>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {useRoute} from "vue-router";
-    import {computed} from "vue";
+    import {KsButton} from "@kestra-io/design-system"
 
-    const route = useRoute();
-
-    const getADemoUrl = computed(() => {
-        const demoUrl = new URL("https://kestra.io/demo");
-        // set all utm params from the route query
-        for (const [key, value] of Object.entries(route.query)) {
-            if (key.startsWith("utm_")) {
-                demoUrl.searchParams.set(key, value as string);
-            }
-        }
-        return demoUrl;
-    });
+    defineProps<{
+        type: string;
+    }>()
 </script>

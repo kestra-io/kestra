@@ -2,7 +2,7 @@ name: Auto-Translate UI keys and create PR
 
 on:
   schedule:
-    - cron: "0 9-21/3 * * *"  # Every 3 hours from 9 AM to 9 PM
+    - cron: "0 9-21/3 * * 1-5"  # Every 3 hours from 9 AM to 9 PM, Monday to Friday
   workflow_dispatch:
     inputs:
       retranslate_modified_keys:
@@ -14,34 +14,37 @@ on:
         default: "false"
         required: false
 
+# Scheduled runs fire every three hours and each one opens its own timestamped branch. Without a
+# concurrency group two overlapping runs generate the same change and open two PRs for it, leaving
+# the loser with an empty diff once the winner merges — see kestra-io/kestra#17822.
+concurrency:
+  group: auto-translate-ui-keys-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   translations:
     name: Translations
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-        - uses: actions/checkout@v5
+        - uses: actions/checkout@v7
           name: Checkout
           with:
             fetch-depth: 0
 
-        - name: Set up Python
-          uses: actions/setup-python@v6
+        - name: Set up Node
+          uses: actions/setup-node@v7
           with:
-            python-version: "3.x"
+            node-version: "24.x"
 
-        - name: Install Python dependencies
-          run: pip install gitpython openai
+        - name: Install Node dependencies
+          run: npm ci
+          working-directory: ui
 
         - name: Generate translations
-          run: python ui/src/translations/generate_translations.py ${{ github.event.inputs.retranslate_modified_keys }}
+          run: node --experimental-strip-types ui/scripts/generate_translations.ts ${{ github.event.inputs.retranslate_modified_keys }}
           env:
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-        - name: Set up Node
-          uses: actions/setup-node@v5
-          with:
-            node-version: "20.x"
+            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
         - name: Set up Git
           run: |
@@ -64,4 +67,5 @@ jobs:
             gh pr create --title "Translations from en.json" --body $'This PR was created automatically by a GitHub Action.\n\nSomeone from the @kestra-io/frontend team needs to review and merge.' --base ${{ github.ref_name }} --head $BRANCH_NAME
 
         - name: Check keys matching
-          run: node ui/src/translations/check.js
+          run: npm run translations:check
+          working-directory: ui

@@ -1,33 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.client.HttpClient;
-import io.kestra.core.http.client.HttpClientException;
-import io.kestra.core.http.client.HttpClientRequestException;
-import io.kestra.core.http.client.HttpClientResponseException;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.serializers.JacksonMapper;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.body.DefaultMessageBodyHandlerRegistry;
-import io.micronaut.http.body.MessageBodyWriter;
-import io.micronaut.http.simple.SimpleHttpHeaders;
-import io.micronaut.http.uri.UriBuilder;
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.EvaluationContextImpl;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -35,11 +7,40 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.client.HttpClientException;
+import io.kestra.core.http.client.HttpClientResponseException;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.body.DefaultMessageBodyHandlerRegistry;
+import io.micronaut.http.body.MessageBodyWriter;
+import io.micronaut.http.simple.SimpleHttpHeaders;
+import io.micronaut.http.uri.UriBuilder;
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.EvaluationContextImpl;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 @Singleton
-public class HttpFunction<T> implements Function {
+public class HttpFunction<T> implements KestraFunction {
     public static final String NAME = "http";
 
-    private final MessageBodyWriter<T> FALLBACK_CONTENT_WRITER = (type, mediaType, object, outgoingHeaders, outputStream) -> {
+    private final MessageBodyWriter<T> FALLBACK_CONTENT_WRITER = (type, mediaType, object, outgoingHeaders, outputStream) ->
+    {
         if (mediaType == MediaType.APPLICATION_YAML_TYPE || mediaType.equals(MediaType.of("application/yaml"))) {
             try {
                 outputStream.write(JacksonMapper.ofYaml().writeValueAsString(object).getBytes(StandardCharsets.UTF_8));
@@ -53,10 +54,10 @@ public class HttpFunction<T> implements Function {
     };
 
     @Inject
-    private ApplicationContext applicationContext;
+    private DefaultMessageBodyHandlerRegistry defaultMessageBodyHandlerRegistry;
 
     @Inject
-    private DefaultMessageBodyHandlerRegistry defaultMessageBodyHandlerRegistry;
+    private Provider<RunContextFactory> runContextFactoryProvider;
 
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
@@ -69,7 +70,7 @@ public class HttpFunction<T> implements Function {
             .collect(HashMap::new, (m, k) -> m.put(k, context.getVariable(k)), HashMap::putAll);
 
         // We need late injection otherwise there is a circular dependency issue between Extension and VariableRenderer from RunContextFactory
-        RunContextFactory runContextFactory = applicationContext.getBean(RunContextFactory.class);
+        RunContextFactory runContextFactory = runContextFactoryProvider.get();
         RunContext runContext = runContextFactory.of(pebbleVariables);
 
         URI uri = args.get("uri") instanceof URI uriObject
@@ -106,12 +107,12 @@ public class HttpFunction<T> implements Function {
         } catch (HttpClientResponseException e) {
             if (e.getResponse() != null) {
                 String msg = "Failed to execute HTTP Request, server respond with status " + e.getResponse().getStatus().getCode() + " : " + e.getResponse().getStatus().getReason();
-                throw new PebbleException(e, msg , lineNumber, self.getName());
+                throw new PebbleException(e, msg, lineNumber, self.getName());
             } else {
-                throw new PebbleException( e, "Failed to execute HTTP request ", lineNumber, self.getName());
+                throw new PebbleException(e, "Failed to execute HTTP request ", lineNumber, self.getName());
             }
-        } catch(HttpClientException | IllegalVariableEvaluationException | IOException e ) {
-            throw new PebbleException( e, "Failed to execute HTTP request ", lineNumber, self.getName());
+        } catch (HttpClientException | IllegalVariableEvaluationException | IOException e) {
+            throw new PebbleException(e, "Failed to execute HTTP request ", lineNumber, self.getName());
         }
     }
 
@@ -146,5 +147,19 @@ public class HttpFunction<T> implements Function {
     @Override
     public List<String> getArgumentNames() {
         return List.of("uri", "method", "query", "body", "contentType", "headers", "options", "accept");
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put("uri", "'https://example.com'");
+        defaults.put("method", "'GET'");
+        defaults.put("query", null);
+        defaults.put("body", null);
+        defaults.put("contentType", null);
+        defaults.put("headers", null);
+        defaults.put("options", null);
+        defaults.put("accept", null);
+        return defaults;
     }
 }

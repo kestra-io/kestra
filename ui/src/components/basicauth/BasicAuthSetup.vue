@@ -1,248 +1,183 @@
 <template>
-    <div class="setup-container">
-        <div class="setup-sidebar">
+    <KsRow class="setup-container" :gutter="30" justify="center" align="middle">
+        <KsCol :xs="24" :md="8" class="setup-sidebar">
             <div class="logo-container">
-                <Logo style="width: 14rem;" />
+                <Logo class="setup-logo" />
             </div>
-            <el-steps :space="60" direction="vertical" :active="activeStep" finishStatus="success">
-                <el-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
-                <el-step
-                    :icon="activeStep > 1 ? CheckBold : Cogs"
-                    :title="t('setup.steps.config')"
-                    :class="{'primary-icon': activeStep <= 1}"
+            <KsSteps :space="60" direction="vertical" :active="activeStep" finishStatus="success">
+                <KsStep :icon="activeStep > 0 ? CheckBold : AccountOutline" :title="$t('setup.steps.user')" />
+                <KsStep
+                    :icon="activeStep > 1 ? CheckBold : MessageOutline"
+                    :title="$t('setup.steps.survey')"
                 />
-                <el-step
-                    :icon="activeStep > 2 ? CheckBold : MessageOutline"
-                    :title="t('setup.steps.survey')"
-                    :class="{'primary-icon': activeStep <= 2}"
-                />
-                <el-step :icon="LightningBolt" :title="t('setup.steps.complete')" class="primary-icon" />
-            </el-steps>
-        </div>
-        <div class="setup-main">
-            <div class="setup-card-header">
-                <div class="card-header">
-                    <el-text size="large" class="header-title" v-if="activeStep === 0">
-                        {{ t('setup.titles.user') }}
-                    </el-text>
-                    <el-text size="large" class="header-title" v-else-if="activeStep === 1">
-                        Welcome {{ userFormData.firstName }}
-                    </el-text>
-                    <el-text size="large" class="header-title" v-else-if="activeStep === 2">
-                        {{ t('setup.titles.survey') }}
-                    </el-text>
-                    <el-text class="d-block mt-4">
-                        {{ subtitles[activeStep] }}
-                    </el-text>
-                    <el-button v-if="activeStep === 2" class="skip-button" @click="handleSurveySkip()">
-                        {{ t('setup.survey.skip') }}
-                    </el-button>
-                </div>
-            </div>
-
-            <div class="setup-card-body">
-                <div v-if="activeStep === 0">
-                    <el-form ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
-                        <el-form-item :label="t('setup.form.email')" prop="username">
-                            <el-input v-model="userFormData.username" :placeholder="t('setup.form.email')" type="email">
-                                <template #suffix v-if="getFieldError('username')">
-                                    <el-tooltip placement="top" :content="getFieldError('username')">
-                                        <InformationOutline class="validation-icon error" />
-                                    </el-tooltip>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item :label="t('setup.form.firstName')" prop="firstName">
-                            <el-input v-model="userFormData.firstName" :placeholder="t('setup.form.firstName')">
-                                <template #suffix v-if="getFieldError('firstName')">
-                                    <el-tooltip placement="top" :content="getFieldError('firstName')">
-                                        <InformationOutline class="validation-icon error" />
-                                    </el-tooltip>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item :label="t('setup.form.lastName')" prop="lastName">
-                            <el-input v-model="userFormData.lastName" :placeholder="t('setup.form.lastName')">
-                                <template #suffix v-if="getFieldError('lastName')">
-                                    <el-tooltip placement="top" :content="getFieldError('lastName')">
-                                        <InformationOutline class="validation-icon error" />
-                                    </el-tooltip>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item :label="t('setup.form.password')" prop="password" class="mb-2">
-                            <el-input
-                                type="password"
-                                showPassword
-                                v-model="userFormData.password"
-                                :placeholder="t('setup.form.password')"
-                            >
-                                <template #suffix v-if="getFieldError('password')">
-                                    <el-tooltip placement="top" :content="getFieldError('password')">
-                                        <InformationOutline class="validation-icon error" />
-                                    </el-tooltip>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <div class="password-requirements mb-4">
-                            <el-text>
-                                8+ chars, 1 upper, 1 number
-                            </el-text>
-                        </div>
-                    </el-form>
-                    <div class="d-flex gap-1">
-                        <el-button type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
-                            {{ t("setup.confirm.confirm") }}
-                        </el-button>
+                <KsStep :icon="LightningBolt" :title="$t('setup.steps.complete')" />
+            </KsSteps>
+        </KsCol>
+        <KsCol :xs="24" :md="16" class="setup-main">
+            <KsCard class="setup-card">
+                <template #header v-if="activeStep !== 2">
+                    <div class="card-header">
+                        <KsText size="large" class="header-title" v-if="activeStep === 0">
+                            {{ $t('setup.titles.user') }}
+                        </KsText>
+                        <KsText size="large" class="header-title" v-else-if="activeStep === 1">
+                            {{ $t('setup.titles.survey') }}
+                        </KsText>
+                        <KsText v-if="activeStep === 0" class="header-subtitle">
+                            {{ $t('setup.subtitles.user') }}
+                        </KsText>
+                        <KsButton v-if="activeStep === 1" class="skip-button" @click="handleSurveySkip()">
+                            {{ $t('setup.survey.skip') }}
+                        </KsButton>
                     </div>
-                </div>
+                </template>
 
-                <div class="d-flex flex-column gap-4" v-else-if="activeStep === 1">
-                    <el-card v-if="isLoading">
-                        <el-text>Loading configuration...</el-text>
-                    </el-card>
-                    <el-card v-else-if="setupConfigurationLines.length > 0">
-                        <el-row
-                            v-for="config in setupConfigurationLines"
-                            :key="config.name"
-                            class="lh-lg mt-1 mb-1 align-items-center gap-2"
-                        >
-                            <component :is="config.icon" />
-                            <el-text size="small">
-                                {{ t("setup.config." + config.name) }}
-                            </el-text>
-                            <el-divider class="m-auto" />
-                            <Check class="text-success" v-if="config.value === true" />
-                            <Close class="text-danger" v-else-if="config.value === false" />
-                            <el-text v-else size="small">
-                                {{ config.value === "NOT SETUP" ? config.value : config.value.toString().capitalize() }}
-                            </el-text>
-                        </el-row>
-                    </el-card>
-                    <el-card v-else>
-                        <el-text>No configuration data available</el-text>
-                    </el-card>
-                    <el-text class="align-self-start">
-                        {{ t("setup.confirm.config_title") }}
-                    </el-text>
-                    <div class="d-flex align-self-start">
-                        <el-button @click="previousStep()">
-                            {{ t("setup.confirm.not_valid") }}
-                        </el-button>
-                        <el-button type="primary" @click="initBasicAuth()">
-                            {{ t("setup.confirm.valid") }}
-                        </el-button>
-                    </div>
-                </div>
-
-                <div v-else-if="activeStep === 2">
-                    <el-form ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
-                        <el-form-item :label="t('setup.survey.company_size')">
-                            <el-radio-group v-model="surveyData.companySize" class="survey-radio-group">
-                                <el-radio
-                                    v-for="option in companySizeOptions"
-                                    :key="option.value"
-                                    :value="option.value"
-                                >
-                                    {{ option.label }}
-                                </el-radio>
-                            </el-radio-group>
-                        </el-form-item>
-
-                        <el-divider class="my-4" />
-
-                        <el-form-item :label="t('setup.survey.use_case')">
-                            <div class="use-case-checkboxes">
-                                <el-checkbox-group v-model="surveyData.useCases">
-                                    <el-checkbox
-                                        v-for="option in useCaseOptions"
-                                        :key="option.value"
-                                        :value="option.value"
-                                        class="survey-checkbox"
-                                    >
-                                        {{ option.label }}
-                                    </el-checkbox>
-                                </el-checkbox-group>
+                <div class="setup-card-body">
+                    <div v-if="activeStep === 0">
+                        <KsForm ref="userForm" class="user-form" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
+                            <div class="user-field">
+                                <KsFormItem :label="$t('setup.form.username')" prop="username">
+                                    <KsInput v-model="userFormData.username" placeholder="admin@company.com" type="email">
+                                        <template #suffix v-if="getFieldError('username')">
+                                            <KsTooltip placement="top" :content="getFieldError('username')">
+                                                <KsIcon name="information-outline" class="validation-icon error" />
+                                            </KsTooltip>
+                                        </template>
+                                    </KsInput>
+                                </KsFormItem>
+                                <div class="username-requirements">
+                                    <KsText>
+                                        {{ $t('setup.form.username_hint') }}
+                                    </KsText>
+                                </div>
                             </div>
-                        </el-form-item>
+                            <div class="user-field">
+                                <KsFormItem :label="$t('setup.form.password')" prop="password">
+                                    <KsInput
+                                        type="password"
+                                        showPassword
+                                        v-model="userFormData.password"
+                                        placeholder="StrongPass1"
+                                    />
+                                </KsFormItem>
+                                <KsPasswordRequirements
+                                    :password="userFormData.password"
+                                    v-model:valid="isPasswordValid"
+                                />
+                            </div>
+                            <div class="user-field">
+                                <KsFormItem :label="$t('confirm password')">
+                                    <KsInput
+                                        type="password"
+                                        showPassword
+                                        v-model="confirmPassword"
+                                        placeholder="Re-enter your password"
+                                    />
+                                </KsFormItem>
+                                <KsCheckItem :met="passwordsMatch">
+                                    {{ $t('password_requirements.match') }}
+                                </KsCheckItem>
+                            </div>
+                        </KsForm>
+                        <div class="d-flex justify-content-end gap-1">
+                            <KsButton type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
+                                {{ $t("setup.confirm.confirm") }}
+                            </KsButton>
+                        </div>
+                    </div>
 
-                        <el-divider class="my-4" />
+                    <div v-else-if="activeStep === 1">
+                        <KsForm ref="surveyForm" class="survey-form" labelPosition="top" :model="surveyData" :showMessage="false">
+                            <KsFormItem :label="$t('setup.survey.company_size')">
+                                <KsSelect
+                                    v-model="surveyData.mainGoal"
+                                    placeholder="Select"
+                                    class="survey-select"
+                                >
+                                    <KsOption
+                                        v-for="option in intentOptions"
+                                        :key="option.value"
+                                        :label="option.label"
+                                        :value="option.value"
+                                    />
+                                </KsSelect>
+                            </KsFormItem>
 
-                        <el-form-item>
-                            <el-checkbox v-model="surveyData.newsletter" class="newsletter-checkbox">
-                                <span v-html="t('setup.survey.newsletter')" />
-                            </el-checkbox>
-                        </el-form-item>
-                    </el-form>
+                            <KsFormItem :label="$t('setup.survey.use_case')">
+                                <div class="use-case-checkboxes">
+                                    <KsCheckboxGroup v-model="surveyData.useCases">
+                                        <KsCheckbox
+                                            v-for="option in useCaseOptions"
+                                            :key="option.value"
+                                            :value="option.value"
+                                            class="survey-checkbox"
+                                        >
+                                            {{ option.label }}
+                                        </KsCheckbox>
+                                    </KsCheckboxGroup>
+                                </div>
+                            </KsFormItem>
 
-                    <div class="d-flex">
-                        <el-button type="primary" @click="handleSurveyContinue()">
-                            {{ t("setup.survey.continue") }}
-                        </el-button>
+                            <KsFormItem :label="$t('setup.survey.newsletter_heading')" class="newsletter-form-item">
+                                <KsCheckbox v-model="surveyData.newsletter" class="newsletter-checkbox">
+                                    {{ $t('setup.survey.newsletter') }}
+                                </KsCheckbox>
+                            </KsFormItem>
+                        </KsForm>
+
+                        <div class="d-flex justify-content-end">
+                            <KsButton type="primary" @click="handleSurveyContinue()">
+                                {{ $t("setup.survey.continue") }}
+                            </KsButton>
+                        </div>
+                    </div>
+
+                    <div v-else-if="activeStep === 2" class="success-step">
+                        <KsLogoBadge />
+                        <div class="success-content">
+                            <h1 class="success-title">
+                                {{ $t('setup.success.title') }}
+                            </h1>
+                            <p class="success-subtitle">
+                                {{ $t('setup.success.subtitle') }}
+                            </p>
+                        </div>
+                        <KsButton @click="completeSetup()" type="primary" class="success-button">
+                            {{ $t('setup.steps.complete') }}
+                        </KsButton>
                     </div>
                 </div>
-
-                <div v-else-if="activeStep === 3" class="success-step">
-                    <img :src="success" alt="success" class="success-img">
-                    <div class="success-content">
-                        <h1 class="success-title">
-                            {{ t('setup.success.title') }}
-                        </h1>
-                        <p class="success-subtitle">
-                            {{ t('setup.success.subtitle') }}
-                        </p>
-                    </div>
-                    <el-button @click="completeSetup()" type="primary" class="success-button">
-                        {{ t('setup.steps.complete') }}
-                    </el-button>
-                </div>
-            </div>
-        </div>
-    </div>
+            </KsCard>
+        </KsCol>
+    </KsRow>
 </template>
 
 <script setup lang="ts">
+    import MailChecker from "mailchecker"
     import {ref, computed, onUnmounted, type Ref} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import MailChecker from "mailchecker"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
-    import {initPostHogForSetup, trackSetupEvent} from "../../composables/usePosthog"
+    import {trackSetupEvent} from "../../composables/usePosthog"
+    import {identifyPosthogUser} from "../../utils/posthog"
 
-    import Cogs from "vue-material-design-icons/Cogs.vue"
-    import AccountPlus from "vue-material-design-icons/AccountPlus.vue"
+    import AccountOutline from "vue-material-design-icons/AccountOutline.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
     import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
     import Logo from "../home/Logo.vue"
-    import Check from "vue-material-design-icons/Check.vue"
-    import Close from "vue-material-design-icons/Close.vue"
     import CheckBold from "vue-material-design-icons/CheckBold.vue"
-    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
-    import Database from "vue-material-design-icons/Database.vue"
-    import CurrentDc from "vue-material-design-icons/CurrentDc.vue"
-    import CloudOutline from "vue-material-design-icons/CloudOutline.vue"
-    import Lock from "vue-material-design-icons/Lock.vue"
-    import success from "../../assets/success.svg"
-    import * as BasicAuth from "../../utils/basicAuth";
+    import * as BasicAuth from "../../utils/basicAuth"
 
     interface UserFormData {
-        firstName: string
-        lastName: string
         username: string
         password: string
     }
 
     interface SurveyData {
-        companySize: string
+        mainGoal: string
         useCases: string[]
         newsletter: boolean
-    }
-
-    interface ConfigLine {
-        name: string
-        icon: any
-        value: any
     }
 
     interface CompanySizeOption {
@@ -250,54 +185,50 @@
         label: string
     }
 
-    const miscStore = useMiscStore()
-    const router = useRouter()
     const {t} = useI18n()
+    const router = useRouter()
+    const miscStore = useMiscStore()
+
     const {storeSurveySkipData} = useSurveySkip()
 
     const activeStep = ref(0)
-    const usageData = ref<any>(null)
-    const isLoading = ref(true)
     const userForm: Ref<any> = ref(null)
-    const surveyForm: Ref<any> = ref(null)
 
     const userFormData = ref<UserFormData>({
-        firstName: "",
-        lastName: "",
         username: "",
-        password: ""
+        password: "",
     })
 
+    const confirmPassword = ref("")
+
     const surveyData = ref<SurveyData>({
-        companySize: "",
+        mainGoal: "",
         useCases: [],
-        newsletter: false
+        newsletter: false,
     })
 
     const formData = computed(() => userFormData.value)
-    const setupConfiguration = computed(() => usageData.value?.configurations ?? {})
 
     const initializeSetup = async () => {
         try {
-            const config = await miscStore.loadConfigs()
+            // Public, unauthenticated endpoint: only isBasicAuthInitialized is available at this stage.
+            const loginConfig = await miscStore.loadLoginConfig()
 
-            if (config?.isBasicAuthInitialized) {
+            if (loginConfig?.isBasicAuthInitialized) {
                 localStorage.removeItem("basicAuthSetupInProgress")
                 localStorage.removeItem("setupStartTime")
                 router.push({name: "login"})
                 return
             }
 
-            await initPostHogForSetup(config)
+            // The full configuration (needed for posthog init and setup-flow tracking) requires
+            // authentication and is not available until the account below has been created;
+            // trackSetupEvent/initPosthogIfEnabled no-op gracefully without it.
 
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
-
-            usageData.value = await miscStore.loadAllUsages()
         } catch {
-            /* Silently handle usage data loading errors */
-        } finally {
-            isLoading.value = false
+            /* Silently handle config loading errors */
         }
     }
 
@@ -309,44 +240,23 @@
         }
     })
 
-    const setupConfigurationLines = computed<ConfigLine[]>(() => {
-        if (!setupConfiguration.value) return []
-        const configs = miscStore.configs
-
-        const basicAuthValue = activeStep.value >= 1 || configs?.isBasicAuthInitialized
-
-        return [
-            {name: "repository", icon: Database, value: setupConfiguration.value.repositoryType || "NOT SETUP"},
-            {name: "queue", icon: CurrentDc, value: setupConfiguration.value.queueType || "NOT SETUP"},
-            {name: "storage", icon: CloudOutline, value: setupConfiguration.value.storageType || "NOT SETUP"},
-            {name: "basicauth", icon: Lock, value: basicAuthValue}
-        ]
-    })
-
-    const subtitles = computed(() => [
-        t("setup.subtitles.user"),
-        t("setup.subtitles.config"),
-        t("setup.subtitles.survey"),
-    ])
-
-    const companySizeOptions = computed<CompanySizeOption[]>(() => [
-        {value: "1-10", label: t("setup.survey.company_1_10")},
-        {value: "11-50", label: t("setup.survey.company_11_50")},
-        {value: "50-250", label: t("setup.survey.company_50_250")},
-        {value: "250+", label: t("setup.survey.company_250_plus")},
-        {value: "personal", label: t("setup.survey.company_personal")}
+    const intentOptions = computed<CompanySizeOption[]>(() => [
+        {value: "learning_exploring", label: t("setup.survey.company_1_10")},
+        {value: "personal_project", label: t("setup.survey.company_11_50")},
+        {value: "evaluating_team_company", label: t("setup.survey.company_50_250")},
+        {value: "production_use", label: t("setup.survey.company_250_plus")},
     ])
 
     const useCaseOptions = computed<CompanySizeOption[]>(() => [
         {value: "infrastructure", label: t("setup.survey.use_case_infrastructure")},
-        {value: "business", label: t("setup.survey.use_case_business")},
         {value: "data", label: t("setup.survey.use_case_data")},
         {value: "ml", label: t("setup.survey.use_case_ml")},
-        {value: "other", label: t("setup.survey.use_case_other")}
+        {value: "business", label: t("setup.survey.use_case_business")},
+        {value: "scheduling", label: t("setup.survey.use_case_scheduling")},
+        {value: "other", label: t("setup.survey.use_case_other")},
     ])
 
     const EMAIL_REGEX = /^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
-    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/
 
     const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
         if (!value) {
@@ -367,18 +277,24 @@
         callback()
     }
 
+    const isPasswordValid = ref(false)
+
+    const passwordsMatch = computed(() =>
+        userFormData.value.password.length > 0 &&
+        userFormData.value.password === confirmPassword.value,
+    )
+
     const userRules = computed(() => ({
         username: [{required: true, validator: validateEmail, trigger: "blur"}],
-        firstName: [{required: true, message: t("setup.validation.firstName_required"), trigger: "blur"}],
-        lastName: [{required: true, message: t("setup.validation.lastName_required"), trigger: "blur"}],
-        password: [{required: true, pattern: PASSWORD_REGEX, message: t("setup.validation.password_invalid"), trigger: "blur"}]
     }))
 
     const isUserStepValid = computed(() => {
         const data = userFormData.value
-        return data.firstName && data.lastName && data.username && data.password &&
-            EMAIL_REGEX.test(data.username) && PASSWORD_REGEX.test(data.password) &&
-            MailChecker.isValid(data.username)
+        return Boolean(data.username) &&
+            EMAIL_REGEX.test(data.username) &&
+            MailChecker.isValid(data.username) &&
+            isPasswordValid.value &&
+            passwordsMatch.value
     })
 
     const getFieldError = (fieldName: string) => {
@@ -387,64 +303,48 @@
         return field?.validateState === "error" ? field.validateMessage : null
     }
 
-    const nextStep = () => {
-        activeStep.value++
-    }
-
-    const previousStep = () => {
-        activeStep.value--
-    }
-
     const handleUserFormSubmit = async () => {
         try {
+            const normalizedEmail = userFormData.value.username.trim()
+
             await miscStore.addBasicAuth({
-                firstName: userFormData.value.firstName,
-                lastName: userFormData.value.lastName,
-                username: userFormData.value.username,
-                password: userFormData.value.password
+                username: normalizedEmail,
+                password: userFormData.value.password,
             })
 
-            BasicAuth.signIn(userFormData.value.username, userFormData.value.password)
+            BasicAuth.signIn({
+                username: normalizedEmail,
+                password: userFormData.value.password,
+            })
 
-            await miscStore.loadConfigs()
-
-            try {
-                usageData.value = await miscStore.loadAllUsages()
-            } catch {
-                /* Silently handle usage data loading  */
-            }
+            // addBasicAuth() above already loaded the full (now-authenticated) configuration.
+            await identifyPosthogUser(miscStore.configs, {email: normalizedEmail})
 
             trackSetupEvent("setup_flow:account_created", {
-                user_firstname: userFormData.value.firstName,
-                user_lastname: userFormData.value.lastName,
-                user_email: userFormData.value.username
+                user_email: normalizedEmail,
             }, userFormData.value)
 
 
             localStorage.setItem("basicAuthUserCreated", "true")
 
-            nextStep()
+            activeStep.value = 1
         } catch (error: any) {
             trackSetupEvent("setup_flow:account_creation_failed", {
-                error_message: error.message || "Unknown error"
+                error_message: error.message || "Unknown error",
             }, userFormData.value)
             console.error("Failed to create basic auth account:", error)
         }
-    }
-
-    const initBasicAuth = () => {
-        nextStep()
     }
 
     const handleSurveyContinue = () => {
         localStorage.setItem("basicAuthSurveyData", JSON.stringify(surveyData.value))
 
         const surveySelections: Record<string, any> = {
-            company_size: surveyData.value.companySize,
+            main_goal: surveyData.value.mainGoal,
             use_cases: surveyData.value.useCases,
             use_cases_count: surveyData.value.useCases.length,
             newsletter_opted_in: surveyData.value.newsletter,
-            survey_action: "submitted"
+            survey_action: "submitted",
         }
 
         if (surveyData.value.useCases.length > 0) {
@@ -454,15 +354,17 @@
         }
 
         trackSetupEvent("setup_flow:marketing_survey_submitted", {
-            ...surveySelections
+            ...surveySelections,
         }, userFormData.value)
 
-        nextStep()
+        activeStep.value = 2
     }
 
     const handleSurveySkip = () => {
         const surveySelections: Record<string, any> = {
-            survey_action: "skipped"
+            main_goal: surveyData.value.mainGoal,
+            newsletter_opted_in: surveyData.value.newsletter,
+            survey_action: "skipped",
         }
 
         if (surveyData.value.useCases.length > 0) {
@@ -472,26 +374,28 @@
         }
 
         storeSurveySkipData({
-            ...surveySelections
+            ...surveySelections,
         })
 
         trackSetupEvent("setup_flow:marketing_survey_skipped", {
-            ...surveySelections
+            ...surveySelections,
         }, userFormData.value)
 
-        nextStep()
+        activeStep.value = 2
     }
 
     const completeSetup = () => {
         const savedSurveyData = localStorage.getItem("basicAuthSurveyData")
         const surveySelections = savedSurveyData ? JSON.parse(savedSurveyData) : {}
+        const normalizedEmail = userFormData.value.username.trim()
 
-        trackSetupEvent("setup_flow:completed", {
-            user_firstname: userFormData.value.firstName,
-            user_lastname: userFormData.value.lastName,
-            user_email: userFormData.value.username,
-            ...surveySelections
-        }, userFormData.value)
+        const completeEventPayload: Record<string, any> = {
+            user_email: normalizedEmail,
+            newsletter_opted_in: surveyData.value.newsletter,
+            ...surveySelections,
+        }
+
+        trackSetupEvent("setup_flow:completed", completeEventPayload, userFormData.value)
 
         localStorage.setItem("basicAuthSetupCompleted", "true")
         localStorage.removeItem("basicAuthSetupInProgress")
@@ -500,344 +404,8 @@
         localStorage.removeItem("basicAuthUserCreated")
         localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
 
-        router.push({name: "login"})
+        router.push({name: "ai"})
     }
 </script>
 
-<style scoped lang="scss">
-$mobile-breakpoint: 992px;
-
-.setup-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    width: 100%;
-    max-width: 911px;
-    gap: 32px;
-    margin: 0 auto;
-    padding: 20px;
-    align-items: start;
-
-    @media (min-width: $mobile-breakpoint) {
-        grid-template-columns: 219px 564px;
-        width: 911px;
-        height: 587px;
-        gap: 128px;
-        padding: 0;
-        align-items: center;
-    }
-}
-
-.setup-sidebar {
-    width: 100%;
-    border-radius: 11.23px;
-    gap: 32px;
-    padding: 24px;
-    box-shadow: 0 4.21px 28.08px var(--Shadows);
-    display: flex;
-    flex-direction: column;
-
-    @media (min-width: $mobile-breakpoint) {
-        width: 219px;
-        height: 432px;
-        padding: 0;
-    }
-
-    .logo-container {
-        padding-bottom: 24px;
-
-        @media (min-width: $mobile-breakpoint) {
-            padding-bottom: 32px;
-        }
-    }
-}
-
-.setup-main {
-    width: 100%;
-    border-radius: 8px;
-    gap: 2rem;
-    padding: 24px;
-    background: var(--ks-background-card);
-    border: 1px solid var(--ks-border-primary);
-    box-shadow: 0 2px 4px var(--ks-card-shadow);
-    display: flex;
-    flex-direction: column;
-
-    @media (min-width: $mobile-breakpoint) {
-        padding: 2rem;
-    }
-}
-
-.setup-card {
-    min-width: 100%;
-
-    &-body {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    @media (min-width: $mobile-breakpoint) {
-        min-width: 800px;
-    }
-}
-
-.el-step {
-    :deep(.el-step__head) {
-        &, & > .el-step__icon {
-            width: 43px !important;
-        }
-
-        & > .el-step__icon {
-            height: 43px !important;
-        }
-
-        .el-step__line {
-            left: 21px;
-        }
-    }
-
-    :deep(.el-step__title) {
-        padding: 0;
-        vertical-align: middle;
-        line-height: 43px;
-        color: var(--ks-content-inactive);
-
-        &.is-process {
-            color: var(--ks-content-primary);
-            font-weight: 400;
-            font-size: 16px;
-        }
-    }
-}
-
-.card-header {
-    position: relative;
-}
-
-.skip-button {
-    position: absolute;
-    top: 0;
-    right: 0;
-    color: var(--ks-content-primary);
-    font-size: 14px;
-    font-weight: 400;
-
-    &:hover {
-        color: var(--ks-content-secondary);
-    }
-}
-
-.header-title {
-    color: var(--ks-content-primary);
-    font-weight: 600;
-    font-size: 24px;
-    line-height: 36px;
-}
-
-.password-requirements {
-    margin-top: -8px;
-
-    .el-text {
-        color: var(--ks-content-tertiary);
-        font-size: 14px;
-    }
-}
-
-.survey-radio-group {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-
-    :deep(.el-radio) {
-        margin: 0 !important;
-
-        .el-radio__label {
-            font-size: 14px;
-            color: var(--ks-content-primary);
-        }
-
-        .el-radio__inner {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--ks-border-primary);
-            background: transparent;
-
-            &::after {
-                width: 12px;
-                height: 12px;
-                background-color: var(--ks-button-background-primary);
-            }
-        }
-
-        &.is-checked .el-radio__inner {
-            border-color: var(--ks-button-background-primary);
-            background: transparent;
-        }
-    }
-}
-
-.use-case-checkboxes {
-    margin-top: 10px;
-
-    :deep(.el-checkbox-group) {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px 40px;
-    }
-
-    .survey-checkbox {
-        display: flex;
-        align-items: center;
-        border: none;
-        background-color: transparent;
-        cursor: pointer;
-        margin: 0;
-    }
-}
-
-.newsletter-checkbox {
-    margin-top: 16px;
-    display: flex;
-    align-items: center;
-
-    :deep(.el-checkbox__label) {
-        padding-left: 8px;
-    }
-}
-
-.survey-checkbox, .newsletter-checkbox {
-    :deep(.el-checkbox__input) {
-        margin-right: 8px;
-        align-self: center;
-
-        .el-checkbox__inner {
-            border: 2px solid #918BA9;
-            background-color: transparent;
-            width: 18px;
-            height: 18px;
-            position: relative;
-
-            &::after {
-                content: "";
-                position: absolute;
-                border: 2px solid white;
-                border-top: none;
-                border-left: none;
-                width: 4px;
-                height: 8px;
-                transform: rotate(45deg);
-                opacity: 0;
-                top: 1px;
-                left: 4px;
-            }
-        }
-
-        &.is-checked .el-checkbox__inner {
-            border-color: #8405FF;
-            background-color: #8405FF;
-
-            &::after {
-                opacity: 1;
-            }
-        }
-    }
-
-    :deep(.el-checkbox__label) {
-        font-size: 14px;
-        padding-left: 0;
-        line-height: 1.4;
-        align-self: center;
-        color: var(--ks-content-primary);
-    }
-}
-
-.success-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-
-    .success-img {
-        width: 65%;
-        margin-top: -8rem;
-    }
-
-    .success-content {
-        margin-top: -8rem;
-        position: relative;
-        padding: 2rem;
-    }
-
-    .success-title {
-        font-weight: 600;
-        font-size: 24px;
-        line-height: 36px;
-        color: var(--ks-content-primary);
-        margin: 0;
-    }
-
-    .success-subtitle {
-        font-weight: 600;
-        font-size: 18.4px;
-        line-height: 28px;
-        color: var(--ks-content-primary);
-        margin: 0;
-    }
-
-    .success-button {
-        margin-top: 16px;
-    }
-}
-
-:deep(.el-button:not(.skip-button)) {
-    margin-top: 1rem;
-}
-
-:deep(.el-card__body) {
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--spacer) / 2);
-}
-
-:deep(.el-form-item.is-error .el-input__wrapper) {
-    box-shadow: 0 0 0 1px var(--ks-border-error) inset;
-}
-
-:deep(.el-form-item.is-error .el-input__suffix-inner) {
-    color: var(--ks-content-alert);
-}
-
-:deep(.el-form-item__error) {
-    color: var(--ks-content-alert) !important;
-}
-
-:deep(.el-input__inner) {
-    font-size: 14px;
-
-    &::placeholder {
-        color: var(--ks-content-tertiary) !important;
-    }
-}
-
-.el-row {
-    .el-divider {
-        flex: 1;
-    }
-
-    .el-col .el-card:deep(.el-card__header) {
-        border-bottom: 0;
-    }
-}
-
-html.dark .el-col .el-card * {
-    color: var(--ks-content-primary);
-}
-
-.primary-icon {
-    :deep(.el-step__icon-inner) {
-        color: var(--ks-content-primary);
-    }
-}
-</style>
+<style src="./setup.scss" scoped lang="scss" />

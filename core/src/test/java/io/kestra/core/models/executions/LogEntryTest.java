@@ -1,14 +1,15 @@
 package io.kestra.core.models.executions;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.Map;
+
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LogEntryTest {
 
     @Test
-    public void should_format_to_log_map(){
+    public void should_format_to_log_map() {
         LogEntry logEntry = LogEntry.builder()
             .tenantId("tenantId")
             .namespace("namespace")

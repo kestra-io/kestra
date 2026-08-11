@@ -16,7 +16,7 @@ tasks:
       - log
       - namespace_files
       - parallel
-      - pause
+      - pause-test
       - purge_current_execution_files
       - request-basicauth-deprecated
       - request-basicauth

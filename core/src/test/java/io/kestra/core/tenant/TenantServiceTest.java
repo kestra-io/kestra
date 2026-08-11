@@ -1,20 +1,26 @@
 package io.kestra.core.tenant;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class TenantServiceTest {
     @Inject
     private TenantService tenantService;
 
     @Test
-    void test() {
+    void resolveTenant() {
         var tenant = tenantService.resolveTenant();
         assertThat(tenant).isEqualTo("main");
     }
 
+    @Test
+    void listTenants() {
+        var tenants = tenantService.listTenants();
+        assertThat(tenants).containsExactly("main");
+    }
 }

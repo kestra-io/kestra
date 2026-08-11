@@ -1,0 +1,122 @@
+name: Pre Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      skip-test:
+        description: 'Skip test'
+        type: choice
+        required: true
+        default: 'false'
+        options:
+          - "true"
+          - "false"
+
+jobs:
+  build-artifacts:
+    name: Build Artifacts
+    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    with:
+      java-version: 25
+
+  backend-tests:
+    name: Backend tests
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    with:
+      java-version: 25
+
+  frontend-tests:
+    name: Frontend tests
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  design-system-frontend-tests:
+    name: Design System Frontend tests
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-maven:
+    name: Publish Maven
+    needs: [ backend-tests, frontend-tests, design-system-frontend-tests ]
+    if: "!failure() && !cancelled()"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
+    secrets:
+      SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
+      SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
+      SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
+    with:
+      java-version: 25
+
+  generate-configuration-schema:
+    name: Generate Configuration Schema
+    needs: [build-artifacts]
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc')
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download executable
+        uses: actions/download-artifact@v8
+        with:
+          name: exe
+          path: build/executable
+
+      - name: Prepare executable
+        run: cp build/executable/* build/executable/kestra && chmod +x build/executable/kestra
+
+      - name: Generate and publish schema
+        uses: kestra-io/actions/composite/kestra/kestra-configuration-schema@main
+        with:
+          kestra-version: ${{ github.ref_name }}
+          executable-path: build/executable/kestra
+          output-path: oss.json
+          gcs-destination: kestra-api-storage_prd/configuration-schema/${{ github.ref_name }}/
+          gcp-credentials-json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Slack - Schema generation failure
+        if: failure()
+        uses: kestra-io/actions/composite/slack-status@main
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: 'C09FF36GKE1'
+
+  publish-github:
+    name: Github Release
+    needs: [build-artifacts, backend-tests, frontend-tests]
+    if: "!failure() && !cancelled()"
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@main
+    secrets: inherit
+
+  otel-export-trace:
+    name: OpenTelemetry - Export Trace
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [ build-artifacts, backend-tests, frontend-tests, design-system-frontend-tests, publish-maven, generate-configuration-schema, publish-github ]
+    env:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+    steps:
+      - name: OpenTelemetry - Export trace
+        uses: kestra-io/actions/actions/otel-collect@main
+        if: ${{ env.OTLP_ENDPOINT != '' }}
+        with:
+          mode: export-all
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          otlp-endpoint: ${{ secrets.OTLP_ENDPOINT }}
+          otlp-headers: "${{ secrets.OTLP_HEADERS }}"
+          logs-enabled: 'true'
+          service-name: "Github Actions - ${{ github.repository }} - ${{ github.workflow }}"

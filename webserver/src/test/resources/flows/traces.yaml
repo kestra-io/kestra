@@ -1,0 +1,8 @@
+id: trace-parent
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      traceparent: "{{trace.parent}}"

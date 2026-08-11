@@ -2,6 +2,7 @@
 # https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
+
 updates:
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -9,11 +10,10 @@ updates:
     schedule:
       interval: "weekly"
       day: "wednesday"
-      time: "08:00"
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade", "area/devops"]
 
   # Maintain dependencies for Gradle modules
   - package-ecosystem: "gradle"
@@ -21,30 +21,307 @@ updates:
     schedule:
       interval: "weekly"
       day: "wednesday"
-      time: "08:00"
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade", "area/backend"]
+    ignore:
+      # Ignore Micronaut 5.x until migration is planned
+      - dependency-name: "io.micronaut*"
+        versions: ["[5,)"]
 
-  # Maintain dependencies for NPM modules
+  # Maintain dependencies for NPM modules (core UI)
   - package-ecosystem: "npm"
     directory: "/ui"
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
     schedule:
       interval: "weekly"
       day: "wednesday"
-      time: "08:00"
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
-    ignore:
-      # Ignore updates of version 1.x, as we're using the beta of 2.x (still in beta)
-      - dependency-name: "vue-virtual-scroller"
-        versions:
-          - "1.x"
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      build:
+        applies-to: version-updates
+        patterns:
+          ["@esbuild/*", "@rollup/*", "@rolldown/*", "@swc/*", "lightningcss-*"]
 
-      # Ignore updates to monaco-yaml, version is pinned to 5.3.1 due to patch-package script additions
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+
+      storybook:
+        applies-to: version-updates
+        patterns: ["storybook*", "@storybook/*"]
+
+      linting:
+        applies-to: version-updates
+        patterns: ["oxlint", "eslint-plugin-oxlint"]
+
+      vitest:
+        applies-to: version-updates
+        patterns: ["vitest", "@vitest/*"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "@esbuild/*",
+            "@rollup/*",
+            "@rolldown/*",
+            "@swc/*",
+            "lightningcss-*",
+            "@types/*",
+            "storybook*",
+            "@storybook/*",
+            "oxlint",
+            "eslint-plugin-oxlint",
+            "vitest",
+            "@vitest/*",
+          ]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns: [
+            "@esbuild/*",
+            "@rollup/*",
+            "@rolldown/*",
+            "@swc/*",
+            "lightningcss-*",
+            "@types/*",
+            "storybook*",
+            "@storybook/*",
+            "oxlint",
+            "eslint-plugin-oxlint",
+            "vitest",
+            "@vitest/*",
+            # Temporary exclusion of these packages from minor updates
+            "monaco-editor",
+          ]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "@esbuild/*",
+            "@rollup/*",
+            "@rolldown/*",
+            "@swc/*",
+            "lightningcss-*",
+            "@types/*",
+            "storybook*",
+            "@storybook/*",
+            "oxlint",
+            "eslint-plugin-oxlint",
+            "vitest",
+            "@vitest/*",
+          ]
+
+    ignore:
+      # Ignore TypeScript major updates (v6 currently conflicts with @typescript-eslint/parser which requires <6.0.0)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+      # Ignore eslint major updates (eslint@10 currently conflicts with eslint-plugin-vue)
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+
+      # Ignore eslint-plugin-vue all updates (v10 requires eslint ^10 but project is on eslint ^9)
+      - dependency-name: "eslint-plugin-vue"
+        versions: ["*"]
+
+      # Ignore updates to monaco-yaml; version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"
-        versions:
-          - ">=5.3.2"
+        versions: [">=5.3.2"]
+
+  # Maintain dependencies for ui/packages/design-system
+  - package-ecosystem: "npm"
+    directory: "/ui/packages/design-system"
+    commit-message:
+      prefix: "build(design-system)"
+      prefix-development: "build(design-system)"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      timezone: "Europe/Paris"
+      time: "08:00"
+    open-pull-requests-limit: 50
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      build:
+        applies-to: version-updates
+        patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
+
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+
+      storybook:
+        applies-to: version-updates
+        patterns: ["storybook", "@storybook/*"]
+
+      vitest:
+        applies-to: version-updates
+        patterns: ["vitest", "@vitest/*"]
+
+      remark:
+        applies-to: version-updates
+        patterns: ["remark-*", "unified"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "storybook",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+            "remark-*",
+            "unified",
+          ]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "storybook",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+            "remark-*",
+            "unified",
+          ]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "storybook",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+            "remark-*",
+            "unified",
+          ]
+
+  # Maintain dependencies for ui/packages/slot-contracts
+  - package-ecosystem: "npm"
+    directory: "/ui/packages/slot-contracts"
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps)"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      timezone: "Europe/Paris"
+      time: "08:00"
+    open-pull-requests-limit: 50
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      build:
+        applies-to: version-updates
+        patterns: ["tsdown"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns: ["tsdown"]
+
+  # Maintain dependencies for ui/packages/topology
+  - package-ecosystem: "npm"
+    directory: "/ui/packages/topology"
+    commit-message:
+      prefix: "build(topology)"
+      prefix-development: "build(topology)"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      timezone: "Europe/Paris"
+      time: "08:00"
+    open-pull-requests-limit: 50
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      build:
+        applies-to: version-updates
+        patterns: ["tsdown", "vite", "@vitejs/*", "sass-embedded"]
+
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+
+      vue-flow:
+        applies-to: version-updates
+        patterns: ["@vue-flow/*"]
+
+      major:
+        update-types: ["major"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "@vue-flow/*",
+          ]
+
+      minor:
+        update-types: ["minor"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "@vue-flow/*",
+          ]
+
+      patch:
+        update-types: ["patch"]
+        applies-to: version-updates
+        exclude-patterns:
+          [
+            "tsdown",
+            "vite",
+            "@vitejs/*",
+            "sass-embedded",
+            "@types/*",
+            "@vue-flow/*",
+          ]

@@ -20,7 +20,6 @@ public interface LocalPath {
     String ENABLE_FILE_FUNCTIONS_CONFIG = LocalPath.LOCAL_FILES_CONFIG + ".enable-file-functions";
     String ENABLE_PREVIEW_CONFIG = LocalPath.LOCAL_FILES_CONFIG + ".enable-preview";
 
-
     /**
      * Get an InputStream of a local file denoted by this URI.
      *

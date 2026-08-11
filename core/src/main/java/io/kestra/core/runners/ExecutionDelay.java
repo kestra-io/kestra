@@ -1,14 +1,16 @@
 package io.kestra.core.runners;
 
+import java.time.Instant;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.flows.State;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
-
-import java.time.Instant;
 
 @Value
 @AllArgsConstructor
@@ -23,9 +25,11 @@ public class ExecutionDelay implements HasUID {
     @NotNull
     Instant date;
 
-    @NotNull State.Type state;
+    @NotNull
+    State.Type state;
 
-    @NotNull DelayType delayType;
+    @NotNull
+    DelayType delayType;
 
     @Override
     @JsonIgnore
@@ -35,6 +39,7 @@ public class ExecutionDelay implements HasUID {
 
     /**
      * For previous version, return RESUME_FLOW by default as it was the only case
+     * 
      * @return DelayType representing the action to do when
      */
     public DelayType getDelayType() {

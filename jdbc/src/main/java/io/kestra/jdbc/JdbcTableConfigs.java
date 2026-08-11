@@ -1,10 +1,10 @@
 package io.kestra.jdbc;
 
+import java.util.List;
+
 import io.micronaut.context.annotation.ConfigurationProperties;
 import jakarta.inject.Inject;
 import lombok.Getter;
-
-import java.util.List;
 
 @ConfigurationProperties("kestra.jdbc")
 @Getter

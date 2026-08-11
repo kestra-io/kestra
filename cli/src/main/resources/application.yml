@@ -12,6 +12,7 @@ micronaut:
       ui:
         paths: classpath:ui
         mapping: /ui/**
+        enabled: ${kestra.webserver.ui.enabled:true}
       static:
         paths: classpath:static
         mapping: /static/**
@@ -30,15 +31,15 @@ micronaut:
     read-idle-timeout: 60m
     write-idle-timeout: 60m
     idle-timeout: 60m
-    netty:
-      max-zstd-encode-size: 67108864 # increased to 64MB from the default of 32MB
-      max-chunk-size: 10MB
-      max-header-size: 32768 # increased from the default of 8k
     responses:
       file:
         cache-seconds: 86400
         cache-control:
           public: true
+    netty:
+      max-zstd-encode-size: 67108864 # increased to 64MB from the default of 32MB
+      max-chunk-size: 10MB
+      max-header-size: 32768 # increased from the default of 8k
 
       # Access log configuration, see https://docs.micronaut.io/latest/guide/index.html#accessLogger
       access-logger:
@@ -49,12 +50,22 @@ micronaut:
           - /ui/.+
           - /health
           - /health/.+
-          - /prometheus
+          - /metrics
+          - /metrics/.+
+          - /prometheus(\?.*)?
     http-version: HTTP_1_1
+  security:
+    filter:
+      enabled: false
+    csrf:
+      enabled: true
+      signature-key: ${kestra.encryption.secret-key:}
+      cookie-name: csrfToken
+      filter:
+        enabled: false
   caches:
     default:
       maximum-weight: 10485760
-
   http:
     client:
       read-idle-timeout: 60s
@@ -110,50 +121,37 @@ jackson:
   mapper:
     ACCEPT_CASE_INSENSITIVE_ENUMS: true
 
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false
 endpoints:
   all:
     port: 8081
-    enabled: true
-    sensitive: false
   health:
-    details-visible: ANONYMOUS
     disk-space:
       enabled: false
     discovery-client:
       enabled: false
-  loggers:
-    write-sensitive: false
-  env:
-    enabled: true
-
-flyway:
-  datasources:
-    postgres:
-      enabled: true
-      locations:
-        - classpath:migrations/postgres
-      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-    mysql:
-      enabled: true
-      locations:
-        - classpath:migrations/mysql
-      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-    h2:
-      enabled: true
-      locations:
-        - classpath:migrations/h2
-      # We must ignore missing migrations as we delete some wrong or not used anymore migrations
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
 
 kestra:
   tutorial-flows:
     # Automatically loads all tutorial flows at startup.
     enabled: true
+
+  webserver:
+    # Browser security response headers, added to every HTTP response (UI and API).
+    # Set a value to "" to disable that single header, or security-headers.enabled to false to disable the whole filter.
+    security-headers:
+      enabled: true
+      frame-options: SAMEORIGIN
+      content-type-options: nosniff
+      referrer-policy: strict-origin-when-cross-origin
+      # content-security-policy: "default-src 'self'; ..." # tune for the UI before enforcing
+      # content-security-policy-report-only: true # report-only intermediate step
+      # strict-transport-security: "max-age=31536000; includeSubDomains" # only sent when this server sees the request as HTTPS
 
   retries:
     attempts: 5
@@ -194,22 +192,25 @@ kestra:
         initial-delay: 1h
         fixed-delay: 1d
         retention: 30d
+  controller:
+    port: 50051
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: ${kestra.controller.port}
+  queue:
+    message-protection:
+      enabled: true
+      limit: 1048576
 
   jdbc:
     queues:
       min-poll-interval: 25ms
       max-poll-interval: 500ms
       poll-switch-interval: 60s
-
-    cleaner:
-      initial-delay: 1h
-      fixed-delay: 1h
-      retention: 7d
-      types:
-        - type: io.kestra.core.models.executions.LogEntry
-          retention: 1h
-        - type: io.kestra.core.models.executions.MetricEntry
-          retention: 1h
 
   plugins:
     repositories:
@@ -233,6 +234,13 @@ kestra:
     cache-size: 1000
 
   metrics:
+    sharedServiceInstanceMetrics:
+      WORKER:
+        - kestra.worker.job.pending
+        - kestra.worker.job.thread
+        - kestra.worker.job.running
+      WEBSERVER:
+        - kestra.queue.message.lag.count
     prefix: kestra
 
   traces:
@@ -240,6 +248,10 @@ kestra:
 
   ui-anonymous-usage-report:
     enabled: true
+
+  ui:
+    charts:
+      default-duration: PT24H
 
   anonymous-usage-report:
     enabled: true
@@ -251,6 +263,15 @@ kestra:
     prefixes:
       - system.
       - internal.
+
+  async-operations:
+    wait-timeout: PT30S
+
+  tasks:
+    sdk:
+      authentication:
+        username: ${kestra.server.basic-auth.username:}
+        password: ${kestra.server.basic-auth.password:}
 
 otel:
   exclusions:

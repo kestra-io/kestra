@@ -1,25 +1,19 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Objects;
-import java.util.regex.Pattern;
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Introspected
 @ToString
 public class FlowWithSource extends Flow {
 
     String source;
 
-    @SuppressWarnings("deprecation")
     public Flow toFlow() {
         return Flow.builder()
             .tenantId(this.tenantId)
@@ -34,20 +28,23 @@ public class FlowWithSource extends Flow {
             .tasks(this.tasks)
             .errors(this.errors)
             ._finally(this._finally)
-            .listeners(this.listeners)
             .afterExecution(this.afterExecution)
             .triggers(this.triggers)
-            .pluginDefaults(this.pluginDefaults)
+            .policyRefs(this.policyRefs)
             .disabled(this.disabled)
             .deleted(this.deleted)
+            .draft(this.draft)
             .concurrency(this.concurrency)
+            .quotas(this.quotas)
             .retry(this.retry)
             .sla(this.sla)
+            .checks(this.checks)
+            .updated(this.updated)
             .build();
     }
 
     @Override
-    @JsonIgnore(value = false)
+    @Schema(hidden = false)
     public String getSource() {
         return this.source;
     }
@@ -60,7 +57,6 @@ public class FlowWithSource extends Flow {
             .build();
     }
 
-    @SuppressWarnings("deprecation")
     public static FlowWithSource of(Flow flow, String source) {
         return FlowWithSource.builder()
             .tenantId(flow.tenantId)
@@ -76,15 +72,18 @@ public class FlowWithSource extends Flow {
             .errors(flow.errors)
             ._finally(flow._finally)
             .afterExecution(flow.afterExecution)
-            .listeners(flow.listeners)
             .triggers(flow.triggers)
-            .pluginDefaults(flow.pluginDefaults)
+            .policyRefs(flow.policyRefs)
             .disabled(flow.disabled)
             .deleted(flow.deleted)
+            .draft(flow.draft)
             .source(source)
             .concurrency(flow.concurrency)
+            .quotas(flow.quotas)
             .retry(flow.retry)
             .sla(flow.sla)
+            .checks(flow.checks)
+            .updated(flow.updated)
             .build();
     }
 }

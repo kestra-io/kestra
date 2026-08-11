@@ -64,10 +64,22 @@ IF NOT ERRORLEVEL 1 (set java_version=19)
 ECHO %java_fullversion% | find " full version ""20" > NUL
 IF NOT ERRORLEVEL 1 (set java_version=20)
 
+ECHO %java_fullversion% | find " full version ""21" > NUL
+IF NOT ERRORLEVEL 1 (set java_version=21)
+
+ECHO %java_fullversion% | find " full version ""22" > NUL
+IF NOT ERRORLEVEL 1 (set java_version=22)
+
+ECHO %java_fullversion% | find " full version ""23" > NUL
+IF NOT ERRORLEVEL 1 (set java_version=23)
+
+ECHO %java_fullversion% | find " full version ""24" > NUL
+IF NOT ERRORLEVEL 1 (set java_version=24)
+
 IF NOT DEFINED java_version (set java_version=0)
 
 IF %java_version% NEQ 0 (
-    ECHO [ERROR] Kestra require at least Java 21.. 1>&2
+    ECHO [ERROR] Kestra require at least Java 25.. 1>&2
     EXIT 1
 )
 
@@ -80,7 +92,7 @@ REM Java options that Kestra engineers think are best for Kestra, they should be
 REM -XX:MaxRAMPercentage=50.0: configure max heap to 50% of available RAM (default 25%)
 SET "KESTRA_JAVA_OPTS=-XX:MaxRAMPercentage=50.0"
 
-java %KESTRA_JAVA_OPTS% %JAVA_OPTS% %JAVA_ADD_OPENS% -Djava.security.manager=allow -jar "%this%" %*
+java %KESTRA_JAVA_OPTS% %JAVA_OPTS% %JAVA_ADD_OPENS% --enable-native-access=ALL-UNNAMED -jar "%this%" %*
 
 ENDLOCAL
 

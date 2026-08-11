@@ -1,23 +1,17 @@
 <template>
-    <el-dropdown>
-        <el-button>
+    <KsDropdown>
+        <KsButton :aria-label="$t('more actions')">
             <DotsVertical />
-        </el-button>
+        </KsButton>
         <template #dropdown>
-            <el-dropdown-menu>
+            <KsDropdownMenu>
                 <slot />
-            </el-dropdown-menu>
+            </KsDropdownMenu>
         </template>
-    </el-dropdown>
+    </KsDropdown>
 </template>
-<script>
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 
-    export default {
-        components: {DotsVertical},
-        props:{
-
-        },
-    }
+<script setup lang="ts">
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue"
 </script>
 

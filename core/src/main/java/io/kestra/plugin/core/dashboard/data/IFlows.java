@@ -1,12 +1,12 @@
 package io.kestra.plugin.core.dashboard.data;
 
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.utils.ListUtils;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+import io.kestra.core.utils.ListUtils;
 
 public interface IFlows extends IData<IFlows.Fields> {
 
@@ -20,11 +20,11 @@ public interface IFlows extends IData<IFlows.Fields> {
         List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
         if (!namespaceFilters.isEmpty()) {
             updatedWhere.removeIf(filter -> filter.getField().equals(IFlows.Fields.NAMESPACE));
-            namespaceFilters.forEach(f -> {
+            namespaceFilters.forEach(f ->
+            {
                 updatedWhere.add(f.toDashboardFilterBuilder(IFlows.Fields.NAMESPACE, f.value()));
             });
         }
-
 
         return updatedWhere;
     }

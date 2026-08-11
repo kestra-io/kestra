@@ -1,39 +1,51 @@
-import {defineStore} from "pinia";
+import {defineStore} from "pinia"
 
 export class Me {
     hasAny(_permission: any, _namespace?: any) {
-        return true;
+        return true
     }
 
 
     hasAnyAction(_permission: any, _action: any, _namespace?: any) {
-        return true;
+        return true
     }
 
 
     isAllowed(_permission: any, _action: any, _namespace: any) {
-        return true;
+        return true
     }
 
 
     isAllowedGlobal(_permission: any, _action: any) {
-        return true;
+        return true
     }
 
 
     hasAnyActionOnAnyNamespace(_permission: any, _action: any) {
-        return true;
+        return true
     }
 
     hasAnyRole() {
-        return true;
+        return true
     }
+
+    getNamespacesForAction(_permission: any, _action: any): string[] {
+        return []
+    }
+}
+
+export interface AuthMethods {
+    mailsEnabled?: boolean;
+    passwordless?: boolean;
+    loginPassword?: boolean;
+    oauths?: string[];
 }
 
 export const useAuthStore = defineStore("auth", {
     state: () => ({
-        user: new Me(),
+        user: new Me() as Me | undefined,
         isLogged: true,
+        auths: undefined as AuthMethods | undefined,
     }),
     actions: {
         logout(){
@@ -41,6 +53,9 @@ export const useAuthStore = defineStore("auth", {
         },
         correction(){
             return Promise.resolve(true)
-        }
+        },
+        loadAuths(_options: any): Promise<AuthMethods | undefined> {
+            return Promise.resolve(undefined)
+        },
     },
 })

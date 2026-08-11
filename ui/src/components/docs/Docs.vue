@@ -1,91 +1,91 @@
 <template>
-    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
+    <TopNavBar :title="routeInfo.title" />
     <DocsLayout>
         <template #menu>
             <Toc />
         </template>
         <template #content>
-            <template v-if="ast?.body">
-                <h1>{{ routeInfo.title }}</h1>
-                <MDCRenderer :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
-            </template>
+            <KsMarkdown class="markdown" :content="markdownContent" :components="markdownComponents" />
         </template>
     </DocsLayout>
 </template>
 
-<script>
-    import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs";
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import {mapStores} from "pinia";
-    import {useDocStore} from "../../stores/doc";
-    import DocsLayout from "./DocsLayout.vue";
-    import Toc from "./Toc.vue";
-    import {getCurrentInstance} from "vue";
+<script setup lang="ts">
+    import {computed,ref,watch} from "vue"
+    import TopNavBar from "../layout/TopNavBar.vue"
+    import useRouteContext from "../../composables/useRouteContext"
+    import {useDocStore} from "../../stores/doc"
+    import DocsLayout from "./DocsLayout.vue"
+    import Toc from "./Toc.vue"
+    import {useRoute} from "vue-router"
+    import {useI18n} from "vue-i18n"
+    import {KsMarkdown} from "@kestra-io/design-system"
+    import PluginCount from "./PluginCount.vue"
+    import WhatsNew from "../content/WhatsNew.vue"
+    import SupportLinks from "../content/SupportLinks.vue"
+    import BigChildCards from "../content/BigChildCards.vue"
+    import CardLogos from "../content/CardLogos.vue"
+    import ChildReleases from "../content/ChildReleases.vue"
+    import DownloadLogoPack from "../content/DownloadLogoPack.vue"
+    import GuidesChildCard from "../content/GuidesChildCard.vue"
+    import HomePageButtons from "../content/HomePageButtons.vue"
+    import HomePageHeader from "../content/HomePageHeader.vue"
+    import ProseImg from "../content/ProseImg.vue"
+    import ProseA from "../content/ProseA.vue"
+    import ChildTableOfContents from "../content/ChildTableOfContents.vue"
+    import ChildCard from "../content/ChildCard.vue"
+    import {removeMDXImports, extractMultilineJSXComponents, replaceSelfClosingTagsWithOpenClose} from "./docsUtils"
 
+    const markdownComponents = {
+        a: ProseA,
+        img: ProseImg,
+        BigChildCards: BigChildCards,
+        CardLogos: CardLogos,
+        ChildCard: ChildCard,
+        ChildReleases: ChildReleases,
+        ChildTableOfContents: ChildTableOfContents,
+        DownloadLogoPack: DownloadLogoPack,
+        GuidesChildCard: GuidesChildCard,
+        HomePageButtons: HomePageButtons,
+        HomePageHeader: HomePageHeader,
+        PluginCount: PluginCount,
+        SupportLinks: SupportLinks,
+        WhatsNew: WhatsNew,
+    }
 
-    export default {
-        computed: {
-            ...mapStores(useDocStore),
-            pageMetadata() {
-                return this.docStore.pageMetadata;
-            },
-            path() {
-                let routePath = this.$route.params.path;
-                return routePath && routePath.length > 0 ? routePath.replaceAll(/(^|\/)\.\//g, "$1") : undefined;
-            },
-            pathParts() {
-                return this.path?.split("/") ?? [];
-            },
-            routeInfo() {
-                return {
-                    title: this.pageMetadata?.title ?? this.$t("docs"),
-                    breadcrumb: [
-                        {
-                            label: this.$t("docs"),
-                            link: {
-                                name: "docs/view"
-                            }
-                        },
-                        ...(this.pathParts.map((part, index) => {
-                            return {
-                                label: part,
-                                link: {
-                                    name: "docs/view",
-                                    params: {
-                                        path: this.pathParts.slice(0, index + 1).join("/")
-                                    }
-                                }
-                            }
-                        }))
-                    ]
-                };
+    const route = useRoute()
+    const {t} = useI18n()
+    const docStore = useDocStore()
+
+    const markdownContent = ref()
+
+    const path = computed(() => {
+        const routePath = Array.isArray(route.params.path) ? route.params.path.join("/") : route.params.path
+        return routePath?.length > 0 ? routePath.replaceAll(/(^|\/)\.\//g, "$1") : undefined
+    })
+
+    const routeInfo = computed(() => ({
+        title: docStore.pageMetadata?.title ?? t("docs"),
+    }))
+
+    useRouteContext(routeInfo)
+
+    watch(
+        [() => route.params.path, () => docStore.resourceUrlTemplate],
+        async ([, resourceUrlTemplate]) => {
+            if (!resourceUrlTemplate) return
+
+            // the route already consumes the "docs" path segment, so it must be added back here for the API lookup
+            const response = await docStore.fetchResource(path.value ? `/docs/${path.value}` : "/docs")
+            docStore.pageMetadata = response.metadata
+            let content = response.content
+            if (!("canShare" in navigator)) {
+                content = content.replaceAll(/\s*web-share\s*/g, "")
             }
+            content = removeMDXImports(content)
+            const {content: cleanedContent} = extractMultilineJSXComponents(content)
+            markdownContent.value = replaceSelfClosingTagsWithOpenClose(cleanedContent)
         },
-        components: {DocsLayout, Toc, TopNavBar, MDCRenderer},
-        data() {
-            return {
-                ast: undefined,
-                proseComponents: Object.fromEntries(
-                    Object.keys(getCurrentInstance().appContext.components).filter(componentName => componentName.startsWith("Prose"))
-                        .map(name => name.substring(5).replaceAll(/(.)([A-Z])/g, "$1-$2").toLowerCase())
-                        .map(name => [name, "prose-" + name])
-                )
-            };
-        },
-        watch: {
-            "$route.params.path": {
-                async handler() {
-                    const response = await this.docStore.fetchResource(`docs${this.path === undefined ? "" : `/${this.path}`}`);
-                    this.docStore.pageMetadata = response.metadata;
-                    let content = response.content;
-                    if (!("canShare" in navigator)) {
-                        content = content.replaceAll(/\s*web-share\s*/g, "");
-                    }
-                    const parse = await getMDCParser();
-                    this.ast = await parse(content);
-                },
-                immediate: true
-            }
-        }
-    };
+        {immediate: true},
+    )
 </script>

@@ -1,24 +1,34 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.encryption.EncryptionService;
-import io.kestra.core.models.tasks.common.EncryptedString;
+import java.security.GeneralSecurityException;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import org.slf4j.Logger;
 
-import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Supplier;
+import io.kestra.core.encryption.EncryptionService;
+import io.kestra.core.models.tasks.common.EncryptedString;
 
 final class Secret {
 
     private final Optional<String> secretKey;
-    private final  Supplier<Logger> logger;
+    private final Supplier<Logger> logger;
+    private final Consumer<String> onSecretDecrypted;
 
     Secret(final Optional<String> secretKey, final Supplier<Logger> logger) {
+        this(secretKey, logger, value -> {});
+    }
+
+    /**
+     * Creates a new {@link Secret} that also notifies {@code onSecretDecrypted} with each value
+     * successfully decrypted out of a {@code Map} (see {@link #decrypt(Map)}) — used to re-register
+     * a SECRET flow output's plaintext for log masking once it has been decrypted.
+     */
+    Secret(final Optional<String> secretKey, final Supplier<Logger> logger, final Consumer<String> onSecretDecrypted) {
         this.secretKey = Objects.requireNonNull(secretKey, "secretKey cannot be null");
         this.logger = Objects.requireNonNull(logger, "logger cannot be null");
+        this.onSecretDecrypted = Objects.requireNonNull(onSecretDecrypted, "onSecretDecrypted cannot be null");
     }
 
     String decrypt(final String encrypted) throws GeneralSecurityException {
@@ -39,15 +49,16 @@ final class Secret {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     Map<String, Object> decrypt(final Map<String, Object> data) {
-        Map<String, Object> decryptedMap = new HashMap<>(data);
-        for (var entry: data.entrySet()) {
+        Map<String, Object> decryptedMap = new LinkedHashMap<>(data);
+        for (var entry : data.entrySet()) {
             if (entry.getValue() instanceof Map map) {
                 // if some value are of type EncryptedString we decode them and replace the object
                 if (map.get("type") instanceof String typeStr && EncryptedString.TYPE.equalsIgnoreCase(typeStr)) {
                     try {
                         String decoded = decrypt((String) map.get("value"));
+                        onSecretDecrypted.accept(decoded);
                         decryptedMap.put(entry.getKey(), decoded);
                     } catch (GeneralSecurityException | IllegalArgumentException e) {
                         // NOTE: in rare cases, if for ex a Worker didn't have the encryption but an Executor has it,
@@ -55,7 +66,7 @@ final class Secret {
                         // As it could break the executor, the best is to do nothing in this case and only log an error.
                         logger.get().warn("Unable to decrypt the output", e);
                     }
-                }  else {
+                } else {
                     decryptedMap.put(entry.getKey(), decrypt((Map<String, Object>) map));
                 }
             }

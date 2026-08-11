@@ -1,0 +1,532 @@
+package io.kestra.controller;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.controller.config.GrpcChannelConfiguration;
+import io.kestra.controller.config.GrpcConfiguration;
+import io.kestra.controller.config.WorkerControllersConfiguration;
+import io.kestra.controller.discovery.ControllerRegistration;
+import io.kestra.controller.discovery.ControllerRegistry;
+import io.kestra.controller.grpc.ExecutionLogsServiceGrpc;
+import io.kestra.controller.grpc.KVMetadataServiceGrpc;
+import io.kestra.controller.grpc.NamespaceFileMetadataServiceGrpc;
+import io.kestra.controller.grpc.WorkerFlowMetaStoreServiceGrpc;
+import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
+import io.kestra.controller.grpc.resolver.StorageNameResolverProvider;
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.FileAttributes;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.ExecutorsUtils;
+
+import io.grpc.Channel;
+import io.grpc.ChannelCredentials;
+import io.grpc.ConnectivityState;
+import io.grpc.EquivalentAddressGroup;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.MethodDescriptor;
+import io.grpc.NameResolverProvider;
+import io.grpc.NameResolverRegistry;
+import io.grpc.Status;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Manages gRPC channels for worker-to-controller communication.
+ * <p>
+ * Supports three service discovery strategies:
+ * <ul>
+ * <li>STATIC: Explicit list of controller endpoints with gRPC load-balancing</li>
+ * <li>DNS: DNS A-record resolution with gRPC load-balancing</li>
+ * <li>STORAGE: Dynamic discovery via Kestra internal storage (controllers self-register)</li>
+ * </ul>
+ * <p>
+ */
+@Singleton
+@Slf4j
+public class GrpcChannelManager {
+
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
+    // The static name resolver is stateless (endpoints are encoded in each channel's target URI),
+    // so a single instance is registered once per JVM at class-load time and never deregistered.
+    static {
+        NameResolverRegistry.getDefaultRegistry().register(new StaticNameResolverProvider());
+    }
+
+    /**
+     * The one status on which replaying a call is unambiguously safe: the controller went away — recycled by
+     * {@code kestra.controller.max-connection-age}, restarting, or unreachable — so the call can be retried
+     * against another replica. Deliberately excludes {@code DEADLINE_EXCEEDED} (the deadline has already
+     * elapsed, so a replay cannot help) and {@code RESOURCE_EXHAUSTED} (a replay amplifies the load that
+     * caused it). {@code GrpcWorkerIOSender.isRetryable} does accept {@code DEADLINE_EXCEEDED} because
+     * re-queuing a message for later delivery can absorb a timeout, whereas an in-call replay cannot.
+     */
+    private static final List<String> RETRYABLE_STATUS_CODES = List.of(Status.Code.UNAVAILABLE.name());
+
+    /** The minimum number of attempts the gRPC service-config spec accepts for a retry policy. */
+    private static final int MIN_RETRY_ATTEMPTS = 2;
+
+    /**
+     * The RPCs this channel may replay, listed one by one so that a newly added RPC is never retried until
+     * someone classifies it — {@code GrpcChannelManagerTest} fails until then.
+     * <p>
+     * An RPC belongs here only if it passes two independent tests: replaying it must be safe, and no outer
+     * layer must already retry it. A second layer does not add resilience, it multiplies attempts and spends
+     * the outer layer's time budget. Every RPC absent from here fails one of those tests:
+     * <ul>
+     * <li>{@code heartbeat} — the fixed-rate {@code AbstractServiceLivenessTask} schedule is already the
+     * retry, and retrying in-call delays that cadence while briefly masking a real disconnect.</li>
+     * <li>{@code getMaintenanceMode} — no client caller anywhere; only a server-side implementation.</li>
+     * <li>{@code sendWorkerTaskResults} / {@code sendWorkerTriggerResults} / {@code sendWorkerLogEntries} /
+     * {@code sendWorkerMetricEntries} — {@code GrpcWorkerIOSender} owns redelivery, re-queuing results and
+     * deliberately dropping logs and metrics so a high-volume stream cannot back-pressure the worker; a
+     * channel policy would multiply attempts inside every redrive and duplicate the dropped log lines.</li>
+     * <li>{@code sendReport} — best-effort telemetry whose failures are already swallowed at debug level.</li>
+     * <li>{@code KVMetadataService.save} / {@code deleteByName}, {@code NamespaceFileMetadataService.save} —
+     * mutations.</li>
+     * <li>{@code connect} — already guarded by wait-for-ready and a per-call deadline; a replay risks a
+     * duplicate registration.</li>
+     * <li>{@code streamWorkerJobs} — a bidi stream, where gRPC retry only applies before the first response;
+     * {@code WorkerJobFetcher} owns the reconnect loop instead.</li>
+     * </ul>
+     */
+    private static final List<MethodDescriptor<?, ?>> RETRYABLE_METHODS = List.of(
+        WorkerFlowMetaStoreServiceGrpc.getIsNamespaceExistsMethod(),
+        ExecutionLogsServiceGrpc.getErrorLogsMethod(),
+        KVMetadataServiceGrpc.getFindByNameMethod(),
+        KVMetadataServiceGrpc.getFindMethod(),
+        KVMetadataServiceGrpc.getExistsByNamespaceMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindByPathMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindChildrenMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindAllMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindByPathsMethod(),
+        NamespaceFileMetadataServiceGrpc.getFindAllVersionsByPathsMethod(),
+        NamespaceFileMetadataServiceGrpc.getExistsByNamespaceMethod()
+    );
+
+    private static final AtomicBoolean STORAGE_RESOLVER_REGISTERED = new AtomicBoolean(false);
+    private static final AtomicReference<StorageNameResolverProvider> REGISTERED_STORAGE_RESOLVER_PROVIDER = new AtomicReference<>();
+
+    private volatile ManagedChannel defaultChannel;
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final GrpcChannelConfiguration grpcChannelConfiguration;
+    private final GrpcConfiguration grpcConfiguration;
+    private final WorkerControllersConfiguration controllersConfig;
+    private final Provider<StorageInterface> storageInterface;
+
+    // Last known good list of storage-discovered endpoints — used to ride out transient storage failures.
+    private volatile List<EquivalentAddressGroup> lastKnownStorageAddresses = List.of();
+
+    // One-shot guard for the "first endpoints loaded from storage" log line.
+    private final AtomicBoolean firstStorageLoadLogged = new AtomicBoolean(false);
+
+    // ExecutorService shared across channels
+    private final ExecutorService sharedExecutorService;
+
+    /**
+     * Creates a new {@link GrpcChannelManager} instance.
+     *
+     * @param grpcChannelConfiguration the gRPC channel configuration.
+     * @param grpcConfiguration the global gRPC configuration.
+     * @param controllersConfig the multi-endpoint controllers configuration.
+     * @param storageInterface the internal storage used for STORAGE discovery. May be {@code null}
+     *        when Kestra is started without storage (only STATIC/DNS are then usable).
+     */
+    @Inject
+    public GrpcChannelManager(
+        GrpcChannelConfiguration grpcChannelConfiguration,
+        GrpcConfiguration grpcConfiguration,
+        WorkerControllersConfiguration controllersConfig,
+        Provider<StorageInterface> storageInterface) {
+        this.grpcChannelConfiguration = grpcChannelConfiguration;
+        this.grpcConfiguration = grpcConfiguration;
+        this.controllersConfig = controllersConfig;
+        this.storageInterface = storageInterface;
+        this.sharedExecutorService = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("grpc-channel-", 0).factory());
+    }
+
+    /**
+     * Initializes the default gRPC channel.
+     */
+    @PostConstruct
+    public void init() {
+        if (this.defaultChannel == null) {
+            defaultChannel = createNewManagedChannel();
+        }
+    }
+
+    /**
+     * Return the shared gRPC Channel.
+     *
+     * @return the {@link Channel}
+     */
+    public Channel getDefaultChannel() {
+        return defaultChannel;
+    }
+
+    /**
+     * Returns the current connectivity state of the shared channel. Used by the worker
+     * to confirm a reconnection only once the transport is actually {@code READY}.
+     *
+     * @param requestConnection if {@code true}, nudges an idle channel to start connecting
+     * @return the channel's {@link ConnectivityState}
+     */
+    public ConnectivityState getState(boolean requestConnection) {
+        return defaultChannel.getState(requestConnection);
+    }
+
+    /**
+     * Create a new gRPC Channel.
+     * <p>
+     * Uses the new {@link WorkerControllersConfiguration} if available,
+     * otherwise falls back to legacy single-endpoint mode.
+     *
+     * @return the {@link ManagedChannel}
+     */
+    @VisibleForTesting
+    ManagedChannel createNewManagedChannel() {
+        log.info("Using controllers configuration with discovery type: {}", controllersConfig.type());
+        return createChannelWithControllersConfig();
+    }
+
+    /**
+     * Creates a channel using the controller's configuration.
+     */
+    private ManagedChannel createChannelWithControllersConfig() {
+        ManagedChannelBuilder<?> builder = switch (controllersConfig.type()) {
+            case STATIC -> createStaticChannelBuilder();
+            case DNS -> createDnsChannelBuilder();
+            case STORAGE -> createStorageChannelBuilder();
+        };
+        return configureChannel(builder).build();
+    }
+
+    /**
+     * Creates a channel builder for the static endpoint list.
+     */
+    private ManagedChannelBuilder<?> createStaticChannelBuilder() {
+        WorkerControllersConfiguration.StaticConfig staticConfig = controllersConfig.staticConfig();
+        if (staticConfig == null || staticConfig.endpoints() == null || staticConfig.endpoints().isEmpty()) {
+            throw new IllegalStateException("Static configuration requires at least one endpoint");
+        }
+
+        List<InetSocketAddress> endpoints = staticConfig.endpoints().stream()
+            .map(e ->
+            {
+                log.debug("Adding static controller endpoint: {}:{}", e.host(), e.port());
+                return InetSocketAddress.createUnresolved(e.host(), e.port());
+            })
+            .toList();
+
+        log.info("Configuring static discovery with {} controller endpoint(s)", endpoints.size());
+
+        return Grpc.newChannelBuilder(StaticNameResolverProvider.targetFor(endpoints), createChannelCredentials());
+    }
+
+    /**
+     * Creates a channel builder for internal-storage-based discovery.
+     */
+    private ManagedChannelBuilder<?> createStorageChannelBuilder() {
+        WorkerControllersConfiguration.StorageConfig storageConfig = controllersConfig.storageConfig();
+        if (storageConfig == null) {
+            throw new IllegalStateException("Storage configuration is required when kestra.worker.controllers.type=STORAGE");
+        }
+        if (storageInterface == null) {
+            throw new IllegalStateException("StorageInterface bean is not available; cannot use STORAGE discovery");
+        }
+        log.info("Configuring storage discovery with refresh interval {}", storageConfig.refreshInterval());
+
+        if (STORAGE_RESOLVER_REGISTERED.compareAndSet(false, true)) {
+            StorageNameResolverProvider resolverProvider = new StorageNameResolverProvider(
+                this::discoverControllersFromStorage,
+                storageConfig.refreshInterval()
+            );
+            NameResolverRegistry.getDefaultRegistry().register(resolverProvider);
+            REGISTERED_STORAGE_RESOLVER_PROVIDER.set(resolverProvider);
+        }
+        return Grpc.newChannelBuilder("storage:///controllers", createChannelCredentials());
+    }
+
+    /**
+     * Lists live controllers from internal storage. Entries whose {@code expiresAt} is in the past
+     * are filtered out. Malformed entries are dropped individually, but a transient storage error on
+     * any list or read call causes us to return the last known good list unchanged, so that a single
+     * failed round-trip does not flap the LB pool.
+     */
+    @VisibleForTesting
+    List<EquivalentAddressGroup> discoverControllersFromStorage() {
+        List<FileAttributes> files;
+        try {
+            files = storageInterface.get().listInstanceResource(null, ControllerRegistry.REGISTRY_PREFIX);
+        } catch (FileNotFoundException e) {
+            // Registry prefix does not exist yet — no controllers registered.
+            lastKnownStorageAddresses = List.of();
+            return lastKnownStorageAddresses;
+        } catch (IOException e) {
+            log.warn(
+                "Failed to list controller registry from storage; returning last known good list ({} entries)",
+                lastKnownStorageAddresses.size(), e
+            );
+            return lastKnownStorageAddresses;
+        }
+
+        Instant now = Instant.now();
+        List<EquivalentAddressGroup> addresses = new ArrayList<>(files.size());
+        for (FileAttributes attr : files) {
+            if (attr.getType() != FileAttributes.FileType.File) {
+                continue;
+            }
+            URI entryUri = ControllerRegistry.REGISTRY_PREFIX.resolve(attr.getFileName());
+            try (InputStream in = storageInterface.get().getInstanceResource(null, entryUri)) {
+                ControllerRegistration registration = MAPPER.readValue(in, ControllerRegistration.class);
+                if (registration.isExpired(now)) {
+                    log.debug("Skipping expired controller registration [{}] at {}", registration.id(), entryUri);
+                    continue;
+                }
+                addresses.add(new EquivalentAddressGroup(new InetSocketAddress(registration.host(), registration.port())));
+            } catch (JsonProcessingException e) {
+                // Malformed JSON — drop just this entry, likely from a stale or partial writer.
+                log.warn("Skipping malformed controller registration at {}", entryUri, e);
+            } catch (IOException e) {
+                // Transient storage failure on a per-entry read — treat as we would a list() failure
+                // and preserve the last known good list rather than committing a shrunken pool.
+                log.warn(
+                    "Transient storage error reading controller registration at {}; returning last known good list ({} entries)",
+                    entryUri, lastKnownStorageAddresses.size(), e
+                );
+                return lastKnownStorageAddresses;
+            }
+        }
+        lastKnownStorageAddresses = List.copyOf(addresses);
+        if (!addresses.isEmpty() && firstStorageLoadLogged.compareAndSet(false, true)) {
+            log.info(
+                "Discovered {} controller endpoint(s) from internal storage: {}",
+                addresses.size(),
+                addresses.stream()
+                    .flatMap(group -> group.getAddresses().stream())
+                    .map(Object::toString)
+                    .toList()
+            );
+        }
+        return lastKnownStorageAddresses;
+    }
+
+    /**
+     * Creates a channel builder for DNS-based discovery.
+     */
+    private ManagedChannelBuilder<?> createDnsChannelBuilder() {
+        WorkerControllersConfiguration.DnsConfig dnsConfig = controllersConfig.dnsConfig();
+        if (dnsConfig == null || dnsConfig.hostname() == null || dnsConfig.hostname().isBlank()) {
+            throw new IllegalStateException("DNS configuration requires a hostname");
+        }
+
+        // The gRPC DNS name resolver performs A/AAAA record lookups of the hostname and connects to
+        // each resolved address on defaultPort. It does not query _grpc._tcp.<host> SRV records, so
+        // SRV-based discovery is intentionally not offered here.
+        log.info("Configuring DNS discovery with A records for: {}:{}", dnsConfig.hostname(), dnsConfig.defaultPort());
+        String target = "dns:///" + dnsConfig.hostname() + ":" + dnsConfig.defaultPort();
+        return Grpc.newChannelBuilder(target, createChannelCredentials());
+    }
+
+    /**
+     * Creates channel credentials for gRPC communication.
+     * Returns plaintext (insecure) credentials by default. EE overrides this to add TLS support.
+     *
+     * @return the channel credentials.
+     */
+    protected ChannelCredentials createChannelCredentials() {
+        return InsecureChannelCredentials.create();
+    }
+
+    /**
+     * Configures common channel settings. EE overrides this to add TLS authority override.
+     *
+     * @param builder the channel builder to configure.
+     * @return the configured channel builder.
+     */
+    protected ManagedChannelBuilder<?> configureChannel(ManagedChannelBuilder<?> builder) {
+        builder.enableRetry()
+            .maxRetryAttempts(grpcChannelConfiguration.retry().maxAttempts())
+            .userAgent(getUserAgent())
+            .keepAliveTime(grpcChannelConfiguration.keepAliveTime().toSeconds(), TimeUnit.SECONDS)
+            .keepAliveWithoutCalls(true)
+            .maxInboundMessageSize(grpcConfiguration.maxInboundMessageSize())
+            .executor(sharedExecutorService);
+
+        // Configure load balancing policy
+        String loadBalancingPolicy = controllersConfig.loadBalancing().policy().getGrpcName();
+        log.debug("Using load balancing policy: {}", loadBalancingPolicy);
+        builder.defaultLoadBalancingPolicy(loadBalancingPolicy);
+
+        // Health checking and the retry policy share one service config: a second defaultServiceConfig()
+        // call replaces the first, so they cannot be installed independently.
+        Map<String, Object> serviceConfig = serviceConfig();
+        if (!serviceConfig.isEmpty()) {
+            builder.defaultServiceConfig(serviceConfig);
+        }
+        return builder;
+    }
+
+    /**
+     * Builds the channel's service config: health checking, and the retry policy for the RPCs that are
+     * safe to replay.
+     *
+     * @return the service config, empty when both parts are disabled.
+     */
+    @VisibleForTesting
+    public Map<String, Object> serviceConfig() {
+        Map<String, Object> serviceConfig = new HashMap<>();
+
+        if (controllersConfig.healthCheck().enabled()) {
+            // The empty string ("") service, signifying the health of the whole server
+            serviceConfig.put("healthCheckConfig", Map.of("serviceName", ""));
+        }
+
+        if (isRetryPolicyEnabled()) {
+            serviceConfig.put("methodConfig", List.of(retryableMethodConfig()));
+        }
+
+        return serviceConfig;
+    }
+
+    /**
+     * Whether a retry policy can be installed. Attempts below the spec minimum leave retries off instead of
+     * failing the server at startup, since a single attempt is a legitimate way to ask for no retry.
+     */
+    private boolean isRetryPolicyEnabled() {
+        GrpcChannelConfiguration.Retry retry = grpcChannelConfiguration.retry();
+        if (!retry.enabled()) {
+            return false;
+        }
+        if (retry.maxAttempts() < MIN_RETRY_ATTEMPTS) {
+            log.warn(
+                "gRPC retries are disabled because kestra.grpc.channel.retry.max-attempts is {}, below the minimum of {} required for a retry policy. Set it to {} or more to retry replay-safe RPCs.",
+                retry.maxAttempts(), MIN_RETRY_ATTEMPTS, MIN_RETRY_ATTEMPTS
+            );
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * The single method config entry naming every retryable RPC, plus the policy applied to them.
+     * <p>
+     * gRPC parses a service config from JSON, so the map may only contain the types a JSON parser produces:
+     * numbers must be {@link Double} and durations second-suffixed strings.
+     */
+    private Map<String, Object> retryableMethodConfig() {
+        List<Map<String, String>> names = new ArrayList<>(RETRYABLE_METHODS.size());
+        RETRYABLE_METHODS.forEach(method -> names.add(Map.of(
+            "service", MethodDescriptor.extractFullServiceName(method.getFullMethodName()),
+            "method", MethodDescriptor.extractBareMethodName(method.getFullMethodName())
+        )));
+
+        GrpcChannelConfiguration.Retry retry = grpcChannelConfiguration.retry();
+        return Map.of(
+            "name", names,
+            "retryPolicy", Map.of(
+                "maxAttempts", (double) retry.maxAttempts(),
+                "initialBackoff", toSecondsLiteral(retry.initialBackoff()),
+                "maxBackoff", toSecondsLiteral(retry.maxBackoff()),
+                "backoffMultiplier", retry.backoffMultiplier(),
+                "retryableStatusCodes", RETRYABLE_STATUS_CODES
+            )
+        );
+    }
+
+    /** Formats a duration as the fractional-seconds literal the gRPC service config expects, e.g. {@code 0.5s}. */
+    private static String toSecondsLiteral(Duration duration) {
+        return new BigDecimal(duration.toNanos()).movePointLeft(9).stripTrailingZeros().toPlainString() + "s";
+    }
+
+    @PreDestroy
+    public void close() {
+        if (!stopped.compareAndSet(false, true)) {
+            return; // Method called twice
+        }
+        log.info("Closing gRPC channel manager");
+        // Shutdown channel first
+        if (this.defaultChannel != null && !this.defaultChannel.isShutdown()) {
+            try {
+                shutdownChannelAndWait();
+            } catch (Exception e) {
+                log.debug("Error while stopping default gRPC channel", e);
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        StorageNameResolverProvider storageProvider = REGISTERED_STORAGE_RESOLVER_PROVIDER.getAndSet(null);
+        if (storageProvider != null) {
+            STORAGE_RESOLVER_REGISTERED.set(false);
+            deregisterSilently(storageProvider, "storage");
+        }
+
+        // Shutdown executor service
+        if (this.sharedExecutorService != null) {
+            ExecutorsUtils.closeExecutorService(
+                "grpc-channel",
+                this.sharedExecutorService,
+                grpcChannelConfiguration.shutdownTimeout()
+            );
+        }
+    }
+
+    private void shutdownChannelAndWait() throws InterruptedException {
+        this.defaultChannel.shutdown().awaitTermination(grpcChannelConfiguration.shutdownTimeout().toSeconds(), TimeUnit.SECONDS);
+    }
+
+    private static void deregisterSilently(NameResolverProvider provider, String name) {
+        try {
+            NameResolverRegistry.getDefaultRegistry().deregister(provider);
+            log.debug("Unregistered {} name resolver provider", name);
+        } catch (Exception e) {
+            log.debug("Error while unregistering {} name resolver provider", name, e);
+        }
+    }
+
+    /**
+     * Returns the user agent string for gRPC requests.
+     * Falls back to "unknown" version if KestraContext is not initialized.
+     *
+     * @return the user agent string
+     */
+    protected static String getUserAgent() {
+        try {
+            String version = KestraContext.getContext().getVersion();
+            return "Kestra/" + (version != null ? version : "unknown");
+        } catch (IllegalStateException e) {
+            // KestraContext not initialized (e.g., in unit tests)
+            return "Kestra/unknown";
+        }
+    }
+}

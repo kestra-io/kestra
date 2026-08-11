@@ -8,7 +8,7 @@ This devcontainer provides a quick and easy setup for anyone using VSCode to get
 
 ### Setup:
 
-Take a look at this guide to get an idea of what the setup is like as this devcontainer setup follows this approach: https://kestra.io/docs/getting-started/contributing
+Take a look at this guide to get an idea of what the setup is like as this devcontainer setup follows this approach: https://kestra.io/docs/contribute-to-kestra
 
 Once you have this repo cloned to your local system, you will need to install the VSCode extension [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack).
 
@@ -25,17 +25,11 @@ In the meantime, you can move onto the next step...
 
 ### Requirements
 
-- Java 21 (LTS versions).
-  > ⚠️ Java 24 and above are not supported yet and will fail with `invalid source release: 21`.
+- Java 25 (LTS versions).
 - Gradle (comes with wrapper `./gradlew`)
 - Docker (optional, for running Kestra in containers)
 
 ### Development:
-
-- (Optional) By default, your dev server will target `localhost:8080`. If your backend is running elsewhere, you can create `.env.development.local` under `ui` folder with this content:
-```
-VITE_APP_API_URL={myApiUrl}
-```
 
 - Navigate into the `ui` folder and run `npm install` to install the dependencies for the frontend project.
 
@@ -118,7 +112,7 @@ Then add the following settings to the `.vscode/launch.json` file:
       "type": "java",
       "name": "Kestra Standalone",
       "request": "launch",
-      "mainClass": "io.kestra.cli.App",
+      "mainClass": "io.kestra.cli.Kestra",
       "projectName": "cli",
       "args": "server standalone"
     }

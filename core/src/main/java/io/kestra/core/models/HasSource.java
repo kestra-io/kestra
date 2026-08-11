@@ -1,17 +1,18 @@
 package io.kestra.core.models;
 
-import io.micronaut.http.multipart.CompletedFileUpload;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import io.kestra.core.security.ProtectedZipInputStream;
+import io.kestra.core.security.SecurityConfiguration.ZipBombProtectionConfiguration;
+import io.micronaut.http.multipart.CompletedFileUpload;
 
 /**
  * Interface that can be implemented by Kestra's resource attached to an original source code.
@@ -23,23 +24,25 @@ public interface HasSource {
      * <p>
      * This method should return a valid and parseable in YAML object.
      *
-     * @return  the string source.
+     * @return the string source.
      */
     String source();
 
     /**
      * Static helper method for constructing a ZIP file containing the given sources.
      *
-     * @param sources      the sources to zip.
+     * @param sources the sources to zip.
      * @param zipEntryName the function used for constructing the ZIP entry name.
-     * @param <T>          type of the source.
+     * @param <T> type of the source.
      * @return a byte array representation of the ZIP file.
      * @throws IOException if an error happen while zipping sources.
      */
     static <T extends HasSource> byte[] asZipFile(final List<? extends T> sources,
-                                                  final Function<T, String> zipEntryName) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ZipOutputStream archive = new ZipOutputStream(bos)) {
+        final Function<T, String> zipEntryName) throws IOException {
+        try (
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ZipOutputStream archive = new ZipOutputStream(bos)
+        ) {
 
             for (var source : sources) {
                 var zipEntry = new ZipEntry(zipEntryName.apply(source));
@@ -55,24 +58,26 @@ public interface HasSource {
     /**
      * Static helper method for reading an uploaded source or archive file.
      *
-     * @param fileUpload    the upload file.
-     * @param reader        the source reader.
-     * @throws IOException  if the file cannot be read.
+     * @param zipBombProtection the ZIP-bomb protection configuration applied when the upload is a
+     *        ZIP archive, may be {@code null} to disable protection.
+     * @param fileUpload the upload file.
+     * @param reader the source reader.
+     * @throws IOException if the file cannot be read.
      */
-    static void readSourceFile(final CompletedFileUpload fileUpload, final BiConsumer<String, String> reader) throws IOException {
+    static void readSourceFile(final ZipBombProtectionConfiguration zipBombProtection, final CompletedFileUpload fileUpload, final BiConsumer<String, String> reader) throws IOException {
         String fileName = fileUpload.getFilename().toLowerCase();
         try (InputStream inputStream = fileUpload.getInputStream()) {
 
             if (isYAML(fileName)) {
                 byte[] bytes = inputStream.readAllBytes();
-                List<String> sources = List.of(new String(bytes).split("---"));
+                List<String> sources = List.of(new String(bytes).split("(?m)^---\\s*$"));
                 for (int i = 0; i < sources.size(); i++) {
                     String source = sources.get(i);
-                    reader.accept(source, String.valueOf(i));
+                    reader.accept(source, fileName + "(flow number: " + i + ")");
                 }
             } else if (fileName.endsWith(".zip")) {
 
-                try (ZipInputStream archive = new ZipInputStream(inputStream)) {
+                try (ZipInputStream archive = ProtectedZipInputStream.of(inputStream, zipBombProtection)) {
                     ZipEntry entry;
                     while ((entry = archive.getNextEntry()) != null) {
                         if (entry.isDirectory() || !isYAML(entry.getName())) {
@@ -82,7 +87,9 @@ public interface HasSource {
                     }
                 }
             } else {
-                throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
+                int extensionIndex = fileName.lastIndexOf('.');
+                String type = extensionIndex >= 0 ? fileName.substring(extensionIndex) : fileName;
+                throw new IllegalArgumentException("Cannot import file of type " + type);
             }
         }
     }

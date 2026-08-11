@@ -1,7 +1,5 @@
 package io.kestra.core.utils;
 
-import jakarta.annotation.Nullable;
-
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -10,6 +8,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+
+import jakarta.annotation.Nullable;
 
 import static java.util.function.Predicate.not;
 
@@ -90,7 +90,8 @@ public final class PathMatcherPredicate implements Predicate<Path> {
     private PathMatcherPredicate(@Nullable final Path basePath, final List<String> patterns) {
         Objects.requireNonNull(patterns, "patterns cannot be null");
         this.syntaxAndPatterns = patterns.stream()
-            .map(p -> {
+            .map(p ->
+            {
                 String syntaxAndPattern = p;
                 if (!isPrefixWithSyntax(p)) {
                     String pattern;

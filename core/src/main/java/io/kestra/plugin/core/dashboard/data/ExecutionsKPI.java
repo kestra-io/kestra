@@ -2,6 +2,7 @@ package io.kestra.plugin.core.dashboard.data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
@@ -9,6 +10,7 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.kestra.core.validations.ExecutionsDataFilterKPIValidation;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -30,26 +32,25 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with executions in success in a given namespace.",
             full = true,
-            code = { """
-            charts:
-              - id: kpi_success_ratio
-                type: io.kestra.plugin.core.dashboard.chart.KPI
-                chartOptions:
-                  displayName: Success Ratio
-                  numberType: PERCENTAGE
-                  width: 3
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
-                  columns:
-                    field: ID
-                    agg: COUNT
-                  numerator:
-                    - type: IN
-                      field: STATE
-                      values:
-                        - SUCCESS
-            """
-          }
+            code = """
+                charts:
+                  - id: kpi_success_ratio
+                    type: io.kestra.plugin.core.dashboard.chart.KPI
+                    chartOptions:
+                      displayName: Success Ratio
+                      numberType: PERCENTAGE
+                      width: 3
+                    data:
+                      type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
+                      columns:
+                        field: ID
+                        agg: COUNT
+                      numerator:
+                        - type: IN
+                          field: STATE
+                          values:
+                            - SUCCESS
+                """
         )
     }
 )

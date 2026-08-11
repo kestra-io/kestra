@@ -1,11 +1,12 @@
 package io.kestra.core.runners;
 
+import java.nio.file.Path;
+
+import org.junit.jupiter.api.Test;
+
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
-import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

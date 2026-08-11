@@ -8,32 +8,41 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue";
-    import {useExecutionsStore} from "../../stores/executions";
+    import {computed, onMounted, ref, watch} from "vue"
+    import {useExecutionsStore} from "../../stores/executions"
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
-    import Dashboard from "../dashboard/Dashboard.vue";
-    import NoExecutions from "../flows/NoExecutions.vue";
-    import {useFlowStore} from "../../stores/flow";
+    import Dashboard from "../dashboard/Dashboard.vue"
+    import NoExecutions from "../flows/NoExecutions.vue"
+    import {useFlowStore} from "../../stores/flow"
 
-    const flowStore = useFlowStore();
-    const flow = computed(() => flowStore.flow);
-    const executionsStore = useExecutionsStore();
+    const flowStore = useFlowStore()
+    const flow = computed(() => flowStore.flow)
+    const executionsStore = useExecutionsStore()
 
-    const total = ref(0);
-    const loaded = ref(false);
+    const total = ref(0)
+    const loaded = ref(false)
 
-    defineEmits(["expand-subflow"]);
+    defineEmits(["expand-subflow"])
 
-    onMounted(() => {
+    function fetchExecutions() {
         if (flow.value?.id) {
+            loaded.value = false
             executionsStore
                 .findExecutions({namespace: flow.value.namespace, flowId: flow.value.id})
                 .then((r) => {
-                    total.value = r.total ?? 0;
-                    loaded.value = true;
-                });
+                    total.value = r.total ?? 0
+                    loaded.value = true
+                })
         }
-    });
+    }
+
+    onMounted(fetchExecutions)
+
+    watch(() => flow.value?.id, (newId, oldId) => {
+        if (newId && newId !== oldId && !loaded.value) {
+            fetchExecutions()
+        }
+    })
 </script>

@@ -1,0 +1,44 @@
+package io.kestra.executor.handler;
+
+import java.util.List;
+
+import io.kestra.core.models.flows.Concurrency;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.quota.Quota;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.log.Log;
+
+final class Fixtures {
+    private Fixtures() {
+        // utility class pattern
+    }
+
+    static Flow flow() {
+        return Flow.builder()
+            .tenantId("tenant")
+            .namespace("namespace")
+            .id(IdUtils.create())
+            .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello World").build()))
+            .build();
+    }
+
+    static Flow flowWithConcurrency(Concurrency concurrency) {
+        return Flow.builder()
+            .tenantId("tenant")
+            .namespace("namespace")
+            .id(IdUtils.create())
+            .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello World").build()))
+            .concurrency(concurrency)
+            .build();
+    }
+
+    static Flow flowWithQuotas(Quota quota) {
+        return Flow.builder()
+            .tenantId("tenant")
+            .namespace("namespace")
+            .id(IdUtils.create())
+            .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello World").build()))
+            .quotas(List.of(quota))
+            .build();
+    }
+}

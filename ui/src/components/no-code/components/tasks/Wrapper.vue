@@ -5,22 +5,22 @@
     </div>
 </template>
 
-<script lang="ts" setup>
-    defineOptions({name: "Wrapper"});
+<script setup lang="ts">
+    defineOptions({name: "Wrapper"})
 
-    defineProps<{merge?: boolean, transparent?: boolean}>();
+    defineProps<{merge?: boolean, transparent?: boolean}>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .schema-wrapper {
     width: 100%;
     padding-bottom: 1rem;
     border-radius: 8px;
 }
 .bordered {
-    background: var(--ks-background-box);
-    border: 1px solid var(--ks-border-secondary);
-    box-shadow: 0 0 0 1px var(--ks-border-primary) inset;
+    background: var(--ks-bg-surface);
+    border: 1px solid var(--ks-border-subtle);
+    box-shadow: 0 0 0 1px var(--ks-border-default) inset;
     margin: 1rem 0;
     padding: 1rem;
 }

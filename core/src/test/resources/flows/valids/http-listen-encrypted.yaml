@@ -6,8 +6,8 @@ triggers:
     type: io.kestra.plugin.fs.http.Trigger
     encryptBody: true
     uri: https://api.chucknorris.io/jokes/random
-    responseCondition: "{{ json(response.body).id is not null }}"
-    interval: PT10S
+    responseCondition: "{{ fromJson(response.body).id is not null }}"
+    interval: PT1S
 
 tasks:
   - id: hello

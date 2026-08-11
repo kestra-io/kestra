@@ -84,7 +84,6 @@
                 :key="type"
                 :type="type.toLowerCase()"
                 :title="`${type} Alert`"
-                showIcon
             />
         </div>
 
@@ -143,7 +142,7 @@
                 size="large"
                 style="width: 240px"
             >
-                <el-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -151,7 +150,7 @@
                 />
             </el-select>
             <el-select v-model="valueSelect" placeholder="Select" style="width: 240px">
-                <el-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -164,7 +163,7 @@
                 size="small"
                 style="width: 240px"
             >
-                <el-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -180,7 +179,7 @@
                 placeholder="Select"
                 style="width: 240px"
             >
-                <el-option
+                <KsOption
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
@@ -189,7 +188,7 @@
             </el-select>
         </div>
 
-        <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="tabChanged" />
+        <Tabs :tabs="tabs" :embedActiveTab="activeTab" @changed="(tab) => { if(tab.name) tabChanged({name:tab.name}) }" />
         <div>
             <div class="sub-title my-2 text-sm text-gray-600">
                 list suggestions when activated
@@ -222,24 +221,17 @@
     </div>
 </template>
 
-<script lang="ts" setup>
-    import {getCurrentInstance, onMounted, ref} from "vue"
-    import {ElMessage} from "element-plus"
+<script setup lang="ts">
+    import {onMounted, ref} from "vue"
+    import {KsMessage} from "@kestra-io/design-system"
     import Search from "vue-material-design-icons/SearchWeb.vue"
     import Edit from "vue-material-design-icons/Pencil.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import Message from "vue-material-design-icons/Message.vue"
     import Star from "vue-material-design-icons/Star.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
-    import Upload from "vue-material-design-icons/Upload.vue";
+    import Upload from "vue-material-design-icons/Upload.vue"
     import Tabs from "../../../src/components/Tabs.vue"
-
-    const app = getCurrentInstance()?.appContext.config.globalProperties as any
-
-    if(app){
-        app.$router = {}
-        app.$route = {params: {tab: "first"}}
-    }
 
     const input = ref("")
     const curDate = ref(new Date())
@@ -247,7 +239,7 @@
 
 
     function toast() {
-        ElMessage.success("Hello")
+        KsMessage.success("Hello")
     }
 
     const tableData = [
@@ -362,7 +354,7 @@
 </script>
 
 <style scoped>
-.demo-tabs > :deep( .el-tabs__content) {
+.demo-tabs > :deep( .kel-tabs__content) {
   padding: 32px;
   color: #6b778c;
   font-size: 32px;

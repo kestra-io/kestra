@@ -1,16 +1,17 @@
 package io.kestra.core.models.flows.sla.types;
 
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;

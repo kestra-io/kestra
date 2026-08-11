@@ -1,0 +1,18 @@
+id: loop-flowable
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
+    values: ["value 1", "value 2", "value 3"]
+    tasks:
+      - id: before_if
+        type: io.kestra.plugin.core.debug.Return
+        format: "Before if {{ item.value }}"
+      - id: if
+        type: io.kestra.plugin.core.flow.If
+        condition: '{{ item.value == "value 2" }}'
+        then:
+          - id: after_if
+            type: io.kestra.plugin.core.debug.Return
+            format: "After if {{ item.value }}"

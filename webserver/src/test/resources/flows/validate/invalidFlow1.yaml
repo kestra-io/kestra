@@ -1,0 +1,7 @@
+id: "first_flow"
+namespace: "validation"
+tasks:
+  - id: task_one
+    type: io.kestra.plugin.core.log.Log
+    message: "strange---string"
+    unknownProp: unknownValue

@@ -1,111 +1,199 @@
 <template>
-    <Header v-if="header" :dashboard />
+    <Header v-if="header && dashboard" :dashboard :load />
 
-    <section id="filter" :class="{filterPadding: padding}">
-        <KestraFilter
+    <section id="filter" class="filterPadding" :class="{noMarginTop: isFlow || isNamespace}">
+        <KSFilter
+            :key="`dashboard__${dashboard.id}`"
             :prefix="`dashboard__${dashboard.id}`"
-            :language
-            :buttons="{
-                refresh: {shown: true, callback: () => refreshCharts()},
-                settings: {shown: false},
+            :configuration="filterConfiguration"
+            :defaultScope="false"
+            :tableOptions="{
+                chart: {shown: false},
+                columns: {shown: false},
+                refresh: {shown: true, callback: () => refreshCharts()}
             }"
-            :dashboards="{shown: ALLOWED_CREATION_ROUTES.includes(String(route.name))}"
-            @dashboard="(value: Dashboard['id']) => load(value)"
+            :showSearchInput="false"
+            :defaultDuration="dashboard.timeWindow?.default"
         />
     </section>
 
-    <Sections ref="dashboardComponent" :dashboard :charts :showDefault="dashboard.id === 'default'" :padding="padding" />
+    <Sections
+        ref="dashboardComponent"
+        :dashboard
+        :charts
+        :showDefault="isDashboardBundledWithUI"
+        :padding="true"
+    />
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount, ref, useTemplateRef} from "vue";
+    import {computed, ref, useTemplateRef, watch} from "vue"
+    import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
 
-    import type {Dashboard, Chart} from "./composables/useDashboards";
-    import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
+    import {Dashboard, Chart, ALLOWED_CREATION_ROUTES} from "./composables/useDashboards"
+    import {processFlowYaml} from "./composables/useDashboards"
 
-    import Header from "./components/Header.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
-    import Sections from "./sections/Sections.vue";
+    import Header from "./components/Header.vue"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import Sections from "./sections/Sections.vue"
 
-    import FILTER_LANGUAGE_MAIN from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage";
-    import FILTER_LANGUAGE_NAMESPACE from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage";
-    import FILTER_LANGUAGE_FLOW from "../../composables/monaco/languages/filters/impl/flowDashboardFilterLanguage";
+    import {
+        useDashboardFilter,
+        useNamespaceDashboardFilter,
+        useFlowDashboardFilter,
+    } from "../filter/configurations"
+    import useRestoreUrl from "../../composables/useRestoreUrl"
 
-    const language = computed(() => {
-        if (props.isNamespace) return FILTER_LANGUAGE_NAMESPACE;
-        if (props.isFlow) return FILTER_LANGUAGE_FLOW;
-        return FILTER_LANGUAGE_MAIN;
-    });
+    useRestoreUrl()
 
-    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
+    const dashboardFilter = useDashboardFilter()
+    const flowDashboardFilter = useFlowDashboardFilter()
+    const namespaceDashboardFilter = useNamespaceDashboardFilter()
 
-    import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
-    import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
-    import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw";
+    const filterConfiguration = computed(() => {
+        if (props.isNamespace) return namespaceDashboardFilter.value
+        if (props.isFlow) return flowDashboardFilter.value
+        return dashboardFilter.value
+    })
 
-    import {useRoute, useRouter} from "vue-router";
-    const route = useRoute();
-    const router = useRouter();
+    import {useRoute, useRouter} from "vue-router"
+    import {routeFamily} from "../../utils/routeFamily"
+    import {DEFAULT_DASHBOARD, useDashboardStore} from "../../stores/dashboard"
+    import {useCoreStore} from "../../stores/core.ts"
+    import {useI18n} from "vue-i18n"
 
-    import {useDashboardStore} from "../../stores/dashboard";
-    const dashboardStore = useDashboardStore();
+    const route = useRoute()
+    const router = useRouter()
+    const coreStore = useCoreStore()
+    const dashboardStore = useDashboardStore()
+    const {t} = useI18n()
 
-    defineOptions({inheritAttrs: false});
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps({
         header: {type: Boolean, default: true},
         isFlow: {type: Boolean, default: false},
         isNamespace: {type: Boolean, default: false},
-    });
+    })
 
-    const padding = computed(() => !props.isFlow && !props.isNamespace);
+    const dashboardLocation = computed(() => {
+        if(props.isFlow){
+            return "flow_overview"
+        } else if (props.isNamespace){
+            return "namespace_overview"
+        } else {
+            return "home"
+        }
+    })
 
-    const dashboard = ref<Dashboard>({id: "", charts: []});
-    const charts = ref<Chart[]>([]);
+    const dashboard = computed<Dashboard>(() => dashboardStore.activeDashboard ?? DEFAULT_DASHBOARD)
+    const isDashboardBundledWithUI = ref<boolean>(false)
+    const charts = ref<Chart[]>([])
 
     const loadCharts = async (allCharts: Chart[] = []) => {
-        charts.value = [];
+        charts.value = []
 
         for (const chart of allCharts) {
-            charts.value.push({...chart, content: stringify(chart)});
+            charts.value.push({...chart, content: YAML_UTILS.stringify(chart)})
         }
-    };
+    }
 
-    const dashboardComponent = useTemplateRef("dashboardComponent");
+    const dashboardComponent = useTemplateRef("dashboardComponent")
 
     const refreshCharts = () => {
-        dashboardComponent.value?.refreshCharts?.();
-    };
+        dashboardComponent.value?.refreshCharts?.()
+    }
+    const getDefaultDashboardBundledInUI = async () => {
+        const definitions = await dashboardStore.loadDefaultDefinitions()
+        if(props.isFlow){
+            return processFlowYaml(definitions.flow, route.params.namespace as string, route.params.id as string)
+        } else if(props.isNamespace){
+            return definitions.namespace
+        } else {
+            return definitions.main
+        }
+    }
+    const useDefaultDashboardBundledInUI = async () => {
+        dashboardStore.activeDashboard = {id: "default", charts: [], ...YAML_UTILS.parse(await getDefaultDashboardBundledInUI()), title: t("dashboards.default"), deleted: false}
+        isDashboardBundledWithUI.value = true
+    }
 
-    const load = async (id = "default", defaultYAML = YAML_MAIN) => {
-        if (!ALLOWED_CREATION_ROUTES.includes(String(route.name))) {
-            return;
+    const load = async (id = "default") => {
+        if (!ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name))) {
+            return
         }
 
-        if (!props.isFlow && !props.isNamespace) {
-            router.replace({
+        const doesRouteHaveSpecificDashboard = route.params?.dashboard && typeof route.params?.dashboard === "string" && route.params?.dashboard
+        // handle navigating on /ui/dashboards
+        if(route.name === "home" && !doesRouteHaveSpecificDashboard && id){
+            await router.push({
+                name: route.name,
+                query: route.query,
                 params: {...route.params, dashboard: id},
-                query: route.params.dashboard !== id ? {} : {...route.query},
-            });
+            })
+            return
         }
 
-        dashboard.value = id === "default" ? {id, ...parse(defaultYAML)} : await dashboardStore.load(id);
-        loadCharts(dashboard.value.charts);
-    };
+        if (dashboardLocation.value === "home") {
+            if (route.params.dashboard !== id) {
+                await router.replace({
+                    params: {...route.params, dashboard: id},
+                })
+            }
+        }
 
-    onBeforeMount(() => {
-        const ID = getDashboard(route, "id");
+        isDashboardBundledWithUI.value = false
+        if (id === "default") {
+            // if requested dashboard is the default one, we first try to find if there is any configured in the DB by an admin
+            const defaults = await dashboardStore.loadDefaults()
+            switch (dashboardLocation.value){
+            case "home": id = defaults?.defaultHomeDashboard ?? id; break
+            case "namespace_overview": id = defaults?.defaultNamespaceOverviewDashboard ?? id; break
+            case "flow_overview": id = defaults?.defaultFlowOverviewDashboard ?? id; break
+            }
+        }
+        if (id === "default") {
+            // we are in the case we will load the defaults bundled in the UI
+            await useDefaultDashboardBundledInUI()
+        } else {
 
-        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
-        else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
-    });
+            // case a default dashboard exists in the DB, try to load it
+            const maybeDashboard = await dashboardStore.load(id)
+
+            if(maybeDashboard){
+                dashboardStore.activeDashboard = maybeDashboard
+            } else {
+
+                console.warn(`default dashboard ${id} configured in the DB was not found`)
+                const err = `Dashboard with id '${id}' could not be found`
+                coreStore.message = {
+                    variant: "error",
+                    title: err,
+                }
+                await useDefaultDashboardBundledInUI()
+            }
+        }
+
+        await loadCharts(dashboard.value.charts)
+    }
+
+    watch([() => route.params.dashboard, () => route.params.tenant], async () => {
+        if(route.params.tenant){
+            // at initial load after login tenant is not yet immediately available
+            const dashboardId = await dashboardStore.getDashboardId(route)
+            await load(dashboardId)
+        }
+    }, {immediate: true})
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
 
 .filterPadding {
-    margin: 2rem 0.25rem 0;
+    margin-top: 2rem;
     padding: 0 2rem;
+}
+
+.noMarginTop {
+    margin-top: 0;
 }
 </style>

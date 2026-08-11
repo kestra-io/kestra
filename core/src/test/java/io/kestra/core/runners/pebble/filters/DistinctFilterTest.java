@@ -1,16 +1,19 @@
 package io.kestra.core.runners.pebble.filters;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.VariableRenderer;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.runners.VariableRenderer;
+
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,23 +29,25 @@ class DistinctFilterTest {
         ZonedDateTime date = ZonedDateTime.parse("2013-09-08T16:19:00+02").withZoneSameLocal(ZoneId.systemDefault());
 
         ImmutableMap<String, Object> vars = ImmutableMap.of(
-            "vars", ImmutableMap.of("second", Map.of(
-                "string", "string",
-                "int", 1,
-                "float", 1.123F,
-                "list", Arrays.asList(
-                    "one", "two", "one", "three", "four", "five", "three",
-                    1, 2, 3, 1, 2, 2,
-                    1.123F, 2.123F, 1.123F, 10.000F, 10.000F
-                ),
-                "bool", true,
-                "date", date,
-                "map", Map.of(
+            "vars", ImmutableMap.of(
+                "second", Map.of(
                     "string", "string",
                     "int", 1,
-                    "float", 1.123F
+                    "float", 1.123F,
+                    "list", Arrays.asList(
+                        "one", "two", "one", "three", "four", "five", "three",
+                        1, 2, 3, 1, 2, 2,
+                        1.123F, 2.123F, 1.123F, 10.000F, 10.000F
+                    ),
+                    "bool", true,
+                    "date", date,
+                    "map", Map.of(
+                        "string", "string",
+                        "int", 1,
+                        "float", 1.123F
+                    )
                 )
-            ))
+            )
         );
 
         //Test rendering the list without the distinct filter
@@ -67,15 +72,16 @@ class DistinctFilterTest {
         //Edge case: an empty list
         render = variableRenderer.render("{{ [] | distinct }}", Map.of());
         assertThat(render).isEqualTo("[]");
-		
-		render = variableRenderer.render("{{ null | distinct }}", Map.of());
+
+        render = variableRenderer.render("{{ null | distinct }}", Map.of());
         assertThat(render).isEqualTo("null");
     }
 
     @Test
     void distinctFilterWithInvalidInput() {
         //Test case where input is not a list (should throw exception)
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
             variableRenderer.render("{{ \"string\" | distinct }}", Map.of());
         });
     }
@@ -83,7 +89,8 @@ class DistinctFilterTest {
     @Test
     void distinctFilterWithNonListObject() {
         //Test case where the input is an object (should throw exception)
-        assertThrows(IllegalVariableEvaluationException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () ->
+        {
             variableRenderer.render("{{ {key : \"value\"} | distinct }}", Map.of());
         });
     }

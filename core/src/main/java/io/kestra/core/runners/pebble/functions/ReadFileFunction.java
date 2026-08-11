@@ -1,33 +1,91 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.storages.StorageContext;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import com.amazon.ion.util.IonStreamUtils;
+
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
+import io.kestra.core.storages.StorageContext;
+
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class ReadFileFunction extends AbstractFileFunction {
+    public static final String NAME = "read";
+    public static final String REVISION = "revision";
+
     private static final String ERROR_MESSAGE = "The 'read' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
 
     @Override
-    protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId) throws IOException {
+    public List<String> getArgumentNames() {
+        return Stream.concat(
+            super.getArgumentNames().stream(),
+            Stream.of(REVISION)
+        ).toList();
+    }
+
+    @Override
+    public Map<String, String> getArgumentDefaults() {
+        HashMap<String, String> defaults = new HashMap<>();
+        defaults.put(PATH, "'a/namespace/file'");
+        defaults.put(NAMESPACE, "flow.namespace");
+        defaults.put(REVISION, null);
+        return defaults;
+    }
+
+    @Override
+    protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
         return switch (path.getScheme()) {
             case StorageContext.KESTRA_SCHEME -> {
-                try (InputStream inputStream = storageInterface.get(tenantId, namespace, path)) {
-                    yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                try (InputStream inputStream = storageInterface.get().get(tenantId, namespace, path)) {
+                    yield readContent(inputStream);
                 }
             }
             case LocalPath.FILE_SCHEME -> {
-                try (InputStream inputStream = localPathFactory.createLocalPath().get(path)) {
-                    yield new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                try (InputStream inputStream = localPathFactory.get().createLocalPath().get(path)) {
+                    yield readContent(inputStream);
+                }
+            }
+            case Namespace.NAMESPACE_FILE_SCHEME -> {
+                try (InputStream inputStream = contentInputStream(path, namespace, tenantId, args)) {
+                    yield readContent(inputStream);
                 }
             }
             default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));
         };
+    }
+
+    // Returns byte[] for binary ION (preserves fidelity for fromIon()), String for everything else
+    private static Object readContent(InputStream inputStream) throws IOException {
+        byte[] bytes = inputStream.readAllBytes();
+        if (IonStreamUtils.isIonBinary(bytes)) {
+            return bytes;
+        }
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private InputStream contentInputStream(URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException {
+        Namespace namespaceStorage = namespaceFactory.get().of(tenantId, namespace, storageInterface.get());
+
+        if (args.containsKey(REVISION)) {
+            return namespaceStorage.getFileContent(
+                NamespaceFile.normalize(Path.of(path.getPath())),
+                Integer.parseInt(args.get(REVISION).toString())
+            );
+        }
+
+        return namespaceStorage.getFileContent(NamespaceFile.normalize(Path.of(path.getPath())));
     }
 
     @Override

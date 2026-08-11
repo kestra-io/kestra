@@ -1,21 +1,24 @@
 package io.kestra.cli.commands.servers;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.ServerType;
-import io.kestra.core.runners.Indexer;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.services.SkipExecutionService;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
-import picocli.CommandLine;
-import picocli.CommandLine.Option;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.models.ServerType;
+import io.kestra.core.runners.Indexer;
+import io.kestra.core.services.IgnoreExecutionService;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.worker.Controller;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 @CommandLine.Command(
     name = "webserver",
@@ -26,22 +29,31 @@ public class WebServerCommand extends AbstractServerCommand {
     private ExecutorService poolExecutor;
 
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private ExecutorsUtils executorsUtils;
 
     @Inject
-    private SkipExecutionService skipExecutionService;
+    private IgnoreExecutionService ignoreExecutionService;
 
-    @Option(names = {"--no-tutorials"}, description = "Flag to disable auto-loading of tutorial flows.")
+    @Inject
+    private Provider<Indexer> indexer;
+
+    @Inject
+    private Provider<Controller> controller;
+
+    @Option(names = { "--no-tutorials" }, description = "Flag to disable auto-loading of tutorial flows.")
     private boolean tutorialsDisabled = false;
 
-    @Option(names = {"--no-indexer"}, description = "Flag to disable starting an embedded indexer.")
+    @Option(names = { "--no-indexer" }, description = "Flag to disable starting an embedded indexer.")
     private boolean indexerDisabled = false;
 
-    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "a list of indexer record keys, separated by a coma; for troubleshooting purpose only")
-    private List<String> skipIndexerRecords = Collections.emptyList();
+    @Option(names = { "--no-controller" }, description = "Flag to disable starting an embedded controller.")
+    private boolean controllerDisabled = false;
+
+    @CommandLine.Option(names = { "--ignore-indexer-records" }, split = ",", description = "a list of indexer record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreIndexerRecords = Collections.emptyList();
+
+    @Option(names = { "--ignore-queue-records" }, split = ",", description = "a list of queue record keys to ignore, separated by a coma; for troubleshooting only")
+    private List<String> ignoreQueueRecords = Collections.emptyList();
 
     @Override
     public boolean isFlowAutoLoadEnabled() {
@@ -57,20 +69,34 @@ public class WebServerCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
-        this.skipExecutionService.setSkipIndexerRecords(skipIndexerRecords);
+        this.ignoreExecutionService.setIgnoredIndexerRecords(ignoreIndexerRecords);
+        this.ignoreExecutionService.setIgnoredQueueRecords(ignoreQueueRecords);
 
         super.call();
+
+        if (!(indexerDisabled && controllerDisabled)) {
+            poolExecutor = executorsUtils.cachedThreadPool("embedded-services");
+        }
 
         // start the indexer
         if (!indexerDisabled) {
             log.info("Starting an embedded indexer, this can be disabled by using `--no-indexer`.");
-            poolExecutor = executorsUtils.cachedThreadPool("webserver-indexer");
-            poolExecutor.execute(applicationContext.getBean(Indexer.class));
-            shutdownHook(false, () -> poolExecutor.shutdown());
+            poolExecutor.execute(indexer.get());
+        }
+
+        // start the controller
+        if (!controllerDisabled) {
+            log.info("Starting an embedded controller, this can be disabled by using `--no-controller`.");
+            poolExecutor.execute(controller.get()::start);
+        }
+
+        if (poolExecutor != null) {
+            shutdownHook(true, () -> poolExecutor.shutdown());
         }
 
         log.info("Webserver started");
-        Await.until(() -> !this.applicationContext.isRunning());
+        embeddedServer.ifPresent(server -> System.out.println("\n✅ Kestra is ready! Open the UI at: " + server.getURL()));
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
         return 0;
     }
 }

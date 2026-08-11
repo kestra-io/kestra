@@ -1,6 +1,11 @@
 package io.kestra.core.plugins;
 
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -11,17 +16,14 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.services.TaskOutputService;
+
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hamcrest.MatcherAssert;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 
 @KestraTest(startRunner = true)
 class AdditionalPluginTest {
@@ -29,21 +31,24 @@ class AdditionalPluginTest {
     @Inject
     private JsonSchemaGenerator jsonSchemaGenerator;
 
+    @Inject
+    private TaskOutputService taskOutputService;
+
     @Test
     @ExecuteFlow("flows/valids/additional-plugin.yaml")
-    void additionalPlugin(Execution execution) {
+    void additionalPlugin(Execution execution) throws Exception {
         assertThat(execution).isNotNull();
         assertThat(execution.getState().isSuccess()).isTrue();
         assertThat(execution.getTaskRunList()).hasSize(2);
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("output")).isEqualTo("1 -> Hello");
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("output")).isEqualTo("Hello World!");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("output")).isEqualTo("1 -> Hello");
+        assertThat(taskOutputService.getOutputs(execution.getTaskRunList().get(1)).get("output")).isEqualTo("Hello World!");
     }
 
     @Test
     void shouldResolveAdditionalPluginSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, AdditionalPluginTest.AdditionalPluginTestTask.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions).hasSize(7);
+        assertThat(definitions).hasSize(10);
         assertThat(definitions).containsKey("io.kestra.core.plugins.AdditionalPluginTest-AdditionalPluginTest1");
         assertThat(definitions).containsKey("io.kestra.core.plugins.AdditionalPluginTest-AdditionalPluginTest2");
     }

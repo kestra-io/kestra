@@ -1,15 +1,15 @@
 <template>
-    <el-table tableLayout="auto" fixed :data="variables">
-        <el-table-column prop="key" minWidth="500" :label="$t(keyLabelTranslationKey)">
+    <KsTable tableLayout="auto" fixed :data="variables">
+        <KsTableColumn prop="key" width="240" :label="$t(keyLabelTranslationKey)">
             <template #default="scope">
                 <code class="key-col">{{ scope.row.key }}</code>
             </template>
-        </el-table-column>
+        </KsTableColumn>
 
-        <el-table-column prop="value" :label="$t('value')">
+        <KsTableColumn prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.date">
-                    <DateAgo :inverted="true" :date="scope.row.value" />
+                    <KsDateAgo :inverted="true" :date="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.subflow">
                     {{ scope.row.value }}
@@ -19,42 +19,41 @@
                     <VarValue :execution="executionsStore.execution" :value="scope.row.value" />
                 </template>
             </template>
-        </el-table-column>
-    </el-table>
+        </KsTableColumn>
+    </KsTable>
 </template>
 
-<script>
-    import Utils from "../../utils/utils";
-    import VarValue from "./VarValue.vue";
-    import DateAgo from "../../components/layout/DateAgo.vue";
+<script setup lang="ts">
+    import {computed} from "vue"
+    import * as Utils from "../../utils/utils"
+    import VarValue from "./VarValue.vue"
     import SubFlowLink from "../flows/SubFlowLink.vue"
-    import {mapStores} from "pinia";
-    import {useExecutionsStore} from "../../stores/executions";
+    import {useExecutionsStore} from "../../stores/executions"
 
-    export default {
-        components: {
-            DateAgo,
-            VarValue,
-            SubFlowLink
+
+    interface VariableRow {
+        key: string;
+        value: any;
+        date?: boolean;
+        subflow?: boolean;
+    }
+
+    const props = withDefaults(
+        defineProps<{
+            data: Record<string, any>;
+            keyLabelTranslationKey?: string;
+        }>(),
+        {
+            keyLabelTranslationKey: "name",
         },
-        props: {
-            data: {
-                type: Object,
-                required: true
-            },
-            keyLabelTranslationKey: {
-                type: String,
-                required: false,
-                default: "name"
-            }
-        },
-        computed: {
-            ...mapStores(useExecutionsStore),
-            variables() {
-                return Utils.executionVars(this.data);
-            },
-        },
-    };
+    )
+
+    const executionsStore = useExecutionsStore()
+
+    const variables = computed<VariableRow[]>(() => {
+        return Utils.executionVars(props.data)
+    })
+
 </script>
 <style>
     .key-col {

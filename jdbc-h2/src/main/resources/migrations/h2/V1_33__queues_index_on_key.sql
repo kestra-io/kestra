@@ -1,1 +1,0 @@
-CREATE INDEX IF NOT EXISTS queues_type__key ON queues ("type", "key");

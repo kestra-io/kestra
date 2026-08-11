@@ -1,162 +1,156 @@
 <template>
-    <ContextInfoContent :title="t('feeds.title')">
-        <div
+    <ContextInfoContent ref="contextInfoRef">
+        <header class="newsHeader">
+            <h4>{{ $t("feeds.heading") }}</h4>
+            <p>{{ $t("feeds.subheading") }}</p>
+        </header>
+        <a
             class="post"
             :class="{
-                lastPost: index === 0,
-                expanded: expanded[feed.id]
+                topPost: index === 0,
+                bottomPost: index === feeds.length - 1
             }"
             v-for="(feed, index) in feeds"
             :key="feed.id"
+            :href="feed.href ?? feed.link"
+            target="_blank"
+            rel="noopener noreferrer"
         >
-            <div v-if="feed.image" class="mr-2">
-                <img :src="feed.image" alt="">
-            </div>
+            <img v-if="feed.image" :src="feed.image" alt="">
             <div class="metaBlock">
+                <KsDateAgo className="news-date" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
             </div>
-
-            <Markdown class="markdown-tooltip mt-3 postParagraph" :source="feed.description" />
-
-            <div class="newsButtonBar">
-                <el-button
-                    style="flex:1"
-                    @click="expanded[feed.id] = !expanded[feed.id]"
-                >
-                    <MenuDown class="expandIcon" />
-                    {{ expanded[feed.id] ? t("showLess") : t("showMore") }}
-                </el-button>
-                <el-button
-                    v-if="feed.href"
-                    :title="t('open in new tab')"
-                    tag="a"
-                    type="primary"
-                    target="_blank"
-                    :href="feed.href"
-                >
-                    <OpenInNew :title="feed.link" />
-                </el-button>
-            </div>
-
-            <el-divider v-if="index !== feeds.length - 1" />
-        </div>
+            <OpenInNew class="openInNewIcon" aria-hidden="true" />
+        </a>
     </ContextInfoContent>
 </template>
 
-<script lang="ts" setup>
-    import {computed, onMounted, reactive} from "vue";
-    import {useI18n} from "vue-i18n";
+<script setup lang="ts">
+    import {computed, onMounted, ref} from "vue"
     import {useStorage} from "@vueuse/core"
+    import {useScrollMemory} from "../../composables/useScrollMemory"
 
-    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-    import MenuDown from "vue-material-design-icons/MenuDown.vue";
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import Markdown from "./Markdown.vue";
-    import DateAgo from "./DateAgo.vue";
-    import ContextInfoContent from "../ContextInfoContent.vue";
+    import ContextInfoContent from "../ContextInfoContent.vue"
 
-    import {useApiStore} from "../../stores/api";
+    import {useApiStore} from "../../stores/api"
 
-    const apiStore = useApiStore();
-    const {t} = useI18n({useScope: "global"});
+    const apiStore = useApiStore()
 
-    const feeds = computed(() => apiStore.feeds);
-
-    const expanded = reactive<Record<string, boolean>>({});
+    const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null)
+    const feeds = computed(() => apiStore.feeds)
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
     onMounted(() => {
-        lastNewsReadDate.value = feeds.value[0].publicationDate;
-    });
+        lastNewsReadDate.value = feeds.value[0].publicationDate
+    })
+
+    const scrollableElement = computed(() => contextInfoRef.value?.contentRef || null)
+    useScrollMemory(ref("context-panel-news"), scrollableElement as any)
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
+    .newsHeader {
+        padding: 2rem 2rem 0;
+
+        h4 {
+            font-size: var(--ks-font-size-md);
+            font-weight: 600;
+            margin: 0 0 0.25rem;
+            color: var(--ks-text-primary);
+        }
+
+        p {
+            font-size: var(--ks-font-size-sm);
+            color: var(--ks-text-secondary);
+            margin: 0;
+        }
+    }
+
     .post {
-        padding: 1rem;
+        position: relative;
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        margin: 0 1rem;
+        padding: 0.75rem;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: inherit;
+        text-decoration: none;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+
+        & + & {
+            margin-top: 0.25rem;
+        }
+
+        &:hover,
+        &:focus-visible {
+            background: var(--ks-bg-hover-elevated);
+            border-color: var(--ks-border-focus);
+
+            .openInNewIcon {
+                opacity: 1;
+            }
+        }
 
         h5 {
-            margin-bottom: 0;
-            font-size: var(--font-size-lg);
+            margin: 0;
+            font-size: var(--ks-font-size-md);
+            font-weight: 600;
+            color: var(--ks-text-primary);
         }
 
         img {
-            max-height: 6rem;
-            max-width: 10rem;
-            margin-right: 1rem;
-            float: left;
-            border-radius: var(--border-radius-lg);
+            display: block;
+            width: 100px;
+            aspect-ratio: 16 / 9;
+            border: 1px solid var(--ks-border-default);
+            border-radius: 4px;
+            object-fit: cover;
+            flex-shrink: 0;
         }
 
         .metaBlock {
             display: flex;
             flex-direction: column;
-            vertical-align: middle;
-            justify-content: center;
             gap: 0.25rem;
-            min-height: 6rem;
-        }
-
-        hr {
-            border-top-color: var(--bs-gray-700);
-            margin-top: .5rem;
-            margin-bottom: .5rem;
-        }
-
-        .small {
-            font-size:  var(--font-size-sm);
-            opacity: 0.7;
-        }
-
-        a.el-button {
-            font-weight: bold;
-        }
-
-        .expandIcon {
-            margin-right: 1rem;
+            min-width: 0;
         }
     }
 
-    .expanded .expandIcon{
-        transform: rotate(180deg);
-    }
-
-    .lastPost{
-        .postParagraph {
-            -webkit-line-clamp: 6;
-            line-clamp: 6;
-        }
+    .topPost {
+        flex-direction: column;
+        gap: 0.5rem;
 
         img {
-            display: block;
             width: 100%;
-            float: none;
-            max-width: none;
-            max-height: none;
-            margin-bottom: 1rem;
+            aspect-ratio: auto;
+            border: none;
+            border-radius: var(--kel-border-radius-round);
         }
     }
 
-    .postParagraph {
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        overflow: hidden;
-        line-height: 1.6;
-        .expanded & {
-            -webkit-line-clamp: unset;
-        }
+    .bottomPost {
+        margin-bottom: 2rem;
     }
 
-    .newsButtonBar {
-        display: flex;
-        margin-top: 1rem;
+    .openInNewIcon {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: var(--ks-text-primary);
+        opacity: 0;
+        transition: opacity 0.15s ease;
     }
 
     :deep(.news-date) {
-        color: var(--bs-gray-700);
+        font-size: var(--ks-font-size-2xs);
+        font-weight: 400;
+        color: var(--ks-text-secondary);
     }
 </style>

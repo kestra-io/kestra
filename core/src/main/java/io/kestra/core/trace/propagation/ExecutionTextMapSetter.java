@@ -1,8 +1,8 @@
 package io.kestra.core.trace.propagation;
 
 import io.kestra.core.models.executions.Execution;
-import io.opentelemetry.context.propagation.TextMapSetter;
 
+import io.opentelemetry.context.propagation.TextMapSetter;
 import jakarta.annotation.Nullable;
 
 public class ExecutionTextMapSetter implements TextMapSetter<Execution> {

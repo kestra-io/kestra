@@ -1,0 +1,14 @@
+id: loop-empty
+namespace: io.kestra.tests
+
+tasks:
+  - id: 1_each
+    type: io.kestra.plugin.core.flow.Loop
+    values: '[]'
+    tasks:
+      - id: 1-1
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{task.id}} > {{item.value}} > {{taskrun.startDate}}"
+  - id: 2_end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

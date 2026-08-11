@@ -1,7 +1,5 @@
 package io.kestra.webserver.tenants;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-
 import io.micronaut.core.order.Ordered;
 import io.micronaut.http.BasicHttpAttributes;
 import io.micronaut.http.HttpRequest;
@@ -10,6 +8,8 @@ import io.micronaut.http.annotation.RequestFilter;
 import io.micronaut.http.annotation.ServerFilter;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.uri.UriMatchInfo;
+
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 @ServerFilter("/**")
 public class TenantValidationFilter implements Ordered {

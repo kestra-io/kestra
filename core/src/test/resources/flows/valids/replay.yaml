@@ -1,0 +1,11 @@
+id: replay
+namespace: io.kestra.tests
+
+tasks:
+  - id: output
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      name: World
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "Hello {{ outputs.output.values.name }}"

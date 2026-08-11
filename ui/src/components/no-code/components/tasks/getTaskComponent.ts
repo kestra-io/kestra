@@ -1,10 +1,36 @@
-import {pascalCase} from "change-case";
+import {pascalCase} from "change-case"
+import {resolve$ref} from "../../../../utils/utils"
+import {SECTIONS_IDS} from "../../utils/useFlowFields"
 
-const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
+const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true})
 
-function getType(property: any, key?: string, schema?: any): string {
+export interface Schema{
+    $ref?: string;
+    $required?: boolean;
+    type: string | {const: string};
+    properties?: Record<string, Schema>;
+    required?: string[];
+    default?: any;
+    allOf?: Schema[];
+    anyOf?: Schema[];
+    oneOf?: Schema[];
+    items?: Schema;
+    const?: string;
+    format?: string;
+    $language: string;
+    $secret?: boolean;
+}
+
+export const LIST_FIELDS = SECTIONS_IDS.filter(id => id !== "outputs")
+
+function getType(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): string {
+
     if (property.enum !== undefined) {
-        return "enum";
+        return "enum"
+    }
+
+    if (property.$secret === true) {
+        return "secret"
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "$ref")) {
@@ -13,68 +39,85 @@ function getType(property: any, key?: string, schema?: any): string {
         }
 
         if (property.$ref.includes("tasks.runners.TaskRunner")) {
-            return "task-runner"
+            return "task"
         }
 
         if (property.$ref.includes("io.kestra.preload")) {
             return "list"
         }
 
-        return "complex";
+        return "complex"
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "allOf")) {
         if (property.allOf.length === 2
             && property.allOf[0].$ref && !property.allOf[1].properties) {
-            return "complex";
+            return "complex"
         }
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
         if (key === "labels" && property.anyOf.length === 2
             && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
-            return "KV-pairs";
+            return "dict"
         }
 
         // for dag tasks
-        if (property.anyOf.length > 10) {
+        if (property.anyOf.length > 10 || key === "taskRunner") {
             return "task"
         }
-        return "any-of";
+        return "any-of"
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {
-        return "dict";
+        return "dict"
     }
 
     if (property.type === "integer") {
-        return "number";
+        return "number"
     }
 
     if (key === "version" && property.type === "string") {
-        return "version";
+        return "version"
     }
 
     if (key === "namespace") {
-        return "namespace";
+        return "namespace"
     }
 
-    const properties = Object.keys(schema?.properties ?? {});
-    const hasNamespaceProperty = properties.includes("namespace");
+    if (key === "namespaces" && property.type === "array") {
+        return "namespaces"
+    }
+
+    if (key === "tenants" && property.type === "array") {
+        return "tenants"
+    }
+
+    const properties = siblingKeys ?? []
+    const hasNamespaceProperty = properties.includes("namespace")
     if (key === "flowId" && hasNamespaceProperty) {
-        return "subflow-id";
+        return "subflow-id"
+    }
+
+    if (key === "dashboardId") {
+        return "dashboard-id"
+    }
+
+    if (key === "chartId" && properties.includes("dashboardId")) {
+        return "chart-id"
     }
 
     if (key === "inputs" && hasNamespaceProperty && properties.includes("flowId")) {
-        return "subflow-inputs";
+        return "subflow-inputs"
     }
 
     if (property.type === "array") {
-        if (property.items?.anyOf?.length === 0 || property.items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
-            return "list";
+        const items = definitions ? resolve$ref({definitions: definitions}, property.items) : property.items
+        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10 || LIST_FIELDS.includes(key ?? "")) {
+            return "list"
         }
 
-        return "array";
+        return "array"
     }
 
     if (property.const) {
@@ -82,18 +125,18 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (property.type === "object" && !property.properties) {
-        return "KV-pairs";
+        return "dict"
     }
 
-    return property.type || "expression";
+    return property.type || "expression"
 }
 
-export default function getTaskComponent(property: any, key?: string, schema?: any) {
-    const typeString = getType(property, key, schema);
-    const type = pascalCase(typeString);
-    const component = TasksComponents[`./Task${type}.vue`]?.default;
+export function getTaskComponent(property: any, definitions: Record<string, any>, key?: string, siblingKeys?: string[]): any {
+    const typeString = getType(property, definitions, key, siblingKeys)
+    const type = pascalCase(typeString)
+    const component = TasksComponents[`./Task${type}.vue`]?.default
     if (component) {
-        component.ksTaskName = typeString;
+        component.ksTaskName = typeString
     }
     return component ?? {}
 }

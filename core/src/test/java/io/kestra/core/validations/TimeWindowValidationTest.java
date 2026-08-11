@@ -1,16 +1,17 @@
 package io.kestra.core.validations;
 
+import java.time.Duration;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.models.validations.ModelValidator;
+
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.time.LocalTime;
-import java.time.OffsetTime;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

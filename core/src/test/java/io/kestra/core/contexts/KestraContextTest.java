@@ -1,36 +1,31 @@
 package io.kestra.core.contexts;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-import java.util.Optional;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class KestraContextTest {
 
     @Inject
     KestraContext context;
 
     @Test
-    void shouldGetWorkerMaxNumThreads() {
+    void shouldGetWorkerMaxNumThreads() throws InterruptedException {
         // When
-        context.injectWorkerConfigs(16, null);
+        context.injectWorkerConfigs(16);
 
         // Then
-        assertThat(KestraContext.getContext().getWorkerMaxNumThreads()).isEqualTo(Optional.of(16));
+        assertThat(context.getWorkerMaxNumThreads()).isEqualTo(Optional.of(16));
     }
 
     @Test
-    void shouldGetWorkerGroupKey() {
-        // When
-        context.injectWorkerConfigs(null, "my-key");
-
-        // Then
-        assertThat(KestraContext.getContext().getWorkerGroupKey()).isEqualTo(Optional.of("my-key"));
+    void shouldGetAllocatedCpuCores() {
+        assertThat(context.getAllocatedCpuCores()).isEqualTo(Runtime.getRuntime().availableProcessors());
     }
 }

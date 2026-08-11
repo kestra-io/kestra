@@ -9,9 +9,7 @@ import java.util.List;
 public class InvalidQueryFiltersException extends KestraRuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
-    private static final String INVALID_QUERY_FILTER_MESSAGE = "Provided query filters are invalid";
-
-    private transient final List<String> invalids;
+    private static final String INVALID_QUERY_FILTER_MESSAGE = "Provided query filters are invalid: %s";
 
     /**
      * Creates a new {@link InvalidQueryFiltersException} instance.
@@ -19,8 +17,7 @@ public class InvalidQueryFiltersException extends KestraRuntimeException {
      * @param invalids the invalid filters.
      */
     public InvalidQueryFiltersException(final List<String> invalids) {
-        super(INVALID_QUERY_FILTER_MESSAGE);
-        this.invalids = invalids;
+        super(INVALID_QUERY_FILTER_MESSAGE.formatted(String.join(", ", invalids)));
     }
 
     /**
@@ -29,15 +26,6 @@ public class InvalidQueryFiltersException extends KestraRuntimeException {
      * @param invalid the invalid filter.
      */
     public InvalidQueryFiltersException(final String invalid) {
-        super(INVALID_QUERY_FILTER_MESSAGE);
-        this.invalids = List.of(invalid);
-    }
-
-
-    public String formatedInvalidObjects(){
-        if (invalids == null || invalids.isEmpty()){
-            return INVALID_QUERY_FILTER_MESSAGE;
-        }
-        return String.join(", ", invalids);
+        super(INVALID_QUERY_FILTER_MESSAGE.formatted(invalid));
     }
 }

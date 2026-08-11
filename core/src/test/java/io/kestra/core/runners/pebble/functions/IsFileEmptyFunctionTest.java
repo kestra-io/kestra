@@ -1,30 +1,36 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.IdUtils;
-import io.micronaut.context.annotation.Property;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.LocalPath;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
+
+import io.micronaut.context.annotation.Property;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.pebbletemplates.pebble.error.PebbleException;
+import jakarta.inject.Inject;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@KestraTest(rebuildContext = true)
+@MicronautTest(rebuildContext = true)
 @Execution(ExecutionMode.SAME_THREAD)
 class IsFileEmptyFunctionTest {
 
@@ -36,6 +42,9 @@ class IsFileEmptyFunctionTest {
 
     @Inject
     StorageInterface storageInterface;
+
+    @Inject
+    NamespaceFactory namespaceFactory;
 
     private URI getInternalStorageURI(String executionId) {
         return URI.create("/" + NAMESPACE.replace(".", "/") + "/" + FLOW + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
@@ -56,7 +65,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", FLOW,
                 "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", executionId)
         );
         boolean render = Boolean.parseBoolean(variableRenderer.render("{{ isFileEmpty('" + internalStorageFile + "') }}", variables));
@@ -64,15 +74,17 @@ class IsFileEmptyFunctionTest {
     }
 
     @Test
-    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
-        String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("NOT AN EMPTY FILE".getBytes()));
+        String value = "NOT AN EMPTY FILE";
+        URI nsFile = createNsFile(false, value);
 
         boolean render = Boolean.parseBoolean(
-            variableRenderer.render("{{ isFileEmpty('" + filePath + "', namespace='" + namespace + "') }}",
-                Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT))));
+            variableRenderer.render(
+                "{{ isFileEmpty('" + nsFile.getPath() + "', namespace='" + namespace + "') }}",
+                Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT))
+            )
+        );
         assertFalse(render);
     }
 
@@ -87,7 +99,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", FLOW,
                 "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", executionId)
         );
         boolean render = Boolean.parseBoolean(variableRenderer.render("{{ isFileEmpty('" + internalStorageFile + "') }}", variables));
@@ -100,11 +113,14 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme")
         );
 
-        assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ isFileEmpty('unsupported://path-to/file.txt') }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ isFileEmpty('unsupported://path-to/file.txt') }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).contains("Cannot process the URI unsupported://path-to/file.txt: scheme not supported.");
     }
 
     @Test
@@ -114,12 +130,14 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
 
-        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
     @Test
@@ -130,7 +148,8 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
@@ -147,23 +166,25 @@ class IsFileEmptyFunctionTest {
             "flow", Map.of(
                 "id", "notme",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "notme"),
             "file", file.toString()
         );
 
-        assertThrows(SecurityException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ isFileEmpty(file) }}", variables));
+        assertThat(exception.getCause()).isInstanceOf(SecurityException.class);
     }
 
-
     @Test
-    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException {
-        URI file = createNsFile(false);
+    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        URI file = createNsFile(false, "Hello World");
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "flow",
                 "namespace", "io.kestra.tests",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
         );
@@ -172,13 +193,14 @@ class IsFileEmptyFunctionTest {
     }
 
     @Test
-    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException {
-        URI file = createNsFile(true);
+    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        URI file = createNsFile(true, "Hello World");
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "flow",
                 "namespace", "notme",
-                "tenantId", MAIN_TENANT),
+                "tenantId", MAIN_TENANT
+            ),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
         );
@@ -186,16 +208,16 @@ class IsFileEmptyFunctionTest {
         assertThat(variableRenderer.render("{{ isFileEmpty(nsfile) }}", variables)).isEqualTo("false");
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
+    private URI createNsFile(boolean nsInAuthority, String value) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("file", ".txt");
+        File tempFile = Files.createTempFile(Path.of("/tmp"), "file", ".txt").toFile();
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

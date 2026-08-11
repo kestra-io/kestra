@@ -1,16 +1,18 @@
 package io.kestra.core.validations.extractors;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Set;
+
+import org.junit.jupiter.api.Test;
 
 import io.kestra.core.models.property.Property;
+
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.validation.validator.Validator;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 
-import java.util.Set;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
 public class PropertyValueExtractorTest {
@@ -19,7 +21,7 @@ public class PropertyValueExtractorTest {
     private Validator validator;
 
     @Test
-    public void should_extract_and_validate_integer_value(){
+    public void should_extract_and_validate_integer_value() {
         DynamicPropertyDto dto = new DynamicPropertyDto(Property.ofValue(20), Property.ofValue("Test"));
         Set<ConstraintViolation<DynamicPropertyDto>> violations = validator.validate(dto);
         assertTrue(violations.isEmpty());

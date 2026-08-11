@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.templating
+name: "templating"
+title: "Templating"
+description: "Tasks that render dynamic task specifications from templates."
+body: "TemplatedTask lets you supply a Pebble-rendered YAML spec that is parsed and executed at runtime; provide the `spec` property with a valid runnable task definition and avoid recursive templating when composing dynamic tasks."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

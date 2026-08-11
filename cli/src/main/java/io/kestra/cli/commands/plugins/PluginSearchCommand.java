@@ -1,18 +1,19 @@
 package io.kestra.cli.commands.plugins;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.kestra.cli.AbstractCommand;
-import io.micronaut.core.type.Argument;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Command(
     name = "search",
@@ -59,12 +60,14 @@ public class PluginSearchCommand extends AbstractCommand {
 
         for (JsonNode plugin : root) {
             if (matchesSearch(plugin, searchTermLower)) {
-                plugins.add(new PluginInfo(
-                    plugin.path("name").asText(),
-                    plugin.path("title").asText(),
-                    plugin.path("group").asText(),
-                    plugin.path("version").asText("")
-                ));
+                plugins.add(
+                    new PluginInfo(
+                        plugin.path("name").asText(),
+                        plugin.path("title").asText(),
+                        plugin.path("group").asText(),
+                        plugin.path("version").asText("")
+                    )
+                );
             }
         }
 
@@ -84,12 +87,15 @@ public class PluginSearchCommand extends AbstractCommand {
 
     private void printResults(List<PluginInfo> plugins) {
         if (plugins.isEmpty()) {
-            stdOut("No plugins found{0}",
-                searchTerm.isEmpty() ? "" : " matching '" + searchTerm + "'");
+            stdOut(
+                "No plugins found{0}",
+                searchTerm.isEmpty() ? "" : " matching '" + searchTerm + "'"
+            );
             return;
         }
 
-        stdOut("\nFound {0} plugins{1}",
+        stdOut(
+            "\nFound {0} plugins{1}",
             plugins.size(),
             searchTerm.isEmpty() ? "" : " matching '" + searchTerm + "'"
         );
@@ -110,20 +116,25 @@ public class PluginSearchCommand extends AbstractCommand {
         StringBuilder groupPad = new StringBuilder(maxGroup);
 
         stdOut("");
-        printRow(namePad, titlePad, groupPad, "NAME", "TITLE", "GROUP", "VERSION",
-            maxName, maxTitle, maxGroup);
+        printRow(
+            namePad, titlePad, groupPad, "NAME", "TITLE", "GROUP", "VERSION",
+            maxName, maxTitle, maxGroup
+        );
 
         for (PluginInfo plugin : plugins) {
-            printRow(namePad, titlePad, groupPad, plugin.name, plugin.title, plugin.group, plugin.version,
-                maxName, maxTitle, maxGroup);
+            printRow(
+                namePad, titlePad, groupPad, plugin.name, plugin.title, plugin.group, plugin.version,
+                maxName, maxTitle, maxGroup
+            );
         }
         stdOut("");
     }
 
     private void printRow(StringBuilder namePad, StringBuilder titlePad, StringBuilder groupPad,
-                          String name, String title, String group, String version,
-                          int maxName, int maxTitle, int maxGroup) {
-        stdOut("{0}  {1}  {2}  {3}",
+        String name, String title, String group, String version,
+        int maxName, int maxTitle, int maxGroup) {
+        stdOut(
+            "{0}  {1}  {2}  {3}",
             pad(namePad, name, maxName),
             pad(titlePad, title, maxTitle),
             pad(groupPad, group, maxGroup),
@@ -140,7 +151,8 @@ public class PluginSearchCommand extends AbstractCommand {
         return sb.toString();
     }
 
-    private record PluginInfo(String name, String title, String group, String version) {}
+    private record PluginInfo(String name, String title, String group, String version) {
+    }
 
     @Override
     protected boolean loadExternalPlugins() {

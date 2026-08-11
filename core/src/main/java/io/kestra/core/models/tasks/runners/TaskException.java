@@ -1,8 +1,8 @@
 package io.kestra.core.models.tasks.runners;
 
-import lombok.Getter;
-
 import java.io.Serial;
+
+import lombok.Getter;
 
 @Getter
 public class TaskException extends Exception {
@@ -16,35 +16,30 @@ public class TaskException extends Exception {
     private transient AbstractLogConsumer logConsumer;
 
     /**
-     * This constructor will certainly be removed in 0.21 as we keep it only because all task runners must be impacted.
-     * @deprecated use {@link #TaskException(int, AbstractLogConsumer)} instead.
+     * Optional post-execution detail produced by the task runner before it failed.
+     * Carried here so the script task can still expose it as the {@code taskRunner}
+     * output on the failure path (e.g. to render a FAILED state in the topology view).
      */
-    @Deprecated(forRemoval = true, since = "0.20.0")
-    public TaskException(int exitCode, int stdOutCount, int stdErrCount) {
-        this("Command failed with exit code " + exitCode, exitCode, stdOutCount, stdErrCount);
-    }
+    private final transient TaskRunnerDetailResult details;
 
     public TaskException(int exitCode, AbstractLogConsumer logConsumer) {
-        this("Command failed with exit code " + exitCode, exitCode, logConsumer);
-    }
-
-    /**
-     * This constructor will certainly be removed in 0.21 as we keep it only because all task runners must be impacted.
-     * @deprecated use {@link #TaskException(String, int, AbstractLogConsumer)} instead.
-     */
-    @Deprecated(forRemoval = true, since = "0.20.0")
-    public TaskException(String message, int exitCode, int stdOutCount, int stdErrCount) {
-        super(message);
-        this.exitCode = exitCode;
-        this.stdOutCount = stdOutCount;
-        this.stdErrCount = stdErrCount;
+        this("Command failed with exit code " + exitCode, exitCode, logConsumer, null);
     }
 
     public TaskException(String message, int exitCode, AbstractLogConsumer logConsumer) {
+        this(message, exitCode, logConsumer, null);
+    }
+
+    public TaskException(int exitCode, AbstractLogConsumer logConsumer, TaskRunnerDetailResult details) {
+        this("Command failed with exit code " + exitCode, exitCode, logConsumer, details);
+    }
+
+    public TaskException(String message, int exitCode, AbstractLogConsumer logConsumer, TaskRunnerDetailResult details) {
         super(message);
         this.exitCode = exitCode;
         this.stdOutCount = logConsumer.getStdOutCount();
         this.stdErrCount = logConsumer.getStdErrCount();
         this.logConsumer = logConsumer;
+        this.details = details;
     }
 }

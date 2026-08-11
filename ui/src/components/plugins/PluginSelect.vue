@@ -1,142 +1,201 @@
 <template>
-    <el-select
+    <KsSelect
         v-model="modelValue"
-        :placeholder="t(`no_code.select.${blockType}`)"
+        :placeholder="$te(`no_code.select.${blockType}`) ? $t(`no_code.select.${blockType}`) : $t('no_code.select.default')"
         filterable
+        :filterMethod="onFilter"
+        clearable
     >
-        <el-option
-            v-for="item in taskModels.sort()"
-            :key="item"
-            :label="item"
-            :value="item"
+        <KsOption
+            v-for="item in filteredTaskModels"
+            :key="item.cls"
+            :label="item.cls"
+            :value="item.cls"
         >
             <span class="options">
-                <TaskIcon v-if="hasIcons" :cls="item" :onlyIcon="true" :icons="pluginsStore.icons" />
-                <span>
-                    {{ item }}
-                </span>
+                <TaskIcon
+                    :cls="item?.cls"
+                    :onlyIcon="true"
+                    :loadIcon="pluginsStore.loadIcon"
+                />
+                <div class="option-content">
+                    <div class="cls">{{ item?.cls }}</div>
+                    <div v-if="item?.title && item?.title !== item?.cls" class="title">
+                        {{ item?.title }}
+                    </div>
+                </div>
             </span>
-        </el-option>
+        </KsOption>
 
         <template #prefix>
-            <TaskIcon v-if="modelValue && hasIcons" :cls="modelValue" :onlyIcon="true" :icons="pluginsStore.icons" />
+            <TaskIcon
+                v-if="modelValue"
+                :cls="modelValue"
+                :onlyIcon="true"
+                :loadIcon="pluginsStore.loadIcon"
+            />
         </template>
-    </el-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onBeforeMount, ref} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {TaskIcon} from "@kestra-io/ui-libs";
-    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
+    import {computed, inject, onBeforeMount, ref} from "vue"
+    import TaskIcon from "./TaskIcon.vue"
+    import {removeRefPrefix, usePluginsStore} from "../../stores/plugins"
     import {
         FULL_SCHEMA_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-    } from "../no-code/injectionKeys";
-    import {getValueAtJsonPath} from "../../utils/utils";
+    } from "../no-code/injectionKeys"
+    import {getValueAtJsonPath} from "../../utils/utils"
 
-    const pluginsStore = usePluginsStore();
+    const pluginsStore = usePluginsStore()
 
-    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
-    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}));
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "")
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}))
+    const rootDefinitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, ref<Record<string, any>>({}))
 
-    const blockType = parentPath.split(".").pop() ?? "";
+    const blockType = (parentPath.split(".").pop() ?? "").replace(/\[\d+\]$/, "")
+    const isPluginBlock = ["tasks", "triggers", "conditions", "taskRunners"].includes(blockType)
 
     const fieldDefinition = computed(() => {
         if (props.blockSchemaPath.length === 0) {
-            console.error("Definition key is required for PluginSelect component");
+            console.error("Definition key is required for PluginSelect component")
         }
-        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath);
+        return getValueAtJsonPath(fullSchema.value, props.blockSchemaPath)
     })
 
     onBeforeMount(() => {
-        if (blockType === "pluginDefaults") {
-            pluginsStore.listWithSubgroup({includeDeprecated: false});
+        if (isPluginBlock) {
+            pluginsStore.listWithSubgroup({includeDeprecated: false})
         }
+        pluginsStore.fetchIcons()
     })
 
     const allRefs = computed(() => fieldDefinition.value?.anyOf?.map((item: any) => {
         if (item.allOf) {
             // if the item is an allOf, we need to find the first item that has a $ref
-            const refItem = item.allOf.find((d: any) => d.$ref);
+            const refItem = item.allOf.find((d: any) => d.$ref)
             if (refItem?.$ref) {
-                return removeRefPrefix(refItem.$ref);
+                return removeRefPrefix(refItem.$ref)
             }
         }
-        return removeRefPrefix(item.$ref);
-    }) || []);
+        return removeRefPrefix(item.$ref)
+    }) || [])
 
-    const taskModels = computed(() => {
-        if (blockType === "pluginDefaults") {
-            const models = new Set<any>();
-            const pluginKeySection = ["tasks", "conditions", "triggers", "taskRunners"] as const;
-
-            for (const plugin of pluginsStore.plugins || []) {
-                for (const curSection of pluginKeySection) {
-                    const entries = plugin[curSection];
-                    if (entries) {
-                        for (const {cls} of entries.filter(({deprecated}) => !deprecated)) {
-                            models.add(cls);
-                        }
-                    }
-                }
-            }
-
-            return Array.from(models);
-        }
-
-        return allRefs.value.reduce((acc: string[], item: string) => {
+    const taskModelsSets = computed(() => {
+        return allRefs.value.reduce((acc: Map<string, string>, item: string) => {
             const def = rootDefinitions.value?.[item]
 
             if (!def || def.$deprecated) {
-                return acc;
+                return acc
             }
 
             const consolidatedType = def.allOf
                 ? def.allOf.find((d: any) => d.properties?.type)?.properties.type
-                : def.properties?.type;
+                : def.properties?.type
 
             if (consolidatedType?.const) {
-                acc.push(consolidatedType?.const);
+                acc.set(consolidatedType.const, def.title ?? consolidatedType.const)
+            }
+
+            if (consolidatedType?.enum) {
+                const val = consolidatedType.enum[0]
+
+                acc.set(val, def.title ?? val)
             }
             return acc
-        }, []).sort();
+        }, new Map<string, string>())
     })
 
-    const hasIcons = computed(() => {
-        return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => taskModels.value.includes(plugin)).length > 0;
-    });
+    const taskModels = computed(() => {
+        const entries = (Array.from(taskModelsSets.value) as [string, string][])
+            .map(([cls, title]) => ({cls, title}))
 
-    const {t} = useI18n();
+        const unique = Array.from(new Map(entries.map(e => [e.cls, e])).values())
+        return unique.sort((a, b) => a.cls.localeCompare(b.cls))
+    })
+    
+    const query = ref("")
+    const onFilter = (value: string) => {
+        query.value = value ?? ""
+    }
+
+    const filteredTaskModels = computed(() => {
+        const q = query.value.trim().toLowerCase()
+        if (!q) {
+            return taskModels.value
+        }
+        return taskModels.value.filter(({cls}) => cls.toLowerCase().includes(q))
+    })
 
     const modelValue = defineModel({
         type: String,
         default: "",
-    });
+    })
 
     const props = defineProps<{
         blockSchemaPath: string,
     }>()
 </script>
 
-<style lang="scss" scoped>
-    :deep(div.wrapper) {
+<style scoped lang="scss">
+    :deep(div.task-icon) {
         display: inline-block;
-        width: 20px;
-        height: 20px;
+        width: var(--ks-font-size-lg);
+        height: var(--ks-font-size-lg);
         margin-right: 1rem;
     }
 
-    :deep(.el-input__prefix-inner) {
-        .wrapper {
+    :deep(.kel-input__prefix-inner) {
+        .task-icon {
             top: 0;
             margin-right: 0;
         }
     }
 
-    :deep(.el-select__suffix) {
+    :deep(.kel-select__suffix) {
         display: flex !important;
     }
+
+    .kel-select-dropdown__item {
+        height: fit-content;
+        line-height: normal;
+        padding: 8px 12px;
+    }
+
+    .options {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        :deep(.task-icon) {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .option-content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            gap: 0.25rem;
+
+            .cls {
+                font-weight: 600;
+                line-height: 1.2;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .title {
+                font-size: var(--ks-font-size-xs);
+                color: var(--ks-text-secondary);
+                line-height: 1.2;
+                white-space: normal;
+            }
+        }
+    }
+
 </style>
+

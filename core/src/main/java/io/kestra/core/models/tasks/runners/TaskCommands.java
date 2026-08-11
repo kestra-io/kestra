@@ -1,8 +1,5 @@
 package io.kestra.core.models.tasks.runners;
 
-import io.kestra.core.models.property.Property;
-import lombok.With;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +10,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import io.kestra.core.models.property.Property;
 
 /**
  * Interface for the commands passed to a TaskRunner.
@@ -29,6 +27,10 @@ public interface TaskCommands {
     Property<List<String>> getCommands();
 
     Map<String, Object> getAdditionalVars();
+
+    default String outputDirectoryName() {
+        return this.getWorkingDirectory().relativize(this.getOutputDirectory()).toString();
+    }
 
     Path getWorkingDirectory();
 

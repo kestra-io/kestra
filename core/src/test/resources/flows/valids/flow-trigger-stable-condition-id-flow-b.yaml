@@ -1,0 +1,7 @@
+id: flow-trigger-stable-condition-id-flow-b
+namespace: io.kestra.tests.trigger.stable.condition.id
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from flow-b: {{execution.id}}"

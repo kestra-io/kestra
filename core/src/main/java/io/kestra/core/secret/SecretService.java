@@ -1,19 +1,28 @@
 package io.kestra.core.secret;
 
+import java.io.IOException;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.Strings;
+
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.repositories.ArrayListTotal;
+
+import io.micronaut.data.model.Pageable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Singleton
 @Slf4j
-public class SecretService {
+public class SecretService<META> {
     private static final String SECRET_PREFIX = "SECRET_";
+
     private Map<String, String> decodedSecrets;
 
     @PostConstruct
@@ -23,8 +32,8 @@ public class SecretService {
 
     public void decode() {
         decodedSecrets = System.getenv().entrySet().stream()
-            .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX))
-            .<Map.Entry<String, String>>mapMulti((entry, consumer) -> {
+            .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX)).<Map.Entry<String, String>> mapMulti((entry, consumer) ->
+            {
                 try {
                     String value = entry.getValue().replaceAll("\\R", "");
                     consumer.accept(Map.entry(entry.getKey(), new String(Base64.getDecoder().decode(value))));
@@ -32,10 +41,12 @@ public class SecretService {
                     log.error("Could not decode secret '{}', make sure it is Base64-encoded: {}", entry.getKey(), e.getMessage());
                 }
             })
-            .collect(Collectors.toMap(
-                entry -> entry.getKey().substring(SECRET_PREFIX.length()).toUpperCase(),
-                Map.Entry::getValue
-            ));
+            .collect(
+                Collectors.toMap(
+                    entry -> entry.getKey().substring(SECRET_PREFIX.length()).toUpperCase(),
+                    Map.Entry::getValue
+                )
+            );
     }
 
     public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
@@ -46,7 +57,42 @@ public class SecretService {
         return secret;
     }
 
+    /**
+     * Finds the secret in full mode, as a value plus metadata.
+     * The default returns the value with empty metadata. Multi-field secret managers override this to add metadata.
+     */
+    public SecretObject findSecretObject(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
+        return new SecretObject(findSecret(tenantId, namespace, key));
+    }
+
+    public ArrayListTotal<META> list(Pageable pageable, String tenantId, List<QueryFilter> filters) throws IOException {
+        final Predicate<String> queryPredicate = filters.stream()
+            .filter(filter -> QueryFilter.Field.QUERY.equals(filter.field()) && filter.value() != null)
+            .findFirst()
+            .map(filter ->
+            {
+                if (QueryFilter.Op.EQUALS.equals(filter.operation())) {
+                    return (Predicate<String>) s -> Strings.CI.contains(s, (String) filter.value());
+                } else if (QueryFilter.Op.NOT_EQUALS.equals(filter.operation())) {
+                    return (Predicate<String>) s -> !Strings.CI.contains(s, (String) filter.value());
+                } else {
+                    throw new IllegalArgumentException("Unsupported operation for QUERY filter: " + filter.operation());
+                }
+            })
+            .orElse(s -> true);
+
+        //noinspection unchecked
+        return ArrayListTotal.of(
+            pageable,
+            decodedSecrets.keySet().stream().filter(queryPredicate).map(s -> (META) s).toList()
+        );
+    }
+
     public Map<String, Set<String>> inheritedSecrets(String tenantId, String namespace) throws IOException {
         return Map.of(namespace, decodedSecrets.keySet());
+    }
+
+    public Map<String, Set<String>> ownAndInheritedSecrets(String tenantId, String namespace) throws IOException {
+        return inheritedSecrets(tenantId, namespace);
     }
 }

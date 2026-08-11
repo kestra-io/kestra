@@ -1,5 +1,11 @@
 package io.kestra.plugin.core.kv;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.kv.KVType;
@@ -12,6 +18,8 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
+import io.kestra.core.utils.TypeConverter;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -19,14 +27,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.time.Duration;
-import java.time.Instant;
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create or modify a Key-Value pair."
+    title = "Create or update a key-value entry.",
+    description = """
+        Renders `key`, `value`, and `namespace` (defaults to flow namespace) and writes to the KV store. Supports TTL, description, type coercion (`kvType`), and overwrite control.
+
+        If `kvType` is set, the string value is parsed/validated accordingly (number, boolean, datetime, duration, JSON, etc.)."""
 )
 @Plugin(
     examples = {
@@ -103,14 +112,19 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
 
         KVStore kvStore = runContext.namespaceKv(renderedNamespace);
 
-        if (kvType != null){
+        if (kvType != null) {
             KVType renderedKvType = runContext.render(kvType).as(KVType.class).orElseThrow();
             if (renderedValue instanceof String renderedValueStr) {
                 renderedValue = switch (renderedKvType) {
                     case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
-                    case BOOLEAN -> Boolean.parseBoolean((String) renderedValue);
-                    case DATETIME, DATE -> Instant.parse(renderedValueStr);
-                    case DURATION -> Duration.parse(renderedValueStr);
+                    case BOOLEAN -> TypeConverter.toBoolean(renderedValueStr);
+                    case DATETIME -> TypeConverter.toInstant(renderedValueStr);
+                    case DATE -> parseDate(renderedValueStr);
+                    // We parse duration to make sure it's valid but we store it as a raw duration string
+                    case DURATION -> {
+                        TypeConverter.toDuration(renderedValueStr);
+                        yield renderedValueStr;
+                    }
                     case JSON -> JacksonMapper.toObject(renderedValueStr);
                     default -> renderedValue;
                 };
@@ -119,14 +133,31 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
             }
         }
 
-        kvStore.put(renderedKey, new KVValueAndMetadata(
-            new KVMetadata(
-                runContext.render(kvDescription).as(String.class).orElse(null),
-                runContext.render(ttl).as(Duration.class).orElse(null)
-            ), renderedValue),
+        kvStore.put(
+            renderedKey, new KVValueAndMetadata(
+                new KVMetadata(
+                    runContext.render(kvDescription).as(String.class).orElse(null),
+                    runContext.render(ttl).as(Duration.class).orElse(null)
+                ), renderedValue
+            ),
             runContext.render(this.overwrite).as(Boolean.class).orElseThrow()
         );
 
         return null;
+    }
+
+    /**
+     * Parses a {@code DATE}-typed KV value into a {@link LocalDate}.
+     * <p>
+     * A date-only value (e.g. {@code 2023-05-02}) is the expected form. A full ISO-8601
+     * instant (e.g. {@code 2023-05-02T01:02:03Z}) is also accepted — previously {@code DATE}
+     * shared {@code DATETIME}'s {@code Instant.parse} branch — and is truncated to its UTC date.
+     */
+    private static LocalDate parseDate(String value) {
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            return LocalDate.ofInstant(Instant.parse(value), ZoneOffset.UTC);
+        }
     }
 }

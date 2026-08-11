@@ -1,13 +1,14 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
+
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
 
 @Data
 @SuperBuilder
@@ -26,7 +27,7 @@ public class WorkerTaskRunning extends WorkerJobRunning {
     private Task task;
 
     @NotNull
-    private RunContext runContext;
+    private WorkerTaskData data;
 
     /**
      * {@inheritDoc}
@@ -36,13 +37,12 @@ public class WorkerTaskRunning extends WorkerJobRunning {
         return this.taskRun.getId();
     }
 
-    public static WorkerTaskRunning of(WorkerTask workerTask, WorkerInstance workerInstance, int partition) {
+    public static WorkerTaskRunning of(WorkerTask workerTask, WorkerInstance workerInstance) {
         return WorkerTaskRunning.builder()
             .workerInstance(workerInstance)
-            .partition(partition)
             .taskRun(workerTask.getTaskRun())
             .task(workerTask.getTask())
-            .runContext(workerTask.getRunContext())
+            .data(workerTask.getData())
             .build();
     }
 }

@@ -1,27 +1,23 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.Indexer;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.debug.Return;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.debug.Return;
+
+import jakarta.inject.Inject;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,22 +26,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @KestraTest
 abstract public class JdbcQueueTest {
     @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    protected QueueInterface<FlowInterface> flowQueue;
+    protected BroadcastQueueInterface<FlowInterface> flowQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;
-
-    @Inject
-    JdbcTestUtils jdbcTestUtils;
+    protected DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Test
     void noGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, throwConsumer(either -> {
-            FlowInterface flow = either.getLeft();
+        flowQueue.addListener(throwConsumer(flow ->
+        {
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
             }
@@ -56,7 +47,6 @@ abstract public class JdbcQueueTest {
         flowQueue.emit(builder("io.kestra.f1"));
 
         assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
-        receive.blockLast();
 
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
@@ -65,19 +55,18 @@ abstract public class JdbcQueueTest {
     void withGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", throwConsumer(either -> {
-            FlowInterface flow = either.getLeft();
+        flowQueue.addListener(throwConsumer(flow ->
+        {
             if (flow.getNamespace().equals("io.kestra.f1")) {
-                flowQueue.emit("consumer_group", builder("io.kestra.f2"));
+                flowQueue.emit(builder("io.kestra.f2"));
             }
 
             countDownLatch.countDown();
         }));
 
-        flowQueue.emit("consumer_group", builder("io.kestra.f1"));
+        flowQueue.emit(builder("io.kestra.f1"));
 
         assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
-        receive.blockLast();
 
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
@@ -85,8 +74,8 @@ abstract public class JdbcQueueTest {
     @Test
     void withType() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, Indexer.class, throwConsumer(either -> {
-            FlowInterface flow = either.getLeft();
+        flowQueue.addListener(throwConsumer(flow ->
+        {
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 // second one
                 flowQueue.emit(builder("io.kestra.f2"));
@@ -99,7 +88,6 @@ abstract public class JdbcQueueTest {
         flowQueue.emit(builder("io.kestra.f1"));
 
         assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
-        receive.blockLast();
 
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
@@ -108,20 +96,19 @@ abstract public class JdbcQueueTest {
     @Test
     void withGroupAndType() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, throwConsumer(either -> {
-            FlowInterface flow = either.getLeft();
+        flowQueue.addListener(throwConsumer(flow ->
+        {
             if (flow.getNamespace().equals("io.kestra.f1")) {
-                flowQueue.emit("consumer_group", builder("io.kestra.f2"));
+                flowQueue.emit(builder("io.kestra.f2"));
             }
 
             countDownLatch.countDown();
         }));
 
         // first one
-        flowQueue.emit("consumer_group", builder("io.kestra.f1"));
+        flowQueue.emit(builder("io.kestra.f1"));
 
         assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
-        receive.blockLast();
 
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
@@ -132,11 +119,5 @@ abstract public class JdbcQueueTest {
             .namespace(namespace == null ? "kestra.test" : namespace)
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
             .build();
-    }
-
-    @BeforeEach
-    protected void init() {
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 }

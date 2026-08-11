@@ -1,21 +1,126 @@
-import {defineConfig} from "vite";
-import vue from "@vitejs/plugin-vue";
-import path from "path";
+import {defineConfig} from "vite"
+import vue from "@vitejs/plugin-vue"
 
-import viteConfig from "./vite.config.js";
+import {mergeConfig} from "vitest/config"
+import viteConfig from "./vite.config.js"
+import path from "node:path"
+import {fileURLToPath} from "node:url"
+import {storybookTest} from "@storybook/addon-vitest/vitest-plugin"
+import {playwright} from "@vitest/browser-playwright"
 
+const dirname =
+    typeof __dirname !== "undefined"
+        ? __dirname
+        : path.dirname(fileURLToPath(import.meta.url))
+
+// vite.config.js skips the federation()/VitePWA() plugins when this is set (they have no
+// place in a test run); the storybook CLI sets it automatically, so mirror that here.
+process.env.STORYBOOK = "true"
+
+const resolvedViteConfig = typeof viteConfig === "function" ? viteConfig({mode: "test"}) : viteConfig
+
+if (resolvedViteConfig.server) {
+    resolvedViteConfig.server.proxy = {}
+}
+
+// @vue/compiler-dom passes a browser-only `decodeEntities` option to
+// @vue/compiler-core during Vite's Node.js transform phase. The core
+// compiler warns that the option is ignored in non-browser builds — this
+// is a known false-positive that produces no functional difference.
+// Suppress it so test output stays clean.
+const originalConsoleWarn = console.warn.bind(console)
+console.warn = (...args) => {
+    if (typeof args[0] === "string" && args[0].includes("decodeEntities")) return
+    originalConsoleWarn(...args)
+}
+
+// Vite writes logger warnings to process.stderr. Silence the
+// "Sourcemap for X points to a source file outside its package" noise
+// emitted when node_modules packages reference scss from sibling packages
+// (e.g. element-plus inside design-system, design-system inside topology).
+// These are harmless cross-package sourcemap references that flood test output.
+const isElementPlusSourcemapWarning = (s) =>
+    /sourcemap/i.test(s) && s.includes("points to a source file outside its package") && s.includes("node_modules")
+const origStderrWrite = process.stderr.write.bind(process.stderr)
+process.stderr.write = (chunk, ...rest) => {
+    if (typeof chunk === "string" && isElementPlusSourcemapWarning(chunk)) return true
+    return origStderrWrite(chunk, ...rest)
+}
+const origStdoutWrite = process.stdout.write.bind(process.stdout)
+process.stdout.write = (chunk, ...rest) => {
+    if (typeof chunk === "string" && isElementPlusSourcemapWarning(chunk)) return true
+    return origStdoutWrite(chunk, ...rest)
+}
+
+// More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-    plugins: [
-        vue(),
-    ],
+    plugins: [vue()],
     resolve: {
-        alias: {
-            "override/services/filterLanguagesProvider": path.resolve(__dirname, "tests/storybook/mocks/services/filterLanguagesProvider.mock.ts"),
-            ...viteConfig.resolve.alias,
-        },
+        ...resolvedViteConfig.resolve,
+        alias: [
+            ...resolvedViteConfig.resolve.alias,
+        ],
     },
     test: {
-        projects: [".storybook/vitest.config.js", "./vitest.config.unit.js"],
+        projects: [
+            "./vitest.config.unit.js",
+            mergeConfig(resolvedViteConfig, {
+                plugins: [
+                    // The plugin will run tests for the stories defined in your Storybook config
+                    // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
+                    storybookTest({
+                        configDir: path.join(dirname, ".storybook"),
+                    }),
+                ],
+                test: {
+                    name: "storybook",
+                    setupFiles: ["./.storybook/vitest.setup.js"],
+                    reporters: [
+                        ["default"],
+                        ["junit"],
+                    ],
+                    outputFile: {
+                        junit: "./test-report.storybook.junit.xml",
+                    },
+                    // Each worker drives its own headless Chromium instance; letting
+                    // this scale with CPU count (the default) spins up enough
+                    // concurrent browsers to exhaust CI memory, which kills a
+                    // worker mid-run and surfaces as "[birpc] rpc is closed,
+                    // cannot call 'createTesters'" rather than a real test failure.
+                    maxWorkers: 2,
+                    browser: {
+                        enabled: true,
+                        headless: true,
+                        // enable early garbage collection
+                        provider: playwright({
+                            launchOptions: {
+                                args: ["--js-flags=--max-old-space-size=1536", "--disable-dev-shm-usage"],
+                            },
+                        }),
+                        instances: [
+                            {
+                                browser: "chromium",
+                            },
+                        ],
+                    },
+                },
+            }),
+        ],
+        coverage: {
+            reporter: ["text", "html"],
+            include: [
+                "src/**/*.{ts,vue}",
+            ],
+            exclude: [
+                "**/node_modules/**",
+                "**/*.stories.*",
+                "**/*.spec.{ts,tsx}",
+                "**/*.d.ts",
+                "**/.storybook/**",
+                "storybook-static/**",
+                "stylelint.config.mjs",
+            ],
+        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

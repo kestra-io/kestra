@@ -1,20 +1,35 @@
 package io.kestra.core.docs;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
+
 import com.google.common.collect.ImmutableMap;
+
+import io.kestra.core.app.AppBlockInterface;
+import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.annotations.PluginSubGroup;
-import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.charts.Chart;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.AdditionalPlugin;
 import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.preview.FileRenderer;
 import io.kestra.core.runners.pebble.Extension;
 import io.kestra.core.runners.pebble.JsonWriter;
 import io.kestra.core.runners.pebble.filters.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Slugify;
+
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.extension.AbstractExtension;
 import io.pebbletemplates.pebble.extension.Filter;
@@ -26,14 +41,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.apache.commons.io.IOUtils;
-
-import java.io.IOException;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -61,10 +68,11 @@ public class DocumentationGenerator {
             })
             .autoEscaping(false)
             .extension(new Extension())
+            .allowOverrideCoreOperators(true)
             .build();
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public List<Document> generate(RegisteredPlugin registeredPlugin) throws Exception {
         ArrayList<Document> result = new ArrayList<>();
 
@@ -72,20 +80,22 @@ public class DocumentationGenerator {
 
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
-        result.addAll(this.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
-        //noinspection unchecked
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTaskRunners(), (Class) TaskRunner.class, "task-runners"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getLogExporters(), (Class) LogExporter.class, "log-exporters"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getAdditionalPlugins(), AdditionalPlugin.class, "additional-plugins"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getCharts(), (Class) Chart.class, "charts"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getDataFilters(), (Class) DataFilter.class, "data-filters"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getApps(), AppPluginInterface.class, "apps"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getAppBlocks(), AppBlockInterface.class, "app-blocks"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getFileRenderers(), FileRenderer.class, "file-renderers"));
 
         result.addAll(guides(registeredPlugin));
 
         return result;
     }
 
-    private static List<Document> index(RegisteredPlugin plugin) throws IOException {
+    public static List<Document> index(RegisteredPlugin plugin) throws IOException {
         Map<SubGroup, Map<String, List<ClassPlugin>>> groupedClass = DocumentationGenerator.indexGroupedClass(plugin);
-
 
         if (groupedClass.isEmpty()) {
             return Collections.emptyList();
@@ -114,16 +124,18 @@ public class DocumentationGenerator {
             builder.put("icon", plugin.icon("plugin-icon"));
         }
 
-        if(!plugin.getGuides().isEmpty()) {
+        if (!plugin.getGuides().isEmpty()) {
             builder.put("guides", plugin.getGuides());
         }
 
-        return Collections.singletonList(new Document(
-            docPath(plugin),
-            render("index", builder.build()),
-            plugin.icon("plugin-icon"),
-            null
-        ));
+        return Collections.singletonList(
+            new Document(
+                docPath(plugin),
+                render("index", builder.build()),
+                plugin.icon("plugin-icon"),
+                null
+            )
+        );
     }
 
     private static Map<SubGroup, Map<String, List<ClassPlugin>>> indexGroupedClass(RegisteredPlugin plugin) {
@@ -131,43 +143,47 @@ public class DocumentationGenerator {
             .entrySet()
             .stream()
             .filter(r -> !r.getKey().equals("controllers") && !r.getKey().equals("storages"))
-            .flatMap(entry -> entry.getValue()
-                .stream()
-                .map(cls -> {
-                    ClassPlugin.ClassPluginBuilder builder = ClassPlugin.builder()
-                        .name(cls.getName())
-                        .simpleName(cls.getSimpleName())
-                        .type(entry.getKey());
-                    if (cls.getPackageName().startsWith(plugin.group())) {
-                        var pluginSubGroup = cls.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
-                        var subGroupName =  cls.getPackageName().length() > plugin.group().length() ?
-                            cls.getPackageName().substring(plugin.group().length() + 1) : "";
-                        var subGroupTitle = pluginSubGroup != null ? pluginSubGroup.title() : subGroupName;
-                        var subGroupDescription = pluginSubGroup != null ? pluginSubGroup.description() : null;
-                        // hack to avoid adding the subgroup in the task URL when it's the group to keep search engine indexes
-                        var subgroupIsGroup = cls.getPackageName().length() <= plugin.group().length();
-                        var subGroupIcon = plugin.icon(cls.getPackageName());
-                        var subgroup = new SubGroup(subGroupName, subGroupTitle, subGroupDescription, subGroupIcon, subgroupIsGroup);
-                        builder.subgroup(subgroup);
-                    } else {
-                        // should never occur
-                        builder.subgroup(new SubGroup(""));
-                    }
+            .flatMap(
+                entry -> entry.getValue()
+                    .stream()
+                    .map(cls ->
+                    {
+                        ClassPlugin.ClassPluginBuilder builder = ClassPlugin.builder()
+                            .name(cls.getName())
+                            .simpleName(cls.getSimpleName())
+                            .type(entry.getKey());
+                        if (cls.getPackageName().startsWith(plugin.group())) {
+                            var pluginSubGroup = cls.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
+                            var subGroupName = cls.getPackageName().length() > plugin.group().length() ? cls.getPackageName().substring(plugin.group().length() + 1) : "";
+                            var subGroupTitle = pluginSubGroup != null ? pluginSubGroup.title() : subGroupName;
+                            var subGroupDescription = pluginSubGroup != null ? pluginSubGroup.description() : null;
+                            // hack to avoid adding the subgroup in the task URL when it's the group to keep search engine indexes
+                            var subgroupIsGroup = cls.getPackageName().length() <= plugin.group().length();
+                            var subGroupIcon = plugin.icon(cls.getPackageName());
+                            var subgroup = new SubGroup(subGroupName, subGroupTitle, subGroupDescription, subGroupIcon, subgroupIsGroup);
+                            builder.subgroup(subgroup);
+                        } else {
+                            // should never occur
+                            builder.subgroup(new SubGroup(""));
+                        }
 
-                    return builder.build();
-                }))
+                        return builder.build();
+                    })
+            )
             .filter(Objects::nonNull)
             .distinct()
-            .sorted(Comparator.comparing(ClassPlugin::getSubgroup)
-                .thenComparing(ClassPlugin::getType)
-                .thenComparing(ClassPlugin::getName)
+            .sorted(
+                Comparator.comparing(ClassPlugin::getSubgroup)
+                    .thenComparing(ClassPlugin::getType)
+                    .thenComparing(ClassPlugin::getName)
             )
-            .collect(Collectors.groupingBy(
-                ClassPlugin::getSubgroup,
-                Collectors.groupingBy(classPlugin -> Slugify.toStartCase(classPlugin.getType()))
-            ));
+            .collect(
+                Collectors.groupingBy(
+                    ClassPlugin::getSubgroup,
+                    Collectors.groupingBy(classPlugin -> Slugify.toStartCase(classPlugin.getType()))
+                )
+            );
     }
-
 
     @AllArgsConstructor
     @Getter
@@ -183,7 +199,7 @@ public class DocumentationGenerator {
     @AllArgsConstructor
     @Getter
     @EqualsAndHashCode(of = "name")
-    public static class SubGroup implements Comparable<SubGroup>{
+    public static class SubGroup implements Comparable<SubGroup> {
         String name;
         String title;
         String description;
@@ -208,19 +224,24 @@ public class DocumentationGenerator {
             .guides()
             .entrySet()
             .stream()
-            .map(throwFunction(e -> new Document(
-                pluginName + "/guides/" + e.getKey()  + ".md",
-                e.getValue(),
-                null,
-                null
-            )))
+            .map(
+                throwFunction(
+                    e -> new Document(
+                        pluginName + "/guides/" + e.getKey() + ".md",
+                        e.getValue(),
+                        null,
+                        null
+                    )
+                )
+            )
             .toList();
     }
 
     private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
         return cls
             .stream()
-            .map(pluginClass -> {
+            .map(pluginClass ->
+            {
                 PluginClassAndMetadata<T> metadata = PluginClassAndMetadata.create(
                     registeredPlugin,
                     pluginClass,
@@ -229,7 +250,8 @@ public class DocumentationGenerator {
                 );
                 return ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, registeredPlugin.version(), true);
             })
-            .map(pluginDocumentation -> {
+            .map(pluginDocumentation ->
+            {
                 try {
                     return new Document(
                         docPath(registeredPlugin, type, pluginDocumentation),

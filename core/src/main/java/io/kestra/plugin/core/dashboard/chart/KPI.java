@@ -8,6 +8,7 @@ import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -55,7 +56,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class KPI <F extends Enum<F>, D extends DataFilterKPI<F, ? extends ColumnDescriptor<F>>> extends DataChartKPI<KpiOption, D> {
+public class KPI<F extends Enum<F>, D extends DataFilterKPI<F, ? extends ColumnDescriptor<F>>> extends DataChartKPI<KpiOption, D> {
 
     @Override
     public Integer minNumberOfAggregations() {

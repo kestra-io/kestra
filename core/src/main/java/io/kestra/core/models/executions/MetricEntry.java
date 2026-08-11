@@ -1,23 +1,27 @@
 package io.kestra.core.models.executions;
 
+import java.time.Instant;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.DeletedInterface;
+
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.executions.metrics.Gauge;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.utils.IdUtils;
+
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Value;
 
-import java.time.Instant;
-import java.util.Map;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-
 @Value
 @Builder(toBuilder = true)
-public class MetricEntry implements DeletedInterface, TenantInterface {
+public class MetricEntry implements TenantInterface, DispatchEvent {
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
@@ -53,12 +57,14 @@ public class MetricEntry implements DeletedInterface, TenantInterface {
     @Nullable
     Map<String, String> tags;
 
-    @NotNull
-    @Builder.Default
-    boolean deleted = false;
-
     @Nullable
     ExecutionKind executionKind;
+
+    @Override
+    public String key() {
+        // FIXME should we return null instead?
+        return IdUtils.create();
+    }
 
     public static MetricEntry of(TaskRun taskRun, AbstractMetricEntry<?> metricEntry, ExecutionKind executionKind) {
         return MetricEntry.builder()
@@ -80,6 +86,10 @@ public class MetricEntry implements DeletedInterface, TenantInterface {
     private static Double computeValue(AbstractMetricEntry<?> metricEntry) {
         if (metricEntry instanceof Counter counter) {
             return counter.getValue();
+        }
+
+        if (metricEntry instanceof Gauge gauge) {
+            return gauge.getValue();
         }
 
         if (metricEntry instanceof Timer timer) {

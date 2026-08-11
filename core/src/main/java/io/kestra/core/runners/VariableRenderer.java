@@ -1,120 +1,44 @@
 package io.kestra.core.runners;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.configuration.VariableConfiguration;
 import io.kestra.core.runners.pebble.*;
-import io.kestra.core.runners.pebble.functions.RenderingFunctionInterface;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.ConfigurationProperties;
+import io.kestra.core.serializers.JacksonMapper;
+
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.AttributeNotFoundException;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Extension;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.Getter;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Proxy;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Singleton
 public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
+    public static final String RENDER_DEPTH_VAR = "__kestra_render_depth";
 
-    private final PebbleEngine pebbleEngine;
+    private volatile PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
     @Inject
-    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
-        this(applicationContext, variableConfiguration, Collections.emptyList());
-    }
-
-    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration, List<String> functionsToMask) {
+    public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
+        this.pebbleEngine = pebbleEngineFactory.create();
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
-
-        PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
-            .registerExtensionCustomizer(ExtensionCustomizer::new)
-            .strictVariables(true)
-            .cacheActive(this.variableConfiguration.getCacheEnabled())
-            .newLineTrimming(false)
-            .autoEscaping(false);
-
-        List<Extension> extensions = applicationContext.getBeansOfType(Extension.class).stream()
-            .map(e -> functionsToMask.stream().anyMatch(excludedFunction -> e.getFunctions().containsKey(excludedFunction))
-                ? extensionWithMaskedFunctions(e, functionsToMask)
-                : e)
-            .toList();
-
-        extensions.forEach(pebbleBuilder::extension);
-
-        if (this.variableConfiguration.getCacheEnabled()) {
-            pebbleBuilder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
-        }
-
-        this.pebbleEngine = pebbleBuilder.build();
     }
 
-    private Extension extensionWithMaskedFunctions(Extension initialExtension, List<String> maskedFunctions) {
-        return (Extension) Proxy.newProxyInstance(
-            initialExtension.getClass().getClassLoader(),
-            new Class[]{Extension.class},
-            (proxy, method, methodArgs) -> {
-                if (method.getName().equals("getFunctions")) {
-                    return initialExtension.getFunctions().entrySet().stream()
-                        .map(entry -> {
-                            if (maskedFunctions.contains(entry.getKey())) {
-                                return Map.entry(entry.getKey(), this.maskedFunctionProxy(entry.getValue()));
-                            } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
-                                return Map.entry(entry.getKey(), this.variableRendererProxy(entry.getValue()));
-                            }
-
-                            return entry;
-                        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                }
-
-                return method.invoke(initialExtension, methodArgs);
-            }
-        );
+    public void setPebbleEngine(final PebbleEngine pebbleEngine) {
+        this.pebbleEngine = pebbleEngine;
     }
 
-    private Function variableRendererProxy(Function initialFunction) {
-        return (Function) Proxy.newProxyInstance(
-            initialFunction.getClass().getClassLoader(),
-            new Class[]{Function.class, RenderingFunctionInterface.class},
-            (functionProxy, functionMethod, functionArgs) -> {
-                if (functionMethod.getName().equals("variableRenderer")) {
-                    return this;
-                }
-                return functionMethod.invoke(initialFunction, functionArgs);
-            }
-        );
-    }
-
-    private Function maskedFunctionProxy(Function initialFunction) {
-        return (Function) Proxy.newProxyInstance(
-            initialFunction.getClass().getClassLoader(),
-            new Class[]{Function.class},
-            (functionProxy, functionMethod, functionArgs) -> {
-                Object result;
-                try {
-                    result = functionMethod.invoke(initialFunction, functionArgs);
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
-                if (functionMethod.getName().equals("execute")) {
-                    return "******";
-                }
-                return result;
-            }
-        );
+    private PebbleEngine pebbleEngine() {
+        return this.pebbleEngine;
     }
 
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
@@ -138,7 +62,11 @@ public class VariableRenderer {
     }
 
     public String render(String inline, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
-        return (String) this.render(inline, variables, recursive, true);
+        if (inline == null) {
+            return null;
+        }
+        String result = (String) this.render(inline, variables, recursive, true);
+        return result != null ? result : "";
     }
 
     public Object render(Object inline, Map<String, Object> variables, boolean recursive, boolean stringify) throws IllegalVariableEvaluationException {
@@ -173,21 +101,34 @@ public class VariableRenderer {
         }
 
         try {
-            PebbleTemplate compiledTemplate = this.pebbleEngine.getLiteralTemplate((String) result);
+            PebbleTemplate compiledTemplate = this.pebbleEngine().getLiteralTemplate((String) result);
 
-            OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
-            compiledTemplate.evaluate(writer, variables);
-            result = writer.output();
-        } catch (IOException | PebbleException e) {
-            String alternativeRender = this.alternativeRender(e, (String) inline, variables);
-            if (alternativeRender == null) {
-                if (e instanceof PebbleException pebbleException) {
-                    throw properPebbleException(pebbleException);
+            try {
+                OutputWriter writer = stringify ? new JsonWriter() : new TypedObjectWriter();
+                compiledTemplate.evaluate(writer, variables);
+                result = writer.output();
+            } catch (IllegalArgumentException e) {
+                //can happen in case of mixed type in string
+                if (!stringify) {
+                    JsonWriter fallbackWriter = new JsonWriter();
+                    compiledTemplate.evaluate(fallbackWriter, variables);
+                    Object rendered = fallbackWriter.output();
+
+                    if (rendered instanceof String renderedString) {
+                        result = tryParseJson(renderedString);
+                    } else {
+                        result = rendered;
+                    }
+                } else {
+                    throw e;
                 }
-                throw new IllegalVariableEvaluationException(e);
-            } else {
-                result = alternativeRender;
             }
+
+        } catch (IOException | RuntimeException e) {
+            if (e instanceof PebbleException pebbleException) {
+                throw properPebbleException(pebbleException);
+            }
+            throw new IllegalVariableEvaluationException(e);
         }
 
         if (result instanceof String stringValue && replacers != null) {
@@ -198,16 +139,12 @@ public class VariableRenderer {
         return result;
     }
 
-    /**
-     * This method can be used in fallback for rendering an input string.
-     *
-     * @param e The exception that was throw by the default variable renderer.
-     * @param inline           The expression to be rendered.
-     * @param variables        The context variables.
-     * @return The rendered string.
-     */
-    protected String alternativeRender(Exception e, String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return null;
+    private Object tryParseJson(String value) {
+        try {
+            return JacksonMapper.ofJson().readValue(value, Object.class);
+        } catch (Exception ignored) {
+            return value;
+        }
     }
 
     private static String putBackRawTags(Map<String, String> replacers, String result) {
@@ -218,7 +155,8 @@ public class VariableRenderer {
     }
 
     private static String replaceRawTags(Matcher rawMatcher, Map<String, String> replacers) {
-        return rawMatcher.replaceAll(matchResult -> {
+        return rawMatcher.replaceAll(matchResult ->
+        {
             var uuid = UUID.randomUUID().toString();
             replacers.put(uuid, matchResult.group(1));
             return uuid;
@@ -235,7 +173,7 @@ public class VariableRenderer {
         }
 
         Object result = this.renderOnce(inline, variables, stringify);
-        if (result.equals(inline)) {
+        if (result == null || Objects.equals(result, inline)) {
             return result;
         }
 
@@ -251,7 +189,7 @@ public class VariableRenderer {
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
             String key = this.render(r.getKey(), variables);
-            Object value = renderObject(r.getValue(), variables, recursive).orElse(r.getValue());
+            Object value = renderObject(r.getValue(), variables, recursive).orElse(null);
 
             map.putIfAbsent(
                 key,
@@ -266,7 +204,7 @@ public class VariableRenderer {
         return this.renderObject(object, variables, this.variableConfiguration.getRecursiveRendering());
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive) throws IllegalVariableEvaluationException {
         if (object instanceof Map map) {
             return Optional.of(this.render(map, variables, recursive));
@@ -275,11 +213,19 @@ public class VariableRenderer {
         } else if (object instanceof Set set) {
             return Optional.of(this.render(set, variables, recursive));
         } else if (object instanceof String string) {
-            return Optional.of(this.render(string, variables, recursive));
+            return Optional.ofNullable(this.render(string, variables, recursive, true));
         }
 
         // Return the given object if it cannot be rendered.
         return Optional.ofNullable(object);
+    }
+
+    /**
+     * Renders an object while tracking render() nesting depth to prevent infinite recursion.
+     */
+    public Optional<Object> renderObject(Object object, Map<String, Object> variables, boolean recursive, int renderDepth) throws IllegalVariableEvaluationException {
+        variables.put(RENDER_DEPTH_VAR, renderDepth);
+        return renderObject(object, variables, recursive);
     }
 
     public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -290,7 +236,7 @@ public class VariableRenderer {
         List<Object> result = new ArrayList<>();
 
         for (Object inline : list) {
-            result.add(this.renderObject(inline, variables, recursive).orElse(inline));
+            result.add(this.renderObject(inline, variables, recursive).orElse(null));
         }
 
         return result;
@@ -320,19 +266,5 @@ public class VariableRenderer {
         }
 
         return result;
-    }
-
-    @Getter
-    @ConfigurationProperties("kestra.variables")
-    public static class VariableConfiguration {
-        public VariableConfiguration() {
-            this.cacheEnabled = true;
-            this.cacheSize = 1000;
-            this.recursiveRendering = false;
-        }
-
-        Boolean cacheEnabled;
-        Integer cacheSize;
-        Boolean recursiveRendering;
     }
 }

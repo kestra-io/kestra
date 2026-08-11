@@ -5,8 +5,8 @@
     </span>
 </template>
 
-<script lang="ts" setup>
-    import LockIcon from "vue-material-design-icons/LockOutline.vue";
+<script setup lang="ts">
+    import LockIcon from "vue-material-design-icons/LockOutline.vue"
     defineProps({
         enable: {
             type: Boolean,
@@ -15,7 +15,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     span {
         display: inline-flex;
         align-items: center;

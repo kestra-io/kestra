@@ -15,22 +15,28 @@ public interface WorkerJobLifecycle {
     /**
      * Forces termination of the underlying job and its associated processes.
      *
-     * <p>This method is invoked when the job is killed or timeout.
+     * <p>
+     * This method is invoked when the job is killed or timeout.
      *
-     * <p>Note that this method may be invoked from a different thread than the one running the job.
+     * <p>
+     * Note that this method may be invoked from a different thread than the one running the job.
      */
-    default void kill() { /* noop */ }
+    default void kill() {
+        /* noop */ }
 
     /**
      * Signals the underlying job to stop.
      *
-     * <p>This method is invoked when the server is shutting down.
+     * <p>
+     * This method is invoked when the server is shutting down.
      * The implementation of this method MUST be non-blocking. Thus, it is not required that the job has fully
      * stopped when returning from this method. For example, this method could set a flag that will force
      * the {@link RunnableTask#run(RunContext)} to return immediately, or a {@link RealtimeTriggerInterface} to stop publishing execution.
      *
-     * <p>Note that this method may be invoked from a different thread than the one running the job.
+     * <p>
+     * Note that this method may be invoked from a different thread than the one running the job.
      */
-    default void stop() { /* noop */ }
-    
+    default void stop() {
+        /* noop */ }
+
 }

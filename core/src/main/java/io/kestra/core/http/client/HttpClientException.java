@@ -1,9 +1,10 @@
 package io.kestra.core.http.client;
 
-import lombok.Getter;
+import java.io.Serial;
+
 import org.apache.hc.core5.http.HttpException;
 
-import java.io.Serial;
+import lombok.Getter;
 
 @Getter
 public abstract class HttpClientException extends HttpException {

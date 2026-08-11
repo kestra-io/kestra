@@ -1,21 +1,20 @@
 package io.kestra.core.utils;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThatObject;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 class VersionTest {
-    
+
     @Test
     void shouldCreateVersionFromIntegerGivenMajorVersion() {
         Version version = Version.of(1);
         Assertions.assertEquals(1, version.majorVersion());
     }
-    
+
     @Test
     void shouldCreateVersionFromStringGivenMajorVersion() {
         Version version = Version.of("1");
@@ -67,7 +66,8 @@ class VersionTest {
     void shouldThrowIllegalArgumentGivenInvalidVersion() {
         IllegalArgumentException e = Assertions.assertThrows(
             IllegalArgumentException.class,
-            () -> Version.of("bad input"));
+            () -> Version.of("bad input")
+        );
 
         Assertions.assertEquals("Invalid version, cannot parse 'bad input'", e.getMessage());
     }
@@ -147,27 +147,27 @@ class VersionTest {
     public void shouldGetStableVersionGivenMajorMinorPatchVersion() {
         // Given
         List<Version> versions = List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"));
-        
+
         // When - Then
         assertThatObject(Version.getStable(Version.of("1.2.1"), versions)).isEqualTo(Version.of("1.2.1"));
         assertThatObject(Version.getStable(Version.of("1.2.0"), versions)).isNull();
         assertThatObject(Version.getStable(Version.of("1.2.4"), versions)).isNull();
     }
-    
+
     @Test
     public void shouldGetStableGivenMajorAndMinorVersionOnly() {
         // Given
         List<Version> versions = List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"));
-        
+
         // When - Then
         assertThatObject(Version.getStable(Version.of("1.2"), versions)).isEqualTo(Version.of("1.2.3"));
     }
-    
+
     @Test
     public void shouldGetStableGivenMajorVersionOnly() {
         // Given
         List<Version> versions = List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"));
-        
+
         // When - Then
         assertThatObject(Version.getStable(Version.of("1"), versions)).isEqualTo(Version.of("1.2.3"));
     }
@@ -176,17 +176,17 @@ class VersionTest {
     public void shouldGetNullForStableGivenMajorAndMinorVersionOnly() {
         // Given
         List<Version> versions = List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"));
-        
+
         // When - Then
         assertThatObject(Version.getStable(Version.of("2.0"), versions)).isNull();
         assertThatObject(Version.getStable(Version.of("0.1"), versions)).isNull();
     }
-    
+
     @Test
     public void shouldGetNullForStableGivenMajorVersionOnly() {
         // Given
         List<Version> versions = List.of(Version.of("1.2.1"), Version.of("1.2.3"), Version.of("0.99.0"));
-        
+
         // When - Then
         assertThatObject(Version.getStable(Version.of("2"), versions)).isNull();
     }

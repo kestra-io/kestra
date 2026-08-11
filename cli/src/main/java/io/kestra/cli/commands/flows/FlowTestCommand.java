@@ -1,30 +1,36 @@
 package io.kestra.cli.commands.flows;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.cli.AbstractApiCommand;
-import io.kestra.cli.services.TenantIdSelectorService;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
-import io.kestra.cli.StandAloneRunner;
-import io.micronaut.context.ApplicationContext;
-import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import java.util.*;
+
+import org.apache.commons.io.FileUtils;
+
+import com.google.common.collect.ImmutableMap;
+
+import io.kestra.cli.AbstractApiCommand;
+import io.kestra.cli.StandAloneRunner;
+import io.kestra.cli.services.TenantIdSelectorService;
+import io.kestra.core.executor.command.Create;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import io.kestra.core.runners.FlowInputOutput;
+
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
+
+import static org.awaitility.Awaitility.await;
 
 @CommandLine.Command(
     name = "test",
@@ -69,26 +75,28 @@ public class FlowTestCommand extends AbstractApiCommand {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Integer call() throws Exception {
         super.call();
 
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+        ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
-        RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
-        TenantIdSelectorService tenantService =  applicationContext.getBean(TenantIdSelectorService.class);
+        TenantIdSelectorService tenantService = applicationContext.getBean(TenantIdSelectorService.class);
+        DispatchQueueInterface<ExecutionCommand> executionCommandQueue = applicationContext.getBean(DispatchQueueInterface.class, Qualifiers.byTypeArguments(ExecutionCommand.class));
 
         Map<String, Object> inputs = new HashMap<>();
 
-        for (int i = 0; i < this.inputs.size(); i=i+2) {
+        for (int i = 0; i < this.inputs.size(); i = i + 2) {
             if (this.inputs.size() <= i + 1) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid key pair value for inputs");
             }
 
-            inputs.put(this.inputs.get(i), this.inputs.get(i+1));
+            inputs.put(this.inputs.get(i), this.inputs.get(i + 1));
         }
 
-        try (StandAloneRunner runner = applicationContext.createBean(StandAloneRunner.class);){
+        try (StandAloneRunner runner = applicationContext.createBean(StandAloneRunner.class);) {
             runner.run();
             repositoryLoader.load(tenantService.getTenantId(tenantId), file.toFile());
 
@@ -97,18 +105,24 @@ public class FlowTestCommand extends AbstractApiCommand {
                 throw new IllegalArgumentException("Too many flow found, need 1, found " + all.size());
             }
 
-            runnerUtils.runOne(
-                all.getFirst(),
-                (flow, execution) -> flowInputOutput.readExecutionInputs(flow, execution, inputs),
-                Duration.ofHours(1)
+            var flow = all.getFirst();
+            var createCommand = Create.of(flow.toFlowId()).withInputsFromReader((executionId) -> flowInputOutput.readExecutionInputs(flow, executionId, inputs));
+            executionCommandQueue.emit(
+                createCommand
             );
+            Execution terminated = await().atMost(Duration.ofHours(1)).until(
+                () -> executionRepository.findById(tenantService.getTenantId(tenantId), createCommand.executionId()).orElse(null),
+                e -> e != null && e.getState().isTerminated()
+            );
+            stdOut("Successfully executed the flow with execution %s in state %s", terminated.getId(), terminated.getState().getCurrent());
         } catch (ConstraintViolationException e) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
-        } catch (IOException | TimeoutException e) {
+        } catch (IOException e) {
             throw new IllegalStateException(e);
         } finally {
             applicationContext.getProperty("kestra.storage.local.base-path", Path.class)
-                .ifPresent(path -> {
+                .ifPresent(path ->
+                {
                     try {
                         FileUtils.deleteDirectory(path.toFile());
                     } catch (IOException ignored) {

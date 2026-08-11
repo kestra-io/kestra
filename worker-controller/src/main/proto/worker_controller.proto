@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+import "request.proto";
+
+service WorkerControllerService {
+  // [Bidirectional Streaming] Primary RPC for job distribution using pull/ack pattern.
+  // Worker sends permits (requesting N jobs) and ACKs for received jobs.
+  // Controller sends jobs only when worker has capacity.
+  rpc streamWorkerJobs(stream WorkerJobRequest) returns (stream WorkerJobResponse);
+
+  // [Unary] Service for publishing WorkerJobResult
+  rpc sendWorkerTaskResults(OpaqueData) returns (OpaqueData);
+
+  // [Unary] Service for publishing WorkerTriggerResult
+  rpc sendWorkerTriggerResults(OpaqueData) returns (OpaqueData);
+
+  // [Unary] Service for publishing metric entries from worker.
+  rpc sendWorkerMetricEntries(OpaqueData) returns (OpaqueData);
+
+  // [Unary] Service for publishing log entries from worker.
+  rpc sendWorkerLogEntries(OpaqueData) returns (OpaqueData);
+}
+
+// Worker -> Controller: Request for jobs and signals about previously dispatched jobs.
+message WorkerJobRequest {
+  RequestOrResponseHeader header = 1;
+
+  // Number of jobs the worker can accept right now (based on local queue capacity)
+  int32 permits = 2;
+
+  // UIDs of jobs that reached a terminal state on the worker.
+  repeated string completed_job_ids = 3;
+
+  // Worker connection info - only required in the first message of the stream
+  optional WorkerConnectionInfo connectionInfo = 4;
+}
+
+// Worker connection information sent in the first request
+message WorkerConnectionInfo {
+  // Unique identifier for this worker instance
+  string workerId = 1;
+
+  // Worker group ID used to resolve worker queue subscriptions.
+  string worker_group_id = 2;
+
+  // Maximum concurrent jobs this worker can handle (based on thread count)
+  int32 maxConcurrency = 3;
+
+  // Worker's gRPC max inbound message size (bytes).
+  int32 max_inbound_message_size = 4;
+}
+
+// Controller -> Worker: Jobs to be executed
+message WorkerJobResponse {
+  RequestOrResponseHeader header = 1;
+
+  // List of jobs to execute (may be empty if no jobs available)
+  repeated WorkerJobPayload jobs = 2;
+
+  // Serialized WorkerBroadcastEvent (JSON format) — carries ExecutionKilled, ClusterEvent, etc.
+  repeated bytes events = 3;
+}
+
+// Individual job payload
+message WorkerJobPayload {
+  // Unique identifier for this job (used for ACK tracking)
+  string jobId = 1;
+  
+  // Serialized WorkerJob (JSON format, same as existing messageFormat)
+  bytes jobData = 2;
+}

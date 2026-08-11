@@ -1,0 +1,66 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "vue"],
+  "jsPlugins": ["./lint-rules/index.js"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "env": {
+    "browser": true
+  },
+  "rules": {
+    "no-console": ["error", {"allow": ["warn", "error"]}],
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-this-alias": "off",
+    "no-underscore-dangle": ["warn", {
+      "allow": [
+        "__dirname",
+        "__filename",
+        "__VUE_I18N_SYMBOL__",
+        "__setValueInTests",
+        "__loaded",
+      ]
+    }]
+  },
+  "overrides": [
+    {
+      "files": [
+        "scripts/**", 
+        "**/scripts/**", 
+        "src/translations/check.js", 
+        "**/tests/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/*.spec.js", "**/*.spec.ts", "**/*.test.js", "**/*.test.ts", "tests/unit/**/*.js", "tests/unit/**/*.ts"],
+      "excludeFiles": ["tests/e2e/**"],
+      "rules": {
+        "kestra-test-hygiene/no-direct-global-assignment": "error",
+        "kestra-test-hygiene/no-unrestored-fake-timers": "error",
+        "kestra-test-hygiene/no-unrestored-global-stub": "error",
+        "kestra-test-hygiene/require-mock-reset": "error"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "node/**",
+    "playwright-report/**",
+    "test-results/**",
+    "coverage/**",
+    "**/dist/**",
+    "packages/kestra-sdk/src/openapi/**"
+  ]
+}

@@ -1,305 +1,415 @@
-# Kestra AGENTS.md
+# Coding Agent Guidelines for Kestra Open Source Edition
 
-This file provides guidance for AI coding agents working on the Kestra project. Kestra is an open-source data orchestration and scheduling platform built with Java (Micronaut) and Vue.js.
+This document provides essential information for AI coding agents working on the Kestra codebase.
 
-## Repository Layout
+**IMPORTANT — READ FIRST**
 
-- **`core/`**: Core Kestra framework and task definitions
-- **`cli/`**: Command-line interface and server implementation
-- **`webserver/`**: REST API server implementation
-- **`ui/`**: Vue.js frontend application
-- **`jdbc-*`**: Database connector modules (H2, MySQL, PostgreSQL)
-- **`script/`**: Script execution engine
-- **`storage-local/`**: Local file storage implementation
-- **`repository-memory/`**: In-memory repository implementation
-- **`runner-memory/`**: In-memory execution runner
-- **`processor/`**: Task processing engine
-- **`model/`**: Data models and Data Transfer Objects
-- **`platform/`**: Platform-specific implementations
-- **`tests/`**: Integration test framework
-- **`e2e-tests/`**: End-to-end testing suite
+- **Act as a Senior Software Engineer and Software Architect.** Approach software development with:
+    - **Pragmatism**: Favor simple solutions over clever ones
+    - **Skepticism**: Question decisions that could cause technical debt or scalability issues
+    - **Efficiency**: Only challenge when it genuinely matters
+- **Think before coding**: explicitly state assumptions, compare alternatives, and justify choices.
+- **Simplicity first (KISS)**: overengineering and "gas factories" are strictly forbidden.
+- **Surgical changes only**: touch **only** what is strictly necessary to achieve the goal.
+- **Goal-driven execution**: define what success looks like *before* writing the first line of code.
+- **Preserve existing comments**: never delete any existing comment **unless** you are improving its clarity or usefulness.
+- **Keep comments short and only where they earn their place**: a comment you write should be **one sentence**, or two at most when the *why* genuinely needs it (a non-obvious constraint, a workaround, a subtle ordering or concurrency requirement). Do **not** comment obvious code — no restating what the next line plainly says (`// increment the counter`), no narrating a self-explanatory getter, loop, or well-named call. If the code is readable, the comment is noise; if it isn't, prefer making the code clearer over explaining it.
+- **Write clear, maintainable, and well-documented code**
+- **Build & test are mandatory**
 
-## Development Environment
+## Project
 
-### Prerequisites
+Monorepo built with Java (backend) and Vue (frontend), using Gradle as the build system.
 
-- Java 21+
-- Node.js 22+ and npm
-- Python 3, pip, and python venv
-- Docker & Docker Compose
-- Gradle (wrapper included)
+## Tech Stack
+- **Backend:** Java 25, Micronaut Framework, Lombok
+- **Frontend:** Vue 3, TypeScript, Vite, Element Plus, Pinia
+- **Build:** Gradle 8.x with multi-project structure (77 submodules)
+- **Testing:** JUnit 5, Mockito, AssertJ, Vitest, Playwright
 
-### Quick Setup with Devcontainer
+## Critical Code Patterns
 
-The easiest way to get started is using the provided devcontainer:
+### Dependency Injection
 
-1. Install VSCode Remote Development extension
-2. Run `Dev Containers: Open Folder in Container...` from command palette
-3. Select the Kestra root folder
-4. Wait for Gradle build to complete
+**DO**: Use constructor injection with final fields.
 
-### Manual Setup
+```java
+@Singleton
+public class MyService {
+    private final SomeDependency dependency;
 
-1. Clone the repository
-2. Run `./gradlew build` to build the backend
-3. Navigate to `ui/` and run `npm install`
-4. Create configuration files as described below
-
-## Configuration Files
-
-### Backend Configuration
-
-Create `cli/src/main/resources/application-override.yml`:
-
-**Local Mode (H2 database):**
-
-```yaml
-micronaut:
-  server:
-    cors:
-      enabled: true
-      configurations:
-        all:
-          allowedOrigins:
-            - http://localhost:5173
+    @Inject
+    public MyService(SomeDependency dependency) {
+        this.dependency = Objects.requireNonNull(dependency);
+    }
+}
 ```
 
-**Standalone Mode (PostgreSQL):**
+**DON'T**: Use field injection (`@Inject` on fields directly). Always prefer constructor injection.
 
-```yaml
-kestra:
-  repository:
-    type: postgres
-  storage:
-    type: local
-    local:
-      base-path: "/app/storage"
-  queue:
-    type: postgres
-  tasks:
-    tmp-dir:
-      path: /tmp/kestra-wd/tmp
-  anonymous-usage-report:
-    enabled: false
+### Class Structure
 
-datasources:
-  postgres:
-    url: jdbc:postgresql://host.docker.internal:5432/kestra
-    driverClassName: org.postgresql.Driver
-    username: kestra
-    password: k3str4
-
-flyway:
-  datasources:
-    postgres:
-      enabled: true
-      locations:
-        - classpath:migrations/postgres
-      ignore-migration-patterns: "*:missing,*:future"
-      out-of-order: true
-
-micronaut:
-  server:
-    cors:
-      enabled: true
-      configurations:
-        all:
-          allowedOrigins:
-            - http://localhost:5173
+```java
+// 1. Package declaration and imports
+// 2. Class-level annotations (@Slf4j, @Singleton, etc.)
+// 3. Class declaration with Javadoc
+// 4. Static constants (UPPER_SNAKE_CASE)
+// 5. Injected fields (@Inject)
+// 6. Constructors
+// 7. Public methods
+// 8. Protected methods
+// 9. Private methods
+// 10. Inner classes/records
 ```
 
-### Frontend Configuration
+### Annotations
+- **Micronaut:** `@Singleton`, `@Inject`, `@Controller`, `@Replaces`, `@Requires`
+- **Validation:** `@Valid`, `@NotNull`, `@Nullable`
+- **Lombok:** `@Slf4j`, `@Getter`, `@NoArgsConstructor`, `@AllArgsConstructor`
+- Use `@Builder` for complex object creation
 
-Create `ui/.env.development.local` for environment variables.
+### Error Handling
 
-## Running the Application
+**DO**:
+- Use specific exception types — extend `KestraException` or `KestraRuntimeException`
+- Use `Optional<T>` for potentially absent returned values
+- Return empty collections (e.g., `List.of()`, `Collections.emptyList()`) for absent values
+- Use try-with-resources for resource management
+- Log errors before re-throwing: `log.error("message", exception)`
+- Write exception messages as plain, complete sentences that state the fact and the actionable detail — build them with `String.formatted()`/`String.format()`, not string concatenation or em dashes, e.g. `"Cannot acquire lock on asset '%s': already locked by '%s' until %s.".formatted(id, owner, until)`
 
-### Backend
+**DON'T**: Use generic `Exception`. Don't return null for collections. Don't write terse or telegraphic exception messages (e.g. dropping articles/verbs) or string-concatenate message parts.
 
-- **Local mode**: `./gradlew runLocal` (uses H2 database)
-- **Standalone mode**: Use VSCode Run and Debug with main class `io.kestra.cli.App` and args `server standalone`
+### Java Language Features
+- Use java records for simple data carriers
 
-### Frontend
+### Naming Conventions
+- Follow Java naming-convention best practices for Classes, Methods, Variables, Constants.
+- Boolean methods: Start with `is`, `has`, `should`, `can` (e.g., `isReadOnly()`).
 
-- Navigate to `ui/` directory
-- Run `npm run dev` for development server (port 5173)
-- Run `npm run build` for production build
+### File Organization
+- Use 4-space indentation (configured in .editorconfig)
+- UTF-8 encoding with LF line endings
+- No trailing whitespace
 
-## Building and Testing
+### Utility Classes
+* Mark utility classes as `final` with a private constructor
+* Use static methods only
+* Use existing utility classes (e.g., `ListUtils`, `MapUtils`) instead of creating new ones (`io.kestra.core.utils.*`)
 
-### Backend
+**MANDATORY — never hand-roll Pebble delimiter detection.** Pebble has two block delimiter pairs — print blocks (`{{ ... }}`) and execute/statement blocks (`{% ... %}`) — and code that only checks for `{{`/`}}` silently misses `{%`/`%}` blocks. Use `io.kestra.core.utils.PebbleUtil` (`containsOpeningBlockDelimiter`, `startsWithOpeningBlockDelimiter`, `endsWithClosingBlockDelimiter`, `openingBlockDelimiters()`/`closingBlockDelimiters()`) instead of writing a new delimiter regex or literal — it derives the delimiter pairs from Pebble's own `Syntax.Builder` defaults, so it never drifts from what Pebble actually parses.
 
-```bash
-# Build the project
-./gradlew build
+### Enums
+- Use enums for fixed sets of constants, including internal fields not exposed over the API — prefer a typed enum over a raw `String`/`int` whenever the value is drawn from a closed set of known cases, even if the set may only ever have a couple of members
+- Use `@JsonValue` for custom serialization if needed
+- Use `UNKNOWN` enum value for unknown cases in deserialization
+- Compare Constants From The Left (a.k.a., Yoda conditions)
+- Use a static `fromString` method for case-insensitive lookups using `Enums` class.
 
-# Run tests
-./gradlew test
+e.g.:
+```java
+public enum MyEnum {
+    VALUE_ONE,
+    VALUE_TWO,
+    UNKNOWN;
 
-# Run specific module tests
-./gradlew :core:test
-
-# Clean build
-./gradlew clean build
+    @JsonCreator
+    public static ResourceType fromString(final String value) {
+        return Enums.getForNameIgnoreCase(value, MyEnum.class, UNKNOWN);
+    }
+}
 ```
 
-### Frontend
+### Documentation
+- Javadoc for all public classes and methods - be concise
+- Use `@param`, `@return`, `@throws` appropriately
+- Use `{@inheritDoc}` for inherited methods
+- Include usage examples for complex methods
 
-```bash
-cd ui
-npm install
-npm run test
-npm run lint
-npm run build
+## Webserver Constraints
+- Put classes used by only controllers in the webserver module (not core)
+- No business code/rule inside controllers - instead use a Service class
+- All APIs must return a valid JSON object
+- APIs should not return a response being a JSON array which cannot be evolved in a backwards-compatible way
+- Unit tests must assert that a user can only access a given API if authorized to do so, and that access is denied otherwise
+- APIs must be documented with OpenAPI annotations
+- Use DTOs for requests/responses
+- Always validate input parameters with `@Valid`
+- Use `@ExecuteOn(TaskExecutors.IO)` for blocking operations
+- Return meaningful error responses in controllers
+
+## Worker Constraints
+- Never depend on repositories for code called by the workers - instead use MetaStore/StateStore facades
+
+## Executor Constraints
+- Run the `H2RunnerTest` whenever you update part of the executor
+
+## Testing Guidelines
+
+### Java Tests
+
+**DO**:
+- Place tests in same package structure as source code
+- Simple unit test with mocks over complex integration tests when possible
+- Add // Given-When-Then comments for clarity
+- Test method naming: `should<ExpectedBehavior>When<ConditionOrAction>` (also `...Given<Input>`, `...For<Condition>`, `...If<Condition>`), e.g. `shouldThrowExceptionWhenDividingByZero()`
+- Use `@MicronautTest` for tests that require Micronaut beans
+- Use `@KestraTest` for tests that require running Kestra services (e.g., Executor, Scheduler)
+-
+```java
+@KestraTest
+class ServiceTest {
+    @Inject
+    private ServiceClass service;
+
+    @Test
+    void shouldPerformActionWhenCondition() {
+        // Given (setup)
+
+        // When (action)
+
+        // Then (assertions)
+        assertThat(result).isNotNull();
+    }
+}
 ```
 
-### End-to-End Tests
+**DON'T**: Use Nested classes for test organization. Avoid complex test hierarchies.
 
-```bash
-# Build and start E2E tests
-./build-and-start-e2e-tests.sh
+**Assertions:**
+- Use AssertJ: `assertThat().isEqualTo()`, `assertThat().isNotNull()`, `assertThatThrownBy()`, `assertThatObject()`
+- Prefer descriptive assertion methods
+- Use `@MockBean` for mocking dependencies
 
-# Or use the Makefile
-make install
-make install-plugins
-make start-standalone-postgres
-```
+**Test Categories:**
+- Unit tests: Fast, isolated, no external dependencies
+- Integration tests: Test component interaction, use `@Tag("integration")`
+- Flaky tests: Use `@Tag("flaky")` for unreliable tests
 
-## Development Guidelines
+### Frontend Tests
+- Unit tests with Vitest and `@vue/test-utils`
+- E2E tests with Playwright
+- Storybook component tests
+- Use JSdom environment for DOM testing
+- **Prefer Storybook component tests over Vitest unit tests whenever possible** — components render through their real story setup (props, slots, design-system deps) instead of being stubbed out, catching regressions unit mocks miss. Fall back to a Vitest unit test only when the logic under test isn't component-rendering behavior (e.g. a pure helper/composable) or no story exists and adding one isn't practical.
+
+## UI Design System
+
+The full UI design-system rules, component catalogue, token reference, and frontend best practices live in [ui/AGENTS.md](ui/AGENTS.md). That file is auto-loaded by AI coding agents whenever work happens under `ui/` in OSS or `ui-ee/` in Enterprise edition, and should be consulted (and kept up to date) for any frontend change.
+
+@ui/AGENTS.md
+
+## Frontend Code Style (Vue 3)
+
+**File Organization:**
+- Use 2-space indentation for Vue, JSON, YAML, CSS
+- Use 4-space indentation for JavaScript/TypeScript
+- Follow Vue 3 Composition API patterns
+- Organize imports: Vue/framework → third-party → local modules
+
+**Naming Conventions:**
+- Components: `PascalCase` files (e.g., `MyComponent.vue`)
+- Variables/functions: `camelCase`
+- Constants: `UPPER_SNAKE_CASE`
+- CSS classes: Follow Element Plus conventions
+
+**TypeScript:**
+- Use strict TypeScript configuration
+- Prefer type definitions over `any`
+- Use interfaces for object shapes
+- Use enums for fixed sets of values
+
+## Build Commands
 
 ### Java Backend
 
-- Use Java 21 features
-- Follow Micronaut framework patterns
-- Add Swagger annotations for API documentation
-- Use annotation processors (enable in IDE)
-- Set `MICRONAUT_ENVIRONMENTS=local,override` for custom config
-- Set `KESTRA_PLUGINS_PATH` for custom plugin loading
-
-### Vue.js Frontend
-
-- Vue 3 with Composition API
-- TypeScript for type safety
-- Vite for build tooling
-- ESLint and Prettier for code quality
-- Component-based architecture in `src/components/`
-
-### Code Style
-
-- Follow `.editorconfig` settings
-- Use 4 spaces for Java, 2 spaces for YAML/JSON/CSS
-- Enable format on save in VSCode
-- Use Prettier for frontend code formatting
-
-## Testing Strategy
-
-### Backend Testing
-
-- Unit tests in `src/test/java/`
-- Integration tests in `tests/` module
-- Use Micronaut test framework
-- Test both local and standalone modes
-
-### Frontend Testing
-- Unit tests with Jest
-- E2E tests with Playwright
-- Component testing with Storybook
-- Run `npm run test:unit` and `npm run test:e2e`
-
-## Plugin Development
-
-### Creating Plugins
-
-- Follow the [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/)
-- Place JAR files in `KESTRA_PLUGINS_PATH`
-- Use the plugin template structure
-- Test with both local and standalone modes
-
-### Plugin Loading
-
-- Set `KESTRA_PLUGINS_PATH` environment variable
-- Use devcontainer mounts for local development
-- Plugins are loaded at startup
-
-## Common Issues and Solutions
-
-### JavaScript Heap Out of Memory
-
-Set `NODE_OPTIONS=--max-old-space-size=4096` environment variable.
-
-### CORS Issues
-
-Ensure backend CORS is configured for `http://localhost:5173` when using frontend dev server.
-
-### Database Connection Issues
-
-- Use `host.docker.internal` instead of `localhost` when connecting from devcontainer
-- Verify PostgreSQL is running and accessible
-- Check database credentials and permissions
-
-### Gradle Build Issues
-
-- Clear Gradle cache: `./gradlew clean`
-- Check Java version compatibility
-- Verify all dependencies are available
-
-## Pull Request Guidelines
-
-### Before Submitting
-
-1. Run all tests: `./gradlew test` and `npm test`
-2. Check code formatting: `./gradlew spotlessCheck`
-3. Verify CORS configuration if changing API
-4. Test both local and standalone modes
-5. Update documentation for user-facing changes
-
-### Commit Messages
-
-- Follow conventional commit format
-- Use present tense ("Add feature" not "Added feature")
-- Reference issue numbers when applicable
-- Keep commits focused and atomic
-
-### Review Checklist
-
-- [ ] All tests pass
-- [ ] Code follows project style guidelines
-- [ ] Documentation is updated
-- [ ] No breaking changes without migration guide
-- [ ] CORS properly configured if API changes
-- [ ] Both local and standalone modes tested
-
-## Useful Commands
-
 ```bash
-# Quick development commands
-./gradlew runLocal                    # Start local backend
-./gradlew :ui:build                   # Build frontend
-./gradlew clean build                 # Clean rebuild
-npm run dev                           # Start frontend dev server
-make install                          # Install Kestra locally
-make start-standalone-postgres        # Start with PostgreSQL
+# Clean build
+./gradlew clean
 
-# Testing commands
-./gradlew test                        # Run all backend tests
-./gradlew :core:test                  # Run specific module tests
-npm run test                          # Run frontend tests
-npm run lint                          # Lint frontend code
+# Full build (includes tests)
+./gradlew build
+
+# Build without tests (faster)
+./gradlew build -x test -x integrationTest -x testCodeCoverageReport --refresh-dependencies --no-daemon --parallel
 ```
 
-## Getting Help
+### Test Commands
 
-- Open a [GitHub issue](https://github.com/kestra-io/kestra/issues)
-- Join the [Kestra Slack community](https://kestra.io/slack)
-- Check the [main documentation](https://kestra.io/docs)
+```bash
+# Run all tests (excludes flaky tests)
+./gradlew test
 
-## Environment Variables
+# Run only unit tests (fastest)
+./gradlew unitTest
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MICRONAUT_ENVIRONMENTS` | Custom config environments | `local,override` |
-| `KESTRA_PLUGINS_PATH` | Path to custom plugins | `/workspaces/kestra/local/plugins` |
-| `NODE_OPTIONS` | Node.js options | `--max-old-space-size=4096` |
-| `JAVA_HOME` | Java installation path | `/usr/java/jdk-21` |
+# Run integration tests
+./gradlew integrationTest
 
-Remember: Always test your changes in both local and standalone modes, and ensure CORS is properly configured for frontend development.
+# Run flaky tests (separate from build)
+./gradlew flakyTest
+
+# Run tests for specific module
+./gradlew :core:test
+
+# Run single test class
+./gradlew :module-name:test --tests "ClassName"
+
+# Run single test method
+./gradlew :module-name:test --tests "ClassName.methodName"
+
+# After running tests: generate a markdown summary of failures only
+npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors $(pwd)
+```
+
+### Frontend (UI)
+
+```bash
+cd ui
+
+# Install dependencies
+npm install
+
+# Development server
+npm run dev
+
+# Type checking
+npm run check:types
+
+# Build for production
+npm run build
+
+# Run tests
+npm run test:all        # All tests with coverage
+npm run test:unit       # Unit tests only
+npm run test:storybook  # Storybook tests
+npm run test:e2e        # End-to-end tests
+
+# Linting
+npm run lint            # Fix linting issues
+npm run test:lint       # Check linting only
+
+# Storybook
+npm run storybook       # Development
+npm run build-storybook # Build
+```
+
+## Development Workflow
+
+### Running Locally
+
+1. **Start/stop backends:**
+```bash
+# Start databases with Docker Compose
+docker compose -f docker-compose-ci.yml up
+
+# Stop databases with Docker Compose
+docker compose -f docker-compose-ci.yml down
+```
+
+2. **Access application:** http://localhost:8080
+
+### Worktree setup
+
+When working in an EE worktree (detected by: the working directory is under a `worktrees/` directory):
+```bash
+dev-tools/setup-worktree.sh ../worktrees/foo
+```
+This copies the gitignored `cli/src/main/resources/application-*.yml` files from the main checkout into the worktree. Without this step Kestra cannot boot in the worktree. The script is idempotent — safe to re-run.
+
+### Security Considerations
+- Use tenant isolation for multi-tenant features
+- Implement proper authorization with `@HasAnyPermission`
+- Handle secrets securely (never log sensitive data)
+
+### Performance Best Practices
+- Implement pagination for large datasets
+- Use streaming for large file operations
+- Cache frequently accessed data appropriately
+- Initialize collections with the expected size to avoid resizing overhead
+
+## Troubleshooting
+
+**Common Issues:**
+- **Build failures:** Run `./gradlew clean` and retry
+- **Test failures:** Check for service dependencies (Docker containers)
+- **Frontend issues:** Ensure Node.js version matches package.json requirements
+
+**Debugging:**
+- Use IDE debugging with remote JVM debugging
+- Use Micronaut's built-in health endpoints
+- Enable debug logging: `--logging.level.io.kestra=DEBUG`
+- Use JUnit and Vitest reports for test failures
+
+## Module Structure
+
+**Core Modules:**
+- `cli` - Command Line Interface
+- `core` - Core functionality
+- `webserver` - Web server
+- `ui` - Vue 3 frontend application
+- `executor` - The component responsible for managing execution state
+- `scheduler` - The component responsible for scheduling polling and schedule triggers
+- `worker` - The component that executes tasks and manages worker instances
+- `worker-controller` - The component that manages worker instances and job distribution
+- `indexer` - The component responsible for indexing executions
+- `plateform` - provides the Platform Bill of Materials (BOM) for dependency management
+
+**Queuing Layer:**
+- `queue` - Core API for queue implementations
+- `queue-jdbc` - JDBC-based queue implementation
+
+**Data Layer:**
+- `jdbc-*` - Database implementations (H2, Postgres, MySQL)
+
+**Testing Modules:**
+- `tests` - Common test utilities and base classes
+- `jmh-benchmark` - JMH benchmarks for performance testing
+
+**Key Patterns:**
+- Repository pattern for data access
+- Service layer for business logic
+- Controller layer for HTTP endpoints
+- Builder pattern for object construction (often with Lombok `@Builder`)
+
+## Pull request guidelines
+- Always add tests, keep your branch rebased instead of merged, and adhere to the commit message recommendations from https://www.conventionalcommits.org/en/v1.0.0.
+- Use types: chore, feat, fix, refactor, test, docs, build
+- Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
+
+## Issue guidelines
+- **Classify an issue with its GitHub issue type, not a `kind/*` label.** The `kind/bug` label is retired — do not add it. Set the type instead: `gh issue create --title … ` followed by `gh issue edit <number> --type Bug`, or `gh issue edit <number> --type Task|Feature|Epic`. Available types are `Task`, `Bug`, `Feature` and `Epic` (list them with `gh api /orgs/kestra-io/issue-types`).
+- **Do add the `area/*` labels** — `area/frontend`, `area/backend`, `area/devops`, `area/docs`, `area/plugin`, `area/qa`, `area/analytics` — since those drive routing and are still in use.
+- Leave triage labels such as `kind/cooldown` to `kestrabot`; it applies them automatically on new issues.
+
+This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.
+
+## UI Translations
+
+**MANDATORY — never hardcode user-facing strings.** Every label, button, tooltip, placeholder, dialog/section title, table-column header, and toast/confirm message rendered to the user MUST go through vue-i18n: `t("key")` (or `:label`/`:tooltip` bindings) in components, and `<i18n-t keypath="...">` with named slots when the string embeds markup or a component (e.g. a `<code>` fragment). Never write a literal user-facing string in a template, a `:tooltip`/`:label` attribute, or a `toast.*` call. Reuse existing generic keys (`cancel`, `delete`, `edit`, `save`, `add`, `id`, `description`, `namespace`, `revision`, …) instead of duplicating them; put feature-specific strings under one namespaced object (e.g. `"reusableInputs": { … }`). After adding keys to `en.json`, propagate them to every language (translation generation script) so the missing-keys check stays clean — a key present only in `en.json` fails the check.
+
+Translation files live in `ui/src/translations/`. There is one JSON file per language code (e.g. `de.json`, `fr.json`) plus the source `en.json`.
+
+### Checking for missing translations
+
+Run the check script from the `ui/` directory:
+
+```bash
+cd ui && npm run translations:check
+```
+
+A clean run reports `No missing keys. No extra keys.` for every language. Any listed missing keys must be added.
+
+> **Enterprise Edition:** EE-only keys live in `ui-ee/src/translations/ee_translations/en.json` and are checked separately — run `npm run translations:check` in `ui-ee` as well (see `kestra-ee/AGENTS.md` → "Frontend i18n").
+
+### Adding missing translations
+
+1. Identify gaps by running `npm run translations:check` (or by diffing the flattened `en.json` keys against each language file).
+2. Translate only the missing keys — do **not** re-translate keys that already have a value.
+3. Follow these translation rules (mirroring `generate_translations.ts`):
+   - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
+   - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
+   - **Preserve `{placeholder}` variables** exactly — vue-i18n uses a **single** pair of braces. Do not translate the name inside the braces, do not rename it, and never write `{{placeholder}}`: double braces are a compile error (`Not allowed nest placeholder`) and make `t()` throw at render time. Each translation must carry exactly the same placeholders as the English source — no invented ones, none dropped.
+   - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).
+4. Insert the translated keys into the correct position in the target language JSON, keeping `sort_keys=True` order (alphabetical within each object).
+5. Re-run `npm run translations:check` to confirm everything is clean before committing.

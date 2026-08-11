@@ -1,5 +1,15 @@
 package io.kestra.plugin.core.namespace;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.slf4j.Logger;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -13,27 +23,23 @@ import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.utils.PathMatcherPredicate;
 import io.kestra.core.utils.Rethrow;
 import io.kestra.plugin.core.namespace.DeleteFiles.Output;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 @SuperBuilder
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete one or multiple files from your namespace files."
+    title = "Delete files from Namespace storage.",
+    description = """
+        Removes files in a Namespace matching provided paths or glob patterns. Optional `deleteParentFolder` cleans up now-empty parent directories.
+
+        Accepts string or list for `files`; Namespace authoritzation applies when deleting outside the current Flow Namespace."""
 )
 @Plugin(
     examples = {
@@ -42,15 +48,15 @@ import java.util.TreeSet;
             full = true,
             code = {
                 """
-                id: delete_files
-                namespace: company.team
-                tasks:
-                  - id: delete
-                    type: io.kestra.plugin.core.namespace.DeleteFiles
-                    namespace: tutorial
-                    files:
-                      - "**.upl"
-                """
+                    id: delete_files
+                    namespace: company.team
+                    tasks:
+                      - id: delete
+                        type: io.kestra.plugin.core.namespace.DeleteFiles
+                        namespace: tutorial
+                        files:
+                          - "**.upl"
+                    """
             }
         ),
         @Example(
@@ -58,15 +64,15 @@ import java.util.TreeSet;
             full = true,
             code = {
                 """
-                id: delete_all_files
-                namespace: company.team
-                tasks:
-                  - id: delete
-                    type: io.kestra.plugin.core.namespace.DeleteFiles
-                    namespace: tutorial
-                    files:
-                      - "**"
-                """
+                    id: delete_all_files
+                    namespace: company.team
+                    tasks:
+                      - id: delete
+                        type: io.kestra.plugin.core.namespace.DeleteFiles
+                        namespace: tutorial
+                        files:
+                          - "**"
+                    """
             }
         )
     }
@@ -82,7 +88,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
     @Schema(
         title = "A file or a list of files from the given namespace",
         description = "String or a list of strings; each string can either be a regex glob pattern or a file path URI.",
-        anyOf = {List.class, String.class}
+        anyOf = { List.class, String.class }
     )
     @PluginProperty(dynamic = true)
     private Object files;
@@ -118,8 +124,9 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
         Set<String> parentFolders = Boolean.TRUE.equals(deleteParent) ? new TreeSet<>() : null;
         long count = matched
             .stream()
-            .map(Rethrow.throwFunction(file -> {
-                if (namespace.delete(NamespaceFile.of(renderedNamespace, Path.of(file.path().replace("\\","/"))).storagePath())) {
+            .map(Rethrow.throwFunction(file ->
+            {
+                if (!namespace.delete(Path.of(file.path().replace("\\", "/"))).isEmpty()) {
                     logger.debug(String.format("Deleted %s", (file.path())));
 
                     if (Boolean.TRUE.equals(deleteParent)) {
@@ -144,16 +151,11 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
     private void deleteEmptyFolders(Namespace namespace, Set<String> folders, Logger logger) {
         folders.stream()
             .sorted((a, b) -> b.split("/").length - a.split("/").length)
-            .forEach(folderPath -> {
+            .forEach(folderPath ->
+            {
                 try {
                     if (namespace.isDirectoryEmpty(folderPath)) {
-                        // Create proper NamespaceFile for folder with trailing slash
-                        NamespaceFile folder = NamespaceFile.of(
-                            namespace.namespace(),
-                            URI.create(folderPath + "/")
-                        );
-
-                        if (namespace.deleteDirectory(folder)) {
+                        if (!namespace.delete(Path.of(folderPath + "/")).isEmpty()) {
                             logger.debug("Deleted empty folder: {}", folderPath);
                         }
                     }

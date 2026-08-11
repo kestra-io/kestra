@@ -1,47 +1,43 @@
 <template>
     <div class="trigger">
-        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
+        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)" class="trigger-icon">
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
-                <el-popover
+                <KsPopover
+                    :ref="(el: any) => setPopoverRef(el, trigger)"
                     placement="left"
                     :persistent="true"
                     :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
                     :width="500"
                     transition=""
                     :hideAfter="0"
+                    @show="handlePopoverShow"
                 >
                     <template #reference>
-                        <el-button @click="copyLink(trigger)" size="small">
-                            <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
-                        </el-button>
+                        <TaskIcon :onlyIcon="true" :cls="trigger?.type" :loadIcon="pluginsStore.loadIcon" />
                     </template>
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />
                     </template>
-                </el-popover>
+                </KsPopover>
             </template>
         </span>
     </div>
 </template>
-<script lang="ts" setup>
-    import {computed} from "vue";
-    import {useRoute} from "vue-router";
-    import {usePluginsStore} from "../../stores/plugins";
-    import Utils from "../../utils/utils";
-    import TriggerVars from "./TriggerVars.vue";
-    import {TaskIcon} from "@kestra-io/ui-libs";
-    import {useI18n} from "vue-i18n";
-    import {useToast} from "../../utils/toast";
+<script setup lang="ts">
+    import {computed, ref, nextTick} from "vue"
+    import {usePluginsStore} from "../../stores/plugins"
+    import * as Utils from "../../utils/utils"
+    import {webhookUrl, WEBHOOK_TRIGGER_TYPE} from "../../utils/webhook"
+    import TriggerVars from "./TriggerVars.vue"
+    import TaskIcon from "../plugins/TaskIcon.vue"
+    import {useI18n} from "vue-i18n"
+    import {useToast} from "../../utils/toast"
+    import {Execution} from "../../stores/executions"
 
     interface Flow {
         namespace: string;
         id: string;
         triggers?: Trigger[];
-    }
-
-    interface Execution {
-        id: string;
-        trigger?: Trigger;
     }
 
     interface Trigger {
@@ -56,59 +52,74 @@
         flow?: Flow;
         execution?: Execution;
         triggerId?: string;
-    }>();
+    }>()
 
-    const pluginsStore = usePluginsStore();
-    const route = useRoute();
+    const pluginsStore = usePluginsStore()
+
+    const popoverRefs = ref<Map<string, any>>(new Map())
 
     const triggers = computed<Trigger[]>(() => {
         if (props.flow && props.flow.triggers) {
             return props.flow.triggers.filter(
-                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id
-            );
+                (trigger) => props.triggerId === undefined || props.triggerId === trigger.id,
+            )
         } else if (props.execution && props.execution.trigger) {
-            return [props.execution.trigger];
+            return [props.execution.trigger]
         } else {
-            return [];
+            return []
         }
-    });
+    })
 
     function uid(trigger: Trigger): string {
-        return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id;
+        return (props.flow ? props.flow.namespace + "-" + props.flow.id : props.execution?.id) + "-" + trigger.id
     }
 
-    const {t} = useI18n();
-    const toast = useToast();
+    function setPopoverRef(el: any, trigger: Trigger) {
+        if (el) {
+            popoverRefs.value.set(uid(trigger), el)
+        }
+    }
+
+    function handlePopoverShow() {
+        nextTick(() => {
+            popoverRefs.value.forEach((popover) => {
+                if (popover?.popperRef?.popperInstanceRef) {
+                    popover.popperRef.popperInstanceRef.update()
+                }
+            })
+        })
+    }
+
+    const {t} = useI18n()
+    const toast = useToast()
 
     async function copyLink(trigger: Trigger) {
-        if (trigger?.type === "io.kestra.plugin.core.trigger.Webhook" && props.flow) {
-            const tenant = route.params.tenant ? route.params.tenant + "/" : "";
-            const url =
-                new URL(window.location.href).origin +
-                `/api/v1/${tenant}executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
+        if (trigger?.type === WEBHOOK_TRIGGER_TYPE && trigger.key && props.flow) {
+            const url = webhookUrl({namespace: props.flow.namespace, id: props.flow.id, key: trigger.key})
             try {
-                await Utils.copy(url);
-                toast.success(t("webhook link copied"));
+                await Utils.copy(url)
+                toast.success(t("webhook link copied"))
             } catch (error) {
-                console.error(error);
+                console.error(error)
             }
         }
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .trigger {
         max-width: 180px;
-        overflow-x: auto;
+        display: flex;
+        justify-content: center;
     }
 
-    .el-button {
-        display: inline-flex !important;
-        margin-right: .25rem;
-    }
-
-    :deep(div.wrapper) {
-        width: 20px;
-        height: 20px;
+    .trigger-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--ks-font-size-lg);
+        height: var(--ks-font-size-lg);
+        margin-right: var(--ks-spacing-1);
+        cursor: default;
     }
 </style>

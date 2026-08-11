@@ -1,32 +1,28 @@
 package io.kestra.plugin.core.flow;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.property.Property;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
-import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 
-import java.util.List;
-import java.util.stream.Stream;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @ToString
@@ -34,16 +30,19 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks in parallel.",
-    description = "This task runs all child tasks in parallel."
+    title = "Run child tasks in parallel.",
+    description = """
+        Starts all child tasks concurrently, bounded by `concurrent` if set (0 = no cap). Each branch can contain its own sequences or nested flows.
+
+        Use when independent steps can run at the same time to shorten wall-clock duration."""
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
             title = """
-            Run tasks in parallel
-            """,
+                Run tasks in parallel
+                """,
             code = """
                 id: parallel
                 namespace: company.team
@@ -68,43 +67,42 @@ import jakarta.validation.constraints.NotNull;
         @Example(
             full = true,
             title = """
-            Run two sequences in parallel
-            """,
+                Run two sequences in parallel
+                """,
             code = """
                 id: parallel_sequences
                 namespace: company.team
 
                 tasks:
-                - id: parallel
+                  - id: parallel
                     type: io.kestra.plugin.core.flow.Parallel
                     tasks:
-                    - id: sequence1
+                      - id: sequence1
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
-                        - id: task1
+                          - id: task1
                             type: io.kestra.plugin.core.debug.Return
                             format: "{{ task.id }}"
 
-                        - id: task2
+                          - id: task2
                             type: io.kestra.plugin.core.debug.Return
                             format: "{{ task.id }}"
 
-                    - id: sequence2
+                      - id: sequence2
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
-                        - id: task3
+                          - id: task3
                             type: io.kestra.plugin.core.debug.Return
                             format: "{{ task.id }}"
 
-                        - id: task4
+                          - id: task4
                             type: io.kestra.plugin.core.debug.Return
                             format: "{{ task.id }}"
-            """
+                """
         )
-    },
-    aliases = "io.kestra.core.tasks.flows.Parallel"
+    }
 )
-public class Parallel extends Task implements FlowableTask<VoidOutput> {
+public class Parallel extends AbstractBranch<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
@@ -112,24 +110,6 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
         description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
     private final Property<Integer> concurrent = Property.ofValue(0);
-
-    @Valid
-    @PluginProperty
-    @NotEmpty
-    @NotNull
-    private List<@NotNull Task> tasks;
-
-    @Valid
-    protected List<Task> errors;
-
-    @Valid
-    @JsonProperty("finally")
-    @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
-
-    public List<Task> getFinally() {
-        return this._finally;
-    }
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -148,24 +128,6 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     }
 
     @Override
-    public List<Task> allChildTasks() {
-        return Stream
-            .concat(
-                this.tasks != null ? this.tasks.stream() : Stream.empty(),
-                Stream.concat(
-                    this.errors != null ? this.errors.stream() : Stream.empty(),
-                    this._finally != null ? this._finally.stream() : Stream.empty()
-                )
-            )
-            .toList();
-    }
-
-    @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(this.tasks, parentTaskRun);
-    }
-
-    @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveParallelNexts(
             execution,
@@ -174,6 +136,22 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
             runContext.render(this.concurrent).as(Integer.class).orElseThrow()
+        );
+    }
+
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+
+        return FlowableUtils.resolveSequentialState(
+            execution,
+            childTasks,
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            parentTaskRun,
+            runContext,
+            this.isAllowFailure(),
+            this.isAllowWarning()
         );
     }
 }

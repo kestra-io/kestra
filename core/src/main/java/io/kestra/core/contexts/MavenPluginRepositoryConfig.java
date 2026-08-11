@@ -9,19 +9,15 @@ import lombok.Builder;
 @Builder
 @EachProperty("kestra.plugins.repositories")
 public record MavenPluginRepositoryConfig(
-    @Parameter
-    String id,
+    @Parameter String id,
     String url,
-    @Nullable
-    BasicAuth basicAuth
-) {
+    @Nullable BasicAuth basicAuth) {
 
     @Builder
     @ConfigurationProperties("basic-auth")
     public record BasicAuth(
         String username,
-        String password
-    ) {
+        String password) {
 
     }
 }

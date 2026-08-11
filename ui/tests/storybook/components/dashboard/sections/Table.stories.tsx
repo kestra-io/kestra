@@ -1,0 +1,129 @@
+import Table from "../../../../../src/components/dashboard/sections/Table.vue";
+import type {Chart} from "../../../../../src/components/dashboard/types.ts";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {vueRouter} from "storybook-vue3-router";
+import {expect, waitFor, within} from "storybook/test";
+import {useDashboardStore} from "../../../../../src/stores/dashboard";
+
+const MOCK_RESULTS = [
+    {
+        "namespace": "company.team",
+        "id": "2wJlDoXRsMc7jXJfQUWTE7",
+        "state": "RUNNING",
+        "flow": "sleep",
+        "start_date": "2025-11-25T09:28:00.000+00:00",
+    },
+    {
+        "namespace": "company.team",
+        "id": "2yiYHSqLwNbocm9FB8qK5L",
+        "state": "RUNNING",
+        "flow": "sleep",
+        "start_date": "2025-11-25T09:28:00.000+00:00"
+    },
+    {
+        "duration": 6,
+        "namespace": "company.team",
+        "id": "2Iq5tjur4bB9fRYYazstV4",
+        "state": "SUCCESS",
+        "flow": "sleep",
+        "end_date": "2025-11-25T09:27:00.000+00:00",
+        "start_date": "2025-11-25T09:27:00.000+00:00",
+    },
+    {
+        "namespace": "company.team",
+        "id": "69d95APmpdw94OkaMduCep",
+        "state": "RUNNING",
+        "flow": "sleep",
+        "start_date": "2025-11-25T09:27:00.000+00:00"
+    }
+];
+
+const meta: Meta<typeof Table> = {
+    title: "Dashboard/Sections/Table",
+    component: Table,
+    decorators: [
+        vueRouter([
+            {
+                path: "/",
+                component: {template: "<div></div>"}
+            },
+            {
+                path: "/:tenant?/flows/edit/:namespace/:id/:tab?",
+                name: "flows/update",
+                component: {template: "<div></div>"}
+            },
+            {
+                path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?",
+                name: "executions/update",
+                component: {template: "<div></div>"}
+            },
+            {
+                path: "/:tenant?/namespaces/edit/:id/:tab?",
+                name: "namespaces/update",
+                component: {template: "<div></div>"}
+            },
+        ])
+    ]
+}
+
+export default meta;
+
+export const SimpleExecutionsCase: StoryObj<typeof Table> = {
+    render: () => ({
+        setup() {
+            // dashboardStore.generate() calls DashboardsAPI.dashboardChartData() directly,
+            // which goes through the SDK's own internal client rather than the axios instance
+            // setMockClient() swaps - so the store method itself is stubbed instead (same
+            // pattern as KSFilter.stories.tsx's useNamespacesStore().loadAutocomplete override).
+            useDashboardStore().generate = async () => ({results: MOCK_RESULTS, total: MOCK_RESULTS.length}) as any;
+
+            const chart: Chart = {
+                "id": "executions_finished",
+                "type": "io.kestra.plugin.core.dashboard.chart.Table",
+                "chartOptions": {
+
+                            "displayName": "Executions Finished",
+                            "width": 12,
+                            "header": {"enabled": true},
+                            "pagination": {"enabled": true}
+                },
+                "data": {
+                    "columns": {
+                        "id": {"field": "ID", "displayName": "Execution ID", "columnAlignment": "LEFT"},
+                        "flow": {"field": "FLOW_ID", "displayName": "Flow", "columnAlignment": "LEFT"},
+                        "state": {"field": "STATE", "displayName": "State", "columnAlignment": "LEFT"},
+                        "duration": {"field": "DURATION", "displayName": "Duration", "columnAlignment": "LEFT"},
+                        "end_date": {"field": "END_DATE", "displayName": "End date", "columnAlignment": "LEFT"},
+                        "namespace": {
+                            "field": "NAMESPACE",
+                            "displayName": "Namespace",
+                            "columnAlignment": "LEFT"
+                        },
+                        "start_date": {
+                            "field": "START_DATE",
+                            "displayName": "Start date",
+                            "columnAlignment": "LEFT"
+                        }
+                    }
+                },
+            } as any;
+            return () => (
+                <div style="padding: 20px; background: #f5f5f5; border-radius: 8px;">
+                    <Table chart={chart} dashboardId="default" />
+                </div>
+            );
+        }
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement);
+        // Default waitFor timeout (1000ms) is too tight here: each findByText call below has
+        // its own nested default-timeout wait, so a single outer retry can itself take longer
+        // than the outer waitFor's own budget before the mocked chart data finishes rendering.
+        await waitFor(async () => {
+            await expect(await canvas.findByText("2wJlDoXR")).toBeVisible();
+            await expect(await canvas.findByText("2yiYHSqL")).toBeVisible();
+            await expect(await canvas.findByText("2Iq5tjur")).toBeVisible();
+            await expect(await canvas.findByText("69d95APm")).toBeVisible();
+        }, {timeout: 5000, interval: 100});
+    }
+}

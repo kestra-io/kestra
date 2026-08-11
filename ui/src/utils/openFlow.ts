@@ -1,0 +1,33 @@
+import type {Router} from "vue-router"
+
+export interface OpenFlowTarget {
+    namespace: string
+    flowId: string
+    executionId?: string
+    tab?: string
+}
+
+export function openFlowInNewTab(target: OpenFlowTarget, router: Router): void {
+    const tenant = router.currentRoute.value.params.tenant
+
+    const resolved = target.executionId
+        ? router.resolve({
+            name: `executions/update/${target.tab ?? "topology"}`,
+            params: {
+                namespace: target.namespace,
+                flowId: target.flowId,
+                id: target.executionId,
+                tenant,
+            },
+        })
+        : router.resolve({
+            name: `flows/update/${target.tab ?? "overview"}`,
+            params: {
+                namespace: target.namespace,
+                id: target.flowId,
+                tenant,
+            },
+        })
+
+    window.open(resolved.href, "_blank")
+}

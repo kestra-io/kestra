@@ -1,45 +1,44 @@
 <template>
     <component
         :is="component"
-        :icon="icon.StateMachine"
+        :icon="StateMachine"
         @click="visible = !visible"
         :disabled="!enabled"
     >
-        <span v-if="component !== 'el-button'">{{ $t('change state') }}</span>
+        <span v-if="component !== 'KsButton'">{{ $t('change state') }}</span>
 
-        <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
+        <KsDialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
             <template #header>
                 <h5>{{ $t("confirmation") }}</h5>
             </template>
 
             <template #default>
-                <p v-html="$t('change state confirm', {id: execution.id, task: taskRun.taskId})" />
+                <p v-html="$t('change state confirm', {id: escape(execution.id), task: escape(taskRun.taskId)})" />
 
                 <p>
-                    {{ $t('change state current state') }} <Status size="small" class="me-1" :status="taskRun.state.current" />
+                    {{ $t('change state current state') }} <KsExecutionStatus size="small" class="me-1" :status="taskRun.state.current" />
                 </p>
 
-                <el-select
+                <KsSelect
                     :required="true"
                     v-model="selectedStatus"
-                    :persistent="false"
                 >
-                    <el-option
+                    <KsOption
                         v-for="item in states"
                         :key="item.code"
                         :value="item.code"
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <Status size="small" :label="true" class="me-1" :status="item.code" />
+                            <KsExecutionStatus size="small" :label="true" class="me-1" :status="item.code" />
                             <span v-html="item.label" />
                         </template>
-                    </el-option>
-                </el-select>
+                    </KsOption>
+                </KsSelect>
 
                 <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
                     <ul>
-                        <li v-for="(text, i) in $t('change status hint')[selectedStatus]" :key="i">
+                        <li v-for="(text, i) in ($t('change status hint') as any)[selectedStatus]" :key="i">
                             {{ text }}
                         </li>
                     </ul>
@@ -47,148 +46,125 @@
             </template>
 
             <template #footer>
-                <el-button @click="visible = false">
+                <KsButton @click="visible = false">
                     {{ $t('cancel') }}
-                </el-button>
-                <el-button
+                </KsButton>
+                <KsButton
                     type="primary"
                     @click="changeStatus()"
                     :disabled="selectedStatus === taskRun.state.current || selectedStatus === null"
                 >
                     {{ $t('ok') }}
-                </el-button>
+                </KsButton>
             </template>
-        </el-dialog>
+        </KsDialog>
     </component>
 </template>
 
-<script>
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
-    import {mapStores} from "pinia";
-    import {useExecutionsStore} from "../../stores/executions";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
-    import Status from "../../components/Status.vue";
-    import * as ExecutionUtils from "../../utils/executionUtils";
-    import {shallowRef} from "vue";
+<script setup lang="ts">
+    import StateMachine from "vue-material-design-icons/StateMachine.vue"
+    import {computed, ref} from "vue"
+    import escape from "lodash/escape"
+    import {useI18n} from "vue-i18n"
+    import {useExecutionsStore} from "../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../utils/toast"
+    import resource from "../../models/resource"
+    import action from "../../models/action"
+    import {State} from "@kestra-io/design-system"
 
-    export default {
-        components: {StateMachine, Status},
-        props: {
-            component: {
-                type: String,
-                default: "b-button"
-            },
-            execution: {
-                type: Object,
-                required: true
-            },
-            taskRun: {
-                type: Object,
-                required: false,
-                default: undefined
-            },
-            attemptIndex: {
-                type: Number,
-                required: false,
-                default: undefined
-            }
-        },
-        emits: ["follow"],
-        methods: {
-            changeStatus() {
-                this.visible = false;
+    // FIXME: any - execution/taskRun are untyped domain objects
+    const props = withDefaults(defineProps<{
+        component?: string
+        execution: any // FIXME: any
+        taskRun?: any // FIXME: any
+        attemptIndex?: number
+    }>(), {
+        component: "KsButton",
+        taskRun: undefined,
+        attemptIndex: undefined,
+    })
 
-                this.executionsStore
-                    .changeStatus({
-                        executionId: this.execution.id,
-                        taskRunId: this.taskRun.id,
-                        state: this.selectedStatus
-                    })
-                    .then(response => {
-                        if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(this.$http, response.data);
-                        } else {
-                            return response.data;
-                        }
-                    })
-                    .then((execution) => {
-                        this.executionsStore.execution = execution;
-                        if (execution.id === this.execution.id) {
-                            this.$emit("follow")
-                        } else {
-                            this.$router.push({
-                                name: "executions/update",
-                                params: {
-                                    namespace: execution.namespace,
-                                    flowId: execution.flowId,
-                                    id: execution.id,
-                                    tab: "gantt",
-                                    tenant: this.$route.params.tenant
-                                }
-                            });
-                        }
+    const {t} = useI18n()
+    const executionsStore = useExecutionsStore()
+    const authStore = useAuthStore()
+    const toast = useToast()
 
-                        this.$toast().success(this.$t("change state done"));
-                    })
-            },
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            uuid() {
-                return "changestatus-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
-            },
-            states() {
-                return (this.taskRun.state.current === "PAUSED" ?
-                    [
-                        State.FAILED,
-                        State.RUNNING,
-                    ] :
-                    [
-                        State.FAILED,
-                        State.SUCCESS,
-                        State.WARNING,
-                    ]
-                )
-                    .filter(value => value !== this.taskRun.state.current)
-                    .map(value => {
-                        return {
-                            code: value,
-                            label: this.$t("mark as", {status: value}),
-                            disabled: value === this.taskRun.state.current
-                        };
-                    })
-            },
-            enabled() {
-                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
+    const visible = ref(false)
+    const selectedStatus = ref<string | undefined>(undefined)
+
+    const uuid = computed(() =>
+        "changestatus-" + (props.execution as {id: string}).id + (props.taskRun ? "-" + (props.taskRun as {id: string}).id : ""),
+    )
+
+    // FIXME: any - execution/taskRun are untyped domain objects
+    const states = computed(() => {
+        const taskRun = props.taskRun as any // FIXME: any
+        return (taskRun.state.current === "PAUSED" ?
+            [
+                State.FAILED,
+                State.RUNNING,
+            ] :
+            [
+                State.FAILED,
+                State.SUCCESS,
+                State.WARNING,
+            ]
+        )
+            .filter((value: string) => value !== taskRun.state.current)
+            .map((value: string) => {
+                return {
+                    code: value,
+                    label: t("mark as", {status: value}),
+                    disabled: value === taskRun.state.current,
                 }
+            })
+    })
 
-                if (this.taskRun.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex) {
-                    return false;
-                }
+    const enabled = computed(() => {
+        const execution = props.execution as any // FIXME: any
+        const taskRun = props.taskRun as any // FIXME: any
 
-                if (this.taskRun.state.current === "PAUSED" || this.taskRun.state.current === "CREATED") {
-                    return true;
-                }
+        if (!(authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, execution.namespace))) {
+            return false
+        }
 
-                if (State.isRunning(this.execution.state.current)) {
-                    return false;
-                }
+        if (taskRun.attempts !== undefined && taskRun.attempts.length - 1 !== props.attemptIndex) {
+            return false
+        }
 
-                return true;
-            }
-        },
-        data() {
-            return {
-                selectedStatus: undefined,
-                visible: false,
-                icon: {StateMachine: shallowRef(StateMachine)}
-            };
-        },
-    };
+        if (taskRun.state.current === "PAUSED" || taskRun.state.current === "CREATED") {
+            return true
+        }
+
+        if (State.isRunning(execution.state.current)) {
+            return false
+        }
+
+        return true
+    })
+
+    function changeStatus() {
+        visible.value = false
+
+        const taskRun = props.taskRun as any // FIXME: any
+        executionsStore
+            .changeStatus({
+                executionId: (props.execution as {id: string}).id,
+                taskRunId: taskRun.id,
+                state: selectedStatus.value as string,
+            })
+            .then(() => executionsStore.waitForStateChange(props.execution as any)) // FIXME: any
+            .then((execution: unknown) => {
+                // FIXME: any
+                ;(executionsStore as any).execution = execution // FIXME: any
+                // Re-subscribe to the execution SSE stream directly via the store
+                // instead of bubbling a `follow` event up to the route component.
+                executionsStore.followExecution({id: (props.execution as {id: string}).id}, t)
+
+                toast.success(t("change state done"))
+            })
+    }
 </script>
 
 <style lang="scss">

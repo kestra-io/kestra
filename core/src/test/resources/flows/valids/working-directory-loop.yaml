@@ -1,0 +1,45 @@
+id: working-directory-loop
+namespace: io.kestra.tests
+
+tasks:
+  - id: 1_each
+    type: io.kestra.plugin.core.flow.Loop
+    values: '["s1"]'
+    outputs:
+      - id: uri
+        type: STRING
+        value: "{{outputs['1-1_each'].outputs[0].outputs.uri}}"
+    tasks:
+    - id: 1-1_each
+      type: io.kestra.plugin.core.flow.Loop
+      values: '["s2"]'
+      outputs:
+        - id: uri
+          type: STRING
+          value: "{{outputs['1-1-1_each'].outputs[0].outputs.uri}}"
+      tasks:
+        - id: 1-1-1_each
+          type: io.kestra.plugin.core.flow.Loop
+          values: '["s3"]'
+          outputs:
+            - id: uri
+              type: STRING
+              value: "{{outputs.second.uris['out/stay.txt']}}"
+          tasks:
+            - id: 1-1-1-1_return
+              type: io.kestra.plugin.core.debug.Return
+              format: "{{task.id}} > {{item.value}} > {{taskrun.startDate}}"
+            - id: worker
+              type: io.kestra.plugin.core.flow.WorkingDirectory
+              tasks:
+              - id: first
+                type: io.kestra.plugin.core.flow.WorkingDirectoryTest$LocalFiles
+                inputs:
+                  out/stay.txt: "{{ taskrun.id }}"
+              - id: second
+                type: io.kestra.plugin.core.flow.WorkingDirectoryTest$LocalFiles
+                outputs:
+                  - out/*
+  - id: 2_end
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ outputs['1_each'].outputs[0].outputs.uri }}"

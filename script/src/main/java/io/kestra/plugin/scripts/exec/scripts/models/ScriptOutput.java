@@ -1,23 +1,25 @@
 package io.kestra.plugin.scripts.exec.scripts.models;
 
+import java.net.URI;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.runners.TaskRunnerDetailResult;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
 
-import java.net.URI;
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
 public class ScriptOutput implements Output {
     @Schema(
-        title = "The value extracted from the output of the executed `commands`."
+        title = "The values extracted from executed `commands` using the [Kestra outputs](https://kestra.io/docs/scripts/outputs-metrics#outputs-and-metrics-in-script-and-commands-tasks) format."
     )
     @JsonInclude(JsonInclude.Include.ALWAYS) // always include vars so it's easier to reason about in expressions
     private final Map<String, Object> vars;

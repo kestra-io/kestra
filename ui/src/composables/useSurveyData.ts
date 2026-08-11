@@ -36,7 +36,7 @@ export function useSurveySkip() {
                 step_number: 3,
                 survey_action: "skipped",
                 dialogShown: false,
-                ...data
+                ...data,
             }
             localStorage.setItem(SURVEY_SKIP_KEY, JSON.stringify(skipData))
             surveySkipData.value = skipData
@@ -64,7 +64,7 @@ export function useSurveySkip() {
         if (surveySkipData.value) {
             const updatedData = {
                 ...surveySkipData.value,
-                dialogShown: true
+                dialogShown: true,
             }
             localStorage.setItem(SURVEY_SKIP_KEY, JSON.stringify(updatedData))
             surveySkipData.value = updatedData
@@ -78,7 +78,7 @@ export function useSurveySkip() {
                 skippedAt: new Date().toISOString(),
                 step_number: 3,
                 survey_action: "skipped_again",
-                dialogShown: false
+                dialogShown: false,
             }
             localStorage.setItem(SURVEY_SKIP_KEY, JSON.stringify(resetData))
             surveySkipData.value = resetData
@@ -131,6 +131,6 @@ export function useSurveySkip() {
         isSurveySkipped,
         surveySkipStatus,
         shouldShowDialog,
-        getSurveySkipDetails
+        getSurveySkipDetails,
     }
 }

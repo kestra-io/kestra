@@ -7,4 +7,5 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.webserver.annotation.WebServerEnabled;
+
 import io.micronaut.context.annotation.Configuration;

@@ -1,139 +1,143 @@
 <template>
-    <el-select
+    <KsSelect
+        class="auth-selector"
+        popperClass="user-select border border-0"
         placement="right-end"
         :popperOffset="20"
         :showArrow="false"
         :suffixIcon="ChevronRight"
-        :placeholder="t('kestra')"
-        popperClass="user-select border border-0"
+        :placeholder="$t('kestra')"
     >
         <template #prefix>
-            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra" class="user-avatar">
+            <img :src="KS_LOGO" width="24" height="24" alt="Kestra" class="user-avatar">
         </template>
+
+        <template #label>
+            {{ $t("kestra") }}
+        </template>
+
         <template #header>
-            <el-option :value="{}" class=" list-unstyled">
-                <div class="menu-item">
-                    <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
-                    {{ t("kestra") }}
-                </div>
-            </el-option>
+            <div class="menu-item">
+                <img :src="KS_LOGO" width="40" alt="Kestra">
+                {{ $t("kestra") }}
+            </div>
         </template>
-        <el-option label="Settings" value="settings">
-            <RouterLink :to="{name: 'settings'}" class="menu-item">
-                <CogOutline class="menu-icon" />
-                {{ t("settings.label") }}
+
+        <KsOption label="welcome" value="welcome">
+            <RouterLink :to="startTutorial" class="menu-item">
+                <RocketLaunchOutline class="menu-icon" />
+                {{ $t("product_tour") }}
             </RouterLink>
-        </el-option>
-        <el-option label="slack" value="slack">
-            <a href="https://kestra.io/slack" target="_blank" class="menu-item">
+        </KsOption>
+        <KsOption label="slack" value="slack">
+            <a :href="SLACK_URL" target="_blank" class="menu-item">
                 <Slack class="menu-icon" />
-                {{ t("join_slack") }}
+                {{ $t("join_slack") }}
             </a>
-        </el-option>
+        </KsOption>
+
         <template #footer>
-            <el-option class="list-unstyled" :value="'logout'" @click="logout">
+            <KsOption value="logout" class="list-unstyled" @click="logout">
                 <div class="menu-item">
                     <Logout class="menu-icon" />
-                    {{ t("setup.logout") }}
+                    {{ $t("setup.logout") }}
                 </div>
-            </el-option>
+            </KsOption>
         </template>
-    </el-select>
+    </KsSelect>
 </template>
 
 <script setup lang="ts">
-    import {RouterLink, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
+    import {computed} from "vue"
+    import {useRoute, useRouter} from "vue-router"
 
-    import CogOutline from "vue-material-design-icons/CogOutline.vue";
-    import Slack from "vue-material-design-icons/Slack.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
-    import Logout from "vue-material-design-icons/Logout.vue";
+    import {useClient} from "@kestra-io/kestra-sdk"
 
-    import * as BasicAuth from "../../../utils/basicAuth";
-    import {useAxios} from "../../../utils/axios";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue"
+    import Logout from "vue-material-design-icons/Logout.vue"
+    import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
+    import Slack from "vue-material-design-icons/Slack.vue"
 
-    const router = useRouter();
-    const axios = useAxios();
-    const {t} = useI18n();
+    import KS_LOGO from "../../../assets/ks-logo-small.svg"
+    import * as BasicAuth from "../../../utils/basicAuth"
+
+    const SLACK_URL = "https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=top-auth"
+
+    const route = useRoute()
+    const router = useRouter()
+    const axios = useClient()
+
+    const startTutorial = computed(() => ({
+        name: "ai",
+        query: {tour: "start"},
+        params: {tenant: route.params.tenant},
+    }))
 
     const logout = () => {
-        BasicAuth.logout();
-        delete axios.defaults.headers.common["Authorization"];
-        router.push({name: "login"});
-    };
+        BasicAuth.logout()
+        delete axios.defaults.headers.common["Authorization"]
+        router.push({name: "login"})
+    }
 </script>
 
-<style lang="scss" scoped>
-.menu-item{
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    color: var(--ks-content-primary);
+<style scoped lang="scss">
+    .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: var(--ks-text-primary);
 
-    .menu-icon {
-        color: var(--ks-content-tertiary);
-        font-size: 1.5rem;
+        .menu-icon {
+            color: var(--ks-text-dim);
+            font-size: var(--ks-font-size-xl);
+        }
     }
-}
+
+    :deep(.kel-select__wrapper) {
+        padding: 8px 10px !important;
+        height: 30px;
+        font-size: var(--ks-font-size-xs);
+        background-color: transparent;
+
+        &.is-hovering:not(.is-focused) {
+            box-shadow: 0 0 0 1px var(--ks-border-subtle) inset;
+        }
+    }
+
+    :deep(.kel-select__placeholder.is-transparent) {
+        color: var(--ks-text-primary);
+    }
 </style>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -->
 <style lang="scss">
-.user-select  {
-    &.el-select-dropdown {
-        width: 328px;
-        background: var(--ks-select-background);
-        box-shadow: 2px 3px 3px var(--ks-card-shadow);
-        border-radius: var(--bs-border-radius);
-        border: 1px solid var(--ks-border-primary) !important;
-        margin-bottom: -2px;
+    .user-select {
+        &.kel-select-dropdown {
+            width: 328px;
+            background: var(--ks-bg-input);
+            box-shadow: 2px 3px 3px var(--ks-shadow-element);
+            border-radius: var(--kel-border-radius-base);
+            border: 1px solid var(--ks-border-default) !important;
 
-        .el-select-dropdown__item {
-            min-height: 34px;
-            height: fit-content;
-            padding: 10px 16px 8px 16px;
-            margin: 0;
-            font-size: 14px;
-            font-weight: 700;
-        }
+            .kel-select-dropdown__item {
+                min-height: 30px;
+                height: fit-content;
+                padding: 10px 16px 8px 16px;
+                font-weight: var(--ks-font-weight-bold);
+            }
 
-        .el-select-dropdown__header {
-            .el-select-dropdown__item {
-                padding: 0;
-                margin: 0;
-                background: none;
+            .kel-select-dropdown__footer {
+                padding: 5px 0;
 
-                &.is-hovering {
-                    background: none;
+                .kel-select-dropdown__item {
+                    margin: 0 !important;
                 }
             }
         }
-
-        .el-select-dropdown__footer {
-            padding: 5px 0;
-            .el-select-dropdown__item {
-                margin: 0 !important;
-            }
-        }
     }
-}
 
-.el-select {
-    >.el-select__wrapper {
-        padding: 2px 8px;
-        padding-left: 6px !important;
+    .user-avatar {
+        padding: 0.25rem;
+        border-radius: var(--ks-radius-base);
     }
-}
-
-html.menu-collapsed {
-    .el-select__suffix {
-        display: none;
-    }
-}
-
-.user-avatar {
-    padding: 0.25rem;
-    border-radius: 0.25rem;
-
-}
 </style>

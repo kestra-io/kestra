@@ -1,0 +1,10 @@
+id: flow-trigger-multiple-conditions-flow-a
+namespace: io.kestra.tests.trigger.multiple.conditions
+
+labels:
+  some: label
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "from parents: {{execution.id}}"

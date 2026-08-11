@@ -1,6 +1,25 @@
 configurations {
     implementation.extendsFrom(micronaut)
 }
+
+tasks.register('runLocal', JavaExec) {
+    group = "application"
+    description = "Run Kestra as server local"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "io.kestra.cli.Kestra"
+    environment 'MICRONAUT_ENVIRONMENTS', 'override'
+    args 'server', 'local', '--plugins', '../local/plugins'
+}
+
+tasks.register('runStandalone', JavaExec) {
+    group = "application"
+    description = "Run Kestra as server standalone"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "io.kestra.cli.Kestra"
+    environment 'MICRONAUT_ENVIRONMENTS', 'override'
+    args 'server', 'standalone', '--plugins', '../local/plugins'
+}
+
 dependencies {
     // micronaut
     implementation "info.picocli:picocli"
@@ -31,6 +50,9 @@ dependencies {
     implementation project(":jdbc-mysql")
     implementation project(":jdbc-postgres")
 
+    implementation project(":queue")
+    implementation project(":queue-jdbc")
+
     implementation project(":storage-local")
 
     // Kestra server components
@@ -38,6 +60,8 @@ dependencies {
     implementation project(":scheduler")
     implementation project(":webserver")
     implementation project(":worker")
+    implementation project(":worker-controller")
+    implementation project(":indexer")
 
     //test
     testImplementation project(':tests')

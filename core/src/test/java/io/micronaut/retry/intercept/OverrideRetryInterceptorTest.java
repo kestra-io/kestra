@@ -1,15 +1,17 @@
 package io.micronaut.retry.intercept;
 
+import java.nio.channels.AlreadyBoundException;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.annotations.Retryable;
+import io.kestra.core.junit.annotations.KestraTest;
+
 import io.micronaut.retry.event.RetryEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-
-import java.nio.channels.AlreadyBoundException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -41,6 +43,7 @@ class OverrideRetryInterceptorTest {
     @Slf4j
     public static class RetryEvents {
         public int count = 0;
+
         @EventListener
         void onRetry(final RetryEvent event) {
             this.count++;

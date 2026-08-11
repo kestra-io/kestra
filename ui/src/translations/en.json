@@ -96,10 +96,10 @@
     "running duration": "Running duration",
     "queued duration": "Queued duration",
     "executionProgress": {
-        "title": "Execution progress",
-        "estimatedRemaining": "Est. remaining: {duration}",
-        "noBaseline": "No historical data — cannot estimate the remaining time",
-        "pastEstimate": "Running longer than usual"
+      "title": "Execution progress",
+      "estimatedRemaining": "Est. remaining: {duration}",
+      "noBaseline": "No historical data — cannot estimate the remaining time",
+      "pastEstimate": "Running longer than usual"
     },
     "launch execution": "Execute",
     "triggered done": "Execution <em>{name}</em> is successfully triggered",
@@ -120,8 +120,6 @@
       "last24hours": "Last 24 hours",
       "last48hours": "Last 48 hours",
       "last7days": "Last 7 days",
-      "last14days": "Last 14 days",
-      "last28days": "Last 28 days",
       "last30days": "Last 30 days",
       "last365days": "Last 365 days",
       "next5minutes": "Next 5 minutes",
@@ -140,8 +138,6 @@
       "24hours": "24 hours",
       "48hours": "48 hours",
       "7days": "7 days",
-      "14days": "14 days",
-      "28days": "28 days",
       "30days": "30 days",
       "365days": "365 days",
       "never": "Never",
@@ -163,7 +159,11 @@
         "12h": "12h",
         "1d": "1d",
         "7d": "7d"
-      }
+      },
+      "last14days": "Last 14 days",
+      "last28days": "Last 28 days",
+      "14days": "14 days",
+      "28days": "28 days"
     },
     "created date": "Created date",
     "latest_update": "Latest update",
@@ -381,6 +381,8 @@
     },
     "use": "Use",
     "plugins": {
+      "names": "Plugins",
+      "release": "Release notes",
       "beta": "Beta",
       "copy_type": "Copy type",
       "deprecated": "Deprecated",
@@ -418,13 +420,11 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow documentation",
-      "names": "Plugins",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
       "nav_overview": "Overview",
       "nav_properties": "Properties",
       "non_dynamic": "non-dynamic",
-      "release": "Release notes",
       "required": "Required"
     },
     "last execution date": "Last execution date",
@@ -501,11 +501,6 @@
     "open full page": "Open Full Page",
     "drill down preview": "Preview",
     "errors": {
-      "404": {
-        "title": "Page not found",
-        "content": "The requested URL was not found on this server.<br />That’s all we know.",
-        "flow or execution": "The flow or execution you are looking for does not exist."
-      },
       "401": {
         "title": "Unauthorized",
         "content": "You need to be authenticated to access this page."
@@ -513,6 +508,11 @@
       "403": {
         "title": "Access denied",
         "content": "You don't have the required permissions to access this page."
+      },
+      "404": {
+        "title": "Page not found",
+        "content": "The requested URL was not found on this server.<br />That’s all we know.",
+        "flow or execution": "The flow or execution you are looking for does not exist."
       }
     },
     "back_to_dashboard": "Back to dashboard",
@@ -861,7 +861,8 @@
             "flow_default_tab": "Default Flow Tab",
             "triggers_default_tab": "Default Triggers Tab",
             "playground": "Playground",
-            "auto_refresh_interval": "Auto Refresh Interval"
+            "auto_refresh_interval": "Auto Refresh Interval",
+            "task_edit_default_mode": "Default Task Edit Mode"
           },
           "descriptions": {
             "default_namespace": "Used when creating new flows without a namespace.",
@@ -873,7 +874,12 @@
             "flow_default_tab": "Tab selected when navigating to a flow.",
             "triggers_default_tab": "Tab selected when navigating to the triggers page.",
             "auto_refresh_interval": "Seconds between automatic data refreshes on list pages.",
-            "playground": "Run tasks individually in the editor playground."
+            "playground": "Run tasks individually in the editor playground.",
+            "task_edit_default_mode": "How a task opens by default from the no-code editor."
+          },
+          "task_edit_default_mode_options": {
+            "modal": "Modal",
+            "tab": "Tab"
           }
         },
         "theme": {
@@ -1042,7 +1048,8 @@
         "audit-logs": {
           "title": "Track All Changes in One Place",
           "message": "In Kestra Enterprise Edition, you can view namespace-level audit logs with detailed diffs, giving you a clear history of who changed what and when across all resources."
-        }
+        },
+        "plugin-defaults": {}
       }
     },
     "assets": {
@@ -1373,7 +1380,8 @@
         "triggers": "Triggers",
         "errors": "Error Handlers",
         "afterExecution": "After Execution",
-        "finally": "Finally"
+        "finally": "Finally",
+        "flow": "Flow"
       },
       "fields": {
         "main": {
@@ -1395,7 +1403,8 @@
           "workerGroup": "Worker Group",
           "workerSelector": "Worker Selector",
           "checks": "Checks",
-          "updated": "Updated"
+          "updated": "Updated",
+          "quotas": "Quotas"
         }
       },
       "select": {
@@ -1428,6 +1437,25 @@
       "remove": {
         "default": "Remove this entry",
         "cases": "Remove this case"
+      },
+      "adding_to": "+ Add to {what}",
+      "choose_placeholder": "Choose {field}",
+      "duration": {
+        "add_unit": "Add unit",
+        "units": {
+          "day": "days",
+          "hour": "hours",
+          "minute": "minutes",
+          "second": "seconds",
+          "week": "weeks"
+        }
+      },
+      "expression_placeholder": "Your {field} here...",
+      "nav": {
+        "back": "Back",
+        "breadcrumb_aria": "Field path",
+        "items": "{count} items",
+        "not_set": "Not set"
       }
     },
     "editor_shortcuts": {
@@ -1573,7 +1601,8 @@
       "panels": {
         "title": "No panel open",
         "content": "You've closed all panels.\nPick a tab above to continue."
-      }
+      },
+      "pluginDefaults": {}
     },
     "toggle_word_wrap": "Toggle Word Wrap",
     "copied_logs_to_clipboard": "Copied logs to clipboard.",
@@ -1581,7 +1610,9 @@
       "move_right": "Move right",
       "move_left": "Move left",
       "close_all_tabs": "Close all tabs",
-      "close_all_panels": "Close all panels"
+      "close_all_panels": "Close all panels",
+      "exit_fullscreen": "Exit fullscreen",
+      "fullscreen": "Fullscreen"
     },
     "search_docs": "Search",
     "no_results_found": "No results found",
@@ -2071,6 +2102,156 @@
     "open source": "Open Source",
     "pricing": "Pricing",
     "license": "License",
+    "block_editor": {
+      "add_error_task": "Add error task",
+      "add_switch_case": "Add case",
+      "adding_to": "New entry in {section}",
+      "add_task": "Add task",
+      "add_to_lane": "Add to {lane}",
+      "add_trigger": "Add trigger",
+      "all_apps": "All apps",
+      "app_actions": "{count} actions",
+      "block_deleted": "{name} deleted",
+      "card_aria_label": "Block {id} of type {type}",
+      "canvas_aria": "Flow blocks canvas",
+      "close_all": "Close all tabs",
+      "cluster_collapse_aria": "Collapse {id}",
+      "cluster_expand_aria": "Expand {id} ({count} tasks)",
+      "collapsed_summary": "{count} tasks",
+      "command_menu": {
+        "context_flow": "context: flow",
+        "context_selected": "context: {name}",
+        "delete": "Delete {name}",
+        "duplicate": "Duplicate {name}",
+        "goto": "Go to {section}",
+        "group_block": "This block",
+        "group_flow": "Flow",
+        "group_goto": "Go to",
+        "group_insert": "Insert",
+        "group_types": "Task types",
+        "insert_after": "Insert after {name}",
+        "insert_at_end": "Insert at end of Tasks",
+        "insert_before": "Insert before {name}",
+        "insert_in_section": "Insert in {section}",
+        "insert_kind": "Insert {kind}",
+        "no_match": "No match",
+        "open": "Open {name}",
+        "save": "Save flow",
+        "search_placeholder": "Type a command or search a task…",
+        "title": "Command menu"
+      },
+      "configure": "Configure",
+      "confirm_delete": {
+        "message": "This removes {name} from the flow. You can still undo right after.",
+        "message_group": "This removes the group {name} and everything inside it. You can still undo right after.",
+        "title": "Delete {name}?"
+      },
+      "declared_outputs": "Declared outputs",
+      "delete": "Delete",
+      "depends_on_label": "Depends on",
+      "depends_on_placeholder": "Select tasks…",
+      "depth_pill": "Depth {depth}",
+      "drag_reorder": "Drag to reorder",
+      "duplicate": "Duplicate",
+      "empty": "No tasks or triggers yet. Add your first task to get started.",
+      "empty_add_hint": "or press / to search tasks",
+      "empty_add_lead": "Click to add {label}",
+      "error_task_noun": "an error task",
+      "execution_context": "Execution context",
+      "filter_data": "Filter available data…",
+      "flow_inputs": "Flow inputs",
+      "flowable_todo": "Nested tasks (editing coming soon)",
+      "footer": {
+        "canvas": "Canvas",
+        "close_panel": "Close panel",
+        "command_menu": "Command menu",
+        "editing": "Editing block",
+        "inserting": "Inserting",
+        "selected": "Selected · {name}"
+      },
+      "inline_add": "Add {label}",
+      "inputs": "Inputs",
+      "inputs_sub": "data you can use here",
+      "inserting_into": "Inserting into {section}",
+      "kbd_add": "add",
+      "kbd_close": "close",
+      "kbd_navigate": "navigate",
+      "lane_case": "Case: {key}",
+      "lane_defaults": "Default",
+      "lane_else": "Else",
+      "lane_empty": "No tasks in {lane}",
+      "lane_errors": "Errors",
+      "lane_finally": "Finally",
+      "lane_tasks": "Tasks",
+      "lane_then": "Then",
+      "loading_plugins": "Loading plugins...",
+      "move_down": "Move down",
+      "move_up": "Move up",
+      "nav_rail_empty": "No tasks or triggers yet.",
+      "nav_rail_title": "Outline",
+      "nested_count": "{count} nested tasks",
+      "no_data_matches": "Nothing matches your filter",
+      "no_documentation": "No documentation for this task",
+      "no_recent": "No recent task types yet",
+      "no_task_results": "No matching task types.",
+      "open_details": "Open details",
+      "open_in_split": "Open in split",
+      "output": "Output",
+      "output_sub": "what this task produces",
+      "pick_task_type": "Choose a task type",
+      "picker_more_results": "{count} more, refine your search",
+      "plugin_default": "default: {value}",
+      "plugin_default_tooltip": "Default value from the flow's pluginDefaults",
+      "required_missing": "Required field not set",
+      "save_blocked": {
+        "message": "Fix the errors before saving.",
+        "title": "Cannot save the flow"
+      },
+      "search_task_placeholder": "Search or describe a task…",
+      "shortcuts": {
+        "add_after": "Insert a block after selection",
+        "add_before": "Insert a block before selection",
+        "add_task": "Quick insert at cursor",
+        "clear": "Close / clear selection",
+        "collapse_expand": "Collapse / expand",
+        "command_palette": "Command menu (contextual)",
+        "group_edit": "Edit",
+        "group_global": "Global",
+        "group_insert": "Insert",
+        "group_navigate": "Navigate",
+        "move_between": "Move selection",
+        "open": "Open selected block",
+        "open_split": "Open selected block in split view",
+        "or": "or",
+        "reorder": "Reorder up / down",
+        "save": "Save flow",
+        "step_into": "Expand / step into a group",
+        "step_out": "Collapse / step out to parent",
+        "title": "Keyboard shortcuts",
+        "toggle": "This help",
+        "undo": "Undo"
+      },
+      "split_into": "{count}-column view",
+      "split_view": "Split view",
+      "switch_case_key_placeholder": "New case key",
+      "switch_case_key_taken": "Case {key} already exists",
+      "tab_apps": "By app",
+      "tab_recent": "Recent",
+      "tab_suggested": "Suggested",
+      "task_noun": "a task",
+      "then_required_warning": "Then branch is required",
+      "trigger_noun": "a trigger",
+      "undo": "Undo",
+      "upstream_outputs": "Upstream outputs",
+      "open_in_tabs": "Open in tabs",
+      "open_mode_hint": "Tasks open in a modal by default. You can make tabs the default in {settings}."
+    },
+    "blocks": "Blocks",
+    "flow_description": "Flow Description",
+    "flow_no_description": "No description. Add a description to your flow YAML to document what it does.",
+    "pluginDefaults": {},
+    "split_horizontal": "Split horizontally",
+    "split_vertical": "Split vertically",
     "pwa": {
       "install_title": "Install Kestra",
       "install_description": "Install Kestra as an app for quicker access and a full-screen experience.",

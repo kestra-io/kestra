@@ -120,8 +120,6 @@
       "last24hours": "Letzte 24 Stunden",
       "last48hours": "Letzte 48 Stunden",
       "last7days": "Letzte 7 Tage",
-      "last14days": "Letzte 14 Tage",
-      "last28days": "Letzte 28 Tage",
       "last30days": "Letzte 30 Tage",
       "last365days": "Letzte 365 Tage",
       "next5minutes": "Nächste 5 Minuten",
@@ -140,8 +138,6 @@
       "24hours": "24 Stunden",
       "48hours": "48 Stunden",
       "7days": "7 Tage",
-      "14days": "14 Tage",
-      "28days": "28 Tage",
       "30days": "30 Tage",
       "365days": "365 Tage",
       "never": "Nie",
@@ -163,7 +159,11 @@
         "12h": "12h",
         "1d": "1T",
         "7d": "7T"
-      }
+      },
+      "last14days": "Letzte 14 Tage",
+      "last28days": "Letzte 28 Tage",
+      "14days": "14 Tage",
+      "28days": "28 Tage"
     },
     "created date": "Erstellungsdatum",
     "latest_update": "Letztes Update",
@@ -381,6 +381,8 @@
     },
     "use": "Verwenden",
     "plugins": {
+      "names": "Plugins",
+      "release": "Versionshinweise",
       "beta": "Beta",
       "copy_type": "Typ kopieren",
       "deprecated": "Veraltet",
@@ -418,13 +420,11 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow-Dokumentation",
-      "names": "Plugins",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
       "nav_overview": "Übersicht",
       "nav_properties": "Properties",
       "non_dynamic": "nicht dynamisch",
-      "release": "Versionshinweise",
       "required": "Erforderlich"
     },
     "last execution date": "Letztes Ausführungsdatum",
@@ -861,7 +861,8 @@
             "flow_default_tab": "Standard-Flow-Registerkarte",
             "triggers_default_tab": "Standard-Trigger-Registerkarte",
             "playground": "Spielplatz",
-            "auto_refresh_interval": "Automatisches Aktualisierungsintervall"
+            "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
+            "task_edit_default_mode": "Standard-Bearbeitungsmodus für Tasks"
           },
           "descriptions": {
             "default_namespace": "Wird verwendet, wenn neue flows ohne namespace erstellt werden.",
@@ -873,7 +874,12 @@
             "flow_default_tab": "Registerkarte ausgewählt beim Navigieren zu einem flow.",
             "triggers_default_tab": "Registerkarte ausgewählt beim Navigieren zur Trigger-Seite.",
             "auto_refresh_interval": "Sekunden zwischen automatischen Datenaktualisierungen auf Listen-Seiten.",
-            "playground": "Führen Sie Tasks einzeln im Editor-Spielplatz aus."
+            "playground": "Führen Sie Tasks einzeln im Editor-Spielplatz aus.",
+            "task_edit_default_mode": "Wie eine Task standardmäßig im Code-freien Editor geöffnet wird."
+          },
+          "task_edit_default_mode_options": {
+            "modal": "Modal",
+            "tab": "Tab"
           }
         },
         "theme": {
@@ -1042,7 +1048,8 @@
         "audit-logs": {
           "title": "Alle Änderungen an einem Ort verfolgen",
           "message": "In der Kestra Enterprise Edition können Sie Audit-Logs auf Namespace-Ebene mit detaillierten Diffs anzeigen, die Ihnen eine klare Historie darüber geben, wer was und wann an allen Ressourcen geändert hat."
-        }
+        },
+        "plugin-defaults": {}
       }
     },
     "assets": {
@@ -1373,7 +1380,8 @@
         "triggers": "Trigger",
         "errors": "Fehlerbehandler",
         "afterExecution": "Nach Ausführung",
-        "finally": "Schließlich"
+        "finally": "Schließlich",
+        "flow": "Flow"
       },
       "fields": {
         "main": {
@@ -1395,7 +1403,8 @@
           "workerGroup": "Worker-Gruppe",
           "workerSelector": "Worker-Selektor",
           "checks": "Überprüfungen",
-          "updated": "Aktualisiert"
+          "updated": "Aktualisiert",
+          "quotas": "Kontingente"
         }
       },
       "select": {
@@ -1428,6 +1437,25 @@
       "remove": {
         "default": "Diesen Eintrag entfernen",
         "cases": "Diesen Fall entfernen"
+      },
+      "adding_to": "+ Zu {what} hinzufügen",
+      "choose_placeholder": "{field} auswählen",
+      "duration": {
+        "add_unit": "Einheit hinzufügen",
+        "units": {
+          "day": "Tage",
+          "hour": "Stunden",
+          "minute": "Minuten",
+          "second": "Sekunden",
+          "week": "Wochen"
+        }
+      },
+      "expression_placeholder": "{field} hier eingeben...",
+      "nav": {
+        "back": "Zurück",
+        "breadcrumb_aria": "Feldpfad",
+        "items": "{count} Elemente",
+        "not_set": "Nicht gesetzt"
       }
     },
     "editor_shortcuts": {
@@ -1573,7 +1601,8 @@
       "panels": {
         "title": "Kein Panel geöffnet",
         "content": "Du hast alle Panels geschlossen.  \nWähle oben eine Registerkarte, um fortzufahren."
-      }
+      },
+      "pluginDefaults": {}
     },
     "toggle_word_wrap": "Zeilenumbruch umschalten",
     "copied_logs_to_clipboard": "Logs in die Zwischenablage kopiert.",
@@ -1581,7 +1610,9 @@
       "move_right": "Nach rechts verschieben",
       "move_left": "Nach links verschieben",
       "close_all_tabs": "Alle Registerkarten schließen",
-      "close_all_panels": "Alle Panels schließen"
+      "close_all_panels": "Alle Panels schließen",
+      "exit_fullscreen": "Vollbild beenden",
+      "fullscreen": "Vollbild"
     },
     "search_docs": "Suche",
     "no_results_found": "Keine Ergebnisse gefunden",
@@ -2071,6 +2102,156 @@
     "open source": "Open Source",
     "pricing": "Preise",
     "license": "Lizenz",
+    "block_editor": {
+      "add_error_task": "Fehler-task hinzufügen",
+      "add_switch_case": "Fall hinzufügen",
+      "adding_to": "Neuer Eintrag in {section}",
+      "add_task": "Aufgabe hinzufügen",
+      "add_to_lane": "{lane} hinzufügen",
+      "add_trigger": "Trigger hinzufügen",
+      "all_apps": "Alle Apps",
+      "app_actions": "{count} Aktionen",
+      "block_deleted": "{name} gelöscht",
+      "card_aria_label": "Block {id} vom Typ {type}",
+      "canvas_aria": "Canvas der Flow-Blöcke",
+      "close_all": "Alle Tabs schließen",
+      "cluster_collapse_aria": "{id} einklappen",
+      "cluster_expand_aria": "{id} ausklappen ({count} tasks)",
+      "collapsed_summary": "{count} tasks",
+      "command_menu": {
+        "context_flow": "Kontext: Flow",
+        "context_selected": "Kontext: {name}",
+        "delete": "{name} löschen",
+        "duplicate": "{name} duplizieren",
+        "goto": "Zu {section} wechseln",
+        "group_block": "Dieser Block",
+        "group_flow": "Flow",
+        "group_goto": "Wechseln zu",
+        "group_insert": "Einfügen",
+        "group_types": "Task-Typen",
+        "insert_after": "Nach {name} einfügen",
+        "insert_at_end": "Am Ende von Tasks einfügen",
+        "insert_before": "Vor {name} einfügen",
+        "insert_in_section": "In {section} einfügen",
+        "insert_kind": "{kind} einfügen",
+        "no_match": "Keine Treffer",
+        "open": "{name} öffnen",
+        "save": "Flow speichern",
+        "search_placeholder": "Befehl eingeben oder task suchen…",
+        "title": "Befehlsmenü"
+      },
+      "configure": "Konfigurieren",
+      "confirm_delete": {
+        "message": "Dies entfernt {name} aus dem Flow. Du kannst es direkt danach noch rückgängig machen.",
+        "message_group": "Dies entfernt die Gruppe {name} und alles darin. Du kannst es direkt danach noch rückgängig machen.",
+        "title": "{name} löschen?"
+      },
+      "declared_outputs": "Deklarierte Outputs",
+      "delete": "Löschen",
+      "depends_on_label": "Abhängig von",
+      "depends_on_placeholder": "Tasks auswählen…",
+      "depth_pill": "Tiefe {depth}",
+      "drag_reorder": "Zum Neuanordnen ziehen",
+      "duplicate": "Duplizieren",
+      "empty": "Noch keine Aufgaben oder trigger. Fügen Sie Ihre erste Aufgabe hinzu.",
+      "empty_add_hint": "oder / drücken, um tasks zu suchen",
+      "empty_add_lead": "Klicken, um {label} hinzuzufügen",
+      "error_task_noun": "Fehler-task",
+      "execution_context": "Ausführungskontext",
+      "filter_data": "Verfügbare Daten filtern…",
+      "flow_inputs": "Flow inputs",
+      "flowable_todo": "Verschachtelte Aufgaben (Bearbeitung folgt)",
+      "footer": {
+        "canvas": "Arbeitsbereich",
+        "close_panel": "Panel schließen",
+        "command_menu": "Befehlsmenü",
+        "editing": "Block wird bearbeitet",
+        "inserting": "Wird eingefügt",
+        "selected": "Ausgewählt · {name}"
+      },
+      "inline_add": "{label} hinzufügen",
+      "inputs": "Inputs",
+      "inputs_sub": "hier verwendbare Daten",
+      "inserting_into": "Einfügen in {section}",
+      "kbd_add": "hinzufügen",
+      "kbd_close": "schließen",
+      "kbd_navigate": "navigieren",
+      "lane_case": "Fall: {key}",
+      "lane_defaults": "Standard",
+      "lane_else": "Sonst",
+      "lane_empty": "Keine tasks in {lane}",
+      "lane_errors": "Fehler",
+      "lane_finally": "Abschließend",
+      "lane_tasks": "Tasks",
+      "lane_then": "Dann",
+      "loading_plugins": "Plugins werden geladen...",
+      "move_down": "Nach unten verschieben",
+      "move_up": "Nach oben verschieben",
+      "nav_rail_empty": "Noch keine tasks oder trigger.",
+      "nav_rail_title": "Gliederung",
+      "nested_count": "{count} verschachtelte Aufgaben",
+      "no_data_matches": "Nichts entspricht Ihrem Filter",
+      "no_documentation": "Keine Dokumentation für diese task",
+      "no_recent": "Noch keine zuletzt verwendeten tasks",
+      "no_task_results": "Keine passenden Aufgabentypen.",
+      "open_details": "Geöffnete Details",
+      "open_in_split": "In geteilter Ansicht öffnen",
+      "output": "Output",
+      "output_sub": "was diese task erzeugt",
+      "pick_task_type": "Aufgabentyp auswählen",
+      "picker_more_results": "{count} weitere, verfeinern Sie Ihre Suche",
+      "plugin_default": "Standard: {value}",
+      "plugin_default_tooltip": "Standardwert aus den pluginDefaults des Flows",
+      "required_missing": "Pflichtfeld nicht gesetzt",
+      "save_blocked": {
+        "message": "Beheben Sie die Fehler vor dem Speichern.",
+        "title": "Flow kann nicht gespeichert werden"
+      },
+      "search_task_placeholder": "Aufgabentypen suchen...",
+      "shortcuts": {
+        "add_after": "Block nach Auswahl einfügen",
+        "add_before": "Block vor Auswahl einfügen",
+        "add_task": "Schnelles Einfügen an der Cursorposition",
+        "clear": "Schließen / Auswahl aufheben",
+        "collapse_expand": "Ein-/Ausklappen",
+        "command_palette": "Befehlsmenü (kontextabhängig)",
+        "group_edit": "Bearbeiten",
+        "group_global": "Global",
+        "group_insert": "Einfügen",
+        "group_navigate": "Navigieren",
+        "move_between": "Auswahl bewegen",
+        "open": "Ausgewählten Block öffnen",
+        "open_split": "Ausgewählten Block in geteilter Ansicht öffnen",
+        "or": "oder",
+        "reorder": "Nach oben / unten verschieben",
+        "save": "Flow speichern",
+        "step_into": "Erweitern / in eine Gruppe wechseln",
+        "step_out": "Einklappen / zum übergeordneten Element wechseln",
+        "title": "Tastenkürzel",
+        "toggle": "Diese Hilfe",
+        "undo": "Rückgängig"
+      },
+      "split_into": "{count}-Spalten-Ansicht",
+      "split_view": "Geteilte Ansicht",
+      "switch_case_key_placeholder": "Neuer Fallschlüssel",
+      "switch_case_key_taken": "Fall {key} existiert bereits",
+      "tab_apps": "Nach App",
+      "tab_recent": "Zuletzt",
+      "tab_suggested": "Vorgeschlagen",
+      "task_noun": "task",
+      "then_required_warning": "Der Dann-Zweig ist erforderlich",
+      "trigger_noun": "trigger",
+      "undo": "Rückgängig",
+      "upstream_outputs": "Vorgelagerte Outputs",
+      "open_in_tabs": "In Tabs öffnen",
+      "open_mode_hint": "Tasks öffnen sich standardmäßig in einem Dialog. In den {settings} können Sie Tabs als Standard festlegen."
+    },
+    "blocks": "Blöcke",
+    "flow_description": "Flow-Beschreibung",
+    "flow_no_description": "Keine Beschreibung. Fügen Sie Ihrem flow-YAML eine Beschreibung hinzu.",
+    "pluginDefaults": {},
+    "split_horizontal": "Horizontal aufteilen",
+    "split_vertical": "Vertikal aufteilen",
     "pwa": {
       "install_title": "Kestra installieren",
       "install_description": "Installieren Sie Kestra als App für einen schnelleren Zugriff und ein Vollbild-Erlebnis.",

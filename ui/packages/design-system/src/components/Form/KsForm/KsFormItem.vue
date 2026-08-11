@@ -23,6 +23,8 @@
 
     const props = withDefaults(defineProps<{
         label?: string
+        /** Id of the control the label points at. Pass an empty string when the label slot is a header strip rather than a caption: the label renders as a plain div, so clicking it no longer focuses the control. */
+        for?: string
         prop?: string | string[]
         rules?: FormItemRule[]
         required?: boolean
@@ -33,6 +35,7 @@
         inline?: boolean
     }>(), {
         label: undefined,
+        for: undefined,
         prop: undefined,
         rules: undefined,
         labelWidth: undefined,

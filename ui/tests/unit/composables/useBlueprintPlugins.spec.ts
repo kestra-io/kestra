@@ -73,6 +73,16 @@ describe("useBlueprintPlugins", () => {
             ).toEqual([])
         })
 
+        it("never flags plugin groups/packages (represented by lowercase ending segment)", () => {
+            expect(
+                composable.missingTaskTypes([
+                    "io.kestra.plugin.jdbc.postgresql",
+                    "io.kestra.plugin.docker",
+                    "io.kestra.plugin.aws",
+                ]),
+            ).toEqual([])
+        })
+
         it("returns nothing while the installed set is unknown (never disables blindly)", () => {
             pluginsStore.installedPluginTypes = undefined
             expect(
@@ -118,6 +128,20 @@ describe("useBlueprintPlugins", () => {
         it("swallows loader errors", async () => {
             vi.spyOn(pluginsStore, "loadInstalledPluginTypes").mockRejectedValue(new Error("boom"))
             await expect(composable.ensureInstalledPluginsLoaded()).resolves.toBeUndefined()
+        })
+    })
+
+    describe("isTaskClass", () => {
+        it("returns true for valid task class names", () => {
+            expect(composable.isTaskClass("io.kestra.plugin.core.log.Log")).toBe(true)
+            expect(composable.isTaskClass("io.kestra.plugin.gcp.bigquery.Query")).toBe(true)
+            expect(composable.isTaskClass("io.kestra.plugin.scripts.shell.Commands")).toBe(true)
+        })
+
+        it("returns false for plugin group/package paths", () => {
+            expect(composable.isTaskClass("io.kestra.plugin.jdbc.postgresql")).toBe(false)
+            expect(composable.isTaskClass("io.kestra.plugin.docker")).toBe(false)
+            expect(composable.isTaskClass("io.kestra.plugin.aws")).toBe(false)
         })
     })
 })

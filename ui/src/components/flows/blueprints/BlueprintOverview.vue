@@ -62,7 +62,7 @@
     import TaskIcon from "../../plugins/TaskIcon.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
 
-    import {useBlueprintPlugins} from "../../../composables/useBlueprintPlugins"
+    import {useBlueprintPlugins, isTaskClass} from "../../../composables/useBlueprintPlugins"
     import type {BlueprintTag, FlowBlueprint} from "../../../stores/blueprints"
 
     const props = withDefaults(defineProps<{
@@ -96,7 +96,7 @@
         })),
     )
 
-    const uniqueTasks = computed(() => [...new Set(props.blueprint?.includedTasks)])
+    const uniqueTasks = computed(() => [...new Set(props.blueprint?.includedTasks)].filter(isTaskClass))
 
     const taskName = (cls: string) => stringUtils.afterLastDot(cls)
 

@@ -17,6 +17,7 @@
     import {ref, computed, onMounted, onBeforeUnmount} from "vue"
     import TaskIcon from "./TaskIcon.vue"
     import type {PluginIconMap} from "../../utils/pluginUtils"
+    import {isTaskClass} from "../../composables/useBlueprintPlugins"
 
     const props = defineProps<{
         clses: string[]
@@ -36,6 +37,7 @@
         const seen = new Set<string>()
         const out: string[] = []
         for (const cls of props.clses) {
+            if (!isTaskClass(cls)) continue
             const parent = parentOf(cls)
             if (!seen.has(parent)) {
                 seen.add(parent)

@@ -9,6 +9,13 @@ const PLUGIN_PACKAGE_PREFIX = "io.kestra.plugin."
 // schema (not the plugin list), so they must never be treated as "missing".
 const CONDITION_CLASS_PATTERN = /\.conditions?\./
 
+/** Detects whether a string is a fully-qualified Java class name (assumed by capital letter of the class name). */
+export function isTaskClass(cls: string): boolean {
+    const parts = cls.split(".")
+    const last = parts[parts.length - 1]
+    return last ? /^[A-Z]/.test(last) : false
+}
+
 /** Derives a short, user-facing plugin name from a task class name. */
 function pluginNameOf(taskType: string): string {
     if (taskType.startsWith(PLUGIN_PACKAGE_PREFIX)) {
@@ -58,7 +65,7 @@ export function useBlueprintPlugins() {
     const missingTaskTypes = (includedTasks?: string[]): string[] => {
         if (installedTypes.value.size === 0) return []
         return [...new Set(includedTasks ?? [])].filter(
-            type => !CONDITION_CLASS_PATTERN.test(type) && !installedTypes.value.has(type),
+            type => isTaskClass(type) && !CONDITION_CLASS_PATTERN.test(type) && !installedTypes.value.has(type),
         )
     }
 
@@ -76,5 +83,6 @@ export function useBlueprintPlugins() {
         missingTaskTypes,
         missingPluginNames,
         hasMissingPlugins,
+        isTaskClass,
     }
 }

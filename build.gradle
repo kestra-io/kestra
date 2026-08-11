@@ -253,6 +253,10 @@ subprojects {subProj ->
             // set Xmx for test workers
             t.maxHeapSize = '4g'
 
+            // Parallelize across forks on CI, where org.gradle.workers.max budgets for
+            // it; stay single-forked locally so a laptop isn't oversubscribed.
+            t.maxParallelForks = (System.getenv('CI') ? 2 : 1)
+
             // configure en_US default locale for tests
             t.systemProperty 'user.language', 'en'
             t.systemProperty 'user.country', 'US'
@@ -285,9 +289,10 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
 
-            // Integration tests typically not parallel (but you can enable)
-            maxParallelForks = 1
             commonTestConfig(t)
+            // Integration tests share DB state, so keep this one single-forked
+            // regardless of commonTestConfig's CI default.
+            maxParallelForks = 1
         }
 
         tasks.register('unitTest', Test) { Test t ->

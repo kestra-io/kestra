@@ -19,6 +19,14 @@ import {useCrossResourceSearchStore} from "../../../src/stores/crossResourceSear
 
 const flowFilters = {caseSensitive: false, wholeWord: false, regex: false, scope: "ALL" as const}
 
+function deferred<T>() {
+    let resolve!: (value: T) => void
+    const promise = new Promise<T>((r) => {
+        resolve = r
+    })
+    return {promise, resolve}
+}
+
 describe("useCrossResourceSearchStore", () => {
     beforeEach(() => {
         setActivePinia(createPinia())
@@ -144,5 +152,47 @@ describe("useCrossResourceSearchStore", () => {
             {type: "kv", namespace: "ns", key: "kv-key"},
             {type: "secrets", namespace: "ns", key: "secret-key"},
         ])
+    })
+
+    it("keeps the newest results when an older search resolves last", async () => {
+        const slowFirst = deferred<{results: unknown[]}>()
+        const fastSecond = deferred<{results: unknown[]}>()
+        mockSearchFlowsBySourceCode
+            .mockReturnValueOnce(slowFirst.promise)
+            .mockReturnValueOnce(fastSecond.promise)
+
+        const store = useCrossResourceSearchStore()
+        const first = store.search({types: ["flows"], query: "us-east", ...flowFilters})
+        const second = store.search({types: ["flows"], query: "us-east-1", ...flowFilters})
+
+        fastSecond.resolve({results: [{namespace: "ns", id: "newer", editable: true, matches: [{line: 1, column: 0, snippet: "us-east-1"}]}]})
+        await second
+
+        slowFirst.resolve({results: [{namespace: "ns", id: "older", editable: true, matches: [{line: 9, column: 0, snippet: "us-east"}]}]})
+        await first
+
+        expect(store.flows.results).toHaveLength(1)
+        expect(store.flows.results[0].id).toBe("newer")
+    })
+
+    it("discards a namespace-file retry once the query has moved on", async () => {
+        mockAutocompleteNamespaces.mockResolvedValue(["ns"])
+        mockSearchNamespaceFiles.mockRejectedValueOnce(new Error("timed out"))
+
+        const store = useCrossResourceSearchStore()
+        await store.search({types: ["files"], query: "us-east-1", ...flowFilters})
+        expect(store.files.namespaces[0].status).toBe("failed")
+
+        const slowRetry = deferred<string[]>()
+        mockSearchNamespaceFiles.mockReturnValueOnce(slowRetry.promise)
+        const staleRetry = store.retryNamespaceFiles("ns", "us-east-1")
+
+        mockSearchNamespaceFiles.mockResolvedValueOnce(["scripts/fresh.py"])
+        await store.search({types: ["files"], query: "eu-west-1", ...flowFilters})
+
+        slowRetry.resolve(["scripts/stale.py"])
+        await staleRetry
+
+        expect(store.files.namespaces[0].paths).toEqual(["scripts/fresh.py"])
     })
 })

@@ -85,14 +85,24 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
     const kv = ref<KvTypeState>({status: "idle", groups: []})
     const secrets = ref<SecretsTypeState>({status: "idle", groups: []})
 
+    /**
+     * Every search run gets a generation; a resolution only writes to the shared state while its
+     * generation is still the newest. The consumer debounces but lodash's trailing edge only delays
+     * invocation, so a slow earlier run can still resolve after a later one and clobber its results.
+     */
+    let generation = 0
+    const nextGeneration = () => ++generation
+    const isCurrent = (gen: number) => gen === generation
+
     function reset() {
+        nextGeneration()
         flows.value = {status: "idle", results: []}
         files.value = {status: "idle", namespaces: []}
         kv.value = {status: "idle", groups: []}
         secrets.value = {status: "idle", groups: []}
     }
 
-    async function searchFlows(params: FlowsSearchParams) {
+    async function searchFlows(params: FlowsSearchParams, gen: number = nextGeneration()) {
         if (!params.query) {
             flows.value = {status: "idle", results: []}
             return
@@ -110,13 +120,17 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 q: params.query,
                 namespace: params.namespace,
             })
+            if (!isCurrent(gen)) return
             flows.value = {status: "done", results: (response.results ?? []) as SourceSearchResult[]}
         } catch (e: any) {
+            if (!isCurrent(gen)) return
             flows.value = {status: "failed", results: [], errorMessage: e?.response?.data?.message ?? e?.message}
         }
     }
 
-    function setNamespaceFileState(state: NamespaceFileState) {
+    function setNamespaceFileState(state: NamespaceFileState, gen: number) {
+        if (!isCurrent(gen)) return
+
         const next = [...files.value.namespaces]
         const index = next.findIndex((n) => n.namespace === state.namespace)
         if (index === -1) next.push(state)
@@ -126,12 +140,12 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         files.value = {status: anyPending ? "counting" : "done", namespaces: next}
     }
 
-    async function fetchNamespaceFiles(namespace: string, query: string) {
+    async function fetchNamespaceFiles(namespace: string, query: string, gen: number) {
         try {
             const paths = await FilesAPI.searchNamespaceFiles({namespace, q: query}) ?? []
-            setNamespaceFileState({namespace, status: "done", paths})
+            setNamespaceFileState({namespace, status: "done", paths}, gen)
         } catch (e: any) {
-            setNamespaceFileState({namespace, status: "failed", paths: [], errorMessage: e?.response?.data?.message ?? e?.message})
+            setNamespaceFileState({namespace, status: "failed", paths: [], errorMessage: e?.response?.data?.message ?? e?.message}, gen)
         }
     }
 
@@ -140,7 +154,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
      * namespaces the user can list (or a single one when a namespace filter is active), and each
      * namespace's failure is isolated so one timing out never blanks the others.
      */
-    async function searchFiles(params: {query: string; namespace?: string}) {
+    async function searchFiles(params: {query: string; namespace?: string}, gen: number = nextGeneration()) {
         if (!params.query) {
             files.value = {status: "idle", namespaces: []}
             return
@@ -152,24 +166,32 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 ? [params.namespace]
                 : (await NamespacesAPI.autocompleteNamespaces({existingOnly: true}) as unknown as string[] ?? [])
         } catch (e: any) {
+            if (!isCurrent(gen)) return
             files.value = {status: "failed", namespaces: [], errorMessage: e?.response?.data?.message ?? e?.message}
             return
         }
+
+        if (!isCurrent(gen)) return
 
         files.value = {
             status: namespaces.length === 0 ? "done" : "counting",
             namespaces: namespaces.map((namespace) => ({namespace, status: "pending" as const, paths: []})),
         }
 
-        await Promise.all(namespaces.map((namespace) => fetchNamespaceFiles(namespace, params.query)))
+        await Promise.all(namespaces.map((namespace) => fetchNamespaceFiles(namespace, params.query, gen)))
     }
 
+    /**
+     * A retry belongs to the run that produced the failed namespace, so it reuses the current
+     * generation instead of opening a new one — if the query has moved on, the retry is discarded.
+     */
     async function retryNamespaceFiles(namespace: string, query: string) {
-        setNamespaceFileState({namespace, status: "pending", paths: []})
-        await fetchNamespaceFiles(namespace, query)
+        const gen = generation
+        setNamespaceFileState({namespace, status: "pending", paths: []}, gen)
+        await fetchNamespaceFiles(namespace, query, gen)
     }
 
-    async function searchKv(params: {query: string; namespace?: string}) {
+    async function searchKv(params: {query: string; namespace?: string}, gen: number = nextGeneration()) {
         if (!params.query) {
             kv.value = {status: "idle", groups: []}
             return
@@ -181,6 +203,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
 
             const response = await KvAPI.listAllKeys({filters, page: 1, size: SEARCH_PAGE_SIZE})
+            if (!isCurrent(gen)) return
             const results = (response.results ?? []) as {namespace?: string; key?: string; updateDate?: string; creationDate?: string; expirationDate?: string}[]
             kv.value = {
                 status: "done",
@@ -192,11 +215,12 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 })),
             }
         } catch (e: any) {
+            if (!isCurrent(gen)) return
             kv.value = {status: "failed", groups: [], errorMessage: e?.response?.data?.message ?? e?.message}
         }
     }
 
-    async function searchSecrets(params: {query: string; namespace?: string}) {
+    async function searchSecrets(params: {query: string; namespace?: string}, gen: number = nextGeneration()) {
         if (!params.query) {
             secrets.value = {status: "idle", groups: []}
             return
@@ -208,17 +232,20 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             if (params.namespace) filters.push({field: "namespace", operation: "EQUALS", value: params.namespace})
 
             const response = await SecretsAPI.listSecrets({filters, page: 1, size: SEARCH_PAGE_SIZE})
+            if (!isCurrent(gen)) return
             const results = (response.results ?? []) as {namespace?: string; key: string}[]
             secrets.value = {
                 status: "done",
                 groups: groupByNamespace(results, (entry) => entry.namespace ?? "", (entry) => ({key: entry.key})),
             }
         } catch (e: any) {
+            if (!isCurrent(gen)) return
             secrets.value = {status: "failed", groups: [], errorMessage: e?.response?.data?.message ?? e?.message}
         }
     }
 
     async function search(params: CrossResourceSearchParams) {
+        const gen = nextGeneration()
         const tasks: Promise<void>[] = []
 
         if (params.types.includes("flows")) {
@@ -229,25 +256,25 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 wholeWord: params.wholeWord,
                 regex: params.regex,
                 scope: params.scope,
-            }))
+            }, gen))
         } else {
             flows.value = {status: "idle", results: []}
         }
 
         if (params.types.includes("files")) {
-            tasks.push(searchFiles({query: params.query, namespace: params.namespace}))
+            tasks.push(searchFiles({query: params.query, namespace: params.namespace}, gen))
         } else {
             files.value = {status: "idle", namespaces: []}
         }
 
         if (params.types.includes("kv")) {
-            tasks.push(searchKv({query: params.query, namespace: params.namespace}))
+            tasks.push(searchKv({query: params.query, namespace: params.namespace}, gen))
         } else {
             kv.value = {status: "idle", groups: []}
         }
 
         if (params.types.includes("secrets")) {
-            tasks.push(searchSecrets({query: params.query, namespace: params.namespace}))
+            tasks.push(searchSecrets({query: params.query, namespace: params.namespace}, gen))
         } else {
             secrets.value = {status: "idle", groups: []}
         }

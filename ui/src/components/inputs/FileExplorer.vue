@@ -445,6 +445,11 @@
         filesStore.namespaceId = props.currentNS
     }
 
+    interface FileExplorerNode {
+        data: TreeNode;
+        parent: ElTreeNode;
+    }
+
     interface Dialog{
         visible: boolean;
         type: "file" | "folder";
@@ -804,7 +809,7 @@
         renameDialog.value = {...RENAME_DEFAULTS}
     }
 
-    function onNodeDragStart(draggingNode: any) {
+    function onNodeDragStart(draggingNode: FileExplorerNode) {
         nodeBeforeDrag.value = {
             parent: draggingNode.parent.data.id,
             path: filesStore.getPath(draggingNode.data.id) ?? "",

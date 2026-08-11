@@ -176,6 +176,31 @@ public class BasicAuthService {
         }
     }
 
+    /**
+     * Records the admin's newsletter opt-in choice from the onboarding survey step, which completes
+     * after the account itself (and its {@link #save} event) already exists.
+     *
+     * @throws IllegalStateException if basic authentication has not been configured yet
+     */
+    public void recordNewsletterOptIn(boolean newsletterOptedIn) {
+        var credentials = credentials();
+        if (credentials == null) {
+            throw new IllegalStateException("Basic authentication must be configured before recording a newsletter preference.");
+        }
+
+        ossAuthEventPublisher.publishEventAsync(
+            OssAuthEvent.builder()
+                .iid(instanceService.fetch())
+                .date(Instant.now())
+                .ossAuth(
+                    OssAuthEvent.OssAuth.builder()
+                        .email(credentials.getUsername())
+                        .newsletterOptedIn(newsletterOptedIn)
+                        .build()
+                ).build()
+        );
+    }
+
     public List<String> validationErrors() {
         return settingRepository.findByKey(BASIC_AUTH_ERROR_CONFIG)
             .map(Setting::getValue)

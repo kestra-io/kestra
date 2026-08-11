@@ -106,9 +106,9 @@ public final class QueryFilterToolExecutor implements ToolExecutor {
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Unknown operator '%s' for field '%s'".formatted(operatorName, field.name()));
             }
-            if (!field.supportedOp().contains(op)) {
+            if (!resource.supportedOp(field).contains(op)) {
                 throw new IllegalArgumentException(
-                    "Operator '%s' is not supported for field '%s'. Valid: %s".formatted(op, field.name(), field.supportedOp())
+                    "Operator '%s' is not supported for field '%s'. Valid: %s".formatted(op, field.name(), resource.supportedOp(field))
                 );
             }
             // leaf shape: field + operation present, no logical/children (see QueryFilter's @JsonCreator).

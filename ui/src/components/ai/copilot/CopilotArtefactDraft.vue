@@ -75,7 +75,9 @@
            width instead of shrinking to its longest line. */
         width: 100%;
         max-width: 90%;
-        border: 1px solid var(--ks-border-subtle);
+        /* --ks-border-default, not -subtle: in light theme -subtle is the same gray as the card's
+           --ks-bg-base, so a -subtle border is invisible (it shows fine in dark). */
+        border: 1px solid var(--ks-border-default);
         border-radius: var(--ks-radius-lg);
         overflow: hidden;
         background: var(--ks-bg-base);

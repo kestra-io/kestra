@@ -120,8 +120,9 @@ export function setupKestraHttp(
     function handleErrorCentrally(error: KestraHttpError): KestraHttpError {
         const status = error.status
         if (status === 404) {
-            // Let callers handle an expected 404 locally (e.g. rehydrating a Copilot thread that no
-            // longer exists) by passing `showMessageOnError: false`, instead of the global not-found page.
+            /** Callers expecting a 404 can pass `showMessageOnError: false`
+             * to handle it locally instead of the global not-found page.
+            */
             if (error.config?.showMessageOnError !== false) {
                 onError("error", error)
             }
@@ -229,6 +230,15 @@ export function setupKestraHttp(
         initProgress()
     })
     router?.afterEach(() => {
+        if (pendingRoute) {
+            increaseProgress()
+            pendingRoute = false
+        }
+    })
+    // A thrown guard error or failed async-component import rejects the navigation
+    // without ever calling afterEach, leaving requestsTotal permanently ahead and the
+    // loading bar stuck - settle the counter here too, same as afterEach does.
+    router?.onError(() => {
         if (pendingRoute) {
             increaseProgress()
             pendingRoute = false

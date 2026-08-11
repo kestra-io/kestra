@@ -12,6 +12,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.TaskOutput;
 import io.kestra.core.models.executions.statistics.ExecutionStatistic;
+import io.kestra.core.models.tasks.TaskRunStatistic;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
@@ -78,6 +79,12 @@ public class JdbcTableConfigsFactory {
     @Named("executionstatistics")
     public InstantiableJdbcTableConfig executionStatistics() {
         return new InstantiableJdbcTableConfig("executionstatistics", ExecutionStatistic.class, "execution_statistics");
+    }
+
+    @Bean
+    @Named("taskrunstatistics")
+    public InstantiableJdbcTableConfig taskrunstatistics() {
+        return new InstantiableJdbcTableConfig("taskrunstatistics", TaskRunStatistic.class, "task_run_statistics");
     }
 
     @Bean

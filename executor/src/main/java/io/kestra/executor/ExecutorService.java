@@ -192,11 +192,11 @@ public class ExecutorService {
             // but keep listeners on killing
             executor = this.handleAfterExecution(executor);
 
-            // send worker task to the Worker
-            executor = this.handleWorkerTasks(executor);
-
             // process flowable tasks
             executor = this.handleFlowableTasks(executor);
+
+            // send worker task to the Worker
+            executor = this.handleWorkerTasks(executor);
 
             // search for execution updating tasks
             executor = this.handleExecutionUpdatingTasks(executor);

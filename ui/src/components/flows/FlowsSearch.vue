@@ -605,7 +605,7 @@
     }
 
     function onRetryNamespace(value: {namespace: string}) {
-        return store.retryNamespaceFiles(value.namespace, query.value)
+        return store.retryNamespaceFiles(value.namespace)
     }
 
     const searchFilters = computed(() => ({

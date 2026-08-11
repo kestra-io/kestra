@@ -91,7 +91,7 @@ describe("useCrossResourceSearchStore", () => {
         await store.search({types: ["files"], query: "us-east-1", ...flowFilters})
         expect(store.filesNamespacesFailed.map((n) => n.namespace)).toEqual(["company.b"])
 
-        await store.retryNamespaceFiles("company.b", "us-east-1")
+        await store.retryNamespaceFiles("company.b")
 
         expect(mockSearchNamespaceFiles).toHaveBeenCalledTimes(3)
         expect(store.filesNamespacesFailed).toEqual([])
@@ -185,7 +185,7 @@ describe("useCrossResourceSearchStore", () => {
 
         const slowRetry = deferred<string[]>()
         mockSearchNamespaceFiles.mockReturnValueOnce(slowRetry.promise)
-        const staleRetry = store.retryNamespaceFiles("ns", "us-east-1")
+        const staleRetry = store.retryNamespaceFiles("ns")
 
         mockSearchNamespaceFiles.mockResolvedValueOnce(["scripts/fresh.py"])
         await store.search({types: ["files"], query: "eu-west-1", ...flowFilters})
@@ -194,5 +194,19 @@ describe("useCrossResourceSearchStore", () => {
         await staleRetry
 
         expect(store.files.namespaces[0].paths).toEqual(["scripts/fresh.py"])
+    })
+    it("retries under the query that produced the failure, not whatever is in the box now", async () => {
+        mockAutocompleteNamespaces.mockResolvedValue(["ns"])
+        mockSearchNamespaceFiles.mockRejectedValueOnce(new Error("timed out"))
+
+        const store = useCrossResourceSearchStore()
+        await store.search({types: ["files"], query: "us-east-1", ...flowFilters})
+        expect(store.files.namespaces[0].status).toBe("failed")
+
+        // The user edits the box; the 300ms debounce has not fired a new search yet.
+        mockSearchNamespaceFiles.mockResolvedValueOnce(["scripts/whatever.py"])
+        await store.retryNamespaceFiles("ns")
+
+        expect(mockSearchNamespaceFiles).toHaveBeenLastCalledWith({namespace: "ns", q: "us-east-1"})
     })
 })

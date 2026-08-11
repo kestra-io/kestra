@@ -8,7 +8,7 @@ import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
 import * as NamespacesAPI from "@kestra-io/kestra-sdk/namespaces"
 import type {SourceSearchScope} from "@kestra-io/kestra-sdk"
 
-import {groupByNamespace, SEARCH_RESOURCE_TYPES, type CrossSearchSelection, type SearchResourceType, type SearchStatus} from "../utils/crossResourceSearch"
+import {groupByNamespace, type CrossSearchSelection, type SearchResourceType, type SearchStatus} from "../utils/crossResourceSearch"
 import type {SourceSearchResult} from "../utils/sourceSearchDiff"
 
 const SEARCH_PAGE_SIZE = 200
@@ -64,6 +64,8 @@ interface FlowsTypeState {
 interface FilesTypeState {
     status: SearchStatus;
     namespaces: NamespaceFileState[];
+    /** The query these namespaces were fanned out for, so a retry cannot run under a different one. */
+    query?: string;
     errorMessage?: string;
 }
 
@@ -158,7 +160,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         else next[index] = state
 
         const anyPending = next.some((n) => n.status === "pending")
-        files.value = {status: anyPending ? "counting" : "done", namespaces: next}
+        files.value = {status: anyPending ? "counting" : "done", query: files.value.query, namespaces: next}
     }
 
     async function fetchNamespaceFiles(namespace: string, query: string, gen: number) {
@@ -196,6 +198,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
 
         files.value = {
             status: namespaces.length === 0 ? "done" : "counting",
+            query: params.query,
             namespaces: namespaces.map((namespace) => ({namespace, status: "pending" as const, paths: []})),
         }
 
@@ -203,10 +206,15 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
     }
 
     /**
-     * A retry belongs to the run that produced the failed namespace, so it reuses the current
-     * generation instead of opening a new one — if the query has moved on, the retry is discarded.
+     * A retry belongs to the run that produced the failed namespace, so it reuses that run's query
+     * and generation. Taking the query from the caller instead would let a retry fired after the user
+     * edited the search box — but before the debounce re-searches — write results for the new query
+     * into a list still showing the old one.
      */
-    async function retryNamespaceFiles(namespace: string, query: string) {
+    async function retryNamespaceFiles(namespace: string) {
+        const query = files.value.query
+        if (!query) return
+
         const gen = generation
         setNamespaceFileState({namespace, status: "pending", paths: []}, gen)
         await fetchNamespaceFiles(namespace, query, gen)
@@ -365,8 +373,6 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
-    const anyTruncated = computed(() => SEARCH_RESOURCE_TYPES.some(truncatedFor))
-
     function resourceCountFor(type: SearchResourceType): number {
         switch (type) {
             case "flows": return flowsResourceCount.value
@@ -444,7 +450,6 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         errorMessageFor,
         truncatedFor,
         totalFor,
-        anyTruncated,
         flatSelections,
     }
 })

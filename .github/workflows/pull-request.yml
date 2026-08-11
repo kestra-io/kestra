@@ -166,6 +166,7 @@ jobs:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:
       java-version: 25
+      runner: ubuntu-latest-8-core
 
   # Built once here, consumed by both the E2E tests and the PR docker image
   # publish (previously each of them rebuilt the whole product themselves).
@@ -191,6 +192,7 @@ jobs:
     with:
       java-version: 25
       exe-artifact: ${{ needs.build-artifacts.result == 'success' && 'exe' || '' }}
+      runner: ubuntu-latest-8-core
 
   generate-pull-request-docker-image:
     name: Generate PR docker image

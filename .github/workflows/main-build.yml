@@ -65,6 +65,7 @@ jobs:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:
       java-version: 25
+      runner: ubuntu-latest-8-core
 
   frontend-tests:
     name: Frontend tests

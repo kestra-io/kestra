@@ -859,6 +859,11 @@
         :deep(.kel-splitter-bar) {
             z-index: 0;
         }
+
+        :deep(.el-splitter-bar__dragger-horizontal){
+            width: 16 px;
+            cursor: ew-resize;
+        }
     }
 
     .content-panel{

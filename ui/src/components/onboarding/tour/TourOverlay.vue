@@ -1,5 +1,5 @@
 <template>
-    <TourFinale v-model="showFinale" @restart="restartTour" />
+    <component :is="variant.finale" v-model="showFinale" @restart="restartTour" />
 
     <div
         v-if="tourStore.isGuidedActive && !showFinale"
@@ -30,33 +30,33 @@
         >
             <template v-if="showIntro">
                 <div class="guide-top">
-                    <span class="guide-step">{{ $t("onboarding.tour.intro.kicker") }}</span>
+                    <span class="guide-step">{{ $t(tk("intro.kicker")) }}</span>
                     <KsButton link class="guide-skip" @click="skipTour">
-                        {{ $t("onboarding.tour.intro.skip") }}
+                        {{ $t(tk("intro.skip")) }}
                     </KsButton>
                 </div>
 
                 <h3 class="guide-title">
-                    {{ $t("onboarding.tour.intro.title") }}
+                    {{ $t(tk("intro.title")) }}
                 </h3>
                 <div class="guide-body">
-                    {{ $t("onboarding.tour.intro.body") }}
+                    {{ $t(tk("intro.body")) }}
                 </div>
 
                 <ul class="guide-plan">
-                    <li v-for="group in TOUR_STEP_GROUPS" :key="group.step">
-                        {{ $t(`onboarding.tour.steps.${group.step}`) }}
+                    <li v-for="group in stepGroups" :key="group.step">
+                        {{ $t(tk(`steps.${group.step}`)) }}
                     </li>
                 </ul>
 
                 <p class="guide-note">
-                    {{ $t("onboarding.tour.intro.note") }}
+                    {{ $t(tk("intro.note")) }}
                 </p>
 
                 <div class="guide-actions">
                     <span class="guide-spacer" />
                     <KsButton type="primary" @click="beginTour">
-                        {{ $t("onboarding.tour.intro.start") }}
+                        {{ $t(tk("intro.start")) }}
                     </KsButton>
                 </div>
             </template>
@@ -64,17 +64,17 @@
             <template v-else>
                 <div class="guide-top">
                     <span class="guide-step">
-                        {{ $t("onboarding.tour.step_of", {current: sceneIndex + 1, total: TOUR_TOTAL_STEPS}) }}
-                        <span class="guide-step-name">{{ $t(`onboarding.tour.steps.${scene.step}`) }}</span>
+                        {{ $t(tk("step_of"), {current: sceneIndex + 1, total: totalSteps}) }}
+                        <span class="guide-step-name">{{ $t(tk(`steps.${scene.step}`)) }}</span>
                     </span>
                     <KsButton link class="guide-skip" @click="skipTour">
-                        {{ $t("onboarding.tour.actions.skip") }}
+                        {{ $t(tk("actions.skip")) }}
                     </KsButton>
                 </div>
 
                 <div class="guide-progress">
                     <span
-                        v-for="group in TOUR_STEP_GROUPS"
+                        v-for="group in stepGroups"
                         :key="group.step"
                         class="guide-progress-group"
                         :style="{flexGrow: group.scenes.length}"
@@ -121,7 +121,7 @@
 
                 <div class="guide-actions">
                     <KsButton v-if="sceneIndex > 0" :disabled="isBusy" @click="back">
-                        {{ $t("onboarding.tour.actions.back") }}
+                        {{ $t(tk("actions.back")) }}
                     </KsButton>
                     <span class="guide-spacer" />
                     <KsButton
@@ -129,7 +129,7 @@
                         :disabled="isWorking"
                         @click="finishTour"
                     >
-                        {{ $t("onboarding.tour.actions.finish_now") }}
+                        {{ $t(tk("actions.finish_now")) }}
                     </KsButton>
                     <KsButton
                         type="primary"
@@ -151,17 +151,8 @@
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue"
-    import TourFinale from "./TourFinale.vue"
-    import {
-        TOUR_SCENES,
-        TOUR_SCENE_IDS,
-        TOUR_STEP_GROUPS,
-        TOUR_TOTAL_STEPS,
-        TourSceneError,
-        tourSceneIndex,
-    } from "./tourScenes"
-    import {useTourActions} from "./useTourActions"
-    import {shouldShowWelcome} from "../../../utils/welcomeGuard"
+    import {TourSceneError, sceneIdsOf, sceneIndexOf, stepGroupsOf} from "./tourScenes"
+    import {useTourVariant} from "override/components/onboarding/tour/useTourVariant"
     import {useProductTourStore} from "../../../stores/productTour"
     import {useMiscStore} from "override/stores/misc"
     import {useOnboardingAnalytics, type OnboardingTourEvent} from "../../../composables/useOnboardingAnalytics"
@@ -172,9 +163,19 @@
     const router = useRouter()
     const tourStore = useProductTourStore()
     const miscStore = useMiscStore()
-    const actions = useTourActions()
-    const {trackOnboarding} = useOnboardingAnalytics()
+
+    // Resolved once: remount the overlay if the resolution can change under it.
+    const variant = useTourVariant()
+    const actions = variant.useActions()
+    const scenes = variant.scenes
+    const sceneIds = sceneIdsOf(scenes)
+    const stepGroups = stepGroupsOf(scenes)
+    const totalSteps = scenes.length
+
+    const {trackOnboarding} = useOnboardingAnalytics({sceneIds, guideId: variant.id})
     const toast = useToast()
+
+    const tk = (suffix: string) => `${variant.i18nPrefix}.${suffix}`
 
     const consumeStartQuery = async () => {
         if (route.query.tour !== "start") {
@@ -183,30 +184,37 @@
         const query = {...route.query}
         delete query.tour
         await router.replace({name: route.name ?? undefined, params: route.params, query})
-        tourStore.startGuided()
+        tourStore.startGuided(variant)
         return true
+    }
+
+    const syncTourScope = () => {
+        const uuid = miscStore.configs?.uuid
+        if (uuid) {
+            tourStore.syncScope([uuid, route.params.tenant ?? "", variant.id].join(":"))
+        }
     }
 
     let autoStartChecked = false
 
-    const autoStartOnCopilot = async () => {
-        if (autoStartChecked || route.name !== "ai") {
+    const autoStartOnEntryRoute = async () => {
+        if (autoStartChecked || route.name !== variant.autoStartRoute) {
             return false
         }
-        tourStore.syncInstance(miscStore.configs?.uuid)
+        syncTourScope()
         if (tourStore.state.status !== "not_started" || tourStore.isDismissed) {
             return false
         }
         try {
-            const isNewInstance = await shouldShowWelcome()
+            const isEligible = await variant.eligible()
             autoStartChecked = true
-            if (!isNewInstance) {
+            if (!isEligible) {
                 return false
             }
         } catch {
             return false
         }
-        tourStore.startGuided()
+        tourStore.startGuided(variant)
         return true
     }
 
@@ -219,15 +227,15 @@
 
     const isWorking = computed(() => isBusy.value || !isReady.value)
 
-    const sceneIndex = computed(() => tourSceneIndex(tourStore.state.currentStepId))
-    const scene = computed(() => TOUR_SCENES[sceneIndex.value])
+    const sceneIndex = computed(() => sceneIndexOf(scenes, tourStore.state.currentStepId))
+    const scene = computed(() => scenes[sceneIndex.value])
     const context = computed(() => ({actions, store: tourStore}))
 
     const showIntro = computed(
         () => tourStore.isGuidedActive && !tourStore.state.tour.introSeen,
     )
 
-    const sceneKey = (suffix: string) => `onboarding.tour.scenes.${scene.value.id}.${suffix}`
+    const sceneKey = (suffix: string) => tk(`scenes.${scene.value.id}.${suffix}`)
 
     const isTickFilled = (step: number, tickIndex: number) => {
         if (step < scene.value.step) {
@@ -236,11 +244,11 @@
         if (step > scene.value.step) {
             return false
         }
-        const group = TOUR_STEP_GROUPS.find((candidate) => candidate.step === step)
+        const group = stepGroups.find((candidate) => candidate.step === step)
         return tickIndex <= (group?.scenes.indexOf(scene.value.id) ?? 0)
     }
     const nextLabel = computed(() =>
-        isWorking.value ? t("onboarding.tour.actions.running") : t(sceneKey("next")),
+        isWorking.value ? t(tk("actions.running")) : t(sceneKey("next")),
     )
 
     const track = (event: OnboardingTourEvent, additional: Record<string, unknown> = {}) => {
@@ -251,7 +259,7 @@
             additional: {
                 step_group: scene.value?.step,
                 step_number: sceneIndex.value + 1,
-                step_total: TOUR_TOTAL_STEPS,
+                step_total: totalSteps,
                 ...additional,
             },
         })
@@ -513,7 +521,7 @@
     }
 
     const goTo = async (index: number) => {
-        const id = TOUR_SCENE_IDS[index]
+        const id = sceneIds[index]
         if (!id) {
             return
         }
@@ -530,7 +538,7 @@
         track("tour_continued")
         try {
             await scene.value?.action?.(context.value)
-            if (sceneIndex.value + 1 < TOUR_SCENES.length) {
+            if (sceneIndex.value + 1 < scenes.length) {
                 await goTo(sceneIndex.value + 1)
             } else {
                 finishTour()
@@ -565,29 +573,31 @@
         track("tour_closed")
         clearHighlight()
         stopPolling()
-        actions.restoreEditorPanels()
+        variant.cleanup?.(actions)
         tourStore.skip()
-        toast.success(t("onboarding.tour.actions.skipped_hint"), t("onboarding.tour.menu"))
+        toast.success(t(tk("actions.skipped_hint")), t(tk("menu")))
     }
 
     const finishTour = () => {
         track("tour_completed")
         clearHighlight()
         stopPolling()
-        actions.restoreEditorPanels()
+        variant.cleanup?.(actions)
         tourStore.complete()
         showFinale.value = true
     }
 
     const restartTour = async () => {
         showFinale.value = false
-        tourStore.startGuided()
+        tourStore.startGuided(variant)
         tourStore.setTourState({introSeen: true})
         track("tour_started", {restarted: true})
         await runScene()
     }
 
     watch(() => scene.value?.id, () => applyHighlight())
+
+    watch(() => scene.value?.placement, () => (dragOffset.value = {x: 0, y: 0}))
 
     watch(showIntro, (visible) => {
         if (visible) {
@@ -608,7 +618,7 @@
     }
 
     watch(
-        [() => route.fullPath, () => tourStore.state.tour],
+        [() => route.fullPath, () => tourStore.state.tour, () => tourStore.state.data],
         () => void followUserStep(),
         {deep: true},
     )
@@ -640,10 +650,16 @@
 
     watch(() => route.query.tour, () => void consumeStartQuery())
 
-    watch(() => route.name, () => void autoStartOnCopilot())
+    watch(() => route.name, () => void autoStartOnEntryRoute())
+
+    watch(
+        () => [miscStore.configs?.uuid, route.params.tenant],
+        () => syncTourScope(),
+        {immediate: true},
+    )
 
     onMounted(async () => {
-        const started = (await consumeStartQuery()) || (await autoStartOnCopilot())
+        const started = (await consumeStartQuery()) || (await autoStartOnEntryRoute())
         if (!started && tourStore.isGuidedActive && tourStore.state.tour.introSeen) {
             await runScene()
         }

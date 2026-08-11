@@ -941,6 +941,9 @@
       }
     },
     "apps": "アプリケーション",
+    "promote": {
+      "label": "プロモート"
+    },
     "demos": {
       "enterprise_edition": "エンタープライズエディション",
       "get_a_demo_button": "デモを取得",
@@ -976,6 +979,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "環境間でFlowsをプロモート",
+        "message": "Kestra Enterprise Editionでは、GitやCI/CDパイプラインを必要とせず、UIから直接、flowをある環境から別の環境へ（開発環境からステージング、本番環境など）プロモートできます。プロモートする前に、何が変更されるかを正確にdiffで確認し、機密性の高いターゲットを承認ゲートで保護し、変更のずれ（ドリフト）を一目で特定し、誰が、何を、どこで、いつプロモートしたかの完全な履歴を保持できます。"
       },
       "IAM": {
         "title": "IAMを通じてユーザーを管理（SSO、SCIM、RBACを使用）",

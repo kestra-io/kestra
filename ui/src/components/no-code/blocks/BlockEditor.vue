@@ -267,6 +267,7 @@
         editTask: (parentPath, blockSchemaPath, refPath, split) => emit("editTask", parentPath, blockSchemaPath, refPath, split),
         closeTask: () => emit("closeTask"),
         updateYaml: (yaml: string) => applyYaml(yaml),
+        saveFlow: () => saveFlowWithPendingEdits(),
     })
 
     const parsedFlow = computed(() => {

@@ -37,13 +37,14 @@
             :placeholder="placeholder"
             inline
             @update:model-value="onInput"
+            @save="saveFlow"
             style="z-index: 1;"
         />
     </div>
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref} from "vue"
+    import {computed, inject, onMounted, ref} from "vue"
     import $moment from "moment"
     import {KsEditor} from "@kestra-io/design-system"
     import {useEditorBindings} from "../../../../composables/useEditorBindings"
@@ -51,10 +52,15 @@
     import TaskDuration from "./TaskDuration.vue"
     import TaskBoolean from "./TaskBoolean.vue"
     import {Schema} from "./getTaskComponent"
+    import {SAVE_FLOW_FUNCTION_INJECTION_KEY} from "../../injectionKeys"
 
     defineOptions({inheritAttrs: false})
 
     const editorBindings = useEditorBindings()
+
+    // Monaco binds Ctrl/Cmd+S itself, so the field swallows the shortcut before the editor
+    // shell ever sees it — without this the whole form silently ignores it.
+    const saveFlow = inject(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {})
 
     const props = defineProps<{
         disabled?: boolean;

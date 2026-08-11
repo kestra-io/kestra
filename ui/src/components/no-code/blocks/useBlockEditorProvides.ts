@@ -21,6 +21,7 @@ import {
     POSITION_INJECTION_KEY,
     REF_PATH_INJECTION_KEY,
     ROOT_SCHEMA_INJECTION_KEY,
+    SAVE_FLOW_FUNCTION_INJECTION_KEY,
     SCHEMA_DEFINITIONS_INJECTION_KEY,
     UPDATE_YAML_FUNCTION_INJECTION_KEY,
 } from "../injectionKeys"
@@ -36,6 +37,7 @@ export interface BlockEditorProvideContext {
     editTask: (parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean) => void
     closeTask: () => void
     updateYaml: (yaml: string) => void
+    saveFlow: () => void
 }
 
 export function useBlockEditorProvides(ctx: BlockEditorProvideContext) {
@@ -66,4 +68,5 @@ export function useBlockEditorProvides(ctx: BlockEditorProvideContext) {
     })
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => ctx.closeTask())
     provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml: string) => ctx.updateYaml(yaml))
+    provide(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => ctx.saveFlow())
 }

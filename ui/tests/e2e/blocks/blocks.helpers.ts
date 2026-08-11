@@ -142,6 +142,9 @@ export async function saveFlow(page: Page) {
     // this save's round-trip completes — let it dismiss first.
     await page.getByText("Successfully saved", {exact: false}).first()
         .waitFor({state: "hidden", timeout: 10000}).catch(() => {})
+    // Monaco binds Ctrl/Cmd+S for itself, so a Source tab left focused eats the shortcut
+    // before the editor shell sees it — save the way a user does, from outside the field.
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
     await page.keyboard.press("ControlOrMeta+s")
     await expect(page.getByText("Successfully saved", {exact: false}).first()).toBeVisible()
 }

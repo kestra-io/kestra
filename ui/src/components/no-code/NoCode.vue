@@ -57,6 +57,7 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
+        SAVE_FLOW_FUNCTION_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys"
     import {useFlowFields} from "./utils/useFlowFields"
@@ -182,6 +183,10 @@
 
     provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
         editorUpdate(yaml)
+    })
+
+    provide(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {
+        flowStore.save?.()
     })
 
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {

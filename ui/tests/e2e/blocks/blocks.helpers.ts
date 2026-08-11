@@ -37,10 +37,21 @@ export async function replaceMonacoContent(page: Page, editor: Locator, text: st
 
 export async function login(page: Page) {
     await page.goto("/ui")
-    await page.getByRole("textbox", {name: "Email"}).fill(shared.username)
-    await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
-    await page.getByRole("button", {name: "Login"}).click()
-    await page.waitForURL(url => !url.pathname.includes("login"))
+
+    // The parked cookie jar can carry the session on its own, in which case the app boots
+    // straight into the shell and there is no form to fill — whether it does is a race between
+    // the router guard's own auth call and the redirect to the login page. Wait for whichever
+    // of the two actually lands, then sign in only if asked to.
+    const email = page.getByRole("textbox", {name: "Email"})
+    const shell = page.getByRole("button", {name: "Toggle panel"})
+    await expect(email.or(shell).first()).toBeVisible({timeout: 30000})
+
+    if (await email.isVisible()) {
+        await email.fill(shared.username)
+        await page.getByRole("textbox", {name: "Password"}).fill(shared.password)
+        await page.getByRole("button", {name: "Login"}).click()
+    }
+    await expect(shell).toBeVisible({timeout: 30000})
     // The Login button click leaves the cursor parked at a fixed viewport
     // position. If a later hover-highlighted overlay (task picker, command
     // menu) happens to render an option under that exact stale point, the

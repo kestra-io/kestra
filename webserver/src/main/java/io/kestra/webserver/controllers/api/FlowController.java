@@ -954,6 +954,7 @@ public class FlowController {
     @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = { "Flows" }, summary = "Export all flows as a streamed CSV file")
+    @ApiResponse(responseCode = "200", content = { @Content(mediaType = MediaType.TEXT_CSV, schema = @Schema(type = "string")) })
     @SuppressWarnings("unchecked")
     public MutableHttpResponse<Flux<String>> exportFlows(
         @Parameter(description = "Filters. PHP-style nested query is used - examples: `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`", in = ParameterIn.QUERY)

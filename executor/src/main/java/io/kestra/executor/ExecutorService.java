@@ -666,100 +666,7 @@ public class ExecutorService {
                         }
                         case Loop loop -> {
                             if (!loop.isMySubExecution(executor.getExecution(), taskRun)) {
-                                if (taskRun.getState().getCurrent() == State.Type.CREATED) {
-                                    RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                                    var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
-
-                                    if (valuesUri.isPresent()) {
-                                        var init = loop.initFromUri(runContext, valuesUri.get());
-                                        // save the iteration information in outputs to know how many loop iterations we already triggered
-                                        taskOutputService.saveOutputs(
-                                            taskRun, Map.of(
-                                                Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
-                                                Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
-                                                Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
-                                            )
-                                        );
-                                        for (int i = 0; i < init.values().size(); i++) {
-                                            var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i));
-                                            executor.withLoopExecution(loopExecution, "handleLoopExecution");
-                                        }
-                                    } else {
-                                        var init = loop.initFromValues(runContext);
-                                        // save the iteration information in outputs to know how many loop iterations we already triggered
-                                        taskOutputService.saveOutputs(
-                                            taskRun, Map.of(
-                                                Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
-                                                Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
-                                                Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
-                                            )
-                                        );
-
-                                        if (init.totalCount() == 0) {
-                                            // if no loop iteration, we end the task immediately
-                                            executor.withExecution(
-                                                executor.getExecution()
-                                                    .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
-                                                "handleLoop"
-                                            );
-                                            // replace existing CREATED WorkerTask to SUCCESS
-                                            executor.getWorkerTasks().replaceAll(
-                                                ewt -> ewt.workerTask().getTaskRun().getId().equals(taskRun.getId())
-                                                    ? new ExecutorContext.ExecutorWorkerTask(ewt.workerTask().withTaskRun(taskRun.withState(State.Type.SUCCESS)), ewt.runContext())
-                                                    : ewt
-                                            );
-                                        } else {
-                                            if (init.values().isLeft()) {
-                                                List<String> values = init.values().getLeft();
-                                                for (int i = 0; i < init.limit(); i++) {
-                                                    var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, values.get(i));
-                                                    executor.withLoopExecution(loopExecution, "handleLoopExecution");
-                                                }
-                                            } else {
-                                                List<Pair<String, String>> values = init.values().getRight();
-                                                for (int i = 0; i < init.limit(); i++) {
-                                                    var value = values.get(i);
-                                                    var loopExecution = executor.getExecution().loopExecution(taskRun, i, value.getKey(), value.getValue());
-                                                    executor.withLoopExecution(loopExecution, "handleLoopExecution");
-                                                }
-                                            }
-
-                                            executor.withExecution(
-                                                executor.getExecution()
-                                                    .withTaskRun(taskRun.withState(State.Type.RUNNING)),
-                                                "handleLoop"
-                                            );
-                                        }
-                                    }
-                                } else if (taskRun.getState().getCurrent() == State.Type.RESTARTED) {
-                                    // On restart, find the last failing sub-execution and restart it instead of
-                                    // re-initializing from scratch.
-                                    Optional<Execution> failingSubExecution = executionService.findLastFailingLoopSubExecution(executor.getExecution(), taskRun);
-                                    if (failingSubExecution.isPresent()) {
-                                        Execution restarted = executionService.restart(failingSubExecution.get(), executor.getFlow(), null);
-                                        executor.withLoopExecution(restarted, "restartLoopExecution");
-                                        executor.withExecution(
-                                            executor.getExecution()
-                                                .withTaskRun(taskRun.withState(State.Type.RUNNING)),
-                                            "handleLoop"
-                                        );
-                                    } else {
-                                        // No restartable sub-execution found — fail the loop task to avoid stalling.
-                                        RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                                        runContext.logger().error("No restartable loop sub-execution found for task run {} — marking loop as FAILED", taskRun.getId());
-                                        executor.withExecution(
-                                            executor.getExecution()
-                                                .withTaskRun(taskRun.withState(State.Type.FAILED)),
-                                            "handleLoop"
-                                        );
-                                        executor.getWorkerTasks().replaceAll(
-                                            ewt -> ewt.workerTask().getTaskRun().getId().equals(taskRun.getId())
-                                                ? new ExecutorContext.ExecutorWorkerTask(ewt.workerTask().withTaskRun(taskRun.withState(State.Type.FAILED)), ewt.runContext())
-                                                : ewt
-                                        );
-                                    }
-                                }
+                                // Loop logic will be handled by handleWorkerTasks
                             }
                         }
                         default -> {
@@ -1210,6 +1117,128 @@ public class ExecutorService {
         }
 
         ExecutorContext executorToReturn = executor;
+
+        // Handle Loop tasks
+        List<ExecutorContext.ExecutorWorkerTask> loopTasks = workerTasks.getOrDefault(false, Collections.emptyList())
+            .stream()
+            .filter(ewt -> ewt.workerTask().getTask() instanceof Loop)
+            .toList();
+
+        if (!loopTasks.isEmpty()) {
+            workerTasks.get(false).removeAll(loopTasks);
+            for (var executorTask : loopTasks) {
+                Loop loop = (Loop) executorTask.workerTask().getTask();
+                TaskRun taskRun = executorTask.workerTask().getTaskRun();
+                RunContext runContext = executorTask.runContext();
+
+                try {
+                    if (taskRun.getState().getCurrent() == State.Type.CREATED) {
+                        var valuesUri = FlowableUtils.resolveLoopValuesUri(runContext, loop.getValues());
+
+                        if (valuesUri.isPresent()) {
+                            var init = loop.initFromUri(runContext, valuesUri.get());
+                            // save the iteration information in outputs to know how many loop iterations we already triggered
+                            taskOutputService.saveOutputs(
+                                taskRun, Map.of(
+                                    Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
+                                    Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
+                                    Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6),
+                                    Loop.NEXT_OFFSET_OUTPUT, init.nextOffset()
+                                )
+                            );
+                            for (int i = 0; i < init.values().size(); i++) {
+                                var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, init.values().get(i));
+                                executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                            }
+                        } else {
+                            var init = loop.initFromValues(runContext);
+                            // save the iteration information in outputs to know how many loop iterations we already triggered
+                            taskOutputService.saveOutputs(
+                                taskRun, Map.of(
+                                    Loop.ITERATION_COUNT_OUTPUT, init.totalCount(),
+                                    Loop.RUNNING_ITERATIONS_OUTPUT, init.limit(),
+                                    Loop.TERMINATED_ITERATIONS_OUTPUT, HashMap.newHashMap(6)
+                                )
+                            );
+
+                            if (init.totalCount() == 0) {
+                                // if no loop iteration, we end the task immediately
+                                executor.withExecution(
+                                    executor.getExecution()
+                                        .withTaskRun(taskRun.withState(State.Type.SUCCESS)),
+                                    "handleLoop"
+                                );
+                            } else {
+                                if (init.values().isLeft()) {
+                                    List<String> values = init.values().getLeft();
+                                    for (int i = 0; i < init.limit(); i++) {
+                                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, null, values.get(i));
+                                        executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                                    }
+                                } else {
+                                    List<Pair<String, String>> values = init.values().getRight();
+                                    for (int i = 0; i < init.limit(); i++) {
+                                        var value = values.get(i);
+                                        var loopExecution = executor.getExecution().loopExecution(taskRun, i, value.getKey(), value.getValue());
+                                        executor.withLoopExecution(loopExecution, "handleLoopExecution");
+                                    }
+                                }
+
+                                executor.withExecution(
+                                    executor.getExecution()
+                                        .withTaskRun(
+                                            taskRun
+                                                .withState(State.Type.RUNNING)
+                                                .addAttempt(
+                                                    TaskRunAttempt.builder()
+                                                        .state(new State().withState(State.Type.RUNNING))
+                                                        .build()
+                                                )
+                                        ),
+                                    "handleLoop"
+                                );
+                            }
+                        }
+                    } else if (taskRun.getState().getCurrent() == State.Type.RESTARTED) {
+                        // On restart, find the last failing sub-execution and restart it instead of
+                        // re-initializing from scratch.
+                        Optional<Execution> failingSubExecution = executionService.findLastFailingLoopSubExecution(executor.getExecution(), taskRun);
+                        if (failingSubExecution.isPresent()) {
+                            Execution restarted = executionService.restart(failingSubExecution.get(), executor.getFlow(), null);
+                            executor.withLoopExecution(restarted, "restartLoopExecution");
+                            executor.withExecution(
+                                executor.getExecution()
+                                    .withTaskRun(
+                                        taskRun
+                                            .withState(State.Type.RUNNING)
+                                            .addAttempt(
+                                                TaskRunAttempt.builder()
+                                                    .state(new State().withState(State.Type.RUNNING))
+                                                    .build()
+                                            )
+                                    ),
+                                "handleLoop"
+                            );
+                        } else {
+                            // No restartable sub-execution found — fail the loop task to avoid stalling.
+                            runContext.logger().error("No restartable loop sub-execution found for task run {} — marking loop as FAILED", taskRun.getId());
+                            executor.withExecution(
+                                executor.getExecution()
+                                    .withTaskRun(taskRun.withState(State.Type.FAILED)),
+                                "handleLoop"
+                            );
+                        }
+                    }
+                } catch (Exception e) {
+                    runContext.logger().error("Failed to process loop task {}: {}", taskRun.getId(), e.getMessage(), e);
+                    executor.withExecution(
+                        executor.getExecution()
+                            .withTaskRun(taskRun.withState(State.Type.FAILED)),
+                        "handleLoop"
+                    );
+                }
+            }
+        }
 
         // suspend on breakpoint: if a breakpoint is for a CREATED taskrun, set the execution state to BREAKPOINT and ends here
         if (!ListUtils.isEmpty(executor.getExecution().getBreakpoints())) {

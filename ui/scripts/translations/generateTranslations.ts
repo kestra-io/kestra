@@ -19,9 +19,16 @@
  * This module has no side effects beyond sizing the shared request gate: it never chdirs, never
  * reads `process.argv` and never writes a file unless a caller asks it to.
  */
-import {createHash} from "node:crypto"
-import {existsSync, readFileSync, writeFileSync} from "node:fs"
+import {readFileSync} from "node:fs"
 import {dirname, relative, resolve} from "node:path"
+import {writeIfChanged} from "./files.ts"
+import {
+    type Fingerprints,
+    fingerprintOf,
+    KEY_SEPARATOR,
+    readFingerprints,
+    writeFingerprints,
+} from "./fingerprints.ts"
 
 /**
  * The slice of `@google/genai`'s `GoogleGenAI` this generator actually uses.
@@ -67,7 +74,6 @@ const LANGUAGE_BY_CODE: {[code: string]: string} = Object.fromEntries(LANGUAGES)
 
 const MODEL = "gemini-2.5-flash"
 
-const SEP = "|"
 
 // How many translation requests may be in flight at once, across every language and every file.
 // Translating one key at a time made a full backlog take far longer than the workflow's job
@@ -102,33 +108,6 @@ function createGate(limit: number): <T>(task: () => Promise<T>) => Promise<T> {
 
 // Module-level so both phases of an OSS run draw from one budget rather than one each.
 const withRequestSlot = createGate(CONCURRENCY)
-
-/**
- * Writes `nextContent` only if it differs from what is on disk by more than trailing whitespace,
- * and matches the file's existing final-newline style when it does.
- *
- * Without this the generator is not formatting-neutral: it serialises with `JSON.stringify`, which
- * emits no final newline, while most editors add one when a developer touches a language file by
- * hand. Every scheduled run then stripped those twelve newlines back off and opened a PR whose
- * entire diff was `\ No newline at end of file` — see kestra-io/kestra#17823.
- *
- * @returns whether the file was written
- */
-function writeIfChanged(filePath: string, nextContent: string): boolean {
-    if (!existsSync(filePath)) {
-        writeFileSync(filePath, nextContent)
-        return true
-    }
-
-    const currentContent = readFileSync(filePath, "utf-8")
-    if (currentContent.trimEnd() === nextContent.trimEnd()) return false
-
-    // Preserve whatever final-newline convention the file already uses, so a real content change
-    // doesn't smuggle in an unrelated whitespace flip alongside it.
-    const endsWithNewline = currentContent.endsWith("\n")
-    writeFileSync(filePath, endsWithNewline ? `${nextContent.trimEnd()}\n` : nextContent.trimEnd())
-    return true
-}
 
 /**
  * Translates one string, or returns `undefined` if the call failed.
@@ -183,7 +162,15 @@ async function translateText(client: TranslationClient, text: string, targetLang
     }
 }
 
-function flattenDict(d: NestedValue, parentKey = "", sep = SEP): FlatDict {
+/**
+ * Flattens every leaf, not just strings — unlike `flattenStrings` in `./fingerprints.ts`.
+ *
+ * The two differ deliberately: this one round-trips through `unflattenDict` to rebuild a language
+ * file, so a numeric or boolean leaf has to survive the trip rather than be dropped. Fingerprints
+ * only ever describe translatable text, so they use the string-only variant. Both share
+ * `KEY_SEPARATOR`, which is the part that must not drift.
+ */
+function flattenDict(d: NestedValue, parentKey = "", sep = KEY_SEPARATOR): FlatDict {
     const items: FlatDict = {}
     for (const [k, v] of Object.entries(d)) {
         const newKey = parentKey ? `${parentKey}${sep}${k}` : k
@@ -196,7 +183,7 @@ function flattenDict(d: NestedValue, parentKey = "", sep = SEP): FlatDict {
     return items
 }
 
-function unflattenDict(d: FlatDict, sep = SEP): NestedDict {
+function unflattenDict(d: FlatDict, sep = KEY_SEPARATOR): NestedDict {
     const result: NestedDict = {}
     for (const [k, v] of Object.entries(d)) {
         const keys = k.split(sep)
@@ -239,49 +226,6 @@ function arrayifyNumericKeys(value: NestedValue): NestedValue {
             .map((n) => processed[String(n)])
     }
     return processed
-}
-
-// ---------------------------------------------------------------------------
-// Fingerprints
-//
-// For every key we record a hash of the English text the translations were last generated from.
-// A key is stale when that hash no longer matches the current English value — which is the whole
-// question this generator has to answer, asked as a property of the files rather than of the
-// commit graph.
-//
-// This replaces reading the previous English revision out of git. That approach could only ever
-// see one commit boundary, so it silently missed every edit that was not in the commit it happened
-// to look at: OSS diffed against the last commit touching `en.json`, EE against `HEAD~1` (which
-// found nothing at all unless the immediately preceding commit edited the file). Fingerprints have
-// no such window — they hold regardless of how many commits, merges, squashes or rebases happened
-// in between, and they work in a checkout with no git history at all.
-// ---------------------------------------------------------------------------
-
-type Fingerprints = {[key: string]: string};
-
-/** Short content hash of an English source string. Only ever compared for equality. */
-function fingerprintOf(englishValue: string): string {
-    return createHash("sha256").update(englishValue).digest("hex").slice(0, 12)
-}
-
-function readFingerprints(filePath: string | undefined): Fingerprints {
-    if (!filePath || !existsSync(filePath)) return {}
-    try {
-        return JSON.parse(readFileSync(filePath, "utf-8")) as Fingerprints
-    } catch (e) {
-        console.warn(`Could not read fingerprints from "${filePath}", treating every key as stale: ${e}`)
-        return {}
-    }
-}
-
-/** Writes fingerprints in sorted key order, so the file diffs cleanly and never churns on reorder. */
-function writeFingerprints(filePath: string | undefined, fingerprints: Fingerprints): void {
-    if (!filePath) return
-    const sorted: Fingerprints = {}
-    for (const key of Object.keys(fingerprints).sort()) {
-        sorted[key] = fingerprints[key]
-    }
-    writeIfChanged(filePath, JSON.stringify(sorted, null, 2))
 }
 
 export interface GenerateTranslationsOptions {

@@ -1,7 +1,7 @@
-import {createHash} from "crypto"
 import fs from "fs"
 import path from "path"
 import {baseCompile} from "@intlify/message-compiler"
+import {readFingerprints, staleKeys} from "./fingerprints.ts"
 
 export const DEFAULT_LANGUAGES = ["de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "pt_BR", "ru", "zh_CN"]
 
@@ -17,25 +17,6 @@ const getNestedStrings = (obj: Record<string, unknown>, prefix = ""): Record<str
         }
         return strings
     }, {})
-
-/**
- * Flattens exactly the way `generateTranslations.ts` does — `|` separator, descending into arrays
- * via their numeric indices — so fingerprints written by the generator can be looked up here.
- *
- * Deliberately not `getNestedStrings`, which joins with `.` for human-readable reporting and skips
- * arrays altogether. Reusing that one silently missed every fingerprint.
- */
-const flattenLikeGenerator = (value: unknown, prefix = ""): Record<string, string> => {
-    if (typeof value === "string") {
-        return {[prefix]: value}
-    }
-    if (value === null || typeof value !== "object") {
-        return {}
-    }
-    return Object.entries(value).reduce((out: Record<string, string>, [key, child]) => {
-        return Object.assign(out, flattenLikeGenerator(child, prefix ? `${prefix}|${key}` : key))
-    }, {})
-}
 
 /**
  * Runs a message through vue-i18n's own compiler and returns its errors. This is the ground truth for
@@ -100,14 +81,9 @@ export function compareTranslations(
 
     // A key is stale when the English text no longer hashes to what it did when the translations
     // were last generated. Same hash the generator writes — see `generateTranslations.ts`.
-    const stale: string[] = []
-    if (fingerprintsFile && fs.existsSync(fingerprintsFile)) {
-        const fingerprints = JSON.parse(fs.readFileSync(fingerprintsFile, "utf-8")) as Record<string, string>
-        for (const [key, message] of Object.entries(flattenLikeGenerator(englishRoot))) {
-            const expected = createHash("sha256").update(message).digest("hex").slice(0, 12)
-            if (fingerprints[key] !== expected) stale.push(key)
-        }
-    }
+    const stale = fingerprintsFile && fs.existsSync(fingerprintsFile)
+        ? staleKeys(englishRoot, readFingerprints(fingerprintsFile))
+        : []
 
     const globalMissing: Record<string, string[]> = {}
     const globalExtra: Record<string, string[]> = {}

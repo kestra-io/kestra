@@ -206,6 +206,7 @@
     "total_duration": "Całkowity czas trwania",
     "running duration": "Czas działania",
     "queued duration": "Czas w kolejce",
+    "paused duration": "Czas wstrzymania",
     "executionProgress": {
       "title": "Postęp egzekucji",
       "estimatedRemaining": "Szacowany pozostały czas: {duration}",

@@ -51,6 +51,11 @@
                             :class="{'split-bar-running-live': isActivelyRunning}"
                             :style="{width: shareOf(breakdown.running) + '%'}"
                         />
+                        <span
+                            v-if="breakdown.paused > 0"
+                            class="split-bar-seg split-bar-paused"
+                            :style="{width: shareOf(breakdown.paused) + '%'}"
+                        />
                     </div>
                     <div class="split-rows">
                         <div v-if="breakdown.queued > 0" class="split-row">
@@ -64,6 +69,12 @@
                             <span class="split-name">{{ $t('running duration') }}</span>
                             <span class="split-value">{{ formatPhaseDuration(breakdown.running) }}</span>
                             <span class="split-share">{{ shareLabel(breakdown.running) }}</span>
+                        </div>
+                        <div v-if="breakdown.paused > 0" class="split-row">
+                            <span class="split-key split-bar-paused" />
+                            <span class="split-name">{{ $t('paused duration') }}</span>
+                            <span class="split-value">{{ formatPhaseDuration(breakdown.paused) }}</span>
+                            <span class="split-share">{{ shareLabel(breakdown.paused) }}</span>
                         </div>
                     </div>
                 </template>
@@ -133,7 +144,6 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue"
     import Check from "vue-material-design-icons/Check.vue"
     import * as Utils from "../utils/utils"
-    import {TIMEZONE_STORAGE_KEY} from "../utils/utils"
     import {computeDurationBreakdown} from "./durationBreakdown"
 
     const TIER1_POPPER_STYLE = {
@@ -210,11 +220,8 @@
         return boundaries + 1
     })
 
-    // The attempt count is only ever displayed when the caller supplies an authoritative value
-    // (e.g. taskRun.attempts.length). Deriving it from RETRYING transitions instead would leak a
-    // child task's retry count onto surfaces with no "attempts" concept at all, such as an
-    // execution-level total. Grouping in the state history still uses the derived boundaries
-    // below: it needs to know *where* attempts split, not whether to display a count.
+    // Only an authoritative count is displayed; deriving one from RETRYING transitions would leak a
+    // child task's retries onto surfaces with no attempts concept, such as an execution-level total.
     const displayedAttemptCount = computed(() => {
         return props.attemptCount && props.attemptCount > 1 ? props.attemptCount : undefined
     })
@@ -271,10 +278,8 @@
         return Utils.humanDuration(ms / 1000, {maxDecimalPoints: 2, units: ["h", "m", "s"], delimiter: " "})
     }
 
-    // The card's own headline, unlike triggerLabel (the persistent chip/column value, left
-    // untouched to avoid reflowing the topology node or the Gantt duration column): a sub-second
-    // total reads as "no time at all" in "h"/"m"/"s" units right next to a millisecond-precision
-    // breakdown row, so it switches to plain milliseconds below 1s.
+    // Only the card headline drops to milliseconds below 1s; triggerLabel keeps its units so the
+    // topology chip and Gantt column do not reflow.
     function formatCardTotal(ms: number): string {
         if (ms > 0 && ms < 1000) {
             return Utils.humanDuration(ms / 1000, {maxDecimalPoints: 0, units: ["ms"]})
@@ -298,10 +303,8 @@
         return `${((part / breakdown.value.total) * 100).toFixed(1)}%`
     }
 
-    const timezone = computed(() => localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
-
     function formatInTimezone(date: Moment, format: string): string {
-        return moment(date).tz(timezone.value).format(format)
+        return Utils.dateFilter(date.toISOString(), format)
     }
 
     const anchorLabel = computed(() => {
@@ -337,13 +340,10 @@
     const timelineRows = computed<TimelineRow[]>(() => {
         const entries = filteredHistories.value
         const rows: TimelineRow[] = []
-        // Grouping reflects the RETRYING boundaries actually found in this history, independent
-        // of the authoritative attemptCount: the two can disagree (e.g. a truncated history), and
-        // there is nothing meaningful to group when no boundary exists.
+        // Grouping follows the RETRYING boundaries in this history, which can disagree with the
+        // authoritative attemptCount (e.g. a truncated history).
         const showAttempts = derivedAttemptGroupCount.value > 1
-        // "Attempt N" is only ever a label the caller can back up with an authoritative count
-        // (see displayedAttemptCount): without one, the boundary still separates the groups
-        // visually, just with no unowned "Attempt" claim attached to it.
+        // Without an authoritative count the boundary still separates groups, just unlabelled.
         const showAttemptLabels = displayedAttemptCount.value !== undefined
         let previousDay: string | null = null
         let groupIndex = 1
@@ -507,6 +507,10 @@
 
     .split-bar-running {
         background: var(--ks-status-running);
+    }
+
+    .split-bar-paused {
+        background: var(--ks-status-paused);
     }
 
     .split-bar-running-live {

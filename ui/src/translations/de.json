@@ -206,6 +206,7 @@
     "total_duration": "Gesamtdauer",
     "running duration": "Laufzeit",
     "queued duration": "Wartedauer",
+    "paused duration": "Pausierte Dauer",
     "executionProgress": {
       "title": "Execution-Fortschritt",
       "estimatedRemaining": "Geschätzte Restzeit: {duration}",

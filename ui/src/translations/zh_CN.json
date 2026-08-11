@@ -206,6 +206,7 @@
     "total_duration": "总持续时间",
     "running duration": "运行时间",
     "queued duration": "排队时间",
+    "paused duration": "暂停时长",
     "executionProgress": {
       "title": "执行进度",
       "estimatedRemaining": "预计剩余：{duration}",

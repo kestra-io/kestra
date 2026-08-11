@@ -206,6 +206,7 @@
     "total_duration": "Общая продолжительность",
     "running duration": "Время выполнения",
     "queued duration": "Время в очереди",
+    "paused duration": "Длительность паузы",
     "executionProgress": {
       "title": "Прогресс выполнения",
       "estimatedRemaining": "Осталось примерно: {duration}",

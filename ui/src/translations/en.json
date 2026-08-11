@@ -206,6 +206,7 @@
     "total_duration": "Total duration",
     "running duration": "Running duration",
     "queued duration": "Queued duration",
+    "paused duration": "Paused duration",
     "executionProgress": {
       "title": "Execution progress",
       "estimatedRemaining": "Est. remaining: {duration}",

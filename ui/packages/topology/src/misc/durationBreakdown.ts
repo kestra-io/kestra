@@ -7,15 +7,27 @@ export interface DurationHistoryEntry {
 }
 
 export interface DurationBreakdown {
-    /** Total elapsed time in milliseconds, always equal to `queued + running`. */
+    /** Total elapsed time in milliseconds, always equal to `queued + running + paused`. */
     total: number;
-    /** Time spent outside of a RUNNING span: before the first RUNNING entry, and every gap
-     *  between a RUNNING span ending and the next one starting (e.g. inter-attempt waiting). */
+    /** Time spent waiting to be picked up by a worker, including inter-attempt waiting. */
     queued: number;
-    /** Time spent inside RUNNING spans. */
+    /** Time spent executing, including the teardown window while a run is being killed. */
     running: number;
+    /** Time spent waiting on a human, from a paused run or a debug breakpoint. */
+    paused: number;
     /** Whether the task run has not yet reached a terminal state. */
     isRunning: boolean;
+}
+
+type Bucket = "queued" | "running" | "paused"
+
+const EXECUTING_STATES: string[] = [State.RUNNING, State.KILLING]
+const WAITING_ON_HUMAN_STATES: string[] = [State.PAUSED, State.BREAKPOINT]
+
+function bucketOf(state: string): Bucket {
+    if (EXECUTING_STATES.includes(state)) return "running"
+    if (WAITING_ON_HUMAN_STATES.includes(state)) return "paused"
+    return "queued"
 }
 
 function toMillis(date: Moment | string | number): number {
@@ -25,10 +37,9 @@ function toMillis(date: Moment | string | number): number {
 }
 
 /**
- * Splits a task run's flat state-history transitions into queued vs. running time.
- * A RUNNING entry opens a "running span" that lasts until the next transition, whatever its
- * state; every other span (before the first RUNNING, or between a RUNNING span ending and the
- * next one starting) counts as queued. `queued + running` is always exactly `total`.
+ * Splits a task run's flat state-history transitions into queued, running and paused time.
+ * Each transition opens a span that lasts until the next one and is attributed by the state that
+ * opened it, so `queued + running + paused` is always exactly `total`.
  */
 export function computeDurationBreakdown(
     histories: DurationHistoryEntry[],
@@ -40,31 +51,27 @@ export function computeDurationBreakdown(
         .sort((a, b) => a.date - b.date)
 
     if (entries.length === 0) {
-        return {total: 0, queued: 0, running: 0, isRunning: false}
+        return {total: 0, queued: 0, running: 0, paused: 0, isRunning: false}
     }
 
     const last = entries[entries.length - 1]
     const isRunning = Boolean(State.isRunning(last.state))
 
-    let queued = 0
-    let running = 0
+    const spans: Record<Bucket, number> = {queued: 0, running: 0, paused: 0}
+
     for (let i = 0; i < entries.length - 1; i++) {
-        const span = entries[i + 1].date - entries[i].date
-        if (entries[i].state === "RUNNING") {
-            running += span
-        } else {
-            queued += span
-        }
+        spans[bucketOf(entries[i].state)] += entries[i + 1].date - entries[i].date
     }
 
     if (isRunning) {
-        const tail = Math.max(0, now - last.date)
-        if (last.state === "RUNNING") {
-            running += tail
-        } else {
-            queued += tail
-        }
+        spans[bucketOf(last.state)] += Math.max(0, now - last.date)
     }
 
-    return {total: queued + running, queued, running, isRunning}
+    return {
+        total: spans.queued + spans.running + spans.paused,
+        queued: spans.queued,
+        running: spans.running,
+        paused: spans.paused,
+        isRunning,
+    }
 }

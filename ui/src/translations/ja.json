@@ -206,6 +206,7 @@
     "total_duration": "合計時間",
     "running duration": "実行期間",
     "queued duration": "キュー待ち期間",
+    "paused duration": "一時停止時間",
     "executionProgress": {
       "title": "実行の進行状況",
       "estimatedRemaining": "残り時間の目安: {duration}",

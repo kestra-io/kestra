@@ -206,6 +206,7 @@
     "total_duration": "Duração total",
     "running duration": "Duração em execução",
     "queued duration": "Duração na fila",
+    "paused duration": "Duração em pausa",
     "executionProgress": {
       "title": "Progresso da execução",
       "estimatedRemaining": "Tempo restante estimado: {duration}",

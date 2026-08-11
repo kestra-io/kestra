@@ -206,6 +206,7 @@
     "total_duration": "Durée totale",
     "running duration": "Durée de traitement",
     "queued duration": "Durée d'attente",
+    "paused duration": "Durée en pause",
     "executionProgress": {
       "title": "Progression de l'exécution",
       "estimatedRemaining": "Temps restant estimé : {duration}",

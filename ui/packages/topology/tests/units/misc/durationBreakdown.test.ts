@@ -5,7 +5,7 @@ describe("computeDurationBreakdown", () => {
     it("should return zeroed breakdown when there is no history", () => {
         const result = computeDurationBreakdown([])
 
-        expect(result).toEqual({total: 0, queued: 0, running: 0, isRunning: false})
+        expect(result).toEqual({total: 0, queued: 0, running: 0, paused: 0, isRunning: false})
     })
 
     it("should return zero duration when the task never ran (single terminal entry)", () => {
@@ -13,7 +13,7 @@ describe("computeDurationBreakdown", () => {
             {date: 1_000, state: "SKIPPED"},
         ])
 
-        expect(result).toEqual({total: 0, queued: 0, running: 0, isRunning: false})
+        expect(result).toEqual({total: 0, queued: 0, running: 0, paused: 0, isRunning: false})
     })
 
     it("should count elapsed time as queued while waiting for a single pending entry to start running", () => {
@@ -22,7 +22,7 @@ describe("computeDurationBreakdown", () => {
             1_420,
         )
 
-        expect(result).toEqual({total: 420, queued: 420, running: 0, isRunning: true})
+        expect(result).toEqual({total: 420, queued: 420, running: 0, paused: 0, isRunning: true})
     })
 
     it("should keep accumulating running time against now while the task is still running", () => {
@@ -34,7 +34,7 @@ describe("computeDurationBreakdown", () => {
             3_500,
         )
 
-        expect(result).toEqual({total: 2_500, queued: 250, running: 2_250, isRunning: true})
+        expect(result).toEqual({total: 2_500, queued: 250, running: 2_250, paused: 0, isRunning: true})
     })
 
     it("should bill an inter-attempt gap as queued rather than running", () => {
@@ -67,6 +67,59 @@ describe("computeDurationBreakdown", () => {
         expect(result.total).toBe(afterMidnight - beforeMidnight)
         expect(result.queued + result.running).toBe(result.total)
         expect(result.running).toBe(afterMidnight - (beforeMidnight + 60_000))
+    })
+
+    it("should bill a pause as paused rather than queued or running", () => {
+        const result = computeDurationBreakdown([
+            {date: 0, state: "CREATED"},
+            {date: 100, state: "RUNNING"},
+            {date: 1_100, state: "PAUSED"},
+            {date: 14_401_100, state: "RUNNING"},
+            {date: 14_403_100, state: "SUCCESS"},
+        ])
+
+        expect(result.paused).toBe(14_400_000)
+        expect(result.running).toBe(3_000)
+        expect(result.queued).toBe(100)
+        expect(result.queued + result.running + result.paused).toBe(result.total)
+    })
+
+    it("should keep accumulating paused time against now while the task is still paused", () => {
+        const result = computeDurationBreakdown(
+            [
+                {date: 0, state: "CREATED"},
+                {date: 100, state: "RUNNING"},
+                {date: 1_100, state: "PAUSED"},
+            ],
+            5_100,
+        )
+
+        expect(result.paused).toBe(4_000)
+        expect(result.running).toBe(1_000)
+        expect(result.queued).toBe(100)
+        expect(result.isRunning).toBe(true)
+    })
+
+    it("should treat a breakpoint as paused and a killing teardown as running", () => {
+        const breakpoint = computeDurationBreakdown([
+            {date: 0, state: "RUNNING"},
+            {date: 500, state: "BREAKPOINT"},
+            {date: 2_500, state: "RUNNING"},
+            {date: 3_000, state: "SUCCESS"},
+        ])
+
+        expect(breakpoint.paused).toBe(2_000)
+        expect(breakpoint.running).toBe(1_000)
+
+        const killed = computeDurationBreakdown([
+            {date: 0, state: "RUNNING"},
+            {date: 1_000, state: "KILLING"},
+            {date: 1_250, state: "KILLED"},
+        ])
+
+        expect(killed.running).toBe(1_250)
+        expect(killed.paused).toBe(0)
+        expect(killed.queued).toBe(0)
     })
 
     it("should accept ISO string and Moment-like dates, sorting out-of-order entries", () => {

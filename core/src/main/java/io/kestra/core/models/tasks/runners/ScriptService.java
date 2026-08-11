@@ -33,7 +33,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Helper class for task runners and script tasks.
  */
 public final class ScriptService {
-    private static final String ALLOWED_PATH_CHARS = "-\\p{Alnum}._\\+~#=/,:;";
+    private static final String ALLOWED_PATH_CHARS = "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~#=/,:;";
     private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[" + ALLOWED_PATH_CHARS + "]*)", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Pattern VALID_STORAGE_PATH_PATTERN = Pattern.compile("[" + ALLOWED_PATH_CHARS + "]+", Pattern.UNICODE_CHARACTER_CLASS);
 

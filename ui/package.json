@@ -39,7 +39,7 @@
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@google/genai": "^2.11.0",
-        "@hey-api/openapi-ts": "0.99.0",
+        "@hey-api/openapi-ts": "0.97.0",
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
         "@kestra-io/kestra-sdk": "*",

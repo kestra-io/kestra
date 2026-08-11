@@ -29,6 +29,7 @@ import {
     readFingerprints,
     writeFingerprints,
 } from "./fingerprints.ts"
+import {LANGUAGES} from "../../src/translations/languages.ts"
 
 /**
  * The slice of `@google/genai`'s `GoogleGenAI` this generator actually uses.
@@ -53,22 +54,6 @@ export interface TranslationClient {
 type NestedValue = string | NestedValue[] | NestedDict;
 type NestedDict = {[key: string]: NestedValue};
 type FlatDict = {[key: string]: string};
-
-/** (language code, Gemini target language) pairs. English is the reference and is never translated. */
-export const LANGUAGES: ReadonlyArray<readonly [string, string]> = [
-    ["de", "German"],
-    ["es", "Spanish"],
-    ["fr", "French"],
-    ["hi", "Hindi"],
-    ["it", "Italian"],
-    ["ja", "Japanese"],
-    ["ko", "Korean"],
-    ["pl", "Polish"],
-    ["pt", "Portuguese"],
-    ["pt_BR", "Portuguese (Brazil)"],
-    ["ru", "Russian"],
-    ["zh_CN", "Simplified Chinese (Mandarin)"],
-]
 
 const LANGUAGE_BY_CODE: {[code: string]: string} = Object.fromEntries(LANGUAGES)
 

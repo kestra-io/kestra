@@ -3,7 +3,10 @@ import path from "path"
 import {baseCompile} from "@intlify/message-compiler"
 import {readFingerprints, staleKeys} from "./fingerprints.ts"
 
-export const DEFAULT_LANGUAGES = ["de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "pt_BR", "ru", "zh_CN"]
+import {TRANSLATED_LOCALES} from "../../src/translations/languages.ts"
+
+// Re-exported under the name the entry points already use.
+export {TRANSLATED_LOCALES as DEFAULT_LANGUAGES}
 
 const readJSON = (filePath: string): Record<string, unknown> => JSON.parse(fs.readFileSync(filePath, "utf-8"))
 
@@ -69,7 +72,7 @@ const getNestedKeys = (obj: Record<string, unknown>, prefix = ""): string[] =>
  */
 export function compareTranslations(
     translationsDir: string,
-    languages: string[] = DEFAULT_LANGUAGES,
+    languages: readonly string[] = TRANSLATED_LOCALES,
     fingerprintsFile?: string,
 ): void {
     const getPath = (lang: string): string => path.resolve(translationsDir, `${lang}.json`)

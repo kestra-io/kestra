@@ -1048,8 +1048,7 @@
         "audit-logs": {
           "title": "在一个地方跟踪所有更改",
           "message": "在 Kestra 企业版中，您可以查看 namespace 级别的审计日志，包含详细的差异，提供所有资源的更改历史，清晰地显示是谁在何时更改了什么。"
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1601,8 +1600,7 @@
       "panels": {
         "title": "没有面板打开",
         "content": "您已关闭所有面板。  \n请选择上面的选项卡以继续。"
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "切换自动换行",
     "copied_logs_to_clipboard": "已将日志复制到剪贴板。",
@@ -2249,7 +2247,6 @@
     "blocks": "区块",
     "flow_description": "Flow描述",
     "flow_no_description": "无描述。请在flow YAML中添加描述以记录其功能。",
-    "pluginDefaults": {},
     "split_horizontal": "水平分割",
     "split_vertical": "垂直分割",
     "pwa": {

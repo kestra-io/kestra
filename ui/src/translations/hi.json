@@ -120,8 +120,6 @@
       "last24hours": "पिछले 24 घंटे",
       "last48hours": "पिछले 48 घंटे",
       "last7days": "पिछले 7 दिन",
-      "last14days": "पिछले 14 दिन",
-      "last28days": "पिछले 28 दिन",
       "last30days": "पिछले 30 दिन",
       "last365days": "पिछले 365 दिन",
       "next5minutes": "अगले 5 मिनट",
@@ -140,8 +138,6 @@
       "24hours": "24 घंटे",
       "48hours": "48 घंटे",
       "7days": "7 दिन",
-      "14days": "14 दिन",
-      "28days": "28 दिन",
       "30days": "30 दिन",
       "365days": "365 दिन",
       "never": "कभी नहीं",
@@ -163,7 +159,11 @@
         "12h": "12घं",
         "1d": "1दिन",
         "7d": "7दिन"
-      }
+      },
+      "last14days": "पिछले 14 दिन",
+      "last28days": "पिछले 28 दिन",
+      "14days": "14 दिन",
+      "28days": "28 दिन"
     },
     "created date": "निर्माण तिथि",
     "latest_update": "नवीनतम अपडेट",
@@ -381,6 +381,8 @@
     },
     "use": "उपयोग करें",
     "plugins": {
+      "names": "plugins",
+      "release": "रिलीज़ नोट्स",
       "beta": "Beta",
       "copy_type": "प्रकार कॉपी करें",
       "deprecated": "पुराना",
@@ -418,13 +420,11 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow डॉक्यूमेंटेशन",
-      "names": "plugins",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
       "nav_overview": "अवलोकन",
       "nav_properties": "Properties",
       "non_dynamic": "गैर-गतिशील",
-      "release": "रिलीज़ नोट्स",
       "required": "आवश्यक"
     },
     "last execution date": "अंतिम निष्पादन तिथि",
@@ -861,7 +861,8 @@
             "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "triggers_default_tab": "डिफ़ॉल्ट Triggers टैब",
             "playground": "प्लेग्राउंड",
-            "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल"
+            "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
+            "task_edit_default_mode": "डिफ़ॉल्ट टास्क संपादन मोड"
           },
           "descriptions": {
             "default_namespace": "नए flows को बिना namespace के बनाते समय उपयोग किया जाता है।",
@@ -873,7 +874,12 @@
             "flow_default_tab": "फ्लो पर नेविगेट करते समय चयनित टैब।",
             "triggers_default_tab": "ट्रिगर्स पृष्ठ पर नेविगेट करते समय चयनित टैब।",
             "auto_refresh_interval": "सूची पृष्ठों पर स्वचालित डेटा ताज़ा करने के बीच सेकंड।",
-            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।"
+            "playground": "संपादक प्लेग्राउंड में व्यक्तिगत रूप से tasks चलाएं।",
+            "task_edit_default_mode": "नो-कोड एडिटर से कोई टास्क डिफ़ॉल्ट रूप से कैसे खुलता है।"
+          },
+          "task_edit_default_mode_options": {
+            "modal": "मोडल",
+            "tab": "टैब"
           }
         },
         "theme": {
@@ -941,6 +947,9 @@
       }
     },
     "apps": "ऐप्स",
+    "promote": {
+      "label": "पदोन्नत करें"
+    },
     "demos": {
       "enterprise_edition": "एंटरप्राइज एडिशन",
       "get_a_demo_button": "डेमो प्राप्त करें",
@@ -976,6 +985,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "Flows को Environments में आगे बढ़ाएँ",
+        "message": "Kestra Enterprise Edition आपको एक environment से दूसरे में flows को प्रमोट करने की अनुमति देता है — जैसे dev से staging से production तक — सीधे UI से, किसी Git या CI/CD pipelines की आवश्यकता नहीं है। प्रमोट करने से पहले ठीक क्या बदलेगा, इसका diff देखें, संवेदनशील targets को एक confirmation gate से सुरक्षित रखें, एक नज़र में drift का पता लगाएं, और किसने क्या, कहाँ और कब प्रमोट किया, इसका पूरा history रखें।"
       },
       "IAM": {
         "title": "IAM के माध्यम से SSO, SCIM और RBAC के साथ उपयोगकर्ताओं का प्रबंधन करें।",
@@ -1035,7 +1048,8 @@
         "audit-logs": {
           "title": "सभी परिवर्तनों को एक स्थान पर ट्रैक करें",
           "message": "Kestra एंटरप्राइज एडिशन में, आप namespace-स्तर के ऑडिट logs को विस्तृत अंतर के साथ देख सकते हैं, जो आपको सभी संसाधनों में किसने क्या और कब बदला, इसका स्पष्ट इतिहास प्रदान करता है।"
-        }
+        },
+        "plugin-defaults": {}
       }
     },
     "assets": {
@@ -1366,7 +1380,8 @@
         "triggers": "ट्रिगर्स",
         "errors": "त्रुटि हैंडलर्स",
         "afterExecution": "Execution के बाद",
-        "finally": "अंत में"
+        "finally": "अंत में",
+        "flow": "Flow"
       },
       "fields": {
         "main": {
@@ -1388,7 +1403,8 @@
           "workerGroup": "वर्कर ग्रुप",
           "workerSelector": "वर्कर सेलेक्टर",
           "checks": "जांचें",
-          "updated": "अपडेट किया गया"
+          "updated": "अपडेट किया गया",
+          "quotas": "कोटा"
         }
       },
       "select": {
@@ -1421,6 +1437,25 @@
       "remove": {
         "default": "इस प्रविष्टि को हटाएं",
         "cases": "इस केस को हटाएं"
+      },
+      "adding_to": "+ {what} में जोड़ें",
+      "choose_placeholder": "{field} चुनें",
+      "duration": {
+        "add_unit": "इकाई जोड़ें",
+        "units": {
+          "day": "दिन",
+          "hour": "घंटे",
+          "minute": "मिनट",
+          "second": "सेकंड",
+          "week": "सप्ताह"
+        }
+      },
+      "expression_placeholder": "अपना {field} यहाँ दर्ज करें...",
+      "nav": {
+        "back": "वापस",
+        "breadcrumb_aria": "फ़ील्ड पथ",
+        "items": "{count} आइटम",
+        "not_set": "सेट नहीं है"
       }
     },
     "editor_shortcuts": {
@@ -1566,7 +1601,8 @@
       "panels": {
         "title": "कोई पैनल खुला नहीं है",
         "content": "आपने सभी पैनल बंद कर दिए हैं।  \nजारी रखने के लिए ऊपर एक टैब चुनें।"
-      }
+      },
+      "pluginDefaults": {}
     },
     "toggle_word_wrap": "शब्द रैप टॉगल करें",
     "copied_logs_to_clipboard": "लॉग्स को क्लिपबोर्ड पर कॉपी किया गया।",
@@ -1574,7 +1610,9 @@
       "move_right": "दाईं ओर ले जाएँ",
       "move_left": "बाएँ ले जाएँ",
       "close_all_tabs": "सभी टैब बंद करें",
-      "close_all_panels": "सभी पैनल बंद करें"
+      "close_all_panels": "सभी पैनल बंद करें",
+      "exit_fullscreen": "पूर्ण स्क्रीन से बाहर निकलें",
+      "fullscreen": "पूर्ण स्क्रीन"
     },
     "search_docs": "खोजें",
     "no_results_found": "कोई परिणाम नहीं मिला",
@@ -2064,6 +2102,156 @@
     "open source": "ओपन सोर्स",
     "pricing": "मूल्य निर्धारण",
     "license": "लाइसेंस",
+    "block_editor": {
+      "add_error_task": "एरर task जोड़ें",
+      "add_switch_case": "केस जोड़ें",
+      "adding_to": "{section} में नई प्रविष्टि",
+      "add_task": "task जोड़ें",
+      "add_to_lane": "{lane} में जोड़ें",
+      "add_trigger": "trigger जोड़ें",
+      "all_apps": "सभी ऐप्स",
+      "app_actions": "{count} क्रियाएँ",
+      "block_deleted": "{name} हटाया गया",
+      "card_aria_label": "ब्लॉक {id} प्रकार {type}",
+      "canvas_aria": "Flow ब्लॉक कैनवास",
+      "close_all": "सभी टैब बंद करें",
+      "cluster_collapse_aria": "{id} संकुचित करें",
+      "cluster_expand_aria": "{id} विस्तार करें ({count} tasks)",
+      "collapsed_summary": "{count} tasks",
+      "command_menu": {
+        "context_flow": "संदर्भ: flow",
+        "context_selected": "संदर्भ: {name}",
+        "delete": "{name} हटाएं",
+        "duplicate": "{name} दोहराएं",
+        "goto": "{section} पर जाएं",
+        "group_block": "यह ब्लॉक",
+        "group_flow": "Flow",
+        "group_goto": "यहां जाएं",
+        "group_insert": "जोड़ें",
+        "group_types": "task प्रकार",
+        "insert_after": "{name} के बाद डालें",
+        "insert_at_end": "Tasks के अंत में डालें",
+        "insert_before": "{name} से पहले डालें",
+        "insert_in_section": "{section} में डालें",
+        "insert_kind": "{kind} डालें",
+        "no_match": "कोई मेल नहीं",
+        "open": "{name} खोलें",
+        "save": "Flow सहेजें",
+        "search_placeholder": "एक कमांड टाइप करें या task खोजें…",
+        "title": "कमांड मेनू"
+      },
+      "configure": "कॉन्फ़िगर करें",
+      "confirm_delete": {
+        "message": "यह {name} को flow से हटा देगा। आप ठीक बाद में इसे पूर्ववत कर सकते हैं।",
+        "message_group": "यह समूह {name} और उसके अंदर सब कुछ हटा देगा। आप ठीक बाद में इसे पूर्ववत कर सकते हैं।",
+        "title": "{name} हटाएं?"
+      },
+      "declared_outputs": "घोषित Outputs",
+      "delete": "हटाएं",
+      "depends_on_label": "इस पर निर्भर",
+      "depends_on_placeholder": "task चुनें…",
+      "depth_pill": "गहराई {depth}",
+      "drag_reorder": "पुनर्क्रमित करने के लिए खींचें",
+      "duplicate": "दोहराएं",
+      "empty": "अभी तक कोई task या trigger नहीं। शुरू करने के लिए पहली task जोड़ें।",
+      "empty_add_hint": "या task खोजने के लिए / दबाएँ",
+      "empty_add_lead": "{label} जोड़ने के लिए क्लिक करें",
+      "error_task_noun": "एरर task",
+      "execution_context": "निष्पादन संदर्भ",
+      "filter_data": "उपलब्ध डेटा फ़िल्टर करें…",
+      "flow_inputs": "Flow inputs",
+      "flowable_todo": "नेस्टेड task (संपादन जल्द आएगा)",
+      "footer": {
+        "canvas": "कैनवास",
+        "close_panel": "पैनल बंद करें",
+        "command_menu": "कमांड मेनू",
+        "editing": "ब्लॉक संपादित हो रहा है",
+        "inserting": "जोड़ा जा रहा है",
+        "selected": "चयनित · {name}"
+      },
+      "inline_add": "{label} जोड़ें",
+      "inputs": "Inputs",
+      "inputs_sub": "यहाँ उपयोग करने योग्य डेटा",
+      "inserting_into": "{section} में जोड़ा जा रहा है",
+      "kbd_add": "जोड़ें",
+      "kbd_close": "बंद करें",
+      "kbd_navigate": "नेविगेट",
+      "lane_case": "केस: {key}",
+      "lane_defaults": "डिफ़ॉल्ट",
+      "lane_else": "अन्यथा",
+      "lane_empty": "{lane} में कोई tasks नहीं",
+      "lane_errors": "त्रुटियाँ",
+      "lane_finally": "अंततः",
+      "lane_tasks": "Tasks",
+      "lane_then": "तब",
+      "loading_plugins": "प्लगइन लोड हो रहे हैं...",
+      "move_down": "नीचे ले जाएं",
+      "move_up": "ऊपर ले जाएं",
+      "nav_rail_empty": "अभी तक कोई task या trigger नहीं।",
+      "nav_rail_title": "रूपरेखा",
+      "nested_count": "{count} नेस्टेड task",
+      "no_data_matches": "फ़िल्टर से कुछ मेल नहीं खाता",
+      "no_documentation": "इस task के लिए कोई दस्तावेज़ नहीं",
+      "no_recent": "कोई हाल की task नहीं",
+      "no_task_results": "कोई मेल खाने वाला task प्रकार नहीं मिला।",
+      "open_details": "खुले विवरण",
+      "open_in_split": "स्प्लिट में खोलें",
+      "output": "Output",
+      "output_sub": "यह task क्या उत्पन्न करती है",
+      "pick_task_type": "task प्रकार चुनें",
+      "picker_more_results": "{count} और, अपनी खोज को परिष्कृत करें",
+      "plugin_default": "डिफ़ॉल्ट: {value}",
+      "plugin_default_tooltip": "फ़्लो के pluginDefaults से डिफ़ॉल्ट मान",
+      "required_missing": "आवश्यक फ़ील्ड सेट नहीं है",
+      "save_blocked": {
+        "message": "सहेजने से पहले त्रुटियों को ठीक करें।",
+        "title": "फ़्लो सहेजा नहीं जा सकता"
+      },
+      "search_task_placeholder": "task प्रकार खोजें...",
+      "shortcuts": {
+        "add_after": "चयन के बाद एक ब्लॉक जोड़ें",
+        "add_before": "चयन से पहले एक ब्लॉक जोड़ें",
+        "add_task": "कर्सर पर त्वरित जोड़",
+        "clear": "बंद करें / चयन हटाएं",
+        "collapse_expand": "संक्षिप्त / विस्तृत करें",
+        "command_palette": "कमांड मेनू (संदर्भ आधारित)",
+        "group_edit": "संपादित करें",
+        "group_global": "वैश्विक",
+        "group_insert": "जोड़ें",
+        "group_navigate": "नेविगेट करें",
+        "move_between": "चयन को हिलाएं",
+        "open": "चयनित ब्लॉक खोलें",
+        "open_split": "चयनित ब्लॉक को विभाजित दृश्य में खोलें",
+        "or": "या",
+        "reorder": "ऊपर / नीचे पुनर्व्यवस्थित करें",
+        "save": "Flow सहेजें",
+        "step_into": "विस्तार करें / समूह में जाएं",
+        "step_out": "संक्षिप्त करें / मूल में वापस जाएं",
+        "title": "कीबोर्ड शॉर्टकट",
+        "toggle": "यह सहायता",
+        "undo": "पूर्ववत करें"
+      },
+      "split_into": "{count}-स्तंभ दृश्य",
+      "split_view": "विभाजित दृश्य",
+      "switch_case_key_placeholder": "नई केस की",
+      "switch_case_key_taken": "केस {key} पहले से मौजूद है",
+      "tab_apps": "ऐप अनुसार",
+      "tab_recent": "हाल की",
+      "tab_suggested": "सुझाई गई",
+      "task_noun": "task",
+      "then_required_warning": "Then शाखा आवश्यक है",
+      "trigger_noun": "trigger",
+      "undo": "पूर्ववत करें",
+      "upstream_outputs": "अपस्ट्रीम Outputs",
+      "open_in_tabs": "टैब में खोलें",
+      "open_mode_hint": "Tasks डिफ़ॉल्ट रूप से एक मोडल में खुलती हैं। आप {settings} में टैब को डिफ़ॉल्ट बना सकते हैं।"
+    },
+    "blocks": "ब्लॉक",
+    "flow_description": "Flow विवरण",
+    "flow_no_description": "कोई विवरण नहीं। अपने flow YAML में विवरण जोड़ें।",
+    "pluginDefaults": {},
+    "split_horizontal": "क्षैतिज रूप से विभाजित करें",
+    "split_vertical": "लंबवत रूप से विभाजित करें",
     "pwa": {
       "install_title": "Kestra इंस्टॉल करें",
       "install_description": "तेज़ पहुंच और पूर्ण-स्क्रीन अनुभव के लिए Kestra को ऐप के रूप में इंस्टॉल करें।",

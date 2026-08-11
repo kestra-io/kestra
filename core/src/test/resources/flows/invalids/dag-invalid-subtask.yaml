@@ -1,0 +1,15 @@
+id: "dag-invalid-subtask"
+namespace: io.kestra.tests
+tasks:
+  - id: dag
+    type: io.kestra.plugin.core.flow.Dag
+    tasks:
+      - task:
+          id: task1
+          type: io.kestra.plugin.core.log.Log
+      - task:
+          id: task2
+          type: io.kestra.plugin.core.log.Log
+          message: "ok"
+        dependsOn:
+          - task1

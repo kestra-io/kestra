@@ -414,14 +414,12 @@
         {value: "overview", label: t("overview")},
         {value: "gantt", label: t("gantt")},
         {value: "logs", label: t("logs")},
-        {value: "topology", label: t("topology")},
         {value: "outputs", label: t("outputs")},
         {value: "metrics", label: t("metrics")},
     ])
 
     const flowDefaultTabOptions = computed(() => [
         {value: "overview", label: t("overview")},
-        {value: "topology", label: t("topology")},
         {value: "executions", label: t("executions")},
         {value: "edit", label: t("edit")},
         {value: "revisions", label: t("revisions")},
@@ -430,7 +428,7 @@
         {value: "metrics", label: t("metrics")},
         {value: "dependencies", label: t("dependencies")},
         {value: "concurrency", label: t("concurrency")},
-        {value: "auditlogs", label: t("auditlogs")},
+        {value: "audit-logs", label: t("auditlogs")},
     ])
 
     const triggersDefaultTabOptions = computed(() => [

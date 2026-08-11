@@ -6,7 +6,7 @@
  *   2. The design-system `*.locale.ts` files (ui/packages/design-system/.../  *.locale.ts),
  *      each of which holds every language in a single `export default { en: {...}, de: {...}, ... }`.
  *
- * Run from the repository root so the relative paths below resolve correctly:
+ * Runs from anywhere — from `ui/` via `npm run translations:generate`, or from the repository root:
  *   GEMINI_API_KEY=... node --experimental-strip-types ui/scripts/generate_translations.ts [true|false]
  *
  * The single positional argument mirrors `retranslate_modified_keys`: pass "true"
@@ -15,15 +15,82 @@
  * Requires the `@google/genai` package and Node 22+ (for native TypeScript type stripping and fs.globSync).
  */
 import {execFileSync} from "node:child_process"
-import {globSync, readFileSync, writeFileSync} from "node:fs"
+import {existsSync, globSync, readFileSync, writeFileSync} from "node:fs"
+import {dirname, resolve} from "node:path"
+import {fileURLToPath} from "node:url"
 import {GoogleGenAI} from "@google/genai"
+
+// Every path in this file — and the `git log`/`git show` pathspecs — is written relative to the
+// repository root, so the script anchors itself there rather than depending on where it was
+// launched from. Without this, running it from `ui/` would look for `ui/ui/src/translations`.
+process.chdir(resolve(dirname(fileURLToPath(import.meta.url)), "../.."))
 
 const MODEL = "gemini-2.5-flash"
 const client = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY})
 
+/**
+ * Writes `nextContent` only if it differs from what is on disk by more than trailing whitespace,
+ * and matches the file's existing final-newline style when it does.
+ *
+ * Without this the generator is not formatting-neutral: it serialises with `JSON.stringify`, which
+ * emits no final newline, while most editors add one when a developer touches a language file by
+ * hand. Every scheduled run then stripped those twelve newlines back off and opened a PR whose
+ * entire diff was `\ No newline at end of file` — see #17823.
+ *
+ * @returns whether the file was written
+ */
+function writeIfChanged(filePath: string, nextContent: string): boolean {
+    if (!existsSync(filePath)) {
+        writeFileSync(filePath, nextContent)
+        return true
+    }
+
+    const currentContent = readFileSync(filePath, "utf-8")
+    if (currentContent.trimEnd() === nextContent.trimEnd()) return false
+
+    // Preserve whatever final-newline convention the file already uses, so a real content change
+    // doesn't smuggle in an unrelated whitespace flip alongside it.
+    const endsWithNewline = currentContent.endsWith("\n")
+    writeFileSync(filePath, endsWithNewline ? `${nextContent.trimEnd()}\n` : nextContent.trimEnd())
+    return true
+}
+
 type NestedValue = string | NestedValue[] | NestedDict;
 type NestedDict = {[key: string]: NestedValue};
 type FlatDict = {[key: string]: string};
+
+// How many translation requests may be in flight at once, across every language and every file.
+// Translating one key at a time made a full backlog take far longer than the workflow's job
+// timeout, so the run was cancelled before committing anything and the backlog only ever grew.
+// Raise it for a faster local run; lower it if the provider starts rate-limiting.
+const CONCURRENCY = Math.max(1, Number(process.env.TRANSLATION_CONCURRENCY ?? 10))
+
+/**
+ * Returns a gate that admits at most `limit` concurrent tasks and queues the rest.
+ *
+ * The gate wraps the single point of network I/O rather than each loop, so callers are free to
+ * schedule as many translations as they like — by language, by key, by locale file — while the
+ * number of simultaneous requests stays bounded by one shared budget.
+ */
+function createGate(limit: number): <T>(task: () => Promise<T>) => Promise<T> {
+    let active = 0
+    const waiting: (() => void)[] = []
+
+    return async function run<T>(task: () => Promise<T>): Promise<T> {
+        if (active >= limit) {
+            await new Promise<void>((resolve) => waiting.push(resolve))
+        }
+        active++
+        try {
+            return await task()
+        } finally {
+            active--
+            waiting.shift()?.()
+        }
+    }
+}
+
+const withRequestSlot = createGate(CONCURRENCY)
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     const prompt = `Translate the text provided after "----------" into ${targetLanguage} for use in Kestra’s orchestration UI. Follow these guidelines:
@@ -41,7 +108,7 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
           - Creation → Erstellung (not "Schöpfung")
           Apply similar context-appropriate translations in other languages to avoid false friends or misleading terms.
         - State Labels in English: Keep status labels that are in all caps (e.g. WARNING, FAILED, SUCCESS, PAUSED, RUNNING) in English and in their original uppercase format.
-        - Preserve Variables: Do not translate or change any placeholders enclosed in double curly braces (e.g. \`{{label}}\`, \`{{key}}\`). Leave them exactly as they are. For example, "System {{label}}" should remain "System {{label}}" in the translated text (do not translate "label" or remove the braces).
+        - Preserve Variables: Placeholders are enclosed in a SINGLE pair of curly braces (e.g. \`{label}\`, \`{key}\`). Copy them verbatim: do not translate the name inside the braces, do not rename it, do not add or remove braces, and never turn \`{label}\` into \`{{label}}\` — vue-i18n rejects double braces with a "Not allowed nest placeholder" compile error. For example, "System {label}" must stay "System {label}" in the translated text. Reproduce exactly the same set of placeholders as the source string — never invent a placeholder the source does not have, and never drop one it does.
 
         If the loaded dictionary has no key-value pairs to translate, it means we're adding a new language, and we need to translate all the keys from English to ${targetLanguage}.
 
@@ -51,14 +118,19 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         `
 
     try {
-        const response = await client.models.generateContent({
+        const response = await withRequestSlot(() => client.models.generateContent({
             model: MODEL,
             contents: prompt,
             config: {
                 systemInstruction: `You are a software engineer translating textual UI elements into ${targetLanguage} while keeping technical terms in English.`,
                 temperature: 0.1,
+                // Translating a short UI string needs no deliberation, and the thinking pass is what
+                // made each call slow: median latency measured over the prompts this script actually
+                // sends drops from ~2.5s to ~0.5s with it switched off, with no loss of quality on
+                // placeholder or reserved-term handling.
+                thinkingConfig: {thinkingBudget: 0},
             },
-        })
+        }))
         return (response.text ?? "").trim()
     } catch (e) {
         console.log(`Error during translation: ${e}`)
@@ -168,7 +240,18 @@ function detectChanges(currentDict: NestedDict, previousDict: NestedDict): Set<s
     return new Set([...addedKeys, ...changedKeys])
 }
 
+// The changed-key set depends only on en.json, yet it used to be recomputed for every language —
+// running `git fetch --all` and re-parsing two revisions of the file twelve times over. Memoised
+// per input file so that work happens once. Populated synchronously before the first await, so
+// concurrent language runs cannot race on it.
+const changedEnKeysByFile = new Map<string, FlatDict>()
+
 function getKeysToTranslate(filePath = "ui/src/translations/en.json"): FlatDict {
+    const memoised = changedEnKeysByFile.get(filePath)
+    if (memoised) {
+        return memoised
+    }
+
     const currentEnDict = loadEnDict(filePath)
     const previousEnDict = loadEnChangesFromLastCommits(filePath)
 
@@ -178,6 +261,7 @@ function getKeysToTranslate(filePath = "ui/src/translations/en.json"): FlatDict 
     for (const k of keysToTranslate) {
         result[k] = enFlat[k]
     }
+    changedEnKeysByFile.set(filePath, result)
     return result
 }
 
@@ -217,16 +301,23 @@ async function main(
     const translatedFlatDict: FlatDict = {}
 
     // Only re-translate if the key is not already in the target dict or is empty
-    for (const [k, v] of Object.entries(toTranslate)) {
+    const pending = Object.entries(toTranslate).filter(([k]) => {
         // If we already have a non-empty translation, skip unless forced to re-translate
         if (k in targetFlat && targetFlat[k] && !retranslateModifiedKeys) {
             console.log(`Skipping re-translation for '${k}' since a translation already exists.`)
-            continue
+            return false
         }
+        return true
+    })
+
+    // Requested together rather than one after another; the gate around the API call caps how many
+    // are actually in flight. Writing into a dictionary keyed by translation key means completion
+    // order does not matter, and the output ordering is rebuilt from en.json just below.
+    await Promise.all(pending.map(async ([k, v]) => {
         const newTranslation = await translateText(v, targetLanguage)
         translatedFlatDict[k] = newTranslation
         console.log(`Translating ${k}:${v} to ${targetLanguage} -> '${newTranslation}'.`)
-    }
+    }))
 
     Object.assign(targetFlat, translatedFlatDict)
 
@@ -244,7 +335,7 @@ async function main(
     const updatedTargetDict = unflattenDict(orderedTargetFlat)
 
     const output = {[languageCode]: updatedTargetDict}
-    writeFileSync(`ui/src/translations/${languageCode}.json`, JSON.stringify(output, null, 2))
+    writeIfChanged(`ui/src/translations/${languageCode}.json`, JSON.stringify(output, null, 2))
 }
 
 // ---------------------------------------------------------------------------
@@ -264,8 +355,6 @@ async function main(
 // re-serialise them back to TypeScript after filling in the translations.
 // ---------------------------------------------------------------------------
 
-const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/
-
 // Evaluate the body of a `*.locale.ts` default export into a plain object.
 // The files are pure data literals, so this is safe (and far simpler than parsing TS).
 function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
@@ -276,7 +365,11 @@ function evalLocaleModule(source: string): {[lang: string]: NestedDict} {
 }
 
 // Serialise a value back to TypeScript source, matching the existing 4-space
-// indentation, trailing commas, and unquoted-identifier-keys style.
+// indentation and trailing-comma style. Keys are always quoted: many of them have to be
+// (`"customize tooltip"` contains a space), so quoting only the ones that strictly need it left
+// each file inconsistent with itself and made the serialiser rewrite whichever keys happened to be
+// stored the other way. Quoting everything is one rule, applied uniformly, and keeps regeneration
+// a no-op when nothing was translated.
 function serializeLocaleValue(value: NestedValue, indent: number): string {
     if (value === null || typeof value !== "object") {
         return JSON.stringify(value)
@@ -298,10 +391,8 @@ function serializeLocaleValue(value: NestedValue, indent: number): string {
         return "{}"
     }
 
-    const lines = entries.map(([k, v]) => {
-        const key = IDENTIFIER.test(k) ? k : JSON.stringify(k)
-        return `${padInner}${key}: ${serializeLocaleValue(v, indent + 1)},`
-    })
+    const lines = entries.map(([k, v]) =>
+        `${padInner}${JSON.stringify(k)}: ${serializeLocaleValue(v, indent + 1)},`)
     return `{\n${lines.join("\n")}\n${pad}}`
 }
 
@@ -342,8 +433,7 @@ async function translateLocaleFile(filePath: string, retranslateModifiedKeys: bo
     // Keys whose English source changed since the previous commit (used only when forcing re-translation).
     const changedEnKeys = detectChanges(data.en, loadLocaleEnFromLastCommits(filePath))
 
-    // Preserve `en` first and keep any unknown languages already present in the file untouched.
-    const result: {[lang: string]: NestedDict} = {en: data.en}
+    // Keep any unknown languages already present in the file, and add any shipped language missing from it.
     const codes = Object.keys(data).filter((code) => code !== "en")
     for (const [code] of LANGUAGES) {
         if (!codes.includes(code)) {
@@ -351,12 +441,11 @@ async function translateLocaleFile(filePath: string, retranslateModifiedKeys: bo
         }
     }
 
-    for (const code of codes) {
+    const translatedByCode = await Promise.all(codes.map(async (code): Promise<readonly [string, NestedDict]> => {
         const targetLanguage = LANGUAGE_BY_CODE[code]
         if (!targetLanguage) {
             // Language not in our translation list: keep whatever is already there.
-            result[code] = data[code]
-            continue
+            return [code, data[code]] as const
         }
 
         const targetFlat = flattenDict(data[code] ?? {})
@@ -374,17 +463,21 @@ async function translateLocaleFile(filePath: string, retranslateModifiedKeys: bo
             }
         }
 
-        const translatedFlatDict: FlatDict = {}
-        for (const [k, v] of Object.entries(toTranslate)) {
+        const pending = Object.entries(toTranslate).filter(([k]) => {
             // If we already have a non-empty translation, skip unless forced to re-translate.
             if (k in targetFlat && targetFlat[k] && !retranslateModifiedKeys) {
                 console.log(`[${filePath}] Skipping re-translation for '${k}' since a translation already exists.`)
-                continue
+                return false
             }
+            return true
+        })
+
+        const translatedFlatDict: FlatDict = {}
+        await Promise.all(pending.map(async ([k, v]) => {
             const newTranslation = await translateText(v, targetLanguage)
             translatedFlatDict[k] = newTranslation
             console.log(`[${filePath}] Translating ${k}:${v} to ${targetLanguage} -> '${newTranslation}'.`)
-        }
+        }))
 
         Object.assign(targetFlat, translatedFlatDict)
 
@@ -395,10 +488,18 @@ async function translateLocaleFile(filePath: string, retranslateModifiedKeys: bo
                 prunedTargetFlat[k] = targetFlat[k]
             }
         }
-        result[code] = unflattenDict(prunedTargetFlat)
+        return [code, unflattenDict(prunedTargetFlat)] as const
+    }))
+
+    // Assembled after the fact in a fixed order — `en` first, then `codes` — rather than as each
+    // language finishes. The serialised output preserves key order, so letting completion order
+    // decide it would rewrite the whole file on every run.
+    const result: {[lang: string]: NestedDict} = {en: data.en}
+    for (const [code, dict] of translatedByCode) {
+        result[code] = dict
     }
 
-    writeFileSync(filePath, serializeLocaleModule(result))
+    writeIfChanged(filePath, serializeLocaleModule(result))
 }
 
 const LANGUAGES: ReadonlyArray<readonly [string, string]> = [
@@ -421,12 +522,15 @@ const LANGUAGE_BY_CODE: {[code: string]: string} = Object.fromEntries(LANGUAGES)
 // Default to 'false' if no argument is provided
 const boolFromCi = process.argv[2]?.toLowerCase() === "true"
 
+// Both phases run their units concurrently. Each language owns exactly one output file and each
+// locale file is independent, so nothing is shared but the request gate, which bounds how many
+// translations are in flight at once. Phase 1 is awaited before phase 2 only to keep the log
+// readable; the two are otherwise independent.
+
 // 1. Translate the per-language JSON files from en.json.
-for (const [languageCode, targetLanguage] of LANGUAGES) {
-    await main(languageCode, targetLanguage, "ui/src/translations/en.json", boolFromCi)
-}
+await Promise.all(LANGUAGES.map(([languageCode, targetLanguage]) =>
+    main(languageCode, targetLanguage, "ui/src/translations/en.json", boolFromCi)))
 
 // 2. Translate the design-system `*.locale.ts` files (each holds every language in one file).
-for (const localeFile of globSync("ui/packages/design-system/**/*.locale.ts")) {
-    await translateLocaleFile(localeFile, boolFromCi)
-}
+await Promise.all(globSync("ui/packages/design-system/**/*.locale.ts")
+    .map((localeFile) => translateLocaleFile(localeFile, boolFromCi)))

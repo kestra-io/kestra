@@ -2,7 +2,7 @@
     <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #actions>
             <NavBarActions>
-                <NavBarAction v-if="canRead" :icon="Download" :label="$t('export_csv')" @click="exportFlowsAsStream()" />
+                <NavBarAction v-if="canRead" :icon="Download" :label="$t('export_csv')" @click="exportFlowsAsStream(route.query)" />
                 <NavBarAction :icon="Upload" :label="$t('import')" @click="file?.click()" />
                 <NavBarAction :icon="TextBoxSearch" :to="{name: 'flows/search'}" :label="$t('source search')" />
 
@@ -14,6 +14,7 @@
                         :icon="Plus"
                         :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}"
                         :label="$t('create')"
+                        data-test="flows-create"
                     />
                 </template>
             </NavBarActions>
@@ -67,19 +68,24 @@
                     {{ $t("delete") }}
                 </KsButton>
                 <KsButton
-                    v-if="canUpdate && anyFlowDisabled()"
+                    v-if="canUpdate && anyFlowDisabled"
                     @click="enableFlows"
                     :icon="FileDocumentCheckOutline"
                 >
                     {{ $t("enable") }}
                 </KsButton>
                 <KsButton
-                    v-if="canUpdate && anyFlowEnabled()"
+                    v-if="canUpdate && anyFlowEnabled"
                     @click="disableFlows"
                     :icon="FileDocumentRemoveOutline"
                 >
                     {{ $t("disable") }}
                 </KsButton>
+                <component
+                    :is="flowsExtension.bulkAction"
+                    v-if="flowsExtension.bulkAction && !dataTable?.queryBulkAction"
+                    :flows="dataTable?.selection ?? []"
+                />
             </template>
 
             <KsTableColumn
@@ -226,6 +232,32 @@
                         <TriggerAvatar :flow="scope.row" />
                     </template>
                 </KsTableColumn>
+
+                <KsTableColumn
+                    v-else-if="colProp === 'updated'"
+                    prop="updated"
+                    sortable="custom"
+                    :sortOrders="['ascending', 'descending']"
+                    :label="$t('last modified')"
+                >
+                    <template #default="scope">
+                        <KsDateAgo v-if="scope.row.updated" :date="scope.row.updated" inverted />
+                    </template>
+                </KsTableColumn>
+
+                <KsTableColumn
+                    v-else-if="extensionColumn(colProp)"
+                    :label="extensionColumn(colProp)!.label"
+                >
+                    <template #header>
+                        <component :is="extensionColumn(colProp)!.header" v-if="extensionColumn(colProp)!.header" />
+                        <template v-else>{{ extensionColumn(colProp)!.label }}</template>
+                    </template>
+                    <template #default="scope">
+                        <component :is="extensionColumn(colProp)!.cell" :row="scope.row" />
+                    </template>
+                </KsTableColumn>
+
             </template>
 
             <KsTableColumn columnKey="action" className="row-action" :label="$t('actions')">
@@ -247,6 +279,8 @@
             v-model="showRunModal"
             destroyOnClose
             appendToBody
+            scrollable
+            large
         >
             <template #header>
                 <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
@@ -313,9 +347,11 @@
     import {useMiscStore} from "override/stores/misc"
     import {useExecutionsStore} from "../../stores/executions"
 
-    import {useTableColumns} from "../../composables/useTableColumns"
+    import {useTableColumns, type ColumnConfig} from "../../composables/useTableColumns"
     import useRouteContext from "../../composables/useRouteContext"
+    import {useFlowsTableExtension} from "override/components/flows/flowsTableExtension"
     import {QueryFilter} from "@kestra-io/kestra-sdk"
+    import useFlowsBulkActions from "./useFlowsBulkActions"
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -353,7 +389,7 @@
     const latestExecutions = ref<any[]>([])
     const file = ref<HTMLInputElement | null>(null)
 
-    const optionalColumns = ref([
+    const optionalColumns = ref<ColumnConfig[]>([
         {
             label: t("labels"),
             prop: "labels",
@@ -390,7 +426,26 @@
             default: true,
             description: t("filter.table_column.flows.triggers"),
         },
+        {
+            label: t("last modified"),
+            prop: "updated",
+            default: false,
+            description: t("filter.table_column.flows.last modified"),
+        },
     ])
+
+    const flowsExtension = useFlowsTableExtension()
+    optionalColumns.value.push(...flowsExtension.columns)
+
+    const extensionColumn = (prop: string) => flowsExtension.columns.find(column => column.prop === prop)
+    const extensionColumnsVisible = computed(() =>
+        flowsExtension.columns.some(column => displayColumns.value.includes(column.prop)),
+    )
+    const loadExtensionData = (rows: {id: string; namespace: string}[]) => {
+        if (extensionColumnsVisible.value) {
+            flowsExtension.load?.(rows.map(row => ({id: row.id, namespace: row.namespace})))
+        }
+    }
 
     const {
         visibleColumns: displayColumns,
@@ -399,6 +454,12 @@
         columns: optionalColumns.value,
         storageKey: "flows",
         initialVisibleColumns: [],
+    })
+
+    watch(extensionColumnsVisible, visible => {
+        if (visible && flowStore.flows?.length) {
+            loadExtensionData(flowStore.flows)
+        }
     })
 
     const user = computed(() => authStore.user)
@@ -437,6 +498,7 @@
                         lastExecutionByFlowReady.value = true
                     })
                 }
+                loadExtensionData(data.results)
             })
     }
 
@@ -465,11 +527,6 @@
         }
     }
 
-    const selection = computed(() => dataTable.value?.selection ?? [])
-    const queryBulkAction = computed(() => dataTable.value?.queryBulkAction ?? false)
-    const toggleAllUnselected = () => dataTable.value?.toggleAllUnselected()
-
-    const selectionIds = computed(() => selection.value.map((flow: any) => ({id: flow.id, namespace: flow.namespace})))
 
     // Chart definition for mappedChart
     const CHART_DEFINITION: Chart = {
@@ -550,113 +607,6 @@
         toast.success(t("execution_started"))
     }
 
-    function exportFlows() {
-        toast.confirm(
-            t("flow export", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
-            () => {
-                const flowCount = queryBulkAction.value ? flowStore.total : selection.value.length
-                if (queryBulkAction.value) {
-                    return flowStore.exportFlowByQuery(loadQuery()).then(() => {
-                        toast.success(t("flows exported", {count: flowCount}))
-                        toggleAllUnselected()
-                    })
-                } else {
-                    return flowStore.exportFlowByIds({ids: selection.value}).then(() => {
-                        toast.success(t("flows exported", {count: flowCount}))
-                        toggleAllUnselected()
-                    })
-                }
-            },
-        )
-    }
-
-    function disableFlows() {
-        toast.confirm(
-            t("flow disable", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
-            () => {
-                if (queryBulkAction.value) {
-                    return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                } else {
-                    return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows disabled", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                }
-            },
-        )
-    }
-
-    function anyFlowDisabled() {
-        return selection.value.some((flow: any) => !flow.enabled)
-    }
-    function anyFlowEnabled() {
-        return selection.value.some((flow: any) => flow.enabled)
-    }
-
-    function enableFlows() {
-
-        toast.confirm(
-            t("flow enable", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
-            () => {
-                if (queryBulkAction.value) {
-                    return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                } else {
-                    return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows enabled", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                }
-            },
-        )
-    }
-
-    function deleteFlows() {
-        toast.confirm(
-            t("flow delete", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
-            () => {
-                if (queryBulkAction.value) {
-                    return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                } else {
-                    return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
-                        toast.success(t("flows deleted", {count: r.count}))
-                        toggleAllUnselected()
-                        dataTable.value?.reload()
-                    })
-                }
-            },
-        )
-    }
-
-    function importFlows() {
-        const formData = new FormData()
-        if (file.value && file.value.files && file.value.files[0]) {
-            formData.append("fileUpload", file.value.files[0])
-            flowStore.importFlows({file: formData, failOnError: true}).then((res: any) => {
-                if (res.data.length > 0) {
-                    toast.warning(t("flows not imported") + ": " + res.data.join(", "))
-                } else {
-                    toast.success(t("flows imported"))
-                }
-                if (file.value) file.value.value = ""
-                dataTable.value?.reload()
-            })
-        }
-    }
-
     function getLastExecution(row: any) {
         if (!latestExecutions.value || !row) return null
         return latestExecutions.value.find(
@@ -703,11 +653,20 @@
         }]
     }
 
-    async function exportFlowsAsStream() {
-        await flowStore.exportFlowAsCSV(
-            route.query,
-        )
-    }
+    const {
+        anyFlowDisabled,
+        anyFlowEnabled,
+        deleteFlows,
+        enableFlows,
+        disableFlows,
+        exportFlows,
+        exportFlowsAsStream,
+        importFlows,
+    } = useFlowsBulkActions({
+        loadQuery,
+        dataTable,
+        file,
+    })
 </script>
 
 <style scoped lang="scss">

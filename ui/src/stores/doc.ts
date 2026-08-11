@@ -20,10 +20,34 @@ interface SearchResult {
     preview: string;
 }
 
+/**
+ * recursively removes HTML tags from a string.
+ * the recursive nature is to avoid issues with nested tags 
+ * and to ensure all tags are removed.
+ * @see https://github.com/kestra-io/kestra/security/code-scanning/88
+ * @param input The input string containing HTML.
+ * @returns The input string with all HTML tags removed.
+ */
+function recursivelyRemoveHtmlTags(input: string): string {
+    while (/<[^>]+>/.test(input)) {
+        input = input.replace(/<[^>]+>/g, "")
+    }
+    return input
+}
+
+/**
+ * Sanitize a preview string by removing HTML tags and replacing <br> with spaces.
+ * @param preview The preview string containing HTML.
+ * @returns The sanitized plain-text preview string.
+ */
+function sanitizePreview(preview: string): string {
+    return recursivelyRemoveHtmlTags(preview.replace(/<br\s*\/?>/gi, " "))
+    .replace(/\s+/g, " ").trim()
+}
+
 export const useDocStore = defineStore("doc", () => {
     const pageMetadata = ref<DocMetadata | undefined>(undefined)
     const resourceUrlTemplate = ref<string | undefined>(undefined)
-    const appResourceUrlTemplate = ref<string | undefined>(undefined)
     const docPath = ref<string | undefined>(undefined)
     const docId = ref<string | undefined>(undefined)
 
@@ -94,8 +118,7 @@ export const useDocStore = defineStore("doc", () => {
             return response.data.results.map(({url: itemUrl, title, highlights}: {url: string; title: string; highlights?: string[]}): SearchResult => ({
                 parsedUrl: itemUrl,
                 title,
-                // highlights are HTML snippets (with <mark>/<br/> tags); strip them for a plain-text preview
-                preview: (highlights?.[0] ?? "").replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(),
+                preview: sanitizePreview(highlights?.[0] ?? ""),
             }))
         }
 
@@ -113,7 +136,6 @@ export const useDocStore = defineStore("doc", () => {
     return {
         pageMetadata,
         resourceUrlTemplate,
-        appResourceUrlTemplate,
         docPath,
         docId,
         resourceUrl,

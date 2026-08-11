@@ -22,6 +22,7 @@ import io.kestra.core.models.flows.quota.Quota;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
@@ -248,10 +249,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         }
                         executor = executorService.process(executor);
 
-                        if (!executor.getNexts().isEmpty()) {
+                        if (executor.getNextCount() > 0) {
                             executor.withExecution(
-                                executorService.onNexts(executor.getExecution(), executor.getNexts()),
-                                "onNexts"
+                                executorService.onNext(executor.getExecution(), executor.getNextCount()),
+                                "onNext"
                             );
                         }
 
@@ -356,8 +357,14 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                                 log.info(msg);
 
-                                var logger = runContextLoggerFactory.create(execution);
-                                logger.emitLog(
+                                // Bind the logger to the parent task so its configured logLevel (e.g. plugin
+                                // defaults setting logLevel: WARN) applies to the creation log, which is emitted
+                                // directly and therefore bypasses the regular logging pipeline (#16238).
+                                Task parentTask = flow.findTaskByTaskIdOrNull(subflowExecution.getParentTaskRun().getTaskId());
+                                var logger = parentTask != null
+                                    ? runContextLoggerFactory.create(subflowExecution.getParentTaskRun(), parentTask, subflowExecution.getExecution().getKind())
+                                    : runContextLoggerFactory.create(execution);
+                                logger.emitLogIfEnabled(
                                     LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
                                         .level(Level.INFO)
                                         .message(msg)

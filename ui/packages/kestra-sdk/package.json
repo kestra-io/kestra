@@ -38,10 +38,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.99.0",
+    "@hey-api/openapi-ts": "^0.97.0",
     "@kestra-io/hey-api-plugin": "*",
     "@types/node": "^26.1.1",
     "tsdown": "^0.22.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "unrun": "^0.3.1"
   }
 }

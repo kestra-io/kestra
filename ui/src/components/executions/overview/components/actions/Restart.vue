@@ -74,6 +74,7 @@
         v-model="isOpen"
         destroyOnClose
         :appendToBody="true"
+        scrollable
     >
         <template #header>
             <div class="modal-header m-0">
@@ -158,6 +159,7 @@
         v-model="isReplayWithInputsOpen"
         destroyOnClose
         :appendToBody="true"
+        scrollable
     >
         <template #header>
             <span
@@ -369,12 +371,11 @@
 
         if (newExecution.id !== props.execution.id) {
             window.location.href = router.resolve({
-                name: "executions/update",
+                name: "executions/update/gantt",
                 params: {
                     namespace: newExecution.namespace,
                     flowId: newExecution.flowId,
                     id: newExecution.id,
-                    tab: "gantt",
                     tenant: router.currentRoute.value.params.tenant,
                 },
             }).href

@@ -78,6 +78,7 @@ import KsPopover from "./components/Feedback/KsPopover.vue"
 import KsProgress from "./components/Data/KsProgress.vue"
 import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
 import KsRadioButton from "./components/Form/KsRadio/KsRadioButton.vue"
+import KsRadioCardGroup from "./components/Form/KsRadio/KsRadioCardGroup.vue"
 import KsRadioGroup from "./components/Form/KsRadio/KsRadioGroup.vue"
 import KsRow from "./components/Basic/KsRow/KsRow.vue"
 import KsScrollbar from "./components/Basic/KsScrollbar.vue"
@@ -94,7 +95,6 @@ import KsSteps from "./components/Navigation/KsSteps/KsSteps.vue"
 import KsSwitch from "./components/Form/KsSwitch.vue"
 import KsTabPane from "./components/Navigation/KsTabs/KsTabPane.vue"
 import KsTabs from "./components/Navigation/KsTabs/KsTabs.vue"
-import KsRouterTab from "./components/Navigation/KsTabs/KsRouterTab.vue"
 import KsTable from "./components/Data/KsTable/KsTable.vue"
 import KsTableColumn from "./components/Data/KsTable/KsTableColumn.vue"
 import KsNoData from "./components/Data/KsNoData.vue"
@@ -137,7 +137,6 @@ export {SECTIONS, CLUSTER_PREFIX} from "./utils/constants"
 export {setMomentInstance, setDateFormatter} from "./date/index"
 export type {KsChartSeriesItem} from "./components/Charts/KsEchart.vue"
 export type {KsGraphNode, KsGraphEdge} from "./components/Charts/KsGraph.vue"
-export type {RouterTab} from "./components/Navigation/KsTabs/KsRouterTab.vue"
 export type {KsBreadcrumbItem} from "./components/Navigation/KsBreadcrumb/types"
 export {Comparators} from "./components/Data/KsDataTable/filter/utils/filterTypes"
 export type {InputInstance, FormItemRule, FormRules, FormInstance, CascaderOption, CascaderProps} from "element-plus"
@@ -173,8 +172,10 @@ export {
     serializeFiltersToString,
     parseFiltersFromString,
     validStructureSignature,
-    routeQueryToQueryFilters,
-    type QueryFilter,
+    parseFilterKey,
+    decodeFilterValue,
+    type ParsedFilterKey,
+    type PrefixSegment,
 } from "./components/Data/KsDataTable/filter/utils/helpers"
 export {pickStarterField} from "./components/Data/KsDataTable/filter/utils/filterChipFactory"
 export {
@@ -278,6 +279,7 @@ const components: Record<string, Component> = {
     KsProgress,
     KsRadio,
     KsRadioButton,
+    KsRadioCardGroup,
     KsRadioGroup,
     KsRow,
     KsScrollbar,
@@ -295,7 +297,6 @@ const components: Record<string, Component> = {
     KsSwitch,
     KsTabPane,
     KsTabs,
-    KsRouterTab,
     KsTable,
     KsTableColumn,
     KsNoData,
@@ -387,6 +388,7 @@ export {
     KsProgress,
     KsRadio,
     KsRadioButton,
+    KsRadioCardGroup,
     KsRadioGroup,
     KsRow,
     KsScrollbar,
@@ -404,7 +406,6 @@ export {
     KsSwitch,
     KsTabPane,
     KsTabs,
-    KsRouterTab,
     KsTable,
     KsTableColumn,
     KsNoData,
@@ -516,6 +517,7 @@ declare module "vue" {
         KsProgress: typeof KsProgress
         KsRadio: typeof KsRadio
         KsRadioButton: typeof KsRadioButton
+        KsRadioCardGroup: typeof KsRadioCardGroup
         KsRadioGroup: typeof KsRadioGroup
         KsRow: typeof KsRow
         KsScrollbar: typeof KsScrollbar
@@ -533,7 +535,6 @@ declare module "vue" {
         KsSwitch: typeof KsSwitch
         KsTabPane: typeof KsTabPane
         KsTabs: typeof KsTabs
-        KsRouterTab: typeof KsRouterTab
         KsTable: typeof KsTable
         KsTableColumn: typeof KsTableColumn
         KsNoData: typeof KsNoData

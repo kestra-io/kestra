@@ -1,7 +1,8 @@
 import {defineStore} from "pinia"
 import {ref} from "vue"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
-import {routeQueryToQueryFilters, type QueryFilter} from "@kestra-io/design-system"
+import type {QueryFilter} from "@kestra-io/kestra-sdk"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
 import * as Utils from "../utils/utils"
 import {LevelKey, formatLogsAsText, logsDownloadFilename} from "../utils/logs"
 
@@ -15,7 +16,7 @@ function toSearchParams(options: Record<string, any>) {
         size,
         sort: sort ? [sort] : undefined,
         filters: routeQueryToQueryFilters(filterKeys),
-    } as Parameters<typeof LogsAPI.searchLogs>[0]
+    }
 }
 
 export interface Log{
@@ -37,7 +38,6 @@ export interface Log{
 export const useLogsStore = defineStore("logs", () => {
     const logs = ref<Log[]>()
     const total = ref(0)
-    const level = ref<LevelKey>("INFO")
 
     function findLogs(options: Record<string, any>) {
         return LogsAPI.searchLogs(toSearchParams(options)).then(response => {
@@ -52,7 +52,7 @@ export const useLogsStore = defineStore("logs", () => {
     }
 
     function downloadLogs(options: Record<string, any>) {
-        const params = toSearchParams({...options, page: 1, size: options.size ?? 10000})
+        const params = toSearchParams({...options, page: 1, size: options.size ?? 1000})
         return LogsAPI.searchLogs(params)
             .then(response => {
                 const results = (response.results ?? []) as unknown as Log[]
@@ -67,12 +67,12 @@ export const useLogsStore = defineStore("logs", () => {
     const LEVELS_ASC: LevelKey[] = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]
 
     async function levelCounts(baseParams: Record<string, any>): Promise<Record<string, number>> {
-        const baseFilters = (routeQueryToQueryFilters(baseParams) as QueryFilter[])
+        const baseFilters = routeQueryToQueryFilters(baseParams)
             .filter((f) => f.field !== "level")
 
         const cumulative = await Promise.all(LEVELS_ASC.map((logLevel) => {
-            const filters = [...baseFilters, {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: logLevel}]
-            return LogsAPI.searchLogs({page: 1, size: 1, filters} as Parameters<typeof LogsAPI.searchLogs>[0])
+            const filters: QueryFilter[] = [...baseFilters, {field: "level", operation: "GREATER_THAN_OR_EQUAL_TO", value: logLevel}]
+            return LogsAPI.searchLogs({page: 1, size: 1, filters})
                 .then((response) => (response.total ?? 0) as number)
                 .catch(() => 0)
         }))
@@ -87,7 +87,6 @@ export const useLogsStore = defineStore("logs", () => {
     return {
         logs,
         total,
-        level,
         findLogs,
         deleteLogs,
         downloadLogs,

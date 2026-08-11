@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "type": "module",
-    "packageManager": "npm@10.9.0",
+    "packageManager": "npm@11.16.0",
     "workspaces": [
         "packages/*"
     ],
@@ -11,23 +11,26 @@
         "predev": "node scripts/ensure-sdk.mjs",
         "dev": "vite --host",
         "prebuild": "node scripts/ensure-sdk.mjs",
+        "plugin-count:update": "node --experimental-strip-types ./scripts/update_plugin_catalog_count.ts",
         "build": "vite build --emptyOutDir",
         "build:design": "npm run build --workspace=@kestra-io/design-system",
         "build:topology": "npm run build --workspace=@kestra-io/topology",
-        "build:sdk": "npm run build --workspace=@kestra-io/hey-api-plugin && npm run build --workspace=@kestra-io/kestra-sdk",
+        "build:sdk": "node scripts/ensure-sdk.mjs",
         "generate:openapi-spec": "cd .. && ./gradlew :webserver:generateOpenapiSpec",
         "generate:sdk": "node scripts/ensure-sdk.mjs --check-spec",
         "preview": "vite preview",
         "precheck:types": "node scripts/ensure-sdk.mjs",
         "check:types": "vue-tsc --build packages/design-system/tsconfig.app.json && echo \"design-system compiled\" \\\n && vue-tsc --build tsconfig.app.json && echo \"app checked\" \\\n && vue-tsc --project tsconfig.test.json && echo \"test checked\"",
-        "test:lint": "oxlint src packages && eslint",
+        "test:lint": "oxlint src packages tests && eslint",
         "test:all": "vitest run --coverage",
         "test:unit": "vitest run --project=unit",
-        "test:storybook": "./scripts/run-storybook-tests.sh",
+        "test:unit:shuffle": "vitest run --project=unit --sequence.shuffle.files",
+        "test:storybook": "vitest run --project=storybook",
         "test:e2e": "./run-e2e-tests.sh",
         "test:e2e-without-starting-backend": "playwright test --config=tests/e2e/playwright.config.ts",
         "translations:check": "npx --yes tsx ./src/translations/check.ts",
-        "lint": "oxlint --fix src packages && eslint --fix",
+        "translations:generate": "node --experimental-strip-types ./scripts/generate_translations.ts",
+        "lint": "oxlint --fix src packages tests && eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "postinstall": "npx patch-package"
@@ -36,6 +39,7 @@
         "@codecov/vite-plugin": "^2.0.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@google/genai": "^2.11.0",
+        "@hey-api/openapi-ts": "0.97.0",
         "@js-joda/core": "^6.0.1",
         "@kestra-io/design-system": "*",
         "@kestra-io/kestra-sdk": "*",
@@ -50,7 +54,6 @@
         "@storybook/vue3-vite": "^10.4.6",
         "@types/bootstrap": "^5.2.11",
         "@types/humanize-duration": "^3.27.4",
-        "@types/js-yaml": "^4.0.9",
         "@types/moment": "^2.13.0",
         "@types/node": "^26.1.1",
         "@types/nprogress": "^0.2.3",
@@ -90,7 +93,7 @@
         "moment": "^2.30.1",
         "moment-range": "^4.0.2",
         "moment-timezone": "^0.6.2",
-        "monaco-editor": "^0.52.2",
+        "monaco-editor": "^0.56.0",
         "monaco-yaml": "5.5.1",
         "motion-v": "^2.3.0",
         "nprogress": "^0.2.0",
@@ -149,12 +152,30 @@
         "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7",
         "@codecov/vite-plugin": {
             "vite": "$vite"
-        }
+        },
+        "dompurify": "^3.4.13"
     },
     "lint-staged": {
         "**/*.{js,mjs,cjs,ts,vue}": [
             "oxlint --fix",
             "eslint --fix"
         ]
+    },
+    "allowScripts": {
+        "@google/genai@2.11.0": true,
+        "@parcel/watcher@2.5.6": true,
+        "@scarf/scarf@1.4.0": true,
+        "@tree-sitter-grammars/tree-sitter-yaml@0.7.1": true,
+        "tree-sitter@0.22.4": true,
+        "tree-sitter@0.21.1": true,
+        "vue-demi@0.14.10": true,
+        "core-js@3.49.0": true,
+        "core-js-pure@3.49.0": true,
+        "es5-ext@0.10.64": true,
+        "esbuild@0.28.1": true,
+        "fsevents@2.3.2": true,
+        "fsevents@2.3.3": true,
+        "protobufjs@7.6.5": true,
+        "tree-sitter-json@0.24.8": true
     }
 }

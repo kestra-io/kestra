@@ -4,9 +4,10 @@ import {apiUrl} from "override/utils/route"
 import * as Utils from "../utils/utils"
 import {useCoreStore} from "./core"
 import throttle from "lodash/throttle"
-import {useRoute} from "vue-router"
-import {CLUSTER_PREFIX, routeQueryToQueryFilters} from "@kestra-io/design-system"
-import {TaskRun, useClient, type Execution as SDKExecution} from "@kestra-io/kestra-sdk"
+import {useRoute, type LocationQuery} from "vue-router"
+import {CLUSTER_PREFIX} from "@kestra-io/design-system"
+import {routeQueryToQueryFilters} from "../utils/queryFilters"
+import {TaskRun, useClient, type Execution as SDKExecution, type StateType} from "@kestra-io/kestra-sdk"
 import * as ExecutionsAPI from "@kestra-io/kestra-sdk/executions"
 import * as LogsAPI from "@kestra-io/kestra-sdk/logs"
 import * as MetricsAPI from "@kestra-io/kestra-sdk/metrics"
@@ -14,6 +15,8 @@ import * as ExecutionUtils from "../utils/executionUtils"
 import {executionLogsDownloadFilename} from "../utils/logs"
 import {InputType} from "../utils/inputs"
 import {Optional} from "../utils/utils"
+import {useApiStore} from "./api"
+import {executionLocation, isExampleFlow} from "../utils/analytics/activation"
 
 export interface Check {
     message: string
@@ -107,14 +110,12 @@ export const useExecutionsStore = defineStore("executions", () => {
     // State
     const executions = ref<Execution[] | undefined>(undefined)
     const execution = ref<Execution | undefined>(undefined)
-    const taskRun = ref<any | undefined>(undefined)
     const total = ref<number>(0)
     const logs = ref<LogsState>({
         total: 0,
         results: [],
     })
     const metrics = ref<any[]>([])
-    const metricsTotal = ref<number>(0)
     const subflowsExecutions = ref<Record<string, any>>({})
     // live lifecycle-step progress reported by plugins mid-run (see RunContext#emitProgress),
     // read off the follow-logs SSE stream; taskRunId is globally unique so this is safe to
@@ -142,12 +143,13 @@ export const useExecutionsStore = defineStore("executions", () => {
         return ExecutionsAPI.restartExecution({executionId: options.executionId, revision: options.revision}) as unknown as Promise<Execution>
     }
 
-    const bulkRestartExecution = (options: { executionsId: string[] }) => {
-        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId})
+    const bulkRestartExecution = (options: { executionsId: string[] } & Record<string, any>) => {
+        return ExecutionsAPI.restartExecutionsByIds({body: options.executionsId, latestRevision: options.latestRevision})
     }
 
     const queryRestartExecution = (options: Record<string, any>) => {
-        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.restartExecutionsByQuery>[0])
+        const {latestRevision, ...filterKeys} = options
+        return ExecutionsAPI.restartExecutionsByQuery({filters: routeQueryToQueryFilters(filterKeys), latestRevision})
     }
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
@@ -155,7 +157,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryResumeExecution = (options: Record<string, any>) => {
-        return ExecutionsAPI.resumeExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.resumeExecutionsByQuery>[0])
+        return ExecutionsAPI.resumeExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
     const bulkReplayExecution = (options: { executionsId: string[] } & Record<string, any>) => {
@@ -168,12 +170,12 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const queryReplayExecution = (options: Record<string, any>) => {
         const {latestRevision, ...filterKeys} = options
-        return ExecutionsAPI.replayExecutionsByQuery({filters: routeQueryToQueryFilters(filterKeys), latestRevision} as Parameters<typeof ExecutionsAPI.replayExecutionsByQuery>[0])
+        return ExecutionsAPI.replayExecutionsByQuery({filters: routeQueryToQueryFilters(filterKeys), latestRevision})
     }
 
     const queryChangeExecutionStatus = (options: Record<string, any>) => {
         const {newStatus, ...filterKeys} = options
-        return ExecutionsAPI.updateExecutionsStatusByQuery({filters: routeQueryToQueryFilters(filterKeys), newStatus} as Parameters<typeof ExecutionsAPI.updateExecutionsStatusByQuery>[0])
+        return ExecutionsAPI.updateExecutionsStatusByQuery({filters: routeQueryToQueryFilters(filterKeys), newStatus})
     }
 
     const replayExecution = (options: { executionId: string; taskRunId?: string; revision?: number, breakpoints?: string[] }) => {
@@ -228,7 +230,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryKill = (options: Record<string, any>) => {
-        return ExecutionsAPI.killExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.killExecutionsByQuery>[0])
+        return ExecutionsAPI.killExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
@@ -269,7 +271,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryPauseExecution = (options: Record<string, any>) => {
-        return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.pauseExecutionsByQuery>[0])
+        return ExecutionsAPI.pauseExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
     const loadExecution = (options: { id: string }) => {
@@ -286,7 +288,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             size,
             sort: sort ? [sort] : undefined,
             filters: routeQueryToQueryFilters(filterKeys),
-        } as Parameters<typeof ExecutionsAPI.searchExecutions>[0]
+        }
     }
 
     const findExecutions = (options: { commit?: boolean } & Record<string, any>): Promise<any> => {
@@ -306,14 +308,14 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const findDistinctFieldValues = async (options: {
         field: string;
-        filters?: Record<string, string>;
+        filters?: LocationQuery;
         size?: number;
     }): Promise<string[]> => {
         return ExecutionsAPI.findDistinctFieldValues({
             field: options.field as Parameters<typeof ExecutionsAPI.findDistinctFieldValues>[0]["field"],
             filters: options.filters ? routeQueryToQueryFilters(options.filters) : undefined,
             size: options.size ?? 100,
-        } as Parameters<typeof ExecutionsAPI.findDistinctFieldValues>[0])
+        })
     }
 
     // Stays on raw axios: multipart form-data body (file inputs), not a clean typed JSON call.
@@ -354,7 +356,20 @@ export const useExecutionsStore = defineStore("executions", () => {
         // Don't set Content-Type here - createExecution() already defaults it to null so the
         // browser can generate the multipart boundary itself. An explicit "multipart/form-data"
         // header (needed under the old axios client) has no boundary and corrupts the request.
-        }, {timeout: 60 * 60 * 1000})
+        }, {timeout: 60 * 60 * 1000}).then(execution => {
+            useApiStore().posthogEvents({
+                type: "FLOW_EXECUTION",
+                action: "executed",
+                execution_id: execution.id,
+                namespace: execution.namespace,
+                flow_id: execution.flowId,
+                location: executionLocation(route.name?.toString(), options.kind),
+                is_example: isExampleFlow(execution.namespace),
+                revision: execution.flowRevision,
+            })
+
+            return execution
+        })
     }
 
     const deleteExecution = (options: { id: string; deleteLogs?: boolean; deleteMetrics?: boolean; deleteStorage?: boolean }) => {
@@ -370,7 +385,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const bulkDeleteExecution = (options: { executionsId: string[] } & Record<string, any>) => {
         const {executionsId, ...rest} = options
-        return ExecutionsAPI.deleteExecutionsByIds({body: executionsId, ...rest} as Parameters<typeof ExecutionsAPI.deleteExecutionsByIds>[0])
+        return ExecutionsAPI.deleteExecutionsByIds({body: executionsId, ...rest})
     }
 
     const queryDeleteExecution = (options: Record<string, any>) => {
@@ -381,7 +396,7 @@ export const useExecutionsStore = defineStore("executions", () => {
             deleteLogs,
             deleteMetrics,
             deleteStorage,
-        } as Parameters<typeof ExecutionsAPI.deleteExecutionsByQuery>[0])
+        })
     }
 
     // Handle to the SDK follow stream backing the currently displayed execution.
@@ -539,7 +554,7 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const loadLogs = (options: { executionId: string; params?: Record<string, any>; store?: boolean; showMessageOnError?: boolean }) => {
         return LogsAPI.listLogsFromExecution(
-            {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})} as Parameters<typeof LogsAPI.listLogsFromExecution>[0],
+            {executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})},
             options.showMessageOnError === false ? ({showMessageOnError: false} as any) : undefined,
         ).then(data => {
             if (options.store === false) {
@@ -568,7 +583,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const downloadLogs = (options: { executionId: string; params?: Record<string, any> }) => {
-        return LogsAPI.downloadLogsFromExecution({executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})} as Parameters<typeof LogsAPI.downloadLogsFromExecution>[0]) as unknown as Promise<string>
+        return LogsAPI.downloadLogsFromExecution({executionId: options.executionId, filters: routeQueryToQueryFilters(options.params ?? {})}) as unknown as Promise<string>
     }
 
     const downloadLogsFile = (options: { executionId: string; params?: Record<string, any> }) => {
@@ -581,7 +596,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const deleteLogs = (options: { executionId: string; params?: Record<string, any> }) => {
-        return LogsAPI.deleteLogsFromExecution({executionId: options.executionId, ...options.params} as Parameters<typeof LogsAPI.deleteLogsFromExecution>[0])
+        return LogsAPI.deleteLogsFromExecution({executionId: options.executionId, ...options.params})
     }
 
     const filePreviewB = ref<any | undefined>(undefined)
@@ -597,12 +612,26 @@ export const useExecutionsStore = defineStore("executions", () => {
         })
     }
 
+    // Fetches the complete, untruncated file as text. Unlike filePreview (which
+    // caps rows and bytes for the RAW/TEXT viewer), this returns the whole file
+    // so callers such as the HTML iframe preview can render a valid document.
+    // The /file endpoint sets Content-Disposition: attachment, but that only
+    // affects browser navigation — an XHR reads the body normally, and the
+    // shared client attaches auth automatically.
+    const fileContent = (options: { executionId: string; path: string }): Promise<string> => {
+        return axios.get(`${apiUrl()}/executions/${options.executionId}/file`, {
+            params: {path: options.path},
+            responseType: "text",
+            transformResponse: [(data: string) => data],
+        }).then(response => response.data as string)
+    }
+
     const setLabels = (options: { executionId: string; labels: any }) => {
         return ExecutionsAPI.setLabelsOnTerminatedExecution({executionId: options.executionId, body: options.labels})
     }
 
     const querySetLabels = (options: { data: any; params: Record<string, any> }) => {
-        return ExecutionsAPI.setLabelsOnTerminatedExecutionsByQuery({filters: routeQueryToQueryFilters(options.params), body: options.data} as Parameters<typeof ExecutionsAPI.setLabelsOnTerminatedExecutionsByQuery>[0])
+        return ExecutionsAPI.setLabelsOnTerminatedExecutionsByQuery({filters: routeQueryToQueryFilters(options.params), body: options.data})
     }
 
     const bulkSetLabels = (options: { executionsId: string[]; executionLabels: any[] }) => {
@@ -619,7 +648,10 @@ export const useExecutionsStore = defineStore("executions", () => {
 
     const queryUnqueueExecution = (options: { newStatus: string } & Record<string, any>) => {
         const {newStatus, ...filterKeys} = options
-        return ExecutionsAPI.unqueueExecutionsByQuery({filters: routeQueryToQueryFilters(filterKeys), newState: newStatus} as Parameters<typeof ExecutionsAPI.unqueueExecutionsByQuery>[0])
+        return ExecutionsAPI.unqueueExecutionsByQuery({
+            filters: routeQueryToQueryFilters(filterKeys),
+            newState: newStatus as StateType,
+        })
     }
 
     const forceRun = (options: { id: string }) => {
@@ -631,7 +663,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const queryForceRunExecution = (options: Record<string, any>) => {
-        return ExecutionsAPI.forceRunExecutionsByQuery({filters: routeQueryToQueryFilters(options)} as Parameters<typeof ExecutionsAPI.forceRunExecutionsByQuery>[0])
+        return ExecutionsAPI.forceRunExecutionsByQuery({filters: routeQueryToQueryFilters(options)})
     }
 
     const loadFlowForExecution = (options: { namespace: string; flowId: string; revision?: number, store: boolean }) => {
@@ -832,11 +864,9 @@ export const useExecutionsStore = defineStore("executions", () => {
         // State
         executions,
         execution,
-        taskRun,
         total,
         logs,
         metrics,
-        metricsTotal,
         subflowsExecutions,
         progressEvents,
         flow,
@@ -886,6 +916,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         downloadLogsFile,
         deleteLogs,
         filePreview,
+        fileContent,
         setLabels,
         querySetLabels,
         bulkSetLabels,

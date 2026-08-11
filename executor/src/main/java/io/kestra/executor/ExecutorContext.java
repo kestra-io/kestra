@@ -29,35 +29,41 @@ public class ExecutorContext {
 
     private Execution execution;
     private Exception exception;
-    private final List<String> from = new ArrayList<>();
-    private boolean executionUpdated = false;
     private FlowWithSource flow;
+
+    private final List<String> from = new ArrayList<>(8);
+    private boolean executionUpdated = false;
+    private int nextCount = 0;
+
     // We usually only use one of the lists above, not many in each processing loop.
     // And as we always use addAll the capacity of the list will grow to what's needed when used,
     // so we initialize them with 0 to save memory.
-    private final List<TaskRun> nexts = new ArrayList<>(0);
     private final List<ExecutorWorkerTask> workerTasks = new ArrayList<>(0);
     private final List<WorkerJobEvent> workerJobEvents = new ArrayList<>(0);
     private final List<ExecutionDelay> executionDelays = new ArrayList<>(0);
     private final List<SubflowExecution<?>> subflowExecutions = new ArrayList<>(0);
     private final List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>(0);
     private final List<Execution> loopExecutions = new ArrayList<>(0);
-    private State.Type originalState;
+    /**
+     * The execution as loaded at cycle entry when it was <b>already in a terminal
+     * state</b> then, and {@code null} otherwise.
+     */
+    private final Execution terminalExecutionAtEntry;
     // Tracks every distinct state this execution passes through within a single cycle.
-    // Index 0 = state at cycle entry (== originalState); each subsequent entry is a new state.
+    // Index 0 = state at cycle entry; each subsequent entry is a new state.
     private final List<State.Type> stateTransitions = new ArrayList<>(1);
 
     public ExecutorContext(Execution execution) {
         this.execution = execution;
-        this.originalState = execution.getState().getCurrent();
-        this.stateTransitions.add(this.originalState);
+        this.terminalExecutionAtEntry = execution.getState().isTerminated() ? execution : null;
+        this.stateTransitions.add(execution.getState().getCurrent());
     }
 
     public ExecutorContext(Execution execution, FlowWithSource flow) {
         this.execution = execution;
         this.flow = flow;
-        this.originalState = execution.getState().getCurrent();
-        this.stateTransitions.add(this.originalState);
+        this.terminalExecutionAtEntry = execution.getState().isTerminated() ? execution : null;
+        this.stateTransitions.add(execution.getState().getCurrent());
     }
 
     public Boolean canBeProcessed() {
@@ -90,9 +96,21 @@ public class ExecutorContext {
         return this;
     }
 
+    /**
+     * Callers must only pass task runs not already present in the execution.
+     */
     public ExecutorContext withTaskRun(List<TaskRun> taskRuns, String from) {
-        this.nexts.addAll(taskRuns);
         this.from.add(from);
+
+        // Merge into the execution immediately, so a task run created earlier in this same process() pass is visible to later steps of the same pass
+        // (e.g. handleWorkerTasks dispatching a child created by handleFlowableTasks in the same cycle).
+        if (!taskRuns.isEmpty()) {
+            List<TaskRun> merged = this.execution.getTaskRunList() == null ? new ArrayList<>() : new ArrayList<>(this.execution.getTaskRunList());
+            merged.addAll(taskRuns);
+            this.execution = this.execution.withTaskRunList(merged);
+            this.executionUpdated = true;
+            this.nextCount = nextCount + taskRuns.size();
+        }
 
         return this;
     }

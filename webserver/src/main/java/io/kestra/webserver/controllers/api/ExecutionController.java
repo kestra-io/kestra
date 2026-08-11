@@ -43,6 +43,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
@@ -63,6 +64,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.DateFilter;
+import io.kestra.core.repositories.ExecutionStatisticsRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
@@ -92,6 +94,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
+import io.kestra.webserver.services.WebhookBodyService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -103,6 +106,7 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.format.Format;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
@@ -116,6 +120,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -130,6 +135,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -149,6 +155,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
+    private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
+
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
@@ -164,6 +172,9 @@ public class ExecutionController {
 
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private ExecutionStatisticsRepositoryInterface executionStatisticsRepository;
 
     @Inject
     private GraphService graphService;
@@ -235,6 +246,9 @@ public class ExecutionController {
     private WebhookService webhookService;
 
     @Inject
+    private WebhookBodyService webhookBodyService;
+
+    @Inject
     private AsyncOperationWaiter asyncOperationWaiter;
 
     @Inject
@@ -283,7 +297,7 @@ public class ExecutionController {
     @Operation(tags = { "Executions" }, summary = "Search for executions")
     public PagedResults<ApiLightExecution> searchExecutions(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size,
         @Parameter(
             description = "The sort of current page", examples = {
                 @ExampleObject(name = "Sort by start date in ascending order", value = "state.startDate:asc"),
@@ -319,7 +333,7 @@ public class ExecutionController {
             in = ParameterIn.QUERY
         )
         @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
-        @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) int size) {
+        @Parameter(description = "Maximum number of distinct values to return.") @QueryValue(defaultValue = "100") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
         if (!QueryFilter.Resource.EXECUTION.supportedField().contains(field)) {
             throw new HttpStatusException(
                 HttpStatus.BAD_REQUEST,
@@ -546,7 +560,7 @@ public class ExecutionController {
         @Parameter(description = "The flow namespace") @QueryValue String namespace,
         @Parameter(description = "The flow id") @QueryValue String flowId,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
-        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size) {
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) @Max(PageableUtils.MAX_PAGE_SIZE) int size) {
         var executions = executionRepository.findByFlowId(tenantService.resolveTenant(), namespace, flowId, PageableUtils.from(page, size));
         var apiExecution = executions.stream()
             .map(execution -> ApiLightExecution.of(execution))
@@ -558,14 +572,64 @@ public class ExecutionController {
     @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by POST webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
+    @RequestBody(
+        description = "The webhook payload, of any content type. What the flow sees of it depends on the " +
+            "`fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A " +
+            "`multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's " +
+            "internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.",
+        content = {
+            @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    description = "A form whose part names are chosen by the caller: each file part is exposed on " +
+                        "`trigger.parts` with the URI of its content in Kestra's internal storage, each other " +
+                        "part on `trigger.formFields`."
+                )
+            )
+        }
+    )
     @SingleResult
     public Mono<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
+    }
+
+    // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
+    // the spec already describes; a second operation on the same path and method would shadow it.
+    @Hidden
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @SingleResult
+    public Mono<HttpResponse<?>> triggerExecutionByPostWebhookMultipart(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
+        @Nullable @Body MultipartBody parts,
+        HttpRequest<?> request) {
+        return this.webhookMultipart(namespace, id, key, path, parts, request);
+    }
+
+    // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
+    // the spec already describes; a second operation on the same path and method would shadow it.
+    @Hidden
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @SingleResult
+    public Mono<HttpResponse<?>> triggerExecutionByPutWebhookMultipart(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
+        @Nullable @Body MultipartBody parts,
+        HttpRequest<?> request) {
+        return this.webhookMultipart(namespace, id, key, path, parts, request);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -578,7 +642,7 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
     }
 
@@ -586,85 +650,155 @@ public class ExecutionController {
     @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by PUT webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
+    @RequestBody(
+        description = "The webhook payload, of any content type. What the flow sees of it depends on the " +
+            "`fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A " +
+            "`multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's " +
+            "internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.",
+        content = {
+            @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    description = "A form whose part names are chosen by the caller: each file part is exposed on " +
+                        "`trigger.parts` with the URI of its content in Kestra's internal storage, each other " +
+                        "part on `trigger.formFields`."
+                )
+            )
+        }
+    )
     @SingleResult
     public Mono<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    /**
+     * Collect the parts of a {@code multipart/form-data} webhook request, then evaluate the webhook with them.
+     * The content of a file part is streamed into the internal storage, so that a file of any size reaches the
+     * flow intact. The webhook is resolved first: a request that matches none must not store anything.
+     */
+    private Mono<HttpResponse<?>> webhookMultipart(
+        String namespace,
+        String id,
+        String key,
+        String path,
+        MultipartBody parts,
+        HttpRequest<?> request) {
+        Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+        return webhookMultipart(maybeFlow, key, path, parts, request);
+    }
+
+    protected Mono<HttpResponse<?>> webhookMultipart(
+        Optional<Flow> maybeFlow,
+        String key,
+        String path,
+        MultipartBody parts,
+        HttpRequest<?> request) {
+        Flow flow = executableFlow(maybeFlow);
+        findWebhook(flow, key);
+
+        // Minted before the parts are read, so that they are stored under the execution that will carry them.
+        String executionId = IdUtils.create();
+
+        return webhookBodyService
+            .collect(parts, flow, executionId, request.getContentType().map(MediaType::getName).orElse(MediaType.MULTIPART_FORM_DATA))
+            .flatMap(body ->
+            {
+                try {
+                    return this.webhook(maybeFlow, key, path, MicronautHttpService.from(request, body), executionId, null);
+                } catch (RuntimeException | IllegalVariableEvaluationException e) {
+                    // The call was refused after its parts were stored under an execution that will not exist.
+                    webhookBodyService.deleteStored(flow, executionId);
+                    return Mono.error(e);
+                }
+            });
+    }
+
+    /**
+     * Read the body of a webhook request as the trigger it reaches asks for it, then evaluate the webhook with it.
+     * The webhook is resolved first: a request that matches none must have neither its body stored nor its bytes
+     * carried into the server.
+     */
     private Mono<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
         String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        Optional<Flow> find = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
-        return webhook(find, key, path, request);
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+       return webhook(maybeFlow, key, path, request);
     }
 
     protected Mono<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        if (maybeFlow.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
-        }
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        Flow flow = executableFlow(maybeFlow);
+        AbstractWebhookTrigger webhook = findWebhook(flow, key);
 
-        var flow = maybeFlow.get();
-        if (flow.isDisabled()) {
-            throw new ConflictException("Cannot execute flow: flow is disabled.");
-        }
-        if (flow instanceof FlowWithException fwe) {
-            throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
-        }
+        // Minted before the body is read, so that a stored body lives under the execution that will carry it.
+        String executionId = IdUtils.create();
+        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook.getFetchType());
 
-        Optional<AbstractWebhookTrigger> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
-            : flow
-                .getTriggers())
-            .stream()
-            .filter(o -> o instanceof AbstractWebhookTrigger)
-            .map(o -> (AbstractWebhookTrigger) o)
-            .filter(w ->
-            {
-                RunContext runContext = runContextFactory.of(flow, w);
-                try {
-                    String webhookKey = runContext.render(w.getKey()).trim();
-                    // compare via MessageDigest.isEqual to prevent timing attacks
-                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
-                } catch (IllegalVariableEvaluationException e) {
-                    // be conservative, don't crash but filter the webhook
-                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
-                    return false;
-                }
-            })
-            .findFirst();
-
-        if (maybeWebhook.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
+        try {
+            return this.webhook(
+                maybeFlow,
+                key,
+                path,
+                MicronautHttpService.from(request, body.requestBody()),
+                executionId,
+                body.storedUri()
+            );
+        } catch (RuntimeException | IllegalVariableEvaluationException e) {
+            // The call was refused after its body was stored under an execution that will not exist.
+            webhookBodyService.deleteStored(flow, executionId);
+            throw e;
         }
+    }
 
-        final AbstractWebhookTrigger webhook = maybeWebhook.get();
+    /**
+     * Evaluate the webhook the given key matches, for an execution that will be given the provided identifier.
+     *
+     * @param executionId the identifier of the execution the call creates, minted by the caller when the request
+     *        had to be read before the execution could be created, e.g. to store its file parts
+     * @param storedBodyUri the URI the body of the request was stored under, {@code null} unless the trigger
+     *        fetches its body as {@link AbstractWebhookTrigger.FetchType#STORE}
+     */
+    private Mono<HttpResponse<?>> webhook(
+        Optional<Flow> maybeFlow,
+        String key,
+        String path,
+        io.kestra.core.http.HttpRequest request,
+        String executionId,
+        URI storedBodyUri) throws IllegalVariableEvaluationException {
+        Flow flow = executableFlow(maybeFlow);
+        final AbstractWebhookTrigger webhook = findWebhook(flow, key);
         this.onWebhookMatched(flow, webhook);
 
         // Webhook context
         var webhookContext = new WebhookContext(
-            MicronautHttpService.from(request),
+            request,
             path,
             flow,
             webhook,
-            webhookService
+            webhookService,
+            executionId,
+            storedBodyUri
         );
 
         // Call evaluate and create a failed execution if exception occurs
         try {
             return webhook.evaluate(webhookContext).map(MicronautHttpService::to);
         } catch (Exception e) {
-            var executionId = IdUtils.create();
+            // The failed execution takes the identifier the call was given, so that anything already stored for it
+            // is attached to it, and purged with it.
             var createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
                 .withLabels(LabelService.labelsExcludingSystem(flow.getLabels()))
                 .withStateType(State.Type.FAILED)
@@ -689,6 +823,55 @@ public class ExecutionController {
      */
     protected void onWebhookMatched(Flow flow, AbstractWebhookTrigger webhook) {
         // no-op
+    }
+
+    /**
+     * @return the flow a webhook call targets
+     * @throws HttpStatusException if the flow does not exist
+     * @throws ConflictException if the flow cannot be executed
+     */
+    private static Flow executableFlow(Optional<Flow> maybeFlow) {
+        if (maybeFlow.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
+        }
+
+        var flow = maybeFlow.get();
+        if (flow.isDisabled()) {
+            throw new ConflictException("Cannot execute flow: flow is disabled.");
+        }
+        if (flow instanceof FlowWithException fwe) {
+            throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
+        }
+
+        return flow;
+    }
+
+    /**
+     * @return the webhook trigger of the flow the given key matches
+     * @throws HttpStatusException if no webhook trigger matches the key
+     */
+    private AbstractWebhookTrigger findWebhook(Flow flow, String key) {
+        return (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
+            : flow
+                .getTriggers())
+            .stream()
+            .filter(o -> o instanceof AbstractWebhookTrigger)
+            .map(o -> (AbstractWebhookTrigger) o)
+            .filter(w ->
+            {
+                RunContext runContext = runContextFactory.of(flow, w);
+                try {
+                    String webhookKey = runContext.render(w.getKey()).trim();
+                    // compare via MessageDigest.isEqual to prevent timing attacks
+                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
+                } catch (IllegalVariableEvaluationException e) {
+                    // be conservative, don't crash but filter the webhook
+                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
+                    return false;
+                }
+            })
+            .findFirst()
+            .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found"));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -782,6 +965,9 @@ public class ExecutionController {
         // flatMap() may execute on a different thread (e.g. boundedElastic), where Context.current()
         // would return an empty root context since OTel Context is thread-local.
         final Context otelContext = Context.current();
+        // Same reason for the Micronaut propagated context: it carries the server request and its
+        // authentication, which the CREATE event listeners need to attribute the execution to its author.
+        final PropagatedContext propagatedContext = PropagatedContext.getOrEmpty();
         return flowInputOutput.readExecutionInputs(flow, executionId, inputs)
             .flatMap(executionInputs ->
             {
@@ -827,6 +1013,10 @@ public class ExecutionController {
                     operationId -> executionCommandQueue.emit(finalCreateCommand.withOperationId(operationId))
                 ).flatMap(res ->
                 {
+                    try (PropagatedContext.Scope ignored = propagatedContext.propagate()) {
+                        eventPublisher.publishEvent(CrudEvent.create(res.body()));
+                    }
+
                     var executionUrl = executionUrl(finalCreateCommand.executionFullId());
                     if (!wait || (finalCreateCommand.stateType() != null && finalCreateCommand.stateType().isFailed())) {
                         return Mono.just(
@@ -860,9 +1050,6 @@ public class ExecutionController {
                         .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
                         .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
                 });
-
-                //                    eventPublisher.publishEvent(CrudEvent.create(createCommand)); TODO
-
             });
     }
 
@@ -1134,7 +1321,8 @@ public class ExecutionController {
     @ApiResponse(responseCode = "202", description = "Accepted", content = { @Content(schema = @Schema(implementation = ApiAsyncOperationResponse.class)) })
     @ApiResponse(responseCode = "400", description = "Validation errors", content = { @Content(schema = @Schema(implementation = BulkErrorResponse.class)) })
     public MutableHttpResponse<ApiAsyncOperationResponse> restartExecutionsByIds(
-        @RequestBody(description = "The list of executions id") @Body List<String> executionsId) throws Exception {
+        @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -1180,7 +1368,14 @@ public class ExecutionController {
 
         return submitBatchAction(
             executions,
-            (execution, opId) -> executionCommandQueue.emit(Restart.from(execution, null).withOperationId(opId))
+            (execution, opId) -> {
+                Integer revision = null;
+                if (Boolean.TRUE.equals(latestRevision)) {
+                    Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+                    revision = flow.getRevision();
+                }
+                executionCommandQueue.emit(Restart.from(execution, revision).withOperationId(opId));
+            }
         );
     }
 
@@ -1193,9 +1388,11 @@ public class ExecutionController {
         @Parameter(
             description = "Filters. PHP-style nested query is used - examples: `filters[timeRange][EQUALS]=PT168H`, `filters[scope][EQUALS]=USER`, `filters[state][IN]=FAILED,CANCELLED`, `filters[labels][NOT_EQUALS][foo]=bar`, `filters[namespace][CONTAINS]=test`",
             in = ParameterIn.QUERY
-        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters) throws Exception {
+        ) @QueryFilterFormat(Resource.EXECUTION) List<QueryFilter> filters,
+
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision) throws Exception {
         var ids = getExecutionIds(QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters));
-        return restartExecutionsByIds(ids);
+        return restartExecutionsByIds(ids, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2492,6 +2689,53 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/namespaces/{namespace}/flows/{flowId}/average-duration")
+    @Operation(
+        tags = { "Executions" },
+        summary = "Get the average duration of the recent executions of a flow, used to estimate the progress of a running execution."
+    )
+    public ExecutionAverageDuration getExecutionAverageDuration(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId) {
+        Instant endDate = Instant.now();
+
+        long durationSumMs = 0;
+        long count = 0;
+
+        for (DailyExecutionStatistics statistic : executionStatisticsRepository.statistics(
+            tenantService.resolveTenant(),
+            namespace,
+            flowId,
+            endDate.minus(AVERAGE_DURATION_LOOKBACK),
+            endDate,
+            DateUtils.GroupType.DAY
+        )) {
+            DailyExecutionStatistics.Duration duration = statistic.getDuration();
+            // Buckets without any execution are gap-filled with an all-null duration, so the count
+            // must be checked before reading the sum.
+            if (duration != null && 0 < duration.getCount()) {
+                durationSumMs += duration.getSum().toMillis();
+                count += duration.getCount();
+            }
+        }
+
+        // Weighted by bucket count: averaging the per-bucket averages would over-weight quiet days.
+        return new ExecutionAverageDuration(0 == count ? null : durationSumMs / count, count);
+    }
+
+    /**
+     * The average duration of the recent executions of a flow.
+     *
+     * @param avgDurationMs the average duration in milliseconds, or {@code null} when the flow has no
+     *        terminated execution in the lookback window.
+     * @param count the number of executions the average was computed from.
+     */
+    public record ExecutionAverageDuration(
+        @jakarta.annotation.Nullable Long avgDurationMs,
+        long count) {
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow-dependencies", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(
         tags = { "Executions" },
@@ -2549,7 +2793,7 @@ public class ExecutionController {
 
                 // check if there are already terminated executions so we could end them immediately
                 List<Execution> terminatedExecutions = executionRepository
-                    .find(null, current.getTenantId(), null, null, null, null, null, null, Map.of(CORRELATION_ID, correlationId), null, null)
+                    .find(null, current.getTenantId(), null, null, null, null, null, null, Map.of(CORRELATION_ID, correlationId), null)
                     .mapNotNull(exec ->
                     {
                         if (
@@ -2760,7 +3004,11 @@ public class ExecutionController {
                         "Failed to execute action '%s' on execution %s (operation_id=%s). Cause: %s".formatted(actionName, executionId, processed.operationId(), processed.error())
                     );
                 }
-                return executionRepository.findById(tenantId, executionId)
+                // This runs on the thread that completes the async-operation sink, which is the event-queue polling
+                // thread and carries no authenticated principal. The ACL-enforcing findById fails closed there, so it
+                // reports the execution as missing even though the command succeeded. Authorization already happened
+                // on the request thread, in the endpoint that submitted this operation.
+                return executionRepository.findByIdWithoutAcl(tenantId, executionId)
                     .orElseThrow(
                         () -> new NoSuchElementException(
                             "Execution disappeared after " + actionName.toLowerCase() + ": " + executionId

@@ -139,6 +139,7 @@
             :title="secretModalTitle"
             :beforeClose="beforeSecretClose"
             formLayout
+            scrollable
         >
             <KsForm labelPosition="left" :model="secret" :rules="rules" ref="form">
                 <KsFormItem
@@ -229,7 +230,8 @@
 
     import {KsId, KsIconButton, KsPassword} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
-    import {KsFilter as KSFilter, routeQueryToQueryFilters} from "@kestra-io/design-system"
+    import {KsFilter as KSFilter} from "@kestra-io/design-system"
+    import {routeQueryToQueryFilters} from "../../utils/queryFilters"
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue"
 
     import action from "../../models/action"
@@ -237,9 +239,10 @@
     import * as Utils from "../../utils/utils"
     import {useToast} from "../../utils/toast"
     import {storageKeys} from "../../utils/constants"
-    import {useSecretsStore} from "../../stores/secrets"
+    import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations"
     import {useTableColumns} from "../../composables/useTableColumns"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
@@ -292,8 +295,8 @@
     const route = useRoute()
     const router = useRouter()
     const authStore = useAuthStore()
-    const secretsStore = useSecretsStore()
     const namespacesStore = useNamespacesStore()
+    const apiStore = useApiStore()
 
     const form = ref<FormInstance>()
 
@@ -454,7 +457,7 @@
 
     const loadData = async ({page, size, sort}: {page: number; size: number; sort?: string}) => {
         const activeFilters = routeQueryToQueryFilters(route.query)
-        const secretsResponse = await secretsStore.find(loadQuery({
+        const secretsResponse = await SecretsAPI.listSecrets(loadQuery({
             size,
             page,
             sort: sort ?? String(route.query.sort ?? "key:asc"),
@@ -472,7 +475,7 @@
             const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1)
 
             for (const parentNs of parentNamespaces) {
-                const parentSecretsResponse = await secretsStore.find(loadQuery({
+                const parentSecretsResponse = await SecretsAPI.listSecrets(loadQuery({
                     filters: [...activeFilters, ...namespaceFilter(parentNs)],
                 }))
 
@@ -562,8 +565,20 @@
                 ? namespacesStore.createSecrets
                 : namespacesStore.patchSecret
 
-            actionMethod({namespace: secret.value?.namespace as string, secret: secretData})
+            // Snapshot before the request: resetForm() swaps secret.value out when the drawer closes,
+            // and the .then() would then read the flag off a different object.
+            const wasUpdate = secret.value?.update === true
+            const namespace = secret.value?.namespace
+
+            actionMethod({namespace: namespace as string, secret: secretData})
                 .then(() => {
+                    apiStore.posthogEvents({
+                        type: wasUpdate ? "SECRET_UPDATED" : "SECRET_CREATED",
+                        secret_type: "secret",
+                        namespace,
+                        has_tags: (secretData.tags?.length ?? 0) > 0,
+                    })
+
                     secret.value!.update = true
                     toast.saved(secret.value?.key || "")
                     addSecretDrawerVisible.value = false

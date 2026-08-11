@@ -36,7 +36,6 @@ import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.YamlParser;
@@ -47,6 +46,12 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.models.flows.SourceSearchReplaceApplyRequest;
+import io.kestra.webserver.models.flows.SourceSearchReplaceApplyResponse;
+import io.kestra.webserver.models.flows.SourceSearchReplaceLineRequest;
+import io.kestra.webserver.models.flows.SourceSearchReplacePreviewRequest;
+import io.kestra.webserver.models.flows.SourceSearchReplacePreviewResponse;
+import io.kestra.webserver.models.flows.SourceSearchResult;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.RequestUtils;
@@ -64,6 +69,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.nullValue;
@@ -219,6 +225,143 @@ class FlowControllerTest {
                 .getTotal()
         )
             .isEqualTo(Helpers.FLOWS_COUNT - 1); // all except io.kestra.tests2
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlowsBySourceCodeWithRegexOption() {
+        String namespace = "io.kestra.sourcesearch.regex";
+        createSourceSearchFlow(namespace, "regex-flow", "unique-marker-alpha");
+        createSourceSearchFlow(namespace, "regex-flow-2", "no-match-here");
+
+        PagedResults<SourceSearchResult> results = client.toBlocking().retrieve(
+            HttpRequest.GET(FLOW_PATH + "/source?q=" + URLEncoder.encode("unique-marker-\\w+", StandardCharsets.UTF_8) + "&regex=true&namespace=" + namespace),
+            Argument.of(PagedResults.class, SourceSearchResult.class)
+        );
+
+        assertThat(results.getResults()).hasSize(1);
+        assertThat(results.getResults().getFirst().id()).isEqualTo("regex-flow");
+        assertThat(results.getResults().getFirst().editable()).isTrue();
+        assertThat(results.getResults().getFirst().matches()).hasSize(1);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlowsBySourceCodeWithCaseSensitiveOption() {
+        String namespace = "io.kestra.sourcesearch.case";
+        createSourceSearchFlow(namespace, "case-flow-upper", "MARKERCASE");
+        createSourceSearchFlow(namespace, "case-flow-lower", "markercase");
+
+        PagedResults<SourceSearchResult> caseSensitive = client.toBlocking().retrieve(
+            HttpRequest.GET(FLOW_PATH + "/source?q=MARKERCASE&caseSensitive=true&namespace=" + namespace),
+            Argument.of(PagedResults.class, SourceSearchResult.class)
+        );
+
+        assertThat(caseSensitive.getResults()).hasSize(1);
+        assertThat(caseSensitive.getResults().getFirst().id()).isEqualTo("case-flow-upper");
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidRegexQuery() {
+        assertThatThrownBy(() -> client.toBlocking().retrieve(
+            HttpRequest.GET(FLOW_PATH + "/source?q=" + URLEncoder.encode("concurrency:(\\s*limit:", StandardCharsets.UTF_8) + "&regex=true")
+        ))
+            .isInstanceOf(HttpClientResponseException.class)
+            .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
+    }
+
+    @Test
+    void shouldPreviewAndApplySourceSearchReplace() {
+        String namespace = "io.kestra.sourcesearch.replace";
+        String id = "replace-flow";
+        createSourceSearchFlow(namespace, id, "legacy-value-here");
+
+        SourceSearchReplacePreviewResponse preview = client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH + "/source/replace/preview", new SourceSearchReplacePreviewRequest("legacy-value", false, false, false, namespace, null, "new-value")),
+            SourceSearchReplacePreviewResponse.class
+        );
+
+        assertThat(preview.totalMatches()).isEqualTo(1);
+        assertThat(preview.totalFlows()).isEqualTo(1);
+        assertThat(preview.editableFlowCount()).isEqualTo(1);
+        assertThat(preview.flows().getFirst().matches().getFirst().before()).contains("legacy-value-here");
+        assertThat(preview.flows().getFirst().matches().getFirst().after()).contains("new-value-here");
+
+        FlowWithSource beforeApply = client.toBlocking().retrieve(HttpRequest.GET(FLOW_PATH + "/" + namespace + "/" + id + "?source=true"), FlowWithSource.class);
+        assertThat(beforeApply.getSource()).contains("legacy-value-here");
+
+        SourceSearchReplaceApplyResponse apply = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                FLOW_PATH + "/source/replace/apply",
+                new SourceSearchReplaceApplyRequest("legacy-value", false, false, false, null, "new-value", List.of(new IdWithNamespace(namespace, id)))
+            ),
+            SourceSearchReplaceApplyResponse.class
+        );
+
+        assertThat(apply.updated()).hasSize(1);
+        assertThat(apply.updated().getFirst().getSource()).contains("new-value-here");
+        assertThat(apply.skipped()).isEmpty();
+
+        FlowWithSource afterApply = client.toBlocking().retrieve(HttpRequest.GET(FLOW_PATH + "/" + namespace + "/" + id + "?source=true"), FlowWithSource.class);
+        assertThat(afterApply.getSource()).contains("new-value-here");
+        assertThat(afterApply.getSource()).doesNotContain("legacy-value-here");
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidReplacementBackreferenceOnPreview() {
+        String namespace = "io.kestra.sourcesearch.badbackref.preview";
+        createSourceSearchFlow(namespace, "badbackref-flow", "aaa");
+
+        assertThatThrownBy(() -> client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH + "/source/replace/preview", new SourceSearchReplacePreviewRequest("(a)", false, false, true, namespace, null, "$9"))
+        ))
+            .isInstanceOf(HttpClientResponseException.class)
+            .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidReplacementBackreferenceOnApply() {
+        String namespace = "io.kestra.sourcesearch.badbackref.apply";
+        String id = "badbackref-flow";
+        createSourceSearchFlow(namespace, id, "aaa");
+
+        assertThatThrownBy(() -> client.toBlocking().retrieve(
+            HttpRequest.POST(
+                FLOW_PATH + "/source/replace/apply",
+                new SourceSearchReplaceApplyRequest("(a)", false, false, true, null, "$9", List.of(new IdWithNamespace(namespace, id)))
+            )
+        ))
+            .isInstanceOf(HttpClientResponseException.class)
+            .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidReplacementBackreferenceOnLine() {
+        String namespace = "io.kestra.sourcesearch.badbackref.line";
+        String id = "badbackref-flow";
+        createSourceSearchFlow(namespace, id, "aaa");
+
+        assertThatThrownBy(() -> client.toBlocking().retrieve(
+            HttpRequest.POST(
+                FLOW_PATH + "/source/replace/line",
+                new SourceSearchReplaceLineRequest("(a)", false, false, true, "$9", namespace, id, 3, 13)
+            )
+        ))
+            .isInstanceOf(HttpClientResponseException.class)
+            .satisfies(e -> assertThat(((HttpClientResponseException) e).getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode()));
+    }
+
+    private void createSourceSearchFlow(String namespace, String id, String description) {
+        String source = """
+            id: %s
+            namespace: %s
+            description: %s
+            tasks:
+              - id: task
+                type: io.kestra.plugin.core.debug.Return
+                format: test
+            """.formatted(id, namespace, description);
+        client.toBlocking().exchange(HttpRequest.POST(FLOW_PATH, source).contentType(MediaType.APPLICATION_YAML_TYPE), FlowWithSource.class);
     }
 
     @Test
@@ -901,8 +1044,7 @@ class FlowControllerTest {
     }
 
     /**
-     * this is testing legacy > new filters /by-query endpoints, related file is
-     * {@link RequestUtils#getFiltersOrDefaultToLegacyMapping(List, String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     * this is testing legacy > new filters /by-query endpoints
      */
     @Test
     void exportFlowsByQueryForANamespace() throws IOException {

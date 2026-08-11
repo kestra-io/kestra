@@ -168,7 +168,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             );
         }
 
-        result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE, logEntry));
+        result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.DEBUG, logEntry));
 
         return result;
     }
@@ -221,6 +221,27 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
      */
     public void emitLogs(List<LogEntry> logEntries) {
         this.logEmitter.emits(logEntries);
+    }
+
+    /**
+     * Emit the given log entry only when its level is enabled for this context's configured
+     * log level. Prefer this over {@link #emitLog(LogEntry)} for manually built entries:
+     * direct emission bypasses the regular logging pipeline, so the configured level filter
+     * (e.g. a task's {@code logLevel} property) must be applied explicitly.
+     *
+     * @see #emitLog(LogEntry)
+     */
+    public void emitLogIfEnabled(LogEntry logEntry) {
+        if (logEntry.getLevel() == null || isLogLevelEnabled(logEntry.getLevel())) {
+            this.emitLog(logEntry);
+        }
+    }
+
+    /**
+     * Returns true when the given level is enabled for this context's configured log level.
+     */
+    public boolean isLogLevelEnabled(org.slf4j.event.Level level) {
+        return this.loglevel == null || Level.toLevel(level.toString()).isGreaterOrEqual(this.loglevel);
     }
 
     /**

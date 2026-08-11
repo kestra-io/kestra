@@ -44,6 +44,26 @@ public class QueryFilterTest {
         assertThat(e.getMessage()).contains("Operation");
     }
 
+    @Test
+    void shouldThrowExceptionWhenFieldIsNotSupportedForResource() {
+        QueryFilter filter = QueryFilter.builder().field(Field.LOCKED).operation(Op.EQUALS).value(true).build();
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.FLOW)
+        );
+        assertThat(e.getMessage()).contains("LOCKED", "FLOW");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenFieldIsNotSupportedForPromotionTargets() {
+        QueryFilter filter = QueryFilter.builder().field(Field.NAMESPACE).operation(Op.EQUALS).value("io.kestra").build();
+        InvalidQueryFiltersException e = assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> QueryFilter.validateQueryFilters(List.of(filter), Resource.PROMOTION_TARGETS)
+        );
+        assertThat(e.getMessage()).contains("NAMESPACE", "PROMOTION_TARGETS");
+    }
+
     static Stream<Arguments> validOperationFilters() {
         return Stream.of(
             buildQueryFiltersForOperations(
@@ -86,7 +106,10 @@ public class QueryFilterTest {
                     Op.NOT_EQUALS,
                     Op.IN,
                     Op.NOT_IN,
-                    Op.CONTAINS
+                    Op.CONTAINS,
+                    Op.NOT_CONTAINS,
+                    Op.IS_NULL,
+                    Op.IS_NOT_NULL
                 )
             ),
 
@@ -327,7 +350,36 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.LOCKED, Resource.ASSET,
+                Set.of(
+                    Op.EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.TYPE, Resource.CREDENTIALS,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.CONTAINS,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.REGEX,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.PROMOTION_TARGETS,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.PROMOTION_TARGETS,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS,
@@ -467,10 +519,33 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                // STATUS is virtual for Invitation (ACCEPTED/PENDING map to the status column,
+                // EXPIRED is computed from expired_at), so unlike Case it can't support IN/NOT_IN
+                // even though Field.STATUS.supportedOp() offers it globally — see Resource.supportedOp().
                 Field.STATUS, Resource.INVITATION,
                 Set.of(
                     Op.EQUALS,
                     Op.NOT_EQUALS
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.SEVERITY, Resource.CASE,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ASSIGNEE, Resource.CASE,
+                Set.of(
+                    Op.EQUALS,
+                    Op.NOT_EQUALS,
+                    Op.IN,
+                    Op.NOT_IN
                 )
             ),
 
@@ -1172,7 +1247,53 @@ public class QueryFilterTest {
             ),
 
             buildQueryFiltersForOperations(
+                Field.LOCKED, Resource.ASSET,
+                Set.of(
+                    Op.NOT_EQUALS,
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
                 Field.TYPE, Resource.CREDENTIALS,
+                Set.of(
+                    Op.PREFIX,
+                    Op.LESS_THAN,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.GREATER_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.QUERY, Resource.PROMOTION_TARGETS,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.IN,
+                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ID, Resource.PROMOTION_TARGETS,
                 Set.of(
                     Op.PREFIX,
                     Op.LESS_THAN,
@@ -1297,12 +1418,42 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.STATUS, Resource.INVITATION,
                 Set.of(
+                    Op.IN,
+                    Op.NOT_IN,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
                     Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.IN,
-                    Op.NOT_IN,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.SEVERITY, Resource.CASE,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
+                    Op.STARTS_WITH,
+                    Op.ENDS_WITH,
+                    Op.CONTAINS,
+                    Op.REGEX,
+                    Op.PREFIX
+                )
+            ),
+
+            buildQueryFiltersForOperations(
+                Field.ASSIGNEE, Resource.CASE,
+                Set.of(
+                    Op.GREATER_THAN,
+                    Op.LESS_THAN,
+                    Op.GREATER_THAN_OR_EQUAL_TO,
+                    Op.LESS_THAN_OR_EQUAL_TO,
                     Op.STARTS_WITH,
                     Op.ENDS_WITH,
                     Op.CONTAINS,

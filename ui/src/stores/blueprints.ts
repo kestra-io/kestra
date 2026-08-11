@@ -3,7 +3,7 @@ import {defineStore} from "pinia"
 
 import {useClient, type BlueprintControllerApiBlueprintItemWithSource} from "@kestra-io/kestra-sdk"
 import {apiUrl} from "override/utils/route"
-import type {QueryFilter} from "@kestra-io/design-system"
+import type {QueryFilter} from "@kestra-io/kestra-sdk"
 
 import {useMiscStore} from "override/stores/misc"
 
@@ -55,10 +55,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const miscStore = useMiscStore()
     const {edition, version} = miscStore.configs || {}
 
-    const blueprints = ref<Blueprint[]>([])
     const blueprint = ref<Blueprint | undefined>(undefined)
-    const source = ref<string | undefined>(undefined)
-    const graph = ref<any | undefined>(undefined)
 
     const validateYAML = ref<boolean>(true) // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
 
@@ -67,13 +64,11 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
             const PARAMS = {params: options.params, ...VALIDATE}
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`
             const response = await axios.get(COMMUNITY, PARAMS)
-            blueprints.value = response.data
             return response.data
         }
 
         try {
             const {data} = await axios.get(`${apiUrl()}/blueprints/custom`, {params: toCustomBlueprintParams(options.params)})
-            blueprints.value = data.results as unknown as Blueprint[]
             return data
         } catch (e: any) {
             if (e.status === 401) return {results: [], total: 0}
@@ -123,12 +118,10 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         if (options.type === "community") {
             const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/source`
             const response = await axios.get(COMMUNITY)
-            source.value = response.data
             return response.data
         }
 
         const {data} = await axios.get(`${apiUrl()}/blueprints/custom/${options.id!}/source`)
-        source.value = data
         return data
     }
 
@@ -138,7 +131,6 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
         const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM)
 
-        graph.value = response.data
         return response.data
     }
 
@@ -191,9 +183,6 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
     return {
         blueprint,
-        blueprints,
-        source,
-        graph,
         validateYAML,
         getBlueprints,
         getBlueprint,

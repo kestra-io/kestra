@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
 import io.kestra.core.exceptions.*;
+import io.kestra.core.utils.RegexUtils;
 import io.kestra.libs.copilot.exceptions.AiException;
 
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
@@ -169,6 +170,16 @@ public class ErrorController {
     }
 
     @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidSourceSearchQueryException e) {
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, "The pattern couldn't be parsed");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, RegexUtils.RegexTimeoutException e) {
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, "Regular expression took too long to evaluate");
+    }
+
+    @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ValidationErrorException e) {
         return jsonError(request, e, HttpStatus.BAD_REQUEST, e.formatedInvalidObjects());
     }
@@ -235,7 +246,7 @@ public class ErrorController {
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
             log.error("Server error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         } else {
-            log.trace("Client error: {}", e.getMessage() != null ? e.getMessage() : "", e);
+            log.debug("Client error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         }
 
         JsonError error = new JsonError(reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))

@@ -4,6 +4,11 @@
         :execution="execution!"
     />
     <template v-else-if="execution && executionsStore.flow">
+        <ExecutionProgress
+            v-if="isProgressing"
+            :execution="execution"
+            class="gantt-progress"
+        />
         <!-- No task runs to plot: hide the filter bar + card and show only the execution
              status (mirrors the versioned-plugins empty screen). -->
         <KsEmptyState v-if="series.length === 0" :image="emptyIllustration">
@@ -79,7 +84,6 @@
                                     :item="item"
                                     :active="active"
                                     :data-index="index"
-                                    :sizeDependencies="[selectedTaskRuns]"
                                 >
                                     <div class="d-flex flex-column">
                                         <div
@@ -148,7 +152,6 @@
                                                     :taskRun="item.task"
                                                     :execution="execution"
                                                     :flow="executionsStore.flow"
-                                                    @follow="emit('follow', $event)"
                                                 />
                                             </div>
                                         </div>
@@ -160,7 +163,6 @@
                                                         :excludeMetas="['namespace', 'flowId', 'taskId', 'executionId']"
                                                         :levelFilter="effectiveSelectedLogLevel"
                                                         hideTaskHeader
-                                                        @follow="emit('follow', $event)"
                                                         :targetFlow="executionsStore.flow"
                                                         class="mh-100 mx-3"
                                                     />
@@ -181,16 +183,6 @@
                 </KsCard>
             </div>
         </template>
-        <OnboardingSuccessPopup
-            :modelValue="showOnboardingSuccessPopup"
-            :backdrop="false"
-            @update:modelValue="showOnboardingSuccessPopup = $event"
-        />
-        <SaveExecuteAnimation
-            :modelValue="showSaveExecuteAnimation"
-            @update:modelValue="showSaveExecuteAnimation = $event"
-            @finished="onSaveExecuteAnimationFinished"
-        />
     </template>
 </template>
 
@@ -234,10 +226,9 @@
     import TaskRunDetails from "../logs/TaskRunDetails.vue"
     import TaskRunActions from "./TaskRunActions.vue"
     import ExecutionPending from "./ExecutionPending.vue"
+    import ExecutionProgress from "./ExecutionProgress.vue"
     import emptyIllustration from "../../assets/empty_visuals/generic.svg"
     import {buildTaskRunHierarchy} from "../../utils/taskRunHierarchy"
-    import OnboardingSuccessPopup from "../onboarding/OnboardingSuccessPopup.vue"
-    import SaveExecuteAnimation from "../inputs/SaveExecuteAnimation.vue"
     import {computeTaskBarPercents} from "../../utils/ganttSeries"
 
     interface TaskRun {
@@ -289,11 +280,6 @@
         embed: true,
     })
 
-    const emit = defineEmits<{
-        follow: [event: unknown];
-        goToDetail: [event: unknown];
-    }>()
-
     const {t} = useI18n()
     const route = useRoute()
     const toast = useToast()
@@ -323,9 +309,6 @@
     const selectedTaskRunId = ref<string | undefined>(undefined)
     const regularPaintingInterval = ref<ReturnType<typeof setInterval> | undefined>(undefined)
     const expandedFromRoute = ref(false)
-    const showOnboardingSuccessPopup = ref(false)
-    const showSaveExecuteAnimation = ref(false)
-    const onboardingAnimationPlayed = ref(false)
 
     const defaultLogLevel = computed(() => localStorage.getItem("defaultLogLevel") || "INFO")
     const {
@@ -429,6 +412,8 @@
     })
 
     const isQueued = computed<boolean>(() => execution.value?.state?.current === "QUEUED")
+
+    const isProgressing = computed<boolean>(() => execution.value?.state?.current === State.RUNNING)
 
     // Supporting line shown under the status badge when the Gantt has no task runs to plot.
     const emptyStateHint = computed<string>(() => {
@@ -638,30 +623,41 @@
         {immediate: true},
     )
 
+    /** `autoExpandGantt` route query: `true` (all), `failed`, or a comma-separated task id list. */
+    function applyAutoExpandFromRoute(currentExecution: any) {
+        const autoExpand = route.query.autoExpandGantt
+        if (typeof autoExpand !== "string" || !autoExpand) {
+            return
+        }
+        if (!currentExecution?.taskRunList || expandedFromRoute.value) {
+            return
+        }
+
+        const taskIds = autoExpand === "true" || autoExpand === "failed"
+            ? undefined
+            : autoExpand.split(",").map((id) => id.trim()).filter(Boolean)
+
+        const taskRuns = autoExpand === "failed"
+            ? currentExecution.taskRunList.filter((taskRun: any) => taskRun.state?.current === "FAILED")
+            : taskIds
+                ? currentExecution.taskRunList.filter((taskRun: any) => taskIds.includes(taskRun.taskId))
+                : currentExecution.taskRunList
+
+        if (taskRuns.length) {
+            selectedTaskRuns.value = taskRuns.map((taskRun: any) => taskRun.id)
+            expandedFromRoute.value = true
+        }
+    }
+
+    watch(() => route.query.autoExpandGantt,() => applyAutoExpandFromRoute(execution.value))
+
     watch(
         execution,
         (newExecution) => {
-            if (route.query.autoExpandGantt === "true" && newExecution?.taskRunList && !expandedFromRoute.value) {
-                selectedTaskRuns.value = newExecution.taskRunList.map(taskRun => taskRun.id)
-                expandedFromRoute.value = true
-            }
-
-            if (
-                route.query.onboardingSuccess === "true" &&
-                newExecution?.state?.current === "SUCCESS" &&
-                !onboardingAnimationPlayed.value
-            ) {
-                onboardingAnimationPlayed.value = true
-                showSaveExecuteAnimation.value = true
-                showOnboardingSuccessPopup.value = true
-            }
+            applyAutoExpandFromRoute(newExecution)
         },
         {immediate: true},
     )
-
-    function onSaveExecuteAnimationFinished() {
-        showOnboardingSuccessPopup.value = true
-    }
 
     onUnmounted(() => {
         clearInterval(regularPaintingInterval.value)
@@ -669,6 +665,10 @@
 </script>
 
 <style scoped lang="scss">
+    .gantt-progress {
+        margin-bottom: var(--ks-spacing-4);
+    }
+
     .kel-card {
         padding: 0;
 

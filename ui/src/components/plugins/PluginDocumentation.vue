@@ -81,6 +81,12 @@
             </Suspense>
         </template>
 
+        <KsMarkdown
+            v-else-if="overrideIntro"
+            :content="overrideIntro"
+            :class="{'position-absolute': absolute}"
+        />
+
         <div v-else-if="introContent" class="dp-intro" :class="{'position-absolute': absolute}">
             <div class="dp-intro-hero">
                 <div class="dp-intro-icon">

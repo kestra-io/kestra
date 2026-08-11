@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,6 +47,11 @@ import static io.kestra.core.models.Label.CORRELATION_ID;
 @Slf4j
 @Singleton
 public class WebhookService {
+    public static final String TEST_EVENT_HEADER = "X-Kestra-Test-Event";
+
+    private static final String FROM_TRIGGER = "trigger";
+    private static final String FROM_TEST_EVENT = "testEvent";
+
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -95,6 +101,17 @@ public class WebhookService {
             );
     }
 
+    private static boolean isTestEvent(WebhookContext context) {
+        if (context.request() == null || context.request().getHeaders() == null) {
+            return false;
+        }
+
+        return context.request().getHeaders()
+            .firstValue(TEST_EVENT_HEADER)
+            .map(Boolean::parseBoolean)
+            .orElse(false);
+    }
+
     /**
      * Prepare the execution checking conditions, and injecting inputs.
      *
@@ -106,7 +123,9 @@ public class WebhookService {
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
         Execution execution = Execution.builder()
-            .id(IdUtils.create())
+            // The caller mints the id before reading the request so that files stored for the call already live
+            // under this execution; it is only null for a context built without one.
+            .id(Optional.ofNullable(context.executionId()).orElseGet(IdUtils::create))
             .tenantId(context.flow().getTenantId())
             .namespace(context.flow().getNamespace())
             .flowId(context.flow().getId())
@@ -117,10 +136,13 @@ public class WebhookService {
             .trigger(ExecutionTrigger.of(trigger, output))
             .build();
 
+        var runContext = runContext(flow, execution);
+
         // Add labels
         List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, "trigger"));
-        labels.addAll(LabelService.labelsExcludingSystem(flow.getLabels()));
+        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : FROM_TRIGGER));
+        // The trigger's own labels, as the other trigger types get them through TriggerService
+        labels.addAll(LabelService.fromTrigger(runContext, flow, trigger, Map.of()));
         if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
             labels.add(new Label(CORRELATION_ID, execution.getId()));
         }
@@ -128,8 +150,8 @@ public class WebhookService {
         execution = execution.withLabels(labels);
 
         // Check conditions
-        var runContext = runContext(flow, execution);
         if (!conditionService.isValid(trigger, flow, runContext)) {
+            deleteStoredFiles(runContext, execution);
             return Optional.empty(); // Conditions not met
         }
 
@@ -143,11 +165,24 @@ public class WebhookService {
                 // Distinct from "conditions not met": a rendering failure is a real error and must
                 // not be silently turned into a 204, so we surface it to the caller.
                 log.warn("Unable to render the webhook inputs", e);
+                deleteStoredFiles(runContext, execution);
                 throw new WebhookInputRenderException("Unable to render the webhook inputs", e);
             }
         }
 
         return Optional.of(execution);
+    }
+
+    /**
+     * Delete the files the request was stored under, for a call that ends without creating an execution.
+     * Nothing would ever purge them otherwise, as the execution they are scoped to will not exist.
+     */
+    private void deleteStoredFiles(RunContext runContext, Execution execution) {
+        try {
+            runContext.storage().deleteExecutionFiles();
+        } catch (IOException e) {
+            log.warn("Unable to delete the files stored for the webhook execution {}", execution.getId(), e);
+        }
     }
 
     /**

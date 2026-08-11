@@ -59,6 +59,9 @@
 
     const route = useRoute()
     const router = useRouter()
+    import {useActiveTab} from "../../../../composables/useActiveTab"
+    const activeTab = useActiveTab()
+    const isRouterDriven = computed(() => route.meta?.tab !== undefined)
 
     import {useI18n} from "vue-i18n"
     const {t} = useI18n({useScope: "global"})
@@ -80,11 +83,29 @@
 
     const isOpen = ref(false)
 
-    const rootName = computed(() => ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home")
-    const query = computed(() => ({
-        name: rootName.value,
-        params: JSON.stringify({...route.params, dashboard: undefined}),
-    }))
+    const rootName = computed(() => {
+        const name = String(route.name ?? "")
+        if (name.startsWith("flows/update")) return "flows/update"
+        if (name.startsWith("namespaces/update")) return "namespaces/update"
+        return "home"
+    })
+    // Pages migrated to router children (e.g. flows/update) no longer carry the
+    // active tab in route.params, so re-derive it via useActiveTab and bake it into
+    // the target route name directly rather than a `tab` param (which would be
+    // silently discarded before the parent route's redirect runs).
+    const query = computed(() => {
+        const {tab: _tab, ...restParams} = route.params as Record<string, unknown>
+        const name = rootName.value === "home" || !isRouterDriven.value
+            ? rootName.value
+            : `${rootName.value}/${activeTab.value}`
+        const params = rootName.value === "home" || isRouterDriven.value
+            ? restParams
+            : {...restParams, tab: activeTab.value}
+        return {
+            name,
+            params: JSON.stringify({...params, dashboard: undefined}),
+        }
+    })
 
     const dashboards = ref<{id: string; title: string; isDefault: boolean}[]>([])
 

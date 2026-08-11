@@ -1,3 +1,8 @@
+// Must stay the FIRST import: it patches window.fetch before any src/ or SDK module is evaluated.
+// preview.jsx imports it too — the install is idempotent. Importing from both files removes any
+// dependence on the relative order of this setup file and the one addon-vitest injects itself.
+import "./apiMock"
+
 // Story templates are runtime-compiled by Vue in the browser, which triggers
 // "@vue/compiler-core: decodeEntities option is passed but will be ignored in
 // non-browser builds" — a false-positive from the esm-bundler Vue build that

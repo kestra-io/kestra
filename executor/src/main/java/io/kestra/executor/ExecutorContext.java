@@ -11,6 +11,7 @@ import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTask;
 
 import lombok.Getter;
@@ -36,6 +37,7 @@ public class ExecutorContext {
     // so we initialize them with 0 to save memory.
     private final List<TaskRun> nexts = new ArrayList<>(0);
     private final List<ExecutorWorkerTask> workerTasks = new ArrayList<>(0);
+    private final List<WorkerJobEvent> workerJobEvents = new ArrayList<>(0);
     private final List<ExecutionDelay> executionDelays = new ArrayList<>(0);
     private final List<SubflowExecution<?>> subflowExecutions = new ArrayList<>(0);
     private final List<SubflowExecutionResult> subflowExecutionResults = new ArrayList<>(0);
@@ -98,6 +100,12 @@ public class ExecutorContext {
     public ExecutorContext withWorkerTasks(List<ExecutorWorkerTask> workerTasks, String from) {
         this.workerTasks.addAll(workerTasks);
         this.from.add(from);
+
+        return this;
+    }
+
+    public ExecutorContext withWorkerJobEvent(WorkerJobEvent event) {
+        this.workerJobEvents.add(event);
 
         return this;
     }

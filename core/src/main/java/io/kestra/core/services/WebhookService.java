@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -122,7 +123,9 @@ public class WebhookService {
      */
     public Optional<Execution> newExecution(WebhookContext context, Flow flow, AbstractWebhookTrigger trigger, io.kestra.core.models.tasks.Output output) {
         Execution execution = Execution.builder()
-            .id(IdUtils.create())
+            // The caller mints the id before reading the request so that files stored for the call already live
+            // under this execution; it is only null for a context built without one.
+            .id(Optional.ofNullable(context.executionId()).orElseGet(IdUtils::create))
             .tenantId(context.flow().getTenantId())
             .namespace(context.flow().getNamespace())
             .flowId(context.flow().getId())
@@ -148,6 +151,7 @@ public class WebhookService {
 
         // Check conditions
         if (!conditionService.isValid(trigger, flow, runContext)) {
+            deleteStoredFiles(runContext, execution);
             return Optional.empty(); // Conditions not met
         }
 
@@ -161,11 +165,24 @@ public class WebhookService {
                 // Distinct from "conditions not met": a rendering failure is a real error and must
                 // not be silently turned into a 204, so we surface it to the caller.
                 log.warn("Unable to render the webhook inputs", e);
+                deleteStoredFiles(runContext, execution);
                 throw new WebhookInputRenderException("Unable to render the webhook inputs", e);
             }
         }
 
         return Optional.of(execution);
+    }
+
+    /**
+     * Delete the files the request was stored under, for a call that ends without creating an execution.
+     * Nothing would ever purge them otherwise, as the execution they are scoped to will not exist.
+     */
+    private void deleteStoredFiles(RunContext runContext, Execution execution) {
+        try {
+            runContext.storage().deleteExecutionFiles();
+        } catch (IOException e) {
+            log.warn("Unable to delete the files stored for the webhook execution {}", execution.getId(), e);
+        }
     }
 
     /**

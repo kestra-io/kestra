@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import io.kestra.core.models.tasks.*;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -17,11 +18,6 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.AssetFailureBehavior;
-import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -83,6 +79,9 @@ class WorkerTaskProcessorTest {
 
     @Inject
     private DispatchQueueInterface<LogEntry> logQueue;
+
+    @Inject
+    private DispatchQueueInterface<TaskRunStatistic> taskRunStatisticQueue;
 
     @Test
     void shouldEmitFailedResultWhenTaskFailsOnItsOwnDuringShutdownDrain() throws Exception {
@@ -247,7 +246,8 @@ class WorkerTaskProcessorTest {
             runContextLoggerFactory,
             resultQueue,
             new InMemoryWorkerQueue<>(100),
-            executionKilledManager
+            executionKilledManager,
+            taskRunStatisticQueue
         );
     }
 

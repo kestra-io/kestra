@@ -2,6 +2,7 @@ import fs from "fs"
 import path from "path"
 import {baseCompile} from "@intlify/message-compiler"
 import {readFingerprints, staleKeys} from "./fingerprints.ts"
+import {allKeys, flattenStrings, placeholdersOf} from "./translationRules.mjs"
 
 import {TRANSLATED_LOCALES} from "../../src/translations/languages.ts"
 
@@ -9,17 +10,6 @@ import {TRANSLATED_LOCALES} from "../../src/translations/languages.ts"
 export {TRANSLATED_LOCALES as DEFAULT_LANGUAGES}
 
 const readJSON = (filePath: string): Record<string, unknown> => JSON.parse(fs.readFileSync(filePath, "utf-8"))
-
-const getNestedStrings = (obj: Record<string, unknown>, prefix = ""): Record<string, string> =>
-    Object.keys(obj).reduce((strings: Record<string, string>, key: string) => {
-        const fullKey = prefix ? `${prefix}.${key}` : key
-        const value = obj[key]
-        if (typeof value === "string") strings[fullKey] = value
-        else if (typeof value === "object" && value && !Array.isArray(value)) {
-            Object.assign(strings, getNestedStrings(value as Record<string, unknown>, fullKey))
-        }
-        return strings
-    }, {})
 
 /**
  * Runs a message through vue-i18n's own compiler and returns its errors. This is the ground truth for
@@ -31,27 +21,6 @@ const compileErrors = (message: string): string[] => {
     baseCompile(message, {onError: (e) => errors.push(e.message)})
     return errors
 }
-
-/**
- * Placeholder names a message interpolates, e.g. `Flow {namespace}.{id}` -> `["id", "namespace"]`.
- * Deduplicated, so a locale that collapses `{count} rule | {count} rules` into a single plural form
- * still matches English. `{'literal'}` escapes are not placeholders and are skipped.
- */
-const placeholders = (message: string): string[] => {
-    // `\{` / `\}` backslash escapes and `{'...'}` literal blocks are text, not interpolation
-    const scannable = message.replace(/\\[{}]/g, "").replace(/\{'[^']*'\}/g, "")
-    return [...new Set([...scannable.matchAll(/\{\s*([^{}\s][^{}]*?)\s*\}/g)].map((m) => m[1]))].sort()
-}
-
-const getNestedKeys = (obj: Record<string, unknown>, prefix = ""): string[] =>
-    Object.keys(obj).reduce((keys: string[], key: string) => {
-        const fullKey = prefix ? `${prefix}.${key}` : key
-        keys.push(fullKey)
-        if (typeof obj[key] === "object" && obj[key] && !Array.isArray(obj[key])) {
-            keys.push(...getNestedKeys(obj[key] as Record<string, unknown>, fullKey))
-        }
-        return keys
-    }, [])
 
 /**
  * Compares every language file in `translationsDir` against the English base and throws if any key
@@ -79,8 +48,8 @@ export function compareTranslations(
 
     // Use English as a base language
     const englishRoot = readJSON(getPath("en"))["en"] as Record<string, unknown>
-    const content = getNestedKeys(englishRoot)
-    const englishStrings = getNestedStrings(englishRoot)
+    const content = allKeys(englishRoot)
+    const englishStrings = flattenStrings(englishRoot)
 
     // A key is stale when the English text no longer hashes to what it did when the translations
     // were last generated. Same hash the generator writes — see `generateTranslations.ts`.
@@ -111,8 +80,8 @@ export function compareTranslations(
 
     languages.forEach((lang) => {
         const root = readJSON(getPath(lang))[lang] as Record<string, unknown>
-        const current = getNestedKeys(root)
-        const strings = getNestedStrings(root)
+        const current = allKeys(root)
+        const strings = flattenStrings(root)
 
         const missing = content.filter((key) => !current.includes(key))
         const extra = current.filter((key) => !content.includes(key))
@@ -120,8 +89,8 @@ export function compareTranslations(
         const drift = Object.entries(strings).flatMap(([key, message]) => {
             const english = englishStrings[key]
             if (english === undefined) return []
-            const expected = placeholders(english)
-            const actual = placeholders(message)
+            const expected = placeholdersOf(english)
+            const actual = placeholdersOf(message)
             if (expected.length === actual.length && expected.every((name, i) => name === actual[i])) return []
             return [`${key}: expected {${expected.join("}, {")}} but found {${actual.join("}, {")}} — ${JSON.stringify(message)}`]
         })

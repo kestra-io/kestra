@@ -39,6 +39,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import {fileURLToPath} from "node:url"
+import {flattenStrings, leafKeys, placeholderProblems} from "./translationRules.mjs"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 // ui/scripts/translations -> the OSS repo root
@@ -78,81 +79,6 @@ function listLanguages(dir) {
         .filter(file => file.endsWith(".json"))
         .map(file => file.replace(/\.json$/, ""))
         .filter(lang => lang !== "en")
-}
-
-function flatten(obj, prefix = "") {
-    let keys = []
-    for (const key of Object.keys(obj ?? {})) {
-        const value = obj[key]
-        const fullKey = prefix ? `${prefix}.${key}` : key
-        if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-            keys = keys.concat(flatten(value, fullKey))
-        } else {
-            keys.push(fullKey)
-        }
-    }
-    return keys
-}
-
-function flattenStrings(obj, prefix = "", out = {}) {
-    for (const key of Object.keys(obj ?? {})) {
-        const value = obj[key]
-        const fullKey = prefix ? `${prefix}.${key}` : key
-        if (typeof value === "string") out[fullKey] = value
-        else if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-            flattenStrings(value, fullKey, out)
-        }
-    }
-    return out
-}
-
-// --- Interpolation placeholders -------------------------------------------
-// vue-i18n interpolates a SINGLE pair of braces (`{name}` / `{0}`). Both of the
-// failure modes below are compile errors, so `t()` throws and the component
-// rendering the key fails outright rather than degrading to literal text.
-// `compareTranslations.ts` proves this against vue-i18n's own compiler, but that
-// runs post-install; this file must stay dependency-free to run straight after
-// checkout, so it re-implements just the two structural rules by hand.
-
-/**
- * Strip the two ways a brace can appear as literal text rather than interpolation:
- * `\{` / `\}` backslash escapes (e.g. `\{ 1 key \}`) and `{'...'}` literal blocks.
- */
-const stripLiteralEscapes = (message) => message.replace(/\\[{}]/g, "").replace(/\{'[^']*'\}/g, "")
-
-/** Named placeholders are identifiers; list placeholders are indices. */
-const VALID_PLACEHOLDER = /^(?:[A-Za-z_$][\w$]*|\d+)$/
-
-/** Deduplicated, so a locale collapsing `{count} x | {count} xs` to one plural form still matches. */
-function placeholdersOf(message) {
-    const found = [...stripLiteralEscapes(message).matchAll(/\{\s*([^{}\s][^{}]*?)\s*\}/g)].map(m => m[1])
-    return [...new Set(found)].sort()
-}
-
-function placeholderProblems(key, message, englishMessage) {
-    const problems = []
-
-    if (/\{\{[^{}]*\}\}/.test(stripLiteralEscapes(message))) {
-        problems.push(`"${key}" uses double braces — vue-i18n rejects \`{{name}}\` with "Not allowed nest placeholder"; write \`{name}\``)
-    }
-
-    for (const name of placeholdersOf(message)) {
-        if (!VALID_PLACEHOLDER.test(name)) {
-            problems.push(`"${key}" has an invalid placeholder \`{${name}}\` — the name must be an identifier or an index, and must never be translated`)
-        }
-    }
-
-    if (englishMessage !== undefined) {
-        const expected = placeholdersOf(englishMessage)
-        const actual = placeholdersOf(message)
-        const same = expected.length === actual.length && expected.every((name, i) => name === actual[i])
-        if (!same) {
-            const show = (list) => (list.length ? list.map(n => `{${n}}`).join(", ") : "none")
-            problems.push(`"${key}" interpolates ${show(actual)} but its English source declares ${show(expected)} — an invented placeholder renders as an empty gap, a dropped one loses the value`)
-        }
-    }
-
-    return problems
 }
 
 /** Adds `result.placeholders[lang]` for every language whose messages break the rules above. */
@@ -197,10 +123,10 @@ function checkOss() {
     checkPlaceholders(result, "OSS", ossTranslationsDir, "kestra-io/kestra's ui/src/translations/{lang}.json")
 
     const ossEn = readLanguage(ossTranslationsDir, "en")
-    const ossEnKeys = flatten(ossEn)
+    const ossEnKeys = leafKeys(ossEn)
 
     for (const lang of listLanguages(ossTranslationsDir)) {
-        const langKeys = new Set(flatten(readLanguage(ossTranslationsDir, lang)))
+        const langKeys = new Set(leafKeys(readLanguage(ossTranslationsDir, lang)))
         const missing = ossEnKeys.filter(key => !langKeys.has(key))
         if (missing.length === 0) continue
 
@@ -219,10 +145,10 @@ function checkEe() {
     const result = {missing: {}, duplicates: [], placeholders: {}}
     checkPlaceholders(result, "EE", eeTranslationsDir, "ui-ee/src/translations/ee_translations/{lang}.json")
     const eeEn = readLanguage(eeTranslationsDir, "en")
-    const eeEnKeys = flatten(eeEn)
+    const eeEnKeys = leafKeys(eeEn)
 
     for (const lang of listLanguages(eeTranslationsDir)) {
-        const langKeys = new Set(flatten(readLanguage(eeTranslationsDir, lang)))
+        const langKeys = new Set(leafKeys(readLanguage(eeTranslationsDir, lang)))
         const missing = eeEnKeys.filter(key => !langKeys.has(key))
         if (missing.length === 0) continue
 
@@ -233,7 +159,7 @@ function checkEe() {
     }
 
     if (fs.existsSync(path.join(ossTranslationsDir, "en.json"))) {
-        const ossEnKeys = new Set(flatten(readLanguage(ossTranslationsDir, "en")))
+        const ossEnKeys = new Set(leafKeys(readLanguage(ossTranslationsDir, "en")))
         const duplicates = eeEnKeys.filter(key => ossEnKeys.has(key))
         if (duplicates.length > 0) {
             result.duplicates = duplicates

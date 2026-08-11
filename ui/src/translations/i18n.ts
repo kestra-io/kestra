@@ -5,7 +5,6 @@ const translations = import.meta.glob(["./*.json", "!./en.json"])
 
 import {SUPPORT_LOCALES} from "./languages"
 
-export {SUPPORT_LOCALES}
 type Locales = (typeof SUPPORT_LOCALES)[number]
 
 export const globalI18n = ref<I18n<any, any, any, Locales, false>["global"]>()

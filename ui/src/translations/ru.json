@@ -942,6 +942,9 @@
       }
     },
     "apps": "Приложения",
+    "promote": {
+      "label": "Продвинуть"
+    },
     "demos": {
       "enterprise_edition": "Enterprise Edition (Корпоративная версия)",
       "get_a_demo_button": "Получить демо-версию",
@@ -977,6 +980,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "Продвигать Flows между средами",
+        "message": "Kestra Enterprise Edition позволяет продвигать flows из одной среды в другую — например, из dev в staging и затем в production — непосредственно из UI, без необходимости использования Git или CI/CD пайплайнов. Просматривайте diff того, что именно изменится перед продвижением, защищайте конфиденциальные цели с помощью подтверждающего шлюза, мгновенно выявляйте расхождения и ведите полную историю того, кто, что, куда и когда продвинул."
       },
       "IAM": {
         "title": "Управление пользователями через IAM с SSO, SCIM и RBAC",
@@ -1307,7 +1314,8 @@
       "title": "Начните автоматизацию с",
       "sub_title": "Нажмите на кнопку Execute, чтобы начать выполнение вашего первого workflow.",
       "namespace_sub_title": "Выполните один или несколько flow из этого namespace, чтобы заполнить эту панель.",
-      "namespace_guidance_desc": "Нужна помощь в управлении вашим Namespace?"
+      "namespace_guidance_desc": "Нужна помощь в управлении вашим Namespace?",
+      "need_help": "Нужна помощь?"
     },
     "execution_guide": {
       "get_started": {
@@ -1997,10 +2005,69 @@
       }
     },
     "source_search": {
+      "cannot_select_read_only": "Невозможно выбрать — у вас нет прав на редактирование {namespace} / {id}",
+      "collapse_all": "Свернуть всё",
+      "confirm_bar_message": "Заменить {matches} в {flows} редактируемых flow. {skipped} flow только для чтения будут пропущены.",
+      "diff_preview_aria": "Предпросмотр diff замены",
+      "diff_preview_label": "предпросмотр diff · ещё не применено",
+      "empty_description": "Ищите в YAML-исходнике каждого flow тип плагина, свойство или любое другое определение. Включите .* для регулярных выражений, Aa для учёта регистра, и откройте «Заменить», чтобы изменить совпадения на месте — с учётом ваших прав доступа.",
+      "empty_title": "Найдите, где что-либо используется в ваших flow",
+      "error_title": "Недопустимое регулярное выражение",
+      "examples_aria": "Примеры запросов",
+      "expand_all": "Развернуть всё",
+      "flow_update_permission": "FLOW · UPDATE",
+      "hide_replace": "Скрыть замену",
+      "line_label": "строка {line}",
+      "match_case": "Учитывать регистр",
       "match_count": "{count} совпадение | {count} совпадения",
+      "match_nav": "{current} из {total}",
+      "match_nav_empty": "0 из 0",
+      "match_whole_word": "Слово целиком",
+      "next_match": "Следующее совпадение",
+      "no_results_description": "Попробуйте расширить namespace, вернуть область поиска на «Весь исходный код» или отключить «Учитывать регистр» и «Слово целиком».",
+      "no_results_title": "Нет совпадений для «{query}»",
       "open_flow": "Открыть flow",
+      "open_in_editor": "Открыть в редакторе",
+      "options_aria": "Параметры поиска",
       "preview_empty": "Выберите результат для предпросмотра. Нажмите на flow в списке результатов, чтобы увидеть его исходный код.",
-      "preview_error": "Не удалось загрузить исходный код flow"
+      "preview_error": "Не удалось загрузить исходный код flow",
+      "previous_match": "Предыдущее совпадение",
+      "rbac_banner": "{count} flow исключены из замены. У вас есть доступ на чтение, но нет доступа на редактирование {namespace}. Попросите администратора namespace предоставить право {permission}, чтобы включить их.",
+      "read_only": "Только чтение",
+      "read_only_tooltip": "У вас есть доступ на чтение, но нет доступа на редактирование этого namespace",
+      "replace_all": "Заменить всё",
+      "replace_all_in_flow": "Заменить всё в flow",
+      "replace_all_tooltip": "Заменить все совпадения в редактируемых flow",
+      "replace_apply_failed": "Не удалось применить замену",
+      "replace_apply_skipped": "{count} flow пропущен ({reasons}) | {count} flows пропущено ({reasons})",
+      "replace_apply_success": "Обновлён {count} flow | Обновлено {count} flow",
+      "replace_aria": "Заменить на",
+      "replace_placeholder": "Заменить…",
+      "replace_preview_failed": "Не удалось вычислить предпросмотр замены",
+      "replace_skip_reason": {
+        "INVALID_FLOW": "стал бы недействительным",
+        "NOT_FOUND": "больше не существует",
+        "NO_CHANGE": "уже актуален",
+        "NO_MATCH": "совпадение больше не найдено",
+        "READ_ONLY": "только для чтения",
+        "UNKNOWN": "не удалось сохранить"
+      },
+      "replace_this": "Заменить",
+      "replace_this_match": "Заменить это совпадение",
+      "retry_search": "Повторить поиск",
+      "scope": "Область",
+      "scope_all": "Весь исходный код",
+      "scope_inputs": "Inputs",
+      "scope_tasks": "Tasks",
+      "scope_triggers": "Triggers",
+      "search_aria": "Поиск по исходному коду flow",
+      "search_failed": "Поиск не удался",
+      "search_placeholder": "Поиск по всему исходному коду flow…",
+      "select_all_in_flow": "Выбрать все совпадения в {namespace} / {id}",
+      "select_match": "Выбрать совпадение в строке {line}",
+      "show_replace": "Показать замену",
+      "summary": "{matches} совпадений в {flows} flow",
+      "use_regex": "Использовать регулярное выражение"
     },
     "open source": "Открытый исходный код",
     "pricing": "Цены",

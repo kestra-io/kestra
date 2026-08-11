@@ -942,6 +942,9 @@
       }
     },
     "apps": "Applications",
+    "promote": {
+      "label": "Promouvoir"
+    },
     "demos": {
       "enterprise_edition": "Édition Enterprise",
       "get_a_demo_button": "Obtenir une démo",
@@ -977,6 +980,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "Promouvoir les Flows entre les environnements",
+        "message": "Kestra Enterprise Edition vous permet de promouvoir des flows d'un environnement à un autre — par exemple, de dev à staging à production — directement depuis l'interface utilisateur, sans nécessiter de pipelines Git ou CI/CD. Examinez un diff de ce qui va changer exactement avant de promouvoir, protégez les cibles sensibles avec un mécanisme de confirmation, repérez les dérives en un coup d'œil, et conservez un historique complet de qui a promu quoi, où et quand."
       },
       "IAM": {
         "title": "Gérer les utilisateurs via IAM avec SSO, SCIM et RBAC",
@@ -1307,7 +1314,8 @@
       "title": "Commencez à automatiser avec",
       "sub_title": "Cliquez sur le bouton Exécuter pour démarrer l'exécution de votre premier workflow.",
       "namespace_sub_title": "Exécutez un ou plusieurs flows de ce namespace pour remplir ce tableau de bord.",
-      "namespace_guidance_desc": "Besoin de conseils pour gérer votre Namespace ?"
+      "namespace_guidance_desc": "Besoin de conseils pour gérer votre Namespace ?",
+      "need_help": "Besoin d'aide ?"
     },
     "execution_guide": {
       "get_started": {
@@ -1997,10 +2005,69 @@
       }
     },
     "source_search": {
+      "cannot_select_read_only": "Sélection impossible — vous n'avez pas la permission de modifier {namespace} / {id}",
+      "collapse_all": "Tout réduire",
+      "confirm_bar_message": "Remplacer {matches} dans {flows} flows modifiables. {skipped} flows en lecture seule seront ignorés.",
+      "diff_preview_aria": "Aperçu du diff de remplacement",
+      "diff_preview_label": "aperçu du diff · pas encore appliqué",
+      "empty_description": "Recherchez dans le code source YAML de chaque flow un type de plugin, une propriété ou toute autre définition. Activez .* pour les expressions régulières, Aa pour la sensibilité à la casse, et ouvrez Remplacer pour modifier les résultats sur place — dans le respect de vos permissions.",
+      "empty_title": "Trouvez où quelque chose est utilisé dans vos flows",
+      "error_title": "Expression régulière invalide",
+      "examples_aria": "Exemples de recherches",
+      "expand_all": "Tout développer",
+      "flow_update_permission": "FLOW · UPDATE",
+      "hide_replace": "Masquer le remplacement",
+      "line_label": "ligne {line}",
+      "match_case": "Respecter la casse",
       "match_count": "{count} résultat | {count} résultats",
+      "match_nav": "{current} sur {total}",
+      "match_nav_empty": "0 sur 0",
+      "match_whole_word": "Mot entier",
+      "next_match": "Résultat suivant",
+      "no_results_description": "Essayez d'élargir le namespace, de repasser le champ d'application sur « Tout le code source », ou de désactiver « Respecter la casse » et « Mot entier ».",
+      "no_results_title": "Aucun résultat pour « {query} »",
       "open_flow": "Ouvrir le flow",
+      "open_in_editor": "Ouvrir dans l'éditeur",
+      "options_aria": "Options de recherche",
       "preview_empty": "Sélectionnez un résultat pour l'afficher. Cliquez sur un flow dans la liste des résultats pour voir sa source.",
-      "preview_error": "Échec du chargement de la source du flow"
+      "preview_error": "Échec du chargement de la source du flow",
+      "previous_match": "Résultat précédent",
+      "rbac_banner": "{count} flows sont exclus du remplacement. Vous avez un accès en lecture mais pas en écriture sur {namespace}. Demandez à un administrateur du namespace la permission {permission} pour les inclure.",
+      "read_only": "Lecture seule",
+      "read_only_tooltip": "Vous avez un accès en lecture mais pas en écriture sur ce namespace",
+      "replace_all": "Tout remplacer",
+      "replace_all_in_flow": "Tout remplacer dans le flow",
+      "replace_all_tooltip": "Remplacer tous les résultats dans les flows modifiables",
+      "replace_apply_failed": "Échec de l'application du remplacement",
+      "replace_apply_skipped": "{count} flow ignoré ({reasons}) | {count} flows ignorés ({reasons})",
+      "replace_apply_success": "{count} flow mis à jour | {count} flows mis à jour",
+      "replace_aria": "Remplacer par",
+      "replace_placeholder": "Remplacer…",
+      "replace_preview_failed": "Échec du calcul de l'aperçu du remplacement",
+      "replace_skip_reason": {
+        "INVALID_FLOW": "deviendrait invalide",
+        "NOT_FOUND": "n'existe plus",
+        "NO_CHANGE": "déjà à jour",
+        "NO_MATCH": "correspondance introuvable",
+        "READ_ONLY": "lecture seule",
+        "UNKNOWN": "n'a pas pu être enregistré"
+      },
+      "replace_this": "Remplacer",
+      "replace_this_match": "Remplacer ce résultat",
+      "retry_search": "Relancer la recherche",
+      "scope": "Champ d'application",
+      "scope_all": "Tout le code source",
+      "scope_inputs": "Inputs",
+      "scope_tasks": "Tasks",
+      "scope_triggers": "Triggers",
+      "search_aria": "Rechercher dans le code source des flows",
+      "search_failed": "Échec de la recherche",
+      "search_placeholder": "Rechercher dans tout le code source des flows…",
+      "select_all_in_flow": "Sélectionner tous les résultats dans {namespace} / {id}",
+      "select_match": "Sélectionner le résultat à la ligne {line}",
+      "show_replace": "Afficher le remplacement",
+      "summary": "{matches} résultats dans {flows} flows",
+      "use_regex": "Utiliser une expression régulière"
     },
     "open source": "Open Source",
     "pricing": "Tarification",

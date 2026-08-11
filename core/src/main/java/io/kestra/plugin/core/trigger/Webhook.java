@@ -228,13 +228,62 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             .headers(context.request().getHeaders() != null ? context.request().getHeaders().map() : null)
             .parameters(context.webhookService().parseParameters(context));
 
+        // Expose the request body on the trigger output: a text body as `body`, a binary body as `body`
+        // base64-encoded, and a multipart/form-data body as `parts` and `formFields`. Bytes are base64-encoded
+        // because trigger variables carry text, not binary.
+        // A body the trigger asked to store never reaches here: it carries no content but the URI it was
+        // stored under, which is exposed as `uri` instead.
+        URI storedBodyUri = context.storedBodyUri();
+        if (storedBodyUri != null) {
+            output.uri(storedBodyUri.toString());
+        } else {
+            HttpRequest.RequestBody requestBody = context.request().getBody();
+
+            switch (requestBody) {
+                case null -> { }
+                case HttpRequest.MultipartFormDataRequestBody multipart -> {
+                    Charset charset = multipart.getCharset() != null ? multipart.getCharset() : StandardCharsets.UTF_8;
+                    List<Output.Part> parts = new ArrayList<>(multipart.getContent().size());
+                    Map<String, List<String>> formFields = new HashMap<>();
+
+                    multipart.getContent().forEach(part ->
+                    {
+                        switch (part) {
+                            case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(Output.Part.builder()
+                                .name(file.name())
+                                .filename(file.filename())
+                                .contentType(file.contentType())
+                                .size(file.size())
+                                .uri(file.uri().toString())
+                                .build());
+                            case HttpRequest.MultipartFormDataRequestBody.FormFieldPart formField ->
+                                formFields.computeIfAbsent(formField.name(), name -> new ArrayList<>()).add(new String(formField.content(), charset));
+                        }
+                    });
+
+                    output.parts(parts).formFields(formFields);
+                }
+                case HttpRequest.ByteArrayRequestBody binary -> output.body(BASE64_ENCODER.encodeToString(binary.getContent()));
+                case HttpRequest.StringRequestBody text -> {
+                    String body = text.getContent();
+
+                    output.body(
+                        tryMap(body)
+                            .or(() -> tryArray(body))
+                            .orElse(body)
+                    );
+                }
+                default -> output.body(requestBody.getContent());
+            }
+        }
+
         Optional<Execution> maybeExecution;
         try {
             maybeExecution = context.webhookService().newExecution(
                 context,
                 context.flow(),
                 this,
-                withBody(output, context.request().getBody(), context.storedBodyUri()).build()
+                output.build()
             );
         } catch (WebhookInputRenderException e) {
             // The inputs could not be rendered: a real error, not a "conditions not met" outcome.
@@ -295,65 +344,6 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
 
         // Default: application/json (or no responseContentType set)
         return HttpResponse.of(responseCode, body, responseContentType);
-    }
-
-    /**
-     * Expose the request body on the trigger output: a text body as {@code body}, a binary body as {@code body}
-     * base64-encoded, and a {@code multipart/form-data} body as {@code parts} and {@code formFields}.
-     * Bytes are base64-encoded because trigger variables carry text, not binary.
-     * <p>
-     * A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
-     * under, which is exposed as {@code uri}.
-     *
-     * @param output        the output being built
-     * @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
-     *                      stored rather than read
-     * @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
-     * @return the output builder, for chaining
-     */
-    private static Output.OutputBuilder withBody(Output.OutputBuilder output, HttpRequest.RequestBody requestBody, URI storedBodyUri) {
-        if (storedBodyUri != null) {
-            return output.uri(storedBodyUri.toString());
-        }
-
-        return switch (requestBody) {
-            case null -> output;
-            case HttpRequest.MultipartFormDataRequestBody multipart -> withMultipartBody(output, multipart);
-            case HttpRequest.ByteArrayRequestBody binary -> output.body(BASE64_ENCODER.encodeToString(binary.getContent()));
-            case HttpRequest.StringRequestBody text -> {
-                String body = text.getContent();
-
-                yield output.body(
-                    tryMap(body)
-                        .or(() -> tryArray(body))
-                        .orElse(body)
-                );
-            }
-            default -> output.body(requestBody.getContent());
-        };
-    }
-
-    private static Output.OutputBuilder withMultipartBody(Output.OutputBuilder output, HttpRequest.MultipartFormDataRequestBody multipart) {
-        Charset charset = multipart.getCharset() != null ? multipart.getCharset() : StandardCharsets.UTF_8;
-        List<Output.Part> parts = new ArrayList<>(multipart.getContent().size());
-        Map<String, List<String>> formFields = new HashMap<>();
-
-        multipart.getContent().forEach(part ->
-        {
-            switch (part) {
-                case HttpRequest.MultipartFormDataRequestBody.FilePart file -> parts.add(Output.Part.builder()
-                    .name(file.name())
-                    .filename(file.filename())
-                    .contentType(file.contentType())
-                    .size(file.size())
-                    .uri(file.uri().toString())
-                    .build());
-                case HttpRequest.MultipartFormDataRequestBody.FormFieldPart formField ->
-                    formFields.computeIfAbsent(formField.name(), name -> new ArrayList<>()).add(new String(formField.content(), charset));
-            }
-        });
-
-        return output.parts(parts).formFields(formFields);
     }
 
     private static Optional<Object> tryMap(String body) {

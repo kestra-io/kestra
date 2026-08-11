@@ -169,13 +169,21 @@ function flattenDict(d: NestedValue, parentKey = "", sep = KEY_SEPARATOR): FlatD
 }
 
 function unflattenDict(d: FlatDict, sep = KEY_SEPARATOR): NestedDict {
-    const result: NestedDict = {}
+    // Prototype-less containers, because the segments being assigned come from translation keys.
+    // On a normal object `current["__proto__"] = {}` mutates the prototype instead of adding a
+    // property, so a key like `__proto__|title` would write onto `Object.prototype` rather than
+    // into the dictionary. With a null prototype there is nothing to pollute, and keys that only
+    // look dangerous — `constructor` is a plausible thing to describe in a Java product — keep
+    // working as ordinary properties.
+    const emptyDict = (): NestedDict => Object.create(null) as NestedDict
+
+    const result: NestedDict = emptyDict()
     for (const [k, v] of Object.entries(d)) {
         const keys = k.split(sep)
         let current = result
         for (const key of keys.slice(0, -1)) {
             if (typeof current[key] !== "object" || current[key] === null) {
-                current[key] = {}
+                current[key] = emptyDict()
             }
             current = current[key] as NestedDict
         }

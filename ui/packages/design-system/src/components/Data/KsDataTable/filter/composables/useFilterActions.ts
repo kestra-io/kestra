@@ -22,7 +22,6 @@ import type {usePreAppliedFilters} from "./usePreAppliedFilters"
 
 type Tree = ReturnType<typeof useFilterGroups>
 type Dismissed = ReturnType<typeof useDismissedKeys>
-
 type PreApplied = ReturnType<typeof usePreAppliedFilters>
 
 interface UseFilterActionsOptions {
@@ -91,9 +90,10 @@ export function useFilterActions({
             filters: leaf.filters.filter(f => f?.id !== filterId),
         }))
         dismissed.dismissDefaultVisibleKey(found.key)
+        preApplied.clearPreAppliedKey(found.key)
         updateRoute(false)
     }
-
+    
     const updateFilter = (updatedFilter: AppliedFilter) => {
         dismissed.restoreDefaultVisibleKey(updatedFilter.key)
         const enclosing = findLeafContaining(tree.groups.value, updatedFilter.id)

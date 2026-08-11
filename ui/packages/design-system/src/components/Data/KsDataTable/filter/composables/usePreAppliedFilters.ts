@@ -33,6 +33,16 @@ export function usePreAppliedFilters() {
         preAppliedDefaults.value = new Map()
     }
 
+    const clearPreAppliedKey = (filterKey: string) => {
+        const nextKeys = new Set(preAppliedKeys.value)
+        nextKeys.delete(filterKey)
+        preAppliedKeys.value = nextKeys
+
+        const nextDefaults = new Map(preAppliedDefaults.value)
+        nextDefaults.delete(filterKey)
+        preAppliedDefaults.value = nextDefaults
+    }
+
     return {
         markAsPreApplied,
         hasPreApplied,
@@ -40,5 +50,6 @@ export function usePreAppliedFilters() {
         isPreApplied,
         getAllPreApplied,
         clearPreApplied,
+        clearPreAppliedKey,
     }
 }

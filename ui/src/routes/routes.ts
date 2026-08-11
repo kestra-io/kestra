@@ -13,6 +13,7 @@ import DemoAssets from "../components/demo/Assets.vue"
 import DemoCases from "../components/demo/Cases.vue"
 import DemoQuotas from "../components/demo/Quotas.vue"
 import DemoPolicies from "../components/demo/Policies.vue"
+import DemoPromote from "../components/demo/Promote.vue"
 import {EXECUTION_ROUTE} from "../components/executions/executionTabs"
 import {FLOW_ROUTE} from "../components/flows/flowTabs"
 import {NAMESPACE_PARENT_ROUTE, createNamespaceTabRoutes} from "../utils/namespaceTabRoutes"
@@ -124,6 +125,7 @@ const routes: KestraRouteRecord[] = [
     {name: "admin/quotas/list", path: "/:tenant?/admin/quotas", component: DemoQuotas},
     {name: "admin/policies", path: "/:tenant?/admin/policies", component: DemoPolicies},
     {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
+    {name: "promote/targets", path: "/:tenant?/promote/targets", component: DemoPromote},
 ]
 
 export default routes

@@ -67,4 +67,24 @@ describe("KsFormItem", () => {
         })
         expect(wrapper.find(".kel-form-item.is-inline-row").exists()).toBe(false)
     })
+
+    test("forwards for so the label can opt out of pointing at a control", () => {
+        const wrapper = mount(KsFormItem, {
+            props: {label: "Name", for: ""},
+            slots: {default: "<ks-input />"},
+            global: globalConfig,
+        })
+        const label = wrapper.find(".kel-form-item__label")
+        expect(label.element.tagName).toBe("DIV")
+        expect(label.attributes("for")).toBe("")
+    })
+
+    test("leaves for unset so element-plus can derive it", () => {
+        const wrapper = mount(KsFormItem, {
+            props: {label: "Name"},
+            slots: {default: "<ks-input />"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".kel-form-item__label").attributes("for")).toBeUndefined()
+    })
 })

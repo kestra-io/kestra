@@ -120,8 +120,6 @@
       "last24hours": "最近24小时",
       "last48hours": "最近48小时",
       "last7days": "最近7天",
-      "last14days": "最近 14 天",
-      "last28days": "最近 28 天",
       "last30days": "最近30天",
       "last365days": "最近365天",
       "next5minutes": "接下来的5分钟",
@@ -140,8 +138,6 @@
       "24hours": "24小时",
       "48hours": "48小时",
       "7days": "7天",
-      "14days": "14 天",
-      "28days": "28 天",
       "30days": "30天",
       "365days": "365天",
       "never": "从不",
@@ -163,7 +159,11 @@
         "12h": "12小时",
         "1d": "1天",
         "7d": "7天"
-      }
+      },
+      "last14days": "最近 14 天",
+      "last28days": "最近 28 天",
+      "14days": "14 天",
+      "28days": "28 天"
     },
     "created date": "创建日期",
     "latest_update": "最新更新",
@@ -381,6 +381,8 @@
     },
     "use": "使用",
     "plugins": {
+      "names": "插件",
+      "release": "发行说明",
       "beta": "Beta",
       "copy_type": "复制类型",
       "deprecated": "已弃用",
@@ -418,13 +420,11 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow文档",
-      "names": "插件",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
       "nav_overview": "概览",
       "nav_properties": "Properties",
       "non_dynamic": "非动态",
-      "release": "发行说明",
       "required": "必填"
     },
     "last execution date": "最后执行日期",
@@ -861,7 +861,8 @@
             "flow_default_tab": "默认 Flow 标签页",
             "triggers_default_tab": "默认 Trigger 标签页",
             "playground": "游乐场",
-            "auto_refresh_interval": "自动刷新间隔"
+            "auto_refresh_interval": "自动刷新间隔",
+            "task_edit_default_mode": "默认任务编辑模式"
           },
           "descriptions": {
             "default_namespace": "用于在没有namespace的情况下创建新flow。",
@@ -873,7 +874,12 @@
             "flow_default_tab": "导航到flow时选择的选项卡。",
             "triggers_default_tab": "导航到 triggers 页面时选择的选项卡。",
             "auto_refresh_interval": "列表页面上自动数据刷新的秒数。",
-            "playground": "在编辑器游乐场中单独运行任务。"
+            "playground": "在编辑器游乐场中单独运行任务。",
+            "task_edit_default_mode": "在无代码编辑器中任务默认的打开方式。"
+          },
+          "task_edit_default_mode_options": {
+            "modal": "模态框",
+            "tab": "标签页"
           }
         },
         "theme": {
@@ -941,6 +947,9 @@
       }
     },
     "apps": "应用程序",
+    "promote": {
+      "label": "提升"
+    },
     "demos": {
       "enterprise_edition": "企业版",
       "get_a_demo_button": "获取演示",
@@ -976,6 +985,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "跨环境提升 Flow",
+        "message": "Kestra 企业版允许您直接从 UI 将 flow 从一个环境提升到另一个环境 — 例如从开发环境到预发布环境再到生产环境 — 无需 Git 或 CI/CD 流水线。在提升前查看确切的变更 diff，通过确认门保护敏感目标，一目了然地发现偏差，并保留谁在何时何地提升了什么的完整历史记录。"
       },
       "IAM": {
         "title": "通过IAM使用SSO、SCIM和RBAC管理用户",
@@ -1035,7 +1048,8 @@
         "audit-logs": {
           "title": "在一个地方跟踪所有更改",
           "message": "在 Kestra 企业版中，您可以查看 namespace 级别的审计日志，包含详细的差异，提供所有资源的更改历史，清晰地显示是谁在何时更改了什么。"
-        }
+        },
+        "plugin-defaults": {}
       }
     },
     "assets": {
@@ -1366,7 +1380,8 @@
         "triggers": "触发器",
         "errors": "错误处理程序",
         "afterExecution": "执行后",
-        "finally": "最后"
+        "finally": "最后",
+        "flow": "Flow"
       },
       "fields": {
         "main": {
@@ -1388,7 +1403,8 @@
           "workerGroup": "工作组",
           "workerSelector": "Worker 选择器",
           "checks": "检查",
-          "updated": "已更新"
+          "updated": "已更新",
+          "quotas": "配额"
         }
       },
       "select": {
@@ -1421,6 +1437,25 @@
       "remove": {
         "default": "删除此条目",
         "cases": "删除此案例"
+      },
+      "adding_to": "+ 添加到 {what}",
+      "choose_placeholder": "选择 {field}",
+      "duration": {
+        "add_unit": "添加单位",
+        "units": {
+          "day": "天",
+          "hour": "小时",
+          "minute": "分钟",
+          "second": "秒",
+          "week": "周"
+        }
+      },
+      "expression_placeholder": "在此输入 {field}...",
+      "nav": {
+        "back": "返回",
+        "breadcrumb_aria": "字段路径",
+        "items": "{count} 项",
+        "not_set": "未设置"
       }
     },
     "editor_shortcuts": {
@@ -1566,7 +1601,8 @@
       "panels": {
         "title": "没有面板打开",
         "content": "您已关闭所有面板。  \n请选择上面的选项卡以继续。"
-      }
+      },
+      "pluginDefaults": {}
     },
     "toggle_word_wrap": "切换自动换行",
     "copied_logs_to_clipboard": "已将日志复制到剪贴板。",
@@ -1574,7 +1610,9 @@
       "move_right": "向右移动",
       "move_left": "向左移动",
       "close_all_tabs": "关闭所有标签页",
-      "close_all_panels": "关闭所有面板"
+      "close_all_panels": "关闭所有面板",
+      "exit_fullscreen": "退出全屏",
+      "fullscreen": "全屏"
     },
     "search_docs": "搜索",
     "no_results_found": "未找到结果",
@@ -2064,6 +2102,156 @@
     "open source": "开源",
     "pricing": "定价",
     "license": "许可证",
+    "block_editor": {
+      "add_error_task": "添加错误task",
+      "add_switch_case": "添加分支",
+      "adding_to": "{section} 中的新条目",
+      "add_task": "添加task",
+      "add_to_lane": "添加到 {lane}",
+      "add_trigger": "添加trigger",
+      "all_apps": "所有应用",
+      "app_actions": "{count} 个操作",
+      "block_deleted": "已删除 {name}",
+      "card_aria_label": "类型为{type}的块{id}",
+      "canvas_aria": "Flow 块画布",
+      "close_all": "关闭所有标签页",
+      "cluster_collapse_aria": "折叠 {id}",
+      "cluster_expand_aria": "展开 {id} ({count} tasks)",
+      "collapsed_summary": "{count} tasks",
+      "command_menu": {
+        "context_flow": "上下文：flow",
+        "context_selected": "上下文：{name}",
+        "delete": "删除{name}",
+        "duplicate": "复制{name}",
+        "goto": "转到{section}",
+        "group_block": "此区块",
+        "group_flow": "Flow",
+        "group_goto": "转到",
+        "group_insert": "插入",
+        "group_types": "task 类型",
+        "insert_after": "在{name}之后插入",
+        "insert_at_end": "在Tasks末尾插入",
+        "insert_before": "在{name}之前插入",
+        "insert_in_section": "插入到{section}",
+        "insert_kind": "插入{kind}",
+        "no_match": "无匹配项",
+        "open": "打开{name}",
+        "save": "保存flow",
+        "search_placeholder": "输入命令或搜索task…",
+        "title": "命令菜单"
+      },
+      "configure": "配置",
+      "confirm_delete": {
+        "message": "这将从flow中移除{name}。之后仍可撤销。",
+        "message_group": "这将移除{name}组及其中的所有内容。之后仍可撤销。",
+        "title": "删除{name}？"
+      },
+      "declared_outputs": "已声明的 Outputs",
+      "delete": "删除",
+      "depends_on_label": "依赖于",
+      "depends_on_placeholder": "选择 task…",
+      "depth_pill": "深度 {depth}",
+      "drag_reorder": "拖拽以重新排序",
+      "duplicate": "复制",
+      "empty": "暂无task或trigger。添加您的第一个task以开始。",
+      "empty_add_hint": "或按 / 搜索task",
+      "empty_add_lead": "点击添加{label}",
+      "error_task_noun": "错误task",
+      "execution_context": "执行上下文",
+      "filter_data": "筛选可用数据…",
+      "flow_inputs": "Flow inputs",
+      "flowable_todo": "嵌套task（编辑功能即将推出）",
+      "footer": {
+        "canvas": "画布",
+        "close_panel": "关闭面板",
+        "command_menu": "命令菜单",
+        "editing": "正在编辑区块",
+        "inserting": "正在插入",
+        "selected": "已选中 · {name}"
+      },
+      "inline_add": "添加{label}",
+      "inputs": "Inputs",
+      "inputs_sub": "可在此使用的数据",
+      "inserting_into": "插入到 {section}",
+      "kbd_add": "添加",
+      "kbd_close": "关闭",
+      "kbd_navigate": "导航",
+      "lane_case": "分支: {key}",
+      "lane_defaults": "默认",
+      "lane_else": "否则",
+      "lane_empty": "{lane} 中没有 tasks",
+      "lane_errors": "错误",
+      "lane_finally": "最终",
+      "lane_tasks": "Tasks",
+      "lane_then": "然后",
+      "loading_plugins": "正在加载插件...",
+      "move_down": "下移",
+      "move_up": "上移",
+      "nav_rail_empty": "暂无task或trigger。",
+      "nav_rail_title": "大纲",
+      "nested_count": "{count}个嵌套task",
+      "no_data_matches": "没有匹配筛选的内容",
+      "no_documentation": "此 task 没有文档",
+      "no_recent": "暂无最近的 task",
+      "no_task_results": "未找到匹配的task类型。",
+      "open_details": "已打开的详情",
+      "open_in_split": "在拆分视图中打开",
+      "output": "Output",
+      "output_sub": "此 task 产生的内容",
+      "pick_task_type": "选择task类型",
+      "picker_more_results": "还有{count}个，请细化搜索",
+      "plugin_default": "默认: {value}",
+      "plugin_default_tooltip": "来自 flow 的 pluginDefaults 的默认值",
+      "required_missing": "必填字段未设置",
+      "save_blocked": {
+        "message": "保存前请修复错误。",
+        "title": "无法保存 flow"
+      },
+      "search_task_placeholder": "搜索task类型...",
+      "shortcuts": {
+        "add_after": "在所选内容之后插入区块",
+        "add_before": "在所选内容之前插入区块",
+        "add_task": "在光标处快速插入",
+        "clear": "关闭 / 清除选择",
+        "collapse_expand": "折叠 / 展开",
+        "command_palette": "命令菜单（上下文相关）",
+        "group_edit": "编辑",
+        "group_global": "全局",
+        "group_insert": "插入",
+        "group_navigate": "导航",
+        "move_between": "移动选择",
+        "open": "打开所选区块",
+        "open_split": "在分屏视图中打开所选块",
+        "or": "或",
+        "reorder": "上移 / 下移",
+        "save": "保存flow",
+        "step_into": "展开 / 进入组",
+        "step_out": "折叠 / 退出到父级",
+        "title": "键盘快捷键",
+        "toggle": "此帮助",
+        "undo": "撤销"
+      },
+      "split_into": "{count} 列视图",
+      "split_view": "分屏视图",
+      "switch_case_key_placeholder": "新分支键",
+      "switch_case_key_taken": "分支 {key} 已存在",
+      "tab_apps": "按应用",
+      "tab_recent": "最近",
+      "tab_suggested": "推荐",
+      "task_noun": "task",
+      "then_required_warning": "Then 分支为必填项",
+      "trigger_noun": "trigger",
+      "undo": "撤销",
+      "upstream_outputs": "上游 Outputs",
+      "open_in_tabs": "在标签页中打开",
+      "open_mode_hint": "Tasks 默认在弹窗中打开。您可以在{settings}中将标签页设为默认。"
+    },
+    "blocks": "区块",
+    "flow_description": "Flow描述",
+    "flow_no_description": "无描述。请在flow YAML中添加描述以记录其功能。",
+    "pluginDefaults": {},
+    "split_horizontal": "水平分割",
+    "split_vertical": "垂直分割",
     "pwa": {
       "install_title": "安装 Kestra",
       "install_description": "将 Kestra 安装为应用,以获得更快的访问速度和全屏体验。",

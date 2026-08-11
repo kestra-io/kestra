@@ -1,38 +1,57 @@
 <template>
-    <KsFormItem :class="{'radio-wrapper':!isSelectingPlugins}">
-        <KsSelect
-            v-if="isSelectingPlugins"
-            v-model="selectedSchema"
-            filterable
-        >
-            <KsOption
-                v-for="item in schemaOptions"
-                :key="item.value"
-                :label="item.id"
-                :value="item.value"
-            />
-        </KsSelect>
-        <KsRadioGroup v-else v-model="selectedSchema" @change="onSelectType">
-            <KsRadio
-                v-for="radioSchema in schemaOptions"
-                :key="radioSchema.value"
-                :value="radioSchema.value"
+    <TaskString
+        v-if="durationSchema"
+        :schema="durationSchema"
+        :modelValue="model"
+        @update:model-value="onInput"
+    />
+    <TaskString
+        v-else-if="booleanStringSchema"
+        :schema="booleanStringSchema"
+        :modelValue="model"
+        @update:model-value="onInput"
+    />
+    <TaskString
+        v-else-if="singleStringSchema"
+        :schema="singleStringSchema"
+        :modelValue="model"
+        @update:model-value="onInput"
+    />
+    <template v-else>
+        <KsFormItem :class="{'anyof-switch': !isSelectingPlugins}">
+            <KsSelect
+                v-if="isSelectingPlugins"
+                v-model="selectedSchema"
+                filterable
             >
-                {{ radioSchema.label }}
-            </KsRadio>
-        </KsRadioGroup>
-    </KsFormItem>
-    <KsForm labelPosition="top" v-if="selectedSchema">
-        <component
-            :is="currentSchemaType"
-            v-if="currentSchema"
-            :modelValue="modelValue"
-            :schema="currentSchema"
-            :properties="Object.fromEntries(filteredProperties)"
-            @update:model-value="onAnyOfInput"
-            merge
-        />
-    </KsForm>
+                <KsOption
+                    v-for="item in schemaOptions"
+                    :key="item.value"
+                    :label="item.id"
+                    :value="item.value"
+                />
+            </KsSelect>
+            <KsSegmented
+                v-else
+                v-model="selectedSchema"
+                :options="schemaOptions"
+                size="small"
+                @change="(value) => onSelectType(String(value))"
+            />
+        </KsFormItem>
+        <KsForm labelPosition="top" v-if="selectedSchema">
+            <component
+                :is="currentSchemaType"
+                v-if="currentSchema"
+                :modelValue="modelValue"
+                :schema="currentSchema"
+                :root="root"
+                :properties="Object.fromEntries(filteredProperties)"
+                @update:model-value="onAnyOfInput"
+                merge
+            />
+        </KsForm>
+    </template>
 </template>
 
 <script setup lang="ts">
@@ -41,10 +60,12 @@
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys"
     import {useBlockComponent} from "./useBlockComponent"
+    import TaskString from "./TaskString.vue"
 
     const props = defineProps<{
         schema: Schema,
-        required?: boolean
+        required?: boolean,
+        root?: string
     }>()
 
     defineOptions({inheritAttrs: false})
@@ -108,7 +129,7 @@
 
     const schemas = computed(() => {
         if (!props.schema?.anyOf || !Array.isArray(props.schema.anyOf)) return []
-        return props.schema.anyOf.map((schema: Schema) => {
+        const mapped = props.schema.anyOf.map((schema: Schema) => {
             if (schema.allOf && Array.isArray(schema.allOf)) {
                 if (schema.allOf.length === 2 && schema.allOf[0].$ref && !schema.allOf[1].$ref) {
                     return {
@@ -119,6 +140,34 @@
             }
             return schema
         })
+        const seen = new Set<string>()
+        return mapped.filter((schema: Schema) => {
+            const key = JSON.stringify(schema)
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+        })
+    })
+
+    const singleStringSchema = computed<Schema | null>(() => {
+        const list = schemas.value
+        return list.length === 1 && list[0].type === "string" && !list[0].properties ? list[0] : null
+    })
+
+    const durationSchema = computed<Schema | null>(() => {
+        const list = schemas.value
+        if (list.length !== 2) return null
+        const duration = list.find((item: Schema) => item.type === "string" && item.format === "duration")
+        const string = list.find((item: Schema) => item.type === "string" && !item.format)
+        return duration && string ? duration : null
+    })
+
+    const booleanStringSchema = computed<Schema | null>(() => {
+        const list = schemas.value
+        if (list.length !== 2) return null
+        const bool = list.find((item: Schema) => item.type === "boolean")
+        const string = list.find((item: Schema) => item.type === "string" && !item.format)
+        return bool && string ? {type: "boolean", $language: props.schema.$language} as Schema : null
     })
 
     const allSchemaSameType = computed(() => {
@@ -172,8 +221,6 @@
     const isSelectingPlugins = computed(() => schemas.value.length > 4)
 
     const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {
-        // if all schemas are of type array we have to
-        // look at the type of their items to differentiate them
         if(allSchemaSameType.value){
             return schemas.value.map((schema) => {
                 const itemsType = schema.type === "array" ? schema.items?.format ?? schema.items?.type : schema.format ?? schema.type
@@ -206,8 +253,6 @@
             })
             .map((schemaRef: string) => `${schemaRef}.`)
             .join("")
-
-
 
         return schemas.value.map((schema: any) => {
             const schemaRef = schema.$ref
@@ -246,7 +291,7 @@
                 }
             }
         }
-        onAnyOfInput(model.value || {type: val})
+        onAnyOfInput(model.value ? {...model.value} : {type: val})
     })
 
     watch(selectedSchema, (val) => {
@@ -257,7 +302,8 @@
     })
 
     onMounted(() => {
-        const schema = schemaOptions.value?.find((item: any) =>
+        if (durationSchema.value) return
+        let schema = schemaOptions.value?.find((item: any) =>
             item.value === model.value?.type ||
             (typeof model.value === "string" && item.value === "string") ||
             (typeof model.value === "number" && item.value === "integer") ||
@@ -267,6 +313,13 @@
             (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value[0])) && item.value === "array.string.date-time") ||
             (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string"),
         )
+
+        if (!schema && model.value && typeof model.value === "object" && !Array.isArray(model.value) && model.value.type) {
+            schema = schemaOptions.value?.find((item: any) => {
+                const raw = definitions.value[item.value] ?? schemaByType.value[item.value]
+                return consolidateAllOfSchemas(raw, definitions.value)?.properties?.type?.const === model.value.type
+            })
+        }
 
         selectedSchema.value = schema?.value
 
@@ -282,7 +335,6 @@
         })
     })
 
-    // Methods
     function onSelectType(value: string) {
         if (typeof model.value === "string" && (value === "object" || value === "array")) {
             let parsedValue: any = {}
@@ -292,7 +344,6 @@
                     parsedValue = [parsedValue]
                 }
             } catch {
-                // ignore invalid yaml
             }
         }
         if (value === "string") {
@@ -336,7 +387,6 @@
         })
     }
 
-    // Expose
     defineExpose({
         resetSelectType,
     })
@@ -347,49 +397,7 @@
     width: 100%;
 }
 
-.radio-wrapper {
-    :deep(.kel-radio-group) {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: .5rem;
-    }
-
-    :deep(.kel-radio) {
-        margin-right: 0;
-        height: 40px;
-
-        .kel-radio__inner {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--ks-text-link);
-            background: transparent;
-
-            &::after {
-                width: 12px;
-                height: 12px;
-                background-color: var(--ks-text-link);
-            }
-        }
-
-        &.is-checked {
-            .kel-radio__label {
-                color: var(--ks-text-link);
-            }
-            .kel-radio__inner {
-                border-color: var(--ks-text-link);
-                background: transparent;
-            }
-        }
-
-        &:hover {
-            .kel-radio__label {
-                color: var(--ks-text-link);
-            }
-            .kel-radio__inner {
-                border-color: var(--ks-text-link);
-            }
-        }
-    }
+.anyof-switch {
+    margin-bottom: var(--ks-spacing-2);
 }
 </style>

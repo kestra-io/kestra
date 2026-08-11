@@ -53,6 +53,10 @@ public abstract class AbstractFlow implements FlowInterface {
 
     @NotNull
     @Builder.Default
+    @Schema(
+        title = "Whether the flow is disabled.",
+        description = "A disabled flow does not run: its triggers are paused and new executions are rejected."
+    )
     boolean disabled = false;
 
     @Getter

@@ -133,7 +133,7 @@ test.describe("Block editor — insertions", () => {
         const menuInput = page.getByPlaceholder("Type a command or search a task…")
         await expect(menuInput).toBeFocused()
         await expect(page.getByText("context: middle_task")).toBeVisible()
-        await expect(page.getByText("Insert task after middle_task")).toBeVisible()
+        await expect(page.getByText("Insert after middle_task")).toBeVisible()
 
         await page.keyboard.press("Enter")
         await expect(page.getByText("Inserting into Tasks", {exact: true})).toBeVisible()

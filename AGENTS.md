@@ -424,3 +424,17 @@ If you must write a translation by hand:
 4. Re-run `npm run translations:check` to confirm everything is clean before committing.
 
 The tooling itself lives in `ui/scripts/translations/` and is shared with EE, which keeps only thin entry points. Rules live in `.mjs` so the dependency-free PR gate can apply them; file IO and orchestration stay in `.ts`.
+
+### Conflicts in `fingerprints.json`
+
+Two branches that both touch `en.json` will both regenerate `ui/scripts/translations/fingerprints.json`, so it conflicts often. **Never hand-merge the hashes and never pick a side** — a hash says "this English text is what the twelve translations were generated from", so choosing the wrong one silently marks a drifted key as current and the drift becomes invisible again.
+
+Resolve it the same way as a `kestra-sdk` conflict — regenerate:
+
+```bash
+git checkout --ours ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
+cd ui && npm run translations:generate   # fills whatever the other branch added
+npm run translations:check               # must report no missing / extra / stale keys
+```
+
+`en.json` itself normally merges cleanly, since branches usually add different keys; it is the generated files that collide.

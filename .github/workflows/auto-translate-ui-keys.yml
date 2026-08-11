@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       retranslate_modified_keys:
-        description: "Whether to re-translate modified keys even if they already have translations."
+        description: "Force a full re-translation of every key, ignoring the fingerprints. Keys whose English source changed are re-translated automatically without this."
         type: choice
         options:
           - "false"

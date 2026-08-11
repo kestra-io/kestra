@@ -26,7 +26,7 @@
 //
 // --report <path> writes a JSON summary ({missing: {lang: [keys]},
 // duplicates: [keys], placeholders: {lang: [problems]}}) for
-// build-translation-comment.mjs to turn into a PR comment. Always written, even
+// build-comment.mjs to turn into a PR comment. Always written, even
 // on a passing run, so the comment builder can tell "no report" (check didn't
 // run) apart from "report, but empty".
 //

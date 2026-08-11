@@ -80,6 +80,10 @@
         --kel-input-bg-color: var(--ks-bg-input);
     }
 
+    .kel-input__inner, .kel-textarea__inner {
+        font-variant-ligatures: none;
+    }
+
     .kel-input {
         width: 100%;
         &.kel-input--small {

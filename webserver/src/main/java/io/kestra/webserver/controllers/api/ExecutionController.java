@@ -2830,7 +2830,11 @@ public class ExecutionController {
                         "Failed to execute action '%s' on execution %s (operation_id=%s). Cause: %s".formatted(actionName, executionId, processed.operationId(), processed.error())
                     );
                 }
-                return executionRepository.findById(tenantId, executionId)
+                // This runs on the thread that completes the async-operation sink, which is the event-queue polling
+                // thread and carries no authenticated principal. The ACL-enforcing findById fails closed there, so it
+                // reports the execution as missing even though the command succeeded. Authorization already happened
+                // on the request thread, in the endpoint that submitted this operation.
+                return executionRepository.findByIdWithoutAcl(tenantId, executionId)
                     .orElseThrow(
                         () -> new NoSuchElementException(
                             "Execution disappeared after " + actionName.toLowerCase() + ": " + executionId

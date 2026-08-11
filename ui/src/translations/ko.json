@@ -2288,6 +2288,8 @@
       "tag_paths_only": "경로만 — 파일 내용은 검색되지 않습니다",
       "tag_search_only": "검색 전용 — 바뀌지 않습니다",
       "tag_source_code": "소스 코드",
+      "truncated_flows": "전체 {total}개 중 처음 {shown}개의 일치 항목을 표시합니다. 모두 바꾸기는 표시된 항목에만 적용되므로 먼저 검색어를 좁히세요.",
+      "truncated_type": "{total}개 중 {shown}개",
       "turn_off": "{option} 끄기",
       "type_files": "Namespace 파일",
       "type_flows": "Flows",

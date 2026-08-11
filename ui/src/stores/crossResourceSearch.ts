@@ -8,10 +8,28 @@ import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
 import * as NamespacesAPI from "@kestra-io/kestra-sdk/namespaces"
 import type {SourceSearchScope} from "@kestra-io/kestra-sdk"
 
-import {groupByNamespace, type CrossSearchSelection, type SearchResourceType, type SearchStatus} from "../utils/crossResourceSearch"
+import {groupByNamespace, SEARCH_RESOURCE_TYPES, type CrossSearchSelection, type SearchResourceType, type SearchStatus} from "../utils/crossResourceSearch"
 import type {SourceSearchResult} from "../utils/sourceSearchDiff"
 
 const SEARCH_PAGE_SIZE = 200
+
+/**
+ * Namespace files are fetched one request per namespace; a tenant with hundreds of namespaces would
+ * otherwise open hundreds of connections at once on every keystroke that survives the debounce.
+ */
+const NAMESPACE_FETCH_CONCURRENCY = 8
+
+const isTruncated = (total: number | undefined, shown: number) => total !== undefined && shown < total
+
+async function runBounded<T>(items: T[], limit: number, task: (item: T) => Promise<void>) {
+    let cursor = 0
+    const workers = Array.from({length: Math.min(limit, items.length)}, async () => {
+        while (cursor < items.length) {
+            await task(items[cursor++])
+        }
+    })
+    await Promise.all(workers)
+}
 
 export interface NamespaceFileState {
     namespace: string;
@@ -39,6 +57,7 @@ export interface ResourceGroup<M> {
 interface FlowsTypeState {
     status: SearchStatus;
     results: SourceSearchResult[];
+    total?: number;
     errorMessage?: string;
 }
 
@@ -51,12 +70,14 @@ interface FilesTypeState {
 interface KvTypeState {
     status: SearchStatus;
     groups: ResourceGroup<KvMatchEntry>[];
+    total?: number;
     errorMessage?: string;
 }
 
 interface SecretsTypeState {
     status: SearchStatus;
     groups: ResourceGroup<SecretMatchEntry>[];
+    total?: number;
     errorMessage?: string;
 }
 
@@ -121,7 +142,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
                 namespace: params.namespace,
             })
             if (!isCurrent(gen)) return
-            flows.value = {status: "done", results: (response.results ?? []) as SourceSearchResult[]}
+            flows.value = {status: "done", results: (response.results ?? []) as SourceSearchResult[], total: response.total}
         } catch (e: any) {
             if (!isCurrent(gen)) return
             flows.value = {status: "failed", results: [], errorMessage: e?.response?.data?.message ?? e?.message}
@@ -178,7 +199,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             namespaces: namespaces.map((namespace) => ({namespace, status: "pending" as const, paths: []})),
         }
 
-        await Promise.all(namespaces.map((namespace) => fetchNamespaceFiles(namespace, params.query, gen)))
+        await runBounded(namespaces, NAMESPACE_FETCH_CONCURRENCY, (namespace) => fetchNamespaceFiles(namespace, params.query, gen))
     }
 
     /**
@@ -207,6 +228,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             const results = (response.results ?? []) as {namespace?: string; key?: string; updateDate?: string; creationDate?: string; expirationDate?: string}[]
             kv.value = {
                 status: "done",
+                total: response.total,
                 groups: groupByNamespace(results, (entry) => entry.namespace ?? "", (entry) => ({
                     key: entry.key ?? "",
                     updateDate: entry.updateDate,
@@ -236,6 +258,7 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
             const results = (response.results ?? []) as {namespace?: string; key: string}[]
             secrets.value = {
                 status: "done",
+                total: response.total,
                 groups: groupByNamespace(results, (entry) => entry.namespace ?? "", (entry) => ({key: entry.key})),
             }
         } catch (e: any) {
@@ -319,6 +342,31 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         }
     }
 
+    /**
+     * The list endpoints cap at SEARCH_PAGE_SIZE, so a broad query silently returns a subset. Flows
+     * is the one replaceable type, and a bulk replace over a truncated set would only rewrite part of
+     * what the user believes they selected — so the caller has to be able to say so.
+     */
+    function truncatedFor(type: SearchResourceType): boolean {
+        switch (type) {
+            case "flows": return isTruncated(flows.value.total, flows.value.results.length)
+            case "kv": return isTruncated(kv.value.total, kvMatchCount.value)
+            case "secrets": return isTruncated(secrets.value.total, secretsMatchCount.value)
+            case "files": return false
+        }
+    }
+
+    function totalFor(type: SearchResourceType): number | undefined {
+        switch (type) {
+            case "flows": return flows.value.total
+            case "kv": return kv.value.total
+            case "secrets": return secrets.value.total
+            case "files": return undefined
+        }
+    }
+
+    const anyTruncated = computed(() => SEARCH_RESOURCE_TYPES.some(truncatedFor))
+
     function resourceCountFor(type: SearchResourceType): number {
         switch (type) {
             case "flows": return flowsResourceCount.value
@@ -394,6 +442,9 @@ export const useCrossResourceSearchStore = defineStore("crossResourceSearch", ()
         countFor,
         resourceCountFor,
         errorMessageFor,
+        truncatedFor,
+        totalFor,
+        anyTruncated,
         flatSelections,
     }
 })

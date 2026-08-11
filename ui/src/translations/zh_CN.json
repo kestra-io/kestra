@@ -2288,6 +2288,8 @@
       "tag_paths_only": "仅路径 — 不搜索文件内容",
       "tag_search_only": "仅搜索 — 不会被替换",
       "tag_source_code": "源码",
+      "truncated_flows": "显示 {total} 个匹配项中的前 {shown} 个。全部替换仅作用于已显示的匹配项，请先缩小查询范围。",
+      "truncated_type": "{total} 个中的前 {shown} 个",
       "turn_off": "关闭{option}",
       "type_files": "命名空间文件",
       "type_flows": "流程",

@@ -348,6 +348,7 @@
         replaceMode: boolean
         selectedMatchKeys: Set<string>
         replaceContext?: ReplaceContext | null
+        truncatedTypes?: Partial<Record<SearchResourceType, {shown: number; total: number}>>
     }>()
 
     const emit = defineEmits<{
@@ -393,6 +394,14 @@
     const visibleTypes = computed(() => SEARCH_RESOURCE_TYPES.filter((type) => props.selectedTypes.includes(type) && statusFor(type) !== "idle" && statusFor(type) !== "failed"))
 
     function typeMeta(type: SearchResourceType) {
+        const base = baseTypeMeta(type)
+        const truncated = props.truncatedTypes?.[type]
+        return truncated
+            ? `${base} · ${t("source_search.truncated_type", truncated)}`
+            : base
+    }
+
+    function baseTypeMeta(type: SearchResourceType) {
         switch (type) {
         case "flows":
             return t("source_search.type_meta", {

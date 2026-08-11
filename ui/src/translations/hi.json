@@ -2288,6 +2288,8 @@
       "tag_paths_only": "केवल पथ — फ़ाइल सामग्री खोजी नहीं जाती",
       "tag_search_only": "केवल खोज — बदला नहीं जाता",
       "tag_source_code": "स्रोत कोड",
+      "truncated_flows": "{total} में से पहले {shown} मिलान दिखाए जा रहे हैं। सभी बदलें केवल दिखाए गए मिलानों पर लागू होता है, पहले क्वेरी सीमित करें।",
+      "truncated_type": "{total} में से पहले {shown}",
       "turn_off": "{option} बंद करें",
       "type_files": "Namespace फ़ाइलें",
       "type_flows": "Flows",

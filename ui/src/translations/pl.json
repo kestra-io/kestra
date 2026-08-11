@@ -2288,6 +2288,8 @@
       "tag_paths_only": "Tylko ścieżki — zawartość pliku nie jest przeszukiwana",
       "tag_search_only": "Tylko wyszukiwanie — nie zamieniane",
       "tag_source_code": "Kod źródłowy",
+      "truncated_flows": "Wyświetlono pierwsze {shown} z {total} dopasowań. Zamień wszystko dotyczy tylko wyświetlonych dopasowań, najpierw zawęź zapytanie.",
+      "truncated_type": "pierwsze {shown} z {total}",
       "turn_off": "Wyłącz {option}",
       "type_files": "Pliki namespace",
       "type_flows": "Flows",

@@ -2288,6 +2288,8 @@
       "tag_paths_only": "Chemins uniquement — le contenu du fichier n'est pas recherché",
       "tag_search_only": "Recherche uniquement — non remplacé",
       "tag_source_code": "Code source",
+      "truncated_flows": "Affichage des {shown} premières correspondances sur {total}. Remplacer tout ne s'applique qu'aux correspondances affichées, affinez d'abord la requête.",
+      "truncated_type": "{shown} premières sur {total}",
       "turn_off": "Désactiver {option}",
       "type_files": "Fichiers du namespace",
       "type_flows": "Flows",

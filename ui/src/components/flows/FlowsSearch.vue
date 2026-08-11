@@ -86,6 +86,13 @@
                         <InformationOutline />
                         {{ t('source_search.replace_scope_hint') }}
                     </p>
+
+                    <KsAlert
+                        v-if="store.truncatedFor('flows')"
+                        type="warning"
+                        class="source-search__truncation-alert"
+                        :description="t('source_search.truncated_flows', {shown: store.countFor('flows'), total: store.totalFor('flows')})"
+                    />
                 </div>
             </div>
 
@@ -285,6 +292,7 @@
                     :replaceMode="replaceOpen"
                     :selectedMatchKeys="selectedMatchKeys"
                     :replaceContext="replaceContext"
+                    :truncatedTypes="truncatedTypes"
                     data-test="source-search-results-pane"
                     @select="onSelect"
                     @toggle-flow="onToggleFlow"
@@ -482,6 +490,12 @@
     const selectedKey = computed(() => selection.value ? crossSearchResultKey(selection.value) : null)
 
     const showDiffPreview = computed(() => previewResponse.value !== null)
+
+    const truncatedTypes = computed(() => Object.fromEntries(
+        SEARCH_RESOURCE_TYPES
+            .filter((type) => store.truncatedFor(type))
+            .map((type) => [type, {shown: store.countFor(type), total: store.totalFor(type)!}]),
+    ))
 
     const selectionSummary = computed(() => computeSelectionSummary(store.flows.results, selectedMatchKeys.value))
 

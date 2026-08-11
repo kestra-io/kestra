@@ -2288,6 +2288,8 @@
       "tag_paths_only": "Только пути — содержимое файла не ищется",
       "tag_search_only": "Только поиск — не заменяется",
       "tag_source_code": "Исходный код",
+      "truncated_flows": "Показаны первые {shown} из {total} совпадений. «Заменить все» применяется только к показанным совпадениям, сначала уточните запрос.",
+      "truncated_type": "первые {shown} из {total}",
       "turn_off": "Отключить {option}",
       "type_files": "Файлы namespace",
       "type_flows": "Flows",

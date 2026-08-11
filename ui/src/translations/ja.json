@@ -2288,6 +2288,8 @@
       "tag_paths_only": "パスのみ — ファイルの内容は検索されません",
       "tag_search_only": "検索専用 — 置換されません",
       "tag_source_code": "ソースコード",
+      "truncated_flows": "{total} 件中 {shown} 件の一致を表示しています。すべて置換は表示中の一致にのみ適用されます。先に検索条件を絞り込んでください。",
+      "truncated_type": "{total} 件中 {shown} 件",
       "turn_off": "{option} をオフにする",
       "type_files": "Namespaceのファイル",
       "type_flows": "Flows",

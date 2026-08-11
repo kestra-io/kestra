@@ -2288,6 +2288,8 @@
       "tag_paths_only": "Solo rutas — el contenido del archivo no se busca",
       "tag_search_only": "Solo búsqueda — no se reemplaza",
       "tag_source_code": "Código fuente",
+      "truncated_flows": "Se muestran las primeras {shown} de {total} coincidencias. Reemplazar todo solo se aplica a las coincidencias mostradas: acota primero la consulta.",
+      "truncated_type": "primeras {shown} de {total}",
       "turn_off": "Desactivar {option}",
       "type_files": "Archivos del namespace",
       "type_flows": "Flujos",

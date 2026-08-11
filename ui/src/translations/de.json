@@ -2288,6 +2288,8 @@
       "tag_paths_only": "Nur Pfade — Dateiinhalt wird nicht durchsucht",
       "tag_search_only": "Nur Suche — wird nicht ersetzt",
       "tag_source_code": "Quellcode",
+      "truncated_flows": "Es werden die ersten {shown} von {total} Treffern angezeigt. Alle ersetzen gilt nur für die angezeigten Treffer, grenzen Sie die Suche zuerst ein.",
+      "truncated_type": "erste {shown} von {total}",
       "turn_off": "{option} deaktivieren",
       "type_files": "Namespace-Dateien",
       "type_flows": "Flows",

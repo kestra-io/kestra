@@ -389,11 +389,6 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Output implements io.kestra.core.models.tasks.Output {
-        // Declared empty for Lombok to fill in: javadoc runs no annotation processor, so a purely
-        // generated builder type is invisible to it and every signature naming one fails to resolve.
-        public static class OutputBuilder {
-        }
-
         @Schema(
             title = "The full body for the webhook request",
             description = "We try to deserialize the incoming request as JSON (array or object).\n" +

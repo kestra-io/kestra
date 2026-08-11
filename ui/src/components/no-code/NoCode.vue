@@ -57,6 +57,7 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
+        SAVE_FLOW_FUNCTION_INJECTION_KEY,
         UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys"
     import {useFlowFields} from "./utils/useFlowFields"
@@ -78,13 +79,9 @@
 
     function onTaskUpdateField(key: string, val: any) {
         const realValue = val === null || val === undefined ? undefined :
-            // allow array to be created with null values (specifically for metadata)
-            // metadata do not use a buffer value, so each change needs to be reflected in the code,
-            // for TaskKvPair.vue (object) we added the buffer value in the input component
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
                 : val // Handle null values
-
 
         editorUpdate(YAML_UTILS.replaceBlockWithPath({
             source: flowYaml.value,
@@ -125,19 +122,15 @@
         try {
             parsedSource = YAML_UTILS.parse(source)
         } catch {
-            // ignore parse errors here
             return
         }
 
-        // if no-code would not change the structure of the flow,
-        // do not trigger an update as it would remove all formatting and comments
         if(deepEqual(parsedSource, flowStore.flowParsed)) {
             return
         }
         flowStore.flowYaml = source
         validateFlow()
 
-        // throttle the trigger of the flow update
         clearTimeout(timeout.value)
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
@@ -180,7 +173,7 @@
 
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
-        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined): boolean | void;
+        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined, split?: boolean): boolean | void;
         (e: "closeTask"): boolean | void;
     }>()
 
@@ -192,15 +185,18 @@
         editorUpdate(yaml)
     })
 
+    provide(SAVE_FLOW_FUNCTION_INJECTION_KEY, () => {
+        flowStore.save?.()
+    })
+
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath) => {
         emit("createTask", parentPath, blockSchemaPath, refPath, "after")
     })
 
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath) => {
-        emit("editTask", parentPath, blockSchemaPath, refPath)
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (parentPath, blockSchemaPath, refPath, split) => {
+        emit("editTask", parentPath, blockSchemaPath, refPath, split)
     })
 
-    // Scroll position persistence for No-code editor
     const scrollContainer = ref<HTMLDivElement | null>(null)
 
     const flowIdentity = computed(() => {
@@ -211,9 +207,7 @@
 
     const scrollKey = computed(() => {
         const base = `nocode:${flowIdentity.value}`
-        // home screen
         if (!props.creatingTask && !props.editingTask) return `${base}:home`
-        // task-specific
         const action = props.creatingTask ? "create" : "edit"
         const parentPath = props.parentPath ?? ""
         const refPath = props.refPath ?? ""

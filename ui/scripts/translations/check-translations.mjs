@@ -125,7 +125,7 @@ function checkDesignSystem(result) {
 
     result.stale = stale.map(({file, key}) => `${file}: ${key}`)
     for (const {file, key} of stale) {
-        annotate("error", `[OSS] Design-system string "${key}" in ${file} was changed in English after it was translated - run \`npm run translations:generate\` in ui/`)
+        annotate("error", `[OSS] Design-system string "${key}" in ${file} has no up-to-date translation - it is either new, or its English source changed after it was translated. Run \`npm run translations:generate\` in ui/`)
     }
 }
 

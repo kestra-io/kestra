@@ -691,6 +691,15 @@ public class ExecutionController {
         MultipartBody parts,
         HttpRequest<?> request) {
         Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+        return webhookMultipart(maybeFlow, key, path, parts, request);
+    }
+
+    protected Mono<HttpResponse<?>> webhookMultipart(
+        Optional<Flow> maybeFlow,
+        String key,
+        String path,
+        MultipartBody parts,
+        HttpRequest<?> request) {
         Flow flow = executableFlow(maybeFlow);
         findWebhook(flow, key);
 
@@ -723,6 +732,14 @@ public class ExecutionController {
         String path,
         HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+       return webhook(maybeFlow, key, path, request);
+    }
+
+    protected Mono<HttpResponse<?>> webhook(
+        Optional<Flow> maybeFlow,
+        String key,
+        String path,
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         Flow flow = executableFlow(maybeFlow);
         AbstractWebhookTrigger webhook = findWebhook(flow, key);
 
@@ -746,14 +763,6 @@ public class ExecutionController {
         }
     }
 
-    protected Mono<HttpResponse<?>> webhook(
-        Optional<Flow> maybeFlow,
-        String key,
-        String path,
-        io.kestra.core.http.HttpRequest request) throws IllegalVariableEvaluationException {
-        return webhook(maybeFlow, key, path, request, IdUtils.create(), null);
-    }
-
     /**
      * Evaluate the webhook the given key matches, for an execution that will be given the provided identifier.
      *
@@ -762,7 +771,7 @@ public class ExecutionController {
      * @param storedBodyUri the URI the body of the request was stored under, {@code null} unless the trigger
      *        fetches its body as {@link AbstractWebhookTrigger.FetchType#STORE}
      */
-    protected Mono<HttpResponse<?>> webhook(
+    private Mono<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         String path,

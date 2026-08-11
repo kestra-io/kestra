@@ -1,6 +1,7 @@
 import {vi} from "vitest"
 import {AppContext, ref} from "vue"
 import {config} from "@vue/test-utils"
+import {installMonacoCssEscapePolyfill} from "../../../../tests/unit/monacoCssEscapePolyfill"
 
 // Most unit tests mount a component in isolation, without installing vue-router,
 // so a literal <router-link> in its template (or a dynamic :is="'router-link'")
@@ -32,6 +33,7 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
         dispatchEvent: () => false,
     })
 }
+installMonacoCssEscapePolyfill()
 
 vi.mock("vue-i18n", () => ({
   useI18n: () => ({

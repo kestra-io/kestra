@@ -1,5 +1,5 @@
 import {h, ref, render, watch, type Component, type Ref, type VNode} from "vue"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
 import uniqBy from "lodash/uniqBy"
 import {STATES} from "../utils/state"
 import {OVERFLOW_WIDGETS_ID} from "../utils/monacoSetup"

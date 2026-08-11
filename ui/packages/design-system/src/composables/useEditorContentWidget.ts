@@ -1,5 +1,5 @@
 import {ref, type Ref} from "vue"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
 
 const CONTENT_NODE_POLL_MS = 30
 

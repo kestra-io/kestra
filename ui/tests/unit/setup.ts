@@ -1,5 +1,6 @@
 import {afterEach, vi} from "vitest"
 import {config, disableAutoUnmount, enableAutoUnmount} from "@vue/test-utils"
+import {installMonacoCssEscapePolyfill} from "./monacoCssEscapePolyfill"
 
 // Required by `isolate: false` (vitest.config.unit.js): workers reuse one module registry, so a
 // module cached while another file's vi.mock was active keeps that mock. Setup files run before
@@ -113,10 +114,4 @@ if (typeof globalThis.ResizeObserver === "undefined") {
         disconnect() {}
     }
 }
-// jsdom doesn't implement CSS.escape (used by BlockEditor's data-dock-pane-id lookups)
-if (typeof globalThis.CSS === "undefined" || typeof globalThis.CSS.escape !== "function") {
-    (globalThis as any).CSS = {
-        ...(globalThis as any).CSS,
-        escape: (value: string) => String(value).replace(/([!"#$%&'()*+,./:;<=>?@[\]^`{|}~])/g, "\\$1"),
-    }
-}
+installMonacoCssEscapePolyfill()

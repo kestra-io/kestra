@@ -1,4 +1,5 @@
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
+import {typescriptDefaults, ScriptTarget} from "monaco-editor/languages/features/typescript/register"
 
 export const OVERFLOW_WIDGETS_ID = "ks-monaco-overflow-widgets"
 
@@ -37,9 +38,8 @@ export function registerMonacoThemes(): void {
 }
 
 export function configureMonacoTypescript(): void {
-    if (!monaco.languages.typescript) return
-    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-        target: monaco.languages.typescript.ScriptTarget.ES2020,
+    typescriptDefaults.setCompilerOptions({
+        target: ScriptTarget.ES2020,
         lib: ["es2020"],
         allowNonTsExtensions: true,
     })

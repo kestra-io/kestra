@@ -86,7 +86,7 @@
     import KsButton from "../Basic/KsButton/KsButton.vue"
     import KsButtonGroup from "../Basic/KsButton/KsButtonGroup.vue"
     import KsTooltip from "../Feedback/KsTooltip.vue"
-    import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+    import * as monaco from "monaco-editor/editor/editor.api"
     import {useKsEditor} from "../../composables/useKsEditor"
     import type {KsEditorExposes, KsEditorProps} from "../../utils/editorTypes"
 

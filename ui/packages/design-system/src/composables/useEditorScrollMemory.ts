@@ -1,6 +1,6 @@
 import {type Ref} from "vue"
 import {useThrottleFn} from "@vueuse/core"
-import type * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+import type * as monaco from "monaco-editor/editor/editor.api"
 
 const SAVE_THROTTLE_MS = 100
 

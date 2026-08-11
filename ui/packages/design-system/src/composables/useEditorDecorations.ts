@@ -1,5 +1,5 @@
 import {watch, type Ref} from "vue"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
 
 const PEBBLE_BLOCK_PATTERN = "\\{\\{(.+?)}}"
 

@@ -1,5 +1,5 @@
 import {ref, type Ref} from "vue"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+import * as monaco from "monaco-editor/editor/editor.api"
 import moment from "moment"
 
 export const DATE_PICKER_SUGGESTION_LABEL = "_DATE_PICKER_"

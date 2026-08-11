@@ -1,10 +1,10 @@
-import "monaco-editor/esm/vs/editor/editor.all"
-import "monaco-editor/esm/vs/editor/standalone/browser/inspectTokens/inspectTokens"
-import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
-import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
-import "monaco-editor/esm/vs/language/json/monaco.contribution"
-import "monaco-editor/esm/vs/language/typescript/monaco.contribution"
-import "monaco-editor/esm/vs/basic-languages/monaco.contribution"
+import "monaco-editor/features/register.all"
+import "monaco-editor/editor/standalone/browser/inspectTokens/inspectTokens"
+import "monaco-editor/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard"
+import "monaco-editor/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess"
+import "monaco-editor/language/json/monaco.contribution"
+import "monaco-editor/language/typescript/monaco.contribution"
+import "monaco-editor/basic-languages/monaco.contribution"
 import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from "vue"
 import {useI18n} from "vue-i18n"
 import {useStorage} from "@vueuse/core"
@@ -12,9 +12,9 @@ import {APP_FONT_SIZE_KEY, BASE_PX, type AppFontSizeMode} from "../utils/fontSca
 import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue"
 import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue"
 // @ts-expect-error tab focus path lacks types
-import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
-import {editor as monacoEditorNs} from "monaco-editor/esm/vs/editor/editor.api"
+import {TabFocus} from "monaco-editor/editor/browser/config/tabFocus"
+import * as monaco from "monaco-editor/editor/editor.api"
+import {editor as monacoEditorNs} from "monaco-editor/editor/editor.api"
 import debounce from "lodash/debounce"
 import type {EditorOptions, KsEditorOptions} from "../utils/editorTypes"
 import {configureMonacoTypescript, editorModelUid as uid, getOrCreateOverflowWidgetsDomNode, registerMonacoThemes} from "../utils/monacoSetup"
@@ -233,6 +233,10 @@ export function useKsEditor(
 
         return {
             tabSize: 2,
+            // monaco-editor 0.56 defaults to the native EditContext API instead of a hidden textarea for
+            // text input; that surface isn't a real <textarea>/[contenteditable], which breaks Playwright's
+            // .fill() and other tooling that expects the old input model. Opt back into it explicitly.
+            editContext: false,
             fontFamily: localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace",
             fontSize: resolvedEditorFontSize.value,
             showFoldingControls: "always",

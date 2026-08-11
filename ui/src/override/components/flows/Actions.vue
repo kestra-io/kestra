@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, unref} from "vue"
+    import {computed} from "vue"
     import {useI18n} from "vue-i18n"
     import {useRoute, useRouter} from "vue-router"
     import {useFlowStore} from "../../../stores/flow"
@@ -178,7 +178,7 @@
     // The single save-family control: publishing is what a draft is for, saving is what an
     // already-published flow (or a flow being created) needs. The variant not taken stays
     // reachable in the dropdown.
-    const isPublishAction = computed(() => unref(editorIsDraft) && !flowStore.isCreating)
+    const isPublishAction = computed(() => editorIsDraft.value && !flowStore.isCreating)
 
     const editorSaveOrPublish = () => {
         if (isPublishAction.value) {

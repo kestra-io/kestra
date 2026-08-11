@@ -1,4 +1,5 @@
 import {describe, expect, it} from "vitest"
+import {defineComponent} from "vue"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
@@ -76,6 +77,36 @@ describe("NavBarActions — callers that opt into the secondary slot", () => {
             primary: "<button>Execute</button>",
         })
 
+        expect(visibleButton(wrapper, "Delete logs")).toBeUndefined()
+        expect(overflowTrigger(wrapper)).toBeDefined()
+    })
+
+    it("switches layout when a caller gates the secondary declaration after mount", async () => {
+        const parent = defineComponent({
+            components: {NavBarActions},
+            props: {showSecondary: {type: Boolean, default: false}},
+            template: `
+                <NavBarActions>
+                    <button>Delete logs</button>
+                    <template v-if="showSecondary" #secondary><button>Edit Flow</button></template>
+                    <template #primary><button>Execute</button></template>
+                </NavBarActions>
+            `,
+        })
+
+        const wrapper = mount(parent, {
+            props: {showSecondary: false},
+            global: {plugins: [i18n, KestraDesignSystem]},
+        })
+
+        // Legacy layout: a lone action renders inline, no overflow.
+        expect(visibleButton(wrapper, "Delete logs")).toBeDefined()
+        expect(overflowTrigger(wrapper)).toBeUndefined()
+
+        await wrapper.setProps({showSecondary: true})
+
+        // Two-slot layout: the action moves into the overflow, the secondary is visible.
+        expect(visibleButton(wrapper, "Edit Flow")).toBeDefined()
         expect(visibleButton(wrapper, "Delete logs")).toBeUndefined()
         expect(overflowTrigger(wrapper)).toBeDefined()
     })

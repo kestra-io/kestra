@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from "vitest"
+import {computed} from "vue"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
 import KestraDesignSystem from "@kestra-io/design-system"
@@ -51,7 +52,9 @@ vi.mock("../../../../../src/components/flows/useFlowEditorActions", () => ({
         hasErrors: false,
         isReadOnly: false,
         isAllowedEdit: true,
-        isDraft: true,
+        // The real composable returns computed refs; `isDraft` is read from script (not just
+        // auto-unwrapped in a template), so the mock has to be a ref for that read to work.
+        isDraft: computed(() => true),
         isPlaygroundEnabled: false,
         isPlaygroundAllowed: false,
         save: vi.fn(),

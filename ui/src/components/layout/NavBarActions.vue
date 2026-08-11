@@ -1,5 +1,13 @@
 <template>
-    <template v-if="hasSecondarySlot">
+    <!--
+        Keyed on slot declaration rather than rendered content, so a caller whose `#secondary`
+        content is `v-if`-ed away still gets the two-slot layout instead of silently falling back
+        to the legacy one. Read straight off `$slots` in the template so it is re-evaluated on
+        every render: a `computed(() => !!slots.secondary)` never registers a dependency (it checks
+        for the key without invoking the slot) and would freeze at its first-render value for a
+        caller that gates the `<template #secondary>` declaration itself.
+    -->
+    <template v-if="$slots.secondary">
         <NavBarActionsDropdown v-if="overflowCount > 0">
             <slot />
         </NavBarActionsDropdown>
@@ -21,10 +29,6 @@
     const MAX_INLINE_ACTIONS = 1
 
     const slots = useSlots()
-
-    // Keyed on slot declaration rather than rendered content: a `#secondary` whose own `v-if`
-    // is false must not fall back to the legacy branch and start rendering overflow inline.
-    const hasSecondarySlot = computed(() => !!slots.secondary)
 
     const flatten = (nodes: VNode[]): VNode[] =>
         nodes.flatMap((node) => {

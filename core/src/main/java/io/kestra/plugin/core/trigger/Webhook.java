@@ -224,17 +224,13 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             return Mono.just(HttpResponse.of(HttpResponse.Status.NOT_FOUND));
         }
 
-        Output.OutputBuilder output = Output.builder()
-            .headers(context.request().getHeaders() != null ? context.request().getHeaders().map() : null)
-            .parameters(context.webhookService().parseParameters(context));
-
         Optional<Execution> maybeExecution;
         try {
             maybeExecution = context.webhookService().newExecution(
                 context,
                 context.flow(),
                 this,
-                withBody(output, context.request().getBody(), context.storedBodyUri()).build()
+                buildOutput(context, context.request().getBody(), context.storedBodyUri())
             );
         } catch (WebhookInputRenderException e) {
             // The inputs could not be rendered: a real error, not a "conditions not met" outcome.
@@ -297,45 +293,53 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
         return HttpResponse.of(responseCode, body, responseContentType);
     }
 
-    // JavaDoc is not working as annotation processor didn't run before JavaDoc so this is a regular comment
-    // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
-    //
-    // Expose the request body on the trigger output: a text body as {@code body}, a binary body as {@code body}
-    // base64-encoded, and a {@code multipart/form-data} body as {@code parts} and {@code formFields}.
-    // Bytes are base64-encoded because trigger variables carry text, not binary.
-    // <p>
-    // A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
-    // under, which is exposed as {@code uri}.
-    //
-    // @param output        the output being built
-    // @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
-    // stored rather than read
-    // @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
-    // @return the output builder, for chaining
-    //
-    private static Output.OutputBuilder withBody(Output.OutputBuilder output, HttpRequest.RequestBody requestBody, URI storedBodyUri) {
+    /**
+     * Build the trigger output from the webhook request: its headers and query parameters, plus the body as
+     * {@code body} for a text body, as {@code body} base64-encoded for a binary one, and as {@code parts} and
+     * {@code formFields} for a {@code multipart/form-data} one.
+     * Bytes are base64-encoded because trigger variables carry text, not binary.
+     * <p>
+     * A body the trigger asked to store never reaches here: it carries no content but the URI it was stored
+     * under, which is exposed as {@code uri}.
+     *
+     * @param context       the webhook request context
+     * @param requestBody   the body of the webhook request, {@code null} if the request has none, or if it was
+     *                      stored rather than read
+     * @param storedBodyUri the URI the body was stored under, {@code null} unless the trigger stores it
+     * @return the trigger output
+     */
+    private static Output buildOutput(WebhookContext context, HttpRequest.RequestBody requestBody, URI storedBodyUri) {
+        var output = Output.builder()
+            .headers(context.request().getHeaders() != null ? context.request().getHeaders().map() : null)
+            .parameters(context.webhookService().parseParameters(context));
+
         if (storedBodyUri != null) {
-            return output.uri(storedBodyUri.toString());
+            return output.uri(storedBodyUri.toString()).build();
         }
 
-        return switch (requestBody) {
-            case null -> output;
-            case HttpRequest.MultipartFormDataRequestBody multipart -> withMultipartBody(output, multipart);
+        switch (requestBody) {
+            case null -> { }
+            case HttpRequest.MultipartFormDataRequestBody multipart -> {
+                MultipartContent content = multipartContent(multipart);
+                output.parts(content.parts()).formFields(content.formFields());
+            }
             case HttpRequest.ByteArrayRequestBody binary -> output.body(BASE64_ENCODER.encodeToString(binary.getContent()));
             case HttpRequest.StringRequestBody text -> {
                 String body = text.getContent();
 
-                yield output.body(
+                output.body(
                     tryMap(body)
                         .or(() -> tryArray(body))
                         .orElse(body)
                 );
             }
             default -> output.body(requestBody.getContent());
-        };
+        }
+
+        return output.build();
     }
 
-    private static Output.OutputBuilder withMultipartBody(Output.OutputBuilder output, HttpRequest.MultipartFormDataRequestBody multipart) {
+    private static MultipartContent multipartContent(HttpRequest.MultipartFormDataRequestBody multipart) {
         Charset charset = multipart.getCharset() != null ? multipart.getCharset() : StandardCharsets.UTF_8;
         List<Output.Part> parts = new ArrayList<>(multipart.getContent().size());
         Map<String, List<String>> formFields = new HashMap<>();
@@ -355,7 +359,7 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             }
         });
 
-        return output.parts(parts).formFields(formFields);
+        return new MultipartContent(parts, formFields);
     }
 
     private static Optional<Object> tryMap(String body) {
@@ -375,6 +379,8 @@ public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Web
             return Optional.empty();
         }
     }
+
+    private record MultipartContent(List<Output.Part> parts, Map<String, List<String>> formFields) {}
 
     @Builder
     @ToString

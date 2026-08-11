@@ -15,6 +15,11 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -932,6 +937,11 @@ export type Flow = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -993,8 +1003,6 @@ export type FlowControllerFlowWithDeprecatedTasks = {
     deprecatedTasks?: Array<FlowServiceTaskDeprecation>;
 };
 
-export type FlowControllerTaskValidationType = 'TASKS' | 'TRIGGERS';
-
 export type FlowForExecution = AbstractFlow & {
     id: string;
     namespace: string;
@@ -1002,6 +1010,11 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1168,6 +1181,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -6252,9 +6270,9 @@ export type ValidateTaskData = {
     };
     query: {
         /**
-         * The type of task
+         * The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)
          */
-        section: FlowControllerTaskValidationType;
+        section: string;
     };
     url: '/api/v1/{tenant}/flows/validate/task';
 };

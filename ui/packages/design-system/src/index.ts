@@ -78,6 +78,7 @@ import KsPopover from "./components/Feedback/KsPopover.vue"
 import KsProgress from "./components/Data/KsProgress.vue"
 import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
 import KsRadioButton from "./components/Form/KsRadio/KsRadioButton.vue"
+import KsRadioCardGroup from "./components/Form/KsRadio/KsRadioCardGroup.vue"
 import KsRadioGroup from "./components/Form/KsRadio/KsRadioGroup.vue"
 import KsRow from "./components/Basic/KsRow/KsRow.vue"
 import KsScrollbar from "./components/Basic/KsScrollbar.vue"
@@ -278,6 +279,7 @@ const components: Record<string, Component> = {
     KsProgress,
     KsRadio,
     KsRadioButton,
+    KsRadioCardGroup,
     KsRadioGroup,
     KsRow,
     KsScrollbar,
@@ -386,6 +388,7 @@ export {
     KsProgress,
     KsRadio,
     KsRadioButton,
+    KsRadioCardGroup,
     KsRadioGroup,
     KsRow,
     KsScrollbar,
@@ -514,6 +517,7 @@ declare module "vue" {
         KsProgress: typeof KsProgress
         KsRadio: typeof KsRadio
         KsRadioButton: typeof KsRadioButton
+        KsRadioCardGroup: typeof KsRadioCardGroup
         KsRadioGroup: typeof KsRadioGroup
         KsRow: typeof KsRow
         KsScrollbar: typeof KsScrollbar

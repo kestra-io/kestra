@@ -1919,7 +1919,7 @@ export type ServiceInstanceTimestampedEvent = {
     state?: ServiceServiceState;
 };
 
-export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'CONTROLLER' | 'INVALID';
+export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'SYSTEM_WORKER' | 'CONTROLLER' | 'INVALID';
 
 export type SoftDeletableFlowInterface = {
     deleted?: boolean;

@@ -165,4 +165,28 @@ class RuntimeLabelsTest {
             new Label("fromListKey", "value2")
         );
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/labels-update-nested-value-list.yml")
+    void shouldUpdateWithNestedValueInList(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("stage", "{\"name\":\"done\"}")
+        );
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/labels-update-nested-value-map.yml")
+    void shouldUpdateWithNestedValueInMap(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("stage", "{\"name\":\"done\"}")
+        );
+    }
 }

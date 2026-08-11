@@ -17,8 +17,6 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.pebble.PebbleExpressionService;
-import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
@@ -28,6 +26,8 @@ import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.pebble.PebbleExpressionService;
+import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerFlowRevisionUpdated;
@@ -224,20 +224,20 @@ class FlowServiceTest {
     void importFlow_ShouldEmitTriggerCreatedEventForNewTriggerInSyncedFlow() throws FlowProcessingException, QueueException {
         reset(triggerEventQueue);
 
-    String source = """
-        id: import_with_trigger
-        namespace: some.namespace
-        triggers:
-          - id: daily
-            type: io.kestra.plugin.core.trigger.Schedule
-            cron: "0 6 * * *"
-        tasks:
-          - id: task
-            type: io.kestra.plugin.core.log.Log
-            message: Hello""";
+        String source = """
+            id: import_with_trigger
+            namespace: some.namespace
+            triggers:
+              - id: daily
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "0 6 * * *"
+            tasks:
+              - id: task
+                type: io.kestra.plugin.core.log.Log
+                message: Hello""";
 
-    flowService.importFlow("my-tenant", source);
-    verify(triggerEventQueue).send(any());
+        flowService.importFlow("my-tenant", source);
+        verify(triggerEventQueue).send(any());
 
     }
 
@@ -1319,7 +1319,7 @@ class FlowServiceTest {
     }
 
     @Test
-    void shouldWarnOnDeprecatedPebbleFunction() {
+    void shouldWarnOnDeprecatedPebbleFunction() throws IllegalAccessException {
         PebbleFunction deprecatedFunc = new PebbleFunction("oldFunc", List.of(), true, "newFunc");
         PebbleExpressionService mockPebbleService = mock(PebbleExpressionService.class);
         when(mockPebbleService.functions()).thenReturn(List.of(deprecatedFunc));
@@ -1338,14 +1338,13 @@ class FlowServiceTest {
             FlowWithSource flow = FlowWithSource.of(Flow.builder().id(flowId).namespace(TEST_NAMESPACE).build(), source);
             List<String> warnings = flowService.warnings(flow.toFlow(), TenantService.MAIN_TENANT);
             assertThat(warnings).contains("Pebble function 'oldFunc' is deprecated. Use 'newFunc' instead.");
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
         } finally {
-            try {
-                org.apache.commons.lang3.reflect.FieldUtils.writeDeclaredField(flowService, "pebbleExpressionService", original, true);
-            } catch (IllegalAccessException e) {
-                // ignore
-            }
+            FieldUtils.writeDeclaredField(
+                flowService,
+                "pebbleExpressionService",
+                original,
+                true
+            );
         }
     }
 }

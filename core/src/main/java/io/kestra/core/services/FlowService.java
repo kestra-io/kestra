@@ -14,13 +14,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
-import io.kestra.core.runners.ConcurrencyLimit;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.annotations.VisibleForTesting;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -39,10 +37,13 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvent;
@@ -53,9 +54,8 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.SecretUtils;
-import io.kestra.core.runners.pebble.PebbleFunction;
 import io.kestra.core.utils.PebbleUtil;
+import io.kestra.core.utils.SecretUtils;
 import io.kestra.plugin.core.flow.Pause;
 
 import io.micronaut.core.annotation.Nullable;
@@ -601,10 +601,11 @@ public class FlowService {
 
         if (pebbleExpressionService != null && flow.getSource() != null) {
             Map<String, PebbleFunction> deprecatedFunctions = pebbleExpressionService.functions().stream()
-                .filter(fn -> fn.getClass().isAnnotationPresent(Deprecated.class))
+                .filter(PebbleFunction::deprecated)
                 .collect(Collectors.toMap(PebbleFunction::name, f -> f));
             if (!deprecatedFunctions.isEmpty()) {
-                PebbleUtil.replaceInBlock(flow.getSource(), block -> {
+                PebbleUtil.replaceInBlock(flow.getSource(), block ->
+                {
                     Matcher matcher = PEBBLE_FUNCTION_PATTERN.matcher(block);
                     while (matcher.find()) {
                         String fnName = matcher.group(1);

@@ -2292,6 +2292,7 @@
       "type_files": "命名空间文件",
       "type_flows": "流程",
       "type_kv": "键值存储",
+      "type_meta": "{matches} · {resources}",
       "type_search_failed": "无法搜索 {type}",
       "type_secrets": "秘密",
       "use_regex": "使用正则表达式",

@@ -2292,6 +2292,7 @@
       "type_files": "Namespaceのファイル",
       "type_flows": "Flows",
       "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
       "type_search_failed": "{type} を検索できませんでした",
       "type_secrets": "Secrets",
       "use_regex": "正規表現を使用",

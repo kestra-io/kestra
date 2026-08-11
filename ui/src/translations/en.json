@@ -2294,6 +2294,7 @@
       "type_files": "Namespace files",
       "type_flows": "Flows",
       "type_kv": "KV keys",
+      "type_meta": "{matches} · {resources}",
       "type_search_failed": "{type} couldn't be searched",
       "type_secrets": "Secret keys",
       "use_regex": "Use regular expression",

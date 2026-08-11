@@ -2292,6 +2292,7 @@
       "type_files": "Fichiers du namespace",
       "type_flows": "Flows",
       "type_kv": "Stockage de clés/valeurs",
+      "type_meta": "{matches} · {resources}",
       "type_search_failed": "{type} n'a pas pu être recherché",
       "type_secrets": "Secrets",
       "use_regex": "Utiliser une expression régulière",

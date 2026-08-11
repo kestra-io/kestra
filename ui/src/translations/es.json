@@ -2292,6 +2292,7 @@
       "type_files": "Archivos del namespace",
       "type_flows": "Flujos",
       "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
       "type_search_failed": "No se pudo buscar en {type}",
       "type_secrets": "Secrets",
       "use_regex": "Usar expresión regular",

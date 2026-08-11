@@ -2292,6 +2292,7 @@
       "type_files": "Namespace-Dateien",
       "type_flows": "Flows",
       "type_kv": "KV Store",
+      "type_meta": "{matches} · {resources}",
       "type_search_failed": "{type} konnte nicht durchsucht werden",
       "type_secrets": "Secrets",
       "use_regex": "Regulären Ausdruck verwenden",

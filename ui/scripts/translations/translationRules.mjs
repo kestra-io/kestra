@@ -39,15 +39,20 @@ export function leafKeys(obj, prefix = "") {
     }, [])
 }
 
-/** Leaf key path -> message, for every string leaf. */
+/**
+ * Leaf key path -> message, for every string leaf.
+ *
+ * Arrays are descended into by index, matching the generator, which translates their elements
+ * individually. Skipping them left every element of a list-valued key — `thinkingWords`, the
+ * copilot's rotating status words — outside all three checks at once, so one untranslated entry
+ * sat in the middle of a translated list with nothing able to see it.
+ */
 export function flattenStrings(obj, prefix = "", out = {}) {
     for (const key of Object.keys(obj ?? {})) {
         const value = obj[key]
         const fullKey = prefix ? `${prefix}.${key}` : key
         if (typeof value === "string") out[fullKey] = value
-        else if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-            flattenStrings(value, fullKey, out)
-        }
+        else if (value !== null && typeof value === "object") flattenStrings(value, fullKey, out)
     }
     return out
 }

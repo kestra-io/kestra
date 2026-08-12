@@ -1624,7 +1624,7 @@ export default {
                 "LESS_THAN": "संख्यात्मक/तिथि तुलना - value छोटा होना चाहिए",
                 "GREATER_THAN_OR_EQUAL_TO": "संख्यात्मक/तिथि तुलना - value बड़ा या बराबर होना चाहिए",
                 "LESS_THAN_OR_EQUAL_TO": "संख्यात्मक/तिथि तुलना - value छोटा या बराबर होना चाहिए",
-                "STARTS_WITH": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
+                "STARTS_WITH": "टेक्स्ट निर्दिष्ट वर्णों से शुरू होता है",
                 "ENDS_WITH": "पाठ निर्दिष्ट वर्णों के साथ समाप्त होता है",
                 "CONTAINS": "पाठ में निर्दिष्ट वर्ण कहीं भी शामिल हैं",
                 "NOT_CONTAINS": "टेक्स्ट में निर्दिष्ट वर्ण कहीं भी शामिल नहीं हैं",

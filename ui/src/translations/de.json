@@ -1507,6 +1507,10 @@
     "dataFilters": "Datenfilter",
     "logExporters": "Log-Exporteure",
     "empty": {
+      "secrets": {
+        "title": "Sie haben noch keine Secrets!",
+        "content": "API-Schlüssel, Passwörter und Tokens können als Secrets gespeichert werden, anstatt sie fest in Ihren flows zu codieren. Jedes Secret gehört zu einem namespace, wird von seinen untergeordneten namespaces geerbt und kann von jeder task referenziert werden."
+      },
       "namespaceFiles": {
         "title": "Noch keine Dateien in diesem Namespace",
         "content": "Namespace-Dateien funktionieren wie ein Projektordner für diesen Namespace. Speichern Sie Python-, SQL-, dbt- oder Terraform-Code und referenzieren Sie anschließend jede Datei in Ihren Flows mit"

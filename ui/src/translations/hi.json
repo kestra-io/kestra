@@ -1507,6 +1507,10 @@
     "dataFilters": "डेटा फ़िल्टर",
     "logExporters": "लॉग Exporters",
     "empty": {
+      "secrets": {
+        "title": "आपके पास अभी तक कोई Secrets नहीं है!",
+        "content": "API keys, पासवर्ड और टोकन को आपके flows में हार्डकोड करने के बजाय secrets के रूप में स्टोर किया जा सकता है। प्रत्येक secret एक namespace से संबंधित होता है, उसके child namespaces द्वारा इनहेरिट किया जाता है, और किसी भी task से संदर्भित किया जा सकता है।"
+      },
       "namespaceFiles": {
         "title": "इस namespace में अभी तक कोई फ़ाइल नहीं है",
         "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें"

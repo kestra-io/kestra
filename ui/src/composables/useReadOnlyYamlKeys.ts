@@ -20,6 +20,30 @@ export interface ReadOnlyKeyLine {
 }
 
 /**
+ * The scalar carried by everything after `key:`.
+ *
+ * Quotes and inline comments are stripped, because neither changes the value:
+ * treating `id: my-flow # note` as the literal `my-flow # note` would make it
+ * permanently unequal to the saved id, and every later keystroke would then read
+ * as an attempt to change it.
+ */
+function scalarOf(raw: string): string {
+    const value = raw.trim()
+    const quote = value[0]
+
+    if (quote === "\"" || quote === "'") {
+        const closing = value.indexOf(quote, 1)
+        // A quote still being typed has no closing partner yet.
+        return closing === -1 ? value.slice(1) : value.slice(1, closing)
+    }
+
+    // YAML only opens an inline comment on a `#` preceded by whitespace, so a
+    // `#` inside a bare scalar (`id: a#b`) is part of the value.
+    const comment = value.search(/\s#/)
+    return (comment === -1 ? value : value.slice(0, comment)).trim()
+}
+
+/**
  * Read the scalar value of a top-level key, or undefined when the key is absent.
  *
  * Only the first occurrence counts — a duplicate top-level key is invalid YAML,
@@ -29,17 +53,9 @@ export function readTopLevelValue(source: string, key: string): string | undefin
     for (const rawLine of source.split("\n")) {
         const match = TOP_LEVEL_KEY.exec(rawLine.replace(/\r$/, ""))
         if (match?.[1] !== key) continue
-        return unquote(match[2].trim())
+        return scalarOf(match[2])
     }
     return undefined
-}
-
-function unquote(value: string): string {
-    const quote = value[0]
-    if ((quote === "\"" || quote === "'") && value.length > 1 && value.endsWith(quote)) {
-        return value.slice(1, -1)
-    }
-    return value
 }
 
 /**
@@ -105,21 +121,24 @@ export interface ReadOnlyYamlKeysOptions {
 /**
  * Keep the given top-level YAML keys read-only inside a Monaco editor.
  *
- * Monaco has no native read-only ranges, so the guard reverts an offending
- * change on the same tick it arrives. That is invisible to the user — the
- * character never appears — unlike reverting after a debounce, which shows the
- * edit being accepted and then taken away.
+ * Monaco has no native read-only ranges, so the guard undoes an offending change
+ * on the same tick it arrives. That is invisible to the user — the character
+ * never appears — unlike correcting it after a debounce, which shows the edit
+ * being accepted and then taken away.
  *
- * Locked lines are only decorated, never made unselectable, so their values
- * stay selectable and copyable.
+ * Only the locked lines are rewritten, so an edit that spans them (select-all
+ * and paste, find-and-replace) keeps everything else the user did.
+ *
+ * Locked lines are only decorated, never made unselectable, so their values stay
+ * selectable and copyable.
  */
 export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
     let changeListener: monaco.IDisposable | undefined
     let decorations: monaco.editor.IEditorDecorationsCollection | undefined
-    /** Last content known to satisfy every expectation; the target of a revert. */
+    /** Last content known to satisfy every expectation; the last-resort fallback. */
     let lastValid: string | undefined
-    /** Guards against reacting to our own revert edit. */
-    let reverting = false
+    /** Guards against reacting to our own corrective edit. */
+    let correcting = false
 
     function keys(): string[] {
         return Object.keys(options.expected.value)
@@ -149,6 +168,38 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         })))
     }
 
+    /**
+     * Put the saved value back on each offending line, leaving the rest of the
+     * document as the user left it. Returns false when a locked key is no longer
+     * present at all, which cannot be corrected line-by-line.
+     */
+    function restoreLines(
+        editor: monaco.editor.IStandaloneCodeEditor,
+        model: monaco.editor.ITextModel,
+        violations: string[],
+    ): boolean {
+        const source = model.getValue()
+        const edits: monaco.editor.IIdentifiedSingleEditOperation[] = []
+
+        for (const key of violations) {
+            const line = findReadOnlyLines(source, [key])[0]
+            if (!line) return false
+            edits.push({
+                range: {
+                    startLineNumber: line.lineNumber,
+                    startColumn: 1,
+                    endLineNumber: line.lineNumber,
+                    endColumn: model.getLineMaxColumn(line.lineNumber),
+                },
+                text: `${key}: ${options.expected.value[key]}`,
+            })
+        }
+
+        if (!edits.length) return false
+        editor.executeEdits("readonly-yaml-keys", edits)
+        return true
+    }
+
     function detach() {
         changeListener?.dispose()
         changeListener = undefined
@@ -165,7 +216,7 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         paint(editor, initial)
 
         changeListener = editor.onDidChangeModelContent(() => {
-            if (reverting) return
+            if (correcting) return
 
             const model = editor.getModel()
             if (!model) return
@@ -177,25 +228,31 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
                 return
             }
 
-            // Nothing to revert to yet (the document arrived already inconsistent):
-            // accept the edit rather than trapping the user in a broken state.
-            if (violatedKeys(current, options.expected.value).length && lastValid !== undefined) {
-                reverting = true
-                const selection = editor.getSelection()
+            const violations = violatedKeys(current, options.expected.value)
+            if (!violations.length) {
+                lastValid = current
+                paint(editor, current)
+                return
+            }
+
+            correcting = true
+            const selection = editor.getSelection()
+
+            // Whole-document fallback only when a locked key was removed outright;
+            // otherwise the user's other changes are preserved.
+            if (!restoreLines(editor, model, violations) && lastValid !== undefined) {
                 editor.executeEdits("readonly-yaml-keys", [{
                     range: model.getFullModelRange(),
                     text: lastValid,
                     forceMoveMarkers: true,
                 }])
-                if (selection) editor.setSelection(selection)
-                reverting = false
-
-                paint(editor, lastValid)
-                return
             }
 
-            lastValid = current
-            paint(editor, current)
+            if (selection) editor.setSelection(selection)
+            correcting = false
+
+            lastValid = model.getValue()
+            paint(editor, lastValid)
         })
     }
 

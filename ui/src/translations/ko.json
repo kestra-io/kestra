@@ -1048,8 +1048,7 @@
         "audit-logs": {
           "title": "모든 변경 사항을 한 곳에서 추적하기",
           "message": "Kestra Enterprise Edition에서는 namespace 수준의 감사 로그를 상세한 차이점과 함께 볼 수 있어, 모든 리소스에 걸쳐 누가 무엇을 언제 변경했는지에 대한 명확한 기록을 제공합니다."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1601,8 +1600,7 @@
       "panels": {
         "title": "패널이 열려 있지 않음",
         "content": "모든 패널을 닫았습니다.  \n계속하려면 위의 탭을 선택하세요."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "자동 줄 바꿈 토글",
     "copied_logs_to_clipboard": "로그가 클립보드에 복사되었습니다.",
@@ -2249,7 +2247,6 @@
     "blocks": "블록",
     "flow_description": "Flow 설명",
     "flow_no_description": "설명 없음. flow YAML에 설명을 추가하여 문서화하세요.",
-    "pluginDefaults": {},
     "split_horizontal": "수평으로 분할",
     "split_vertical": "수직으로 분할",
     "pwa": {

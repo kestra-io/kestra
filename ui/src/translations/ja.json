@@ -1048,8 +1048,7 @@
         "audit-logs": {
           "title": "すべての変更を一箇所で追跡",
           "message": "Kestra Enterprise Editionでは、namespaceレベルの監査Logを詳細な差分とともに表示でき、すべてのリソースにわたって誰が何をいつ変更したかの履歴を明確に確認できます。"
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1601,8 +1600,7 @@
       "panels": {
         "title": "パネルが開いていません",
         "content": "すべてのパネルを閉じました。  \n続行するには上のタブを選択してください。"
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "ワードラップを切り替え",
     "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
@@ -2249,7 +2247,6 @@
     "blocks": "ブロック",
     "flow_description": "Flowの説明",
     "flow_no_description": "説明なし。flow YAMLに説明を追加してドキュメント化してください。",
-    "pluginDefaults": {},
     "split_horizontal": "水平分割",
     "split_vertical": "垂直分割",
     "pwa": {

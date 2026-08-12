@@ -1048,8 +1048,7 @@
         "audit-logs": {
           "title": "Отслеживайте все изменения в одном месте",
           "message": "В Kestra Enterprise Edition вы можете просматривать audit logs на уровне namespace с подробными различиями, что дает вам четкую историю того, кто, что и когда изменил во всех ресурсах."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1601,8 +1600,7 @@
       "panels": {
         "title": "Нет открытой панели",
         "content": "Вы закрыли все панели.  \nВыберите вкладку выше, чтобы продолжить."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Переключить перенос слов",
     "copied_logs_to_clipboard": "Скопированные logs в буфер обмена.",
@@ -2249,7 +2247,6 @@
     "blocks": "Блоки",
     "flow_description": "Описание flow",
     "flow_no_description": "Нет описания. Добавьте описание в YAML вашего flow для документирования.",
-    "pluginDefaults": {},
     "split_horizontal": "Разделить горизонтально",
     "split_vertical": "Разделить вертикально",
     "pwa": {

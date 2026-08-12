@@ -92,6 +92,7 @@ import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
+import io.kestra.webserver.services.FlowLabelsResolver;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
 import io.kestra.webserver.services.WebhookBodyService;
@@ -244,6 +245,9 @@ public class ExecutionController {
 
     @Inject
     private WebhookService webhookService;
+
+    @Inject
+    private FlowLabelsResolver flowLabelsResolver;
 
     @Inject
     private WebhookBodyService webhookBodyService;
@@ -887,7 +891,7 @@ public class ExecutionController {
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision) {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
-        List<Label> parsedLabels = parseLabels(labels);
+        List<Label> parsedLabels = parseLabels(labels, flow);
         Execution execution = Execution.newExecution(flow, parsedLabels);
         return flowInputOutput
             .validateExecutionInputs(flow.getInputs(), flow, execution, inputs)
@@ -927,7 +931,6 @@ public class ExecutionController {
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
         @Parameter(description = "Specific execution kind") @QueryValue Optional<ExecutionKind> kind) {
         final String tenantId = tenantService.resolveTenant();
-        List<Label> parsedLabels = parseLabels(labels);
         final Flow flow;
         try {
             flow = flowService.getFlowIfExecutableOrThrow(tenantId, namespace, id, revision);
@@ -946,6 +949,9 @@ public class ExecutionController {
             }
             throw e;
         }
+
+        // parsed once the flow is known: which labels the caller may set can depend on it
+        List<Label> parsedLabels = parseLabels(labels, flow);
 
         if (flow.isDraft()) {
             controlDraftExecutableAs(flow, kind.orElse(null));
@@ -1110,7 +1116,11 @@ public class ExecutionController {
         }
     }
 
-    protected List<Label> parseLabels(List<String> labels) {
+    /**
+     * Parses the labels a caller supplied for an execution of the given flow, rejecting the ones that are not
+     * theirs to set — the system namespace here, and whatever {@link FlowLabelsResolver} restricts for this flow.
+     */
+    protected List<Label> parseLabels(List<String> labels, FlowInterface flow) {
         List<Label> parsedLabels = labels == null ? new ArrayList<>()
             : RequestUtils.toMap(labels).entrySet().stream()
                 .map(entry -> new Label(entry.getKey(), entry.getValue()))
@@ -1127,6 +1137,8 @@ public class ExecutionController {
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
+
+        parsedLabels = new ArrayList<>(flowLabelsResolver.resolve(flow, parsedLabels));
 
         // default the origin to "api" when the client didn't set it (the UI sends system.from=ui)
         if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {

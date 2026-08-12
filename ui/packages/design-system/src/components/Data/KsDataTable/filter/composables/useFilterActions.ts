@@ -93,7 +93,7 @@ export function useFilterActions({
         preApplied.clearPreAppliedKey(found.key)
         updateRoute(false)
     }
-    
+
     const updateFilter = (updatedFilter: AppliedFilter) => {
         dismissed.restoreDefaultVisibleKey(updatedFilter.key)
         const enclosing = findLeafContaining(tree.groups.value, updatedFilter.id)

@@ -33,6 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TaskLogLineMatcherTest {
     private static final Instant FALLBACK_INSTANT = Instant.parse("2024-06-18T00:00:00Z");
     private static final long TIME_UNIX_NANO = 1_718_700_000_000_000_000L;
+    // the stdout record of the kotlp recording in tasks/otlp/kotlp.ndjson
+    private static final long RECORDED_STDOUT_UNIX_NANO = 1_786_528_894_518_078_375L;
 
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -319,6 +321,13 @@ class TaskLogLineMatcherTest {
         assertThat(runContext.metrics()).isEmpty();
     }
 
+    /**
+     * The fixture is a verbatim {@code --log-dir} recording of kotlp {@code v0.0.1-10-g8072519}
+     * wrapping {@code sh -c 'echo hello from file; dd if=/dev/zero of=payload.bin bs=1M count=64; sleep 1; echo something went wrong >&2'},
+     * with only {@code host.name} anonymized, followed by three lines the parser must skip: a blank
+     * one, one truncated mid-object as file rotation would leave it, and a well-formed JSON object
+     * holding no OTLP section.
+     */
     @Test
     void shouldParseBareNdjsonStreamWhenGivenKotlpLogDirFile() throws IOException {
         var runContext = runContext();
@@ -330,16 +339,32 @@ class TaskLogLineMatcherTest {
         }
 
         // blank, truncated and empty-object lines are skipped
-        assertThat(records).hasSize(3);
+        assertThat(records).hasSize(6);
         assertThat(records.getFirst().resourceLogs()).isNotEmpty();
         assertThat(records.get(1).resourceMetrics()).isNotEmpty();
-        assertThat(records.get(2).resourceSpans()).isNotEmpty();
+        assertThat(records.get(2).resourceMetrics()).isNotEmpty();
+        assertThat(records.get(3).resourceLogs()).isNotEmpty();
+        assertThat(records.get(4).resourceMetrics()).isNotEmpty();
+        assertThat(records.get(5).resourceSpans()).isNotEmpty();
+
+        // the recording really is kotlp's own
+        assertThat(records.getFirst().resourceLogs().getFirst().resource().attributes())
+            .anySatisfy(attribute ->
+            {
+                assertThat(attribute.key()).isEqualTo("telemetry.sdk.name");
+                assertThat(attribute.value().asText()).isEqualTo("kotlp");
+            });
 
         assertThat(listAppender.list).anySatisfy(event ->
         {
             assertThat(event.getFormattedMessage()).isEqualTo("hello from file");
             assertThat(event.getLevel()).isEqualTo(Level.INFO);
-            assertThat(originalTimestamp(event)).isEqualTo(Instant.ofEpochSecond(0, TIME_UNIX_NANO));
+            assertThat(originalTimestamp(event)).isEqualTo(Instant.ofEpochSecond(0, RECORDED_STDOUT_UNIX_NANO));
+        });
+        assertThat(listAppender.list).anySatisfy(event ->
+        {
+            assertThat(event.getFormattedMessage()).isEqualTo("something went wrong");
+            assertThat(event.getLevel()).isEqualTo(Level.ERROR);
         });
         assertThat(listAppender.list).anySatisfy(event ->
         {
@@ -352,10 +377,16 @@ class TaskLogLineMatcherTest {
             assertThat(event.getLevel()).isEqualTo(Level.WARN);
         });
 
+        // one entry per (name, tags) pair over the three metric batches, each holding the last sample
         List<AbstractMetricEntry<?>> metrics = runContext.metrics();
-        assertThat(metrics).hasSize(1);
-        assertThat(metrics.getFirst().getName()).isEqualTo("process.memory.usage");
-        assertThat(metrics.getFirst().getValue()).isEqualTo(1048576d);
+        assertThat(metrics).hasSize(10);
+        assertThat(metricNamed(metrics, "process.memory.usage", Map.of()).getValue()).isEqualTo(8_810_496d);
+        assertThat(metricNamed(metrics, "process.thread.count", Map.of()).getValue()).isEqualTo(2d);
+        assertThat(metricNamed(metrics, "process.cpu.time", Map.of("cpu.mode", "system")).getValue()).isEqualTo(0.025476);
+        // the closing batch is derived from rusage: kotlp carries the last /proc read of an IO
+        // counter it cannot recompute rather than restarting the series at zero
+        assertThat(metricNamed(metrics, "process.disk.io", Map.of("disk.io.direction", "write")).getValue()).isEqualTo(67_108_864d);
+        assertThat(metricNamed(metrics, "process.disk.io", Map.of("disk.io.direction", "read")).getValue()).isEqualTo(299_008d);
     }
 
     @Test
@@ -422,6 +453,13 @@ class TaskLogLineMatcherTest {
         logger.setLevel(Level.TRACE);
         logger.addAppender(listAppender);
         return listAppender;
+    }
+
+    private static AbstractMetricEntry<?> metricNamed(List<AbstractMetricEntry<?>> metrics, String name, Map<String, String> tags) {
+        return metrics.stream()
+            .filter(metric -> name.equals(metric.getName()) && tags.equals(metric.getTags()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("No metric '%s' with tags %s among %s".formatted(name, tags, metrics)));
     }
 
     private static Instant originalTimestamp(ILoggingEvent event) {

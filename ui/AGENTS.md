@@ -46,6 +46,7 @@ A design system rots fast if it's treated as a one-time deliverable. Apply these
 ### While you write code
 
 - Build screens by *composing* `Ks*` components. A new feature should read like a list of design-system blocks plus business logic — not a wall of custom CSS.
+- Keep the style **inside** the SFC. `<style scoped src="./x.scss">` is valid and `scoped` still applies, but an external file separates the CSS from the markup it describes for no gain, and it is one more file to open. Block order is `template`, `script`, `style`, enforced by `vue/block-order` in `ui/eslint.config.js`.
 - Keep `<style>` blocks small. If a component file has more than ~50 lines of CSS, you probably need a new prop, a new slot, or a new `Ks*` component.
 - Prefer `scoped` styles and rely on design tokens for theming. If you find yourself writing `:deep(.el-...)`, stop — it's a signal the design system needs to expose something.
 - Write each CSS class selector as a full literal — never construct it with SCSS `&` nesting (`&__row`, `&--active`). Constructed selectors can't be found by search and devtools can't jump from a class to its rule. With `scoped` styles, BEM-style namespacing is redundant anyway: use flat, hyphenated names (`.label-input-row`, not `.label-input { &__row }`).
@@ -308,6 +309,7 @@ If your `<style>` block needs to exist:
 | `KsAutocomplete` | Autocomplete input with suggestions |
 | `KsCheckbox` / `KsCheckboxGroup` / `KsCheckboxButton` | Checkbox variants |
 | `KsRadio` / `KsRadioGroup` / `KsRadioButton` | Radio button variants |
+| `KsRadioCardGroup` | Single-select radio group rendered as option cards (title + optional hint/icon/disabled); options-driven via `:options` + `v-model` |
 | `KsSwitch` | Toggle switch |
 | `KsDatePicker` / `KsTimePicker` | Date and time pickers |
 | `KsColorPicker` | Color picker |

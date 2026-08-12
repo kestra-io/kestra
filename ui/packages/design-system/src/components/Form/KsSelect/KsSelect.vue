@@ -133,9 +133,6 @@
 
     provide(KsSelectColorMapKey, toRef(props, "colorMap"))
 
-    // `loading` is intentionally NOT forwarded to ElSelect: ElSelect v-shows its option
-    // list on `!loading`, so forwarding would hide still-valid options while they
-    // recompute. We only surface a spinning suffix icon, leaving the dropdown usable.
     const LoadingSpinner = markRaw({
         render: () => h(KsIcon, {class: "is-loading"}, () => h(Loading)),
     }) as Component
@@ -222,7 +219,6 @@
             }
         }
 
-
         &:not(.kel-select--small),
         &:not(.kel-select--large) {
             font-size: var(--ks-font-size-xs);
@@ -247,6 +243,10 @@
             &.is-hovering:not(.is-focused):not(.is-disabled) {
                 box-shadow: 0 0 0 1px var(--ks-border-focus) inset;
             }
+        }
+
+        .kel-select__selection.is-near:has(.kel-select__selected-item) {
+            margin-left: 0;
         }
 
         .kel-select__caret {

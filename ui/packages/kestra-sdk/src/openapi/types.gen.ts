@@ -15,6 +15,11 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -342,7 +347,7 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -932,6 +937,11 @@ export type Flow = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -993,8 +1003,6 @@ export type FlowControllerFlowWithDeprecatedTasks = {
     deprecatedTasks?: Array<FlowServiceTaskDeprecation>;
 };
 
-export type FlowControllerTaskValidationType = 'TASKS' | 'TRIGGERS';
-
 export type FlowForExecution = AbstractFlow & {
     id: string;
     namespace: string;
@@ -1002,6 +1010,11 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1168,6 +1181,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1639,8 +1657,8 @@ export type PagedResultsPlugin = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsSearchResultFlow = {
-    results: Array<SearchResultFlow>;
+export type PagedResultsSourceSearchResult = {
+    results: Array<SourceSearchResult>;
     total: number;
 };
 
@@ -1878,11 +1896,6 @@ export type SlaType = 'MAX_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
 
-export type SearchResultFlow = {
-    model?: Flow;
-    fragments?: Array<string>;
-};
-
 export type ServerInstance = {
     id: string;
     type: ServerInstanceType;
@@ -1924,11 +1937,104 @@ export type ServiceInstanceTimestampedEvent = {
     state?: ServiceServiceState;
 };
 
-export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'CONTROLLER' | 'INVALID';
+export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'SYSTEM_WORKER' | 'CONTROLLER' | 'INVALID';
 
 export type SoftDeletableFlowInterface = {
     deleted?: boolean;
 };
+
+export type SourceMatch = {
+    line?: number;
+    column?: number;
+    snippet?: string;
+};
+
+export type SourceSearchReplaceApplyRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    scope?: SourceSearchScope | null;
+    replacement: string;
+    flows: Array<IdWithNamespace>;
+};
+
+export type SourceSearchReplaceApplyResponse = {
+    /**
+     * The flows that were rewritten, with their new revision.
+     */
+    updated?: Array<FlowWithSource>;
+    /**
+     * The flows that were left untouched, each with the reason it was skipped.
+     */
+    skipped?: Array<SourceSearchReplaceApplyResponseSkippedFlow>;
+};
+
+export type SourceSearchReplaceApplyResponseSkipReason = 'NOT_FOUND' | 'READ_ONLY' | 'NO_CHANGE' | 'NO_MATCH' | 'INVALID_FLOW' | 'UNKNOWN';
+
+/**
+ * A flow that the replace operation did not modify, and why.
+ */
+export type SourceSearchReplaceApplyResponseSkippedFlow = {
+    namespace?: string;
+    id?: string;
+    reason?: SourceSearchReplaceApplyResponseSkipReason;
+    /**
+     * The underlying validation error, when the reason is INVALID_FLOW.
+     */
+    message?: string | null;
+};
+
+export type SourceSearchReplaceLineRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    replacement: string;
+    namespace: string;
+    id: string;
+    line?: number;
+    column?: number;
+};
+
+export type SourceSearchReplacePreviewRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    namespace?: string | null;
+    scope?: SourceSearchScope | null;
+    replacement: string;
+};
+
+export type SourceSearchReplacePreviewResponse = {
+    totalMatches?: number;
+    totalFlows?: number;
+    editableFlowCount?: number;
+    flows?: Array<SourceSearchReplacePreviewResponseFlowMatches>;
+};
+
+export type SourceSearchReplacePreviewResponseFlowMatches = {
+    namespace?: string;
+    id?: string;
+    editable?: boolean;
+    matches?: Array<SourceSearchReplacePreviewResponseMatch>;
+};
+
+export type SourceSearchReplacePreviewResponseMatch = {
+    line?: number;
+    before?: string;
+    after?: string;
+};
+
+export type SourceSearchResult = {
+    namespace?: string;
+    id?: string;
+    editable?: boolean;
+    matches?: Array<SourceMatch>;
+};
+
+export type SourceSearchScope = 'ALL' | 'TASKS' | 'TRIGGERS' | 'INPUTS';
 
 export type State = {
     readonly duration?: string | null;
@@ -2033,6 +2139,10 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2041,7 +2151,7 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2265,7 +2375,7 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2354,6 +2464,10 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2362,7 +2476,7 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -4533,7 +4647,10 @@ export type TriggerExecutionByGetWebhookResponses = {
 export type TriggerExecutionByGetWebhookResponse = TriggerExecutionByGetWebhookResponses[keyof TriggerExecutionByGetWebhookResponses];
 
 export type TriggerExecutionByPostWebhookData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4563,7 +4680,10 @@ export type TriggerExecutionByPostWebhookResponses = {
 export type TriggerExecutionByPostWebhookResponse = TriggerExecutionByPostWebhookResponses[keyof TriggerExecutionByPostWebhookResponses];
 
 export type TriggerExecutionByPutWebhookData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4627,7 +4747,10 @@ export type TriggerExecutionByGetWebhookWithPathResponses = {
 export type TriggerExecutionByGetWebhookWithPathResponse = TriggerExecutionByGetWebhookWithPathResponses[keyof TriggerExecutionByGetWebhookWithPathResponses];
 
 export type TriggerExecutionByPostWebhookWithPathData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4661,7 +4784,10 @@ export type TriggerExecutionByPostWebhookWithPathResponses = {
 export type TriggerExecutionByPostWebhookWithPathResponse = TriggerExecutionByPostWebhookWithPathResponses[keyof TriggerExecutionByPostWebhookWithPathResponses];
 
 export type TriggerExecutionByPutWebhookWithPathData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -6027,6 +6153,22 @@ export type SearchFlowsBySourceCodeData = {
          * A namespace filter prefix
          */
         namespace?: string | null;
+        /**
+         * Whether the query must match with exact case
+         */
+        caseSensitive?: boolean;
+        /**
+         * Whether the query must match on word boundaries only
+         */
+        wholeWord?: boolean;
+        /**
+         * Whether the query is a regular expression rather than a literal string
+         */
+        regex?: boolean;
+        /**
+         * Restricts matches to a top-level section of the flow YAML
+         */
+        scope?: SourceSearchScope;
     };
     url: '/api/v1/{tenant}/flows/source';
 };
@@ -6035,10 +6177,73 @@ export type SearchFlowsBySourceCodeResponses = {
     /**
      * searchFlowsBySourceCode 200 response
      */
-    200: PagedResultsSearchResultFlow;
+    200: PagedResultsSourceSearchResult;
 };
 
 export type SearchFlowsBySourceCodeResponse = SearchFlowsBySourceCodeResponses[keyof SearchFlowsBySourceCodeResponses];
+
+export type ApplyReplaceBySourceCodeData = {
+    /**
+     * The search query, replacement and target flows
+     */
+    body: SourceSearchReplaceApplyRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/apply';
+};
+
+export type ApplyReplaceBySourceCodeResponses = {
+    /**
+     * applyReplaceBySourceCode 200 response
+     */
+    200: SourceSearchReplaceApplyResponse;
+};
+
+export type ApplyReplaceBySourceCodeResponse = ApplyReplaceBySourceCodeResponses[keyof ApplyReplaceBySourceCodeResponses];
+
+export type ReplaceLineBySourceCodeData = {
+    /**
+     * The search query, replacement and target match line
+     */
+    body: SourceSearchReplaceLineRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/line';
+};
+
+export type ReplaceLineBySourceCodeResponses = {
+    /**
+     * replaceLineBySourceCode 200 response
+     */
+    200: SourceSearchReplaceApplyResponse;
+};
+
+export type ReplaceLineBySourceCodeResponse = ReplaceLineBySourceCodeResponses[keyof ReplaceLineBySourceCodeResponses];
+
+export type PreviewReplaceBySourceCodeData = {
+    /**
+     * The search query and replacement
+     */
+    body: SourceSearchReplacePreviewRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/preview';
+};
+
+export type PreviewReplaceBySourceCodeResponses = {
+    /**
+     * previewReplaceBySourceCode 200 response
+     */
+    200: SourceSearchReplacePreviewResponse;
+};
+
+export type PreviewReplaceBySourceCodeResponse = PreviewReplaceBySourceCodeResponses[keyof PreviewReplaceBySourceCodeResponses];
 
 export type ValidateFlowsData = {
     /**
@@ -6073,9 +6278,9 @@ export type ValidateTaskData = {
     };
     query: {
         /**
-         * The type of task
+         * The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)
          */
-        section: FlowControllerTaskValidationType;
+        section: string;
     };
     url: '/api/v1/{tenant}/flows/validate/task';
 };

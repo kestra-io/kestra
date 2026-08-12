@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -97,6 +98,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -1197,6 +1199,211 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(execution.getTrigger().getVariables().get("body")).isEqualTo("{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}");
 
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    @LoadFlows({ "flows/valids/webhook.yaml" })
+    void shouldStorePartsWhenWebhookReceivesMultipartFormData() throws IOException {
+        // Given — a binary file, containing byte sequences that are not valid UTF-8, and a plain form field
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+        byte[] photo = binaryContent();
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("photo", "result.jpg", MediaType.IMAGE_JPEG_TYPE, photo)
+            .addPart("note", "looks good")
+            .build();
+
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key, body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        // Then — the file part is stored under the execution byte-identical, and the other part is a form field
+        Map<String, Object> variables = execution.getTrigger().getVariables();
+        List<Map<String, Object>> parts = (List<Map<String, Object>>) variables.get("parts");
+
+        assertThat(parts).hasSize(1);
+        assertThat(parts.getFirst().get("name")).isEqualTo("photo");
+        assertThat(parts.getFirst().get("filename")).isEqualTo("result.jpg");
+        assertThat(parts.getFirst().get("contentType")).isEqualTo(MediaType.IMAGE_JPEG);
+        assertThat(parts.getFirst().get("size")).isEqualTo(photo.length);
+
+        URI uri = URI.create((String) parts.getFirst().get("uri"));
+        assertThat(uri.getScheme()).isEqualTo("kestra");
+        assertThat(uri.getPath()).contains("/executions/" + execution.getId() + "/").endsWith("/result.jpg");
+        assertThat(storageInterface.get(TENANT_ID, TESTS_FLOW_NS, uri).readAllBytes()).isEqualTo(photo);
+
+        assertThat((Map<String, List<String>>) variables.get("formFields")).containsExactly(entry("note", List.of("looks good")));
+        assertThat(variables.get("body")).isNull();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    @LoadFlows({ "flows/valids/webhook.yaml" })
+    void shouldStoreEachPartSeparatelyWhenWebhookReceivesFilesOfTheSameName() throws IOException {
+        // Given — two file parts sharing both their form field name and their filename
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+
+        MultipartBody body = MultipartBody.builder()
+            .addPart("photo", "result.jpg", MediaType.IMAGE_JPEG_TYPE, "first".getBytes(StandardCharsets.UTF_8))
+            .addPart("photo", "result.jpg", MediaType.IMAGE_JPEG_TYPE, "second".getBytes(StandardCharsets.UTF_8))
+            .build();
+
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key, body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        // Then — neither part overwrote the other
+        List<Map<String, Object>> parts = (List<Map<String, Object>>) execution.getTrigger().getVariables().get("parts");
+
+        assertThat(parts).hasSize(2);
+        List<String> contents = parts.stream()
+            .map(part -> URI.create((String) part.get("uri")))
+            .map(uri ->
+            {
+                try {
+                    return new String(storageInterface.get(TENANT_ID, TESTS_FLOW_NS, uri).readAllBytes(), StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            })
+            .toList();
+        assertThat(contents).containsExactly("first", "second");
+    }
+
+    @Test
+    @LoadFlows(value = { "flows/valids/webhook-with-condition.yaml" })
+    void shouldNotKeepStoredPartsWhenWebhookConditionsAreNotMet() throws IOException {
+        // Given — a webhook whose condition a multipart request cannot meet, as it has no body
+        MultipartBody body = MultipartBody.builder()
+            .addPart("photo", "result.jpg", MediaType.IMAGE_JPEG_TYPE, binaryContent())
+            .build();
+
+        // When
+        var response = client.toBlocking().exchange(
+            HttpRequest
+                .POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+
+        // Then — no execution is created, and the part stored for it does not outlive the call
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        assertThat(
+            storageInterface.allByPrefix(
+                TENANT_ID,
+                TESTS_FLOW_NS,
+                URI.create("kestra:///io/kestra/tests/webhook-with-condition/executions/"),
+                false
+            )
+        ).isEmpty();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/webhook.yaml" })
+    void shouldExposeBase64EncodedBodyWhenWebhookReceivesBinaryBody() {
+        // Given
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+        byte[] content = binaryContent();
+
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key, content)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+            Execution.class
+        );
+
+        // Then — the body reaches the flow byte-identical, base64-encoded rather than decoded as text
+        Map<String, Object> variables = execution.getTrigger().getVariables();
+
+        assertThat(Base64.getDecoder().decode((String) variables.get("body"))).isEqualTo(content);
+        assertThat(variables.get("parts")).isNull();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/webhook-store-body.yaml" })
+    void shouldStoreBodyWhenWebhookFetchTypeIsStore() throws IOException {
+        // Given
+        byte[] content = binaryContent();
+
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-store-body/storeBodyKey", content)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+            Execution.class
+        );
+
+        // Then - the body is stored under the execution byte-identical, and nothing of it reaches the execution
+        Map<String, Object> variables = execution.getTrigger().getVariables();
+
+        URI uri = URI.create((String) variables.get("uri"));
+        assertThat(uri.getScheme()).isEqualTo("kestra");
+        assertThat(uri.getPath()).isEqualTo(
+            "/io/kestra/tests/webhook-store-body/executions/" + execution.getId() + "/webhook/body"
+        );
+        assertThat(storageInterface.get(TENANT_ID, TESTS_FLOW_NS, uri).readAllBytes()).isEqualTo(content);
+        assertThat(variables.get("body")).isNull();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/webhook-store-body.yaml" })
+    void shouldNotStoreAnythingWhenWebhookFetchTypeIsStoreAndCallHasNoBody() {
+        // When
+        Execution execution = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-store-body/storeBodyKey"),
+            Execution.class
+        );
+
+        // Then - a call without a body has nothing to store, so it gets no URI pointing at an empty file
+        assertThat(execution.getTrigger().getVariables().get("uri")).isNull();
+        assertThat(execution.getTrigger().getVariables().get("body")).isNull();
+    }
+
+    @Test
+    @LoadFlows({ "flows/valids/webhook-no-body.yaml" })
+    void shouldIgnoreBodyWhenWebhookFetchTypeIsNone() {
+        // When - a body the flow declared it does not want
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST(
+                "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-no-body/noBodyKey",
+                ImmutableMap.of("a", 1)
+            ),
+            Execution.class
+        );
+
+        // Then - the call still succeeds, and only what surrounds the body reaches the flow
+        Map<String, Object> variables = execution.getTrigger().getVariables();
+
+        assertThat(variables.get("body")).isNull();
+        assertThat(variables.get("uri")).isNull();
+        assertThat(variables.get("headers")).isNotNull();
+    }
+
+    /**
+     * @return content that a UTF-8 round-trip would corrupt, so that a test asserting on it detects any decoding
+     */
+    private static byte[] binaryContent() {
+        byte[] content = new byte[512];
+        new Random(42).nextBytes(content);
+
+        // Make sure the content is not valid UTF-8, whatever the random bytes are.
+        content[0] = (byte) 0xC3;
+        content[1] = (byte) 0x28;
+        content[2] = (byte) 0xFF;
+
+        return content;
     }
 
     @Test

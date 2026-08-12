@@ -281,10 +281,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                         }
                         executor = executorService.process(executor);
 
-                        if (!executor.getNexts().isEmpty()) {
+                        if (executor.getNextCount() > 0) {
                             executor.withExecution(
-                                executorService.onNexts(executor.getExecution(), executor.getNexts()),
-                                "onNexts"
+                                executorService.onNext(executor.getExecution(), executor.getNextCount()),
+                                "onNext"
                             );
                         }
 

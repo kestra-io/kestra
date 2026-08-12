@@ -69,6 +69,16 @@ public class DagTest {
     }
 
     @Test
+    void dagInvalidSubtask() {
+        Flow flow = this.parse("flows/invalids/dag-invalid-subtask.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage()).contains("task1");
+        assertThat(validate.get().getMessage()).contains("message: must not be null");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/finally-dag.yaml" }, tenantId = "errors")
     void errors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(

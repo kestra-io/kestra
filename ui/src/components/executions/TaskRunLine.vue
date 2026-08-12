@@ -222,18 +222,15 @@
 </script>
 
 <style scoped lang="scss">
-    .task-duration {
-        padding: .375rem 0;
-    }
-
     .taskrun-header,
     .attempt-header {
         display: flex;
-        gap: .5rem;
-        padding: 0.5rem 1rem;
+        align-items: center;
+        gap: var(--ks-spacing-2);
+        padding: var(--ks-spacing-1) var(--ks-spacing-4);
         border-bottom: 1px solid var(--ks-border-default);
 
-        >* {
+        > * {
             display: flex;
             align-items: center;
         }
@@ -255,17 +252,17 @@
         padding-left: calc(var(--ks-spacing-4) + var(--depth, 0) * var(--ks-spacing-5));
 
         .task-icon {
-            width: 36px;
-            padding: 6px 6px 6px 0;
-            border-radius: 0.5rem;
-            margin-left: -0.5rem;
+            flex-shrink: 0;
+            width: var(--ks-spacing-6);
+            height: var(--ks-spacing-6);
+            border-radius: var(--ks-radius-base);
+            margin-left: calc(-1 * var(--ks-spacing-2));
         }
 
         .task-id {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding: .375rem 0;
 
             span span {
                 color: var(--ks-text-primary);

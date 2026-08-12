@@ -4,14 +4,14 @@
     "more actions": "Дополнительные действия",
     "new_flow_landing": {
       "blank": {
-        "id_invalid": "Используйте только буквы, цифры, точки, дефисы и подчёркивания, начиная с буквы или цифры.",
-        "id_label": "id flow",
-        "id_placeholder": "moy-flow",
-        "namespace_invalid": "Используйте только строчные буквы, цифры, точки, дефисы и подчёркивания, начиная со строчной буквы или цифры.",
+        "id_invalid": "Используйте только буквы, цифры, точки, тире и нижние подчеркивания, начиная с буквы или цифры.",
+        "id_label": "ID flow",
+        "id_placeholder": "my-flow",
+        "namespace_invalid": "Используйте только строчные буквы, цифры, точки, тире и подчеркивания, начиная со строчной буквы или цифры.",
         "namespace_placeholder": "Выберите namespace",
-        "namespaces_error": "Не удалось загрузить namespace. Введите namespace вручную.",
+        "namespaces_error": "Не удалось загрузить namespaces. Введите namespace вручную.",
         "open_editor": "Открыть редактор",
-        "subtitle": "Начните с примера hello-world и стройте с нуля.",
+        "subtitle": "Начните с шаблона hello-world и создайте с нуля.",
         "title": "Пустой flow"
       },
       "blueprints": {
@@ -21,10 +21,10 @@
       "import": {
         "back": "Назад",
         "error": {
-          "empty": "Содержимое YAML пустое.",
-          "invalid_mapping": "Недействительный YAML flow: ожидалось отображение ключ-значение, а не список или скаляр.",
+          "empty": "Содержимое YAML пусто.",
+          "invalid_mapping": "Недопустимый YAML flow: ожидалось сопоставление ключ-значение, а не список или скаляр.",
           "parse_error": "Не удалось разобрать YAML.",
-          "too_large": "Этот файл слишком большой. Вставьте определение flow или загрузите файл меньше 1 МБ."
+          "too_large": "Этот файл слишком большой. Вместо этого вставьте определение flow или загрузите файл размером менее 1 МБ."
         },
         "paste_label": "Вставить YAML",
         "read_error": "Не удалось прочитать файл.",
@@ -32,12 +32,12 @@
         "subtitle": "Вставьте или загрузите существующее определение flow.",
         "title": "Импортировать YAML",
         "upload_button": "Загрузить .yml / .yaml",
-        "upload_label": "Или загрузить файл",
+        "upload_label": "Или загрузите файл",
         "upload_tip": "Принимает файлы .yml и .yaml."
       },
-      "subtitle": "Начните с пустого холста, просмотрите blueprints или импортируйте существующий YAML.",
+      "subtitle": "Начните с чистого листа, изучите blueprints или импортируйте существующий YAML.",
       "system": {
-        "badge": "SYSTEM",
+        "badge": "СИСТЕМА",
         "subtitle": "Создайте flow оповещений или автоматизации для вашей платформы.",
         "title": "Создать системный flow"
       },
@@ -45,112 +45,112 @@
     },
     "recipe": {
       "create_flow": "Создать flow",
-      "email": "Электронная почта",
+      "email": "Email",
       "execution": {
-        "include_sub": "Включить дочерние namespaces",
-        "include_sub_hint_off": "Только flow в точном namespace будут запускать это оповещение.",
-        "include_sub_hint_on": "Flow в дочерних namespaces также будут запускать это оповещение.",
+        "include_sub": "Включить sub-namespaces",
+        "include_sub_hint_off": "Только flow в точном namespace будут вызывать это оповещение.",
+        "include_sub_hint_on": "flow в дочерних namespace также вызовут это оповещение.",
         "namespace_placeholder": "Выберите namespace",
-        "namespaces_error": "Не удалось загрузить namespace. Введите namespace для отслеживания или повторите позже.",
-        "states": "При этих состояниях",
-        "states_recommended": "FAILED — рекомендуемое значение по умолчанию для оповещений.",
-        "states_required": "Выберите хотя бы одно состояние.",
-        "watch_namespace": "Наблюдать за namespace"
+        "namespaces_error": "Не удалось загрузить namespaces. Введите namespace для просмотра или повторите попытку позже.",
+        "states": "В этих состояниях",
+        "states_recommended": "FAILED рекомендуется по умолчанию для оповещений.",
+        "states_required": "Выберите хотя бы один state.",
+        "watch_namespace": "Следить за namespace"
       },
       "notify": {
-        "email_label": "Электронная почта",
+        "email_label": "Email",
         "email_sub": "Отправить уведомление по электронной почте",
-        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "email_to_placeholder": "получатель{'@'}ваш-домен.com",
         "custom_label": "Пользовательский",
-        "custom_note": "Добавляется задача-заглушка — замените её любым плагином уведомлений в редакторе.",
-        "custom_sub": "Добавьте свою задачу уведомления",
+        "custom_note": "Добавлена задача-заполнитель — замените ее на любой плагин уведомлений в редакторе.",
+        "custom_sub": "Добавьте свою собственную задачу уведомления",
         "plugin_unavailable": "Плагин не установлен",
         "slack_channel_placeholder": "#alerts",
-        "slack_sub": "Опубликовать сообщение в канале Slack",
+        "slack_sub": "Отправить сообщение в Slack-канал",
         "teams_sub": "Отправить карточку в канал Teams",
-        "teams_webhook_placeholder": "URL входящего webhook Teams"
+        "teams_webhook_placeholder": "URL входящего вебхука Teams"
       },
       "other": {
-        "load_error": "Не удалось загрузить trigger. Повторите позже.",
-        "no_results": "Triggers не найдены.",
+        "load_error": "Не удалось загрузить triggers. Повторите попытку позже.",
+        "no_results": "Триггеры не найдены.",
         "search_label": "Поиск triggers",
-        "search_placeholder": "Фильтр по имени или типу"
+        "search_placeholder": "Фильтровать по имени или типу"
       },
       "schedule": {
         "cron": "Cron-выражение",
-        "custom": "Настроить",
+        "custom": "Пользовательский",
         "daily": "Ежедневно",
         "daily_hint": "Запускается каждый день в 9:00.",
         "frequency": "Частота",
         "hourly": "Ежечасно",
-        "hourly_hint": "Запускается каждый час в минуту 0.",
+        "hourly_hint": "Запускается каждый час в 0 минут.",
         "timezone": "Часовой пояс",
         "timezone_placeholder": "Выберите часовой пояс (по умолчанию UTC)",
         "weekly": "Еженедельно",
         "weekly_hint": "Запускается каждый понедельник в 9:00."
       },
-      "section_subtitle": "Создайте flow, который отслеживает вашу платформу и автоматически уведомляет команду.",
+      "section_subtitle": "Создайте flow, который отслеживает вашу платформу и автоматически уведомляет вашу команду.",
       "section_title": "Создать системный flow",
       "summary": {
         "any_namespace": "любой namespace",
         "empty": "Настройте trigger и хотя бы один канал уведомлений для предварительного просмотра вашего flow.",
-        "exact_match": "точное соответствие",
+        "exact_match": "точное совпадение",
         "execution": "Когда flow в {ns} ({scope}) достигает состояния {states}, уведомить через {channels}.",
-        "including_sub": "и дочерние namespaces",
+        "including_sub": "и под-namespaces",
         "invalid_hint": "Добавьте хотя бы один канал уведомлений и завершите настройку trigger.",
         "invalid_hint_trigger": "Завершите настройку trigger.",
         "no_channel": "выбранные вами каналы",
-        "other": "Когда срабатывает trigger {trigger}, уведомить через {channels}.",
-        "schedule": "По расписанию \"{cron}\", уведомить через {channels}.",
-        "selected_trigger": "выбранный",
+        "other": "Когда срабатывает триггер {trigger}, уведомить через {channels}.",
+        "schedule": "По расписанию \"{cron}\", уведомлять через {channels}.",
+        "selected_trigger": "выбрано",
         "title": "Сводка",
-        "webhook": "При получении webhook, уведомить через {channels}.",
-        "preview_title": "Предпросмотр",
-        "live": "LIVE"
+        "webhook": "При получении вебхука, уведомить через {channels}.",
+        "preview_title": "Предварительный просмотр",
+        "live": "В РЕАЛЬНОМ ВРЕМЕНИ"
       },
       "then": {
         "no_channel_warning": "Выберите хотя бы один канал уведомлений.",
-        "subtitle": "Выберите способ уведомления команды.",
-        "title": "Тогда уведомить",
-        "unavailable_channels_warning": "{channels}: plugin не установлен для этого типа trigger, уведомление не будет отправлено."
+        "subtitle": "Выберите способ уведомления вашей команды.",
+        "title": "Затем уведомить",
+        "unavailable_channels_warning": "{channels}: плагин не установлен для этого типа trigger, уведомления не будут отправлены."
       },
       "trigger": {
-        "case_sub": "Только функция EE",
-        "case_title": "Статус случая",
+        "case_sub": "Функция только для EE",
+        "case_title": "Статус кейса",
         "execution_sub": "Реагирует на изменения состояния flow",
-        "execution_title": "Состояние execution",
+        "execution_title": "Состояние выполнения",
         "other_sub": "Любой доступный плагин trigger",
         "other_title": "Другой trigger",
-        "schedule_sub": "Выполняется по расписанию",
+        "schedule_sub": "Запускается по расписанию",
         "schedule_title": "Расписание",
-        "webhook_sub": "Запускается HTTP-запросом",
+        "webhook_sub": "Запущено HTTP-запросом",
         "webhook_title": "Webhook"
       },
       "webhook": {
-        "endpoint_hint": "Отправьте POST-запрос на этот URL для запуска flow.",
+        "endpoint_hint": "Отправьте POST-запрос на этот URL, чтобы запустить flow.",
         "endpoint_url": "URL конечной точки",
-        "key_label": "Ключ webhook",
-        "key_placeholder": "Введите уникальный ключ для этого webhook"
+        "key_label": "Webhook key",
+        "key_placeholder": "Введите уникальный key для этого webhook"
       },
       "when": {
         "subtitle": "Выберите, что запускает этот системный flow.",
         "title": "Когда это происходит",
         "trigger_type": "Тип trigger"
       },
-      "hero_eyebrow": "Ваш system flow",
-      "hero_empty": "Выберите trigger и канал, чтобы увидеть предпросмотр flow.",
-      "browse_blueprints": "Предпочитаете начать с шаблона? Просмотрите system blueprints сообщества",
+      "hero_eyebrow": "Ваш системный flow",
+      "hero_empty": "Выберите trigger и канал для предварительного просмотра вашего flow.",
+      "browse_blueprints": "Предпочитаете начать с шаблона? Просмотрите системные blueprints сообщества",
       "start_blank": "Предпочитаете написать самостоятельно? Пропустите шаги и откройте пустой flow",
       "steps": {
         "trigger_title": "Триггер",
         "trigger_desc": "Когда запускается",
         "trigger_heading": "Когда должен запускаться этот flow?",
         "notify_title": "Уведомление",
-        "notify_desc": "Кто узнает",
-        "notify_heading": "Как уведомить вашу команду?",
-        "review_title": "Проверка",
+        "notify_desc": "Кто об этом узнает",
+        "notify_heading": "Как мы должны уведомить вашу команду?",
+        "review_title": "Обзор",
         "review_desc": "Проверить и создать",
-        "review_heading": "Проверьте свой system flow"
+        "review_heading": "Просмотрите ваш системный flow"
       }
     },
     "toggle menu": "Переключить меню",

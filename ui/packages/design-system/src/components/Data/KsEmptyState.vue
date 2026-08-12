@@ -15,18 +15,10 @@
                 </p>
             </div>
 
-            <div v-if="$slots.action || (isOnline && video) || learnMoreAsButton" class="ks-empty-state__actions">
+            <div v-if="$slots.action || learnMore" class="ks-empty-state__actions">
                 <slot name="action" />
                 <KsButton
-                    v-if="isOnline && video"
-                    tag="a"
-                    target="_blank"
-                    :href="video"
-                >
-                    {{ $t("ks_empty_state.watch_the_video") }}
-                </KsButton>
-                <KsButton
-                    v-else-if="learnMoreAsButton"
+                    v-if="learnMore"
                     tag="a"
                     target="_blank"
                     rel="noopener"
@@ -35,33 +27,18 @@
                     {{ $t("ks_empty_state.learn_more") }}
                 </KsButton>
             </div>
-
-            <a
-                v-if="learnMore && !learnMoreAsButton"
-                class="ks-empty-state__learn-more"
-                :href="learnMore"
-                target="_blank"
-                rel="noopener"
-            >
-                {{ $t("ks_empty_state.learn_more") }}
-                <ArrowTopRight :size="14" />
-            </a>
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
-    import {useNetwork} from "@vueuse/core"
-    import ArrowTopRight from "vue-material-design-icons/ArrowTopRight.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
 
-    const props = defineProps<{
+    defineProps<{
         title?: string;
         description?: string;
         image?: string;
         imageAlt?: string;
-        video?: string;
         learnMore?: string;
     }>()
 
@@ -69,11 +46,6 @@
         action?(): unknown;
         description?(): unknown;
     }>()
-
-    const {isOnline} = useNetwork()
-
-    /** Shown as a button when there is no video, so the two never appear together. */
-    const learnMoreAsButton = computed(() => Boolean(props.learnMore) && !props.video)
 </script>
 
 <style lang="scss" scoped>
@@ -142,19 +114,6 @@
 
     :deep(.kel-button + .kel-button) {
         margin-left: 0;
-    }
-}
-
-.ks-empty-state__learn-more {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: var(--ks-font-size-sm);
-    color: var(--ks-text-secondary);
-    text-decoration: none;
-
-    &:hover {
-        color: var(--ks-text-link);
     }
 }
 </style>

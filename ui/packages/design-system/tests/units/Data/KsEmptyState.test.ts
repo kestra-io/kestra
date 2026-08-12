@@ -10,7 +10,6 @@ const i18n = createI18n({
     messages: {
         en: {
             ks_empty_state: {
-                watch_the_video: "Watch the video",
                 learn_more: "Learn more",
             },
         },
@@ -51,30 +50,7 @@ describe("KsEmptyState", () => {
         expect(wrapper.find("[data-test=\"create\"]").exists()).toBe(true)
     })
 
-    test("renders Learn more link when learnMore is set", () => {
-        const wrapper = mount(KsEmptyState, {
-            props: {
-                title: "Empty",
-                learnMore: "https://kestra.io/docs",
-                video: "https://www.youtube.com/watch?v=h-vmMGlTGM8",
-            },
-            global: globalConfig,
-        })
-        const link = wrapper.find(".ks-empty-state__learn-more")
-        expect(link.exists()).toBe(true)
-        expect(link.attributes("href")).toBe("https://kestra.io/docs")
-        expect(link.attributes("target")).toBe("_blank")
-    })
-
-    test("omits Learn more link when learnMore is absent", () => {
-        const wrapper = mount(KsEmptyState, {
-            props: {title: "Empty"},
-            global: globalConfig,
-        })
-        expect(wrapper.find(".ks-empty-state__learn-more").exists()).toBe(false)
-    })
-
-    test("promotes Learn more to a button when there is no video", () => {
+    test("renders Learn more as a button when learnMore is set", () => {
         const wrapper = mount(KsEmptyState, {
             props: {title: "Empty", learnMore: "https://kestra.io/docs"},
             global: globalConfig,
@@ -86,26 +62,26 @@ describe("KsEmptyState", () => {
         expect(button.attributes("target")).toBe("_blank")
         // setup.ts mocks vue-i18n, so labels render as their translation key.
         expect(button.text()).toBe("ks_empty_state.learn_more")
-
-        expect(wrapper.find(".ks-empty-state__learn-more").exists()).toBe(false)
     })
 
-    test("offers the video instead of a Learn more button when both are set", () => {
+    test("omits the actions row when there is no action slot and no learnMore", () => {
         const wrapper = mount(KsEmptyState, {
-            props: {
-                title: "Empty",
-                learnMore: "https://kestra.io/docs",
-                video: "https://www.youtube.com/watch?v=h-vmMGlTGM8",
-            },
+            props: {title: "Empty"},
+            global: globalConfig,
+        })
+        expect(wrapper.find(".ks-empty-state__actions").exists()).toBe(false)
+    })
+
+    test("keeps the action slot alongside the Learn more button", () => {
+        const wrapper = mount(KsEmptyState, {
+            props: {title: "Empty", learnMore: "https://kestra.io/docs"},
+            slots: {action: "<button data-test=\"create\">Create</button>"},
             global: globalConfig,
         })
 
-        const actions = wrapper.findAll(".ks-empty-state__actions a")
-        expect(actions).toHaveLength(1)
-        expect(actions[0].attributes("href")).toBe("https://www.youtube.com/watch?v=h-vmMGlTGM8")
-        expect(actions[0].text()).toBe("ks_empty_state.watch_the_video")
-
-        expect(wrapper.find(".ks-empty-state__learn-more").attributes("href")).toBe("https://kestra.io/docs")
+        const actions = wrapper.find(".ks-empty-state__actions")
+        expect(actions.find("[data-test=\"create\"]").exists()).toBe(true)
+        expect(actions.findAll("a")).toHaveLength(1)
     })
 
     test("description slot overrides description prop", () => {

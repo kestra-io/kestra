@@ -217,7 +217,7 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
-    onMounted(async () => {
+    const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
             providers.value = list ?? []
@@ -225,7 +225,7 @@
         } catch {
             // No provider list (e.g. AI unavailable) — the composer just omits the picker.
         }
-    })
+    })()
 
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
@@ -237,11 +237,7 @@
 
     const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext} = useAiChat()
 
-    // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
-    // Kept as a promise so an auto-sent prompt waits for it and continues that thread instead of
-    // racing the restore into a second one.
-    let restored: Promise<void> = Promise.resolve()
-    onMounted(() => { restored = restoreThread() })
+    const restored = restoreThread()
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
@@ -357,9 +353,12 @@
         if (seeded.newChat || seeded.autoSend) await restored
         if (seeded.newChat) reset()
 
-        if (seeded.autoSend && canSend.value) {
-            onSubmit(seeded.text)
-            return
+        if (seeded.autoSend) {
+            await providersLoaded
+            if (canSend.value) {
+                onSubmit(seeded.text)
+                return
+            }
         }
 
         composerText.value = seeded.text

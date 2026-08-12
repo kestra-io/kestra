@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
 import {ref} from "vue"
 import {mountGlobal} from "./_helpers"
@@ -40,7 +40,16 @@ import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vu
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
 import {providers as providersMock} from "@kestra-io/kestra-sdk/ai"
 
-const mountChat = (props = {}) => mount(CopilotChat, {props, global: mountGlobal})
+// Tracked and unmounted after each test: a live instance keeps watching `miscStore.copilotPrompt`,
+// so a leaked one from an earlier test would consume the next test's seeded prompt before its own
+// instance mounts.
+const mounted: ReturnType<typeof mount>[] = []
+
+const mountChat = (props = {}) => {
+    const wrapper = mount(CopilotChat, {props, global: mountGlobal})
+    mounted.push(wrapper)
+    return wrapper
+}
 
 describe("CopilotChat", () => {
     beforeEach(() => {
@@ -62,6 +71,10 @@ describe("CopilotChat", () => {
         state.noteContext.mockReset()
         state.thread.value = null
         miscStore.copilotPrompt = null
+    })
+
+    afterEach(() => {
+        mounted.splice(0).forEach((wrapper) => wrapper.unmount())
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -137,6 +150,21 @@ describe("CopilotChat", () => {
         expect(state.sendChat).not.toHaveBeenCalled()
         const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
         expect(textarea.value).toBe("Generate a unit test")
+    })
+
+    it("waits for the provider list before auto-sending, so the turn carries a providerId", async () => {
+        // The thread restore and the provider fetch are independent calls. Sending as soon as the
+        // restore lands would drop providerId and silently take the server default instead.
+        // Held open so the restore lands first, the way a slower provider fetch would.
+        let resolveProviders: (list: unknown) => void = () => {}
+        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        miscStore.copilotPrompt = {text: "Generate a unit test", autoSend: true, newChat: false}
+        mountChat()
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test", providerId: "gemini"}))
     })
 
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {

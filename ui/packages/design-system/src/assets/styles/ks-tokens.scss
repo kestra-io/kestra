@@ -2,11 +2,11 @@
 @use "./color-palette" as palette;
 
 :root {
-    // base colors
     #{--ks-black}: #{v.$black};
     #{--ks-white}: #{v.$white};
 
-    // typography
+    #{--ks-bg-plugin-icon}: #{v.$white};
+
     --ks-font-family-sans: #{v.$font-family-sans-serif};
     --ks-font-family-mono: #{v.$font-family-monospace};
     --ks-font-scale: 1;
@@ -21,19 +21,16 @@
     --ks-font-size-3xl: calc(#{v.$font-size-3xl} * var(--ks-font-scale));
     --ks-font-size-4xl: calc(#{v.$font-size-4xl} * var(--ks-font-scale));
 
-    // radius
     --ks-radius-xs: #{v.$border-radius-xs};
     --ks-radius-sm: #{v.$border-radius-sm};
     --ks-radius-base: #{v.$border-radius};
     --ks-radius-lg: #{v.$border-radius-lg};
     --ks-radius-xl: #{v.$border-radius-xl};
 
-    // shadow
     --ks-shadow-sm: #{v.$box-shadow-sm};
     --ks-shadow-base: #{v.$box-shadow};
     --ks-shadow-lg: #{v.$box-shadow-lg};
 
-    // spacing (4px step)
     --ks-spacing-px: 1px;
     --ks-spacing-1: 0.25rem;
     --ks-spacing-2: 0.5rem;
@@ -47,18 +44,15 @@
     --ks-spacing-12: 5rem;
     --ks-spacing-16: 6rem;
 
-    // font weight
     --ks-font-weight-regular: 400;
     --ks-font-weight-medium: 500;
     --ks-font-weight-semibold: 600;
     --ks-font-weight-bold: 700;
 
-    // line height
     --ks-line-height-tight: 1.2;
     --ks-line-height-base: 1.5;
     --ks-line-height-loose: 1.75;
 
-    // motion
     --ks-duration-fast: 100ms;
     --ks-duration-base: 200ms;
     --ks-duration-slow: 300ms;
@@ -66,24 +60,20 @@
     --ks-ease-in: cubic-bezier(0.4, 0, 1, 1);
     --ks-ease-out: cubic-bezier(0, 0, 0.2, 1);
 
-    // border widths
     --ks-border-width-thin: 1px;
     --ks-border-width-base: 2px;
     --ks-border-width-thick: 4px;
 
-    // composite borders
     --ks-border-block-primary: var(--ks-border-width-thin) solid var(--ks-border-default);
     --ks-border-block-secondary: var(--ks-border-width-thin) solid var(--ks-border-subtle);
     --ks-border-block-active: var(--ks-border-width-thin) solid var(--ks-border-focus);
 
-    // icon sizes
     --ks-icon-size-xs: 0.75rem;
     --ks-icon-size-sm: 1rem;
     --ks-icon-size-base: 1.25rem;
     --ks-icon-size-lg: 1.5rem;
     --ks-icon-size-xl: 2rem;
 
-    // status
     --ks-status-created: var(--ks-status-info);
     --ks-status-restarted: var(--ks-status-info);
     --ks-status-retried: var(--ks-status-info);
@@ -132,7 +122,6 @@
     --ks-status-background-skipped: color-mix(in srgb, var(--ks-status-skipped), var(--ks-bg-badge) 90%);
     --ks-status-background-queued: color-mix(in srgb, var(--ks-status-queued), var(--ks-bg-badge) 90%);
 
-    // logs
     --ks-log-trace: var(--ks-status-neutral);
     --ks-log-debug: var(--ks-status-running);
     --ks-log-info: var(--ks-status-info);

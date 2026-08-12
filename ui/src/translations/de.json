@@ -1048,8 +1048,7 @@
         "audit-logs": {
           "title": "Alle Änderungen an einem Ort verfolgen",
           "message": "In der Kestra Enterprise Edition können Sie Audit-Logs auf Namespace-Ebene mit detaillierten Diffs anzeigen, die Ihnen eine klare Historie darüber geben, wer was und wann an allen Ressourcen geändert hat."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1601,8 +1600,7 @@
       "panels": {
         "title": "Kein Panel geöffnet",
         "content": "Du hast alle Panels geschlossen.  \nWähle oben eine Registerkarte, um fortzufahren."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Zeilenumbruch umschalten",
     "copied_logs_to_clipboard": "Logs in die Zwischenablage kopiert.",
@@ -2249,7 +2247,6 @@
     "blocks": "Blöcke",
     "flow_description": "Flow-Beschreibung",
     "flow_no_description": "Keine Beschreibung. Fügen Sie Ihrem flow-YAML eine Beschreibung hinzu.",
-    "pluginDefaults": {},
     "split_horizontal": "Horizontal aufteilen",
     "split_vertical": "Vertikal aufteilen",
     "pwa": {

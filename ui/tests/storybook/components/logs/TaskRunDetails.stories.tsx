@@ -5,6 +5,7 @@ import {useExecutionsStore} from "../../../../src/stores/executions";
 import TaskRunDetails from "../../../../src/components/logs/TaskRunDetails.vue";
 
 const TASK_RUN_ID = "task-run-1";
+const SECOND_TASK_RUN_ID = "task-run-2";
 
 const BASE_LOG = {
     namespace: "company.team",
@@ -43,12 +44,27 @@ const TASK_RUN_STATE = {
     ],
 };
 
+const SECOND_TASK_RUN_STATE = {
+    current: "SUCCESS",
+    startDate: "2025-01-01T00:00:00Z",
+    endDate: "2025-01-01T00:02:00Z",
+    duration: "PT2M",
+    histories: [
+        {state: "CREATED", date: "2025-01-01T00:00:00Z"},
+        {state: "RUNNING", date: "2025-01-01T00:00:00Z"},
+        {state: "SUCCESS", date: "2025-01-01T00:02:00Z"},
+    ],
+};
+
 const FAKE_EXECUTION = {
     id: "test-exec-id",
     flowId: "test-flow",
     namespace: "company.team",
     state: TASK_RUN_STATE,
-    taskRunList: [{id: TASK_RUN_ID, taskId: "my-task", state: TASK_RUN_STATE, attempts: [{state: TASK_RUN_STATE}]}],
+    taskRunList: [
+        {id: TASK_RUN_ID, taskId: "my-task", state: TASK_RUN_STATE, attempts: [{state: TASK_RUN_STATE}]},
+        {id: SECOND_TASK_RUN_ID, taskId: "my-longer-task", state: SECOND_TASK_RUN_STATE, attempts: [{state: SECOND_TASK_RUN_STATE}]},
+    ],
 };
 
 const ROUTER_ROUTES = [
@@ -87,6 +103,56 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+export const KeepsTaskHeadersCompactAndAligned: Story = {
+    args: {
+        taskRunId: undefined,
+        targetFlow: {
+            tasks: [
+                {id: "my-task", type: "io.kestra.plugin.core.log.Log"},
+                {id: "my-longer-task", type: "io.kestra.plugin.core.log.Log"},
+            ],
+        },
+    },
+    play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+        const headers = await waitFor(
+            () => {
+                const renderedHeaders = Array.from(canvasElement.querySelectorAll<HTMLElement>(".taskrun-header"));
+                if (renderedHeaders.length !== 2) {
+                    throw new Error(`expected 2 task headers, got ${renderedHeaders.length}`);
+                }
+                if (renderedHeaders.some(header => !header.querySelector(".ks-duration-value")?.textContent?.trim())) {
+                    throw new Error("task duration not rendered yet");
+                }
+                return renderedHeaders;
+            },
+            {timeout: 5000},
+        );
+
+        const durationRightEdges: number[] = [];
+        for (const header of headers) {
+            const duration = header.querySelector<HTMLElement>(".ks-duration-value");
+            const status = header.querySelector<HTMLElement>(".ks-execution-status");
+            const attemptHeader = header.parentElement?.querySelector<HTMLElement>(".attempt-header");
+            if (!duration || !status || !attemptHeader) {
+                throw new Error("task header controls not rendered");
+            }
+
+            const headerRect = header.getBoundingClientRect();
+            const attemptHeaderRect = attemptHeader.getBoundingClientRect();
+            const durationRect = duration.getBoundingClientRect();
+            const statusRect = status.getBoundingClientRect();
+            const durationCenter = durationRect.top + durationRect.height / 2;
+            const statusCenter = statusRect.top + statusRect.height / 2;
+
+            expect(Math.abs(durationCenter - statusCenter)).toBeLessThanOrEqual(2);
+            expect(headerRect.height).toBeLessThanOrEqual(attemptHeaderRect.height + 1);
+            durationRightEdges.push(durationRect.right);
+        }
+
+        expect(Math.max(...durationRightEdges) - Math.min(...durationRightEdges)).toBeLessThanOrEqual(1);
+    },
+};
 
 /**
  * Collapsed runs of similar log lines are the one place where an item's height changes WITHOUT its

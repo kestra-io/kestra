@@ -76,7 +76,7 @@ export const InputTypes = {
             expect(can.getByTestId("test-content").textContent).to.include("foo@example.com");
         });
 
-        const input = await waitFor(() => can.getByLabelText("Single select input"), {timeout: 4000, interval: 500});
+        const input = await waitFor(() => within(can.getByTestId("input-form-resource_type")).getByRole("combobox"), {timeout: 4000, interval: 500});
 
         await userEvent.click(input);
         await userEvent.click(popups.getByText("Second value"));
@@ -85,7 +85,7 @@ export const InputTypes = {
             expect(can.getByTestId("test-content").textContent).to.include("Second value");
         });
 
-        await userEvent.click(can.getByLabelText("Multi select input"));
+        await userEvent.click(within(can.getByTestId("input-form-resource_type_multi")).getByRole("combobox"));
         await userEvent.click(popups.getByText("Fifth value"));
         await userEvent.click(popups.getByText("Seventh value"));
 

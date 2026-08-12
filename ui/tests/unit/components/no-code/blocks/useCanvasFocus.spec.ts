@@ -1,6 +1,13 @@
-import {describe, expect, it, vi} from "vitest"
+import {afterEach, describe, expect, it, vi} from "vitest"
 import {nextTick, ref} from "vue"
 import {useCanvasFocus} from "../../../../../src/components/no-code/blocks/useCanvasFocus"
+
+const mounted: HTMLElement[] = []
+
+afterEach(() => {
+    // The unit setup fails any spec that leaves nodes on document.body.
+    mounted.splice(0).forEach((root) => root.remove())
+})
 
 // jsdom reports every element as having no offsetParent and has no layout, so the
 // two things the composable relies on — visibility filtering and scrollIntoView —
@@ -18,6 +25,7 @@ function buildCanvas(ids: string[]) {
     }
 
     document.body.appendChild(root)
+    mounted.push(root)
     return root
 }
 

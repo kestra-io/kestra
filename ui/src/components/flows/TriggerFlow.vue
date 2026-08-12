@@ -2,24 +2,13 @@
     <div class="trigger-flow-wrapper">
         <span data-onboarding-target="flow-execute-button">
             <KsButton
-                v-if="iconOnly"
                 :id="actionId"
-                class="execute-icon-only"
-                type="success"
-                :icon="PlayOutlineIcon"
-                :disabled="actionDisabled"
-                :aria-label="actionLabel"
-                @click="runAction()"
-            />
-            <KsButton
-                v-else
-                id="execute-button"
                 :icon="PlayOutlineIcon"
                 :type="type"
-                :disabled="isDisabled()"
-                @click="onClick()"
+                :disabled="actionDisabled"
+                @click="runAction()"
             >
-                {{ t("execute") }}
+                {{ actionLabel }}
             </KsButton>
         </span>
         <KsDialog
@@ -120,12 +109,10 @@
         disabled?: boolean
         type?: "default" | "primary" | "success" | "warning" | "info" | "danger" | "text" | ""
         flowSource?: string | null
-        iconOnly?: boolean
     }>(), {
         disabled: false,
         type: "primary",
         flowSource: null,
-        iconOnly: false,
     })
 
     const {t} = useI18n({useScope: "global"})
@@ -314,11 +301,5 @@
 <style scoped>
     .trigger-flow-wrapper {
         display: inline;
-    }
-
-    .execute-icon-only {
-        aspect-ratio: 1 / 1;
-        padding-left: 0;
-        padding-right: 0;
     }
 </style>

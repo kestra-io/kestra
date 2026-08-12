@@ -41,6 +41,16 @@ describe("normalize for BOOL always yields a real boolean", () => {
     })
 })
 
+describe("normalize for ION uses the structured-data editor contract", () => {
+    it("serializes structured values", () => {
+        expect(normalize("ION", {name: "Ada"})).toBe('{"name":"Ada"}')
+    })
+
+    it("preserves Ion text", () => {
+        expect(normalize("ION", '{name:"Ada"}')).toBe('{name:"Ada"}')
+    })
+})
+
 describe("flattenInputs", () => {
     it("returns [] for undefined", () => {
         expect(flattenInputs(undefined)).toEqual([])

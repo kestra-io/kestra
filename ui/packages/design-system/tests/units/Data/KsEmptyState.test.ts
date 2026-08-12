@@ -53,7 +53,11 @@ describe("KsEmptyState", () => {
 
     test("renders Learn more link when learnMore is set", () => {
         const wrapper = mount(KsEmptyState, {
-            props: {title: "Empty", learnMore: "https://kestra.io/docs"},
+            props: {
+                title: "Empty",
+                learnMore: "https://kestra.io/docs",
+                video: "https://www.youtube.com/watch?v=h-vmMGlTGM8",
+            },
             global: globalConfig,
         })
         const link = wrapper.find(".ks-empty-state__learn-more")
@@ -68,6 +72,43 @@ describe("KsEmptyState", () => {
             global: globalConfig,
         })
         expect(wrapper.find(".ks-empty-state__learn-more").exists()).toBe(false)
+    })
+
+    test("promotes Learn more to a button when there is no video", () => {
+        const wrapper = mount(KsEmptyState, {
+            props: {title: "Empty", learnMore: "https://kestra.io/docs"},
+            global: globalConfig,
+        })
+
+        const button = wrapper.find(".ks-empty-state__actions a")
+        expect(button.exists()).toBe(true)
+        expect(button.attributes("href")).toBe("https://kestra.io/docs")
+        expect(button.attributes("target")).toBe("_blank")
+        // setup.ts mocks vue-i18n, so labels render as their translation key.
+        expect(button.text()).toBe("ks_empty_state.learn_more")
+
+        // The button replaces the arrow link rather than doubling up with it.
+        expect(wrapper.find(".ks-empty-state__learn-more").exists()).toBe(false)
+    })
+
+    test("offers the video instead of a Learn more button when both are set", () => {
+        const wrapper = mount(KsEmptyState, {
+            props: {
+                title: "Empty",
+                learnMore: "https://kestra.io/docs",
+                video: "https://www.youtube.com/watch?v=h-vmMGlTGM8",
+            },
+            global: globalConfig,
+        })
+
+        const actions = wrapper.findAll(".ks-empty-state__actions a")
+        expect(actions).toHaveLength(1)
+        expect(actions[0].attributes("href")).toBe("https://www.youtube.com/watch?v=h-vmMGlTGM8")
+        // setup.ts mocks vue-i18n, so labels render as their translation key.
+        expect(actions[0].text()).toBe("ks_empty_state.watch_the_video")
+
+        // learnMore stays available, but as the arrow link underneath.
+        expect(wrapper.find(".ks-empty-state__learn-more").attributes("href")).toBe("https://kestra.io/docs")
     })
 
     test("description slot overrides description prop", () => {

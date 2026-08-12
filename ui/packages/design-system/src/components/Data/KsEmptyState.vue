@@ -15,7 +15,7 @@
                 </p>
             </div>
 
-            <div v-if="$slots.action || (isOnline && video)" class="ks-empty-state__actions">
+            <div v-if="$slots.action || (isOnline && video) || learnMoreAsButton" class="ks-empty-state__actions">
                 <slot name="action" />
                 <KsButton
                     v-if="isOnline && video"
@@ -25,10 +25,19 @@
                 >
                     {{ $t("ks_empty_state.watch_the_video") }}
                 </KsButton>
+                <KsButton
+                    v-else-if="learnMoreAsButton"
+                    tag="a"
+                    target="_blank"
+                    rel="noopener"
+                    :href="learnMore"
+                >
+                    {{ $t("ks_empty_state.learn_more") }}
+                </KsButton>
             </div>
 
             <a
-                v-if="learnMore"
+                v-if="learnMore && !learnMoreAsButton"
                 class="ks-empty-state__learn-more"
                 :href="learnMore"
                 target="_blank"
@@ -42,11 +51,12 @@
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue"
     import {useNetwork} from "@vueuse/core"
     import ArrowTopRight from "vue-material-design-icons/ArrowTopRight.vue"
     import KsButton from "../Basic/KsButton/KsButton.vue"
 
-    defineProps<{
+    const props = defineProps<{
         title?: string;
         description?: string;
         image?: string;
@@ -61,6 +71,14 @@
     }>()
 
     const {isOnline} = useNetwork()
+
+    /**
+     * Without a video to offer, `learnMore` is promoted from the subdued arrow
+     * link to a proper button, so every empty state keeps one obvious way to
+     * read up on the feature. The two are mutually exclusive: a surface never
+     * shows both a "Learn more" button and a "Learn more" link.
+     */
+    const learnMoreAsButton = computed(() => Boolean(props.learnMore) && !props.video)
 </script>
 
 <style lang="scss" scoped>

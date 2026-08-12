@@ -24,12 +24,13 @@
         tab: string;
     }>()
 
+    // The policies tab is deliberately absent: its recording covered Plugin
+    // Defaults, so that tab falls back to the namespace documentation instead.
     const videos = {
         edit: "https://www.youtube.com/embed/As4y2oliD_8",
         secrets: "https://www.youtube.com/embed/u0yuOYG-qMI",
         assets: "https://www.youtube.com/embed/XhICXP_GXic",
         variables: "https://www.youtube.com/embed/1iSam2aftKo",
-        policies: "https://www.youtube.com/embed/9zQTUeL0KMc",
         history: "https://www.youtube.com/embed/lpHl52Rlvr0",
         "audit-logs": "https://www.youtube.com/embed/Qz24gBPGZHs",
     }

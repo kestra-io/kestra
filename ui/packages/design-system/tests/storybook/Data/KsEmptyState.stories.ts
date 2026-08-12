@@ -10,7 +10,7 @@ const meta: Meta<typeof KsEmptyState> = {
         docs: {
             description: {
                 component:
-                    "Onboarding empty state for surfaces that have no data yet. Renders a left-aligned artwork tile, title, description, optional action button (slot), optional 'Watch the video' button (when `video` URL provided), and optional 'Learn more' link (when `learnMore` URL provided).",
+                    "Onboarding empty state for surfaces that have no data yet. Renders a left-aligned artwork tile, title, description and an optional action button (slot). With a `video` URL it adds a 'Watch the video' button and shows `learnMore` as an arrow link underneath. Without one, `learnMore` is promoted to a 'Learn more' button and the arrow link is dropped, so the two never appear together.",
             },
         },
     },
@@ -51,6 +51,23 @@ export const WithVideoAndLearnMore: Story = {
             >
                 <template #action>
                     <ks-button type="primary">Install</ks-button>
+                </template>
+            </ks-empty-state>
+        `,
+    }),
+}
+
+export const WithLearnMoreOnly: Story = {
+    render: () => ({
+        components: {KsEmptyState, KsButton},
+        template: `
+            <ks-empty-state
+                title="You have no policies yet!"
+                description="Policies let you enforce rules on every flow in your tenant."
+                learn-more="https://kestra.io/docs/enterprise/governance/policies"
+            >
+                <template #action>
+                    <ks-button type="primary">Create policy</ks-button>
                 </template>
             </ks-empty-state>
         `,

@@ -48,8 +48,6 @@ class TaskRunTest {
         assertThat(restored.getAssetEmits().getFirst().getInputs().getFirst().id()).isEqualTo("asset_a");
         assertThat(restored.getAssetEmits().getFirst().getOutputs()).hasSize(1);
         assertThat(restored.getAssetEmits().getFirst().getOutputs().getFirst().getId()).isEqualTo("asset_b");
-        // deprecated bridge still returns a single bundle for callers like ApiTaskRun
-        assertThat(restored.getAssets()).isNotNull();
     }
 
     // Modern payloads serialize as `assetEmits` and never write the legacy `assets` key.

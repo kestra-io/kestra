@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
@@ -57,8 +56,7 @@ public class TaskRun implements TenantInterface {
     @With
     List<TaskRunAttempt> attempts;
 
-    // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own
-    // lineage event. Canonical store for a taskRun's assets (the legacy single `assets` folds in via setAssets).
+    // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own lineage event.
     @With
     @Nullable
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -112,17 +110,6 @@ public class TaskRun implements TenantInterface {
             this.assetEmits = this.assetEmits == null ? new ArrayList<>() : new ArrayList<>(this.assetEmits);
         }
         this.assetEmits.add(assets);
-    }
-
-    /**
-     * @deprecated use {@link #getAssetEmits()}. Returns the first bundle so callers still expecting a
-     *             single `assets` (e.g. the API layer) keep working. Not serialized.
-     */
-    @Deprecated(forRemoval = true, since = "2.0.0")
-    @JsonIgnore
-    @Nullable
-    public AssetsInOut getAssets() {
-        return this.assetEmits == null || this.assetEmits.isEmpty() ? null : this.assetEmits.getFirst();
     }
 
     public TaskRun withState(State.Type state) {

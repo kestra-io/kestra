@@ -60,7 +60,7 @@
       "notify": {
         "email_label": "电子邮件",
         "email_sub": "发送电子邮件通知",
-        "email_to_placeholder": "recipient@your-domain.com",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "自定义",
         "custom_note": "已添加一个占位符 task — 在编辑器中将其替换为任何通知插件。",
         "custom_sub": "添加您自己的通知 task",

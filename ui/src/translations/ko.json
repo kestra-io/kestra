@@ -60,7 +60,7 @@
       "notify": {
         "email_label": "이메일",
         "email_sub": "이메일 알림 보내기",
-        "email_to_placeholder": "recipient@your-domain.com",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "사용자 지정",
         "custom_note": "자리 표시자 task가 추가되었습니다. 편집기에서 이를 알림 플러그인으로 교체하세요.",
         "custom_sub": "나만의 알림 task 추가",

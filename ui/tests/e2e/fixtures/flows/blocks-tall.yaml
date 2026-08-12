@@ -1,7 +1,8 @@
 id: blocks-tall-fixture
 namespace: company.team
 # Deliberately long: the canvas has to overflow the viewport for a jump to be
-# distinguishable from "already on screen".
+# distinguishable from "already on screen". Kept short enough that walkTo() can
+# still reach the last block within its step bound.
 tasks:
   - id: task_01
     type: io.kestra.plugin.core.log.Log
@@ -51,30 +52,6 @@ tasks:
   - id: task_16
     type: io.kestra.plugin.core.log.Log
     message: sixteen
-  - id: task_17
-    type: io.kestra.plugin.core.log.Log
-    message: seventeen
-  - id: task_18
-    type: io.kestra.plugin.core.log.Log
-    message: eighteen
-  - id: task_19
-    type: io.kestra.plugin.core.log.Log
-    message: nineteen
-  - id: task_20
-    type: io.kestra.plugin.core.log.Log
-    message: twenty
-  - id: task_21
-    type: io.kestra.plugin.core.log.Log
-    message: twenty one
-  - id: task_22
-    type: io.kestra.plugin.core.log.Log
-    message: twenty two
-  - id: task_23
-    type: io.kestra.plugin.core.log.Log
-    message: twenty three
-  - id: task_24
-    type: io.kestra.plugin.core.log.Log
-    message: twenty four
 errors:
   - id: err_handler
     type: io.kestra.plugin.core.log.Log

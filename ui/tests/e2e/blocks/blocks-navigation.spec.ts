@@ -1,9 +1,10 @@
 import {expect, test} from "./blocks.fixture"
+import type {Page} from "@playwright/test"
 import {FlowsApi} from "../api/flows.api"
-import {expectRing, login, openBlockEditor} from "./blocks.helpers"
+import {expectRing, login, openBlockEditor, walkTo} from "./blocks.helpers"
 
-// Jumping across the canvas from the command palette, on a flow long enough that
-// the destination starts off screen.
+// Moving around a canvas that is taller than the viewport. Both behaviours here
+// only exist once the canvas actually scrolls, hence the tall fixture.
 test.describe("Block editor — canvas navigation", () => {
     let flowsApi: FlowsApi
     let flowId: string
@@ -13,13 +14,19 @@ test.describe("Block editor — canvas navigation", () => {
         flowId = await flowsApi.generateFlowViaApi("blocks-tall.yaml", "blocks-tall-fixture")
         await login(page)
         await openBlockEditor(page, flowId)
+
+        // Everything below measures a scroll, so prove there is one to measure.
+        const overflows = await page.locator(".block-editor-main").evaluate(
+            (el) => el.scrollHeight > el.clientHeight + 50,
+        )
+        expect(overflows, "fixture must be tall enough to scroll").toBe(true)
     })
 
     test.afterEach(async () => {
         await flowsApi.removeFlowsViaApi()
     })
 
-    async function goTo(page: Parameters<typeof expectRing>[0], section: string) {
+    async function goTo(page: Page, section: string) {
         await page.keyboard.press("ControlOrMeta+Shift+P")
         const menuInput = page.getByPlaceholder("Type a command or search a task…")
         await expect(menuInput).toBeFocused()
@@ -29,38 +36,51 @@ test.describe("Block editor — canvas navigation", () => {
         await page.getByText(`Go to ${section}`, {exact: true}).click()
     }
 
-    test("a Go to jump leaves its destination comfortably in view", async ({page}) => {
-        // Sanity: the canvas really does overflow, otherwise nothing below would
-        // be measuring a scroll at all.
-        const overflows = await page.locator(".block-editor-main").evaluate(
-            (el) => el.scrollHeight > el.clientHeight + 50,
-        )
-        expect(overflows, "fixture must be tall enough to scroll").toBe(true)
+    async function boxOf(page: Page, selector: string) {
+        const box = await page.locator(selector).boundingBox()
+        expect(box, `${selector} must be laid out`).not.toBeNull()
+        return box!
+    }
 
+    test("a Go to jump centres its destination in the canvas", async ({page}) => {
         await goTo(page, "Errors")
-        await expectRing(page, "err_handler")
+        await expectRing(page, "__section:errors")
 
-        const box = await page.locator("[data-block-id='err_handler']").boundingBox()
-        const viewport = page.viewportSize()
-        expect(box).not.toBeNull()
-        expect(viewport).not.toBeNull()
+        const scrollport = await boxOf(page, ".block-editor-main")
+        const target = await boxOf(page, "[data-block-id='err_handler']")
 
-        // The regression parked the destination flush against the bottom edge,
-        // partly behind the status bar. Centring keeps it well clear.
-        expect(box!.y).toBeLessThan(viewport!.height * 0.75)
-        expect(box!.y + box!.height).toBeLessThan(viewport!.height)
+        // Asserting the distance from the centre, not merely "not at the bottom":
+        // a revert to `nearest` parks it at the edge, and `start` would pin it to
+        // the top — both of which a one-sided bound would let through.
+        const targetCentre = target.y + target.height / 2
+        const scrollportCentre = scrollport.y + scrollport.height / 2
+        expect(Math.abs(targetCentre - scrollportCentre)).toBeLessThan(scrollport.height * 0.25)
     })
 
-    test("jumping back up to Tasks is visible too", async ({page}) => {
-        await goTo(page, "Errors")
+    test("arrow-stepping to the last block keeps it clear of the status bar", async ({page}) => {
+        // Stepping still uses `nearest`, which stops as soon as the card is
+        // technically inside the scrollport — including the strip the status bar
+        // is painted over. scroll-padding-bottom is what reserves that strip.
+        await walkTo(page, "err_handler")
         await expectRing(page, "err_handler")
+
+        const target = await boxOf(page, "[data-block-id='err_handler']")
+        const statusBar = await boxOf(page, "[data-test='block-editor-footer']")
+
+        expect(target.y + target.height).toBeLessThanOrEqual(statusBar.y)
+    })
+
+    test("jumping back up to Tasks leaves the first block fully visible", async ({page}) => {
+        await goTo(page, "Errors")
+        await expectRing(page, "__section:errors")
 
         await goTo(page, "Tasks")
         await expectRing(page, "task_01")
 
-        const box = await page.locator("[data-block-id='task_01']").boundingBox()
-        const viewport = page.viewportSize()
-        expect(box!.y).toBeGreaterThanOrEqual(0)
-        expect(box!.y + box!.height).toBeLessThan(viewport!.height)
+        const scrollport = await boxOf(page, ".block-editor-main")
+        const target = await boxOf(page, "[data-block-id='task_01']")
+
+        expect(target.y).toBeGreaterThanOrEqual(scrollport.y)
+        expect(target.y + target.height).toBeLessThanOrEqual(scrollport.y + scrollport.height)
     })
 })

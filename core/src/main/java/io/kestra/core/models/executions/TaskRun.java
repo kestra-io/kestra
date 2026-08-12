@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
@@ -354,5 +356,35 @@ public class TaskRun implements TenantInterface {
         }
         this.attempts.add(attempt);
         return this;
+    }
+
+    /**
+     * Converts this task run's stored value so field access works in flow expressions (e.g. {@code taskrun.value.id}).
+     *
+     * @return A Map or List when value is JSON, otherwise the original string or null
+     */
+    public Object valueForVariables() {
+        return valueForVariables(this.value);
+    }
+
+    /**
+     * Converts a stored iteration value so field access works in flow expressions (e.g. {@code item.value.id}).
+     *
+     * @param value The iteration value as stored, may be null
+     * @return A Map or List when value is JSON, otherwise the original string or null
+     */
+    public static Object valueForVariables(@Nullable String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+            return value;
+        }
+        try {
+            return JacksonMapper.ofJson().readValue(trimmed, Object.class);
+        } catch (JsonProcessingException e) {
+            return value;
+        }
     }
 }

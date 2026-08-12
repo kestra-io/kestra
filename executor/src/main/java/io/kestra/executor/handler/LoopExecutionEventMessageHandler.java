@@ -213,7 +213,7 @@ public class LoopExecutionEventMessageHandler implements ExecutorMessageHandler<
 
     private Map<String, Object> buildIterationOutput(LoopExecutionEvent message) {
         Map<String, Object> item = HashMap.newHashMap(3);
-        item.put("value", message.loopRun().value());
+        item.put("value", TaskRun.valueForVariables(message.loopRun().value()));
         item.put("iteration", message.loopRun().index());
         if (message.loopRun().key() != null) {
             item.put("key", message.loopRun().key());

@@ -20,8 +20,17 @@ public class JsonTest implements Test {
 
     @Override
     public boolean apply(Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) throws PebbleException {
+        if (input == null) {
+            return false;
+        }
+        if (input instanceof Map || input instanceof List) {
+            return true;
+        }
+        if (!(input instanceof String stringValue)) {
+            return false;
+        }
         try {
-            JacksonMapper.ofJson().readTree((String) input);
+            JacksonMapper.ofJson().readTree(stringValue);
             return true;
         } catch (JsonProcessingException e) {
             return false;

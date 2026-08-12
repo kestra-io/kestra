@@ -160,7 +160,7 @@ public final class RunVariables {
         }
 
         if (taskRun.getValue() != null) {
-            builder.put("value", taskRun.getValue());
+            builder.put("value", taskRun.valueForVariables());
         }
 
         if (taskRun.getIteration() != null) {
@@ -216,7 +216,7 @@ public final class RunVariables {
         if (loopRun.key() != null) {
             loopRunMap.put("key", loopRun.key());
         }
-        loopRunMap.put("value", loopRun.value());
+        loopRunMap.put("value", TaskRun.valueForVariables(loopRun.value()));
         if (loopRun.parents() != null) {
             loopRunMap.put("parent", of(loopRun.parents().getLast()));
             List<Map<String, Object>> parents = new ArrayList<>();
@@ -232,7 +232,7 @@ public final class RunVariables {
         if (parent.key() != null) {
             parentMap.put("key", parent.key());
         }
-        parentMap.put("value", parent.value());
+        parentMap.put("value", TaskRun.valueForVariables(parent.value()));
         return parentMap;
     }
 
@@ -650,7 +650,7 @@ public final class RunVariables {
                 current.put("task", Map.of("id", parent.getTaskId()));
 
                 if (parent.getValue() != null) {
-                    current.put("taskrun", Map.of("value", parent.getValue()));
+                    current.put("taskrun", Map.of("value", parent.valueForVariables()));
                 }
 
                 result.add(current);

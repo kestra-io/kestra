@@ -156,6 +156,17 @@ class VariableRendererTest {
         assertThat(variableRenderer.render("{{ outputs.after.value | number - outputs.before.value | number >= 5 }}", variables)).isEqualTo("true");
     }
 
+    @Test
+    void shouldEvaluateIsJsonTestOnParsedIterationValue() throws IllegalVariableEvaluationException {
+        // Given
+        Map<String, Object> item = Map.of("value", Map.of("key", "my-key", "value", "my-value"));
+
+        // When-Then
+        assertThat(variableRenderer.render("{{ item.value is json }}", Map.of("item", item))).isEqualTo("true");
+        assertThat(variableRenderer.render("{{ item.value is json }}", Map.of("item", Map.of("value", "value 1")))).isEqualTo("false");
+        assertThat(variableRenderer.render("{{ item.value is json }}", Map.of("item", Map.of("value", "{\"key\":\"my-key\"}")))).isEqualTo("true");
+    }
+
     public static class TestVariableRenderer extends VariableRenderer {
 
         public TestVariableRenderer(PebbleEngineFactory pebbleEngineFactory,

@@ -136,7 +136,11 @@ public class RunContextInitializer {
         Map<String, Object> workerTaskRun = (Map<String, Object>) variables.get("workerTaskrun");
         if (workerTaskRun != null && workerTaskRun.containsKey("value")) {
             Map<String, Object> taskrun = new HashMap<>((Map<String, Object>) variables.get("taskrun"));
-            taskrun.put("value", workerTaskRun.get("value"));
+            Object workerValue = workerTaskRun.get("value");
+            if (workerValue instanceof String stringValue) {
+                workerValue = TaskRun.valueForVariables(stringValue);
+            }
+            taskrun.put("value", workerValue);
             variables.put("taskrun", taskrun);
         }
 

@@ -63,6 +63,21 @@ describe("KsEntityLink", () => {
         expect(wrapper.find(".folder-open-outline-icon").exists()).toBe(false)
     })
 
+    test("renders no icon when noIcon is set, keeping the value and its title", () => {
+        const wrapper = mount(KsEntityLink, {
+            props: {
+                entity: "namespace",
+                value: "company.team",
+                to: "/namespaces/edit/company.team",
+                noIcon: true,
+            },
+            global: globalConfig,
+        })
+        expect(wrapper.find(".material-design-icon").exists()).toBe(false)
+        expect(wrapper.find("a").text()).toBe("company.team")
+        expect(wrapper.find("a").attributes("title")).toBe("company.team")
+    })
+
     test("the icon is decorative", () => {
         const wrapper = mount(KsEntityLink, {
             props: {entity: "namespace", value: "company.team", to: "/namespaces/edit/company.team"},

@@ -226,15 +226,17 @@
             : undefined
     }
 
+    const metadataGuarded = computed(() => props.flow
+        && !flowStore.isCreating
+        && !flowStore.isReadOnly
+        && previewSource.value === undefined)
+
     useReadOnlyYamlKeys({
         editor: monacoEditor,
         expected: computed(() => props.flow
             ? {id: flowStore.flow?.id, namespace: flowStore.flow?.namespace}
             : {}),
-        enabled: computed(() => props.flow
-            && !flowStore.isCreating
-            && !flowStore.isReadOnly
-            && previewSource.value === undefined),
+        enabled: metadataGuarded,
         hoverMessage: computed(() => t("namespace and id readonly")),
     })
 
@@ -300,6 +302,9 @@
                 source: newValue,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
                 topologyVisible: true,
+                // The id/namespace lines are locked in this editor, so a warning
+                // here would explain a change the user was never able to make.
+                metadataGuarded: metadataGuarded.value,
             })
         }, 1000)
     }

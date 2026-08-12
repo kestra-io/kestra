@@ -73,6 +73,8 @@
 
     useReadOnlyYamlKeys({
         editor: monacoEditor,
+        // The saved dashboard, not the parsed buffer — comparing the buffer with
+        // itself could never detect a change.
         expected: computed(() => ({id: dashboardStore.activeDashboard?.id})),
         enabled: computed(() => !dashboardStore.isCreating),
         hoverMessage: computed(() => t("dashboards.edition.id readonly")),
@@ -101,3 +103,13 @@
         },
     })
 </script>
+
+<style lang="scss">
+    /* Deliberately not scoped: Monaco renders its own DOM, which Vue's scope
+       attribute never reaches. Repeated rather than shared with the flow editor
+       because an SFC style block ships in that component's CSS chunk, and a
+       dashboard route need never mount FlowFileEditorTab. */
+    .monaco-editor .ks-readonly-yaml-line {
+        background-color: rgba(128, 128, 128, 0.14);
+    }
+</style>

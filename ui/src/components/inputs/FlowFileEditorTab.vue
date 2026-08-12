@@ -62,7 +62,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
+    import {computed, onActivated, onMounted, ref, shallowRef, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
@@ -216,7 +216,8 @@
     // `id` and `namespace` are immutable once the flow exists. Monaco has no
     // read-only ranges, so the guard below refuses those edits as they arrive
     // rather than letting them land and undoing them on the next onEdit tick.
-    const monacoEditor = ref<monaco.editor.IStandaloneCodeEditor>()
+    // shallowRef, not ref: a deep reactive proxy around the editor breaks it.
+    const monacoEditor = shallowRef<monaco.editor.IStandaloneCodeEditor>()
 
     function onEditorMounted(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
         // The revision preview mounts a diff editor, which is read-only as a whole.

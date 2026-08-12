@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, ref, computed} from "vue"
+    import {onMounted, ref, shallowRef, computed} from "vue"
     import {useI18n} from "vue-i18n"
     import type * as monaco from "monaco-editor/editor/editor.api"
     import {useDashboardStore} from "../../../stores/dashboard"
@@ -61,8 +61,9 @@
     }
 
     // A dashboard's id is fixed once it exists, so the line is locked in the
-    // editor rather than corrected after the fact.
-    const monacoEditor = ref<monaco.editor.IStandaloneCodeEditor>()
+    // editor rather than corrected after the fact. shallowRef, not ref: a deep
+    // reactive proxy around the editor breaks it.
+    const monacoEditor = shallowRef<monaco.editor.IStandaloneCodeEditor>()
 
     function onEditorMounted(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
         monacoEditor.value = editor && !("getOriginalEditor" in editor)

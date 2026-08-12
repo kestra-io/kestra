@@ -799,8 +799,9 @@ public class ExecutionController {
         } catch (Exception e) {
             // The failed execution takes the identifier the call was given, so that anything already stored for it
             // is attached to it, and purged with it.
+            // No labels: the executor builds the execution from the flow processed for runtime, which contributes
+            // them itself — passing the authored ones here would let them win the merge and override governance.
             var createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
-                .withLabels(LabelService.labelsExcludingSystem(flow.getLabels()))
                 .withStateType(State.Type.FAILED)
                 .withTrigger(ExecutionTrigger.of(webhook, Map.of()));
 

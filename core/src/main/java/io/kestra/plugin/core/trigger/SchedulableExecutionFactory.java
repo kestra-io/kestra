@@ -93,7 +93,7 @@ final class SchedulableExecutionFactory {
      */
     private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, Map<String, Object> variables)
         throws IllegalVariableEvaluationException {
-        List<Label> labels = LabelService.fromTriggerOnly(runContext, (AbstractTrigger) trigger, Map.of("trigger", variables));
+        List<Label> labels = LabelService.fromTrigger(runContext, (AbstractTrigger) trigger, Map.of("trigger", variables));
 
         if (backfill != null) {
             // It is better to remove system labels before rendering

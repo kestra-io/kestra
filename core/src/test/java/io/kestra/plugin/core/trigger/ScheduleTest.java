@@ -114,7 +114,7 @@ class ScheduleTest {
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), date)).isEqualTo(date.minusMonths(1));
         // the flow's labels are deliberately absent: the execution takes them from the flow processed for
-        // runtime when it is created, so carrying the authored ones here would let them override governance
+        // runtime when it is created, so carrying the raw flow's here would let them override governance
         assertThat(evaluate.get().labels()).doesNotContain(
             new Label("flow-label-1", "flow-label-1"),
             new Label("flow-label-2", "flow-label-2")

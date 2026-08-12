@@ -30,7 +30,7 @@ import jakarta.annotation.Nullable;
  * @param trigger the execution trigger metadata containing plugin output variables and log file URI.
  * @param labels the labels the trigger contributes, including system labels (FROM, CORRELATION_ID). The flow's
  *        own labels are deliberately absent: the execution takes those from the flow processed for runtime when
- *        it is created, so carrying the authored ones here would let them override governance.
+ *        it is created, so carrying the raw flow's here would let them override governance.
  * @param flowRevision the flow revision at evaluation time.
  */
 public record TriggerEvaluationResult(

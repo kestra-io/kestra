@@ -27,8 +27,6 @@ const textYamlHeader = {
     },
 }
 
-// backfill (Schedule) and key (Webhook) are trigger-type-specific runtime config, not part of
-// the SDK's generic AbstractTrigger schema (which models fields common to every trigger type).
 export type Trigger = AbstractTrigger & {
     backfill?: {
         start?: string;
@@ -36,8 +34,6 @@ export type Trigger = AbstractTrigger & {
     key?: string;
 }
 
-// tasks nest recursively (Sequential, Parallel, EachSequential, ...), which the SDK's flat,
-// generic Task schema doesn't model - re-added here for this app's tree-walking usage.
 export type Task = SdkTask & {
     tasks?: Task[]
 }
@@ -57,12 +53,6 @@ export interface FlowValidations {
     deprecationPaths?: string[];
 }
 
-// tasks/errors/triggers/inputs are overridden below: the SDK's generic Task/AbstractTrigger/
-// InputObject types don't model the recursive subtasks or OSS-specific fields (backfill) this
-// app relies on for tree-walking and trigger editing. source is narrowed to required since this
-// store only ever loads flows with the `source: true` request param, which always returns it.
-// disabled/draft/deleted/tasks are widened back to optional: flowStore.flow is also used to hold
-// locally-constructed in-progress flows (new flow/file creation) that don't set them yet.
 export type Flow = Omit<FlowWithSource, "disabled" | "draft" | "deleted" | "tasks"> & {
     source: string;
     disabled?: boolean;
@@ -240,7 +230,6 @@ export const useFlowStore = defineStore("flow", () => {
                     )
                 }
             } catch{
-                // yaml is not always valid
             }
         }
 
@@ -251,8 +240,6 @@ export const useFlowStore = defineStore("flow", () => {
                 if (
                     topologyVisible &&
                     flowHaveTasks.value &&
-                    // avoid sending empty errors
-                    // they make the backend fail
                     flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
                 ) {
                     if (!value.constraints) fetchGraph()
@@ -275,7 +262,20 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
+    let inFlightSave: Promise<FlowSaveOutcome> | null = null
+
     async function saveWithoutRevisionGuard(draft: boolean = false): Promise<FlowSaveOutcome> {
+        if (inFlightSave) return inFlightSave
+        if (!isCreating.value && !haveChange.value) return "no_op"
+        inFlightSave = performSave(draft)
+        try {
+            return await inFlightSave
+        } finally {
+            inFlightSave = null
+        }
+    }
+
+    async function performSave(draft: boolean = false): Promise<FlowSaveOutcome> {
         const flowSource = flowYaml.value ?? ""
 
         if (flowParsed.value === undefined && !draft) {
@@ -370,7 +370,6 @@ export const useFlowStore = defineStore("flow", () => {
             flow: flowYaml.value ?? "",
             config: {
                 params: {
-                    // due to usage of axios instance instead of $http which doesn't convert arrays
                     subflows: expandedSubflows.value.join(","),
                 },
                 validateStatus: (status: number) => {
@@ -389,7 +388,6 @@ export const useFlowStore = defineStore("flow", () => {
             fetchGraph()
         }
 
-        // validate flow on first load
         return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
     }
 
@@ -463,7 +461,6 @@ export const useFlowStore = defineStore("flow", () => {
                 variant: "error",
             }
 
-            // add this error to the list of errors
             flowValidation.value = {
                 constraints: data.exception,
                 outdated: false,
@@ -533,7 +530,6 @@ export const useFlowStore = defineStore("flow", () => {
 
             flow.value = data as Flow
 
-            // clean-up
             localStorage.removeItem(`el-fl-creation-${creationId.value}`)
             creationId.value = undefined
 
@@ -664,7 +660,6 @@ function deleteFlowAndDependencies() {
                 flowVar.id = flow.value?.id ?? flowVar.id
                 flowVar.namespace = flow.value?.namespace ?? flowVar.namespace
                 flowVar.source = options.flow
-                // prevent losing revision when loading graph from source
                 flowVar.revision = flow.value?.revision
                 flowVar.draft = flow.value?.draft
                 flow.value = flowVar

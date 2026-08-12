@@ -241,7 +241,7 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
-    onMounted(async () => {
+    const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
             providers.value = list ?? []
@@ -249,7 +249,7 @@
         } catch {
             // No provider list (e.g. AI unavailable) — the composer just omits the picker.
         }
-    })
+    })()
 
     // Note a user-driven provider/model switch in the transcript (parallels noteContext for focus
     // changes). `previousProvider` starts undefined, so the initial default-selection above doesn't
@@ -282,11 +282,7 @@
     /** Where the unavailable state sends the user: the Copilot docs, on the configuration section. */
     const docsUrl = "https://kestra.io/docs/ai-tools/ai-copilot?utm_source=kestra_app&utm_medium=referral&utm_campaign=ai_copilot_unavailable&utm_content=learn_more#configuration"
 
-    // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
-    // Kept as a promise so an auto-sent prompt waits for it and continues that thread instead of
-    // racing the restore into a second one.
-    let restored: Promise<void> = Promise.resolve()
-    onMounted(() => { restored = restoreThread() })
+    const restored = restoreThread()
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
@@ -426,9 +422,14 @@
             nextThreadTitle.value = threadTitle
         }
 
-        if (autoSend && canSend.value) {
-            onSubmit(seeded)
-            return
+        if (autoSend) {
+            // The provider list has to be in hand before the turn goes out, or it is sent against
+            // the default provider rather than the one the picker restored.
+            await providersLoaded
+            if (canSend.value) {
+                onSubmit(seeded)
+                return
+            }
         }
 
         composerText.value = seeded

@@ -86,7 +86,7 @@
                             >
                                 <slot
                                     name="markdown"
-                                    :content="property.description || property.title || ''"
+                                    :content="propertyDoc(property)"
                                 />
                             </div>
                         </div>
@@ -184,6 +184,7 @@
         extractTypeInfo,
         isDeprecated,
         isDynamic,
+        sanitizeForMarkdown,
         type JSONProperty,
         type JSONSchema,
         type SchemaExample,
@@ -235,6 +236,17 @@
     watch(autoExpanded, (expanded) => {
         if (expanded) emit("expand")
     })
+
+    // The title says what a property is, the description carries the caveat, so the
+    // compact view renders both - matching PropertyDetail. Joined as two paragraphs
+    // in a single slot call: KsMarkdown wraps each render in its own container, so
+    // two slots would break the `p + p` spacing rule.
+    function propertyDoc(property: JSONProperty): string {
+        return [property.title, property.description]
+            .filter((text): text is string => Boolean(text))
+            .map(sanitizeForMarkdown)
+            .join("\n\n")
+    }
 
     function isPropertyVisible(key: string, property: JSONProperty): boolean {
         if (!props.showFilter) return true

@@ -5,6 +5,7 @@ import java.util.List;
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetUser;
+import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.queues.QueueException;
 
 import io.micronaut.context.annotation.Secondary;
@@ -17,7 +18,7 @@ public interface AssetService {
 
     Asset syncUpsert(@Nullable Asset inRepository, AssetUser assetUser, Asset assetToUpsert) throws QueueException;
 
-    void assetLineage(AssetUser assetUser, List<AssetIdentifier> inputs, List<AssetIdentifier> outputs) throws QueueException;
+    void assetLineage(AssetUser assetUser, List<AssetIdentifier> inputs, List<AssetIdentifier> outputs, List<AssetsInOut> bundles) throws QueueException;
 
     void deleteAsset(Asset toDelete, AssetUser assetUser) throws QueueException;
 
@@ -36,7 +37,7 @@ public interface AssetService {
         }
 
         @Override
-        public void assetLineage(AssetUser assetUser, List<AssetIdentifier> inputs, List<AssetIdentifier> outputs) {
+        public void assetLineage(AssetUser assetUser, List<AssetIdentifier> inputs, List<AssetIdentifier> outputs, List<AssetsInOut> bundles) {
             // no-op
         }
 

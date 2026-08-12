@@ -64,6 +64,12 @@ public class TaskRun implements TenantInterface {
     @Nullable
     AssetsInOut assets;
 
+    // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own lineage event.
+    @With
+    @Nullable
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    List<AssetsInOut> assetEmits;
+
     @NotNull
     State state;
 
@@ -95,6 +101,7 @@ public class TaskRun implements TenantInterface {
             this.attempts,
             this.outputs,
             this.assets,
+            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -124,6 +131,7 @@ public class TaskRun implements TenantInterface {
             newAttempts,
             this.outputs,
             this.assets,
+            this.assetEmits,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -148,6 +156,7 @@ public class TaskRun implements TenantInterface {
             newAttempts,
             this.outputs,
             this.assets,
+            this.assetEmits,
             this.state.withState(State.Type.FAILED),
             this.iteration,
             this.dynamic,
@@ -168,6 +177,7 @@ public class TaskRun implements TenantInterface {
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
             .assets(this.getAssets())
+            .assetEmits(this.getAssetEmits())
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
             .build();
@@ -253,6 +263,7 @@ public class TaskRun implements TenantInterface {
             ", state=" + this.getState().getCurrent().toString() +
             ", outputs=" + this.getOutputs() +
             ", assets=" + this.getAssets() +
+            ", assetEmits=" + this.getAssetEmits() +
             ", attempts=" + this.getAttempts() +
             ")";
     }

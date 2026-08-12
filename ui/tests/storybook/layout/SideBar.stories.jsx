@@ -1,4 +1,5 @@
 import {shallowRef} from "vue";
+import {expect, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import HomeIcon from "vue-material-design-icons/Home.vue";
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -88,6 +89,7 @@ Default.args = {
       },
       child: [
         {
+          id: "dashboard-submenu1",
           title: "Submenu 1",
           href: "/dashboard/submenu1",
           icon: {
@@ -96,6 +98,7 @@ Default.args = {
           },
         },
         {
+          id: "dashboard-submenu2",
           title: "Submenu 2",
           href: "/dashboard/submenu2",
           icon: {
@@ -114,6 +117,7 @@ Default.args = {
       },
       child: [
         {
+          id: "settings-submenu1",
           title: "Submenu 1",
           href: "/settings/submenu1",
           icon: {
@@ -122,6 +126,7 @@ Default.args = {
           },
         },
         {
+          id: "settings-submenu2",
           title: "Submenu 2",
           href: "/settings/submenu2",
           icon: {
@@ -132,4 +137,29 @@ Default.args = {
       ]
     },
   ]
+};
+
+export const ContextMenuOnLink = Template.bind({});
+ContextMenuOnLink.args = Default.args;
+ContextMenuOnLink.play = async ({canvasElement}) => {
+  const link = within(canvasElement).getByRole("link", {name: /Flows/});
+
+  const event = new MouseEvent("contextmenu", {bubbles: true, cancelable: true});
+  link.dispatchEvent(event);
+
+  await expect(event.defaultPrevented).toBe(false);
+  await expect(within(document.body).queryByRole("menu")).toBeNull();
+};
+
+export const ContextMenuOnSectionTitle = Template.bind({});
+ContextMenuOnSectionTitle.args = Default.args;
+ContextMenuOnSectionTitle.play = async ({canvasElement}) => {
+  const sectionTitle = within(canvasElement).getByRole("button", {name: /Dashboard/});
+
+  const event = new MouseEvent("contextmenu", {bubbles: true, cancelable: true});
+  sectionTitle.dispatchEvent(event);
+
+  await waitFor(() => {
+    within(document.body).getByRole("menuitem", {name: /Customize sidebar/});
+  });
 };

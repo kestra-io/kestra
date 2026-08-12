@@ -1048,8 +1048,7 @@
         "audit-logs": {
           "title": "Suivez tous les changements en un seul endroit",
           "message": "Dans Kestra Enterprise Edition, vous pouvez consulter les logs d'audit au niveau du namespace avec des différences détaillées, vous offrant un historique clair de qui a modifié quoi et quand à travers toutes les ressources."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1601,8 +1600,7 @@
       "panels": {
         "title": "Aucun panneau ouvert",
         "content": "Vous avez fermé tous les panneaux.  \nChoisissez un onglet ci-dessus pour continuer."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Activer/Désactiver le retour à la ligne",
     "copied_logs_to_clipboard": "Logs copiés dans le presse-papiers.",
@@ -2249,7 +2247,6 @@
     "blocks": "Blocs",
     "flow_description": "Description du flow",
     "flow_no_description": "Aucune description. Ajoutez une description à votre YAML de flow pour le documenter.",
-    "pluginDefaults": {},
     "split_horizontal": "Diviser horizontalement",
     "split_vertical": "Diviser verticalement",
     "pwa": {

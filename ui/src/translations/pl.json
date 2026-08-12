@@ -1048,8 +1048,7 @@
         "audit-logs": {
           "title": "Śledź wszystkie zmiany w jednym miejscu",
           "message": "W Kestra Enterprise Edition możesz przeglądać dzienniki audytu na poziomie namespace z szczegółowymi różnicami, co daje jasną historię, kto, co i kiedy zmienił we wszystkich zasobach."
-        },
-        "plugin-defaults": {}
+        }
       }
     },
     "assets": {
@@ -1601,8 +1600,7 @@
       "panels": {
         "title": "Brak otwartego panelu",
         "content": "Zamknąłeś wszystkie panele.  \nWybierz kartę powyżej, aby kontynuować."
-      },
-      "pluginDefaults": {}
+      }
     },
     "toggle_word_wrap": "Przełącz zawijanie wierszy",
     "copied_logs_to_clipboard": "Skopiowano logi do schowka.",
@@ -2249,7 +2247,6 @@
     "blocks": "Bloki",
     "flow_description": "Opis flow",
     "flow_no_description": "Brak opisu. Dodaj opis do swojego YAML flow, aby go udokumentować.",
-    "pluginDefaults": {},
     "split_horizontal": "Podziel poziomo",
     "split_vertical": "Podziel pionowo",
     "pwa": {

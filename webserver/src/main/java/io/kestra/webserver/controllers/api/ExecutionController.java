@@ -250,6 +250,9 @@ public class ExecutionController {
     private FlowLabelsResolver flowLabelsResolver;
 
     @Inject
+    private FlowMetaStoreInterface flowMetaStore;
+
+    @Inject
     private WebhookBodyService webhookBodyService;
 
     @Inject
@@ -745,7 +748,8 @@ public class ExecutionController {
         String path,
         HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         Flow flow = executableFlow(maybeFlow);
-        AbstractWebhookTrigger webhook = findWebhook(flow, key);
+        // Processed here too: how the body is read is the trigger's fetchType, which governance can change
+        AbstractWebhookTrigger webhook = processedForRuntime(flow, findWebhook(flow, key));
 
         // Minted before the body is read, so that a stored body lives under the execution that will carry it.
         String executionId = IdUtils.create();
@@ -783,7 +787,9 @@ public class ExecutionController {
         String executionId,
         URI storedBodyUri) throws IllegalVariableEvaluationException {
         Flow flow = executableFlow(maybeFlow);
-        final AbstractWebhookTrigger webhook = findWebhook(flow, key);
+        // Matched on the raw flow so an unknown key stays a 404, then evaluated as the executor would
+        // run it: the trigger is part of the flow, so its configuration is the processed one.
+        final AbstractWebhookTrigger webhook = processedForRuntime(flow, findWebhook(flow, key));
         this.onWebhookMatched(flow, webhook);
 
         // Webhook context
@@ -803,8 +809,8 @@ public class ExecutionController {
         } catch (Exception e) {
             // The failed execution takes the identifier the call was given, so that anything already stored for it
             // is attached to it, and purged with it.
-            // No labels: the executor builds the execution from the flow processed for runtime, which contributes
-            // them itself — passing the authored ones here would let them win the merge and override governance.
+            // No labels: the executor builds the execution from the flow processed for runtime, which
+            // contributes them itself.
             var createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
                 .withStateType(State.Type.FAILED)
                 .withTrigger(ExecutionTrigger.of(webhook, Map.of()));
@@ -849,6 +855,21 @@ public class ExecutionController {
         }
 
         return flow;
+    }
+
+    /**
+     * @return the same trigger as the flow processed for runtime carries it, so that what governs the flow
+     *         governs its triggers too; the one given when the processed flow can no longer supply it, which
+     *         is the case for a flow governance blocks — rejected a step later by the edition's gate.
+     */
+    private AbstractWebhookTrigger processedForRuntime(Flow flow, AbstractWebhookTrigger webhook) {
+        return ListUtils.emptyOnNull(FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow).getTriggers())
+            .stream()
+            .filter(processed -> webhook.getId().equals(processed.getId()))
+            .filter(AbstractWebhookTrigger.class::isInstance)
+            .map(AbstractWebhookTrigger.class::cast)
+            .findFirst()
+            .orElse(webhook);
     }
 
     /**

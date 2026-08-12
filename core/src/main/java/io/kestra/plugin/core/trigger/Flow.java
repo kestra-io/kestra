@@ -324,7 +324,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 .build()
         );
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, this, Map.of("trigger", executionTrigger.getVariables()));
+        List<Label> labels = LabelService.fromTriggerOnly(runContext, this, Map.of("trigger", executionTrigger.getVariables()));
         Streams.of(current.getLabels())
             .filter(label -> label.key().equals(Label.CORRELATION_ID))
             .findFirst()

@@ -58,6 +58,21 @@ class LabelServiceTest {
     }
 
     @Test
+    void shouldReturnOnlyTriggerLabelsWhenExcludingFlowLabels() {
+        // Given
+        RunContext runContext = runContextFactory.of(Map.of("variable", "variableValue"));
+        AbstractTrigger trigger = Schedule.builder()
+            .labels(List.of(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "{{variable}}")))
+            .build();
+
+        // When
+        List<Label> labels = LabelService.fromTriggerOnly(runContext, trigger, Collections.emptyMap());
+
+        // Then the flow's labels are absent, so they cannot override the ones the resolved flow contributes
+        assertThat(labels).containsExactly(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "variableValue"));
+    }
+
+    @Test
     void shouldFilterNonRenderableLabels() {
         RunContext runContext = runContextFactory.of();
         Flow flow = Flow.builder()

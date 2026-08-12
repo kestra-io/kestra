@@ -32,21 +32,29 @@ test.describe("Flow editor — immutable id and namespace", () => {
         flowId = `readonly_${uuidv4().replace(/-/g, "_")}`.slice(0, 24)
     })
 
-    function editor(page: Page): Locator {
+    function editorText(page: Page): Locator {
         return page.getByTestId("monaco-editor").first()
     }
 
-    // Click and PROVE the caret landed before typing — the editor shell's async
-    // side effects can steal focus between the click and the first keystroke.
-    async function focusEditor(page: Page) {
-        const target = editor(page)
+    /**
+     * Put the caret at the end of a rendered editor line and type.
+     *
+     * Clicking the line is what makes this a real user interaction — Ctrl/Cmd+Home
+     * is not bound to "document start" in Monaco on macOS, so navigating by
+     * keyboard silently leaves the caret wherever it already was.
+     */
+    async function typeOnLine(page: Page, lineIndex: number, text: string) {
+        const line = page.locator(".monaco-editor .view-lines .view-line").nth(lineIndex)
+        await expect(line).toBeVisible()
         await expect(async () => {
-            await target.click()
-            await expect(target.locator("textarea.inputarea")).toBeFocused({timeout: 1000})
+            await line.click()
+            await expect(page.locator(".monaco-editor textarea.inputarea").first()).toBeFocused({timeout: 1000})
         }).toPass({timeout: 15000})
+        await page.keyboard.press("End")
+        await page.keyboard.type(text)
     }
 
-    async function createFlow(page: Page) {
+    async function seedEditor(page: Page) {
         await page.goto("/ui/flows")
         await expect(page.locator(CREATE)).toBeVisible()
         await page.locator(CREATE).click()
@@ -56,7 +64,11 @@ test.describe("Flow editor — immutable id and namespace", () => {
         await textarea.clear({force: true})
         await textarea.fill(source(flowId), {force: true})
         await textarea.blur()
-        await expect(editor(page).getByText(flowId)).toBeVisible()
+        await expect(editorText(page)).toContainText(flowId)
+    }
+
+    async function createFlow(page: Page) {
+        await seedEditor(page)
 
         await page.getByRole("button", {name: "Save", exact: true}).click()
         await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
@@ -64,64 +76,45 @@ test.describe("Flow editor — immutable id and namespace", () => {
         // Land on the saved flow's editor explicitly, so the store is in the
         // "existing flow" state rather than still mid-creation.
         await page.goto(`/ui/${TENANT}/flows/edit/${NAMESPACE}/${flowId}/edit`)
-        await expect(editor(page).getByText(flowId).first()).toBeVisible()
+        await expect(editorText(page)).toContainText(flowId)
     }
 
     test("refuses a keystroke aimed at the id line", async ({page}) => {
         await createFlow(page)
-        await focusEditor(page)
 
-        // Caret to the end of line 1, which is `id: <flowId>`.
-        await page.keyboard.press("ControlOrMeta+Home")
-        await page.keyboard.press("End")
-        await page.keyboard.type("XXX")
+        await typeOnLine(page, 0, "XXX")
 
-        // The character never lands: no toast, no revert a second later.
-        await expect(editor(page)).not.toContainText(`${flowId}XXX`)
-        await expect(editor(page).getByText(flowId).first()).toBeVisible()
+        // The character never lands anywhere — no toast, and no revert a second
+        // later. Asserting on the whole document also catches a stray caret.
+        await expect(editorText(page)).not.toContainText("XXX")
+        await expect(editorText(page)).toContainText(`id: ${flowId}`)
     })
 
     test("refuses a keystroke aimed at the namespace line", async ({page}) => {
         await createFlow(page)
-        await focusEditor(page)
 
-        await page.keyboard.press("ControlOrMeta+Home")
-        await page.keyboard.press("ArrowDown")
-        await page.keyboard.press("End")
-        await page.keyboard.type(".zzz")
+        await typeOnLine(page, 1, "ZZZ")
 
-        await expect(editor(page)).not.toContainText(`${NAMESPACE}.zzz`)
-        await expect(editor(page)).toContainText(NAMESPACE)
+        await expect(editorText(page)).not.toContainText("ZZZ")
+        await expect(editorText(page)).toContainText(`namespace: ${NAMESPACE}`)
     })
 
     test("still accepts edits to the rest of the document", async ({page}) => {
         await createFlow(page)
-        await focusEditor(page)
 
-        await page.keyboard.press("ControlOrMeta+End")
-        await page.keyboard.type("# edited by e2e")
+        // The `message: hello` line, which carries no lock.
+        await typeOnLine(page, 6, "_edited")
 
-        await expect(editor(page)).toContainText("# edited by e2e")
+        await expect(editorText(page)).toContainText("message: hello_edited")
+        await expect(editorText(page)).toContainText(`id: ${flowId}`)
     })
 
     test("leaves both fields editable while creating a flow", async ({page}) => {
-        await page.goto("/ui/flows")
-        await expect(page.locator(CREATE)).toBeVisible()
-        await page.locator(CREATE).click()
-        await page.waitForURL("**/flows/new")
+        await seedEditor(page)
 
-        const textarea = page.getByTestId("monaco-editor-hidden-synced-textarea")
-        await textarea.clear({force: true})
-        await textarea.fill(source(flowId), {force: true})
-        await textarea.blur()
-        await expect(editor(page).getByText(flowId)).toBeVisible()
-
-        await focusEditor(page)
-        await page.keyboard.press("ControlOrMeta+Home")
-        await page.keyboard.press("End")
-        await page.keyboard.type("_edited")
+        await typeOnLine(page, 0, "_edited")
 
         // Nothing is saved yet, so there is no immutable value to protect.
-        await expect(editor(page)).toContainText(`${flowId}_edited`)
+        await expect(editorText(page)).toContainText(`id: ${flowId}_edited`)
     })
 })

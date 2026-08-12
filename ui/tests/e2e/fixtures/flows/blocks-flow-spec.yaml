@@ -1,0 +1,14 @@
+id: blocks-flow-spec-fixture
+namespace: company.team
+tasks:
+  - id: main_task
+    type: io.kestra.plugin.core.log.Log
+    message: main
+finally:
+  - id: cleanup_task
+    type: io.kestra.plugin.core.log.Log
+    message: cleanup
+afterExecution:
+  - id: notify_task
+    type: io.kestra.plugin.core.log.Log
+    message: notify

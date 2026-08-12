@@ -1,5 +1,6 @@
 <template>
     <ElInput
+        ref="elInputRef"
         v-model="model"
         v-bind="({...filteredProps(), ...$attrs} as any)"
         :class="reserveClearSpace ? 'ks-input--reserve-clear' : undefined"
@@ -21,11 +22,19 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue"
+    import {computed, ref} from "vue"
     import {ElInput} from "element-plus"
     import {useFilteredProps} from "../../utils/filteredProps"
 
     defineOptions({inheritAttrs: false})
+
+    const elInputRef = ref<InstanceType<typeof ElInput>>()
+
+    defineExpose({
+        focus: () => elInputRef.value?.focus(),
+        blur: () => elInputRef.value?.blur(),
+        select: () => elInputRef.value?.select(),
+    })
 
     const model = defineModel<string | number>()
 

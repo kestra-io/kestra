@@ -43,8 +43,10 @@ test.describe("Block editor — canvas navigation", () => {
     }
 
     test("a Go to jump centres its destination in the canvas", async ({page}) => {
+        // The section has a block, so the jump lands on it rather than on the
+        // empty-section sentinel.
         await goTo(page, "Errors")
-        await expectRing(page, "__section:errors")
+        await expectRing(page, "err_handler")
 
         const scrollport = await boxOf(page, ".block-editor-main")
         const target = await boxOf(page, "[data-block-id='err_handler']")
@@ -72,7 +74,7 @@ test.describe("Block editor — canvas navigation", () => {
 
     test("jumping back up to Tasks leaves the first block fully visible", async ({page}) => {
         await goTo(page, "Errors")
-        await expectRing(page, "__section:errors")
+        await expectRing(page, "err_handler")
 
         await goTo(page, "Tasks")
         await expectRing(page, "task_01")

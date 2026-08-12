@@ -1,5 +1,6 @@
 // The kotlp binary is a mandatory embedded resource: it is a single Actually Portable Executable
-// covering Linux/macOS/BSD on amd64 and arm64, pinned by the 'kotlpVersion' Gradle property.
+// covering Linux/macOS/BSD on amd64 and arm64, pinned by the 'kotlpVersion' property in this module's
+// own gradle.properties (see the note there on why it does not live in the root one).
 def kotlpBinary = file('src/main/resources/kotlp/kotlp')
 def kotlpVersionMarker = file('src/main/resources/kotlp/kotlp.version')
 

@@ -94,7 +94,6 @@ export const useFlowStore = defineStore("flow", () => {
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
     const isCreating = ref<boolean>(false)
-    const readonlyToastShown = ref(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
     const previewSource = ref<string | undefined>(undefined)
@@ -223,14 +222,10 @@ export const useFlowStore = defineStore("flow", () => {
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
-                    if (!readonlyToastShown.value) {
-                        readonlyToastShown.value = true
-                        coreStore.message = {
-                            variant: "warning",
-                            title: t("readonly property"),
-                            message: t("namespace and id readonly"),
-                        }
-                    }
+                    // Safety net only, and deliberately silent. The editor refuses edits to
+                    // the id/namespace lines outright (useReadOnlyYamlKeys), so typing can no
+                    // longer reach this branch; it still guards the paths that replace the
+                    // source wholesale, such as applying an AI Copilot draft.
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
                         source,
                         flowBeforeEdit.id,
@@ -485,7 +480,6 @@ export const useFlowStore = defineStore("flow", () => {
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
         previewSource.value = undefined
-        readonlyToastShown.value = false
 
         return data
     }

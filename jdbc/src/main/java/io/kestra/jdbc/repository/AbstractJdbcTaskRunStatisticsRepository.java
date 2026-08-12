@@ -30,10 +30,10 @@ public abstract class AbstractJdbcTaskRunStatisticsRepository
     extends AbstractJdbcCrudRepository<TaskRunStatistic>
     implements TaskRunStatisticRepositoryInterface {
 
-    private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
-    private static final Field<String> FLOW_ID_FIELD = field("flow_id", String.class);
-    private static final Field<String> TASK_ID_FIELD = field("task_id", String.class);
-    private static final Field<Object> DATE_FIELD = field("date");
+    static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
+    static final Field<String> FLOW_ID_FIELD = field("flow_id", String.class);
+    static final Field<String> TASK_ID_FIELD = field("task_id", String.class);
+    static final Field<Object> DATE_FIELD = field("date");
 
     public AbstractJdbcTaskRunStatisticsRepository(io.kestra.jdbc.AbstractJdbcRepository<TaskRunStatistic> jdbcRepository) {
         super(jdbcRepository);
@@ -62,6 +62,13 @@ public abstract class AbstractJdbcTaskRunStatisticsRepository
     @Override
     protected Condition defaultFilter() {
         return DSL.trueCondition();
+    }
+
+    /**
+     * Tenant-null-safe equality condition on {@code tenant_id}.
+     */
+    static Condition tenantCondition(String tenantId) {
+        return tenantId == null ? TENANT_ID_FIELD.isNull() : TENANT_ID_FIELD.eq(tenantId);
     }
 
     /** {@inheritDoc} **/

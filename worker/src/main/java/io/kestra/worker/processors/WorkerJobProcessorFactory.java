@@ -26,6 +26,7 @@ import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import io.micronaut.context.annotation.Value;
 
 @Singleton
 public class WorkerJobProcessorFactory {

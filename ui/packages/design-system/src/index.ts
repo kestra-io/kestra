@@ -14,6 +14,7 @@ import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
 import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
+import KsDrillRow from "./components/Navigation/KsDrillRow/KsDrillRow.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
@@ -42,7 +43,7 @@ import KsDivider from "./components/Others/KsDivider.vue"
 import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
 import KsEditor from "./components/Form/KsEditor.vue"
-export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./components/Form/KsEditor.vue"
+export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
 export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
 export type {TaskIconProps} from "./composables/taskIcon"
 export {findDuplicateTaskIds} from "./utils/yamlValidation"
@@ -78,6 +79,7 @@ import KsPopover from "./components/Feedback/KsPopover.vue"
 import KsProgress from "./components/Data/KsProgress.vue"
 import KsRadio from "./components/Form/KsRadio/KsRadio.vue"
 import KsRadioButton from "./components/Form/KsRadio/KsRadioButton.vue"
+import KsRadioCardGroup from "./components/Form/KsRadio/KsRadioCardGroup.vue"
 import KsRadioGroup from "./components/Form/KsRadio/KsRadioGroup.vue"
 import KsRow from "./components/Basic/KsRow/KsRow.vue"
 import KsScrollbar from "./components/Basic/KsScrollbar.vue"
@@ -223,6 +225,7 @@ const components: Record<string, Component> = {
     KsBadge,
     KsNewBadge,
     KsBreadcrumb,
+    KsDrillRow,
     KsButton,
     KsButtonGroup,
     KsCard,
@@ -278,6 +281,7 @@ const components: Record<string, Component> = {
     KsProgress,
     KsRadio,
     KsRadioButton,
+    KsRadioCardGroup,
     KsRadioGroup,
     KsRow,
     KsScrollbar,
@@ -331,6 +335,7 @@ export {
     KsBadge,
     KsNewBadge,
     KsBreadcrumb,
+    KsDrillRow,
     KsButton,
     KsButtonGroup,
     KsCard,
@@ -386,6 +391,7 @@ export {
     KsProgress,
     KsRadio,
     KsRadioButton,
+    KsRadioCardGroup,
     KsRadioGroup,
     KsRow,
     KsScrollbar,
@@ -439,7 +445,6 @@ const KestraDesignSystem = {
         app.directive("ks-loading", vKsLoading)
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
-        // oxlint-disable-next-line no-underscore-dangle
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
         if (i18n) void registerDesignSystemI18n(i18n)
     },
@@ -460,6 +465,7 @@ declare module "vue" {
         KsBadge: typeof KsBadge
         KsNewBadge: typeof KsNewBadge
         KsBreadcrumb: typeof KsBreadcrumb
+        KsDrillRow: typeof KsDrillRow
         KsButton: typeof KsButton
         KsButtonGroup: typeof KsButtonGroup
         KsCard: typeof KsCard
@@ -514,6 +520,7 @@ declare module "vue" {
         KsProgress: typeof KsProgress
         KsRadio: typeof KsRadio
         KsRadioButton: typeof KsRadioButton
+        KsRadioCardGroup: typeof KsRadioCardGroup
         KsRadioGroup: typeof KsRadioGroup
         KsRow: typeof KsRow
         KsScrollbar: typeof KsScrollbar

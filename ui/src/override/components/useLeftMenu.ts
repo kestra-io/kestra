@@ -32,6 +32,7 @@ import Battery40 from "vue-material-design-icons/Battery40.vue"
 import Gauge from "vue-material-design-icons/Gauge.vue"
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue"
 import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue"
+import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue"
 import McpIcon from "../../components/McpIcon.vue"
 
 export type MenuItem = {
@@ -336,6 +337,20 @@ export function useLeftMenu() {
                         },
                         icon: {
                             element: FileDocumentOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
+                    {
+                        id: "promote",
+                        title: t("promote.label"),
+                        routes: routeStartWith("promote"),
+                        href: {
+                            name: "promote/targets",
+                        },
+                        icon: {
+                            element: RocketLaunchOutline,
                         },
                         attributes: {
                             locked: true,

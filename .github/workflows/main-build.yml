@@ -22,10 +22,6 @@ on:
         default: 'ubuntu-latest'
         required: false
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-main
-  cancel-in-progress: true
-
 # kestra-io/actions PR #190 (adds the `runner` input below) is not merged yet, so the
 # reusable-workflow calls in this file temporarily pin to that PR's branch instead of @main.
 # Switch them back to @main once it merges.

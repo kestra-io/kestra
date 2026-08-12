@@ -55,8 +55,8 @@
         "lodash": "^4",
         "moment": "^2.30.1",
         "moment-timezone": "^0.6.2",
-        "vue": "^3.5.0",
-        "vue-i18n": "^11.4.4"
+        "vue": "^3.5.41",
+        "vue-i18n": "^11.4.8"
     },
     "peerDependenciesMeta": {
         "vue-i18n": {
@@ -68,15 +68,15 @@
         "@types/js-yaml": "^4.0.9",
         "@types/lodash": "^4",
         "@types/node": "^25.9.1",
-        "@vitejs/plugin-vue": "^6.0.7",
+        "@vitejs/plugin-vue": "^6.0.8",
         "sass-embedded": "^1.99.0",
         "tsdown": "^0.22.1",
         "typescript": "^6.0.3",
         "unrun": "^0.3.1",
         "vite": "^8.0.14",
         "vitest": "^4.1.0",
-        "vue": "^3.5.0",
-        "vue-i18n": "^11.4.4",
+        "vue": "^3.5.41",
+        "vue-i18n": "^11.4.8",
         "vue-tsc": "^3.2.8"
     }
 }

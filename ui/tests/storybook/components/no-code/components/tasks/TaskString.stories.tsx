@@ -1,6 +1,7 @@
 import {computed, provide, ref} from "vue";
 import TaskString from "../../../../../../src/components/no-code/components/tasks/TaskString.vue";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
+import {expect} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
 
@@ -78,5 +79,13 @@ export const Disabled: Story = {
         schema: {type: "string"} as any,
         root: "locked",
         disabled: true,
+    },
+    play: async ({canvasElement}) => {
+        // A locked field must carry the greyed disabled treatment, not just the lock
+        // icon, so it reads the same as the locked namespace select next to it.
+        const input = canvasElement.querySelector("input") as HTMLInputElement;
+        expect(input.disabled).toBe(true);
+        expect(canvasElement.querySelector(".kel-input.is-disabled")).toBeTruthy();
+        expect(canvasElement.querySelector(".lock-icon")).toBeTruthy();
     },
 };

@@ -1,3 +1,9 @@
+export interface PebbleCursorEditor {
+    getPosition: () => {lineNumber: number; column: number} | null
+    getModel: () => {getOffsetAt: (position: {lineNumber: number; column: number}) => number} | null
+    getValue: () => string
+}
+
 export function isOffsetInPebbleBlock(text: string, offset: number): boolean {
     if (offset < 2) {
         return false
@@ -68,4 +74,18 @@ export function isPebbleEnabled(opts: {
     if (opts.lang === "yaml-pebble") return true
     if ((PEBBLE_SCHEMA_TYPES as readonly string[]).includes(opts.schemaType ?? "")) return true
     return opts.lang === "yaml"
+}
+
+export function isCursorInPebbleBlock(editor: PebbleCursorEditor): boolean {
+    const cursorPos = editor.getPosition()
+    if (!cursorPos) return false
+    const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0
+    return isOffsetInPebbleBlock(editor.getValue(), absoluteOffset)
+}
+
+export function cursorPebbleBlockKey(editor: PebbleCursorEditor): number | null {
+    const cursorPos = editor.getPosition()
+    if (!cursorPos) return null
+    const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0
+    return pebbleBlockKeyAtOffset(editor.getValue(), absoluteOffset)
 }

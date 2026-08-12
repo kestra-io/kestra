@@ -37,6 +37,15 @@
             </SettingRow>
 
             <SettingRow
+                :label="$t('settings.blocks.configuration.fields.task_edit_default_mode')"
+                :description="$t('settings.blocks.configuration.descriptions.task_edit_default_mode')"
+            >
+                <KsSelect fit :modelValue="settings.taskEditDefaultMode" @update:model-value="onTaskEditDefaultMode">
+                    <KsOption v-for="item in taskEditDefaultModeOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </KsSelect>
+            </SettingRow>
+
+            <SettingRow
                 :label="$t('settings.blocks.configuration.fields.execute_flow')"
                 :description="$t('settings.blocks.configuration.descriptions.execute_flow')"
             >
@@ -252,7 +261,7 @@
     import {date as dateFilter} from "../../utils/filters"
     import * as Utils from "../../utils/utils"
     import type {SelectedTheme} from "../../utils/utils"
-    import {logDisplayTypes, storageKeys, executeFlowBehaviours} from "../../utils/constants"
+    import {logDisplayTypes, storageKeys, executeFlowBehaviours, taskEditDefaultModes} from "../../utils/constants"
     import {applyFontScale, APP_FONT_SIZE_KEY, type AppFontSizeMode} from "../../utils/appFontSize"
     import {appFontSizeMode, logsFontSizeOverride, effectiveEditorFontSize, editorFontSizeOverride, logsFontSize} from "../../composables/useLogDisplay"
     import {defaultNamespace} from "../../composables/useNamespaces"
@@ -282,6 +291,7 @@
         defaultLogLevel: [`${CONFIG}.fields.log_level`, `${CONFIG}.descriptions.log_level`],
         logDisplay: [`${CONFIG}.fields.log_display`, `${CONFIG}.descriptions.log_display`],
         [storageKeys.EDITOR_VIEW_TYPE]: [`${CONFIG}.fields.editor_type`, `${CONFIG}.descriptions.editor_type`],
+        [storageKeys.TASK_EDIT_DEFAULT_MODE]: [`${CONFIG}.fields.task_edit_default_mode`, `${CONFIG}.descriptions.task_edit_default_mode`],
         [storageKeys.EXECUTE_FLOW_BEHAVIOUR]: [`${CONFIG}.fields.execute_flow`, `${CONFIG}.descriptions.execute_flow`],
         executeDefaultTab: [`${CONFIG}.fields.execute_default_tab`, `${CONFIG}.descriptions.execute_default_tab`],
         flowDefaultTab: [`${CONFIG}.fields.flow_default_tab`, `${CONFIG}.descriptions.flow_default_tab`],
@@ -315,6 +325,7 @@
         defaultLogLevel: localStorage.getItem("defaultLogLevel") || "INFO",
         logDisplay: localStorage.getItem("logDisplay") || logDisplayTypes.DEFAULT,
         editorType: localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML",
+        taskEditDefaultMode: localStorage.getItem(storageKeys.TASK_EDIT_DEFAULT_MODE) || taskEditDefaultModes.MODAL,
         executeFlowBehaviour: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) || executeFlowBehaviours.SAME_TAB,
         executeDefaultTab: localStorage.getItem("executeDefaultTab") || "gantt",
         flowDefaultTab: localStorage.getItem("flowDefaultTab") || "edit",
@@ -354,6 +365,11 @@
     const editorTypeOptions = computed(() => [
         {label: t("no_code.labels.yaml"), value: "YAML"},
         {label: t("no_code.labels.no_code"), value: "NO_CODE"},
+    ])
+
+    const taskEditDefaultModeOptions = computed(() => [
+        {label: t("settings.blocks.configuration.task_edit_default_mode_options.modal"), value: taskEditDefaultModes.MODAL},
+        {label: t("settings.blocks.configuration.task_edit_default_mode_options.tab"), value: taskEditDefaultModes.TAB},
     ])
 
     const executeFlowOptions = computed(() => Object.values(executeFlowBehaviours).map((item) => ({
@@ -516,6 +532,11 @@
     function onEditorType(value: string) {
         settings.editorType = value
         persist(storageKeys.EDITOR_VIEW_TYPE, value)
+    }
+
+    function onTaskEditDefaultMode(value: string) {
+        settings.taskEditDefaultMode = value
+        persist(storageKeys.TASK_EDIT_DEFAULT_MODE, value)
     }
 
     function onExecuteFlowBehaviour(value: string) {

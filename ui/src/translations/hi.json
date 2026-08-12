@@ -60,7 +60,7 @@
       "notify": {
         "email_label": "ईमेल",
         "email_sub": "ईमेल नोटिफिकेशन भेजें",
-        "email_to_placeholder": "recipient@your-domain.com",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "कस्टम",
         "custom_note": "एक प्लेसहोल्डर task जोड़ा जाता है — इसे संपादक में किसी भी सूचना प्लगइन से बदलें।",
         "custom_sub": "अपना स्वयं का सूचना task जोड़ें",

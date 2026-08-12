@@ -60,7 +60,7 @@
       "notify": {
         "email_label": "メール",
         "email_sub": "メール通知を送信",
-        "email_to_placeholder": "recipient@your-domain.com",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
         "custom_label": "カスタム",
         "custom_note": "プレースホルダーの task が追加されます — エディターで任意の通知プラグインに置き換えてください。",
         "custom_sub": "独自の通知タスクを追加",

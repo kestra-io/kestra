@@ -60,7 +60,7 @@
       "notify": {
         "email_label": "E-mail",
         "email_sub": "Invia una notifica via email",
-        "email_to_placeholder": "destinatario@tuo-dominio.com",
+        "email_to_placeholder": "destinatario{'@'}tuo-dominio.com",
         "custom_label": "Personalizzato",
         "custom_note": "Viene aggiunta un'attività segnaposto — sostituiscila con qualsiasi plugin di notifica nell'editor.",
         "custom_sub": "Aggiungi la tua attività di notifica",

@@ -60,7 +60,7 @@
       "notify": {
         "email_label": "E-mail",
         "email_sub": "Wyślij powiadomienie e-mail",
-        "email_to_placeholder": "odbiorca@twoja-domena.com",
+        "email_to_placeholder": "odbiorca{'@'}twoja-domena.com",
         "custom_label": "Niestandardowe",
         "custom_note": "Dodawane jest zadanie zastępcze — zamień je na dowolny plugin powiadomień w edytorze.",
         "custom_sub": "Dodaj własne zadanie powiadomienia",

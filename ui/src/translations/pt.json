@@ -60,7 +60,7 @@
       "notify": {
         "email_label": "E-mail",
         "email_sub": "Enviar uma notificação por e-mail",
-        "email_to_placeholder": "destinatario@seu-dominio.com",
+        "email_to_placeholder": "destinatario{'@'}seu-dominio.com",
         "custom_label": "Personalizado",
         "custom_note": "Uma tarefa de exemplo é adicionada — substitua-a por qualquer plugin de notificação no editor.",
         "custom_sub": "Adicione a sua própria tarefa de notificação",

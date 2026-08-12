@@ -60,7 +60,7 @@
       "notify": {
         "email_label": "E-Mail",
         "email_sub": "E-Mail-Benachrichtigung senden",
-        "email_to_placeholder": "empfaenger@ihre-domain.com",
+        "email_to_placeholder": "empfaenger{'@'}ihre-domain.com",
         "custom_label": "Benutzerdefiniert",
         "custom_note": "Eine Platzhalter-Aufgabe wird hinzugefügt — ersetzen Sie sie im Editor durch ein beliebiges Benachrichtigungs-Plugin.",
         "custom_sub": "Eigene Benachrichtigungsaufgabe hinzufügen",

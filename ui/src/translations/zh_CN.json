@@ -1507,6 +1507,10 @@
     "dataFilters": "数据过滤器",
     "logExporters": "日志导出器",
     "empty": {
+      "secrets": {
+        "title": "您还没有任何 Secrets！",
+        "content": "API 密钥、密码和令牌可以存储为 secrets，而不必硬编码在您的 flows 中。每个 secret 属于一个 namespace，会被其子 namespace 继承，并可在任意 task 中引用。"
+      },
       "namespaceFiles": {
         "title": "此命名空间中尚无文件",
         "content": "命名空间文件的作用类似于此命名空间的项目文件夹。存储 Python、SQL、dbt 或 Terraform 代码，然后在您的 flow 中引用任何文件，使用"

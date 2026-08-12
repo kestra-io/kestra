@@ -1507,6 +1507,10 @@
     "dataFilters": "데이터 필터",
     "logExporters": "로그 Exporters",
     "empty": {
+      "secrets": {
+        "title": "아직 Secrets가 없습니다.",
+        "content": "API 키, 비밀번호, 토큰은 flows에 하드코딩하는 대신 secrets로 저장할 수 있습니다. 각 secret은 namespace에 속하며 하위 namespace로 상속되고 모든 task에서 참조할 수 있습니다."
+      },
       "namespaceFiles": {
         "title": "이 namespace에 아직 파일이 없습니다",
         "content": "namespace 파일은 이 namespace의 프로젝트 폴더처럼 작동합니다. Python, SQL, dbt 또는 Terraform 코드를 저장한 다음, flow에서 다음을 사용하여 모든 파일을 참조하세요"

@@ -1507,6 +1507,10 @@
     "dataFilters": "Filtros de Dados",
     "logExporters": "Exportadores de Log",
     "empty": {
+      "secrets": {
+        "title": "Ainda não tem Secrets!",
+        "content": "Chaves de API, palavras-passe e tokens podem ser guardados como secrets em vez de ficarem fixos nos seus flows. Cada secret pertence a um namespace, é herdado pelos namespaces filhos e pode ser referenciado a partir de qualquer task."
+      },
       "namespaceFiles": {
         "title": "Ainda não há ficheiros neste namespace",
         "content": "Os ficheiros do namespace funcionam como uma pasta de projeto para este namespace. Armazene código Python, SQL, dbt ou Terraform e, em seguida, referencie qualquer ficheiro nos seus flows com"

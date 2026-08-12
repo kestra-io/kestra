@@ -62,6 +62,24 @@ class InternalStorageUriTest {
     }
 
     /**
+     * Square brackets ({@code [} and {@code ]}) are IPv6-reserved URI characters and must be
+     * encoded to {@code %5B}/{@code %5D} exactly once. This guards against double-encoding
+     * that occurred when a caller pre-encoded them to {@code %5B}/{@code %5D} before passing
+     * the name to {@code buildStorageUri}, which then re-encoded the {@code %} to {@code %25}.
+     */
+    @Test
+    void shouldPercentEncodeBracketsInFilename() throws IOException {
+        URI base = contextUri();
+        URI result = buildStorageUri(base, "file.with[]brackets.txt");
+
+        assertThat(result.getFragment()).isNull();
+        // Raw path must contain single-encoded brackets — not double-encoded (%255B).
+        assertThat(result.getRawPath()).endsWith("/file.with%5B%5Dbrackets.txt");
+        // Decoded path recovers the original filename.
+        assertThat(result.getPath()).endsWith("/file.with[]brackets.txt");
+    }
+
+    /**
      * A filename that looks like an existing percent-escape ({@code 100%20.txt}) must be stored
      * as-is (with the {@code %} re-encoded to {@code %25}), not silently decoded to {@code 100 .txt}.
      */

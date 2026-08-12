@@ -36,16 +36,34 @@ class HttpFunctionTest {
     private VariableRenderer variableRenderer;
 
     @Test
-    void defaultHttpCall() throws IllegalVariableEvaluationException {
-        String rendered = variableRenderer.render("{{ http(url) }}", Map.of("url", "https://dummyjson.com/todos"));
+    void defaultHttpCall(WireMockRuntimeInfo wmRuntimeInfo) throws IllegalVariableEvaluationException {
+        stubFor(
+            get(urlMatching("/todos"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"todos\":[{\"id\":1,\"todo\":\"Do something nice for someone I care about\",\"completed\":false,\"userId\":26}]}")
+                )
+        );
+
+        String rendered = variableRenderer.render("{{ http(url) }}", Map.of("url", "http://localhost:28182/todos"));
         Assertions.assertTrue(rendered.startsWith("{\"todos\":[{"));
     }
 
     @Test
-    void postWithBodyHttpCall() throws IllegalVariableEvaluationException {
+    void postWithBodyHttpCall(WireMockRuntimeInfo wmRuntimeInfo) throws IllegalVariableEvaluationException {
+        stubFor(
+            post(urlMatching("/todos/add"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"id\":256,\"todo\":\"New todo\",\"completed\":false,\"userId\":1}")
+                )
+        );
+
         String rendered = variableRenderer.render(
             "{{ http(url,'POST',body=body) }}", Map.of(
-                "url", "https://dummyjson.com/todos/add",
+                "url", "http://localhost:28182/todos/add",
                 "body", Map.of(
                     "todo", "New todo",
                     "userId", 1,
@@ -57,14 +75,29 @@ class HttpFunctionTest {
     }
 
     @Test
-    void wrongMethod() {
-        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ http(url) }}", Map.of("url", "https://dummyjson.com/todos/add")));
+    void wrongMethod(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(
+            get(urlMatching("/todos/add"))
+                .willReturn(aResponse().withStatus(404).withHeader("Content-Type", "application/json").withBody("{\"message\":\"Not Found\"}"))
+        );
+
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ http(url) }}", Map.of("url", "http://localhost:28182/todos/add")));
         assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
         assertThat(exception.getCause().getMessage()).isEqualTo("Failed to execute HTTP Request, server respond with status 404 : Not Found ({{ http(url) }}:1)");
     }
 
     @Test
-    void getWithQueryHttpCall() throws IllegalVariableEvaluationException, JsonProcessingException {
+    void getWithQueryHttpCall(WireMockRuntimeInfo wmRuntimeInfo) throws IllegalVariableEvaluationException, JsonProcessingException {
+        stubFor(
+            get(urlPathMatching("/todos"))
+                .withQueryParam("limit", equalTo("2"))
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"todos\":[{\"id\":1,\"todo\":\"Task one\",\"completed\":false,\"userId\":1},{\"id\":2,\"todo\":\"Task two\",\"completed\":true,\"userId\":2}],\"total\":2,\"skip\":0,\"limit\":2}")
+                )
+        );
+
         String rendered = variableRenderer.render(
             """
                 {{
@@ -76,7 +109,7 @@ class HttpFunctionTest {
                     }
                   )
                 }}""", Map.of(
-                "url", "https://dummyjson.com/todos"
+                "url", "http://localhost:28182/todos"
             )
         );
         Assertions.assertEquals(2, ((List<Map<String, Object>>) JacksonMapper.toMap(rendered).get("todos")).size());

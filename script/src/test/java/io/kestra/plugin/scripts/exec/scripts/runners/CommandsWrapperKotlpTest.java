@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @KestraTest
-class CommandsWrapperKoltpTest {
+class CommandsWrapperKotlpTest {
 
     private static final Task TASK = new Task() {
         @Override
@@ -45,12 +45,12 @@ class CommandsWrapperKoltpTest {
     private TestRunContextFactory runContextFactory;
 
     @Test
-    void shouldWrapCommandsWithKoltpWhenEnabled() throws Exception {
+    void shouldWrapCommandsWithKotlpWhenEnabled() throws Exception {
         // Given
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKoltp(new KoltpOptions(true, null, null))
+            .withKotlp(new KotlpOptions(true, null, null))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -63,11 +63,11 @@ class CommandsWrapperKoltpTest {
         // The APE binary is bootstrapped through sh and the wrapped command follows the '--' separator.
         List<String> finalCommands = runContext.render(wrapper.getCommands()).asList(String.class);
         assertThat(finalCommands.get(0)).isEqualTo("/bin/sh");
-        assertThat(finalCommands.get(1)).endsWith("/" + KoltpUtils.BINARY_NAME);
+        assertThat(finalCommands.get(1)).endsWith("/" + KotlpUtils.BINARY_NAME);
         assertThat(finalCommands.get(2)).isEqualTo("--");
         assertThat(finalCommands.subList(3, finalCommands.size())).containsExactly("/bin/sh", "-c", "echo hello");
 
-        Path binary = runContext.workingDir().path().resolve(KoltpUtils.BINARY_NAME);
+        Path binary = runContext.workingDir().path().resolve(KotlpUtils.BINARY_NAME);
         assertThat(binary).exists();
         assertThat(Files.isExecutable(binary)).isTrue();
     }
@@ -78,7 +78,7 @@ class CommandsWrapperKoltpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKoltp(new KoltpOptions(true, "telemetry", null))
+            .withKotlp(new KotlpOptions(true, "telemetry", null))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -94,7 +94,7 @@ class CommandsWrapperKoltpTest {
         assertThat(finalCommands.get(logDirIndex + 1)).isEqualTo("telemetry");
         assertThat(logDirIndex).isLessThan(finalCommands.indexOf("--"));
 
-        // koltp resolves the relative log dir against its cwd, the working directory, and writes bare OTLP NDJSON.
+        // kotlp resolves the relative log dir against its cwd, the working directory, and writes bare OTLP NDJSON.
         Path logFile = runContext.workingDir().path().resolve("telemetry/log.ndjson");
         assertThat(logFile).exists();
         List<String> lines = Files.readAllLines(logFile).stream().filter(line -> !line.isBlank()).toList();
@@ -111,7 +111,7 @@ class CommandsWrapperKoltpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKoltp(new KoltpOptions(true, "telemetry", Duration.ofSeconds(60)))
+            .withKotlp(new KotlpOptions(true, "telemetry", Duration.ofSeconds(60)))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
@@ -135,18 +135,18 @@ class CommandsWrapperKoltpTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKoltp(new KoltpOptions(true, null, Duration.ofSeconds(60)))
+            .withKotlp(new KotlpOptions(true, null, Duration.ofSeconds(60)))
             .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
             .withCommands(Property.ofValue(List.of("echo hello")));
 
         // When
         // Then
         assertThatThrownBy(wrapper::run).isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("The koltp 'logFlushInterval' option requires 'logDir' to be set.");
+            .hasMessage("The kotlp 'logFlushInterval' option requires 'logDir' to be set.");
     }
 
     @Test
-    void shouldNotWrapCommandsWhenKoltpDisabled() throws Exception {
+    void shouldNotWrapCommandsWhenKotlpDisabled() throws Exception {
         // Given
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
@@ -161,23 +161,23 @@ class CommandsWrapperKoltpTest {
         assertThat(run.getExitCode()).isEqualTo(0);
         List<String> finalCommands = runContext.render(wrapper.getCommands()).asList(String.class);
         assertThat(finalCommands).containsExactly("/bin/sh", "-c", "echo hello");
-        assertThat(runContext.workingDir().path().resolve(KoltpUtils.BINARY_NAME)).doesNotExist();
+        assertThat(runContext.workingDir().path().resolve(KotlpUtils.BINARY_NAME)).doesNotExist();
     }
 
     @Test
-    void shouldKeepKoltpOptionsWhenEnvIsSet() {
+    void shouldKeepKotlpOptionsWhenEnvIsSet() {
         // Given
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
 
-        // When — withEnv re-invokes the all-args constructor and must thread the koltp options through.
+        // When — withEnv re-invokes the all-args constructor and must thread the kotlp options through.
         CommandsWrapper wrapper = new CommandsWrapper(runContext)
             .withTaskRunner(Process.instance())
-            .withKoltp(new KoltpOptions(true, "telemetry", Duration.ofSeconds(60)))
+            .withKotlp(new KotlpOptions(true, "telemetry", Duration.ofSeconds(60)))
             .withEnv(Map.of("FOO", "bar"));
 
         // Then
-        assertThat(wrapper.getKoltp().isEnabled()).isTrue();
-        assertThat(wrapper.getKoltp().logDir()).isEqualTo("telemetry");
-        assertThat(wrapper.getKoltp().logFlushInterval()).isEqualTo(Duration.ofSeconds(60));
+        assertThat(wrapper.getKotlp().isEnabled()).isTrue();
+        assertThat(wrapper.getKotlp().logDir()).isEqualTo("telemetry");
+        assertThat(wrapper.getKotlp().logFlushInterval()).isEqualTo(Duration.ofSeconds(60));
     }
 }

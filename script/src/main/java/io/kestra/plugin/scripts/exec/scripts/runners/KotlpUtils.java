@@ -12,31 +12,31 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Utility to inject the embedded <a href="https://github.com/kestra-io/koltp">koltp</a> binary into a file destination.
+ * Utility to inject the embedded <a href="https://github.com/kestra-io/kotlp">kotlp</a> binary into a file destination.
  * <p>
- * koltp is a single Actually Portable Executable covering Linux, macOS and BSD on amd64 and arm64; the same
+ * kotlp is a single Actually Portable Executable covering Linux, macOS and BSD on amd64 and arm64; the same
  * binary works on Windows once renamed with an {@code .exe} extension. It is embedded at build time by the
- * {@code downloadKoltp} Gradle task of the script module.
+ * {@code downloadKotlp} Gradle task of the script module.
  */
-public final class KoltpUtils {
-    public static final String BINARY_NAME = "koltp";
-    public static final String WINDOWS_BINARY_NAME = "koltp.exe";
-    private static final String RESOURCE_PATH = "/koltp/koltp";
+public final class KotlpUtils {
+    public static final String BINARY_NAME = "kotlp";
+    public static final String WINDOWS_BINARY_NAME = "kotlp.exe";
+    private static final String RESOURCE_PATH = "/kotlp/kotlp";
 
-    private KoltpUtils() {
+    private KotlpUtils() {
     }
 
     /**
-     * Copies the embedded koltp binary to the given destination and makes it executable.
+     * Copies the embedded kotlp binary to the given destination and makes it executable.
      *
      * @param destination the file the binary is written to, overwritten when it already exists
      * @return the destination path
      * @throws IOException when the destination cannot be written
      */
     public static Path copyTo(Path destination) throws IOException {
-        try (InputStream binary = KoltpUtils.class.getResourceAsStream(RESOURCE_PATH)) {
+        try (InputStream binary = KotlpUtils.class.getResourceAsStream(RESOURCE_PATH)) {
             if (binary == null) {
-                throw new KestraRuntimeException("Cannot inject the koltp binary: it was not embedded in this build. Run the 'downloadKoltp' Gradle task and rebuild.");
+                throw new KestraRuntimeException("Cannot inject the kotlp binary: it was not embedded in this build. Run the 'downloadKotlp' Gradle task and rebuild.");
             }
 
             Path parent = destination.getParent();

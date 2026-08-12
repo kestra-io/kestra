@@ -96,7 +96,7 @@ public class CommandsWrapper implements TaskCommands {
     private TargetOS targetOS;
 
     @With
-    private KoltpOptions koltp;
+    private KotlpOptions kotlp;
 
     public CommandsWrapper(RunContext runContext) {
         this.runContext = runContext;
@@ -130,7 +130,7 @@ public class CommandsWrapper implements TaskCommands {
             enableOutputDirectory,
             timeout,
             targetOS,
-            koltp
+            kotlp
         );
     }
 
@@ -178,8 +178,8 @@ public class CommandsWrapper implements TaskCommands {
             FilesService.inputFiles(runContext, runnerVars, this.inputFiles);
         }
 
-        if (this.isKoltpEnabled()) {
-            KoltpUtils.copyTo(this.workingDirectory.resolve(koltpBinaryName()));
+        if (this.isKotlpEnabled()) {
+            KotlpUtils.copyTo(this.workingDirectory.resolve(kotlpBinaryName()));
         }
 
         RunContext taskRunnerRunContext = runContext.cloneForPlugin(taskRunner);
@@ -205,24 +205,24 @@ public class CommandsWrapper implements TaskCommands {
                 Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
             );
 
-        if (this.isKoltpEnabled()) {
-            if (this.koltp.logFlushInterval() != null && this.koltp.logDir() == null) {
-                throw new IllegalArgumentException("The koltp 'logFlushInterval' option requires 'logDir' to be set.");
+        if (this.isKotlpEnabled()) {
+            if (this.kotlp.logFlushInterval() != null && this.kotlp.logDir() == null) {
+                throw new IllegalArgumentException("The kotlp 'logFlushInterval' option requires 'logDir' to be set.");
             }
 
             String workingDir = String.valueOf(runnerVars.getOrDefault(ScriptService.VAR_WORKING_DIR, this.workingDirectory));
             List<String> wrapped = new ArrayList<>(finalCommands.size() + 7);
             if (!this.isWindowsTarget()) {
-                // The koltp APE binary cannot be exec'd directly without kernel binfmt support; its header is a valid shell script that bootstraps it.
+                // The kotlp APE binary cannot be exec'd directly without kernel binfmt support; its header is a valid shell script that bootstraps it.
                 wrapped.add("/bin/sh");
             }
-            wrapped.add(workingDir + "/" + koltpBinaryName());
-            if (this.koltp.logDir() != null) {
+            wrapped.add(workingDir + "/" + kotlpBinaryName());
+            if (this.kotlp.logDir() != null) {
                 wrapped.add("--log-dir");
-                wrapped.add(this.koltp.logDir());
-                if (this.koltp.logFlushInterval() != null) {
+                wrapped.add(this.kotlp.logDir());
+                if (this.kotlp.logFlushInterval() != null) {
                     wrapped.add("--log-flush-interval");
-                    wrapped.add(String.valueOf(this.koltp.logFlushInterval().toSeconds()));
+                    wrapped.add(String.valueOf(this.kotlp.logFlushInterval().toSeconds()));
                 }
             }
             wrapped.add("--");
@@ -358,12 +358,12 @@ public class CommandsWrapper implements TaskCommands {
             (os == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process);
     }
 
-    private boolean isKoltpEnabled() {
-        return this.koltp != null && this.koltp.isEnabled();
+    private boolean isKotlpEnabled() {
+        return this.kotlp != null && this.kotlp.isEnabled();
     }
 
-    // koltp is a single portable binary; Windows only needs it renamed with an '.exe' extension.
-    private String koltpBinaryName() {
-        return this.isWindowsTarget() ? KoltpUtils.WINDOWS_BINARY_NAME : KoltpUtils.BINARY_NAME;
+    // kotlp is a single portable binary; Windows only needs it renamed with an '.exe' extension.
+    private String kotlpBinaryName() {
+        return this.isWindowsTarget() ? KotlpUtils.WINDOWS_BINARY_NAME : KotlpUtils.BINARY_NAME;
     }
 }

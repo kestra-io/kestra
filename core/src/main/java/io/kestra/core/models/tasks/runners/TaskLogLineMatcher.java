@@ -44,10 +44,10 @@ import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
  *
  * <pre>{@code
  * ::{"outputs":{"key":"value"}}::
- * ::{"oltp":{"resourceLogs":[...]}}::
+ * ::{"otlp":{"resourceLogs":[...]}}::
  * }</pre>
  *
- * The {@code oltp} form carries an OpenTelemetry OTLP/JSON record as framed by the koltp process
+ * The {@code otlp} form carries an OpenTelemetry OTLP/JSON record as framed by the kotlp process
  * wrapper; see {@link OtlpRecord}.
  */
 @Singleton
@@ -113,8 +113,8 @@ public class TaskLogLineMatcher {
             }
         }
 
-        if (match.oltp() != null && !match.oltp().isEmpty()) {
-            handleOtlp(logger, runContext, instant, match.oltp(), data);
+        if (match.otlp() != null && !match.otlp().isEmpty()) {
+            handleOtlp(logger, runContext, instant, match.otlp(), data);
         }
 
         return match;
@@ -333,15 +333,15 @@ public class TaskLogLineMatcher {
      * @param metrics a list of captured metric entries, typically used for reporting or monitoring
      * @param logs additional log lines derived from the matched line, if any
      * @param assets assets emitted through the matched line, if any
-     * @param oltp an OpenTelemetry record captured from the matched line, if any (the key spelling
-     *             follows the koltp {@code ::{"oltp":...}::} framing)
+     * @param otlp an OpenTelemetry record captured from the matched line, if any (the key spelling
+     *             follows the kotlp {@code ::{"otlp":...}::} framing)
      */
     public record TaskLogMatch(
         Map<String, Object> outputs,
         List<AbstractMetricEntry<?>> metrics,
         List<LogLine> logs,
         AssetEmit assets,
-        OtlpRecord oltp) {
+        OtlpRecord otlp) {
         @Override
         public Map<String, Object> outputs() {
             return Optional.ofNullable(outputs).orElse(Map.of());

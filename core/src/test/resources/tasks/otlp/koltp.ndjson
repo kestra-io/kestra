@@ -1,6 +1,0 @@
-{"resourceLogs":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"my-program"}},{"key":"process.pid","value":{"intValue":"48213"}}]},"scopeLogs":[{"scope":{"name":"koltp","version":"0.1.0"},"logRecords":[{"timeUnixNano":"1718700000000000000","observedTimeUnixNano":"1718700000000000000","severityNumber":9,"severityText":"INFO","body":{"stringValue":"hello from file"},"attributes":[{"key":"log.iostream","value":{"stringValue":"stdout"}}]}]}]}]}
-{"resourceMetrics":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"my-program"}}]},"scopeMetrics":[{"scope":{"name":"koltp","version":"0.1.0"},"metrics":[{"name":"process.memory.usage","unit":"By","gauge":{"dataPoints":[{"timeUnixNano":"1718700001000000000","asInt":"1048576"}]}}]}]}]}
-{"resourceSpans":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"my-program"}}]},"scopeSpans":[{"scope":{"name":"koltp","version":"0.1.0"},"spans":[{"traceId":"0af7651916cd43dd8448eb211c80319c","spanId":"b7ad6b7169203331","name":"exec my-program","kind":1,"startTimeUnixNano":"1718700000000000000","endTimeUnixNano":"1718700002000000000","attributes":[{"key":"process.exit.code","value":{"intValue":"0"}}],"status":{"code":1}}]}]}]}
-
-{"resourceLogs":[{"resource"
-{}

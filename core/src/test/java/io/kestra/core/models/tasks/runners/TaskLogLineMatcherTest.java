@@ -46,17 +46,17 @@ class TaskLogLineMatcherTest {
         var listAppender = appender(runContext);
 
         Optional<TaskLogMatch> match = matcher.matches(
-            framed(logRecord("{\"timeUnixNano\":\"" + TIME_UNIX_NANO + "\",\"severityNumber\":9,\"severityText\":\"INFO\",\"body\":{\"stringValue\":\"hello from koltp\"},\"attributes\":[{\"key\":\"log.iostream\",\"value\":{\"stringValue\":\"stdout\"}}]}")),
+            framed(logRecord("{\"timeUnixNano\":\"" + TIME_UNIX_NANO + "\",\"severityNumber\":9,\"severityText\":\"INFO\",\"body\":{\"stringValue\":\"hello from kotlp\"},\"attributes\":[{\"key\":\"log.iostream\",\"value\":{\"stringValue\":\"stdout\"}}]}")),
             runContext.logger(),
             runContext,
             FALLBACK_INSTANT
         );
 
         assertThat(match).isPresent();
-        assertThat(match.get().oltp().resourceLogs()).hasSize(1);
+        assertThat(match.get().otlp().resourceLogs()).hasSize(1);
         assertThat(listAppender.list).hasSize(1);
         ILoggingEvent event = listAppender.list.getFirst();
-        assertThat(event.getFormattedMessage()).isEqualTo("hello from koltp");
+        assertThat(event.getFormattedMessage()).isEqualTo("hello from kotlp");
         assertThat(event.getLevel()).isEqualTo(Level.INFO);
         assertThat(originalTimestamp(event)).isEqualTo(Instant.ofEpochSecond(0, TIME_UNIX_NANO));
     }
@@ -293,7 +293,7 @@ class TaskLogLineMatcherTest {
         var listAppender = appender(runContext);
 
         Optional<TaskLogMatch> match = matcher.matches(
-            framed("{\"resourceSpans\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"my-program\"}}]},\"scopeSpans\":[{\"scope\":{\"name\":\"koltp\",\"version\":\"0.1.0\"},\"spans\":[" +
+            framed("{\"resourceSpans\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"my-program\"}}]},\"scopeSpans\":[{\"scope\":{\"name\":\"kotlp\",\"version\":\"0.1.0\"},\"spans\":[" +
                 "{\"traceId\":\"0af7651916cd43dd8448eb211c80319c\",\"spanId\":\"b7ad6b7169203331\",\"name\":\"exec my-program\",\"kind\":1,\"startTimeUnixNano\":\"" + TIME_UNIX_NANO + "\",\"endTimeUnixNano\":\"" + (TIME_UNIX_NANO + 2_000_000_000L) + "\",\"attributes\":[{\"key\":\"process.exit.code\",\"value\":{\"intValue\":\"3\"}}],\"status\":{\"code\":2,\"message\":\"exited with code 3\"}}," +
                 "{\"traceId\":\"0af7651916cd43dd8448eb211c80319c\",\"spanId\":\"c8be7c8270314442\",\"parentSpanId\":\"b7ad6b7169203331\",\"name\":\"child\",\"kind\":1,\"events\":[{\"timeUnixNano\":\"" + TIME_UNIX_NANO + "\",\"name\":\"started\"}]}" +
                 "]}]}]}"),
@@ -303,7 +303,7 @@ class TaskLogLineMatcherTest {
         );
 
         assertThat(match).isPresent();
-        List<OtlpRecord.ResourceSpans> resourceSpans = match.get().oltp().resourceSpans();
+        List<OtlpRecord.ResourceSpans> resourceSpans = match.get().otlp().resourceSpans();
         assertThat(resourceSpans).hasSize(1);
         List<OtlpRecord.Span> spans = resourceSpans.getFirst().scopeSpans().getFirst().spans();
         assertThat(spans).hasSize(2);
@@ -320,12 +320,12 @@ class TaskLogLineMatcherTest {
     }
 
     @Test
-    void shouldParseBareNdjsonStreamWhenGivenKoltpLogDirFile() throws IOException {
+    void shouldParseBareNdjsonStreamWhenGivenKotlpLogDirFile() throws IOException {
         var runContext = runContext();
         var listAppender = appender(runContext);
 
         List<OtlpRecord> records;
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("tasks/otlp/koltp.ndjson")) {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("tasks/otlp/kotlp.ndjson")) {
             records = matcher.parseOtlp(inputStream, runContext.logger(), runContext, FALLBACK_INSTANT);
         }
 
@@ -378,7 +378,7 @@ class TaskLogLineMatcherTest {
     }
 
     @Test
-    void shouldStillParseOutputsWhenNoOltpKey() throws IOException {
+    void shouldStillParseOutputsWhenNoOtlpKey() throws IOException {
         var runContext = runContext();
 
         Optional<TaskLogMatch> match = matcher.matches(
@@ -390,16 +390,16 @@ class TaskLogLineMatcherTest {
 
         assertThat(match).isPresent();
         assertThat(match.get().outputs()).containsEntry("key", "value");
-        assertThat(match.get().oltp()).isNull();
+        assertThat(match.get().otlp()).isNull();
     }
 
     @Test
-    void shouldProcessOutputsAndOltpWhenFramedLineContainsBoth() throws IOException {
+    void shouldProcessOutputsAndOtlpWhenFramedLineContainsBoth() throws IOException {
         var runContext = runContext();
         var listAppender = appender(runContext);
 
         Optional<TaskLogMatch> match = matcher.matches(
-            "::{\"outputs\":{\"key\":\"value\"},\"oltp\":" + logRecord("{\"severityNumber\":9,\"body\":{\"stringValue\":\"combined\"}}") + "}::",
+            "::{\"outputs\":{\"key\":\"value\"},\"otlp\":" + logRecord("{\"severityNumber\":9,\"body\":{\"stringValue\":\"combined\"}}") + "}::",
             runContext.logger(),
             runContext,
             FALLBACK_INSTANT
@@ -433,15 +433,15 @@ class TaskLogLineMatcherTest {
     }
 
     private static String framed(String otlpJson) {
-        return "::{\"oltp\":%s}::".formatted(otlpJson);
+        return "::{\"otlp\":%s}::".formatted(otlpJson);
     }
 
     private static String logRecord(String logRecordJson) {
-        return "{\"resourceLogs\":[{\"scopeLogs\":[{\"scope\":{\"name\":\"koltp\",\"version\":\"0.1.0\"},\"logRecords\":[%s]}]}]}".formatted(logRecordJson);
+        return "{\"resourceLogs\":[{\"scopeLogs\":[{\"scope\":{\"name\":\"kotlp\",\"version\":\"0.1.0\"},\"logRecords\":[%s]}]}]}".formatted(logRecordJson);
     }
 
     private static String metric(String metricJson) {
-        return "{\"resourceMetrics\":[{\"scopeMetrics\":[{\"scope\":{\"name\":\"koltp\",\"version\":\"0.1.0\"},\"metrics\":[%s]}]}]}".formatted(metricJson);
+        return "{\"resourceMetrics\":[{\"scopeMetrics\":[{\"scope\":{\"name\":\"kotlp\",\"version\":\"0.1.0\"},\"metrics\":[%s]}]}]}".formatted(metricJson);
     }
 
     private static String cumulativeSum(String name, double value) {

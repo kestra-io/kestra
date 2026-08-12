@@ -1,0 +1,23 @@
+id: blocks-canvas-fixture
+namespace: company.team
+triggers:
+  - id: schedule_trigger
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 3 * * *"
+    disabled: true
+tasks:
+  - id: seq_group
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: child_one
+        type: io.kestra.plugin.core.log.Log
+        message: one
+      - id: child_two
+        type: io.kestra.plugin.core.log.Log
+        message: two
+  - id: middle_task
+    type: io.kestra.plugin.core.log.Log
+    message: middle
+  - id: last_task
+    type: io.kestra.plugin.core.log.Log
+    message: last

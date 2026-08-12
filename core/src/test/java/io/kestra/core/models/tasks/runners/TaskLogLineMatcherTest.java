@@ -34,7 +34,7 @@ class TaskLogLineMatcherTest {
     private static final Instant FALLBACK_INSTANT = Instant.parse("2024-06-18T00:00:00Z");
     private static final long TIME_UNIX_NANO = 1_718_700_000_000_000_000L;
     // the stdout record of the kotlp recording in tasks/otlp/kotlp.ndjson
-    private static final long RECORDED_STDOUT_UNIX_NANO = 1_786_528_894_518_078_375L;
+    private static final long RECORDED_STDOUT_UNIX_NANO = 1_786_530_207_904_629_286L;
 
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -322,11 +322,16 @@ class TaskLogLineMatcherTest {
     }
 
     /**
-     * The fixture is a verbatim {@code --log-dir} recording of kotlp {@code v0.0.1-10-g8072519}
-     * wrapping {@code sh -c 'echo hello from file; dd if=/dev/zero of=payload.bin bs=1M count=64; sleep 1; echo something went wrong >&2'},
-     * with only {@code host.name} anonymized, followed by three lines the parser must skip: a blank
+     * The fixture is a verbatim {@code --log-dir} recording of the kotlp release this build embeds,
+     * invoked as
+     * <pre>{@code
+     * kotlp --log-dir . --interval 800 --service-name my-program -- \
+     *   /bin/sh -c 'echo hello from file; dd if=/dev/zero of=payload.bin bs=1M count=64 2>/dev/null; sync; sleep 1; echo something went wrong >&2'
+     * }</pre>
+     * with only {@code host.name} replaced, followed by three lines the parser must skip: a blank
      * one, one truncated mid-object as file rotation would leave it, and a well-formed JSON object
-     * holding no OTLP section.
+     * holding no OTLP section. Those three are appended rather than recorded — kotlp does not
+     * produce them on purpose.
      */
     @Test
     void shouldParseBareNdjsonStreamWhenGivenKotlpLogDirFile() throws IOException {
@@ -380,13 +385,13 @@ class TaskLogLineMatcherTest {
         // one entry per (name, tags) pair over the three metric batches, each holding the last sample
         List<AbstractMetricEntry<?>> metrics = runContext.metrics();
         assertThat(metrics).hasSize(10);
-        assertThat(metricNamed(metrics, "process.memory.usage", Map.of()).getValue()).isEqualTo(8_810_496d);
+        assertThat(metricNamed(metrics, "process.memory.usage", Map.of()).getValue()).isEqualTo(9_134_080d);
         assertThat(metricNamed(metrics, "process.thread.count", Map.of()).getValue()).isEqualTo(2d);
-        assertThat(metricNamed(metrics, "process.cpu.time", Map.of("cpu.mode", "system")).getValue()).isEqualTo(0.025476);
+        assertThat(metricNamed(metrics, "process.cpu.time", Map.of("cpu.mode", "system")).getValue()).isEqualTo(0.029441);
         // the closing batch is derived from rusage: kotlp carries the last /proc read of an IO
         // counter it cannot recompute rather than restarting the series at zero
-        assertThat(metricNamed(metrics, "process.disk.io", Map.of("disk.io.direction", "write")).getValue()).isEqualTo(67_108_864d);
-        assertThat(metricNamed(metrics, "process.disk.io", Map.of("disk.io.direction", "read")).getValue()).isEqualTo(299_008d);
+        assertThat(metricNamed(metrics, "process.disk.io", Map.of("disk.io.direction", "write")).getValue()).isEqualTo(81_788_928d);
+        assertThat(metricNamed(metrics, "process.disk.io", Map.of("disk.io.direction", "read")).getValue()).isEqualTo(73_728d);
     }
 
     @Test

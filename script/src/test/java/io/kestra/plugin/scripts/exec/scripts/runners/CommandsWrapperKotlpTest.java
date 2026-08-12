@@ -76,29 +76,10 @@ class CommandsWrapperKotlpTest {
         Path binary = runContext.workingDir().path().resolve(KotlpUtils.BINARY_NAME);
         assertThat(binary).exists();
         assertThat(Files.isExecutable(binary)).isTrue();
-    }
 
-    @Test
-    void shouldForwardEmbeddedBinaryTelemetryWhenEnabled() throws Exception {
-        // Given
-        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
-        CommandsWrapper wrapper = new CommandsWrapper(runContext)
-            .withTaskRunner(Process.instance())
-            .withKotlp(new KotlpOptions(true, null, null))
-            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
-            .withCommands(Property.ofValue(List.of("echo hello")));
-
-        // When
-        ScriptOutput run = wrapper.run();
-
-        // Then
-        assertThat(run.getExitCode()).isEqualTo(0);
-
-        // End to end: the embedded binary frames its records as ::{"otlp":<json>}:: and
-        // TaskLogLineMatcher turns them into Kestra metrics on the wrapper's own run context. An
-        // embedded binary predating the 'otlp' envelope key would leave this empty rather than fail,
-        // which is the whole failure mode this asserts against.
-        assertThat(runContext.metrics()).isNotEmpty();
+        // End to end: the embedded binary frames its records as ::{"otlp":<json>}:: and the matcher
+        // turns them into metrics on the wrapper's own run context. A binary spelling the key the
+        // old way would leave this empty rather than fail.
         assertThat(runContext.metrics()).anySatisfy(metric ->
             assertThat(metric.getName()).isEqualTo("process.cpu.time"));
     }
@@ -135,12 +116,9 @@ class CommandsWrapperKotlpTest {
             assertThat(record.isObject()).isTrue();
         }
 
-        // With --log-dir the file is the only full copy: the console drops the framing and prints the
-        // child's output raw, so nothing reaches Kestra through the log lines...
+        // With --log-dir the file is the only full copy: the console prints the child's output raw,
+        // so nothing reaches Kestra until the caller ships the file back through the matcher.
         assertThat(runContext.metrics()).isEmpty();
-
-        // ...until the caller ships the file back and feeds it to the matcher, which is what the
-        // option exists for.
         try (InputStream inputStream = Files.newInputStream(logFile)) {
             assertThat(matcher.parseOtlp(inputStream, runContext.logger(), runContext, Instant.now())).isNotEmpty();
         }

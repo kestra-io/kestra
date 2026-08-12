@@ -87,9 +87,14 @@ export function violatedKeys(
 }
 
 export interface ReadOnlyYamlKeysOptions {
-    /** The Monaco editor to guard; undefined until it mounts. */
+    /**
+     * The Monaco editor to guard; undefined until it mounts.
+     *
+     * Must be a shallowRef: a plain ref() would wrap the editor in a deep
+     * reactive proxy and break it.
+     */
     editor: Ref<monaco.editor.IStandaloneCodeEditor | undefined>
-    /** Expected value per locked key. Empty/undefined values disable the guard for that key. */
+    /** Expected value per locked key. Undefined values disable the guard for that key. */
     expected: Ref<Record<string, string | undefined>>
     /** Guard only applies while true — creation flows stay fully editable. */
     enabled: Ref<boolean>
@@ -194,6 +199,9 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
         })
     }
 
+    // Identity comparison only. A deep watch here would walk the Monaco editor
+    // object graph, which is both enormous and self-referential; `expected` is a
+    // computed whose identity already changes exactly when the locked values do.
     watch(
         [options.editor, options.enabled, options.expected],
         ([editor]) => {
@@ -203,7 +211,7 @@ export function useReadOnlyYamlKeys(options: ReadOnlyYamlKeysOptions) {
             }
             attach(editor)
         },
-        {immediate: true, deep: true},
+        {immediate: true},
     )
 
     onBeforeUnmount(detach)

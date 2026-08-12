@@ -1,5 +1,5 @@
 <template>
-    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed}" @contextmenu.prevent="onContextMenu">
+    <KsSideBar id="side-menu" v-bind="$attrs" :class="{'is-collapsed': collapsed}" @contextmenu="onContextMenu">
         <template #header>
             <KsIconButton
                 class="header-toggle"
@@ -127,6 +127,12 @@
     const CONTEXT_MENU_HEIGHT = 60
 
     function onContextMenu(event: MouseEvent) {
+        if ((event.target as HTMLElement).closest("a[href]")) {
+            // contextmenu doesn't trigger the click listener that closes our menu, so close it explicitly here.
+            hideContextMenu()
+            return
+        }
+        event.preventDefault()
         const x = Math.max(0, Math.min(event.clientX, window.innerWidth - CONTEXT_MENU_WIDTH))
         const y = Math.max(0, Math.min(event.clientY, window.innerHeight - CONTEXT_MENU_HEIGHT))
         contextMenu.value = {visible: true, x, y}

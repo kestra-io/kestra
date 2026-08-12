@@ -701,7 +701,13 @@
         deleteFocused: requestDeleteFocused,
         goToSection: (section) => {
             const list = sectionList(section)
-            focusCanvasCard(list.length ? String(list[0].id ?? 0) : sectionSentinelId(section))
+            // A palette jump crosses the whole canvas, unlike an arrow-key step
+            // between neighbours, so centre the destination — `nearest` would
+            // leave it flush against the edge of the viewport.
+            focusCanvasCard(
+                list.length ? String(list[0].id ?? 0) : sectionSentinelId(section),
+                {align: "center"},
+            )
         },
         saveFlow: saveFlowWithPendingEdits,
         taskEntries: picker.focusedContextEntries.value,
@@ -729,6 +735,10 @@
         height: 100%;
         overflow-y: auto;
         padding: var(--ks-spacing-6) var(--ks-spacing-4) calc(2.25rem + var(--ks-spacing-6));
+        /* The status bar is painted over the bottom of this scroll container, so
+           scrollIntoView has to stop short of it — otherwise a card scrolled to
+           the bottom edge ends up underneath it. */
+        scroll-padding-bottom: calc(2.25rem + var(--ks-spacing-6));
     }
 
     .block-editor-inline-edit {

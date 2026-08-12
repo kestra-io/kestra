@@ -117,7 +117,7 @@ public class Labels extends Task implements ExecutionUpdatableTask {
                     Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
-                        (_, second) -> second
+                        (ignored, second) -> second
                     )
                 );
         } else if (labels instanceof Map<?, ?> map) {

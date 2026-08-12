@@ -10,7 +10,7 @@
             </ul>
         </template>
     </Navbar>
-    <section v-show="!showEmpty" :class="miscStore.configs?.secretsEnabled === undefined ? 'd-flex flex-column fill-height container' : 'full-container'">
+    <section :class="miscStore.configs?.secretsEnabled === undefined ? 'd-flex flex-column fill-height container' : 'full-container'">
         <div v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
             <div class="oss-secrets-block d-flex flex-column gap-4">
                 <SecretsTable
@@ -68,17 +68,18 @@
             :addSecretModalVisible="addSecretModalVisible"
             :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
-            @has-data="hasData = $event"
-        />
+        >
+            <template #empty>
+                <Empty type="secrets">
+                    <template v-if="miscStore.configs?.secretsEnabled" #button>
+                        <KsButton :icon="Plus" type="primary" @click="addSecretModalVisible = true">
+                            {{ $t('secret.add') }}
+                        </KsButton>
+                    </template>
+                </Empty>
+            </template>
+        </SecretsTable>
     </section>
-
-    <Empty v-if="showEmpty" type="secrets">
-        <template v-if="miscStore.configs?.secretsEnabled" #button>
-            <KsButton :icon="Plus" type="primary" @click="addSecretModalVisible = true">
-                {{ $t('secret.add') }}
-            </KsButton>
-        </template>
-    </Empty>
 </template>
 
 <script setup lang="ts">
@@ -90,7 +91,6 @@
     import Navbar from "../layout/TopNavBar.vue"
     import Empty from "../layout/empty/Empty.vue"
     import {useI18n} from "vue-i18n"
-    import {useRoute} from "vue-router"
     import {computed, ref} from "vue"
     import useRouteContext from "../../composables/useRouteContext"
     import useRestoreUrl from "../../composables/useRestoreUrl"
@@ -111,22 +111,6 @@
 
     const addSecretModalVisible = ref(false)
     const hasData = ref<boolean>()
-
-    const route = useRoute()
-
-    const hasActiveFilters = computed(() => {
-        const {page: _page, size: _size, sort: _sort, ...filters} = route.query
-        return Object.keys(filters).length > 0
-    })
-
-    // Only for instances with a secret manager: the OSS branch below already has its own guidance.
-    // The add-secret dialog belongs to SecretsTable, so the table has to stay visible while it is open.
-    const showEmpty = computed(() =>
-        miscStore.configs?.secretsEnabled !== undefined &&
-        hasData.value === false &&
-        !hasActiveFilters.value &&
-        !addSecretModalVisible.value,
-    )
 
     const {t} = useI18n({useScope: "global"})
     const routeInfo = computed(() => ({title: t("secret.names")}))

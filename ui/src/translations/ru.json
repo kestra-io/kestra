@@ -1507,6 +1507,10 @@
     "dataFilters": "Фильтры данных",
     "logExporters": "Экспортеры Log",
     "empty": {
+      "secrets": {
+        "title": "У вас пока нет Secrets!",
+        "content": "Ключи API, пароли и токены могут храниться как секреты вместо того, чтобы быть жестко закодированными в ваших flows. Каждый секрет принадлежит namespace, наследуется его дочерними namespaces и может быть использован из любой task."
+      },
       "namespaceFiles": {
         "title": "В этом namespace пока нет файлов",
         "content": "Файлы namespace работают как папка проекта для этого namespace. Храните код Python, SQL, dbt или Terraform, а затем ссылайтесь на любой файл в своих flows с помощью"

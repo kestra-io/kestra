@@ -1507,6 +1507,10 @@
     "dataFilters": "Filtres de données",
     "logExporters": "Exportateurs de Logs",
     "empty": {
+      "secrets": {
+        "title": "Vous n'avez pas encore de Secrets !",
+        "content": "Les clés API, les mots de passe et les tokens peuvent être stockés en tant que secrets au lieu d'être codés en dur dans vos flows. Chaque secret appartient à un namespace, est hérité par ses namespaces enfants et peut être référencé depuis n'importe quelle task."
+      },
       "namespaceFiles": {
         "title": "Aucun fichier dans cet espace de noms pour le moment",
         "content": "Les fichiers de l'espace de noms fonctionnent comme un dossier de projet pour cet espace de noms. Stockez du code Python, SQL, dbt ou Terraform, puis référencez n'importe quel fichier dans vos flows avec"

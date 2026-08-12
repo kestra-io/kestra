@@ -9,6 +9,8 @@ import {
     tourSceneIndex,
 } from "../../../src/components/onboarding/tour/tourScenes"
 import {
+    TOUR_FLOW_ID,
+    TOUR_NAMESPACE,
     TOUR_FLOW_BASE,
     TOUR_NOTIFY_TASK_BROKEN,
     TOUR_NOTIFY_TASK_FIXED,
@@ -21,6 +23,16 @@ import {
 import en from "../../../src/translations/en.json"
 
 const translations = (en as any).en.onboarding.tour
+
+const TOUR_FLOW_PARAMS = {namespace: TOUR_NAMESPACE, id: TOUR_FLOW_ID}
+
+const completedOn = (
+    id: string,
+    route: {name: string; params?: Record<string, unknown>},
+) => {
+    const scene = TOUR_SCENES.find((candidate) => candidate.id === id)
+    return Boolean(scene?.completedByUser?.({route: {params: {}, ...route}} as any))
+}
 
 describe("product tour scenes", () => {
     it("has unique scene ids", () => {
@@ -141,6 +153,25 @@ describe("product tour scenes", () => {
             "webhook_trigger",
             "test_event",
         ])
+    })
+
+    it("leaves the copilot step until the flow lands in an editor", () => {
+        expect(completedOn("copilot", {name: "ai"})).toBe(false)
+        expect(completedOn("copilot", {name: "flows/list"})).toBe(false)
+        expect(completedOn("copilot", {name: "executions/list"})).toBe(false)
+
+        expect(completedOn("copilot", {name: "flows/create"})).toBe(true)
+        expect(completedOn("copilot", {name: "flows/update", params: TOUR_FLOW_PARAMS})).toBe(true)
+    })
+
+    it("follows the user into the tour flow only, not any flow", () => {
+        const otherFlow = {namespace: "other", id: "other"}
+
+        expect(completedOn("first_execution", {name: "flows/update", params: TOUR_FLOW_PARAMS})).toBe(true)
+        expect(completedOn("first_execution", {name: "flows/update", params: otherFlow})).toBe(false)
+
+        expect(completedOn("webhook_trigger", {name: "flows/update/triggers", params: TOUR_FLOW_PARAMS})).toBe(true)
+        expect(completedOn("webhook_trigger", {name: "flows/update/triggers", params: otherFlow})).toBe(false)
     })
 
     it("names every step, for the plan listed on the intro card", () => {

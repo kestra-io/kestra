@@ -34,10 +34,12 @@ vi.mock("vue-i18n", () => ({
 
 const dashboardFn = vi.fn()
 const updateDashboardFn = vi.fn().mockResolvedValue({})
+const validateDashboardFn = vi.fn().mockResolvedValue({})
 
 vi.mock("@kestra-io/kestra-sdk/dashboards", () => ({
     dashboard: (...args: any[]) => dashboardFn(...args),
     updateDashboard: (...args: any[]) => updateDashboardFn(...args),
+    validateDashboard: (...args: any[]) => validateDashboardFn(...args),
 }))
 
 // Each `it` re-imports the dashboard store after `vi.resetModules()` (see
@@ -50,6 +52,7 @@ describe("dashboard store dirty tracking", () => {
         vi.resetModules()
         dashboardFn.mockReset()
         updateDashboardFn.mockReset().mockResolvedValue({})
+        validateDashboardFn.mockReset().mockResolvedValue({})
         setActivePinia(createPinia())
     })
 

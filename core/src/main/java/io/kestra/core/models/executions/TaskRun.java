@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.assets.AssetsInOut;
@@ -60,10 +62,6 @@ public class TaskRun implements TenantInterface {
     @Schema(implementation = Object.class)
     Variables outputs;
 
-    @With
-    @Nullable
-    AssetsInOut assets;
-
     // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own lineage event.
     @With
     @Nullable
@@ -88,6 +86,35 @@ public class TaskRun implements TenantInterface {
         // no-op for backward compatibility
     }
 
+    /**
+     * Folds the pre-existing single `assets` object into {@code assetEmits} when deserializing executions
+     * saved before `assetEmits` existed, so old executions still load. New code uses {@link #getAssetEmits()}.
+     *
+     * @deprecated use {@code assetEmits}.
+     */
+    @Deprecated(forRemoval = true, since = "1.3.33")
+    @JsonSetter("assets")
+    public void setAssets(@Nullable AssetsInOut assets) {
+        if (assets == null) {
+            return;
+        }
+        if (!(this.assetEmits instanceof ArrayList)) {
+            this.assetEmits = this.assetEmits == null ? new ArrayList<>() : new ArrayList<>(this.assetEmits);
+        }
+        this.assetEmits.add(assets);
+    }
+
+    /**
+     * @deprecated use {@link #getAssetEmits()}. Returns the first bundle so callers still expecting a
+     *             single `assets` (e.g. the API layer) keep working. Not serialized.
+     */
+    @Deprecated(forRemoval = true, since = "1.3.33")
+    @JsonIgnore
+    @Nullable
+    public AssetsInOut getAssets() {
+        return this.assetEmits == null || this.assetEmits.isEmpty() ? null : this.assetEmits.getFirst();
+    }
+
     public TaskRun withState(State.Type state) {
         return new TaskRun(
             this.tenantId,
@@ -100,7 +127,6 @@ public class TaskRun implements TenantInterface {
             this.value,
             this.attempts,
             this.outputs,
-            this.assets,
             this.assetEmits,
             this.state.withState(state),
             this.iteration,
@@ -130,7 +156,6 @@ public class TaskRun implements TenantInterface {
             this.value,
             newAttempts,
             this.outputs,
-            this.assets,
             this.assetEmits,
             this.state.withState(state),
             this.iteration,
@@ -155,7 +180,6 @@ public class TaskRun implements TenantInterface {
             this.value,
             newAttempts,
             this.outputs,
-            this.assets,
             this.assetEmits,
             this.state.withState(State.Type.FAILED),
             this.iteration,
@@ -176,7 +200,6 @@ public class TaskRun implements TenantInterface {
             .value(this.getValue())
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
-            .assets(this.getAssets())
             .assetEmits(this.getAssetEmits())
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
@@ -262,7 +285,6 @@ public class TaskRun implements TenantInterface {
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
             ", outputs=" + this.getOutputs() +
-            ", assets=" + this.getAssets() +
             ", assetEmits=" + this.getAssetEmits() +
             ", attempts=" + this.getAttempts() +
             ")";

@@ -8148,6 +8148,9 @@ components:
               - A MAJOR.MINOR version (e.g., `1.1`).
               - A MAJOR.MINOR.PATCH version, optionally with any qualifier
                 (e.g., `1.1.2`, `1.1.0-SNAPSHOT`).
+        pluginDefaultsRef:
+          title: Reference (`ref`) of the `pluginDefaults` to apply to this trigger.
+          type: string
         description:
           type: string
         conditions:
@@ -8284,7 +8287,7 @@ components:
         id:
           maxLength: 150
           minLength: 1
-          pattern: "^[a-zA-Z0-9][a-zA-Z0-9._-]*"
+          pattern: "^[a-zA-Z0-9][a-zA-Z0-9._:-]*"
           type: string
         type:
           minLength: 1
@@ -9693,6 +9696,9 @@ components:
           nullable: true
           allOf:
           - $ref: "#/components/schemas/ExecutionKind"
+        progress:
+          type: string
+          nullable: true
     Map_Object.Object_:
       type: object
       properties:
@@ -10188,6 +10194,10 @@ components:
           type: string
         forced:
           type: boolean
+        ref:
+          title: Optional reference id used to apply this default only to plugins
+            that opt in via `pluginDefaultsRef`.
+          type: string
         values:
           type: object
           additionalProperties: false
@@ -10665,6 +10675,9 @@ components:
               - A MAJOR.MINOR version (e.g., `1.1`).
               - A MAJOR.MINOR.PATCH version, optionally with any qualifier
                 (e.g., `1.1.2`, `1.1.0-SNAPSHOT`).
+        pluginDefaultsRef:
+          title: Reference (`ref`) of the `pluginDefaults` to apply to this task.
+          type: string
         description:
           type: string
         retry:
@@ -10788,6 +10801,11 @@ components:
           nullable: true
           allOf:
           - $ref: "#/components/schemas/AssetsInOut"
+        assetEmits:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/AssetsInOut"
         state:
           $ref: "#/components/schemas/State"
         iteration:

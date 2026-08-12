@@ -1264,9 +1264,12 @@ public class ExecutorService {
                 .record(taskRun.getState().getDurationOrComputeIt());
 
             ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
+            // Per-emit lineage bundles, falling back to the legacy single `assets` for task runs produced before assetEmits existed.
+            List<AssetsInOut> assetBundles = taskRun.getAssetEmits() != null && !taskRun.getAssetEmits().isEmpty()
+                ? taskRun.getAssetEmits()
+                : (taskRun.getAssets() != null ? List.of(taskRun.getAssets()) : List.of());
             if (
-                taskRun.getAssets() != null &&
-                    (!taskRun.getAssets().getInputs().isEmpty() || !taskRun.getAssets().getOutputs().isEmpty())
+                assetBundles.stream().anyMatch(bundle -> !bundle.getInputs().isEmpty() || !bundle.getOutputs().isEmpty())
                     && executionKind != ExecutionKind.TEST
             ) {
                 AssetUser assetUser = new AssetUser(
@@ -1282,18 +1285,25 @@ public class ExecutorService {
                     taskRun.getState().getEndDate().orElse(null)
                 );
 
-                List<AssetIdentifier> outputIdentifiers = taskRun.getAssets().getOutputs().stream()
+                // Union across bundles for usage, external-asset creation and triggers (once per asset), while the
+                // bundles themselves are passed through so USED_BY edges stay per-pair instead of a cartesian join.
+                List<AssetIdentifier> outputIdentifiers = assetBundles.stream()
+                    .flatMap(bundle -> bundle.getOutputs().stream())
                     .map(asset -> asset.withTenantId(taskRun.getTenantId()))
                     .map(AssetIdentifier::of)
+                    .distinct()
                     .toList();
-                List<AssetIdentifier> inputAssets = taskRun.getAssets().getInputs().stream()
+                List<AssetIdentifier> inputAssets = assetBundles.stream()
+                    .flatMap(bundle -> bundle.getInputs().stream())
                     .map(assetIdentifier -> assetIdentifier.withTenantId(taskRun.getTenantId()))
+                    .distinct()
                     .toList();
                 try {
                     assetService.assetLineage(
                         assetUser,
                         inputAssets,
-                        outputIdentifiers
+                        outputIdentifiers,
+                        assetBundles
                     );
                 } catch (QueueException e) {
                     log.warn("Unable to submit asset lineage event for {} -> {}", inputAssets, outputIdentifiers, e);
@@ -1301,14 +1311,16 @@ public class ExecutorService {
 
                 // don't update output asserts if task fail
                 if (!taskRun.getState().isFailed()) {
-                    taskRun.getAssets().getOutputs().forEach(asset ->
-                    {
-                        try {
-                            assetService.asyncUpsert(assetUser, asset);
-                        } catch (QueueException e) {
-                            log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
-                        }
-                    });
+                    assetBundles.stream()
+                        .flatMap(bundle -> bundle.getOutputs().stream())
+                        .forEach(asset ->
+                        {
+                            try {
+                                assetService.asyncUpsert(assetUser, asset);
+                            } catch (QueueException e) {
+                                log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
+                            }
+                        });
                 }
             }
         }

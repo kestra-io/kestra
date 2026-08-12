@@ -398,18 +398,43 @@ Run the check script from the `ui/` directory:
 cd ui && npm run translations:check
 ```
 
-A clean run reports `No missing keys. No extra keys.` for every language. Any listed missing keys must be added.
+A clean run reports `No missing keys.`, `No extra keys.` and `No stale keys.` for every language. Anything listed must be fixed before merging — the same check runs as a PR gate.
 
 > **Enterprise Edition:** EE-only keys live in `ui-ee/src/translations/ee_translations/en.json` and are checked separately — run `npm run translations:check` in `ui-ee` as well (see `kestra-ee/AGENTS.md` → "Frontend i18n").
 
-### Adding missing translations
+### Editing English strings
 
-1. Identify gaps by running `npm run translations:check` (or by diffing the flattened `en.json` keys against each language file).
-2. Translate only the missing keys — do **not** re-translate keys that already have a value.
-3. Follow these translation rules (mirroring `generate_translations.ts`):
-   - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
+**Changing an existing English value is a translation change.** Every key carries a fingerprint of the English text its translations were generated from, so editing `en.json` — even just the capitalisation — marks that key stale in all twelve languages and fails `translations:check` until it is regenerated. Run `npm run translations:generate` and commit the result alongside your change.
+
+This is deliberate: before it existed, edited values were never propagated, and a rename of "SuperAdmin" to "Superadmin" sat un-translated in eleven locales for a year (kestra-io/kestra#10656).
+
+### Adding or regenerating translations
+
+Prefer `npm run translations:generate` (needs `GEMINI_API_KEY`); it fills missing keys and re-translates stale ones on its own, with no flag to remember. Pass `true` to force a full re-translation of everything.
+
+If you must write a translation by hand:
+
+1. Identify gaps by running `npm run translations:check`.
+2. Follow these translation rules (mirroring `ui/scripts/translations/generateTranslations.ts`, the generator shared by OSS and EE):
+   - **Reserved English terms — never translate:** `kv store`, `namespace`, `tenant`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
    - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
    - **Preserve `{placeholder}` variables** exactly — vue-i18n uses a **single** pair of braces. Do not translate the name inside the braces, do not rename it, and never write `{{placeholder}}`: double braces are a compile error (`Not allowed nest placeholder`) and make `t()` throw at render time. Each translation must carry exactly the same placeholders as the English source — no invented ones, none dropped.
    - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).
-4. Insert the translated keys into the correct position in the target language JSON, keeping `sort_keys=True` order (alphabetical within each object).
-5. Re-run `npm run translations:check` to confirm everything is clean before committing.
+3. Insert the translated keys into the correct position in the target language JSON, mirroring the key order of `en.json`.
+4. Re-run `npm run translations:check` to confirm everything is clean before committing.
+
+The tooling itself lives in `ui/scripts/translations/` and is shared with EE, which keeps only thin entry points. Rules live in `.mjs` so the dependency-free PR gate can apply them; file IO and orchestration stay in `.ts`.
+
+### Conflicts in `fingerprints.json`
+
+Two branches that both touch `en.json` will both regenerate `ui/scripts/translations/fingerprints.json`, so it conflicts often. **Never hand-merge the hashes and never pick a side** — a hash says "this English text is what the twelve translations were generated from", so choosing the wrong one silently marks a drifted key as current and the drift becomes invisible again.
+
+Resolve it the same way as a `kestra-sdk` conflict — regenerate:
+
+```bash
+git checkout --ours ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
+cd ui && npm run translations:generate   # fills whatever the other branch added
+npm run translations:check               # must report no missing / extra / stale keys
+```
+
+`en.json` itself normally merges cleanly, since branches usually add different keys; it is the generated files that collide.

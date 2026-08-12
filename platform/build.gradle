@@ -39,7 +39,7 @@ dependencies {
     api platform('software.amazon.awssdk:bom:2.51.3')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
-    api platform("io.qameta.allure:allure-bom:2.35.1")
+    api platform("io.qameta.allure:allure-bom:2.35.4")
 
     constraints {
         api("io.opentelemetry.proto:opentelemetry-proto:1.11.0-alpha")

@@ -1,7 +1,10 @@
 import {describe, expect, it} from "vitest"
+import {mount} from "@vue/test-utils"
+import {computed, defineComponent, ref} from "vue"
 import {
     findReadOnlyLines,
     readTopLevelValue,
+    useReadOnlyYamlKeys,
     violatedKeys,
 } from "../../../src/composables/useReadOnlyYamlKeys"
 
@@ -110,5 +113,124 @@ describe("violatedKeys", () => {
 
     it("accepts a re-quoted but unchanged value", () => {
         expect(violatedKeys("id: \"my_flow\"\nnamespace: company.team\n", expected)).toEqual([])
+    })
+})
+
+/**
+ * Minimal stand-in for the slice of Monaco the composable touches, so the revert
+ * path is exercised without pulling the real editor into a jsdom test.
+ */
+function editorDouble(initial: string) {
+    let value = initial
+    const listeners: Array<() => void> = []
+    let painted: unknown[] = []
+
+    const model = {
+        getValue: () => value,
+        getFullModelRange: () => ({startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1}),
+        getLineMaxColumn: () => 1,
+    }
+
+    const editor = {
+        getModel: () => model,
+        onDidChangeModelContent(callback: () => void) {
+            listeners.push(callback)
+            return {dispose: () => listeners.splice(listeners.indexOf(callback), 1)}
+        },
+        createDecorationsCollection: () => ({
+            set: (next: unknown[]) => { painted = next },
+            clear: () => { painted = [] },
+        }),
+        executeEdits(_source: string, edits: {text: string}[]) {
+            value = edits[0].text
+            // Monaco notifies synchronously, which is also what exercises the
+            // composable's re-entrancy guard.
+            listeners.forEach((listener) => listener())
+            return true
+        },
+        getSelection: () => null,
+        setSelection: () => {},
+    }
+
+    return {
+        editor,
+        current: () => value,
+        decorationCount: () => painted.length,
+        /** Simulate the user changing the buffer. */
+        type(next: string) {
+            value = next
+            listeners.forEach((listener) => listener())
+        },
+    }
+}
+
+function withComposable(run: () => void) {
+    return mount(defineComponent({
+        setup() {
+            run()
+            return () => null
+        },
+    }))
+}
+
+describe("useReadOnlyYamlKeys", () => {
+    function guard(double: ReturnType<typeof editorDouble>, enabled = true) {
+        return withComposable(() => useReadOnlyYamlKeys({
+            editor: ref(double.editor) as any,
+            expected: computed(() => ({id: "my_flow", namespace: "company.team"})),
+            enabled: computed(() => enabled),
+        }))
+    }
+
+    it("rejects an edit to a locked value", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        double.type(FLOW.replace("id: my_flow", "id: my_flowX"))
+
+        expect(double.current()).toBe(FLOW)
+    })
+
+    it("rejects deleting a locked line", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        double.type(FLOW.replace("namespace: company.team\n", ""))
+
+        expect(double.current()).toBe(FLOW)
+    })
+
+    it("lets edits to the rest of the document through", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        const edited = FLOW.replace("message: hello", "message: changed")
+        double.type(edited)
+
+        expect(double.current()).toBe(edited)
+    })
+
+    it("stays out of the way while disabled, as when creating", () => {
+        const double = editorDouble(FLOW)
+        guard(double, false)
+
+        const renamed = FLOW.replace("id: my_flow", "id: brand_new")
+        double.type(renamed)
+
+        expect(double.current()).toBe(renamed)
+    })
+
+    it("decorates both locked lines", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        expect(double.decorationCount()).toBe(2)
+    })
+
+    it("decorates nothing while disabled", () => {
+        const double = editorDouble(FLOW)
+        guard(double, false)
+
+        expect(double.decorationCount()).toBe(0)
     })
 })

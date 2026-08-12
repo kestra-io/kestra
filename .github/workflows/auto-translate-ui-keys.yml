@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       retranslate_modified_keys:
-        description: "Whether to re-translate modified keys even if they already have translations."
+        description: "Force a full re-translation of every key, ignoring the fingerprints. Keys whose English source changed are re-translated automatically without this."
         type: choice
         options:
           - "false"
@@ -42,7 +42,7 @@ jobs:
           working-directory: ui
 
         - name: Generate translations
-          run: node --experimental-strip-types ui/scripts/generate_translations.ts ${{ github.event.inputs.retranslate_modified_keys }}
+          run: node --experimental-strip-types ui/scripts/translations/generate.ts ${{ github.event.inputs.retranslate_modified_keys }}
           env:
             GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
@@ -57,7 +57,12 @@ jobs:
           run: |
             BRANCH_NAME="chore/update-translations-$(date +%s)"
             git checkout -b $BRANCH_NAME
-            git add ui/src/translations/*.json
+            # The fingerprints record what each translation was generated from; committing the
+            # languages without them would leave every regenerated key looking stale forever, so the
+            # next run would translate it again and open the same PR in a loop. The design-system
+            # locale files are phase 2 of the same generator and were never committed at all.
+            git add ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
+            git add ':(glob)ui/packages/design-system/**/*.locale.ts'
             if git diff --cached --quiet; then
               echo "No changes to commit. Exiting with success."
               exit 0

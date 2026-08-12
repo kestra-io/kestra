@@ -58,8 +58,7 @@ public class TaskRun implements TenantInterface {
     List<TaskRunAttempt> attempts;
 
     // Lineage bundles, one AssetsInOut per (inputs -> outputs) pair, kept unmerged so each becomes its own
-    // lineage event downstream. This is the single source of truth for a taskRun's assets. The pre-existing
-    // single `assets` object is folded in here via the deprecated setAssets bridge below.
+    // lineage event. Canonical store for a taskRun's assets (the legacy single `assets` folds in via setAssets).
     @With
     @Nullable
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -98,11 +97,10 @@ public class TaskRun implements TenantInterface {
     }
 
     /**
-     * Backward-compatibility bridge for the pre-existing single `assets` bundle. Executions serialized
-     * before `assetEmits` existed carry a single `assets` object; this folds it into `assetEmits` on
-     * deserialization so old executions still load. New code should use {@link #getAssetEmits()}.
+     * Folds the pre-existing single `assets` object into {@code assetEmits} when deserializing executions
+     * saved before `assetEmits` existed, so old executions still load. New code uses {@link #getAssetEmits()}.
      *
-     * @deprecated use {@code assetEmits}. Kept only so historical executions deserialize.
+     * @deprecated use {@code assetEmits}.
      */
     @Deprecated(forRemoval = true, since = "2.0.0")
     @JsonSetter("assets")

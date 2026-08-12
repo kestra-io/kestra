@@ -459,9 +459,8 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
 
                 AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
 
-                // Collect every lineage bundle into one list: the manual `assets:` declaration (one bundle) plus
-                // each auto-emitted (inputs -> outputs) pair, kept unmerged so persistence writes one lineage
-                // event per pair instead of a cartesian all-inputs x all-outputs.
+                // One bundle per lineage pair (the manual `assets:` declaration plus each auto-emitted pair),
+                // kept unmerged so persistence writes one event per pair instead of a cartesian graph.
                 List<AssetsInOut> bundles = new ArrayList<>();
                 List<AssetIdentifier> declaredInputs = runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap);
                 List<Asset> declaredOutputs = runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap);

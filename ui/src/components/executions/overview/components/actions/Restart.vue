@@ -1,6 +1,6 @@
 <template>
     <NavBarAction
-        v-if="trigger && asItem && (isReplay || enabled)"
+        v-if="trigger && asItem && hasPermission && (isReplay || enabled)"
         :icon="icon"
         :disabled="!enabled"
         @click="isOpen = !isOpen"
@@ -8,7 +8,7 @@
         {{ $t(replayOrRestart) }}
     </NavBarAction>
     <KsTooltip
-        v-else-if="trigger && (isReplay || enabled)"
+        v-else-if="trigger && hasPermission && (isReplay || enabled)"
         :placement="tooltipPosition"
         :enterable="false"
         :content="tooltip"
@@ -261,14 +261,21 @@
             .reverse(),
     )
 
+    // Split out of `enabled` so a missing permission hides the action entirely instead of
+    // rendering it disabled: a permanently dead button in the nav bar would leave the user with
+    // no reachable action at all in that slot.
+    const hasPermission = computed(() => {
+        if (!props.execution) return false
+
+        return props.isReplay
+            ? !!authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
+            : !!authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
+    })
+
     const enabled = computed(() => {
         if (!props.execution?.state) return false
 
-        const hasPermission = props.isReplay
-            ? authStore.user?.isAllowed(resource.EXECUTION, action.REPLAY, props.execution.namespace)
-            : authStore.user?.isAllowed(resource.EXECUTION, action.UPDATE, props.execution.namespace)
-
-        if (!hasPermission) return false
+        if (!hasPermission.value) return false
 
         if (
             props.isReplay &&

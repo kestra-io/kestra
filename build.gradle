@@ -479,6 +479,27 @@ tasks.named('testCodeCoverageReport') {
 }
 
 /**********************************************************************************************************************\
+ * Allure Reports
+ **********************************************************************************************************************/
+subprojects {
+    plugins.withId('java') {
+        dependencies {
+            testImplementation "io.qameta.allure:allure-junit5"
+        }
+
+        test {
+            // allure-junit5 writes results as a side effect of the test JVM, invisible to Gradle's
+            // dependency tracking. Without declaring it as a task output, a build-cache hit on :test
+            // (org.gradle.caching=true) restores build/test-results/ but skips the JVM entirely, so
+            // no allure-results are ever produced for that run.
+            def allureResultsDir = layout.buildDirectory.dir("allure-results")
+            systemProperty 'allure.results.directory', allureResultsDir.get().asFile.absolutePath
+            outputs.dir(allureResultsDir)
+        }
+    }
+}
+
+/**********************************************************************************************************************\
  * Sonar
  **********************************************************************************************************************/
 subprojects {

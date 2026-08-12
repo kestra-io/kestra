@@ -9,7 +9,7 @@
         >
             <Action
                 :label="t('mcp.create')"
-                :to="{name: 'admin/mcp-servers/create', params: {tab: 'edit'}}"
+                :to="{name: 'admin/mcp-servers/create', params: {tab: 'edit', tenant: route.params.tenant}}"
             />
         </template>
     </TopNavBar>
@@ -65,6 +65,7 @@
 <script lang="ts" setup>
     import {computed, onMounted, ref} from "vue"
     import {useI18n} from "vue-i18n"
+    import {useRoute} from "vue-router"
 
     import {useMcpStore, type McpServer} from "../../stores/mcp"
     import {useMiscStore} from "override/stores/misc"
@@ -92,6 +93,7 @@
     }>()
 
     const {t} = useI18n({useScope: "global"})
+    const route = useRoute()
     const toast = useToast()
     const mcpStore = useMcpStore()
     const miscStore = useMiscStore()
@@ -140,7 +142,7 @@
     }
 
     const routeTo = (server: DisplayServer): RouteLocationRaw => {
-        const params: Record<string, string> = {id: server.id, tab: "edit"}
+        const params: Record<string, string> = {id: server.id, tab: "edit", tenant: route.params.tenant as string}
 
         if (instanceMode.value) {
             return {

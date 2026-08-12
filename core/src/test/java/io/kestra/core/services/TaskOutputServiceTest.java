@@ -12,7 +12,6 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunWithOutput;
-import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -436,7 +435,7 @@ class TaskOutputServiceTest {
             .flowId("test-flow")
             .taskId("test-task")
             .state(new State())
-            .outputs(Variables.inMemory(legacyOutputs))
+            .outputs(legacyOutputs)
             .build();
 
         // When - no output saved to repository; should use deprecated field directly
@@ -461,7 +460,7 @@ class TaskOutputServiceTest {
             .flowId("test-flow")
             .taskId("task-1")
             .state(new State())
-            .outputs(Variables.inMemory(Map.of("output1", "value1")))
+            .outputs(Map.of("output1", "value1"))
             .build();
 
         TaskRun taskRun2 = TaskRun.builder()
@@ -472,7 +471,7 @@ class TaskOutputServiceTest {
             .flowId("test-flow")
             .taskId("task-2")
             .state(new State())
-            .outputs(Variables.inMemory(Map.of("output2", "value2")))
+            .outputs(Map.of("output2", "value2"))
             .build();
 
         Execution execution = Execution.builder()
@@ -515,7 +514,7 @@ class TaskOutputServiceTest {
             .flowId("test-flow")
             .taskId("task-legacy")
             .state(new State())
-            .outputs(Variables.inMemory(Map.of("source", "legacy")))
+            .outputs(Map.of("source", "legacy"))
             .build();
 
         TaskRun modernTaskRun = TaskRun.builder()

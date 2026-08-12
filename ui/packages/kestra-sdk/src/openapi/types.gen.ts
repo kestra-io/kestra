@@ -347,7 +347,7 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2151,6 +2151,10 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2159,7 +2163,7 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2383,7 +2387,7 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2472,6 +2476,10 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2480,7 +2488,7 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;

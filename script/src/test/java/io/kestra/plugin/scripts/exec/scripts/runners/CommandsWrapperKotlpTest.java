@@ -1,8 +1,10 @@
 package io.kestra.plugin.scripts.exec.scripts.runners;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +17,7 @@ import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.runners.TaskLogLineMatcher;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TestsUtils;
@@ -44,6 +47,9 @@ class CommandsWrapperKotlpTest {
     @Inject
     private TestRunContextFactory runContextFactory;
 
+    @Inject
+    private TaskLogLineMatcher matcher;
+
     @Test
     void shouldWrapCommandsWithKotlpWhenEnabled() throws Exception {
         // Given
@@ -70,6 +76,31 @@ class CommandsWrapperKotlpTest {
         Path binary = runContext.workingDir().path().resolve(KotlpUtils.BINARY_NAME);
         assertThat(binary).exists();
         assertThat(Files.isExecutable(binary)).isTrue();
+    }
+
+    @Test
+    void shouldForwardEmbeddedBinaryTelemetryWhenEnabled() throws Exception {
+        // Given
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
+        CommandsWrapper wrapper = new CommandsWrapper(runContext)
+            .withTaskRunner(Process.instance())
+            .withKotlp(new KotlpOptions(true, null, null))
+            .withInterpreter(Property.ofValue(List.of("/bin/sh", "-c")))
+            .withCommands(Property.ofValue(List.of("echo hello")));
+
+        // When
+        ScriptOutput run = wrapper.run();
+
+        // Then
+        assertThat(run.getExitCode()).isEqualTo(0);
+
+        // End to end: the embedded binary frames its records as ::{"otlp":<json>}:: and
+        // TaskLogLineMatcher turns them into Kestra metrics on the wrapper's own run context. An
+        // embedded binary predating the 'otlp' envelope key would leave this empty rather than fail,
+        // which is the whole failure mode this asserts against.
+        assertThat(runContext.metrics()).isNotEmpty();
+        assertThat(runContext.metrics()).anySatisfy(metric ->
+            assertThat(metric.getName()).isEqualTo("process.cpu.time"));
     }
 
     @Test
@@ -103,6 +134,18 @@ class CommandsWrapperKotlpTest {
             JsonNode record = JacksonMapper.ofJson().readTree(line);
             assertThat(record.isObject()).isTrue();
         }
+
+        // With --log-dir the file is the only full copy: the console drops the framing and prints the
+        // child's output raw, so nothing reaches Kestra through the log lines...
+        assertThat(runContext.metrics()).isEmpty();
+
+        // ...until the caller ships the file back and feeds it to the matcher, which is what the
+        // option exists for.
+        try (InputStream inputStream = Files.newInputStream(logFile)) {
+            assertThat(matcher.parseOtlp(inputStream, runContext.logger(), runContext, Instant.now())).isNotEmpty();
+        }
+        assertThat(runContext.metrics()).anySatisfy(metric ->
+            assertThat(metric.getName()).isEqualTo("process.cpu.time"));
     }
 
     @Test

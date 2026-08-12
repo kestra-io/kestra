@@ -54,6 +54,18 @@ test.describe("Flow editor — immutable id and namespace", () => {
         await page.keyboard.type(text)
     }
 
+    /**
+     * One-shot read, deliberately not a retrying assertion.
+     *
+     * The behaviour being replaced also ends up without the typed text — it let the
+     * edit land and stripped it on the next onEdit tick — so anything that retries
+     * passes either way. What distinguishes the lock is that the character is never
+     * inserted in the first place.
+     */
+    async function documentNow(page: Page): Promise<string> {
+        return (await editorText(page).textContent()) ?? ""
+    }
+
     async function seedEditor(page: Page) {
         await page.goto("/ui/flows")
         await expect(page.locator(CREATE)).toBeVisible()
@@ -84,9 +96,11 @@ test.describe("Flow editor — immutable id and namespace", () => {
 
         await typeOnLine(page, 0, "XXX")
 
-        // The character never lands anywhere — no toast, and no revert a second
-        // later. Asserting on the whole document also catches a stray caret.
-        await expect(editorText(page)).not.toContainText("XXX")
+        // Never inserted — not inserted and then withdrawn.
+        expect(await documentNow(page)).not.toContain("XXX")
+        // Still absent once the old debounce window has elapsed.
+        await page.waitForTimeout(1500)
+        expect(await documentNow(page)).not.toContain("XXX")
         await expect(editorText(page)).toContainText(`id: ${flowId}`)
     })
 
@@ -95,7 +109,9 @@ test.describe("Flow editor — immutable id and namespace", () => {
 
         await typeOnLine(page, 1, "ZZZ")
 
-        await expect(editorText(page)).not.toContainText("ZZZ")
+        expect(await documentNow(page)).not.toContain("ZZZ")
+        await page.waitForTimeout(1500)
+        expect(await documentNow(page)).not.toContain("ZZZ")
         await expect(editorText(page)).toContainText(`namespace: ${NAMESPACE}`)
     })
 

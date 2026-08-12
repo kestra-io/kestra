@@ -16,12 +16,27 @@ on:
         options:
           - "true"
           - "false"
+      runner:
+        description: 'Runner label to run the CI jobs on.'
+        type: string
+        default: 'ubuntu-latest'
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
+# kestra-io/actions PR #190 (adds the `runner` input below) is not merged yet, so the
+# reusable-workflow calls in this file temporarily pin to that PR's branch instead of @main.
+# Switch them back to @main once it merges.
 jobs:
+  print-runner:
+    name: Print selected runner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo runner input
+        run: "echo 'CI jobs will run on runner: ${{ inputs.runner || 'ubuntu-latest' }}'"
+
   # On develop push: fire the full EE CI cross-check async (oss-updated) AND run a
   # synchronous EE compile gate via the Kestra webhook.
   trigger-ee:
@@ -56,7 +71,7 @@ jobs:
   backend-tests:
     name: Backend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@feat/opt-in-larger-runners
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -67,35 +82,41 @@ jobs:
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   frontend-tests:
     name: Frontend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@feat/opt-in-larger-runners
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   design-system-frontend-tests:
     name: Design System Frontend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@feat/opt-in-larger-runners
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   publish-develop-docker:
     name: Publish Docker
     needs: [backend-tests, frontend-tests, design-system-frontend-tests]
     if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@feat/opt-in-larger-runners
     with:
       java-version: 25
       notify-in-slack-release-channel: false
       use-kestra-base-images: true
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
     secrets: inherit
 
 
@@ -103,7 +124,7 @@ jobs:
     name: Publish develop Maven
     needs: [ backend-tests, frontend-tests ]
     if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@feat/opt-in-larger-runners
     secrets:
       SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
@@ -114,6 +135,7 @@ jobs:
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   generate-configuration-schema:
     name: Generate Configuration Schema

@@ -23,18 +23,34 @@ on:
         type: string
         default: '25'
         required: false
+      runner:
+        description: 'Runner label to run the CI jobs on.'
+        type: string
+        default: 'ubuntu-latest'
+        required: false
 
+# kestra-io/actions PR #190 (adds the `runner` input above) is not merged yet, so the
+# reusable-workflow calls in this file temporarily pin to that PR's branch instead of @main.
+# Switch them back to @main once it merges.
 jobs:
+  print-runner:
+    name: Print selected runner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo runner input
+        run: "echo 'CI jobs will run on runner: ${{ inputs.runner || 'ubuntu-latest' }}'"
+
   publish-docker:
     name: Publish Docker
     if: startsWith(github.ref, 'refs/tags/v')
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@feat/opt-in-larger-runners
     with:
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
       dry-run: ${{ inputs.dry-run }}
       java-version: ${{ inputs.java-version }}
       use-kestra-base-images: true
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
     secrets: inherit
 
   helm-release:
@@ -44,9 +60,10 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: kestra-io/actions/.github/workflows/kestra-oss-helm-release.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-helm-release.yml@feat/opt-in-larger-runners
     with:
       dry-run: ${{ inputs.dry-run }}
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace

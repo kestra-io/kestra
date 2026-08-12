@@ -7,7 +7,21 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-pr
   cancel-in-progress: true
 
+# `pull_request` runs can't carry a workflow_dispatch-style choice, so the `runner` passed to the
+# reusable-workflow calls below (kestra-io/actions PR #190) is a fixed literal rather than a real
+# input; the `with:` context for a called workflow doesn't expose `env`, so it can't be centralized
+# in an env var either. Bump the literal in each call below to change it.
+#
+# kestra-io/actions PR #190 is not merged yet, so the reusable-workflow calls in this file
+# temporarily pin to that PR's branch instead of @main. Switch them back to @main once it merges.
 jobs:
+  print-runner:
+    name: Print selected runner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo runner input
+        run: "echo 'CI jobs will run on runner: ubuntu-latest'"
+
   # When an OSS PR opens, run the kestra-ee compile check for its ref (via a
   # Kestra webhook) and trigger the EE OpenAPI spec check.
   trigger-ee:
@@ -227,24 +241,28 @@ jobs:
     name: Frontend - Tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@feat/opt-in-larger-runners
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      runner: 'ubuntu-latest'
 
   design-system-frontend:
     name: Frontend - Design System tests
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui-design-system == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@feat/opt-in-larger-runners
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      runner: 'ubuntu-latest'
 
   backend:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@feat/opt-in-larger-runners
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -253,6 +271,7 @@ jobs:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
     with:
       java-version: 25
+      runner: 'ubuntu-latest'
 
   # Built once here, consumed by both the E2E tests and the PR docker image
   # publish (previously each of them rebuilt the whole product themselves).
@@ -264,12 +283,13 @@ jobs:
     # share artifacts (their runs hold no repo write token), so they keep
     # the E2E build-from-source fallback below.
     if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@feat/opt-in-larger-runners
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
+      runner: 'ubuntu-latest'
 
   e2e-tests:
     name: E2E - Tests
@@ -277,13 +297,14 @@ jobs:
     # Runs when build-artifacts succeeded (prebuilt exe) or was skipped for a
     # fork (falls back to building from source); not when the build failed.
     if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true')"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@feat/opt-in-larger-runners
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
       exe-artifact: ${{ needs.build-artifacts.result == 'success' && 'exe' || '' }}
+      runner: 'ubuntu-latest'
 
   generate-pull-request-docker-image:
     name: Generate PR docker image
@@ -294,10 +315,11 @@ jobs:
     # otherwise let the reusable workflow build it from source itself.
     # Dependabot runs get a read-only GITHUB_TOKEN so it cannot publish an image : skip the job.
     if: "!cancelled() && needs.build-artifacts.result != 'failure' && github.actor != 'dependabot[bot]'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@feat/opt-in-larger-runners
     with:
       java-version: 25
       skip-build: ${{ needs.build-artifacts.result == 'success' }}
+      runner: 'ubuntu-latest'
 
   otel-export-trace:
     name: OpenTelemetry - Export Trace

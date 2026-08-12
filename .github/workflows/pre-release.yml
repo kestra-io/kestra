@@ -14,20 +14,36 @@ on:
         options:
           - "true"
           - "false"
+      runner:
+        description: 'Runner label to run the CI jobs on.'
+        type: string
+        default: 'ubuntu-latest'
+        required: false
 
+# kestra-io/actions PR #190 (adds the `runner` input above) is not merged yet, so the
+# reusable-workflow calls in this file temporarily pin to that PR's branch instead of @main.
+# Switch them back to @main once it merges.
 jobs:
+  print-runner:
+    name: Print selected runner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo runner input
+        run: "echo 'CI jobs will run on runner: ${{ inputs.runner || 'ubuntu-latest' }}'"
+
   build-artifacts:
     name: Build Artifacts
-    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@feat/opt-in-larger-runners
     secrets:
       OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   backend-tests:
     name: Backend tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@feat/opt-in-larger-runners
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -36,27 +52,32 @@ jobs:
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
     with:
       java-version: 25
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   frontend-tests:
     name: Frontend tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@feat/opt-in-larger-runners
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   design-system-frontend-tests:
     name: Design System Frontend tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@feat/opt-in-larger-runners
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   publish-maven:
     name: Publish Maven
     needs: [ backend-tests, frontend-tests, design-system-frontend-tests ]
     if: "!failure() && !cancelled()"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@feat/opt-in-larger-runners
     secrets:
       SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
@@ -67,6 +88,7 @@ jobs:
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
 
   generate-configuration-schema:
     name: Generate Configuration Schema
@@ -104,7 +126,9 @@ jobs:
     name: Github Release
     needs: [build-artifacts, backend-tests, frontend-tests]
     if: "!failure() && !cancelled()"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-github.yml@feat/opt-in-larger-runners
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-latest' }}
     secrets: inherit
 
   otel-export-trace:

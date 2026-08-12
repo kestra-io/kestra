@@ -40,9 +40,8 @@ public class SubflowGraphTask extends AbstractGraphTask {
         SubflowGraphTask previous = this;
         return new SubflowGraphTask(this.getUid(), new SubflowTaskWrapper<>(runContext, this.executableTask()), this.getTaskRun(), this.getValues(), this.getRelationType()) {
             @Override
-            public int hashCode() {
-                // Since edges are handled by a hashmap, we need to keep the same hash and uid is not a good candidate as it changes whenever a node is moved to a cluster
-                return previous.hashCode();
+            protected AbstractGraph nodeIdentity() {
+                return previous;
             }
         };
     }

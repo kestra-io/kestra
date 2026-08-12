@@ -67,7 +67,7 @@ class GraphUtilsTest {
     }
 
     @Test
-    void shouldThrowWhenATaskHasDuplicatedTaskRuns() throws Exception {
+    void shouldWalkSuccessorsWhenATaskHasDuplicatedTaskRuns() throws Exception {
         Flow flow = chainFlow(3);
         String executionId = IdUtils.create();
 
@@ -86,13 +86,9 @@ class GraphUtilsTest {
 
         GraphCluster graph = GraphUtils.of(flow, execution);
 
-        assertThat(GraphUtils.edges(graph))
-            .as("two task runs sharing a uid turn the chain edge between them into a self-loop")
-            .anySatisfy(edge -> assertThat(edge.getSource()).isEqualTo(edge.getTarget()));
-
-        assertThatThrownBy(() -> GraphUtils.successors(graph, Set.of(duplicated.getId())))
-            .isInstanceOf(CyclicGraphException.class)
-            .hasMessageContaining("root.task_1 -> root.task_1");
+        assertThat(GraphUtils.successors(graph, Set.of(duplicated.getId())))
+            .extracting(AbstractGraph::getUid)
+            .contains("root.task_1", "root.task_2");
     }
 
     @Test

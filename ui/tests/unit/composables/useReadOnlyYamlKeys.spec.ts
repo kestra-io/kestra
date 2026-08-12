@@ -39,6 +39,12 @@ describe("readTopLevelValue", () => {
         ["id: 'single'", "single"],
         ["id:    spaced", "spaced"],
         ["id:", ""],
+        // An inline comment is not part of the value — reading it as one would
+        // make the id permanently unequal to the saved value.
+        ["id: my_flow # keep this", "my_flow"],
+        ["id: \"my_flow\" # keep this", "my_flow"],
+        // `#` only opens a comment when preceded by whitespace.
+        ["id: a#b", "a#b"],
     ])("normalises %s", (line, expected) => {
         expect(readTopLevelValue(line, "id")).toBe(expected)
     })
@@ -90,6 +96,11 @@ describe("violatedKeys", () => {
         expect(violatedKeys(edited, expected)).toEqual([])
     })
 
+    it("tolerates an inline comment on a locked line", () => {
+        const commented = FLOW.replace("id: my_flow", "id: my_flow # do not touch")
+        expect(violatedKeys(commented, expected)).toEqual([])
+    })
+
     it("reports a changed id", () => {
         expect(violatedKeys(FLOW.replace("id: my_flow", "id: my_flowX"), expected)).toEqual(["id"])
     })
@@ -117,18 +128,24 @@ describe("violatedKeys", () => {
 })
 
 /**
- * Minimal stand-in for the slice of Monaco the composable touches, so the revert
- * path is exercised without pulling the real editor into a jsdom test.
+ * Minimal stand-in for the slice of Monaco the composable touches. Edits are
+ * applied by line range, which is what makes the "keep the rest of the edit"
+ * behaviour observable.
  */
 function editorDouble(initial: string) {
-    let value = initial
+    let lines = initial.split("\n")
     const listeners: Array<() => void> = []
     let painted: unknown[] = []
 
     const model = {
-        getValue: () => value,
-        getFullModelRange: () => ({startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1}),
-        getLineMaxColumn: () => 1,
+        getValue: () => lines.join("\n"),
+        getFullModelRange: () => ({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: lines.length,
+            endColumn: (lines[lines.length - 1]?.length ?? 0) + 1,
+        }),
+        getLineMaxColumn: (line: number) => (lines[line - 1]?.length ?? 0) + 1,
     }
 
     const editor = {
@@ -141,8 +158,13 @@ function editorDouble(initial: string) {
             set: (next: unknown[]) => { painted = next },
             clear: () => { painted = [] },
         }),
-        executeEdits(_source: string, edits: {text: string}[]) {
-            value = edits[0].text
+        executeEdits(_source: string, edits: {range: {startLineNumber: number; endLineNumber: number}; text: string}[]) {
+            // Descending, so earlier line numbers stay valid as we splice.
+            for (const edit of [...edits].sort((a, b) => b.range.startLineNumber - a.range.startLineNumber)) {
+                const start = edit.range.startLineNumber - 1
+                const count = edit.range.endLineNumber - edit.range.startLineNumber + 1
+                lines.splice(start, count, ...edit.text.split("\n"))
+            }
             // Monaco notifies synchronously, which is also what exercises the
             // composable's re-entrancy guard.
             listeners.forEach((listener) => listener())
@@ -154,11 +176,11 @@ function editorDouble(initial: string) {
 
     return {
         editor,
-        current: () => value,
+        current: () => lines.join("\n"),
         decorationCount: () => painted.length,
         /** Simulate the user changing the buffer. */
         type(next: string) {
-            value = next
+            lines = next.split("\n")
             listeners.forEach((listener) => listener())
         },
     }
@@ -191,15 +213,6 @@ describe("useReadOnlyYamlKeys", () => {
         expect(double.current()).toBe(FLOW)
     })
 
-    it("rejects deleting a locked line", () => {
-        const double = editorDouble(FLOW)
-        guard(double)
-
-        double.type(FLOW.replace("namespace: company.team\n", ""))
-
-        expect(double.current()).toBe(FLOW)
-    })
-
     it("lets edits to the rest of the document through", () => {
         const double = editorDouble(FLOW)
         guard(double)
@@ -207,6 +220,61 @@ describe("useReadOnlyYamlKeys", () => {
         const edited = FLOW.replace("message: hello", "message: changed")
         double.type(edited)
 
+        expect(double.current()).toBe(edited)
+    })
+
+    it("keeps the rest of a paste that also changed a locked line", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        // Select-all and paste a different flow: the id must snap back, but the
+        // pasted body must survive — discarding it silently is the failure mode.
+        double.type([
+            "id: someone_elses_flow",
+            "namespace: company.team",
+            "",
+            "tasks:",
+            "  - id: pasted",
+            "    type: io.kestra.plugin.core.log.Log",
+            "    message: pasted",
+            "",
+        ].join("\n"))
+
+        expect(double.current()).toContain("id: my_flow")
+        expect(double.current()).not.toContain("someone_elses_flow")
+        expect(double.current()).toContain("  - id: pasted")
+        expect(double.current()).toContain("message: pasted")
+    })
+
+    it("restores both locked lines when a paste changes each of them", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        double.type("id: other\nnamespace: other.team\n\ntasks: []\n")
+
+        expect(double.current()).toContain("id: my_flow")
+        expect(double.current()).toContain("namespace: company.team")
+        expect(double.current()).toContain("tasks: []")
+    })
+
+    it("falls back to the last good document when a locked key is removed", () => {
+        const double = editorDouble(FLOW)
+        guard(double)
+
+        double.type(FLOW.replace("id: my_flow\n", ""))
+
+        expect(double.current()).toBe(FLOW)
+    })
+
+    it("does not freeze a document whose locked line carries a comment", () => {
+        const commented = FLOW.replace("id: my_flow", "id: my_flow # keep")
+        const double = editorDouble(commented)
+        guard(double)
+
+        const edited = commented.replace("message: hello", "message: changed")
+        double.type(edited)
+
+        // The comment survives and the unrelated edit lands.
         expect(double.current()).toBe(edited)
     })
 

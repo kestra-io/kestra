@@ -24,8 +24,7 @@
         tab: string;
     }>()
 
-    // The policies tab is deliberately absent: its recording covered Plugin
-    // Defaults, so that tab falls back to the namespace documentation instead.
+    // No policies entry on purpose: no recording covers it yet.
     const videos = {
         edit: "https://www.youtube.com/embed/As4y2oliD_8",
         secrets: "https://www.youtube.com/embed/u0yuOYG-qMI",

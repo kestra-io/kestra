@@ -10,12 +10,11 @@ export interface EmptyLinks {
  * `Empty.vue` falls back to this registry when no explicit `video` /
  * `learnMore` prop is passed; an explicit prop always wins.
  *
- * Only add a `video` once a recording covers that feature on its own. Entries
- * without one render `learnMore` as a "Learn more" button instead of the arrow
- * link, so a feature is never advertised with a video about something else.
+ * Only set `video` when a recording covers that feature on its own; entries
+ * without one show `learnMore` as a button instead.
  *
- * @todo Point every `learnMore` at a short.io link so the target can be swapped
- * between docs and a video without a release, and so clicks are tracked.
+ * @todo Point every `learnMore` at a short.io link so the target can be changed
+ * without a release.
  */
 export const links: Record<string, EmptyLinks> = {
     namespaceFiles: {
@@ -27,7 +26,6 @@ export const links: Record<string, EmptyLinks> = {
         learnMore: "https://kestra.io/docs/enterprise/instance/versioned-plugins",
     },
     kill_switches: {
-        // The only recording is the 1.3 release round-up, not a Kill Switch walkthrough.
         learnMore: "https://kestra.io/docs/enterprise/instance/kill-switch",
     },
     announcements: {
@@ -54,7 +52,6 @@ export const links: Record<string, EmptyLinks> = {
         learnMore: "https://kestra.io/docs/enterprise/auth/api-tokens",
     },
     panels: {
-        // The No Code recording is about building flows, not the editor panels.
         learnMore: "https://kestra.io/docs/ui/flows",
     },
     "dependencies.FLOW": {
@@ -90,7 +87,6 @@ export const links: Record<string, EmptyLinks> = {
         learnMore: "https://kestra.io/docs/workflow-components/concurrency",
     },
     policies: {
-        // The only recording covers Plugin Defaults, which is a different feature.
         learnMore: "https://kestra.io/docs/enterprise/governance/policies",
     },
     tests: {
@@ -131,13 +127,11 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=u0yuOYG-qMI",
         learnMore: "https://kestra.io/docs/concepts/secret",
     },
-    /** @todo Swap in a dedicated promotion docs page once one is published. */
+    /** @todo Use a dedicated promotion docs page once one exists. */
     promote: {
-        // The placeholder recording here was the Assets one, unrelated to promotion.
         learnMore: "https://kestra.io/docs/best-practices/from-dev-to-prod",
     },
     groups: {
-        // Groups have no page of their own; RBAC covers them alongside role bindings.
         learnMore: "https://kestra.io/docs/enterprise/auth/rbac",
     },
 }

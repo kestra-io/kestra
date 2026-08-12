@@ -87,7 +87,6 @@ describe("KsEmptyState", () => {
         // setup.ts mocks vue-i18n, so labels render as their translation key.
         expect(button.text()).toBe("ks_empty_state.learn_more")
 
-        // The button replaces the arrow link rather than doubling up with it.
         expect(wrapper.find(".ks-empty-state__learn-more").exists()).toBe(false)
     })
 
@@ -104,10 +103,8 @@ describe("KsEmptyState", () => {
         const actions = wrapper.findAll(".ks-empty-state__actions a")
         expect(actions).toHaveLength(1)
         expect(actions[0].attributes("href")).toBe("https://www.youtube.com/watch?v=h-vmMGlTGM8")
-        // setup.ts mocks vue-i18n, so labels render as their translation key.
         expect(actions[0].text()).toBe("ks_empty_state.watch_the_video")
 
-        // learnMore stays available, but as the arrow link underneath.
         expect(wrapper.find(".ks-empty-state__learn-more").attributes("href")).toBe("https://kestra.io/docs")
     })
 

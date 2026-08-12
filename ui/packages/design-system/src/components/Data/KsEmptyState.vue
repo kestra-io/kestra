@@ -72,12 +72,7 @@
 
     const {isOnline} = useNetwork()
 
-    /**
-     * Without a video to offer, `learnMore` is promoted from the subdued arrow
-     * link to a proper button, so every empty state keeps one obvious way to
-     * read up on the feature. The two are mutually exclusive: a surface never
-     * shows both a "Learn more" button and a "Learn more" link.
-     */
+    /** Shown as a button when there is no video, so the two never appear together. */
     const learnMoreAsButton = computed(() => Boolean(props.learnMore) && !props.video)
 </script>
 

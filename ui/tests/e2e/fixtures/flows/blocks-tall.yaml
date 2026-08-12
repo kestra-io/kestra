@@ -1,0 +1,81 @@
+id: blocks-tall-fixture
+namespace: company.team
+# Deliberately long: the canvas has to overflow the viewport for a jump to be
+# distinguishable from "already on screen".
+tasks:
+  - id: task_01
+    type: io.kestra.plugin.core.log.Log
+    message: one
+  - id: task_02
+    type: io.kestra.plugin.core.log.Log
+    message: two
+  - id: task_03
+    type: io.kestra.plugin.core.log.Log
+    message: three
+  - id: task_04
+    type: io.kestra.plugin.core.log.Log
+    message: four
+  - id: task_05
+    type: io.kestra.plugin.core.log.Log
+    message: five
+  - id: task_06
+    type: io.kestra.plugin.core.log.Log
+    message: six
+  - id: task_07
+    type: io.kestra.plugin.core.log.Log
+    message: seven
+  - id: task_08
+    type: io.kestra.plugin.core.log.Log
+    message: eight
+  - id: task_09
+    type: io.kestra.plugin.core.log.Log
+    message: nine
+  - id: task_10
+    type: io.kestra.plugin.core.log.Log
+    message: ten
+  - id: task_11
+    type: io.kestra.plugin.core.log.Log
+    message: eleven
+  - id: task_12
+    type: io.kestra.plugin.core.log.Log
+    message: twelve
+  - id: task_13
+    type: io.kestra.plugin.core.log.Log
+    message: thirteen
+  - id: task_14
+    type: io.kestra.plugin.core.log.Log
+    message: fourteen
+  - id: task_15
+    type: io.kestra.plugin.core.log.Log
+    message: fifteen
+  - id: task_16
+    type: io.kestra.plugin.core.log.Log
+    message: sixteen
+  - id: task_17
+    type: io.kestra.plugin.core.log.Log
+    message: seventeen
+  - id: task_18
+    type: io.kestra.plugin.core.log.Log
+    message: eighteen
+  - id: task_19
+    type: io.kestra.plugin.core.log.Log
+    message: nineteen
+  - id: task_20
+    type: io.kestra.plugin.core.log.Log
+    message: twenty
+  - id: task_21
+    type: io.kestra.plugin.core.log.Log
+    message: twenty one
+  - id: task_22
+    type: io.kestra.plugin.core.log.Log
+    message: twenty two
+  - id: task_23
+    type: io.kestra.plugin.core.log.Log
+    message: twenty three
+  - id: task_24
+    type: io.kestra.plugin.core.log.Log
+    message: twenty four
+errors:
+  - id: err_handler
+    type: io.kestra.plugin.core.log.Log
+    message: handled

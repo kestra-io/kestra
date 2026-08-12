@@ -4,7 +4,7 @@
         @update:model-value="onInput"
         filterable
         clearable
-        :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root?.split('.').pop() || 'value'}`"
+        :placeholder="$t('no_code.choose_placeholder', {field: root?.split('.').pop() || 'value'})"
     >
         <KsOption
             v-for="item in (schema?.enum as string[])"
@@ -14,6 +14,7 @@
         />
     </KsSelect>
 </template>
+
 <script setup lang="ts">
     import {computed} from "vue"
     import {collapseEmptyValues} from "../utils/collapseEmptyValues"

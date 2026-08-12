@@ -123,6 +123,7 @@
                     destroyOnClose
                     :appendToBody="true"
                     alignCenter
+                    scrollable
                 >
                     <template #header>
                         <h5>{{ $t("Set labels") }}</h5>

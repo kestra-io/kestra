@@ -5,6 +5,7 @@ import KestraDesignSystem from "../../../../src/index"
 import FilterEditPopper from "../../../../src/components/Data/KsDataTable/filter/layout/FilterEditPopper.vue"
 import FilterSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterSelect.vue"
 import FilterMultiSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterMultiSelect.vue"
+import FilterDateTime from "../../../../src/components/Data/KsDataTable/filter/layout/FilterDateTime.vue"
 import FilterComparatorSelect from "../../../../src/components/Data/KsDataTable/filter/layout/FilterComparatorSelect.vue"
 import {Comparators, type AppliedFilter, type FilterKeyConfig} from "../../../../src/components/Data/KsDataTable/filter/utils/filterTypes"
 
@@ -95,6 +96,49 @@ describe("FilterEditPopper range comparators on a multi-select field", () => {
         expect(updates!.at(-1)![0]).toMatchObject({
             comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
             value: "",
+        })
+    })
+})
+
+describe("FilterEditPopper date field", () => {
+    const expirationKey: FilterKeyConfig = {
+        key: "expirationDate",
+        label: "Expiration date",
+        valueType: "date",
+        comparators: [
+            Comparators.GREATER_THAN_OR_EQUAL_TO,
+            Comparators.LESS_THAN_OR_EQUAL_TO,
+        ],
+    }
+
+    test("emits update when a date is picked (live apply)", async () => {
+        const wrapper = mount(FilterEditPopper, {
+            props: {
+                filter: {
+                    id: "f1",
+                    key: "expirationDate",
+                    keyLabel: "Expiration date",
+                    comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
+                    comparatorLabel: "At or After",
+                    value: "",
+                    valueLabel: "",
+                },
+                filterKey: expirationKey,
+                showComparatorSelection: true,
+            },
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        const picked = new Date("2026-12-31T00:00:00")
+        wrapper.findComponent(FilterDateTime).vm.$emit("update:dateValue", picked)
+        await flushPromises()
+
+        const updates = wrapper.emitted("update") as Array<[AppliedFilter]> | undefined
+        expect(updates).toBeTruthy()
+        expect(updates!.at(-1)![0]).toMatchObject({
+            comparator: Comparators.GREATER_THAN_OR_EQUAL_TO,
+            value: picked,
         })
     })
 })

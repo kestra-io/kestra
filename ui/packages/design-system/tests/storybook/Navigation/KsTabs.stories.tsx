@@ -57,6 +57,26 @@ export const Box: Story = {
     }),
 }
 
+/** `paneScroll` confines overflow to the active pane so the tab strip stays put while long content scrolls inside a fixed-height container. */
+export const PaneScroll: Story = {
+    render: () => ({
+        setup() {
+            const active = ref("long")
+            const lines = Array.from({length: 40}, (_, i) => `Row ${i + 1}`)
+            return () => (
+                <div style="padding:24px;height:320px">
+                    <KsTabs v-model={active.value} type="box" paneScroll style="height:100%">
+                        <KsTabPane label="Long" name="long">
+                            <div>{lines.map((l) => <p key={l} style="margin:4px 0">{l}</p>)}</div>
+                        </KsTabPane>
+                        <KsTabPane label="Short" name="short">Short content</KsTabPane>
+                    </KsTabs>
+                </div>
+            )
+        },
+    }),
+}
+
 /** Self-contained segmented control — a contained pill group for inline use in forms and modals. */
 export const Segmented: Story = {
     render: () => ({

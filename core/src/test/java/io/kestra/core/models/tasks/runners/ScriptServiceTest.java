@@ -115,25 +115,22 @@ class ScriptServiceTest {
         ScriptService.validateStoragePath("file-name_v2.txt");
         // '%' must be accepted so that percent-encoded kestra URIs (e.g. report%231.csv) survive INTERNAL_STORAGE_PATTERN
         ScriptService.validateStoragePath("file%20name.txt");
-    }
-
-    @Test
-    void shouldRejectOutputFileWithHash() {
-        // '#' is a URI fragment delimiter: 'report#1.csv' is silently stored as 'report',
-        // causing distinct files to collide and overwrite each other.
-        assertThatThrownBy(() -> ScriptService.validateStoragePath("report#1.csv"))
-            .isInstanceOf(IOException.class)
-            .hasMessageContaining("unsupported characters");
+        // '#' must be accepted: buildStorageUri encodes it to '%23' via the quoting URI constructor,
+        // so 'report#1.csv' is stored as 'report%231.csv' — no fragment-truncation risk.
+        ScriptService.validateStoragePath("report#1.csv");
     }
 
     @Test
     void shouldMatchPercentEncodedUriWithInternalStoragePattern() {
         // After the InternalStorage fix, '#' in a filename is percent-encoded to '%23' in the URI.
         // INTERNAL_STORAGE_PATTERN must match such URIs so replaceInternalStorage can resolve them.
-        Pattern pattern = Pattern.compile("(kestra:\\/\\/[" + "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%=/,:;" + "]*)",
+        Pattern pattern = Pattern.compile("(kestra:\\/\\/[" + "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%#=/,:;" + "]*)",
             Pattern.UNICODE_CHARACTER_CLASS);
         String encodedUri = "kestra:///ns/exec/task/report%231.csv";
         assertThat(pattern.matcher(encodedUri).find()).isTrue();
+        // A raw '#' in a URI is also matched since '#' is now in the allowed set.
+        String hashUri = "kestra:///ns/exec/task/report#1.csv";
+        assertThat(pattern.matcher(hashUri).find()).isTrue();
     }
 
 

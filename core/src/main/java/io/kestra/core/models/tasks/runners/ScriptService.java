@@ -33,7 +33,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * Helper class for task runners and script tasks.
  */
 public final class ScriptService {
-    private static final String ALLOWED_PATH_CHARS = "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%=/,:;";
+    // '#' is allowed here because buildStorageUri percent-encodes it to '%23' via the quoting URI constructor,
+    // so 'report#1.csv' is stored as a distinct 'report%231.csv' path — no fragment-truncation risk.
+    private static final String ALLOWED_PATH_CHARS = "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%#=/,:;";
+
     private static final Pattern INTERNAL_STORAGE_PATTERN = Pattern.compile("(kestra:\\/\\/[" + ALLOWED_PATH_CHARS + "]*)", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Pattern VALID_STORAGE_PATH_PATTERN = Pattern.compile("[" + ALLOWED_PATH_CHARS + "]+", Pattern.UNICODE_CHARACTER_CLASS);
 
@@ -153,7 +156,7 @@ public final class ScriptService {
     static void validateStoragePath(String filename) throws IOException {
         if (!VALID_STORAGE_PATH_PATTERN.matcher(filename).matches()) {
             throw new IOException(
-                "Output file '%s' contains unsupported characters. Allowed: letters, digits, hyphens, dots, underscores, plus, tilde, percent, equals, slashes, commas, colons, semicolons."
+                "Output file '%s' contains unsupported characters. Allowed: letters, digits, hyphens, dots, underscores, plus, tilde, percent, hash, equals, slashes, commas, colons, semicolons."
                     .formatted(filename)
             );
         }

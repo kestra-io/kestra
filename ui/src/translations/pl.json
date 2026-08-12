@@ -337,7 +337,7 @@
     "jsonl": "JSONL",
     "concurrency_limit": {
       "dialog_title": "Limity Równoczesności",
-      "scope": "Scope",
+      "scope": "Zakres",
       "warning": "Zmiana bieżącego licznika może uszkodzić współbieżność, co może spowodować przekroczenie dozwolonego limitu przez wykonania."
     },
     "flowConcurrency": {

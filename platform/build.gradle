@@ -39,6 +39,7 @@ dependencies {
     api platform('software.amazon.awssdk:bom:2.50.2')
     api platform("dev.langchain4j:langchain4j-bom:$langchain4jVersion")
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
+    api platform("io.qameta.allure:allure-bom:2.35.1")
 
     constraints {
         api("io.opentelemetry.proto:opentelemetry-proto:1.11.0-alpha")
@@ -114,7 +115,7 @@ dependencies {
         api "com.github.victools:jsonschema-module-swagger-2:$jsonschemaVersion"
         api "com.networknt:json-schema-validator:3.0.6"
         api 'com.h2database:h2:2.4.240'
-        api 'com.mysql:mysql-connector-j:9.7.0'
+        api 'com.mysql:mysql-connector-j:26.7.0'
         api 'org.postgresql:postgresql:42.7.13'
         api 'com.github.docker-java:docker-java:3.7.1'
         api 'com.github.docker-java:docker-java-transport-httpclient5:3.7.1'

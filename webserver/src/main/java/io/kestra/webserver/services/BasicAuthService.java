@@ -42,6 +42,11 @@ public class BasicAuthService {
     public static final String BASIC_AUTH_SETTINGS_KEY = "kestra.server.basic-auth";
     public static final String BASIC_AUTH_ERROR_CONFIG = "kestra.server.authentication-configuration-error";
     public static final String BASIC_AUTH_COOKIE_NAME = "BASIC_AUTH";
+    /**
+     * Non-HttpOnly cookie mirroring whether {@value BASIC_AUTH_COOKIE_NAME} is set, so the UI can read
+     * the login state directly instead of tracking a separate client-side flag. It carries no credentials.
+     */
+    public static final String BASIC_AUTH_FLAG_COOKIE_NAME = "kestraBasicAuthenticated";
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$");
     private static final Pattern PASSWORD_PATTERN = Pattern.compile("(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).*");
     private static final int EMAIL_PASSWORD_MAX_LEN = 256;

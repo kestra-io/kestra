@@ -8,7 +8,6 @@
     >
         <KsButton
             v-bind="buttonAttrs"
-            class="ks-icon-button"
             :disabled="disabled"
             :aria-label="ariaLabel || tooltip"
             :tag="buttonTag"
@@ -22,7 +21,6 @@
     <KsButton
         v-else
         v-bind="buttonAttrs"
-        class="ks-icon-button"
         :disabled="disabled"
         :aria-label="ariaLabel"
         :tag="buttonTag"
@@ -48,6 +46,7 @@
         disabled?: boolean
         to?: string | Record<string, unknown>
         replace?: boolean
+        filled?: boolean
     }>(), {
         tooltip: "",
         placement: "left",
@@ -55,6 +54,7 @@
         disabled: false,
         to: undefined,
         replace: false,
+        filled: false,
     })
 
     defineSlots<{
@@ -64,7 +64,7 @@
     const attrs = useAttrs()
     const buttonAttrs = computed(() => ({
         ...attrs,
-        class: [attrs.class],
+        class: ["ks-icon-button", {"ks-icon-button--filled": props.filled}, attrs.class],
     }))
 
     const buttonTag = computed(() => (props.to ? "router-link" : undefined))
@@ -82,21 +82,24 @@
         display: inline-flex;
         justify-content: center;
         align-items: center;
-        background-color: transparent;
-        border: none;
-        box-shadow: none;
         padding: 0;
         cursor: pointer;
-
-        &:hover {
-            color: var(--ks-text-primary);
-            background-color: var(--ks-bg-tag);
-        }
 
         :deep(.material-design-icon__svg) {
             width: 16px;
             height: 16px;
             transform: translateY(1px) translateX(-0.5px);
+        }
+    }
+
+    .ks-icon-button:not(.ks-icon-button--filled) {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+
+        &:hover {
+            color: var(--ks-text-primary);
+            background-color: var(--ks-bg-tag);
         }
     }
 </style>

@@ -77,7 +77,14 @@ public class ExecutionDependenciesStreamingService {
             }
 
             String executionId = either.getLeft().executionId();
-            Execution execution = executionRepositoryInterface.findById(either.getLeft().tenantId(), executionId).orElseThrow();
+            // This fan-out runs on the queue-polling thread, which has no authenticated principal,
+            // so the ACL-enforcing findById would always deny authorization on EE.
+            Optional<Execution> maybeExecution = executionRepositoryInterface.findByIdWithoutAcl(either.getLeft().tenantId(), executionId);
+            if (maybeExecution.isEmpty()) {
+                log.error("Unable to find the execution id {}", executionId);
+                return;
+            }
+            Execution execution = maybeExecution.get();
             Optional<String> correlationId = execution.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value());
 
             // Get all subscribers for this correlationId

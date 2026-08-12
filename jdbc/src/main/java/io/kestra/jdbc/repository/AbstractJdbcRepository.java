@@ -371,6 +371,10 @@ public abstract class AbstractJdbcRepository {
             return tagsCondition(value, operation);
         }
 
+        if (field == QueryFilter.Field.ASSIGNEE) {
+            return assigneeCondition(value, operation);
+        }
+
         if (field == QueryFilter.Field.EXPIRATION_DATE) {
             return getDateCondition(value, operation, QueryFilter.Field.EXPIRATION_DATE.name().toLowerCase());
         }
@@ -559,6 +563,10 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition tagsCondition(Object value, QueryFilter.Op operation) {
         return defaultHandlers(QueryFilter.Field.TAGS, value, operation);
+    }
+
+    protected Condition assigneeCondition(Object value, QueryFilter.Op operation) {
+        return defaultHandlers(QueryFilter.Field.ASSIGNEE, value, operation);
     }
 
     // Generate the condition for Field.STATE

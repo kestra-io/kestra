@@ -6,13 +6,9 @@ export default {
             "update": "Update",
             "update conditions hint": "The currently applied filters will replace this saved filter's conditions.",
             "save": "Save",
-            "footer_apply": "Apply",
             "cancel": "Cancel",
-            "label": "Label",
             "description": "Description",
-            "columns": "Columns",
             "apply": "Apply filters",
-            "apply filter": "Apply filter",
             "customize": "Add filters",
             "customize tooltip": "Customize which filters to display",
             "customize columns": "Customize table columns",
@@ -27,12 +23,10 @@ export default {
             "saved": "Saved filters",
             "saved filters": "Saved Filters Sets",
             "saved tooltip": "Manage saved filters",
-            "show data options tooltip": "Show data options",
             "show chart": "Show Chart",
             "drag to reorder": "Drag to reorder",
             "select filter": "Select a filter to add",
             "enter description": "Enter filter description",
-            "enter label": "Enter filter label",
             "enter name": "Enter filter name",
             "reset": "Clear all",
             "reset_all": "Reset all filters",
@@ -41,7 +35,6 @@ export default {
             "and": "AND",
             "in any": "in any",
             "add_condition_group": "Add condition group",
-            "add_condition_group_tooltip": "Add another condition group",
             "add_condition": "Add condition",
             "add_advanced_filter": "Add advanced filter",
             "advanced_filter": "Advanced filter",
@@ -52,19 +45,14 @@ export default {
             "rule_count": "{count} rule",
             "rules_count": "{count} rules",
             "where": "Where",
-            "remove_condition_group": "Remove this condition group",
-            "drag_group": "Drag to combine with another group",
-            "unwrap_group": "Ungroup",
             "raw_view": "Edit as text",
             "chip_view": "Edit visually",
-            "chip_view_locked": "This query is too complex for the visual editor",
             "raw_apply": "Apply",
             "raw_revert": "Revert",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Complex query",
             "unrenderable_body": "This query uses nesting the visual filter editor can't represent. Edit it directly here, or apply to simplify.",
             "drag to reorder columns": "Drag to reorder columns",
-            "empty": "You don't have any saved filter yet.",
             "save current": "Save current filters",
             "empty title": "No saved filters yet",
             "empty subtitle": "Save your active filter to reuse it later",
@@ -73,7 +61,6 @@ export default {
             "kv_pair_selected": "{count} Key/Value pairs selected",
             "key": "Key",
             "value": "Value",
-            "add key value pair": "Add Key/Value pair",
             "search options": "Search...",
             "select all": "Select All",
             "deselect all": "Deselect All",
@@ -142,15 +129,12 @@ export default {
                 "description": "Filter by namespace",
             },
             "enabled": {
-                "label": "Enabled",
                 "description": "Filter by enabled",
             },
             "type": {
-                "label": "Type",
                 "description": "Filter by type",
             },
             "username": {
-                "label": "Username",
                 "description": "Filter by username",
             },
             "name": {
@@ -158,16 +142,10 @@ export default {
                 "description": "Filter by name",
             },
             "member": {
-                "label": "Member",
                 "description": "Filter by member",
             },
             "group": {
-                "label": "Group",
                 "description": "Filter by group",
-            },
-            "kill_switch_type": {
-                "label": "Type",
-                "description": "Filter by kill switch type",
             },
             "parentId": {
                 "label": "Parent ID",
@@ -178,7 +156,6 @@ export default {
                 "description": "Filter by flow ID",
             },
             "email": {
-                "label": "Email",
                 "description": "Filter by email",
             },
             "kind": {
@@ -198,10 +175,6 @@ export default {
             },
             "childFilter": {
                 "label": "Hierarchy",
-                "description": "Filter by execution hierarchy",
-            },
-            "childFilter_child": {
-                "label": "Child Filter",
                 "description": "Filter by execution hierarchy",
             },
             "timeRange": {
@@ -230,7 +203,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Interval",
                 "description": "Filter by trigger time",
-                "applyTo": "Apply to",
                 "chip": {
                     "nextExecution": "Next execution",
                     "lastTriggered": "Last triggered",
@@ -279,7 +251,6 @@ export default {
                 "description": "Filter by trigger scope",
             },
             "level": {
-                "label": "Level",
                 "description": "Filter logs by severity",
             },
             "level_log_executions": {
@@ -317,10 +288,6 @@ export default {
                 "label": "Task",
                 "description": "Filter by task name",
             },
-            "aggregation": {
-                "label": "Aggregation",
-                "description": "Filter by aggregation method",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Display title shown to AI agents",
@@ -331,15 +298,13 @@ export default {
                     "description": "What the tool does and when an agent should call it",
                 },
                 "flows": {
-                    "id": "Unique flow identifier",
                     "labels": "Flow labels (key:value format)",
                     "namespace": "Namespace of the flow",
                     "last execution date": "When the flow was last executed",
                     "last execution status": "Status of the most recent execution",
                     "execution statistics": "Chart showing recent execution states",
                     "triggers": "Triggers that can start the flow (e.g., schedule, event)",
-                    "revision": "Current version number of the flow definition",
-                    "description": "Text description provided for the flow",
+                    "last modified": "When the flow definition was last updated",
                 },
                 "executions": {
                     "id": "Execution ID",
@@ -352,7 +317,6 @@ export default {
                     "state": "Current execution state",
                     "revision": "Version of the flow used for this execution",
                     "inputs": "Input values provided to the execution",
-                    "outputs": "Outputs emitted by the execution",
                     "task-id": "ID of the last task in the execution",
                     "trigger": "Trigger that started the execution",
                     "parent-execution": "Parent execution ID that triggered this execution",
@@ -366,33 +330,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Logical grouping where the secret is stored",
-                    "key": "Identifier for the stored secret",
                     "description": "Optional notes providing context",
                     "tags": "Extra categorization tags",
                 },
                 "triggers": {
                     "flow": "Flow associated with the trigger",
                     "namespace": "Namespace of the trigger",
-                    "current execution": "Current execution ID",
+                    "execution id": "ID of the execution started by the trigger",
                     "workerId": "Worker identifier",
                     "last trigger date": "When the trigger last executed",
                     "context updated date": "Last update of trigger context",
                     "next evaluation date": "When the trigger evaluates next",
-                    "evaluation lock date": "When evaluation is locked",
-                },
-                "flow_triggers": {
-                    "type": "Type of trigger",
-                    "workerId": "Worker identifier",
-                    "next execution date": "When the trigger will execute next",
+                    "last evaluation date": "When the trigger was last evaluated",
                 },
                 "metrics": {
                     "task": "Task that generated the metric",
                     "name": "Name of the metric",
                     "value": "Value of the metric",
                     "tags": "Tags associated with the metric",
-                },
-                "blueprints": {
-                    "tags": "Tags associated with the blueprint",
                 },
             },
             "titles": {
@@ -410,7 +365,6 @@ export default {
                 "kv_filters": "Key-Value Filters",
                 "secret_filters": "Secret Filters",
                 "blueprint_filters": "Blueprint Filters",
-                "plugin_filters": "Plugin Search",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Search MCP tools",
@@ -424,7 +378,6 @@ export default {
                 "search_kv": "Search KV pairs",
                 "search_secrets": "Search secrets",
                 "search_blueprints": "Search blueprints",
-                "search_plugins": "Search {count}+ plugins",
             },
         },
     },
@@ -435,13 +388,9 @@ export default {
             "update": "Aktualisieren",
             "update conditions hint": "Die aktuell angewandten Filter ersetzen die Bedingungen dieses gespeicherten Filters.",
             "save": "Speichern",
-            "footer_apply": "Anwenden",
             "cancel": "Abbrechen",
-            "label": "Label",
             "description": "Beschreibung",
-            "columns": "Spalten",
             "apply": "Filter anwenden",
-            "apply filter": "Filter anwenden",
             "customize": "Filter hinzufügen",
             "customize tooltip": "Anpassen, welche Filter angezeigt werden",
             "customize columns": "Tabellenspalten anpassen",
@@ -456,12 +405,10 @@ export default {
             "saved": "Gespeicherte Filter",
             "saved filters": "Gespeicherte Filtersets",
             "saved tooltip": "Gespeicherte Filter verwalten",
-            "show data options tooltip": "Datenoptionen anzeigen",
             "show chart": "Diagram anzeigen",
             "drag to reorder": "Zum Neuanordnen ziehen",
             "select filter": "Wählen Sie einen Filter zum Hinzufügen aus",
             "enter description": "Filterbeschreibung eingeben",
-            "enter label": "Filter-Label eingeben",
             "enter name": "Filtername eingeben",
             "reset": "Alle löschen",
             "reset_all": "Alle Filter zurücksetzen",
@@ -470,7 +417,6 @@ export default {
             "and": "UND",
             "in any": "in beliebigen",
             "add_condition_group": "Bedingungsgruppe hinzufügen",
-            "add_condition_group_tooltip": "Weitere Bedingungsgruppe hinzufügen",
             "add_condition": "Bedingung hinzufügen",
             "add_advanced_filter": "Erweiterten Filter hinzufügen",
             "advanced_filter": "Erweiterter Filter",
@@ -481,19 +427,14 @@ export default {
             "rule_count": "{count} Regel",
             "rules_count": "{count} Regeln",
             "where": "Wo",
-            "remove_condition_group": "Diese Bedingungsgruppe entfernen",
-            "drag_group": "Ziehen, um mit einer anderen Gruppe zu kombinieren",
-            "unwrap_group": "Gruppierung aufheben",
             "raw_view": "Als Text bearbeiten",
             "chip_view": "Visuell bearbeiten",
-            "chip_view_locked": "Diese Abfrage ist zu komplex für den visuellen Editor",
             "raw_apply": "Anwenden",
             "raw_revert": "Zurücksetzen",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Komplexe Abfrage",
             "unrenderable_body": "Diese Abfrage verwendet eine Verschachtelung, die der visuelle Filter-Editor nicht darstellen kann. Bearbeiten Sie sie direkt hier oder wenden Sie sie an, um sie zu vereinfachen.",
             "drag to reorder columns": "Spalten zum Neuordnen ziehen",
-            "empty": "Sie haben noch keinen gespeicherten Filter.",
             "save current": "Aktuelle Filter speichern",
             "empty title": "Noch keine gespeicherten Filter",
             "empty subtitle": "Speichern Sie Ihren aktiven Filter, um ihn später wiederzuverwenden",
@@ -502,7 +443,6 @@ export default {
             "kv_pair_selected": "{count} Key/Value-Paare ausgewählt",
             "key": "Schlüssel",
             "value": "Wert",
-            "add key value pair": "Schlüssel/Wert-Paar hinzufügen",
             "search options": "Suche...",
             "select all": "Alle auswählen",
             "deselect all": "Alles abwählen",
@@ -571,15 +511,12 @@ export default {
                 "description": "Nach namespace filtern",
             },
             "enabled": {
-                "label": "Aktiviert",
                 "description": "Nach aktiviert filtern",
             },
             "type": {
-                "label": "Typ",
                 "description": "Nach Typ filtern",
             },
             "username": {
-                "label": "Benutzername",
                 "description": "Nach Benutzername filtern",
             },
             "name": {
@@ -587,16 +524,10 @@ export default {
                 "description": "Nach Name filtern",
             },
             "member": {
-                "label": "Mitglied",
                 "description": "Filtern nach Mitglied",
             },
             "group": {
-                "label": "Gruppe",
                 "description": "Nach Gruppe filtern",
-            },
-            "kill_switch_type": {
-                "label": "Typ",
-                "description": "Nach Kill-Switch-Typ filtern",
             },
             "parentId": {
                 "label": "Parent-ID",
@@ -607,7 +538,6 @@ export default {
                 "description": "Nach flow-ID filtern",
             },
             "email": {
-                "label": "Email",
                 "description": "Nach Email filtern",
             },
             "kind": {
@@ -627,10 +557,6 @@ export default {
             },
             "childFilter": {
                 "label": "Hierarchie",
-                "description": "Nach Ausführungshierarchie filtern",
-            },
-            "childFilter_child": {
-                "label": "Kinderfilter",
                 "description": "Nach Ausführungshierarchie filtern",
             },
             "timeRange": {
@@ -659,7 +585,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Intervall",
                 "description": "Nach Trigger-Zeit filtern",
-                "applyTo": "Anwenden auf",
                 "chip": {
                     "nextExecution": "Nächste Ausführung",
                     "lastTriggered": "Zuletzt ausgelöst",
@@ -708,7 +633,6 @@ export default {
                 "description": "Nach Trigger-Bereich filtern",
             },
             "level": {
-                "label": "Ebene",
                 "description": "Nach Log-Schweregrad filtern",
             },
             "level_log_executions": {
@@ -746,10 +670,6 @@ export default {
                 "label": "Aufgabe",
                 "description": "Nach Aufgabe filtern",
             },
-            "aggregation": {
-                "label": "Aggregation",
-                "description": "Nach Aggregationsmethode filtern",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Anzeigetitel, der KI-Agenten angezeigt wird",
@@ -760,15 +680,13 @@ export default {
                     "description": "Was das Tool tut und wann ein Agent es aufrufen sollte",
                 },
                 "flows": {
-                    "id": "Eindeutige flow-ID",
                     "labels": "Flow-Labels (key:value-Format)",
                     "namespace": "Namespace des flow",
                     "last execution date": "Wann der flow zuletzt ausgeführt wurde",
                     "last execution status": "Status der letzten Ausführung",
                     "execution statistics": "Diagramm zeigt die letzten Ausführungszustände",
                     "triggers": "Trigger, die den flow starten können (z. B. Zeitplan, Ereignis)",
-                    "revision": "Aktuelle Versionsnummer der flow-Definition",
-                    "description": "Textbeschreibung für den flow bereitgestellt",
+                    "last modified": "Wann die flow-Definition zuletzt aktualisiert wurde",
                 },
                 "executions": {
                     "id": "Ausführungs-ID",
@@ -781,7 +699,6 @@ export default {
                     "state": "Aktueller Ausführungszustand",
                     "revision": "Version des flow, die für diese Ausführung verwendet wird",
                     "inputs": "Eingabewerte, die der Ausführung bereitgestellt werden",
-                    "outputs": "Ausgaben, die von der Ausführung erzeugt wurden",
                     "task-id": "ID der letzten Task in der Ausführung",
                     "trigger": "Trigger, der die Ausführung gestartet hat",
                     "parent-execution": "Übergeordnete Ausführungs-ID, die diese Ausführung ausgelöst hat",
@@ -795,33 +712,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Logische Gruppierung, in der das Geheimnis gespeichert ist",
-                    "key": "Kennung für das gespeicherte Geheimnis",
                     "description": "Optionale Notizen zur Bereitstellung von Kontext",
                     "tags": "Zusätzliche Kategorisierungs-Tags",
                 },
                 "triggers": {
                     "flow": "Flow, der mit dem Trigger verknüpft ist",
                     "namespace": "Namespace des Triggers",
-                    "current execution": "Aktuelle Ausführungs-ID",
+                    "execution id": "ID der Ausführung, die vom trigger gestartet wurde",
                     "workerId": "Arbeiterkennung",
                     "last trigger date": "Wann der Trigger zuletzt ausgeführt wurde",
                     "context updated date": "Letzte Aktualisierung des Trigger-Kontexts",
                     "next evaluation date": "Wann der Trigger das nächste Mal ausgewertet wird",
-                    "evaluation lock date": "Wenn die Auswertung gesperrt ist",
-                },
-                "flow_triggers": {
-                    "type": "Art des Triggers",
-                    "workerId": "Arbeiterkennung",
-                    "next execution date": "Wann der Trigger das nächste Mal ausgeführt wird",
+                    "last evaluation date": "Wann der Trigger zuletzt ausgewertet wurde",
                 },
                 "metrics": {
                     "task": "Aufgabe, die die Metrik erzeugt hat",
                     "name": "Name der Metrik",
                     "value": "Wert der Metrik",
                     "tags": "Mit dem Metrik verbundene Tags",
-                },
-                "blueprints": {
-                    "tags": "Tags, die mit dem Blueprint verknüpft sind",
                 },
             },
             "titles": {
@@ -839,7 +747,6 @@ export default {
                 "kv_filters": "Key-Value-Filter",
                 "secret_filters": "Geheimnis-Filter",
                 "blueprint_filters": "Blueprint-Filter",
-                "plugin_filters": "Plugin-Suche",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP-Tools durchsuchen",
@@ -853,7 +760,6 @@ export default {
                 "search_kv": "Suche KV-Paare",
                 "search_secrets": "Geheimnisse suchen",
                 "search_blueprints": "Blueprints durchsuchen",
-                "search_plugins": "Suche {count}+ Plugins",
             },
         },
     },
@@ -864,13 +770,9 @@ export default {
             "update": "Actualizar",
             "update conditions hint": "Los filtros actualmente aplicados reemplazarán las condiciones de este filter guardado.",
             "save": "Guardar",
-            "footer_apply": "Aplicar",
             "cancel": "Cancelar",
-            "label": "Etiqueta",
             "description": "Descripción",
-            "columns": "Columnas",
             "apply": "Aplicar filtros",
-            "apply filter": "Aplicar filtro",
             "customize": "Agregar filtros",
             "customize tooltip": "Personalizar qué filtros mostrar",
             "customize columns": "Personalizar columnas de la tabla",
@@ -885,12 +787,10 @@ export default {
             "saved": "Filtros guardados",
             "saved filters": "Conjuntos de Filtros Guardados",
             "saved tooltip": "Administrar filtros guardados",
-            "show data options tooltip": "Mostrar opciones de datos",
             "show chart": "Mostrar gráfico",
             "drag to reorder": "Arrastrar para reordenar",
             "select filter": "Selecciona un filtro para añadir",
             "enter description": "Ingrese la descripción del filtro",
-            "enter label": "Ingrese etiqueta de filtro",
             "enter name": "Ingrese el nombre del filtro",
             "reset": "Borrar todo",
             "reset_all": "Restablecer todos los filtros",
@@ -899,7 +799,6 @@ export default {
             "and": "Y",
             "in any": "en cualquiera",
             "add_condition_group": "Añadir grupo de condiciones",
-            "add_condition_group_tooltip": "Añadir otro grupo de condiciones",
             "add_condition": "Añadir condición",
             "add_advanced_filter": "Añadir filtro avanzado",
             "advanced_filter": "Filtro avanzado",
@@ -910,19 +809,14 @@ export default {
             "rule_count": "{count} regla",
             "rules_count": "{count} reglas",
             "where": "Donde",
-            "remove_condition_group": "Eliminar este grupo de condiciones",
-            "drag_group": "Arrastrar para combinar con otro grupo",
-            "unwrap_group": "Desagrupar",
             "raw_view": "Editar como texto",
             "chip_view": "Editar visualmente",
-            "chip_view_locked": "Esta consulta es demasiado compleja para el editor visual",
             "raw_apply": "Aplicar",
             "raw_revert": "Revertir",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Consulta compleja",
             "unrenderable_body": "Esta consulta usa anidamiento que el editor visual de filtros no puede representar. Edítala directamente aquí o aplícala para simplificarla.",
             "drag to reorder columns": "Arrastrar para reordenar columnas",
-            "empty": "Todavía no tienes ningún filtro guardado.",
             "save current": "Guardar filtros actuales",
             "empty title": "Aún no hay filtros guardados",
             "empty subtitle": "Guarda tu filtro activo para reutilizarlo más tarde",
@@ -931,7 +825,6 @@ export default {
             "kv_pair_selected": "{count} pares de Key/Value seleccionados",
             "key": "Clave",
             "value": "Valor",
-            "add key value pair": "Agregar par de Key/Value",
             "search options": "Buscar...",
             "select all": "Seleccionar todo",
             "deselect all": "Deseleccionar todo",
@@ -1000,15 +893,12 @@ export default {
                 "description": "Filtrar por namespace",
             },
             "enabled": {
-                "label": "Habilitado",
                 "description": "Filtrar por habilitado",
             },
             "type": {
-                "label": "Tipo",
                 "description": "Filtrar por tipo",
             },
             "username": {
-                "label": "Nombre de usuario",
                 "description": "Filtrar por nombre de usuario",
             },
             "name": {
@@ -1016,16 +906,10 @@ export default {
                 "description": "Filtrar por nombre",
             },
             "member": {
-                "label": "Miembro",
                 "description": "Filtrar por miembro",
             },
             "group": {
-                "label": "Grupo",
                 "description": "Filtrar por grupo",
-            },
-            "kill_switch_type": {
-                "label": "Tipo",
-                "description": "Filtrar por tipo de kill switch",
             },
             "parentId": {
                 "label": "ID de Parent",
@@ -1036,7 +920,6 @@ export default {
                 "description": "Filtrar por flow ID",
             },
             "email": {
-                "label": "Email",
                 "description": "Filtrar por email",
             },
             "kind": {
@@ -1056,10 +939,6 @@ export default {
             },
             "childFilter": {
                 "label": "Jerarquía",
-                "description": "Filtrar por jerarquía de ejecución",
-            },
-            "childFilter_child": {
-                "label": "Filtro de Child",
                 "description": "Filtrar por jerarquía de ejecución",
             },
             "timeRange": {
@@ -1088,7 +967,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Intervalo",
                 "description": "Filtrar por tiempo de trigger",
-                "applyTo": "Aplicar a",
                 "chip": {
                     "nextExecution": "Próxima ejecución",
                     "lastTriggered": "Última activación",
@@ -1137,7 +1015,6 @@ export default {
                 "description": "Filtrar por alcance de trigger",
             },
             "level": {
-                "label": "Nivel",
                 "description": "Filtrar por severidad del log",
             },
             "level_log_executions": {
@@ -1175,10 +1052,6 @@ export default {
                 "label": "Tarea",
                 "description": "Filtrar por nombre de task",
             },
-            "aggregation": {
-                "label": "Agregación",
-                "description": "Filtrar por método de agregación",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Título mostrado a los agentes de IA",
@@ -1189,15 +1062,13 @@ export default {
                     "description": "Qué hace la herramienta y cuándo debe llamarla un agente",
                 },
                 "flows": {
-                    "id": "Identificador único de flow",
                     "labels": "Etiquetas de flow (formato key:value)",
                     "namespace": "Namespace del flow",
                     "last execution date": "Cuando el flow fue ejecutado por última vez",
                     "last execution status": "Estado de la ejecución más reciente",
                     "execution statistics": "Gráfico que muestra los estados recientes de ejecución",
                     "triggers": "Disparadores que pueden iniciar el flow (por ejemplo, programación, evento)",
-                    "revision": "Número de versión actual de la definición del flow",
-                    "description": "Descripción del texto proporcionada para el flow",
+                    "last modified": "Cuándo la definición del flow fue actualizada por última vez",
                 },
                 "executions": {
                     "id": "ID de Ejecución",
@@ -1210,7 +1081,6 @@ export default {
                     "state": "Estado actual de ejecución",
                     "revision": "Versión del flow utilizada para esta ejecución",
                     "inputs": "Valores de input proporcionados a la ejecución",
-                    "outputs": "Salidas emitidas por la ejecución",
                     "task-id": "ID de la última task en la ejecución",
                     "trigger": "Trigger que inició la ejecución",
                     "parent-execution": "ID de ejecución principal que desencadenó esta ejecución",
@@ -1224,33 +1094,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Agrupación lógica donde se almacena el secreto",
-                    "key": "Identificador para el secreto almacenado",
                     "description": "Notas opcionales que proporcionan contexto",
                     "tags": "Etiquetas de categorización adicionales",
                 },
                 "triggers": {
                     "flow": "Flujo asociado con el trigger",
                     "namespace": "Namespace del trigger",
-                    "current execution": "ID de ejecución actual",
+                    "execution id": "ID de la ejecución iniciada por el trigger",
                     "workerId": "Identificador de worker",
                     "last trigger date": "Cuando el trigger se ejecutó por última vez",
                     "context updated date": "Última actualización del contexto del trigger",
                     "next evaluation date": "Cuando el trigger se evalúe la próxima vez",
-                    "evaluation lock date": "Cuando la evaluación está bloqueada",
-                },
-                "flow_triggers": {
-                    "type": "Tipo de trigger",
-                    "workerId": "Identificador de worker",
-                    "next execution date": "Cuándo se ejecutará el trigger a continuación",
+                    "last evaluation date": "Cuándo el trigger fue evaluado por última vez",
                 },
                 "metrics": {
                     "task": "Tarea que generó la métrica",
                     "name": "Nombre de la métrica",
                     "value": "Valor de la métrica",
                     "tags": "Etiquetas asociadas con la métrica",
-                },
-                "blueprints": {
-                    "tags": "Etiquetas asociadas con el blueprint",
                 },
             },
             "titles": {
@@ -1268,7 +1129,6 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Secretos",
                 "blueprint_filters": "Filtros de Blueprint",
-                "plugin_filters": "Búsqueda de Plugin",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Buscar herramientas MCP",
@@ -1282,7 +1142,6 @@ export default {
                 "search_kv": "Buscar pares KV",
                 "search_secrets": "Buscar secretos",
                 "search_blueprints": "Buscar blueprints",
-                "search_plugins": "Buscar {count}+ plugins",
             },
         },
     },
@@ -1293,13 +1152,9 @@ export default {
             "update": "Mettre à jour",
             "update conditions hint": "Les filtres actuellement appliqués remplaceront les conditions de ce filter enregistré.",
             "save": "Enregistrer",
-            "footer_apply": "Appliquer",
             "cancel": "Annuler",
-            "label": "Étiquette",
             "description": "Description",
-            "columns": "Colonnes",
             "apply": "Appliquer des filtres",
-            "apply filter": "Appliquer le filtre",
             "customize": "Ajouter des filtres",
             "customize tooltip": "Personnaliser les filtres à afficher",
             "customize columns": "Personnaliser les colonnes du tableau",
@@ -1314,12 +1169,10 @@ export default {
             "saved": "Filtres enregistrés",
             "saved filters": "Ensembles de filtres enregistrés",
             "saved tooltip": "Gérer les filtres enregistrés",
-            "show data options tooltip": "Afficher les options de données",
             "show chart": "Afficher le graphique",
             "drag to reorder": "Faites glisser pour réorganiser",
             "select filter": "Sélectionnez un filtre à ajouter",
             "enter description": "Entrez la description du filtre",
-            "enter label": "Entrez le label de filtre",
             "enter name": "Entrez le nom du filtre",
             "reset": "Tout effacer",
             "reset_all": "Réinitialiser tous les filtres",
@@ -1328,7 +1181,6 @@ export default {
             "and": "ET",
             "in any": "dans tout",
             "add_condition_group": "Ajouter un groupe de conditions",
-            "add_condition_group_tooltip": "Ajouter un autre groupe de conditions",
             "add_condition": "Ajouter une condition",
             "add_advanced_filter": "Ajouter un filtre avancé",
             "advanced_filter": "Filtre avancé",
@@ -1339,19 +1191,14 @@ export default {
             "rule_count": "{count} règle",
             "rules_count": "{count} règles",
             "where": "Où",
-            "remove_condition_group": "Supprimer ce groupe de conditions",
-            "drag_group": "Faites glisser pour combiner avec un autre groupe",
-            "unwrap_group": "Dégrouper",
             "raw_view": "Modifier en texte",
             "chip_view": "Modifier visuellement",
-            "chip_view_locked": "Cette requête est trop complexe pour l'éditeur visuel",
             "raw_apply": "Appliquer",
             "raw_revert": "Annuler les modifications",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Requête complexe",
             "unrenderable_body": "Cette requête utilise une imbrication que l'éditeur de filtres visuel ne peut pas représenter. Modifiez-la directement ici, ou appliquez-la pour la simplifier.",
             "drag to reorder columns": "Faites glisser pour réorganiser les colonnes",
-            "empty": "Vous n'avez pas encore de filtre enregistré.",
             "save current": "Enregistrer les filtres actuels",
             "empty title": "Aucun filtre enregistré",
             "empty subtitle": "Enregistrez votre filtre actif pour le réutiliser plus tard",
@@ -1360,7 +1207,6 @@ export default {
             "kv_pair_selected": "{count} paires Key/Value sélectionnées",
             "key": "Clé",
             "value": "Valeur",
-            "add key value pair": "Ajouter une paire clé/valeur",
             "search options": "Rechercher...",
             "select all": "Tout sélectionner",
             "deselect all": "Tout désélectionner",
@@ -1429,15 +1275,12 @@ export default {
                 "description": "Filtrer par namespace",
             },
             "enabled": {
-                "label": "Activé",
                 "description": "Filtrer par activé",
             },
             "type": {
-                "label": "Type",
                 "description": "Filtrer par type",
             },
             "username": {
-                "label": "Nom d'utilisateur",
                 "description": "Filtrer par nom d'utilisateur",
             },
             "name": {
@@ -1445,16 +1288,10 @@ export default {
                 "description": "Filtrer par nom",
             },
             "member": {
-                "label": "Membre",
                 "description": "Filtrer par membre",
             },
             "group": {
-                "label": "Groupe",
                 "description": "Filtrer par groupe",
-            },
-            "kill_switch_type": {
-                "label": "Type",
-                "description": "Filtrer par type de kill switch",
             },
             "parentId": {
                 "label": "ID de parent",
@@ -1465,7 +1302,6 @@ export default {
                 "description": "Filtrer par flow ID",
             },
             "email": {
-                "label": "Email",
                 "description": "Filtrer par email",
             },
             "kind": {
@@ -1485,10 +1321,6 @@ export default {
             },
             "childFilter": {
                 "label": "Hiérarchie",
-                "description": "Filtrer par hiérarchie d'exécution",
-            },
-            "childFilter_child": {
-                "label": "Filtre Enfant",
                 "description": "Filtrer par hiérarchie d'exécution",
             },
             "timeRange": {
@@ -1517,7 +1349,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Intervalle",
                 "description": "Filtrer par temps de déclenchement",
-                "applyTo": "Appliquer à",
                 "chip": {
                     "nextExecution": "Prochaine exécution",
                     "lastTriggered": "Dernier déclenchement",
@@ -1566,7 +1397,6 @@ export default {
                 "description": "Filtrer par portée de trigger",
             },
             "level": {
-                "label": "Niveau",
                 "description": "Filtrer par gravité du log",
             },
             "level_log_executions": {
@@ -1604,10 +1434,6 @@ export default {
                 "label": "Tâche",
                 "description": "Filtrer par nom de task",
             },
-            "aggregation": {
-                "label": "Agrégation",
-                "description": "Filtrer par méthode d'agrégation",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Titre affiché aux agents IA",
@@ -1618,15 +1444,13 @@ export default {
                     "description": "Ce que fait l'outil et quand un agent doit l'appeler",
                 },
                 "flows": {
-                    "id": "Identifiant unique de flow",
                     "labels": "Étiquettes de flow (format clé:valeur)",
                     "namespace": "Namespace du flow",
                     "last execution date": "Dernière exécution du flow",
                     "last execution status": "Statut de la dernière exécution",
                     "execution statistics": "Graphique montrant les états d'exécution récents",
                     "triggers": "Déclencheurs pouvant démarrer le flow (par exemple, calendrier, événement)",
-                    "revision": "Numéro de version actuel de la définition du flow",
-                    "description": "Description du texte fourni pour le flow",
+                    "last modified": "Date de la dernière mise à jour de la définition du flow",
                 },
                 "executions": {
                     "id": "ID d'exécution",
@@ -1639,7 +1463,6 @@ export default {
                     "state": "État actuel de l'exécution",
                     "revision": "Version du flow utilisée pour cette exécution",
                     "inputs": "Valeurs d'input fournies à l'exécution",
-                    "outputs": "Sorties émises par l'exécution",
                     "task-id": "ID de la dernière task dans l'exécution",
                     "trigger": "Déclencheur qui a démarré l'exécution",
                     "parent-execution": "ID d'exécution parent qui a déclenché cette exécution",
@@ -1653,33 +1476,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Groupe logique où le secret est stocké",
-                    "key": "Identifiant pour le secret stocké",
                     "description": "Notes optionnelles fournissant un contexte",
                     "tags": "Étiquettes de catégorisation supplémentaires",
                 },
                 "triggers": {
                     "flow": "Flux associé au trigger",
                     "namespace": "Namespace du trigger",
-                    "current execution": "ID d'exécution actuelle",
+                    "execution id": "ID de l'exécution démarrée par le trigger",
                     "workerId": "Identifiant du worker",
                     "last trigger date": "Dernière exécution du trigger",
                     "context updated date": "Dernière mise à jour du contexte de trigger",
                     "next evaluation date": "Quand le trigger s'évalue ensuite",
-                    "evaluation lock date": "Lorsque l'évaluation est verrouillée",
-                },
-                "flow_triggers": {
-                    "type": "Type de trigger",
-                    "workerId": "Identifiant du worker",
-                    "next execution date": "Quand le trigger s'exécutera ensuite",
+                    "last evaluation date": "Lorsque le trigger a été évalué pour la dernière fois",
                 },
                 "metrics": {
                     "task": "Tâche qui a généré la métrique",
                     "name": "Nom de la métrique",
                     "value": "Valeur de la métrique",
                     "tags": "Tags associés à la métrique",
-                },
-                "blueprints": {
-                    "tags": "Étiquettes associées au blueprint",
                 },
             },
             "titles": {
@@ -1697,7 +1511,6 @@ export default {
                 "kv_filters": "Filtres Key-Value",
                 "secret_filters": "Filtres de Secret",
                 "blueprint_filters": "Filtres de Blueprint",
-                "plugin_filters": "Recherche de Plugin",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Rechercher des outils MCP",
@@ -1711,7 +1524,6 @@ export default {
                 "search_kv": "Rechercher des paires KV",
                 "search_secrets": "Rechercher des secrets",
                 "search_blueprints": "Rechercher des blueprints",
-                "search_plugins": "Rechercher {count}+ plugins",
             },
         },
     },
@@ -1722,13 +1534,9 @@ export default {
             "update": "अपडेट",
             "update conditions hint": "वर्तमान में लागू filter इस सहेजे गए filter की शर्तों को बदल देंगे।",
             "save": "सहेजें",
-            "footer_apply": "लागू करें",
             "cancel": "रद्द करें",
-            "label": "लेबल",
             "description": "विवरण",
-            "columns": "कॉलम्स",
             "apply": "फ़िल्टर लागू करें",
-            "apply filter": "फ़िल्टर लागू करें",
             "customize": "फ़िल्टर जोड़ें",
             "customize tooltip": "कौन से फ़िल्टर प्रदर्शित करने हैं, इसे अनुकूलित करें",
             "customize columns": "तालिका स्तंभों को अनुकूलित करें",
@@ -1743,12 +1551,10 @@ export default {
             "saved": "सहेजे गए फ़िल्टर",
             "saved filters": "सहेजे गए फ़िल्टर सेट्स",
             "saved tooltip": "सहेजे गए फ़िल्टर प्रबंधित करें",
-            "show data options tooltip": "डेटा विकल्प दिखाएं",
             "show chart": "चार्ट दिखाएं",
             "drag to reorder": "पुनः क्रमबद्ध करने के लिए खींचें",
             "select filter": "एक फ़िल्टर जोड़ने के लिए चुनें",
             "enter description": "फ़िल्टर विवरण दर्ज करें",
-            "enter label": "फ़िल्टर लेबल दर्ज करें",
             "enter name": "फ़िल्टर नाम दर्ज करें",
             "reset": "सभी साफ़ करें",
             "reset_all": "सभी फ़िल्टर रीसेट करें",
@@ -1757,7 +1563,6 @@ export default {
             "and": "और",
             "in any": "किसी में भी",
             "add_condition_group": "शर्त समूह जोड़ें",
-            "add_condition_group_tooltip": "एक और शर्त समूह जोड़ें",
             "add_condition": "शर्त जोड़ें",
             "add_advanced_filter": "उन्नत फ़िल्टर जोड़ें",
             "advanced_filter": "उन्नत फ़िल्टर",
@@ -1768,19 +1573,14 @@ export default {
             "rule_count": "{count} नियम",
             "rules_count": "{count} नियम",
             "where": "जहां",
-            "remove_condition_group": "इस शर्त समूह को हटाएं",
-            "drag_group": "किसी अन्य समूह के साथ संयोजित करने के लिए खींचें",
-            "unwrap_group": "समूह हटाएं",
             "raw_view": "पाठ के रूप में संपादित करें",
             "chip_view": "दृश्य रूप से संपादित करें",
-            "chip_view_locked": "यह क्वेरी दृश्य संपादक के लिए बहुत जटिल है",
             "raw_apply": "लागू करें",
             "raw_revert": "पूर्ववत करें",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "जटिल क्वेरी",
             "unrenderable_body": "यह क्वेरी ऐसी नेस्टिंग का उपयोग करती है जिसे दृश्य फ़िल्टर संपादक प्रस्तुत नहीं कर सकता। इसे सीधे यहां संपादित करें, या सरल बनाने के लिए लागू करें।",
             "drag to reorder columns": "कॉलम को पुनः क्रमबद्ध करने के लिए खींचें",
-            "empty": "आपके पास अभी तक कोई सहेजा हुआ फ़िल्टर नहीं है।",
             "save current": "वर्तमान फ़िल्टर सहेजें",
             "empty title": "अभी तक कोई सहेजा हुआ फ़िल्टर नहीं",
             "empty subtitle": "बाद में पुन: उपयोग के लिए अपना सक्रिय फ़िल्टर सहेजें",
@@ -1789,7 +1589,6 @@ export default {
             "kv_pair_selected": "{count} Key/Value जोड़े चुने गए",
             "key": "कुंजी",
             "value": "मान",
-            "add key value pair": "कुंजी/मान जोड़ी जोड़ें",
             "search options": "खोजें...",
             "select all": "सभी चुनें",
             "deselect all": "सभी को अचयनित करें",
@@ -1858,15 +1657,12 @@ export default {
                 "description": "namespace द्वारा फ़िल्टर करें",
             },
             "enabled": {
-                "label": "सक्रिय",
                 "description": "सक्षम द्वारा फ़िल्टर करें",
             },
             "type": {
-                "label": "प्रकार",
                 "description": "प्रकार के अनुसार फ़िल्टर करें",
             },
             "username": {
-                "label": "उपयोगकर्ता नाम",
                 "description": "उपयोगकर्ता नाम द्वारा फ़िल्टर करें",
             },
             "name": {
@@ -1874,16 +1670,10 @@ export default {
                 "description": "नाम से फ़िल्टर करें",
             },
             "member": {
-                "label": "सदस्य",
                 "description": "सदस्य द्वारा फ़िल्टर करें",
             },
             "group": {
-                "label": "समूह",
                 "description": "समूह द्वारा फ़िल्टर करें",
-            },
-            "kill_switch_type": {
-                "label": "प्रकार",
-                "description": "किल स्विच प्रकार द्वारा फ़िल्टर करें",
             },
             "parentId": {
                 "label": "Parent ID",
@@ -1894,7 +1684,6 @@ export default {
                 "description": "flow ID द्वारा फ़िल्टर करें",
             },
             "email": {
-                "label": "Email",
                 "description": "ईमेल द्वारा फ़िल्टर करें",
             },
             "kind": {
@@ -1915,10 +1704,6 @@ export default {
             "childFilter": {
                 "label": "अनुक्रम",
                 "description": "कार्यक्रम पदानुक्रम द्वारा फ़िल्टर करें",
-            },
-            "childFilter_child": {
-                "label": "बच्चा फ़िल्टर",
-                "description": "निष्पादन पदानुक्रम द्वारा फ़िल्टर करें",
             },
             "timeRange": {
                 "label": "अंतराल",
@@ -1946,7 +1731,6 @@ export default {
             "timeRange_trigger": {
                 "label": "अंतराल",
                 "description": "ट्रिगर समय द्वारा फ़िल्टर करें",
-                "applyTo": "लागू करें",
                 "chip": {
                     "nextExecution": "अगला निष्पादन",
                     "lastTriggered": "अंतिम ट्रिगर",
@@ -1995,7 +1779,6 @@ export default {
                 "description": "ट्रिगर स्कोप द्वारा फ़िल्टर करें",
             },
             "level": {
-                "label": "स्तर",
                 "description": "लॉग गंभीरता के अनुसार फ़िल्टर करें",
             },
             "level_log_executions": {
@@ -2033,10 +1816,6 @@ export default {
                 "label": "कार्य",
                 "description": "कार्य का नाम द्वारा फ़िल्टर करें",
             },
-            "aggregation": {
-                "label": "एग्रीगेशन",
-                "description": "एग्रीगेशन विधि द्वारा फ़िल्टर करें",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "AI एजेंट्स को दिखाया जाने वाला शीर्षक",
@@ -2047,15 +1826,13 @@ export default {
                     "description": "टूल क्या करता है और एजेंट को इसे कब कॉल करना चाहिए",
                 },
                 "flows": {
-                    "id": "अद्वितीय flow पहचानकर्ता",
                     "labels": "फ्लो लेबल्स (key:value प्रारूप)",
                     "namespace": "flow का namespace",
                     "last execution date": "जब flow को अंतिम बार निष्पादित किया गया था",
                     "last execution status": "हाल की सबसे नई execution की स्थिति",
                     "execution statistics": "हाल की execution अवस्थाओं को दिखाने वाला चार्ट",
                     "triggers": "फ्लो शुरू करने वाले ट्रिगर्स (जैसे, शेड्यूल, इवेंट)",
-                    "revision": "flow परिभाषा का वर्तमान संस्करण संख्या",
-                    "description": "flow के लिए प्रदान किया गया पाठ विवरण",
+                    "last modified": "flow परिभाषा को अंतिम बार कब अपडेट किया गया था",
                 },
                 "executions": {
                     "id": "Execution ID",
@@ -2068,7 +1845,6 @@ export default {
                     "state": "वर्तमान निष्पादन स्थिति",
                     "revision": "इस execution के लिए उपयोग किए गए flow का संस्करण",
                     "inputs": "असेंबल के लिए प्रदान किए गए Input values",
-                    "outputs": "निष्पादन द्वारा उत्पन्न आउटपुट्स",
                     "task-id": "अंतिम task का ID निष्पादन में",
                     "trigger": "जिस Trigger ने execution शुरू किया",
                     "parent-execution": "इस निष्पादन को ट्रिगर करने वाला पैरेंट execution ID",
@@ -2082,33 +1858,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "जिस तार्किक समूह में गुप्त जानकारी संग्रहीत की जाती है",
-                    "key": "संग्रहीत गुप्त के लिए पहचानकर्ता",
                     "description": "वैकल्पिक नोट्स जो संदर्भ प्रदान करते हैं",
                     "tags": "अतिरिक्त वर्गीकरण टैग्स",
                 },
                 "triggers": {
                     "flow": "ट्रिगर के साथ जुड़ा हुआ flow",
                     "namespace": "ट्रिगर का namespace",
-                    "current execution": "वर्तमान execution ID",
+                    "execution id": "trigger द्वारा शुरू किए गए निष्पादन की ID",
                     "workerId": "वर्कर पहचानकर्ता",
                     "last trigger date": "जब trigger ने अंतिम बार निष्पादन किया",
                     "context updated date": "ट्रिगर संदर्भ का अंतिम अपडेट",
                     "next evaluation date": "जब अगला trigger मूल्यांकन करेगा",
-                    "evaluation lock date": "जब मूल्यांकन लॉक हो जाता है",
-                },
-                "flow_triggers": {
-                    "type": "ट्रिगर का प्रकार",
-                    "workerId": "वर्कर पहचानकर्ता",
-                    "next execution date": "जब trigger अगली बार execute होगा",
+                    "last evaluation date": "trigger का अंतिम बार कब मूल्यांकन किया गया था",
                 },
                 "metrics": {
                     "task": "मेट्रिक उत्पन्न करने वाला Task",
                     "name": "मेट्रिक का नाम",
                     "value": "मेट्रिक का मूल्य",
                     "tags": "मेट्रिक से जुड़े टैग्स",
-                },
-                "blueprints": {
-                    "tags": "ब्लूप्रिंट से जुड़े टैग्स",
                 },
             },
             "titles": {
@@ -2126,7 +1893,6 @@ export default {
                 "kv_filters": "कुंजी-मूल्य फ़िल्टर",
                 "secret_filters": "गुप्त फ़िल्टर",
                 "blueprint_filters": "ब्लूप्रिंट फ़िल्टर",
-                "plugin_filters": "प्लगइन खोज",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP टूल खोजें",
@@ -2140,7 +1906,6 @@ export default {
                 "search_kv": "KV जोड़े खोजें",
                 "search_secrets": "गोपनीय जानकारी खोजें",
                 "search_blueprints": "ब्लूप्रिंट्स खोजें",
-                "search_plugins": "{count}+ प्लगइन्स खोजें",
             },
         },
     },
@@ -2151,13 +1916,9 @@ export default {
             "update": "Aggiorna",
             "update conditions hint": "I filtri attualmente applicati sostituiranno le condizioni di questo filter salvato.",
             "save": "Salva",
-            "footer_apply": "Applica",
             "cancel": "Annulla",
-            "label": "Etichetta",
             "description": "Descrizione",
-            "columns": "Colonne",
             "apply": "Applica filtri",
-            "apply filter": "Applica filtro",
             "customize": "Aggiungi filtri",
             "customize tooltip": "Personalizza quali filtri visualizzare",
             "customize columns": "Personalizza le colonne della tabella",
@@ -2172,12 +1933,10 @@ export default {
             "saved": "Filtri salvati",
             "saved filters": "Set di Filtri Salvati",
             "saved tooltip": "Gestisci filtri salvati",
-            "show data options tooltip": "Mostra opzioni dati",
             "show chart": "Mostra Grafico",
             "drag to reorder": "Trascina per riordinare",
             "select filter": "Seleziona un filtro da aggiungere",
             "enter description": "Inserisci la descrizione del filtro",
-            "enter label": "Inserisci il filtro label",
             "enter name": "Inserisci il nome del filtro",
             "reset": "Cancella tutto",
             "reset_all": "Reimposta tutti i filtri",
@@ -2186,7 +1945,6 @@ export default {
             "and": "E",
             "in any": "in qualsiasi",
             "add_condition_group": "Aggiungi gruppo di condizioni",
-            "add_condition_group_tooltip": "Aggiungi un altro gruppo di condizioni",
             "add_condition": "Aggiungi condizione",
             "add_advanced_filter": "Aggiungi filtro avanzato",
             "advanced_filter": "Filtro avanzato",
@@ -2197,19 +1955,14 @@ export default {
             "rule_count": "{count} regola",
             "rules_count": "{count} regole",
             "where": "Dove",
-            "remove_condition_group": "Rimuovi questo gruppo di condizioni",
-            "drag_group": "Trascina per combinare con un altro gruppo",
-            "unwrap_group": "Separa gruppo",
             "raw_view": "Modifica come testo",
             "chip_view": "Modifica visivamente",
-            "chip_view_locked": "Questa query è troppo complessa per l'editor visuale",
             "raw_apply": "Applica",
             "raw_revert": "Ripristina",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Query complessa",
             "unrenderable_body": "Questa query utilizza un annidamento che l'editor visuale dei filtri non può rappresentare. Modificala direttamente qui oppure applica per semplificarla.",
             "drag to reorder columns": "Trascina per riordinare le colonne",
-            "empty": "Non hai ancora nessun filtro salvato.",
             "save current": "Salva i filtri correnti",
             "empty title": "Nessun filtro salvato",
             "empty subtitle": "Salva il filtro attivo per riutilizzarlo in seguito",
@@ -2218,7 +1971,6 @@ export default {
             "kv_pair_selected": "{count} coppie di Key/Value selezionate",
             "key": "Chiave",
             "value": "Valore",
-            "add key value pair": "Aggiungi coppia Key/Value",
             "search options": "Cerca...",
             "select all": "Seleziona tutto",
             "deselect all": "Deseleziona tutto",
@@ -2287,15 +2039,12 @@ export default {
                 "description": "Filtra per namespace",
             },
             "enabled": {
-                "label": "Abilitato",
                 "description": "Filtra per abilitato",
             },
             "type": {
-                "label": "Tipo",
                 "description": "Filtra per tipo",
             },
             "username": {
-                "label": "Nome utente",
                 "description": "Filtra per nome utente",
             },
             "name": {
@@ -2303,16 +2052,10 @@ export default {
                 "description": "Filtra per nome",
             },
             "member": {
-                "label": "Membro",
                 "description": "Filtra per membro",
             },
             "group": {
-                "label": "Gruppo",
                 "description": "Filtra per gruppo",
-            },
-            "kill_switch_type": {
-                "label": "Tipo",
-                "description": "Filtra per tipo di kill switch",
             },
             "parentId": {
                 "label": "ID del parent",
@@ -2323,7 +2066,6 @@ export default {
                 "description": "Filtra per flow ID",
             },
             "email": {
-                "label": "Email",
                 "description": "Filtra per email",
             },
             "kind": {
@@ -2343,10 +2085,6 @@ export default {
             },
             "childFilter": {
                 "label": "Gerarchia",
-                "description": "Filtra per gerarchia di esecuzione",
-            },
-            "childFilter_child": {
-                "label": "Filtro Figlio",
                 "description": "Filtra per gerarchia di esecuzione",
             },
             "timeRange": {
@@ -2375,7 +2113,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Intervallo",
                 "description": "Filtra per tempo del trigger",
-                "applyTo": "Applica a",
                 "chip": {
                     "nextExecution": "Prossima esecuzione",
                     "lastTriggered": "Ultimo trigger",
@@ -2424,7 +2161,6 @@ export default {
                 "description": "Filtra per ambito del trigger",
             },
             "level": {
-                "label": "Livello",
                 "description": "Filtra per gravità del log",
             },
             "level_log_executions": {
@@ -2462,10 +2198,6 @@ export default {
                 "label": "Task",
                 "description": "Filtra per nome task",
             },
-            "aggregation": {
-                "label": "Aggregazione",
-                "description": "Filtra per metodo di aggregazione",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Titolo visualizzato agli agenti IA",
@@ -2476,15 +2208,13 @@ export default {
                     "description": "Cosa fa lo strumento e quando un agente dovrebbe chiamarlo",
                 },
                 "flows": {
-                    "id": "Identificatore univoco del flow",
                     "labels": "Etichette del flow (formato key:value)",
                     "namespace": "Namespace del flow",
                     "last execution date": "Quando il flow è stato eseguito l'ultima volta",
                     "last execution status": "Stato dell'esecuzione più recente",
                     "execution statistics": "Grafico che mostra i recenti stati di esecuzione",
                     "triggers": "Trigger che possono avviare il flow (ad esempio, schedule, event)",
-                    "revision": "Numero di versione corrente della definizione del flow",
-                    "description": "Descrizione del testo fornita per il flow",
+                    "last modified": "Quando la definizione del flow è stata aggiornata l'ultima volta",
                 },
                 "executions": {
                     "id": "ID di esecuzione",
@@ -2497,7 +2227,6 @@ export default {
                     "state": "Stato attuale dell'esecuzione",
                     "revision": "Versione del flow utilizzata per questa esecuzione",
                     "inputs": "Valori di input forniti all'esecuzione",
-                    "outputs": "Output generati dall'esecuzione",
                     "task-id": "ID dell'ultimo task nell'esecuzione",
                     "trigger": "Trigger che ha avviato l'esecuzione",
                     "parent-execution": "ID di esecuzione principale che ha attivato questa esecuzione",
@@ -2511,33 +2240,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Raggruppamento logico dove il segreto è memorizzato",
-                    "key": "Identificatore per il segreto memorizzato",
                     "description": "Note opzionali che forniscono contesto",
                     "tags": "Tag di categorizzazione extra",
                 },
                 "triggers": {
                     "flow": "Flusso associato al trigger",
                     "namespace": "Namespace del trigger",
-                    "current execution": "ID di esecuzione corrente",
+                    "execution id": "ID dell'esecuzione avviata dal trigger",
                     "workerId": "Identificatore del worker",
                     "last trigger date": "Quando il trigger è stato eseguito l'ultima volta",
                     "context updated date": "Ultimo aggiornamento del contesto del trigger",
                     "next evaluation date": "Quando il trigger viene valutato successivamente",
-                    "evaluation lock date": "Quando la valutazione è bloccata",
-                },
-                "flow_triggers": {
-                    "type": "Tipo di trigger",
-                    "workerId": "Identificatore del worker",
-                    "next execution date": "Quando il trigger verrà eseguito successivamente",
+                    "last evaluation date": "Quando il trigger è stato valutato l'ultima volta",
                 },
                 "metrics": {
                     "task": "Task che ha generato la metrica",
                     "name": "Nome della metrica",
                     "value": "Valore della metrica",
                     "tags": "Tag associati alla metrica",
-                },
-                "blueprints": {
-                    "tags": "Tag associati al blueprint",
                 },
             },
             "titles": {
@@ -2555,7 +2275,6 @@ export default {
                 "kv_filters": "Filtri Key-Value",
                 "secret_filters": "Filtri Segreti",
                 "blueprint_filters": "Filtri Blueprint",
-                "plugin_filters": "Ricerca Plugin",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Cerca strumenti MCP",
@@ -2569,7 +2288,6 @@ export default {
                 "search_kv": "Cerca coppie KV",
                 "search_secrets": "Cerca segreti",
                 "search_blueprints": "Cerca blueprint",
-                "search_plugins": "Cerca {count}+ plugin",
             },
         },
     },
@@ -2580,13 +2298,9 @@ export default {
             "update": "更新",
             "update conditions hint": "現在適用されているfilterが、この保存されたfilterの条件に置き換わります。",
             "save": "保存",
-            "footer_apply": "適用",
             "cancel": "キャンセル",
-            "label": "ラベル",
             "description": "説明",
-            "columns": "列",
             "apply": "フィルターを適用",
-            "apply filter": "フィルターを適用",
             "customize": "フィルターを追加",
             "customize tooltip": "表示するフィルターをカスタマイズ",
             "customize columns": "テーブル列をカスタマイズ",
@@ -2601,12 +2315,10 @@ export default {
             "saved": "保存済みフィルター",
             "saved filters": "保存済みフィルターセット",
             "saved tooltip": "保存されたフィルターを管理",
-            "show data options tooltip": "データオプションを表示",
             "show chart": "チャートを表示",
             "drag to reorder": "ドラッグして並べ替え",
             "select filter": "フィルターを選択して追加",
             "enter description": "フィルターの説明を入力してください",
-            "enter label": "フィルターラベルを入力してください",
             "enter name": "フィルター名を入力してください",
             "reset": "すべてクリア",
             "reset_all": "すべてのフィルターをリセット",
@@ -2615,7 +2327,6 @@ export default {
             "and": "AND",
             "in any": "すべて",
             "add_condition_group": "条件グループを追加",
-            "add_condition_group_tooltip": "別の条件グループを追加",
             "add_condition": "条件を追加",
             "add_advanced_filter": "詳細フィルターを追加",
             "advanced_filter": "詳細フィルター",
@@ -2626,19 +2337,14 @@ export default {
             "rule_count": "{count} 件のルール",
             "rules_count": "{count} 件のルール",
             "where": "条件",
-            "remove_condition_group": "この条件グループを削除",
-            "drag_group": "ドラッグして別のグループと結合",
-            "unwrap_group": "グループ解除",
             "raw_view": "テキストで編集",
             "chip_view": "ビジュアル編集",
-            "chip_view_locked": "このクエリはビジュアルエディタで扱うには複雑すぎます",
             "raw_apply": "適用",
             "raw_revert": "元に戻す",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "複雑なクエリ",
             "unrenderable_body": "このクエリにはビジュアルフィルターエディタでは表現できないネストが含まれています。ここで直接編集するか、適用して簡略化してください。",
             "drag to reorder columns": "列をドラッグして並べ替え",
-            "empty": "まだ保存されたフィルターがありません。",
             "save current": "現在のフィルターを保存",
             "empty title": "保存されたフィルターはまだありません",
             "empty subtitle": "アクティブなフィルターを保存して後で再利用できます",
@@ -2647,7 +2353,6 @@ export default {
             "kv_pair_selected": "{count} 個のKey/Valueペアが選択されました",
             "key": "キー",
             "value": "値",
-            "add key value pair": "キー/Valueペアを追加",
             "search options": "検索...",
             "select all": "すべて選択",
             "deselect all": "すべて選択解除",
@@ -2716,15 +2421,12 @@ export default {
                 "description": "namespaceでフィルター",
             },
             "enabled": {
-                "label": "有効",
                 "description": "有効でフィルター",
             },
             "type": {
-                "label": "タイプ",
                 "description": "タイプでフィルター",
             },
             "username": {
-                "label": "ユーザー名",
                 "description": "ユーザー名でフィルター",
             },
             "name": {
@@ -2732,16 +2434,10 @@ export default {
                 "description": "名前でフィルター",
             },
             "member": {
-                "label": "メンバー",
                 "description": "メンバーでフィルタ",
             },
             "group": {
-                "label": "グループ",
                 "description": "グループでフィルター",
-            },
-            "kill_switch_type": {
-                "label": "タイプ",
-                "description": "キルスイッチタイプでフィルター",
             },
             "parentId": {
                 "label": "Parent ID",
@@ -2752,7 +2448,6 @@ export default {
                 "description": "flow IDでフィルター",
             },
             "email": {
-                "label": "Email",
                 "description": "Emailでフィルター",
             },
             "kind": {
@@ -2772,10 +2467,6 @@ export default {
             },
             "childFilter": {
                 "label": "階層",
-                "description": "実行階層でフィルター",
-            },
-            "childFilter_child": {
-                "label": "子フィルター",
                 "description": "実行階層でフィルター",
             },
             "timeRange": {
@@ -2804,7 +2495,6 @@ export default {
             "timeRange_trigger": {
                 "label": "インターバル",
                 "description": "トリガー時刻でフィルター",
-                "applyTo": "適用先",
                 "chip": {
                     "nextExecution": "次回実行",
                     "lastTriggered": "最終トリガー",
@@ -2853,7 +2543,6 @@ export default {
                 "description": "トリガースコープでフィルター",
             },
             "level": {
-                "label": "レベル",
                 "description": "ログの重大度でフィルター",
             },
             "level_log_executions": {
@@ -2891,10 +2580,6 @@ export default {
                 "label": "タスク",
                 "description": "タスク名でフィルター",
             },
-            "aggregation": {
-                "label": "集計",
-                "description": "集約方法でフィルター",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "AIエージェントに表示されるタイトル",
@@ -2905,15 +2590,13 @@ export default {
                     "description": "ツールの機能と、エージェントが呼び出すべきタイミング",
                 },
                 "flows": {
-                    "id": "一意のflow識別子",
                     "labels": "フローラベル (key:value 形式)",
                     "namespace": "flowのnamespace",
                     "last execution date": "フローが最後に実行されたとき",
                     "last execution status": "最新の実行のステータス",
                     "execution statistics": "最近の実行状態を示すチャート",
                     "triggers": "フローを開始できるトリガー（例：スケジュール、イベント）",
-                    "revision": "フロー定義の現在のバージョン番号",
-                    "description": "フローに提供されたテキスト説明",
+                    "last modified": "flow 定義の最終更新日時",
                 },
                 "executions": {
                     "id": "実行ID",
@@ -2926,7 +2609,6 @@ export default {
                     "state": "現在の実行状態",
                     "revision": "この実行に使用されたflowのバージョン",
                     "inputs": "実行に提供されたInput値",
-                    "outputs": "実行によって生成されたOutputs",
                     "task-id": "実行中の最後のタスクのID",
                     "trigger": "実行を開始したTrigger",
                     "parent-execution": "この実行をトリガーした親実行ID",
@@ -2940,33 +2622,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "シークレットが保存されている論理グループ",
-                    "key": "保存されたシークレットの識別子",
                     "description": "オプションのメモでコンテキストを提供",
                     "tags": "追加のカテゴリタグ",
                 },
                 "triggers": {
                     "flow": "トリガーに関連付けられたflow",
                     "namespace": "トリガーのnamespace",
-                    "current execution": "現在の実行ID",
+                    "execution id": "triggerによって開始された実行のID",
                     "workerId": "ワーカー識別子",
                     "last trigger date": "トリガーが最後に実行されたとき",
                     "context updated date": "トリガーコンテキストの最終更新",
                     "next evaluation date": "次にtriggerが評価されるとき",
-                    "evaluation lock date": "評価がロックされている場合",
-                },
-                "flow_triggers": {
-                    "type": "トリガーの種類",
-                    "workerId": "ワーカー識別子",
-                    "next execution date": "次にtriggerが実行されるとき",
+                    "last evaluation date": "trigger が最後に評価されたとき",
                 },
                 "metrics": {
                     "task": "メトリックを生成したTask",
                     "name": "メトリックの名前",
                     "value": "メトリックの値",
                     "tags": "メトリックに関連付けられたタグ",
-                },
-                "blueprints": {
-                    "tags": "ブループリントに関連付けられたタグ",
                 },
             },
             "titles": {
@@ -2984,7 +2657,6 @@ export default {
                 "kv_filters": "キー-バリュー フィルター",
                 "secret_filters": "シークレットフィルター",
                 "blueprint_filters": "ブループリントフィルター",
-                "plugin_filters": "プラグイン検索",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCPツールを検索",
@@ -2998,7 +2670,6 @@ export default {
                 "search_kv": "KVペアを検索",
                 "search_secrets": "シークレットを検索",
                 "search_blueprints": "ブループリントを検索",
-                "search_plugins": "{count}+ プラグインを検索",
             },
         },
     },
@@ -3009,13 +2680,9 @@ export default {
             "update": "업데이트",
             "update conditions hint": "현재 적용된 filter가 이 저장된 filter의 조건을 대체합니다.",
             "save": "저장",
-            "footer_apply": "적용",
             "cancel": "취소",
-            "label": "레이블",
             "description": "설명",
-            "columns": "열",
             "apply": "필터 적용",
-            "apply filter": "필터 적용",
             "customize": "필터 추가",
             "customize tooltip": "표시할 필터 사용자 지정",
             "customize columns": "테이블 열 사용자 정의",
@@ -3030,12 +2697,10 @@ export default {
             "saved": "저장된 필터",
             "saved filters": "저장된 필터 세트",
             "saved tooltip": "저장된 필터 관리",
-            "show data options tooltip": "데이터 옵션 표시",
             "show chart": "차트 표시",
             "drag to reorder": "끌어서 순서 변경",
             "select filter": "필터를 추가하려면 선택하세요",
             "enter description": "필터 설명 입력",
-            "enter label": "필터 label 입력",
             "enter name": "필터 이름 입력",
             "reset": "모두 지우기",
             "reset_all": "모든 필터 재설정",
@@ -3044,7 +2709,6 @@ export default {
             "and": "AND",
             "in any": "모두",
             "add_condition_group": "조건 그룹 추가",
-            "add_condition_group_tooltip": "다른 조건 그룹 추가",
             "add_condition": "조건 추가",
             "add_advanced_filter": "고급 필터 추가",
             "advanced_filter": "고급 필터",
@@ -3055,19 +2719,14 @@ export default {
             "rule_count": "규칙 {count}개",
             "rules_count": "규칙 {count}개",
             "where": "조건",
-            "remove_condition_group": "이 조건 그룹 제거",
-            "drag_group": "드래그하여 다른 그룹과 결합",
-            "unwrap_group": "그룹 해제",
             "raw_view": "텍스트로 편집",
             "chip_view": "시각적으로 편집",
-            "chip_view_locked": "이 쿼리는 너무 복잡하여 시각적 편집기에서 사용할 수 없습니다",
             "raw_apply": "적용",
             "raw_revert": "되돌리기",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "복잡한 쿼리",
             "unrenderable_body": "이 쿼리는 시각적 필터 편집기가 표현할 수 없는 중첩을 사용합니다. 여기에서 직접 편집하거나, 적용하여 단순화하세요.",
             "drag to reorder columns": "열을 재정렬하려면 드래그하세요.",
-            "empty": "저장된 필터가 아직 없습니다.",
             "save current": "현재 필터 저장",
             "empty title": "저장된 필터가 아직 없습니다",
             "empty subtitle": "활성 필터를 저장하여 나중에 다시 사용하세요",
@@ -3076,7 +2735,6 @@ export default {
             "kv_pair_selected": "{count} Key/Value 쌍 선택됨",
             "key": "키",
             "value": "값",
-            "add key value pair": "Key/Value 쌍 추가",
             "search options": "검색...",
             "select all": "모두 선택",
             "deselect all": "모두 선택 해제",
@@ -3145,15 +2803,12 @@ export default {
                 "description": "namespace로 필터링",
             },
             "enabled": {
-                "label": "사용 가능",
                 "description": "사용 가능 여부로 필터링",
             },
             "type": {
-                "label": "유형",
                 "description": "유형별 필터",
             },
             "username": {
-                "label": "사용자 이름",
                 "description": "사용자 이름으로 필터링",
             },
             "name": {
@@ -3161,16 +2816,10 @@ export default {
                 "description": "이름으로 필터링",
             },
             "member": {
-                "label": "회원",
                 "description": "멤버별 필터링",
             },
             "group": {
-                "label": "그룹",
                 "description": "그룹별 필터링",
-            },
-            "kill_switch_type": {
-                "label": "유형",
-                "description": "킬 스위치 유형별 필터",
             },
             "parentId": {
                 "label": "Parent ID",
@@ -3181,7 +2830,6 @@ export default {
                 "description": "flow ID로 필터링",
             },
             "email": {
-                "label": "Email",
                 "description": "email로 필터링",
             },
             "kind": {
@@ -3201,10 +2849,6 @@ export default {
             },
             "childFilter": {
                 "label": "계층 구조",
-                "description": "실행 계층별 필터링",
-            },
-            "childFilter_child": {
-                "label": "자식 필터",
                 "description": "실행 계층별 필터링",
             },
             "timeRange": {
@@ -3233,7 +2877,6 @@ export default {
             "timeRange_trigger": {
                 "label": "간격",
                 "description": "트리거 시간으로 필터링",
-                "applyTo": "적용 대상",
                 "chip": {
                     "nextExecution": "다음 실행",
                     "lastTriggered": "마지막 트리거",
@@ -3282,7 +2925,6 @@ export default {
                 "description": "트리거 범위로 필터링",
             },
             "level": {
-                "label": "레벨",
                 "description": "로그 심각도로 필터링",
             },
             "level_log_executions": {
@@ -3320,10 +2962,6 @@ export default {
                 "label": "작업",
                 "description": "작업 이름으로 필터링",
             },
-            "aggregation": {
-                "label": "집계",
-                "description": "집계 방법으로 필터링",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "AI 에이전트에게 표시되는 제목",
@@ -3334,15 +2972,13 @@ export default {
                     "description": "도구의 기능과 에이전트가 호출해야 하는 시점",
                 },
                 "flows": {
-                    "id": "고유 flow 식별자",
                     "labels": "Flow 레이블 (key:value 형식)",
                     "namespace": "flow의 namespace",
                     "last execution date": "flow가 마지막으로 실행된 시점",
                     "last execution status": "가장 최근 실행의 상태",
                     "execution statistics": "최근 실행 상태를 보여주는 차트",
                     "triggers": "flow를 시작할 수 있는 트리거 (예: 일정, 이벤트)",
-                    "revision": "flow 정의의 현재 버전 번호",
-                    "description": "flow에 제공된 텍스트 설명",
+                    "last modified": "flow 정의 최종 업데이트 시점",
                 },
                 "executions": {
                     "id": "실행 ID",
@@ -3355,7 +2991,6 @@ export default {
                     "state": "현재 실행 상태",
                     "revision": "이 실행에 사용된 flow의 버전",
                     "inputs": "실행에 제공된 입력 값",
-                    "outputs": "실행에 의해 생성된 Outputs",
                     "task-id": "실행에서 마지막 task의 ID",
                     "trigger": "실행을 시작한 Trigger",
                     "parent-execution": "이 실행을 트리거한 상위 execution ID",
@@ -3369,33 +3004,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "비밀이 저장되는 논리적 그룹화",
-                    "key": "저장된 비밀의 식별자",
                     "description": "선택적 메모는 컨텍스트를 제공합니다",
                     "tags": "추가 분류 태그",
                 },
                 "triggers": {
                     "flow": "트리거와 연결된 flow",
                     "namespace": "트리거의 namespace",
-                    "current execution": "현재 실행 ID",
+                    "execution id": "trigger에 의해 시작된 실행의 ID",
                     "workerId": "작업자 식별자",
                     "last trigger date": "트리거가 마지막으로 실행된 시점",
                     "context updated date": "트리거 컨텍스트의 마지막 업데이트",
                     "next evaluation date": "트리거가 다음에 평가될 때",
-                    "evaluation lock date": "평가가 잠겼을 때",
-                },
-                "flow_triggers": {
-                    "type": "트리거 유형",
-                    "workerId": "작업자 식별자",
-                    "next execution date": "트리거가 다음에 실행될 때",
+                    "last evaluation date": "trigger가 마지막으로 평가된 시점",
                 },
                 "metrics": {
                     "task": "메트릭을 생성한 Task",
                     "name": "메트릭의 이름",
                     "value": "메트릭의 값",
                     "tags": "메트릭과 연관된 태그",
-                },
-                "blueprints": {
-                    "tags": "블루프린트와 연결된 태그",
                 },
             },
             "titles": {
@@ -3413,7 +3039,6 @@ export default {
                 "kv_filters": "키-값 필터",
                 "secret_filters": "비밀 필터",
                 "blueprint_filters": "블루프린트 필터",
-                "plugin_filters": "플러그인 검색",
             },
             "search_placeholders": {
                 "search_mcp_tools": "MCP 도구 검색",
@@ -3427,7 +3052,6 @@ export default {
                 "search_kv": "KV 쌍 검색",
                 "search_secrets": "비밀 검색",
                 "search_blueprints": "블루프린트 검색",
-                "search_plugins": "{count}+ 플러그인 검색",
             },
         },
     },
@@ -3438,13 +3062,9 @@ export default {
             "update": "Aktualizuj",
             "update conditions hint": "Aktualnie zastosowane filtry zastąpią warunki tego zapisanego filter.",
             "save": "Zapisz",
-            "footer_apply": "Zastosuj",
             "cancel": "Anuluj",
-            "label": "Etykieta",
             "description": "Opis",
-            "columns": "Kolumny",
             "apply": "Zastosuj filtry",
-            "apply filter": "Zastosuj filtr",
             "customize": "Dodaj filtry",
             "customize tooltip": "Dostosuj, które filtry mają być wyświetlane",
             "customize columns": "Dostosuj kolumny tabeli",
@@ -3459,12 +3079,10 @@ export default {
             "saved": "Zapisane filtry",
             "saved filters": "Zapisane zestawy filtrów",
             "saved tooltip": "Zarządzaj zapisanymi filtrami",
-            "show data options tooltip": "Pokaż opcje danych",
             "show chart": "Pokaż wykres",
             "drag to reorder": "Przeciągnij, aby zmienić kolejność",
             "select filter": "Wybierz filtr do dodania",
             "enter description": "Wprowadź opis filtra",
-            "enter label": "Wprowadź filtr label",
             "enter name": "Wprowadź nazwę filtra",
             "reset": "Wyczyść wszystko",
             "reset_all": "Resetuj wszystkie filtry",
@@ -3473,7 +3091,6 @@ export default {
             "and": "ORAZ",
             "in any": "w dowolnym",
             "add_condition_group": "Dodaj grupę warunków",
-            "add_condition_group_tooltip": "Dodaj kolejną grupę warunków",
             "add_condition": "Dodaj warunek",
             "add_advanced_filter": "Dodaj filtr zaawansowany",
             "advanced_filter": "Filtr zaawansowany",
@@ -3484,19 +3101,14 @@ export default {
             "rule_count": "{count} reguła",
             "rules_count": "{count} reguły",
             "where": "Gdzie",
-            "remove_condition_group": "Usuń tę grupę warunków",
-            "drag_group": "Przeciągnij, aby połączyć z inną grupą",
-            "unwrap_group": "Rozgrupuj",
             "raw_view": "Edytuj jako tekst",
             "chip_view": "Edytuj wizualnie",
-            "chip_view_locked": "To zapytanie jest zbyt złożone dla edytora wizualnego",
             "raw_apply": "Zastosuj",
             "raw_revert": "Przywróć",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Złożone zapytanie",
             "unrenderable_body": "To zapytanie używa zagnieżdżenia, którego wizualny edytor filtrów nie potrafi przedstawić. Edytuj je bezpośrednio tutaj lub zastosuj, aby je uprościć.",
             "drag to reorder columns": "Przeciągnij, aby zmienić kolejność kolumn",
-            "empty": "Nie masz jeszcze żadnego zapisanego filtra.",
             "save current": "Zapisz bieżące filtry",
             "empty title": "Brak zapisanych filtrów",
             "empty subtitle": "Zapisz aktywny filtr, aby użyć go ponownie później",
@@ -3505,7 +3117,6 @@ export default {
             "kv_pair_selected": "Wybrano {count} pary Key/Value",
             "key": "Klucz",
             "value": "Wartość",
-            "add key value pair": "Dodaj parę Key/Value",
             "search options": "Szukaj...",
             "select all": "Zaznacz wszystko",
             "deselect all": "Odznacz wszystko",
@@ -3574,15 +3185,12 @@ export default {
                 "description": "Filtruj według namespace",
             },
             "enabled": {
-                "label": "Włączone",
                 "description": "Filtruj według enabled",
             },
             "type": {
-                "label": "Typ",
                 "description": "Filtruj według typu",
             },
             "username": {
-                "label": "Nazwa użytkownika",
                 "description": "Filtruj według nazwy użytkownika",
             },
             "name": {
@@ -3590,16 +3198,10 @@ export default {
                 "description": "Filtruj według nazwy",
             },
             "member": {
-                "label": "Członek",
                 "description": "Filtruj według członka",
             },
             "group": {
-                "label": "Grupa",
                 "description": "Filtruj według grupy",
-            },
-            "kill_switch_type": {
-                "label": "Typ",
-                "description": "Filtruj według typu kill switch",
             },
             "parentId": {
                 "label": "Identyfikator parent",
@@ -3610,7 +3212,6 @@ export default {
                 "description": "Filtruj według flow ID",
             },
             "email": {
-                "label": "Email",
                 "description": "Filtruj według email",
             },
             "kind": {
@@ -3630,10 +3231,6 @@ export default {
             },
             "childFilter": {
                 "label": "Hierarchia",
-                "description": "Filtruj według hierarchii wykonania",
-            },
-            "childFilter_child": {
-                "label": "Filtr Dziecka",
                 "description": "Filtruj według hierarchii wykonania",
             },
             "timeRange": {
@@ -3662,7 +3259,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Interwał",
                 "description": "Filtruj według czasu wyzwalania",
-                "applyTo": "Zastosuj do",
                 "chip": {
                     "nextExecution": "Następne wykonanie",
                     "lastTriggered": "Ostatnie uruchomienie",
@@ -3711,7 +3307,6 @@ export default {
                 "description": "Filtruj według zakresu triggera",
             },
             "level": {
-                "label": "Poziom",
                 "description": "Filtruj według log severity",
             },
             "level_log_executions": {
@@ -3749,10 +3344,6 @@ export default {
                 "label": "Zadanie",
                 "description": "Filtruj według nazwy taska",
             },
-            "aggregation": {
-                "label": "Agregacja",
-                "description": "Filtruj według metody agregacji",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Tytuł wyświetlany agentom AI",
@@ -3763,15 +3354,13 @@ export default {
                     "description": "Co robi narzędzie i kiedy agent powinien je wywołać",
                 },
                 "flows": {
-                    "id": "Unikalny identyfikator flow",
                     "labels": "Etykiety flow (format klucz:wartość)",
                     "namespace": "Namespace flow",
                     "last execution date": "Kiedy flow został ostatnio wykonany",
                     "last execution status": "Status ostatniego wykonania",
                     "execution statistics": "Wykres pokazujący ostatnie stany wykonania",
                     "triggers": "Wyzwalacze, które mogą uruchomić flow (np. harmonogram, zdarzenie)",
-                    "revision": "Aktualny numer wersji definicji flow",
-                    "description": "Opis tekstowy dostarczony dla flow",
+                    "last modified": "Ostatnia aktualizacja definicji flow",
                 },
                 "executions": {
                     "id": "Identyfikator wykonania",
@@ -3784,7 +3373,6 @@ export default {
                     "state": "Bieżący stan wykonania",
                     "revision": "Wersja flow używana dla tej wykonania",
                     "inputs": "Wartości input dostarczone do wykonania",
-                    "outputs": "Wyniki wygenerowane przez wykonanie",
                     "task-id": "ID ostatniego tasku w wykonaniu",
                     "trigger": "Trigger, który rozpoczął wykonanie",
                     "parent-execution": "ID nadrzędnej wykonania, które uruchomiło to wykonanie",
@@ -3798,33 +3386,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Logiczna grupa, w której przechowywany jest sekret",
-                    "key": "Identyfikator dla przechowywanego sekretu",
                     "description": "Opcjonalne notatki dostarczające kontekst",
                     "tags": "Dodatkowe tagi kategoryzacji",
                 },
                 "triggers": {
                     "flow": "Przepływ powiązany z triggerem",
                     "namespace": "Namespace wyzwalacza",
-                    "current execution": "Aktualne ID wykonania",
+                    "execution id": "ID wykonania rozpoczętego przez trigger",
                     "workerId": "Identyfikator worker",
                     "last trigger date": "Kiedy trigger został ostatnio wykonany",
                     "context updated date": "Ostatnia aktualizacja kontekstu triggera",
                     "next evaluation date": "Kiedy trigger oceni następny",
-                    "evaluation lock date": "Gdy ocena jest zablokowana",
-                },
-                "flow_triggers": {
-                    "type": "Rodzaj triggera",
-                    "workerId": "Identyfikator worker",
-                    "next execution date": "Kiedy trigger wykona się następnie",
+                    "last evaluation date": "Kiedy trigger był ostatnio oceniany",
                 },
                 "metrics": {
                     "task": "Zadanie, które wygenerowało metrykę",
                     "name": "Nazwa metryki",
                     "value": "Wartość metryki",
                     "tags": "Tagi powiązane z metryką",
-                },
-                "blueprints": {
-                    "tags": "Tagi powiązane z blueprintem",
                 },
             },
             "titles": {
@@ -3842,7 +3421,6 @@ export default {
                 "kv_filters": "Filtry Key-Value",
                 "secret_filters": "Filtry Sekretów",
                 "blueprint_filters": "Filtry Blueprint",
-                "plugin_filters": "Wyszukiwanie Pluginów",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Wyszukaj narzędzia MCP",
@@ -3856,7 +3434,6 @@ export default {
                 "search_kv": "Szukaj par KV",
                 "search_secrets": "Szukaj secrets",
                 "search_blueprints": "Wyszukaj blueprinty",
-                "search_plugins": "Szukaj {count}+ pluginów",
             },
         },
     },
@@ -3867,13 +3444,9 @@ export default {
             "update": "Atualizar",
             "update conditions hint": "Os filtros atualmente aplicados substituirão as condições deste filter guardado.",
             "save": "Salvar",
-            "footer_apply": "Aplicar",
             "cancel": "Cancelar",
-            "label": "Etiqueta",
             "description": "Descrição",
-            "columns": "Colunas",
             "apply": "Aplicar filtros",
-            "apply filter": "Aplicar filtro",
             "customize": "Adicionar filtros",
             "customize tooltip": "Personalizar quais filtros exibir",
             "customize columns": "Personalizar colunas da tabela",
@@ -3888,12 +3461,10 @@ export default {
             "saved": "Filtros salvos",
             "saved filters": "Conjuntos de Filtros Salvos",
             "saved tooltip": "Gerenciar filtros salvos",
-            "show data options tooltip": "Mostrar opções de dados",
             "show chart": "Mostrar Gráfico",
             "drag to reorder": "Arraste para reordenar",
             "select filter": "Selecione um filtro para adicionar",
             "enter description": "Insira a descrição do filtro",
-            "enter label": "Insira o filtro {label}",
             "enter name": "Insira o nome do filtro",
             "reset": "Limpar tudo",
             "reset_all": "Redefinir todos os filtros",
@@ -3902,7 +3473,6 @@ export default {
             "and": "E",
             "in any": "em qualquer",
             "add_condition_group": "Adicionar grupo de condições",
-            "add_condition_group_tooltip": "Adicionar outro grupo de condições",
             "add_condition": "Adicionar condição",
             "add_advanced_filter": "Adicionar filtro avançado",
             "advanced_filter": "Filtro avançado",
@@ -3913,19 +3483,14 @@ export default {
             "rule_count": "{count} regra",
             "rules_count": "{count} regras",
             "where": "Onde",
-            "remove_condition_group": "Remover este grupo de condições",
-            "drag_group": "Arraste para combinar com outro grupo",
-            "unwrap_group": "Desagrupar",
             "raw_view": "Editar como texto",
             "chip_view": "Editar visualmente",
-            "chip_view_locked": "Esta consulta é demasiado complexa para o editor visual",
             "raw_apply": "Aplicar",
             "raw_revert": "Reverter",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Consulta complexa",
             "unrenderable_body": "Esta consulta utiliza aninhamento que o editor visual de filtros não consegue representar. Edite-a diretamente aqui ou aplique para a simplificar.",
             "drag to reorder columns": "Arraste para reordenar colunas",
-            "empty": "Você ainda não tem nenhum filtro salvo.",
             "save current": "Salvar filtros atuais",
             "empty title": "Nenhum filtro salvo ainda",
             "empty subtitle": "Salve seu filtro ativo para reutilizá-lo mais tarde",
@@ -3934,7 +3499,6 @@ export default {
             "kv_pair_selected": "{count} pares de Key/Value selecionados",
             "key": "Chave",
             "value": "Valor",
-            "add key value pair": "Adicionar par Chave/Valor",
             "search options": "Pesquisar...",
             "select all": "Selecionar Tudo",
             "deselect all": "Desmarcar Tudo",
@@ -4003,15 +3567,12 @@ export default {
                 "description": "Filtrar por namespace",
             },
             "enabled": {
-                "label": "Habilitado",
                 "description": "Filtrar por habilitado",
             },
             "type": {
-                "label": "Tipo",
                 "description": "Filtrar por tipo",
             },
             "username": {
-                "label": "Nome de Usuário",
                 "description": "Filtrar por nome de usuário",
             },
             "name": {
@@ -4019,16 +3580,10 @@ export default {
                 "description": "Filtrar por nome",
             },
             "member": {
-                "label": "Membro",
                 "description": "Filtrar por membro",
             },
             "group": {
-                "label": "Grupo",
                 "description": "Filtrar por grupo",
-            },
-            "kill_switch_type": {
-                "label": "Tipo",
-                "description": "Filtrar por tipo de kill switch",
             },
             "parentId": {
                 "label": "ID do Parent",
@@ -4039,7 +3594,6 @@ export default {
                 "description": "Filtrar por flow ID",
             },
             "email": {
-                "label": "Email",
                 "description": "Filtrar por email",
             },
             "kind": {
@@ -4059,10 +3613,6 @@ export default {
             },
             "childFilter": {
                 "label": "Hierarquia",
-                "description": "Filtrar por hierarquia de execução",
-            },
-            "childFilter_child": {
-                "label": "Filtro de Child",
                 "description": "Filtrar por hierarquia de execução",
             },
             "timeRange": {
@@ -4091,7 +3641,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Intervalo",
                 "description": "Filtrar por tempo do trigger",
-                "applyTo": "Aplicar a",
                 "chip": {
                     "nextExecution": "Próxima execução",
                     "lastTriggered": "Último trigger",
@@ -4140,7 +3689,6 @@ export default {
                 "description": "Filtrar por escopo do trigger",
             },
             "level": {
-                "label": "Nível",
                 "description": "Filtrar por severidade do log",
             },
             "level_log_executions": {
@@ -4178,10 +3726,6 @@ export default {
                 "label": "Tarefa",
                 "description": "Filtrar por nome da task",
             },
-            "aggregation": {
-                "label": "Agregação",
-                "description": "Filtrar por método de agregação",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Título exibido aos agentes de IA",
@@ -4192,15 +3736,13 @@ export default {
                     "description": "O que a ferramenta faz e quando um agente deve chamá-la",
                 },
                 "flows": {
-                    "id": "Identificador único do flow",
                     "labels": "Rótulos de flow (formato key:value)",
                     "namespace": "Namespace do flow",
                     "last execution date": "Quando o flow foi executado pela última vez",
                     "last execution status": "Status da execução mais recente",
                     "execution statistics": "Gráfico mostrando estados recentes de execução",
                     "triggers": "Triggers que podem iniciar o flow (por exemplo, agendamento, evento)",
-                    "revision": "Número da versão atual da definição do flow",
-                    "description": "Descrição do texto fornecida para o flow",
+                    "last modified": "Quando a definição do flow foi atualizada pela última vez",
                 },
                 "executions": {
                     "id": "ID de Execução",
@@ -4213,7 +3755,6 @@ export default {
                     "state": "Estado atual da execução",
                     "revision": "Versão do flow usada para esta execução",
                     "inputs": "Valores de input fornecidos para a execução",
-                    "outputs": "Saídas emitidas pela execução",
                     "task-id": "ID da última task na execução",
                     "trigger": "Trigger que iniciou a execução",
                     "parent-execution": "ID de execução pai que acionou esta execução",
@@ -4227,33 +3768,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Agrupamento lógico onde o segredo é armazenado",
-                    "key": "Identificador para o segredo armazenado",
                     "description": "Notas opcionais fornecendo contexto",
                     "tags": "Tags de categorização extra",
                 },
                 "triggers": {
                     "flow": "Fluxo associado ao trigger",
                     "namespace": "Namespace do trigger",
-                    "current execution": "ID de execução atual",
+                    "execution id": "ID da execução iniciada pelo trigger",
                     "workerId": "Identificador do worker",
                     "last trigger date": "Quando o trigger foi executado pela última vez",
                     "context updated date": "Última atualização do contexto do trigger",
                     "next evaluation date": "Quando o trigger avaliar a seguir",
-                    "evaluation lock date": "Quando a avaliação está bloqueada",
-                },
-                "flow_triggers": {
-                    "type": "Tipo de trigger",
-                    "workerId": "Identificador do worker",
-                    "next execution date": "Quando o trigger será executado a seguir",
+                    "last evaluation date": "Quando o trigger foi avaliado pela última vez",
                 },
                 "metrics": {
                     "task": "Tarefa que gerou a métrica",
                     "name": "Nome da métrica",
                     "value": "Valor da métrica",
                     "tags": "Etiquetas associadas à métrica",
-                },
-                "blueprints": {
-                    "tags": "Tags associados ao blueprint",
                 },
             },
             "titles": {
@@ -4271,7 +3803,6 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Segredo",
                 "blueprint_filters": "Filtros de Blueprint",
-                "plugin_filters": "Pesquisa de Plugin",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
@@ -4285,7 +3816,6 @@ export default {
                 "search_kv": "Pesquisar pares KV",
                 "search_secrets": "Procurar segredos",
                 "search_blueprints": "Pesquisar blueprints",
-                "search_plugins": "Pesquisar {count}+ plugins",
             },
         },
     },
@@ -4296,13 +3826,9 @@ export default {
             "update": "Atualizar",
             "update conditions hint": "Os filtros atualmente aplicados substituirão as condições deste filter salvo.",
             "save": "Salvar",
-            "footer_apply": "Aplicar",
             "cancel": "Cancelar",
-            "label": "Etiqueta",
             "description": "Descrição",
-            "columns": "Colunas",
             "apply": "Aplicar filtros",
-            "apply filter": "Aplicar filtro",
             "customize": "Adicionar filtros",
             "customize tooltip": "Personalizar quais filtros exibir",
             "customize columns": "Personalizar colunas da tabela",
@@ -4317,12 +3843,10 @@ export default {
             "saved": "Filtros salvos",
             "saved filters": "Conjuntos de Filtros Salvos",
             "saved tooltip": "Gerenciar filtros salvos",
-            "show data options tooltip": "Mostrar opções de dados",
             "show chart": "Mostrar Gráfico",
             "drag to reorder": "Arraste para reordenar",
             "select filter": "Selecione um filtro para adicionar",
             "enter description": "Insira a descrição do filtro",
-            "enter label": "Insira o filtro de label",
             "enter name": "Insira o nome do filtro",
             "reset": "Limpar tudo",
             "reset_all": "Redefinir todos os filtros",
@@ -4331,7 +3855,6 @@ export default {
             "and": "E",
             "in any": "em qualquer",
             "add_condition_group": "Adicionar grupo de condições",
-            "add_condition_group_tooltip": "Adicionar outro grupo de condições",
             "add_condition": "Adicionar condição",
             "add_advanced_filter": "Adicionar filtro avançado",
             "advanced_filter": "Filtro avançado",
@@ -4342,19 +3865,14 @@ export default {
             "rule_count": "{count} regra",
             "rules_count": "{count} regras",
             "where": "Onde",
-            "remove_condition_group": "Remover este grupo de condições",
-            "drag_group": "Arraste para combinar com outro grupo",
-            "unwrap_group": "Desagrupar",
             "raw_view": "Editar como texto",
             "chip_view": "Editar visualmente",
-            "chip_view_locked": "Esta consulta é muito complexa para o editor visual",
             "raw_apply": "Aplicar",
             "raw_revert": "Reverter",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Consulta complexa",
             "unrenderable_body": "Esta consulta usa aninhamento que o editor visual de filtros não consegue representar. Edite-a diretamente aqui ou aplique para simplificar.",
             "drag to reorder columns": "Arraste para reordenar colunas",
-            "empty": "Você ainda não tem nenhum filtro salvo.",
             "save current": "Salvar filtros atuais",
             "empty title": "Nenhum filtro salvo ainda",
             "empty subtitle": "Salve seu filtro ativo para reutilizá-lo mais tarde",
@@ -4363,7 +3881,6 @@ export default {
             "kv_pair_selected": "{count} pares de Key/Value selecionados",
             "key": "Chave",
             "value": "Valor",
-            "add key value pair": "Adicionar par chave/valor",
             "search options": "Pesquisar...",
             "select all": "Selecionar Tudo",
             "deselect all": "Desmarcar Tudo",
@@ -4432,15 +3949,12 @@ export default {
                 "description": "Filtrar por namespace",
             },
             "enabled": {
-                "label": "Habilitado",
                 "description": "Filtrar por habilitado",
             },
             "type": {
-                "label": "Tipo",
                 "description": "Filtrar por tipo",
             },
             "username": {
-                "label": "Nome de Usuário",
                 "description": "Filtrar por nome de usuário",
             },
             "name": {
@@ -4448,16 +3962,10 @@ export default {
                 "description": "Filtrar por nome",
             },
             "member": {
-                "label": "Membro",
                 "description": "Filtrar por membro",
             },
             "group": {
-                "label": "Grupo",
                 "description": "Filtrar por grupo",
-            },
-            "kill_switch_type": {
-                "label": "Tipo",
-                "description": "Filtrar por tipo de kill switch",
             },
             "parentId": {
                 "label": "ID do Parent",
@@ -4468,7 +3976,6 @@ export default {
                 "description": "Filtrar por flow ID",
             },
             "email": {
-                "label": "Email",
                 "description": "Filtrar por email",
             },
             "kind": {
@@ -4488,10 +3995,6 @@ export default {
             },
             "childFilter": {
                 "label": "Hierarquia",
-                "description": "Filtrar por hierarquia de execução",
-            },
-            "childFilter_child": {
-                "label": "Filtro de Child",
                 "description": "Filtrar por hierarquia de execução",
             },
             "timeRange": {
@@ -4520,7 +4023,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Intervalo",
                 "description": "Filtrar por tempo do trigger",
-                "applyTo": "Aplicar a",
                 "chip": {
                     "nextExecution": "Próxima execução",
                     "lastTriggered": "Último trigger",
@@ -4569,7 +4071,6 @@ export default {
                 "description": "Filtrar por escopo de trigger",
             },
             "level": {
-                "label": "Nível",
                 "description": "Filtrar por severidade do log",
             },
             "level_log_executions": {
@@ -4607,10 +4108,6 @@ export default {
                 "label": "Tarefa",
                 "description": "Filtrar por nome da task",
             },
-            "aggregation": {
-                "label": "Agrupamento",
-                "description": "Filtrar por método de agregação",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Título exibido aos agentes de IA",
@@ -4621,15 +4118,13 @@ export default {
                     "description": "O que a ferramenta faz e quando um agente deve chamá-la",
                 },
                 "flows": {
-                    "id": "Identificador único do flow",
                     "labels": "Rótulos de flow (formato key:value)",
                     "namespace": "Namespace do flow",
                     "last execution date": "Quando o flow foi executado pela última vez",
                     "last execution status": "Status da execução mais recente",
                     "execution statistics": "Gráfico mostrando estados recentes de execução",
                     "triggers": "Gatilhos que podem iniciar o flow (por exemplo, agendamento, evento)",
-                    "revision": "Número da versão atual da definição do flow",
-                    "description": "Descrição do texto fornecida para o flow",
+                    "last modified": "Quando a definição do flow foi atualizada pela última vez",
                 },
                 "executions": {
                     "id": "ID de Execução",
@@ -4642,7 +4137,6 @@ export default {
                     "state": "Estado atual da execução",
                     "revision": "Versão do flow usada para esta execução",
                     "inputs": "Valores de input fornecidos para a execução",
-                    "outputs": "Saídas emitidas pela execução",
                     "task-id": "ID da última task na execução",
                     "trigger": "Trigger que iniciou a execução",
                     "parent-execution": "ID da execução pai que acionou esta execução",
@@ -4656,33 +4150,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Agrupamento lógico onde o segredo é armazenado",
-                    "key": "Identificador para o segredo armazenado",
                     "description": "Notas opcionais fornecendo contexto",
                     "tags": "Etiquetas de categorização extra",
                 },
                 "triggers": {
                     "flow": "Fluxo associado ao trigger",
                     "namespace": "Namespace do trigger",
-                    "current execution": "ID de execução atual",
+                    "execution id": "ID da execução iniciada pelo trigger",
                     "workerId": "Identificador do worker",
                     "last trigger date": "Quando o trigger foi executado pela última vez",
                     "context updated date": "Última atualização do contexto do trigger",
                     "next evaluation date": "Quando o trigger avaliar a seguir",
-                    "evaluation lock date": "Quando a avaliação está bloqueada",
-                },
-                "flow_triggers": {
-                    "type": "Tipo de trigger",
-                    "workerId": "Identificador do worker",
-                    "next execution date": "Quando o trigger será executado em seguida",
+                    "last evaluation date": "Quando o trigger foi avaliado pela última vez",
                 },
                 "metrics": {
                     "task": "Tarefa que gerou a métrica",
                     "name": "Nome da métrica",
                     "value": "Valor da métrica",
                     "tags": "Tags associados à métrica",
-                },
-                "blueprints": {
-                    "tags": "Tags associados ao blueprint",
                 },
             },
             "titles": {
@@ -4700,7 +4185,6 @@ export default {
                 "kv_filters": "Filtros de Key-Value",
                 "secret_filters": "Filtros de Segredo",
                 "blueprint_filters": "Filtros de Blueprint",
-                "plugin_filters": "Pesquisa de Plugin",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Pesquisar ferramentas MCP",
@@ -4714,7 +4198,6 @@ export default {
                 "search_kv": "Pesquisar pares KV",
                 "search_secrets": "Pesquisar segredos",
                 "search_blueprints": "Pesquisar blueprints",
-                "search_plugins": "Pesquisar {count}+ plugins",
             },
         },
     },
@@ -4725,13 +4208,9 @@ export default {
             "update": "Обновить",
             "update conditions hint": "Текущие применённые filter заменят условия этого сохранённого filter.",
             "save": "Сохранить",
-            "footer_apply": "Применить",
             "cancel": "Отменить",
-            "label": "Ярлык",
             "description": "Описание",
-            "columns": "Столбцы",
             "apply": "Применить фильтры",
-            "apply filter": "Применить фильтр",
             "customize": "Добавить фильтры",
             "customize tooltip": "Настроить, какие фильтры отображать",
             "customize columns": "Настроить столбцы таблицы",
@@ -4746,12 +4225,10 @@ export default {
             "saved": "Сохраненные фильтры",
             "saved filters": "Сохраненные наборы фильтров",
             "saved tooltip": "Управление сохраненными фильтрами",
-            "show data options tooltip": "Показать параметры данных",
             "show chart": "Показать диаграмму",
             "drag to reorder": "Перетащите для изменения порядка",
             "select filter": "Выберите фильтр для добавления",
             "enter description": "Введите описание фильтра",
-            "enter label": "Введите фильтр label",
             "enter name": "Введите имя фильтра",
             "reset": "Очистить все",
             "reset_all": "Сбросить все фильтры",
@@ -4760,7 +4237,6 @@ export default {
             "and": "И",
             "in any": "в любом",
             "add_condition_group": "Добавить группу условий",
-            "add_condition_group_tooltip": "Добавить ещё одну группу условий",
             "add_condition": "Добавить условие",
             "add_advanced_filter": "Добавить расширенный фильтр",
             "advanced_filter": "Расширенный фильтр",
@@ -4771,19 +4247,14 @@ export default {
             "rule_count": "{count} правило",
             "rules_count": "{count} правила",
             "where": "Где",
-            "remove_condition_group": "Удалить эту группу условий",
-            "drag_group": "Перетащите, чтобы объединить с другой группой",
-            "unwrap_group": "Разгруппировать",
             "raw_view": "Редактировать как текст",
             "chip_view": "Редактировать визуально",
-            "chip_view_locked": "Этот запрос слишком сложен для визуального редактора",
             "raw_apply": "Применить",
             "raw_revert": "Вернуть",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "Сложный запрос",
             "unrenderable_body": "Этот запрос использует вложенность, которую визуальный редактор фильтров не может отобразить. Отредактируйте его напрямую здесь или примените, чтобы упростить.",
             "drag to reorder columns": "Перетащите, чтобы изменить порядок столбцов",
-            "empty": "У вас еще нет сохраненных фильтров.",
             "save current": "Сохранить текущие фильтры",
             "empty title": "Пока нет сохраненных фильтров",
             "empty subtitle": "Сохраните активный фильтр, чтобы использовать его позже",
@@ -4792,7 +4263,6 @@ export default {
             "kv_pair_selected": "{count} Key/Value пар выбрано",
             "key": "Ключ",
             "value": "Значение",
-            "add key value pair": "Добавить пару Key/Value",
             "search options": "Поиск...",
             "select all": "Выбрать все",
             "deselect all": "Снять выделение со всех",
@@ -4861,15 +4331,12 @@ export default {
                 "description": "Фильтр по namespace",
             },
             "enabled": {
-                "label": "Включено",
                 "description": "Фильтр по включенным",
             },
             "type": {
-                "label": "Тип",
                 "description": "Фильтр по типу",
             },
             "username": {
-                "label": "Имя пользователя",
                 "description": "Фильтр по имени пользователя",
             },
             "name": {
@@ -4877,16 +4344,10 @@ export default {
                 "description": "Фильтр по имени",
             },
             "member": {
-                "label": "Член",
                 "description": "Фильтровать по участнику",
             },
             "group": {
-                "label": "Группа",
                 "description": "Фильтр по группе",
-            },
-            "kill_switch_type": {
-                "label": "Тип",
-                "description": "Фильтр по типу kill switch",
             },
             "parentId": {
                 "label": "Идентификатор parent",
@@ -4897,7 +4358,6 @@ export default {
                 "description": "Фильтр по flow ID",
             },
             "email": {
-                "label": "Email",
                 "description": "Фильтр по email",
             },
             "kind": {
@@ -4917,10 +4377,6 @@ export default {
             },
             "childFilter": {
                 "label": "Иерархия",
-                "description": "Фильтр по иерархии выполнения",
-            },
-            "childFilter_child": {
-                "label": "Фильтр дочерних элементов",
                 "description": "Фильтр по иерархии выполнения",
             },
             "timeRange": {
@@ -4949,7 +4405,6 @@ export default {
             "timeRange_trigger": {
                 "label": "Интервал",
                 "description": "Фильтр по времени триггера",
-                "applyTo": "Применить к",
                 "chip": {
                     "nextExecution": "Следующее выполнение",
                     "lastTriggered": "Последнее срабатывание",
@@ -4998,7 +4453,6 @@ export default {
                 "description": "Фильтр по области действия trigger",
             },
             "level": {
-                "label": "Уровень",
                 "description": "Фильтр по уровню log",
             },
             "level_log_executions": {
@@ -5036,10 +4490,6 @@ export default {
                 "label": "Задача",
                 "description": "Фильтр по имени task",
             },
-            "aggregation": {
-                "label": "Агрегация",
-                "description": "Фильтр по методу агрегации",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "Заголовок, отображаемый ИИ-агентам",
@@ -5050,15 +4500,13 @@ export default {
                     "description": "Что делает инструмент и когда агент должен его вызвать",
                 },
                 "flows": {
-                    "id": "Уникальный идентификатор flow",
                     "labels": "Метки flow (формат key:value)",
                     "namespace": "Namespace потока",
                     "last execution date": "Когда flow был выполнен в последний раз",
                     "last execution status": "Статус последней выполнения",
                     "execution statistics": "Диаграмма, показывающая недавние состояния выполнения",
                     "triggers": "Триггеры, которые могут запустить flow (например, расписание, событие)",
-                    "revision": "Текущий номер версии определения flow",
-                    "description": "Описание текста, предоставленного для flow",
+                    "last modified": "Когда определение flow было обновлено в последний раз",
                 },
                 "executions": {
                     "id": "ID выполнения",
@@ -5071,7 +4519,6 @@ export default {
                     "state": "Текущий состояние выполнения",
                     "revision": "Версия flow, используемая для этой Ausführung",
                     "inputs": "Входные значения, предоставленные для выполнения",
-                    "outputs": "Выходные данные, сгенерированные в ходе выполнения",
                     "task-id": "ID последнего task в выполнении",
                     "trigger": "Триггер, который запустил выполнение",
                     "parent-execution": "ID родительской Ausführung, который вызвал эту Ausführung",
@@ -5085,33 +4532,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "Логическая группа, где хранится секрет",
-                    "key": "Идентификатор для сохраненного секрета",
                     "description": "Необязательные примечания, предоставляющие контекст",
                     "tags": "Дополнительные теги категоризации",
                 },
                 "triggers": {
                     "flow": "Поток, связанный с триггером",
                     "namespace": "Namespace триггера",
-                    "current execution": "Текущий ID выполнения",
+                    "execution id": "ID выполнения, запущенного trigger'ом",
                     "workerId": "Идентификатор worker",
                     "last trigger date": "Когда trigger выполнялся в последний раз",
                     "context updated date": "Последнее обновление контекста trigger",
                     "next evaluation date": "Когда trigger будет оценен в следующий раз",
-                    "evaluation lock date": "Когда оценка заблокирована",
-                },
-                "flow_triggers": {
-                    "type": "Тип trigger",
-                    "workerId": "Идентификатор worker",
-                    "next execution date": "Когда trigger будет выполнен в следующий раз",
+                    "last evaluation date": "Когда trigger был последний раз оценен",
                 },
                 "metrics": {
                     "task": "Задача, которая сгенерировала метрику",
                     "name": "Название метрики",
                     "value": "Значение метрики",
                     "tags": "Теги, связанные с метрикой",
-                },
-                "blueprints": {
-                    "tags": "Теги, связанные с blueprint",
                 },
             },
             "titles": {
@@ -5129,7 +4567,6 @@ export default {
                 "kv_filters": "Фильтры Key-Value",
                 "secret_filters": "Фильтры секретов",
                 "blueprint_filters": "Фильтры Blueprint",
-                "plugin_filters": "Поиск плагинов",
             },
             "search_placeholders": {
                 "search_mcp_tools": "Поиск инструментов MCP",
@@ -5143,7 +4580,6 @@ export default {
                 "search_kv": "Поиск KV пар",
                 "search_secrets": "Поиск секретов",
                 "search_blueprints": "Поиск blueprints",
-                "search_plugins": "Искать {count}+ plugins",
             },
         },
     },
@@ -5154,13 +4590,9 @@ export default {
             "update": "更新",
             "update conditions hint": "当前应用的filter将替换此保存的filter的条件。",
             "save": "保存",
-            "footer_apply": "应用",
             "cancel": "取消",
-            "label": "标签",
             "description": "描述",
-            "columns": "列",
             "apply": "应用过滤器",
-            "apply filter": "应用过滤器",
             "customize": "添加过滤器",
             "customize tooltip": "自定义显示哪些过滤器",
             "customize columns": "自定义表格列",
@@ -5175,12 +4607,10 @@ export default {
             "saved": "已保存的过滤器",
             "saved filters": "已保存的过滤器集",
             "saved tooltip": "管理已保存的过滤器",
-            "show data options tooltip": "显示数据选项",
             "show chart": "显示图表",
             "drag to reorder": "拖动以重新排序",
             "select filter": "选择要添加的过滤器",
             "enter description": "输入筛选器描述",
-            "enter label": "输入过滤器标签",
             "enter name": "输入过滤器名称",
             "reset": "清除所有",
             "reset_all": "重置所有过滤器",
@@ -5189,7 +4619,6 @@ export default {
             "and": "且",
             "in any": "任意",
             "add_condition_group": "添加条件组",
-            "add_condition_group_tooltip": "添加另一个条件组",
             "add_condition": "添加条件",
             "add_advanced_filter": "添加高级筛选",
             "advanced_filter": "高级筛选",
@@ -5200,19 +4629,14 @@ export default {
             "rule_count": "{count} 条规则",
             "rules_count": "{count} 条规则",
             "where": "条件",
-            "remove_condition_group": "移除此条件组",
-            "drag_group": "拖动以与另一个组合并",
-            "unwrap_group": "取消分组",
             "raw_view": "以文本方式编辑",
             "chip_view": "可视化编辑",
-            "chip_view_locked": "此查询过于复杂，无法使用可视化编辑器",
             "raw_apply": "应用",
             "raw_revert": "还原",
             "raw_placeholder": "filters[field][op]=value…",
             "unrenderable_title": "复杂查询",
             "unrenderable_body": "此查询使用了可视化过滤器编辑器无法表示的嵌套结构。请在此处直接编辑，或应用以进行简化。",
             "drag to reorder columns": "拖动以重新排序列",
-            "empty": "您还没有保存任何过滤器。",
             "save current": "保存当前过滤器",
             "empty title": "暂无已保存的过滤器",
             "empty subtitle": "保存当前过滤器以便稍后重复使用",
@@ -5221,7 +4645,6 @@ export default {
             "kv_pair_selected": "{count} 个 Key/Value 对已选择",
             "key": "键",
             "value": "值",
-            "add key value pair": "添加Key/Value对",
             "search options": "搜索...",
             "select all": "全选",
             "deselect all": "取消全选",
@@ -5290,15 +4713,12 @@ export default {
                 "description": "按namespace筛选",
             },
             "enabled": {
-                "label": "启用",
                 "description": "按启用筛选",
             },
             "type": {
-                "label": "类型",
                 "description": "按类型筛选",
             },
             "username": {
-                "label": "用户名",
                 "description": "按用户名筛选",
             },
             "name": {
@@ -5306,16 +4726,10 @@ export default {
                 "description": "按名称筛选",
             },
             "member": {
-                "label": "成员",
                 "description": "按成员筛选",
             },
             "group": {
-                "label": "组",
                 "description": "按组筛选",
-            },
-            "kill_switch_type": {
-                "label": "类型",
-                "description": "按关闭开关类型筛选",
             },
             "parentId": {
                 "label": "Parent ID",
@@ -5326,7 +4740,6 @@ export default {
                 "description": "按 flow ID 筛选",
             },
             "email": {
-                "label": "Email",
                 "description": "按 email 筛选",
             },
             "kind": {
@@ -5346,10 +4759,6 @@ export default {
             },
             "childFilter": {
                 "label": "层次结构",
-                "description": "按执行层级筛选",
-            },
-            "childFilter_child": {
-                "label": "子过滤器",
                 "description": "按执行层级筛选",
             },
             "timeRange": {
@@ -5378,7 +4787,6 @@ export default {
             "timeRange_trigger": {
                 "label": "间隔",
                 "description": "按触发器时间筛选",
-                "applyTo": "应用到",
                 "chip": {
                     "nextExecution": "下次执行",
                     "lastTriggered": "最后触发",
@@ -5427,7 +4835,6 @@ export default {
                 "description": "按 trigger 范围筛选",
             },
             "level": {
-                "label": "级别",
                 "description": "按日志严重性筛选",
             },
             "level_log_executions": {
@@ -5465,10 +4872,6 @@ export default {
                 "label": "任务",
                 "description": "按任务名称筛选",
             },
-            "aggregation": {
-                "label": "聚合",
-                "description": "按聚合方法筛选",
-            },
             "table_column": {
                 "mcpTools": {
                     "title": "向 AI 智能体显示的标题",
@@ -5479,15 +4882,13 @@ export default {
                     "description": "工具的功能以及智能体何时应调用它",
                 },
                 "flows": {
-                    "id": "唯一的flow标识符",
                     "labels": "flow 标签 (key:value 格式)",
                     "namespace": "flow的namespace",
                     "last execution date": "上次执行flow的时间",
                     "last execution status": "最近一次执行的状态",
                     "execution statistics": "显示最近执行状态的图表",
                     "triggers": "可以启动flow的Triggers（例如，schedule，event）",
-                    "revision": "flow定义的当前版本号",
-                    "description": "flow的文本描述",
+                    "last modified": "flow 定义最后更新时间",
                 },
                 "executions": {
                     "id": "执行 ID",
@@ -5500,7 +4901,6 @@ export default {
                     "state": "当前执行状态",
                     "revision": "用于此次执行的flow版本",
                     "inputs": "执行提供的输入值",
-                    "outputs": "执行产生的输出",
                     "task-id": "执行中最后一个task的ID",
                     "trigger": "启动执行的Trigger",
                     "parent-execution": "触发此执行的父执行ID",
@@ -5514,33 +4914,24 @@ export default {
                 },
                 "secrets": {
                     "namespace": "逻辑分组存储机密",
-                    "key": "存储密钥的标识符",
                     "description": "可选备注提供上下文",
                     "tags": "额外分类标签",
                 },
                 "triggers": {
                     "flow": "与trigger关联的flow",
                     "namespace": "触发器的namespace",
-                    "current execution": "当前执行ID",
+                    "execution id": "由 trigger 启动的执行 ID",
                     "workerId": "工作器标识符",
                     "last trigger date": "上次触发器执行时间",
                     "context updated date": "触发器上下文的最后更新",
                     "next evaluation date": "触发器下一次评估时",
-                    "evaluation lock date": "当评估被锁定时",
-                },
-                "flow_triggers": {
-                    "type": "触发器类型",
-                    "workerId": "工作器标识符",
-                    "next execution date": "下次触发器执行时间",
+                    "last evaluation date": "trigger 上次评估时间",
                 },
                 "metrics": {
                     "task": "生成该指标的任务",
                     "name": "指标名称",
                     "value": "指标的值",
                     "tags": "与指标关联的标签",
-                },
-                "blueprints": {
-                    "tags": "与blueprint关联的标签",
                 },
             },
             "titles": {
@@ -5558,7 +4949,6 @@ export default {
                 "kv_filters": "键值过滤器",
                 "secret_filters": "秘密过滤器",
                 "blueprint_filters": "蓝图过滤器",
-                "plugin_filters": "插件搜索",
             },
             "search_placeholders": {
                 "search_mcp_tools": "搜索 MCP 工具",
@@ -5572,7 +4962,6 @@ export default {
                 "search_kv": "搜索 KV 对",
                 "search_secrets": "搜索密钥",
                 "search_blueprints": "搜索blueprint",
-                "search_plugins": "搜索 {count}+ 插件",
             },
         },
     },

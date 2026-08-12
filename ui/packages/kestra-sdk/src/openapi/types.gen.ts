@@ -1639,8 +1639,8 @@ export type PagedResultsPlugin = {
 /**
  * Paged response for the offset-pagination endpoints (the vast majority of list APIs): a store that always knows its row count, so both `results` and `total` are always present. A store that may not know its total (e.g. an external log store) uses CursorOrOffsetPagedResults --- see that class for why the two are kept apart.
  */
-export type PagedResultsSearchResultFlow = {
-    results: Array<SearchResultFlow>;
+export type PagedResultsSourceSearchResult = {
+    results: Array<SourceSearchResult>;
     total: number;
 };
 
@@ -1844,7 +1844,7 @@ export type QueryFilter = {
     children?: Array<QueryFilter>;
 };
 
-export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'super_admin' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
+export type QueryFilterField = 'q' | 'scope' | 'namespace' | 'kind' | 'POLICY_SCOPE' | 'ENFORCEMENT' | 'labels' | 'tags' | 'metadata' | 'flowId' | 'flowRevision' | 'id' | 'assetId' | 'type' | 'action' | 'created' | 'updated' | 'startDate' | 'endDate' | 'expirationDate' | 'state' | 'status' | 'SEVERITY' | 'ASSIGNEE' | 'email' | 'timeRange' | 'parentId' | 'triggerExecutionId' | 'triggerId' | 'triggerState' | 'executionId' | 'taskId' | 'taskRunId' | 'attemptNumber' | 'childFilter' | 'workerId' | 'existingOnly' | 'userId' | 'resources' | 'details' | 'level' | 'path' | 'parentPath' | 'version' | 'enabled' | 'username' | 'name' | 'groupList' | 'external_id' | 'expired_at' | 'super_admin' | 'source' | 'locked' | 'lastTriggeredDate' | 'nextExecutionDate' | 'artifactId';
 
 export type QueryFilterLogical = 'and' | 'or';
 
@@ -1877,11 +1877,6 @@ export type SlaBehavior = 'FAIL' | 'CANCEL' | 'NONE';
 export type SlaType = 'MAX_DURATION' | 'EXECUTION_ASSERTION';
 
 export type SchemaType = 'FLOW' | 'TASK' | 'TRIGGER' | 'APPS' | 'TESTSUITES' | 'DASHBOARD' | 'REUSABLEINPUTS' | 'POLICY';
-
-export type SearchResultFlow = {
-    model?: Flow;
-    fragments?: Array<string>;
-};
 
 export type ServerInstance = {
     id: string;
@@ -1929,6 +1924,99 @@ export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | '
 export type SoftDeletableFlowInterface = {
     deleted?: boolean;
 };
+
+export type SourceMatch = {
+    line?: number;
+    column?: number;
+    snippet?: string;
+};
+
+export type SourceSearchReplaceApplyRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    scope?: SourceSearchScope | null;
+    replacement: string;
+    flows: Array<IdWithNamespace>;
+};
+
+export type SourceSearchReplaceApplyResponse = {
+    /**
+     * The flows that were rewritten, with their new revision.
+     */
+    updated?: Array<FlowWithSource>;
+    /**
+     * The flows that were left untouched, each with the reason it was skipped.
+     */
+    skipped?: Array<SourceSearchReplaceApplyResponseSkippedFlow>;
+};
+
+export type SourceSearchReplaceApplyResponseSkipReason = 'NOT_FOUND' | 'READ_ONLY' | 'NO_CHANGE' | 'NO_MATCH' | 'INVALID_FLOW' | 'UNKNOWN';
+
+/**
+ * A flow that the replace operation did not modify, and why.
+ */
+export type SourceSearchReplaceApplyResponseSkippedFlow = {
+    namespace?: string;
+    id?: string;
+    reason?: SourceSearchReplaceApplyResponseSkipReason;
+    /**
+     * The underlying validation error, when the reason is INVALID_FLOW.
+     */
+    message?: string | null;
+};
+
+export type SourceSearchReplaceLineRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    replacement: string;
+    namespace: string;
+    id: string;
+    line?: number;
+    column?: number;
+};
+
+export type SourceSearchReplacePreviewRequest = {
+    query: string;
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    regex?: boolean;
+    namespace?: string | null;
+    scope?: SourceSearchScope | null;
+    replacement: string;
+};
+
+export type SourceSearchReplacePreviewResponse = {
+    totalMatches?: number;
+    totalFlows?: number;
+    editableFlowCount?: number;
+    flows?: Array<SourceSearchReplacePreviewResponseFlowMatches>;
+};
+
+export type SourceSearchReplacePreviewResponseFlowMatches = {
+    namespace?: string;
+    id?: string;
+    editable?: boolean;
+    matches?: Array<SourceSearchReplacePreviewResponseMatch>;
+};
+
+export type SourceSearchReplacePreviewResponseMatch = {
+    line?: number;
+    before?: string;
+    after?: string;
+};
+
+export type SourceSearchResult = {
+    namespace?: string;
+    id?: string;
+    editable?: boolean;
+    matches?: Array<SourceMatch>;
+};
+
+export type SourceSearchScope = 'ALL' | 'TASKS' | 'TRIGGERS' | 'INPUTS';
 
 export type State = {
     readonly duration?: string | null;
@@ -4533,7 +4621,10 @@ export type TriggerExecutionByGetWebhookResponses = {
 export type TriggerExecutionByGetWebhookResponse = TriggerExecutionByGetWebhookResponses[keyof TriggerExecutionByGetWebhookResponses];
 
 export type TriggerExecutionByPostWebhookData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4563,7 +4654,10 @@ export type TriggerExecutionByPostWebhookResponses = {
 export type TriggerExecutionByPostWebhookResponse = TriggerExecutionByPostWebhookResponses[keyof TriggerExecutionByPostWebhookResponses];
 
 export type TriggerExecutionByPutWebhookData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4627,7 +4721,10 @@ export type TriggerExecutionByGetWebhookWithPathResponses = {
 export type TriggerExecutionByGetWebhookWithPathResponse = TriggerExecutionByGetWebhookWithPathResponses[keyof TriggerExecutionByGetWebhookWithPathResponses];
 
 export type TriggerExecutionByPostWebhookWithPathData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4661,7 +4758,10 @@ export type TriggerExecutionByPostWebhookWithPathResponses = {
 export type TriggerExecutionByPostWebhookWithPathResponse = TriggerExecutionByPostWebhookWithPathResponses[keyof TriggerExecutionByPostWebhookWithPathResponses];
 
 export type TriggerExecutionByPutWebhookWithPathData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -6027,6 +6127,22 @@ export type SearchFlowsBySourceCodeData = {
          * A namespace filter prefix
          */
         namespace?: string | null;
+        /**
+         * Whether the query must match with exact case
+         */
+        caseSensitive?: boolean;
+        /**
+         * Whether the query must match on word boundaries only
+         */
+        wholeWord?: boolean;
+        /**
+         * Whether the query is a regular expression rather than a literal string
+         */
+        regex?: boolean;
+        /**
+         * Restricts matches to a top-level section of the flow YAML
+         */
+        scope?: SourceSearchScope;
     };
     url: '/api/v1/{tenant}/flows/source';
 };
@@ -6035,10 +6151,73 @@ export type SearchFlowsBySourceCodeResponses = {
     /**
      * searchFlowsBySourceCode 200 response
      */
-    200: PagedResultsSearchResultFlow;
+    200: PagedResultsSourceSearchResult;
 };
 
 export type SearchFlowsBySourceCodeResponse = SearchFlowsBySourceCodeResponses[keyof SearchFlowsBySourceCodeResponses];
+
+export type ApplyReplaceBySourceCodeData = {
+    /**
+     * The search query, replacement and target flows
+     */
+    body: SourceSearchReplaceApplyRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/apply';
+};
+
+export type ApplyReplaceBySourceCodeResponses = {
+    /**
+     * applyReplaceBySourceCode 200 response
+     */
+    200: SourceSearchReplaceApplyResponse;
+};
+
+export type ApplyReplaceBySourceCodeResponse = ApplyReplaceBySourceCodeResponses[keyof ApplyReplaceBySourceCodeResponses];
+
+export type ReplaceLineBySourceCodeData = {
+    /**
+     * The search query, replacement and target match line
+     */
+    body: SourceSearchReplaceLineRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/line';
+};
+
+export type ReplaceLineBySourceCodeResponses = {
+    /**
+     * replaceLineBySourceCode 200 response
+     */
+    200: SourceSearchReplaceApplyResponse;
+};
+
+export type ReplaceLineBySourceCodeResponse = ReplaceLineBySourceCodeResponses[keyof ReplaceLineBySourceCodeResponses];
+
+export type PreviewReplaceBySourceCodeData = {
+    /**
+     * The search query and replacement
+     */
+    body: SourceSearchReplacePreviewRequest;
+    path: {
+        tenant: string;
+    };
+    query?: never;
+    url: '/api/v1/{tenant}/flows/source/replace/preview';
+};
+
+export type PreviewReplaceBySourceCodeResponses = {
+    /**
+     * previewReplaceBySourceCode 200 response
+     */
+    200: SourceSearchReplacePreviewResponse;
+};
+
+export type PreviewReplaceBySourceCodeResponse = PreviewReplaceBySourceCodeResponses[keyof PreviewReplaceBySourceCodeResponses];
 
 export type ValidateFlowsData = {
     /**

@@ -60,6 +60,7 @@ Inputs in Kestra are strongly typed. Each type defines how values are entered, v
 | `INT`              | Integer without decimals. Supports `min` and `max` validation to enforce numeric ranges. Example: `42`.                                                                                                                                      |
 | `FLOAT`            | Floating-point number with decimals. Supports `min` and `max` validation. Example: `3.14`.                                                                                                                                                   |
 | `BOOL` | Boolean flag, must be `true` or `false`. Avoid scalar equivalents such as `yes`/`no`, as the API and UI expect `true` or `false`.                                                                                        |
+| `FORM`             | Groups related inputs under a shared `displayName` in the UI. Child inputs are defined in `inputs` and resolved as nested paths — e.g. a `region` child of an `environment` form is accessed as `{{ inputs.environment.region }}`. Use full dotted paths in `dependsOn` conditions. Forms cannot be nested and cannot declare `defaults` or `prefill`. |
 | `SELECT`           | Single value chosen from a predefined list, either static `values` or a dynamic list defined via an `expression`, which can render values using `kv()` or `http()` functions. Supports `allowCustomValue` to let user enter a custom value and `autoSelectFirst` to preselect the first item. |
 | `MULTISELECT`      | One or more values chosen from a predefined list, either static `values` or a dynamic list defined via an `expression`, which can render values using `kv()` or `http()` functions. Supports `allowCustomValue` to let user enter a custom value and `autoSelectFirst` to preselect the first item.                                                                                     |
 | `DATE`             | ISO-8601 date (`YYYY-MM-DD`). Supports `after` and `before` validation to enforce valid ranges. Example: `2042-12-28`.                                                                                                                       |
@@ -138,6 +139,7 @@ inputs:
   - id: bird
     type: SELECT
     displayName: Choose your favorite Falco bird
+    autoSelectFirst: true
     values:
       - Kestrel
       - Merlin
@@ -163,7 +165,7 @@ tasks:
   - id: run_if_true
     type: io.kestra.plugin.core.debug.Return
     format: Hello World!
-    when: "{{ inputs.run_task }}"
+    runIf: "{{ inputs.run_task }}"
 
   - id: fallback
     type: io.kestra.plugin.core.debug.Return
@@ -184,15 +186,13 @@ outputs:
     type: STRING
     value: "{{ tasks.run_if_true.state != 'SKIPPED' ? outputs.run_if_true.value : outputs.fallback.value }}"
 
-pluginDefaults:
-  - type: io.kestra.plugin.core.log.Log
-    values:
-      level: TRACE
-
 triggers:
   - id: monthly
     type: io.kestra.plugin.core.trigger.Schedule
     cron: "0 9 1 * *" # 1st of each month at 9am
+    inputs:
+      pokemon: Psyduck
+      user: Kestrel
 ```
 
 You can document flows, tasks, inputs, or triggers with the `description` property. These descriptions are rendered in the UI using [Markdown](https://en.wikipedia.org/wiki/Markdown).

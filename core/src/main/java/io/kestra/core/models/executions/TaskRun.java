@@ -298,7 +298,7 @@ public class TaskRun implements TenantInterface {
             ", value=" + this.getValue() +
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
-            ", assets=" + this.getAssets() +
+            ", assetEmits=" + this.getAssetEmits() +
             ", attempts=" + this.getAttempts() +
             ")";
     }

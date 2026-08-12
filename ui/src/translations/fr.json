@@ -1141,6 +1141,15 @@
         "title": "Promouvoir les flows entre les environnements",
         "message": "Kestra Enterprise Edition vous permet de promouvoir des flows d'un environnement à un autre — comme du développement à la pré-production, puis à la production — directement depuis l'interface utilisateur, sans nécessiter de Git ou de pipelines CI/CD. Examinez un diff de ce qui va changer avant de promouvoir, protégez les cibles sensibles avec une porte de confirmation, repérez les dérives en un coup d'œil, et conservez un historique complet de qui a promu quoi, où et quand."
       },
+      "dashboards": {
+        "header": "Tableaux de bord personnalisés",
+        "title": "Créez des tableaux de bord personnalisés adaptés à votre équipe.",
+        "message": "Les tableaux de bord personnalisés de Kestra Enterprise Edition vous permettent de créer et de partager vos propres vues sur les exécutions, les logs et les métriques, en combinant séries temporelles, KPI, tableaux et graphiques Markdown, avec un éditeur code et no-code, un aperçu en direct et des tableaux de bord par défaut par tenant.",
+        "blueprints": {
+          "title": "Partez d'un blueprint de tableau de bord.",
+          "message": "Les blueprints de tableaux de bord sont des tableaux de bord personnalisés prêts à l'emploi pour les besoins de supervision courants. Avec Kestra Enterprise Edition, vous pouvez utiliser n'importe quel blueprint comme point de départ et adapter ses graphiques, KPI et tableaux à votre équipe dans l'éditeur de tableaux de bord."
+        }
+      },
       "IAM": {
         "title": "Gérer les utilisateurs via IAM avec SSO, SCIM et RBAC",
         "message": "Kestra Enterprise Edition intègre des capacités IAM avec l'authentification unique (SSO), la synchronisation d'annuaire SCIM et le contrôle d'accès basé sur les rôles (RBAC), s'intégrant à plusieurs fournisseurs d'identité et vous permettant d'attribuer des autorisations granulaires aux utilisateurs et aux comptes de service."

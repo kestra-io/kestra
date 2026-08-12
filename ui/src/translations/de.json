@@ -1141,6 +1141,15 @@
         "title": "Flows über Umgebungen hinweg bewerben",
         "message": "Mit Kestra Enterprise Edition können Sie flows direkt über die UI von einer Umgebung in eine andere – z. B. von der Entwicklung über das Staging zur Produktion – befördern, ohne dass Git- oder CI/CD-Pipelines erforderlich sind. Überprüfen Sie vor der Beförderung einen Diff der genauen Änderungen, schützen Sie sensible Ziele mit einer Bestätigungsschranke, erkennen Sie Abweichungen auf einen Blick und behalten Sie eine vollständige Historie darüber, wer was, wo und wann befördert hat."
       },
+      "dashboards": {
+        "header": "Benutzerdefinierte Dashboards",
+        "title": "Erstellen Sie benutzerdefinierte Dashboards, die auf Ihr Team zugeschnitten sind.",
+        "message": "Benutzerdefinierte Dashboards in der Kestra Enterprise Edition ermöglichen es Ihnen, eigene Ansichten auf Ausführungen, logs und Metriken zu erstellen und zu teilen. Sie kombinieren Zeitreihen, KPIs, Tabellen und Markdown-Diagramme mit einem Code- und No-Code-Editor, einer Live-Vorschau und mandantenspezifischen Standard-Dashboards.",
+        "blueprints": {
+          "title": "Beginnen Sie mit einem Dashboard-Blueprint.",
+          "message": "Dashboard-Blueprints sind vorgefertigte benutzerdefinierte Dashboards für gängige Monitoring-Anforderungen. Mit der Kestra Enterprise Edition können Sie jedes Blueprint als Ausgangspunkt verwenden und dessen Diagramme, KPIs und Tabellen im Dashboard-Editor an Ihr Team anpassen."
+        }
+      },
       "IAM": {
         "title": "Benutzer über IAM mit SSO, SCIM und RBAC verwalten",
         "message": "Die Kestra Enterprise Edition verfügt über integrierte IAM-Funktionen mit Single Sign-On (SSO), SCIM-Verzeichnissynchronisierung und rollenbasierter Zugriffskontrolle (RBAC), die sich in mehrere Identitätsanbieter integrieren lässt und Ihnen die Zuweisung detaillierter Berechtigungen für Benutzer und Dienstkonten ermöglicht."

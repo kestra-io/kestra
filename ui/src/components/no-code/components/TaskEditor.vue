@@ -288,11 +288,29 @@
         return typeMap.value[selectedTaskType.value ?? ""] || []
     })
 
+    const resolvedSchemas = computed(() => {
+        return resolvedTypes.value.map((type) => definitions.value?.[type])
+    })
+
+    const dataTypes = computed(() => {
+        const types = new Set<string>()
+        for(const s of resolvedSchemas.value){
+            const dataResolved = s?.properties?.data?.$ref
+                ? getValueAtJsonPath(fullSchema.value, s.properties.data.$ref)
+                : s?.properties?.data
+            const typeConst = dataResolved?.properties?.type?.const
+            if(typeConst){
+                types.add(typeConst)
+            }
+        }
+        return Array.from(types)
+    })
+
     const versionedSchema = ref<Schemas|undefined>()
     const isPluginSchemaLoading = ref(false)
 
     watch([selectedTaskType, resolvedTypes], async ([val, types]) => {
-        if(types.length > 1 && val){
+        if(types.length > 1 && val && dataTypes.value.length <= 1){
             isPluginSchemaLoading.value = true
             try{
                 const {schema} = await pluginsStore.load({
@@ -305,6 +323,8 @@
             } finally {
                 isPluginSchemaLoading.value = false
             }
+        } else {
+            versionedSchema.value = undefined
         }
     }, {immediate: true})
 
@@ -330,10 +350,6 @@
                 ? resolvedTypes.value[0]
                 : selectedTaskType.value ?? "")
             : ""
-    })
-
-    const resolvedSchemas = computed(() => {
-        return resolvedTypes.value.map((type) => definitions.value?.[type])
     })
 
     const REQUIRED_FIELDS = ["id", "data"]
@@ -387,20 +403,6 @@
         }
 
         return undefined
-    })
-
-    const dataTypes = computed(() => {
-        const types = new Set<string>()
-        for(const s of resolvedSchemas.value){
-            const dataResolved = s.properties?.data?.$ref
-                ? getValueAtJsonPath(fullSchema.value, s.properties?.data?.$ref)
-                : s.properties?.data
-            const typeConst = dataResolved?.properties?.type?.const
-            if(typeConst){
-                types.add(typeConst)
-            }
-        }
-        return Array.from(types)
     })
 
     const dataTypesMap = computed(() => dataTypes.value.length > 1 ? {

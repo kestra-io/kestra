@@ -1509,7 +1509,7 @@
     "empty": {
       "secrets": {
         "title": "Nie masz jeszcze żadnych Secrets!",
-        "content": "Klucze API, hasła i tokeny można przechowywać jako secrets zamiast zapisywać je na stałe w swoich flows. Każdy secret należy do namespace'u, jest dziedziczony przez jego podrzędne namespace'y i można się do niego odwołać z dowolnego taska."
+        "content": "Klucze API, hasła i tokeny mogą być przechowywane jako sekrety zamiast być zakodowane na stałe w Twoich flows. Każdy sekret należy do namespace, jest dziedziczony przez jego podrzędne namespaces i może być odwoływany z dowolnego taska."
       },
       "namespaceFiles": {
         "title": "Brak plików w tym namespace",

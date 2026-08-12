@@ -1509,7 +1509,7 @@
     "empty": {
       "secrets": {
         "title": "Vous n'avez pas encore de Secrets !",
-        "content": "Les clés d'API, mots de passe et tokens peuvent être stockés sous forme de secrets au lieu d'être codés en dur dans vos flows. Chaque secret appartient à un namespace, est hérité par ses namespaces enfants et peut être référencé depuis n'importe quelle task."
+        "content": "Les clés API, les mots de passe et les tokens peuvent être stockés en tant que secrets au lieu d'être codés en dur dans vos flows. Chaque secret appartient à un namespace, est hérité par ses namespaces enfants et peut être référencé depuis n'importe quelle task."
       },
       "namespaceFiles": {
         "title": "Aucun fichier dans cet espace de noms pour le moment",

@@ -1508,8 +1508,8 @@
     "logExporters": "Exportadores de Log",
     "empty": {
       "secrets": {
-        "title": "Você ainda não tem Secrets!",
-        "content": "Chaves de API, senhas e tokens podem ser armazenados como secrets em vez de ficarem fixos nos seus flows. Cada secret pertence a um namespace, é herdado pelos namespaces filhos e pode ser referenciado a partir de qualquer task."
+        "title": "Você ainda não tem Segredos!",
+        "content": "Chaves de API, senhas e tokens podem ser armazenados como secrets em vez de serem codificados diretamente em seus flows. Cada secret pertence a um namespace, é herdado por seus namespaces filhos e pode ser referenciado a partir de qualquer task."
       },
       "namespaceFiles": {
         "title": "Ainda não há arquivos neste namespace",

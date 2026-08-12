@@ -1508,8 +1508,8 @@
     "logExporters": "ログエクスポーター",
     "empty": {
       "secrets": {
-        "title": "まだSecretsがありません。",
-        "content": "APIキー、パスワード、トークンはflowsにハードコードする代わりにsecretsとして保存できます。各secretはnamespaceに属し、子namespaceに継承され、任意のtaskから参照できます。"
+        "title": "まだSecretsがありません！",
+        "content": "API key、パスワード、トークンは、flowにハードコードする代わりにシークレットとして保存できます。各シークレットはnamespaceに属し、その子namespaceに継承され、任意のtaskから参照できます。"
       },
       "namespaceFiles": {
         "title": "このnamespaceにはまだファイルがありません",

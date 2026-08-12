@@ -1508,8 +1508,8 @@
     "logExporters": "日志导出器",
     "empty": {
       "secrets": {
-        "title": "您还没有任何 Secrets！",
-        "content": "API 密钥、密码和令牌可以存储为 secrets，而不必硬编码在您的 flows 中。每个 secret 属于一个 namespace，会被其子 namespace 继承，并可在任意 task 中引用。"
+        "title": "您还没有 Secrets！",
+        "content": "API key、密码和 token 可以作为 secret 存储，而不是硬编码在您的 flow 中。每个 secret 都属于一个 namespace，由其子 namespace 继承，并且可以从任何 task 中引用。"
       },
       "namespaceFiles": {
         "title": "此命名空间中尚无文件",

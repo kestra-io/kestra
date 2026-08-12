@@ -1,13 +1,14 @@
 <template>
     <NavBarAction
         v-if="enabled"
+        v-bind="$attrs"
         :icon="Play"
         @click="click"
     >
         {{ $t('resume') }}
     </NavBarAction>
 
-    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
+    <KsDialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true" scrollable>
         <template #header>
             <span v-html="$t('resumed title', {id: escape(execution.id)})" />
         </template>
@@ -39,6 +40,8 @@
     import {useExecutionsStore} from "../../../../../stores/executions"
     import {useAuthStore} from "override/stores/auth"
     import {useToast} from "../../../../../utils/toast"
+
+    defineOptions({inheritAttrs: false})
 
     const props = defineProps<{
         // FIXME: any - execution is an untyped domain object

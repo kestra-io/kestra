@@ -39,6 +39,9 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=XhICXP_GXic",
         learnMore: "https://kestra.io/docs/enterprise/governance/assets",
     },
+    cases: {
+        learnMore: "https://kestra.io/docs/enterprise/governance/cases",
+    },
     apiTokens: {
         video: "https://www.youtube.com/watch?v=g-740VZLRdA",
         learnMore: "https://kestra.io/docs/enterprise/auth/api-tokens",
@@ -116,5 +119,14 @@ export const links: Record<string, EmptyLinks> = {
     variables: {
         video: "https://www.youtube.com/watch?v=fs86GLg-OGM",
         learnMore: "https://kestra.io/docs/how-to-guides/namespace-variables-vs-kvstore",
+    },
+    secrets: {
+        video: "https://www.youtube.com/watch?v=u0yuOYG-qMI",
+        learnMore: "https://kestra.io/docs/concepts/secret",
+    },
+    /** @todo Replace the placeholder video and learnMore links with the real promotion docs/video once published. */
+    promote: {
+        video: "https://www.youtube.com/watch?v=XhICXP_GXic",
+        learnMore: "https://kestra.io/docs/enterprise",
     },
 }

@@ -13,6 +13,7 @@ This document provides essential information for AI coding agents working on the
 - **Surgical changes only**: touch **only** what is strictly necessary to achieve the goal.
 - **Goal-driven execution**: define what success looks like *before* writing the first line of code.
 - **Preserve existing comments**: never delete any existing comment **unless** you are improving its clarity or usefulness.
+- **Keep comments short and only where they earn their place**: a comment you write should be **one sentence**, or two at most when the *why* genuinely needs it (a non-obvious constraint, a workaround, a subtle ordering or concurrency requirement). Do **not** comment obvious code — no restating what the next line plainly says (`// increment the counter`), no narrating a self-explanatory getter, loop, or well-named call. If the code is readable, the comment is noise; if it isn't, prefer making the code clearer over explaining it.
 - **Write clear, maintainable, and well-documented code**
 - **Build & test are mandatory**
 
@@ -190,6 +191,7 @@ class ServiceTest {
 - E2E tests with Playwright
 - Storybook component tests
 - Use JSdom environment for DOM testing
+- **Prefer Storybook component tests over Vitest unit tests whenever possible** — components render through their real story setup (props, slots, design-system deps) instead of being stubbed out, catching regressions unit mocks miss. Fall back to a Vitest unit test only when the logic under test isn't component-rendering behavior (e.g. a pure helper/composable) or no story exists and adding one isn't practical.
 
 ## UI Design System
 
@@ -375,6 +377,11 @@ This copies the gitignored `cli/src/main/resources/application-*.yml` files from
 - Use types: chore, feat, fix, refactor, test, docs, build
 - Use scopes: apps, assets, core, dashboards, deps, design-system, executions, flows, iam, namespaces, plugins, secrets, storage, scheduler, system, tasks, tenants, tests, topology, triggers, variables, version, worker
 
+## Issue guidelines
+- **Classify an issue with its GitHub issue type, not a `kind/*` label.** The `kind/bug` label is retired — do not add it. Set the type instead: `gh issue create --title … ` followed by `gh issue edit <number> --type Bug`, or `gh issue edit <number> --type Task|Feature|Epic`. Available types are `Task`, `Bug`, `Feature` and `Epic` (list them with `gh api /orgs/kestra-io/issue-types`).
+- **Do add the `area/*` labels** — `area/frontend`, `area/backend`, `area/devops`, `area/docs`, `area/plugin`, `area/qa`, `area/analytics` — since those drive routing and are still in use.
+- Leave triage labels such as `kind/cooldown` to `kestrabot`; it applies them automatically on new issues.
+
 This document should be updated as the codebase evolves. When in doubt, follow existing patterns in the codebase and maintain consistency with established conventions.
 
 ## UI Translations
@@ -391,18 +398,43 @@ Run the check script from the `ui/` directory:
 cd ui && npm run translations:check
 ```
 
-A clean run reports `No missing keys. No extra keys.` for every language. Any listed missing keys must be added.
+A clean run reports `No missing keys.`, `No extra keys.` and `No stale keys.` for every language. Anything listed must be fixed before merging — the same check runs as a PR gate.
 
 > **Enterprise Edition:** EE-only keys live in `ui-ee/src/translations/ee_translations/en.json` and are checked separately — run `npm run translations:check` in `ui-ee` as well (see `kestra-ee/AGENTS.md` → "Frontend i18n").
 
-### Adding missing translations
+### Editing English strings
 
-1. Identify gaps by running `npm run translations:check` (or by diffing the flattened `en.json` keys against each language file).
-2. Translate only the missing keys — do **not** re-translate keys that already have a value.
-3. Follow these translation rules (mirroring `generate_translations.ts`):
-   - **Reserved English terms — never translate:** `kv store`, `namespace`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
+**Changing an existing English value is a translation change.** Every key carries a fingerprint of the English text its translations were generated from, so editing `en.json` — even just the capitalisation — marks that key stale in all twelve languages and fails `translations:check` until it is regenerated. Run `npm run translations:generate` and commit the result alongside your change.
+
+This is deliberate: before it existed, edited values were never propagated, and a rename of "SuperAdmin" to "Superadmin" sat un-translated in eleven locales for a year (kestra-io/kestra#10656).
+
+### Adding or regenerating translations
+
+Prefer `npm run translations:generate` (needs `GEMINI_API_KEY`); it fills missing keys and re-translates stale ones on its own, with no flag to remember. Pass `true` to force a full re-translation of everything.
+
+If you must write a translation by hand:
+
+1. Identify gaps by running `npm run translations:check`.
+2. Follow these translation rules (mirroring `ui/scripts/translations/generateTranslations.ts`, the generator shared by OSS and EE):
+   - **Reserved English terms — never translate:** `kv store`, `namespace`, `tenant`, `flow`, `subflow`, `task`, `log`, `blueprint`, `id`, `trigger`, `label`, `key`, `value`, `input`, `output`, `port`, `worker`, `backfill`, `healthcheck`, `min`, `max`.
    - **ALL-CAPS status labels stay in English:** `WARNING`, `FAILED`, `SUCCESS`, `PAUSED`, `RUNNING`, etc.
-   - **Preserve `{{placeholder}}` variables** exactly — do not translate the word inside the braces.
+   - **Preserve `{placeholder}` variables** exactly — vue-i18n uses a **single** pair of braces. Do not translate the name inside the braces, do not rename it, and never write `{{placeholder}}`: double braces are a compile error (`Not allowed nest placeholder`) and make `t()` throw at render time. Each translation must carry exactly the same placeholders as the English source — no invented ones, none dropped.
    - **Use natural UI terminology** — avoid false friends or overly literal translations (e.g. German: Execution → Ausführung, Theme → Modus, State → Zustand).
-4. Insert the translated keys into the correct position in the target language JSON, keeping `sort_keys=True` order (alphabetical within each object).
-5. Re-run `npm run translations:check` to confirm everything is clean before committing.
+3. Insert the translated keys into the correct position in the target language JSON, mirroring the key order of `en.json`.
+4. Re-run `npm run translations:check` to confirm everything is clean before committing.
+
+The tooling itself lives in `ui/scripts/translations/` and is shared with EE, which keeps only thin entry points. Rules live in `.mjs` so the dependency-free PR gate can apply them; file IO and orchestration stay in `.ts`.
+
+### Conflicts in `fingerprints.json`
+
+Two branches that both touch `en.json` will both regenerate `ui/scripts/translations/fingerprints.json`, so it conflicts often. **Never hand-merge the hashes and never pick a side** — a hash says "this English text is what the twelve translations were generated from", so choosing the wrong one silently marks a drifted key as current and the drift becomes invisible again.
+
+Resolve it the same way as a `kestra-sdk` conflict — regenerate:
+
+```bash
+git checkout --ours ui/src/translations/*.json ui/scripts/translations/fingerprints*.json
+cd ui && npm run translations:generate   # fills whatever the other branch added
+npm run translations:check               # must report no missing / extra / stale keys
+```
+
+`en.json` itself normally merges cleanly, since branches usually add different keys; it is the generated files that collide.

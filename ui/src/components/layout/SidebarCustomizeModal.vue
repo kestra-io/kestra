@@ -3,6 +3,7 @@
         v-model="visible"
         :title="$t('customize sidebar')"
         destroyOnClose
+        scrollable
     >
         <div class="sidebar-customize">
             <div

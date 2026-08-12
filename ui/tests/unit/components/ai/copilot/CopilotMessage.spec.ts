@@ -43,6 +43,17 @@ describe("CopilotMessage", () => {
         expect(w.find(".copilot-tool-args").text()).toContain("\"id\": \"exec-1\"")
     })
 
+    it("spins the tool_call header only while the step is running", () => {
+        const message: ChatMessage = {
+            id: "3r", role: "TOOL", type: "TOOL_CALL",
+            toolCall: {tool: "read-execution", family: "READ", arguments: {}},
+        }
+        const running = mount(CopilotMessage, {props: {message, isRunning: true}, global: mountGlobal})
+        expect(running.find(".copilot-tool-spinner").exists()).toBe(true)
+        const idle = mount(CopilotMessage, {props: {message, isRunning: false}, global: mountGlobal})
+        expect(idle.find(".copilot-tool-spinner").exists()).toBe(false)
+    })
+
     it("renders an ok tool_result with a success message", () => {
         const w = mountMessage({
             id: "4", role: "TOOL", type: "TOOL_RESULT",

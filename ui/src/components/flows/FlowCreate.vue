@@ -4,7 +4,7 @@
             <Actions />
         </template>
     </TopNavBar>
-    <section class="full-container">
+    <section class="full-container flush-top">
         <template v-if="showLanding">
             <ImportYaml
                 v-if="showImport"
@@ -17,6 +17,18 @@
                 @import="showImport = true"
             />
         </template>
+        <div v-else-if="setupError" class="flow-create-error" data-test="flow-create-error">
+            <KsAlert
+                type="error"
+                :closable="false"
+                :title="$t('something_went_wrong.opening_flow_editor')"
+            >
+                {{ setupError }}
+            </KsAlert>
+            <KsButton size="small" data-test="flow-create-error-retry" @click="retrySetup">
+                {{ $t("something_went_wrong.retry") }}
+            </KsButton>
+        </div>
         <MultiPanelFlowEditorView v-else-if="flowStore.flow" />
     </section>
 </template>
@@ -55,6 +67,8 @@
 
     const showLanding = ref(shouldShowLanding(route.query))
     const showImport = ref(false)
+
+    const setupError = ref<string>()
 
     const defaultFlowTemplate = (id: string, namespace: string) => {
         const configuredTemplate = miscStore.configs?.flowTemplate
@@ -163,13 +177,37 @@ tasks:
         flowStore.initYamlSource()
     }
 
+    let lastSetupArgs: Parameters<typeof setupFlow> = []
+
+    /*
+     * `setupFlow` used to be called without awaiting it or catching it. A rejection was
+     * therefore an unhandled promise rejection, and the page stayed empty for good: the
+     * editor is gated on `flowStore.flow` and the Save button on `isAllowedEdit`, which is
+     * false while there is no flow. Awaiting it here turns that silent blank page into an
+     * error the user (and the E2E suite) can see, with a way to try again.
+     */
+    const initialize = async (...args: Parameters<typeof setupFlow>) => {
+        lastSetupArgs = args
+        setupError.value = undefined
+
+        try {
+            await setupFlow(...args)
+        } catch (error) {
+            setupError.value = error instanceof Error ? error.message : String(error)
+            console.error("Cannot open the flow creation editor.", error)
+        }
+    }
+
+    // Retry has to replay the funnel choice, or an import would silently become a blank flow.
+    const retrySetup = () => initialize(...lastSetupArgs)
+
     const handleLandingProceed = async ({id, namespace}: {id: string; namespace: string}) => {
-        await setupFlow(id, namespace)
+        await initialize(id, namespace)
         showLanding.value = false
     }
 
     const handleImportSubmit = async ({yaml}: {yaml: string}) => {
-        await setupFlow(undefined, undefined, yaml)
+        await initialize(undefined, undefined, yaml)
         showImport.value = false
         showLanding.value = false
     }
@@ -184,7 +222,7 @@ tasks:
 
     flowStore.isCreating = true
     if (!showLanding.value) {
-        setupFlow()
+        initialize()
     }
 
     onBeforeUnmount(() => {
@@ -192,3 +230,13 @@ tasks:
         flowStore.flow = undefined
     })
 </script>
+
+<style scoped>
+    .flow-create-error {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--ks-spacing-3);
+        padding: var(--ks-spacing-5);
+    }
+</style>

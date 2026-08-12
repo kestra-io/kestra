@@ -169,7 +169,6 @@
                 coreStore.message = {
                     variant: "error",
                     title: err,
-                    message: err,
                 }
                 await useDefaultDashboardBundledInUI()
             }
@@ -190,7 +189,7 @@
 <style scoped lang="scss">
 
 .filterPadding {
-    margin-top: 1rem;
+    margin-top: 2rem;
     padding: 0 2rem;
 }
 

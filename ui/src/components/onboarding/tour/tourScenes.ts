@@ -42,6 +42,7 @@ export interface TourScene {
     step: number;
     targetSelector?: string;
     placement?: "left";
+    dim?: boolean;
     milestone?: boolean;
     callout?: boolean;
     confetti?: boolean;
@@ -62,7 +63,11 @@ const isTourExecution = (route: TourRoute) =>
     && route.params.namespace === TOUR_NAMESPACE
     && route.params.flowId === TOUR_FLOW_ID
 
-const isFlowEditor = (route: TourRoute) => String(route.name ?? "").startsWith(FLOW_PARENT_ROUTE)
+const isTourFlow = (route: TourRoute) =>
+    route.params.namespace === TOUR_NAMESPACE && route.params.id === TOUR_FLOW_ID
+
+const isFlowEditor = (route: TourRoute) =>
+    String(route.name ?? "").startsWith(FLOW_PARENT_ROUTE) && isTourFlow(route)
 
 const adoptExecution = (
     {store, route}: TourSceneContext & {route: TourRoute},
@@ -76,11 +81,13 @@ const adoptExecution = (
     return true
 }
 
-const EXECUTE_BUTTON = "[data-onboarding-target=\"flow-execute-button\"], #execute-button"
+// Ranked: the first selector is what the card is about, the rest keep something lit until it renders.
 const EDITOR = "#flowFileEditorTab"
 const DOCS_PANEL = ".plugin-doc-wrapper, .plugin-list-wrapper"
 const GANTT = "[data-onboarding-target=\"execution-gantt\"], #gantt"
-const REVISION_DIFF = ".revision-select"
+const FAILED_LOG = `.log-row-error, .task-details, ${GANTT}`
+const REPLAYED_TASK = `.task-details, ${GANTT}`
+const REVISION_DIFF = ".revision .ks-editor, .revision-select"
 const TEST_EVENT_BUTTON = "[data-onboarding-target=\"trigger-test-event-button\"]"
 const EXPRESSION_DEBUGGER = ".expression-debugger .button"
 
@@ -93,12 +100,13 @@ export const TOUR_SCENES: TourScene[] = [
             await actions.openCopilot()
         },
         action: ({actions}) => actions.generateFlow(),
-        completedByUser: ({route}) => route.name !== "ai",
+        completedByUser: ({route}) => route.name === "flows/create" || isFlowEditor(route),
     },
     {
         id: "flow_generated",
         step: 1,
-        targetSelector: EXECUTE_BUTTON,
+        targetSelector: EDITOR,
+        placement: "left",
         enter: async ({actions}) => {
             if (await actions.tourFlowExists()) {
                 await actions.openEditorWith(tourFlowSource.generated())
@@ -158,7 +166,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "failed_execution",
         step: 2,
-        targetSelector: GANTT,
+        targetSelector: FAILED_LOG,
         callout: true,
         enter: async ({actions, store}) => {
             const executionId = store.state.tour.failedExecutionId
@@ -189,7 +197,7 @@ export const TOUR_SCENES: TourScene[] = [
     {
         id: "replayed_execution",
         step: 2,
-        targetSelector: GANTT,
+        targetSelector: REPLAYED_TASK,
         milestone: true,
         callout: true,
         enter: async ({actions, store}) => {
@@ -211,7 +219,8 @@ export const TOUR_SCENES: TourScene[] = [
             await actions.showTaskDocs(TOUR_WEBHOOK_TRIGGER_TYPE)
         },
         action: ({actions}) => actions.openTriggersTab(),
-        completedByUser: ({route}) => route.name === `${FLOW_PARENT_ROUTE}/triggers`,
+        completedByUser: ({route}) =>
+            route.name === `${FLOW_PARENT_ROUTE}/triggers` && isTourFlow(route),
     },
     {
         id: "test_event",
@@ -263,9 +272,9 @@ export const TOUR_SCENES: TourScene[] = [
         id: "explore_payload",
         step: 3,
         targetSelector: EXPRESSION_DEBUGGER,
+        dim: false,
         callout: true,
         offersExit: true,
-        placement: "left",
         enter: async ({actions, store}) => {
             const executionId = store.state.tour.eventExecutionId
             if (executionId) {

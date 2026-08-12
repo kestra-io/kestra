@@ -15,6 +15,10 @@
             :fitHeight="!paneView && !keyOnly"
             :rowKey="(row: any) => `${row.namespace}-${row.key}`"
         >
+            <template v-if="$slots.empty && showEmptyState" #empty>
+                <slot name="empty" />
+            </template>
+
             <template #top v-if="!paneView">
                 <KSFilter
                     :configuration="secretsFilter"
@@ -139,6 +143,7 @@
             :title="secretModalTitle"
             :beforeClose="beforeSecretClose"
             formLayout
+            scrollable
         >
             <KsForm labelPosition="left" :model="secret" :rules="rules" ref="form">
                 <KsFormItem
@@ -241,6 +246,7 @@
     import * as SecretsAPI from "@kestra-io/kestra-sdk/secrets"
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces"
+    import {useApiStore} from "../../stores/api"
     import {useSecretsFilter} from "../filter/configurations"
     import {useTableColumns} from "../../composables/useTableColumns"
     import {useDiscardGuard} from "../../composables/useDiscardGuard"
@@ -294,6 +300,7 @@
     const router = useRouter()
     const authStore = useAuthStore()
     const namespacesStore = useNamespacesStore()
+    const apiStore = useApiStore()
 
     const form = ref<FormInstance>()
 
@@ -491,6 +498,7 @@
         areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false
         secrets.value = allSecrets
         total.value = secretsResponse.total ?? 0
+        loadedFilterKey.value = filterQueryKey.value
     }
 
     const urlPage = computed(() => Number(route.query.page) || 1)
@@ -500,6 +508,20 @@
         const {page: _p, size: _s, sort: _so, ...filters} = route.query
         return JSON.stringify(filters)
     })
+
+    const hasActiveFilters = computed(() => routeQueryToQueryFilters(route.query).length > 0)
+
+    // The filter query the rows on screen were loaded for; until it catches up, `total` still answers
+    // for the previous one.
+    const loadedFilterKey = ref<string>()
+
+    // Judged on the total rather than the loaded page: a page past the end of a shrunken list is
+    // empty without the list being empty.
+    const showEmptyState = computed(() =>
+        loadedFilterKey.value === filterQueryKey.value &&
+        total.value === 0 &&
+        !hasActiveFilters.value,
+    )
 
     watch(filterQueryKey, () => {
         dataTable.value?.resetAndReload()
@@ -562,8 +584,20 @@
                 ? namespacesStore.createSecrets
                 : namespacesStore.patchSecret
 
-            actionMethod({namespace: secret.value?.namespace as string, secret: secretData})
+            // Snapshot before the request: resetForm() swaps secret.value out when the drawer closes,
+            // and the .then() would then read the flag off a different object.
+            const wasUpdate = secret.value?.update === true
+            const namespace = secret.value?.namespace
+
+            actionMethod({namespace: namespace as string, secret: secretData})
                 .then(() => {
+                    apiStore.posthogEvents({
+                        type: wasUpdate ? "SECRET_UPDATED" : "SECRET_CREATED",
+                        secret_type: "secret",
+                        namespace,
+                        has_tags: (secretData.tags?.length ?? 0) > 0,
+                    })
+
                     secret.value!.update = true
                     toast.saved(secret.value?.key || "")
                     addSecretDrawerVisible.value = false

@@ -20,7 +20,7 @@ import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.jdbc.JdbcJsonbUtils;
-import io.kestra.jdbc.JdbcMapper;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
 
@@ -90,7 +90,7 @@ public class V2_0_07TriggerMigration implements MigrationScript {
                     String json = row.get(VALUE_FIELD, String.class);
 
                     try {
-                        V1Trigger v1 = JdbcMapper.of().readValue(json, V1Trigger.class);
+                        V1Trigger v1 = JacksonMapper.ofJson().readValue(json, V1Trigger.class);
 
                         if (v1.evaluatedAt() != null) {
                             skipped++;
@@ -98,7 +98,7 @@ public class V2_0_07TriggerMigration implements MigrationScript {
                         }
 
                         TriggerState state = toTriggerState(v1);
-                        String newJson = JdbcMapper.of().writeValueAsString(state);
+                        String newJson = JacksonMapper.ofJson().writeValueAsString(state);
 
                         DSL.using(configuration)
                             .update(DSL.table("triggers"))

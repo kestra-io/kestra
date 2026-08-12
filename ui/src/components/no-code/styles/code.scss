@@ -1,11 +1,9 @@
-// Coloring
 $code-primary: var(--ks-text-link);
 $code-secondary: var(--ks-text-secondary);
 $code-gray: var(--ks-text-primary);
 $code-card-color: var(--ks-bg-surface);
 $code-border-color: var(--ks-border-default);
 
-// Typography
 $code-font-sm: var(--ks-font-size-sm);
 
 .collapse {
@@ -35,6 +33,12 @@ $code-font-sm: var(--ks-font-size-sm);
     font-size: $code-font-sm;
 }
 
+.task-collection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ks-spacing-2);
+}
+
 .delete,
 .reorder {
     height: 32px;
@@ -42,6 +46,17 @@ $code-font-sm: var(--ks-font-size-sm);
     padding-left: 0;
     color: $code-gray;
     text-align: right;
+}
+
+.reorder {
+    flex: 0 0 auto;
+    max-width: none;
+    align-items: center;
+
+    // HACK: reset Element Plus adjacent-button margin-left (horizontal-group assumption) in this vertical stack
+    :deep(.kel-button) {
+        margin-left: 0;
+    }
 }
 
 .wrapper {

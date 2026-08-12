@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from "@storybook/vue3-vite"
-import {ref} from "vue"
+import {ref, watchEffect} from "vue"
 import KsEditor from "../../../src/components/Form/KsEditor.vue"
 
 const meta: Meta<typeof KsEditor> = {
@@ -128,4 +128,102 @@ export const WithLabel: Story = {
         setup() { return {value: ref(YAML_SAMPLE)} },
         template: "<div style=\"padding:24px;height:360px\"><ks-editor v-model=\"value\" lang=\"yaml\" label=\"Flow YAML\" /></div>",
     }),
+}
+
+type EditorHandle = {
+    focus: () => void
+    destroy: () => void
+    highlightLinesRange: (range: {start: number; end: number}) => void
+    clearLinesRangeHighlights: () => void
+    addContentWidget: (widget: {id: string; position: {lineNumber: number; column: number}; height: number; right: string}) => Promise<void>
+    removeContentWidget: (id: string) => void
+    monaco: unknown
+    getEditor: () => {getValue?: () => string; getOriginalEditor?: () => unknown} | undefined
+}
+
+const handles: Record<string, EditorHandle | undefined> = {}
+
+function handleStory(key: string, template: string, value = YAML_SAMPLE) {
+    return () => ({
+        components: {KsEditor},
+        setup() {
+            const editor = ref<EditorHandle>()
+            watchEffect(() => { handles[key] = editor.value })
+            return {value: ref(value), editor}
+        },
+        template,
+    })
+}
+
+async function settled(): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 400))
+}
+
+async function toleratingMonacoCancelledOnDispose(run: () => void): Promise<void> {
+    const swallowCancelled = (event: PromiseRejectionEvent) => {
+        const reason = event.reason as {name?: string} | undefined
+        if ((reason?.name ?? String(event.reason)).includes("Canceled")) event.preventDefault()
+    }
+    window.addEventListener("unhandledrejection", swallowCancelled)
+    try {
+        run()
+        await new Promise(resolve => setTimeout(resolve, 100))
+    } finally {
+        window.removeEventListener("unhandledrejection", swallowCancelled)
+    }
+}
+
+export const ExposedApi: Story = {
+    render: handleStory("api", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>"),
+    play: async () => {
+        await settled()
+        const api = handles["api"]!
+
+        for (const method of ["focus", "destroy", "highlightLinesRange", "clearLinesRangeHighlights", "addContentWidget", "removeContentWidget", "getEditor"] as const) {
+            if (typeof api[method] !== "function") throw new Error(`KsEditor no longer exposes ${method}`)
+        }
+        if (!api.monaco) throw new Error("KsEditor no longer exposes monaco")
+
+        const editor = api.getEditor()
+        if (!editor) throw new Error("getEditor() returned nothing after mount")
+        if (editor.getValue?.() !== YAML_SAMPLE) throw new Error("the mounted editor does not hold the bound model value")
+    },
+}
+
+export const HighlightsAndDestroy: Story = {
+    render: handleStory("lifecycle", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>"),
+    play: async () => {
+        await settled()
+        const api = handles["lifecycle"]!
+
+        api.highlightLinesRange({start: 1, end: 2})
+        api.clearLinesRangeHighlights()
+        api.focus()
+
+        await toleratingMonacoCancelledOnDispose(() => {
+            api.destroy()
+            api.destroy()
+        })
+        if (api.getEditor() !== undefined) throw new Error("getEditor() still resolves after destroy()")
+    },
+}
+
+export const DiffResolvesDiffEditor: Story = {
+    render: handleStory("diff", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" original=\"id: before\" lang=\"yaml\" /></div>"),
+    play: async () => {
+        await settled()
+        const editor = handles["diff"]!.getEditor()
+        if (typeof editor?.getOriginalEditor !== "function") throw new Error("an original prop no longer resolves a diff editor")
+    },
+}
+
+export const InstallsWindowHelpers: Story = {
+    render: handleStory("helpers", "<div style=\"padding:24px;height:300px\"><ks-editor ref=\"editor\" v-model=\"value\" lang=\"yaml\" /></div>"),
+    play: async () => {
+        await settled()
+        const w = window as unknown as Record<string, unknown>
+        for (const helper of ["pasteToEditor", "clearEditor", "acceptSuggestion", "nextSuggestion"]) {
+            if (typeof w[helper] !== "function") throw new Error(`window.${helper} is no longer installed on mount`)
+        }
+    },
 }

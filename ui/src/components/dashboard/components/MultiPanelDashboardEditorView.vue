@@ -13,7 +13,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, markRaw, nextTick, ref, useTemplateRef, watch} from "vue"
+    import {computed, markRaw, nextTick, useTemplateRef, watch} from "vue"
     import _throttle from "lodash/throttle"
     import {DASHBOARD_EDITOR_ELEMENTS, DEFAULT_ACTIVE_TABS} from "../composables/useDashboardPanels"
     import {useDashboardStore} from "../../../stores/dashboard"
@@ -21,8 +21,6 @@
     import DashboardNoCodeEditor from "./DashboardNoCodeEditor.vue"
     import DashboardEditorButtons from "./DashboardEditorButtons.vue"
     import {useNoCodePanelsFull} from "../../flows/useNoCodePanels"
-    import {useI18n} from "vue-i18n"
-    import {useCoreStore} from "../../../stores/core.ts"
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import * as DashboardsAPI from "@kestra-io/kestra-sdk/dashboards"
 
@@ -59,11 +57,6 @@
         source: computed(() => dashboardStore.sourceCode),
     })
 
-    const coreStore = useCoreStore()
-    const readonlyToastShown = ref(false)
-
-    const {t} = useI18n()
-
     watch(() => dashboardStore.sourceCode, _throttle(async () => {
         const errorsResult = await DashboardsAPI.validateDashboard({body: dashboardStore.sourceCode})
 
@@ -75,15 +68,10 @@
         }
 
         if (!dashboardStore.isCreating && dbId !== undefined && YAML_UTILS.parse(dashboardStore.sourceCode).id !== dbId) {
-            if (!readonlyToastShown.value) {
-                readonlyToastShown.value = true
-                coreStore.message = {
-                    variant: "warning",
-                    title: t("readonly property"),
-                    message: t("dashboards.edition.id readonly"),
-                }
-            }
-
+            // Safety net only: the code editor now refuses edits to the id line
+            // (useReadOnlyYamlKeys), so this is unreachable from normal typing and
+            // stays silent. It still guards the paths that replace the source
+            // wholesale without going through the editor.
             await nextTick()
             if(dashboardStore.sourceCode && dbId){
                 dashboardStore.sourceCode = YAML_UTILS.replaceBlockWithPath({

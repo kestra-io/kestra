@@ -98,3 +98,136 @@ export function placeholderProblems(key, message, englishMessage) {
 
     return problems
 }
+
+/**
+ * Locales whose writing system is not Latin, with a pattern matching a character only that script
+ * uses.
+ *
+ * These are the locales where "the value equals its English source" is proof that nothing was
+ * translated. In a Latin-script locale it usually is not: German really does write "Status", and
+ * Spanish really does write "Total", so flagging those would bury a real finding under false
+ * positives. Restricting the check to these five keeps every hit actionable, at the cost of not
+ * catching an untranslated German string whose English happens to be a German word too.
+ */
+export const NON_LATIN_LOCALE_SCRIPTS = {
+    hi: /[ऀ-ॿ]/,
+    ja: /[぀-ヿ一-鿿]/,
+    ko: /[가-힯ᄀ-ᇿ]/,
+    ru: /[Ѐ-ӿ]/,
+    zh_CN: /[一-鿿]/,
+}
+
+/**
+ * Words that stay in English in every locale, so a message built only from them is identical to its
+ * English source on purpose.
+ *
+ * The first group is the generator's own reserved-term list - the prompt in
+ * `./generateTranslations.ts` instructs the model to leave these in English, so a translation that
+ * did exactly that must not be reported as missing. The rest are brand names, product names and
+ * acronyms, which have no translation to begin with.
+ */
+const NEVER_TRANSLATED_WORDS = new Set([
+    // Reserved terms, kept in sync with the prompt in ./generateTranslations.ts.
+    "kv", "store", "namespace", "namespaces", "tenant", "tenants", "flow", "flows", "subflow",
+    "subflows", "task", "tasks", "log", "logs", "blueprint", "blueprints", "id", "ids", "trigger",
+    "triggers", "label", "labels", "key", "keys", "value", "values", "input", "inputs", "output",
+    "outputs", "port", "ports", "worker", "workers", "backfill", "backfills", "healthcheck",
+    "min", "max",
+    // Terms of the same kind the model declines to translate in every locale, so an English value
+    // for them is a deliberate choice rather than a skipped translation.
+    "secret", "secrets", "token", "tokens", "payload", "payloads", "context", "email", "webhook",
+    "webhooks", "true", "false",
+    // Brands and product names.
+    "kestra", "copilot", "github", "gitlab", "bitbucket", "slack", "docker", "kubernetes",
+    "terraform", "python", "java", "javascript", "node", "npm", "linux", "macos", "windows",
+    "claude", "codex", "openai", "gemini", "anthropic", "cursor", "pebble", "elasticsearch",
+    "kafka", "postgres", "mysql", "redis", "aws", "gcp", "azure",
+    // Acronyms and units.
+    "ai", "api", "bearer", "cli", "cpu", "csv", "gb", "http", "https", "iam", "iso", "jwt", "json",
+    "jsonl", "kb", "k8s", "ldap", "mb", "mcp", "ms", "oauth", "oidc", "rbac", "regex", "rfc", "rsa",
+    "s3", "saml", "scim", "sla", "slas", "sql", "sso", "ttl", "ui", "uri", "url", "utc", "uuid",
+    "yaml", "yml",
+    // Kestra's own entity names, which are product nouns in the UI just like `flow` and `namespace`.
+    "app", "apps", "taskrun", "taskruns",
+])
+
+/**
+ * Individual keys whose English text is the correct value in every locale, where no word-level rule
+ * expresses why.
+ *
+ * Each entry is a string the translation model returns unchanged on every reroll, in every
+ * non-Latin-script locale - its judgement being that the term is a Kestra product noun rather than
+ * prose. Listing the key is honest about that; widening {@link NEVER_TRANSLATED_WORDS} with
+ * "group", "queue" or "unchanged" would blind the check across hundreds of real messages to spare
+ * these nine.
+ */
+const ALLOWED_ENGLISH_KEYS = new Set([
+    // EE worker-group UI: entity names ("Worker Group", "Worker Queue", "Worker Instances") and the
+    // reservation-mode name "Elastic", which sits alongside "Strict" and "Share".
+    "cluster-worker-group",
+    "worker-group",
+    "worker-instances",
+    "worker-group-capacity-bar-elastic-badge",
+    "worker-group-subscription-mode-elastic",
+    // vue-i18n plural form whose English carries no `{count}`; every reroll adds one, which the
+    // placeholder check then rejects. Left in English until the English source is reworded.
+    "worker-group-overview-kpi-workers-suffix",
+    // Protocol and product terms: "Subject claim (sub)" is the OIDC claim name, "SCIM Provisioning"
+    // and "Tenant Endpoint" name the feature and the field they configure.
+    "credentials.subject_placeholder",
+    "provisioning",
+    "security.integration.uri",
+    // A masked value plus its parenthetical, which the model keeps verbatim in every locale.
+    "promote.modal.token_keep_placeholder",
+])
+
+/**
+ * True when English text is expected to survive translation verbatim because it is not prose:
+ * config snippets, URLs, PEM headers, identifier-shaped placeholders, ALL-CAPS state labels (which
+ * the generator's prompt also pins to English) and bare interpolations.
+ */
+const isNotProse = (message) => {
+    const text = message.trim()
+    return !/[a-zA-Z]/.test(text)                     // digits, punctuation or placeholders only
+        || /^(https?:\/\/|www\.|\/|~\/|%)/.test(text) // URLs, paths, environment variables
+        || /^-{3,}/.test(text)                        // PEM block headers
+        || /^[a-z0-9]+([-_.][a-z0-9]+)+$/.test(text)  // slug-shaped sample values, e.g. `us-west-2`
+        || /^[A-Z][A-Z0-9_]*$/.test(text)             // state labels, e.g. `FAILED`
+        || /^\{[^{}]*\}$/.test(text)                  // a lone interpolation
+        || /^<[^>]+>$/.test(text)                     // angle-bracket literals, e.g. `<tenant level quota>`
+        || /^\S*=\S*$/.test(text)                     // query syntax samples, e.g. `filters[field][op]=value…`
+        || /(^|\s)(~\/|%[A-Z_]+%)/.test(text)         // config file paths, e.g. `macOS: ~/Library/…`
+        || /^[a-z][\w.]*(,\s*[a-z][\w.]*)+$/.test(text) // identifier lists, e.g. OAuth scopes `openid, profile, email`
+}
+
+/** The words in `message` that a translator would actually have had to translate. */
+const translatableWords = (message) =>
+    (message.replace(/\{[^{}]*\}/g, " ").replace(/<[^>]*>/g, " ").match(/[A-Za-z][A-Za-z']+/g) ?? [])
+        .filter((word) => !NEVER_TRANSLATED_WORDS.has(word.toLowerCase()))
+
+/**
+ * Keys whose `lang` message is the untouched English text.
+ *
+ * `./generateTranslations.ts` falls back to the English source when a translation request fails, so
+ * a failed run still writes a complete, well-formed, correctly-fingerprinted file - one that no
+ * other check can tell apart from a translated one. Key parity passes, the message compiles, the
+ * placeholders match and the fingerprint is current; only the value gives it away. Without this,
+ * one bad run silently ships English to every locale and stays that way (kestra-io/kestra#18090).
+ *
+ * Returns an empty list for Latin-script locales, where an identical value is not evidence of
+ * anything - see {@link NON_LATIN_LOCALE_SCRIPTS}.
+ */
+export function untranslatedKeys(lang, messages, englishMessages) {
+    if (!(lang in NON_LATIN_LOCALE_SCRIPTS)) return []
+
+    return Object.entries(messages)
+        .filter(([key, message]) => {
+            const english = englishMessages[key]
+            return english !== undefined
+                && message === english
+                && !ALLOWED_ENGLISH_KEYS.has(key)
+                && !isNotProse(english)
+                && translatableWords(english).length > 0
+        })
+        .map(([key]) => key)
+}

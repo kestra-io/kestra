@@ -316,7 +316,7 @@
       "search_placeholder": "Key या value खोजें...",
       "tasks_outputs": "Tasks outputs",
       "tree": "ट्री",
-      "raw_json": "Raw JSON",
+      "raw_json": "रॉ JSON",
       "select_prompt": "इसका value देखने के लिए एक वेरिएबल चुनें।",
       "select_hint": "वेरिएबल्स, trigger, और task outputs बाईं ओर सूचीबद्ध हैं।",
       "empty": "इस निष्पादन के लिए कोई वेरिएबल उपलब्ध नहीं है।",
@@ -383,7 +383,7 @@
     "plugins": {
       "names": "plugins",
       "release": "रिलीज़ नोट्स",
-      "beta": "Beta",
+      "beta": "बीटा",
       "copy_type": "प्रकार कॉपी करें",
       "deprecated": "पुराना",
       "dynamic": "गतिशील",
@@ -413,17 +413,17 @@
       "intro_step3_desc_suffix": " और Pebble expressions।",
       "intro_step3_title": "इसे गतिशील बनाएं",
       "intro_sub": "YAML में flow बनाने के लिए सब कुछ: प्रॉपर्टीज़, inputs और Pebble templating, एक ही जगह।",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "उदाहरण",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "अवलोकन",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow डॉक्यूमेंटेशन",
-      "nav_examples": "Examples",
+      "nav_examples": "उदाहरण",
       "nav_outputs": "Outputs",
       "nav_overview": "अवलोकन",
-      "nav_properties": "Properties",
+      "nav_properties": "प्रॉपर्टीज़",
       "non_dynamic": "गैर-गतिशील",
       "required": "आवश्यक"
     },
@@ -477,7 +477,7 @@
     "last trigger date tooltip": "ट्रिगर ने आखिरी बार कब निष्पादित किया था। जब एक backfill चल रहा हो तो यह अतीत में हो सकता है।",
     "context updated date tooltip": "ट्रिगर के संदर्भ को आखिरी बार कब अपडेट किया गया था। यह तब होता है जब execution ट्रिगर होता है, समाप्त होता है (लॉक रिलीज़ होता है), या एक मूल्यांकन के बाद (भले ही कोई execution न हो)।",
     "next evaluation date tooltip": "जब शेड्यूलर इस trigger का अगली बार मूल्यांकन करेगा, उसके interval के आधार पर। एक मूल्यांकन केवल तभी एक execution उत्पन्न करता है जब trigger की शर्तें पूरी होती हैं।",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "last evaluation date tooltip": "जब ट्रिगर को शेड्यूलर द्वारा अंतिम बार मूल्यांकित किया गया था, भले ही उसने कोई execution उत्पन्न किया हो या नहीं।",
     "conditions": "शर्तें",
     "triggerId": "ट्रिगर ID",
     "tenantId": "tenant ID",
@@ -631,22 +631,22 @@
     "collapse all": "सभी संक्षिप्त करें",
     "expand": "विस्तारित करें",
     "collapse": "संक्षिप्त करें",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
-    "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "filter_for": "इसके लिए फ़िल्टर करें",
+    "filter_out": "फ़िल्टर करें",
+    "copy_value": "मान कॉपी करें",
+    "open_page": "पेज खोलें",
+    "logs_copied": "लॉग आपके क्लिपबोर्ड पर कॉपी हो गए हैं",
+    "expand_by_default": "संरचित logs को डिफ़ॉल्ट रूप से विस्तृत करें",
+    "similar lines": "समान लाइनें",
+    "download_logs_description": "निर्यात करने के लिए logs चुनें। फ़िल्टर आपकी वर्तमान दृश्य के अनुसार डिफ़ॉल्ट होते हैं।",
+    "display_settings": "सेटिंग्स दिखाएँ",
+    "density": "घनत्व",
+    "density_compact": "कॉम्पैक्ट",
+    "density_normal": "सामान्य",
+    "density_expanded": "विस्तारित",
+    "pretty_json": "सुंदर JSON",
+    "body_line_clamp": "लाइन की ऊंचाई सीमित करें",
+    "font size": "फ़ॉन्ट आकार",
     "environment": "पर्यावरण",
     "join_slack": "Slack से जुड़ें",
     "kestra": "केस्ट्रा",
@@ -843,7 +843,7 @@
       }
     },
     "no inputs": "इस flow में कोई इनपुट्स नहीं हैं।",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "पसंद",
     "settings": {
       "label": "सेटिंग्स",
       "updated": "{name} अपडेट किया गया",
@@ -981,10 +981,10 @@
         "message": "एसेट्स अवलोकन, वंशावली, और स्वामित्व मेटाडेटा को जोड़ते हैं ताकि प्लेटफ़ॉर्म टीमें तेजी से समस्या निवारण कर सकें और आत्मविश्वास के साथ परिनियोजन कर सकें।"
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "केस",
+        "header": "घटना प्रबंधन",
+        "title": "Kestra छोड़े बिना घटनाओं का निवारण और समाधान करें।",
+        "message": "Kestra Enterprise Edition में केस आपको SLA ट्रैकिंग, गतिविधि टाइमलाइन और रूट-कॉज़ विश्लेषण को तेज़ करने के लिए लिंक किए गए एग्ज़िक्यूशन और एसेट के साथ, सीधे विफल एग्ज़िक्यूशन से घटनाओं को खोलने, असाइन करने और ट्रैक करने की सुविधा देते हैं।"
       },
       "promote": {
         "title": "flow को विभिन्न एनवायरनमेंट में प्रमोट करें",
@@ -1218,7 +1218,7 @@
         }
       }
     },
-    "auditlogs": "Audit Logs",
+    "auditlogs": "ऑडिट Logs",
     "quotas": "कोटा",
     "iam": "IAM",
     "tenant": {
@@ -1250,7 +1250,7 @@
       "add": "बनाएं",
       "update": "गुप्त जानकारी '{name}' अपडेट करें",
       "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
-      "names": "Secrets",
+      "names": "सीक्रेट्स",
       "key": "नाम",
       "keyPlaceholder": "इस गुप्त को संदर्भित करने के लिए उपयोग किया जाने वाला नाम, उदाहरण के लिए MY_API_TOKEN",
       "name": "गुप्त मान",
@@ -1283,7 +1283,7 @@
     },
     "webhook": {
       "curl_command": "Webhook cURL कमांड",
-      "payload": "Webhook Payload (JSON)",
+      "payload": "Webhook पेलोड (JSON)",
       "curl_note": "इस cURL कमांड का उपयोग कस्टम JSON payload के साथ webhook के माध्यम से flow को trigger करने के लिए करें।",
       "no_triggers": "इस flow में कोई सक्षम वेबहुक triggers नहीं हैं",
       "copy_url": "वेबहुक URL कॉपी करें"
@@ -1536,8 +1536,8 @@
         "content": "अपने डेटा एसेट्स, सेवाओं और इन्फ्रास्ट्रक्चर को ट्रैक और प्रबंधित करने के लिए एसेट्स जोड़ें।"
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "आपके पास अभी तक कोई केस नहीं है!",
+        "content": "किसी घटना को छाँटने और ट्रैक करने के लिए एक केस खोलें, या विफल execution से स्वचालित रूप से एक को लिंक करें।"
       },
       "apiTokens": {
         "title": "अपने API Tokens प्रबंधित करें",
@@ -1752,7 +1752,7 @@
           "execution": "निष्पादन: {id}",
           "flow": "Flow: {flow}",
           "namespace": "Namespace: {namespace}",
-          "plugin": "Plugin: {plugin}",
+          "plugin": "प्लगइन: {plugin}",
           "test": "परीक्षण: {test}"
         },
         "contextAdded": "{type} {id} को संदर्भ में जोड़ा गया।",
@@ -1947,7 +1947,7 @@
     },
     "mcp": {
       "your_servers": "आपके सर्वर",
-      "servers_count": "{count} MCP Servers",
+      "servers_count": "{count} MCP सर्वर",
       "managed_by_kestra": "Kestra द्वारा प्रबंधित",
       "servers": "MCP सर्वर",
       "client_setup": "क्लाइंट सेटअप",
@@ -1988,13 +1988,13 @@
         "trigger_id": "Trigger ID",
         "title": "शीर्षक",
         "description": "विवरण",
-        "annotations": "Annotations",
+        "annotations": "एनोटेशन",
         "flow": "flow",
         "state": "स्थिति",
         "read_only": "केवल पढ़ें",
-        "open_world": "Open world",
+        "open_world": "ओपन वर्ल्ड",
         "destructive": "विनाशकारी",
-        "idempotent": "Idempotent",
+        "idempotent": "अपरिवर्तनीय",
         "return_direct": "सीधा वापसी"
       },
       "connect_tab": {

@@ -956,7 +956,7 @@
       "contact_sales": "Связаться с отделом продаж",
       "secrets": {
         "title": "Обновите управление Secrets",
-        "message": "Enterprise Edition (EE) позволяет добавлять, редактировать или удалять секреты непосредственно в UI — без перезапуска экземпляра. Организуйте секреты по namespace с детальными разрешениями RBAC и наследуйте их от родительских namespace к дочерним. EE интегрируется с менеджерами секретов, такими как HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager и Elasticsearch. Настройте выделенные бэкенды для каждого namespace, tenant или экземпляра, чтобы изолировать секреты между командами, или включите секреты только для чтения, хранящиеся во внешних хранилищах. Секреты остаются зашифрованными в состоянии покоя и при передаче. Дополнительное кэширование сокращает вызовы API, а журналы аудита регистрируют весь доступ.",
+        "message": "Enterprise Edition позволяет добавлять, редактировать и удалять секреты непосредственно в UI, организовывать их по namespace с помощью RBAC и хранить их в HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager или Elasticsearch.",
         "add_env": {
           "intro": "Создать новый Secret",
           "first": "Закодируйте <a href=\"https://kestra.io/docs/how-to-guides/secrets?utm_source=app&utm_medium=referral&utm_campaign=secrets-inlinedoc#using-secrets-in-kestra\" target=\"_blank\">секретное значение в Base64</a>",

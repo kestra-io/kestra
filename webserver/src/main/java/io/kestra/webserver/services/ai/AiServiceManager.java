@@ -20,6 +20,8 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.naming.conventions.StringConvention;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,13 +61,13 @@ public class AiServiceManager {
         List<AiProviderConfiguration> configs = new java.util.ArrayList<>(
             providersConfiguration.providers() != null ? providersConfiguration.providers() : List.of()
         );
+        int declaredProviderCount = configs.size();
 
         String legacyType = environment.get("kestra.ai.type", String.class).orElse(null);
         if (legacyType != null) {
             Map<String, Object> rawConfig = environment.get("kestra.ai." + legacyType, Map.class).orElse(null);
 
-            Map<String, Object> legacyConfig = rawConfig.entrySet().stream()
-                .collect(java.util.stream.Collectors.toMap(e -> io.micronaut.core.naming.NameUtils.camelCase(e.getKey()), Map.Entry::getValue));
+            Map<String, Object> legacyConfig = normalizeConfigurationKeys(rawConfig);
 
             configs.add(
                 new AiProviderConfiguration(
@@ -81,8 +83,10 @@ public class AiServiceManager {
         // AI Copilot requires an explicitly configured provider. When none is configured no service is
         // registered, and the Copilot surfaces as unavailable until the user adds a provider.
         PropertyPlaceholderResolver placeholderResolver = environment.getPlaceholderResolver();
-        for (AiProviderConfiguration rawProvider : configs) {
-            AiProviderConfiguration provider = resolveConfigurationPlaceholders(rawProvider, placeholderResolver);
+        for (int i = 0; i < configs.size(); i++) {
+            // The legacy single-provider configuration, when set, is the entry appended past the declared ones.
+            String configurationPath = i < declaredProviderCount ? "kestra.ai.providers[" + i + "].configuration" : "kestra.ai." + legacyType;
+            AiProviderConfiguration provider = resolveConfiguration(configs.get(i), configurationPath, placeholderResolver, environment);
             AiServiceInterface aiService = createAiService(
                 provider,
                 pluginRegistry,
@@ -180,25 +184,60 @@ public class AiServiceManager {
     }
 
     /**
-     * Returns a copy of the given provider whose configuration values have had their {@code ${...}} placeholders
-     * resolved. Needed because Micronaut does not resolve placeholders for values nested inside an untyped
-     * {@code Map<String, Object>} within a {@code List} element when bound from a YAML property source.
+     * Returns a copy of the given provider ready for Jackson: its custom HTTP headers re-read from the property
+     * source, and its {@code ${...}} placeholders resolved. Both are needed because Micronaut applies its
+     * camel-case key convention at every nesting level of the untyped configuration map — which would turn the
+     * header name {@code X-Api-Key} into {@code xApiKey} — and resolves no placeholder nested inside it.
      */
-    private static AiProviderConfiguration resolveConfigurationPlaceholders(AiProviderConfiguration provider, PropertyPlaceholderResolver resolver) {
+    private static AiProviderConfiguration resolveConfiguration(
+        AiProviderConfiguration provider,
+        String configurationPath,
+        PropertyPlaceholderResolver resolver,
+        Environment environment) {
         if (provider.configuration() == null) {
             return provider;
         }
 
-        Map<String, Object> resolved = new HashMap<>(provider.configuration().size());
-        provider.configuration().forEach((key, value) -> resolved.put(key, resolvePlaceholders(value, resolver)));
+        Map<String, Object> configuration = new HashMap<>(provider.configuration());
+        Map<String, Object> customHeaders = rawCustomHeaders(configurationPath, environment);
+        if (!customHeaders.isEmpty()) {
+            configuration.put("customHeaders", customHeaders);
+        }
+        configuration.replaceAll((key, value) -> resolvePlaceholders(value, resolver));
 
         return new AiProviderConfiguration(
             provider.id(),
             provider.displayName(),
             provider.type(),
             provider.isDefault(),
-            resolved
+            configuration,
+            provider.systemPrompt()
         );
+    }
+
+    /** Returns the provider's custom headers with the names exactly as written, empty when it declares none. */
+    private static Map<String, Object> rawCustomHeaders(String configurationPath, Environment environment) {
+        try {
+            Map<String, Object> headers = environment.getProperties(configurationPath + ".custom-headers", StringConvention.RAW);
+            // The property may also be written in camel case, which lands under a different raw key.
+            return headers.isEmpty() ? environment.getProperties(configurationPath + ".customHeaders", StringConvention.RAW) : headers;
+        } catch (Exception e) {
+            // Reading raw properties resolves placeholders, which throws when one cannot be resolved: keep the
+            // bound headers rather than aborting the startup over a single misconfigured value.
+            log.warn("Could not read the custom headers of the AI provider at '{}': {}", configurationPath, e.getMessage());
+            return Map.of();
+        }
+    }
+
+    /**
+     * Camel-cases the provider properties so Jackson binds them to the typed configuration. Only the legacy
+     * single-provider configuration needs it, being read as a raw map: Micronaut already camel-cases the keys of a
+     * {@code providers} entry. Nested maps are left alone — {@code customHeaders} is keyed by HTTP header names.
+     */
+    static Map<String, Object> normalizeConfigurationKeys(Map<String, Object> configuration) {
+        Map<String, Object> normalized = new HashMap<>(configuration.size());
+        configuration.forEach((key, value) -> normalized.put(NameUtils.camelCase(key), value));
+        return normalized;
     }
 
     /**

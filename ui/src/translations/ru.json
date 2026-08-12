@@ -120,8 +120,6 @@
       "last24hours": "Последние 24 часа",
       "last48hours": "Последние 48 часов",
       "last7days": "Последние 7 дней",
-      "last14days": "Последние 14 дней",
-      "last28days": "Последние 28 дней",
       "last30days": "Последние 30 дней",
       "last365days": "Последние 365 дней",
       "next5minutes": "Следующие 5 мин",
@@ -140,8 +138,6 @@
       "24hours": "24 часа",
       "48hours": "48 часов",
       "7days": "7 дней",
-      "14days": "14 дней",
-      "28days": "28 дней",
       "30days": "30 дней",
       "365days": "365 дней",
       "never": "Никогда",
@@ -163,7 +159,11 @@
         "12h": "12ч",
         "1d": "1д",
         "7d": "7д"
-      }
+      },
+      "last14days": "Последние 14 дней",
+      "last28days": "Последние 28 дней",
+      "14days": "14 дней",
+      "28days": "28 дней"
     },
     "created date": "Дата создания",
     "latest_update": "Последнее обновление",
@@ -381,6 +381,8 @@
     },
     "use": "Использовать",
     "plugins": {
+      "names": "Плагины",
+      "release": "Заметки о выпуске",
       "beta": "Beta",
       "copy_type": "Скопировать тип",
       "deprecated": "Устаревшее",
@@ -418,13 +420,11 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Документация flow",
-      "names": "Плагины",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
       "nav_overview": "Обзор",
       "nav_properties": "Properties",
       "non_dynamic": "не динамический",
-      "release": "Заметки о выпуске",
       "required": "Обязательный"
     },
     "last execution date": "Дата последнего выполнения",
@@ -861,7 +861,8 @@
             "flow_default_tab": "Вкладка Flow по умолчанию",
             "triggers_default_tab": "Вкладка по умолчанию Triggers",
             "playground": "Песочница",
-            "auto_refresh_interval": "Интервал автоматического обновления"
+            "auto_refresh_interval": "Интервал автоматического обновления",
+            "task_edit_default_mode": "Режим редактирования задачи по умолчанию"
           },
           "descriptions": {
             "default_namespace": "Используется при создании новых flow без namespace.",
@@ -873,7 +874,12 @@
             "flow_default_tab": "Вкладка выбрана при переходе к flow.",
             "triggers_default_tab": "Вкладка выбрана при переходе на страницу триггеров.",
             "auto_refresh_interval": "Секунды между автоматическими обновлениями данных на страницах списков.",
-            "playground": "Запускайте задачи по отдельности в редакторе playground."
+            "playground": "Запускайте задачи по отдельности в редакторе playground.",
+            "task_edit_default_mode": "Как задача открывается по умолчанию в редакторе No Code."
+          },
+          "task_edit_default_mode_options": {
+            "modal": "Модальное окно",
+            "tab": "Вкладка"
           }
         },
         "theme": {
@@ -941,6 +947,9 @@
       }
     },
     "apps": "Приложения",
+    "promote": {
+      "label": "Продвинуть"
+    },
     "demos": {
       "enterprise_edition": "Enterprise Edition (Корпоративная версия)",
       "get_a_demo_button": "Получить демо-версию",
@@ -976,6 +985,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "Продвигать Flows между средами",
+        "message": "Kestra Enterprise Edition позволяет продвигать flows из одной среды в другую — например, из dev в staging и затем в production — непосредственно из UI, без необходимости использования Git или CI/CD пайплайнов. Просматривайте diff того, что именно изменится перед продвижением, защищайте конфиденциальные цели с помощью подтверждающего шлюза, мгновенно выявляйте расхождения и ведите полную историю того, кто, что, куда и когда продвинул."
       },
       "IAM": {
         "title": "Управление пользователями через IAM с SSO, SCIM и RBAC",
@@ -1366,7 +1379,8 @@
         "triggers": "Триггеры",
         "errors": "Обработчики ошибок",
         "afterExecution": "После выполнения",
-        "finally": "Наконец"
+        "finally": "Наконец",
+        "flow": "Flow"
       },
       "fields": {
         "main": {
@@ -1388,7 +1402,8 @@
           "workerGroup": "Группа Worker",
           "workerSelector": "Селектор Worker",
           "checks": "Проверки",
-          "updated": "Обновлено"
+          "updated": "Обновлено",
+          "quotas": "Квоты"
         }
       },
       "select": {
@@ -1421,6 +1436,25 @@
       "remove": {
         "default": "Удалить эту запись",
         "cases": "Удалить этот кейс"
+      },
+      "adding_to": "+ Добавить в {what}",
+      "choose_placeholder": "Выберите {field}",
+      "duration": {
+        "add_unit": "Добавить единицу",
+        "units": {
+          "day": "дни",
+          "hour": "часы",
+          "minute": "минуты",
+          "second": "секунды",
+          "week": "недели"
+        }
+      },
+      "expression_placeholder": "Ваш {field} здесь...",
+      "nav": {
+        "back": "Назад",
+        "breadcrumb_aria": "Путь поля",
+        "items": "{count} элем.",
+        "not_set": "Не задано"
       }
     },
     "editor_shortcuts": {
@@ -1574,7 +1608,9 @@
       "move_right": "Переместить вправо",
       "move_left": "Переместить влево",
       "close_all_tabs": "Закрыть все вкладки",
-      "close_all_panels": "Закрыть все панели"
+      "close_all_panels": "Закрыть все панели",
+      "exit_fullscreen": "Выйти из полноэкранного режима",
+      "fullscreen": "Полный экран"
     },
     "search_docs": "Поиск",
     "no_results_found": "Результаты не найдены",
@@ -2064,6 +2100,155 @@
     "open source": "Открытый исходный код",
     "pricing": "Цены",
     "license": "Лицензия",
+    "block_editor": {
+      "add_error_task": "Добавить task ошибки",
+      "add_switch_case": "Добавить случай",
+      "adding_to": "Новая запись в {section}",
+      "add_task": "Добавить task",
+      "add_to_lane": "Добавить в {lane}",
+      "add_trigger": "Добавить trigger",
+      "all_apps": "Все приложения",
+      "app_actions": "{count} действий",
+      "block_deleted": "{name} удалён",
+      "card_aria_label": "Блок {id} типа {type}",
+      "canvas_aria": "Холст блоков flow",
+      "close_all": "Закрыть все вкладки",
+      "cluster_collapse_aria": "Свернуть {id}",
+      "cluster_expand_aria": "Развернуть {id} ({count} tasks)",
+      "collapsed_summary": "{count} tasks",
+      "command_menu": {
+        "context_flow": "Контекст: flow",
+        "context_selected": "Контекст: {name}",
+        "delete": "Удалить {name}",
+        "duplicate": "Дублировать {name}",
+        "goto": "Перейти к {section}",
+        "group_block": "Этот блок",
+        "group_flow": "Flow",
+        "group_goto": "Перейти к",
+        "group_insert": "Вставить",
+        "group_types": "Типы task",
+        "insert_after": "Вставить после {name}",
+        "insert_at_end": "Вставить в конец Tasks",
+        "insert_before": "Вставить перед {name}",
+        "insert_in_section": "Вставить в {section}",
+        "insert_kind": "Вставить {kind}",
+        "no_match": "Нет совпадений",
+        "open": "Открыть {name}",
+        "save": "Сохранить flow",
+        "search_placeholder": "Введите команду или найдите task…",
+        "title": "Меню команд"
+      },
+      "configure": "Настроить",
+      "confirm_delete": {
+        "message": "Это удалит {name} из flow. Сразу после этого можно отменить действие.",
+        "message_group": "Это удалит группу {name} и все, что в ней содержится. Сразу после этого можно отменить действие.",
+        "title": "Удалить {name}?"
+      },
+      "declared_outputs": "Объявленные Outputs",
+      "delete": "Удалить",
+      "depends_on_label": "Зависит от",
+      "depends_on_placeholder": "Выберите task…",
+      "depth_pill": "Глубина {depth}",
+      "drag_reorder": "Перетащите для изменения порядка",
+      "duplicate": "Дублировать",
+      "empty": "Пока нет task и trigger. Добавьте первую task для начала.",
+      "empty_add_hint": "или нажмите /, чтобы искать tasks",
+      "empty_add_lead": "Нажмите, чтобы добавить {label}",
+      "error_task_noun": "task ошибки",
+      "execution_context": "Контекст выполнения",
+      "filter_data": "Фильтр доступных данных…",
+      "flow_inputs": "Flow inputs",
+      "flowable_todo": "Вложенные task (редактирование скоро)",
+      "footer": {
+        "canvas": "Холст",
+        "close_panel": "Закрыть панель",
+        "command_menu": "Меню команд",
+        "editing": "Редактирование блока",
+        "inserting": "Вставка",
+        "selected": "Выбрано · {name}"
+      },
+      "inline_add": "Добавить {label}",
+      "inputs": "Inputs",
+      "inputs_sub": "данные, доступные здесь",
+      "inserting_into": "Вставка в {section}",
+      "kbd_add": "добавить",
+      "kbd_close": "закрыть",
+      "kbd_navigate": "навигация",
+      "lane_case": "Случай: {key}",
+      "lane_defaults": "По умолчанию",
+      "lane_else": "Иначе",
+      "lane_empty": "Нет tasks в {lane}",
+      "lane_errors": "Ошибки",
+      "lane_finally": "В конце",
+      "lane_tasks": "Tasks",
+      "lane_then": "Тогда",
+      "loading_plugins": "Загрузка плагинов...",
+      "move_down": "Переместить вниз",
+      "move_up": "Переместить вверх",
+      "nav_rail_empty": "Пока нет tasks или triggers.",
+      "nav_rail_title": "Структура",
+      "nested_count": "{count} вложенных task",
+      "no_data_matches": "Ничего не соответствует фильтру",
+      "no_documentation": "Нет документации для этой task",
+      "no_recent": "Пока нет недавних tasks",
+      "no_task_results": "Подходящих типов task не найдено.",
+      "open_details": "Открытые сведения",
+      "open_in_split": "Открыть в разделённом виде",
+      "output": "Output",
+      "output_sub": "что производит эта task",
+      "pick_task_type": "Выбрать тип task",
+      "picker_more_results": "ещё {count}, уточните поиск",
+      "plugin_default": "по умолчанию: {value}",
+      "plugin_default_tooltip": "Значение по умолчанию из pluginDefaults flow",
+      "required_missing": "Обязательное поле не заполнено",
+      "save_blocked": {
+        "message": "Исправьте ошибки перед сохранением.",
+        "title": "Не удалось сохранить flow"
+      },
+      "search_task_placeholder": "Поиск типов task...",
+      "shortcuts": {
+        "add_after": "Вставить блок после выделения",
+        "add_before": "Вставить блок перед выделением",
+        "add_task": "Быстрая вставка в позиции курсора",
+        "clear": "Закрыть / снять выделение",
+        "collapse_expand": "Свернуть / развернуть",
+        "command_palette": "Меню команд (контекстное)",
+        "group_edit": "Редактирование",
+        "group_global": "Глобальные",
+        "group_insert": "Вставка",
+        "group_navigate": "Навигация",
+        "move_between": "Переместить выделение",
+        "open": "Открыть выбранный блок",
+        "open_split": "Открыть выбранный блок в режиме разделения",
+        "or": "или",
+        "reorder": "Переместить вверх / вниз",
+        "save": "Сохранить flow",
+        "step_into": "Развернуть / войти в группу",
+        "step_out": "Свернуть / выйти к родителю",
+        "title": "Горячие клавиши",
+        "toggle": "Эта справка",
+        "undo": "Отменить"
+      },
+      "split_into": "Вид в {count} столбца",
+      "split_view": "Разделённый вид",
+      "switch_case_key_placeholder": "Новый ключ случая",
+      "switch_case_key_taken": "Случай {key} уже существует",
+      "tab_apps": "По приложению",
+      "tab_recent": "Недавние",
+      "tab_suggested": "Рекомендуемые",
+      "task_noun": "task",
+      "then_required_warning": "Ветка Then обязательна",
+      "trigger_noun": "trigger",
+      "undo": "Отменить",
+      "upstream_outputs": "Outputs выше по потоку",
+      "open_in_tabs": "Открыть в вкладках",
+      "open_mode_hint": "По умолчанию tasks открываются в модальном окне. Вы можете сделать вкладки режимом по умолчанию в {settings}."
+    },
+    "blocks": "Блоки",
+    "flow_description": "Описание flow",
+    "flow_no_description": "Нет описания. Добавьте описание в YAML вашего flow для документирования.",
+    "split_horizontal": "Разделить горизонтально",
+    "split_vertical": "Разделить вертикально",
     "pwa": {
       "install_title": "Установить Kestra",
       "install_description": "Установите Kestra как приложение для более быстрого доступа и полноэкранного режима.",

@@ -120,8 +120,6 @@
       "last24hours": "Últimas 24 horas",
       "last48hours": "Últimas 48 horas",
       "last7days": "Últimos 7 dias",
-      "last14days": "Últimos 14 dias",
-      "last28days": "Últimos 28 dias",
       "last30days": "Últimos 30 dias",
       "last365days": "Últimos 365 dias",
       "next5minutes": "Próximos 5 minutos",
@@ -140,8 +138,6 @@
       "24hours": "24 horas",
       "48hours": "48 horas",
       "7days": "7 dias",
-      "14days": "14 dias",
-      "28days": "28 dias",
       "30days": "30 dias",
       "365days": "365 dias",
       "never": "Nunca",
@@ -163,7 +159,11 @@
         "12h": "12h",
         "1d": "1d",
         "7d": "7d"
-      }
+      },
+      "last14days": "Últimos 14 dias",
+      "last28days": "Últimos 28 dias",
+      "14days": "14 dias",
+      "28days": "28 dias"
     },
     "created date": "Data de criação",
     "latest_update": "Última atualização",
@@ -381,6 +381,8 @@
     },
     "use": "Usar",
     "plugins": {
+      "names": "Plugins",
+      "release": "Notas de lançamento",
       "beta": "Beta",
       "copy_type": "Copiar tipo",
       "deprecated": "Descontinuado",
@@ -418,13 +420,11 @@
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentação do flow",
-      "names": "Plugins",
       "nav_examples": "Examples",
       "nav_outputs": "Outputs",
       "nav_overview": "Visão geral",
       "nav_properties": "Properties",
       "non_dynamic": "não dinâmico",
-      "release": "Notas de lançamento",
       "required": "Obrigatório"
     },
     "last execution date": "Data da última execução",
@@ -861,7 +861,8 @@
             "flow_default_tab": "Aba Padrão do Flow",
             "triggers_default_tab": "Aba de Triggers Padrão",
             "playground": "Playground",
-            "auto_refresh_interval": "Intervalo de Atualização Automática"
+            "auto_refresh_interval": "Intervalo de Atualização Automática",
+            "task_edit_default_mode": "Modo de edição de task padrão"
           },
           "descriptions": {
             "default_namespace": "Usado ao criar novos flows sem um namespace.",
@@ -873,7 +874,12 @@
             "flow_default_tab": "Aba selecionada ao navegar para um flow.",
             "triggers_default_tab": "Aba selecionada ao navegar para a página de triggers.",
             "auto_refresh_interval": "Segundos entre atualizações automáticas de dados nas páginas de lista.",
-            "playground": "Execute tasks individualmente no editor playground."
+            "playground": "Execute tasks individualmente no editor playground.",
+            "task_edit_default_mode": "Como uma task é aberta por padrão no editor Sem Código."
+          },
+          "task_edit_default_mode_options": {
+            "modal": "Modal",
+            "tab": "Aba"
           }
         },
         "theme": {
@@ -941,6 +947,9 @@
       }
     },
     "apps": "Aplicativos",
+    "promote": {
+      "label": "Promover"
+    },
     "demos": {
       "enterprise_edition": "Edição Enterprise",
       "get_a_demo_button": "Obter uma Demonstração",
@@ -976,6 +985,10 @@
         "header": "Incident Management",
         "title": "Triage and resolve incidents without leaving Kestra.",
         "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+      },
+      "promote": {
+        "title": "Promover Flows Entre Ambientes",
+        "message": "Kestra Enterprise Edition permite promover flows de um ambiente para outro — como de desenvolvimento para staging para produção — diretamente da UI, sem a necessidade de Git ou pipelines de CI/CD. Revise um diff do que exatamente será alterado antes de promover, proteja alvos sensíveis com uma etapa de confirmação, identifique desvios rapidamente e mantenha um histórico completo de quem promoveu o quê, onde e quando."
       },
       "IAM": {
         "title": "Gerencie Usuários através do IAM com SSO, SCIM e RBAC",
@@ -1366,7 +1379,8 @@
         "triggers": "Triggers",
         "errors": "Manipuladores de Erro",
         "afterExecution": "Após a Execução",
-        "finally": "Finalmente"
+        "finally": "Finalmente",
+        "flow": "Flow"
       },
       "fields": {
         "main": {
@@ -1388,7 +1402,8 @@
           "workerGroup": "Grupo de Worker",
           "workerSelector": "Seletor de Worker",
           "checks": "Verificações",
-          "updated": "Atualizado"
+          "updated": "Atualizado",
+          "quotas": "Quotas"
         }
       },
       "select": {
@@ -1421,6 +1436,25 @@
       "remove": {
         "default": "Remover esta entrada",
         "cases": "Remover este caso"
+      },
+      "adding_to": "+ Adicionar a {what}",
+      "choose_placeholder": "Escolher {field}",
+      "duration": {
+        "add_unit": "Adicionar unidade",
+        "units": {
+          "day": "dias",
+          "hour": "horas",
+          "minute": "minutos",
+          "second": "segundos",
+          "week": "semanas"
+        }
+      },
+      "expression_placeholder": "O teu {field} aqui...",
+      "nav": {
+        "back": "Voltar",
+        "breadcrumb_aria": "Caminho do campo",
+        "items": "{count} itens",
+        "not_set": "Não definido"
       }
     },
     "editor_shortcuts": {
@@ -1574,7 +1608,9 @@
       "move_right": "Mover para a direita",
       "move_left": "Mover para a esquerda",
       "close_all_tabs": "Fechar todas as abas",
-      "close_all_panels": "Fechar todos os painéis"
+      "close_all_panels": "Fechar todos os painéis",
+      "exit_fullscreen": "Sair do ecrã inteiro",
+      "fullscreen": "Ecrã inteiro"
     },
     "search_docs": "Pesquisar",
     "no_results_found": "Nenhum resultado encontrado",
@@ -2064,6 +2100,155 @@
     "open source": "Código Aberto",
     "pricing": "Preços",
     "license": "Licença",
+    "block_editor": {
+      "add_error_task": "Adicionar task de erro",
+      "add_switch_case": "Adicionar caso",
+      "adding_to": "Nova entrada em {section}",
+      "add_task": "Adicionar task",
+      "add_to_lane": "Adicionar a {lane}",
+      "add_trigger": "Adicionar trigger",
+      "all_apps": "Todas as apps",
+      "app_actions": "{count} ações",
+      "block_deleted": "{name} eliminado",
+      "card_aria_label": "Bloco {id} do tipo {type}",
+      "canvas_aria": "Tela de blocos do flow",
+      "close_all": "Fechar todos os separadores",
+      "cluster_collapse_aria": "Recolher {id}",
+      "cluster_expand_aria": "Expandir {id} ({count} tasks)",
+      "collapsed_summary": "{count} tasks",
+      "command_menu": {
+        "context_flow": "Contexto: flow",
+        "context_selected": "Contexto: {name}",
+        "delete": "Eliminar {name}",
+        "duplicate": "Duplicar {name}",
+        "goto": "Ir para {section}",
+        "group_block": "Este bloco",
+        "group_flow": "Flow",
+        "group_goto": "Ir para",
+        "group_insert": "Inserir",
+        "group_types": "Tipos de task",
+        "insert_after": "Inserir depois de {name}",
+        "insert_at_end": "Inserir no fim de Tasks",
+        "insert_before": "Inserir antes de {name}",
+        "insert_in_section": "Inserir em {section}",
+        "insert_kind": "Inserir {kind}",
+        "no_match": "Sem correspondências",
+        "open": "Abrir {name}",
+        "save": "Guardar flow",
+        "search_placeholder": "Escreva um comando ou procure um task…",
+        "title": "Menu de comandos"
+      },
+      "configure": "Configurar",
+      "confirm_delete": {
+        "message": "Isto remove {name} do flow. Ainda pode anular logo a seguir.",
+        "message_group": "Isto remove o grupo {name} e tudo o que contém. Ainda pode anular logo a seguir.",
+        "title": "Eliminar {name}?"
+      },
+      "declared_outputs": "Outputs declarados",
+      "delete": "Eliminar",
+      "depends_on_label": "Depende de",
+      "depends_on_placeholder": "Selecionar tasks…",
+      "depth_pill": "Profundidade {depth}",
+      "drag_reorder": "Arraste para reordenar",
+      "duplicate": "Duplicar",
+      "empty": "Ainda não há tasks ou triggers. Adicione a sua primeira task para começar.",
+      "empty_add_hint": "ou pressione / para procurar tasks",
+      "empty_add_lead": "Clique para adicionar uma {label}",
+      "error_task_noun": "task de erro",
+      "execution_context": "Contexto de execução",
+      "filter_data": "Filtrar dados disponíveis…",
+      "flow_inputs": "Flow inputs",
+      "flowable_todo": "Tasks aninhadas (edição em breve)",
+      "footer": {
+        "canvas": "Tela",
+        "close_panel": "Fechar painel",
+        "command_menu": "Menu de comandos",
+        "editing": "A editar bloco",
+        "inserting": "A inserir",
+        "selected": "Selecionado · {name}"
+      },
+      "inline_add": "Adicionar uma {label}",
+      "inputs": "Inputs",
+      "inputs_sub": "dados que pode usar aqui",
+      "inserting_into": "Inserindo em {section}",
+      "kbd_add": "adicionar",
+      "kbd_close": "fechar",
+      "kbd_navigate": "navegar",
+      "lane_case": "Caso: {key}",
+      "lane_defaults": "Padrão",
+      "lane_else": "Caso contrário",
+      "lane_empty": "Sem tasks em {lane}",
+      "lane_errors": "Erros",
+      "lane_finally": "Finalmente",
+      "lane_tasks": "Tasks",
+      "lane_then": "Então",
+      "loading_plugins": "Carregando plugins...",
+      "move_down": "Mover para baixo",
+      "move_up": "Mover para cima",
+      "nav_rail_empty": "Ainda não há tasks ou triggers.",
+      "nav_rail_title": "Esboço",
+      "nested_count": "{count} tasks aninhadas",
+      "no_data_matches": "Nada corresponde ao filtro",
+      "no_documentation": "Sem documentação para esta task",
+      "no_recent": "Ainda não há tasks recentes",
+      "no_task_results": "Nenhum tipo de task encontrado.",
+      "open_details": "Detalhes abertos",
+      "open_in_split": "Abrir em vista dividida",
+      "output": "Output",
+      "output_sub": "o que esta task produz",
+      "pick_task_type": "Escolher tipo de task",
+      "picker_more_results": "mais {count}, refine a sua pesquisa",
+      "plugin_default": "padrão: {value}",
+      "plugin_default_tooltip": "Valor padrão dos pluginDefaults do flow",
+      "required_missing": "Campo obrigatório não definido",
+      "save_blocked": {
+        "message": "Corrija os erros antes de guardar.",
+        "title": "Não é possível guardar o flow"
+      },
+      "search_task_placeholder": "Pesquisar tipos de task...",
+      "shortcuts": {
+        "add_after": "Inserir um bloco após a seleção",
+        "add_before": "Inserir um bloco antes da seleção",
+        "add_task": "Inserção rápida no cursor",
+        "clear": "Fechar / limpar seleção",
+        "collapse_expand": "Recolher / expandir",
+        "command_palette": "Menu de comandos (contextual)",
+        "group_edit": "Editar",
+        "group_global": "Global",
+        "group_insert": "Inserir",
+        "group_navigate": "Navegar",
+        "move_between": "Mover seleção",
+        "open": "Abrir bloco selecionado",
+        "open_split": "Abrir o bloco selecionado em vista dividida",
+        "or": "ou",
+        "reorder": "Reordenar para cima / para baixo",
+        "save": "Guardar flow",
+        "step_into": "Expandir / entrar num grupo",
+        "step_out": "Recolher / sair para o superior",
+        "title": "Atalhos de teclado",
+        "toggle": "Esta ajuda",
+        "undo": "Anular"
+      },
+      "split_into": "Vista de {count} colunas",
+      "split_view": "Vista dividida",
+      "switch_case_key_placeholder": "Nova chave de caso",
+      "switch_case_key_taken": "O caso {key} já existe",
+      "tab_apps": "Por app",
+      "tab_recent": "Recentes",
+      "tab_suggested": "Sugeridas",
+      "task_noun": "task",
+      "then_required_warning": "O bloco Then é obrigatório",
+      "trigger_noun": "trigger",
+      "undo": "Anular",
+      "upstream_outputs": "Outputs anteriores",
+      "open_in_tabs": "Abrir em abas",
+      "open_mode_hint": "Por predefinição, as tasks abrem numa janela modal. Pode definir os separadores como predefinição em {settings}."
+    },
+    "blocks": "Blocos",
+    "flow_description": "Descrição do flow",
+    "flow_no_description": "Sem descrição. Adicione uma descrição ao YAML do seu flow para documentá-lo.",
+    "split_horizontal": "Dividir horizontalmente",
+    "split_vertical": "Dividir verticalmente",
     "pwa": {
       "install_title": "Instalar o Kestra",
       "install_description": "Instale o Kestra como uma aplicação para um acesso mais rápido e uma experiência em ecrã inteiro.",

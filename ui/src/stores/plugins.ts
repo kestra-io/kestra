@@ -81,9 +81,6 @@ function toPluginIconDataMap(raw: Record<string, RawPluginIcon> | undefined): Re
     )
 }
 
-// Icons stay on raw axios rather than the SDK's PluginsAPI: the backend's icon response carries
-// monochrome/hasIcon/hash fields the SDK's generated PluginIcon type doesn't model yet (name/icon/
-// flowable only), so a typed SDK call would silently misrepresent the response shape.
 function usePluginsIcons() {
     const iconsLoaded = ref(false)
 
@@ -128,9 +125,6 @@ function usePluginsIcons() {
         })
     }
 
-    // Falls back to the community ecosystem catalog for plugins that aren't installed locally,
-    // probed via an <img> load (not XHR) - loading an image cross-origin doesn't need CORS,
-    // only reading its pixels would.
     function loadEcosystemIcon(cls: string): Promise<PluginIconData | undefined> {
         const url = `${API_URL}/v1/plugins/icons/${encodeURIComponent(cls)}`
         return probeImageExists(url).then(exists => {
@@ -143,9 +137,6 @@ function usePluginsIcons() {
         })
     }
 
-    // Lazily resolves a single icon instead of preloading the whole (potentially huge) plugin-icons
-    // catalog. Meant for views that only ever render a handful of task icons (execution timelines,
-    // trigger lists, ...); catalog-browsing views still use fetchIcons()/icons above.
     function loadIcon(cls: string): Promise<PluginIconData | undefined> {
         const cached = icons.value[cls]
         if (cached) {
@@ -193,7 +184,6 @@ export const usePluginsStore = defineStore("plugins", () => {
     const plugin = ref<PluginComponent>()
     const versions = ref<string[]>()
     const plugins = ref<Plugin[]>()
-
 
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({})
     const editorPlugin = ref<(PluginComponent & {cls: string})>()
@@ -272,9 +262,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         return response.results
     }
 
-    // Flat list of every task/trigger class installed on the instance, fetched
-    // from the plugins endpoint and cached independently of `plugins` (which
-    // other views overwrite with subgroup-shaped, partial payloads).
     const installedPluginTypes = ref<string[]>()
     let installedPluginTypesPending: Promise<string[]> | null = null
     async function loadInstalledPluginTypes(): Promise<string[]> {
@@ -332,8 +319,8 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const data = (options.version
-            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all})
-            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all})) as PluginComponent
+            ? await PluginsAPI.pluginDocumentationFromVersion({cls: options.cls, version: options.version, all: options.all}, {ignoreNotFound: true})
+            : await PluginsAPI.pluginDocumentation({cls: options.cls, all: options.all}, {ignoreNotFound: true})) as PluginComponent
 
         if (options.commit !== false && options.all !== true) {
             plugin.value = data
@@ -430,8 +417,6 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     const groupIcons = ref<PluginIconMap>({})
     let groupIconsPending: Promise<PluginIconMap> | null = null
-    // Stays on raw axios like usePluginsIcons() above: same monochrome/hasIcon/hash gap in the
-    // SDK's generated PluginIcon type.
     function ensureGroupIcons(): Promise<PluginIconMap> {
         if (Object.keys(groupIcons.value).length > 0) return Promise.resolve(groupIcons.value)
         if (groupIconsPending) return groupIconsPending
@@ -486,7 +471,6 @@ export const usePluginsStore = defineStore("plugins", () => {
     }
 
     return {
-        // state
         plugin,
         versions,
         plugins,
@@ -520,7 +504,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         lazyLoadSchemaType,
         updateDocumentation,
 
-        // icons
         icons,
         iconsLoaded,
         fetchIcons,

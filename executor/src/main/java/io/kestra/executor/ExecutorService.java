@@ -972,8 +972,8 @@ public class ExecutorService {
                                         fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs())
                                     )
                                 )
-                                .withAssetEmits(
-                                    List.of(new AssetsInOut(
+                                .withAssets(
+                                    new AssetsInOut(
                                         Optional.ofNullable(assetsDeclaration).map(AssetsDeclaration::getInputs)
                                             .map(throwFunction(assetInputs -> runContext.render(assetInputs).asList(AssetIdentifier.class)))
                                             .stream()
@@ -984,7 +984,7 @@ public class ExecutorService {
                                             : fixtureAndTaskRun.fixture().getAssets().stream()
                                                 .map(asset -> asset.withTenantId(executor.getFlow().getTenantId()))
                                                 .toList()
-                                    ))
+                                    )
                                 )
                         )
                         .build();
@@ -1264,9 +1264,10 @@ public class ExecutorService {
                 .record(taskRun.getState().getDurationOrComputeIt());
 
             ExecutionKind executionKind = Optional.ofNullable(executor.getExecution().getKind()).orElse(ExecutionKind.NORMAL);
-            // Per-emit lineage bundles. Executions saved before assetEmits existed are folded into it on
-            // deserialization by TaskRun.setAssets, so reading assetEmits also covers the legacy single `assets`.
-            List<AssetsInOut> assetBundles = taskRun.getAssetEmits() == null ? List.of() : taskRun.getAssetEmits();
+            // Per-emit lineage bundles, falling back to the legacy single `assets` for task runs produced before assetEmits existed.
+            List<AssetsInOut> assetBundles = taskRun.getAssetEmits() != null && !taskRun.getAssetEmits().isEmpty()
+                ? taskRun.getAssetEmits()
+                : (taskRun.getAssets() != null ? List.of(taskRun.getAssets()) : List.of());
             if (
                 assetBundles.stream().anyMatch(bundle -> !bundle.getInputs().isEmpty() || !bundle.getOutputs().isEmpty())
                     && executionKind != ExecutionKind.TEST

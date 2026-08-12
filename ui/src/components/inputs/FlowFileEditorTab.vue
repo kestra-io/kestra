@@ -27,6 +27,7 @@
             }"
             @update:model-value="editorUpdate"
             @cursor="updatePluginDocumentation"
+            @editorMounted="onEditorMounted"
             @save="flow ? saveFlowYaml(): saveFileContent()"
             @execute="execute"
             @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
@@ -63,6 +64,7 @@
 <script setup lang="ts">
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
+    import {useI18n} from "vue-i18n"
     import {apiUrl} from "override/utils/route"
     import type * as monaco from "monaco-editor/editor/editor.api"
 
@@ -74,6 +76,7 @@
     import {useMiscStore} from "override/stores/misc"
     import {useProductTourStore} from "../../stores/productTour"
     import useFlowEditorRunTaskButton from "../../composables/playground/useFlowEditorRunTaskButton"
+    import {useReadOnlyYamlKeys} from "../../composables/useReadOnlyYamlKeys"
 
     import {flowYamlUtils as YAML_UTILS} from "@kestra-io/topology"
     import {KsEditor} from "@kestra-io/design-system"
@@ -85,6 +88,7 @@
 
     const route = useRoute()
     const router = useRouter()
+    const {t} = useI18n()
 
     const flowStore = useFlowStore()
     const editorBindings = useEditorBindings()
@@ -208,6 +212,30 @@
 
     const namespace = computed(() => flowStore.flow?.namespace)
     const isCreating = computed(() => flowStore.isCreating)
+
+    // `id` and `namespace` are immutable once the flow exists. Monaco has no
+    // read-only ranges, so the guard below refuses those edits as they arrive
+    // rather than letting them land and undoing them on the next onEdit tick.
+    const monacoEditor = ref<monaco.editor.IStandaloneCodeEditor>()
+
+    function onEditorMounted(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
+        // The revision preview mounts a diff editor, which is read-only as a whole.
+        monacoEditor.value = editor && !("getOriginalEditor" in editor)
+            ? editor as monaco.editor.IStandaloneCodeEditor
+            : undefined
+    }
+
+    useReadOnlyYamlKeys({
+        editor: monacoEditor,
+        expected: computed(() => props.flow
+            ? {id: flowStore.flow?.id, namespace: flowStore.flow?.namespace}
+            : {}),
+        enabled: computed(() => props.flow
+            && !flowStore.isCreating
+            && !flowStore.isReadOnly
+            && previewSource.value === undefined),
+        hoverMessage: computed(() => t("namespace and id readonly")),
+    })
 
     const timeout = ref<any>(null)
 
@@ -345,5 +373,14 @@
         opacity: 0.4;
         cursor: not-allowed;
         pointer-events: none;
+    }
+</style>
+
+<style lang="scss">
+    /* Deliberately not scoped: Monaco renders its own DOM, which Vue's scope
+       attribute never reaches. The tint is theme-neutral so it reads as "locked"
+       on both the light and dark editor themes. */
+    .monaco-editor .ks-readonly-yaml-line {
+        background-color: rgba(128, 128, 128, 0.14);
     }
 </style>

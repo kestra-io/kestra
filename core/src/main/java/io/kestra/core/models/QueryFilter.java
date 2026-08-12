@@ -766,6 +766,15 @@ public record QueryFilter(
                 );
             }
         },
+        PROMOTION_TARGETS {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.ID
+                );
+            }
+        },
         AUDIT_LOG {
             @Override
             public List<Field> supportedField() {

@@ -18,6 +18,7 @@
         </div>
     </div>
 </template>
+
 <script lang="ts" setup>
     import {computed, onActivated, provide} from "vue"
     import Task from "../../no-code/segments/Task.vue"
@@ -73,8 +74,6 @@
     })
 
     function editorUpdate(source: string) {
-        // if no-code would not change the structure of the app,
-        // do not trigger an update as it would remove all formatting and comments
         if(deepEqual(YAML_UTILS.parse(source), parsedSource.value)) {
             return
         }
@@ -83,7 +82,7 @@
 
     const emit = defineEmits<{
         (e: "createTask", parentPath: string, blockSchemaPath: string, refPath: number | undefined,  position: "after" | "before"): boolean | void;
-        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath?: number): boolean | void;
+        (e: "editTask", parentPath: string, blockSchemaPath: string, refPath?: number, split?: boolean): boolean | void;
         (e: "closeTask"): boolean | void;
     }>()
 

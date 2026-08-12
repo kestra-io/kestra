@@ -113,4 +113,22 @@ describe("useInputsWizard persistValues / restorePersistedValues", () => {
         expect(inputsValues["env.region"]).toBe("us-east")
         expect(inputsValues["name"]).toBeUndefined()
     })
+
+    test("restorePersistedValues ignores keys that are not declared inputs (mass-assignment guard)", () => {
+        localStorage.setItem(storageKey, JSON.stringify({
+            "env.region": "us-east",
+            "__proto__": {polluted: "yes"},
+            "notAnInput": "should be dropped",
+        }))
+        const {api, inputsValues} = mountWizard(
+            [{id: "env.region", type: "STRING", required: true} as InputMetaData],
+            FLOW,
+        )
+
+        api.restorePersistedValues()
+
+        expect(inputsValues["env.region"]).toBe("us-east")
+        expect(inputsValues["notAnInput"]).toBeUndefined()
+        expect(({} as any).polluted).toBeUndefined()
+    })
 })

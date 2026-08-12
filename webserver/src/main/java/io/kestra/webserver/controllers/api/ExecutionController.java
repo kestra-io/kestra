@@ -94,6 +94,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.MicronautHttpService;
 import io.kestra.webserver.services.SseConnectionMetrics;
+import io.kestra.webserver.services.WebhookBodyService;
 import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
@@ -119,6 +120,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -242,6 +244,9 @@ public class ExecutionController {
 
     @Inject
     private WebhookService webhookService;
+
+    @Inject
+    private WebhookBodyService webhookBodyService;
 
     @Inject
     private AsyncOperationWaiter asyncOperationWaiter;
@@ -567,14 +572,64 @@ public class ExecutionController {
     @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by POST webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
+    @RequestBody(
+        description = "The webhook payload, of any content type. What the flow sees of it depends on the " +
+            "`fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A " +
+            "`multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's " +
+            "internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.",
+        content = {
+            @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    description = "A form whose part names are chosen by the caller: each file part is exposed on " +
+                        "`trigger.parts` with the URI of its content in Kestra's internal storage, each other " +
+                        "part on `trigger.formFields`."
+                )
+            )
+        }
+    )
     @SingleResult
     public Mono<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
+    }
+
+    // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
+    // the spec already describes; a second operation on the same path and method would shadow it.
+    @Hidden
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @SingleResult
+    public Mono<HttpResponse<?>> triggerExecutionByPostWebhookMultipart(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
+        @Nullable @Body MultipartBody parts,
+        HttpRequest<?> request) {
+        return this.webhookMultipart(namespace, id, key, path, parts, request);
+    }
+
+    // Hidden from the API spec: this is the same endpoint as the route that takes any other content type, which
+    // the spec already describes; a second operation on the same path and method would shadow it.
+    @Hidden
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @SingleResult
+    public Mono<HttpResponse<?>> triggerExecutionByPutWebhookMultipart(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The webhook trigger uid") @PathVariable String key,
+        @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
+        @Nullable @Body MultipartBody parts,
+        HttpRequest<?> request) {
+        return this.webhookMultipart(namespace, id, key, path, parts, request);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -587,7 +642,7 @@ public class ExecutionController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
     }
 
@@ -595,85 +650,155 @@ public class ExecutionController {
     @Put(uri = "/webhook/{namespace}/{id}/{key}{/path}", consumes = { MediaType.ALL })
     @Operation(tags = { "Executions" }, summary = "Trigger a new execution by PUT webhook trigger")
     @ApiResponse(responseCode = "200", description = "On success", content = { @Content(schema = @Schema(implementation = WebhookResponse.class)) })
+    @RequestBody(
+        description = "The webhook payload, of any content type. What the flow sees of it depends on the " +
+            "`fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A " +
+            "`multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's " +
+            "internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.",
+        content = {
+            @Content(mediaType = MediaType.ALL, schema = @Schema(type = "string")),
+            @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    description = "A form whose part names are chosen by the caller: each file part is exposed on " +
+                        "`trigger.parts` with the URI of its content in Kestra's internal storage, each other " +
+                        "part on `trigger.formFields`."
+                )
+            )
+        }
+    )
     @SingleResult
     public Mono<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
         @Parameter(description = "Optional additional path segments") @Nullable @PathVariable String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
         return this.webhook(namespace, id, key, path, request);
     }
 
+    /**
+     * Collect the parts of a {@code multipart/form-data} webhook request, then evaluate the webhook with them.
+     * The content of a file part is streamed into the internal storage, so that a file of any size reaches the
+     * flow intact. The webhook is resolved first: a request that matches none must not store anything.
+     */
+    private Mono<HttpResponse<?>> webhookMultipart(
+        String namespace,
+        String id,
+        String key,
+        String path,
+        MultipartBody parts,
+        HttpRequest<?> request) {
+        Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+        return webhookMultipart(maybeFlow, key, path, parts, request);
+    }
+
+    protected Mono<HttpResponse<?>> webhookMultipart(
+        Optional<Flow> maybeFlow,
+        String key,
+        String path,
+        MultipartBody parts,
+        HttpRequest<?> request) {
+        Flow flow = executableFlow(maybeFlow);
+        findWebhook(flow, key);
+
+        // Minted before the parts are read, so that they are stored under the execution that will carry them.
+        String executionId = IdUtils.create();
+
+        return webhookBodyService
+            .collect(parts, flow, executionId, request.getContentType().map(MediaType::getName).orElse(MediaType.MULTIPART_FORM_DATA))
+            .flatMap(body ->
+            {
+                try {
+                    return this.webhook(maybeFlow, key, path, MicronautHttpService.from(request, body), executionId, null);
+                } catch (RuntimeException | IllegalVariableEvaluationException e) {
+                    // The call was refused after its parts were stored under an execution that will not exist.
+                    webhookBodyService.deleteStored(flow, executionId);
+                    return Mono.error(e);
+                }
+            });
+    }
+
+    /**
+     * Read the body of a webhook request as the trigger it reaches asks for it, then evaluate the webhook with it.
+     * The webhook is resolved first: a request that matches none must have neither its body stored nor its bytes
+     * carried into the server.
+     */
     private Mono<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
         String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        Optional<Flow> find = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
-        return webhook(find, key, path, request);
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        Optional<Flow> maybeFlow = flowRepository.findByIdForExecution(tenantService.resolveTenant(), namespace, id);
+       return webhook(maybeFlow, key, path, request);
     }
 
     protected Mono<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         String path,
-        HttpRequest<String> request) throws IllegalVariableEvaluationException {
-        if (maybeFlow.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
-        }
+        HttpRequest<?> request) throws IllegalVariableEvaluationException, IOException {
+        Flow flow = executableFlow(maybeFlow);
+        AbstractWebhookTrigger webhook = findWebhook(flow, key);
 
-        var flow = maybeFlow.get();
-        if (flow.isDisabled()) {
-            throw new ConflictException("Cannot execute flow: flow is disabled.");
-        }
-        if (flow instanceof FlowWithException fwe) {
-            throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
-        }
+        // Minted before the body is read, so that a stored body lives under the execution that will carry it.
+        String executionId = IdUtils.create();
+        WebhookBodyService.Body body = webhookBodyService.read(request, flow, executionId, webhook.getFetchType());
 
-        Optional<AbstractWebhookTrigger> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
-            : flow
-                .getTriggers())
-            .stream()
-            .filter(o -> o instanceof AbstractWebhookTrigger)
-            .map(o -> (AbstractWebhookTrigger) o)
-            .filter(w ->
-            {
-                RunContext runContext = runContextFactory.of(flow, w);
-                try {
-                    String webhookKey = runContext.render(w.getKey()).trim();
-                    // compare via MessageDigest.isEqual to prevent timing attacks
-                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
-                } catch (IllegalVariableEvaluationException e) {
-                    // be conservative, don't crash but filter the webhook
-                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
-                    return false;
-                }
-            })
-            .findFirst();
-
-        if (maybeWebhook.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
+        try {
+            return this.webhook(
+                maybeFlow,
+                key,
+                path,
+                MicronautHttpService.from(request, body.requestBody()),
+                executionId,
+                body.storedUri()
+            );
+        } catch (RuntimeException | IllegalVariableEvaluationException e) {
+            // The call was refused after its body was stored under an execution that will not exist.
+            webhookBodyService.deleteStored(flow, executionId);
+            throw e;
         }
+    }
 
-        final AbstractWebhookTrigger webhook = maybeWebhook.get();
+    /**
+     * Evaluate the webhook the given key matches, for an execution that will be given the provided identifier.
+     *
+     * @param executionId the identifier of the execution the call creates, minted by the caller when the request
+     *        had to be read before the execution could be created, e.g. to store its file parts
+     * @param storedBodyUri the URI the body of the request was stored under, {@code null} unless the trigger
+     *        fetches its body as {@link AbstractWebhookTrigger.FetchType#STORE}
+     */
+    private Mono<HttpResponse<?>> webhook(
+        Optional<Flow> maybeFlow,
+        String key,
+        String path,
+        io.kestra.core.http.HttpRequest request,
+        String executionId,
+        URI storedBodyUri) throws IllegalVariableEvaluationException {
+        Flow flow = executableFlow(maybeFlow);
+        final AbstractWebhookTrigger webhook = findWebhook(flow, key);
         this.onWebhookMatched(flow, webhook);
 
         // Webhook context
         var webhookContext = new WebhookContext(
-            MicronautHttpService.from(request),
+            request,
             path,
             flow,
             webhook,
-            webhookService
+            webhookService,
+            executionId,
+            storedBodyUri
         );
 
         // Call evaluate and create a failed execution if exception occurs
         try {
             return webhook.evaluate(webhookContext).map(MicronautHttpService::to);
         } catch (Exception e) {
-            var executionId = IdUtils.create();
+            // The failed execution takes the identifier the call was given, so that anything already stored for it
+            // is attached to it, and purged with it.
             var createCommand = Create.of(new ExecutionId(flow.getTenantId(), flow.getNamespace(), flow.getId(), executionId, flow.getRevision()))
                 .withLabels(LabelService.labelsExcludingSystem(flow.getLabels()))
                 .withStateType(State.Type.FAILED)
@@ -698,6 +823,55 @@ public class ExecutionController {
      */
     protected void onWebhookMatched(Flow flow, AbstractWebhookTrigger webhook) {
         // no-op
+    }
+
+    /**
+     * @return the flow a webhook call targets
+     * @throws HttpStatusException if the flow does not exist
+     * @throws ConflictException if the flow cannot be executed
+     */
+    private static Flow executableFlow(Optional<Flow> maybeFlow) {
+        if (maybeFlow.isEmpty()) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow not found");
+        }
+
+        var flow = maybeFlow.get();
+        if (flow.isDisabled()) {
+            throw new ConflictException("Cannot execute flow: flow is disabled.");
+        }
+        if (flow instanceof FlowWithException fwe) {
+            throw new ConflictException("Cannot execute flow: flow is invalid: " + fwe.getException());
+        }
+
+        return flow;
+    }
+
+    /**
+     * @return the webhook trigger of the flow the given key matches
+     * @throws HttpStatusException if no webhook trigger matches the key
+     */
+    private AbstractWebhookTrigger findWebhook(Flow flow, String key) {
+        return (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>()
+            : flow
+                .getTriggers())
+            .stream()
+            .filter(o -> o instanceof AbstractWebhookTrigger)
+            .map(o -> (AbstractWebhookTrigger) o)
+            .filter(w ->
+            {
+                RunContext runContext = runContextFactory.of(flow, w);
+                try {
+                    String webhookKey = runContext.render(w.getKey()).trim();
+                    // compare via MessageDigest.isEqual to prevent timing attacks
+                    return MessageDigest.isEqual(webhookKey.getBytes(StandardCharsets.UTF_8), key.getBytes(StandardCharsets.UTF_8));
+                } catch (IllegalVariableEvaluationException e) {
+                    // be conservative, don't crash but filter the webhook
+                    log.warn("Unable to render the webhook key {}, the webhook will be ignored", key, e);
+                    return false;
+                }
+            })
+            .findFirst()
+            .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found"));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2830,7 +3004,11 @@ public class ExecutionController {
                         "Failed to execute action '%s' on execution %s (operation_id=%s). Cause: %s".formatted(actionName, executionId, processed.operationId(), processed.error())
                     );
                 }
-                return executionRepository.findById(tenantId, executionId)
+                // This runs on the thread that completes the async-operation sink, which is the event-queue polling
+                // thread and carries no authenticated principal. The ACL-enforcing findById fails closed there, so it
+                // reports the execution as missing even though the command succeeded. Authorization already happened
+                // on the request thread, in the endpoint that submitted this operation.
+                return executionRepository.findByIdWithoutAcl(tenantId, executionId)
                     .orElseThrow(
                         () -> new NoSuchElementException(
                             "Execution disappeared after " + actionName.toLowerCase() + ": " + executionId

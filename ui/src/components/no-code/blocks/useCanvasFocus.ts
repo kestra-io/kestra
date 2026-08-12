@@ -2,6 +2,18 @@ import {nextTick, ref, type Ref} from "vue"
 import {ALL_SECTIONS, findNestedPath} from "./blockSections"
 import type {BlockSection} from "../../../utils/flowableBlockOps"
 
+export interface FocusCanvasCardOptions {
+    /**
+     * How to align the card in the scrollport.
+     *
+     * `nearest` (the default) scrolls the minimum distance, which is what makes
+     * arrow-key stepping between neighbours feel steady. A jump across the whole
+     * canvas needs `center`, otherwise the destination stops at the very edge of
+     * the viewport and the move is easy to miss.
+     */
+    align?: ScrollLogicalPosition
+}
+
 export function useCanvasFocus(
     editorEl: Ref<HTMLElement | undefined>,
     sectionList: (section: BlockSection) => Record<string, unknown>[],
@@ -22,14 +34,14 @@ export function useCanvasFocus(
         return card.querySelector<HTMLElement>("[data-test='flowable-cluster-header']") ?? card
     }
 
-    function focusCanvasCard(id: string | undefined) {
+    function focusCanvasCard(id: string | undefined, options: FocusCanvasCardOptions = {}) {
         focusedId.value = id
         if (!id) return
         nextTick(() => {
             const card = focusedCard()
             if (!card) return
             cardFocusTarget(card).focus({preventScroll: true})
-            card.scrollIntoView({block: "nearest"})
+            card.scrollIntoView({block: options.align ?? "nearest"})
         })
     }
 

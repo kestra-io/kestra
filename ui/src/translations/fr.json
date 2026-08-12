@@ -735,6 +735,10 @@
         "files": "Supprimer {count} fichiers sélectionnés",
         "folders": "Supprimer {count} dossiers sélectionnés"
       },
+      "move": {
+        "bulk_success": "Fichiers sélectionnés déplacés avec succès.",
+        "bulk_error": "Échec du déplacement de {count} des éléments sélectionnés."
+      },
       "import": {
         "files": "Importer des fichiers",
         "folder": "Importer un dossier",

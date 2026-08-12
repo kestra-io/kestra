@@ -735,6 +735,10 @@
         "files": "{count}개의 선택된 파일 삭제",
         "folders": "{count}개의 선택된 폴더 삭제"
       },
+      "move": {
+        "bulk_success": "선택된 파일이 성공적으로 이동되었습니다",
+        "bulk_error": "선택된 항목 중 {count}개를 이동하지 못했습니다"
+      },
       "import": {
         "files": "파일 가져오기",
         "folder": "폴더 가져오기",

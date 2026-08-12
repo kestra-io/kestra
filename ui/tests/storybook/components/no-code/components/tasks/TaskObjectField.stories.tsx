@@ -1,6 +1,7 @@
 import {computed, provide, ref} from "vue";
 import TaskObjectField from "../../../../../../src/components/no-code/components/tasks/TaskObjectField.vue";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
+import {expect, fireEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
 
@@ -152,4 +153,49 @@ export const DisabledField: Story = {
         },
     }),
     args: {modelValue: "Cannot edit"},
+};
+
+export const HeaderStripDoesNotOpenTheControl: Story = {
+    render: (args) => ({
+        setup() {
+            provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
+            const model = ref(args.modelValue);
+            return () => <div style={{width: "500px"}}>
+                <TaskObjectField
+                    modelValue={model.value}
+                    onUpdate:modelValue={(val) => model.value = val}
+                    schema={{
+                        type: "string",
+                        title: "Log level",
+                        enum: ["DEBUG", "INFO", "WARNING", "ERROR"],
+                    }}
+                    fieldKey="level"
+                    task={{}}
+                />
+            </div>
+        },
+    }),
+    args: {modelValue: "INFO"},
+    async play({canvasElement}) {
+        const canvas = within(canvasElement);
+        const header = canvasElement.querySelector(".kel-form-item__label") as HTMLElement;
+
+        // Poppers teleport to body and earlier stories leave theirs behind hidden, so
+        // count only the open one — the mere presence of a popper node proves nothing.
+        const openPoppers = () =>
+            [...canvasElement.ownerDocument.querySelectorAll<HTMLElement>(".kel-select__popper")]
+                .filter(popper => popper.style.display !== "none");
+
+        expect(header.tagName).toBe("DIV");
+        expect(header.getAttribute("for")).toBe("");
+
+        const {width, height} = header.getBoundingClientRect();
+        expect(width).toBeGreaterThan(200);
+
+        fireEvent.click(header, {clientX: width - 20, clientY: height / 2});
+        expect(openPoppers()).toHaveLength(0);
+
+        fireEvent.click(await canvas.findByRole("combobox"));
+        await waitFor(() => expect(openPoppers().length).toBeGreaterThan(0));
+    },
 };

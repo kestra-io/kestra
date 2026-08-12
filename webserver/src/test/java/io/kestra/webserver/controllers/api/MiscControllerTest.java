@@ -221,6 +221,28 @@ class MiscControllerTest {
 
     @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
     @Test
+    void login_shouldSetNonHttpOnlyFlagCookie_withValidCredentials() {
+        String uid = "loginFlagUid";
+        String username = "login.flag.success@kestra.io";
+        String password = "loginPassword1";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+
+        try {
+            var response = client.toBlocking().exchange(
+                HttpRequest.POST("/api/v1/login", new MiscController.LoginRequest(username, password))
+            );
+
+            var flagCookie = response.getCookie(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME);
+            assertThat(flagCookie).isPresent();
+            assertThat(flagCookie.get().isHttpOnly()).isFalse();
+            assertThat(flagCookie.get().getValue()).isEqualTo("true");
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @FlakyTest(description = "BasicAuth state from other tests leaks; needs full security lifecycle isolation")
+    @Test
     void login_shouldReject_withInvalidCredentials() {
         String uid = "loginUid2";
         String username = "login.fail@kestra.io";
@@ -310,6 +332,10 @@ class MiscControllerTest {
             var cookie = response.getCookie(BasicAuthService.BASIC_AUTH_COOKIE_NAME);
             assertThat(cookie).isPresent();
             assertThat(cookie.get().getMaxAge()).isEqualTo(0);
+
+            var flagCookie = response.getCookie(BasicAuthService.BASIC_AUTH_FLAG_COOKIE_NAME);
+            assertThat(flagCookie).isPresent();
+            assertThat(flagCookie.get().getMaxAge()).isEqualTo(0);
         } finally {
             basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
         }

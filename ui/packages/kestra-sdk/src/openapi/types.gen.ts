@@ -15,6 +15,11 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -932,6 +937,11 @@ export type Flow = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -993,8 +1003,6 @@ export type FlowControllerFlowWithDeprecatedTasks = {
     deprecatedTasks?: Array<FlowServiceTaskDeprecation>;
 };
 
-export type FlowControllerTaskValidationType = 'TASKS' | 'TRIGGERS';
-
 export type FlowForExecution = AbstractFlow & {
     id: string;
     namespace: string;
@@ -1002,6 +1010,11 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1168,6 +1181,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1919,7 +1937,7 @@ export type ServiceInstanceTimestampedEvent = {
     state?: ServiceServiceState;
 };
 
-export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'CONTROLLER' | 'INVALID';
+export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'SYSTEM_WORKER' | 'CONTROLLER' | 'INVALID';
 
 export type SoftDeletableFlowInterface = {
     deleted?: boolean;
@@ -4621,7 +4639,10 @@ export type TriggerExecutionByGetWebhookResponses = {
 export type TriggerExecutionByGetWebhookResponse = TriggerExecutionByGetWebhookResponses[keyof TriggerExecutionByGetWebhookResponses];
 
 export type TriggerExecutionByPostWebhookData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4651,7 +4672,10 @@ export type TriggerExecutionByPostWebhookResponses = {
 export type TriggerExecutionByPostWebhookResponse = TriggerExecutionByPostWebhookResponses[keyof TriggerExecutionByPostWebhookResponses];
 
 export type TriggerExecutionByPutWebhookData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4715,7 +4739,10 @@ export type TriggerExecutionByGetWebhookWithPathResponses = {
 export type TriggerExecutionByGetWebhookWithPathResponse = TriggerExecutionByGetWebhookWithPathResponses[keyof TriggerExecutionByGetWebhookWithPathResponses];
 
 export type TriggerExecutionByPostWebhookWithPathData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -4749,7 +4776,10 @@ export type TriggerExecutionByPostWebhookWithPathResponses = {
 export type TriggerExecutionByPostWebhookWithPathResponse = TriggerExecutionByPostWebhookWithPathResponses[keyof TriggerExecutionByPostWebhookWithPathResponses];
 
 export type TriggerExecutionByPutWebhookWithPathData = {
-    body?: never;
+    /**
+     * The webhook payload, of any content type. What the flow sees of it depends on the `fetchType` of the trigger: `trigger.body` by default, `trigger.uri` when the trigger stores it. A `multipart/form-data` payload is handled by a dedicated route: its file parts are stored in Kestra's internal storage and reach the flow as `trigger.parts`, its other parts as `trigger.formFields`.
+     */
+    body?: string;
     path: {
         /**
          * The flow namespace
@@ -6240,9 +6270,9 @@ export type ValidateTaskData = {
     };
     query: {
         /**
-         * The type of task
+         * The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)
          */
-        section: FlowControllerTaskValidationType;
+        section: string;
     };
     url: '/api/v1/{tenant}/flows/validate/task';
 };

@@ -174,15 +174,8 @@ public class TaskOutputService {
 
                     if (outputMap != null) {
                         if (current.getIteration() != null) {
-                            Map<String, Object> merged = MapUtils.merge(taskOutputs, outputs(current, outputMap, byIds));
                             // If one of two of the map is null in the merge() method, we just return the other
-                            // And if the not null map is a Variables (= read-only), we cast it back to a simple
-                            // hashmap to avoid taskOutputs becoming read-only
-                            // i.e this happens in nested loopUntil tasks
-                            if (merged instanceof Variables) {
-                                merged = new HashMap<>(merged);
-                            }
-                            taskOutputs = merged;
+                            taskOutputs = MapUtils.merge(taskOutputs, outputs(current, outputMap, byIds));
                         } else {
                             taskOutputs.putAll(outputs(current, outputMap, byIds));
                         }

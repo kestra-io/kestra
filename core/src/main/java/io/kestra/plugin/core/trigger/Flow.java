@@ -330,27 +330,22 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             .findFirst()
             .ifPresent(label -> labels.add(label));
 
-        Execution.ExecutionBuilder builder = Execution.builder()
-            .id(IdUtils.create())
-            .tenantId(flow.getTenantId())
-            .namespace(flow.getNamespace())
-            .flowId(flow.getId())
-            .flowRevision(flow.getRevision())
-            .labels(labels)
-            .state(new State())
-            .trigger(executionTrigger);
+        // the execution snapshots the flow labels and variables, so it is built through the same factory as
+        // every other creation path rather than field by field, which is how flow variables went missing here
+        Execution execution = Execution.newExecution(flow, labels).withTrigger(executionTrigger);
 
         try {
+            Map<String, Object> renderedInputs;
             if (this.inputs != null) {
                 if (outputs != null && !outputs.isEmpty()) {
-                    builder.inputs(runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs))));
+                    renderedInputs = runContext.render(this.inputs, Map.of(TRIGGER_VAR, Map.of(OUTPUTS_VAR, outputs)));
                 } else {
-                    builder.inputs(runContext.render(this.inputs));
+                    renderedInputs = runContext.render(this.inputs);
                 }
             } else {
-                builder.inputs(new HashMap<>());
+                renderedInputs = new HashMap<>();
             }
-            return Optional.of(builder.build());
+            return Optional.of(execution.withInputs(renderedInputs));
         } catch (Exception e) {
             logger.warn(
                 "Failed to trigger flow {}.{} for trigger {}, invalid inputs",
@@ -359,8 +354,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 this.getId(),
                 e
             );
-            var failedExecution = builder.build().withState(State.Type.FAILED);
-            return Optional.of(failedExecution);
+            return Optional.of(execution.withState(State.Type.FAILED));
         }
     }
 

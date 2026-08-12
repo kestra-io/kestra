@@ -94,6 +94,7 @@ export const useFlowStore = defineStore("flow", () => {
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
     const isCreating = ref<boolean>(false)
+    const readonlyToastShown = ref(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
     const previewSource = ref<string | undefined>(undefined)
@@ -202,10 +203,16 @@ export const useFlowStore = defineStore("flow", () => {
         return save(false)
     }
 
-    async function onEdit({source, topologyVisible}: {
+    async function onEdit({source, topologyVisible, metadataGuarded}: {
         source: string,
         editorViewType?: string,
-        topologyVisible?: boolean
+        topologyVisible?: boolean,
+        /**
+         * Set by an editor that already prevents id/namespace from being edited.
+         * There the warning would explain a change the user was never able to
+         * make; every other caller still needs it.
+         */
+        metadataGuarded?: boolean
     }): Promise<FlowValidations | undefined> {
         const flowBeforeEdit = flow.value
         const flowOnValidation = flowParsed.value
@@ -222,10 +229,14 @@ export const useFlowStore = defineStore("flow", () => {
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
 
-                    // Safety net only, and deliberately silent. The editor refuses edits to
-                    // the id/namespace lines outright (useReadOnlyYamlKeys), so typing can no
-                    // longer reach this branch; it still guards the paths that replace the
-                    // source wholesale, such as applying an AI Copilot draft.
+                    if (!metadataGuarded && !readonlyToastShown.value) {
+                        readonlyToastShown.value = true
+                        coreStore.message = {
+                            variant: "warning",
+                            title: t("readonly property"),
+                            message: t("namespace and id readonly"),
+                        }
+                    }
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
                         source,
                         flowBeforeEdit.id,
@@ -480,6 +491,7 @@ export const useFlowStore = defineStore("flow", () => {
         flowYaml.value = data.source
         flowYamlOrigin.value = data.source
         previewSource.value = undefined
+        readonlyToastShown.value = false
 
         return data
     }

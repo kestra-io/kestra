@@ -38,7 +38,6 @@ import io.kestra.core.services.ConcurrencyLimitResolver;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.QuotaService;
 import io.kestra.core.services.TaskOutputService;
-import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerQueueService;
 import io.kestra.core.services.configuration.TaskOutputConfiguration;
 import io.kestra.core.storages.NamespaceFactory;
@@ -125,7 +124,6 @@ public final class ExecutorTestHarness {
     private final FlowTriggerService flowTriggerService;
     private final MultipleConditionStateStore multipleConditionStateStore;
     private final ExecutionService executionService;
-    private final VariablesService variablesService;
     private final KitRunContextFactory runContextFactory;
 
     public static ExecutorTestHarness create() {
@@ -168,7 +166,6 @@ public final class ExecutorTestHarness {
             TracerFactory.class,
             invocation -> "getTracer".equals(invocation.getMethod().getName()) ? new PassthroughTracer() : Mockito.RETURNS_DEFAULTS.answer(invocation)
         );
-        this.variablesService = Mockito.mock(VariablesService.class);
         // Task-bean validation after Property rendering is a no-op in the unit lane: a Mockito
         // Validator returns no violations (empty-set default), so RunContextProperty#as never NPEs.
         Validator validator = Mockito.mock(Validator.class);
@@ -189,9 +186,6 @@ public final class ExecutorTestHarness {
                 Object beanType = invocation.getArgument(0);
                 if (TracerFactory.class.equals(beanType)) {
                     return tracerFactory;
-                }
-                if (VariablesService.class.equals(beanType)) {
-                    return variablesService;
                 }
                 if (FlowInputOutput.class.equals(beanType)) {
                     return flowInputOutput;
@@ -562,10 +556,6 @@ public final class ExecutorTestHarness {
 
     public ExecutionService executionService() {
         return executionService;
-    }
-
-    public VariablesService variablesService() {
-        return variablesService;
     }
 
     /**

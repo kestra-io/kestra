@@ -47,8 +47,8 @@ class SubflowExecutionEndMessageHandlerTest {
         var message = givenASubflowScenario(true);
 
         // The real Subflow.createSubflowExecutionResult unconditionally dereferences the Micronaut
-        // ApplicationContext (runContext.services().variablesService()), which the harness
-        // deliberately doesn't provide — without this stub the swallowed NPE would degrade into a
+        // ApplicationContext (runContext.services()), which the harness deliberately only stubs
+        // partially — without this stub the swallowed NPE would degrade into a
         // synthetic FAILED result. Stub the task boundary and assert the handler's own work:
         // resolving the task and taskRun, applying the message state, and emitting on the queue.
         var subflowExecutionResult = SubflowExecutionResult.builder()

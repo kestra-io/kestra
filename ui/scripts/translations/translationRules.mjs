@@ -142,8 +142,8 @@ const NEVER_TRANSLATED_WORDS = new Set([
     // for them is a deliberate choice rather than a skipped translation.
     "secret", "secrets", "token", "tokens", "payload", "payloads", "context", "email", "webhook",
     "webhooks", "true", "false",
-    // Brands and product names.
-    "kestra", "copilot", "github", "gitlab", "bitbucket", "slack", "docker", "kubernetes",
+    // Brands, product and format names.
+    "kestra", "copilot", "github", "gitlab", "bitbucket", "slack", "docker", "kubernetes", "markdown",
     "terraform", "python", "java", "javascript", "node", "npm", "linux", "macos", "windows",
     "claude", "codex", "openai", "gemini", "anthropic", "cursor", "pebble", "elasticsearch",
     "kafka", "postgres", "mysql", "redis", "aws", "gcp", "azure",
@@ -184,6 +184,10 @@ const ALLOWED_ENGLISH_KEYS = new Set([
     "security.integration.uri",
     // A masked value plus its parenthetical, which the model keeps verbatim in every locale.
     "promote.modal.token_keep_placeholder",
+    // Sample values for the notify recipe: a Slack channel name and an example email address,
+    // which the model keeps verbatim on every reroll.
+    "recipe.notify.slack_channel_placeholder",
+    "recipe.notify.email_to_placeholder",
 ])
 
 /**

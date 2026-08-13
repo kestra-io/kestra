@@ -115,7 +115,7 @@
         "unavailable_channels_warning": "{channels}: इस trigger प्रकार के लिए प्लगइन स्थापित नहीं है, कोई सूचना नहीं भेजी जाएगी।"
       },
       "trigger": {
-        "case_sub": "EE only feature",
+        "case_sub": "EE-मात्र सुविधा",
         "case_title": "केस स्थिति",
         "execution_sub": "flow स्थिति परिवर्तनों पर प्रतिक्रिया करता है",
         "execution_title": "एक्सेक्यूशन स्थिति",

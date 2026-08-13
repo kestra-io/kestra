@@ -13,6 +13,9 @@ interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
 }
 
+// Pagination is navigation state, not a filter: coming back to a list page must land on the first page (https://github.com/kestra-io/kestra-ee/issues/7241).
+const NON_RESTORABLE_KEYS = ["page"]
+
 function getLocalStorageName(route: RouteLocation): string {
     const tenant = route.params.tenant
     return `${route.name?.toString().replace("/", "_")}${route.params.tab ? "_" + route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`
@@ -33,6 +36,8 @@ export function getRestoredQuery(route: RouteLocation) {
     let change = false
 
     for (const key in localStorageValue) {
+        // skip values persisted before this key became non-restorable
+        if (NON_RESTORABLE_KEYS.includes(key)) continue
         const value = localStorageValue[key]
         if (query[key] || !value) continue
         // empty array breaks the application
@@ -61,10 +66,14 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
 
     const saveRestoreUrl = () => {
         if (!restoreUrl || route.query.noRestore) return
-        if (Object.keys(route.query).length === 0) {
+        const query = {...route.query}
+        for (const key of NON_RESTORABLE_KEYS) {
+            delete query[key]
+        }
+        if (Object.keys(query).length === 0) {
             window.sessionStorage.removeItem(localStorageName.value)
         } else {
-            window.sessionStorage.setItem(localStorageName.value, JSON.stringify(route.query))
+            window.sessionStorage.setItem(localStorageName.value, JSON.stringify(query))
         }
     }
 

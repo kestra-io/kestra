@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.junit.jupiter.api.Test;
 
@@ -107,11 +108,13 @@ class KestraDateTimeModuleTest {
 
     @Test
     void shouldWriteZonedDateTimeWithSixFractionalDigits() throws JsonProcessingException {
-        // Given
+        // Given — the writer renders in the mapper's timezone, so pin it instead of inheriting the
+        // machine's: this assertion is about the fractional width, not about where the test runs
+        ObjectMapper mapper = JacksonMapper.ofJson().copy().setTimeZone(TimeZone.getTimeZone("Europe/Paris"));
         Holder holder = new Holder(null, ZonedDateTime.parse("2024-06-01T12:00:00.123456789+02:00"));
 
         // When
-        String json = MAPPER.writeValueAsString(holder);
+        String json = mapper.writeValueAsString(holder);
 
         // Then — six digits, matching Instant, rather than the three it used to write
         assertThat(json).contains("2024-06-01T12:00:00.123456+02:00");

@@ -80,4 +80,20 @@ describe("plugins store fetchIcons", () => {
 
         expect(getMock).toHaveBeenCalledTimes(1)
     })
+
+    it("retries on a later call when the catalog request failed", async () => {
+        // Given a first attempt that fails
+        getMock.mockRejectedValueOnce(new Error("network error"))
+        await store.fetchIcons()
+
+        // When something asks for the catalog again
+        getMock.mockResolvedValueOnce({
+            data: {"io.kestra.plugin.core.log.Log": {icon: "base64svg", flowable: false, monochrome: false}},
+        })
+        await store.fetchIcons()
+
+        // Then the failure wasn't memoized: the retry happened and its icons landed
+        expect(getMock).toHaveBeenCalledTimes(2)
+        expect(store.icons["io.kestra.plugin.core.log.Log"].hasIcon).toBe(true)
+    })
 })

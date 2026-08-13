@@ -2,6 +2,157 @@
   "en": {
     "loading": "Loading...",
     "more actions": "More actions",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "Use letters, digits, dots, dashes and underscores only, starting with a letter or a digit.",
+        "id_label": "Flow id",
+        "id_placeholder": "my-flow",
+        "namespace_invalid": "Use lowercase letters, digits, dots, dashes and underscores only, starting with a lowercase letter or a digit.",
+        "namespace_placeholder": "Select a namespace",
+        "namespaces_error": "Could not load namespaces. Type a namespace manually.",
+        "open_editor": "Open editor",
+        "subtitle": "Start with a hello-world starter and build from scratch.",
+        "title": "Blank flow"
+      },
+      "blueprints": {
+        "subtitle": "Pick a ready-made flow from the community catalog.",
+        "title": "Browse blueprints"
+      },
+      "import": {
+        "back": "Back",
+        "error": {
+          "empty": "YAML content is empty.",
+          "invalid_mapping": "Invalid flow YAML: expected a key-value mapping, not a list or scalar.",
+          "parse_error": "Could not parse YAML.",
+          "too_large": "That file is too large. Paste the flow definition instead, or upload a file under 1 MB."
+        },
+        "paste_label": "Paste YAML",
+        "read_error": "Could not read the file.",
+        "submit": "Import flow",
+        "subtitle": "Paste or upload an existing flow definition.",
+        "title": "Import YAML",
+        "upload_button": "Upload .yml / .yaml",
+        "upload_label": "Or upload a file",
+        "upload_tip": "Accepts .yml and .yaml files."
+      },
+      "subtitle": "Start from a blank canvas, explore blueprints, or import an existing YAML.",
+      "system": {
+        "badge": "SYSTEM",
+        "subtitle": "Build an alert or automation flow for your platform.",
+        "title": "Create a system flow"
+      },
+      "title": "Create a new flow"
+    },
+    "recipe": {
+      "create_flow": "Create flow",
+      "email": "Email",
+      "execution": {
+        "include_sub": "Include sub-namespaces",
+        "include_sub_hint_off": "Only flows in the exact namespace will trigger this alert.",
+        "include_sub_hint_on": "Flows in child namespaces will also trigger this alert.",
+        "namespace_placeholder": "Select a namespace",
+        "namespaces_error": "Namespaces could not be loaded. Type a namespace to watch, or retry later.",
+        "states": "On these states",
+        "states_recommended": "FAILED is the recommended default for alerting.",
+        "states_required": "Select at least one state.",
+        "watch_namespace": "Watch namespace"
+      },
+      "notify": {
+        "email_label": "Email",
+        "email_sub": "Send an email notification",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "custom_label": "Custom",
+        "custom_note": "A placeholder task is added — swap it for any notification plugin in the editor.",
+        "custom_sub": "Add your own notification task",
+        "plugin_unavailable": "Plugin not installed",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Post a message to a Slack channel",
+        "teams_sub": "Send a card to a Teams channel",
+        "teams_webhook_placeholder": "Teams incoming webhook URL"
+      },
+      "other": {
+        "load_error": "Triggers could not be loaded. Retry later.",
+        "no_results": "No triggers found.",
+        "search_label": "Search triggers",
+        "search_placeholder": "Filter by name or type"
+      },
+      "schedule": {
+        "cron": "Cron expression",
+        "custom": "Custom",
+        "daily": "Daily",
+        "daily_hint": "Runs every day at 9:00 AM.",
+        "frequency": "Frequency",
+        "hourly": "Hourly",
+        "hourly_hint": "Runs every hour at minute 0.",
+        "timezone": "Timezone",
+        "timezone_placeholder": "Select a timezone (default UTC)",
+        "weekly": "Weekly",
+        "weekly_hint": "Runs every Monday at 9:00 AM."
+      },
+      "section_subtitle": "Build a flow that monitors your platform and notifies your team automatically.",
+      "section_title": "Create a system flow",
+      "summary": {
+        "any_namespace": "any namespace",
+        "empty": "Configure the trigger and at least one notification channel to preview your flow.",
+        "exact_match": "exact match",
+        "execution": "When a flow in {ns} ({scope}) reaches state {states}, notify via {channels}.",
+        "including_sub": "and sub-namespaces",
+        "invalid_hint": "Add at least one notification channel and complete the trigger configuration.",
+        "invalid_hint_trigger": "Complete the trigger configuration.",
+        "no_channel": "the channels you select",
+        "other": "When the {trigger} trigger fires, notify via {channels}.",
+        "schedule": "On schedule \"{cron}\", notify via {channels}.",
+        "selected_trigger": "selected",
+        "title": "Summary",
+        "webhook": "When a webhook is received, notify via {channels}.",
+        "preview_title": "Preview",
+        "live": "LIVE"
+      },
+      "then": {
+        "no_channel_warning": "Select at least one notification channel.",
+        "subtitle": "Select how to notify your team.",
+        "title": "Then notify",
+        "unavailable_channels_warning": "{channels}: plugin not installed for this trigger type, no notification will be sent."
+      },
+      "trigger": {
+        "case_sub": "EE only feature",
+        "case_title": "Case status",
+        "execution_sub": "Reacts to flow state changes",
+        "execution_title": "Execution state",
+        "other_sub": "Any available trigger plugin",
+        "other_title": "Other trigger",
+        "schedule_sub": "Runs on a time schedule",
+        "schedule_title": "Schedule",
+        "webhook_sub": "Triggered by an HTTP request",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "Send a POST request to this URL to trigger the flow.",
+        "endpoint_url": "Endpoint URL",
+        "key_label": "Webhook key",
+        "key_placeholder": "Enter a unique key for this webhook"
+      },
+      "when": {
+        "subtitle": "Choose what triggers this system flow.",
+        "title": "When this happens",
+        "trigger_type": "Trigger type"
+      },
+      "hero_eyebrow": "Your system flow",
+      "hero_empty": "Pick a trigger and a channel to preview your flow.",
+      "browse_blueprints": "Prefer to start from a template? Browse community system blueprints",
+      "start_blank": "Prefer to write it yourself? Skip the steps and open an empty flow",
+      "steps": {
+        "trigger_title": "Trigger",
+        "trigger_desc": "When it runs",
+        "trigger_heading": "When should this flow run?",
+        "notify_title": "Notify",
+        "notify_desc": "Who hears about it",
+        "notify_heading": "How should we notify your team?",
+        "review_title": "Review",
+        "review_desc": "Check & create",
+        "review_heading": "Review your system flow"
+      }
+    },
     "toggle menu": "Toggle menu",
     "panel actions": "Panel actions",
     "playground actions": "Playground actions",

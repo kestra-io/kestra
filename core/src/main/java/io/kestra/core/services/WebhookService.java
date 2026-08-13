@@ -45,7 +45,6 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static io.kestra.core.models.Label.CORRELATION_ID;
 
 @Slf4j
 @Singleton
@@ -146,17 +145,12 @@ public class WebhookService {
 
         var runContext = runContext(flow, execution);
 
-        // Add labels, flow first so the trigger's own override it, as Execution#newExecution does elsewhere
-        List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
-        labels.addAll(LabelService.labelsExcludingSystem(resolvedFlow.getLabels()));
+        List<Label> contributed = new ArrayList<>();
+        contributed.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
         // The trigger's own labels, as the other trigger types get them through TriggerService
-        labels.addAll(LabelService.fromTrigger(runContext, trigger, Map.of()));
-        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
-            labels.add(new Label(CORRELATION_ID, execution.getId()));
-        }
+        contributed.addAll(LabelService.fromTrigger(runContext, trigger, Map.of()));
 
-        execution = execution.withLabels(labels);
+        execution = execution.withLabels(LabelService.forExecution(resolvedFlow, contributed, execution.getId()));
 
         // Check conditions
         if (!conditionService.isValid(trigger, flow, runContext)) {

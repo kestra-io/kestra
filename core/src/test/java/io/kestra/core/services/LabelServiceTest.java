@@ -81,6 +81,61 @@ class LabelServiceTest {
     }
 
     @Test
+    void shouldLetContributedLabelsOverrideTheFlowWhenMergingForAnExecution() {
+        // Given a flow and a caller both labelling the same key
+        Flow flow = Flow.builder()
+            .labels(List.of(new Label("env", "dev"), new Label("owner", "platform")))
+            .build();
+
+        // When
+        List<Label> labels = LabelService.forExecution(flow, List.of(new Label("env", "prod")), "execId");
+
+        // Then the contributed value wins and the flow's other label is kept
+        assertThat(labels).contains(new Label("env", "prod"), new Label("owner", "platform"));
+        assertThat(labels).doesNotContain(new Label("env", "dev"));
+    }
+
+    @Test
+    void shouldStripSystemLabelsFromTheFlowWhenMergingForAnExecution() {
+        // Given a flow authoring a system label, which it must not be able to do
+        Flow flow = Flow.builder()
+            .labels(List.of(new Label(Label.CORRELATION_ID, "forged"), new Label("env", "dev")))
+            .build();
+
+        // When
+        List<Label> labels = LabelService.forExecution(flow, List.of(), "execId");
+
+        // Then the forged correlation id is dropped and the execution's own is used
+        assertThat(labels).contains(new Label(Label.CORRELATION_ID, "execId"), new Label("env", "dev"));
+    }
+
+    @Test
+    void shouldKeepTheContributedCorrelationIdWhenMergingForAnExecution() {
+        // Given a contributed correlation id, as a child execution inherits its parent's
+        Flow flow = Flow.builder().build();
+
+        // When
+        List<Label> labels = LabelService.forExecution(flow, List.of(new Label(Label.CORRELATION_ID, "parentId")), "execId");
+
+        // Then it is not replaced
+        assertThat(labels).containsExactly(new Label(Label.CORRELATION_ID, "parentId"));
+    }
+
+    @Test
+    void shouldAddACorrelationIdWhenNoneIsPresent() {
+        List<Label> labels = LabelService.withCorrelationId(List.of(new Label("env", "prod")), "execId");
+
+        assertThat(labels).containsExactly(new Label("env", "prod"), new Label(Label.CORRELATION_ID, "execId"));
+    }
+
+    @Test
+    void shouldNotAddACorrelationIdWhenOneIsAlreadyPresent() {
+        List<Label> labels = LabelService.withCorrelationId(List.of(new Label(Label.CORRELATION_ID, "parentId")), "execId");
+
+        assertThat(labels).containsExactly(new Label(Label.CORRELATION_ID, "parentId"));
+    }
+
+    @Test
     void containsAll() {
         assertFalse(LabelService.containsAll(null, List.of(new Label("key", "value"))));
         assertFalse(LabelService.containsAll(Collections.emptyList(), List.of(new Label("key", "value"))));

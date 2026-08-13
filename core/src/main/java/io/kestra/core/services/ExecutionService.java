@@ -227,10 +227,7 @@ public class ExecutionService {
         // Pre-seed CORRELATION_ID so Execution.newExecution() doesn't assign the auto-generated ID to it.
         // Without this, newExecution() sets correlationId = auto-id, and then toBuilder().id() overrides
         // the execution ID while leaving correlationId pointing to the discarded auto-id.
-        List<Label> labels = new ArrayList<>(ListUtils.emptyOnNull(createCommand.labels()));
-        if (labels.stream().noneMatch(l -> Label.CORRELATION_ID.equals(l.key()))) {
-            labels.add(new Label(Label.CORRELATION_ID, createCommand.executionId()));
-        }
+        List<Label> labels = LabelService.withCorrelationId(createCommand.labels(), createCommand.executionId());
 
         var newExecution = Execution.newExecution(
             flow,

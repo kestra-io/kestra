@@ -4,6 +4,7 @@ import java.util.*;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
@@ -48,6 +49,39 @@ public final class LabelService {
         }
 
         return labels;
+    }
+
+    /**
+     * Merges the labels an execution carries at creation time: the flow's own — system labels stripped, as a
+     * flow must not author them — overridden by those the trigger or caller contributes, plus a correlation id
+     * when none is present.
+     * <p>
+     * This is the single definition of label precedence at creation time, and the only place the flow's labels
+     * are read: every creation route goes through it so a caller cannot overrule governance on one route and
+     * not another.
+     *
+     * @param flow the flow the execution will run, which must be the flow processed for runtime
+     * @param contributed the labels the trigger or caller contributes, which override the flow's
+     * @param executionId the execution's id, used as correlation id when none is contributed
+     */
+    public static List<Label> forExecution(FlowInterface flow, @Nullable List<Label> contributed, String executionId) {
+        List<Label> labels = new ArrayList<>(labelsExcludingSystem(flow.getLabels()));
+        labels.addAll(ListUtils.emptyOnNull(contributed));
+
+        return withCorrelationId(Label.deduplicate(labels), executionId);
+    }
+
+    /**
+     * Returns the given labels with a correlation id added when none is present. An existing one is never
+     * replaced: a child execution inherits its parent's, which is what correlates the two.
+     */
+    public static List<Label> withCorrelationId(@Nullable List<Label> labels, String executionId) {
+        List<Label> withCorrelationId = new ArrayList<>(ListUtils.emptyOnNull(labels));
+        if (withCorrelationId.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
+            withCorrelationId.add(new Label(Label.CORRELATION_ID, executionId));
+        }
+
+        return withCorrelationId;
     }
 
     private static String renderLabelValue(RunContext runContext, Label label, Map<String, Object> variables) {

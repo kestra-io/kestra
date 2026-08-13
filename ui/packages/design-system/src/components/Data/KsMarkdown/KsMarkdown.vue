@@ -407,14 +407,8 @@
             const key = `${block.lang}::${block.value}`
             if (updated.has(key)) continue
 
-            let lang = block.lang
-            if (lang && !(hl.getLoadedLanguages() as string[]).includes(lang)) {
-                try {
-                    await hl.loadLanguage(lang as any)
-                } catch {
-                    lang = ""
-                }
-            }
+            // Grammars are pre-registered in shikiHighlighter; unknown ones render as plain text.
+            const lang = (hl.getLoadedLanguages() as string[]).includes(block.lang) ? block.lang : ""
 
             try {
                 const html = hl.codeToHtml(block.value, {

@@ -1,4 +1,6 @@
-import {createHighlighter} from "shiki"
+// shiki/core avoids the full bundle's registry of ~220 lazily-importable
+// languages, which would otherwise emit one build chunk per language.
+import {createHighlighterCore} from "shiki/core"
 
 /**
  * Module-level singleton for the Shiki highlighter.
@@ -46,7 +48,7 @@ export function getShiki(): Promise<any> {
         promise = (async () => {
             const jsEngine = createJavaScriptRegexEngine()
 
-            return createHighlighter({
+            return createHighlighterCore({
                 themes: [GithubDark, GithubLight],
                 langs: [
                     Bash,

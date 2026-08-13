@@ -834,4 +834,20 @@ class TriggerControllerTest {
             .vnode(VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes()))
             .build();
     }
+
+    @Test
+    void shouldExportTriggersWithoutTenantId() throws FlowProcessingException, QueueException {
+        Flow flow = generateFlow();
+        flowService.create(GenericFlow.of(flow));
+        createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
+
+        byte[] csvBytes = client.toBlocking().retrieve(
+            HttpRequest.GET(TRIGGER_PATH + "/export/by-query/csv"),
+            Argument.of(byte[].class)
+        );
+
+        String csv = new String(csvBytes, java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(csv).doesNotContain("tenantId");
+        assertThat(csv).contains("triggerId", "namespace", "flowId");
+    }
 }

@@ -1,8 +1,14 @@
 import {defineAsyncComponent} from "vue"
-import type {App, Component} from "vue"
+import type {App, AsyncComponentLoader, Component} from "vue"
 import ElementPlus, {INSTALLED_KEY} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
+
+// defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
+// real name lets consumers stub the component by name in tests and read it in
+// devtools, exactly as they could before it was made async.
+const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
+    Object.assign(defineAsyncComponent(loader), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 import KsEchart from "./components/Charts/KsEchart.vue"
@@ -46,7 +52,7 @@ import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
 // Async on purpose: KsEditor statically pulls the whole Monaco toolchain, which
 // must stay out of the app's eager bundle (see the "monaco" chunk group).
 import type KsEditorSfc from "./components/Form/KsEditor.vue"
-const KsEditor = defineAsyncComponent(
+const KsEditor = asyncComponent("KsEditor",
     () => import("./components/Form/KsEditor.vue"),
 ) as unknown as typeof KsEditorSfc
 export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
@@ -78,7 +84,7 @@ import KsLink from "./components/Basic/KsLink.vue"
 // Async on purpose: KsMarkdown pulls the whole markdown/Shiki toolchain, which
 // must stay out of the app's eager bundle (see the "markdown" chunk group).
 import type KsMarkdownSfc from "./components/Data/KsMarkdown/KsMarkdown.vue"
-const KsMarkdown = defineAsyncComponent(
+const KsMarkdown = asyncComponent("KsMarkdown",
     () => import("./components/Data/KsMarkdown/KsMarkdown.vue"),
 ) as unknown as typeof KsMarkdownSfc
 import KsMenu from "./components/Navigation/KsMenu/KsMenu.vue"

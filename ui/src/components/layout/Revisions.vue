@@ -366,30 +366,41 @@
      *
      * The selections are positions in `sortedRevisions`, so any change to that
      * list silently repoints them — after a delete they can even fall off the
-     * end. Remap by revision number, and where that revision is the one that
-     * just went away, fall back to a neighbour.
+     * end, which is what used to throw mid-render and blank the view.
      */
     watch(sortedRevisions, (current, previous) => {
         if (!previous || current.length === 0) return
 
-        const stillAt = (index: number | undefined) => {
-            const revision = index === undefined ? undefined : previous[index]?.revision
+        const lastIndex = current.length - 1
+
+        const sameRevision = (index: number) => {
+            const revision = previous[index]?.revision
             if (revision === undefined) return undefined
             const found = current.findIndex(item => item.revision === revision)
             return found === -1 ? undefined : found
         }
 
-        let right = stillAt(revisionRightIndex.value)
-        let left = stillAt(revisionLeftIndex.value)
+        // A side whose revision survived follows it. One whose revision was
+        // removed holds its position, which now belongs to the neighbour that
+        // shifted into it — jumping to the newest would move the diff somewhere
+        // the user never asked to look.
+        const reanchor = (index: number | undefined) => {
+            if (index === undefined) return undefined
+            return sameRevision(index) ?? Math.min(Math.max(index, 0), lastIndex)
+        }
 
-        // Whichever side lost its revision falls back: the right to the newest,
-        // the left to whatever sits just before the right.
-        if (right === undefined) right = current.length - 1
-        if (left === undefined) left = right > 0 ? right - 1 : undefined
+        let right = reanchor(revisionRightIndex.value) ?? lastIndex
+        let left = reanchor(revisionLeftIndex.value)
 
-        // Comparing a revision against itself is not a diff; nudge the left side.
-        if (left !== undefined && left === right) {
+        // Diffing a revision against itself shows nothing; step the left side back.
+        if (left === undefined || left === right) {
             left = right > 0 ? right - 1 : undefined
+        }
+
+        // Only possible with a single revision left, where the view is empty anyway.
+        if (left === undefined && current.length > 1) {
+            right = 1
+            left = 0
         }
 
         revisionRightIndex.value = right

@@ -1,5 +1,5 @@
-// shiki/core avoids the full bundle's registry of ~220 lazily-importable
-// languages, which would otherwise emit one build chunk per language.
+// shiki/core keeps the grammars below as the only ones in this chunk; every
+// other language is fetched on demand by loadLanguageOnDemand().
 import {createHighlighterCore} from "shiki/core"
 
 /**
@@ -86,4 +86,26 @@ export function getShiki(): Promise<any> {
         })()
     }
     return promise
+}
+
+let bundledLanguages: Promise<Record<string, any>> | null = null
+
+/**
+ * Registers a grammar that is not pre-registered above, from Shiki's full
+ * bundle (one extra chunk, fetched once). Returns false for unknown languages.
+ */
+export async function loadLanguageOnDemand(highlighter: any, lang: string): Promise<boolean> {
+    bundledLanguages ??= import("shiki/langs").then((module) => module.bundledLanguages)
+
+    const loader = (await bundledLanguages)[lang]
+    if (!loader) {
+        return false
+    }
+
+    try {
+        await highlighter.loadLanguage(loader)
+        return true
+    } catch {
+        return false
+    }
 }

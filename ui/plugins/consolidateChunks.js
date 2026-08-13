@@ -33,6 +33,43 @@ const isRealModule = (id) =>
  */
 const matches = (pattern) => (id) => isRealModule(id) && pattern.test(id)
 
+const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]langs)[\\/]/
+const LANG_REGISTRY = /node_modules[\\/]shiki[\\/]dist[\\/]langs(-bundle-full-[^\\/]+)?\.mjs$/
+
+/**
+ * Grammars some module statically imports (shikiHighlighter.ts pre-registers a
+ * set, shikiToolset.ts another), plus the ones those pull in transitively — html
+ * embeds css and javascript, and so on. Filled during buildEnd: derived from the
+ * graph rather than a hardcoded list, because one missed grammar turns the whole
+ * on-demand bundle into a static import of whichever chunk needed it.
+ * @type {Set<string>}
+ */
+const staticLangs = new Set()
+
+/**
+ * @param {import("rolldown").PluginContext} ctx
+ */
+function collectStaticLangs(ctx) {
+    staticLangs.clear()
+    const queue = []
+
+    // Seed: grammars pulled in by ordinary modules. The registry index reaches
+    // its grammars through dynamic imports, so it contributes nothing here.
+    for (const id of ctx.getModuleIds()) {
+        if (LANG_MODULE.test(id)) continue
+        for (const imported of ctx.getModuleInfo(id)?.importedIds ?? []) {
+            if (LANG_MODULE.test(imported)) queue.push(imported)
+        }
+    }
+
+    while (queue.length) {
+        const id = queue.pop()
+        if (!id || staticLangs.has(id)) continue
+        staticLangs.add(id)
+        queue.push(...(ctx.getModuleInfo(id)?.importedIds ?? []).filter((dep) => LANG_MODULE.test(dep)))
+    }
+}
+
 // Negative priorities keep module federation's own groups (priority >= 0)
 // winning every module they target; recursion off so shared deps stay put.
 const GROUPS = [
@@ -42,6 +79,16 @@ const GROUPS = [
         name: "monaco",
         test: matches(/node_modules[\\/](monaco-editor|monaco-yaml|monaco-worker-manager|monaco-marker-data-provider)[\\/]|design-system[\\/]src[\\/](components[\\/]Form[\\/]KsEditor\.vue|composables[\\/](useKsEditor|useEditor|useSuggestWidgetIcons|PlaceholderContentWidget)|utils[\\/]monacoSetup)/),
         priority: -10,
+        includeDependenciesRecursively: false,
+    },
+    // Every grammar that is not pre-registered, in one chunk fetched only when a
+    // code fence uses an exotic language (see loadLanguageOnDemand). Without
+    // this group Shiki's registry emits one chunk per language (~350 files).
+    {
+        name: "shiki-langs",
+        test: (id) => isRealModule(id) &&
+            (LANG_REGISTRY.test(id) || (LANG_MODULE.test(id) && !staticLangs.has(id))),
+        priority: -12,
         includeDependenciesRecursively: false,
     },
     // The whole markdown/Shiki toolchain in a single lazy chunk
@@ -104,6 +151,21 @@ export function consolidateChunks() {
                 const codeSplitting = typeof existing === "object" && existing !== null ? existing : {}
                 output.codeSplitting = codeSplitting
                 ;(codeSplitting.groups ??= []).push(...GROUPS)
+            }
+        },
+        buildEnd() {
+            collectStaticLangs(this)
+        },
+        generateBundle(_options, bundle) {
+            // A static edge into shiki-langs would make every markdown render
+            // fetch all ~350 grammars, which is exactly what this split avoids.
+            const isLangChunk = (name) => /(^|[\\/])shiki-langs-/.test(name)
+            for (const [name, chunk] of Object.entries(bundle)) {
+                if (chunk.type !== "chunk" || isLangChunk(name)) continue
+                const leaked = (chunk.imports ?? []).filter(isLangChunk)
+                if (leaked.length) {
+                    this.error(`Chunk '${name}' statically imports the on-demand grammar bundle (${leaked.join(", ")}). A statically imported grammar likely gained a transitive import that collectStaticLangs failed to reach.`)
+                }
             }
         },
     }

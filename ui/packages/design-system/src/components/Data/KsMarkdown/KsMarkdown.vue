@@ -18,7 +18,7 @@
     import KsAlert from "../../Feedback/KsAlert.vue"
     import KsTable from "../KsTable/KsTable.vue"
     import KsTableColumn from "../KsTable/KsTableColumn.vue"
-    import {getShiki} from "./shikiHighlighter"
+    import {getShiki, loadLanguageOnDemand} from "./shikiHighlighter"
 
     const props = withDefaults(
         defineProps<{
@@ -407,8 +407,13 @@
             const key = `${block.lang}::${block.value}`
             if (updated.has(key)) continue
 
-            // Grammars are pre-registered in shikiHighlighter; unknown ones render as plain text.
-            const lang = (hl.getLoadedLanguages() as string[]).includes(block.lang) ? block.lang : ""
+            let lang = block.lang
+            if (lang && !(hl.getLoadedLanguages() as string[]).includes(lang)) {
+                // Not pre-registered: fetch it from Shiki's full bundle, or render as plain text.
+                if (!await loadLanguageOnDemand(hl, lang)) {
+                    lang = ""
+                }
+            }
 
             try {
                 const html = hl.codeToHtml(block.value, {

@@ -393,6 +393,32 @@ describe("KsMarkdown", () => {
     })
 
 
+    test("highlights a language that is not pre-registered, from Shiki's on-demand bundle", async () => {
+        // Elixir is deliberately absent from shikiHighlighter's static grammars.
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```elixir\ndefmodule Greeter do\nend\n```"},
+            global: globalConfig,
+        })
+
+        await vi.waitFor(
+            () => expect(wrapper.find(".ks-markdown__code-shiki").exists()).toBe(true),
+            {timeout: 10000, interval: 50},
+        )
+
+        expect(wrapper.find(".ks-markdown__code-shiki pre.shiki").exists()).toBe(true)
+        expect(wrapper.find(".ks-markdown__code-shiki").text()).toContain("defmodule")
+    }, 15000)
+
+    test("falls back to plain text for a language Shiki does not know", async () => {
+        const wrapper = mount(KsMarkdown, {
+            props: {content: "```notarealilanguage\nsome code\n```"},
+            global: globalConfig,
+        })
+        await flushPromises()
+
+        expect(wrapper.text()).toContain("some code")
+    })
+
     test("Shiki-highlighted code contains the original source text", async () => {
         const wrapper = mount(KsMarkdown, {
             props: {content: "```typescript\nconst greeting: string = 'hello'\n```"},

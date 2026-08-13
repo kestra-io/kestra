@@ -88,6 +88,26 @@ class ErrorControllerTest {
             });
     }
 
+    // Micronaut 5's body binder wraps a raw JSON syntax error in io.micronaut.json.JsonSyntaxException before
+    // it reaches ErrorController, instead of letting the Jackson exception propagate directly as under
+    // Micronaut 4. Without a handler for that wrapper type this fell through to a generic 500.
+    @Test
+    void malformedJson() {
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/main/executions/labels/by-ids", "{\"this\":is not json}").contentType(MediaType.APPLICATION_JSON),
+                Argument.of(String.class),
+                Argument.of(JsonError.class)
+            )
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+
+        String response = exception.getResponse().getBody(String.class).get();
+        assertThat(response).contains("Invalid json");
+    }
+
     @Test
     void shouldReportValidationFailedWithFieldErrorsWhenPropertyIsUnknown() throws JsonProcessingException {
         // Given a flow carrying a property the model does not declare

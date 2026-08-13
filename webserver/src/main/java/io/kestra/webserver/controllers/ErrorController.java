@@ -25,6 +25,7 @@ import io.micronaut.http.annotation.Error;
 import io.micronaut.http.server.exceptions.NotAllowedException;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import tools.jackson.core.JacksonException;
 
 /**
  * Translates every exception reaching the HTTP layer into an RFC 9457 problem document.
@@ -106,8 +107,31 @@ public class ErrorController {
             );
         }
 
+        if (cause instanceof tools.jackson.databind.exc.InvalidTypeIdException invalidTypeId) {
+            return this.problems.response(
+                request,
+                e,
+                ProblemTypes.INVALID_PLUGIN_TYPE,
+                List.of(ProblemError.of(
+                    "Unknown type '%s'.".formatted(invalidTypeId.getTypeId()),
+                    null,
+                    pathOf(invalidTypeId)
+                ))
+            );
+        }
+
         if (cause instanceof JsonMappingException mappingException) {
             String path = pathOf(mappingException);
+            return this.problems.responseWithoutMessage(
+                request,
+                e,
+                ProblemTypes.INVALID_JSON,
+                path.isEmpty() ? List.of() : List.of(ProblemError.of(null, null, path))
+            );
+        }
+
+        if (cause instanceof JacksonException jacksonException) {
+            String path = pathOf(jacksonException);
             return this.problems.responseWithoutMessage(
                 request,
                 e,
@@ -134,6 +158,17 @@ public class ErrorController {
             .stream()
             .map(reference -> reference.getFieldName() != null
                 ? reference.getFieldName()
+                : "[" + reference.getIndex() + "]")
+            .collect(Collectors.joining("."))
+            .replace(".[", "[");
+    }
+
+    /** Jackson 3 equivalent of {@link #pathOf(JsonMappingException)}, for exceptions Micronaut's body binder throws. */
+    private static String pathOf(final JacksonException e) {
+        return e.getPath()
+            .stream()
+            .map(reference -> reference.getPropertyName() != null
+                ? reference.getPropertyName()
                 : "[" + reference.getIndex() + "]")
             .collect(Collectors.joining("."))
             .replace(".[", "[");

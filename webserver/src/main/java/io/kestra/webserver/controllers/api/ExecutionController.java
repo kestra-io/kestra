@@ -24,7 +24,6 @@ import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
@@ -71,7 +70,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.Namespace;
@@ -146,6 +144,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -2769,8 +2768,8 @@ public class ExecutionController {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");

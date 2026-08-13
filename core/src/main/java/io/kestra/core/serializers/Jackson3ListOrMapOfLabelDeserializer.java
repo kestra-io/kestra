@@ -1,32 +1,29 @@
 package io.kestra.core.serializers;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
-
 import io.kestra.core.models.Label;
 
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+
 /**
- * This deserializer is for historical purpose, labels was first a map but has been updated to a List of Label so
- * this deserializer allows using both types.
+ * Jackson 3 counterpart of {@link ListOrMapOfLabelDeserializer}, for the HTTP boundary.
  * <p>
- * Jackson 3 counterpart: {@link Jackson3ListOrMapOfLabelDeserializer}.
+ * Labels were first a map and became a list of Label, so both types must deserialize. Jackson 3 has no
+ * separate {@code ResolvableDeserializer} interface: {@code resolve()} is a no-op default on
+ * {@link ValueDeserializer}, so the empty override the Jackson 2 version carries is not needed here.
  */
-public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> implements ResolvableDeserializer {
+public class Jackson3ListOrMapOfLabelDeserializer extends ValueDeserializer<List<Label>> {
     @SuppressWarnings("unchecked")
     @Override
-    public List<Label> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public List<Label> deserialize(JsonParser p, DeserializationContext ctxt) {
         if (p.hasToken(JsonToken.VALUE_NULL)) {
             return null;
         } else if (p.hasToken(JsonToken.START_ARRAY)) {
-            // deserialize as list
             List<Map<String, String>> ret = ctxt.readValue(p, List.class);
             return ret.stream().map(map ->
             {
@@ -38,17 +35,16 @@ public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> 
                 }
             }).toList();
         } else if (p.hasToken(JsonToken.START_OBJECT)) {
-            // deserialize as map
             Map<String, Object> ret = ctxt.readValue(p, Map.class);
             return ret == null ? null
                 : ret.entrySet().stream()
-                    .map(this::validateAndCreateLabel)
+                    .map(Jackson3ListOrMapOfLabelDeserializer::validateAndCreateLabel)
                     .toList();
         }
         throw new IllegalArgumentException("Unable to deserialize value as it's neither an object neither an array");
     }
 
-    private Label validateAndCreateLabel(Map.Entry<String, Object> entry) {
+    private static Label validateAndCreateLabel(Map.Entry<String, Object> entry) {
         Object value = entry.getValue();
         if (isAllowedType(value)) {
             return new Label(entry.getKey(), String.valueOf(value));
@@ -64,9 +60,5 @@ public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> 
             value instanceof Float ||
             value instanceof Double ||
             value instanceof Boolean;
-    }
-
-    @Override
-    public void resolve(DeserializationContext ctxt) throws JsonMappingException {
     }
 }

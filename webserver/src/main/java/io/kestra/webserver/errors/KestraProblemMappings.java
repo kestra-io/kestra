@@ -9,6 +9,10 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.DatabindException;
+
 import io.kestra.core.exceptions.AlreadyExistsException;
 import io.kestra.core.exceptions.ConflictException;
 import io.kestra.core.exceptions.DeserializationException;
@@ -67,11 +71,18 @@ import jakarta.validation.ConstraintViolationException;
 public class KestraProblemMappings extends ExceptionTypeProblemMapper {
     @Override
     protected void register(final BiConsumer<Class<? extends Throwable>, ProblemType> to) {
-        // Unreadable or undecodable request payload.
+        // Unreadable or undecodable request payload. Both Jackson majors are registered: Micronaut binds HTTP
+        // bodies with Jackson 3, while Kestra's own JacksonMapper hub stays on Jackson 2.
         to.accept(JsonParseException.class, ProblemTypes.INVALID_JSON);
+        to.accept(StreamReadException.class, ProblemTypes.INVALID_JSON);
+        to.accept(io.micronaut.json.JsonSyntaxException.class, ProblemTypes.INVALID_JSON);
         to.accept(InvalidTypeIdException.class, ProblemTypes.INVALID_PLUGIN_TYPE);
+        to.accept(tools.jackson.databind.exc.InvalidTypeIdException.class, ProblemTypes.INVALID_PLUGIN_TYPE);
         to.accept(InvalidFormatException.class, ProblemTypes.INVALID_FORMAT);
+        to.accept(tools.jackson.databind.exc.InvalidFormatException.class, ProblemTypes.INVALID_FORMAT);
         to.accept(JsonMappingException.class, ProblemTypes.INVALID_JSON);
+        to.accept(DatabindException.class, ProblemTypes.INVALID_JSON);
+        to.accept(JacksonException.class, ProblemTypes.INVALID_JSON);
         to.accept(ConversionErrorException.class, ProblemTypes.INVALID_ARGUMENT);
         to.accept(DeserializationException.class, ProblemTypes.INTERNAL_ERROR);
         // Exceeds the queue message-size limit, which is a client-input problem rather than a server failure.

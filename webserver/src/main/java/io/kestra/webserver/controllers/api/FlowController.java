@@ -5,10 +5,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -80,6 +80,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -968,7 +969,7 @@ public class FlowController {
             });
         } catch (IOException e) {
             log.error("Unexpected error while importing flows", e);
-            fileUpload.discard();
+            IOUtils.closeQuietly(fileUpload);
             return HttpResponse.badRequest();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
@@ -986,8 +987,8 @@ public class FlowController {
         @QueryFilterFormat(Resource.FLOW) List<QueryFilter> filters) {
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                flowRepository.findAsync(this.tenantService.resolveTenant(), filters),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");

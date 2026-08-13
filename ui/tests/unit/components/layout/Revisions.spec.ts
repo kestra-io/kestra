@@ -37,6 +37,9 @@ const stubs = {
     KsNoData: {template: "<div class='no-data' />"},
 }
 
+// The template reads `$t` off the app instance, which mocking useI18n does not provide.
+const mocks = {$t: (key: string) => key}
+
 function revisionsUpTo(...numbers: number[]) {
     return numbers.map((revision) => ({revision, source: `source ${revision}`}))
 }
@@ -53,7 +56,7 @@ function mountRevisions(revisions: {revision: number; source: string}[]) {
             // revision looked up through the stored index.
             crud: "<span class=\"crud-revision\">{{ params.revision }}</span>",
         },
-        global: {stubs},
+        global: {stubs, mocks},
     })
 }
 

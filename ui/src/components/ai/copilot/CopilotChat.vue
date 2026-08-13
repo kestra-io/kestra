@@ -217,7 +217,7 @@
     const providers = ref<AiControllerAiProviderResponse[]>([])
     const selectedProvider = ref<string>()
 
-    onMounted(async () => {
+    const providersLoaded = (async () => {
         try {
             const list = await AiApi.providers()
             providers.value = list ?? []
@@ -225,7 +225,7 @@
         } catch {
             // No provider list (e.g. AI unavailable) — the composer just omits the picker.
         }
-    })
+    })()
 
     // Quick-start prompts shown under the empty-state composer (Figma Default variant).
     const suggestions = computed(() => [
@@ -237,8 +237,7 @@
 
     const {thread, messages, status, streaming, error, errorDetail, notice, pendingConfirmation, unavailable, canSend, sendChat, confirm, cancel, reset, retry, retryLastTurn, loadThread, restoreThread, noteContext} = useAiChat()
 
-    // Restore the last conversation on open (threads are persisted server-side); harmless no-op if none.
-    onMounted(() => { restoreThread() })
+    const restored = restoreThread()
 
     /** Switch to a thread picked from the (EE) Recents list — rehydrates its transcript + pending action. */
     function onSelectThread(threadId: string): void {
@@ -339,11 +338,30 @@
     // Seeded prompts: an entry point (e.g. "Fix with AI") stashes text via miscStore, which opens
     // this tab. Prefill the composer with it and focus, then clear the store so it doesn't re-seed —
     // run on mount (drawer just opened) and via a watcher (already open / kept alive).
+    // An `autoSend` entry point ("Generate a unit test") sends the turn itself instead: the user
+    // already committed to it by picking the action, so the agent starts working on open. If a turn
+    // is in flight (`canSend` false) we fall back to seeding rather than dropping the prompt.
+    // A `newChat` entry point drops the restored conversation first, so its turn starts clean
+    // instead of inheriting an unrelated transcript.
     async function consumeSeededPrompt(): Promise<void> {
         const seeded = miscStore.copilotPrompt
         if (!seeded) return
-        composerText.value = seeded
         miscStore.copilotPrompt = null
+
+        // Settle the in-flight restore before acting on either flag: resetting ahead of it would be
+        // undone when it lands, and sending without it would fork a second thread.
+        if (seeded.newChat || seeded.autoSend) await restored
+        if (seeded.newChat) reset()
+
+        if (seeded.autoSend) {
+            await providersLoaded
+            if (canSend.value) {
+                onSubmit(seeded.text)
+                return
+            }
+        }
+
+        composerText.value = seeded.text
         await nextTick()
         ;(isEmpty.value ? emptyComposer.value : footerComposer.value)?.focus()
     }

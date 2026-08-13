@@ -5,10 +5,17 @@ import {ref} from "vue"
 // Stub the apply composable (it pulls in the router + flows SDK); assert wiring only.
 const openInEditor = vi.fn()
 const apply = vi.fn()
-// Mutable so a test can simulate the EE app path being present (apps are unsupported in OSS).
+// Mutable so a test can simulate the EE paths being present (apps and unit tests are unsupported in OSS).
 const appSupported = {value: false}
+const testSuiteSupported = {value: false}
 vi.mock("../../../../../src/components/ai/copilot/useApplyDraft", () => ({
-    useApplyDraft: () => ({applying: ref(false), appSupported: appSupported.value, openInEditor, apply}),
+    useApplyDraft: () => ({
+        applying: ref(false),
+        appSupported: appSupported.value,
+        testSuiteSupported: testSuiteSupported.value,
+        openInEditor,
+        apply,
+    }),
 }))
 
 import CopilotArtefactDraft from "../../../../../src/components/ai/copilot/CopilotArtefactDraft.vue"
@@ -90,5 +97,24 @@ describe("CopilotArtefactDraft", () => {
         // Apps have no direct-apply — only open-in-editor.
         expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
         appSupported.value = false
+    })
+
+    it("shows no apply actions for a unit-test draft when tests are unsupported (OSS)", () => {
+        testSuiteSupported.value = false
+        const w = mountDraft({draftId: "d9", kind: "TEST_SUITE", yaml: "id: my-tests", valid: true, constraints: null})
+        expect(w.text()).toContain("Proposed unit test")
+        expect(w.find("[data-test=\"copilot-draft-open\"]").exists()).toBe(false)
+        expect(w.find("[data-test=\"copilot-draft-apply\"]").exists()).toBe(false)
+    })
+
+    it("offers Open-in-editor + Apply for a unit-test draft when the test path is present (EE)", async () => {
+        testSuiteSupported.value = true
+        const w = mountDraft({draftId: "d10", kind: "TEST_SUITE", yaml: "id: my-tests", valid: true, constraints: null})
+        await w.find("[data-test=\"copilot-draft-open\"]").trigger("click")
+        expect(openInEditor).toHaveBeenCalled()
+        // Unlike apps, a test suite has an id-addressable API, so it can be applied directly.
+        await w.find("[data-test=\"copilot-draft-apply\"]").trigger("click")
+        expect(apply).toHaveBeenCalled()
+        testSuiteSupported.value = false
     })
 })

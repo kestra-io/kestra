@@ -2001,7 +2001,8 @@
           "title": {
             "flow": "flow propuesto",
             "dashboard": "Panel de control propuesto",
-            "app": "Aplicación propuesta"
+            "app": "Aplicación propuesta",
+            "test_suite": "Prueba unitaria propuesta"
           },
           "valid": "Válido",
           "invalid": "Necesita cambios"

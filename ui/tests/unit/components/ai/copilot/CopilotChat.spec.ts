@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from "vitest"
+import {describe, it, expect, vi, beforeEach, afterEach} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
 import {ref} from "vue"
 import {mountGlobal} from "./_helpers"
@@ -33,14 +33,23 @@ vi.mock("vue-router", () => ({useRoute: () => routeStub}))
 vi.mock("@kestra-io/kestra-sdk/ai", () => ({providers: vi.fn().mockResolvedValue([])}))
 // CopilotChat reads a seeded prompt from the misc store on mount. Shared mutable stub so a
 // test can seed a prompt before mounting (no Pinia in the unit env).
-const miscStore = {copilotPrompt: null as string | null, openCopilot: vi.fn(), promptCopilot: vi.fn()}
+const miscStore = {copilotPrompt: null as {text: string; autoSend: boolean; newChat: boolean} | null, openCopilot: vi.fn(), promptCopilot: vi.fn()}
 vi.mock("override/stores/misc", () => ({useMiscStore: () => miscStore}))
 
 import CopilotChat from "../../../../../src/components/ai/copilot/CopilotChat.vue"
 import CopilotThreadControls from "override/components/ai/copilot/CopilotThreadControls.vue"
 import {providers as providersMock} from "@kestra-io/kestra-sdk/ai"
 
-const mountChat = (props = {}) => mount(CopilotChat, {props, global: mountGlobal})
+// Tracked and unmounted after each test: a live instance keeps watching `miscStore.copilotPrompt`,
+// so a leaked one from an earlier test would consume the next test's seeded prompt before its own
+// instance mounts.
+const mounted: ReturnType<typeof mount>[] = []
+
+const mountChat = (props = {}) => {
+    const wrapper = mount(CopilotChat, {props, global: mountGlobal})
+    mounted.push(wrapper)
+    return wrapper
+}
 
 describe("CopilotChat", () => {
     beforeEach(() => {
@@ -62,6 +71,10 @@ describe("CopilotChat", () => {
         state.noteContext.mockReset()
         state.thread.value = null
         miscStore.copilotPrompt = null
+    })
+
+    afterEach(() => {
+        mounted.splice(0).forEach((wrapper) => wrapper.unmount())
     })
 
     it("shows the empty state when there are no messages", () => {
@@ -87,13 +100,71 @@ describe("CopilotChat", () => {
     })
 
     it("prefills the composer from a seeded prompt and clears it", async () => {
-        miscStore.copilotPrompt = "Fix this error"
+        miscStore.copilotPrompt = {text: "Fix this error", autoSend: false, newChat: false}
         const w = mountChat()
         await flushPromises()
         const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
         expect(textarea.value).toBe("Fix this error")
         // Consumed once, so it doesn't re-seed on the next open.
         expect(miscStore.copilotPrompt).toBeNull()
+        // Seeded, not sent — the user reviews and submits it.
+        expect(state.sendChat).not.toHaveBeenCalled()
+    })
+
+    it("sends an autoSend prompt itself instead of seeding the composer", async () => {
+        // "Generate a unit test" and friends: the user already committed by picking the action.
+        miscStore.copilotPrompt = {text: "Generate a unit test for the flow hello", autoSend: true, newChat: false}
+        const w = mountChat()
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test for the flow hello"}))
+        const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea.value).toBe("")
+        expect(miscStore.copilotPrompt).toBeNull()
+    })
+
+    it("starts a fresh chat before sending a newChat prompt", async () => {
+        // "Generate a unit test" must not inherit whatever the restored conversation was about.
+        state.messages.value = [{id: "1", role: "USER", type: "TEXT", content: "unrelated"}]
+        miscStore.copilotPrompt = {text: "Generate a unit test for the flow hello", autoSend: true, newChat: true}
+        mountChat()
+        await flushPromises()
+        expect(state.reset).toHaveBeenCalled()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test for the flow hello"}))
+        // Reset first, then send — never the other way round.
+        expect(state.reset.mock.invocationCallOrder[0]).toBeLessThan(state.sendChat.mock.invocationCallOrder[0])
+    })
+
+    it("does not touch the current conversation for a plain seeded prompt", async () => {
+        miscStore.copilotPrompt = {text: "Fix this error", autoSend: false, newChat: false}
+        mountChat()
+        await flushPromises()
+        expect(state.reset).not.toHaveBeenCalled()
+    })
+
+    it("falls back to seeding an autoSend prompt while a turn is in flight", async () => {
+        // Nothing is dropped: the prompt lands in the composer for the user to send when free.
+        state.canSend.value = false
+        miscStore.copilotPrompt = {text: "Generate a unit test", autoSend: true, newChat: false}
+        const w = mountChat()
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+        const textarea = w.find("[data-test=\"copilot-composer-input\"]").element as HTMLTextAreaElement
+        expect(textarea.value).toBe("Generate a unit test")
+    })
+
+    it("waits for the provider list before auto-sending, so the turn carries a providerId", async () => {
+        // The thread restore and the provider fetch are independent calls. Sending as soon as the
+        // restore lands would drop providerId and silently take the server default instead.
+        // Held open so the restore lands first, the way a slower provider fetch would.
+        let resolveProviders: (list: unknown) => void = () => {}
+        ;(providersMock as any).mockReturnValueOnce(new Promise((resolve) => { resolveProviders = resolve }))
+        miscStore.copilotPrompt = {text: "Generate a unit test", autoSend: true, newChat: false}
+        mountChat()
+        await flushPromises()
+        expect(state.sendChat).not.toHaveBeenCalled()
+        resolveProviders([{id: "gemini", isDefault: true}])
+        await flushPromises()
+        expect(state.sendChat).toHaveBeenCalledWith(expect.objectContaining({prompt: "Generate a unit test", providerId: "gemini"}))
     })
 
     it("forwards a composer submit to sendChat with the current mode (no scope off a plain route)", async () => {

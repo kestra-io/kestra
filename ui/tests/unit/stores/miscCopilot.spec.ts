@@ -21,8 +21,17 @@ describe("misc store — AI Copilot entry points", () => {
     it("promptCopilot seeds a prompt and opens the tab", () => {
         const store = useMiscStore()
         store.promptCopilot("Fix this error")
-        expect(store.copilotPrompt).toBe("Fix this error")
+        // Seeded by default: the user reviews the prompt and sends it.
+        expect(store.copilotPrompt).toEqual({text: "Fix this error", autoSend: false, newChat: false})
         expect(store.contextInfoBarOpenTab).toBe("ai")
         expect(store.lastContextTab).toBe("ai")
+    })
+
+    it("promptCopilot can hand over a prompt to send right away, in a fresh chat", () => {
+        // Single-purpose entry points ("Generate a unit test") start the turn on click, on their own.
+        const store = useMiscStore()
+        store.promptCopilot("Generate a unit test", {autoSend: true, newChat: true})
+        expect(store.copilotPrompt).toEqual({text: "Generate a unit test", autoSend: true, newChat: true})
+        expect(store.contextInfoBarOpenTab).toBe("ai")
     })
 })

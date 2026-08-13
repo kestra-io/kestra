@@ -24,9 +24,9 @@
              KsMarkdown provides its own copy-to-clipboard control, so no separate copy button. -->
         <KsMarkdown class="copilot-draft-yaml" data-test="copilot-draft-yaml" :content="yamlBlock" />
 
-        <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps are EE-only —
-             open in the app editor only (no direct apply), and only when the EE app path is present, so
-             OSS shows no actions. -->
+        <!-- Apply actions: flows + dashboards open in the editor or apply directly. Apps and unit
+             tests are EE-only, and only render when the matching EE path is present, so OSS shows no
+             actions. Apps are open-in-editor only (no direct apply); unit tests apply like flows. -->
         <div v-if="showActions" class="copilot-draft-footer">
             <KsButton size="small" data-test="copilot-draft-open" @click="openInEditor(draft)">
                 {{ $t("ai.copilot.draft.openInEditor") }}
@@ -53,11 +53,15 @@
 
     const props = defineProps<{draft: ArtefactDraftEvent}>()
 
-    const {applying, appSupported, openInEditor, apply} = useApplyDraft()
+    const {applying, appSupported, testSuiteSupported, openInEditor, apply} = useApplyDraft()
 
-    // Flow + dashboard drafts always have actions; app drafts only when the EE app path is present.
+    // Flow + dashboard drafts always have actions; app and unit-test drafts only when the matching
+    // EE path is present.
     const showActions = computed(
-        () => props.draft.kind === "FLOW" || props.draft.kind === "DASHBOARD" || (props.draft.kind === "APP" && appSupported),
+        () => props.draft.kind === "FLOW"
+            || props.draft.kind === "DASHBOARD"
+            || (props.draft.kind === "APP" && appSupported)
+            || (props.draft.kind === "TEST_SUITE" && testSuiteSupported),
     )
 
     // Render the YAML as a fenced code block so KsMarkdown syntax-highlights it (matching the

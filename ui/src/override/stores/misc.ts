@@ -17,10 +17,13 @@ export const useMiscStore = defineStore("misc", () => {
     // AI Copilot is the first / default context-dock tab.
     const lastContextTab = ref("ai")
     const theme = ref<SelectedTheme>("syncWithSystem")
-    // A prompt to seed into the AI Copilot composer the next time it renders. Set by entry
-    // points ("Fix with AI", the editor shortcut, …) via `promptCopilot`; consumed and cleared
-    // by CopilotChat. `null` means nothing pending.
-    const copilotPrompt = ref<string | null>(null)
+    // A prompt to hand to the AI Copilot the next time it renders. Set by entry points ("Fix with
+    // AI", "Generate a unit test", the editor shortcut, …) via `promptCopilot`; consumed and cleared
+    // by CopilotChat. `null` means nothing pending. `autoSend` distinguishes the two entry-point
+    // styles: seed the composer for the user to review and send (the default), or send the turn
+    // straight away for a single-purpose action the user already committed to by clicking it.
+    // `newChat` starts the prompt in a fresh conversation instead of continuing the current one.
+    const copilotPrompt = ref<{text: string; autoSend: boolean; newChat: boolean} | null>(null)
 
     /** Opens the AI Copilot context-dock tab. */
     function openCopilot() {
@@ -28,9 +31,9 @@ export const useMiscStore = defineStore("misc", () => {
         contextInfoBarOpenTab.value = "ai"
     }
 
-    /** Opens the AI Copilot context-dock tab and seeds its composer with `prompt`. */
-    function promptCopilot(prompt: string) {
-        copilotPrompt.value = prompt
+    /** Opens the AI Copilot context-dock tab and hands it `prompt`, seeded or sent right away. */
+    function promptCopilot(prompt: string, options?: {autoSend?: boolean; newChat?: boolean}) {
+        copilotPrompt.value = {text: prompt, autoSend: options?.autoSend ?? false, newChat: options?.newChat ?? false}
         openCopilot()
     }
 

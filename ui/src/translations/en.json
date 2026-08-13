@@ -2003,7 +2003,8 @@
           "title": {
             "flow": "Proposed flow",
             "dashboard": "Proposed dashboard",
-            "app": "Proposed app"
+            "app": "Proposed app",
+            "test_suite": "Proposed unit test"
           },
           "valid": "Valid",
           "invalid": "Needs changes"

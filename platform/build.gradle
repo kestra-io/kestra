@@ -119,6 +119,8 @@ dependencies {
         api 'org.postgresql:postgresql:42.7.13'
         api 'com.github.docker-java:docker-java:3.7.1'
         api 'com.github.docker-java:docker-java-transport-httpclient5:3.7.1'
+        // Carries no classes: just the kotlp APE, read off the classpath as /kotlp/kotlp.
+        api 'io.kestra:kotlp:0.1.0'
         api "org.opensearch.client:opensearch-java:$opensearchVersion"
         api "org.opensearch.client:opensearch-rest-client:$opensearchRestVersion"
         api "org.opensearch.client:opensearch-rest-high-level-client:$opensearchRestVersion" // used by the elasticsearch plugin

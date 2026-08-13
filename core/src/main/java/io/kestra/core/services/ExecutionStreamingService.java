@@ -75,7 +75,9 @@ public class ExecutionStreamingService {
             Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(event.executionId());
 
             if (!MapUtils.isEmpty(executionSubscribers)) {
-                Optional<Execution> execution = executionRepository.findById(event.tenantId(), event.executionId());
+                // This fan-out runs on the queue-polling thread, which has no authenticated principal,
+                // so the ACL-enforcing findById would always deny authorization on EE.
+                Optional<Execution> execution = executionRepository.findByIdWithoutAcl(event.tenantId(), event.executionId());
                 if (execution.isEmpty()) {
                     log.error("Unable to find the execution id {}", event.executionId());
                     return;
@@ -126,7 +128,9 @@ public class ExecutionStreamingService {
         // already in a terminal state, deliver the "end" event directly.
         // FluxSink is thread-safe: duplicate complete() calls are no-ops, and next()
         // after complete() is silently dropped, so double-delivery is harmless.
-        executionRepository.findById(flow.getTenantId(), executionId).ifPresent(execution ->
+        // Uses the no-ACL lookup: registerSubscriber's caller thread varies, so the ACL-enforcing findById would always
+        // deny authorization in EE
+        executionRepository.findByIdWithoutAcl(flow.getTenantId(), executionId).ifPresent(execution ->
         {
             if (isStopFollow(flow, execution)) {
                 sink.next(Event.of(execution).id("end"));

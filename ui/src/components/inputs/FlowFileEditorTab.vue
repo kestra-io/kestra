@@ -11,11 +11,12 @@
             id="flowFileEditorTab"
             ref="editorRefElement"
             class="flex-1"
-            :modelValue="source"
+            :modelValue="previewSource ?? source"
+            :original="previewSource ? source : undefined"
             :schemaType="flow ? 'flow': undefined"
             :lang="lang"
             :navbar="false"
-            :readOnly="flow && flowStore.isReadOnly"
+            :readOnly="flow && (flowStore.isReadOnly || previewSource !== undefined)"
             :path="path"
             :options="{
                 creating: isCreating,
@@ -63,7 +64,7 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject, type Ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import {apiUrl} from "override/utils/route"
-    import type * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+    import type * as monaco from "monaco-editor/editor/editor.api"
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys"
     import {usePluginsStore} from "../../stores/plugins"
@@ -115,6 +116,8 @@
 
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value)
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value)
+
+    const previewSource = computed(() => props.flow ? flowStore.previewSource : undefined)
 
     async function loadFile() {
         if (props.dirty || props.flow) return
@@ -247,7 +250,7 @@
     })
 
     function editorUpdate(newValue: string){
-        if (editorContent.value === newValue) {
+        if (editorContent.value === newValue || previewSource.value !== undefined) {
             return
         }
         if (props.flow) {

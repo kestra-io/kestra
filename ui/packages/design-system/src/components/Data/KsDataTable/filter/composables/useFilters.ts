@@ -60,6 +60,7 @@ export function useFilters(
     const actions = useFilterActions({
         tree,
         dismissed,
+        preApplied,
         searchQuery,
         updateRoute: routeSync.updateRoute,
         hasValue: routeSync.hasValue,

@@ -71,6 +71,7 @@
                     :key="message.id"
                     :message="message"
                     :isPending="message.id === pendingProposalMessageId"
+                    :isRunning="message.id === runningToolCallId"
                 />
 
                 <CopilotThinking v-if="working" :phase="workPhase" />
@@ -268,6 +269,12 @@
     // by phase — "thinking" before any output, "answering" while tokens stream, an "end" gather when
     // the turn closes. It stays hidden while a tool runs — the tool strip owns that UI.
     const lastMessage = computed(() => messages.value[messages.value.length - 1])
+
+    // While a turn streams and the latest message is a tool call, that tool is still executing (its
+    // result hasn't arrived) — flag it so its strip shows a spinner instead of sitting blank.
+    const runningToolCallId = computed(() =>
+        streaming.value && lastMessage.value?.type === "TOOL_CALL" ? lastMessage.value.id : null,
+    )
 
     const answering = computed(
         () => streaming.value && lastMessage.value?.role === "ASSISTANT" && lastMessage.value?.type === "TEXT",

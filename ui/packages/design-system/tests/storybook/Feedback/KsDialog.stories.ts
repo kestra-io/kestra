@@ -139,6 +139,39 @@ export const FormLayout: Story = {
     },
 }
 
+/** Scrollable – caps the body at 70vh and scrolls tall content inside the dialog instead of the page */
+export const Scrollable: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            const paragraphs = Array.from({length: 40}, (_, i) => `Paragraph ${i + 1} of a very tall dialog body.`)
+            return {visible, paragraphs}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open scrollable dialog</ks-button>
+                <ks-dialog v-model="visible" title="Scrollable Dialog" scrollable destroy-on-close>
+                    <!-- Mimics an el-row gutter: its negative margins must not cause horizontal scroll -->
+                    <div style="margin: 0 -8px;padding: 0 8px">gutter row</div>
+                    <p v-for="p in paragraphs" :key="p">{{ p }}</p>
+                    <template #footer>
+                        <ks-button type="primary" @click="visible = false">Close</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await userEvent.click(canvas.getByRole("button", {name: "Open scrollable dialog"}))
+        const scrollbar = document.querySelector(".kel-dialog .kel-dialog__scrollable-body .kel-scrollbar__wrap")
+        await expect(scrollbar).toBeTruthy()
+        await expect((scrollbar as HTMLElement).scrollHeight).toBeGreaterThan((scrollbar as HTMLElement).clientHeight)
+        await expect((scrollbar as HTMLElement).scrollWidth).toBeLessThanOrEqual((scrollbar as HTMLElement).clientWidth)
+    },
+}
+
 /** Destroy on close – remounts content each time */
 export const DestroyOnClose: Story = {
     render: () => ({
@@ -210,4 +243,43 @@ export const WithCustomHeader: Story = {
             </div>
         `,
     }),
+}
+
+/** Fill – `fill` caps the dialog to the viewport so its own body scrolls instead of the overlay dragging the whole dialog */
+export const Fill: Story = {
+    render: () => ({
+        components: {KsButton, KsDialog},
+        setup() {
+            const visible = ref(false)
+            const rows = Array.from({length: 80}, (_, index) => `Row ${index + 1}`)
+            return {visible, rows}
+        },
+        template: `
+            <div style="padding:24px">
+                <ks-button type="primary" @click="visible = true">Open tall dialog</ks-button>
+                <ks-dialog v-model="visible" title="Tall Dialog" top="4vh" fill destroy-on-close>
+                    <div style="overflow-y:auto;min-height:0;flex:1">
+                        <p v-for="row in rows" :key="row">{{ row }}</p>
+                    </div>
+                    <template #footer>
+                        <ks-button type="primary" @click="visible = false">Close</ks-button>
+                    </template>
+                </ks-dialog>
+            </div>
+        `,
+    }),
+    async play({canvasElement}) {
+        const canvas = within(canvasElement)
+        await userEvent.click(canvas.getByRole("button", {name: "Open tall dialog"}))
+
+        const dialog = document.querySelector(".kel-dialog") as HTMLElement
+        const overlay = document.querySelector(".kel-overlay-dialog") as HTMLElement
+
+        await expect(dialog.classList.contains("is-fill")).toBe(true)
+        await expect(dialog.getBoundingClientRect().height).toBeLessThanOrEqual(window.innerHeight)
+        await expect(overlay.scrollHeight).toBeLessThanOrEqual(overlay.clientHeight + 1)
+
+        const body = document.querySelector(".kel-dialog__body > div") as HTMLElement
+        await expect(body.scrollHeight).toBeGreaterThan(body.clientHeight)
+    },
 }

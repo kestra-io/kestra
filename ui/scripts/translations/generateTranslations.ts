@@ -117,6 +117,7 @@ async function translateText(client: TranslationClient, text: string, targetLang
           Apply similar context-appropriate translations in other languages to avoid false friends or misleading terms.
         - State Labels in English: Keep status labels that are in all caps (e.g. WARNING, FAILED, SUCCESS, PAUSED, RUNNING) in English and in their original uppercase format.
         - Preserve Variables: Placeholders are enclosed in a SINGLE pair of curly braces (e.g. \`{label}\`, \`{key}\`). Copy them verbatim: do not translate the name inside the braces, do not rename it, do not add or remove braces, and never turn \`{label}\` into \`{{label}}\` — vue-i18n rejects double braces with a "Not allowed nest placeholder" compile error. For example, "System {label}" must stay "System {label}" in the translated text. Reproduce exactly the same set of placeholders as the source string — never invent a placeholder the source does not have, and never drop one it does.
+        - Preserve Literal Escapes: A \`{'...'}\` block is a literal, not a placeholder: it escapes a character vue-i18n would otherwise read as syntax. Copy it verbatim, keeping the braces and quotes. For example \`recipient{'@'}your-domain.com\` must keep \`{'@'}\` — writing a bare \`@\` makes the message fail to compile with "Invalid linked format".
 
         If the loaded dictionary has no key-value pairs to translate, it means we're adding a new language, and we need to translate all the keys from English to ${targetLanguage}.
 

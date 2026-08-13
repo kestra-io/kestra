@@ -2,6 +2,7 @@ import {describe, it, expect, vi} from "vitest"
 import {defineComponent, h} from "vue"
 import {mount} from "@vue/test-utils"
 import {createI18n} from "vue-i18n"
+import {createPinia} from "pinia"
 
 vi.mock("vue-router", () => ({
     useRoute: () => ({params: {id: "company.team"}}),
@@ -18,7 +19,7 @@ function mountHelpers() {
             captured = useHelpers()
             return () => h("div")
         },
-    }), {global: {plugins: [i18n]}})
+    }), {global: {plugins: [i18n, createPinia()]}})
     wrapper.unmount()
     return captured!
 }
@@ -26,13 +27,13 @@ function mountHelpers() {
 describe("namespaces useHelpers — embedded tab title suppression", () => {
     it("flows tab forwards embed:true so Flows.vue doesn't clobber the namespace title", () => {
         const {tabs} = mountHelpers()
-        const flowsTab = tabs.find((tab) => tab.name === "flows")
+        const flowsTab = tabs.value.find((tab) => tab.name === "flows")
         expect(flowsTab?.props?.embed).toBe(true)
     })
 
     it("executions tab forwards embed:true so Executions.vue doesn't clobber the namespace title", () => {
         const {tabs} = mountHelpers()
-        const executionsTab = tabs.find((tab) => tab.name === "executions")
+        const executionsTab = tabs.value.find((tab) => tab.name === "executions")
         expect(executionsTab?.props?.embed).toBe(true)
     })
 })

@@ -1,4 +1,5 @@
 import {expect, test} from "./fixtures/auth"
+import type {Page} from "@playwright/test"
 import {v4 as uuidv4} from "uuid"
 import fs from "fs"
 import {fileURLToPath} from "url"
@@ -6,6 +7,30 @@ import path from "path"
 
 // The repo doesn't set `testIdAttribute`, so `data-test` is matched by hand.
 const CREATE = "[data-test=\"flows-create\"]"
+const LANDING = "[data-test=\"new-flow-landing\"]"
+
+/**
+ * `/flows/new` opens the creation funnel, so the editor is one step behind the blank-flow
+ * form. Walked as a user would rather than bypassed with a query flag, so the specs keep
+ * covering the real entry point into the editor.
+ */
+const openEditorFromFunnel = async (page: Page, id: string, namespace: string) => {
+    await page.locator(CREATE).click()
+    await page.waitForURL("**/flows/new")
+    await expect(page.locator(LANDING)).toBeVisible()
+
+    await page.locator("[data-test=\"blank-flow-id\"]").fill(id)
+
+    // The namespace select is filterable with `allowCreate`, so typing a namespace that
+    // does not exist yet and confirming it is what creates the option.
+    await page.locator("[data-test=\"blank-flow-namespace\"]").click()
+    await page.keyboard.type(namespace)
+    await page.keyboard.press("Enter")
+
+    await expect(page.locator("[data-test=\"blank-flow-open-editor\"]")).toBeEnabled()
+    await page.locator("[data-test=\"blank-flow-open-editor\"]").click()
+    await expect(page.locator(LANDING)).toBeHidden()
+}
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -35,9 +60,7 @@ test.describe("Flow Page", () => {
         await test.step("create the example Flow", async () => {
             await page.waitForURL("**/flows")
 
-            await page.locator(CREATE).click()
-
-            await page.waitForURL("**/flows/new")
+            await openEditorFromFunnel(page, `flow_${testUUID}`.slice(0, 19), "company.team")
 
             await page.getByRole("button", {name: "Save", exact: true}).click()
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible()
@@ -66,8 +89,7 @@ test.describe("Flow Page", () => {
 
         await test.step("create a the flow by pasting the YAML", async () => {
             await expect(page.locator(CREATE)).toBeVisible()
-            await page.locator(CREATE).click()
-            await page.waitForURL("**/flows/new")
+            await openEditorFromFunnel(page, flowId, "company.team")
             // Must be awaited as an assertion: the `clear({force: true})` below skips
             // actionability checks, so it would happily fire into an unmounted editor.
             await expect(page.getByTestId("monaco-editor").getByText("Hello World")).toBeVisible()

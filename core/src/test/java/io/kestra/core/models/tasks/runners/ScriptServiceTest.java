@@ -113,14 +113,11 @@ class ScriptServiceTest {
         ScriptService.validateStoragePath("file;name.txt");
         ScriptService.validateStoragePath("path/to/file.txt");
         ScriptService.validateStoragePath("file-name_v2.txt");
-        // '%' must be accepted so that percent-encoded kestra URIs (e.g. report%231.csv) survive INTERNAL_STORAGE_PATTERN
         ScriptService.validateStoragePath("file%20name.txt");
     }
 
     @Test
     void shouldRejectOutputFileWithHash() {
-        // '#' is a URI fragment delimiter: 'report#1.csv' is silently stored as 'report',
-        // causing distinct files to collide and overwrite each other.
         assertThatThrownBy(() -> ScriptService.validateStoragePath("report#1.csv"))
             .isInstanceOf(IOException.class)
             .hasMessageContaining("unsupported characters");
@@ -128,8 +125,6 @@ class ScriptServiceTest {
 
     @Test
     void shouldMatchPercentEncodedUriWithInternalStoragePattern() {
-        // After the InternalStorage fix, '#' in a filename is percent-encoded to '%23' in the URI.
-        // INTERNAL_STORAGE_PATTERN must match such URIs so replaceInternalStorage can resolve them.
         Pattern pattern = Pattern.compile("(kestra:\\/\\/[" + "-\\p{Alnum}\\p{IsExtended_Pictographic}._\\+~%=/,:;" + "]*)",
             Pattern.UNICODE_CHARACTER_CLASS);
         String encodedUri = "kestra:///ns/exec/task/report%231.csv";
@@ -188,9 +183,6 @@ class ScriptServiceTest {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
 
-        // Colon (:) is also supported by the regex but can't be tested here:
-        // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
-        // which is consistent between read/write in production but breaks test files created directly on disk.
         Map<String, String> specialCharFiles = Map.of(
             "file,name", "kestra://some/file,name.txt",
             "file;name", "kestra://some/file;name.txt"
@@ -271,30 +263,20 @@ class ScriptServiceTest {
         var runContext = runContext(runContextFactory, "namespace");
         String jobName = ScriptService.jobName(runContext);
         assertThat(jobName).startsWith("namespace-flowid-task-");
-        // base name "namespace-flowid-task" is 21 chars. Plus 1 hyphen and 8 char suffix.
         assertThat(jobName.length()).isEqualTo(30);
         assertThat(jobName.substring(jobName.lastIndexOf('-') + 1).length()).isEqualTo(8);
 
         runContext = runContext(runContextFactory, "very.very.very.very.very.very.very.very.very.very.very.very.long.namespace");
         jobName = ScriptService.jobName(runContext);
-
-        // Assert total length is max 63
         assertThat(jobName.length()).isEqualTo(63);
 
-        // Assert the suffix is 8 chars long
         String suffix = jobName.substring(jobName.lastIndexOf("-") + 1);
         assertThat(suffix.length()).isEqualTo(8);
 
-        // Assert the base name part is 54 chars long (63 total - 8 suffix - 1 hyphen)
         String baseName = jobName.substring(0, jobName.lastIndexOf("-"));
         assertThat(baseName.length()).isEqualTo(54);
-
-        // Assert the truncated prefix is correct
         assertThat(baseName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylong");
 
-        // A 43-char namespace yields a 55-char base name ("<43 chars>-flowid-task"), which is
-        // exactly one over the 54-char budget (63 total - 8 suffix - 1 hyphen). Assert it is
-        // still truncated so the total stays within the 63-char Kubernetes limit.
         runContext = runContext(runContextFactory, "a".repeat(43));
         jobName = ScriptService.jobName(runContext);
         assertThat(jobName.length()).isEqualTo(63);
@@ -307,8 +289,6 @@ class ScriptServiceTest {
         assertThat(ScriptService.normalize("a-normal-string")).isEqualTo("a-normal-string");
         assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace"))
             .isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
-
-        // new tests for the fix
         assertThat(ScriptService.normalize("abc-_")).isEqualTo("abc");
         assertThat(ScriptService.normalize("abc.-")).isEqualTo("abc");
         assertThat(ScriptService.normalize("abc_-")).isEqualTo("abc");
@@ -318,7 +298,6 @@ class ScriptServiceTest {
     }
 
     private RunContext runContext(RunContextFactory runContextFactory, String namespace) {
-        // create a fake flow and execution
         Task task = new Task() {
             @Override
             public String getId() {

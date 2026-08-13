@@ -201,10 +201,11 @@ describe("NewFlowLanding", () => {
         const links = wrapper.findAllComponents(RouterLinkStub)
         const link = links.find(l => l.attributes("data-test") === "system-flow-card")
         expect(link).toBeDefined()
-        const to = link!.props("to") as {name: string; params: {id: string}; query: {tab: string}}
-        expect(to.name).toBe("namespaces/update")
+        // Targets the tab's own child route: the parent redirect reads `params.tab`, so a
+        // `query: {tab}` would silently land on Overview instead of the recipe builder.
+        const to = link!.props("to") as {name: string; params: {id: string}}
+        expect(to.name).toBe("namespaces/update/blueprints")
         expect(to.params.id).toBe("kestra.system")
-        expect(to.query.tab).toBe("blueprints")
     })
 
     test("Import YAML card is a button that emits import event", async () => {

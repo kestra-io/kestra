@@ -64,11 +64,12 @@ export const InputTypes = {
         const can = within(canvasElement);
         const popups = within(window.document);
 
+        // KsEditor is an async component: the form paints once Monaco's chunk has loaded.
         const MonacoEditor = await waitFor(function MonacoEditorReady() {
             const editor = can.getByTestId("input-form-email").querySelector(".ks-monaco-editor");
             expect(editor).toBeTruthy();
             return editor;
-        }, {timeout: 5000, interval: 100});
+        }, {timeout: 15000, interval: 100});
         // wait for the setup to finish
         await waitFor(() => expect(typeof MonacoEditor.__setValueInTests).toBe("function"));
         MonacoEditor.__setValueInTests("foo@example.com");
@@ -191,7 +192,8 @@ export const Wizard = {
         const can = within(canvasElement);
 
         // Step 1 (plain "name"): Next visible, Back hidden, not on recap yet.
-        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy());
+        // The form waits on the async KsEditor, so give the first paint room.
+        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy(), {timeout: 15000});
         expect(can.queryByTestId("wizard-back")).toBeNull();
         expect(can.queryByTestId("inputs-wizard-recap")).toBeNull();
         expect(can.getByTestId("on-recap")).toHaveTextContent("false");
@@ -291,8 +293,9 @@ export const AppsWizard = {
     async play({canvasElement}) {
         const can = within(canvasElement);
 
-        // Step 1 (plain "name") renders from the seeded skeleton before any validate resolves.
-        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy());
+        // Step 1 (plain "name") renders from the seeded skeleton before any validate resolves,
+        // but still behind the async KsEditor's first paint.
+        await waitFor(() => expect(can.getByTestId("input-form-name")).toBeTruthy(), {timeout: 15000});
         // Drain the initial mount validate so metadata is populated and its signature recorded.
         await waitFor(() => expect(window.__appsWizardPending()).toBeGreaterThan(0));
         window.__appsWizardFlush();

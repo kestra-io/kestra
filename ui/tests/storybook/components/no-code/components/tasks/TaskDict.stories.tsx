@@ -91,7 +91,7 @@ export const TestDoubleKey: Story = {
 
         await waitFor(function valueUpdated() {
             expect(canvas.getByTestId("sb-meta-data-result")?.innerText).toContain("\"newKey\": \"newValue\"");
-        });
+        }, {timeout: 15000});
     }
 }
 

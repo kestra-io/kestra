@@ -63,6 +63,8 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
       DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
 
@@ -73,6 +75,8 @@ jobs:
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
 
   design-system-frontend-tests:
     name: Design System Frontend tests
@@ -80,6 +84,8 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-designsystem-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
 
   publish-develop-docker:
     name: Publish Docker
@@ -104,6 +110,8 @@ jobs:
       SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
       SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
       SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
 

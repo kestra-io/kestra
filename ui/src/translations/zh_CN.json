@@ -2001,7 +2001,8 @@
           "title": {
             "flow": "建议的 flow",
             "dashboard": "建议的仪表盘",
-            "app": "拟议应用"
+            "app": "拟议应用",
+            "test_suite": "建议的单元测试"
           },
           "valid": "有效",
           "invalid": "需要修改"

@@ -2001,7 +2001,8 @@
           "title": {
             "flow": "flow proposé",
             "dashboard": "Tableau de bord proposé",
-            "app": "Application proposée"
+            "app": "Application proposée",
+            "test_suite": "Test unitaire proposé"
           },
           "valid": "Valide",
           "invalid": "Nécessite des modifications"

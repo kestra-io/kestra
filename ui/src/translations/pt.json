@@ -2001,7 +2001,8 @@
           "title": {
             "flow": "flow Proposto",
             "dashboard": "Painel Proposto",
-            "app": "Aplicativo Proposto"
+            "app": "Aplicativo Proposto",
+            "test_suite": "Teste de unidade proposto"
           },
           "valid": "Válido",
           "invalid": "Precisa de alterações"

@@ -3,6 +3,8 @@ package io.kestra.webserver.services.ai.gemini;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
@@ -82,7 +84,7 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .thinkingConfig(thinkingConfig())
             .returnThinking(true)
             .sendThinking(true)
-            .customHeaders(getAiConfiguration().customHeaders())
+            .customHeaders(customHeaders())
             .timeout(getAiConfiguration().timeout());
 
         if (getAiConfiguration().clientPem() != null) {
@@ -103,8 +105,34 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
         return builder.build();
     }
 
+    /**
+     * The headers attached to every request, resolved per call rather than once.
+     *
+     * <p>A {@link Supplier} because langchain4j evaluates it while building each request, which lets a
+     * subclass send a value that is not known at startup — the free tier's instance identity, for one, which
+     * comes from a setting that may not be readable yet while beans are still being created.
+     */
+    protected Supplier<Map<String, String>> customHeaders() {
+        Map<String, String> configured = getAiConfiguration().customHeaders();
+        return () -> configured;
+    }
+
     @Override
     public StreamingChatModel streamingChatModel(List<ChatModelListener> listeners) {
+        return buildStreamingChatModel(customHeaders(), listeners);
+    }
+
+    /**
+     * Builds the streaming model with a given header source.
+     *
+     * <p>Separated from {@link #streamingChatModel(List)} so a subclass can vary the headers per turn without
+     * holding per-turn state on a shared service — models are built per turn, services are singletons, and
+     * turns run concurrently.
+     */
+    protected StreamingChatModel buildStreamingChatModel(
+        Supplier<Map<String, String>> customHeaders,
+        List<ChatModelListener> listeners
+    ) {
         return GoogleAiGeminiStreamingChatModel.builder()
             .baseUrl(getAiConfiguration().baseUrl())
             .listeners(listeners)
@@ -119,7 +147,7 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .thinkingConfig(thinkingConfig())
             .returnThinking(true)
             .sendThinking(true)
-            .customHeaders(getAiConfiguration().customHeaders())
+            .customHeaders(customHeaders)
             .timeout(getAiConfiguration().timeout())
             .build();
     }

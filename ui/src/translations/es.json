@@ -467,7 +467,7 @@
       "search_placeholder": "Buscar Key o value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "Árbol",
-      "raw_json": "Raw JSON",
+      "raw_json": "JSON sin procesar",
       "select_prompt": "Selecciona una variable para inspeccionar su value.",
       "select_hint": "Las variables, el trigger y los task outputs se muestran a la izquierda.",
       "empty": "No hay variables disponibles para esta ejecución.",
@@ -564,17 +564,17 @@
       "intro_step3_desc_suffix": " y expresiones Pebble.",
       "intro_step3_title": "Házelo dinámico",
       "intro_sub": "Todo lo que necesitas para crear un flow en YAML: propiedades, inputs y Pebble templating, en un solo lugar.",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "Ejemplos",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "Resumen",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentación de flow",
-      "nav_examples": "Examples",
+      "nav_examples": "Ejemplos",
       "nav_outputs": "Outputs",
       "nav_overview": "Resumen",
-      "nav_properties": "Properties",
+      "nav_properties": "Propiedades",
       "non_dynamic": "no dinámico",
       "required": "Obligatorio"
     },
@@ -628,7 +628,7 @@
     "last trigger date tooltip": "Cuando el trigger se ejecutó por última vez. Puede estar en el pasado al ejecutar un backfill.",
     "context updated date tooltip": "Cuando se actualizó por última vez el contexto del trigger. Esto ocurre cuando se inicia la ejecución, finaliza (se libera el bloqueo) o después de una evaluación (incluso si no ocurre ninguna ejecución).",
     "next evaluation date tooltip": "Cuando el programador evaluará este trigger la próxima vez, basándose en su intervalo. Una evaluación solo produce una ejecución si se cumplen las condiciones del trigger.",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "last evaluation date tooltip": "Cuando el trigger fue evaluado por última vez por el scheduler, independientemente de si produjo una ejecución.",
     "conditions": "Condiciones",
     "triggerId": "ID del Trigger",
     "tenantId": "ID del tenant",
@@ -782,22 +782,22 @@
     "collapse all": "Colapsar todo",
     "expand": "Expandir",
     "collapse": "Colapsar",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
+    "filter_for": "Filtrar por",
+    "filter_out": "Filtrar",
+    "copy_value": "Copiar valor",
+    "open_page": "Abrir página",
+    "logs_copied": "Logs copiados a tu portapapeles",
+    "expand_by_default": "Expandir logs estructurados por defecto",
+    "similar lines": "líneas similares",
+    "download_logs_description": "Elige qué logs exportar. Los filtros se ajustan a tu vista actual.",
+    "display_settings": "Configuración de visualización",
+    "density": "Densidad",
+    "density_compact": "Compacto",
     "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "density_expanded": "Expandido",
+    "pretty_json": "JSON bonito",
+    "body_line_clamp": "Limitar altura de línea",
+    "font size": "Tamaño de fuente",
     "environment": "Entorno",
     "join_slack": "Unirse a Slack",
     "kestra": "Kestra",
@@ -994,7 +994,7 @@
       }
     },
     "no inputs": "Este flow no tiene inputs.",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "Preferencias",
     "settings": {
       "label": "Configuración",
       "updated": "{name} actualizado",
@@ -1132,10 +1132,10 @@
         "message": "Los assets conectan la observabilidad, el linaje y los metadatos de propiedad para que los equipos de la plataforma puedan solucionar problemas más rápido y desplegar con confianza."
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "Casos",
+        "header": "Gestión de incidentes",
+        "title": "Clasifica y resuelve incidentes sin salir de Kestra.",
+        "message": "Los casos en Kestra Enterprise Edition le permiten abrir, asignar y rastrear incidentes directamente desde ejecuciones fallidas, con seguimiento de SLA, líneas de tiempo de actividad y ejecuciones y activos vinculados para acelerar el análisis de la causa raíz."
       },
       "promote": {
         "title": "Promover Flows entre Entornos",
@@ -1369,7 +1369,7 @@
         }
       }
     },
-    "auditlogs": "Audit Logs",
+    "auditlogs": "Logs de Auditoría",
     "quotas": "Cuotas",
     "iam": "IAM",
     "tenant": {
@@ -1687,8 +1687,8 @@
         "content": "Agrega activos para rastrear y gestionar tus activos de datos, servicios e infraestructura."
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "¡Todavía no tienes Casos!",
+        "content": "Abra un Case para clasificar y rastrear un incidente, o vincule uno automáticamente desde una ejecución fallida."
       },
       "apiTokens": {
         "title": "Administra tus API Tokens",
@@ -2143,7 +2143,7 @@
         "flow": "flow",
         "state": "Estado",
         "read_only": "Solo lectura",
-        "open_world": "Open world",
+        "open_world": "Abrir mundo",
         "destructive": "Destructivo",
         "idempotent": "Idempotente",
         "return_direct": "Retorno directo"

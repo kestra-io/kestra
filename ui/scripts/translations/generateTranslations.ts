@@ -29,6 +29,7 @@ import {
     readFingerprints,
     writeFingerprints,
 } from "./fingerprints.ts"
+import {placeholderProblems} from "./translationRules.mjs"
 import {LANGUAGES} from "../../src/translations/languages.ts"
 
 /**
@@ -94,6 +95,12 @@ function createGate(limit: number): <T>(task: () => Promise<T>) => Promise<T> {
 // Module-level so both phases of an OSS run draw from one budget rather than one each.
 const withRequestSlot = createGate(CONCURRENCY)
 
+// How many times a translation that came back with the wrong placeholders is asked for again
+// before the key is given up on. The model is sampled at a non-zero temperature, so a reroll
+// usually fixes it; without this the bad string was simply written to the language file, and the
+// PR gate then rejected a file the generator itself had produced.
+const PLACEHOLDER_RETRIES = 3
+
 /**
  * Translates one string, or returns `undefined` if the call failed.
  *
@@ -101,11 +108,12 @@ const withRequestSlot = createGate(CONCURRENCY)
  * that key's fingerprint alone — recording it would claim a translation exists and suppress every
  * future retry.
  */
-async function translateText(client: TranslationClient, text: string, targetLanguage: string): Promise<string | undefined> {
+async function requestTranslation(client: TranslationClient, text: string, targetLanguage: string): Promise<string | undefined> {
     const prompt = `Translate the text provided after "----------" into ${targetLanguage} for use in Kestra’s orchestration UI. Follow these guidelines:
         - Output Only the Translation: Provide only the translated text, with no additional commentary or explanation.
         - Maintain Technical Accuracy: Use correct translations for technical terms (avoid literal translations that change the meaning).
         - Reserved English Terms (Do Not Translate): Keep the following terms in English (adjusting capitalization or plural forms as needed): kv store, namespace, tenant, flow, subflow, task, log, blueprint, id, trigger, label, key, value, input, output, port, worker, backfill, healthcheck, min, max. For example, in German, "log" must remain "Log" in phrases: translate "Log level" as "Log-Ebene" (not "Protokoll-Ebene"), and "Task logs" stays "Task Logs" (not "Aufgabenprotokolle"). Important: do not alter "flow", "namespace" or "tenant" at all – keep them exactly as "flow", "namespace" and "tenant". In German, "tenant" must stay "Tenant" (never "Mandant" or "Mieter").
+        - Acronyms, Formats and Product Names (Do Not Translate): Keep initialisms and format names exactly as written, in their original case, and never transliterate them into the target script: JSON, JSONL, YAML, YML, CSV, SQL, API, URL, URI, HTTP, HTTPS, UUID, UTC, ISO, RFC, CPU, TTL, JWT, OAuth, OIDC, SAML, SCIM, LDAP, SSO, IAM, RBAC, SLA, MCP, CLI, UI, AI. The same goes for product and vendor names such as Kestra, GitHub, GitLab, Slack, Docker, Kubernetes, Terraform, Python, Java, Claude, Codex and Gemini. Only the surrounding words are translated: "Raw JSON" becomes "Rohes JSON" in German and "Необработанный JSON" in Russian, never "Rohes JavaScript-Objektnotation" and never "Необработанный ДЖЕЙСОН".
         - UI Terminology Consistency: Ensure the translation sounds natural for a software interface. Avoid overly formal or word-for-word translations that feel unnatural in a UI. Use terminology that users expect in the target language. For example, in German translations:
           - State → Zustand (not "Staat")
           - Execution → Ausführung (not "Hinrichtung")
@@ -146,6 +154,28 @@ async function translateText(client: TranslationClient, text: string, targetLang
         console.log(`Error during translation: ${e}`)
         return undefined
     }
+}
+
+/**
+ * Translates one string and verifies the result interpolates exactly the placeholders its English
+ * source does, rerolling while it does not.
+ *
+ * A translation that invents or drops a placeholder is not a cosmetic defect: vue-i18n renders the
+ * invented one as an empty gap and silently loses the value behind the dropped one, and the PR gate
+ * rejects it outright. Checking here keeps the generator from writing output that its own checker
+ * refuses.
+ */
+async function translateText(client: TranslationClient, key: string, text: string, targetLanguage: string): Promise<string | undefined> {
+    for (let attempt = 0; attempt <= PLACEHOLDER_RETRIES; attempt++) {
+        const translated = await requestTranslation(client, text, targetLanguage)
+        if (translated === undefined) return undefined
+
+        const problems = placeholderProblems(key, translated, text)
+        if (problems.length === 0) return translated
+
+        console.log(`'${key}': ${problems[0]} - retrying (${attempt + 1}/${PLACEHOLDER_RETRIES})`)
+    }
+    return undefined
 }
 
 /**
@@ -284,7 +314,7 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
         // matter, and the output ordering is rebuilt from en.json just below.
         const translated: FlatDict = {}
         await Promise.all(pending.map(async (key) => {
-            const value = await translateText(client, enFlat[key], targetLanguage)
+            const value = await translateText(client, key, enFlat[key], targetLanguage)
             if (value === undefined) {
                 failedKeys.add(key)
                 console.log(`[${languageCode}] '${key}': translation failed, leaving the existing value in place.`)
@@ -300,9 +330,14 @@ export async function generateTranslations(options: GenerateTranslationsOptions)
         // in en.json. A key that was neither translated nor already present falls back to the
         // English text, so every language file keeps key parity with the reference even when a
         // translation was skipped.
+        //
+        // Falsy-coalescing rather than nullish: an empty existing value means the key was cleared
+        // precisely so this run would refill it, so a failed translation has to fall through to the
+        // English text. `??` kept the empty string instead, and an empty message renders as nothing
+        // at all - strictly worse than the English it was meant to replace.
         const result: FlatDict = {}
         for (const key of Object.keys(enFlat)) {
-            result[key] = translated[key] ?? targetFlat[key] ?? enFlat[key]
+            result[key] = translated[key] || targetFlat[key] || enFlat[key]
         }
 
         const removed = Object.keys(targetFlat).filter((key) => !(key in enFlat))
@@ -455,7 +490,7 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
 
             const translated: FlatDict = {}
             await Promise.all(pending.map(async (key) => {
-                const value = await translateText(client, enFlat[key], targetLanguage)
+                const value = await translateText(client, key, enFlat[key], targetLanguage)
                 if (value === undefined) {
                     failedKeys.add(key)
                     console.log(`[${filePath}] '${key}': translation failed, leaving the existing value in place.`)
@@ -468,7 +503,7 @@ export async function translateLocaleFiles(options: TranslateLocaleFilesOptions)
             // Rebuild the target dict in the same key order as `en`, dropping keys no longer present in `en`.
             const result: FlatDict = {}
             for (const key of Object.keys(enFlat)) {
-                result[key] = translated[key] ?? targetFlat[key] ?? enFlat[key]
+                result[key] = translated[key] || targetFlat[key] || enFlat[key]
             }
             return [code, unflattenDict(result)] as const
         }))

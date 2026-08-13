@@ -12,6 +12,7 @@ export type InputType = "STRING"
     | "ARRAY"
     | "MULTISELECT"
     | "JSON"
+    | "ION"
     | "YAML"
     | "SECRET"
     | "FILE"
@@ -178,7 +179,7 @@ export function normalize(type: InputType | undefined, value: any) {
         res = moment(res).toISOString()
     } else if (type === "TIME") {
         res = moment().startOf("day").add(res, "seconds").toString()
-    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON") {
+    } else if (type === "ARRAY" || type === "MULTISELECT" || type === "JSON" || type === "ION") {
         if (typeof res !== "string") {
             res = JSON.stringify(res).toString()
         }

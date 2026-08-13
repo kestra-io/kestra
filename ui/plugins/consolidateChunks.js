@@ -33,25 +33,29 @@ const isRealModule = (id) =>
  */
 const matches = (pattern) => (id) => isRealModule(id) && pattern.test(id)
 
+const MONACO_MODULES = /node_modules[\\/](monaco-editor|monaco-yaml|monaco-worker-manager|monaco-marker-data-provider)[\\/]|design-system[\\/]src[\\/](components[\\/]Form[\\/]KsEditor\.vue|composables[\\/](useKsEditor|useEditor|useSuggestWidgetIcons|PlaceholderContentWidget)|utils[\\/]monacoSetup)/
+// Entries that look like typos are real unified-ecosystem package names.
+const MARKDOWN_MODULES = /design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMarkdown[\\/]|node_modules[\\/](shiki|@shikijs|oniguruma-to-es|regex(-recursion|-utilities)?|remark-[^\\/]+|micromark[^\\/]*|mdast[^\\/]*|unified|unist[^\\/]*|vfile[^\\/]*|hast[^\\/]*|devlop|ccount|character-[^\\/]+|decode-named-character-reference|markdown-table|longest-streak|trim-lines|zwitch|bail|trough|escape-string-regexp)[\\/]/ // codespell:ignore devlop,trough
+
+/** Lazily loaded toolchains, each owning the private subtree of what it matches. */
+const LAZY_GROUPS = [
+    {name: "monaco", pattern: MONACO_MODULES},
+    {name: "markdown", pattern: MARKDOWN_MODULES},
+]
+
 /**
- * Static graph of an async component, minus whatever the eager graph already
- * reaches, keyed by group name. Filled during buildEnd.
+ * Everything a lazy group's own modules statically reach that the eager graph
+ * does not, keyed by group name. Filled during buildEnd.
  *
- * A group holding an async component must take that component's whole private
- * subtree: rolldown gives the dynamic import its own chunk, so every module the
- * group leaves behind stays there — and because the group chunk holds the
- * component importing them, the two chunks import each other. That cycle builds
- * cleanly and then throws ("X is not a function") the first time the component
- * loads, so it shows up as a silently blank editor or markdown surface.
+ * A group must take the whole private subtree of what it claims. Whatever it
+ * leaves behind lands in some other chunk, and since the group chunk holds the
+ * modules importing it, the two chunks end up importing each other. Such a cycle
+ * builds cleanly and then throws ("X is not a function") the first time the
+ * chunk loads, so it surfaces as a silently blank editor or markdown surface
+ * rather than as a build failure.
  * @type {Map<string, Set<string>>}
  */
 const lazySubtrees = new Map()
-
-/** Async component entry points, by the group that owns each one. */
-const LAZY_ROOTS = [
-    ["monaco", /design-system[\\/]src[\\/]components[\\/]Form[\\/]KsEditor\.vue$/],
-    ["markdown", /design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMarkdown[\\/]KsMarkdown\.vue$/],
-]
 
 /**
  * @param {import("rolldown").PluginContext} ctx
@@ -79,10 +83,15 @@ function collectLazySubtrees(ctx) {
     const ids = [...ctx.getModuleIds()]
     const eager = staticClosure(ctx, ids.filter((id) => ctx.getModuleInfo(id)?.isEntry))
 
-    for (const [name, root] of LAZY_ROOTS) {
+    for (const {name, pattern} of LAZY_GROUPS) {
+        // The other lazy group's declared modules are its own to place; swallowing
+        // them here would make one lazy chunk statically pull in the other.
+        const others = LAZY_GROUPS.filter((group) => group.name !== name)
         const subtree = new Set()
-        for (const id of staticClosure(ctx, ids.filter((candidate) => root.test(candidate)))) {
-            if (!eager.has(id) && isRealModule(id)) subtree.add(id)
+        for (const id of staticClosure(ctx, ids.filter((candidate) => isRealModule(candidate) && pattern.test(candidate)))) {
+            if (eager.has(id) || !isRealModule(id)) continue
+            if (others.some((group) => group.pattern.test(id))) continue
+            subtree.add(id)
         }
         lazySubtrees.set(name, subtree)
     }
@@ -90,7 +99,7 @@ function collectLazySubtrees(ctx) {
 
 /**
  * Matches the group's declared modules plus everything privately reachable from
- * its async component, so no dependency is left stranded in the entry chunk.
+ * them, so no dependency of theirs is left stranded in another chunk.
  * @param {string} name
  * @param {RegExp} pattern
  * @returns {(id: string) => boolean}
@@ -142,7 +151,7 @@ const GROUPS = [
     // Lazy: KsEditor is exported as an async component.
     {
         name: "monaco",
-        test: matchesWithLazySubtree("monaco", /node_modules[\\/](monaco-editor|monaco-yaml|monaco-worker-manager|monaco-marker-data-provider)[\\/]|design-system[\\/]src[\\/](components[\\/]Form[\\/]KsEditor\.vue|composables[\\/](useKsEditor|useEditor|useSuggestWidgetIcons|PlaceholderContentWidget)|utils[\\/]monacoSetup)/),
+        test: matchesWithLazySubtree("monaco", MONACO_MODULES),
         priority: -10,
         includeDependenciesRecursively: false,
     },
@@ -160,8 +169,7 @@ const GROUPS = [
     // (KsMarkdown is exported as an async component).
     {
         name: "markdown",
-        // Entries that look like typos are real unified-ecosystem package names.
-        test: matchesWithLazySubtree("markdown", /design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMarkdown[\\/]|node_modules[\\/](shiki|@shikijs|oniguruma-to-es|regex(-recursion|-utilities)?|remark-[^\\/]+|micromark[^\\/]*|mdast[^\\/]*|unified|unist[^\\/]*|vfile[^\\/]*|hast[^\\/]*|devlop|ccount|character-[^\\/]+|decode-named-character-reference|markdown-table|longest-streak|trim-lines|zwitch|bail|trough|escape-string-regexp)[\\/]/), // codespell:ignore devlop,trough
+        test: matchesWithLazySubtree("markdown", MARKDOWN_MODULES),
         priority: -15,
         includeDependenciesRecursively: false,
     },

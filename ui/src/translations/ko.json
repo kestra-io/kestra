@@ -2001,7 +2001,8 @@
           "title": {
             "flow": "제안된 flow",
             "dashboard": "제안된 대시보드",
-            "app": "제안된 앱"
+            "app": "제안된 앱",
+            "test_suite": "제안된 단위 테스트"
           },
           "valid": "유효",
           "invalid": "수정 필요"

@@ -2001,7 +2001,8 @@
           "title": {
             "flow": "提案された flow",
             "dashboard": "提案ダッシュボード",
-            "app": "提案アプリ"
+            "app": "提案アプリ",
+            "test_suite": "提案された単体テスト"
           },
           "valid": "有効",
           "invalid": "変更が必要です"

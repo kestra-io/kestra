@@ -28,7 +28,9 @@ import jakarta.annotation.Nullable;
  * @param executionId the generated execution ID.
  * @param stateType the execution state type (CREATED or FAILED).
  * @param trigger the execution trigger metadata containing plugin output variables and log file URI.
- * @param labels the execution labels including system labels (FROM, CORRELATION_ID).
+ * @param labels the labels the trigger contributes, including system labels (FROM, CORRELATION_ID). The flow's
+ *        own labels are deliberately absent: the execution takes those from the flow processed for runtime when
+ *        it is created, so carrying the raw flow's here would let them override governance.
  * @param flowRevision the flow revision at evaluation time.
  */
 public record TriggerEvaluationResult(

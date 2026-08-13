@@ -6,6 +6,7 @@ import {createPinia, setActivePinia} from "pinia"
 // `vi.fn(() => …)` infers zero-length call tuples and trips TS2493 under vue-tsc.
 const updateFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
 const createFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: false, source: ""}))
+const validateFlows = vi.fn(() => Promise.resolve([{}]))
 // GET /flows/{namespace}/{id} - used by loadFlow() to fetch a flow's source
 const getFlow = vi.fn((..._args: any[]) => Promise.resolve({id: "f", namespace: "ns", draft: true, revision: 1, source: ""}))
 
@@ -16,7 +17,7 @@ vi.mock("@kestra-io/kestra-sdk", () => ({
 // saveFlow()/createFlow() and validateFlow() go through the SDK's flows submodule, not
 // useClient()'s axios instance
 vi.mock("@kestra-io/kestra-sdk/flows", () => ({
-    validateFlows: vi.fn(() => Promise.resolve([{}])),
+    validateFlows,
     updateFlow,
     createFlow,
     flow: getFlow,
@@ -70,6 +71,8 @@ describe("flow draft save — draft resolution per entry point", () => {
         updateFlow.mockClear()
         createFlow.mockClear()
         getFlow.mockClear()
+        validateFlows.mockReset()
+        validateFlows.mockResolvedValue([{}])
         setActivePinia(createPinia())
     })
 
@@ -109,6 +112,26 @@ describe("flow draft save — draft resolution per entry point", () => {
         await store.saveAll()
         expect(lastDraftParam())
             .toBe(false)
+    })
+
+    it("saveAll() sends an invalid published flow to the backend", async () => {
+        const store = await freshStore()
+        validateFlows.mockResolvedValue([{constraints: "Invalid task configuration"}])
+
+        await store.saveAll()
+
+        expect(updateFlow)
+            .toHaveBeenCalledTimes(1)
+    })
+
+    it("save() sends an invalid published flow to the backend", async () => {
+        const store = await freshStore()
+        validateFlows.mockResolvedValue([{constraints: "Invalid task configuration"}])
+
+        await store.save()
+
+        expect(updateFlow)
+            .toHaveBeenCalledTimes(1)
     })
 
     // FlowRun's executionsStore.flow (the run-panel's flow) has no `source` field: publishDraft(target)

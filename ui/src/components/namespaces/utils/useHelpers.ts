@@ -3,12 +3,13 @@ import {useRoute} from "vue-router"
 import {useI18n} from "vue-i18n"
 import {NAMESPACE_PARENT_ROUTE} from "../../../utils/namespaceTabRoutes"
 
-import BlueprintsBrowser from "../../flows/blueprints/BlueprintsBrowser.vue"
+import SystemBlueprintsTab from "../../flows/SystemBlueprintsTab.vue"
 import Flows from "../../../components/flows/Flows.vue"
 import Executions from "../../../components/executions/Executions.vue"
 import Dependencies from "../../../components/dependencies/Dependencies.vue"
 import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue"
 import NamespaceOverview from "../../../components/namespaces/components/NamespaceOverview.vue"
+import {useMiscStore} from "override/stores/misc"
 
 export interface Tab {
     locked?: boolean;
@@ -61,8 +62,10 @@ export const ORDER = [
 export function useHelpers() {
     const route = useRoute()
     const {t} = useI18n({useScope: "global"})
+    const miscStore = useMiscStore()
 
     const namespace = computed(() => route.params?.id) as Ref<string>
+    const systemNamespace = computed(() => miscStore.configs?.systemNamespace ?? "system")
 
     const parts = computed(() => namespace.value?.split(".") ?? [])
     const details: Ref<Details> = computed(() => ({
@@ -81,15 +84,13 @@ export function useHelpers() {
         ],
     }))
 
-    const tabs: Tab[] = [
-        // If it's a system namespace, include the blueprints tab
-        ...(namespace.value === "system" ? [
+    const tabs = computed<Tab[]>(() => [
+        ...(namespace.value === systemNamespace.value ? [
             {
                 name: "blueprints",
-                title: t("blueprints.title"),
-                component: BlueprintsBrowser,
-                props: {tab: "community", system: true, embed: true},
-                blueprintDetail: true,
+                title: t("recipe.section_title"),
+                component: SystemBlueprintsTab,
+                props: {namespace: namespace.value},
             },
         ]
             : []),
@@ -139,7 +140,7 @@ export function useHelpers() {
             props: {namespace: namespace.value},
             maximized: true,
         },
-    ]
+    ])
 
     return {details, tabs}
 }

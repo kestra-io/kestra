@@ -28,6 +28,7 @@ import io.kestra.core.models.flows.input.FloatInput;
 import io.kestra.core.models.flows.input.FormInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
+import io.kestra.core.models.flows.input.IonInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.ReusableInputsInput;
 import io.kestra.core.models.flows.input.SecretInput;
@@ -439,6 +440,89 @@ class FlowInputOutputTest {
 
         // Then
         assertThat(results.get("input")).isEqualTo("default");
+    }
+
+    @Test
+    void shouldParseIonTextIntoStructuredValues() {
+        // Given
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    IonInput.builder().id("record").type(Type.ION).build(),
+                    IonInput.builder().id("items").type(Type.ION).build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of(
+                "record", "{name:\"Ada\",nested:{active:true}}",
+                "items", "[\"one\",\"two\"]"
+            )
+        );
+
+        // Then
+        assertThat(result.get("record")).isEqualTo(
+            Map.of("name", "Ada", "nested", Map.of("active", true))
+        );
+        assertThat(result.get("items")).isEqualTo(List.of("one", "two"));
+    }
+
+    @Test
+    void shouldPassThroughStructuredIonValues() {
+        // Given
+        Map<String, Object> record = Map.of("name", "Ada");
+        List<String> items = List.of("one", "two");
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(
+                List.of(
+                    IonInput.builder().id("record").type(Type.ION).build(),
+                    IonInput.builder().id("items").type(Type.ION).build()
+                )
+            )
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of("record", record, "items", items)
+        );
+
+        // Then
+        assertThat(result).containsEntry("record", record).containsEntry("items", items);
+    }
+
+    @Test
+    void shouldParseIonTextDefaultIntoStructuredValue() {
+        // Given
+        IonInput input = IonInput.builder()
+            .id("record")
+            .type(Type.ION)
+            .defaults(Property.ofValue("{name:\"Ada\"}"))
+            .build();
+        Flow flow = Flow.builder()
+            .id("test-flow")
+            .namespace("io.kestra.test")
+            .inputs(List.of(input))
+            .build();
+
+        // When
+        Map<String, Object> result = flowInputOutput.readExecutionInputs(
+            flow,
+            DEFAULT_TEST_EXECUTION,
+            Map.of()
+        );
+
+        // Then
+        assertThat(result.get("record")).isEqualTo(Map.of("name", "Ada"));
     }
 
     @Test

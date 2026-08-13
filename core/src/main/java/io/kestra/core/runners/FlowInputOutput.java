@@ -59,6 +59,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Singleton
 public class FlowInputOutput {
 
+    private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
 
     private final StorageInterface storageInterface;
@@ -420,7 +421,7 @@ public class FlowInputOutput {
             case TIME -> resolveDefaultPropertyAs(input, renderer, LocalTime.class);
             case DURATION -> resolveDefaultPropertyAs(input, renderer, Duration.class);
             case FILE, URI -> resolveDefaultPropertyAs(input, renderer, URI.class);
-            case JSON, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
+            case JSON, ION, YAML -> resolveDefaultPropertyAs(input, renderer, Object.class);
             case ARRAY -> resolveDefaultPropertyAsList(input, renderer, Object.class);
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
             case FORM, REUSABLE_INPUTS -> throw new IllegalStateException("FORM and REUSABLE_INPUTS inputs must be expanded before resolution");
@@ -429,7 +430,7 @@ public class FlowInputOutput {
 
     /**
      * Returns {@code true} for input types that treat an empty string as a valid value.
-     * All other types (INT, FLOAT, BOOL, DATE/TIME variants, DURATION, JSON, YAML, URI, FILE,
+     * All other types (INT, FLOAT, BOOL, DATE/TIME variants, DURATION, JSON, ION, YAML, URI, FILE,
      * ARRAY, MULTISELECT) cannot be meaningfully parsed from {@code ""} and should treat it as absent.
      * FORM inputs are always expanded before reaching this point, so they are intentionally omitted.
      */
@@ -566,6 +567,7 @@ public class FlowInputOutput {
                     }
                 }
                 case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current : JacksonMapper.toObject(current.toString());
+                case ION -> (current instanceof Map || current instanceof Collection<?>) ? current : ION_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case YAML -> (current instanceof Map || current instanceof Collection<?>) ? current : YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case URI -> {
                     URI uri = java.net.URI.create(current.toString());

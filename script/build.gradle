@@ -12,23 +12,42 @@ tasks.register('downloadKotlp') {
     onlyIf { !(kotlpBinary.exists() && kotlpVersionMarker.exists() && kotlpVersionMarker.text.trim() == version) }
     doLast {
         def url = "https://github.com/kestra-io/kotlp/releases/download/v${version}/kotlp"
+        // GitHub throttles anonymous release-asset downloads by closing the connection without a
+        // response ("Unexpected end of file from server"). CI runners behind a shared egress IP hit
+        // it regularly, so authenticate when a token is available and always retry a few times.
+        def token = System.getenv("GITHUB_TOKEN") ?: System.getenv("GH_TOKEN")
+        def attempts = 5
         kotlpBinary.parentFile.mkdirs()
-        try {
-            def connection = URI.create(url).toURL().openConnection()
-            connection.connectTimeout = 30_000
-            connection.readTimeout = 300_000
-            if (connection.responseCode != 200) {
-                throw new GradleException("Cannot download the kotlp binary from '%s': HTTP %d.".formatted(url, connection.responseCode))
+        IOException lastFailure = null
+        for (int attempt = 1; attempt <= attempts; attempt++) {
+            try {
+                def connection = URI.create(url).toURL().openConnection()
+                connection.connectTimeout = 30_000
+                connection.readTimeout = 300_000
+                if (token) {
+                    connection.setRequestProperty("Authorization", "Bearer %s".formatted(token))
+                }
+                if (connection.responseCode != 200) {
+                    throw new GradleException("Cannot download the kotlp binary from '%s': HTTP %d.".formatted(url, connection.responseCode))
+                }
+                def expectedLength = connection.contentLengthLong
+                def downloaded = connection.inputStream.withStream { input ->
+                    kotlpBinary.withOutputStream { output -> input.transferTo(output) }
+                }
+                if (0 < expectedLength && downloaded != expectedLength) {
+                    throw new IOException("truncated download, got %d of %d bytes".formatted(downloaded, expectedLength))
+                }
+                kotlpVersionMarker.text = version
+                return
+            } catch (IOException e) {
+                lastFailure = e
+                kotlpBinary.delete()
+                kotlpVersionMarker.delete()
+                logger.warn("Cannot download the kotlp binary from '{}' (attempt {}/{}): {}. Retrying.", url, attempt, attempts, e.getMessage())
+                sleep(2_000L * attempt)
             }
-            connection.inputStream.withStream { input ->
-                kotlpBinary.withOutputStream { output -> input.transferTo(output) }
-            }
-            kotlpVersionMarker.text = version
-        } catch (IOException e) {
-            kotlpBinary.delete()
-            kotlpVersionMarker.delete()
-            throw new GradleException("Cannot download the kotlp binary from '%s': %s.".formatted(url, e.getMessage()), e)
         }
+        throw new GradleException("Cannot download the kotlp binary from '%s' after %d attempts: %s.".formatted(url, attempts, lastFailure.getMessage()), lastFailure)
     }
 }
 processResources.dependsOn downloadKotlp

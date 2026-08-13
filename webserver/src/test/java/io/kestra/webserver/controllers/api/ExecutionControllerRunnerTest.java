@@ -3084,7 +3084,6 @@ class ExecutionControllerRunnerTest {
 
     }
 
-    @FlakyTest(description = "SSE event stream race: the 'end-all' event depends on live queue delivery of the resumed parent")
     @Test
     @LoadFlows(
         value = { "flows/valids/follow-dependencies-partial-parent.yaml",
@@ -3104,17 +3103,15 @@ class ExecutionControllerRunnerTest {
         Execution child = awaitTerminatedExecutionOfFlow(tenantId, childFlowId);
         assertThat(child.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        // When: following the dependencies of the still-paused parent.
-        // copy-on-write so the assertions below can iterate while the SSE subscriber still appends
+        // When: following the dependencies of the still-paused parent. Only the pre-scan of
+        // already-existing executions is asserted here, so no assertion depends on a queue delivery:
+        // it runs before the queue subscription, hence the first event of each flow is its verdict.
         List<Event<ExecutionStatusEvent>> events = new CopyOnWriteArrayList<>();
         Disposable subscription = sseClient
             .eventStream("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
             .subscribe(events::add);
 
         try {
-            // Then: the pre-scan of already-existing executions ends the terminated child and only
-            // progresses the still-paused parent. The pre-scan runs before the queue subscription, so
-            // the first event of each flow is its pre-scan verdict.
             await()
                 .atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofMillis(250))
@@ -3124,30 +3121,33 @@ class ExecutionControllerRunnerTest {
                     assertThat(eventsForFlow(events, parentFlowId)).isNotEmpty();
                 });
 
+            // Then: the terminated child is ended while the still-paused parent only progresses.
             assertThat(eventsForFlow(events, childFlowId).getFirst().getId()).isEqualTo("end");
             assertThat(eventsForFlow(events, parentFlowId).getFirst().getId()).isEqualTo("progress");
             // the stream stays open: the parent is still a pending dependency
             assertThat(events).extracting(Event::getId).doesNotContain("end-all");
-
-            // When: the parent is resumed, it terminates too and the stream can complete.
-            HttpResponse<?> resume = client.toBlocking().exchange(
-                HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/actions/resume", null)
-            );
-            assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-
-            await()
-                .atMost(Duration.ofSeconds(30))
-                .pollInterval(Duration.ofMillis(250))
-                .untilAsserted(() -> assertThat(events).extracting(Event::getId).contains("end-all"));
-
-            // Then: the child was pruned from the dependencies by the pre-scan so it is never ended
-            // twice, and the parent got its own 'end'.
-            assertThat(eventsForFlow(events, childFlowId)).hasSize(1);
-            assertThat(eventsForFlow(events, parentFlowId)).extracting(Event::getId).contains("end");
-            assertThat(events.getLast().getId()).isEqualTo("end-all");
         } finally {
             subscription.dispose();
         }
+
+        // When: the parent is resumed, the whole graph terminates.
+        HttpResponse<?> resume = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/actions/resume", null)
+        );
+        assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(tenantId, parent.getId(), execution -> execution.getState().isTerminated());
+
+        // Then: a stream opened on the terminated graph is ended by the pre-scan alone, so it
+        // completes on its own and every dependency is ended exactly once.
+        List<Event<ExecutionStatusEvent>> terminatedEvents = sseClient
+            .eventStream("/api/v1/" + tenantId + "/executions/" + parent.getId() + "/follow-dependencies?expandAll=true", ExecutionStatusEvent.class)
+            .collectList()
+            .block(Duration.ofSeconds(30));
+
+        assertThat(terminatedEvents).isNotNull();
+        assertThat(eventsForFlow(terminatedEvents, childFlowId)).extracting(Event::getId).containsExactly("end");
+        assertThat(eventsForFlow(terminatedEvents, parentFlowId)).extracting(Event::getId).containsExactly("end");
+        assertThat(terminatedEvents.getLast().getId()).isEqualTo("end-all");
     }
 
     private static List<Event<ExecutionStatusEvent>> eventsForFlow(List<Event<ExecutionStatusEvent>> events, String flowId) {

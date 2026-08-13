@@ -98,7 +98,7 @@
                 </router-link>
 
                 <router-link
-                    :to="{name: 'namespaces/update', params: {tenant: route.params.tenant, id: systemNamespace}, query: {tab: 'blueprints'}}"
+                    :to="{name: 'namespaces/update/blueprints', params: {tenant: route.params.tenant, id: systemNamespace}}"
                     class="secondary-card"
                     data-test="system-flow-card"
                 >

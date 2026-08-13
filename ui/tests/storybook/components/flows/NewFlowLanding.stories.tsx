@@ -37,7 +37,7 @@ const pinia = createPinia()
 const STORY_ROUTES = [
     {path: "/", name: "home", component: {template: "<div />"}},
     {path: "/blueprints/:kind/:tab", name: "blueprints", component: {template: "<div />"}},
-    {path: "/namespaces/:id", name: "namespaces/update", component: {template: "<div />"}},
+    {path: "/namespaces/:id/blueprints", name: "namespaces/update/blueprints", component: {template: "<div />"}},
 ]
 
 const meta: Meta<typeof NewFlowLanding> = {

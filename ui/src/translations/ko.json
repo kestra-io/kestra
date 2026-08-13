@@ -2,6 +2,157 @@
   "ko": {
     "loading": "로딩 중...",
     "more actions": "추가 작업",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "문자, 숫자, 점, 대시, 밑줄만 사용하고, 문자로 시작하거나 숫자로 시작해야 합니다.",
+        "id_label": "flow id",
+        "id_placeholder": "my-flow",
+        "namespace_invalid": "소문자, 숫자, 점, 대시, 밑줄만 사용하며, 소문자 또는 숫자로 시작해야 합니다.",
+        "namespace_placeholder": "namespace를 선택하세요",
+        "namespaces_error": "namespace를 로드할 수 없습니다. namespace를 수동으로 입력하세요.",
+        "open_editor": "에디터 열기",
+        "subtitle": "hello-world 스타터로 시작하여 처음부터 빌드하세요.",
+        "title": "빈 flow"
+      },
+      "blueprints": {
+        "subtitle": "커뮤니티 카탈로그에서 미리 만들어진 flow를 선택하세요.",
+        "title": "블루프린트 찾아보기"
+      },
+      "import": {
+        "back": "뒤로",
+        "error": {
+          "empty": "YAML 콘텐츠가 비어 있습니다.",
+          "invalid_mapping": "유효하지 않은 flow YAML: 목록 또는 스칼라가 아닌 키-값 매핑이 필요합니다.",
+          "parse_error": "YAML을 구문 분석할 수 없습니다.",
+          "too_large": "파일이 너무 큽니다. 대신 flow 정의를 붙여넣거나 1MB 미만의 파일을 업로드하세요."
+        },
+        "paste_label": "YAML 붙여넣기",
+        "read_error": "파일을 읽을 수 없습니다.",
+        "submit": "flow 가져오기",
+        "subtitle": "기존 flow 정의를 붙여넣거나 업로드하세요.",
+        "title": "YAML 가져오기",
+        "upload_button": ".yml / .yaml 업로드",
+        "upload_label": "또는 파일 업로드",
+        "upload_tip": ".yml 및 .yaml 파일을 허용합니다."
+      },
+      "subtitle": "빈 캔버스에서 시작하거나, blueprint를 탐색하거나, 기존 YAML을 가져오세요.",
+      "system": {
+        "badge": "시스템",
+        "subtitle": "플랫폼을 위한 알림 또는 자동화 flow를 구축하세요.",
+        "title": "시스템 flow 생성"
+      },
+      "title": "새 flow 생성"
+    },
+    "recipe": {
+      "create_flow": "flow 생성",
+      "email": "이메일",
+      "execution": {
+        "include_sub": "하위 namespace 포함",
+        "include_sub_hint_off": "정확한 namespace의 flow만 이 알림을 트리거합니다.",
+        "include_sub_hint_on": "하위 namespace의 flow도 이 알림을 트리거합니다.",
+        "namespace_placeholder": "namespace를 선택하세요",
+        "namespaces_error": "namespace를 로드할 수 없습니다. 감시할 namespace를 입력하거나 나중에 다시 시도하세요.",
+        "states": "이러한 상태에서",
+        "states_recommended": "FAILED는 알림을 위한 권장 기본값입니다.",
+        "states_required": "하나 이상의 상태를 선택하세요.",
+        "watch_namespace": "namespace 보기"
+      },
+      "notify": {
+        "email_label": "이메일",
+        "email_sub": "이메일 알림 보내기",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "custom_label": "사용자 지정",
+        "custom_note": "자리 표시자 task가 추가되었습니다. 편집기에서 이를 알림 플러그인으로 교체하세요.",
+        "custom_sub": "나만의 알림 task 추가",
+        "plugin_unavailable": "플러그인이 설치되지 않았습니다.",
+        "slack_channel_placeholder": "#알림",
+        "slack_sub": "Slack 채널에 메시지 게시",
+        "teams_sub": "Teams 채널로 카드 보내기",
+        "teams_webhook_placeholder": "Teams 수신 웹훅 URL"
+      },
+      "other": {
+        "load_error": "Triggers를 로드할 수 없습니다. 나중에 다시 시도하세요.",
+        "no_results": "트리거를 찾을 수 없습니다.",
+        "search_label": "트리거 검색",
+        "search_placeholder": "이름 또는 유형으로 필터링"
+      },
+      "schedule": {
+        "cron": "Cron 표현식",
+        "custom": "사용자 지정",
+        "daily": "매일",
+        "daily_hint": "매일 오전 9시에 실행됩니다.",
+        "frequency": "빈도",
+        "hourly": "시간별",
+        "hourly_hint": "매시간 0분에 실행됩니다.",
+        "timezone": "시간대",
+        "timezone_placeholder": "시간대 선택 (기본값 UTC)",
+        "weekly": "매주",
+        "weekly_hint": "매주 월요일 오전 9시에 실행됩니다."
+      },
+      "section_subtitle": "플랫폼을 모니터링하고 팀에 자동으로 알림을 보내는 flow를 구축하세요.",
+      "section_title": "시스템 flow 생성",
+      "summary": {
+        "any_namespace": "모든 namespace",
+        "empty": "flow를 미리 보려면 trigger 및 하나 이상의 알림 채널을 구성하세요.",
+        "exact_match": "정확히 일치",
+        "execution": "{ns} ({scope})의 flow가 {states} 상태에 도달하면 {channels}를 통해 알림.",
+        "including_sub": "및 하위 namespace",
+        "invalid_hint": "알림 채널을 하나 이상 추가하고 트리거 구성을 완료하세요.",
+        "invalid_hint_trigger": "트리거 구성을 완료하세요.",
+        "no_channel": "선택한 채널",
+        "other": "{trigger} 트리거가 실행되면 {channels}를 통해 알림.",
+        "schedule": "일정 \"{cron}\"에 따라 {channels}를 통해 알림.",
+        "selected_trigger": "선택됨",
+        "title": "요약",
+        "webhook": "웹훅이 수신되면 {channels}을(를) 통해 알립니다.",
+        "preview_title": "미리보기",
+        "live": "라이브"
+      },
+      "then": {
+        "no_channel_warning": "하나 이상의 알림 채널을 선택하세요.",
+        "subtitle": "팀에 알릴 방법을 선택하세요.",
+        "title": "그 다음 알림",
+        "unavailable_channels_warning": "{channels}: 이 trigger 유형에 대한 플러그인이 설치되지 않아 알림이 전송되지 않습니다."
+      },
+      "trigger": {
+        "case_sub": "EE 전용 기능",
+        "case_title": "케이스 상태",
+        "execution_sub": "flow 상태 변경에 반응합니다.",
+        "execution_title": "실행 상태",
+        "other_sub": "사용 가능한 모든 trigger 플러그인",
+        "other_title": "다른 trigger",
+        "schedule_sub": "시간 일정에 따라 실행",
+        "schedule_title": "스케줄",
+        "webhook_sub": "HTTP 요청에 의해 트리거됨",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "이 URL로 POST 요청을 보내 flow를 트리거합니다.",
+        "endpoint_url": "엔드포인트 URL",
+        "key_label": "Webhook 키",
+        "key_placeholder": "이 웹훅에 대한 고유한 key를 입력하세요"
+      },
+      "when": {
+        "subtitle": "이 시스템 flow를 트리거할 요소를 선택하세요.",
+        "title": "이벤트 발생 시",
+        "trigger_type": "트리거 유형"
+      },
+      "hero_eyebrow": "내 시스템 flow",
+      "hero_empty": "flow를 미리 보려면 trigger와 channel을 선택하세요.",
+      "browse_blueprints": "템플릿에서 시작하시겠습니까? 커뮤니티 시스템 blueprint 찾아보기",
+      "start_blank": "직접 작성하시겠습니까? 단계를 건너뛰고 빈 flow를 여세요.",
+      "steps": {
+        "trigger_title": "트리거",
+        "trigger_desc": "실행 시",
+        "trigger_heading": "이 flow는 언제 실행되어야 합니까?",
+        "notify_title": "알림",
+        "notify_desc": "누가 듣나요",
+        "notify_heading": "팀에 어떻게 알릴까요?",
+        "review_title": "검토",
+        "review_desc": "확인 및 생성",
+        "review_heading": "시스템 flow 검토"
+      }
+    },
     "toggle menu": "메뉴 전환",
     "panel actions": "패널 작업",
     "playground actions": "플레이그라운드 작업",
@@ -316,7 +467,7 @@
       "search_placeholder": "Key 또는 value 검색...",
       "tasks_outputs": "Tasks outputs",
       "tree": "트리",
-      "raw_json": "Raw JSON",
+      "raw_json": "원시 JSON",
       "select_prompt": "value를 확인할 변수를 선택하세요.",
       "select_hint": "변수, trigger, 그리고 task output이 왼쪽에 나열됩니다.",
       "empty": "이 실행에 사용할 수 있는 변수가 없습니다.",
@@ -383,7 +534,7 @@
     "plugins": {
       "names": "플러그인들",
       "release": "릴리스 노트",
-      "beta": "Beta",
+      "beta": "베타",
       "copy_type": "유형 복사",
       "deprecated": "사용 중단",
       "dynamic": "동적",
@@ -413,17 +564,17 @@
       "intro_step3_desc_suffix": "와 Pebble 표현식을 사용하세요.",
       "intro_step3_title": "동적으로 만들기",
       "intro_sub": "YAML로 flow를 만드는 데 필요한 모든 것：속성, inputs, Pebble templating을 한 곳에서.",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "예시",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "개요",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow 문서",
-      "nav_examples": "Examples",
+      "nav_examples": "예시",
       "nav_outputs": "Outputs",
       "nav_overview": "개요",
-      "nav_properties": "Properties",
+      "nav_properties": "속성",
       "non_dynamic": "비동적",
       "required": "필수"
     },
@@ -477,7 +628,7 @@
     "last trigger date tooltip": "트리거가 마지막으로 실행된 시점입니다. 백필을 실행할 때 과거일 수 있습니다.",
     "context updated date tooltip": "트리거의 컨텍스트가 마지막으로 업데이트된 시점입니다. 이는 실행이 트리거되거나, 완료되었을 때(잠금 해제), 또는 평가 후(실행이 발생하지 않더라도) 발생합니다.",
     "next evaluation date tooltip": "스케줄러가 간격에 따라 이 trigger를 다음에 평가할 시점입니다. 평가는 trigger의 조건이 충족될 경우에만 실행을 생성합니다.",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "last evaluation date tooltip": "스케줄러가 마지막으로 트리거를 평가한 시점 (실행 생성 여부와 무관).",
     "conditions": "조건",
     "triggerId": "트리거 ID",
     "tenantId": "tenant ID",
@@ -631,22 +782,22 @@
     "collapse all": "모두 축소",
     "expand": "확장",
     "collapse": "축소",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
-    "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "filter_for": "필터링",
+    "filter_out": "필터링",
+    "copy_value": "값 복사",
+    "open_page": "페이지 열기",
+    "logs_copied": "로그가 클립보드에 복사되었습니다.",
+    "expand_by_default": "기본적으로 구조화된 log 확장",
+    "similar lines": "유사한 라인",
+    "download_logs_description": "내보낼 log를 선택하세요. 필터는 현재 보기에 기본 설정됩니다.",
+    "display_settings": "표시 설정",
+    "density": "밀도",
+    "density_compact": "압축",
+    "density_normal": "일반",
+    "density_expanded": "확장됨",
+    "pretty_json": "예쁜 JSON",
+    "body_line_clamp": "줄 높이 제한",
+    "font size": "글꼴 크기",
     "environment": "환경",
     "join_slack": "Slack 참여",
     "kestra": "Kestra",
@@ -789,9 +940,9 @@
     "Set labels to execution": "실행 <code>{id}</code>의 라벨 추가 또는 업데이트",
     "Set labels done": "실행의 라벨이 성공적으로 설정되었습니다",
     "bulk set labels": "<code>{executionCount}</code>개의 실행에 label을 설정하시겠습니까?",
-    "true": "True",
-    "false": "False",
-    "undefined": "Undefined",
+    "true": "참",
+    "false": "거짓",
+    "undefined": "정의되지 않음",
     "execution-include-non-terminated": "종료되지 않은 실행을 포함하시겠습니까?",
     "execution-warn-title": "중요한 WARNING!",
     "execution-warn-deleting-still-running": "이 작업을 취소하고 진행 중인 실행을 먼저 중지할 것을 강력히 권장합니다. 종료되지 않은 실행을 삭제하면 concurrency 문제, flow 종속성 관리 불일치, 인스턴스에서의 좀비 프로세스가 발생할 수 있으며, 이는 시스템 성능을 저하시킬 수 있습니다. 삭제를 진행하기 전에 이러한 위험을 충분히 이해했는지 확인하십시오.",
@@ -843,7 +994,7 @@
       }
     },
     "no inputs": "이 flow에는 입력이 없습니다.",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "환경설정",
     "settings": {
       "label": "설정",
       "updated": "{name} 업데이트됨",
@@ -981,10 +1132,10 @@
         "message": "자산은 관측 가능성, 계보, 소유권 메타데이터를 연결하여 플랫폼 팀이 더 빠르게 문제를 해결하고 자신 있게 배포할 수 있도록 합니다."
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "케이스",
+        "header": "인시던트 관리",
+        "title": "Kestra를 벗어나지 않고 인시던트를 분류하고 해결하세요.",
+        "message": "Kestra Enterprise Edition의 케이스를 사용하면 실패한 실행에서 직접 인시던트를 열고, 할당하고, 추적할 수 있으며, SLA 추적, 활동 타임라인, 연결된 실행 및 자산을 통해 근본 원인 분석 속도를 높일 수 있습니다."
       },
       "promote": {
         "title": "환경 간 flow 승격",
@@ -1283,7 +1434,7 @@
     },
     "webhook": {
       "curl_command": "Webhook cURL 명령어",
-      "payload": "Webhook Payload (JSON)",
+      "payload": "Webhook 페이로드 (JSON)",
       "curl_note": "이 cURL 명령어를 사용하여 사용자 정의 JSON 페이로드로 웹훅을 통해 flow를 trigger하십시오.",
       "no_triggers": "이 flow에는 활성화된 webhook trigger가 없습니다.",
       "copy_url": "웹훅 URL 복사"
@@ -1536,8 +1687,8 @@
         "content": "데이터 자산, 서비스 및 인프라를 추적하고 관리하기 위해 자산을 추가하세요."
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "아직 Case가 없습니다!",
+        "content": "인시던트를 분류하고 추적하기 위해 케이스를 열거나, 실패한 실행에서 자동으로 케이스를 연결합니다."
       },
       "apiTokens": {
         "title": "API 토큰 관리",
@@ -1992,7 +2143,7 @@
         "flow": "flow",
         "state": "상태",
         "read_only": "읽기 전용",
-        "open_world": "Open world",
+        "open_world": "세계 열기",
         "destructive": "파괴적",
         "idempotent": "멱등",
         "return_direct": "직접 반환"

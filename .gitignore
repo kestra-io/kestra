@@ -57,6 +57,7 @@ docker/app/secrets/*.yml
 
 ### Build
 core/src/main/resources/gradle.properties
+script/src/main/resources/kotlp/
 .plugins.override
 
 # H2 Database

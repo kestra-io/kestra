@@ -125,6 +125,7 @@
         default: await dashboardStore.saveDefaults({defaultHomeDashboard: id})
         }
         await fetchDashboards()
+        onSelect(id)
     }
 
     const edit = (id: string) => {

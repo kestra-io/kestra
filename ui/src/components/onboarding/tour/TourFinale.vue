@@ -100,12 +100,14 @@
         {key: "chain", docs: ["flowTrigger", "namespace"]},
     ] as const
 
+    // `blank` skips the creation funnel: the tour has just guided the user for twenty
+    // minutes and ends on "now build one yourself", so a chooser here is a step backwards.
     const startBuilding = async () => {
         isOpen.value = false
         await router.push({
             name: "flows/create",
             params: {tenant: route.params.tenant},
-            query: {namespace: TOUR_NAMESPACE},
+            query: {namespace: TOUR_NAMESPACE, blank: "true"},
         })
     }
 </script>

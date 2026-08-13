@@ -2,6 +2,157 @@
   "zh_CN": {
     "loading": "加载中...",
     "more actions": "更多操作",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "只能使用字母、数字、点、破折号和下划线，并以字母或数字开头。",
+        "id_label": "flow id",
+        "id_placeholder": "我的 flow",
+        "namespace_invalid": "仅可使用小写字母、数字、点、破折号和下划线，并以小写字母或数字开头。",
+        "namespace_placeholder": "选择一个 namespace",
+        "namespaces_error": "无法加载 namespace。请手动输入一个 namespace。",
+        "open_editor": "打开编辑器",
+        "subtitle": "从 hello-world 模板开始，然后从头构建。",
+        "title": "空白 flow"
+      },
+      "blueprints": {
+        "subtitle": "从社区目录中选择一个现成的flow。",
+        "title": "浏览 blueprints"
+      },
+      "import": {
+        "back": "返回",
+        "error": {
+          "empty": "YAML 内容为空。",
+          "invalid_mapping": "无效的 flow YAML：预期为键值映射，而非列表或标量。",
+          "parse_error": "无法解析 YAML。",
+          "too_large": "文件过大。请粘贴 flow 定义，或上传小于 1 MB 的文件。"
+        },
+        "paste_label": "粘贴 YAML",
+        "read_error": "无法读取文件。",
+        "submit": "导入 flow",
+        "subtitle": "粘贴或上传现有 flow 定义。",
+        "title": "导入 YAML",
+        "upload_button": "上传 .yml / .yaml",
+        "upload_label": "或上传文件",
+        "upload_tip": "接受 .yml 和 .yaml 文件。"
+      },
+      "subtitle": "从空白画布开始，探索 blueprints，或导入现有 YAML。",
+      "system": {
+        "badge": "系统",
+        "subtitle": "为您的平台构建警报或自动化 flow。",
+        "title": "创建系统 flow"
+      },
+      "title": "创建新 flow"
+    },
+    "recipe": {
+      "create_flow": "创建 flow",
+      "email": "电子邮件",
+      "execution": {
+        "include_sub": "包含子 namespace",
+        "include_sub_hint_off": "只有精确 namespace 中的 flow 才会触发此警报。",
+        "include_sub_hint_on": "子 namespace 中的 flow 也会触发此警报。",
+        "namespace_placeholder": "选择一个 namespace",
+        "namespaces_error": "无法加载 namespace。请输入要监视的 namespace，或稍后重试。",
+        "states": "在这些状态下",
+        "states_recommended": "FAILED 是推荐的默认警报设置。",
+        "states_required": "请至少选择一个状态。",
+        "watch_namespace": "关注 namespace"
+      },
+      "notify": {
+        "email_label": "电子邮件",
+        "email_sub": "发送电子邮件通知",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "custom_label": "自定义",
+        "custom_note": "已添加一个占位符 task — 在编辑器中将其替换为任何通知插件。",
+        "custom_sub": "添加您自己的通知 task",
+        "plugin_unavailable": "插件未安装",
+        "slack_channel_placeholder": "# 警报",
+        "slack_sub": "向 Slack 频道发布消息",
+        "teams_sub": "向 Teams 频道发送卡片",
+        "teams_webhook_placeholder": "Teams 传入 webhook URL"
+      },
+      "other": {
+        "load_error": "无法加载 Triggers。请稍后重试。",
+        "no_results": "未找到任何 trigger。",
+        "search_label": "搜索 triggers",
+        "search_placeholder": "按名称或类型筛选"
+      },
+      "schedule": {
+        "cron": "Cron 表达式",
+        "custom": "自定义",
+        "daily": "每日",
+        "daily_hint": "每天上午 9:00 运行。",
+        "frequency": "频率",
+        "hourly": "每小时",
+        "hourly_hint": "每小时在第 0 分钟运行。",
+        "timezone": "时区",
+        "timezone_placeholder": "选择时区（默认为 UTC）",
+        "weekly": "每周",
+        "weekly_hint": "每周一上午 9:00 运行。"
+      },
+      "section_subtitle": "构建一个 flow，用于监控您的平台并自动通知您的团队。",
+      "section_title": "创建系统 flow",
+      "summary": {
+        "any_namespace": "任何 namespace",
+        "empty": "配置 trigger 和至少一个通知 channel 来预览您的 flow。",
+        "exact_match": "精确匹配",
+        "execution": "当 {ns} ({scope}) 中的一个 flow 达到 {states} 状态时，通过 {channels} 通知。",
+        "including_sub": "和 sub-namespaces",
+        "invalid_hint": "添加至少一个通知渠道并完成 trigger 配置。",
+        "invalid_hint_trigger": "完成 trigger 配置。",
+        "no_channel": "您选择的渠道",
+        "other": "当 {trigger} trigger 触发时，通过 {channels} 通知。",
+        "schedule": "在计划 \"{cron}\" 上，通过 {channels} 通知。",
+        "selected_trigger": "已选择",
+        "title": "摘要",
+        "webhook": "当收到 webhook 时，通过 {channels} 通知。",
+        "preview_title": "预览",
+        "live": "实时"
+      },
+      "then": {
+        "no_channel_warning": "请选择至少一个通知渠道。",
+        "subtitle": "选择如何通知您的团队。",
+        "title": "然后通知",
+        "unavailable_channels_warning": "{channels}：此 trigger 类型未安装 plugin，将不会发送通知。"
+      },
+      "trigger": {
+        "case_sub": "仅限企业版功能",
+        "case_title": "案例状态",
+        "execution_sub": "对 flow 状态变化作出反应",
+        "execution_title": "执行状态",
+        "other_sub": "任何可用的 trigger 插件",
+        "other_title": "其他 trigger",
+        "schedule_sub": "按时间计划运行",
+        "schedule_title": "计划",
+        "webhook_sub": "由 HTTP 请求触发",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "向此 URL 发送 POST 请求以 trigger 该 flow。",
+        "endpoint_url": "端点 URL",
+        "key_label": "Webhook key",
+        "key_placeholder": "为此 webhook 输入一个唯一的 key"
+      },
+      "when": {
+        "subtitle": "选择触发此系统 flow 的方式。",
+        "title": "当此事件发生时",
+        "trigger_type": "触发器类型"
+      },
+      "hero_eyebrow": "您的系统 flow",
+      "hero_empty": "选择一个 trigger 和一个 channel 来预览您的 flow。",
+      "browse_blueprints": "想从模板开始？浏览社区系统 blueprints",
+      "start_blank": "喜欢自己编写？跳过这些步骤，打开一个空的 flow",
+      "steps": {
+        "trigger_title": "trigger",
+        "trigger_desc": "运行时",
+        "trigger_heading": "此 flow 何时运行？",
+        "notify_title": "通知",
+        "notify_desc": "谁会听到它",
+        "notify_heading": "我们应该如何通知您的团队？",
+        "review_title": "审查",
+        "review_desc": "检查并创建",
+        "review_heading": "审查您的系统 flow"
+      }
+    },
     "toggle menu": "切换菜单",
     "panel actions": "面板操作",
     "playground actions": "游乐场操作",
@@ -316,7 +467,7 @@
       "search_placeholder": "搜索 Key 或 value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "树",
-      "raw_json": "Raw JSON",
+      "raw_json": "原始 JSON",
       "select_prompt": "选择一个变量以查看其 value。",
       "select_hint": "变量、trigger 和 task outputs 列在左侧。",
       "empty": "此执行没有可用的变量。",
@@ -383,7 +534,7 @@
     "plugins": {
       "names": "插件",
       "release": "发行说明",
-      "beta": "Beta",
+      "beta": "测试版",
       "copy_type": "复制类型",
       "deprecated": "已弃用",
       "dynamic": "动态",
@@ -413,17 +564,17 @@
       "intro_step3_desc_suffix": "和Pebble表达式。",
       "intro_step3_title": "使其动态化",
       "intro_sub": "构建YAML flow所需的一切：属性、inputs和Pebble templating，集于一处。",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "示例",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "概览",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Flow文档",
-      "nav_examples": "Examples",
+      "nav_examples": "示例",
       "nav_outputs": "Outputs",
       "nav_overview": "概览",
-      "nav_properties": "Properties",
+      "nav_properties": "属性",
       "non_dynamic": "非动态",
       "required": "必填"
     },
@@ -477,7 +628,7 @@
     "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
     "context updated date tooltip": "触发器的上下文上次更新的时间。这发生在执行被触发、完成（锁释放）或评估后（即使没有执行发生）。",
     "next evaluation date tooltip": "调度器下次根据其间隔评估此 trigger 的时间。仅当 trigger 的条件满足时，评估才会产生一个 execution。",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "last evaluation date tooltip": "调度器上次评估此 trigger 的时间，无论是否生成了 execution。",
     "conditions": "条件",
     "triggerId": "触发器 ID",
     "tenantId": "tenant ID",
@@ -631,22 +782,22 @@
     "collapse all": "折叠所有",
     "expand": "展开",
     "collapse": "折叠",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
-    "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "filter_for": "筛选",
+    "filter_out": "筛选",
+    "copy_value": "复制值",
+    "open_page": "打开页面",
+    "logs_copied": "日志已复制到剪贴板",
+    "expand_by_default": "默认展开结构化 log",
+    "similar lines": "相似行",
+    "download_logs_description": "选择要导出的 log。过滤器默认为当前视图。",
+    "display_settings": "显示设置",
+    "density": "密度",
+    "density_compact": "紧凑",
+    "density_normal": "正常",
+    "density_expanded": "已展开",
+    "pretty_json": "美观 JSON",
+    "body_line_clamp": "限制行高",
+    "font size": "字体大小",
     "environment": "环境",
     "join_slack": "加入 Slack",
     "kestra": "Kestra",
@@ -843,7 +994,7 @@
       }
     },
     "no inputs": "此流程没有输入。",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "偏好设置",
     "settings": {
       "label": "设置",
       "updated": "{name} 已更新",
@@ -898,7 +1049,7 @@
           },
           "color_modes": {
             "dark_2": "深色模式 2.0",
-            "dark_1": "Dark 1.0",
+            "dark_1": "深色 1.0",
             "light": "浅色模式",
             "sync": "与系统同步"
           },
@@ -981,10 +1132,10 @@
         "message": "资产连接可观测性、血缘关系和所有权元数据，使平台团队能够更快地排查问题并自信地部署。"
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "案例",
+        "header": "事件管理",
+        "title": "无需离开 Kestra 即可分类和解决事件。",
+        "message": "Kestra Enterprise Edition 中的案例允许您直接从失败的执行中打开、分配和跟踪事件，并提供 SLA 跟踪、活动时间线以及链接的执行和资产，以加快根本原因分析。"
       },
       "promote": {
         "title": "跨环境推广 flow",
@@ -1536,8 +1687,8 @@
         "content": "添加资产以跟踪和管理您的数据资产、服务和基础设施。"
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "您还没有任何案例！",
+        "content": "打开一个 Case 以分类和跟踪事件，或从失败的 execution 自动链接一个。"
       },
       "apiTokens": {
         "title": "管理您的API Tokens",
@@ -1817,7 +1968,7 @@
           "路由",
           "正在调度",
           "排队中",
-          "Triggering",
+          "触发中",
           "执行中",
           "协调",
           "置备",
@@ -1977,7 +2128,7 @@
       "server_id": "服务器 ID",
       "id_placeholder": "例如 my-mcp-server",
       "id_invalid": "ID必须以小写字母或数字开头，并且只能包含小写字母、数字、连字符或下划线。",
-      "main_tenant": "main",
+      "main_tenant": "主页",
       "tab_edit": "编辑",
       "tab_connect": "连接",
       "tab_tool_flows": "工具Flows",
@@ -1992,7 +2143,7 @@
         "flow": "flow",
         "state": "状态",
         "read_only": "只读",
-        "open_world": "Open world",
+        "open_world": "打开世界",
         "destructive": "破坏性",
         "idempotent": "幂等",
         "return_direct": "直接返回"

@@ -140,7 +140,7 @@ public class WebhookService {
 
         // Add labels
         List<Label> labels = new ArrayList<>();
-        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : FROM_TRIGGER));
+        labels.add(new Label(Label.FROM, isTestEvent(context) ? FROM_TEST_EVENT : Label.FromLabel.TRIGGER.value));
         // The trigger's own labels, as the other trigger types get them through TriggerService
         labels.addAll(LabelService.fromTrigger(runContext, flow, trigger, Map.of()));
         if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {

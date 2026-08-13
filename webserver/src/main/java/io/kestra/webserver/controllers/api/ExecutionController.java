@@ -1115,17 +1115,21 @@ public class ExecutionController {
                 .map(entry -> new Label(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
-        // check for system labels: none can be passed at execution creation time except system.correlationId and system.from
-        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && !label.key().equals(Label.FROM) && label.key().startsWith(SYSTEM_PREFIX))
+        // system labels can only be set by Kestra itself; the only exceptions accepted from a
+        // client are system.correlationId and system.from=ui (sent by the UI). Any other
+        // system.from value (scheduler/trigger/worker/…) would let a caller spoof the origin.
+        Optional<Label> first = parsedLabels.stream()
+            .filter(label -> label.key().startsWith(SYSTEM_PREFIX)
+                && !label.key().equals(CORRELATION_ID)
+                && !(label.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(label.value())))
             .findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
 
-        // from can be passed by the UI so we only add it if it didn't exist anymore
-        // if we want to be more restrictive, we may want to restrict it to only have the `ui` value
+        // default the origin to "api" when the client didn't set it (the UI sends system.from=ui)
         if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
-            parsedLabels.add(new Label(Label.FROM, "api"));
+            parsedLabels.add(new Label(Label.FROM, Label.FromLabel.API.value));
         }
 
         return parsedLabels;

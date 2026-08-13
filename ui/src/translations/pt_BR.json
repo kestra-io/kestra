@@ -2,6 +2,157 @@
   "pt_BR": {
     "loading": "Carregando...",
     "more actions": "Mais ações",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "Use apenas letras, dígitos, pontos, traços e sublinhados, começando com uma letra ou um dígito.",
+        "id_label": "id do flow",
+        "id_placeholder": "meu-flow",
+        "namespace_invalid": "Use apenas letras minúsculas, dígitos, pontos, traços e sublinhados, começando com uma letra minúscula ou um dígito.",
+        "namespace_placeholder": "Selecione um namespace",
+        "namespaces_error": "Não foi possível carregar os namespaces. Digite um namespace manualmente.",
+        "open_editor": "Abrir editor",
+        "subtitle": "Comece com um hello-world starter e construa do zero.",
+        "title": "flow em branco"
+      },
+      "blueprints": {
+        "subtitle": "Escolha um flow pronto do catálogo da comunidade.",
+        "title": "Navegar pelos blueprints"
+      },
+      "import": {
+        "back": "Voltar",
+        "error": {
+          "empty": "O conteúdo YAML está vazio.",
+          "invalid_mapping": "YAML de flow inválido: esperado um mapeamento de chave-valor, não uma lista ou escalar.",
+          "parse_error": "Não foi possível analisar o YAML.",
+          "too_large": "Esse arquivo é muito grande. Cole a definição do flow ou faça upload de um arquivo com menos de 1 MB."
+        },
+        "paste_label": "Colar YAML",
+        "read_error": "Não foi possível ler o arquivo.",
+        "submit": "Importar flow",
+        "subtitle": "Cole ou carregue uma definição de flow existente.",
+        "title": "Importar YAML",
+        "upload_button": "Carregar .yml / .yaml",
+        "upload_label": "Ou faça upload de um arquivo",
+        "upload_tip": "Aceita arquivos .yml e .yaml."
+      },
+      "subtitle": "Comece com uma tela em branco, explore blueprints ou importe um YAML existente.",
+      "system": {
+        "badge": "SISTEMA",
+        "subtitle": "Crie um flow de alerta ou automação para sua plataforma.",
+        "title": "Criar um system flow"
+      },
+      "title": "Criar um novo flow"
+    },
+    "recipe": {
+      "create_flow": "Criar flow",
+      "email": "Email",
+      "execution": {
+        "include_sub": "Incluir sub-namespaces",
+        "include_sub_hint_off": "Apenas flows no namespace exato irão disparar este alerta.",
+        "include_sub_hint_on": "Flows em namespaces filhos também acionarão este alerta.",
+        "namespace_placeholder": "Selecione um namespace",
+        "namespaces_error": "Não foi possível carregar os namespaces. Digite um namespace para observar ou tente novamente mais tarde.",
+        "states": "Nestes estados",
+        "states_recommended": "FALHA é o padrão recomendado para alertas.",
+        "states_required": "Selecione pelo menos um estado.",
+        "watch_namespace": "Observar namespace"
+      },
+      "notify": {
+        "email_label": "Email",
+        "email_sub": "Enviar uma notificação por e-mail",
+        "email_to_placeholder": "destinatário{'@'}seu-domínio.com",
+        "custom_label": "Personalizado",
+        "custom_note": "Uma task de placeholder é adicionada — troque-a por qualquer plugin de notificação no editor.",
+        "custom_sub": "Adicione sua própria task de notificação",
+        "plugin_unavailable": "Plugin não instalado",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Publicar uma mensagem em um canal do Slack",
+        "teams_sub": "Enviar um cartão para um canal do Teams",
+        "teams_webhook_placeholder": "URL do webhook de entrada do Teams"
+      },
+      "other": {
+        "load_error": "Não foi possível carregar os triggers. Tente novamente mais tarde.",
+        "no_results": "Nenhum trigger encontrado.",
+        "search_label": "Pesquisar triggers",
+        "search_placeholder": "Filtrar por nome ou tipo"
+      },
+      "schedule": {
+        "cron": "Expressão Cron",
+        "custom": "Personalizado",
+        "daily": "Diário",
+        "daily_hint": "Executa todos os dias às 9:00 AM.",
+        "frequency": "Frequência",
+        "hourly": "De hora em hora",
+        "hourly_hint": "Executa a cada hora no minuto 0.",
+        "timezone": "Fuso horário",
+        "timezone_placeholder": "Selecione um fuso horário (padrão UTC)",
+        "weekly": "Semanal",
+        "weekly_hint": "Executa toda segunda-feira às 9:00 AM."
+      },
+      "section_subtitle": "Crie um flow que monitora sua plataforma e notifica sua equipe automaticamente.",
+      "section_title": "Criar um system flow",
+      "summary": {
+        "any_namespace": "qualquer namespace",
+        "empty": "Configure o trigger e pelo menos um canal de notificação para pré-visualizar seu flow.",
+        "exact_match": "correspondência exata",
+        "execution": "Quando um flow em {ns} ({scope}) atinge o estado {states}, notificar via {channels}.",
+        "including_sub": "e sub-namespaces",
+        "invalid_hint": "Adicione pelo menos um canal de notificação e complete a configuração do trigger.",
+        "invalid_hint_trigger": "Complete a configuração do trigger.",
+        "no_channel": "os canais que você selecionar",
+        "other": "Quando o trigger {trigger} é acionado, notificar via {channels}.",
+        "schedule": "No agendamento \"{cron}\", notificar via {channels}.",
+        "selected_trigger": "selecionado",
+        "title": "Resumo",
+        "webhook": "Quando um webhook é recebido, notificar via {channels}.",
+        "preview_title": "Pré-visualizar",
+        "live": "AO VIVO"
+      },
+      "then": {
+        "no_channel_warning": "Selecione pelo menos um canal de notificação.",
+        "subtitle": "Selecione como notificar sua equipe.",
+        "title": "Então notificar",
+        "unavailable_channels_warning": "{channels}: plugin não instalado para este tipo de trigger, nenhuma notificação será enviada."
+      },
+      "trigger": {
+        "case_sub": "Recurso exclusivo da EE",
+        "case_title": "Status do caso",
+        "execution_sub": "Reage a mudanças de estado do flow",
+        "execution_title": "Estado da Execution",
+        "other_sub": "Qualquer plugin de trigger disponível",
+        "other_title": "Outro trigger",
+        "schedule_sub": "Executa em um agendamento de tempo",
+        "schedule_title": "Agendamento",
+        "webhook_sub": "Acionado por uma requisição HTTP",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "Envie uma requisição POST para esta URL para disparar o flow.",
+        "endpoint_url": "URL do Endpoint",
+        "key_label": "Chave do Webhook",
+        "key_placeholder": "Insira uma key única para este webhook"
+      },
+      "when": {
+        "subtitle": "Escolha o que dispara este system flow.",
+        "title": "Quando isso acontece",
+        "trigger_type": "Tipo de trigger"
+      },
+      "hero_eyebrow": "Seu system flow",
+      "hero_empty": "Escolha um trigger e um canal para pré-visualizar seu flow.",
+      "browse_blueprints": "Prefere começar de um template? Navegue pelos blueprints da comunidade",
+      "start_blank": "Prefere escrever você mesmo? Pule as etapas e abra um flow vazio",
+      "steps": {
+        "trigger_title": "Trigger",
+        "trigger_desc": "Quando executa",
+        "trigger_heading": "Quando este flow deve ser executado?",
+        "notify_title": "Notificar",
+        "notify_desc": "Quem ouve falar sobre isso",
+        "notify_heading": "Como devemos notificar sua equipe?",
+        "review_title": "Revisar",
+        "review_desc": "Verificar e criar",
+        "review_heading": "Revise seu system flow"
+      }
+    },
     "toggle menu": "Alternar menu",
     "panel actions": "Ações do painel",
     "playground actions": "Ações do Playground",
@@ -316,7 +467,7 @@
       "search_placeholder": "Pesquisar Key ou value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "Árvore",
-      "raw_json": "Raw JSON",
+      "raw_json": "JSON Bruto",
       "select_prompt": "Selecione uma variável para inspecionar seu value.",
       "select_hint": "Variáveis, o trigger e os outputs da task estão listados à esquerda.",
       "empty": "Nenhuma variável disponível para esta execução.",
@@ -413,17 +564,17 @@
       "intro_step3_desc_suffix": " e expressões Pebble.",
       "intro_step3_title": "Torne-o dinâmico",
       "intro_sub": "Tudo o que você precisa para criar um flow em YAML: propriedades, inputs e Pebble templating, tudo em um só lugar.",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "Exemplos",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "Visão Geral",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Documentação do flow",
-      "nav_examples": "Examples",
+      "nav_examples": "Exemplos",
       "nav_outputs": "Outputs",
       "nav_overview": "Visão geral",
-      "nav_properties": "Properties",
+      "nav_properties": "Propriedades",
       "non_dynamic": "não dinâmico",
       "required": "Obrigatório"
     },
@@ -477,7 +628,7 @@
     "last trigger date tooltip": "Quando o trigger foi executado pela última vez. Pode estar no passado ao executar um backfill.",
     "context updated date tooltip": "Quando o contexto do trigger foi atualizado pela última vez. Isso ocorre quando a execução é acionada, termina (bloqueio liberado) ou após uma avaliação (mesmo que nenhuma execução ocorra).",
     "next evaluation date tooltip": "Quando o agendador avaliará este trigger novamente, com base em seu intervalo. Uma avaliação só produz uma execução se as condições do trigger forem atendidas.",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "last evaluation date tooltip": "Quando o trigger foi avaliado pela última vez pelo scheduler, independentemente de ter produzido uma execução.",
     "conditions": "Condições",
     "triggerId": "ID do Trigger",
     "tenantId": "ID do tenant",
@@ -631,22 +782,22 @@
     "collapse all": "Recolher tudo",
     "expand": "Expandir",
     "collapse": "Recolher",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
+    "filter_for": "Filtrar por",
+    "filter_out": "Filtrar",
+    "copy_value": "Copiar valor",
+    "open_page": "Abrir página",
+    "logs_copied": "Logs copiados para a área de transferência",
+    "expand_by_default": "Expandir logs estruturados por padrão",
+    "similar lines": "linhas semelhantes",
+    "download_logs_description": "Escolha quais logs exportar. Os filtros são padronizados para sua visualização atual.",
+    "display_settings": "Configurações de exibição",
+    "density": "Densidade",
+    "density_compact": "Compacto",
     "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "density_expanded": "Expandido",
+    "pretty_json": "JSON Bonito",
+    "body_line_clamp": "Limitar altura da linha",
+    "font size": "Tamanho da fonte",
     "environment": "Ambiente",
     "join_slack": "Participar do Slack",
     "kestra": "Kestra",
@@ -843,7 +994,7 @@
       }
     },
     "no inputs": "Este flow não tem inputs.",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "Preferências",
     "settings": {
       "label": "Configurações",
       "updated": "{name} atualizado",
@@ -898,7 +1049,7 @@
           },
           "color_modes": {
             "dark_2": "Dark 2.0",
-            "dark_1": "Dark 1.0",
+            "dark_1": "Escuro 1.0",
             "light": "Claro",
             "sync": "Sincronizar com o sistema"
           },
@@ -981,10 +1132,10 @@
         "message": "Ativos conectam metadados de observabilidade, linhagem e propriedade para que as equipes da plataforma possam solucionar problemas mais rapidamente e implantar com confiança."
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "Casos",
+        "header": "Gerenciamento de Incidentes",
+        "title": "Trie e resolva incidentes sem sair do Kestra.",
+        "message": "Os Cases no Kestra Enterprise Edition permitem que você abra, atribua e rastreie incidentes diretamente de execuções com falha, com rastreamento de SLA, linhas do tempo de atividade e execuções e ativos vinculados para acelerar a análise da causa raiz."
       },
       "promote": {
         "title": "Promover Flows Entre Ambientes",
@@ -1218,7 +1369,7 @@
         }
       }
     },
-    "auditlogs": "Audit Logs",
+    "auditlogs": "Logs de Auditoria",
     "quotas": "Cotas",
     "iam": "IAM",
     "tenant": {
@@ -1536,8 +1687,8 @@
         "content": "Adicione assets para rastrear e gerenciar seus assets de dados, serviços e infraestrutura."
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "Você ainda não tem Casos!",
+        "content": "Abra um Case para triar e rastrear um incidente, ou vincule um automaticamente a partir de uma execução com falha."
       },
       "apiTokens": {
         "title": "Gerencie seus Tokens de API",
@@ -1992,7 +2143,7 @@
         "flow": "flow",
         "state": "Estado",
         "read_only": "Somente leitura",
-        "open_world": "Open world",
+        "open_world": "Abrir mundo",
         "destructive": "Destrutivo",
         "idempotent": "Idempotente",
         "return_direct": "Retorno direto"

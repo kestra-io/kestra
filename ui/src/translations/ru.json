@@ -2,6 +2,157 @@
   "ru": {
     "loading": "Загрузка...",
     "more actions": "Дополнительные действия",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "Используйте только буквы, цифры, точки, тире и нижние подчеркивания, начиная с буквы или цифры.",
+        "id_label": "ID flow",
+        "id_placeholder": "my-flow",
+        "namespace_invalid": "Используйте только строчные буквы, цифры, точки, тире и подчеркивания, начиная со строчной буквы или цифры.",
+        "namespace_placeholder": "Выберите namespace",
+        "namespaces_error": "Не удалось загрузить namespaces. Введите namespace вручную.",
+        "open_editor": "Открыть редактор",
+        "subtitle": "Начните с шаблона hello-world и создайте с нуля.",
+        "title": "Пустой flow"
+      },
+      "blueprints": {
+        "subtitle": "Выберите готовый flow из каталога сообщества.",
+        "title": "Просмотр blueprints"
+      },
+      "import": {
+        "back": "Назад",
+        "error": {
+          "empty": "Содержимое YAML пусто.",
+          "invalid_mapping": "Недопустимый YAML flow: ожидалось сопоставление ключ-значение, а не список или скаляр.",
+          "parse_error": "Не удалось разобрать YAML.",
+          "too_large": "Этот файл слишком большой. Вместо этого вставьте определение flow или загрузите файл размером менее 1 МБ."
+        },
+        "paste_label": "Вставить YAML",
+        "read_error": "Не удалось прочитать файл.",
+        "submit": "Импортировать flow",
+        "subtitle": "Вставьте или загрузите существующее определение flow.",
+        "title": "Импортировать YAML",
+        "upload_button": "Загрузить .yml / .yaml",
+        "upload_label": "Или загрузите файл",
+        "upload_tip": "Принимает файлы .yml и .yaml."
+      },
+      "subtitle": "Начните с чистого листа, изучите blueprints или импортируйте существующий YAML.",
+      "system": {
+        "badge": "СИСТЕМА",
+        "subtitle": "Создайте flow оповещений или автоматизации для вашей платформы.",
+        "title": "Создать системный flow"
+      },
+      "title": "Создать новый flow"
+    },
+    "recipe": {
+      "create_flow": "Создать flow",
+      "email": "Email",
+      "execution": {
+        "include_sub": "Включить sub-namespaces",
+        "include_sub_hint_off": "Только flow в точном namespace будут вызывать это оповещение.",
+        "include_sub_hint_on": "flow в дочерних namespace также вызовут это оповещение.",
+        "namespace_placeholder": "Выберите namespace",
+        "namespaces_error": "Не удалось загрузить namespaces. Введите namespace для просмотра или повторите попытку позже.",
+        "states": "В этих состояниях",
+        "states_recommended": "FAILED рекомендуется по умолчанию для оповещений.",
+        "states_required": "Выберите хотя бы один state.",
+        "watch_namespace": "Следить за namespace"
+      },
+      "notify": {
+        "email_label": "Email",
+        "email_sub": "Отправить уведомление по электронной почте",
+        "email_to_placeholder": "получатель{'@'}ваш-домен.com",
+        "custom_label": "Пользовательский",
+        "custom_note": "Добавлена задача-заполнитель — замените ее на любой плагин уведомлений в редакторе.",
+        "custom_sub": "Добавьте свою собственную задачу уведомления",
+        "plugin_unavailable": "Плагин не установлен",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Отправить сообщение в Slack-канал",
+        "teams_sub": "Отправить карточку в канал Teams",
+        "teams_webhook_placeholder": "URL входящего вебхука Teams"
+      },
+      "other": {
+        "load_error": "Не удалось загрузить triggers. Повторите попытку позже.",
+        "no_results": "Триггеры не найдены.",
+        "search_label": "Поиск triggers",
+        "search_placeholder": "Фильтровать по имени или типу"
+      },
+      "schedule": {
+        "cron": "Cron-выражение",
+        "custom": "Пользовательский",
+        "daily": "Ежедневно",
+        "daily_hint": "Запускается каждый день в 9:00.",
+        "frequency": "Частота",
+        "hourly": "Ежечасно",
+        "hourly_hint": "Запускается каждый час в 0 минут.",
+        "timezone": "Часовой пояс",
+        "timezone_placeholder": "Выберите часовой пояс (по умолчанию UTC)",
+        "weekly": "Еженедельно",
+        "weekly_hint": "Запускается каждый понедельник в 9:00."
+      },
+      "section_subtitle": "Создайте flow, который отслеживает вашу платформу и автоматически уведомляет вашу команду.",
+      "section_title": "Создать системный flow",
+      "summary": {
+        "any_namespace": "любой namespace",
+        "empty": "Настройте trigger и хотя бы один канал уведомлений для предварительного просмотра вашего flow.",
+        "exact_match": "точное совпадение",
+        "execution": "Когда flow в {ns} ({scope}) достигает состояния {states}, уведомить через {channels}.",
+        "including_sub": "и под-namespaces",
+        "invalid_hint": "Добавьте хотя бы один канал уведомлений и завершите настройку trigger.",
+        "invalid_hint_trigger": "Завершите настройку trigger.",
+        "no_channel": "выбранные вами каналы",
+        "other": "Когда срабатывает триггер {trigger}, уведомить через {channels}.",
+        "schedule": "По расписанию \"{cron}\", уведомлять через {channels}.",
+        "selected_trigger": "выбрано",
+        "title": "Сводка",
+        "webhook": "При получении вебхука, уведомить через {channels}.",
+        "preview_title": "Предварительный просмотр",
+        "live": "В РЕАЛЬНОМ ВРЕМЕНИ"
+      },
+      "then": {
+        "no_channel_warning": "Выберите хотя бы один канал уведомлений.",
+        "subtitle": "Выберите способ уведомления вашей команды.",
+        "title": "Затем уведомить",
+        "unavailable_channels_warning": "{channels}: плагин не установлен для этого типа trigger, уведомления не будут отправлены."
+      },
+      "trigger": {
+        "case_sub": "Функция только для EE",
+        "case_title": "Статус кейса",
+        "execution_sub": "Реагирует на изменения состояния flow",
+        "execution_title": "Состояние выполнения",
+        "other_sub": "Любой доступный плагин trigger",
+        "other_title": "Другой trigger",
+        "schedule_sub": "Запускается по расписанию",
+        "schedule_title": "Расписание",
+        "webhook_sub": "Запущено HTTP-запросом",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "Отправьте POST-запрос на этот URL, чтобы запустить flow.",
+        "endpoint_url": "URL конечной точки",
+        "key_label": "Webhook key",
+        "key_placeholder": "Введите уникальный key для этого webhook"
+      },
+      "when": {
+        "subtitle": "Выберите, что запускает этот системный flow.",
+        "title": "Когда это происходит",
+        "trigger_type": "Тип trigger"
+      },
+      "hero_eyebrow": "Ваш системный flow",
+      "hero_empty": "Выберите trigger и канал для предварительного просмотра вашего flow.",
+      "browse_blueprints": "Предпочитаете начать с шаблона? Просмотрите системные blueprints сообщества",
+      "start_blank": "Предпочитаете написать самостоятельно? Пропустите шаги и откройте пустой flow",
+      "steps": {
+        "trigger_title": "Триггер",
+        "trigger_desc": "Когда запускается",
+        "trigger_heading": "Когда должен запускаться этот flow?",
+        "notify_title": "Уведомление",
+        "notify_desc": "Кто об этом узнает",
+        "notify_heading": "Как мы должны уведомить вашу команду?",
+        "review_title": "Обзор",
+        "review_desc": "Проверить и создать",
+        "review_heading": "Просмотрите ваш системный flow"
+      }
+    },
     "toggle menu": "Переключить меню",
     "panel actions": "Действия панели",
     "playground actions": "Действия Playground",
@@ -316,7 +467,7 @@
       "search_placeholder": "Поиск по Key или value...",
       "tasks_outputs": "Tasks outputs",
       "tree": "Дерево",
-      "raw_json": "Raw JSON",
+      "raw_json": "Необработанный JSON",
       "select_prompt": "Выберите переменную, чтобы просмотреть её value.",
       "select_hint": "Переменные, триггер и output'ы task'ов перечислены слева.",
       "empty": "Нет переменных, доступных для этого выполнения.",
@@ -383,7 +534,7 @@
     "plugins": {
       "names": "Плагины",
       "release": "Заметки о выпуске",
-      "beta": "Beta",
+      "beta": "Бета",
       "copy_type": "Скопировать тип",
       "deprecated": "Устаревшее",
       "dynamic": "динамический",
@@ -413,17 +564,17 @@
       "intro_step3_desc_suffix": " и выражения Pebble.",
       "intro_step3_title": "Сделайте динамичным",
       "intro_sub": "Всё необходимое для создания flow в YAML: свойства, inputs и Pebble templating в одном месте.",
-      "intro_tab_examples": "Examples",
+      "intro_tab_examples": "Примеры",
       "intro_tab_flow": "Flow",
       "intro_tab_inputs": "Inputs",
-      "intro_tab_overview": "Overview",
+      "intro_tab_overview": "Обзор",
       "intro_tab_pebble": "Pebble",
       "intro_tab_tasks": "Tasks",
       "intro_title": "Документация flow",
-      "nav_examples": "Examples",
+      "nav_examples": "Примеры",
       "nav_outputs": "Outputs",
       "nav_overview": "Обзор",
-      "nav_properties": "Properties",
+      "nav_properties": "Свойства",
       "non_dynamic": "не динамический",
       "required": "Обязательный"
     },
@@ -477,7 +628,7 @@
     "last trigger date tooltip": "Когда trigger выполнялся в последний раз. Может быть в прошлом при запуске backfill.",
     "context updated date tooltip": "Когда контекст trigger был обновлен в последний раз. Это происходит, когда выполняется execution, завершается (блокировка снята) или после оценки (даже если execution не происходит).",
     "next evaluation date tooltip": "Когда планировщик в следующий раз оценит этот trigger на основе его интервала. Оценка создает execution только в том случае, если условия trigger выполнены.",
-    "last evaluation date tooltip": "When the trigger was last evaluated by the scheduler, regardless of whether it produced an execution.",
+    "last evaluation date tooltip": "Когда триггер был в последний раз оценен планировщиком, независимо от того, привело ли это к выполнению.",
     "conditions": "Условия",
     "triggerId": "Идентификатор Trigger",
     "tenantId": "ID tenant",
@@ -631,22 +782,22 @@
     "collapse all": "Свернуть все",
     "expand": "Развернуть",
     "collapse": "Свернуть",
-    "filter_for": "Filter for",
-    "filter_out": "Filter out",
-    "copy_value": "Copy value",
-    "open_page": "Open page",
-    "logs_copied": "Logs copied to your clipboard",
-    "expand_by_default": "Expand structured logs by default",
-    "similar lines": "similar lines",
-    "download_logs_description": "Choose which logs to export. Filters default to your current view.",
-    "display_settings": "Display settings",
-    "density": "Density",
-    "density_compact": "Compact",
-    "density_normal": "Normal",
-    "density_expanded": "Expanded",
-    "pretty_json": "Pretty JSON",
-    "body_line_clamp": "Limit line height",
-    "font size": "Font size",
+    "filter_for": "Фильтр по",
+    "filter_out": "Отфильтровать",
+    "copy_value": "Скопировать значение",
+    "open_page": "Открыть страницу",
+    "logs_copied": "Логи скопированы в буфер обмена",
+    "expand_by_default": "Разворачивать структурированные log по умолчанию",
+    "similar lines": "похожие строки",
+    "download_logs_description": "Выберите, какие log'и экспортировать. Фильтры по умолчанию соответствуют вашему текущему представлению.",
+    "display_settings": "Настройки отображения",
+    "density": "Плотность",
+    "density_compact": "Компактный",
+    "density_normal": "Нормальный",
+    "density_expanded": "Развернуто",
+    "pretty_json": "Красивый JSON",
+    "body_line_clamp": "Ограничить высоту строки",
+    "font size": "Размер шрифта",
     "environment": "Окружение",
     "join_slack": "Присоединиться к Slack",
     "kestra": "Kestra",
@@ -843,7 +994,7 @@
       }
     },
     "no inputs": "Этот flow не имеет входных данных.",
-    "admin_preferences": "Preferences",
+    "admin_preferences": "Настройки",
     "settings": {
       "label": "Настройки",
       "updated": "{name} обновлено",
@@ -981,10 +1132,10 @@
         "message": "Активы связывают метаданные наблюдаемости, происхождения и владения, чтобы команды платформы могли быстрее устранять неполадки и развертывать с уверенностью."
       },
       "cases": {
-        "label": "Cases",
-        "header": "Incident Management",
-        "title": "Triage and resolve incidents without leaving Kestra.",
-        "message": "Cases in Kestra Enterprise Edition let you open, assign, and track incidents directly from failed executions, with SLA tracking, activity timelines, and linked executions and assets to speed up root-cause analysis."
+        "label": "Случаи",
+        "header": "Управление инцидентами",
+        "title": "Разбирайте и устраняйте инциденты, не покидая Kestra.",
+        "message": "Cases в Kestra Enterprise Edition позволяют открывать, назначать и отслеживать инциденты непосредственно из неудачных выполнений, с отслеживанием SLA, временными шкалами активности и связанными выполнениями и активами для ускорения анализа первопричин."
       },
       "promote": {
         "title": "Продвижение flow между средами",
@@ -1536,8 +1687,8 @@
         "content": "Добавьте assets, чтобы отслеживать и управлять вашими данными, сервисами и инфраструктурой."
       },
       "cases": {
-        "title": "You have no Cases yet!",
-        "content": "Open a Case to triage and track an incident, or link one automatically from a failed execution."
+        "title": "У вас пока нет Cases!",
+        "content": "Откройте Case для сортировки и отслеживания инцидента или свяжите его автоматически с неудачной execution."
       },
       "apiTokens": {
         "title": "Управление вашими API Tokens",
@@ -1992,7 +2143,7 @@
         "flow": "flow",
         "state": "Состояние",
         "read_only": "Только чтение",
-        "open_world": "Open world",
+        "open_world": "Открыть мир",
         "destructive": "Деструктивный",
         "idempotent": "Идемпотентный",
         "return_direct": "Прямой возврат"
@@ -2087,7 +2238,7 @@
       "replace_this": "Заменить",
       "replace_this_match": "Заменить это совпадение",
       "retry_search": "Повторить поиск",
-      "scope": "Scope",
+      "scope": "Область видимости",
       "scope_all": "Весь исходный код",
       "scope_inputs": "Inputs",
       "scope_tasks": "Задачи",
@@ -2122,7 +2273,7 @@
       "collapsed_summary": "{count} задач",
       "command_menu": {
         "context_flow": "context: flow",
-        "context_selected": "context: {name}",
+        "context_selected": "контекст: {name}",
         "delete": "Удалить {name}",
         "duplicate": "Дублировать {name}",
         "goto": "Перейти к {section}",

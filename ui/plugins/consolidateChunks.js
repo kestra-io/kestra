@@ -25,7 +25,7 @@ const isRealModule = (id) =>
     // Topology imports the design system, so capturing it in the (eager) vendor
     // group would create a vendor <-> design-system chunk cycle; left to
     // automatic chunking it gets its own chunk with one-way edges.
-    !/@kestra-io[\\/]topology[\\/]/.test(id)
+    !/(@kestra-io|packages)[\\/]topology[\\/]/.test(id)
 
 /**
  * @param {RegExp} pattern

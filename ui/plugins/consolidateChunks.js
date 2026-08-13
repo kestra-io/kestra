@@ -33,6 +33,71 @@ const isRealModule = (id) =>
  */
 const matches = (pattern) => (id) => isRealModule(id) && pattern.test(id)
 
+/**
+ * Static graph of an async component, minus whatever the eager graph already
+ * reaches, keyed by group name. Filled during buildEnd.
+ *
+ * A group holding an async component must take that component's whole private
+ * subtree: rolldown gives the dynamic import its own chunk, so every module the
+ * group leaves behind stays there — and because the group chunk holds the
+ * component importing them, the two chunks import each other. That cycle builds
+ * cleanly and then throws ("X is not a function") the first time the component
+ * loads, so it shows up as a silently blank editor or markdown surface.
+ * @type {Map<string, Set<string>>}
+ */
+const lazySubtrees = new Map()
+
+/** Async component entry points, by the group that owns each one. */
+const LAZY_ROOTS = [
+    ["monaco", /design-system[\\/]src[\\/]components[\\/]Form[\\/]KsEditor\.vue$/],
+    ["markdown", /design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMarkdown[\\/]KsMarkdown\.vue$/],
+]
+
+/**
+ * @param {import("rolldown").PluginContext} ctx
+ * @param {string[]} roots
+ */
+function staticClosure(ctx, roots) {
+    const seen = new Set()
+    const queue = [...roots]
+    while (queue.length) {
+        const id = queue.pop()
+        if (!id || seen.has(id)) continue
+        seen.add(id)
+        // Static edges only: a dynamic import gets its own chunk, so its target
+        // is not part of the subtree this group has to keep together.
+        queue.push(...(ctx.getModuleInfo(id)?.importedIds ?? []))
+    }
+    return seen
+}
+
+/**
+ * @param {import("rolldown").PluginContext} ctx
+ */
+function collectLazySubtrees(ctx) {
+    lazySubtrees.clear()
+    const ids = [...ctx.getModuleIds()]
+    const eager = staticClosure(ctx, ids.filter((id) => ctx.getModuleInfo(id)?.isEntry))
+
+    for (const [name, root] of LAZY_ROOTS) {
+        const subtree = new Set()
+        for (const id of staticClosure(ctx, ids.filter((candidate) => root.test(candidate)))) {
+            if (!eager.has(id) && isRealModule(id)) subtree.add(id)
+        }
+        lazySubtrees.set(name, subtree)
+    }
+}
+
+/**
+ * Matches the group's declared modules plus everything privately reachable from
+ * its async component, so no dependency is left stranded in the entry chunk.
+ * @param {string} name
+ * @param {RegExp} pattern
+ * @returns {(id: string) => boolean}
+ */
+const matchesWithLazySubtree = (name, pattern) => (id) =>
+    isRealModule(id) && (pattern.test(id) || lazySubtrees.get(name)?.has(id) === true)
+
 const LANG_MODULE = /node_modules[\\/](@shikijs[\\/]langs|shiki[\\/]dist[\\/]langs)[\\/]/
 const LANG_REGISTRY = /node_modules[\\/]shiki[\\/]dist[\\/]langs(-bundle-full-[^\\/]+)?\.mjs$/
 
@@ -77,7 +142,7 @@ const GROUPS = [
     // Lazy: KsEditor is exported as an async component.
     {
         name: "monaco",
-        test: matches(/node_modules[\\/](monaco-editor|monaco-yaml|monaco-worker-manager|monaco-marker-data-provider)[\\/]|design-system[\\/]src[\\/](components[\\/]Form[\\/]KsEditor\.vue|composables[\\/](useKsEditor|useEditor|useSuggestWidgetIcons|PlaceholderContentWidget)|utils[\\/]monacoSetup)/),
+        test: matchesWithLazySubtree("monaco", /node_modules[\\/](monaco-editor|monaco-yaml|monaco-worker-manager|monaco-marker-data-provider)[\\/]|design-system[\\/]src[\\/](components[\\/]Form[\\/]KsEditor\.vue|composables[\\/](useKsEditor|useEditor|useSuggestWidgetIcons|PlaceholderContentWidget)|utils[\\/]monacoSetup)/),
         priority: -10,
         includeDependenciesRecursively: false,
     },
@@ -96,7 +161,7 @@ const GROUPS = [
     {
         name: "markdown",
         // Entries that look like typos are real unified-ecosystem package names.
-        test: matches(/design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMarkdown[\\/]|node_modules[\\/](shiki|@shikijs|oniguruma-to-es|regex(-recursion|-utilities)?|remark-[^\\/]+|micromark[^\\/]*|mdast[^\\/]*|unified|unist[^\\/]*|vfile[^\\/]*|hast[^\\/]*|devlop|ccount|character-[^\\/]+|decode-named-character-reference|markdown-table|longest-streak|trim-lines|zwitch|bail|trough|escape-string-regexp)[\\/]/), // codespell:ignore devlop,trough
+        test: matchesWithLazySubtree("markdown", /design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMarkdown[\\/]|node_modules[\\/](shiki|@shikijs|oniguruma-to-es|regex(-recursion|-utilities)?|remark-[^\\/]+|micromark[^\\/]*|mdast[^\\/]*|unified|unist[^\\/]*|vfile[^\\/]*|hast[^\\/]*|devlop|ccount|character-[^\\/]+|decode-named-character-reference|markdown-table|longest-streak|trim-lines|zwitch|bail|trough|escape-string-regexp)[\\/]/), // codespell:ignore devlop,trough
         priority: -15,
         includeDependenciesRecursively: false,
     },
@@ -155,6 +220,7 @@ export function consolidateChunks() {
         },
         buildEnd() {
             collectStaticLangs(this)
+            collectLazySubtrees(this)
         },
         generateBundle(_options, bundle) {
             // A static edge into shiki-langs would make every markdown render

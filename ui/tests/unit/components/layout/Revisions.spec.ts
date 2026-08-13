@@ -1,11 +1,16 @@
-import {describe, expect, it, vi} from "vitest"
+import {beforeEach, describe, expect, it, vi} from "vitest"
 import {mount, flushPromises} from "@vue/test-utils"
+
+const {routeQuery, routerPush} = vi.hoisted(() => ({
+    routeQuery: {} as Record<string, string>,
+    routerPush: vi.fn(),
+}))
 
 vi.mock("vue-i18n", () => ({useI18n: () => ({t: (key: string) => key})}))
 
 vi.mock("vue-router", () => ({
-    useRoute: () => ({query: {}, params: {namespace: "company.team", id: "my_flow"}}),
-    useRouter: () => ({push: vi.fn()}),
+    useRoute: () => ({query: routeQuery, params: {namespace: "company.team", id: "my_flow"}}),
+    useRouter: () => ({push: routerPush}),
 }))
 
 vi.mock("../../../../src/utils/toast", () => ({
@@ -60,16 +65,32 @@ function mountRevisions(revisions: {revision: number; source: string}[]) {
     })
 }
 
+// Left column renders before the right one, so this reads [left, right].
 function shownRevisions(wrapper: ReturnType<typeof mountRevisions>) {
     return wrapper.findAll(".crud-revision").map((el) => el.text())
 }
 
-describe("Revisions — deleting a revision", () => {
+describe("Revisions — the list changing under the diff", () => {
+    beforeEach(() => {
+        for (const key of Object.keys(routeQuery)) delete routeQuery[key]
+        routerPush.mockClear()
+    })
+
     it("opens on the newest revision against the one before it", async () => {
         const wrapper = mountRevisions(revisionsUpTo(1, 2, 3, 4))
         await flushPromises()
 
         expect(shownRevisions(wrapper)).toEqual(["3", "4"])
+    })
+
+    it("opens on whatever the URL asks for", async () => {
+        routeQuery.revisionLeft = "2"
+        routeQuery.revisionRight = "4"
+
+        const wrapper = mountRevisions(revisionsUpTo(1, 2, 3, 4))
+        await flushPromises()
+
+        expect(shownRevisions(wrapper)).toEqual(["2", "4"])
     })
 
     it("keeps showing the same revisions when an unrelated one is removed", async () => {
@@ -84,6 +105,25 @@ describe("Revisions — deleting a revision", () => {
 
         expect(wrapper.find(".revision").exists()).toBe(true)
         expect(shownRevisions(wrapper)).toEqual(["3", "4"])
+    })
+
+    it("holds position rather than jumping to the newest", async () => {
+        // The reporter's steps start by picking revisions from the dropdowns,
+        // which writes both into the URL. With more than four revisions, resetting
+        // to the end of the list is distinguishable from stepping to a neighbour.
+        routeQuery.revisionLeft = "3"
+        routeQuery.revisionRight = "5"
+
+        const wrapper = mountRevisions(revisionsUpTo(1, 2, 3, 4, 5, 6, 7, 8))
+        await flushPromises()
+        expect(shownRevisions(wrapper)).toEqual(["3", "5"])
+
+        await wrapper.setProps({revisions: revisionsUpTo(1, 2, 3, 4, 6, 7, 8)})
+        await flushPromises()
+
+        // 6 took 5's place. Landing on 8 would drag the diff to the far end of a
+        // list the user was reading the middle of.
+        expect(shownRevisions(wrapper)).toEqual(["3", "6"])
     })
 
     it("falls back to a neighbour when the revision on show is the one removed", async () => {
@@ -109,6 +149,18 @@ describe("Revisions — deleting a revision", () => {
 
         expect(wrapper.find(".revision").exists()).toBe(true)
         expect(shownRevisions(wrapper)).toEqual(["2", "3"])
+    })
+
+    it("advances to a newly saved revision", async () => {
+        // The same watcher fires when the list GROWS. Saving must still move the
+        // right side onto the new newest revision.
+        const wrapper = mountRevisions(revisionsUpTo(1, 2, 3, 4))
+        await flushPromises()
+
+        await wrapper.setProps({revisions: revisionsUpTo(1, 2, 3, 4, 5)})
+        await flushPromises()
+
+        expect(shownRevisions(wrapper)).toEqual(["3", "5"])
     })
 
     it("renders the empty state rather than a diff once one revision is left", async () => {

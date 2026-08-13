@@ -112,8 +112,7 @@ function usePluginsIcons() {
                 iconsLoaded.value = true
                 return icons.value
             }).catch(() => {
-                // Drop the memoized promise so a later caller retries; keeping a rejected one
-                // cached leaves every icon in the app unresolvable for the whole session.
+                // rejected request -> try again
                 iconsPromiseLocal.value = undefined
                 return icons.value
             })

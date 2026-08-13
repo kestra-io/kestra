@@ -1,5 +1,5 @@
-import {defineStore} from "pinia"
-import {ref} from "vue"
+import { defineStore } from "pinia"
+import { useStorage } from "@vueuse/core"
 
 const LOCAL_STORAGE_KEY = "starred.bookmarks"
 
@@ -8,68 +8,27 @@ interface Page {
     label?: string;
 }
 
-function readStoredPages(): Page[] {
-    try {
-        const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
-        if (raw == null) {
-            return []
-        }
-        const parsed = JSON.parse(raw)
-        return Array.isArray(parsed) ? parsed as Page[] : []
-    } catch {
-        return []
-    }
-}
-
 export const useBookmarksStore = defineStore("bookmarks", () => {
-    const pages = ref<Page[]>(readStoredPages())
-
-    if (typeof window !== "undefined") {
-        window.addEventListener("storage", (event) => {
-            if (event.key === LOCAL_STORAGE_KEY || event.key === null) {
-                pages.value = readStoredPages()
-            }
-        })
-    }
+    const pages = useStorage<Page[]>(LOCAL_STORAGE_KEY, [])
 
     function add(page: Page) {
-        const currentPages = readStoredPages()
-        if (!currentPages.find(p => p.path === page.path)) {
-            currentPages.push(page)
-            updateAll(currentPages)
-            return
+        if (!pages.value.find(p => p.path === page.path)) {
+            pages.value = [...pages.value, page]
         }
-        pages.value = currentPages
     }
 
     function remove(page: Page) {
-        const currentPages = readStoredPages()
-        const index = currentPages.findIndex(p => p.path === page.path)
-        if (index > -1) {
-            currentPages.splice(index, 1)
-            updateAll(currentPages)
-            return
-        }
-        pages.value = currentPages
+        pages.value = pages.value.filter(p => p.path !== page.path)
     }
 
     function rename(page: Page) {
-        const currentPages = readStoredPages()
-        const index = currentPages.findIndex(p => p.path === page.path)
-        if (index > -1) {
-            currentPages.splice(index, 1, {
-                ...currentPages[index],
-                label: page.label,
-            })
-            updateAll(currentPages)
-            return
-        }
-        pages.value = currentPages
+        pages.value = pages.value.map(p =>
+            p.path === page.path ? { ...p, label: page.label } : p
+        )
     }
 
     function updateAll(newPages: Array<Page>) {
-        pages.value = newPages
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newPages))
+        pages.value = [...newPages]
     }
 
     return {

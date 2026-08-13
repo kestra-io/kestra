@@ -265,6 +265,9 @@ jobs:
     # the E2E build-from-source fallback below.
     if: "(needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true') && github.event.pull_request.head.repo.fork == false"
     uses: kestra-io/actions/.github/workflows/kestra-oss-build-artifacts.yml@main
+    secrets:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
 
@@ -275,6 +278,9 @@ jobs:
     # fork (falls back to building from source); not when the build failed.
     if: "!cancelled() && needs.build-artifacts.result != 'failure' && (needs.file-changes.outputs.ui == 'true' || needs.file-changes.outputs.backend == 'true')"
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    secrets:
+      OTLP_ENDPOINT: ${{ secrets.OTLP_ENDPOINT }}
+      OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
       exe-artifact: ${{ needs.build-artifacts.result == 'success' && 'exe' || '' }}

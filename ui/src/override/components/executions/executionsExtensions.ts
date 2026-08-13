@@ -12,8 +12,9 @@ export interface ExecutionExtraColumn {
 // No-op in OSS. The EE build overrides this file (via the `override/` Vite alias)
 // to contribute a Cases column and bulk actions to the Executions table. A function
 // (not a static array) so EE can gate the result on its feature flag/RBAC state via
-// each column's `condition`.
-export function getExtraColumns(): ExecutionExtraColumn[] {
+// each column's `condition`, and on the current page via `routeName` — `condition` runs
+// inside a computed, where composables like `useRoute()` are unavailable.
+export function getExtraColumns(_routeName?: string): ExecutionExtraColumn[] {
     return []
 }
 export const cellComponents: Record<string, Component> = {}

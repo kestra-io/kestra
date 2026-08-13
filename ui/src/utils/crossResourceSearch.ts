@@ -131,6 +131,36 @@ export function buildPathSegments(path: string, query: string, caseSensitive = f
     ]
 }
 
+export type SearchViewState = "initial" | "loading" | "empty" | "results"
+
+export interface SearchViewStateInput {
+    /** The user has typed something. */
+    hasQuery: boolean;
+    /** `useRestoreUrl`'s gate: false while a restore navigation is still in flight. */
+    loadInit: boolean;
+    /** A search is scheduled (debounce) or in flight, but no type has flipped to counting yet. */
+    searchPending: boolean;
+    /** At least one selected type is counting. */
+    anyCounting: boolean;
+    /** Matches currently known across the selected types. */
+    matchCount: number;
+}
+
+/**
+ * Single source of truth for which of the four page states to render.
+ *
+ * `searchPending` is what keeps "empty" honest: the store only knows about a search once a request
+ * is out, so between the keystroke and that request (the debounce) every status is still idle and
+ * every count still zero — indistinguishable from a finished search that found nothing.
+ */
+export function searchViewState(input: SearchViewStateInput): SearchViewState {
+    if (!input.hasQuery) return "initial"
+    const searching = input.searchPending || input.anyCounting
+    if (!input.loadInit || (searching && input.matchCount === 0)) return "loading"
+    if (!searching && input.matchCount === 0) return "empty"
+    return "results"
+}
+
 export function crossSearchResultKey(selection: CrossSearchSelection): string {
     switch (selection.type) {
         case "flows":

@@ -140,6 +140,7 @@
                 <div class="source-search__spacer" />
 
                 <i18n-t
+                    v-if="!showLoadingState"
                     keypath="source_search.summary_cross"
                     tag="span"
                     class="source-search__summary"
@@ -155,7 +156,7 @@
                     </template>
                 </i18n-t>
 
-                <div class="source-search__match-nav">
+                <div v-if="!showLoadingState" class="source-search__match-nav">
                     <KsIconButton
                         :disabled="visibleFlatSelections.length === 0"
                         :tooltip="t('source_search.previous_match')"
@@ -244,7 +245,7 @@
             </KsEmpty>
         </div>
 
-        <div v-else-if="!loadInit" class="source-search__states">
+        <div v-else-if="showLoadingState" class="source-search__states">
             <div class="source-search__skeleton-rows">
                 <KsSkeleton v-for="n in 4" :key="n" animated :rows="1" class="source-search__skeleton-row" />
             </div>
@@ -350,7 +351,7 @@
     import {useToast} from "../../utils/toast"
     import {useCrossResourceSearchStore} from "../../stores/crossResourceSearch"
     import {computeSelectionSummary, distinctSkipReasons, type ReplaceContext} from "../../utils/sourceSearchDiff"
-    import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
+    import {SEARCH_RESOURCE_TYPES, crossSearchResultKey, searchViewState, type CrossSearchSelection, type SearchResourceType} from "../../utils/crossResourceSearch"
 
     import * as FlowsAPI from "@kestra-io/kestra-sdk/flows"
     import type {SourceSearchReplacePreviewResponse, SourceSearchReplaceApplyResponse, SourceSearchScope} from "@kestra-io/kestra-sdk"
@@ -369,6 +370,7 @@
     const selectedMatchKeys = ref<Set<string>>(new Set())
     const previewResponse = ref<SourceSearchReplacePreviewResponse | null>(null)
     const previewLoading = ref(false)
+    const searchPending = ref(false)
     const allCollapsed = ref(false)
 
     const replaceOpen = ref(false)
@@ -507,7 +509,17 @@
 
     const anyCountingSelected = computed(() => selectedTypes.value.some((type) => crossResourceSearchStore.statusFor(type) === "counting"))
     const failedSelectedTypes = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.statusFor(type) === "failed"))
-    const showEmptyResultsState = computed(() => Boolean(query.value) && loadInit.value && !anyCountingSelected.value && summaryMatchCount.value === 0)
+
+    const viewState = computed(() => searchViewState({
+        hasQuery: Boolean(query.value),
+        loadInit: loadInit.value,
+        searchPending: searchPending.value,
+        anyCounting: anyCountingSelected.value,
+        matchCount: summaryMatchCount.value,
+    }))
+
+    const showLoadingState = computed(() => viewState.value === "loading")
+    const showEmptyResultsState = computed(() => viewState.value === "empty")
 
     const hiddenTypeCounts = computed(() => SEARCH_RESOURCE_TYPES
         .filter((type) => !selectedTypes.value.includes(type))
@@ -699,18 +711,24 @@
     async function fetchResults() {
         if (!loadInit.value) return
         if (!query.value) {
+            searchPending.value = false
             crossResourceSearchStore.reset()
             return
         }
 
         previewResponse.value = null
+        searchPending.value = true
 
-        await crossResourceSearchStore.search({
-            types: SEARCH_RESOURCE_TYPES,
-            query: query.value,
-            namespace: namespaceFilter.value,
-            ...searchFilters.value,
-        })
+        try {
+            await crossResourceSearchStore.search({
+                types: SEARCH_RESOURCE_TYPES,
+                query: query.value,
+                namespace: namespaceFilter.value,
+                ...searchFilters.value,
+            })
+        } finally {
+            searchPending.value = false
+        }
     }
 
     const debouncedFetch = debounce(fetchResults, 300)
@@ -718,6 +736,8 @@
     watch(
         () => [query.value, namespaceFilter.value, JSON.stringify(searchFilters.value)].join("|"),
         () => {
+            // Synchronous, so the debounce window is already covered by the loading state.
+            searchPending.value = Boolean(query.value)
             debouncedFetch()
         },
     )

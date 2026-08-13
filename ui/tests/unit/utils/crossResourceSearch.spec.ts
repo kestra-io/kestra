@@ -9,6 +9,8 @@ import {
     crossSearchResultKey,
     groupByNamespace,
     matchesLiteral,
+    searchViewState,
+    type SearchViewStateInput,
 } from "../../../src/utils/crossResourceSearch"
 
 describe("matchesLiteral", () => {
@@ -176,5 +178,50 @@ describe("term highlighting (KV and namespace files)", () => {
 
     it("leaves text untouched when the query has no terms", () => {
         expect(buildTermHighlightHtml("anything", "---")).toBe("anything")
+    })
+})
+
+describe("searchViewState", () => {
+    const state = (overrides: Partial<SearchViewStateInput> = {}) => searchViewState({
+        hasQuery: true,
+        loadInit: true,
+        searchPending: false,
+        anyCounting: false,
+        matchCount: 0,
+        ...overrides,
+    })
+
+    it("shows the initial prompt when there is no query", () => {
+        expect(state({hasQuery: false})).toBe("initial")
+        expect(state({hasQuery: false, searchPending: true})).toBe("initial")
+    })
+
+    it("loads instead of claiming no matches while a search is only scheduled", () => {
+        // The debounce window: a keystroke landed, no request is out yet, so every status is
+        // still idle and every count still zero.
+        expect(state({searchPending: true})).toBe("loading")
+    })
+
+    it("loads while a type is counting and nothing has arrived yet", () => {
+        expect(state({anyCounting: true})).toBe("loading")
+    })
+
+    it("loads while the URL restore navigation is still in flight", () => {
+        expect(state({loadInit: false})).toBe("loading")
+    })
+
+    it("reports empty only once the search has settled with no matches", () => {
+        expect(state()).toBe("empty")
+    })
+
+    it("shows partial results as they stream in rather than a skeleton", () => {
+        // Namespace files fan out one namespace at a time; the first hits must not be hidden
+        // behind a loading state for the rest of the fan-out.
+        expect(state({anyCounting: true, matchCount: 3})).toBe("results")
+        expect(state({searchPending: true, matchCount: 3})).toBe("results")
+    })
+
+    it("shows results for a settled search with matches", () => {
+        expect(state({matchCount: 10})).toBe("results")
     })
 })

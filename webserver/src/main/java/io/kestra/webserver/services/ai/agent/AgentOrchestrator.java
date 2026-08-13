@@ -90,7 +90,7 @@ public class AgentOrchestrator {
         String traceId = thread.uid() + "-turn-" + (threadManager.load(thread.tenant(), thread.uid()).size() + 1);
         try {
             ResolvedProfile profile = modeProfiles.resolve(context.mode(), context.tenant(), context.principal());
-            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(List.of());
+            StreamingChatModel model = aiServiceManager.getAiService(context.providerId()).streamingChatModel(context.principal(), List.of());
 
             threadManager.appendUser(thread.tenant(), thread.uid(), traceId, context.prompt());
 
@@ -160,7 +160,7 @@ public class AgentOrchestrator {
             // keeps every tool-call/result pair inside one turn so turn-windowing can never split them.
             String traceId = pending.traceId();
             ResolvedProfile profile = modeProfiles.resolve(running.mode(), running.tenant(), principal);
-            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(List.of());
+            StreamingChatModel model = aiServiceManager.getAiService(providerId).streamingChatModel(principal, List.of());
 
             List<ChatMessage> projected = ChatMessageAdaptor.project(TurnWindow.lastNTurns(log, maxContextTurns));
             List<ChatMessage> messages = new ArrayList<>(projected.size() + 1);

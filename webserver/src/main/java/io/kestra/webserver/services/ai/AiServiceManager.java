@@ -12,6 +12,7 @@ import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.services.ai.gemini.FreeTierGeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiAiService;
 import io.kestra.webserver.services.ai.gemini.GeminiConfiguration;
 import io.kestra.webserver.services.posthog.PosthogService;
@@ -51,7 +52,8 @@ public class AiServiceManager {
         @Nullable NamespaceContextTool namespaceContextTool,
         @Nullable KestraDocsContextTool kestraDocsContextTool,
         ExpressionContextService expressionContextService,
-        FlowParsingService flowParsingService) {
+        FlowParsingService flowParsingService,
+        AiFreeTierConfiguration freeTierConfiguration) {
         this.providersConfiguration = providersConfiguration;
         this.expressionContextService = expressionContextService;
         this.flowParsingService = flowParsingService;
@@ -108,6 +110,83 @@ public class AiServiceManager {
             aiServices.put(provider.id(), aiService);
             hasConfiguredProvider = true;
         }
+
+        // Gated on whether a provider was *declared*, not on whether one could be built. Those differ:
+        // createAiService returns null for a provider it cannot construct, and the loop above skips it without
+        // marking one as configured. Falling back on that would route an operator's prompts and flow source to
+        // api.kestra.io because their own provider had a bad key — a data-flow change triggered by an unrelated
+        // misconfiguration. A declared provider is an expressed intent, so it is respected even when broken.
+        if (configs.isEmpty()) {
+            registerFreeTier(
+                freeTierConfiguration, pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService,
+                posthogService, listeners, expressionContextService, flowParsingService
+            );
+        } else if (!hasConfiguredProvider) {
+            log.warn(
+                "{} AI provider(s) are configured but none could be created, so Copilot is unavailable. The "
+                    + "hosted free tier is deliberately not used as a substitute: fix the provider configuration, "
+                    + "or remove it to fall back to the free tier.",
+                configs.size()
+            );
+        }
+    }
+
+    /**
+     * Falls back to Kestra's hosted provider so an instance with no key of its own still has a Copilot.
+     *
+     * <p>Reached only when nothing else is configured: an explicitly configured provider always wins, so this
+     * can never divert traffic away from a key someone chose. Enterprise ships it disabled — everything on
+     * this path leaves the deployment, which is a fair trade for a demo or trial and a surprise for a
+     * deployment with its own provider contract.
+     */
+    private void registerFreeTier(
+        AiFreeTierConfiguration freeTier,
+        io.kestra.core.plugins.PluginRegistry pluginRegistry,
+        io.kestra.core.docs.JsonSchemaGenerator jsonSchemaGenerator,
+        VersionProvider versionProvider,
+        InstanceService instanceService,
+        PosthogService posthogService,
+        List<dev.langchain4j.model.chat.listener.ChatModelListener> listeners,
+        ExpressionContextService expressionContextService,
+        FlowParsingService flowParsingService
+    ) {
+        if (freeTier == null || !freeTier.isEnabled()) {
+            log.debug("No AI provider is configured and the hosted free tier is disabled; Copilot stays unavailable.");
+            return;
+        }
+
+        GeminiConfiguration configuration = new GeminiConfiguration(
+            freeTier.getBaseUrl(),
+            freeTier.getToken(),
+            freeTier.getModelName(),
+            null, null, null, null, null,
+            0,
+            false,
+            false,
+            true,
+            null,
+            null,
+            null,
+            freeTier.getTimeout()
+        );
+
+        aiServices.put(
+            AiFreeTierConfiguration.PROVIDER_ID,
+            new FreeTierGeminiAiService(
+                pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService,
+                this.namespaceContextTool, AiFreeTierConfiguration.DISPLAY_NAME, listeners, configuration,
+                expressionContextService, flowParsingService
+            )
+        );
+        defaultProviderId = AiFreeTierConfiguration.PROVIDER_ID;
+        hasConfiguredProvider = true;
+
+        log.debug(
+            "No AI provider is configured; Copilot will use Kestra's hosted free tier at {}. Prompts, flow "
+                + "source and tool results are sent there. Configure kestra.ai to use your own provider, or set "
+                + "kestra.ai.free-tier.enabled to false to turn this off.",
+            freeTier.getBaseUrl()
+        );
     }
 
     protected AiServiceInterface createAiService(

@@ -46,6 +46,9 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     @Nullable
     private HttpClientConfiguration httpClientConfiguration;
 
+    @Inject
+    private JsonMapper jsonMapper;
+
     /**
      * {@inheritDoc}
      */
@@ -60,7 +63,7 @@ public abstract class AbstractApiCommand extends AbstractCommand {
             .build();
         MessageBodyHandlerRegistry defaultHandlerRegistry = defaultHttpClient.getHandlerRegistry();
         if (defaultHandlerRegistry instanceof ContextlessMessageBodyHandlerRegistry modifiableRegistry) {
-            modifiableRegistry.add(MediaType.TEXT_JSON_TYPE, new NettyJsonHandler<>(JsonMapper.createDefault()));
+            modifiableRegistry.add(MediaType.TEXT_JSON_TYPE, new NettyJsonHandler<>(jsonMapper));
         }
         return defaultHttpClient;
     }

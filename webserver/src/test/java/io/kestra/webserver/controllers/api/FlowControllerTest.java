@@ -1914,6 +1914,7 @@ class FlowControllerTest {
         assertThat(csv).contains("id");
         assertThat(csv).contains(f1.getId());
         assertThat(csv).contains(f2.getId());
+        assertThat(csv).doesNotContain("tenantId");
     }
 
     @Test

@@ -40,7 +40,7 @@
                         <KsButtonGroup>
                             <KsButton
                                 :icon="Restore"
-                                :disabled="revisionLeftText === currentRevisionWithSource.source"
+                                :disabled="revisionLeftText === currentRevisionWithSource?.source"
                                 @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
                                 data-testid="restore-left"
                             >
@@ -82,7 +82,7 @@
                         <KsButtonGroup>
                             <KsButton
                                 :icon="Restore"
-                                :disabled="revisionRightText === currentRevisionWithSource.source"
+                                :disabled="revisionRightText === currentRevisionWithSource?.source"
                                 @click="restoreRevision(revisionRightIndex, revisionRightText)"
                                 data-testid="restore-right"
                             >
@@ -233,8 +233,17 @@
         return idx === -1 ? undefined : idx
     }
 
-    function revisionNumber(index: number) {
-        return sortedRevisions.value[index].revision
+    /**
+     * The revision at a position in the sorted list, or undefined when that
+     * position no longer exists.
+     *
+     * Both sides of the diff are held as indices into a list that shrinks when a
+     * revision is deleted, and this is called from the template — reading through
+     * a stale index used to throw mid-render and blank the whole view.
+     */
+    function revisionNumber(index: number | undefined): number | undefined {
+        if (index === undefined) return undefined
+        return sortedRevisions.value[index]?.revision
     }
 
     function restoreRevision(index: number, revisionSource: string) {
@@ -249,12 +258,18 @@
             return
         }
 
+        const revisionLeft = revisionNumber(revisionLeftIndex.value)
+        const revisionRight = revisionNumber(revisionRightIndex.value)
+        if (revisionLeft === undefined || revisionRight === undefined) {
+            return
+        }
+
         if (props.editRouteQuery) {
             router.push({
                 query: {
                     ...route.query,
-                    revisionLeft: sortedRevisions.value[revisionLeftIndex.value].revision,
-                    revisionRight: sortedRevisions.value[revisionRightIndex.value].revision,
+                    revisionLeft,
+                    revisionRight,
                 },
             })
         }
@@ -269,7 +284,7 @@
     function formatRevisionText(revision: number): string {
         let text = revision.toString()
 
-        if (currentRevisionWithSource.value.revision === revision) {
+        if (currentRevision.value === revision) {
             text += ` (${t("current")})`
         }
 
@@ -280,7 +295,7 @@
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
             .map(({revision, updated, draft}) => {
-                const isCurrent = currentRevisionWithSource.value.revision === revision
+                const isCurrent = currentRevision.value === revision
                 return {
                     value: revisionIndex(revision.toString()),
                     revision: revision,
@@ -310,6 +325,10 @@
         }
 
         const revisionObject = sortedRevisions.value[index]
+        if (!revisionObject) {
+            return undefined
+        }
+
         let source = revisionObject.source
 
         if (!source) {
@@ -322,6 +341,8 @@
 
     async function onDelete(index: number) {
         const revisionToDelete = revisionNumber(index)
+        if (revisionToDelete === undefined) return
+
         toast.confirm(t("delete revision confirm", {revision: revisionToDelete}), async () => {
             try {
                 await flowStore.deleteRevision({
@@ -330,13 +351,50 @@
                     revision: revisionToDelete.toString(),
                 })
                 toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}))
+                // The parent refreshes the list asynchronously, so re-reading the
+                // selection here would only ever see the pre-delete list. The
+                // watcher below re-anchors both sides once the new list lands.
                 emit("deleted", revisionToDelete)
-                load()
             } catch (error: any) {
                 toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}))
             }
         })
     };
+
+    /**
+     * Keep both sides pointing at the revisions they were showing.
+     *
+     * The selections are positions in `sortedRevisions`, so any change to that
+     * list silently repoints them — after a delete they can even fall off the
+     * end. Remap by revision number, and where that revision is the one that
+     * just went away, fall back to a neighbour.
+     */
+    watch(sortedRevisions, (current, previous) => {
+        if (!previous || current.length === 0) return
+
+        const stillAt = (index: number | undefined) => {
+            const revision = index === undefined ? undefined : previous[index]?.revision
+            if (revision === undefined) return undefined
+            const found = current.findIndex(item => item.revision === revision)
+            return found === -1 ? undefined : found
+        }
+
+        let right = stillAt(revisionRightIndex.value)
+        let left = stillAt(revisionLeftIndex.value)
+
+        // Whichever side lost its revision falls back: the right to the newest,
+        // the left to whatever sits just before the right.
+        if (right === undefined) right = current.length - 1
+        if (left === undefined) left = right > 0 ? right - 1 : undefined
+
+        // Comparing a revision against itself is not a diff; nudge the left side.
+        if (left !== undefined && left === right) {
+            left = right > 0 ? right - 1 : undefined
+        }
+
+        revisionRightIndex.value = right
+        revisionLeftIndex.value = left
+    })
 
     watch(revisionLeftIndex, async (newValue) => {
         isLoadingRevisions.value = true
@@ -374,7 +432,7 @@
         }
     })
 
-    watch(() => currentRevisionWithSource.value.revision, (newRevision, oldRevision) => {
+    watch(currentRevision, (newRevision, oldRevision) => {
         if (revisionNumber(revisionRightIndex.value) === oldRevision) {
             revisionRightIndex.value = revisionIndex(newRevision.toString())
         }

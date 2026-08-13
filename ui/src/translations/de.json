@@ -1144,10 +1144,10 @@
       "dashboards": {
         "header": "Benutzerdefinierte Dashboards",
         "title": "Erstellen Sie benutzerdefinierte Dashboards, die auf Ihr Team zugeschnitten sind.",
-        "message": "Benutzerdefinierte Dashboards in der Kestra Enterprise Edition ermöglichen es Ihnen, eigene Ansichten auf Ausführungen, logs und Metriken zu erstellen und zu teilen. Sie kombinieren Zeitreihen, KPIs, Tabellen und Markdown-Diagramme mit einem Code- und No-Code-Editor, einer Live-Vorschau und mandantenspezifischen Standard-Dashboards.",
+        "message": "Benutzerdefinierte Dashboards in Kestra Enterprise Edition ermöglichen es Ihnen, eigene Ansichten über Ausführungen, Logs und Metriken zu erstellen und zu teilen. Sie können Zeitreihen, KPIs, Tabellen und Markdown-Diagramme kombinieren, mit einem Code- und No-Code-Editor, Live-Vorschau und Standard-Dashboards pro tenant.",
         "blueprints": {
           "title": "Beginnen Sie mit einem Dashboard-Blueprint.",
-          "message": "Dashboard-Blueprints sind vorgefertigte benutzerdefinierte Dashboards für gängige Monitoring-Anforderungen. Mit der Kestra Enterprise Edition können Sie jedes Blueprint als Ausgangspunkt verwenden und dessen Diagramme, KPIs und Tabellen im Dashboard-Editor an Ihr Team anpassen."
+          "message": "Dashboard-Blueprints sind vorgefertigte, benutzerdefinierte Dashboards für gängige Überwachungsanforderungen. Mit Kestra Enterprise Edition können Sie jeden Blueprint als Ausgangspunkt verwenden und dessen Diagramme, KPIs und Tabellen im Dashboard-Editor an Ihr Team anpassen."
         }
       },
       "IAM": {

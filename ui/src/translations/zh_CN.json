@@ -1142,12 +1142,12 @@
         "message": "Kestra Enterprise Edition 允许您直接从 UI 将 flow 从一个环境（例如 dev、staging 到 production）提升到另一个环境，无需 Git 或 CI/CD 管道。在提升之前，您可以查看将要更改内容的 diff，通过确认门保护敏感目标，一目了然地发现漂移，并保留谁在何时何地提升了什么的完整历史记录。"
       },
       "dashboards": {
-        "header": "自定义仪表板",
-        "title": "构建为您的团队量身定制的自定义仪表板。",
-        "message": "Kestra Enterprise Edition 中的自定义仪表板让您可以基于执行、logs 和指标创建并共享自己的视图，将时间序列、KPI、表格和 Markdown 图表组合在一起，并提供代码与 no-code 编辑器、实时预览以及每个租户的默认仪表板。",
+        "header": "自定义仪表盘",
+        "title": "构建适合您团队的自定义仪表板。",
+        "message": "Kestra Enterprise Edition 中的自定义仪表板允许您创建和共享自己的视图，以查看 execution、log 和 metrics，结合时间序列、KPI、表格和 Markdown 图表，并提供代码和无代码编辑器、实时预览以及每个 tenant 的默认仪表板。",
         "blueprints": {
-          "title": "从仪表板 blueprint 开始。",
-          "message": "仪表板 blueprints 是针对常见监控需求预先构建的自定义仪表板。使用 Kestra Enterprise Edition，您可以将任意 blueprint 作为起点，并在仪表板编辑器中将其图表、KPI 和表格调整为适合您的团队。"
+          "title": "从仪表盘 blueprint 开始。",
+          "message": "仪表盘 blueprint 是用于常见监控需求的预制自定义仪表盘。使用 Kestra Enterprise Edition，您可以将任何 blueprint 作为起点，并在仪表盘编辑器中根据您的团队调整其图表、KPI 和表格。"
         }
       },
       "IAM": {

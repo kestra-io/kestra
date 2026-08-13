@@ -1142,12 +1142,12 @@
         "message": "Kestra Enterprise Edition umożliwia promowanie flow z jednego środowiska do drugiego — na przykład z dev do staging, a następnie do production — bezpośrednio z interfejsu użytkownika, bez konieczności użycia Git lub potoków CI/CD. Przed promowaniem przejrzyj różnice, aby dokładnie wiedzieć, co się zmieni, chroń wrażliwe cele bramką potwierdzającą, szybko wykrywaj dryf i zachowaj pełną historię tego, kto, co, gdzie i kiedy promował."
       },
       "dashboards": {
-        "header": "Niestandardowe Dashboardy",
-        "title": "Twórz niestandardowe dashboardy dopasowane do Twojego zespołu.",
-        "message": "Niestandardowe dashboardy w Kestra Enterprise Edition pozwalają tworzyć i udostępniać własne widoki wykonań, logs i metryk, łącząc szeregi czasowe, KPI, tabele i wykresy Markdown, z edytorem kodu i no-code, podglądem na żywo oraz domyślnymi dashboardami dla każdego tenanta.",
+        "header": "Niestandardowe pulpity nawigacyjne",
+        "title": "Twórz niestandardowe pulpity nawigacyjne dostosowane do Twojego zespołu.",
+        "message": "Niestandardowe pulpity nawigacyjne w Kestra Enterprise Edition umożliwiają tworzenie i udostępnianie własnych widoków na podstawie wykonań, logów i metryk, łącząc szeregi czasowe, KPI, tabele i wykresy Markdown, z edytorem kodu i bez kodu, podglądem na żywo oraz domyślnymi pulpitami nawigacyjnymi dla każdego tenant.",
         "blueprints": {
-          "title": "Zacznij od blueprintu dashboardu.",
-          "message": "Blueprinty dashboardów to gotowe niestandardowe dashboardy odpowiadające typowym potrzebom monitorowania. W Kestra Enterprise Edition możesz użyć dowolnego blueprintu jako punktu wyjścia i dostosować jego wykresy, KPI oraz tabele do swojego zespołu w edytorze dashboardów."
+          "title": "Zacznij od blueprintu pulpitu nawigacyjnego.",
+          "message": "Blueprinty pulpitu nawigacyjnego to gotowe, niestandardowe pulpity nawigacyjne do typowych potrzeb monitorowania. Dzięki Kestra Enterprise Edition możesz użyć dowolnego blueprintu jako punktu wyjścia i dostosować jego wykresy, KPI i tabele do swojego zespołu w edytorze pulpitu nawigacyjnego."
         }
       },
       "IAM": {

@@ -1142,12 +1142,12 @@
         "message": "Kestra Enterprise Edition ti permette di promuovere i flow da un ambiente all'altro — come da dev a staging a production — direttamente dall'interfaccia utente, senza bisogno di Git o pipeline CI/CD. Rivedi un diff di ciò che cambierà esattamente prima di promuovere, proteggi i target sensibili con un gate di conferma, individua le derive a colpo d'occhio e mantieni una cronologia completa di chi ha promosso cosa, dove e quando."
       },
       "dashboards": {
-        "header": "Dashboard personalizzati",
-        "title": "Crea dashboard personalizzati su misura per il tuo team.",
-        "message": "I dashboard personalizzati di Kestra Enterprise Edition ti permettono di creare e condividere le tue viste su esecuzioni, logs e metriche, combinando serie temporali, KPI, tabelle e grafici Markdown, con un editor code e no-code, anteprima in tempo reale e dashboard predefiniti per tenant.",
+        "header": "Dashboard Personalizzate",
+        "title": "Crea dashboard personalizzate su misura per il tuo team.",
+        "message": "Le dashboard personalizzate in Kestra Enterprise Edition ti consentono di creare e condividere le tue viste su esecuzioni, log e metriche, combinando serie temporali, KPI, tabelle e grafici Markdown, con un editor code e no-code, anteprima live e dashboard predefinite per ogni tenant.",
         "blueprints": {
-          "title": "Parti da un blueprint di dashboard.",
-          "message": "I blueprint di dashboard sono dashboard personalizzati pronti all'uso per le esigenze di monitoraggio più comuni. Con Kestra Enterprise Edition puoi usare qualsiasi blueprint come punto di partenza e adattarne grafici, KPI e tabelle al tuo team nell'editor dei dashboard."
+          "title": "Inizia da un blueprint di dashboard.",
+          "message": "I blueprint della Dashboard sono dashboard personalizzate predefinite per le esigenze di monitoraggio più comuni. Con Kestra Enterprise Edition, puoi utilizzare qualsiasi blueprint come punto di partenza e adattare i suoi grafici, KPI e tabelle al tuo team nell'editor della dashboard."
         }
       },
       "IAM": {

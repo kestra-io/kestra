@@ -1143,11 +1143,11 @@
       },
       "dashboards": {
         "header": "カスタムダッシュボード",
-        "title": "チームに合わせたカスタムダッシュボードを構築。",
-        "message": "Kestra Enterprise Editionのカスタムダッシュボードでは、実行、logs、メトリクスに対する独自のビューを作成して共有できます。時系列、KPI、テーブル、Markdownチャートを組み合わせ、コードエディタとno-codeエディタ、ライブプレビュー、テナントごとのデフォルトダッシュボードを利用できます。",
+        "title": "チームに合わせてカスタムダッシュボードを構築します。",
+        "message": "Kestra Enterprise Editionのカスタムダッシュボードでは、コードおよびノーコードエディター、ライブプレビュー、tenantごとのデフォルトダッシュボードを使用して、実行、log、メトリクスに関する独自のビューを作成および共有できます。時系列、KPI、テーブル、Markdownチャートを組み合わせることができます。",
         "blueprints": {
-          "title": "ダッシュボードのblueprintから始める。",
-          "message": "ダッシュボードのblueprintは、一般的なモニタリング用途向けにあらかじめ用意されたカスタムダッシュボードです。Kestra Enterprise Editionでは、任意のblueprintを出発点として使用し、そのチャート、KPI、テーブルをダッシュボードエディタでチームに合わせて調整できます。"
+          "title": "ダッシュボードのblueprintから開始します。",
+          "message": "ダッシュボードのblueprintは、一般的な監視ニーズに対応する既製のカスタムダッシュボードです。Kestra Enterprise Editionでは、任意のblueprintを起点として、ダッシュボードエディターでそのチャート、KPI、テーブルをチームに合わせて調整できます。"
         }
       },
       "IAM": {

@@ -67,39 +67,9 @@ vi.mock("vue-router", () => ({
 }))
 
 import SourceSearchPreview from "../../../../src/components/flows/SourceSearchPreview.vue"
+import en from "../../../../src/translations/en.json"
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            cancel: "Cancel",
-            value: "Value",
-            source_search: {
-                confirm_bar_message: "Replace {matches} across {flows} editable flows. {skipped} read-only flows will be skipped.",
-                diff_preview_aria: "Replacement diff preview",
-                diff_preview_label: "diff preview · not yet applied",
-                file_match_notice: "The file path matched. File content is not searched — open the file to search inside it.",
-                kv_match_notice: "Only the key name was searched. Open the KV store to read the value.",
-                line_label: "line {line}",
-                match_count: "{count} match | {count} matches",
-                meta_created: "Created",
-                meta_expires: "Expires",
-                meta_never: "Never",
-                meta_updated: "Updated",
-                open_in_editor: "Open in editor",
-                open_in_kv: "Open in KV store",
-                open_in_secrets: "Open in secrets",
-                preview_empty: "Select a result to preview. Click a flow in the results list to see its source.",
-                preview_error: "Failed to load flow source",
-                replace_all: "Replace all",
-                secret_match_notice: "Secret values are never read by search. Only key names are matched.",
-                value_never_shown: "Never shown or searched",
-                value_withheld: "Not shown",
-            },
-        },
-    },
-})
+const i18n = createI18n({legacy: false, locale: "en", messages: en})
 
 function createGlobal() {
     setActivePinia(createPinia())

@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
-    <section class="full-container source-search">
+    <section class="full-container flush-top source-search">
         <div class="source-search__header">
             <div class="source-search__query-row">
                 <KsIconButton
@@ -88,10 +88,10 @@
                     </p>
 
                     <KsAlert
-                        v-if="store.truncatedFor('flows')"
+                        v-if="crossResourceSearchStore.truncatedFor('flows')"
                         type="warning"
                         class="source-search__truncation-alert"
-                        :description="t('source_search.truncated_flows', {shown: store.countFor('flows'), total: store.totalFor('flows')})"
+                        :description="t('source_search.truncated_flows', {shown: crossResourceSearchStore.countFor('flows'), total: crossResourceSearchStore.totalFor('flows')})"
                     />
                 </div>
             </div>
@@ -104,7 +104,7 @@
                         :key="type"
                         pill
                         :checked="selectedTypes.includes(type)"
-                        :class="{'source-search__pill--failed': query && store.statusFor(type) === 'failed'}"
+                        :class="{'source-search__pill--failed': query && crossResourceSearchStore.statusFor(type) === 'failed'}"
                         :title="type !== 'flows' ? t(type === 'files' ? 'source_search.path_only_hint' : 'source_search.key_only_hint') : undefined"
                         @change="(checked) => setTypeSelected(type, checked)"
                     >
@@ -112,9 +112,9 @@
                             <component :is="typeIcon(type)" />
                         </template>
                         {{ typeLabel(type) }}
-                        <span v-if="query && store.statusFor(type) !== 'idle'" class="source-search__pill-count">{{ store.countFor(type) }}</span>
-                        <Loading v-if="store.statusFor(type) === 'counting'" class="source-search__pill-spin" />
-                        <AlertCircleOutline v-else-if="query && store.statusFor(type) === 'failed'" :title="store.errorMessageFor(type)" />
+                        <span v-if="query && crossResourceSearchStore.statusFor(type) !== 'idle'" class="source-search__pill-count">{{ crossResourceSearchStore.countFor(type) }}</span>
+                        <Loading v-if="crossResourceSearchStore.statusFor(type) === 'counting'" class="source-search__pill-spin" />
+                        <AlertCircleOutline v-else-if="query && crossResourceSearchStore.statusFor(type) === 'failed'" :title="crossResourceSearchStore.errorMessageFor(type)" />
                         <PencilOff v-else-if="type !== 'flows'" />
                     </KsCheckTag>
                     <KsButton class="source-search__pill-outline" size="small" @click="selectAllTypes">
@@ -189,7 +189,7 @@
             class="source-search__type-failed-banner"
         >
             <div class="source-search__alert-title">{{ t('source_search.type_search_failed', {type: typeLabel(type)}) }}</div>
-            <div>{{ store.errorMessageFor(type) }}</div>
+            <div>{{ crossResourceSearchStore.errorMessageFor(type) }}</div>
         </KsAlert>
 
         <KsAlert
@@ -280,14 +280,14 @@
                     :query="query"
                     :caseSensitive="caseSensitive"
                     :selectedTypes="selectedTypes"
-                    :flowsStatus="store.flows.status"
-                    :flowsResults="store.flows.results"
-                    :filesStatus="store.files.status"
-                    :filesNamespaces="store.files.namespaces"
-                    :kvStatus="store.kv.status"
-                    :kvGroups="store.kv.groups"
-                    :secretsStatus="store.secrets.status"
-                    :secretsGroups="store.secrets.groups"
+                    :flowsStatus="crossResourceSearchStore.flows.status"
+                    :flowsResults="crossResourceSearchStore.flows.results"
+                    :filesStatus="crossResourceSearchStore.files.status"
+                    :filesNamespaces="crossResourceSearchStore.files.namespaces"
+                    :kvStatus="crossResourceSearchStore.kv.status"
+                    :kvGroups="crossResourceSearchStore.kv.groups"
+                    :secretsStatus="crossResourceSearchStore.secrets.status"
+                    :secretsGroups="crossResourceSearchStore.secrets.groups"
                     :selectedKey="selectedKey"
                     :replaceMode="replaceOpen"
                     :selectedMatchKeys="selectedMatchKeys"
@@ -361,7 +361,7 @@
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
-    const store = useCrossResourceSearchStore()
+    const crossResourceSearchStore = useCrossResourceSearchStore()
 
     const resultsRef = ref<InstanceType<typeof SourceSearchResults> | null>(null)
 
@@ -493,25 +493,25 @@
 
     const truncatedTypes = computed(() => Object.fromEntries(
         SEARCH_RESOURCE_TYPES
-            .filter((type) => store.truncatedFor(type))
-            .map((type) => [type, {shown: store.countFor(type), total: store.totalFor(type)!}]),
+            .filter((type) => crossResourceSearchStore.truncatedFor(type))
+            .map((type) => [type, {shown: crossResourceSearchStore.countFor(type), total: crossResourceSearchStore.totalFor(type)!}]),
     ))
 
-    const selectionSummary = computed(() => computeSelectionSummary(store.flows.results, selectedMatchKeys.value))
+    const selectionSummary = computed(() => computeSelectionSummary(crossResourceSearchStore.flows.results, selectedMatchKeys.value))
 
-    const visibleFlatSelections = computed(() => store.flatSelections.filter((entry) => selectedTypes.value.includes(entry.type)))
+    const visibleFlatSelections = computed(() => crossResourceSearchStore.flatSelections.filter((entry) => selectedTypes.value.includes(entry.type)))
 
-    const summaryMatchCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + store.countFor(type), 0))
-    const summaryResourceCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + store.resourceCountFor(type), 0))
-    const summaryActiveTypeCount = computed(() => selectedTypes.value.filter((type) => store.countFor(type) > 0).length)
+    const summaryMatchCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.countFor(type), 0))
+    const summaryResourceCount = computed(() => selectedTypes.value.reduce((sum, type) => sum + crossResourceSearchStore.resourceCountFor(type), 0))
+    const summaryActiveTypeCount = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.countFor(type) > 0).length)
 
-    const anyCountingSelected = computed(() => selectedTypes.value.some((type) => store.statusFor(type) === "counting"))
-    const failedSelectedTypes = computed(() => selectedTypes.value.filter((type) => store.statusFor(type) === "failed"))
+    const anyCountingSelected = computed(() => selectedTypes.value.some((type) => crossResourceSearchStore.statusFor(type) === "counting"))
+    const failedSelectedTypes = computed(() => selectedTypes.value.filter((type) => crossResourceSearchStore.statusFor(type) === "failed"))
     const showEmptyResultsState = computed(() => Boolean(query.value) && loadInit.value && !anyCountingSelected.value && summaryMatchCount.value === 0)
 
     const hiddenTypeCounts = computed(() => SEARCH_RESOURCE_TYPES
         .filter((type) => !selectedTypes.value.includes(type))
-        .map((type) => ({type, count: store.countFor(type)}))
+        .map((type) => ({type, count: crossResourceSearchStore.countFor(type)}))
         .filter((entry) => entry.count > 0))
 
     const hiddenTypeHint = computed(() => hiddenTypeCounts.value
@@ -520,25 +520,25 @@
 
     const selectedTypesLabel = computed(() => selectedTypes.value.map(typeLabel).join(", "))
 
-    const flowsReadOnlyGroupCount = computed(() => store.flows.results.filter((group) => !group.editable).length)
-    const flowsReadOnlyMatchCount = computed(() => store.flows.results
+    const flowsReadOnlyGroupCount = computed(() => crossResourceSearchStore.flows.results.filter((group) => !group.editable).length)
+    const flowsReadOnlyMatchCount = computed(() => crossResourceSearchStore.flows.results
         .filter((group) => !group.editable)
         .reduce((sum, group) => sum + group.matches.length, 0))
 
     const nonFlowSearchOnlyExclusions = computed(() => (["files", "kv", "secrets"] as SearchResourceType[])
         .filter((type) => selectedTypes.value.includes(type))
-        .map((type) => ({type, count: store.countFor(type)}))
+        .map((type) => ({type, count: crossResourceSearchStore.countFor(type)}))
         .filter((entry) => entry.count > 0))
 
     const nonFlowExcludedMatchCount = computed(() => nonFlowSearchOnlyExclusions.value.reduce((sum, entry) => sum + entry.count, 0))
     const totalExcludedFromReplaceCount = computed(() => flowsReadOnlyMatchCount.value + nonFlowExcludedMatchCount.value)
 
     const filesProgressInfo = computed(() => {
-        if (!selectedTypes.value.includes("files") || store.files.status !== "counting") return null
+        if (!selectedTypes.value.includes("files") || crossResourceSearchStore.files.status !== "counting") return null
         return {
-            done: store.filesNamespacesDone,
-            total: store.filesNamespacesTotal,
-            failed: store.filesNamespacesFailed.length,
+            done: crossResourceSearchStore.filesNamespacesDone,
+            total: crossResourceSearchStore.filesNamespacesTotal,
+            failed: crossResourceSearchStore.filesNamespacesFailed.length,
         }
     })
 
@@ -546,7 +546,7 @@
 
     const selectedKvEntry = computed(() => {
         if (selection.value?.type !== "kv") return null
-        const group = store.kv.groups.find((g) => g.namespace === selection.value!.namespace)
+        const group = crossResourceSearchStore.kv.groups.find((g) => g.namespace === selection.value!.namespace)
         return group?.matches.find((match) => match.key === (selection.value as {key: string}).key) ?? null
     })
 
@@ -581,7 +581,7 @@
     }
 
     function onToggleFlow(value: {namespace: string; id: string; checked: boolean}) {
-        const group = store.flows.results.find((g) => g.namespace === value.namespace && g.id === value.id)
+        const group = crossResourceSearchStore.flows.results.find((g) => g.namespace === value.namespace && g.id === value.id)
         if (!group) return
         const next = new Set(selectedMatchKeys.value)
         for (const match of group.matches) {
@@ -605,7 +605,7 @@
     }
 
     function onRetryNamespace(value: {namespace: string}) {
-        return store.retryNamespaceFiles(value.namespace)
+        return crossResourceSearchStore.retryNamespaceFiles(value.namespace)
     }
 
     const searchFilters = computed(() => ({
@@ -690,7 +690,7 @@
     }
 
     function onConfirmReplaceAll() {
-        const flowsToApply = store.flows.results
+        const flowsToApply = crossResourceSearchStore.flows.results
             .filter((group) => group.editable && group.matches.some((match) => selectedMatchKeys.value.has(crossSearchResultKey({type: "flows", namespace: group.namespace, id: group.id, line: match.line, column: match.column}))))
             .map((group) => ({namespace: group.namespace, id: group.id}))
         return applyReplace(flowsToApply)
@@ -699,13 +699,13 @@
     async function fetchResults() {
         if (!loadInit.value) return
         if (!query.value) {
-            store.reset()
+            crossResourceSearchStore.reset()
             return
         }
 
         previewResponse.value = null
 
-        await store.search({
+        await crossResourceSearchStore.search({
             types: SEARCH_RESOURCE_TYPES,
             query: query.value,
             namespace: namespaceFilter.value,
@@ -723,7 +723,7 @@
     )
 
     watch(
-        () => [store.flows.results, selectedTypes.value] as const,
+        () => [crossResourceSearchStore.flows.results, selectedTypes.value] as const,
         ([flowsResults, types]) => {
             selectedMatchKeys.value = types.includes("flows")
                 ? new Set(flowsResults

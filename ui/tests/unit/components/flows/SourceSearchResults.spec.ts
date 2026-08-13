@@ -6,6 +6,7 @@ import SourceSearchResults from "../../../../src/components/flows/SourceSearchRe
 import type {SearchResourceType, SearchStatus} from "../../../../src/utils/crossResourceSearch"
 import type {NamespaceFileState, KvMatchEntry, SecretMatchEntry, ResourceGroup} from "../../../../src/stores/crossResourceSearch"
 import type {SourceSearchResult} from "../../../../src/utils/sourceSearchDiff"
+import en from "../../../../src/translations/en.json"
 
 vi.mock("vue-router", () => ({
     useRouter: () => ({push: vi.fn()}),
@@ -16,44 +17,7 @@ vi.mock("vue-router", () => ({
     },
 }))
 
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    messages: {
-        en: {
-            source_search: {
-                cannot_select_read_only: "Cannot select — you lack edit permission on {namespace} / {id}",
-                count_flows: "{count} flow | {count} flows",
-                count_keys: "{count} key | {count} keys",
-                count_namespaces: "{count} namespace | {count} namespaces",
-                count_paths: "{count} path | {count} paths",
-                match_count: "{count} match | {count} matches",
-                namespace_search_failed: "{namespace} couldn't be searched",
-                namespace_search_failed_detail: "Request failed. The other namespaces are unaffected.",
-                open_flow: "Open flow",
-                read_only: "Read-only",
-                read_only_tooltip: "You have read access but not edit access on this namespace",
-                replace_all_in_flow: "Replace all in flow",
-                replace_this: "Replace",
-                replace_this_match: "Replace this match",
-                retry_namespace: "Retry this namespace",
-                searching_namespace: "Searching {namespace}",
-                select_all_in_flow: "Select all matches in {namespace} / {id}",
-                select_match: "Select match on line {line}",
-                tag_keys_only_never: "Keys only — values never shown or searched",
-                tag_keys_only_values: "Keys only — values are not searched",
-                tag_paths_only: "Paths only — file content is not searched",
-                tag_search_only: "Search only — not replaced",
-                tag_source_code: "Source code",
-                type_files: "Namespace files",
-                type_flows: "Flows",
-                type_kv: "KV keys",
-                type_meta: "{matches} · {resources}",
-                type_secrets: "Secret keys",
-            },
-        },
-    },
-})
+const i18n = createI18n({legacy: false, locale: "en", messages: en})
 
 const globalConfig = {
     plugins: [i18n, KestraDesignSystem],

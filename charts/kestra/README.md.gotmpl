@@ -322,13 +322,12 @@ configurations:
 > **Note:** The webserver pod also starts an embedded controller by default. In distributed mode
 > workers only connect to `<release-name>-controller`, so this embedded controller is unused.
 > This is harmless — Kestra supports multiple controllers for load balancing — but wastes resources.
-> To disable it, add `--no-controller` to the webserver's `extraArgs`:
+> Disable it with:
 >
 > ```yaml
 > deployments:
 >   webserver:
->     extraArgs:
->       - --no-controller
+>     controller: false
 > ```
 
 ### Upgrade prerequisite

@@ -1,0 +1,44 @@
+suite: Deployment webserver controller
+
+templates:
+  - templates/deployment.yaml
+
+tests:
+  - it: does not append --no-controller when controller is left at its default
+    set:
+      deployments:
+        standalone:
+          enabled: false
+        webserver:
+          enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "--no-controller"
+
+  - it: appends --no-controller when controller is explicitly disabled
+    set:
+      deployments:
+        standalone:
+          enabled: false
+        webserver:
+          enabled: true
+          controller: false
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "--no-controller"
+
+  - it: does not affect other deployment types (e.g. standalone)
+    set:
+      deployments:
+        standalone:
+          enabled: true
+        webserver:
+          controller: false
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "--no-controller"

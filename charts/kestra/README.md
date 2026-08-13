@@ -308,13 +308,12 @@ configurations:
 > **Note:** The webserver pod also starts an embedded controller by default. In distributed mode
 > workers only connect to `<release-name>-controller`, so this embedded controller is unused.
 > This is harmless — Kestra supports multiple controllers for load balancing — but wastes resources.
-> To disable it, add `--no-controller` to the webserver's `extraArgs`:
+> Disable it with:
 >
 > ```yaml
 > deployments:
 >   webserver:
->     extraArgs:
->       - --no-controller
+>     controller: false
 > ```
 
 ### Upgrade prerequisite
@@ -383,6 +382,7 @@ JDBC queue tables — this is irreversible. Back up your database before upgradi
 | deployments.standalone.enabled | bool | `true` | Enable standalone Kestra deployment. |
 | deployments.standalone.extraArgs | list | `[]` | Extra arguments to pass to the container. |
 | deployments.standalone.workerThreads | int | `0` | Number of worker threads for standalone deployment ; "0" to auto-configure based on CPU. |
+| deployments.webserver.controller | bool | `true` | Enable the webserver's embedded gRPC worker controller. Set to `false` (adds `--no-controller`) when also running a dedicated `deployments.controller` Deployment, to avoid running two controllers for the same release. |
 | deployments.webserver.enabled | bool | `false` | Enable webserver in distributed mode. |
 | deployments.webserver.extraArgs | list | `[]` | Extra arguments to pass to the container. |
 | deployments.worker.enabled | bool | `false` | Enable worker in distributed mode. |

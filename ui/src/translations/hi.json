@@ -2,6 +2,157 @@
   "hi": {
     "loading": "लोड हो रहा है...",
     "more actions": "अधिक क्रियाएँ",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "केवल अक्षर, अंक, बिंदु, डैश और अंडरस्कोर का उपयोग करें, जो अक्षर या अंक से शुरू होते हों।",
+        "id_label": "flow id",
+        "id_placeholder": "मेरा-flow",
+        "namespace_invalid": "केवल छोटे अक्षरों, अंकों, बिंदुओं, डैश और अंडरस्कोर का उपयोग करें, जिनकी शुरुआत छोटे अक्षर या अंक से हो।",
+        "namespace_placeholder": "एक namespace चुनें",
+        "namespaces_error": "namespace लोड नहीं किए जा सके। मैन्युअल रूप से एक namespace टाइप करें।",
+        "open_editor": "एडिटर खोलें",
+        "subtitle": "हैलो-वर्ल्ड स्टार्टर से शुरू करें और स्क्रैच से बनाएं।",
+        "title": "खाली flow"
+      },
+      "blueprints": {
+        "subtitle": "समुदाय कैटलॉग से एक तैयार flow चुनें।",
+        "title": "ब्लूप्रिंट्स ब्राउज़ करें"
+      },
+      "import": {
+        "back": "वापस",
+        "error": {
+          "empty": "YAML सामग्री खाली है।",
+          "invalid_mapping": "अमान्य flow YAML: एक key-value मैपिंग अपेक्षित थी, न कि एक सूची या स्केलर।",
+          "parse_error": "YAML पार्स नहीं किया जा सका।",
+          "too_large": "वह फ़ाइल बहुत बड़ी है। इसके बजाय flow परिभाषा पेस्ट करें, या 1 MB से कम की फ़ाइल अपलोड करें।"
+        },
+        "paste_label": "YAML पेस्ट करें",
+        "read_error": "फ़ाइल पढ़ी नहीं जा सकी।",
+        "submit": "flow इम्पोर्ट करें",
+        "subtitle": "मौजूदा flow परिभाषा पेस्ट या अपलोड करें।",
+        "title": "YAML इम्पोर्ट करें",
+        "upload_button": ".yml / .yaml अपलोड करें",
+        "upload_label": "या एक फ़ाइल अपलोड करें",
+        "upload_tip": ".yml और .yaml फ़ाइलें स्वीकार करता है।"
+      },
+      "subtitle": "एक खाली कैनवास से शुरू करें, blueprints एक्सप्लोर करें, या मौजूदा YAML इम्पोर्ट करें।",
+      "system": {
+        "badge": "सिस्टम",
+        "subtitle": "अपने प्लेटफ़ॉर्म के लिए एक अलर्ट या ऑटोमेशन flow बनाएँ।",
+        "title": "एक सिस्टम flow बनाएँ"
+      },
+      "title": "नया flow बनाएँ"
+    },
+    "recipe": {
+      "create_flow": "flow बनाएँ",
+      "email": "ईमेल",
+      "execution": {
+        "include_sub": "उप-namespace शामिल करें",
+        "include_sub_hint_off": "केवल सटीक namespace में मौजूद flow ही इस अलर्ट को ट्रिगर करेंगे।",
+        "include_sub_hint_on": "चाइल्ड namespace में flow भी इस अलर्ट को ट्रिगर करेंगे।",
+        "namespace_placeholder": "एक namespace चुनें",
+        "namespaces_error": "Namespaces लोड नहीं किए जा सके। देखने के लिए एक namespace टाइप करें, या बाद में पुनः प्रयास करें।",
+        "states": "इन states पर",
+        "states_recommended": "FAILED अलर्टिंग के लिए अनुशंसित डिफ़ॉल्ट है।",
+        "states_required": "कम से कम एक state चुनें।",
+        "watch_namespace": "namespace देखें"
+      },
+      "notify": {
+        "email_label": "ईमेल",
+        "email_sub": "एक ईमेल सूचना भेजें",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "custom_label": "कस्टम",
+        "custom_note": "एक प्लेसहोल्डर task जोड़ा गया है — इसे एडिटर में किसी भी नोटिफिकेशन प्लगइन से बदलें।",
+        "custom_sub": "अपना स्वयं का नोटिफिकेशन task जोड़ें",
+        "plugin_unavailable": "प्लगइन इंस्टॉल नहीं है",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "एक Slack चैनल पर एक संदेश पोस्ट करें",
+        "teams_sub": "Teams चैनल पर एक कार्ड भेजें",
+        "teams_webhook_placeholder": "Teams इनकमिंग webhook URL"
+      },
+      "other": {
+        "load_error": "Triggers लोड नहीं किए जा सके। बाद में पुनः प्रयास करें।",
+        "no_results": "कोई trigger नहीं मिला।",
+        "search_label": "ट्रिगर खोजें",
+        "search_placeholder": "नाम या प्रकार से फ़िल्टर करें"
+      },
+      "schedule": {
+        "cron": "Cron एक्सप्रेशन",
+        "custom": "कस्टम",
+        "daily": "दैनिक",
+        "daily_hint": "हर दिन सुबह 9:00 बजे चलता है।",
+        "frequency": "फ़्रीक्वेंसी",
+        "hourly": "प्रति घंटा",
+        "hourly_hint": "हर घंटे 0वें मिनट पर चलता है।",
+        "timezone": "टाइमज़ोन",
+        "timezone_placeholder": "एक टाइमज़ोन चुनें (डिफ़ॉल्ट UTC)",
+        "weekly": "साप्ताहिक",
+        "weekly_hint": "हर सोमवार सुबह 9:00 बजे चलता है।"
+      },
+      "section_subtitle": "एक flow बनाएं जो आपके प्लेटफ़ॉर्म की निगरानी करता है और आपकी टीम को स्वचालित रूप से सूचित करता है।",
+      "section_title": "एक सिस्टम flow बनाएँ",
+      "summary": {
+        "any_namespace": "कोई भी namespace",
+        "empty": "अपने flow का पूर्वावलोकन करने के लिए ट्रिगर और कम से कम एक सूचना चैनल कॉन्फ़िगर करें।",
+        "exact_match": "सटीक मिलान",
+        "execution": "जब {ns} ({scope}) में कोई flow {states} स्थिति पर पहुँचता है, तो {channels} के माध्यम से सूचित करें।",
+        "including_sub": "और sub-namespaces",
+        "invalid_hint": "कम से कम एक नोटिफिकेशन चैनल जोड़ें और trigger कॉन्फ़िगरेशन पूरा करें।",
+        "invalid_hint_trigger": "ट्रिगर कॉन्फ़िगरेशन पूरा करें।",
+        "no_channel": "आपके द्वारा चुने गए चैनल",
+        "other": "जब {trigger} ट्रिगर सक्रिय होता है, तो {channels} के माध्यम से सूचित करें।",
+        "schedule": "शेड्यूल \"{cron}\" पर, {channels} के माध्यम से सूचित करें।",
+        "selected_trigger": "चयनित",
+        "title": "सारांश",
+        "webhook": "जब एक वेबहुक प्राप्त होता है, तो {channels} के माध्यम से सूचित करें।",
+        "preview_title": "पूर्वावलोकन",
+        "live": "लाइव"
+      },
+      "then": {
+        "no_channel_warning": "कम से कम एक नोटिफिकेशन चैनल चुनें।",
+        "subtitle": "अपनी टीम को कैसे सूचित करें, यह चुनें।",
+        "title": "फिर सूचित करें",
+        "unavailable_channels_warning": "{channels}: इस trigger प्रकार के लिए प्लगइन स्थापित नहीं है, कोई सूचना नहीं भेजी जाएगी।"
+      },
+      "trigger": {
+        "case_sub": "EE only feature",
+        "case_title": "केस स्थिति",
+        "execution_sub": "flow स्थिति परिवर्तनों पर प्रतिक्रिया करता है",
+        "execution_title": "एक्सेक्यूशन स्थिति",
+        "other_sub": "कोई भी उपलब्ध trigger प्लगइन",
+        "other_title": "अन्य trigger",
+        "schedule_sub": "समय-निर्धारण पर चलता है",
+        "schedule_title": "शेड्यूल",
+        "webhook_sub": "एक HTTP अनुरोध द्वारा ट्रिगर किया गया",
+        "webhook_title": "वेबहुक"
+      },
+      "webhook": {
+        "endpoint_hint": "flow को ट्रिगर करने के लिए इस URL पर एक POST अनुरोध भेजें।",
+        "endpoint_url": "एंडपॉइंट URL",
+        "key_label": "Webhook key",
+        "key_placeholder": "इस वेबहुक के लिए एक अद्वितीय key दर्ज करें"
+      },
+      "when": {
+        "subtitle": "चुनें कि इस सिस्टम flow को क्या trigger करता है।",
+        "title": "जब ऐसा होता है",
+        "trigger_type": "ट्रिगर प्रकार"
+      },
+      "hero_eyebrow": "आपका सिस्टम flow",
+      "hero_empty": "अपने flow का पूर्वावलोकन करने के लिए एक trigger और एक channel चुनें।",
+      "browse_blueprints": "क्या आप किसी टेम्पलेट से शुरू करना पसंद करेंगे? कम्युनिटी सिस्टम blueprints ब्राउज़ करें",
+      "start_blank": "इसे स्वयं लिखना पसंद करते हैं? चरणों को छोड़ें और एक खाली flow खोलें",
+      "steps": {
+        "trigger_title": "ट्रिगर",
+        "trigger_desc": "जब यह चलता है",
+        "trigger_heading": "यह flow कब चलना चाहिए?",
+        "notify_title": "सूचित करें",
+        "notify_desc": "कौन इसके बारे में सुनता है",
+        "notify_heading": "हम आपकी टीम को कैसे सूचित करें?",
+        "review_title": "समीक्षा करें",
+        "review_desc": "जाँचें और बनाएँ",
+        "review_heading": "अपने सिस्टम flow की समीक्षा करें"
+      }
+    },
     "toggle menu": "मेनू टॉगल करें",
     "panel actions": "पैनल क्रियाएँ",
     "playground actions": "प्लेग्राउंड क्रियाएँ",
@@ -1507,6 +1658,10 @@
     "dataFilters": "डेटा फ़िल्टर",
     "logExporters": "लॉग Exporters",
     "empty": {
+      "secrets": {
+        "title": "आपके पास अभी तक कोई Secrets नहीं है!",
+        "content": "API keys, पासवर्ड और टोकन को आपके flows में हार्डकोड करने के बजाय secrets के रूप में स्टोर किया जा सकता है। प्रत्येक secret एक namespace से संबंधित होता है, उसके child namespaces द्वारा इनहेरिट किया जाता है, और किसी भी task से संदर्भित किया जा सकता है।"
+      },
       "namespaceFiles": {
         "title": "इस namespace में अभी तक कोई फ़ाइल नहीं है",
         "content": "Namespace फ़ाइलें इस namespace के लिए एक प्रोजेक्ट फ़ोल्डर की तरह काम करती हैं। Python, SQL, dbt या Terraform कोड संग्रहीत करें, फिर अपने flows में किसी भी फ़ाइल को इसके साथ संदर्भित करें"

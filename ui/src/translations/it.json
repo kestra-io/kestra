@@ -2,6 +2,157 @@
   "it": {
     "loading": "Caricamento...",
     "more actions": "Altre azioni",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "Usa solo lettere, cifre, punti, trattini e underscore, iniziando con una lettera o una cifra.",
+        "id_label": "ID del flow",
+        "id_placeholder": "my-flow",
+        "namespace_invalid": "Utilizzare solo lettere minuscole, cifre, punti, trattini e underscore, iniziando con una lettera minuscola o una cifra.",
+        "namespace_placeholder": "Seleziona un namespace",
+        "namespaces_error": "Impossibile caricare i namespace. Digitare un namespace manualmente.",
+        "open_editor": "Apri editor",
+        "subtitle": "Inizia con un esempio \"hello-world\" e costruisci da zero.",
+        "title": "flow vuoto"
+      },
+      "blueprints": {
+        "subtitle": "Scegli un flow già pronto dal catalogo della community.",
+        "title": "Sfoglia i blueprint"
+      },
+      "import": {
+        "back": "Indietro",
+        "error": {
+          "empty": "Il contenuto YAML è vuoto.",
+          "invalid_mapping": "YAML del flow non valido: previsto un mapping chiave-valore, non un elenco o uno scalare.",
+          "parse_error": "Impossibile analizzare il YAML.",
+          "too_large": "Il file è troppo grande. Incolla invece la definizione del flow o carica un file di dimensioni inferiori a 1 MB."
+        },
+        "paste_label": "Incolla YAML",
+        "read_error": "Impossibile leggere il file.",
+        "submit": "Importa flow",
+        "subtitle": "Incolla o carica una definizione di flow esistente.",
+        "title": "Importa YAML",
+        "upload_button": "Carica .yml / .yaml",
+        "upload_label": "O carica un file",
+        "upload_tip": "Accetta file .yml e .yaml."
+      },
+      "subtitle": "Inizia da una tela vuota, esplora i blueprint o importa un file YAML esistente.",
+      "system": {
+        "badge": "SISTEMA",
+        "subtitle": "Crea un flow di avviso o automazione per la tua piattaforma.",
+        "title": "Crea un system flow"
+      },
+      "title": "Crea un nuovo flow"
+    },
+    "recipe": {
+      "create_flow": "Crea flow",
+      "email": "Email",
+      "execution": {
+        "include_sub": "Includi i sub-namespace",
+        "include_sub_hint_off": "Solo i flow nell'esatto namespace attiveranno questo avviso.",
+        "include_sub_hint_on": "I flow nei namespace figli attiveranno anche questo avviso.",
+        "namespace_placeholder": "Seleziona un namespace",
+        "namespaces_error": "Impossibile caricare i namespace. Digita un namespace da monitorare o riprova più tardi.",
+        "states": "Su questi stati",
+        "states_recommended": "FAILED è il valore predefinito consigliato per gli avvisi.",
+        "states_required": "Seleziona almeno uno stato.",
+        "watch_namespace": "Guarda il namespace"
+      },
+      "notify": {
+        "email_label": "Email",
+        "email_sub": "Invia una notifica email",
+        "email_to_placeholder": "destinatario{'@'}tuo-dominio.com",
+        "custom_label": "Personalizzato",
+        "custom_note": "È stata aggiunta una task segnaposto: sostituiscila con qualsiasi plugin di notifica nell'editor.",
+        "custom_sub": "Aggiungi la tua task di notifica",
+        "plugin_unavailable": "Plugin non installato",
+        "slack_channel_placeholder": "#avvisi",
+        "slack_sub": "Invia un messaggio a un canale Slack",
+        "teams_sub": "Invia una card a un canale Teams",
+        "teams_webhook_placeholder": "URL webhook in entrata di Teams"
+      },
+      "other": {
+        "load_error": "Impossibile caricare i trigger. Riprova più tardi.",
+        "no_results": "Nessun trigger trovato.",
+        "search_label": "Cerca trigger",
+        "search_placeholder": "Filtra per nome o tipo"
+      },
+      "schedule": {
+        "cron": "Espressione Cron",
+        "custom": "Personalizzato",
+        "daily": "Giornaliero",
+        "daily_hint": "Viene eseguito ogni giorno alle 9:00.",
+        "frequency": "Frequenza",
+        "hourly": "Orario",
+        "hourly_hint": "Viene eseguito ogni ora al minuto 0.",
+        "timezone": "Fuso orario",
+        "timezone_placeholder": "Seleziona un fuso orario (UTC predefinito)",
+        "weekly": "Settimanale",
+        "weekly_hint": "Viene eseguito ogni lunedì alle 9:00."
+      },
+      "section_subtitle": "Crea un flow che monitora la tua piattaforma e notifica automaticamente il tuo team.",
+      "section_title": "Crea un system flow",
+      "summary": {
+        "any_namespace": "qualsiasi namespace",
+        "empty": "Configura il trigger e almeno un canale di notifica per visualizzare l'anteprima del tuo flow.",
+        "exact_match": "corrispondenza esatta",
+        "execution": "Quando un flow in {ns} ({scope}) raggiunge lo stato {states}, notifica tramite {channels}.",
+        "including_sub": "e sub-namespace",
+        "invalid_hint": "Aggiungi almeno un canale di notifica e completa la configurazione del trigger.",
+        "invalid_hint_trigger": "Completa la configurazione del trigger.",
+        "no_channel": "i canali selezionati",
+        "other": "Quando il trigger {trigger} si attiva, notifica tramite {channels}.",
+        "schedule": "Secondo la pianificazione \"{cron}\", notifica tramite {channels}.",
+        "selected_trigger": "selezionato",
+        "title": "Riepilogo",
+        "webhook": "Quando viene ricevuto un webhook, notifica tramite {channels}.",
+        "preview_title": "Anteprima",
+        "live": "LIVE"
+      },
+      "then": {
+        "no_channel_warning": "Seleziona almeno un canale di notifica.",
+        "subtitle": "Seleziona come notificare il tuo team.",
+        "title": "Poi notifica",
+        "unavailable_channels_warning": "{channels}: plugin non installato per questo tipo di trigger, nessuna notifica verrà inviata."
+      },
+      "trigger": {
+        "case_sub": "Funzionalità solo EE",
+        "case_title": "Stato del caso",
+        "execution_sub": "Reagisce ai cambiamenti di stato del flow",
+        "execution_title": "Stato di esecuzione",
+        "other_sub": "Qualsiasi plugin trigger disponibile",
+        "other_title": "Altro trigger",
+        "schedule_sub": "Viene eseguito in base a una pianificazione oraria",
+        "schedule_title": "Pianificazione",
+        "webhook_sub": "Attivato da una richiesta HTTP",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "Invia una richiesta POST a questo URL per attivare il flow.",
+        "endpoint_url": "URL dell'Endpoint",
+        "key_label": "Chiave Webhook",
+        "key_placeholder": "Inserisci una chiave univoca per questo webhook"
+      },
+      "when": {
+        "subtitle": "Scegli cosa attiva questo system flow.",
+        "title": "Quando questo accade",
+        "trigger_type": "Tipo di trigger"
+      },
+      "hero_eyebrow": "Il tuo flow di sistema",
+      "hero_empty": "Scegli un trigger e un canale per visualizzare l'anteprima del tuo flow.",
+      "browse_blueprints": "Preferisci iniziare da un template? Sfoglia i blueprint di sistema della community",
+      "start_blank": "Preferisci scriverlo tu stesso? Salta i passaggi e apri un flow vuoto",
+      "steps": {
+        "trigger_title": "Trigger",
+        "trigger_desc": "Quando viene eseguito",
+        "trigger_heading": "Quando dovrebbe essere eseguito questo flow?",
+        "notify_title": "Notifica",
+        "notify_desc": "Chi ne sente parlare",
+        "notify_heading": "Come dovremmo notificare il tuo team?",
+        "review_title": "Revisione",
+        "review_desc": "Verifica e crea",
+        "review_heading": "Rivedi il tuo flow di sistema"
+      }
+    },
     "toggle menu": "Attiva/disattiva menu",
     "panel actions": "Azioni del pannello",
     "playground actions": "Azioni del playground",
@@ -1507,6 +1658,10 @@
     "dataFilters": "Filtri Dati",
     "logExporters": "Esportatori di Log",
     "empty": {
+      "secrets": {
+        "title": "Non hai ancora nessun Segreto!",
+        "content": "Le chiavi API, le password e i token possono essere archiviati come segreti invece di essere codificati direttamente nei tuoi flow. Ogni segreto appartiene a un namespace, è ereditato dai suoi namespace figli e può essere referenziato da qualsiasi task."
+      },
       "namespaceFiles": {
         "title": "Nessun file in questo namespace per ora",
         "content": "I file del namespace funzionano come una cartella di progetto per questo namespace. Archivia codice Python, SQL, dbt o Terraform, quindi fai riferimento a qualsiasi file nei tuoi flows con"

@@ -2,6 +2,157 @@
   "de": {
     "loading": "Wird geladen...",
     "more actions": "Weitere Aktionen",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "Verwenden Sie nur Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche, beginnend mit einem Buchstaben oder einer Ziffer.",
+        "id_label": "Flow id",
+        "id_placeholder": "mein-flow",
+        "namespace_invalid": "Verwenden Sie nur Kleinbuchstaben, Ziffern, Punkte, Bindestriche und Unterstriche, beginnend mit einem Kleinbuchstaben oder einer Ziffer.",
+        "namespace_placeholder": "Wählen Sie einen namespace aus",
+        "namespaces_error": "Namespaces konnten nicht geladen werden. Geben Sie einen namespace manuell ein.",
+        "open_editor": "Editor öffnen",
+        "subtitle": "Beginnen Sie mit einem Hello-World-Starter und erstellen Sie von Grund auf neu.",
+        "title": "Leerer flow"
+      },
+      "blueprints": {
+        "subtitle": "Wählen Sie einen vorgefertigten flow aus dem Community-Katalog.",
+        "title": "Blueprints durchsuchen"
+      },
+      "import": {
+        "back": "Zurück",
+        "error": {
+          "empty": "YAML-Inhalt ist leer.",
+          "invalid_mapping": "Ungültiges flow YAML: Erwartet wurde eine Schlüssel-Wert-Zuordnung, nicht eine Liste oder ein Skalar.",
+          "parse_error": "YAML konnte nicht geparst werden.",
+          "too_large": "Die Datei ist zu groß. Fügen Sie stattdessen die flow-Definition ein oder laden Sie eine Datei unter 1 MB hoch."
+        },
+        "paste_label": "YAML einfügen",
+        "read_error": "Die Datei konnte nicht gelesen werden.",
+        "submit": "flow importieren",
+        "subtitle": "Fügen Sie eine vorhandene flow-Definition ein oder laden Sie sie hoch.",
+        "title": "YAML importieren",
+        "upload_button": ".yml / .yaml hochladen",
+        "upload_label": "Oder eine Datei hochladen",
+        "upload_tip": "Akzeptiert .yml- und .yaml-Dateien."
+      },
+      "subtitle": "Beginnen Sie mit einer leeren Arbeitsfläche, erkunden Sie blueprints oder importieren Sie eine vorhandene YAML-Datei.",
+      "system": {
+        "badge": "SYSTEM",
+        "subtitle": "Erstellen Sie einen Alarm- oder Automatisierungs-flow für Ihre Plattform.",
+        "title": "System-flow erstellen"
+      },
+      "title": "Neuen flow erstellen"
+    },
+    "recipe": {
+      "create_flow": "flow erstellen",
+      "email": "E-Mail",
+      "execution": {
+        "include_sub": "Unter-namespaces einschließen",
+        "include_sub_hint_off": "Nur flows im exakten namespace lösen diesen Alarm aus.",
+        "include_sub_hint_on": "Flows in untergeordneten namespaces lösen ebenfalls diesen Alarm aus.",
+        "namespace_placeholder": "Wählen Sie einen namespace",
+        "namespaces_error": "Namespaces konnten nicht geladen werden. Geben Sie einen Namespace ein, den Sie beobachten möchten, oder versuchen Sie es später erneut.",
+        "states": "Bei diesen Zuständen",
+        "states_recommended": "FAILED ist der empfohlene Standard für Benachrichtigungen.",
+        "states_required": "Wählen Sie mindestens einen Zustand aus.",
+        "watch_namespace": "namespace beobachten"
+      },
+      "notify": {
+        "email_label": "E-Mail",
+        "email_sub": "Eine E-Mail-Benachrichtigung senden",
+        "email_to_placeholder": "empfänger{'@'}ihre-domain.com",
+        "custom_label": "Benutzerdefiniert",
+        "custom_note": "Eine Platzhalter-Task wurde hinzugefügt – ersetzen Sie sie im Editor durch ein beliebiges Benachrichtigungs-Plugin.",
+        "custom_sub": "Eigene Benachrichtigungs-Task hinzufügen",
+        "plugin_unavailable": "Plugin nicht installiert",
+        "slack_channel_placeholder": "#alerts",
+        "slack_sub": "Eine Nachricht in einem Slack-Kanal posten",
+        "teams_sub": "Senden Sie eine Karte an einen Teams-Kanal",
+        "teams_webhook_placeholder": "Eingehende Teams-Webhook-URL"
+      },
+      "other": {
+        "load_error": "Trigger konnten nicht geladen werden. Versuchen Sie es später erneut.",
+        "no_results": "Keine Trigger gefunden.",
+        "search_label": "Trigger suchen",
+        "search_placeholder": "Nach Name oder Typ filtern"
+      },
+      "schedule": {
+        "cron": "Cron-Ausdruck",
+        "custom": "Benutzerdefiniert",
+        "daily": "Täglich",
+        "daily_hint": "Läuft jeden Tag um 9:00 Uhr.",
+        "frequency": "Häufigkeit",
+        "hourly": "Stündlich",
+        "hourly_hint": "Läuft jede Stunde zur Minute 0.",
+        "timezone": "Zeitzone",
+        "timezone_placeholder": "Wählen Sie eine Zeitzone (Standard UTC)",
+        "weekly": "Wöchentlich",
+        "weekly_hint": "Läuft jeden Montag um 9:00 Uhr."
+      },
+      "section_subtitle": "Erstellen Sie einen flow, der Ihre Plattform überwacht und Ihr Team automatisch benachrichtigt.",
+      "section_title": "System-flow erstellen",
+      "summary": {
+        "any_namespace": "jeder namespace",
+        "empty": "Konfigurieren Sie den trigger und mindestens einen Benachrichtigungskanal, um Ihren flow in der Vorschau anzuzeigen.",
+        "exact_match": "Exakte Übereinstimmung",
+        "execution": "Wenn ein flow in {ns} ({scope}) den Zustand {states} erreicht, benachrichtige über {channels}.",
+        "including_sub": "und Sub-namespaces",
+        "invalid_hint": "Fügen Sie mindestens einen Benachrichtigungskanal hinzu und schließen Sie die Trigger-Konfiguration ab.",
+        "invalid_hint_trigger": "Schließen Sie die Trigger-Konfiguration ab.",
+        "no_channel": "die von Ihnen ausgewählten Kanäle",
+        "other": "Wenn der {trigger} Trigger ausgelöst wird, benachrichtige über {channels}.",
+        "schedule": "Nach Zeitplan \"{cron}\", Benachrichtigung über {channels}.",
+        "selected_trigger": "ausgewählt",
+        "title": "Zusammenfassung",
+        "webhook": "Wenn ein Webhook empfangen wird, benachrichtigen über {channels}.",
+        "preview_title": "Vorschau",
+        "live": "LIVE"
+      },
+      "then": {
+        "no_channel_warning": "Wählen Sie mindestens einen Benachrichtigungskanal aus.",
+        "subtitle": "Wählen Sie aus, wie Ihr Team benachrichtigt werden soll.",
+        "title": "Dann benachrichtigen",
+        "unavailable_channels_warning": "{channels}: Plugin für diesen Trigger-Typ nicht installiert, es wird keine Benachrichtigung gesendet."
+      },
+      "trigger": {
+        "case_sub": "Nur für EE-Version",
+        "case_title": "Fallstatus",
+        "execution_sub": "Reagiert auf flow-Zustandsänderungen",
+        "execution_title": "Ausführungszustand",
+        "other_sub": "Jedes verfügbare Trigger-Plugin",
+        "other_title": "Anderer Trigger",
+        "schedule_sub": "Läuft nach einem Zeitplan",
+        "schedule_title": "Zeitplan",
+        "webhook_sub": "Ausgelöst durch eine HTTP-Anfrage",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "Senden Sie eine POST-Anfrage an diese URL, um den flow auszulösen.",
+        "endpoint_url": "Endpunkt-URL",
+        "key_label": "Webhook-Schlüssel",
+        "key_placeholder": "Geben Sie einen eindeutigen Schlüssel für diesen Webhook ein"
+      },
+      "when": {
+        "subtitle": "Wählen Sie aus, was diesen System-flow auslöst.",
+        "title": "Wenn dies geschieht",
+        "trigger_type": "Trigger-Typ"
+      },
+      "hero_eyebrow": "Ihr System-flow",
+      "hero_empty": "Wählen Sie einen Trigger und einen Kanal, um Ihren flow in der Vorschau anzuzeigen.",
+      "browse_blueprints": "Möchten Sie lieber mit einer Vorlage beginnen? Durchsuchen Sie die Community-System-Blueprints",
+      "start_blank": "Möchten Sie es lieber selbst schreiben? Überspringen Sie die Schritte und öffnen Sie einen leeren flow",
+      "steps": {
+        "trigger_title": "Trigger",
+        "trigger_desc": "Wenn es läuft",
+        "trigger_heading": "Wann soll dieser flow ausgeführt werden?",
+        "notify_title": "Benachrichtigen",
+        "notify_desc": "Wer davon erfährt",
+        "notify_heading": "Wie sollen wir Ihr Team benachrichtigen?",
+        "review_title": "Überprüfen",
+        "review_desc": "Prüfen & erstellen",
+        "review_heading": "Überprüfen Sie Ihren System-flow"
+      }
+    },
     "toggle menu": "Menü umschalten",
     "panel actions": "Panelaktionen",
     "playground actions": "Aktionen im Playground",
@@ -1507,6 +1658,10 @@
     "dataFilters": "Datenfilter",
     "logExporters": "Log-Exporteure",
     "empty": {
+      "secrets": {
+        "title": "Sie haben noch keine Secrets!",
+        "content": "API-Schlüssel, Passwörter und Tokens können als Secrets gespeichert werden, anstatt sie fest in Ihren flows zu codieren. Jedes Secret gehört zu einem namespace, wird von seinen untergeordneten namespaces geerbt und kann von jeder task referenziert werden."
+      },
       "namespaceFiles": {
         "title": "Noch keine Dateien in diesem Namespace",
         "content": "Namespace-Dateien funktionieren wie ein Projektordner für diesen Namespace. Speichern Sie Python-, SQL-, dbt- oder Terraform-Code und referenzieren Sie anschließend jede Datei in Ihren Flows mit"

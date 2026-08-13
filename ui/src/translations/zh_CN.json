@@ -2,6 +2,157 @@
   "zh_CN": {
     "loading": "加载中...",
     "more actions": "更多操作",
+    "new_flow_landing": {
+      "blank": {
+        "id_invalid": "只能使用字母、数字、点、破折号和下划线，并以字母或数字开头。",
+        "id_label": "flow id",
+        "id_placeholder": "我的 flow",
+        "namespace_invalid": "仅可使用小写字母、数字、点、破折号和下划线，并以小写字母或数字开头。",
+        "namespace_placeholder": "选择一个 namespace",
+        "namespaces_error": "无法加载 namespace。请手动输入一个 namespace。",
+        "open_editor": "打开编辑器",
+        "subtitle": "从 hello-world 模板开始，然后从头构建。",
+        "title": "空白 flow"
+      },
+      "blueprints": {
+        "subtitle": "从社区目录中选择一个现成的flow。",
+        "title": "浏览 blueprints"
+      },
+      "import": {
+        "back": "返回",
+        "error": {
+          "empty": "YAML 内容为空。",
+          "invalid_mapping": "无效的 flow YAML：预期为键值映射，而非列表或标量。",
+          "parse_error": "无法解析 YAML。",
+          "too_large": "文件过大。请粘贴 flow 定义，或上传小于 1 MB 的文件。"
+        },
+        "paste_label": "粘贴 YAML",
+        "read_error": "无法读取文件。",
+        "submit": "导入 flow",
+        "subtitle": "粘贴或上传现有 flow 定义。",
+        "title": "导入 YAML",
+        "upload_button": "上传 .yml / .yaml",
+        "upload_label": "或上传文件",
+        "upload_tip": "接受 .yml 和 .yaml 文件。"
+      },
+      "subtitle": "从空白画布开始，探索 blueprints，或导入现有 YAML。",
+      "system": {
+        "badge": "系统",
+        "subtitle": "为您的平台构建警报或自动化 flow。",
+        "title": "创建系统 flow"
+      },
+      "title": "创建新 flow"
+    },
+    "recipe": {
+      "create_flow": "创建 flow",
+      "email": "电子邮件",
+      "execution": {
+        "include_sub": "包含子 namespace",
+        "include_sub_hint_off": "只有精确 namespace 中的 flow 才会触发此警报。",
+        "include_sub_hint_on": "子 namespace 中的 flow 也会触发此警报。",
+        "namespace_placeholder": "选择一个 namespace",
+        "namespaces_error": "无法加载 namespace。请输入要监视的 namespace，或稍后重试。",
+        "states": "在这些状态下",
+        "states_recommended": "FAILED 是推荐的默认警报设置。",
+        "states_required": "请至少选择一个状态。",
+        "watch_namespace": "关注 namespace"
+      },
+      "notify": {
+        "email_label": "电子邮件",
+        "email_sub": "发送电子邮件通知",
+        "email_to_placeholder": "recipient{'@'}your-domain.com",
+        "custom_label": "自定义",
+        "custom_note": "已添加一个占位符 task — 在编辑器中将其替换为任何通知插件。",
+        "custom_sub": "添加您自己的通知 task",
+        "plugin_unavailable": "插件未安装",
+        "slack_channel_placeholder": "# 警报",
+        "slack_sub": "向 Slack 频道发布消息",
+        "teams_sub": "向 Teams 频道发送卡片",
+        "teams_webhook_placeholder": "Teams 传入 webhook URL"
+      },
+      "other": {
+        "load_error": "无法加载 Triggers。请稍后重试。",
+        "no_results": "未找到任何 trigger。",
+        "search_label": "搜索 triggers",
+        "search_placeholder": "按名称或类型筛选"
+      },
+      "schedule": {
+        "cron": "Cron 表达式",
+        "custom": "自定义",
+        "daily": "每日",
+        "daily_hint": "每天上午 9:00 运行。",
+        "frequency": "频率",
+        "hourly": "每小时",
+        "hourly_hint": "每小时在第 0 分钟运行。",
+        "timezone": "时区",
+        "timezone_placeholder": "选择时区（默认为 UTC）",
+        "weekly": "每周",
+        "weekly_hint": "每周一上午 9:00 运行。"
+      },
+      "section_subtitle": "构建一个 flow，用于监控您的平台并自动通知您的团队。",
+      "section_title": "创建系统 flow",
+      "summary": {
+        "any_namespace": "任何 namespace",
+        "empty": "配置 trigger 和至少一个通知 channel 来预览您的 flow。",
+        "exact_match": "精确匹配",
+        "execution": "当 {ns} ({scope}) 中的一个 flow 达到 {states} 状态时，通过 {channels} 通知。",
+        "including_sub": "和 sub-namespaces",
+        "invalid_hint": "添加至少一个通知渠道并完成 trigger 配置。",
+        "invalid_hint_trigger": "完成 trigger 配置。",
+        "no_channel": "您选择的渠道",
+        "other": "当 {trigger} trigger 触发时，通过 {channels} 通知。",
+        "schedule": "在计划 \"{cron}\" 上，通过 {channels} 通知。",
+        "selected_trigger": "已选择",
+        "title": "摘要",
+        "webhook": "当收到 webhook 时，通过 {channels} 通知。",
+        "preview_title": "预览",
+        "live": "实时"
+      },
+      "then": {
+        "no_channel_warning": "请选择至少一个通知渠道。",
+        "subtitle": "选择如何通知您的团队。",
+        "title": "然后通知",
+        "unavailable_channels_warning": "{channels}：此 trigger 类型未安装 plugin，将不会发送通知。"
+      },
+      "trigger": {
+        "case_sub": "仅限企业版功能",
+        "case_title": "案例状态",
+        "execution_sub": "对 flow 状态变化作出反应",
+        "execution_title": "执行状态",
+        "other_sub": "任何可用的 trigger 插件",
+        "other_title": "其他 trigger",
+        "schedule_sub": "按时间计划运行",
+        "schedule_title": "计划",
+        "webhook_sub": "由 HTTP 请求触发",
+        "webhook_title": "Webhook"
+      },
+      "webhook": {
+        "endpoint_hint": "向此 URL 发送 POST 请求以 trigger 该 flow。",
+        "endpoint_url": "端点 URL",
+        "key_label": "Webhook key",
+        "key_placeholder": "为此 webhook 输入一个唯一的 key"
+      },
+      "when": {
+        "subtitle": "选择触发此系统 flow 的方式。",
+        "title": "当此事件发生时",
+        "trigger_type": "触发器类型"
+      },
+      "hero_eyebrow": "您的系统 flow",
+      "hero_empty": "选择一个 trigger 和一个 channel 来预览您的 flow。",
+      "browse_blueprints": "想从模板开始？浏览社区系统 blueprints",
+      "start_blank": "喜欢自己编写？跳过这些步骤，打开一个空的 flow",
+      "steps": {
+        "trigger_title": "trigger",
+        "trigger_desc": "运行时",
+        "trigger_heading": "此 flow 何时运行？",
+        "notify_title": "通知",
+        "notify_desc": "谁会听到它",
+        "notify_heading": "我们应该如何通知您的团队？",
+        "review_title": "审查",
+        "review_desc": "检查并创建",
+        "review_heading": "审查您的系统 flow"
+      }
+    },
     "toggle menu": "切换菜单",
     "panel actions": "面板操作",
     "playground actions": "游乐场操作",
@@ -1507,6 +1658,10 @@
     "dataFilters": "数据过滤器",
     "logExporters": "日志导出器",
     "empty": {
+      "secrets": {
+        "title": "您还没有 Secrets！",
+        "content": "API key、密码和 token 可以作为 secret 存储，而不是硬编码在您的 flow 中。每个 secret 都属于一个 namespace，由其子 namespace 继承，并且可以从任何 task 中引用。"
+      },
       "namespaceFiles": {
         "title": "此命名空间中尚无文件",
         "content": "命名空间文件的作用类似于此命名空间的项目文件夹。存储 Python、SQL、dbt 或 Terraform 代码，然后在您的 flow 中引用任何文件，使用"

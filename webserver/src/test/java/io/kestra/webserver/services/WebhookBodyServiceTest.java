@@ -1,6 +1,5 @@
 package io.kestra.webserver.services;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +8,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 
@@ -18,11 +18,16 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger.FetchType;
 
+import io.micronaut.core.io.buffer.ByteArrayBufferFactory;
+import io.micronaut.core.io.buffer.ReadBufferFactory;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.ServerHttpRequest;
 import io.micronaut.http.body.ByteBody;
+import io.micronaut.http.body.ByteBodyFactory;
+import io.micronaut.http.multipart.CompletedAttribute;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.http.multipart.FormFieldMetadata;
 import io.micronaut.http.server.multipart.MultipartBody;
 import reactor.core.publisher.Flux;
 
@@ -170,18 +175,23 @@ class WebhookBodyServiceTest {
 
     @Test
     void shouldReadBodyOffTheConnectionAndDropItWhenFetchTypeIsNone() throws IOException {
-        // Given
+        // Given — a streaming body, so that it being read off the connection is observable
         StorageInterface storage = mock(StorageInterface.class);
         WebhookBodyService service = new WebhookBodyService(storage);
-        InputStream content = new ByteArrayInputStream("ignored".getBytes(StandardCharsets.UTF_8));
+        AtomicBoolean consumed = new AtomicBoolean();
+        ByteBody byteBody = ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE)
+            .adapt(
+                Flux.just(ReadBufferFactory.getJdkFactory().adapt("ignored".getBytes(StandardCharsets.UTF_8)))
+                    .doOnComplete(() -> consumed.set(true))
+            );
 
         // When
-        WebhookBodyService.Body body = service.read(request(MediaType.APPLICATION_JSON, content), FLOW, EXECUTION_ID, FetchType.NONE);
+        WebhookBodyService.Body body = service.read(request(MediaType.APPLICATION_JSON, byteBody), FLOW, EXECUTION_ID, FetchType.NONE);
 
         // Then - nothing of the body reaches the flow, but it was read so the caller is not cut short
         assertThat(body.requestBody()).isNull();
         assertThat(body.storedUri()).isNull();
-        assertThat(content.available()).isZero();
+        assertThat(consumed).isTrue();
         verifyNoInteractions(storage);
     }
 
@@ -246,14 +256,12 @@ class WebhookBodyServiceTest {
         return storage;
     }
 
+    // Micronaut 5 made ByteBody a sealed interface, so it cannot be mocked; build a real heap-backed one.
     private static ServerHttpRequest<?> request(String contentType, byte[] content) {
-        return request(contentType, new ByteArrayInputStream(content));
+        return request(contentType, ByteBodyFactory.createDefault(ByteArrayBufferFactory.INSTANCE).adapt(content));
     }
 
-    private static ServerHttpRequest<?> request(String contentType, InputStream content) {
-        ByteBody byteBody = mock(ByteBody.class);
-        when(byteBody.toInputStream()).thenReturn(content);
-
+    private static ServerHttpRequest<?> request(String contentType, ByteBody byteBody) {
         ServerHttpRequest<?> request = mock(ServerHttpRequest.class);
         when(request.byteBody()).thenReturn(byteBody);
         when(request.getContentType()).thenReturn(Optional.ofNullable(contentType).map(MediaType::of));
@@ -266,21 +274,19 @@ class WebhookBodyServiceTest {
         return flux::subscribe;
     }
 
-    private static CompletedFileUpload fileUpload(String name, String filename, String contentType, byte[] content) throws IOException {
-        CompletedFileUpload part = mock(CompletedFileUpload.class);
-        when(part.getName()).thenReturn(name);
-        when(part.getFilename()).thenReturn(filename);
-        when(part.getContentType()).thenReturn(Optional.of(MediaType.of(contentType)));
-        when(part.getSize()).thenReturn((long) content.length);
-        when(part.getInputStream()).thenReturn(new ByteArrayInputStream(content));
-        return part;
+    // Micronaut 5 made CompletedPart/CompletedFileUpload sealed abstract classes whose metadata accessors are
+    // final, so they can no longer be mocked; build real in-memory parts through the provided factories instead.
+    private static CompletedFileUpload fileUpload(String name, String filename, String contentType, byte[] content) {
+        return CompletedFileUpload.ofMemory(
+            new FormFieldMetadata(name, filename, MediaType.of(contentType)),
+            ReadBufferFactory.getJdkFactory().adapt(content)
+        );
     }
 
-    private static CompletedPart formField(String name, String content) throws IOException {
-        CompletedPart part = mock(CompletedPart.class);
-        when(part.getName()).thenReturn(name);
-        when(part.getContentType()).thenReturn(Optional.empty());
-        when(part.getBytes()).thenReturn(content.getBytes(StandardCharsets.UTF_8));
-        return part;
+    private static CompletedPart formField(String name, String content) {
+        return CompletedAttribute.create(
+            new FormFieldMetadata(name, null, null),
+            ReadBufferFactory.getJdkFactory().adapt(content.getBytes(StandardCharsets.UTF_8))
+        );
     }
 }

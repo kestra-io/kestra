@@ -26,7 +26,6 @@ import org.reactivestreams.Publisher;
 import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
 
 import io.kestra.core.async.AsyncOperationProcessedEvent;
@@ -69,7 +68,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.configuration.LocalFilesConfiguration;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.Namespace;
@@ -144,6 +142,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
+import tools.jackson.databind.ObjectMapper;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -156,6 +155,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Slf4j
 @Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
+    // The Micronaut-managed mapper, which carries TenantSerializer: see CSVUtils#toCSVFlux.
+    @Inject
+    private ObjectMapper objectMapper;
+
     private static final Duration AVERAGE_DURATION_LOOKBACK = Duration.ofDays(30);
 
     @Nullable
@@ -230,9 +233,6 @@ public class ExecutionController {
 
     @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
-
-    @Inject
-    private ObjectMapper objectMapper;
 
     @Inject
     private ServerConfig serverConfig;
@@ -2913,8 +2913,8 @@ public class ExecutionController {
 
         return HttpResponse.ok(
             CSVUtils.toCSVFlux(
-                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
-                    .map(log -> objectMapper.convertValue(log, JacksonMapper.MAP_TYPE_REFERENCE))
+                executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters)),
+                objectMapper
             )
         )
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");

@@ -1,18 +1,14 @@
 package io.kestra.webserver.controllers;
 
 import java.io.FileNotFoundException;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
 import io.kestra.core.exceptions.*;
 import io.kestra.core.utils.RegexUtils;
@@ -32,12 +28,30 @@ import io.micronaut.web.router.exceptions.UnsatisfiedBodyRouteException;
 import io.micronaut.web.router.exceptions.UnsatisfiedQueryValueRouteException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.exc.InvalidTypeIdException;
 
 @Slf4j
 @Controller
 public class ErrorController {
+    // Both Jackson majors reach these handlers: Micronaut binds HTTP bodies with Jackson 3, while Kestra's own
+    // JacksonMapper hub - used by the controllers that parse YAML or JSON themselves - stays on Jackson 2.
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, JsonParseException e) {
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, StreamReadException e) {
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, io.micronaut.json.JsonSyntaxException e) {
+        // Micronaut 5's body binder always wraps a raw StreamReadException in this type before it reaches here,
+        // unlike Micronaut 4 which let the Jackson exception propagate directly.
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
     }
 
@@ -48,60 +62,51 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ConversionErrorException e) {
+        // Micronaut 5 binds bodies with Jackson 3, so a conversion failure carries a tools.jackson cause.
         if (e.getConversionError().getCause() instanceof InvalidTypeIdException invalidTypeIdException) {
-            try {
-                String path = path(invalidTypeIdException);
+            String path = path(invalidTypeIdException);
+            String typeId = invalidTypeIdException.getTypeId();
 
-                Field typeField = InvalidTypeIdException.class.getDeclaredField("_typeId");
-                typeField.setAccessible(true);
-                Object typeClass = typeField.get(invalidTypeIdException);
+            JsonError error = new JsonError("Invalid type: " + typeId)
+                .link(Link.SELF, Link.of(request.getUri()))
+                .embedded(
+                    "errors",
+                    Arrays.asList(
+                        new JsonError("Invalid type: " + typeId)
+                            .path(path),
+                        new JsonError(e.getMessage())
+                            .path(path)
+                    )
+                );
 
-                JsonError error = new JsonError("Invalid type: " + typeClass)
-                    .link(Link.SELF, Link.of(request.getUri()))
-                    .embedded(
-                        "errors",
-                        Arrays.asList(
-                            new JsonError("Invalid type: " + typeClass)
-                                .path(path),
-                            new JsonError(e.getMessage())
-                                .path(path)
-                        )
-                    );
+            return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
+        } else if (e.getConversionError().getCause() instanceof DatabindException databindException) {
+            String path = path(databindException);
 
-                return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
-            } catch (Exception ignored) {
-            }
-        } else if (e.getConversionError().getCause() instanceof JsonMappingException jsonMappingException) {
-            try {
-                String path = path(jsonMappingException);
+            JsonError error = new JsonError("Invalid json mapping")
+                .link(Link.SELF, Link.of(request.getUri()))
+                .embedded(
+                    "errors",
+                    Collections.singletonList(
+                        new JsonError(e.getMessage())
+                            .path(path)
+                    )
+                );
 
-                JsonError error = new JsonError("Invalid json mapping")
-                    .link(Link.SELF, Link.of(request.getUri()))
-                    .embedded(
-                        "errors",
-                        Collections.singletonList(
-                            new JsonError(e.getMessage())
-                                .path(path)
-                        )
-                    );
-
-                return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json mapping");
-            } catch (Exception ignored) {
-            }
+            return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json mapping");
+        } else if (e.getConversionError().getCause() instanceof StreamReadException) {
+            // A StreamReadException is not a DatabindException, so malformed JSON reaching the binder would
+            // otherwise fall through to the generic message below.
+            return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
         }
 
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Internal server error");
     }
 
-    @SuppressWarnings("unchecked")
-    private static String path(JsonMappingException jsonMappingException) throws NoSuchFieldException, IllegalAccessException {
-        Field pathField = JsonMappingException.class.getDeclaredField("_path");
-        pathField.setAccessible(true);
-        LinkedList<JsonMappingException.Reference> path = (LinkedList<JsonMappingException.Reference>) pathField.get(jsonMappingException);
-
-        return path
+    private static String path(DatabindException databindException) {
+        return databindException.getPath()
             .stream()
-            .map(JsonMappingException.Reference::getDescription)
+            .map(JacksonException.Reference::getDescription)
             .collect(Collectors.joining(" > "));
     }
 
@@ -140,6 +145,11 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidFormatException e) {
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid format");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, tools.jackson.databind.exc.InvalidFormatException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid format");
     }
 

@@ -658,7 +658,11 @@ class HttpClientTest {
                             );
                         }
                     } catch (IOException e) {
-                        fileUpload.discard();
+                        try {
+                            fileUpload.close();
+                        } catch (IOException ignored) {
+                            // best-effort cleanup; report the original failure below
+                        }
                         sink.error(e);
                     }
                 } else {

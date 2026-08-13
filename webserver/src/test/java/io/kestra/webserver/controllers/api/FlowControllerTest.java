@@ -1741,6 +1741,9 @@ class FlowControllerTest {
         assertThat(csv).contains("id");
         assertThat(csv).contains(f1.getId());
         assertThat(csv).contains(f2.getId());
+        // The export must go through the mapper carrying TenantSerializer: the header is the first row's key
+        // set, so a mapper without it silently adds a tenantId column.
+        assertThat(csv).doesNotContain("tenantId");
     }
 
     @Test

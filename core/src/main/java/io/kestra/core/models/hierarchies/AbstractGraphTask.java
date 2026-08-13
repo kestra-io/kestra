@@ -7,14 +7,12 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.tasks.TaskInterface;
 
-import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 @ToString
 @Getter
-@Introspected // without it, there is a deserialization issue with GraphTask
 public abstract class AbstractGraphTask extends AbstractGraph {
     @Setter
     private TaskInterface task;

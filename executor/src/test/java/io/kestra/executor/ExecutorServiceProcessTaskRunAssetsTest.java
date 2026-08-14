@@ -169,7 +169,7 @@ class ExecutorServiceProcessTaskRunAssetsTest {
 
         var terminalTaskRun = placeholder
             .withState(terminalState)
-            .withAssets(assets);
+            .withAssetEmits(assets == null ? null : List.of(assets));
 
         var executor = new ExecutorContext(execution, FlowWithSource.of(flow, "flow-source"));
         var workerTaskResult = new WorkerTaskResult(terminalTaskRun);

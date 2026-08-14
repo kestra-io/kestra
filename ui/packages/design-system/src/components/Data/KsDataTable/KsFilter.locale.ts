@@ -495,11 +495,11 @@ export default {
             "execution_kind": {
                 "normal": "Normal",
                 "playground": "Spielplatz",
-                "loop": "Loop",
+                "loop": "Schleife",
                 "test": "Test",
-                "normal_description": "Regular executions",
+                "normal_description": "Reguläre Ausführungen",
                 "playground_description": "Ausführungen, die im Playground-Modus ausgelöst wurden",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Ausführungen, die von der Loop-Task erstellt wurden",
                 "test_description": "Ausführungen ausgelöst durch Unit Tests",
             },
             "scope": {
@@ -877,11 +877,11 @@ export default {
             "execution_kind": {
                 "normal": "Normal",
                 "playground": "Área de Pruebas",
-                "loop": "Loop",
+                "loop": "Bucle",
                 "test": "Prueba",
-                "normal_description": "Regular executions",
+                "normal_description": "Ejecuciones regulares",
                 "playground_description": "Ejecuciones activadas desde el modo Playground",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Ejecuciones creadas por la tarea Loop",
                 "test_description": "Ejecuciones activadas por Unit Tests",
             },
             "scope": {
@@ -1259,11 +1259,11 @@ export default {
             "execution_kind": {
                 "normal": "Normal",
                 "playground": "Terrain de jeu",
-                "loop": "Loop",
+                "loop": "Boucle",
                 "test": "Test",
-                "normal_description": "Regular executions",
+                "normal_description": "Exécutions régulières",
                 "playground_description": "Exécutions déclenchées depuis le mode Playground",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Exécutions créées par la tâche Loop",
                 "test_description": "Exécutions déclenchées par les tests unitaires",
             },
             "scope": {
@@ -1624,7 +1624,7 @@ export default {
                 "LESS_THAN": "संख्यात्मक/तिथि तुलना - value छोटा होना चाहिए",
                 "GREATER_THAN_OR_EQUAL_TO": "संख्यात्मक/तिथि तुलना - value बड़ा या बराबर होना चाहिए",
                 "LESS_THAN_OR_EQUAL_TO": "संख्यात्मक/तिथि तुलना - value छोटा या बराबर होना चाहिए",
-                "STARTS_WITH": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
+                "STARTS_WITH": "टेक्स्ट निर्दिष्ट वर्णों से शुरू होता है",
                 "ENDS_WITH": "पाठ निर्दिष्ट वर्णों के साथ समाप्त होता है",
                 "CONTAINS": "पाठ में निर्दिष्ट वर्ण कहीं भी शामिल हैं",
                 "NOT_CONTAINS": "टेक्स्ट में निर्दिष्ट वर्ण कहीं भी शामिल नहीं हैं",
@@ -1639,13 +1639,13 @@ export default {
                 "parent_description": "केवल शीर्ष-स्तरीय/मूल executions दिखाएं",
             },
             "execution_kind": {
-                "normal": "Normal",
+                "normal": "सामान्य",
                 "playground": "प्लेग्राउंड",
-                "loop": "Loop",
+                "loop": "लूप",
                 "test": "परीक्षण",
-                "normal_description": "Regular executions",
+                "normal_description": "नियमित निष्पादन",
                 "playground_description": "प्लेग्राउंड मोड से ट्रिगर की गई Executions",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "लूप task द्वारा बनाई गई एग्जीक्यूशन",
                 "test_description": "यूनिट टेस्ट द्वारा ट्रिगर की गई Executions",
             },
             "scope": {
@@ -1676,7 +1676,7 @@ export default {
                 "description": "समूह द्वारा फ़िल्टर करें",
             },
             "parentId": {
-                "label": "Parent ID",
+                "label": "पैरेंट ID",
                 "description": "parent ID द्वारा फ़िल्टर करें",
             },
             "flowId": {
@@ -1835,7 +1835,7 @@ export default {
                     "last modified": "flow परिभाषा को अंतिम बार कब अपडेट किया गया था",
                 },
                 "executions": {
-                    "id": "Execution ID",
+                    "id": "एक्सेक्यूशन ID",
                     "start-date": "जब निष्पादन शुरू हुआ",
                     "end-date": "जब निष्पादन समाप्त हो गया",
                     "duration": "निष्पादन का कुल रनटाइम",
@@ -2021,13 +2021,13 @@ export default {
                 "parent_description": "Mostra solo esecuzioni di livello superiore/radice",
             },
             "execution_kind": {
-                "normal": "Normal",
+                "normal": "Normale",
                 "playground": "Playground",
-                "loop": "Loop",
+                "loop": "Ciclo",
                 "test": "Test",
-                "normal_description": "Regular executions",
+                "normal_description": "Esecuzioni regolari",
                 "playground_description": "Esecuzioni triggerate dalla modalità Playground",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Esecuzioni create dal task Loop",
                 "test_description": "Esecuzioni attivate dai Unit Test",
             },
             "scope": {
@@ -2403,13 +2403,13 @@ export default {
                 "parent_description": "トップレベル/ルートの実行のみを表示",
             },
             "execution_kind": {
-                "normal": "Normal",
+                "normal": "通常",
                 "playground": "プレイグラウンド",
-                "loop": "Loop",
+                "loop": "ループ",
                 "test": "テスト",
-                "normal_description": "Regular executions",
+                "normal_description": "通常の実行",
                 "playground_description": "Playgroundモードからトリガーされた実行",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Loop taskによって作成された実行",
                 "test_description": "ユニットテストによってトリガーされた実行",
             },
             "scope": {
@@ -2440,7 +2440,7 @@ export default {
                 "description": "グループでフィルター",
             },
             "parentId": {
-                "label": "Parent ID",
+                "label": "親ID",
                 "description": "parent IDでフィルター",
             },
             "flowId": {
@@ -2785,13 +2785,13 @@ export default {
                 "parent_description": "최상위/루트 실행만 표시",
             },
             "execution_kind": {
-                "normal": "Normal",
+                "normal": "일반",
                 "playground": "플레이그라운드",
-                "loop": "Loop",
+                "loop": "루프",
                 "test": "테스트",
-                "normal_description": "Regular executions",
+                "normal_description": "정기 실행",
                 "playground_description": "플레이그라운드 모드에서 트리거된 실행",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Loop task에 의해 생성된 실행",
                 "test_description": "단위 테스트에 의해 트리거된 실행",
             },
             "scope": {
@@ -2822,7 +2822,7 @@ export default {
                 "description": "그룹별 필터링",
             },
             "parentId": {
-                "label": "Parent ID",
+                "label": "상위 ID",
                 "description": "parent ID로 필터링",
             },
             "flowId": {
@@ -3167,13 +3167,13 @@ export default {
                 "parent_description": "Pokaż tylko wykonania najwyższego poziomu/główne",
             },
             "execution_kind": {
-                "normal": "Normal",
+                "normal": "Normalny",
                 "playground": "Plac zabaw",
-                "loop": "Loop",
+                "loop": "Pętla",
                 "test": "Test",
-                "normal_description": "Regular executions",
+                "normal_description": "Regularne wykonania",
                 "playground_description": "Wykonania uruchomione z trybu Playground",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Wykonania utworzone przez task Loop",
                 "test_description": "Wykonania wyzwolone przez testy jednostkowe",
             },
             "scope": {
@@ -3553,9 +3553,9 @@ export default {
                 "playground": "Playground",
                 "loop": "Loop",
                 "test": "Teste",
-                "normal_description": "Regular executions",
+                "normal_description": "Execuções regulares",
                 "playground_description": "Execuções acionadas a partir do modo Playground",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Execuções criadas pela task Loop",
                 "test_description": "Execuções triggeradas por Unit Tests",
             },
             "scope": {
@@ -3935,9 +3935,9 @@ export default {
                 "playground": "Playground",
                 "loop": "Loop",
                 "test": "Teste",
-                "normal_description": "Regular executions",
+                "normal_description": "Execuções regulares",
                 "playground_description": "Execuções acionadas a partir do modo Playground",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Execuções criadas pela Task Loop",
                 "test_description": "Execuções acionadas por Unit Tests",
             },
             "scope": {
@@ -4313,13 +4313,13 @@ export default {
                 "parent_description": "Показать только верхнеуровневые/корневые выполнения",
             },
             "execution_kind": {
-                "normal": "Normal",
+                "normal": "Обычный",
                 "playground": "Песочница",
-                "loop": "Loop",
+                "loop": "Цикл",
                 "test": "Тест",
-                "normal_description": "Regular executions",
+                "normal_description": "Регулярные выполнения",
                 "playground_description": "Запуски, инициированные из режима Playground",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "Выполнения, созданные задачей Loop",
                 "test_description": "Запуски, инициированные Unit Tests",
             },
             "scope": {
@@ -4695,13 +4695,13 @@ export default {
                 "parent_description": "仅显示顶级/根执行",
             },
             "execution_kind": {
-                "normal": "Normal",
+                "normal": "正常",
                 "playground": "游乐场",
-                "loop": "Loop",
+                "loop": "循环",
                 "test": "测试",
-                "normal_description": "Regular executions",
+                "normal_description": "常规执行",
                 "playground_description": "从Playground模式触发的执行",
-                "loop_description": "Executions created by the Loop task",
+                "loop_description": "由 Loop task 创建的执行",
                 "test_description": "单元测试触发的执行",
             },
             "scope": {
@@ -4732,7 +4732,7 @@ export default {
                 "description": "按组筛选",
             },
             "parentId": {
-                "label": "Parent ID",
+                "label": "父级 ID",
                 "description": "按 parent ID 筛选",
             },
             "flowId": {

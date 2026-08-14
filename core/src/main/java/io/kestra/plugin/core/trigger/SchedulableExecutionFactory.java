@@ -13,7 +13,6 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
@@ -35,10 +34,10 @@ final class SchedulableExecutionFactory {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of((AbstractTrigger) trigger, variables);
 
-        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), conditionContext.getFlow(), variables);
+        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), variables);
 
         List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(labels));
-        executionLabels.add(new Label(Label.FROM, "trigger"));
+        executionLabels.add(new Label(Label.FROM, Label.FromLabel.TRIGGER.value));
         if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
             // add a correlation ID if none exist
             executionLabels.add(new Label(Label.CORRELATION_ID, runContext.getTriggerExecutionId()));
@@ -88,9 +87,13 @@ final class SchedulableExecutionFactory {
         return inputs;
     }
 
-    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, FlowInterface flow, Map<String, Object> variables)
+    /**
+     * Builds the labels the trigger and its backfill contribute, without the flow's own labels: the execution
+     * takes those from the flow processed for runtime when it is created.
+     */
+    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, Map<String, Object> variables)
         throws IllegalVariableEvaluationException {
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, (AbstractTrigger) trigger, Map.of("trigger", variables));
+        List<Label> labels = LabelService.fromTrigger(runContext, (AbstractTrigger) trigger, Map.of("trigger", variables));
 
         if (backfill != null) {
             // It is better to remove system labels before rendering

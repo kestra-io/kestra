@@ -42,51 +42,42 @@ class LabelServiceTest {
     }
 
     @Test
-    void shouldReturnLabelsFromFlowAndTrigger() {
+    void shouldReturnLabelsFromTrigger() {
+        // Given
         RunContext runContext = runContextFactory.of(Map.of("variable", "variableValue"));
-        Flow flow = Flow.builder()
-            .labels(List.of(new Label("key", "value"), new Label(Label.SYSTEM_PREFIX + "label", "systemValue")))
-            .build();
         AbstractTrigger trigger = Schedule.builder()
             .labels(List.of(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "{{variable}}")))
             .build();
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger, Collections.emptyMap());
+        // When
+        List<Label> labels = LabelService.fromTrigger(runContext, trigger, Collections.emptyMap());
 
-        assertThat(labels).hasSize(3);
-        assertThat(labels).contains(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue"), new Label("variable", "variableValue"));
+        // Then only the trigger's labels are returned, so the flow's cannot override the resolved ones
+        assertThat(labels).containsExactly(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "variableValue"));
     }
 
     @Test
     void shouldFilterNonRenderableLabels() {
         RunContext runContext = runContextFactory.of();
-        Flow flow = Flow.builder()
-            .labels(List.of(new Label("key", "value"), new Label(Label.SYSTEM_PREFIX + "label", "systemValue")))
-            .build();
         AbstractTrigger trigger = Schedule.builder()
             .labels(List.of(new Label("scheduleLabel", "scheduleValue"), new Label("variable", "{{variable}}")))
             .build();
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger, Collections.emptyMap());
+        List<Label> labels = LabelService.fromTrigger(runContext, trigger, Collections.emptyMap());
 
-        assertThat(labels).hasSize(2);
-        assertThat(labels).contains(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue"));
+        assertThat(labels).containsExactly(new Label("scheduleLabel", "scheduleValue"));
     }
 
     @Test
     void shouldRenderLabelValueUsingProvidedVariables() {
         RunContext runContext = runContextFactory.of();
-        Flow flow = Flow.builder()
-            .labels(List.of(new Label("key", "value")))
-            .build();
         AbstractTrigger trigger = Schedule.builder()
             .labels(List.of(new Label("dynamicLabel", "{{ trigger.executionId }}")))
             .build();
 
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger, Map.of("trigger", Map.of("executionId", "exec-123")));
+        List<Label> labels = LabelService.fromTrigger(runContext, trigger, Map.of("trigger", Map.of("executionId", "exec-123")));
 
-        assertThat(labels).hasSize(2);
-        assertThat(labels).contains(new Label("key", "value"), new Label("dynamicLabel", "exec-123"));
+        assertThat(labels).containsExactly(new Label("dynamicLabel", "exec-123"));
     }
 
     @Test

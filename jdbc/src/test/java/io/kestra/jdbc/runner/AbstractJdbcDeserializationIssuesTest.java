@@ -107,7 +107,18 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
             }
 
             @Override
-            public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
+            public Optional<FlowWithSource> findByExecutionForRuntime(Execution execution) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<FlowWithSource> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision) {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant,
+                String fromNamespace, String fromId) {
                 return Optional.empty();
             }
         };

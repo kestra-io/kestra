@@ -7,7 +7,8 @@ USER root
 WORKDIR /root
 
 RUN apt update && apt install -y \
-  apt-transport-https ca-certificates gnupg curl wget git zip unzip less zsh net-tools iputils-ping jq lsof
+  apt-transport-https ca-certificates gnupg \
+  curl wget git zip unzip less zsh net-tools iputils-ping jq lsof ripgrep
 
 ENV HOME="/root"
 
@@ -62,13 +63,15 @@ ENV KESTRA_PLUGINS_PATH="/workspaces/kestra/local/plugins"
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh \
   && bash nodesource_setup.sh && apt install -y nodejs
 # Increases JavaScript heap memory to 4GB to prevent heap out of error during startup
-ENV NODE_OPTIONS=--max-old-space-size=4096
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 # --------------------------------------
 
 # --------------------------------------
 # Python
 # --------------------------------------
 RUN apt install -y python3 pip python3-venv
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 # --------------------------------------
 
 # --------------------------------------

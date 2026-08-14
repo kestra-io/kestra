@@ -119,16 +119,22 @@ export function useFlowRoot() {
         }
     }, {immediate: true})
 
-    watch(() => flowStore.flow, (flow) => {
-        if (flow && flow.id) {
-            // https://github.com/kestra-io/kestra/issues/10484
+    // Keyed on which flow and which revision rather than `deep: true`: the count only moves
+    // when the open flow changes or gets saved, and the revision bump is what
+    // https://github.com/kestra-io/kestra/issues/10484 needs this watcher to see. The deep
+    // watch also traversed the whole flow object and re-fired on nested mutations that cannot
+    // change the count, each rerun queueing another dependencies request a second later.
+    watch(
+        () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision] as const,
+        ([namespace, id]) => {
+            if (!namespace || !id) return
             setTimeout(() => {
                 flowStore
-                    .loadDependencies({subtype: "FLOW", namespace: flow.namespace, id: flow.id}, true)
+                    .loadDependencies({subtype: "FLOW", namespace, id}, true)
                     .then(({count}: {count: number}) => dependenciesCount.value = count > 0 ? (count - 1) : 0)
             }, 1000)
-        }
-    }, {deep: true})
+        },
+    )
 
     function setupLifecycle() {
         // since this component is only used in edition

@@ -1,4 +1,4 @@
-import {h, markRaw} from "vue"
+import {defineAsyncComponent, h, markRaw} from "vue"
 import {storageKeys} from "../../../utils/constants"
 
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue"
@@ -8,13 +8,22 @@ import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue"
 import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue"
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue"
 
-import NoCode from "../../../components/no-code/NoCode.vue"
 import FlowFileEditorTab from "../../../components/inputs/FlowFileEditorTab.vue"
 import PluginListWrapper from "../../../components/plugins/PluginListWrapper.vue"
-import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue"
-import FileExplorerWrapper from "../../../components/inputs/FileExplorerWrapper.vue"
-import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue"
 import {EditorElement} from "../../../utils/multiPanelTypes"
+
+// `code` and `doc` are the tabs DEFAULT_ACTIVE_TABS opens on arrival, so they stay eager:
+// deferring them would only add a round trip before the editor can paint.
+//
+// The others are behind a tab the user has to open, yet importing them here dragged their
+// whole subtree into the editor's boot graph anyway - topology pulls @vue-flow/core and
+// @kestra-io/topology, blueprints pulls the blueprint browser and its stores, files pulls
+// the file explorer. Loading them on first open keeps the editor's entry to what the first
+// paint actually needs.
+const NoCode = markRaw(defineAsyncComponent(() => import("../../../components/no-code/NoCode.vue")))
+const LowCodeEditorWrapper = markRaw(defineAsyncComponent(() => import("../../../components/inputs/LowCodeEditorWrapper.vue")))
+const FileExplorerWrapper = markRaw(defineAsyncComponent(() => import("../../../components/inputs/FileExplorerWrapper.vue")))
+const BlueprintsWrapper = markRaw(defineAsyncComponent(() => import("../../../components/flows/blueprints/BlueprintsWrapper.vue")))
 
 export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
 
@@ -39,7 +48,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "No-code",
         },
         uid: "nocode",
-        component: markRaw(NoCode),
+        component: NoCode,
     },
     {
         button: {
@@ -47,7 +56,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "Topology",
         },
         uid: "topology",
-        component: markRaw(LowCodeEditorWrapper),
+        component: LowCodeEditorWrapper,
     },
     {
         button: {
@@ -64,7 +73,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         },
         uid: "files",
         prepend: true,
-        component: markRaw(FileExplorerWrapper),
+        component: FileExplorerWrapper,
     },
     {
         button: {
@@ -72,7 +81,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "Blueprints",
         },
         uid: "blueprints",
-        component: markRaw(BlueprintsWrapper),
+        component: BlueprintsWrapper,
     },
 ].map((e): EditorElement => ({
     // add a default deserializer

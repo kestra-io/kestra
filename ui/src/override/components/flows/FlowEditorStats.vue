@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, watch} from "vue"
+    import {computed, onMounted, onUnmounted, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useMediaQuery} from "@vueuse/core"
 
@@ -41,6 +41,7 @@
     import GraphOutline from "vue-material-design-icons/GraphOutline.vue"
 
     import {useFlowStore} from "../../../stores/flow"
+    import {deferToIdle} from "../../../utils/deferToIdle"
     import ValidationError from "../../../components/flows/ValidationError.vue"
     import FlowEditorStatCounter from "../../../components/flows/FlowEditorStatCounter.vue"
 
@@ -82,21 +83,33 @@
         flowStore.loadFlowStats({namespace: flow.namespace, id: flow.id})
     }
 
-    onMounted(refreshStats)
+    // Nothing on screen waits for these two counters, but fetching them straight from
+    // onMounted put them in the editor's boot tick, competing for the browser's per-origin
+    // connection budget with the panels and schemas the editor needs in order to paint.
+    // Idle also collapses a save (flow object replaced, then revision bumped) into one refresh.
+    let cancelPendingRefresh: (() => void) | undefined
+
+    function scheduleRefresh() {
+        cancelPendingRefresh?.()
+        cancelPendingRefresh = deferToIdle(refreshStats)
+    }
+
+    onMounted(scheduleRefresh)
+    onUnmounted(() => cancelPendingRefresh?.())
 
     watch(
         () => [flowStore.flow?.namespace, flowStore.flow?.id] as const,
         ([ns, id], [prevNs, prevId]) => {
             if (ns !== prevNs || id !== prevId) {
                 flowStore.clearFlowStats()
-                refreshStats()
+                scheduleRefresh()
             }
         },
     )
 
     watch(
         () => flowStore.flow?.revision,
-        () => refreshStats(),
+        () => scheduleRefresh(),
     )
 </script>
 

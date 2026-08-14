@@ -191,7 +191,10 @@ class ScriptServiceTest {
     void shouldReplaceInternalStorageWithSpecialChars() throws IOException {
         String tenant = IdUtils.create();
         var runContext = runContextFactory.of("id", "namespace", tenant);
-
+        
+        // Colon (:) is also supported by the regex but can't be tested here:
+        // WindowsUtils.windowsToUnixPath strips colons in LocalStorage path resolution,
+        // which is consistent between read/write in production but breaks test files created directly on disk.
         Map<String, String> specialCharFiles = Map.of(
             "file,name", "kestra://some/file,name.txt",
             "file;name", "kestra://some/file;name.txt"

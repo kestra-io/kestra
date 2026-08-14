@@ -521,7 +521,9 @@
       "detail": {
         "category": "카테고리 유형",
         "links": "링크 및 리소스",
-        "openInEditor": "편집 Flow에서 열기"
+        "openInEditor": "편집 Flow에서 열기",
+        "openInAppsEditor": "앱 편집기에서 열기",
+        "openInDashboardEditor": "대시보드 편집기에서 열기"
       },
       "missingPlugins": {
         "title": "누락된 plugin",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Kestra로 맞춤형 앱 만들기",
-        "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다."
+        "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다.",
+        "blueprints": {
+          "title": "앱 blueprint에서 시작하기.",
+          "message": "앱 blueprint는 양식, 승인 및 데이터 제출과 같은 일반적인 사용 사례를 위한 기성 앱입니다. Kestra Enterprise Edition을 사용하면 모든 blueprint를 시작점으로 사용하여 워크플로우 위에 사용자 지정 UI를 구축하도록 조정할 수 있습니다."
+        }
       },
       "tests": {
         "label": "테스트",

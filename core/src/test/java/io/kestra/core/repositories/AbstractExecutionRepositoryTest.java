@@ -1575,6 +1575,47 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    void shouldOnlyFindAsyncNormalKindWhenThereIsNoKindFilter() {
+        // Given
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution normal = executionRepository.save(builder(tenant, State.Type.SUCCESS, "flowA").build());
+        Execution playground = executionRepository.save(
+            builder(tenant, State.Type.SUCCESS, "flowA").kind(ExecutionKind.PLAYGROUND).build()
+        );
+
+        try {
+            List<QueryFilter> flowFilter = List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.FLOW_ID)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value("flowA")
+                    .build()
+            );
+            List<QueryFilter> kindFilter = List.of(
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.KIND)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(ExecutionKind.PLAYGROUND)
+                    .build()
+            );
+
+            // When
+            List<Execution> filtered = executionRepository.findAsync(tenant, flowFilter).collectList().block();
+            List<Execution> unfiltered = executionRepository.findAsync(tenant, List.of()).collectList().block();
+            List<Execution> byKind = executionRepository.findAsync(tenant, kindFilter).collectList().block();
+
+            // Then
+            assertThat(filtered).map(Execution::getId).containsExactly(normal.getId());
+            assertThat(unfiltered).map(Execution::getId).containsExactly(normal.getId());
+            assertThat(byKind).map(Execution::getId).containsExactly(playground.getId());
+            assertThat(executionRepository.find(Pageable.UNPAGED, tenant, flowFilter)).hasSameSizeAs(filtered);
+        } finally {
+            executionRepository.delete(normal);
+            executionRepository.delete(playground);
+        }
+    }
+
+    @Test
     protected void shouldFindExecutionByTrigger() {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());

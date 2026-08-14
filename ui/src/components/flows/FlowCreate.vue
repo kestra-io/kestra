@@ -5,7 +5,19 @@
         </template>
     </TopNavBar>
     <section class="full-container flush-top">
-        <div v-if="setupError" class="flow-create-error" data-test="flow-create-error">
+        <template v-if="showLanding">
+            <ImportYaml
+                v-if="showImport"
+                @submit="handleImportSubmit"
+                @back="showImport = false"
+            />
+            <NewFlowLanding
+                v-else
+                @proceed="handleLandingProceed"
+                @import="showImport = true"
+            />
+        </template>
+        <div v-else-if="setupError" class="flow-create-error" data-test="flow-create-error">
             <KsAlert
                 type="error"
                 :closable="false"
@@ -13,7 +25,7 @@
             >
                 {{ setupError }}
             </KsAlert>
-            <KsButton size="small" data-test="flow-create-error-retry" @click="initialize">
+            <KsButton size="small" data-test="flow-create-error-retry" @click="retrySetup">
                 {{ $t("something_went_wrong.retry") }}
             </KsButton>
         </div>
@@ -29,6 +41,8 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue"
     import Actions from "override/components/flows/Actions.vue"
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue"
+    import NewFlowLanding from "./create/NewFlowLanding.vue"
+    import ImportYaml from "./create/ImportYaml.vue"
     import {useBlueprintsStore} from "../../stores/blueprints"
     import {getRandomID} from "../../utils/id"
     import {useFlowStore} from "../../stores/flow"
@@ -40,6 +54,8 @@
     import {useMiscStore} from "override/stores/misc"
     import resource from "../../models/resource"
     import action from "../../models/action"
+    import {ONBOARDING_FLOW_PRESET_KEY, RECIPE_PRESET_KEY} from "../../utils/storageKeys"
+    import {shouldShowLanding} from "../../utils/flowCreationLanding"
 
     const route = useRoute()
     const {t} = useI18n()
@@ -48,7 +64,9 @@
     const flowStore = useFlowStore()
     const authStore = useAuthStore()
     const miscStore = useMiscStore()
-    const ONBOARDING_FLOW_PRESET_KEY = "kestra.onboarding.flowPreset"
+
+    const showLanding = ref(shouldShowLanding(route.query))
+    const showImport = ref(false)
 
     const setupError = ref<string>()
 
@@ -85,12 +103,15 @@ tasks:
         return metadata.length > 0 ? `${metadata.join("\n")}\n\n${source}`.trim() : source
     }
 
-    const setupFlow = async () => {
+    const setupFlow = async (overrideId?: string, overrideNamespace?: string, importYaml?: string) => {
         const blueprintId = route.query.blueprintId as string
         const blueprintSource = route.query.blueprintSource as BlueprintType
         const blueprintSourceYaml = route.query.blueprintSourceYaml as string
         const onboardingPresetFlow = route.query.onboardingPreset === "true"
             ? sessionStorage.getItem(ONBOARDING_FLOW_PRESET_KEY) ?? ""
+            : ""
+        const recipePresetFlow = route.query.recipePreset === "true"
+            ? sessionStorage.getItem(RECIPE_PRESET_KEY) ?? ""
             : ""
         const implicitDefaultNamespace = authStore.user?.getNamespacesForAction(
             resource.FLOW,
@@ -98,14 +119,21 @@ tasks:
         )[0]
         let flowYaml = ""
         let shouldApplyGeneratedMetadata = false
-        const id = getRandomID()
-        const selectedNamespace = (route.query.namespace as string)
+        const id = overrideId ?? getRandomID()
+        const selectedNamespace = overrideNamespace
+            ?? (route.query.namespace as string)
             ?? defaultNamespace()
             ?? implicitDefaultNamespace
             ?? "company.team"
 
         if (route.query.copy && flowStore.flow) {
             flowYaml = flowStore.flow.source
+        } else if (importYaml) {
+            flowYaml = importYaml
+            shouldApplyGeneratedMetadata = true
+        } else if (recipePresetFlow) {
+            flowYaml = recipePresetFlow
+            sessionStorage.removeItem(RECIPE_PRESET_KEY)
         } else if (onboardingPresetFlow) {
             flowYaml = onboardingPresetFlow
             sessionStorage.removeItem(ONBOARDING_FLOW_PRESET_KEY)
@@ -119,7 +147,7 @@ tasks:
             })
         } else if (blueprintId) {
             const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId)
-            if(flowBlueprint.source){
+            if (flowBlueprint.source) {
                 flowYaml = flowBlueprint.source
             }
         } else {
@@ -149,6 +177,8 @@ tasks:
         flowStore.initYamlSource()
     }
 
+    let lastSetupArgs: Parameters<typeof setupFlow> = []
+
     /*
      * `setupFlow` used to be called without awaiting it or catching it. A rejection was
      * therefore an unhandled promise rejection, and the page stayed empty for good: the
@@ -156,15 +186,30 @@ tasks:
      * false while there is no flow. Awaiting it here turns that silent blank page into an
      * error the user (and the E2E suite) can see, with a way to try again.
      */
-    const initialize = async () => {
+    const initialize = async (...args: Parameters<typeof setupFlow>) => {
+        lastSetupArgs = args
         setupError.value = undefined
 
         try {
-            await setupFlow()
+            await setupFlow(...args)
         } catch (error) {
             setupError.value = error instanceof Error ? error.message : String(error)
             console.error("Cannot open the flow creation editor.", error)
         }
+    }
+
+    // Retry has to replay the funnel choice, or an import would silently become a blank flow.
+    const retrySetup = () => initialize(...lastSetupArgs)
+
+    const handleLandingProceed = async ({id, namespace}: {id: string; namespace: string}) => {
+        await initialize(id, namespace)
+        showLanding.value = false
+    }
+
+    const handleImportSubmit = async ({yaml}: {yaml: string}) => {
+        await initialize(undefined, undefined, yaml)
+        showImport.value = false
+        showLanding.value = false
     }
 
     const routeInfo = computed(() => {
@@ -176,7 +221,9 @@ tasks:
     useRouteContext(routeInfo)
 
     flowStore.isCreating = true
-    initialize()
+    if (!showLanding.value) {
+        initialize()
+    }
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined

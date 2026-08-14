@@ -22,6 +22,7 @@ import com.google.common.base.Throwables;
 
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
@@ -340,7 +341,7 @@ public class TriggerScheduler {
         // Evaluate Schedulable
         Optional<TriggerEvaluationResult> evaluationResult = schedulableEvaluator.evaluate(trigger, triggerContext, triggerEvaluationContext.conditionContext());
         if (evaluationResult.isPresent()) {
-            log(clock, triggerContext, evaluationResult.get());
+            log(clock, triggerContext, evaluationResult.get(), triggerEvaluationContext.flow().getLabels());
             boolean allowConcurrent = ((AbstractTrigger) trigger).isAllowConcurrent();
             triggerState = triggerState
                 .updateOnExecutionCreated(clock, evaluationResult.get().stateType())
@@ -433,9 +434,11 @@ public class TriggerScheduler {
         return Optional.empty();
     }
 
-    private void log(Clock clock, TriggerContext triggerContext, TriggerEvaluationResult evaluationResult) {
+    private void log(Clock clock, TriggerContext triggerContext, TriggerEvaluationResult evaluationResult, List<Label> flowLabels) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT, MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION, metricRegistry.tags(evaluationResult, triggerContext))
+            .counter(
+                MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT, MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION, metricRegistry.tags(evaluationResult, triggerContext, flowLabels)
+            )
             .increment();
 
         ZonedDateTime now = ZonedDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS);
@@ -455,7 +458,7 @@ public class TriggerScheduler {
                 metricRegistry
                     .timer(
                         MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION,
-                        metricRegistry.tags(evaluationResult, triggerContext)
+                        metricRegistry.tags(evaluationResult, triggerContext, flowLabels)
                     )
                     .record(Duration.between(triggerContext.getDate(), now));
             }

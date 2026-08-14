@@ -107,6 +107,15 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
 
     Flux<Execution> findAllAsync(@Nullable String tenantId);
 
+    /**
+     * Streams the executions matching the filters, applying the same conditions as {@link #find(Pageable, String, List)}
+     * so that both return the same executions: without an explicit KIND filter, only executions of kind
+     * {@link ExecutionKind#NORMAL} are returned.
+     *
+     * @param tenantId the tenant
+     * @param filters the filters to apply
+     * @return the matching executions
+     */
     Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters);
 
     /**

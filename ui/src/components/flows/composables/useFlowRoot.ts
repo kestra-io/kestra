@@ -125,7 +125,7 @@ export function useFlowRoot() {
             setTimeout(() => {
                 flowStore
                     .loadDependencies({subtype: "FLOW", namespace: flow.namespace, id: flow.id}, true)
-                    .then(({count}: {count: number}) => dependenciesCount.value = count > 0 ? (count - 1) : 0)
+                    .then(({count}: {count: number}) => dependenciesCount.value = count)
             }, 1000)
         }
     }, {deep: true})

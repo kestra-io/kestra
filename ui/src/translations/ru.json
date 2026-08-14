@@ -1223,6 +1223,7 @@
     "onboarding": {
       "tour": {
         "menu": "Обзор продукта",
+        "menu_resume": "Возобновить тур",
         "menu_description": "Создать, запустить и исправить flow, а затем запустить его по событию",
         "step_of": "Шаг {current} из {total}",
         "actions": {

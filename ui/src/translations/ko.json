@@ -1223,6 +1223,7 @@
     "onboarding": {
       "tour": {
         "menu": "제품 둘러보기",
+        "menu_resume": "투어 재개",
         "menu_description": "flow를 구축하고, 실행하고, 수정한 다음, 이벤트에서 시작하세요.",
         "step_of": "총 {total}단계 중 {current}단계",
         "actions": {

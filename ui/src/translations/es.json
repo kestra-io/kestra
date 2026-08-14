@@ -1223,6 +1223,7 @@
     "onboarding": {
       "tour": {
         "menu": "Recorrido del producto",
+        "menu_resume": "Reanudar tour",
         "menu_description": "Crear, ejecutar y corregir un flow, y luego iniciarlo desde un evento",
         "step_of": "Paso {current} de {total}",
         "actions": {

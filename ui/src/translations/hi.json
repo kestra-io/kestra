@@ -1223,6 +1223,7 @@
     "onboarding": {
       "tour": {
         "menu": "उत्पाद भ्रमण",
+        "menu_resume": "टूर फिर से शुरू करें",
         "menu_description": "एक flow बनाएँ, चलाएँ और ठीक करें, फिर इसे एक इवेंट से शुरू करें",
         "step_of": "चरण {current} कुल {total} में से",
         "actions": {

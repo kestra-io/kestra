@@ -1223,6 +1223,7 @@
     "onboarding": {
       "tour": {
         "menu": "产品导览",
+        "menu_resume": "继续导览",
         "menu_description": "搭建、运行并修复一个 flow，然后从事件启动它",
         "step_of": "第 {current} / {total} 步",
         "actions": {

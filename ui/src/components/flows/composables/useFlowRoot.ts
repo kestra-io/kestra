@@ -1,6 +1,7 @@
 import {computed, onBeforeUnmount, onUnmounted, ref, watch} from "vue"
 import {useRoute, useRouter} from "vue-router"
 import {useI18n} from "vue-i18n"
+import {watchDebounced} from "@vueuse/core"
 
 import {useFlowStore} from "../../../stores/flow"
 import {useRouteTabsStore} from "../../../stores/routeTabs"
@@ -123,17 +124,20 @@ export function useFlowRoot() {
     // when the open flow changes or gets saved, and the revision bump is what
     // https://github.com/kestra-io/kestra/issues/10484 needs this watcher to see. The deep
     // watch also traversed the whole flow object and re-fired on nested mutations that cannot
-    // change the count, each rerun queueing another dependencies request a second later.
-    watch(
+    // change the count.
+    //
+    // The debounce is what gives the backend a moment to index the new dependencies after a
+    // save, and unlike the setTimeout it replaces it collapses a burst of triggers into one
+    // request instead of queueing one per trigger.
+    watchDebounced(
         () => [flowStore.flow?.namespace, flowStore.flow?.id, flowStore.flow?.revision] as const,
         ([namespace, id]) => {
             if (!namespace || !id) return
-            setTimeout(() => {
-                flowStore
-                    .loadDependencies({subtype: "FLOW", namespace, id}, true)
-                    .then(({count}: {count: number}) => dependenciesCount.value = count > 0 ? (count - 1) : 0)
-            }, 1000)
+            flowStore
+                .loadDependencies({subtype: "FLOW", namespace, id}, true)
+                .then(({count}: {count: number}) => dependenciesCount.value = count > 0 ? (count - 1) : 0)
         },
+        {debounce: 1000},
     )
 
     function setupLifecycle() {

@@ -54,8 +54,7 @@
 
     // Only one of the two engines can ever render, but importing both statically put both in
     // the editor's boot graph - and the whole no-code tree with them, even when the user never
-    // leaves the code tab. The chosen one now loads when a no-code tab first opens; the tabs
-    // already render it inside a Suspense boundary (see getTabFromNoCodeTab).
+    // leaves the code tab. The chosen one now loads when a no-code tab first opens.
     const RawNoCode = markRaw(
         localStorage.getItem(storageKeys.NOCODE_ENGINE) === "legacy"
             ? defineAsyncComponent(() => import("../no-code/NoCode.vue"))

@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, onUnmounted, watch} from "vue"
+    import {computed, onUnmounted, watch} from "vue"
     import {useI18n} from "vue-i18n"
     import {useMediaQuery} from "@vueuse/core"
 
@@ -94,7 +94,6 @@
         cancelPendingRefresh = deferToIdle(refreshStats)
     }
 
-    onMounted(scheduleRefresh)
     onUnmounted(() => cancelPendingRefresh?.())
 
     watch(
@@ -107,9 +106,11 @@
         },
     )
 
+    // `immediate` covers the initial load too, so there is no separate onMounted call.
     watch(
         () => flowStore.flow?.revision,
         () => scheduleRefresh(),
+        {immediate: true},
     )
 </script>
 

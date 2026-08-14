@@ -19,6 +19,7 @@ vi.mock("../../../../src/stores/flow", async () => {
     const {reactive} = await import("vue")
     const flowStore = reactive({
         flow: undefined,
+        dependenciesCount: undefined,
         loadDependencies: vi.fn(),
     })
 
@@ -55,6 +56,7 @@ describe("useFlowRoot", () => {
     beforeEach(() => {
         vi.useFakeTimers()
         flowStore.flow = undefined
+        flowStore.dependenciesCount = undefined
         loadDependencies.mockReset()
     })
 
@@ -63,7 +65,10 @@ describe("useFlowRoot", () => {
     })
 
     it("keeps the dependencies tab enabled when the store reports one dependency", async () => {
-        loadDependencies.mockResolvedValue({count: 1})
+        loadDependencies.mockImplementation(async () => {
+            flowStore.dependenciesCount = 1
+            return {count: 1}
+        })
         const scope = effectScope()
         const flowRoot = scope.run(() => useFlowRoot())!
 

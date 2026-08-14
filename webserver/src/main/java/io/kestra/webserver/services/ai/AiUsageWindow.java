@@ -14,13 +14,11 @@ import java.time.temporal.TemporalAdjusters;
 /**
  * The period an AI spend ceiling is counted over, and at whose boundary it starts again.
  *
- * <p>Calendar periods rather than a rolling duration, so a ceiling is something a user can be told: spend
- * counted over the last thirty days frees up a call at a time and never resets, which leaves "when can I use
- * this again?" with no answer worth giving. A period that ends on a date has one.
+ * <p>Calendar periods rather than a rolling duration, so a refused user can be told a date: a trailing thirty
+ * days frees up a call at a time and never resets.
  *
- * <p>Boundaries are UTC. A ceiling is an installation-wide accounting period, not a personal calendar, and
- * anchoring it to a viewer's zone would have the same window start at different instants for different callers.
- * What a user is shown is still rendered in their own zone.
+ * <p>Boundaries are UTC, since this is an installation-wide accounting period — anchoring it to the viewer's
+ * zone would start the same window at different instants for different callers. Display is still localised.
  */
 public enum AiUsageWindow {
     /** Since midnight. */
@@ -33,10 +31,8 @@ public enum AiUsageWindow {
     MONTHLY;
 
     /**
-     * These names are also the contract with the hosted relay, which serves one of them from {@code /limits}.
-     * Anything else fails rather than falling back, because a period nobody can name is one nobody configured
-     * on purpose — and silently substituting a default would enforce a ceiling over a period the operator did
-     * not choose.
+     * These names are also the contract with the hosted relay's {@code /limits}. Anything else fails rather
+     * than falling back, since substituting a default would enforce a ceiling over an unchosen period.
      */
     @JsonCreator
     public static AiUsageWindow fromString(final String value) {

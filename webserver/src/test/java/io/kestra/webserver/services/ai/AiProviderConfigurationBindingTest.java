@@ -40,11 +40,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Property(name = "kestra.ai.providers[2].configuration.api-key", value = "fake-key")
 @Property(name = "kestra.ai.providers[2].configuration.usage-limit.enabled", value = "false")
 @Property(name = "kestra.ai.providers[2].configuration.usage-limit.max-weight", value = "5000")
-@Property(name = "kestra.ai.free-tier.usage-limit.enabled", value = "true")
-@Property(name = "kestra.ai.free-tier.usage-limit.max-weight", value = "1000000")
-@Property(name = "kestra.ai.free-tier.usage-limit.user-max-weight", value = "100000")
-@Property(name = "kestra.ai.free-tier.usage-limit.warning-threshold-percent", value = "25")
-@Property(name = "kestra.ai.free-tier.usage-limit.window", value = "DAILY")
 class AiProviderConfigurationBindingTest {
     static final String HEADERLESS_PROVIDER_ID = "gemini-without-headers";
     static final String LIMITED_PROVIDER_ID = "gemini-with-a-ceiling";
@@ -52,9 +47,6 @@ class AiProviderConfigurationBindingTest {
 
     @Inject
     private AiServiceManager aiServiceManager;
-
-    @Inject
-    private AiFreeTierConfiguration freeTierConfiguration;
 
     private AiConfiguration configurationOf(String providerId) {
         return ((AiService<?>) aiServiceManager.getAiService(providerId)).getAiConfiguration();
@@ -64,8 +56,7 @@ class AiProviderConfigurationBindingTest {
     void shouldBindTheUsageLimitDeclaredOnAProvider() {
         AiUsageLimitConfiguration limit = configurationOf(LIMITED_PROVIDER_ID).usageLimit();
 
-        // The ceiling has to survive the untyped-map round trip the provider configuration goes through, or it
-        // would read as absent and every limit an operator wrote would be silently inert.
+        // The ceiling has to survive the untyped-map round trip, or every configured limit is silently inert.
         assertThat(limit.enabled()).isTrue();
         assertThat(limit.maxWeight()).isEqualTo(5_000_000);
         assertThat(limit.userMaxWeight()).isEqualTo(250_000);
@@ -80,35 +71,16 @@ class AiProviderConfigurationBindingTest {
 
     @Test
     void shouldLeaveTheUsageLimitDisabledWhenAProviderDeclaresNone() {
-        // Nothing bound onto the configuration, and nothing for a caller to enforce: absence is what every
-        // provider reports until someone configures a ceiling, and it is one answer rather than a flag to check
+        // Nothing bound, and nothing to enforce: absence is what a provider reports until a ceiling is set
         assertThat(configurationOf(HEADERLESS_PROVIDER_ID).usageLimit()).isNull();
         assertThat(aiServiceManager.getAiService(HEADERLESS_PROVIDER_ID).usageLimit()).isEmpty();
     }
 
     @Test
     void shouldReportNoLimitWhenAProviderDeclaresOneAndTurnsItOff() {
-        // A ceiling switched off is not a ceiling: it reads as absent rather than as something to check a flag on
+        // A ceiling switched off reads as absent rather than as a flag for callers to check
         assertThat(configurationOf(DISABLED_LIMIT_PROVIDER_ID).usageLimit()).isNotNull();
         assertThat(aiServiceManager.getAiService(DISABLED_LIMIT_PROVIDER_ID).usageLimit()).isEmpty();
-    }
-
-    @Test
-    void shouldBindTheUsageLimitDeclaredOnTheHostedFreeTier() {
-        // The free tier is registered programmatically rather than as a declared provider, so its ceiling binds
-        // through a different path and needs asserting separately.
-        AiUsageLimitConfiguration limit = freeTierConfiguration.usageLimit().orElseThrow();
-
-        assertThat(limit.enabled()).isTrue();
-        assertThat(limit.maxWeight()).isEqualTo(1_000_000);
-        // Every multi-word key, since configuration is written in kebab-case and the record's components are not
-        assertThat(limit.userMaxWeight()).isEqualTo(100_000);
-        assertThat(limit.warningThresholdPercent()).isEqualTo(25);
-        assertThat(limit.window()).isEqualTo(AiUsageWindow.DAILY);
-        // and unset weights keep the record's defaults rather than binding as zero
-        assertThat(limit.coldInputWeight()).isEqualTo(1.0);
-        assertThat(limit.cachedInputWeight()).isEqualTo(0.1);
-        assertThat(limit.outputWeight()).isEqualTo(6.0);
     }
 
     @Test

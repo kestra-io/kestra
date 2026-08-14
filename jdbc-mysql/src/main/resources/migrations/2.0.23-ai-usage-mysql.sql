@@ -11,6 +11,6 @@ CREATE TABLE IF NOT EXISTS ai_usage (
     `cached_prompt_tokens` BIGINT       GENERATED ALWAYS AS (value ->> '$.cachedPromptTokens') STORED NOT NULL,
     `completion_tokens`    BIGINT       GENERATED ALWAYS AS (value ->> '$.completionTokens') STORED NOT NULL,
     `thought_tokens`       BIGINT       GENERATED ALWAYS AS (value ->> '$.thoughtTokens') STORED NOT NULL,
-    INDEX ai_usage__provider_recorded (`tenant_id`, `provider_id`, `recorded_at`),
-    INDEX ai_usage__provider_user_recorded (`tenant_id`, `provider_id`, `user_id`, `recorded_at`)
+    INDEX ai_usage__provider_recorded (`provider_id`, `recorded_at`),
+    INDEX ai_usage__provider_user_recorded (`provider_id`, `user_id`, `recorded_at`)
 );

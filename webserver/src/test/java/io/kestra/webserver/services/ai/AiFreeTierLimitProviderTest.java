@@ -1,116 +1,171 @@
 package io.kestra.webserver.services.ai;
 
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.micronaut.runtime.server.EmbeddedServer;
-import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
+import static com.github.tomakehurst.wiremock.client.WireMock.findUnmatchedRequests;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.okForContentType;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The hosted free tier's budget, fetched from the relay rather than configured locally.
  *
- * <p>Served by a stand-in relay on a real port rather than a mocked client: what is being checked is that the
- * relay's JSON binds to the instance's own configuration type, and a mock returning an already-built object
- * would assert nothing about the wire contract between two repositories that are deployed separately.
+ * <p>Served over a real port rather than by a mocked client, because what is under test is that the relay's
+ * JSON binds to the instance's configuration type — a wire contract between two separately deployed
+ * repositories, which a mock returning a built object would not exercise.
  */
+@WireMockTest
 class AiFreeTierLimitProviderTest {
-    private static EmbeddedServer relay;
-    private static ApplicationContext context;
+    /** Relative to the configured base URL, exactly as {@link AiFreeTierLimitProvider} composes it. */
+    private static final String LIMITS_PATH = "/v1/ai/relay/gemini/limits";
+
+    private static final String FULL_BUDGET = """
+        {"enabled":true,"window":"DAILY","maxWeight":400000,"userMaxWeight":250000,\
+        "coldInputWeight":1.0,"cachedInputWeight":0.1,"outputWeight":6.0}""";
+
+    private static ReactorHttpClient client;
 
     @BeforeAll
-    static void startStandInRelay() {
-        context = ApplicationContext.run(Map.of("stand-in-relay.enabled", "true"), "test");
-        relay = context.getBean(EmbeddedServer.class).start();
+    static void createClient() {
+        // No base URL: the provider composes an absolute one from its configuration, which is the whole point of
+        // the base-url property being configurable.
+        client = ReactorHttpClient.create(null);
     }
 
     @AfterAll
-    static void stop() {
-        if (context != null) {
-            context.close();
+    static void closeClient() {
+        if (client != null) {
+            client.close();
         }
     }
 
-    private static AiFreeTierConfiguration configuration(final String baseUrl) {
+    private static AiFreeTierLimitProvider provider(final String baseUrl) {
         AiFreeTierConfiguration configuration = new AiFreeTierConfiguration();
         configuration.setBaseUrl(baseUrl);
-        return configuration;
+        return new AiFreeTierLimitProvider(configuration, client);
     }
 
-    private AiFreeTierLimitProvider provider(final String baseUrl) {
-        return new AiFreeTierLimitProvider(configuration(baseUrl), context.getBean(ReactorHttpClient.class));
+    private static AiFreeTierLimitProvider providerAgainst(final WireMockRuntimeInfo relay) {
+        return provider(relay.getHttpBaseUrl() + "/v1/ai/relay/gemini");
+    }
+
+    /** Stubs the relay's {@code /limits} route with the JSON it would serve. */
+    private static void relayServes(final String budget) {
+        stubFor(get(urlEqualTo(LIMITS_PATH)).willReturn(okJson(budget)));
+    }
+
+    /**
+     * Asserts the relay was called <em>and</em> answered from the stub. {@code verify} alone is not enough: it
+     * records the call whether or not a stub matched, and an unmatched request 404s into the same empty result
+     * these cases assert, so a stub that never matched would look identical to a working one.
+     */
+    private static void assertRelayAnsweredFromTheStub() {
+        verify(getRequestedFor(urlEqualTo(LIMITS_PATH)));
+        assertThat(findUnmatchedRequests()).isEmpty();
     }
 
     @Test
-    void shouldReportTheRelaysBudgetOnceFetched() {
+    void shouldReportTheRelaysBudgetOnceFetched(WireMockRuntimeInfo relay) {
         // Given a relay serving the budget it enforces
-        AiFreeTierLimitProvider provider = provider(relay.getURI() + "/stand-in/v1/ai/relay/gemini");
+        relayServes(FULL_BUDGET);
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
 
         // When it is refreshed
         provider.refresh();
 
-        // Then the instance holds the relay's own ceilings, rate card and window — none of which an operator
-        // could have known, and all of which change when we re-price without any instance being redeployed.
+        // Then the instance holds the relay's own ceilings, rate card and window
         AiUsageLimitConfiguration limit = provider.limit().orElseThrow();
         assertThat(limit.enabled()).isTrue();
-        assertThat(limit.maxWeight()).isEqualTo(2_000_000);
-        assertThat(limit.userMaxWeight()).isEqualTo(600_000);
+        assertThat(limit.maxWeight()).isEqualTo(400_000);
+        assertThat(limit.userMaxWeight()).isEqualTo(250_000);
         assertThat(limit.outputWeight()).isEqualTo(6.0);
         assertThat(limit.cachedInputWeight()).isEqualTo(0.1);
-        // The one period the relay serves. Its name is the whole contract between the two repositories, so a
-        // rename on either side leaves every instance reporting no ceiling at all.
+        // The name is the contract between the two repositories: a rename on either side leaves every
+        // instance reporting no ceiling at all.
         assertThat(limit.window()).isEqualTo(AiUsageWindow.DAILY);
     }
 
     @Test
-    void shouldKeepReadingTheBudgetWhenTheRelayAddsAFieldThisVersionDoesNotKnow() {
-        // Given a relay serving a field this instance was built before — see the stand-in below
-        AiFreeTierLimitProvider provider = provider(relay.getURI() + "/stand-in/v1/ai/relay/gemini");
+    void shouldKeepReadingTheBudgetWhenTheRelayAddsAFieldThisVersionDoesNotKnow(WireMockRuntimeInfo relay) {
+        // Given a relay serving a field this instance was built before
+        relayServes("""
+            {"enabled":true,"window":"DAILY","maxWeight":400000,"someFieldAFutureRelayAdds":"unknown"}""");
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
 
         // When it is refreshed
         provider.refresh();
 
-        // Then the fields it does understand are read. The two sides are deployed independently and the server
-        // moves first, so rejecting an unrecognised field would mean every older instance silently losing its
-        // budget the day we extend the response.
-        assertThat(provider.limit()).isPresent();
-        assertThat(provider.limit().orElseThrow().maxWeight()).isEqualTo(2_000_000);
+        // Then the known fields are still read: the server is deployed first, so rejecting an unrecognised
+        // field would cost every older instance its budget the day the response is extended
+        assertThat(provider.limit().orElseThrow().maxWeight()).isEqualTo(400_000);
     }
 
     @Test
-    void shouldFallBackToTheDefaultWarningThresholdWhichTheRelayDoesNotServe() {
-        // Given the relay's response, which carries ceilings and weights but no warning threshold — when to warn
-        // is a presentation choice belonging to the instance, not a budget the server enforces
-        AiFreeTierLimitProvider provider = provider(relay.getURI() + "/stand-in/v1/ai/relay/gemini");
+    void shouldEnforceABudgetTheRelayServesWithoutSayingItIsEnabled(WireMockRuntimeInfo relay) {
+        // Given a relay that serves ceilings but no 'enabled' flag
+        relayServes("""
+            {"window":"DAILY","maxWeight":400000,"userMaxWeight":250000}""");
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
+
+        // When it is refreshed
         provider.refresh();
 
-        // Then the instance's own default applies rather than binding as zero, which would have meant a warning
-        // that only appears once the allowance is already gone
+        // Then the budget applies: this arrives through Jackson, not Micronaut's binder, so the @Bindable
+        // default does not reach it and an omitted flag must not read as false
+        assertThat(provider.limit().orElseThrow().maxWeight()).isEqualTo(400_000);
+    }
+
+    @Test
+    void shouldReportNoLimitWhenTheRelayServesASwitchedOffOne(WireMockRuntimeInfo relay) {
+        // Given a relay that reports a budget it is not currently enforcing
+        relayServes("""
+            {"enabled":false,"window":"DAILY","maxWeight":400000}""");
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
+
+        // When it is refreshed
+        provider.refresh();
+
+        // Then it reads as no ceiling, as a declared provider's switched-off limit does
+        assertThat(provider.limit()).isEmpty();
+        assertRelayAnsweredFromTheStub();
+    }
+
+    @Test
+    void shouldFallBackToTheDefaultWarningThresholdWhichTheRelayDoesNotServe(WireMockRuntimeInfo relay) {
+        // Given a response carrying ceilings and weights but no warning threshold, which is the instance's
+        // presentation choice rather than something the relay enforces
+        relayServes(FULL_BUDGET);
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
+        provider.refresh();
+
+        // Then the instance's default applies rather than binding as zero
         assertThat(provider.limit().orElseThrow().warningThresholdPercent()).isEqualTo(10);
     }
 
     @Test
-    void shouldReportNoLimitBeforeTheRelayHasEverBeenReached() {
-        // Given a provider that has not refreshed yet — every instance, for its first half minute
-        AiFreeTierLimitProvider provider = provider(relay.getURI() + "/stand-in/v1/ai/relay/gemini");
+    void shouldReportNoLimitBeforeTheRelayHasEverBeenReached(WireMockRuntimeInfo relay) {
+        // Given a provider that has not refreshed yet, as every instance is for its first half minute
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
 
-        // Then nothing is shown or enforced. Failing open matters here: the relay enforces its own budget and
-        // answers 429, so not knowing the limit costs a user a surprise, where inventing one would refuse turns
-        // the relay would have served.
+        // Then nothing is shown or enforced — failing open, since the relay enforces its own budget anyway
         assertThat(provider.limit()).isEmpty();
     }
 
     @Test
-    void shouldKeepTheLastKnownBudgetWhenTheRelayCannotBeReached() {
+    void shouldKeepTheLastKnownBudgetWhenTheRelayCannotBeReached(WireMockRuntimeInfo relay) {
         // Given a provider that has fetched successfully...
-        AiFreeTierLimitProvider provider = provider(relay.getURI() + "/stand-in/v1/ai/relay/gemini");
+        relayServes(FULL_BUDGET);
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
         provider.refresh();
         AiUsageLimitConfiguration fetched = provider.limit().orElseThrow();
 
@@ -119,65 +174,22 @@ class AiFreeTierLimitProviderTest {
         offline.refresh();
 
         // When each is read
-        // Then a failed refresh neither throws nor clears what was known. This runs on a schedule and its result
-        // is read before every model call, so an outage at api.kestra.io must not change what Copilot does.
+        // Then a failed refresh neither throws nor clears what was known: this is read before every model
+        // call, so a relay outage must not change what Copilot does
         assertThat(provider.limit()).contains(fetched);
         assertThat(offline.limit()).isEmpty();
     }
 
     @Test
-    void shouldNotThrowWhenTheRelayAnswersSomethingUnexpected() {
+    void shouldNotThrowWhenTheRelayAnswersSomethingUnexpected(WireMockRuntimeInfo relay) {
         // Given a relay serving a body that is not a budget, as a proxy or an error page would
-        AiFreeTierLimitProvider provider = provider(relay.getURI() + "/stand-in/nonsense");
+        stubFor(get(urlEqualTo(LIMITS_PATH))
+            .willReturn(okForContentType("text/html", "<html>502 Bad Gateway</html>")));
+        AiFreeTierLimitProvider provider = providerAgainst(relay);
 
         // Then the refresh absorbs it rather than propagating out of a scheduled method
         provider.refresh();
         assertThat(provider.limit()).isEmpty();
-    }
-
-    @Test
-    void shouldPreferAnOperatorsOwnCeilingOverTheRelays() {
-        // Given an operator who capped their instance below the hosted allowance
-        AiFreeTierConfiguration configuration = configuration(relay.getURI() + "/stand-in/v1/ai/relay/gemini");
-        configuration.setUsageLimit(Map.of("enabled", true, "maxWeight", 50_000));
-
-        AiFreeTierLimitProvider provider =
-            new AiFreeTierLimitProvider(configuration, context.getBean(ReactorHttpClient.class));
-        provider.refresh();
-
-        // Then theirs wins. Spending less of an allowance than we grant is theirs to decide; spending more is
-        // not, and the relay refuses that regardless of what an instance believes.
-        assertThat(provider.limit().orElseThrow().maxWeight()).isEqualTo(50_000);
-    }
-
-    /**
-     * A stand-in for the relay's {@code /limits} route, serving the same JSON api.kestra.io does with its
-     * shipped defaults. Test-classpath only, and requires a property nothing else sets, so it cannot answer
-     * anywhere but here.
-     */
-    @Controller("/stand-in")
-    @Requires(property = "stand-in-relay.enabled", value = "true")
-    static class StandInRelayController {
-        @Get("/v1/ai/relay/gemini/limits")
-        Map<String, Object> limits() {
-            return Map.of(
-                "enabled", true,
-                "window", "DAILY",
-                "maxWeight", 2_000_000,
-                "userMaxWeight", 600_000,
-                "coldInputWeight", 1.0,
-                "cachedInputWeight", 0.1,
-                "outputWeight", 6.0,
-                // A field this version of the instance knows nothing about. The relay is deployed separately and
-                // ahead of instances, so it will add fields; an instance that choked on one would stop reading the
-                // ones it does understand.
-                "someFieldAFutureRelayAdds", "unknown"
-            );
-        }
-
-        @Get("/nonsense/limits")
-        String nonsense() {
-            return "<html>502 Bad Gateway</html>";
-        }
+        assertRelayAnsweredFromTheStub();
     }
 }

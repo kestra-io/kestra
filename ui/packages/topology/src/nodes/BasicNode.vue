@@ -18,11 +18,11 @@
                             {{ displayTitle }}
                         </KsTooltip>
                     </div>
-                    <slot name="title-status" />
-                    <slot name="title-actions" />
                 </div>
                 <slot name="content" />
             </div>
+            <slot name="title-status" />
+            <slot name="title-actions" />
         </div>
         <slot name="details" />
     </div>
@@ -185,6 +185,7 @@
         flex-direction: column;
         justify-content: center;
         margin-left: 0.7rem;
+        margin-right: var(--ks-spacing-1);
         flex: 1;
         min-width: 0;
 

@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -134,9 +135,9 @@ class AiFreeTierTest {
         configuration.setUsageLimit(Map.of("enabled", true, "maxWeight", 1_000_000));
 
         AiFreeTierLimitProvider limitProvider = mock(AiFreeTierLimitProvider.class);
-        when(limitProvider.limit()).thenReturn(new AiUsageLimitConfiguration(
+        when(limitProvider.limit()).thenReturn(Optional.of(new AiUsageLimitConfiguration(
             true, 1.0, 0.1, 6.0, 250_000, 0, 10, Duration.ofHours(24)
-        ));
+        )));
 
         // When the hosted provider is registered
         AiServiceManager manager = buildManager(null, configuration, limitProvider);
@@ -145,7 +146,7 @@ class AiFreeTierTest {
         // manager synthesizes for it. Two routes to one ceiling is how the figure enforced mid-turn stops
         // matching the figure the client was shown; reconciling an operator's own cap against the allowance is
         // the limit provider's job, and is asserted where that decision lives.
-        assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID).usageLimit().maxWeight())
+        assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID).usageLimit().orElseThrow().maxWeight())
             .isEqualTo(250_000);
     }
 
@@ -161,7 +162,7 @@ class AiFreeTierTest {
         // Then no ceiling is claimed rather than the synthesized configuration's being used as a second source.
         // Failing open is right here: the relay enforces its own budget and answers 429 when it is spent, so the
         // cost of not knowing the ceiling is a surprising refusal, against refusing turns the relay would serve.
-        assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID).usageLimit().enabled()).isFalse();
+        assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID).usageLimit()).isEmpty();
     }
 
     @Test

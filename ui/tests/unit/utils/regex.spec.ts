@@ -76,9 +76,9 @@ describe("Regex", () => {
         expect(performance.now() - start).toBeLessThan(500)
 
         expect(new RegExp(RegexProvider.capturePebbleVarRoot + "$").exec(`{{ ${chain} ~ na`)?.[1]).eq("na")
-        const nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec(`{{ ${chain} ~ inputs.fo`)
+        const nestedFieldMatcher = new RegExp(RegexProvider.capturePebbleVarParent + "$").exec(`{{ ${chain} ~ inputs.foo`)
         expect(nestedFieldMatcher?.[1]).eq("inputs")
-        expect(nestedFieldMatcher?.[2]).eq("fo")
+        expect(nestedFieldMatcher?.[2]).eq("foo")
     })
 
     it("capture string value", () => {

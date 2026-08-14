@@ -67,6 +67,8 @@ jobs:
       OTLP_HEADERS: ${{ secrets.OTLP_HEADERS }}
     with:
       java-version: 25
+      # RC tags are published to Maven Central like regular releases
+      publish-rc: true
 
   generate-configuration-schema:
     name: Generate Configuration Schema

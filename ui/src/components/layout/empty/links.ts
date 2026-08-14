@@ -109,6 +109,10 @@ export const links: Record<string, EmptyLinks> = {
         video: "https://www.youtube.com/watch?v=pcC3OAJPQao",
         learnMore: "https://kestra.io/docs/enterprise/instance",
     },
+    dashboards: {
+        video: "https://www.youtube.com/watch?v=Ag4ICYbE2YE",
+        learnMore: "https://kestra.io/docs/ui/dashboards",
+    },
     blueprints: {
         video: "https://www.youtube.com/watch?v=qbGfK-FJi6s",
         learnMore: "https://kestra.io/docs/enterprise/governance/custom-blueprints",

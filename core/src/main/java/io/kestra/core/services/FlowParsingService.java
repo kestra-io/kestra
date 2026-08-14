@@ -46,7 +46,7 @@ public class FlowParsingService {
      * Parses the given abstract flow, returning a parsed {@link FlowWithSource}.
      *
      * <p>
-     * This parses the flow as authored: plugin versions are injected (required to resolve versioned plugin
+     * This parses the raw flow: plugin versions are injected (required to resolve versioned plugin
      * classes) but no runtime governance is applied — use {@link #parseForRuntime(FlowInterface)} for the
      * executor and scheduler paths.
      * </p>

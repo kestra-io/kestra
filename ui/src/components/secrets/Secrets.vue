@@ -68,7 +68,17 @@
             :addSecretModalVisible="addSecretModalVisible"
             :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
-        />
+        >
+            <template #empty>
+                <Empty type="secrets">
+                    <template v-if="miscStore.configs?.secretsEnabled" #button>
+                        <KsButton :icon="Plus" type="primary" @click="addSecretModalVisible = true">
+                            {{ $t('secret.add') }}
+                        </KsButton>
+                    </template>
+                </Empty>
+            </template>
+        </SecretsTable>
     </section>
 </template>
 
@@ -79,6 +89,7 @@
     import SecretsTable from "./SecretsTable.vue"
     import Plus from "vue-material-design-icons/Plus.vue"
     import Navbar from "../layout/TopNavBar.vue"
+    import Empty from "../layout/empty/Empty.vue"
     import {useI18n} from "vue-i18n"
     import {computed, ref} from "vue"
     import useRouteContext from "../../composables/useRouteContext"

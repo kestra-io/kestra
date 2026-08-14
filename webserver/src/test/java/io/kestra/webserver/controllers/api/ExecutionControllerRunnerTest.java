@@ -2964,6 +2964,34 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldrestrictfromlabel")
+    void shouldRestrictFromLabel() {
+        String tenantId = "shouldrestrictfromlabel";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        // system.from=ui (sent by the UI) must be accepted and preserved
+        Execution uiExecution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/%s/executions/io.kestra.tests/minimal?labels=system.from:ui&wait=true".formatted(tenantId), null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+        assertThat(uiExecution.getLabels()).anyMatch(l -> l.key().equals(Label.FROM) && Label.FromLabel.UI.value.equals(l.value()));
+
+        // system.from with any other value must be rejected
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest
+                    .POST("/api/v1/%s/executions/io.kestra.tests/minimal?labels=system.from:scheduler".formatted(tenantId), null)
+                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                Execution.class
+            )
+        );
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getMessage()).contains("System labels can only be set by Kestra itself");
+    }
+
+    @Test
     @LoadFlows(value = { "flows/valids/minimal.yaml" }, tenantId = "shouldsuspendatbreakpointthenresume")
     void shouldSuspendAtBreakpointThenResume() {
         String tenantId = "shouldsuspendatbreakpointthenresume";

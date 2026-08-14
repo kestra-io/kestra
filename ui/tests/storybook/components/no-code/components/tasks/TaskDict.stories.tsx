@@ -80,7 +80,8 @@ export const TestDoubleKey: Story = {
                 throw new Error("Monaco editor not initialized for tests");
             }
             return mon;
-        });
+        // KsEditor is an async component: Monaco's chunk has to load before it mounts.
+        }, {timeout: 15000});
         monacoEditor?.__setValueInTests("newValue");
 
         // if the field disappears because of duplication,
@@ -90,7 +91,7 @@ export const TestDoubleKey: Story = {
 
         await waitFor(function valueUpdated() {
             expect(canvas.getByTestId("sb-meta-data-result")?.innerText).toContain("\"newKey\": \"newValue\"");
-        });
+        }, {timeout: 15000});
     }
 }
 

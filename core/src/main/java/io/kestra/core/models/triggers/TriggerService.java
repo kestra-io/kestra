@@ -136,14 +136,17 @@ public abstract class TriggerService {
             .build();
     }
 
+    /**
+     * Builds the labels the trigger itself contributes, deliberately without the flow's own labels: the
+     * execution is created from the flow processed for runtime and picks those up there, so carrying the
+     * raw flow's here would let them win the creation-time merge and pin back a value governance overrides.
+     */
     private static List<Label> buildLabels(String id, AbstractTrigger trigger, ConditionContext conditionContext, Map<String, Object> variables) {
-        List<Label> labels = LabelService.fromTrigger(conditionContext.getRunContext(), conditionContext.getFlow(), trigger, Map.of("trigger", variables));
-        labels.add(new Label(Label.FROM, "trigger"));
+        List<Label> labels = LabelService.fromTrigger(conditionContext.getRunContext(), trigger, Map.of("trigger", variables));
+        labels.add(new Label(Label.FROM, Label.FromLabel.TRIGGER.value));
         if (labels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
             labels.add(new Label(Label.CORRELATION_ID, id));
         }
-        // include non-system flow labels (previously added in WorkerTriggerProcessor)
-        labels.addAll(LabelService.labelsExcludingSystem(conditionContext.getFlow().getLabels()));
         return labels;
     }
 }

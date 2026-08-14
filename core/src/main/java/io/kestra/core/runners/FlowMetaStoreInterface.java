@@ -57,5 +57,26 @@ public interface FlowMetaStoreInterface {
         );
     }
 
-    Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution);
+    Optional<FlowWithSource> findByExecutionForRuntime(Execution execution);
+
+    /**
+     * Find a flow by identifier, processed for runtime — plugin defaults injected and, on editions supporting
+     * it, governance applied. Callers creating an execution must use this rather than
+     * {@link #findById(String, String, String, Optional)}: an execution snapshots the flow labels and variables
+     * at creation time, so it must be built from the same flow the executor will run.
+     * <p>
+     * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.
+     */
+    Optional<FlowWithSource> findByIdForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision);
+
+    /**
+     * Same as {@link #findByIdForRuntime(String, String, String, Optional)}, checking that the namespace
+     * is allowed, so it can be used inside a task creating a child execution.
+     * <p>
+     * WARNING: like every flow lookup, this is unsupported on a dedicated worker, which resolves flow metadata
+     * over gRPC and has no parsing service — callers reachable from worker task execution must tolerate an
+     * {@link UnsupportedOperationException}.
+     */
+    Optional<FlowWithSource> findByIdFromTaskForRuntime(String tenantId, String namespace, String id, Optional<Integer> revision, String fromTenant,
+        String fromNamespace, String fromId);
 }

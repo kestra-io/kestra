@@ -19,8 +19,6 @@ import io.kestra.core.killswitch.EvaluationType;
 import io.kestra.core.killswitch.KillSwitchService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionId;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.FlowMetaStoreInterface;
@@ -89,10 +87,10 @@ class ExecutionCommandMessageHandlerTest {
     @Test
     void shouldEmitSucceededOutcomeOnHappyPath() {
         // Given
-        var flow = mock(FlowInterface.class);
+        var flow = mock(FlowWithSource.class);
         var execution = executionWithState(State.Type.CREATED);
         var context = mock(ExecutorContext.class);
-        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(flow));
         when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
         when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.PASS);
         when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
@@ -103,13 +101,16 @@ class ExecutionCommandMessageHandlerTest {
         // Then
         assertThat(result).contains(context);
         verify(asyncOperationService).emitProcessedIfAsync(createCommand, "tenant", "exec-1", Outcome.SUCCEEDED, null);
+        // the new execution snapshots the flow labels and variables, so it must never be built from the
+        // raw flow — that dropped policy-injected labels on every non-triggered execution
+        verify(flowMetaStore, never()).findById(any(), any(), any(), any());
     }
 
     @Test
     void shouldEmitFailedOutcomeWhenFlowNotFound() {
         // Bug #1: FlowNotFoundException previously escaped the try/finally, so emitProcessedIfAsync
         // was never called and the controller would time out with a 504 instead of a clean error.
-        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.empty());
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.empty());
 
         // When — must not throw
         assertThatCode(() -> handler.handle(createCommand)).doesNotThrowAnyException();
@@ -122,9 +123,9 @@ class ExecutionCommandMessageHandlerTest {
     void shouldEmitFailedOutcomeWhenStateStoreCreateFails() {
         // Bug #2: executionStateStore.create() failure was swallowed (only logged) and the handler
         // continued to emit SUCCEEDED — the controller returned 200 for an execution never persisted.
-        var flow = mock(FlowInterface.class);
+        var flow = mock(FlowWithSource.class);
         var execution = mock(Execution.class); // state stubs not needed — exception fires before getState()
-        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(flow));
         when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
         doThrow(new RuntimeException("DB unavailable")).when(executionStateStore).create(execution);
 
@@ -137,9 +138,9 @@ class ExecutionCommandMessageHandlerTest {
 
     @Test
     void shouldEmitFailedOutcomeWhenEventHandlerFails() {
-        var flow = mock(FlowInterface.class);
+        var flow = mock(FlowWithSource.class);
         var execution = executionWithState(State.Type.CREATED);
-        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(flow));
         when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
         when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.PASS);
         when(executionEventMessageHandler.handle(any())).thenThrow(new RuntimeException("handler error"));
@@ -152,9 +153,9 @@ class ExecutionCommandMessageHandlerTest {
     @Test
     void shouldPersistExecutionAndReturnEmptyWhenKillSwitchActive() {
         // Given
-        var flow = mock(FlowInterface.class);
+        var flow = mock(FlowWithSource.class);
         var execution = mock(Execution.class); // no state stubs needed — kill switch fires before getState()
-        when(flowMetaStore.findById(any(), any(), any(), any())).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByIdForRuntime(any(), any(), any(), any())).thenReturn(Optional.of(flow));
         when(executionService.create(eq(createCommand), eq(flow))).thenReturn(execution);
         when(killSwitchService.evaluate(execution)).thenReturn(EvaluationType.IGNORE);
 
@@ -232,7 +233,7 @@ class ExecutionCommandMessageHandlerTest {
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         var context = mock(ExecutorContext.class);
         when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
-        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
         when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
@@ -261,7 +262,7 @@ class ExecutionCommandMessageHandlerTest {
     void replayShouldEmitFailedOutcomeWhenFlowNotFound() {
         // Given
         when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
-        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.empty());
+        when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.empty());
 
         // When — must not throw
         assertThatCode(() -> handler.handle(replayCommand)).doesNotThrowAnyException();
@@ -276,7 +277,7 @@ class ExecutionCommandMessageHandlerTest {
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
-        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), any(), any(), any(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
         doThrow(new RuntimeException("DB unavailable")).when(executionStateStore).create(newExecution);
@@ -294,7 +295,7 @@ class ExecutionCommandMessageHandlerTest {
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
-        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
         when(killSwitchService.evaluate(newExecution)).thenReturn(EvaluationType.KILL);
@@ -317,7 +318,7 @@ class ExecutionCommandMessageHandlerTest {
         var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
-        when(flowMetaStore.findByExecutionThenInjectDefaults(any())).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByExecutionForRuntime(any())).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), isNull(), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
         when(killSwitchService.evaluate(newExecution)).thenReturn(EvaluationType.IGNORE);
@@ -336,11 +337,11 @@ class ExecutionCommandMessageHandlerTest {
     void replayShouldApplyRevisionWhenSpecified() throws Exception {
         // Given
         var commandWithRevision = replayCommand.withRevision(3);
-        var flow = mock(Flow.class);
+        var flow = mock(FlowWithSource.class);
         var newExecution = mockExecution("new-exec-id", "tenant", "ns", "flow-id");
         var context = mock(ExecutorContext.class);
         when(executionStateStore.findById("source-exec-id")).thenReturn(sourceExecution);
-        when(flowMetaStore.findById("tenant", "ns", "flow-id", Optional.of(3))).thenReturn(Optional.of(flow));
+        when(flowMetaStore.findByIdForRuntime("tenant", "ns", "flow-id", Optional.of(3))).thenReturn(Optional.of(flow));
         when(executionService.replay(any(), eq(flow), isNull(), eq(3), any(), eq(true), eq("new-exec-id")))
             .thenReturn(newExecution);
         when(executionEventMessageHandler.handle(any())).thenReturn(Optional.of(context));
@@ -350,7 +351,10 @@ class ExecutionCommandMessageHandlerTest {
 
         // Then
         assertThat(result).contains(context);
-        verify(flowMetaStore).findById("tenant", "ns", "flow-id", Optional.of(3));
+        // the replayed execution snapshots the flow labels and variables, so the pinned revision must be
+        // resolved as the executor will run it
+        verify(flowMetaStore).findByIdForRuntime("tenant", "ns", "flow-id", Optional.of(3));
+        verify(flowMetaStore, never()).findById(any(), any(), any(), any());
     }
 
     // ---- helpers ----

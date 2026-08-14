@@ -12,6 +12,7 @@ import lombok.Setter;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The hosted Copilot provider used when an instance has configured none of its own.
@@ -61,7 +62,8 @@ public class AiFreeTierConfiguration {
     private Duration timeout = Duration.ofMinutes(5);
 
     @Getter(AccessLevel.NONE)
-    private AiUsageLimitConfiguration usageLimit = AiUsageLimitConfiguration.DISABLED;
+    @Nullable
+    private AiUsageLimitConfiguration usageLimit;
 
     /**
      * The instance's own ceiling on hosted spend, disabled by default like every other provider's.
@@ -69,8 +71,8 @@ public class AiFreeTierConfiguration {
      * <p>Not the relay's quota, which lives at Kestra's end and answers 429 when exhausted — this is what the
      * instance decides to spend of it, so an operator can cap or subdivide the allowance they are given.
      */
-    public AiUsageLimitConfiguration usageLimit() {
-        return usageLimit;
+    public Optional<AiUsageLimitConfiguration> usageLimit() {
+        return Optional.ofNullable(usageLimit).filter(AiUsageLimitConfiguration::enabled);
     }
 
     /**
@@ -90,7 +92,7 @@ public class AiFreeTierConfiguration {
         @MapFormat(transformation = MapFormat.MapTransformation.NESTED, keyFormat = StringConvention.CAMEL_CASE)
         final Map<String, Object> usageLimit) {
         if (usageLimit == null || usageLimit.isEmpty()) {
-            this.usageLimit = AiUsageLimitConfiguration.DISABLED;
+            this.usageLimit = null;
             return;
         }
 

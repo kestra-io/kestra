@@ -2,6 +2,7 @@ package io.kestra.webserver.services.ai;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import io.kestra.core.ai.agent.models.AgentPrincipal;
 import io.kestra.libs.copilot.models.in.DashboardGenerationPrompt;
@@ -38,8 +39,15 @@ public interface AiServiceInterface {
         return streamingChatModel(listeners);
     }
 
-    default AiUsageLimitConfiguration usageLimit() {
-        return AiUsageLimitConfiguration.DISABLED;
+    /**
+     * This provider's ceiling, or empty when it has none switched on.
+     *
+     * <p>Empty covers both "configured nothing" and "configured a ceiling and turned it off", because no reader
+     * has ever wanted to tell those apart: a limit that is present but disabled is not a limit. Resolving it to
+     * absence here is what keeps every caller from having to remember a second {@code enabled()} check.
+     */
+    default Optional<AiUsageLimitConfiguration> usageLimit() {
+        return Optional.empty();
     }
 
     default AiService.GenerationContext beforeGeneration(UserInfo userInfo, String conversationId, String spanName, Map<String, String> inputState) {

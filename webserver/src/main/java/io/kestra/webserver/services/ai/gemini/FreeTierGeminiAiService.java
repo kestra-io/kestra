@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The Gemini provider pointed at Kestra's hosted relay instead of Google directly.
@@ -74,8 +75,8 @@ public class FreeTierGeminiAiService extends GeminiAiService {
      * ceiling enforced mid-turn stops matching the one the client was shown.
      */
     @Override
-    public AiUsageLimitConfiguration usageLimit() {
-        return limitProvider != null ? limitProvider.limit() : AiUsageLimitConfiguration.DISABLED;
+    public Optional<AiUsageLimitConfiguration> usageLimit() {
+        return limitProvider != null ? limitProvider.limit() : Optional.empty();
     }
 
     /**

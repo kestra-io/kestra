@@ -35,6 +35,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Property(name = "kestra.ai.providers[1].configuration.usage-limit.user-max-weight", value = "250000")
 @Property(name = "kestra.ai.providers[1].configuration.usage-limit.output-weight", value = "8.0")
 @Property(name = "kestra.ai.providers[1].configuration.usage-limit.window", value = "P7D")
+@Property(name = "kestra.ai.providers[2].id", value = AiProviderConfigurationBindingTest.DISABLED_LIMIT_PROVIDER_ID)
+@Property(name = "kestra.ai.providers[2].type", value = "gemini")
+@Property(name = "kestra.ai.providers[2].configuration.api-key", value = "fake-key")
+@Property(name = "kestra.ai.providers[2].configuration.usage-limit.enabled", value = "false")
+@Property(name = "kestra.ai.providers[2].configuration.usage-limit.max-weight", value = "5000")
 @Property(name = "kestra.ai.free-tier.usage-limit.enabled", value = "true")
 @Property(name = "kestra.ai.free-tier.usage-limit.max-weight", value = "1000000")
 @Property(name = "kestra.ai.free-tier.usage-limit.user-max-weight", value = "100000")
@@ -43,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AiProviderConfigurationBindingTest {
     static final String HEADERLESS_PROVIDER_ID = "gemini-without-headers";
     static final String LIMITED_PROVIDER_ID = "gemini-with-a-ceiling";
+    static final String DISABLED_LIMIT_PROVIDER_ID = "gemini-with-a-ceiling-switched-off";
 
     @Inject
     private AiServiceManager aiServiceManager;
@@ -74,19 +80,24 @@ class AiProviderConfigurationBindingTest {
 
     @Test
     void shouldLeaveTheUsageLimitDisabledWhenAProviderDeclaresNone() {
-        AiUsageLimitConfiguration limit = configurationOf(HEADERLESS_PROVIDER_ID).usageLimit();
+        // Nothing bound onto the configuration, and nothing for a caller to enforce: absence is what every
+        // provider reports until someone configures a ceiling, and it is one answer rather than a flag to check
+        assertThat(configurationOf(HEADERLESS_PROVIDER_ID).usageLimit()).isNull();
+        assertThat(aiServiceManager.getAiService(HEADERLESS_PROVIDER_ID).usageLimit()).isEmpty();
+    }
 
-        // Never null, since every model call reads it, and never enforcing, since nobody asked for a ceiling
-        assertThat(limit).isNotNull();
-        assertThat(limit.enabled()).isFalse();
-        assertThat(limit.isEnforceable()).isFalse();
+    @Test
+    void shouldReportNoLimitWhenAProviderDeclaresOneAndTurnsItOff() {
+        // A ceiling switched off is not a ceiling: it reads as absent rather than as something to check a flag on
+        assertThat(configurationOf(DISABLED_LIMIT_PROVIDER_ID).usageLimit()).isNotNull();
+        assertThat(aiServiceManager.getAiService(DISABLED_LIMIT_PROVIDER_ID).usageLimit()).isEmpty();
     }
 
     @Test
     void shouldBindTheUsageLimitDeclaredOnTheHostedFreeTier() {
         // The free tier is registered programmatically rather than as a declared provider, so its ceiling binds
         // through a different path and needs asserting separately.
-        AiUsageLimitConfiguration limit = freeTierConfiguration.usageLimit();
+        AiUsageLimitConfiguration limit = freeTierConfiguration.usageLimit().orElseThrow();
 
         assertThat(limit.enabled()).isTrue();
         assertThat(limit.maxWeight()).isEqualTo(1_000_000);

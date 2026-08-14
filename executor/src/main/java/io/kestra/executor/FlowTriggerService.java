@@ -85,7 +85,7 @@ public class FlowTriggerService {
             return Collections.emptyList();
         }
 
-        Flow resolved = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolved = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow).flow();
 
         // compute all executions to create from flow triggers without taken into account multiple conditions
         return flowWithFlowTriggers.stream()
@@ -125,7 +125,7 @@ public class FlowTriggerService {
         // resolved before entering the window transaction: the store runs the consumer inside a transaction
         // holding a pooled connection, and resolving there can need a second one — a repository read when the
         // head revision moved, or a governance lookup on a cache miss — deadlocking the pool under load
-        Flow resolved = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow);
+        Flow resolved = FlowMetaStores.findForRuntimeOrRaw(flowMetaStore, flow).flow();
 
         List<Execution> executions = flowWithFlowTriggers.stream()
             .flatMap(

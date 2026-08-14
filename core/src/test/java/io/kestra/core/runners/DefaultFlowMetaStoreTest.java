@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +23,8 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.services.FlowParsingService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -35,6 +36,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -177,16 +179,35 @@ class DefaultFlowMetaStoreTest {
         FlowWithSource flow = createFlow().toBuilder().revision(1).build();
         FlowWithSource processed = flow.toBuilder().labels(List.of(new Label("team", "platform"))).build();
         FlowParsingService parsingService = mock(FlowParsingService.class);
-        when(parsingService.parseForRuntime(flow)).thenReturn(processed);
+        when(parsingService.parseForRuntime(flow)).thenReturn(ProcessedFlow.of(processed));
         DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
 
         // When
-        Optional<FlowWithSource> resolved = metaStore.findByIdForRuntime(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(1));
+        Optional<ProcessedFlow> resolved = metaStore.findByIdForRuntime(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(1));
 
         // Then the flow is the one processed for runtime, not the one as stored
         assertThat(resolved).isPresent();
-        assertThat(resolved.get().getLabels()).containsExactly(new Label("team", "platform"));
+        assertThat(resolved.get().flow().getLabels()).containsExactly(new Label("team", "platform"));
         verify(parsingService).parseForRuntime(flow);
+    }
+
+    @Test
+    void shouldKeepPinnedLabelKeysWhenTheResolvedFlowIsServedFromTheCache() throws FlowProcessingException {
+        // Given a flow whose runtime parse pins a label key
+        FlowWithSource flow = createFlow().toBuilder().revision(1).build();
+        FlowWithSource processed = flow.toBuilder().labels(List.of(new Label("env", "prod"))).build();
+        FlowParsingService parsingService = mock(FlowParsingService.class);
+        when(parsingService.parseForRuntime(flow)).thenReturn(new ProcessedFlow(processed, Set.of("env")));
+        DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
+
+        // When it is resolved twice, the second read served from the cache
+        metaStore.findByIdForRuntime(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(1));
+        Optional<ProcessedFlow> resolved = metaStore.findByIdForRuntime(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(1));
+
+        // Then governance survives the cache: a hit that dropped the pins would let a caller overrule the policy
+        assertThat(resolved).isPresent();
+        assertThat(resolved.get().pinnedLabelKeys()).containsExactly("env");
+        verify(parsingService, times(1)).parseForRuntime(flow);
     }
 
     @Test
@@ -195,7 +216,7 @@ class DefaultFlowMetaStoreTest {
         FlowWithSource flow = createFlow().toBuilder().revision(1).build();
         FlowWithSource processed = flow.toBuilder().labels(List.of(new Label("team", "platform"))).build();
         FlowParsingService parsingService = mock(FlowParsingService.class);
-        when(parsingService.parseForRuntime(flow)).thenReturn(processed);
+        when(parsingService.parseForRuntime(flow)).thenReturn(ProcessedFlow.of(processed));
         DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
 
         // When a subflow task resolves it
@@ -219,12 +240,12 @@ class DefaultFlowMetaStoreTest {
         DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
 
         // When
-        Optional<FlowWithSource> resolved = metaStore.findByIdForRuntime(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(1));
+        Optional<ProcessedFlow> resolved = metaStore.findByIdForRuntime(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(1));
 
         // Then the rejection is surfaced as a FlowWithException the executor fails fast on — never a throw
         assertThat(resolved).isPresent();
-        assertThat(resolved.get()).isInstanceOf(FlowWithException.class);
-        assertThat(((FlowWithException) resolved.get()).getException()).contains("Blocked by governance policy");
+        assertThat(resolved.get().flow()).isInstanceOf(FlowWithException.class);
+        assertThat(((FlowWithException) resolved.get().flow()).getException()).contains("Blocked by governance policy");
     }
 
     @Test
@@ -236,14 +257,14 @@ class DefaultFlowMetaStoreTest {
         DefaultFlowMetaStore metaStore = metaStore(flow, parsingService);
 
         // When
-        Optional<FlowWithSource> resolved = metaStore.findByIdForRuntime(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(1));
+        Optional<ProcessedFlow> resolved = metaStore.findByIdForRuntime(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(1));
 
         // Then the execution proceeds with the flow as stored — never a throw
         assertThat(resolved).isPresent();
-        assertThat(resolved.get()).isNotInstanceOf(FlowWithException.class);
-        assertThat(resolved.get().getId()).isEqualTo(flow.getId());
-        assertThat(resolved.get().getRevision()).isEqualTo(flow.getRevision());
-        assertThat(resolved.get().getLabels()).isNullOrEmpty();
+        assertThat(resolved.get().flow()).isNotInstanceOf(FlowWithException.class);
+        assertThat(resolved.get().flow().getId()).isEqualTo(flow.getId());
+        assertThat(resolved.get().flow().getRevision()).isEqualTo(flow.getRevision());
+        assertThat(resolved.get().flow().getLabels()).isNullOrEmpty();
     }
 
     @Test
@@ -254,9 +275,11 @@ class DefaultFlowMetaStoreTest {
         // the metastore cache is fed asynchronously by a polling flow-queue subscriber
         await()
             .atMost(Duration.ofSeconds(10))
-            .untilAsserted(() -> assertThat(flowMetaStore.allLastVersion())
-                .extracting(flow -> flow.getId())
-                .contains(test1.getId(), test2.getId()));
+            .untilAsserted(
+                () -> assertThat(flowMetaStore.allLastVersion())
+                    .extracting(flow -> flow.getId())
+                    .contains(test1.getId(), test2.getId())
+            );
 
         flowService.delete(test1);
         flowService.delete(test2);
@@ -384,7 +407,7 @@ class DefaultFlowMetaStoreTest {
         FlowParsingService parsingService = mock(FlowParsingService.class);
         FlowWithDefaultCache withDefaultCache = mock(FlowWithDefaultCache.class);
         when(withDefaultCache.getIfPresent(FlowId.uid(head.getTenantId(), head.getNamespace(), head.getId(), Optional.of(1))))
-            .thenReturn(Optional.of(processed));
+            .thenReturn(Optional.of(ProcessedFlow.of(processed)));
 
         DefaultFlowMetaStore metaStore = new DefaultFlowMetaStore(
             repository, parsingService, mock(RunContextLoggerFactory.class), mock(BroadcastQueueInterface.class), withDefaultCache
@@ -400,7 +423,6 @@ class DefaultFlowMetaStoreTest {
         verify(parsingService, never()).parseForRuntime(any());
     }
 
-    @SuppressWarnings("unchecked")
     private DefaultFlowMetaStore metaStore(FlowWithSource cachedFlow, FlowParsingService parsingService) {
         FlowRepositoryInterface repository = mock(FlowRepositoryInterface.class);
         when(repository.findAllWithSourceForAllTenants()).thenReturn(List.of(cachedFlow));
@@ -408,8 +430,8 @@ class DefaultFlowMetaStoreTest {
         RunContextLoggerFactory loggerFactory = mock(RunContextLoggerFactory.class);
         when(loggerFactory.create(org.mockito.ArgumentMatchers.any(Execution.class))).thenReturn(mock(RunContextLogger.class));
 
-        FlowWithDefaultCache withDefaultCache = mock(FlowWithDefaultCache.class);
-        when(withDefaultCache.getIfPresent(org.mockito.ArgumentMatchers.anyString())).thenReturn(Optional.empty());
+        // a real (fresh, per-test) cache, so a test can exercise an actual cache hit rather than a stubbed one
+        FlowWithDefaultCache withDefaultCache = new FlowWithDefaultCache();
 
         return new DefaultFlowMetaStore(repository, parsingService, loggerFactory, mock(BroadcastQueueInterface.class), withDefaultCache);
     }

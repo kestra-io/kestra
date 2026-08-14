@@ -206,15 +206,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .kind(kind)
             .build();
 
-        List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow.getLabels()));
-        if (labels != null) {
-            executionLabels.addAll(labels);
-        }
-        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
-            // add a correlation ID if none exist
-            executionLabels.add(new Label(Label.CORRELATION_ID, execution.getId()));
-        }
-        execution = execution.withLabels(executionLabels);
+        execution = execution.withLabels(LabelService.forExecution(flow, labels, execution.getId()));
 
         if (inputs != null) {
             execution = execution.withInputs(inputs.apply(flow, execution));

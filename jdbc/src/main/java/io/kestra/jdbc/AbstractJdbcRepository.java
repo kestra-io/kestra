@@ -23,6 +23,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 
 import io.micronaut.data.model.Pageable;
@@ -36,7 +37,7 @@ import static io.kestra.core.utils.CaseUtils.camelToSnake;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.*;
 
 public abstract class AbstractJdbcRepository<T> {
-    protected static final ObjectMapper MAPPER = JdbcMapper.of();
+    protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     protected final Class<T> cls;
 

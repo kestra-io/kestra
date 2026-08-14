@@ -521,7 +521,9 @@
       "detail": {
         "category": "カテゴリタイプ",
         "links": "リンクとリソース",
-        "openInEditor": "フローを編集で開く"
+        "openInEditor": "フローを編集で開く",
+        "openInAppsEditor": "Appsエディターで開く",
+        "openInDashboardEditor": "ダッシュボードエディターで開く"
       },
       "missingPlugins": {
         "title": "不足しているplugin",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Kestraでカスタムアプリを構築する",
-        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。"
+        "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
+        "blueprints": {
+          "title": "アプリのblueprintから開始します。",
+          "message": "アプリのblueprintは、フォーム、承認、データ送信などの一般的なユースケースに対応する既製のアプリです。Kestra Enterprise Editionでは、任意のblueprintを起点として使用し、ワークフローの上にカスタムUIを構築するために適応させることができます。"
+        }
       },
       "tests": {
         "label": "テスト",
@@ -1140,6 +1146,15 @@
       "promote": {
         "title": "環境間でのflowの昇格",
         "message": "Kestra Enterprise Editionでは、GitやCI/CDパイプラインを必要とせず、UIから直接、ある環境から別の環境（開発からステージング、本番など）へflowを昇格させることができます。昇格前に変更内容の差分を正確に確認し、確認ゲートで機密性の高いターゲットを保護し、ドリフトを一目で特定し、誰が何を、どこで、いつ昇格させたかの完全な履歴を保持します。"
+      },
+      "dashboards": {
+        "header": "カスタムダッシュボード",
+        "title": "チームに合わせてカスタムダッシュボードを構築します。",
+        "message": "Kestra Enterprise Editionのカスタムダッシュボードでは、コードおよびノーコードエディター、ライブプレビュー、tenantごとのデフォルトダッシュボードを使用して、実行、log、メトリクスに関する独自のビューを作成および共有できます。時系列、KPI、テーブル、Markdownチャートを組み合わせることができます。",
+        "blueprints": {
+          "title": "ダッシュボードのblueprintから開始します。",
+          "message": "ダッシュボードのblueprintは、一般的な監視ニーズに対応する既製のカスタムダッシュボードです。Kestra Enterprise Editionでは、任意のblueprintを起点として、ダッシュボードエディターでそのチャート、KPI、テーブルをチームに合わせて調整できます。"
+        }
       },
       "IAM": {
         "title": "IAMを通じてユーザーを管理（SSO、SCIM、RBACを使用）",
@@ -1783,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "dashboards": {
       "labels": {
-        "singular": "ダッシュボード",
         "plural": "ダッシュボード"
       },
       "default": "デフォルトダッシュボード",
-      "switch": "ダッシュボードを切り替える",
-      "preview": "プレビュー ダッシュボード",
       "empty": "表示する結果がありません。",
-      "creation": {
-        "label": "ダッシュボードを作成",
-        "confirmation": "ダッシュボード <code>{title}</code> が作成されました。"
-      },
       "edition": {
         "label": "ダッシュボードを編集",
-        "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
-        "chart": "このチャートを編集",
-        "id readonly": "プロパティ `id` は変更できません — 現在、初期値に設定されています。変更したい場合は、新しいダッシュボードを作成し、古いものを削除してください。"
-      },
-      "deletion": {
-        "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
+        "chart": "このチャートを編集"
       },
       "no_description": "説明なし",
       "no_description_hint": "このflowに説明を追加して、何をするかを文書化してください。<br>Markdownがサポートされています。",
       "others": "その他",
       "viewAll": "すべて表示",
-      "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
       "export": "エクスポート",
       "exportTo": {
         "csv": "CSVにエクスポート",

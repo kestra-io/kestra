@@ -130,6 +130,26 @@ public class FlowParsingService {
     }
 
     /**
+     * Parses the given abstract flow for the validation paths (save, validate endpoint, pre-execution check),
+     * returning a parsed {@link FlowWithSource}. May be overridden to apply the same governance mutations the
+     * flow will run with, so constraints are checked against the effective configuration rather than the
+     * authored source; the default parses leniently without further processing.
+     *
+     * <p>
+     * Unlike {@link #parseForRuntime(FlowInterface)} this never rejects the flow: governance blocking is owned
+     * by the save and execution gates, which frame their own errors.
+     * </p>
+     *
+     * @param flow the flow to be parsed
+     * @return a parsed {@link FlowWithSource}
+     *
+     * @throws FlowProcessingException if an error occurred while processing the flow
+     */
+    public FlowWithSource parseForValidation(final FlowInterface flow) throws FlowProcessingException {
+        return parse(flow, false);
+    }
+
+    /**
      * Converts the given abstract flow into a {@link FlowWithSource} without re-parsing it. Used by runtime
      * callers to degrade to the flow as stored when {@link #parseForRuntime(FlowInterface)} fails.
      */

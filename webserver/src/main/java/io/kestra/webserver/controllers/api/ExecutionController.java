@@ -2838,7 +2838,9 @@ public class ExecutionController {
                             dependencies.stream()
                                 .anyMatch(node -> node.getTenantId().equals(exec.getTenantId()) && node.getNamespace().equals(exec.getNamespace()) && node.getId().equals(exec.getFlowId()))
                         ) {
-                            if (streamingService.isStopFollow(flows.get(FlowId.uidWithoutRevision(current)), current)) {
+                            // evaluate the dependency execution itself, not the followed one: a terminated
+                            // dependency must be ended and removed even while the followed execution runs
+                            if (streamingService.isStopFollow(flows.get(FlowId.uidWithoutRevision(exec)), exec)) {
                                 emitter.next(Event.of(ExecutionStatusEvent.of(exec)).id("end"));
                                 return exec;
                             } else {

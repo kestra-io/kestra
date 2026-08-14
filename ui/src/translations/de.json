@@ -1792,31 +1792,18 @@
     "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboards"
       },
       "default": "Standard-Dashboard",
-      "switch": "Dashboard wechseln",
-      "preview": "Vorschau-Dashboard",
       "empty": "Es gibt keine Ergebnisse anzuzeigen.",
-      "creation": {
-        "label": "Dashboard erstellen",
-        "confirmation": "Das Dashboard <code>{title}</code> wurde erstellt."
-      },
       "edition": {
         "label": "Dashboard bearbeiten",
-        "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
-        "chart": "Bearbeiten Sie dieses Diagramm",
-        "id readonly": "Die Eigenschaft `id` kann nicht geändert werden — sie ist jetzt auf ihre Anfangswerte festgelegt. Wenn Sie sie ändern möchten, können Sie ein neues Dashboard erstellen und das alte entfernen."
-      },
-      "deletion": {
-        "confirmation": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?"
+        "chart": "Bearbeiten Sie dieses Diagramm"
       },
       "no_description": "Keine Beschreibung",
       "no_description_hint": "Füge eine Beschreibung zu diesem flow hinzu, um zu dokumentieren, was er tut.<br>Markdown wird unterstützt.",
       "others": "Andere",
       "viewAll": "Alle anzeigen",
-      "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
       "export": "Export",
       "exportTo": {
         "csv": "Exportieren als CSV",

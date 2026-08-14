@@ -144,6 +144,7 @@
             padding: var(--ks-spacing-2);
             padding-right: var(--ks-spacing-4);
             align-items: center;
+            gap: var(--ks-spacing-1);
             width: 218px;
             height: 56px;
         }
@@ -184,8 +185,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        margin-left: 0.7rem;
-        margin-right: var(--ks-spacing-1);
+        margin-left: var(--ks-spacing-2);
         flex: 1;
         min-width: 0;
 

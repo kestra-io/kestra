@@ -21,9 +21,9 @@ function mountBasicNode() {
             },
         },
         slots: {
-            badge: '<span class="badge-marker">badge</span>',
-            "title-status": '<span class="status-marker">status</span>',
-            "title-actions": '<span class="actions-marker">actions</span>',
+            badge: "<span class='badge-marker'>badge</span>",
+            "title-status": "<span class='status-marker'>status</span>",
+            "title-actions": "<span class='actions-marker'>actions</span>",
         },
     })
 }

@@ -2,6 +2,7 @@ package io.kestra.core.async;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -36,8 +37,9 @@ class AsyncEventStreamingServiceTest {
             .doFinally(sig -> service.unregisterSubscriber(opId, itemId))
             .subscribe(future::complete, future::completeExceptionally);
 
+        // The event crosses the queue as JSON, whose format carries microseconds; stamp it at the precision the wire can hold.
         AsyncOperationProcessedEvent event = new AsyncOperationProcessedEvent(
-            opId, "tenant", itemId, Outcome.SUCCEEDED, null, Instant.now()
+            opId, "tenant", itemId, Outcome.SUCCEEDED, null, Instant.now().truncatedTo(ChronoUnit.MICROS)
         );
 
         // When

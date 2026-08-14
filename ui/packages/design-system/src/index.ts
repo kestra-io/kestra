@@ -1,7 +1,14 @@
-import type {App, Component} from "vue"
+import {defineAsyncComponent} from "vue"
+import type {App, AsyncComponentLoader, Component} from "vue"
 import ElementPlus, {INSTALLED_KEY} from "element-plus"
 import type {I18n} from "vue-i18n"
 import {registerDesignSystemI18n} from "./i18n"
+
+// defineAsyncComponent names its wrapper "AsyncComponentWrapper"; keeping the
+// real name lets consumers stub the component by name in tests and read it in
+// devtools, exactly as they could before it was made async.
+const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
+    Object.assign(defineAsyncComponent(loader), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
 import KsEchart from "./components/Charts/KsEchart.vue"
@@ -14,6 +21,7 @@ import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"
 import KsNewBadge from "./components/Data/KsNewBadge.vue"
 import KsBreadcrumb from "./components/Navigation/KsBreadcrumb/KsBreadcrumb.vue"
+import KsDrillRow from "./components/Navigation/KsDrillRow/KsDrillRow.vue"
 import KsButton from "./components/Basic/KsButton/KsButton.vue"
 import KsButtonGroup from "./components/Basic/KsButton/KsButtonGroup.vue"
 import KsCard from "./components/Data/KsCard.vue"
@@ -41,8 +49,13 @@ import KsDialog from "./components/Feedback/KsDialog.vue"
 import KsDivider from "./components/Others/KsDivider.vue"
 import KsDrawer from "./components/Feedback/KsDrawer.vue"
 import KsDurationPicker from "./components/Form/KsDurationPicker.vue"
-import KsEditor from "./components/Form/KsEditor.vue"
-export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./components/Form/KsEditor.vue"
+// Async on purpose: KsEditor statically pulls the whole Monaco toolchain, which
+// must stay out of the app's eager bundle (see the "monaco" chunk group).
+import type KsEditorSfc from "./components/Form/KsEditor.vue"
+const KsEditor = asyncComponent("KsEditor",
+    () => import("./components/Form/KsEditor.vue"),
+) as unknown as typeof KsEditorSfc
+export type {KsEditorSchemaType, KsEditorExposes, EditorOptions, KsEditorOptions} from "./utils/editorTypes"
 export {TASK_ICON_INJECTION_KEY, useTaskIcon} from "./composables/taskIcon"
 export type {TaskIconProps} from "./composables/taskIcon"
 export {findDuplicateTaskIds} from "./utils/yamlValidation"
@@ -68,7 +81,12 @@ import KsPassword from "./components/Form/KsPassword.vue"
 import KsPasswordRequirements from "./components/Form/KsPasswordRequirements.vue"
 import KsInputNumber from "./components/Form/KsInputNumber.vue"
 import KsLink from "./components/Basic/KsLink.vue"
-import KsMarkdown from "./components/Data/KsMarkdown/KsMarkdown.vue"
+// Async on purpose: KsMarkdown pulls the whole markdown/Shiki toolchain, which
+// must stay out of the app's eager bundle (see the "markdown" chunk group).
+import type KsMarkdownSfc from "./components/Data/KsMarkdown/KsMarkdown.vue"
+const KsMarkdown = asyncComponent("KsMarkdown",
+    () => import("./components/Data/KsMarkdown/KsMarkdown.vue"),
+) as unknown as typeof KsMarkdownSfc
 import KsMenu from "./components/Navigation/KsMenu/KsMenu.vue"
 import KsMenuItem from "./components/Navigation/KsMenu/KsMenuItem.vue"
 import KsOption from "./components/Form/KsSelect/KsOption.vue"
@@ -128,6 +146,7 @@ export {KsMessageBox} from "./components/Feedback/KsMessageBox"
 export {KsNotification} from "./components/Feedback/KsNotification"
 
 export {cssVar} from "./utils/css"
+export {copyToClipboard} from "./utils/clipboard"
 export * as dateUtils from "./utils/date"
 export * as stringUtils from "./utils/string"
 export * as durationUtils from "./utils/duration"
@@ -224,6 +243,7 @@ const components: Record<string, Component> = {
     KsBadge,
     KsNewBadge,
     KsBreadcrumb,
+    KsDrillRow,
     KsButton,
     KsButtonGroup,
     KsCard,
@@ -333,6 +353,7 @@ export {
     KsBadge,
     KsNewBadge,
     KsBreadcrumb,
+    KsDrillRow,
     KsButton,
     KsButtonGroup,
     KsCard,
@@ -442,7 +463,6 @@ const KestraDesignSystem = {
         app.directive("ks-loading", vKsLoading)
 
         const symbol = (app as unknown as {__VUE_I18N_SYMBOL__?: symbol}).__VUE_I18N_SYMBOL__
-        // oxlint-disable-next-line no-underscore-dangle
         const i18n = symbol ? (app._context.provides[symbol] as I18n | undefined) : undefined
         if (i18n) void registerDesignSystemI18n(i18n)
     },
@@ -463,6 +483,7 @@ declare module "vue" {
         KsBadge: typeof KsBadge
         KsNewBadge: typeof KsNewBadge
         KsBreadcrumb: typeof KsBreadcrumb
+        KsDrillRow: typeof KsDrillRow
         KsButton: typeof KsButton
         KsButtonGroup: typeof KsButtonGroup
         KsCard: typeof KsCard

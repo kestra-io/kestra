@@ -15,6 +15,11 @@ export type AbstractFlow = {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -342,7 +347,7 @@ export type ApiTaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -932,6 +937,11 @@ export type Flow = AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -993,8 +1003,6 @@ export type FlowControllerFlowWithDeprecatedTasks = {
     deprecatedTasks?: Array<FlowServiceTaskDeprecation>;
 };
 
-export type FlowControllerTaskValidationType = 'TASKS' | 'TRIGGERS';
-
 export type FlowForExecution = AbstractFlow & {
     id: string;
     namespace: string;
@@ -1002,6 +1010,11 @@ export type FlowForExecution = AbstractFlow & {
     description?: string;
     inputs?: Array<InputObject>;
     outputs?: Array<Output>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1168,6 +1181,11 @@ export type FlowWithSource = Flow & AbstractFlow & {
     revision?: number;
     description?: string;
     inputs?: Array<InputObject>;
+    /**
+     * Whether the flow is disabled.
+     *
+     * A disabled flow does not run: its triggers are paused and new executions are rejected.
+     */
     disabled: boolean;
     /**
      * Whether this flow revision is a draft. Draft revisions are skipped when an execution starts without an explicit revision (webhooks, schedules, subflows, manual triggers). Executions can still target a draft by passing the revision explicitly.
@@ -1919,7 +1937,7 @@ export type ServiceInstanceTimestampedEvent = {
     state?: ServiceServiceState;
 };
 
-export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'CONTROLLER' | 'INVALID';
+export type ServiceType = 'EXECUTOR' | 'INDEXER' | 'SCHEDULER' | 'WEBSERVER' | 'WORKER' | 'SYSTEM_WORKER' | 'CONTROLLER' | 'INVALID';
 
 export type SoftDeletableFlowInterface = {
     deleted?: boolean;
@@ -2121,6 +2139,10 @@ export type TaskForExecution = {
 };
 
 export type TaskRun = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2129,7 +2151,7 @@ export type TaskRun = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttempt>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: State;
     iteration?: number;
     dynamic?: boolean;
@@ -2216,7 +2238,7 @@ export type TriggerPluginCategory = 'core' | 'realtime' | 'app';
 
 export type TriggerType = 'SCHEDULE' | 'POLLING' | 'REALTIME';
 
-export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
+export type Type = 'STRING' | 'SELECT' | 'INT' | 'FLOAT' | 'BOOL' | 'DATETIME' | 'DATE' | 'TIME' | 'DURATION' | 'FILE' | 'JSON' | 'ION' | 'URI' | 'SECRET' | 'ARRAY' | 'MULTISELECT' | 'YAML' | 'EMAIL' | 'FORM' | 'REUSABLE_INPUTS';
 
 export type ValidateConstraintViolation = {
     index: number;
@@ -2353,7 +2375,7 @@ export type ApiTaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut;
+    assetEmits?: Array<AssetsInOut>;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -2442,6 +2464,10 @@ export type StateWritable = {
 };
 
 export type TaskRunWritable = {
+    /**
+     * @deprecated
+     */
+    assets?: AssetsInOut;
     id: string;
     executionId: string;
     namespace: string;
@@ -2450,7 +2476,7 @@ export type TaskRunWritable = {
     parentTaskRunId?: string;
     value?: string;
     attempts?: Array<TaskRunAttemptWritable>;
-    assets?: AssetsInOut | null;
+    assetEmits?: Array<AssetsInOut> | null;
     state: StateWritable;
     iteration?: number;
     dynamic?: boolean;
@@ -6252,9 +6278,9 @@ export type ValidateTaskData = {
     };
     query: {
         /**
-         * The type of task
+         * The flow section the definition belongs to (triggers, or any task-holding section: tasks, errors, finally, afterExecution)
          */
-        section: FlowControllerTaskValidationType;
+        section: string;
     };
     url: '/api/v1/{tenant}/flows/validate/task';
 };

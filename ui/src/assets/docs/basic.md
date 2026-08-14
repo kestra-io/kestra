@@ -394,9 +394,9 @@ Kestra has a [Pebble templating engine](https://kestra.io/docs/concepts/pebble?u
 
 ### Links to learn more
 
-* Follow the step-by-step [tutorial](https://kestra.io/docs/tutorial?utm_source=app&utm_medium=referral&utm_campaign=editor-flow-doc)
-* Check the [documentation](https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=editor-flow-doc)
+* Follow the step-by-step [Tutorial](https://kestra.io/docs/tutorial?utm_source=app&utm_medium=referral&utm_campaign=editor-flow-doc)
+* Check the [Documentation](https://kestra.io/docs?utm_source=app&utm_medium=referral&utm_campaign=editor-flow-doc)
 * Watch a 15-minute video explanation of key concepts on the [Kestra's YouTube channel](https://go.kestra.io/youtube-get-started)
-* Submit a feature request or a bug report on [GitHub](https://github.com/kestra-io/kestra/issues/new/choose)
+* [Report an issue](https://github.com/kestra-io/kestra/issues/new/choose) or submit a feature request on GitHub
 * Need help? [Join the community](https://kestra.io/slack?utm_source=app&utm_medium=referral&utm_campaign=editor-flow-doc)
-* Do you like the project? Give us a ⭐️ on [GitHub](https://github.com/kestra-io/kestra).
+* Do you like the project? [Star us on GitHub](https://github.com/kestra-io/kestra)

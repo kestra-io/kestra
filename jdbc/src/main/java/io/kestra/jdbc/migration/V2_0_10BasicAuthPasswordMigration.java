@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.kestra.core.migration.MigrationScript;
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.jdbc.JdbcJsonbUtils;
-import io.kestra.jdbc.JdbcMapper;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.runner.JdbcRepositoryEnabled;
 
@@ -55,7 +55,7 @@ public class V2_0_10BasicAuthPasswordMigration implements MigrationScript {
 
     private static final Field<Object> KEY_FIELD = DSL.field(DSL.quotedName("key"));
     private static final Field<Object> VALUE_FIELD = DSL.field(DSL.quotedName("value"));
-    private static final ObjectMapper MAPPER = JdbcMapper.of();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     private final JooqDSLContextWrapper dslContextWrapper;
 

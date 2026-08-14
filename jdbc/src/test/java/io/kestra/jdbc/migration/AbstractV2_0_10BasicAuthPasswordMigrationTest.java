@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.kestra.core.utils.AuthUtils;
 import io.kestra.jdbc.JdbcJsonbUtils;
-import io.kestra.jdbc.JdbcMapper;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Execution(ExecutionMode.SAME_THREAD)
 public abstract class AbstractV2_0_10BasicAuthPasswordMigrationTest {
 
-    private static final ObjectMapper MAPPER = JdbcMapper.of();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final Field<Object> KEY_FIELD = DSL.field(DSL.quotedName("key"));
     private static final Field<Object> VALUE_FIELD = DSL.field(DSL.quotedName("value"));
 

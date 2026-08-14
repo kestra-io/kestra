@@ -11,13 +11,19 @@ tasks.register('runLocal', JavaExec) {
     args 'server', 'local', '--plugins', '../local/plugins'
 }
 
+// Plugin directory used by `runStandalone`, resolved from the `cli` project directory when relative.
+// Override with `-PstandalonePlugins=/path/to/plugins` or the `KESTRA_PLUGINS_PATH` environment variable.
+def standalonePlugins = providers.gradleProperty('standalonePlugins')
+    .orElse(providers.environmentVariable('KESTRA_PLUGINS_PATH'))
+    .getOrElse('../local/plugins')
+
 tasks.register('runStandalone', JavaExec) {
     group = "application"
-    description = "Run Kestra as server standalone"
+    description = "Run Kestra as server standalone (plugin directory: -PstandalonePlugins=<dir>, default '../local/plugins')"
     classpath = sourceSets.main.runtimeClasspath
     mainClass = "io.kestra.cli.Kestra"
     environment 'MICRONAUT_ENVIRONMENTS', 'override'
-    args 'server', 'standalone', '--plugins', '../local/plugins'
+    args 'server', 'standalone', '--plugins', standalonePlugins
 }
 
 dependencies {

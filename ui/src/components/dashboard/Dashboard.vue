@@ -60,12 +60,14 @@
     import {routeFamily} from "../../utils/routeFamily"
     import {DEFAULT_DASHBOARD, useDashboardStore} from "../../stores/dashboard"
     import {useCoreStore} from "../../stores/core.ts"
+    import {useMiscStore} from "override/stores/misc"
     import {useI18n} from "vue-i18n"
 
     const route = useRoute()
     const router = useRouter()
     const coreStore = useCoreStore()
     const dashboardStore = useDashboardStore()
+    const miscStore = useMiscStore()
     const {t} = useI18n()
 
     defineOptions({inheritAttrs: false})
@@ -120,6 +122,14 @@
 
     const load = async (id = "default") => {
         if (!ALLOWED_CREATION_ROUTES.includes(routeFamily(route.name))) {
+            return
+        }
+
+        // When the backend cannot serve custom dashboards, ignore any requested id
+        // (URL, localStorage, tenant default) and render the bundled default directly.
+        if (miscStore.configs?.isCustomDashboardsEnabled === false) {
+            await useDefaultDashboardBundledInUI()
+            await loadCharts(dashboard.value.charts)
             return
         }
 

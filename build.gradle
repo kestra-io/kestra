@@ -654,7 +654,7 @@ tasks.register('runLocal') {
 
 tasks.register('runStandalone') {
     group = "application"
-    description = "Run Kestra as server standalone"
+    description = "Run Kestra as server standalone (plugin directory: -PstandalonePlugins=<dir>, default '../local/plugins')"
     dependsOn ':cli:runStandalone'
 }
 

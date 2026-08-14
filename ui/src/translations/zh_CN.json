@@ -521,7 +521,9 @@
       "detail": {
         "category": "类别类型",
         "links": "链接与资源",
-        "openInEditor": "在编辑 Flow 中打开"
+        "openInEditor": "在编辑 Flow 中打开",
+        "openInAppsEditor": "在 Apps 编辑器中打开",
+        "openInDashboardEditor": "在仪表板编辑器中打开"
       },
       "missingPlugins": {
         "title": "缺少 plugin",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "使用 Kestra 构建自定义应用程序",
-        "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。"
+        "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
+        "blueprints": {
+          "title": "从应用 blueprint 开始。",
+          "message": "应用蓝图是针对常见用例（如表单、审批和数据提交）的预制应用程序。通过 Kestra 企业版，您可以将任何蓝图作为起点，并对其进行调整，以在您的工作流之上构建自定义 UI。"
+        }
       },
       "tests": {
         "label": "测试",
@@ -1792,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "dashboards": {
       "labels": {
-        "singular": "仪表板",
         "plural": "仪表板"
       },
       "default": "默认仪表板",
-      "switch": "切换仪表板",
-      "preview": "预览仪表板",
       "empty": "没有结果显示。",
-      "creation": {
-        "label": "创建仪表板",
-        "confirmation": "仪表板 <code>{title}</code> 已创建。"
-      },
       "edition": {
         "label": "编辑仪表板",
-        "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
-        "chart": "编辑此图表",
-        "id readonly": "属性 `id` 不能更改——它现在设置为初始值。如果您想更改它，可以创建一个新的仪表板并删除旧的。"
-      },
-      "deletion": {
-        "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
+        "chart": "编辑此图表"
       },
       "no_description": "无描述",
       "no_description_hint": "为此 flow 添加描述以记录其功能。<br>支持 Markdown。",
       "others": "其他",
       "viewAll": "查看全部",
-      "chart_preview": "单击图表源代码以查看其预览",
       "export": "导出",
       "exportTo": {
         "csv": "导出为 CSV",

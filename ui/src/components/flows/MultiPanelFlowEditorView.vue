@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, defineAsyncComponent, markRaw, onMounted, onUnmounted, ref, watch} from "vue"
+    import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import * as Utils from "../../utils/utils"
     import {usePlaygroundStore} from "../../stores/playground"
@@ -33,6 +33,8 @@
     import FlowPlayground from "./FlowPlayground.vue"
     import FlowEditorStats from "override/components/flows/FlowEditorStats.vue"
     import KeyShortcuts from "../inputs/KeyShortcuts.vue"
+    import NoCode from "../no-code/NoCode.vue"
+    import BlockEditor from "../no-code/blocks/BlockEditor.vue"
     import {useTriggerDraftStore} from "../../stores/triggerDraft"
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition"
     import {useFilesPanels, useInitialFilesTabs} from "./useFilesPanels"
@@ -52,14 +54,7 @@
             || element.uid.startsWith("nocode-")
     }
 
-    // Only one of the two engines can ever render, but importing both statically put both in
-    // the editor's boot graph - and the whole no-code tree with them, even when the user never
-    // leaves the code tab. The chosen one now loads when a no-code tab first opens.
-    const RawNoCode = markRaw(
-        localStorage.getItem(storageKeys.NOCODE_ENGINE) === "legacy"
-            ? defineAsyncComponent(() => import("../no-code/NoCode.vue"))
-            : defineAsyncComponent(() => import("../no-code/blocks/BlockEditor.vue")),
-    )
+    const RawNoCode = markRaw(localStorage.getItem(storageKeys.NOCODE_ENGINE) === "legacy" ? NoCode : BlockEditor)
 
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()

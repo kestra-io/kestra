@@ -70,6 +70,7 @@ public class GraphService {
             triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId(), null);
         }
         GraphCluster graphCluster = GraphUtils.of(baseGraph, flow, execution, triggers);
+        this.enrichSubflowFlowDisabled(graphCluster, flow, flowByUid, execution);
 
         Stream<Map.Entry<GraphCluster, SubflowGraphTask>> subflowToReplaceByParent = graphCluster.allNodesByParent().entrySet().stream()
             .flatMap(entry ->
@@ -103,37 +104,15 @@ public class GraphService {
                 );
             }
 
-            FlowWithSource subflow = flowByUid.computeIfAbsent(
-                subflowId.flowUid(),
-                uid ->
-                {
-                    Optional<FlowWithSource> flowById;
-                    // Prevent the need for FLOW READ access in case we're looking at an execution graph
-                    if (execution != null) {
-                        flowById = flowRepository.findByIdWithSourceWithoutAcl(
-                            tenantId,
-                            subflowId.namespace(),
-                            subflowId.flowId(),
-                            subflowId.revision()
-                        );
-                    } else {
-                        flowById = flowRepository.findByIdWithSource(
-                            tenantId,
-                            subflowId.namespace(),
-                            subflowId.flowId(),
-                            subflowId.revision()
-                        );
-                    }
-
-                    return flowById.orElseThrow(
-                        () -> new NoSuchElementException(
-                            "Unable to find subflow " +
-                                (subflowId.revision().isEmpty() ? subflowId.flowUidWithoutRevision() : subflowId.flowUid())
-                                + " for task " + task.getId()
-                        )
-                    );
-                }
-            );
+            FlowWithSource subflow = this.findSubflow(tenantId, subflowId, flowByUid, execution)
+                .orElseThrow(
+                    () -> new NoSuchElementException(
+                        "Unable to find subflow " +
+                            (subflowId.revision().isEmpty() ? subflowId.flowUidWithoutRevision() : subflowId.flowUid())
+                            + " for task " + task.getId()
+                    )
+                );
+            subflowGraphTask.setSubflowFlowDisabled(subflow.isDisabled());
             subflow = flowParsingService.parse(subflow, false);
 
             SubflowGraphTask finalSubflowGraphTask = subflowGraphTask;
@@ -144,13 +123,87 @@ public class GraphService {
                     new SubflowGraphCluster(subflowGraphTask.getUid(), subflowGraphTask),
                     subflow,
                     expandedSubflows.stream().filter(expandedSubflow -> expandedSubflow.startsWith(finalSubflowGraphTask.getUid() + ".")).toList(),
-                    flowByUid
+                    flowByUid,
+                    execution
                 )
             );
         }))
             .forEach(TaskToClusterReplacer::replace);
 
         return graphCluster;
+    }
+
+    private void enrichSubflowFlowDisabled(
+        GraphCluster graphCluster,
+        FlowWithSource flow,
+        Map<String, FlowWithSource> flowByUid,
+        Execution execution
+    ) {
+        String tenantId = flow.getTenantId();
+        graphCluster.allNodesByParent().values().stream()
+            .flatMap(List::stream)
+            .filter(SubflowGraphTask.class::isInstance)
+            .map(SubflowGraphTask.class::cast)
+            .forEach(subflowGraphTask -> {
+                if (subflowGraphTask.executableTask() == null) {
+                    return;
+                }
+
+                ExecutableTask.SubflowId subflowId = this.renderedSubflowId(flow, subflowGraphTask, execution);
+                if (PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowUid())) {
+                    return;
+                }
+
+                this.findSubflow(tenantId, subflowId, flowByUid, execution)
+                    .ifPresent(subflow -> subflowGraphTask.setSubflowFlowDisabled(subflow.isDisabled()));
+            });
+    }
+
+    private ExecutableTask.SubflowId renderedSubflowId(FlowWithSource flow, SubflowGraphTask subflowGraphTask, Execution execution) {
+        ExecutableTask<?> executableTask = Objects.requireNonNull(
+            subflowGraphTask.executableTask(),
+            "Subflow graph task must wrap an executable task."
+        );
+        ExecutableTask.SubflowId subflowId = executableTask.subflowId();
+        if (!PebbleUtil.containsOpeningBlockDelimiter(subflowId.flowUid()) || execution == null) {
+            return subflowId;
+        }
+
+        Task task = (Task) subflowGraphTask.getTask();
+        RunContext runContext = runContextFactory.of(flow, task, execution, subflowGraphTask.getTaskRun());
+        return subflowGraphTask.withRenderedSubflowId(runContext).executableTask().subflowId();
+    }
+
+    private Optional<FlowWithSource> findSubflow(
+        String tenantId,
+        ExecutableTask.SubflowId subflowId,
+        Map<String, FlowWithSource> flowByUid,
+        Execution execution
+    ) {
+        String key = subflowId.flowUid();
+        if (flowByUid.containsKey(key)) {
+            return Optional.ofNullable(flowByUid.get(key));
+        }
+
+        Optional<FlowWithSource> flowById;
+        // Prevent the need for FLOW READ access in case we're looking at an execution graph
+        if (execution != null) {
+            flowById = flowRepository.findByIdWithSourceWithoutAcl(
+                tenantId,
+                subflowId.namespace(),
+                subflowId.flowId(),
+                subflowId.revision()
+            );
+        } else {
+            flowById = flowRepository.findByIdWithSource(
+                tenantId,
+                subflowId.namespace(),
+                subflowId.flowId(),
+                subflowId.revision()
+            );
+        }
+        flowByUid.put(key, flowById.orElse(null));
+        return flowById;
     }
 
     private record TaskToClusterReplacer(GraphCluster parentCluster, AbstractGraph taskToReplace,

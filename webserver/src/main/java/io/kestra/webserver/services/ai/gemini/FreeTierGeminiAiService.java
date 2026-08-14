@@ -6,6 +6,8 @@ import io.kestra.core.services.ExpressionContextService;
 import io.kestra.core.services.FlowParsingService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.services.ai.AiFreeTierLimitProvider;
+import io.kestra.webserver.services.ai.AiUsageLimitConfiguration;
 import io.kestra.webserver.services.ai.NamespaceContextTool;
 import io.kestra.webserver.services.posthog.PosthogService;
 
@@ -34,6 +36,7 @@ public class FreeTierGeminiAiService extends GeminiAiService {
     private static final String USER_ID_HEADER = "X-Kestra-User-Id";
 
     private final InstanceService instanceService;
+    private final AiFreeTierLimitProvider limitProvider;
 
     public FreeTierGeminiAiService(
         PluginRegistry pluginRegistry,
@@ -46,13 +49,33 @@ public class FreeTierGeminiAiService extends GeminiAiService {
         List<ChatModelListener> listeners,
         GeminiConfiguration geminiConfiguration,
         ExpressionContextService expressionContextService,
-        FlowParsingService flowParsingService
+        FlowParsingService flowParsingService,
+        @Nullable AiFreeTierLimitProvider limitProvider
     ) {
         super(
             pluginRegistry, jsonSchemaGenerator, versionProvider, instanceService, posthogService, namespaceContextTool,
             displayName, listeners, geminiConfiguration, expressionContextService, flowParsingService
         );
         this.instanceService = instanceService;
+        this.limitProvider = limitProvider;
+    }
+
+    /**
+     * The relay's budget, and nothing else's.
+     *
+     * <p>Alone among the providers, this one's ceiling is not the operator's to set: the allowance belongs to
+     * Kestra and is enforced at the relay, so the figure shown here has to be the one that will refuse the turn.
+     * {@link AiFreeTierLimitProvider#limit()} is the single source of it, and is also what lets an operator cap
+     * their own spend lower than the allowance.
+     *
+     * <p>Deliberately does not fall back to {@code super.usageLimit()}. The configuration this service is built
+     * from is synthesized by {@code AiServiceManager} and carries no ceiling, so consulting it would read as a
+     * second source while returning nothing — and one caller reading a stale second source is exactly how the
+     * ceiling enforced mid-turn stops matching the one the client was shown.
+     */
+    @Override
+    public AiUsageLimitConfiguration usageLimit() {
+        return limitProvider != null ? limitProvider.limit() : AiUsageLimitConfiguration.DISABLED;
     }
 
     /**

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Map;
 
 import io.kestra.webserver.services.ai.AiConfiguration;
+import io.kestra.webserver.services.ai.AiUsageLimitConfiguration;
 import io.kestra.webserver.services.ai.ThinkingEffort;
 
 import io.micronaut.core.annotation.Nullable;
@@ -30,7 +31,8 @@ public record GeminiConfiguration(
     @Nullable ThinkingEffort thinkingEffort,
     @Nullable
     @MapFormat(transformation = MapFormat.MapTransformation.FLAT, keyFormat = StringConvention.RAW) Map<String, String> customHeaders,
-    Duration timeout) implements AiConfiguration {
+    Duration timeout,
+    @Nullable AiUsageLimitConfiguration usageLimit) implements AiConfiguration {
     public GeminiConfiguration {
         if (modelName == null)
             modelName = "gemini-2.5-flash";
@@ -38,6 +40,9 @@ public record GeminiConfiguration(
             temperature = 0.7;
         if (maxOutputTokens == 0)
             maxOutputTokens = 8000;
+
+        if (usageLimit == null)
+            usageLimit = AiUsageLimitConfiguration.DISABLED;
     }
 
     @Override

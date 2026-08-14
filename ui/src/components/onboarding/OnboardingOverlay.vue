@@ -539,7 +539,7 @@
     const goToBlueprints = () => {
         trackCurrentStepAction("finish_explore_blueprints_clicked");
         completeGuide();
-        void router.push({name: "blueprints", params: {kind: "flow", tab: "all"}});
+        void router.push({name: "blueprints", params: {kind: "flow", tab: "community"}});
     };
 
     const goToCreateFlow = () => {

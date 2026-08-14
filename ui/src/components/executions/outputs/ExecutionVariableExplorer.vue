@@ -103,6 +103,7 @@
         KsIconButton,
         KsEditor,
         KsJsonTree,
+        copyToClipboard,
     } from "@kestra-io/design-system"
     import * as OutputsAPI from "@kestra-io/kestra-sdk/outputs"
 
@@ -440,7 +441,7 @@
     const isRawEditor = computed(() => viewMode.value === "raw" && isExpandableValue.value)
 
     function copyValue() {
-        navigator.clipboard?.writeText(rawValue.value)
+        copyToClipboard(rawValue.value)
     }
 
     /* --------------------------------- Layout -------------------------------- */

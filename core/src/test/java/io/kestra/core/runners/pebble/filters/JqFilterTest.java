@@ -2,7 +2,6 @@ package io.kestra.core.runners.pebble.filters;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -96,7 +95,7 @@ class JqFilterTest {
         assertThat(render).isEqualTo("true");
 
         render = variableRenderer.render("{{ vars | jq(\".second.date\") | first }}", vars);
-        assertThat(render).isEqualTo(date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        assertThat(ZonedDateTime.parse(render).toInstant()).isEqualTo(date.toInstant());
 
         render = variableRenderer.render("{{ vars | jq(\".second.map\") | first }}", vars);
         assertThat(render).contains("\"int\":1");

@@ -521,7 +521,9 @@
       "detail": {
         "category": "Type de catégorie",
         "links": "Liens et ressources",
-        "openInEditor": "Ouvrir dans Modifier Flow"
+        "openInEditor": "Ouvrir dans Modifier Flow",
+        "openInAppsEditor": "Ouvrir dans l'éditeur d'applications",
+        "openInDashboardEditor": "Ouvrir dans l'éditeur de tableau de bord"
       },
       "missingPlugins": {
         "title": "Plugins manquants",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Créez des applications personnalisées avec Kestra",
-        "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation."
+        "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation.",
+        "blueprints": {
+          "title": "Démarrer à partir d'un blueprint d'application.",
+          "message": "Les blueprints d'application sont des applications prêtes à l'emploi pour des cas d'utilisation courants tels que les formulaires, les approbations et la soumission de données. Avec Kestra Enterprise Edition, vous pouvez utiliser n'importe quel blueprint comme point de départ et l'adapter pour créer des interfaces utilisateur personnalisées sur vos workflows."
+        }
       },
       "tests": {
         "label": "Tests",
@@ -1140,6 +1146,15 @@
       "promote": {
         "title": "Promouvoir les flows entre les environnements",
         "message": "Kestra Enterprise Edition vous permet de promouvoir des flows d'un environnement à un autre — comme du développement à la pré-production, puis à la production — directement depuis l'interface utilisateur, sans nécessiter de Git ou de pipelines CI/CD. Examinez un diff de ce qui va changer avant de promouvoir, protégez les cibles sensibles avec une porte de confirmation, repérez les dérives en un coup d'œil, et conservez un historique complet de qui a promu quoi, où et quand."
+      },
+      "dashboards": {
+        "header": "Tableaux de bord personnalisés",
+        "title": "Créez des tableaux de bord personnalisés adaptés à votre équipe.",
+        "message": "Les tableaux de bord personnalisés de Kestra Enterprise Edition vous permettent de créer et de partager vos propres vues sur les exécutions, les logs et les métriques, en combinant des séries temporelles, des KPI, des tableaux et des graphiques Markdown, avec un éditeur code et no-code, un aperçu en direct et des tableaux de bord par défaut par tenant.",
+        "blueprints": {
+          "title": "Démarrer à partir d'un blueprint de tableau de bord.",
+          "message": "Les blueprints de tableau de bord sont des tableaux de bord personnalisés prêts à l'emploi pour les besoins de surveillance courants. Avec Kestra Enterprise Edition, vous pouvez utiliser n'importe quel blueprint comme point de départ et adapter ses graphiques, KPI et tableaux à votre équipe dans l'éditeur de tableau de bord."
+        }
       },
       "IAM": {
         "title": "Gérer les utilisateurs via IAM avec SSO, SCIM et RBAC",
@@ -1783,31 +1798,18 @@
     "duplicate-pair": "{label} \"{key}\" est dupliqué, première clé ignorée.",
     "dashboards": {
       "labels": {
-        "singular": "Tableau de bord",
         "plural": "Tableaux de bord"
       },
       "default": "Tableau de bord par défaut",
-      "switch": "Changer de tableau de bord",
-      "preview": "Aperçu du Dashboard",
       "empty": "Il n'y a aucun résultat à afficher.",
-      "creation": {
-        "label": "Créer un tableau de bord",
-        "confirmation": "Le tableau de bord <code>{title}</code> est créé."
-      },
       "edition": {
         "label": "Modifier le tableau de bord",
-        "confirmation": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
-        "chart": "Modifier ce graphique",
-        "id readonly": "La propriété `id` ne peut pas être modifiée — elle est maintenant définie sur ses valeurs initiales. Si vous souhaitez la changer, vous pouvez créer un nouveau tableau de bord et supprimer l'ancien."
-      },
-      "deletion": {
-        "confirmation": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?"
+        "chart": "Modifier ce graphique"
       },
       "no_description": "Aucune description",
       "no_description_hint": "Ajoutez une description à ce flow pour documenter ce qu'il fait.<br>Markdown est pris en charge.",
       "others": "Autres",
       "viewAll": "Tout voir",
-      "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
       "export": "Exporter",
       "exportTo": {
         "csv": "Exporter vers CSV",

@@ -521,7 +521,9 @@
       "detail": {
         "category": "Tipo di categoria",
         "links": "Link e Risorse",
-        "openInEditor": "Apri in Modifica Flow"
+        "openInEditor": "Apri in Modifica Flow",
+        "openInAppsEditor": "Apri nell'editor delle app",
+        "openInDashboardEditor": "Apri nell'Editor Dashboard"
       },
       "missingPlugins": {
         "title": "Plugin mancanti",
@@ -1117,7 +1119,11 @@
       },
       "apps": {
         "title": "Crea App personalizzate con Kestra",
-        "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione."
+        "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione.",
+        "blueprints": {
+          "title": "Inizia da un blueprint di app.",
+          "message": "I blueprint delle app sono app predefinite per casi d'uso comuni come moduli, approvazioni e invio di dati. Con Kestra Enterprise Edition, puoi usare qualsiasi blueprint come punto di partenza e adattarlo per creare UI personalizzate sui tuoi workflow."
+        }
       },
       "tests": {
         "label": "Test",
@@ -1140,6 +1146,15 @@
       "promote": {
         "title": "Promuovi i flow tra gli ambienti",
         "message": "Kestra Enterprise Edition ti permette di promuovere i flow da un ambiente all'altro — come da dev a staging a production — direttamente dall'interfaccia utente, senza bisogno di Git o pipeline CI/CD. Rivedi un diff di ciò che cambierà esattamente prima di promuovere, proteggi i target sensibili con un gate di conferma, individua le derive a colpo d'occhio e mantieni una cronologia completa di chi ha promosso cosa, dove e quando."
+      },
+      "dashboards": {
+        "header": "Dashboard Personalizzate",
+        "title": "Crea dashboard personalizzate su misura per il tuo team.",
+        "message": "Le dashboard personalizzate in Kestra Enterprise Edition ti consentono di creare e condividere le tue viste su esecuzioni, log e metriche, combinando serie temporali, KPI, tabelle e grafici Markdown, con un editor code e no-code, anteprima live e dashboard predefinite per ogni tenant.",
+        "blueprints": {
+          "title": "Inizia da un blueprint di dashboard.",
+          "message": "I blueprint della Dashboard sono dashboard personalizzate predefinite per le esigenze di monitoraggio più comuni. Con Kestra Enterprise Edition, puoi utilizzare qualsiasi blueprint come punto di partenza e adattare i suoi grafici, KPI e tabelle al tuo team nell'editor della dashboard."
+        }
       },
       "IAM": {
         "title": "Gestisci gli utenti tramite IAM con SSO, SCIM e RBAC",
@@ -1783,31 +1798,18 @@
     "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "dashboards": {
       "labels": {
-        "singular": "Dashboard",
         "plural": "Dashboard"
       },
       "default": "Dashboard predefinito",
-      "switch": "Dashboard Switch",
-      "preview": "Anteprima Dashboard",
       "empty": "Non ci sono risultati da mostrare.",
-      "creation": {
-        "label": "Crea Dashboard",
-        "confirmation": "Il dashboard <code>{title}</code> è stato creato."
-      },
       "edition": {
         "label": "Modifica Dashboard",
-        "confirmation": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
-        "chart": "Modifica questo grafico",
-        "id readonly": "La proprietà `id` non può essere modificata — è ora impostata sui suoi valori iniziali. Se desideri cambiarla, puoi creare una nuova dashboard e rimuovere quella vecchia."
-      },
-      "deletion": {
-        "confirmation": "Sei sicuro di voler eliminare la dashboard <code>{title}</code>?"
+        "chart": "Modifica questo grafico"
       },
       "no_description": "Nessuna descrizione",
       "no_description_hint": "Aggiungi una descrizione a questo flow per documentare cosa fa.<br>Markdown è supportato.",
       "others": "Altri",
       "viewAll": "Vedi tutti",
-      "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
       "export": "Esporta",
       "exportTo": {
         "csv": "Esporta in CSV",

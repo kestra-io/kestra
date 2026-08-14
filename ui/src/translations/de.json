@@ -323,7 +323,11 @@
       },
       "apps": {
         "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können.",
-        "title": "Erstellen Sie benutzerdefinierte Apps mit Kestra"
+        "title": "Erstellen Sie benutzerdefinierte Apps mit Kestra",
+        "blueprints": {
+          "title": "Starten Sie mit einem App-Blueprint.",
+          "message": "App-Blueprints sind vorgefertigte Apps für gängige Anwendungsfälle wie Formulare, Genehmigungen und Datenübermittlung. Mit der Kestra Enterprise Edition können Sie jeden Blueprint als Ausgangspunkt verwenden und ihn anpassen, um benutzerdefinierte UIs auf Ihren Workflows aufzubauen."
+        }
       },
       "assets": {
         "header": "Assets-Metadaten und Observability",

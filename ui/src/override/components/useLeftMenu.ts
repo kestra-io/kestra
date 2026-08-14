@@ -289,6 +289,23 @@ export function useLeftMenu() {
                             element: ChartLineVariant,
                         },
                     },
+                    {
+                        title: t("blueprints.apps"),
+                        routes: routeStartWith("blueprints/app"),
+                        href: {
+                            name: "blueprints",
+                            params: {
+                                kind: "app",
+                                tab: "community",
+                            },
+                        },
+                        icon: {
+                            element: LayersTripleOutline,
+                        },
+                        attributes: {
+                            locked: true,
+                        },
+                    },
                 ],
             },
             {

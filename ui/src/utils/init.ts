@@ -123,7 +123,7 @@ export default async (
 
     // Merge design-system locales before first render, so parent computeds
     // that call t() on design-system keys don't cache the raw key.
-    await registerDesignSystemI18n(i18n)
+    registerDesignSystemI18n(i18n)
 
     if(locale !== "en"){
         // FIXME: any - loadLocaleMessages/setI18nLanguage expect literal locale types

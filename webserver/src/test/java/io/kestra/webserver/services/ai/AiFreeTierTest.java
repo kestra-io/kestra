@@ -1,15 +1,15 @@
 package io.kestra.webserver.services.ai;
 
 import io.kestra.core.ai.agent.models.AgentPrincipal;
-import io.kestra.core.docs.JsonSchemaGenerator;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.services.ExpressionContextService;
-import io.kestra.core.utils.VersionProvider;
 import io.kestra.core.services.InstanceService;
 import io.kestra.webserver.services.ai.gemini.FreeTierGeminiAiService;
-import io.kestra.webserver.services.posthog.PosthogService;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertyPlaceholderResolver;
+import io.micronaut.reactor.http.client.ReactorHttpClient;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -17,8 +17,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
@@ -26,40 +29,46 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * The hosted provider that gives an install with no key of its own a working Copilot.
+ * When the hosted provider is registered, and when it is not — the case that decides whether prompts and flow
+ * source leave the deployment.
  *
- * <p>The subject is the defaults, so they are asserted rather than trusted: on when nothing is configured, and
- * absent both when switched off and when the operator configured a provider. Each is one configuration line
- * away from being wrong, and being wrong means prompts and flow source going somewhere nobody chose.
+ * <p>Hand-built rather than {@code @KestraTest}: the module's {@code application-test.yml} configures a Gemini
+ * provider, so a Micronaut context here cannot express "nothing configured". Only
+ * {@code providersConfiguration}, {@code environment} and {@code instanceService} are read; the other mocks
+ * just satisfy the constructor and none is stubbed.
  *
- * <p>Mockito rather than {@code @KestraTest} because the module's {@code application-test.yml} configures a
- * Gemini provider — a Micronaut context in this module cannot express "nothing configured", which is the
- * case that matters most here.
+ * <p>The relay is not faked — WireMock serves the budget and a real {@link AiFreeTierLimitProvider} reads it.
  */
 @ExtendWith(MockitoExtension.class)
+@WireMockTest
 class AiFreeTierTest {
-    @Mock
-    AiProvidersConfiguration providersConfiguration;
+    /** Relative to the configured base URL, exactly as {@link AiFreeTierLimitProvider} composes it. */
+    private static final String LIMITS_PATH = "/v1/ai/relay/gemini/limits";
+
+    private static ReactorHttpClient client;
+
+    @BeforeAll
+    static void createClient() {
+        client = ReactorHttpClient.create(null);
+    }
+
+    @AfterAll
+    static void closeClient() {
+        if (client != null) {
+            client.close();
+        }
+    }
+
+    /**
+     * An instance with no AI configuration: {@link AiServiceManager} reads {@code kestra.ai.type} off this for
+     * the legacy single-provider form, and an unstubbed Mockito {@code get} answers {@code Optional.empty()}.
+     */
     @Mock
     Environment environment;
-    @Mock
-    PluginRegistry pluginRegistry;
-    @Mock
-    JsonSchemaGenerator jsonSchemaGenerator;
-    @Mock
-    VersionProvider versionProvider;
+
+    /** Dereferenced while the provider is built ({@code this.instanceUid = instanceService.fetch()}). */
     @Mock
     InstanceService instanceService;
-    @Mock
-    PosthogService posthogService;
-    @Mock
-    NamespaceContextTool namespaceContextTool;
-    @Mock
-    KestraDocsContextTool kestraDocsContextTool;
-    @Mock
-    ExpressionContextService expressionContextService;
-    @Mock
-    io.kestra.core.services.FlowParsingService flowParsingService;
 
     private static AiFreeTierConfiguration enabled() {
         return new AiFreeTierConfiguration();
@@ -76,8 +85,7 @@ class AiFreeTierTest {
         // Given an install that configured no provider at all
         AiServiceManager manager = buildManager(null, enabled());
 
-        // When Copilot asks for a provider
-        // Then it gets the hosted one, as the default, rather than a 503 that reads as a broken feature
+        // Then the hosted one is registered as the default, rather than Copilot answering 503
         assertThat(manager.hasConfiguredProvider()).isTrue();
         assertThat(manager.getDefaultProviderId()).isEqualTo(AiFreeTierConfiguration.PROVIDER_ID);
         assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID))
@@ -86,13 +94,11 @@ class AiFreeTierTest {
 
     @Test
     void shouldLeaveCopilotUnavailableWhenTheHostedProviderIsDisabled() {
-        // Given the free tier switched off, which is what the Enterprise distribution ships
+        // Given the free tier switched off, as the EE distribution ships it
         AiServiceManager manager = buildManager(null, disabled());
 
-        // When Copilot asks for a provider
-        // Then nothing is registered, so the request never leaves the deployment. This flag is the mechanism
-        // keeping prompts and flow source inside an Enterprise install, and a regression here would be silent:
-        // the free tier would simply start working.
+        // Then nothing is registered, so no request leaves the deployment. A regression here is silent — the
+        // free tier would simply start working.
         assertThat(manager.hasConfiguredProvider()).isFalse();
         assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID)).isNull();
     }
@@ -105,83 +111,76 @@ class AiFreeTierTest {
         );
         AiServiceManager manager = buildManager(List.of(configured), enabled());
 
-        // When Copilot asks for a provider
-        // Then only theirs exists. A fallback that could displace a key someone chose to pay for would be a
-        // far worse failure than having no fallback at all.
+        // Then only theirs exists: the fallback must never displace a key someone chose to pay for
         assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID)).isNull();
         assertThat(manager.getDefaultProviderId()).isEqualTo("mine");
     }
 
     @Test
     void shouldNotSubstituteTheHostedProviderWhenAConfiguredOneFailsToBuild() {
-        // Given a declared provider that cannot be constructed — here a null configuration, which is one of
-        // several paths where createAiService returns null rather than throwing
+        // Given a declared provider that cannot be constructed — a null configuration makes createAiService
+        // return null rather than throw
         AiProviderConfiguration broken = new AiProviderConfiguration("mine", "Mine", "gemini", true, null);
         AiServiceManager manager = buildManager(List.of(broken), enabled());
 
-        // When Copilot asks for a provider
-        // Then it gets none. The free tier keys off whether a provider was *declared*, not whether one could be
-        // built: substituting here would send an operator's prompts and flow source to api.kestra.io because
-        // their own provider had a bad configuration, which is a data-flow change nobody asked for.
+        // Then none is registered: the free tier keys off whether a provider was *declared*, so a bad
+        // configuration cannot silently redirect prompts and flow source off-instance
         assertThat(manager.hasConfiguredProvider()).isFalse();
         assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID)).isNull();
     }
 
     @Test
-    void shouldReadTheHostedCeilingFromTheRelayRatherThanTheSynthesizedConfiguration() {
-        // Given an operator ceiling on the free-tier configuration, and a relay reporting a different one
-        AiFreeTierConfiguration configuration = enabled();
-        configuration.setUsageLimit(Map.of("enabled", true, "maxWeight", 1_000_000));
+    void shouldReadTheHostedCeilingFromTheRelayRatherThanTheSynthesizedConfiguration(WireMockRuntimeInfo relay) {
+        // Given a relay reporting a ceiling, read by a real limit provider, so the whole chain from JSON to
+        // reported ceiling is under test
+        stubFor(get(urlEqualTo(LIMITS_PATH)).willReturn(okJson("""
+            {"enabled":true,"window":"DAILY","maxWeight":250000}""")));
 
-        AiFreeTierLimitProvider limitProvider = mock(AiFreeTierLimitProvider.class);
-        when(limitProvider.limit()).thenReturn(Optional.of(new AiUsageLimitConfiguration(
-            true, 1.0, 0.1, 6.0, 250_000, 0, 10, AiUsageWindow.DAILY
-        )));
+        AiFreeTierConfiguration configuration = enabled();
+        configuration.setBaseUrl(relay.getHttpBaseUrl() + "/v1/ai/relay/gemini");
+
+        AiFreeTierLimitProvider limitProvider = new AiFreeTierLimitProvider(configuration, client);
+        limitProvider.refresh();
 
         // When the hosted provider is registered
         AiServiceManager manager = buildManager(null, configuration, limitProvider);
 
-        // Then the relay's figure is what the provider reports, not the one copied onto the configuration the
-        // manager synthesizes for it. Two routes to one ceiling is how the figure enforced mid-turn stops
-        // matching the figure the client was shown; reconciling an operator's own cap against the allowance is
-        // the limit provider's job, and is asserted where that decision lives.
+        // Then the relay's figure is what the provider reports; the synthesized configuration carries no
+        // ceiling, so it must not act as a second source
         assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID).usageLimit().orElseThrow().maxWeight())
             .isEqualTo(250_000);
     }
 
     @Test
     void shouldClaimNoHostedCeilingWhenTheRelayHasNotBeenReadAtAll() {
-        // Given a configured ceiling but nothing able to read the relay
+        // Given nothing able to read the relay
         AiFreeTierConfiguration configuration = enabled();
-        configuration.setUsageLimit(Map.of("enabled", true, "maxWeight", 1_000_000));
 
         // When the hosted provider is registered without one
         AiServiceManager manager = buildManager(null, configuration);
 
-        // Then no ceiling is claimed rather than the synthesized configuration's being used as a second source.
-        // Failing open is right here: the relay enforces its own budget and answers 429 when it is spent, so the
-        // cost of not knowing the ceiling is a surprising refusal, against refusing turns the relay would serve.
+        // Then no ceiling is claimed. Failing open is right: the relay enforces its own budget and answers
+        // 429, so inventing one would refuse turns the relay would have served.
         assertThat(manager.getAiService(AiFreeTierConfiguration.PROVIDER_ID).usageLimit()).isEmpty();
     }
 
     @Test
     void shouldSendTheInstanceIdentityAndNoUserWhenThereIsNoPrincipal() {
-        // Given the hosted provider on an install with no user identity, which is every OSS install
+        // Given the hosted provider where there is no user identity
         when(instanceService.fetch()).thenReturn("instance-abc");
         FreeTierGeminiAiService service = freeTierService();
 
         // When the headers for a turn are assembled with no principal
         Map<String, String> headers = service.identityHeaders(null);
 
-        // Then the instance is named and no user is claimed. The relay meters the instance in that case; a
-        // placeholder user would read as a metered user while behaving as a second instance.
+        // Then the instance is named and no user is claimed, so the relay meters the instance
         assertThat(headers).containsEntry("X-Kestra-Instance-Id", "instance-abc");
         assertThat(headers).doesNotContainKey("X-Kestra-User-Id");
     }
 
     @Test
     void shouldSendTheUserIdentityWhenThePrincipalCarriesOne() {
-        // Given an edition whose principal names a user, as Enterprise's does
+        // Given a principal that names a user, as EE's does
         when(instanceService.fetch()).thenReturn("instance-abc");
         FreeTierGeminiAiService service = freeTierService();
         AgentPrincipal principal = new TestPrincipal("user-42");
@@ -189,9 +188,7 @@ class AiFreeTierTest {
         // When the headers for that turn are assembled
         Map<String, String> headers = service.identityHeaders(principal);
 
-        // Then the turn is attributed, so the relay can subdivide the instance's budget per user. The id comes
-        // off the principal rather than a request-scoped lookup: a turn need not run on the request thread,
-        // and the ambient context would come back empty there while appearing to work.
+        // Then the turn is attributed, so the relay can subdivide the instance budget per user
         assertThat(headers).containsEntry("X-Kestra-Instance-Id", "instance-abc");
         assertThat(headers).containsEntry("X-Kestra-User-Id", "user-42");
     }
@@ -221,31 +218,30 @@ class AiFreeTierTest {
     private AiServiceManager buildManager(List<AiProviderConfiguration> providers, AiFreeTierConfiguration freeTier) {
         return buildManager(providers, freeTier, null);
     }
-
+    
     private AiServiceManager buildManager(
         List<AiProviderConfiguration> providers,
         AiFreeTierConfiguration freeTier,
         AiFreeTierLimitProvider limitProvider
     ) {
-        when(providersConfiguration.providers()).thenReturn(providers);
         PropertyPlaceholderResolver placeholderResolver = mock(PropertyPlaceholderResolver.class);
         lenient().when(environment.getPlaceholderResolver()).thenReturn(placeholderResolver);
         lenient().when(placeholderResolver.resolveRequiredPlaceholders(anyString()))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
         return new AiServiceManager(
-            providersConfiguration,
+            new AiProvidersConfiguration(providers),
             environment,
-            pluginRegistry,
-            jsonSchemaGenerator,
-            versionProvider,
+            null,
+            null,
+            null,
             instanceService,
-            posthogService,
+            null,
             List.of(),
-            namespaceContextTool,
-            kestraDocsContextTool,
-            expressionContextService,
-            flowParsingService,
+            null,
+            null,
+            null,
+            null,
             freeTier,
             limitProvider
         );

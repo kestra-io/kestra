@@ -1,13 +1,10 @@
 /**
  * `useAiUsage` — where a provider stands against its spend ceiling (`…/ai/usage`).
  *
- * Read so a user learns of an exhausted allowance before spending a turn on it rather than from the
- * refusal. The figure and both flags come from the server: the same type answers this endpoint and
- * enforces the ceiling mid-turn, and a percentage computed on both sides is one that eventually
- * disagrees with the one being enforced.
+ * The figure and both flags come from the server, which is also what enforces the ceiling mid-turn; computing
+ * a percentage here as well would eventually disagree with the one being enforced.
  *
- * Fetched through the `useClient()` facade rather than the generated SDK, as the rest of the Copilot
- * client is — the AI endpoints differ per edition and the generated surface lags them.
+ * Fetched through `useClient()` rather than the generated SDK, as the rest of the Copilot client is.
  */
 import {computed, ref, watch, type Ref} from "vue"
 import {useClient} from "@kestra-io/kestra-sdk"
@@ -31,8 +28,9 @@ export interface AiUsageStatus {
      * instant — render it through `dateUtils.dateFilter` so a user reads it in their own zone.
      */
     availableAt?: string | null
+    /** Spend across every caller and every tenant of the installation, which is what the key is billed for. */
     global?: AiUsageAxis | null
-    /** Absent in OSS, which has no user identity in the agent path. */
+    /** Spend by the calling user, likewise across every tenant they can reach. Absent where there is no user identity. */
     user?: AiUsageAxis | null
     /** The tightest axis — the only number worth showing as one figure. */
     remainingPercent: number
@@ -53,14 +51,11 @@ export function useAiUsage(provider: Ref<string | undefined>) {
     const exceeded = computed(() => shown.value && status.value?.exceeded === true)
 
     /**
-     * Never rejects, and never clears what was last known on failure: this decorates a composer, and an
-     * endpoint that is briefly unreachable must not empty the figure a user is reading, nor raise an
-     * error over a turn they can still send.
+     * Never rejects, and never clears the last known figure on failure — this decorates a composer, and the
+     * turn is still sendable whether or not the read succeeded. Hence `showMessageOnError: false` too.
      */
     async function refresh(): Promise<void> {
         try {
-            // `showMessageOnError` off: a failed read of a decoration is not worth a toast over a turn the
-            // user can still send.
             const {data} = await client.get<AiUsageStatus>(`${apiUrl()}/ai/usage`, {
                 params: provider.value ? {providerId: provider.value} : undefined,
                 showMessageOnError: false,
@@ -71,7 +66,7 @@ export function useAiUsage(provider: Ref<string | undefined>) {
         }
     }
 
-    // A provider carries its own ceiling, so switching them changes the figure entirely.
+    // Each provider carries its own ceiling, so switching them changes the figure entirely.
     watch(provider, () => refresh(), {immediate: true})
 
     return {status, shown, remainingPercent, warning, exceeded, refresh}

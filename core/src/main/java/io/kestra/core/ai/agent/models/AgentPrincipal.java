@@ -9,12 +9,11 @@ import jakarta.annotation.Nullable;
  */
 public interface AgentPrincipal {
     /**
-     * The caller's user id, or {@code null} when the edition has no notion of one.
+     * The caller's user id, or {@code null} where there is no notion of one.
      *
-     * <p>The one detail this contract exposes, because it is needed outside authorization: metering a hosted
-     * AI provider per user requires an id, and the alternatives are worse. A request-scoped lookup cannot be
-     * used — an agent turn does not necessarily run on the request thread — so the id has to travel with the
-     * turn, and the principal is what already does.
+     * <p>Exposed here because per-user metering needs it outside authorization, and it has to travel with the
+     * turn: a turn does not necessarily run on the request thread, so a request-scoped lookup would come back
+     * empty.
      */
     @Nullable
     default String userId() {

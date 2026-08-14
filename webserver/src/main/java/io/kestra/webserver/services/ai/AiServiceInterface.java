@@ -29,22 +29,17 @@ public interface AiServiceInterface {
     }
 
     /**
-     * The streaming model for a turn run on behalf of {@code principal}.
-     *
-     * <p>Defaults to ignoring the principal, so a provider only implements this if the caller's identity
-     * changes what it builds — which today means the hosted free tier, where the identity is what the relay
-     * meters spend against.
+     * The streaming model for a turn run on behalf of {@code principal}. Defaults to ignoring it, so only a
+     * provider whose request varies by caller — the hosted free tier, whose identity headers are metered —
+     * needs to implement this.
      */
     default StreamingChatModel streamingChatModel(@Nullable AgentPrincipal principal, List<ChatModelListener> listeners) {
         return streamingChatModel(listeners);
     }
 
     /**
-     * This provider's ceiling, or empty when it has none switched on.
-     *
-     * <p>Empty covers both "configured nothing" and "configured a ceiling and turned it off", because no reader
-     * has ever wanted to tell those apart: a limit that is present but disabled is not a limit. Resolving it to
-     * absence here is what keeps every caller from having to remember a second {@code enabled()} check.
+     * This provider's ceiling, or empty when it has none switched on. Empty covers both "configured nothing"
+     * and "configured then disabled", so callers need no second {@code enabled()} check.
      */
     default Optional<AiUsageLimitConfiguration> usageLimit() {
         return Optional.empty();

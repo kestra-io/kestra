@@ -20,8 +20,7 @@ class AiUsageWindowTest {
 
     @Test
     void shouldCountTheWeekFromMonday() {
-        // The ISO week, so a ceiling turns over on the day a working week starts rather than seven days after
-        // whenever it was first configured
+        // The ISO week, so a ceiling turns over when a working week starts
         assertThat(AiUsageWindow.WEEKLY.start(WEDNESDAY)).isEqualTo(Instant.parse("2026-01-12T00:00:00Z"));
         assertThat(AiUsageWindow.WEEKLY.next(WEDNESDAY)).isEqualTo(Instant.parse("2026-01-19T00:00:00Z"));
     }
@@ -37,8 +36,7 @@ class AiUsageWindowTest {
         // Given February, which is neither thirty days nor the same length twice in four years
         Instant february = Instant.parse("2028-02-20T10:00:00Z");
 
-        // Then the period ends when the month does. Adding a fixed thirty days would drift a ceiling off the
-        // calendar it is named after, and a "monthly" limit would turn over mid-March by the end of the year.
+        // Then the period ends when the month does; a fixed thirty days would drift off the calendar
         assertThat(AiUsageWindow.MONTHLY.next(february)).isEqualTo(Instant.parse("2028-03-01T00:00:00Z"));
     }
 
@@ -51,8 +49,7 @@ class AiUsageWindowTest {
 
     @Test
     void shouldRefuseAnythingItCannotName() {
-        // A period nobody can name is one nobody configured on purpose, so this fails rather than falling back to
-        // a default that would silently meter against the wrong span.
+        // Fails rather than falling back to a default that would meter against the wrong span.
         assertThatThrownBy(() -> AiUsageWindow.fromString("FORTNIGHTLY"))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("DAILY, WEEKLY, MONTHLY");
@@ -60,8 +57,7 @@ class AiUsageWindowTest {
 
     @Test
     void shouldRefuseADurationSinceTheRelayOnlyEverNamesAPeriod() {
-        // A duration was accepted while the relay stated one. It serves "DAILY" now and has no setting that
-        // could make it state anything else, so the only thing still reading a duration would be a typo.
+        // A duration was accepted while the relay stated one; it serves "DAILY" now, so a duration here is a typo.
         assertThatThrownBy(() -> AiUsageWindow.fromString("PT24H"))
             .isInstanceOf(IllegalArgumentException.class);
     }

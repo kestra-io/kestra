@@ -5,6 +5,7 @@ export default defineConfig({
     entry: {
         index: "src/index.ts",
         "vue-flow-utils": "src/vue-flow-utils.ts",
+        "flow-yaml-utils": "src/flow-yaml-utils.ts",
     },
     platform: "browser",
     exports: "ci-only",

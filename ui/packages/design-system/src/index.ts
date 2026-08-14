@@ -11,11 +11,29 @@ const asyncComponent = (name: string, loader: AsyncComponentLoader) =>
     Object.assign(defineAsyncComponent(loader), {name})
 
 import KsAlert from "./components/Feedback/KsAlert.vue"
-import KsEchart from "./components/Charts/KsEchart.vue"
-import KsGraph from "./components/Charts/KsGraph.vue"
-import KsLine from "./components/Charts/KsLine.vue"
-import KsBar from "./components/Charts/KsBar.vue"
-import KsPie from "./components/Charts/KsPie.vue"
+// Async on purpose: every chart component reaches KsEchart, which statically pulls
+// vue-echarts and the echarts core plus its renderers, and that must stay out of
+// the app's eager bundle (see the "charts" chunk group).
+import type KsEchartSfc from "./components/Charts/KsEchart.vue"
+const KsEchart = asyncComponent("KsEchart",
+    () => import("./components/Charts/KsEchart.vue"),
+) as unknown as typeof KsEchartSfc
+import type KsGraphSfc from "./components/Charts/KsGraph.vue"
+const KsGraph = asyncComponent("KsGraph",
+    () => import("./components/Charts/KsGraph.vue"),
+) as unknown as typeof KsGraphSfc
+import type KsLineSfc from "./components/Charts/KsLine.vue"
+const KsLine = asyncComponent("KsLine",
+    () => import("./components/Charts/KsLine.vue"),
+) as unknown as typeof KsLineSfc
+import type KsBarSfc from "./components/Charts/KsBar.vue"
+const KsBar = asyncComponent("KsBar",
+    () => import("./components/Charts/KsBar.vue"),
+) as unknown as typeof KsBarSfc
+import type KsPieSfc from "./components/Charts/KsPie.vue"
+const KsPie = asyncComponent("KsPie",
+    () => import("./components/Charts/KsPie.vue"),
+) as unknown as typeof KsPieSfc
 import KsAutocomplete from "./components/Form/KsAutocomplete.vue"
 import KsAvatar from "./components/Data/KsAvatar.vue"
 import KsBadge from "./components/Data/KsBadge.vue"

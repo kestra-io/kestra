@@ -13,7 +13,8 @@
     },
     "exports": {
         ".": "./src/index.ts",
-        "./vue-flow-utils": "./src/vue-flow-utils.ts"
+        "./vue-flow-utils": "./src/vue-flow-utils.ts",
+        "./flow-yaml-utils": "./src/flow-yaml-utils.ts"
     },
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",

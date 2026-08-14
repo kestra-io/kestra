@@ -36,11 +36,16 @@ const matches = (pattern) => (id) => isRealModule(id) && pattern.test(id)
 const MONACO_MODULES = /node_modules[\\/](monaco-editor|monaco-yaml|monaco-worker-manager|monaco-marker-data-provider)[\\/]|design-system[\\/]src[\\/](components[\\/]Form[\\/]KsEditor\.vue|composables[\\/](useKsEditor|useEditor|useSuggestWidgetIcons|PlaceholderContentWidget)|utils[\\/]monacoSetup)/
 // Entries that look like typos are real unified-ecosystem package names.
 const MARKDOWN_MODULES = /design-system[\\/]src[\\/]components[\\/]Data[\\/]KsMarkdown[\\/]|node_modules[\\/](shiki|@shikijs|oniguruma-to-es|regex(-recursion|-utilities)?|remark-[^\\/]+|micromark[^\\/]*|mdast[^\\/]*|unified|unist[^\\/]*|vfile[^\\/]*|hast[^\\/]*|devlop|ccount|character-[^\\/]+|decode-named-character-reference|markdown-table|longest-streak|trim-lines|zwitch|bail|trough|escape-string-regexp)[\\/]/ // codespell:ignore devlop,trough
+// Only the chart components, not the whole Charts/ directory: ksChartUtils is
+// re-exported eagerly by the design-system barrel, so claiming it here would put
+// an eager module in this lazy chunk and cycle the two.
+const CHART_MODULES = /design-system[\\/]src[\\/]components[\\/]Charts[\\/]Ks(Echart|Graph|Line|Bar|Pie)\.vue|node_modules[\\/](echarts|vue-echarts|zrender)[\\/]/
 
 /** Lazily loaded toolchains, each owning the private subtree of what it matches. */
 const LAZY_GROUPS = [
     {name: "monaco", pattern: MONACO_MODULES},
     {name: "markdown", pattern: MARKDOWN_MODULES},
+    {name: "charts", pattern: CHART_MODULES},
 ]
 
 /**
@@ -171,6 +176,14 @@ const GROUPS = [
         name: "markdown",
         test: matchesWithLazySubtree("markdown", MARKDOWN_MODULES),
         priority: -15,
+        includeDependenciesRecursively: false,
+    },
+    // The echarts toolchain plus the design-system chart components in one lazy
+    // chunk (all five are exported as async components).
+    {
+        name: "charts",
+        test: matchesWithLazySubtree("charts", CHART_MODULES),
+        priority: -17,
         includeDependenciesRecursively: false,
     },
     // One design-system chunk (with element-plus, its foundation) so federated

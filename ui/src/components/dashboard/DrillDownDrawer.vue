@@ -45,12 +45,14 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref} from "vue"
+    import {computed, defineAsyncComponent, ref} from "vue"
     import {useRoute, useRouter} from "vue-router"
     import get from "lodash/get"
     import {KsExecutionStatus} from "@kestra-io/design-system"
     import Labels from "../layout/Labels.vue"
-    import LogsWrapper from "../logs/LogsWrapper.vue"
+    // Async on purpose: App.vue mounts this drawer on every page, and LogsWrapper
+    // reaches the dashboard chart registry, which would put echarts on the boot path.
+    const LogsWrapper = defineAsyncComponent(() => import("../logs/LogsWrapper.vue"))
     import {useDrillDownStore} from "../../stores/drillDown"
     import {getDrillDownPreview} from "./composables/drillDownPreview"
     import {buildFullQuery} from "./composables/chartDrillDown"
